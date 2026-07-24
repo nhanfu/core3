@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Rendering Framework — Specification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<style>
+  :root{
+    --bg: #FFFFFF;
+    --bg-raise: #F7F9FC;
+    --bg-panel: #F4F6FA;
+    --bg-code: #EEF1F6;
+    --border: #E2E8F0;
+    --border-soft: #EDF1F7;
+    --text: #16213A;
+    --text-dim: #51607A;
+    --text-faint: #8592AC;
+    --teal: #0F8B7E;
+    --teal-dim: #0B6D63;
+    --teal-wash: rgba(15,139,126,0.08);
+    --amber: #C97514;
+    --amber-wash: rgba(201,117,20,0.09);
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --maxw: 760px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  code, .mono{font-family:var(--font-mono);}
+  h1,h2,h3,h4{font-family:var(--font-display); font-weight:600; line-height:1.2; margin:0;}
+  p{margin:0;}
+  ::selection{background:var(--amber); color:#FFFFFF;}
+
+  .kw{
+    font-family:var(--font-mono); font-size:0.86em;
+    background:var(--bg-code); border:1px solid var(--border);
+    padding:0.1em 0.4em; border-radius:4px; color:#2A3650; white-space:nowrap;
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0.9rem 2rem;
+    background:rgba(255,255,255,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .topbar-brand{
+    display:flex; align-items:center; gap:0.6rem;
+    font-family:var(--font-display); font-weight:700; font-size:1rem; letter-spacing:0.01em;
+  }
+  .topbar-dot{width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 8px rgba(201,117,20,0.35);}
+  .topbar-meta{font-family:var(--font-mono); font-size:0.72rem; color:var(--text-faint); letter-spacing:0.03em;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    max-width:1400px; margin:0 auto; padding:4.5rem 2rem 3.5rem;
+    display:grid; grid-template-columns: 1.4fr 1fr; gap:3rem; align-items:end;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:0.74rem; letter-spacing:0.14em; color:var(--teal);
+    text-transform:uppercase; margin-bottom:1rem; display:block;
+  }
+  .hero h1{font-size:3.4rem; color:#0D1526; letter-spacing:-0.01em;}
+  .hero-sub{margin-top:1.1rem; font-size:1.08rem; color:var(--text-dim); max-width:48ch; line-height:1.6;}
+
+  .statrow{display:flex; flex-direction:column; gap:1.1rem; padding-left:1px;}
+  .stat{border-left:2px solid var(--border); padding-left:1rem; text-decoration:none; display:block;}
+  .stat:hover{border-left-color:var(--amber);}
+  .stat b{display:block; font-family:var(--font-display); font-size:1.9rem; color:var(--amber); font-weight:700;}
+  .stat span{font-size:0.82rem; color:var(--text-dim);}
+
+  /* ---------- layout ---------- */
+  .layout{
+    max-width:1400px; margin:0 auto; padding:0 2rem 6rem;
+    display:flex; gap:3.5rem; align-items:flex-start;
+  }
+  .sidebar{
+    width:246px; flex-shrink:0; position:sticky; top:4.2rem;
+    padding-top:3rem; max-height:calc(100vh - 5rem); overflow-y:auto;
+  }
+  .sidebar-label{font-family:var(--font-mono); font-size:0.68rem; letter-spacing:0.12em; color:var(--text-faint); text-transform:uppercase; margin-bottom:0.9rem; display:block;}
+  .sidebar nav{display:flex; flex-direction:column; gap:0.15rem;}
+  .sidebar a{
+    text-decoration:none; color:var(--text-dim); font-size:0.87rem; padding:0.42rem 0.6rem;
+    border-radius:6px; transition:background 0.15s, color 0.15s; border-left:2px solid transparent;
+  }
+  .sidebar a:hover{color:var(--text); background:var(--bg-raise);}
+  .sidebar a.active{color:var(--amber); background:var(--amber-wash); border-left-color:var(--amber);}
+  .sidebar .nav-group .sub-links{
+    display:none; flex-direction:column; gap:0.1rem;
+    margin:0.1rem 0 0.2rem;
+  }
+  .sidebar .nav-group.expanded .sub-links{display:flex;}
+  .sidebar .sub-links a{
+    padding:0.32rem 0.6rem 0.32rem 1.6rem; font-size:0.82rem;
+  }
+
+  .main{flex:1; min-width:0; max-width:var(--maxw); padding-top:3rem;}
+
+  /* ---------- sections ---------- */
+  section{margin-bottom:4.5rem; scroll-margin-top:4.5rem;}
+  section .kicker{
+    font-family:var(--font-mono); font-size:0.72rem; letter-spacing:0.1em; color:var(--teal);
+    text-transform:uppercase; margin-bottom:0.7rem; display:block;
+  }
+  section h2{font-size:1.9rem; color:#0D1526; margin-bottom:0.9rem;}
+  section > p.lead{font-size:1.04rem; color:var(--text-dim); margin-bottom:1.8rem; max-width:64ch;}
+  section h3{font-size:1.15rem; color:var(--text); margin:1.8rem 0 0.7rem;}
+  section p{color:var(--text-dim); margin-bottom:1rem;}
+  section ul, section ol{color:var(--text-dim); padding-left:1.3rem; margin:0 0 1rem;}
+  section li{margin-bottom:0.45rem;}
+  section li::marker{color:var(--text-faint);}
+  strong{color:var(--text); font-weight:600;}
+
+  /* ---------- cards ---------- */
+  .cardgrid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1rem; margin:1.6rem 0;}
+  .card{background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:1.2rem;}
+  .card .ctag{
+    font-family:var(--font-mono); font-size:0.7rem; color:var(--bg); background:var(--teal);
+    padding:0.15em 0.5em; border-radius:4px; font-weight:600; display:inline-block; margin-bottom:0.6rem;
+  }
+  .card .ctag.frontend{background:#2563EB;}
+  .card .ctag.backend{background:#7C3AED;}
+  .card .ctag.infra{background:var(--amber);}
+  .card h4{font-family:var(--font-display); font-size:0.95rem; color:var(--text); margin-bottom:0.5rem;}
+  .card p{font-size:0.88rem; margin:0; color:var(--text-dim);}
+  .card ul{font-size:0.88rem; margin:0.4rem 0 0; padding-left:1.1rem; color:var(--text-dim);}
+  .card li{margin-bottom:0.3rem;}
+
+  /* ---------- panel (diagram/code wrapper) ---------- */
+  .panel{
+    background:var(--bg-panel); border:1px solid var(--border); border-radius:12px;
+    padding:1.6rem; margin:1.6rem 0; overflow-x:auto;
+  }
+  .panel-title{
+    font-family:var(--font-mono); font-size:0.74rem; color:var(--text-faint); letter-spacing:0.06em;
+    text-transform:uppercase; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;
+  }
+  .panel-title::before{content:''; width:6px; height:6px; border-radius:50%; background:var(--teal);}
+  .arch-pre{font-family:var(--font-mono); font-size:0.78rem; white-space:pre; line-height:1.5; color:var(--text-dim);}
+  .arch-pre .hl{color:var(--teal); font-weight:600;}
+  .arch-pre .hl2{color:#2563EB; font-weight:600;}
+  .arch-pre .hl3{color:#7C3AED; font-weight:600;}
+  .arch-pre .hl4{color:var(--amber); font-weight:600;}
+
+  /* ---------- tables ---------- */
+  .dtable{width:100%; border-collapse:collapse; margin:1.2rem 0; font-size:0.88rem;}
+  .dtable th{
+    text-align:left; font-family:var(--font-mono); font-size:0.72rem; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0.8rem; border-bottom:2px solid var(--border);
+  }
+  .dtable td{padding:0.7rem 0.8rem; border-bottom:1px solid var(--border-soft); color:var(--text-dim); vertical-align:top;}
+  .dtable td:first-child{color:var(--text); white-space:nowrap;}
+
+  /* ---------- code ---------- */
+  pre[class*="language-"]{
+    background:var(--bg-code) !important; border:1px solid var(--border); border-radius:10px;
+    padding:1.2rem 1.4rem; margin:1rem 0 1.4rem; font-size:0.84rem;
+  }
+  code[class*="language-"]{font-size:0.84rem !important; background:none !important;}
+  :not(pre) > code[class*="language-"]{
+    background:var(--bg-code) !important; padding:0.1em 0.4em; border-radius:4px;
+    font-size:0.86em !important; color:#2A3650;
+  }
+
+  /* ---------- flowstrip ---------- */
+  .flowstrip{
+    display:grid; grid-template-columns: repeat(5, 1fr); gap:0; margin:1.8rem 0;
+    border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--bg-panel);
+  }
+  .flowstep{padding:1.2rem 0.8rem; position:relative; border-right:1px solid var(--border); text-align:center;}
+  .flowstep:last-child{border-right:none;}
+  .flowstep .fnum{font-family:var(--font-mono); font-size:0.68rem; color:var(--text-faint); margin-bottom:0.4rem; display:block;}
+  .flowstep .flabel{font-family:var(--font-display); font-weight:600; font-size:0.88rem; color:var(--text); margin-bottom:0.2rem;}
+  .flowstep .fsub{font-family:var(--font-mono); font-size:0.72rem; color:var(--teal);}
+  .flowstep:not(:last-child)::after{
+    content:''; position:absolute; top:50%; right:-1px; width:8px; height:8px;
+    border-top:1.5px solid var(--amber); border-right:1.5px solid var(--amber);
+    transform:translateY(-50%) rotate(45deg); z-index:2;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    max-width:1400px; margin:0 auto; padding:2.5rem 2rem 3.5rem; border-top:1px solid var(--border-soft);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;
+  }
+  footer .fmono{font-family:var(--font-mono); font-size:0.76rem; color:var(--text-faint);}
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 980px){
+    .hero{grid-template-columns:1fr; padding:3rem 1.5rem 2.5rem;}
+    .hero h1{font-size:2.4rem;}
+    .layout{flex-direction:column; padding:0 1.5rem 4rem;}
+    .sidebar{position:static; width:100%; max-height:none; padding-top:1.5rem; margin-bottom:0.5rem;}
+    .sidebar nav{flex-direction:row; flex-wrap:wrap; gap:0.3rem;}
+    .sidebar .sub-links{display:none !important;}
+    .main{max-width:100%; padding-top:1.5rem;}
+    .cardgrid{grid-template-columns:1fr;}
+    .flowstrip{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ───────────────────── TOP BAR ───────────────────── -->
+<div class="topbar">
+  <div class="topbar-brand"><span class="topbar-dot"></span> ERP Rendering Framework</div>
+  <div class="topbar-meta">project specification · july 2026</div>
+</div>
+
+<!-- ───────────────────── HERO ───────────────────── -->
+<header class="hero">
+  <div>
+    <span class="eyebrow">Project specification</span>
+    <h1>ERP Rendering<br>Framework</h1>
+    <p class="hero-sub">A TypeScript library for building ERP interfaces at maximum speed. YAML-driven components, embedded SQL, multi-protocol data, OOP rendering, and custom scripting in any language — all wired together so teams ship enterprise features without boilerplate.</p>
+  </div>
+  <div class="statrow">
+    <a class="stat" href="#pillars"><b>5</b><span>core pillars: YAML, OOP tree, SQL, scripting, multi-protocol</span></a>
+    <a class="stat" href="#backend"><b>4</b><span>database engines: Postgres, SQL Server, SQLite, DuckDB</span></a>
+    <a class="stat" href="#scripting"><b>6</b><span>scripting runtimes: JS, TS, Python, Lua, Shell, custom</span></a>
+    <a class="stat" href="#integrations"><b>8</b><span>integration categories for real-world ERP</span></a>
+  </div>
+</header>
+
+<!-- ───────────────────── LAYOUT ───────────────────── -->
+<div class="layout">
+  <aside class="sidebar">
+    <span class="sidebar-label">On this page</span>
+    <nav id="toc">
+      <a href="#vision">Vision</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#pillars">Core pillars</a>
+      <div class="nav-group" data-section="frontend">
+        <a href="#frontend">Frontend rendering</a>
+        <div class="sub-links">
+          <a href="#frontend-base">Base component</a>
+          <a href="#frontend-tree">Component tree</a>
+          <a href="#frontend-actions">Actions</a>
+          <a href="#frontend-react">React interop</a>
+          <a href="#frontend-lego">LEGO assembly</a>
+          <a href="#frontend-gridview">GridView &amp; multi-result</a>
+        </div>
+      </div>
+      <div class="nav-group" data-section="backend">
+        <a href="#backend">Backend pipeline</a>
+        <div class="sub-links">
+          <a href="#backend-repo">Repository</a>
+          <a href="#backend-roles">Permission gates</a>
+          <a href="#backend-dbs">Databases</a>
+          <a href="#backend-sql">Embedded SQL</a>
+        </div>
+      </div>
+      <div class="nav-group" data-section="scripting">
+        <a href="#scripting">Scripting engine</a>
+        <div class="sub-links">
+          <a href="#scripting-runtimes">Runtimes</a>
+          <a href="#scripting-inline">Inline scripts</a>
+          <a href="#scripting-file">External files</a>
+          <a href="#scripting-ctx">Context API</a>
+          <a href="#scripting-hooks">Lifecycle hooks</a>
+        </div>
+      </div>
+      <a href="#auth">Auth &amp; authorization</a>
+      <a href="#protocols">Protocols</a>
+      <a href="#integrations">Integrations</a>
+      <a href="#full-example">Full YAML example</a>
+      <a href="#tech-stack">Tech stack</a>
+      <a href="#principles">Design principles</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <!-- ───────────────────── VISION ───────────────────── -->
+    <section id="vision">
+      <span class="kicker">Why this exists</span>
+      <h2>Vision</h2>
+      <p class="lead">ERP systems are complex: dozens of CRUD views, real-time dashboards, approval workflows, report builders, and integrations with external services. Most teams spend more time on plumbing than on business logic.</p>
+      <p>The framework eliminates that plumbing. A single YAML file declares the UI layout, data sources, queries, and communication protocol. The framework reads the YAML and assembles a fully working page — backend data pipeline included — using a library of built-in components that snap together like LEGO.</p>
+      <p>Under the hood, rendering is powered by <code class="kw">html.js</code> (the fastest DOM-rendering library available), wrapped in an OOP component model that gives developers inheritance, encapsulated state, and explicit <code class="kw">draw()</code> / <code class="kw">redraw()</code> lifecycle hooks.</p>
+    </section>
+
+    <!-- ───────────────────── ARCHITECTURE ───────────────────── -->
+    <section id="architecture">
+      <span class="kicker">System overview</span>
+      <h2>Architecture</h2>
+      <p class="lead">YAML is parsed at build or runtime and fans out into three subsystems — all converging on a pluggable auth layer.</p>
+
+      <div class="flowstrip">
+        <div class="flowstep"><span class="fnum">01</span><div class="flabel">YAML</div><div class="fsub">page definition</div></div>
+        <div class="flowstep"><span class="fnum">02</span><div class="flabel">Frontend</div><div class="fsub">OOP tree + html.js</div></div>
+        <div class="flowstep"><span class="fnum">03</span><div class="flabel">Backend</div><div class="fsub">repository + SQL</div></div>
+        <div class="flowstep"><span class="fnum">04</span><div class="flabel">Comms</div><div class="fsub">HTTP / WS / SSE / gRPC</div></div>
+        <div class="flowstep"><span class="fnum">05</span><div class="flabel">Auth</div><div class="fsub">pluggable interface</div></div>
+      </div>
+
+      <div class="panel">
+        <span class="panel-title">Architecture diagram</span>
+        <div class="arch-pre">
+<span class="hl">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="hl">│                        YAML Page Definition                        │</span>
+<span class="hl">│  components, data sources, queries, protocols, permissions, layout  │</span>
+<span class="hl">└──────────────────────────────┬──────────────────────────────────────┘</span>
+                               │  parsed at build / runtime
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                    ▼
+<span class="hl2">┌──────────────┐</span>  <span class="hl3">┌──────────────────┐</span>  <span class="hl4">┌────────────────────┐</span>
+<span class="hl2">│   Frontend   │</span>  <span class="hl3">│  Data Pipeline   │</span>  <span class="hl4">│   Communication    │</span>
+<span class="hl2">│   Renderer   │</span>  <span class="hl3">│   (Backend)      │</span>  <span class="hl4">│     Layer          │</span>
+<span class="hl2">│              │</span>  <span class="hl3">│                  │</span>  <span class="hl4">│                    │</span>
+<span class="hl2">│ Component    │</span>  <span class="hl3">│ Repository       │</span>  <span class="hl4">│  HTTP / REST       │</span>
+<span class="hl2">│ Tree (OOP)   │</span>  <span class="hl3">│ Pattern ──► DB   │</span>  <span class="hl4">│  WebSocket         │</span>
+<span class="hl2">│ html.js core │</span>  <span class="hl3">│ Embedded SQL     │</span>  <span class="hl4">│  SSE               │</span>
+<span class="hl2">│ draw/redraw  │</span>  <span class="hl3">│ CRUD helpers     │</span>  <span class="hl4">│  gRPC              │</span>
+<span class="hl2">└──────┬───────┘</span>  <span class="hl3">└────────┬─────────┘</span>  <span class="hl4">└─────────┬──────────┘</span>
+       │                   │                      │
+       └───────────────────┼──────────────────────┘
+                           ▼
+<span class="hl">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="hl">│                     Auth &amp; Permission Layer                        │</span>
+<span class="hl">│   Pluggable interface — client project provides implementation     │</span>
+<span class="hl">│   (JWT, OAuth2, SAML, LDAP, custom)                               │</span>
+<span class="hl">└─────────────────────────────────────────────────────────────────────┘</span></div>
+      </div>
+    </section>
+
+    <!-- ───────────────────── CORE PILLARS ───────────────────── -->
+    <section id="pillars">
+      <span class="kicker">Foundation</span>
+      <h2>Core pillars</h2>
+      <p class="lead">Five capabilities that make the framework work as a unified system.</p>
+
+      <div class="cardgrid">
+        <div class="card">
+          <span class="ctag">Core</span>
+          <h4>YAML-Driven Assembly</h4>
+          <p>Pages, components, data sources, queries, and protocols are declared in human-readable YAML. An agent or developer can author, review, and diff a page definition without touching application code.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">Frontend</span>
+          <h4>OOP Rendering &amp; Tree</h4>
+          <p>Components live in a tree with pure JSON state. Any node traverses to <code class="kw">parent</code>, <code class="kw">children</code>, or <code class="kw">root</code> for state access. Named actions are submitted to the backend via <code class="kw">submit(action, params)</code>.</p>
+        </div>
+        <div class="card">
+          <span class="ctag backend">Backend</span>
+          <h4>Embedded SQL &amp; Repository</h4>
+          <p>SQL queries live inside the YAML definition. The repository pattern abstracts the database engine — switch from PostgreSQL to DuckDB by changing one line. Built-in CRUD operations cover 80% of ERP data needs.</p>
+        </div>
+        <div class="card">
+          <span class="ctag backend">Backend</span>
+          <h4>Custom Scripting</h4>
+          <p>Embed logic in any language — JavaScript, TypeScript, Python, Lua, or Shell — directly in the YAML. Declare <code class="kw">language</code>, write the script inline or reference an external file.</p>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Infra</span>
+          <h4>Multi-Protocol Comms</h4>
+          <p>Each data source in the YAML specifies its transport: HTTP for request/response, WebSocket for bidirectional streaming, SSE for server push. The framework negotiates the protocol so components just consume data.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────────────── FRONTEND RENDERING ───────────────────── -->
+    <section id="frontend">
+      <span class="kicker">UI layer</span>
+      <h2>Frontend rendering model</h2>
+      <p class="lead">Every component is a class in a tree, with pure JSON state and full traversal. Under the hood, <code class="kw">html.js</code> handles the DOM for raw speed.</p>
+
+      <h3 id="frontend-base">Base component class</h3>
+      <p>All components inherit from <code class="kw">BaseComponent</code>. The class owns its state as pure JSON, mounts into a DOM target, and exposes lifecycle methods plus full tree traversal:</p>
+      <pre><code class="language-typescript">abstract class BaseComponent&lt;S = any&gt; {
+  state: S;                          // pure JSON — serializable, inspectable, diffable
+  readonly parent: BaseComponent | null;
+  readonly children: BaseComponent[];
+  readonly root: BaseComponent;      // always the top-level page component
+  readonly id: string;
+
+  abstract draw(container: HTMLElement): void;
+  redraw(): void { ... }             // can differ from draw — patch only what changed
+  setState(partial: Partial&lt;S&gt;, redraw?: boolean): void { ... }  // redraw defaults to true
+
+  /** Find a component anywhere in the tree by id */
+  find(id: string): BaseComponent | null;
+
+  /** Submit a named action to the backend */
+  submit(action: string, params?: Record&lt;string, any&gt;): Promise&lt;any&gt;;
+}</code></pre>
+
+      <p><strong>Why <code class="kw">redraw</code> is separate from <code class="kw">draw</code>, and why <code class="kw">setState</code> can skip it.</strong>
+        The framework does not blindly trust the rendering engine to diff efficiently everywhere. <code class="kw">draw()</code> builds the full DOM subtree from scratch — correct but expensive. <code class="kw">redraw()</code> can be overridden to patch only what changed, avoiding a full teardown of the component tree. And <code class="kw">setState(partial, false)</code> lets you batch multiple state changes across the tree before triggering a single coordinated redraw — giving developers explicit control over data flow instead of relying on automatic cascades that may over-render.</p>
+
+      <h3 id="frontend-tree">Component tree &amp; state traversal</h3>
+      <p>Every component lives in a tree. Any node can walk up to its parent, down to its children, or straight to the root. State is always pure JSON — no class instances, no hidden getters, no observables:</p>
+      <pre><code class="language-typescript">class LineItemEditor extends BaseComponent&lt;{ items: LineItem[] }&gt; {
+  draw(el: HTMLElement) {
+    // read parent's state (the PO header)
+    const poHeader = this.parent.state;         // { vendor, ship_to, payment_terms }
+
+    // read root page state (global context)
+    const globalCtx = this.root.state;          // { user, permissions, pageTitle }
+
+    // read sibling data via parent's children
+    const summary = this.parent.children
+      .find(c =&gt; c.id === "po-summary")?.state; // { total, itemCount }
+
+    // collect all children state
+    const allRows = this.children.map(c =&gt; c.state); // [{ qty, price }, ...]
+  }
+}
+
+// Tree structure example:
+//   PageRoot (root.state = global context)
+//   ├── POHeader (parent of LineItemEditor)
+//   │   ├── LineItemEditor
+//   │   │   ├── Row1 (child.state = { qty: 5, price: 100 })
+//   │   │   └── Row2 (child.state = { qty: 3, price: 250 })
+//   │   └── POSummary
+//   └── Sidebar</code></pre>
+
+      <h3 id="frontend-actions">Frontend actions</h3>
+      <p>Components submit named actions to the backend using <code class="kw">submit(action, params)</code>. The action name maps to a handler declared in the YAML — either a SQL mutation, a custom script, or an API call:</p>
+      <pre><code class="language-typescript">class ApproveButton extends BaseComponent&lt;{ loading: boolean }&gt; {
+  draw(el: HTMLElement) {
+    html(el)
+      .button("Approve PO")
+        .cls("btn-primary")
+        .on("click", async () =&gt; {
+          this.setState({ loading: true }, false);   // update state, skip redraw
+
+          const po = this.parent.state;
+          const result = await this.submit("approve_po", {
+            po_id: po.id,
+            approved_by: this.root.state.user.id,
+            line_items: this.parent.children
+              .find(c =&gt; c.id === "line-items")
+              ?.children.map(c =&gt; c.state)
+          });
+
+          this.parent.setState({ status: result.status }); // redraws parent (default)
+        })
+      .end();
+  }
+}</code></pre>
+
+      <pre><code class="language-yaml"># YAML action handlers
+actions:
+  - name: approve_po
+    permission: "po.approve"
+    roles: [manager, director]
+    language: javascript
+    script: |
+      const { po_id, approved_by, line_items } = ctx.params;
+      await ctx.db.update("purchase_orders", po_id, {
+        status: "approved",
+        approved_by,
+        approved_at: new Date()
+      });
+      await ctx.submit("send_notification", {
+        to: "purchasing",
+        message: `PO ${po_id} approved`
+      });
+      return { status: "approved" };
+
+  - name: delete_line_item
+    permission: "po.edit"
+    query: |
+      DELETE FROM po_line_items WHERE id = :id AND po_id = :po_id
+    params:
+      id: { type: uuid }
+      po_id: { type: uuid }</code></pre>
+
+      <h3 id="frontend-react">React interop</h3>
+      <p>For teams that need the React ecosystem (rich date pickers, charting libraries, etc.), a <code class="kw">ReactBridge</code> adapter lets React components live inside the rendering tree. The framework owns the lifecycle; React renders within a managed mount point.</p>
+
+      <h3 id="frontend-lego">LEGO assembly from YAML</h3>
+      <p>A page can be assembled without writing any backend code. The YAML declares which built-in components to use and how to arrange them:</p>
+      <pre><code class="language-yaml"># page: invoice-list.yaml  (frontend-only example)
+layout: split-panel
+components:
+  - type: data-table
+    id: invoices
+    columns: [id, customer, amount, status, date]
+    source: /api/invoices
+    pagination: { size: 50 }
+    actions:
+      - label: Edit
+        route: /invoices/{id}
+      - label: Delete
+        confirm: true
+        submit: delete_invoice
+        params: { id: "{id}" }
+      - label: Mark Paid
+        submit: mark_invoice_paid
+        params: { id: "{id}", paid_at: "now" }
+
+  - type: summary-card
+    id: totals
+    bind: invoices
+    aggregations:
+      - field: amount
+        fn: sum
+        label: Total Revenue
+      - field: status
+        fn: count
+        group: status</code></pre>
+
+      <h3 id="frontend-gridview">GridView &amp; multi-result-set endpoints</h3>
+      <p>Most ERP tables display raw IDs that mean nothing to users — a <code class="kw">vendor_id</code> column showing <code class="kw">7</code> instead of <em>Acme Corp</em>. The traditional fix is to JOIN lookup tables in every query. That approach is slow, couples every query to every reference table, and breaks when the same endpoint serves different column configurations.</p>
+      <p><strong>The framework separates concerns cleanly:</strong> the backend returns pure data with no presentation logic; the frontend defines columns, display rules, and rendering. A GridView datasource returns <em>multiple result sets</em> from a single endpoint call:</p>
+      <ul>
+        <li><strong>Result set 0 — pure data.</strong> Raw rows exactly as stored. Columns may contain opaque IDs, enum codes, or foreign keys. No JOINs, no text resolution. The backend does not know or care which columns the frontend will display.</li>
+        <li><strong>Result sets 1..N — reference metadata.</strong> Each additional result set is a lookup table. It maps IDs to display names, labels, colors, icons, or any presentation metadata the grid needs.</li>
+      </ul>
+
+      <p><strong>Backend: pure data only.</strong> The datasource YAML declares the query and references — no column definitions, no display logic:</p>
+
+      <pre><code class="language-yaml"># Backend datasource — returns raw data + reference lookups
+datasources:
+  - id: purchase-orders
+    db: postgres
+    protocol: http
+    roles: [admin, purchasing]
+    permission: "po.read"
+    multi_result: true
+
+    # Result set 0: pure data (no JOINs, no display logic)
+    query: |
+      SELECT id, po_number, vendor_id, status, branch_id, total, created_at
+      FROM purchase_orders
+      WHERE branch_id IN (:allowed_branches)
+      ORDER BY created_at DESC
+
+    # Result sets 1..N: reference lookups
+    references:
+      - column: vendor_id
+        query: SELECT id, name, code FROM vendors
+      - column: branch_id
+        query: SELECT id, name, region FROM branches
+      - column: status
+        query: SELECT code AS id, label, color, icon FROM po_status_codes</code></pre>
+
+      <p><strong>Custom query function.</strong> When a static SQL query isn't enough — dynamic filters, conditional joins, multi-tenant routing, or data that needs to be assembled from multiple sources — the datasource can declare a function instead. The function returns a <strong>2D array of result sets</strong>: each element is an array of rows. The framework interprets the shape automatically:</p>
+      <ul>
+        <li><strong>Single array</strong> <code class="kw">[ rows ]</code> — data is already cooked. No reference metadata. The GridView renders it as-is.</li>
+        <li><strong>Multiple arrays</strong> <code class="kw">[ rows, ref1, ref2, ... ]</code> — first array is raw data, the rest are reference lookups mapped to columns in declaration order.</li>
+      </ul>
+
+      <pre><code class="language-yaml"># Option A: static query + references (declarative)
+datasources:
+  - id: purchase-orders
+    query: SELECT id, po_number, vendor_id, status, total FROM purchase_orders
+    references:
+      - column: vendor_id
+        query: SELECT id, name FROM vendors
+
+# Option B: function returns result sets (programmatic)
+datasources:
+  - id: purchase-orders
+    roles: [admin, purchasing]
+    permission: "po.read"
+    language: javascript
+    script: |
+      const orders = await ctx.db.query(
+        `SELECT id, po_number, vendor_id, status, total, created_at
+         FROM purchase_orders
+         WHERE branch_id IN (:allowed_branches)
+         ORDER BY created_at DESC`,
+        { allowed_branches: ctx.user.branches }
+      );
+      const vendors = await ctx.db.query(`SELECT id, name, code FROM vendors`);
+      const statuses = await ctx.db.query(
+        `SELECT code AS id, label, color, icon FROM po_status_codes`
+      );
+      // return 2D array: [data, ...references]
+      return [orders, vendors, statuses];
+
+# Option C: function with fully cooked data (no references needed)
+datasources:
+  - id: dashboard-stats
+    language: javascript
+    roles: [admin, manager]
+    permission: "dashboard.read"
+    script: |
+      const stats = await ctx.db.query(`
+        SELECT
+          o.po_number,
+          v.name AS vendor_name,
+          s.label AS status_label,
+          s.color AS status_color,
+          o.total
+        FROM purchase_orders o
+        JOIN vendors v ON v.id = o.vendor_id
+        JOIN po_status_codes s ON s.code = o.status
+      `);
+      // single array — data is already resolved, no references
+      return [stats];</code></pre>
+
+      <pre><code class="language-typescript">// The function return type is simply an array of arrays
+type QueryFnResult = Record&lt;string, any&gt;[][];
+
+// Framework interprets the shape:
+// result.length === 1  → cooked data, no lookups
+// result.length > 1    → result[0] = raw data, result[1..N] = reference sets
+
+// The framework normalizes both static queries and functions
+// into the same MultiResultResponse before handing to the GridView</code></pre>
+
+      <p><strong>Frontend: columns and rendering are defined here.</strong> The component YAML declares which fields to show, how to format them, how to resolve references, and optionally a custom <code class="kw">rowRendering</code> — either a template string or a JavaScript function:</p>
+
+      <pre><code class="language-yaml"># Frontend component — columns, display, and rendering
+components:
+  - type: GridView
+    id: po-grid
+    source: purchase-orders
+    pagination: { size: 25 }
+
+    # Column definitions (frontend-only, backend doesn't know these)
+    columns:
+      - field: po_number
+        label: PO #
+        width: 120
+      - field: vendor_id
+        label: Vendor
+        display: name              # resolved from vendors reference
+        secondary: code            # show vendor code as secondary text
+      - field: total
+        label: Amount
+        format: currency
+        align: right
+      - field: status
+        label: Status
+        display: label
+        badge: { color: color, icon: icon }
+      - field: branch_id
+        label: Branch
+        display: name
+      - field: created_at
+        label: Created
+        format: date-relative
+
+    # Option 1: default rendering (generic — the framework renders each cell)
+    # rowRendering: default
+
+    # Option 2: template-based rendering
+    rowRendering:
+      type: template
+      template: |
+        &lt;div class="po-row"&gt;
+          &lt;span class="po-num"&gt;{{po_number}}&lt;/span&gt;
+          &lt;span class="vendor"&gt;{{vendor_id.name}} ({{vendor_id.code}})&lt;/span&gt;
+          &lt;span class="badge" style="background:{{status.color}}"&gt;{{status.label}}&lt;/span&gt;
+          &lt;span class="amount"&gt;{{total | currency}}&lt;/span&gt;
+        &lt;/div&gt;
+
+    # Option 3: JavaScript function for full control
+    # rowRendering:
+    #   type: function
+    #   language: javascript
+    #   script: |
+    #     (ctx) => {
+    #       const { row, resolve, html } = ctx;
+    #       return html.div().cls("po-row")
+    #         .span(row.po_number).cls("po-num").end()
+    #         .span(resolve("vendor_id", "name")).cls("vendor").end()
+    #         .div().cls("badge")
+    #           .style("background", resolve("status", "color"))
+    #           .text(resolve("status", "label"))
+    #         .end()
+    #         .span(ctx.format(row.total, "currency")).cls("amount").end()
+    #       .end();
+    #     }</code></pre>
+
+      <p>The backend response shape is simple — raw data plus reference maps:</p>
+
+      <pre><code class="language-typescript">interface MultiResultResponse {
+  data: Record&lt;string, any&gt;[];        // result set 0: raw rows
+  references?: {                      // absent when data is already cooked (single array)
+    [column: string]: {
+      rows: Record&lt;string, any&gt;[];
+      keyField: string;               // default: "id"
+    };
+  };
+  meta: { total: number; page: number; pageSize: number; };
+}
+
+// When references is absent, GridView skips lookup resolution
+// and renders column values directly — the data is already display-ready</code></pre>
+
+      <p>The GridView component builds lookup maps, then renders using the configured <code class="kw">rowRendering</code> mode — generic, template, or custom function:</p>
+
+      <pre><code class="language-typescript">class GridView extends BaseComponent&lt;GridViewState&gt; {
+  private lookups: Map&lt;string, Map&lt;any, Record&lt;string, any&gt;&gt;&gt;;
+  private columns: ColumnDef[];
+  private rowRenderer: RowRenderer;
+
+  onDataLoad(response: MultiResultResponse) {
+    this.lookups = new Map();
+    if (response.references) {
+      // multi-result: build lookup maps for reference resolution
+      for (const [col, ref] of Object.entries(response.references)) {
+        const map = new Map();
+        for (const row of ref.rows) map.set(row[ref.keyField], row);
+        this.lookups.set(col, map);
+      }
+    }
+    // if no references → data is already cooked, lookups stay empty
+    this.setState({ rows: response.data, meta: response.meta });
+  }
+
+  resolve(column: string, value: any, field: string): any {
+    return this.lookups.get(column)?.get(value)?.[field] ?? value;
+  }
+
+  draw(el: HTMLElement) {
+    const grid = html(el).div().cls("gridview");
+
+    // render header from frontend column definitions
+    const header = grid.div().cls("grid-header");
+    for (const col of this.columns) {
+      header.div(col.label).cls("grid-th").style("width", col.width).end();
+    }
+    header.end();
+
+    // render rows
+    const body = grid.div().cls("grid-body");
+    for (const row of this.state.rows) {
+      if (this.rowRenderer.type === "function") {
+        // custom JS function: full control via html.js
+        this.rowRenderer.fn({
+          row,
+          resolve: (col, field) =&gt; this.resolve(col, row[col], field),
+          format: (val, fmt) =&gt; this.applyFormat(val, fmt),
+          html: body
+        });
+      } else if (this.rowRenderer.type === "template") {
+        // template: interpolate {{field}} and {{field.ref}} with resolved values
+        body.div().cls("grid-row")
+          .html(this.interpolate(this.rowRenderer.template, row))
+        .end();
+      } else {
+        // generic: render each column with auto-resolution
+        const tr = body.div().cls("grid-row");
+        for (const col of this.columns) {
+          const raw = row[col.field];
+          const display = col.display
+            ? this.resolve(col.field, raw, col.display)
+            : this.applyFormat(raw, col.format);
+          const td = tr.div(display).cls("grid-td");
+          if (col.badge) {
+            td.cls("badge")
+              .style("background", this.resolve(col.field, raw, col.badge.color))
+              .attr("data-icon", this.resolve(col.field, raw, col.badge.icon));
+          }
+          if (col.secondary) {
+            td.span(this.resolve(col.field, raw, col.secondary))
+              .cls("secondary").end();
+          }
+          td.end();
+        }
+        tr.end();
+      }
+    }
+    body.end();
+    grid.end();
+  }
+}</code></pre>
+
+      <p><strong>Why this matters for ERP at scale:</strong></p>
+      <ul>
+        <li><strong>Backend stays pure.</strong> Queries return raw data — no JOINs for display, no awareness of which columns the frontend shows. The same endpoint serves any column configuration.</li>
+        <li><strong>Frontend owns presentation.</strong> Column definitions, formatting, badges, and reference resolution are all frontend concerns defined in the component YAML — not coupled to the SQL.</li>
+        <li><strong>Rendering is pluggable.</strong> Generic mode works out of the box. Templates give designers control without code. JS functions give developers full html.js power for complex cells.</li>
+        <li><strong>Reference data is cacheable independently.</strong> Vendor names rarely change. The framework can cache references with longer TTLs while primary data refreshes every request.</li>
+        <li><strong>One data shape, many views.</strong> A summary card and a detail grid can consume the same raw response but render completely different column sets and layouts.</li>
+      </ul>
+    </section>
+
+    <!-- ───────────────────── BACKEND DATA PIPELINE ───────────────────── -->
+    <section id="backend">
+      <span class="kicker">Data layer</span>
+      <h2>Backend data pipeline</h2>
+      <p class="lead">The repository pattern with permission-gated queries, embedded SQL in YAML, and support for four database engines.</p>
+
+      <h3 id="backend-repo">Repository pattern</h3>
+      <p>Each repository implements a common interface. Switching databases is a one-line config change. Every operation — including raw <code class="kw">query()</code> — is gated by the role and permission declared in the YAML datasource definition:</p>
+      <pre><code class="language-typescript">interface IRepository&lt;T&gt; {
+  findById(id: string): Promise&lt;T | null&gt;;
+  findMany(filter: Filter&lt;T&gt;): Promise&lt;T[]&gt;;
+  create(entity: T): Promise&lt;T&gt;;
+  update(id: string, partial: Partial&lt;T&gt;): Promise&lt;T&gt;;
+  delete(id: string): Promise&lt;void&gt;;
+  query(sql: string, params?: any[]): Promise&lt;T[]&gt;;
+}
+
+// Before executing query(), the framework enforces:
+//   1. roles  — user must hold at least one declared role
+//   2. permission — user must have the specific permission
+// Both are declared per-datasource in YAML (see below)</code></pre>
+
+      <h3 id="backend-roles">YAML role &amp; permission gates</h3>
+      <p>Each datasource declares who can access it. The framework rejects the request before the query runs if the user does not satisfy the gate:</p>
+      <pre><code class="language-yaml"># example: role-gated datasource
+datasources:
+  - id: user-profiles
+    db: postgres
+    protocol: http
+    roles: [admin]                     # only admins can execute this query
+    permission: "profile access"       # must also hold this permission
+    query: |
+      SELECT * FROM user_profile
+      WHERE branch_id IN (:allowed_branches)
+    component: EditableGridView        # renders as an editable grid
+
+  - id: order-summary
+    db: postgres
+    protocol: http
+    roles: [admin, manager]
+    permission: "orders.read"
+    query: |
+      SELECT id, customer, total, status FROM orders
+      ORDER BY created_at DESC
+    component: data-table</code></pre>
+
+      <h3 id="backend-dbs">Supported databases</h3>
+      <table class="dtable">
+        <tr><th>Engine</th><th>Use case</th><th>Driver</th></tr>
+        <tr><td>PostgreSQL</td><td>Primary OLTP, multi-user production</td><td><code class="kw">pg</code></td></tr>
+        <tr><td>SQL Server</td><td>Enterprise / legacy integration</td><td><code class="kw">mssql</code></td></tr>
+        <tr><td>SQLite</td><td>Single-user, embedded, edge deployments</td><td><code class="kw">better-sqlite3</code></td></tr>
+        <tr><td>DuckDB</td><td>Analytics, OLAP, large dataset queries</td><td><code class="kw">duckdb-node</code></td></tr>
+      </table>
+
+      <h3 id="backend-sql">Embedded SQL in YAML</h3>
+      <p>Queries are declared inline. The framework parameterizes inputs to prevent injection, applies row-level permission filters from the auth layer, and returns typed results:</p>
+      <pre><code class="language-yaml"># data-source definition in YAML
+datasources:
+  - id: recent-orders
+    db: postgres            # swap to: duckdb | sqlserver | sqlite
+    protocol: http          # or: websocket | sse
+    roles: [admin, sales]
+    permission: "orders.read"
+    query: |
+      SELECT o.id, c.name AS customer, o.total, o.status
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE o.created_at > :since
+        AND o.branch_id IN (:allowed_branches)   -- injected by auth
+      ORDER BY o.created_at DESC
+    params:
+      since: { type: date, default: "-30d" }
+    cache: { ttl: 60s }</code></pre>
+    </section>
+
+    <!-- ───────────────────── CUSTOM SCRIPTING ───────────────────── -->
+    <section id="scripting">
+      <span class="kicker">Multi-language</span>
+      <h2>Custom scripting engine</h2>
+      <p class="lead">SQL covers most data needs, but ERP workflows often require custom logic — validation rules, complex calculations, data transformations, or calls to external APIs. Declare <code class="kw">language</code> and write code inline or reference an external file.</p>
+      <p>The framework spawns a sandboxed runtime for the declared language, passes the execution context (user, params, previous datasource results), and collects the return value as the datasource output. Role and permission gates apply exactly the same way as SQL datasources.</p>
+
+      <h3 id="scripting-runtimes">Supported runtimes</h3>
+      <table class="dtable">
+        <tr><th>Language</th><th>Runtime</th><th>Best for</th></tr>
+        <tr><td>JavaScript</td><td>V8 isolate (vm2 / isolated-vm)</td><td>General logic, API calls, JSON transforms</td></tr>
+        <tr><td>TypeScript</td><td>V8 isolate + ts-strip</td><td>Same as JS with type safety</td></tr>
+        <tr><td>Python</td><td>Subprocess / Pyodide (WASM)</td><td>Data science, ML inference, pandas transforms</td></tr>
+        <tr><td>Lua</td><td>Fengari (WASM)</td><td>Lightweight rules, game-style scripting</td></tr>
+        <tr><td>Shell</td><td>Subprocess (sandboxed)</td><td>System automation, file processing, CLI tools</td></tr>
+        <tr><td>Custom</td><td>Pluggable adapter</td><td>Any language — register a runtime adapter</td></tr>
+      </table>
+
+      <h3 id="scripting-inline">Inline script in YAML</h3>
+      <pre><code class="language-yaml"># datasource with inline JavaScript
+datasources:
+  - id: enriched-orders
+    language: javascript
+    roles: [admin, sales]
+    permission: "orders.read"
+    script: |
+      const orders = await ctx.datasource("recent-orders");
+      const enriched = orders.map(order => ({
+        ...order,
+        tax: order.total * 0.08,
+        grand_total: order.total * 1.08,
+        priority: order.total > 10000 ? "high" : "normal"
+      }));
+      return enriched;
+    component: data-table
+
+  # datasource with inline Python
+  - id: sales-forecast
+    language: python
+    roles: [admin, analyst]
+    permission: "reports.forecast"
+    script: |
+      import pandas as pd
+      orders = ctx.datasource("recent-orders")
+      df = pd.DataFrame(orders)
+      df['date'] = pd.to_datetime(df['created_at'])
+      monthly = df.groupby(df['date'].dt.to_period('M'))['total'].sum()
+      forecast = monthly.rolling(3).mean().iloc[-1]
+      return { "monthly": monthly.to_dict(), "next_month": forecast }
+    component: summary-card</code></pre>
+
+      <h3 id="scripting-file">External script file</h3>
+      <p>For larger scripts, reference an external file. The framework resolves the path relative to the YAML file:</p>
+      <pre><code class="language-yaml">datasources:
+  - id: inventory-sync
+    language: python
+    roles: [admin, warehouse]
+    permission: "inventory.sync"
+    script_file: ./scripts/inventory_sync.py
+    params:
+      warehouse_id: { type: string, from: route }
+    timeout: 30s
+
+  - id: custom-validation
+    language: typescript
+    roles: [admin]
+    permission: "po.validate"
+    script_file: ./scripts/validate_po.ts
+    params:
+      po_id: { type: uuid, bind: po-detail.id }</code></pre>
+
+      <h3 id="scripting-ctx">Execution context</h3>
+      <p>Every script receives a <code class="kw">ctx</code> object with access to the current user, parameters, other datasource results, and utility functions:</p>
+      <pre><code class="language-typescript">interface ScriptContext {
+  user: User;                                       // current authenticated user
+  params: Record&lt;string, any&gt;;                      // resolved YAML params
+  datasource(id: string): Promise&lt;any&gt;;             // fetch another datasource
+  db: IRepository;                                  // direct DB access (permission-gated)
+  http: { get, post, put, delete };                 // sandboxed HTTP client
+  log: Logger;                                      // structured logging
+  env: Record&lt;string, string&gt;;                      // allowed environment variables
+}</code></pre>
+
+      <h3 id="scripting-hooks">Script lifecycle hooks</h3>
+      <p>Scripts can run at specific lifecycle points, not just as datasources. Declare a <code class="kw">hooks</code> block to run scripts before or after events:</p>
+      <pre><code class="language-yaml">page:
+  title: Purchase Orders
+  hooks:
+    before_save:
+      language: javascript
+      permission: "po.create"
+      script: |
+        if (ctx.data.total > 50000 && !ctx.user.roles.includes("director")) {
+          throw new ValidationError("Orders over $50k require director approval");
+        }
+    after_save:
+      language: python
+      permission: "po.create"
+      script_file: ./scripts/notify_approvers.py
+    on_load:
+      language: javascript
+      script: |
+        ctx.state.defaults = { currency: "USD", payment_terms: "Net 30" };
+        return ctx.state;</code></pre>
+    </section>
+
+    <!-- ───────────────────── AUTH ───────────────────── -->
+    <section id="auth">
+      <span class="kicker">Security</span>
+      <h2>Authentication &amp; authorization</h2>
+      <p class="lead">The framework does <strong>not</strong> implement authentication itself. It defines a pluggable interface that the host application implements — keeping the library infrastructure-agnostic.</p>
+      <pre><code class="language-typescript">interface IAuthProvider {
+  getCurrentUser(): Promise&lt;User | null&gt;;
+  hasPermission(user: User, action: string, resource: string): boolean;
+  getSecurityContext(user: User): SecurityContext;
+}
+
+// The host app plugs in its own implementation
+framework.configure({
+  auth: new MyOAuth2AuthProvider({ ... })
+});</code></pre>
+      <p>Every data source query and component render checks permissions through this interface. Row-level security context values (like <code class="kw">:allowed_branches</code>) are injected into SQL parameters automatically.</p>
+    </section>
+
+    <!-- ───────────────────── COMMUNICATION ───────────────────── -->
+    <section id="protocols">
+      <span class="kicker">Transport</span>
+      <h2>Communication protocols</h2>
+      <table class="dtable">
+        <tr><th>Protocol</th><th>When to use</th><th>YAML key</th></tr>
+        <tr><td>HTTP / REST</td><td>Standard CRUD, form submissions, reports</td><td><code class="kw">protocol: http</code></td></tr>
+        <tr><td>WebSocket</td><td>Real-time dashboards, chat, live notifications</td><td><code class="kw">protocol: websocket</code></td></tr>
+        <tr><td>SSE</td><td>Server-push updates (order status, progress bars)</td><td><code class="kw">protocol: sse</code></td></tr>
+        <tr><td>gRPC</td><td>High-throughput microservice-to-microservice</td><td><code class="kw">protocol: grpc</code></td></tr>
+      </table>
+    </section>
+
+    <!-- ───────────────────── ERP INTEGRATIONS ───────────────────── -->
+    <section id="integrations">
+      <span class="kicker">Ecosystem</span>
+      <h2>ERP integration points</h2>
+      <p class="lead">Beyond database CRUD, real-world ERP systems need to talk to many external services. The framework provides adapter interfaces for these categories:</p>
+
+      <div class="cardgrid">
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>Email &amp; Notifications</h4>
+          <ul>
+            <li>SMTP / SendGrid / SES for transactional emails</li>
+            <li>Push notifications (FCM, APNs) for mobile</li>
+            <li>SMS (Twilio) for delivery confirmations, OTP</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>File &amp; Document Storage</h4>
+          <ul>
+            <li>S3 / Azure Blob / GCS for attachments</li>
+            <li>Document generation (PDF invoices, reports)</li>
+            <li>OCR / document parsing for AP automation</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>Payment &amp; Financial</h4>
+          <ul>
+            <li>Payment gateways (Stripe, PayPal, ACH)</li>
+            <li>Accounting sync (QuickBooks, Xero, SAP)</li>
+            <li>Tax calculation (Avalara, TaxJar)</li>
+            <li>Currency exchange rate APIs</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>External ERP &amp; CRM</h4>
+          <ul>
+            <li>SAP, Oracle, NetSuite connectors</li>
+            <li>Salesforce / HubSpot for CRM data</li>
+            <li>EDI (X12 / EDIFACT) for B2B exchange</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>Logistics &amp; Shipping</h4>
+          <ul>
+            <li>Carrier APIs (FedEx, UPS, DHL)</li>
+            <li>Warehouse Management Systems (WMS)</li>
+            <li>Barcode / RFID scanning input</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>Identity &amp; Directory</h4>
+          <ul>
+            <li>LDAP / Active Directory</li>
+            <li>SSO providers (Okta, Azure AD, Auth0)</li>
+            <li>SCIM for automated user provisioning</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>Workflow &amp; Automation</h4>
+          <ul>
+            <li>Approval chains (POs, expense reports)</li>
+            <li>Webhook dispatch for event-driven integrations</li>
+            <li>Job queues (BullMQ, SQS) for async processing</li>
+            <li>Cron / scheduled tasks</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="ctag infra">Integration</span>
+          <h4>Observability &amp; Audit</h4>
+          <ul>
+            <li>Structured logging (Pino) with correlation IDs</li>
+            <li>Audit trail for compliance</li>
+            <li>APM (Datadog, New Relic, OpenTelemetry)</li>
+            <li>Error tracking (Sentry)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────────────── YAML FULL EXAMPLE ───────────────────── -->
+    <section id="full-example">
+      <span class="kicker">End to end</span>
+      <h2>Full YAML page example</h2>
+      <p class="lead">A complete purchase order page — layout, components, datasources, and permissions in a single YAML file.</p>
+      <pre><code class="language-yaml"># page: purchase-orders.yaml
+page:
+  title: Purchase Orders
+  auth:
+    require: [po.read]
+    row_filter: branch_id
+
+layout:
+  type: master-detail
+  master:
+    component: data-table
+    id: po-list
+    source: recent-pos
+    columns: [po_number, vendor, total, status, created_at]
+    filters:
+      - field: status
+        type: select
+        options: [draft, pending, approved, received]
+      - field: created_at
+        type: date-range
+    actions:
+      - label: New PO
+        permission: po.create
+        route: /purchase-orders/new
+  detail:
+    component: form
+    id: po-detail
+    source: po-by-id
+    sections:
+      - title: Header
+        fields: [vendor, ship_to, payment_terms, notes]
+      - title: Line Items
+        component: editable-table
+        source: po-lines
+        columns: [item, description, qty, unit_price, total]
+
+datasources:
+  - id: recent-pos
+    db: postgres
+    protocol: http
+    query: |
+      SELECT po_number, v.name AS vendor, total, status, created_at
+      FROM purchase_orders po
+      JOIN vendors v ON v.id = po.vendor_id
+      WHERE po.branch_id IN (:allowed_branches)
+      ORDER BY created_at DESC
+    pagination: { size: 25 }
+
+  - id: po-by-id
+    db: postgres
+    protocol: http
+    query: |
+      SELECT * FROM purchase_orders WHERE id = :id
+    params:
+      id: { type: uuid, from: route }
+
+  - id: po-lines
+    db: postgres
+    protocol: websocket
+    query: |
+      SELECT * FROM po_line_items WHERE po_id = :po_id
+    params:
+      po_id: { type: uuid, bind: po-detail.id }</code></pre>
+    </section>
+
+    <!-- ───────────────────── TECH STACK ───────────────────── -->
+    <section id="tech-stack">
+      <span class="kicker">Under the hood</span>
+      <h2>Technology stack</h2>
+      <table class="dtable">
+        <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+        <tr><td>Language</td><td>TypeScript</td><td>Type safety across frontend and backend</td></tr>
+        <tr><td>DOM Rendering</td><td>html.js (wrapped)</td><td>Fastest raw rendering; OOP layer on top</td></tr>
+        <tr><td>Component Model</td><td>Custom OOP classes</td><td>State, inheritance, draw/redraw lifecycle</td></tr>
+        <tr><td>React Interop</td><td>ReactBridge adapter</td><td>Access to React ecosystem when needed</td></tr>
+        <tr><td>Config Format</td><td>YAML</td><td>Human and agent readable, diffable</td></tr>
+        <tr><td>Server Runtime</td><td>Node.js / Bun</td><td>TypeScript native, fast startup</td></tr>
+        <tr><td>Database Access</td><td>Repository pattern</td><td>Swap engines without changing app code</td></tr>
+        <tr><td>Scripting</td><td>JS, TS, Python, Lua, Shell</td><td>Custom logic in any language, sandboxed</td></tr>
+        <tr><td>Auth</td><td>Pluggable interface</td><td>No vendor lock-in; host app provides impl</td></tr>
+      </table>
+    </section>
+
+    <!-- ───────────────────── DESIGN PRINCIPLES ───────────────────── -->
+    <section id="principles">
+      <span class="kicker">Philosophy</span>
+      <h2>Design principles</h2>
+      <ul>
+        <li><strong>Convention over configuration</strong> — sensible defaults, override only when needed</li>
+        <li><strong>YAML is the source of truth</strong> — if it's not in the YAML, it doesn't exist on the page</li>
+        <li><strong>One line to switch</strong> — database, protocol, or auth provider</li>
+        <li><strong>No black boxes</strong> — every built-in component can be extended or replaced</li>
+        <li><strong>Agent-friendly</strong> — YAML definitions are structured enough for AI agents to read, generate, and modify</li>
+        <li><strong>Security by default</strong> — parameterized queries, row-level auth, permission checks on every render and data fetch</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <span class="fmono">ERP Rendering Framework</span>
+  <span class="fmono">Project Specification · July 2026</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+<script>
+  const sections = Array.from(document.querySelectorAll('main section[id], main h3[id]'));
+  const links = Array.from(document.querySelectorAll('#toc a'));
+  const groups = Array.from(document.querySelectorAll('#toc .nav-group'));
+  const byId = id => links.find(l => l.getAttribute('href') === '#' + id);
+
+  function expandGroupFor(link) {
+    groups.forEach(g => g.classList.remove('expanded'));
+    if (!link) return;
+    const group = link.closest('.nav-group');
+    if (group) group.classList.add('expanded');
+  }
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const link = byId(entry.target.id);
+      if (!link) return;
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        expandGroupFor(link);
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+
+  sections.forEach(s => io.observe(s));
+</script>
+
+</body>
+</html>
