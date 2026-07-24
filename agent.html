@@ -261,7 +261,7 @@
           <a href="#frontend-actions">Actions</a>
           <a href="#frontend-react">React interop</a>
           <a href="#frontend-lego">LEGO assembly</a>
-          <a href="#frontend-gridview">GridView &amp; multi-result</a>
+          <a href="#frontend-gridview">Server-first data &amp; components</a>
         </div>
       </div>
       <div class="nav-group" data-section="backend">
@@ -271,6 +271,7 @@
           <a href="#backend-roles">Permission gates</a>
           <a href="#backend-dbs">Databases</a>
           <a href="#backend-sql">Embedded SQL</a>
+          <a href="#backend-crud">CRUD operations</a>
         </div>
       </div>
       <div class="nav-group" data-section="scripting">
@@ -280,9 +281,9 @@
           <a href="#scripting-inline">Inline scripts</a>
           <a href="#scripting-file">External files</a>
           <a href="#scripting-ctx">Context API</a>
-          <a href="#scripting-hooks">Lifecycle hooks</a>
         </div>
       </div>
+      <a href="#css">CSS system</a>
       <a href="#auth">Auth &amp; authorization</a>
       <a href="#protocols">Protocols</a>
       <a href="#integrations">Integrations</a>
@@ -526,274 +527,325 @@ components:
         fn: count
         group: status</code></pre>
 
-      <h3 id="frontend-gridview">GridView &amp; multi-result-set endpoints</h3>
-      <p>Most ERP tables display raw IDs that mean nothing to users — a <code class="kw">vendor_id</code> column showing <code class="kw">7</code> instead of <em>Acme Corp</em>. The traditional fix is to JOIN lookup tables in every query. That approach is slow, couples every query to every reference table, and breaks when the same endpoint serves different column configurations.</p>
-      <p><strong>The framework separates concerns cleanly:</strong> the backend returns pure data with no presentation logic; the frontend defines columns, display rules, and rendering. A GridView datasource returns <em>multiple result sets</em> from a single endpoint call:</p>
-      <ul>
-        <li><strong>Result set 0 — pure data.</strong> Raw rows exactly as stored. Columns may contain opaque IDs, enum codes, or foreign keys. No JOINs, no text resolution. The backend does not know or care which columns the frontend will display.</li>
-        <li><strong>Result sets 1..N — reference metadata.</strong> Each additional result set is a lookup table. It maps IDs to display names, labels, colors, icons, or any presentation metadata the grid needs.</li>
-      </ul>
+      <h3 id="frontend-gridview">Server-first data &amp; component-based rendering</h3>
+      <p>Traditional grid implementations split work awkwardly: the backend returns raw IDs, the frontend resolves them via reference lookups, and column definitions sit in a configuration limbo — neither true components nor pure data. This creates coupling, duplicated logic, and prevents columns from participating in the component tree.</p>
+      <p><strong>The framework takes a different approach:</strong> the server sends a <strong>flat 1D array</strong> with all data fully resolved — every JOIN, lookup, and transformation happens server-side in a single query or function. On the frontend, what were formerly "columns" are now <strong>components</strong> — real <code class="kw">BaseComponent</code> instances that live in the virtual tree, have their own state, can traverse to parent/children/root, and can submit actions to the server. All event handling is centralized in a single class at the page level, inherited from <code class="kw">BaseComponent</code>.</p>
+      <p>This pattern is not GridView-specific. It applies uniformly to <strong>ListView</strong>, <strong>TreeView</strong>, <strong>PDF reports</strong>, or any view that requires complex query and rendering.</p>
 
-      <p><strong>Backend: pure data only.</strong> The datasource YAML declares the query and references — no column definitions, no display logic:</p>
+      <h4>Server side: all burden here</h4>
+      <p>The backend returns a flat array of fully resolved rows. No reference sets, no client-side lookups. One query (or function) does all the work:</p>
 
-      <pre><code class="language-yaml"># Backend datasource — returns raw data + reference lookups
+      <pre><code class="language-yaml"># Backend datasource — flat, fully resolved data
 datasources:
   - id: purchase-orders
     db: postgres
     protocol: http
     roles: [admin, purchasing]
     permission: "po.read"
-    multi_result: true
-
-    # Result set 0: pure data (no JOINs, no display logic)
     query: |
-      SELECT id, po_number, vendor_id, status, branch_id, total, created_at
-      FROM purchase_orders
-      WHERE branch_id IN (:allowed_branches)
-      ORDER BY created_at DESC
+      SELECT
+        po.id,
+        po.po_number,
+        v.name AS vendor_name,
+        v.code AS vendor_code,
+        s.label AS status_label,
+        s.color AS status_color,
+        s.icon AS status_icon,
+        b.name AS branch_name,
+        po.total,
+        po.created_at
+      FROM purchase_orders po
+      JOIN vendors v ON v.id = po.vendor_id
+      JOIN po_status_codes s ON s.code = po.status
+      JOIN branches b ON b.id = po.branch_id
+      WHERE po.branch_id IN (:allowed_branches)
+      ORDER BY po.created_at DESC</code></pre>
 
-    # Result sets 1..N: reference lookups
-    references:
-      - column: vendor_id
-        query: SELECT id, name, code FROM vendors
-      - column: branch_id
-        query: SELECT id, name, region FROM branches
-      - column: status
-        query: SELECT code AS id, label, color, icon FROM po_status_codes</code></pre>
+      <p><strong>When static SQL isn't enough</strong> — dynamic filters, multi-tenant routing, or data assembled from multiple sources — use a function. The function returns a single flat array:</p>
 
-      <p><strong>Custom query function.</strong> When a static SQL query isn't enough — dynamic filters, conditional joins, multi-tenant routing, or data that needs to be assembled from multiple sources — the datasource can declare a function instead. The function returns a <strong>2D array of result sets</strong>: each element is an array of rows. The framework interprets the shape automatically:</p>
-      <ul>
-        <li><strong>Single array</strong> <code class="kw">[ rows ]</code> — data is already cooked. No reference metadata. The GridView renders it as-is.</li>
-        <li><strong>Multiple arrays</strong> <code class="kw">[ rows, ref1, ref2, ... ]</code> — first array is raw data, the rest are reference lookups mapped to columns in declaration order.</li>
-      </ul>
-
-      <pre><code class="language-yaml"># Option A: static query + references (declarative)
-datasources:
-  - id: purchase-orders
-    query: SELECT id, po_number, vendor_id, status, total FROM purchase_orders
-    references:
-      - column: vendor_id
-        query: SELECT id, name FROM vendors
-
-# Option B: function returns result sets (programmatic)
+      <pre><code class="language-yaml"># Programmatic: function returns flat 1D array
 datasources:
   - id: purchase-orders
     roles: [admin, purchasing]
     permission: "po.read"
     language: javascript
     script: |
-      const orders = await ctx.db.query(
-        `SELECT id, po_number, vendor_id, status, total, created_at
-         FROM purchase_orders
-         WHERE branch_id IN (:allowed_branches)
-         ORDER BY created_at DESC`,
-        { allowed_branches: ctx.user.branches }
-      );
-      const vendors = await ctx.db.query(`SELECT id, name, code FROM vendors`);
-      const statuses = await ctx.db.query(
-        `SELECT code AS id, label, color, icon FROM po_status_codes`
-      );
-      // return 2D array: [data, ...references]
-      return [orders, vendors, statuses];
-
-# Option C: function with fully cooked data (no references needed)
-datasources:
-  - id: dashboard-stats
-    language: javascript
-    roles: [admin, manager]
-    permission: "dashboard.read"
-    script: |
-      const stats = await ctx.db.query(`
+      const orders = await ctx.db.query(`
         SELECT
-          o.po_number,
-          v.name AS vendor_name,
-          s.label AS status_label,
-          s.color AS status_color,
-          o.total
-        FROM purchase_orders o
-        JOIN vendors v ON v.id = o.vendor_id
-        JOIN po_status_codes s ON s.code = o.status
-      `);
-      // single array — data is already resolved, no references
-      return [stats];</code></pre>
+          po.id, po.po_number,
+          v.name AS vendor_name, v.code AS vendor_code,
+          s.label AS status_label, s.color AS status_color,
+          b.name AS branch_name,
+          po.total, po.created_at
+        FROM purchase_orders po
+        JOIN vendors v ON v.id = po.vendor_id
+        JOIN po_status_codes s ON s.code = po.status
+        JOIN branches b ON b.id = po.branch_id
+        WHERE po.branch_id IN (:branches)
+        ORDER BY po.created_at DESC
+      `, { branches: ctx.user.branches });
 
-      <pre><code class="language-typescript">// The function return type is simply an array of arrays
-type QueryFnResult = Record&lt;string, any&gt;[][];
+      // apply business logic the database can't express
+      return orders.map(o => ({
+        ...o,
+        overdue: o.status_label === 'Pending'
+          && daysSince(o.created_at) > 30,
+        editable: ctx.user.roles.includes('purchasing')
+      }));</code></pre>
 
-// Framework interprets the shape:
-// result.length === 1  → cooked data, no lookups
-// result.length > 1    → result[0] = raw data, result[1..N] = reference sets
+      <p>The response shape is intentionally simple — no reference maps, no multi-result sets:</p>
 
-// The framework normalizes both static queries and functions
-// into the same MultiResultResponse before handing to the GridView</code></pre>
+      <pre><code class="language-typescript">interface DataResponse {
+  data: Record&lt;string, any&gt;[];   // flat 1D array — every field already resolved
+  meta: { total: number; page: number; pageSize: number; };
+}</code></pre>
 
-      <p><strong>Frontend: columns and rendering are defined here.</strong> The component YAML declares which fields to show, how to format them, how to resolve references, and optionally a custom <code class="kw">rowRendering</code> — either a template string or a JavaScript function:</p>
+      <h4>Components, not columns</h4>
+      <p>In the frontend YAML, what were formerly called "columns" are now <strong>components</strong>. Each one is a real <code class="kw">BaseComponent</code> instance that participates in the virtual tree — with state, traversal, and actions — just like any other component in the framework:</p>
 
-      <pre><code class="language-yaml"># Frontend component — columns, display, and rendering
+      <pre><code class="language-yaml"># Frontend: components, not columns
 components:
   - type: GridView
     id: po-grid
     source: purchase-orders
     pagination: { size: 25 }
 
-    # Column definitions (frontend-only, backend doesn't know these)
-    columns:
-      - field: po_number
+    # Each entry is a real component in the virtual tree
+    components:
+      - type: TextCell
+        id: po-number
+        field: po_number
         label: PO #
         width: 120
-      - field: vendor_id
+
+      - type: TextCell
+        id: vendor
+        field: vendor_name
         label: Vendor
-        display: name              # resolved from vendors reference
-        secondary: code            # show vendor code as secondary text
-      - field: total
+        secondary: vendor_code
+
+      - type: CurrencyCell
+        id: amount
+        field: total
         label: Amount
-        format: currency
         align: right
-      - field: status
+
+      - type: BadgeCell
+        id: status
+        field: status_label
         label: Status
-        display: label
-        badge: { color: color, icon: icon }
-      - field: branch_id
+        color: status_color
+        icon: status_icon
+
+      - type: TextCell
+        id: branch
+        field: branch_name
         label: Branch
-        display: name
-      - field: created_at
+
+      - type: DateCell
+        id: created
+        field: created_at
         label: Created
-        format: date-relative
+        format: relative</code></pre>
 
-    # Option 1: default rendering (generic — the framework renders each cell)
-    # rowRendering: default
+      <p>Because these are real components, each cell instance lives in the tree and has full access to traversal, state, and actions:</p>
 
-    # Option 2: template-based rendering
-    rowRendering:
-      type: template
-      template: |
-        &lt;div class="po-row"&gt;
-          &lt;span class="po-num"&gt;{{po_number}}&lt;/span&gt;
-          &lt;span class="vendor"&gt;{{vendor_id.name}} ({{vendor_id.code}})&lt;/span&gt;
-          &lt;span class="badge" style="background:{{status.color}}"&gt;{{status.label}}&lt;/span&gt;
-          &lt;span class="amount"&gt;{{total | currency}}&lt;/span&gt;
-        &lt;/div&gt;
+      <pre><code class="language-typescript">// Component tree — every cell is a real BaseComponent
+//
+//   PageRoot (root.state = global context)
+//   ├── POGridEvents  (event handler — declared at page level)
+//   ├── GridView (po-grid)
+//   │   ├── Row0
+//   │   │   ├── TextCell (po-number)     ← traversable, has state
+//   │   │   ├── TextCell (vendor)        ← can read grid.state, root.state
+//   │   │   ├── CurrencyCell (amount)    ← can submit actions to server
+//   │   │   ├── BadgeCell (status)       ← redraws independently
+//   │   │   ├── TextCell (branch)        ← finds siblings via parent.children
+//   │   │   └── DateCell (created)       ← participates in draw/redraw cycle
+//   │   ├── Row1
+//   │   │   └── ...
+//   │   └── ...
+//   └── SummaryCard (totals)
 
-    # Option 3: JavaScript function for full control
-    # rowRendering:
-    #   type: function
-    #   language: javascript
-    #   script: |
-    #     (ctx) => {
-    #       const { row, resolve, html } = ctx;
-    #       return html.div().cls("po-row")
-    #         .span(row.po_number).cls("po-num").end()
-    #         .span(resolve("vendor_id", "name")).cls("vendor").end()
-    #         .div().cls("badge")
-    #           .style("background", resolve("status", "color"))
-    #           .text(resolve("status", "label"))
-    #         .end()
-    #         .span(ctx.format(row.total, "currency")).cls("amount").end()
-    #       .end();
-    #     }</code></pre>
-
-      <p>The backend response shape is simple — raw data plus reference maps:</p>
-
-      <pre><code class="language-typescript">interface MultiResultResponse {
-  data: Record&lt;string, any&gt;[];        // result set 0: raw rows
-  references?: {                      // absent when data is already cooked (single array)
-    [column: string]: {
-      rows: Record&lt;string, any&gt;[];
-      keyField: string;               // default: "id"
-    };
-  };
-  meta: { total: number; page: number; pageSize: number; };
-}
-
-// When references is absent, GridView skips lookup resolution
-// and renders column values directly — the data is already display-ready</code></pre>
-
-      <p>The GridView component builds lookup maps, then renders using the configured <code class="kw">rowRendering</code> mode — generic, template, or custom function:</p>
-
-      <pre><code class="language-typescript">class GridView extends BaseComponent&lt;GridViewState&gt; {
-  private lookups: Map&lt;string, Map&lt;any, Record&lt;string, any&gt;&gt;&gt;;
-  private columns: ColumnDef[];
-  private rowRenderer: RowRenderer;
-
-  onDataLoad(response: MultiResultResponse) {
-    this.lookups = new Map();
-    if (response.references) {
-      // multi-result: build lookup maps for reference resolution
-      for (const [col, ref] of Object.entries(response.references)) {
-        const map = new Map();
-        for (const row of ref.rows) map.set(row[ref.keyField], row);
-        this.lookups.set(col, map);
-      }
-    }
-    // if no references → data is already cooked, lookups stay empty
-    this.setState({ rows: response.data, meta: response.meta });
+class BadgeCell extends BaseComponent&lt;{ value: string; color: string; icon: string }&gt; {
+  draw(el: HTMLElement) {
+    html(el)
+      .span(this.state.value)
+        .cls("badge")
+        .style("background", this.state.color)
+        .attr("data-icon", this.state.icon)
+      .end();
   }
 
-  resolve(column: string, value: any, field: string): any {
-    return this.lookups.get(column)?.get(value)?.[field] ?? value;
+  // Real component: traverse the tree
+  getRowTotal(): number {
+    const amountCell = this.parent.children.find(c =&gt; c.id === "amount");
+    return amountCell?.state.value ?? 0;
+  }
+
+  // Real component: submit actions
+  async markApproved() {
+    const rowData = this.parent.state;
+    await this.submit("approve_po", { po_id: rowData.id });
+    this.setState({ value: "Approved", color: "#16a34a" });
+  }
+}
+
+class GridView extends BaseComponent&lt;GridViewState&gt; {
+  private componentDefs: ComponentDef[];
+
+  onDataLoad(response: DataResponse) {
+    // flat data — no reference resolution, no lookup maps
+    this.setState({ rows: response.data, meta: response.meta });
   }
 
   draw(el: HTMLElement) {
     const grid = html(el).div().cls("gridview");
 
-    // render header from frontend column definitions
+    // header from component labels
     const header = grid.div().cls("grid-header");
-    for (const col of this.columns) {
-      header.div(col.label).cls("grid-th").style("width", col.width).end();
+    for (const def of this.componentDefs) {
+      header.div(def.label).cls("grid-th").style("width", def.width).end();
     }
     header.end();
 
-    // render rows
+    // each row spawns real child components
     const body = grid.div().cls("grid-body");
     for (const row of this.state.rows) {
-      if (this.rowRenderer.type === "function") {
-        // custom JS function: full control via html.js
-        this.rowRenderer.fn({
-          row,
-          resolve: (col, field) =&gt; this.resolve(col, row[col], field),
-          format: (val, fmt) =&gt; this.applyFormat(val, fmt),
-          html: body
+      const rowComp = this.createChild(RowComponent, { data: row });
+      for (const def of this.componentDefs) {
+        // each cell is a BaseComponent — added to the tree, fully traversable
+        rowComp.createChild(def.type, {
+          value: row[def.field],
+          ...this.extractProps(def, row)
         });
-      } else if (this.rowRenderer.type === "template") {
-        // template: interpolate {{field}} and {{field.ref}} with resolved values
-        body.div().cls("grid-row")
-          .html(this.interpolate(this.rowRenderer.template, row))
-        .end();
-      } else {
-        // generic: render each column with auto-resolution
-        const tr = body.div().cls("grid-row");
-        for (const col of this.columns) {
-          const raw = row[col.field];
-          const display = col.display
-            ? this.resolve(col.field, raw, col.display)
-            : this.applyFormat(raw, col.format);
-          const td = tr.div(display).cls("grid-td");
-          if (col.badge) {
-            td.cls("badge")
-              .style("background", this.resolve(col.field, raw, col.badge.color))
-              .attr("data-icon", this.resolve(col.field, raw, col.badge.icon));
-          }
-          if (col.secondary) {
-            td.span(this.resolve(col.field, raw, col.secondary))
-              .cls("secondary").end();
-          }
-          td.end();
-        }
-        tr.end();
       }
+      rowComp.draw(body);
     }
     body.end();
     grid.end();
   }
 }</code></pre>
 
+      <h4>Page-level event handler</h4>
+      <p>All event listeners for a data view are handled by a <strong>single class</strong> declared at the top level of the page. This class inherits from <code class="kw">BaseComponent</code>, giving it full tree access. The focus is on <strong>data flow</strong> — server → components → user interaction → actions → server. UI interaction is not limited; it is <em>channeled</em> through a predictable, debuggable path:</p>
+
+      <pre><code class="language-typescript">class POGridEvents extends BaseComponent&lt;{ selectedIds: string[] }&gt; {
+  // Declared at page level — one class handles all grid interactions
+
+  onCellClick(cell: BaseComponent, row: Record&lt;string, any&gt;) {
+    // cell is the actual component in the tree — full traversal available
+    if (cell.id === "status") {
+      this.showStatusDropdown(cell, row);
+    }
+  }
+
+  onRowSelect(rows: Record&lt;string, any&gt;[]) {
+    this.setState({ selectedIds: rows.map(r =&gt; r.id) });
+    // update sibling components via tree traversal
+    const summary = this.root.find("totals");
+    summary?.setState({
+      selectedTotal: rows.reduce((s, r) =&gt; s + r.total, 0),
+      selectedCount: rows.length
+    });
+  }
+
+  async onBulkAction(action: string) {
+    const result = await this.submit(action, {
+      po_ids: this.state.selectedIds,
+      user_id: this.root.state.user.id
+    });
+    // server returns updated flat data — just refresh
+    const grid = this.root.find("po-grid");
+    grid?.setState({ rows: result.data });
+  }
+
+  private showStatusDropdown(cell: BaseComponent, row: Record&lt;string, any&gt;) {
+    // UI enhancement — not limited, but channeled through data flow
+    const dropdown = this.root.find("status-dropdown");
+    dropdown?.setState({ visible: true, anchorTo: cell, currentRow: row });
+  }
+}</code></pre>
+
+      <pre><code class="language-yaml"># YAML declaration — event handler at page level
+page:
+  title: Purchase Orders
+
+  # Event handler: single class, declared at top level
+  events:
+    class: POGridEvents
+    handles:
+      - target: po-grid
+        on: [cellClick, rowSelect, bulkAction]
+      - target: po-detail
+        on: [fieldChange, save]</code></pre>
+
+      <h4>Generalizable pattern</h4>
+      <p>This is not a GridView-specific design. The same three-part pattern — <strong>server-first flat data</strong>, <strong>component-based rendering</strong>, <strong>page-level event handler</strong> — applies to any view that requires complex query and rendering:</p>
+
+      <div class="cardgrid">
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>GridView</h4>
+          <p>Tabular data. Components are cells — <code class="kw">TextCell</code>, <code class="kw">BadgeCell</code>, <code class="kw">CurrencyCell</code>. Each cell is traversable and actionable.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>ListView</h4>
+          <p>Vertical list with rich items. Components are list item parts — avatar, title, subtitle, actions. Same flat data, same event handler.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>TreeView</h4>
+          <p>Hierarchical data (org charts, BOM). Server sends flat array with <code class="kw">parent_id</code> — components build the visual hierarchy client-side.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>PDF Report</h4>
+          <p>Server sends fully resolved data. Components define report sections — header, table, chart, summary. Same data flow, rendered to PDF instead of DOM.</p>
+        </div>
+      </div>
+
+      <pre><code class="language-yaml"># ListView — same pattern, different view type
+components:
+  - type: ListView
+    id: vendor-list
+    source: vendors-flat        # server sends flat 1D array
+    components:
+      - type: AvatarItem
+        id: vendor-avatar
+        field: logo_url
+      - type: TitleItem
+        id: vendor-name
+        field: name
+        secondary: region
+      - type: StatusItem
+        id: vendor-status
+        field: status_label
+        color: status_color
+
+# TreeView — flat data with parent_id, rendered as hierarchy
+components:
+  - type: TreeView
+    id: category-tree
+    source: categories-flat     # flat array, parent_id builds the tree
+    parentField: parent_id
+    components:
+      - type: TreeLabel
+        id: cat-name
+        field: name
+        icon: icon
+      - type: CountBadge
+        id: cat-count
+        field: product_count</code></pre>
+
       <p><strong>Why this matters for ERP at scale:</strong></p>
       <ul>
-        <li><strong>Backend stays pure.</strong> Queries return raw data — no JOINs for display, no awareness of which columns the frontend shows. The same endpoint serves any column configuration.</li>
-        <li><strong>Frontend owns presentation.</strong> Column definitions, formatting, badges, and reference resolution are all frontend concerns defined in the component YAML — not coupled to the SQL.</li>
-        <li><strong>Rendering is pluggable.</strong> Generic mode works out of the box. Templates give designers control without code. JS functions give developers full html.js power for complex cells.</li>
-        <li><strong>Reference data is cacheable independently.</strong> Vendor names rarely change. The framework can cache references with longer TTLs while primary data refreshes every request.</li>
-        <li><strong>One data shape, many views.</strong> A summary card and a detail grid can consume the same raw response but render completely different column sets and layouts.</li>
+        <li><strong>Server owns data complexity.</strong> All JOINs, lookups, and transformations happen in one place — a single query or function. The frontend never resolves references or builds lookup maps. It receives display-ready data.</li>
+        <li><strong>Components are real components.</strong> Every cell, list item, or tree node is a <code class="kw">BaseComponent</code> in the virtual tree — with state, traversal, and actions. No special-case "column definition" rendering.</li>
+        <li><strong>Data flow is explicit.</strong> Server → flat data → components → user events → page-level handler → actions → server. Every step is traceable. No hidden cascades, no implicit reference resolution.</li>
+        <li><strong>Event handling is centralized.</strong> One class per page handles all interactions for all data views. Debuggable, testable, easy to reason about — while still allowing rich UI through the component tree.</li>
+        <li><strong>One pattern, many views.</strong> GridView, ListView, TreeView, PDF — all use the same three-part pattern. Learn it once, apply it everywhere.</li>
       </ul>
     </section>
 
@@ -871,6 +923,143 @@ datasources:
     params:
       since: { type: date, default: "-30d" }
     cache: { ttl: 60s }</code></pre>
+
+      <h3 id="backend-crud">CRUD operations</h3>
+      <p>Datasources are not read-only. Each datasource can declare <strong>create</strong>, <strong>update</strong>, and <strong>delete</strong> operations alongside the query. Use default flags for standard table mutations, or custom functions when business logic is involved.</p>
+
+      <h4>Default CRUD flags</h4>
+      <p>Set <code class="kw">crud: true</code> to auto-generate all three mutations from the table schema. Or pick specific operations with an array. The framework generates parameterized INSERT, UPDATE, and DELETE statements — no SQL to write:</p>
+
+      <pre><code class="language-yaml">datasources:
+  # Full CRUD — framework generates all mutations
+  - id: vendors
+    db: postgres
+    table: vendors
+    roles: [admin, purchasing]
+    permission: "vendors.manage"
+    crud: true                    # shorthand: create + update + delete
+    query: |
+      SELECT id, name, code, region, status, created_at
+      FROM vendors
+      ORDER BY name
+
+  # Selective — only allow update and delete, no create
+  - id: po-lines
+    db: postgres
+    table: po_line_items
+    roles: [admin, purchasing]
+    permission: "po.edit"
+    crud: [update, delete]        # array: pick specific operations
+    query: |
+      SELECT li.id, li.item_id, p.name AS item_name,
+             li.qty, li.unit_price, (li.qty * li.unit_price) AS total
+      FROM po_line_items li
+      JOIN products p ON p.id = li.item_id
+      WHERE li.po_id = :po_id
+    params:
+      po_id: { type: uuid, bind: po-detail.id }</code></pre>
+
+      <p>When <code class="kw">crud: true</code>, the framework reads the <code class="kw">table</code> schema and generates:</p>
+      <table class="dtable">
+        <tr><th>Operation</th><th>Generated SQL</th><th>Frontend call</th></tr>
+        <tr><td>Create</td><td><code class="kw">INSERT INTO {table} (...) VALUES (...) RETURNING *</code></td><td><code class="kw">submit("vendors.create", data)</code></td></tr>
+        <tr><td>Update</td><td><code class="kw">UPDATE {table} SET ... WHERE id = :id RETURNING *</code></td><td><code class="kw">submit("vendors.update", { id, ...data })</code></td></tr>
+        <tr><td>Delete</td><td><code class="kw">DELETE FROM {table} WHERE id = :id</code></td><td><code class="kw">submit("vendors.delete", { id })</code></td></tr>
+      </table>
+      <p>Every generated mutation respects the same <code class="kw">roles</code> and <code class="kw">permission</code> gate declared on the datasource. Row-level filters (<code class="kw">:allowed_branches</code>) are injected into the WHERE clause automatically.</p>
+
+      <h4>Custom CRUD functions</h4>
+      <p>When default flags aren't enough — validation, multi-table writes, audit logging, or side effects — declare a custom function for any operation. Mix and match: use defaults for simple operations and functions for complex ones:</p>
+
+      <pre><code class="language-yaml">datasources:
+  - id: purchase-orders
+    db: postgres
+    table: purchase_orders
+    roles: [admin, purchasing]
+    permission: "po.manage"
+    query: |
+      SELECT po.id, po.po_number, v.name AS vendor_name,
+             s.label AS status_label, po.total, po.created_at
+      FROM purchase_orders po
+      JOIN vendors v ON v.id = po.vendor_id
+      JOIN po_status_codes s ON s.code = po.status
+      WHERE po.branch_id IN (:allowed_branches)
+      ORDER BY po.created_at DESC
+
+    # Default delete — no custom logic needed
+    crud: [delete]
+
+    # Custom create — validation + multi-table + auto-numbering
+    create:
+      language: javascript
+      permission: "po.create"
+      script: |
+        const { vendor_id, ship_to, payment_terms, line_items } = ctx.params;
+        if (!line_items?.length) {
+          throw new ValidationError("PO must have at least one line item");
+        }
+        const po = await ctx.db.create("purchase_orders", {
+          po_number: await ctx.db.nextSequence("po_number_seq"),
+          vendor_id, ship_to, payment_terms,
+          status: "draft",
+          total: line_items.reduce((s, li) => s + li.qty * li.unit_price, 0),
+          created_by: ctx.user.id,
+          branch_id: ctx.user.branch_id
+        });
+        for (const li of line_items) {
+          await ctx.db.create("po_line_items", { po_id: po.id, ...li });
+        }
+        return po;
+
+    # Custom update — approval logic + notifications
+    update:
+      language: javascript
+      permission: "po.edit"
+      script: |
+        const { id, ...changes } = ctx.params;
+        const current = await ctx.db.findById("purchase_orders", id);
+        if (current.status === "approved" && !ctx.user.roles.includes("director")) {
+          throw new ValidationError("Cannot edit an approved PO");
+        }
+        if (changes.line_items) {
+          changes.total = changes.line_items
+            .reduce((s, li) => s + li.qty * li.unit_price, 0);
+        }
+        const updated = await ctx.db.update("purchase_orders", id, changes);
+        if (changes.status === "approved") {
+          await ctx.submit("send_notification", {
+            to: "purchasing",
+            message: `PO ${current.po_number} approved`
+          });
+        }
+        return updated;</code></pre>
+
+      <h4>CRUD in the component tree</h4>
+      <p>Components call CRUD operations through the same <code class="kw">submit()</code> method used for any action. The naming convention is <code class="kw">{datasource_id}.{operation}</code>:</p>
+
+      <pre><code class="language-typescript">class VendorRow extends BaseComponent&lt;{ id: string; name: string; editing: boolean }&gt; {
+  async save() {
+    // uses the default update — no custom function needed
+    const updated = await this.submit("vendors.update", {
+      id: this.state.id,
+      name: this.state.name
+    });
+    this.setState({ ...updated, editing: false });
+  }
+
+  async remove() {
+    await this.submit("vendors.delete", { id: this.state.id });
+    // parent grid handles row removal via event handler
+  }
+}
+
+class AddVendorForm extends BaseComponent&lt;{ name: string; code: string }&gt; {
+  async create() {
+    const vendor = await this.submit("vendors.create", this.state);
+    // event handler refreshes the grid with new data
+    this.setState({ name: "", code: "" });
+  }
+}</code></pre>
     </section>
 
     <!-- ───────────────────── CUSTOM SCRIPTING ───────────────────── -->
@@ -956,27 +1145,119 @@ datasources:
   env: Record&lt;string, string&gt;;                      // allowed environment variables
 }</code></pre>
 
-      <h3 id="scripting-hooks">Script lifecycle hooks</h3>
-      <p>Scripts can run at specific lifecycle points, not just as datasources. Declare a <code class="kw">hooks</code> block to run scripts before or after events:</p>
-      <pre><code class="language-yaml">page:
-  title: Purchase Orders
-  hooks:
-    before_save:
-      language: javascript
-      permission: "po.create"
-      script: |
-        if (ctx.data.total > 50000 && !ctx.user.roles.includes("director")) {
-          throw new ValidationError("Orders over $50k require director approval");
-        }
-    after_save:
-      language: python
-      permission: "po.create"
-      script_file: ./scripts/notify_approvers.py
-    on_load:
-      language: javascript
-      script: |
-        ctx.state.defaults = { currency: "USD", payment_terms: "Net 30" };
-        return ctx.state;</code></pre>
+    </section>
+
+    <!-- ───────────────────── CSS SYSTEM ───────────────────── -->
+    <section id="css">
+      <span class="kicker">Styling</span>
+      <h2>CSS system</h2>
+      <p class="lead">The framework uses <strong>Tailwind CSS</strong> as the default styling system. Components apply utility classes directly in their <code class="kw">draw()</code> methods — no separate stylesheet files, no CSS-in-JS runtime, no naming conventions to learn.</p>
+
+      <p>Tailwind's utility-first approach aligns with the framework's philosophy: the component class <em>is</em> the source of truth for both structure and appearance. A developer reading <code class="kw">draw()</code> sees exactly what the component looks like without jumping to a stylesheet.</p>
+
+      <h3>Utility classes in components</h3>
+      <p>Components apply Tailwind classes via <code class="kw">html.js</code> chaining. The <code class="kw">.cls()</code> method accepts space-separated utilities:</p>
+
+      <pre><code class="language-typescript">class BadgeCell extends BaseComponent&lt;{ value: string; color: string }&gt; {
+  draw(el: HTMLElement) {
+    html(el)
+      .span(this.state.value)
+        .cls("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium")
+        .cls(this.state.color)    // dynamic: "bg-green-100 text-green-800"
+      .end();
+  }
+}
+
+class GridView extends BaseComponent&lt;GridViewState&gt; {
+  draw(el: HTMLElement) {
+    const grid = html(el).div()
+      .cls("overflow-hidden rounded-lg border border-gray-200 shadow-sm");
+
+    const header = grid.div().cls("grid-header bg-gray-50 border-b border-gray-200");
+    for (const def of this.componentDefs) {
+      header.div(def.label)
+        .cls("px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider")
+      .end();
+    }
+    header.end();
+
+    const body = grid.div().cls("divide-y divide-gray-200 bg-white");
+    for (const row of this.state.rows) {
+      const rowComp = this.createChild(RowComponent, { data: row });
+      rowComp.draw(body);
+    }
+    body.end();
+    grid.end();
+  }
+}</code></pre>
+
+      <h3>YAML class overrides</h3>
+      <p>Component styles can be customized in the YAML page definition without touching the component class. The <code class="kw">class</code> key merges with or replaces the component's default classes:</p>
+
+      <pre><code class="language-yaml">components:
+  - type: GridView
+    id: po-grid
+    source: purchase-orders
+    class: "rounded-xl shadow-lg"        # override container classes
+
+    components:
+      - type: BadgeCell
+        id: status
+        field: status_label
+        label: Status
+        color: status_color
+        class: "text-sm font-semibold"   # override per-component
+
+      - type: CurrencyCell
+        id: amount
+        field: total
+        label: Amount
+        class: "tabular-nums text-right font-mono"</code></pre>
+
+      <h3>Tailwind config</h3>
+      <p>The framework ships a base <code class="kw">tailwind.config.js</code> that covers ERP conventions — data-dense layouts, status colors, compact spacing. Projects extend it with their own brand tokens:</p>
+
+      <pre><code class="language-javascript">// tailwind.config.js — framework base
+module.exports = {
+  content: [
+    "./pages/**/*.yaml",
+    "./components/**/*.ts",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // ERP status palette — used by BadgeCell, StatusItem, etc.
+        status: {
+          draft:    { bg: "#f3f4f6", text: "#374151" },
+          pending:  { bg: "#fef3c7", text: "#92400e" },
+          approved: { bg: "#d1fae5", text: "#065f46" },
+          rejected: { bg: "#fee2e2", text: "#991b1b" },
+        },
+      },
+      fontSize: {
+        "grid":  ["0.8125rem", { lineHeight: "1.25rem" }],
+        "grid-header": ["0.6875rem", { lineHeight: "1rem" }],
+      },
+    },
+  },
+  plugins: [
+    require("@tailwindcss/forms"),
+  ],
+};</code></pre>
+
+      <h3>Escape hatch</h3>
+      <p>When Tailwind utilities aren't enough — complex animations, third-party widget styling, or pixel-perfect print layouts — components can use <code class="kw">.style()</code> for inline CSS or inject a scoped <code class="kw">&lt;style&gt;</code> block. The framework does not prevent raw CSS; it just defaults to Tailwind for consistency across teams.</p>
+
+      <pre><code class="language-typescript">class SparklineCell extends BaseComponent&lt;{ points: number[] }&gt; {
+  draw(el: HTMLElement) {
+    const svg = html(el).svg()
+      .cls("w-20 h-6")
+      .style("shape-rendering", "geometricPrecision")   // inline escape hatch
+      .attr("viewBox", `0 0 80 24`);
+    // ... draw polyline from this.state.points
+    svg.end();
+  }
+}</code></pre>
     </section>
 
     <!-- ───────────────────── AUTH ───────────────────── -->
@@ -1099,25 +1380,58 @@ framework.configure({
     <section id="full-example">
       <span class="kicker">End to end</span>
       <h2>Full YAML page example</h2>
-      <p class="lead">A complete purchase order page — layout, components, datasources, and permissions in a single YAML file.</p>
+      <p class="lead">A complete purchase order page — layout, components, datasources, CRUD, and permissions in a single YAML file.</p>
       <pre><code class="language-yaml"># page: purchase-orders.yaml
 page:
   title: Purchase Orders
   auth:
     require: [po.read]
     row_filter: branch_id
+  events:
+    class: POPageEvents
+    handles:
+      - target: po-grid
+        on: [cellClick, rowSelect, bulkAction]
+      - target: po-detail
+        on: [fieldChange, save]
 
 layout:
   type: master-detail
   master:
-    component: data-table
-    id: po-list
+    component: GridView
+    id: po-grid
     source: recent-pos
-    columns: [po_number, vendor, total, status, created_at]
+    pagination: { size: 25 }
+    components:
+      - type: TextCell
+        id: po-number
+        field: po_number
+        label: PO #
+        width: 120
+      - type: TextCell
+        id: vendor
+        field: vendor_name
+        label: Vendor
+        secondary: vendor_code
+      - type: CurrencyCell
+        id: amount
+        field: total
+        label: Amount
+        class: "tabular-nums text-right"
+      - type: BadgeCell
+        id: status
+        field: status_label
+        label: Status
+        color: status_color
+      - type: DateCell
+        id: created
+        field: created_at
+        label: Created
+        format: relative
     filters:
-      - field: status
+      - field: status_label
         type: select
-        options: [draft, pending, approved, received]
+        options: [Draft, Pending, Approved, Received]
       - field: created_at
         type: date-range
     actions:
@@ -1132,35 +1446,104 @@ layout:
       - title: Header
         fields: [vendor, ship_to, payment_terms, notes]
       - title: Line Items
-        component: editable-table
+        component: GridView
+        id: po-lines-grid
         source: po-lines
-        columns: [item, description, qty, unit_price, total]
+        components:
+          - type: TextCell
+            id: item
+            field: item_name
+            label: Item
+          - type: TextCell
+            id: description
+            field: description
+            label: Description
+          - type: NumberCell
+            id: qty
+            field: qty
+            label: Qty
+            editable: true
+          - type: CurrencyCell
+            id: unit-price
+            field: unit_price
+            label: Unit Price
+            editable: true
+          - type: CurrencyCell
+            id: line-total
+            field: total
+            label: Total
 
 datasources:
+  # Query: server does all JOINs, returns flat 1D array
   - id: recent-pos
     db: postgres
     protocol: http
+    roles: [admin, purchasing]
+    permission: "po.read"
     query: |
-      SELECT po_number, v.name AS vendor, total, status, created_at
+      SELECT po.id, po.po_number,
+             v.name AS vendor_name, v.code AS vendor_code,
+             s.label AS status_label, s.color AS status_color,
+             po.total, po.created_at
       FROM purchase_orders po
       JOIN vendors v ON v.id = po.vendor_id
+      JOIN po_status_codes s ON s.code = po.status
       WHERE po.branch_id IN (:allowed_branches)
-      ORDER BY created_at DESC
-    pagination: { size: 25 }
+      ORDER BY po.created_at DESC
 
+  # CRUD: default flags for simple operations
   - id: po-by-id
     db: postgres
     protocol: http
+    table: purchase_orders
+    roles: [admin, purchasing]
+    permission: "po.manage"
+    crud: [update, delete]           # default update + delete
     query: |
-      SELECT * FROM purchase_orders WHERE id = :id
+      SELECT po.*, v.name AS vendor_name, v.code AS vendor_code
+      FROM purchase_orders po
+      JOIN vendors v ON v.id = po.vendor_id
+      WHERE po.id = :id
     params:
       id: { type: uuid, from: route }
 
+    # Custom create — validation + multi-table insert
+    create:
+      language: javascript
+      permission: "po.create"
+      script: |
+        const { vendor_id, ship_to, payment_terms, line_items } = ctx.params;
+        if (!line_items?.length) {
+          throw new ValidationError("PO requires at least one line item");
+        }
+        const po = await ctx.db.create("purchase_orders", {
+          po_number: await ctx.db.nextSequence("po_number_seq"),
+          vendor_id, ship_to, payment_terms,
+          status: "draft",
+          total: line_items.reduce((s, li) => s + li.qty * li.unit_price, 0),
+          created_by: ctx.user.id,
+          branch_id: ctx.user.branch_id
+        });
+        for (const li of line_items) {
+          await ctx.db.create("po_line_items", { po_id: po.id, ...li });
+        }
+        return po;
+
+  # CRUD: full default on line items
   - id: po-lines
     db: postgres
     protocol: websocket
+    table: po_line_items
+    roles: [admin, purchasing]
+    permission: "po.edit"
+    crud: true                       # all three: create, update, delete
     query: |
-      SELECT * FROM po_line_items WHERE po_id = :po_id
+      SELECT li.id, li.item_id, p.name AS item_name,
+             li.description, li.qty, li.unit_price,
+             (li.qty * li.unit_price) AS total
+      FROM po_line_items li
+      JOIN products p ON p.id = li.item_id
+      WHERE li.po_id = :po_id
     params:
       po_id: { type: uuid, bind: po-detail.id }</code></pre>
     </section>
@@ -1174,6 +1557,7 @@ datasources:
         <tr><td>Language</td><td>TypeScript</td><td>Type safety across frontend and backend</td></tr>
         <tr><td>DOM Rendering</td><td>html.js (wrapped)</td><td>Fastest raw rendering; OOP layer on top</td></tr>
         <tr><td>Component Model</td><td>Custom OOP classes</td><td>State, inheritance, draw/redraw lifecycle</td></tr>
+        <tr><td>CSS</td><td>Tailwind CSS</td><td>Utility-first, no separate stylesheets, YAML-overridable</td></tr>
         <tr><td>React Interop</td><td>ReactBridge adapter</td><td>Access to React ecosystem when needed</td></tr>
         <tr><td>Config Format</td><td>YAML</td><td>Human and agent readable, diffable</td></tr>
         <tr><td>Server Runtime</td><td>Node.js / Bun</td><td>TypeScript native, fast startup</td></tr>
