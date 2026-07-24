@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Rendering Framework — Scripting Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="topbar-brand" href="main.html"><span class="topbar-dot"></span> ERP Rendering Framework</a>
+  <div class="topbar-meta">project specification · july 2026</div>
+</div>
+
+<header class="page-hero">
+  <span class="eyebrow">Multi-language</span>
+  <h1>Custom scripting engine</h1>
+  <p class="hero-sub">SQL covers most data needs, but ERP workflows often require custom logic — validation rules, complex calculations, data transformations, or calls to external APIs. Declare <code class="kw">language</code> and write code inline or reference an external file.</p>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <span class="sidebar-label">Spec navigation</span>
+    <nav id="toc">
+      <div class="nav-group">
+        <a href="main.html">Overview</a>
+        <div class="sub-links">
+          <a href="main.html#vision">Vision</a>
+          <a href="main.html#architecture">Architecture</a>
+          <a href="main.html#pillars">Core pillars</a>
+          <a href="main.html#tech-stack">Tech stack</a>
+          <a href="main.html#principles">Design principles</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="frontend.html">Frontend rendering</a>
+        <div class="sub-links">
+          <a href="frontend.html#frontend-base">Base component</a>
+          <a href="frontend.html#frontend-tree">Component tree</a>
+          <a href="frontend.html#frontend-actions">Actions</a>
+          <a href="frontend.html#frontend-react">React interop</a>
+          <a href="frontend.html#frontend-lego">LEGO assembly</a>
+          <a href="frontend.html#frontend-gridview">Server-first data</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="backend.html">Backend pipeline</a>
+        <div class="sub-links">
+          <a href="backend.html#backend-repo">Repository</a>
+          <a href="backend.html#backend-roles">Permission gates</a>
+          <a href="backend.html#backend-dbs">Databases</a>
+          <a href="backend.html#backend-sql">Embedded SQL</a>
+          <a href="backend.html#backend-crud">CRUD operations</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="scripting.html" class="current-page">Scripting engine</a>
+        <div class="sub-links">
+          <a href="#scripting-runtimes">Runtimes</a>
+          <a href="#scripting-inline">Inline scripts</a>
+          <a href="#scripting-file">External files</a>
+          <a href="#scripting-ctx">Context API</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="reference.html">Reference</a>
+        <div class="sub-links">
+          <a href="reference.html#css">CSS system</a>
+          <a href="reference.html#auth">Auth &amp; authorization</a>
+          <a href="reference.html#protocols">Protocols</a>
+          <a href="reference.html#integrations">Integrations</a>
+          <a href="reference.html#full-example">Full YAML example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <section id="scripting">
+      <span class="kicker">Multi-language</span>
+      <h2>Custom scripting engine</h2>
+      <p class="lead">The framework spawns a sandboxed runtime for the declared language, passes the execution context (user, params, previous datasource results), and collects the return value as the datasource output. Role and permission gates apply exactly the same way as SQL datasources.</p>
+
+      <h3 id="scripting-runtimes">Supported runtimes</h3>
+      <table class="dtable">
+        <tr><th>Language</th><th>Runtime</th><th>Best for</th></tr>
+        <tr><td>JavaScript</td><td>V8 isolate (vm2 / isolated-vm)</td><td>General logic, API calls, JSON transforms</td></tr>
+        <tr><td>TypeScript</td><td>V8 isolate + ts-strip</td><td>Same as JS with type safety</td></tr>
+        <tr><td>Python</td><td>Subprocess / Pyodide (WASM)</td><td>Data science, ML inference, pandas transforms</td></tr>
+        <tr><td>Lua</td><td>Fengari (WASM)</td><td>Lightweight rules, game-style scripting</td></tr>
+        <tr><td>Shell</td><td>Subprocess (sandboxed)</td><td>System automation, file processing, CLI tools</td></tr>
+        <tr><td>Custom</td><td>Pluggable adapter</td><td>Any language — register a runtime adapter</td></tr>
+      </table>
+
+      <h3 id="scripting-inline">Inline script in YAML</h3>
+      <pre><code class="language-yaml"># datasource with inline JavaScript
+datasources:
+  - id: enriched-orders
+    language: javascript
+    roles: [admin, sales]
+    permission: "orders.read"
+    script: |
+      const orders = await ctx.datasource("recent-orders");
+      const enriched = orders.map(order => ({
+        ...order,
+        tax: order.total * 0.08,
+        grand_total: order.total * 1.08,
+        priority: order.total > 10000 ? "high" : "normal"
+      }));
+      return enriched;
+    component: data-table
+
+  # datasource with inline Python
+  - id: sales-forecast
+    language: python
+    roles: [admin, analyst]
+    permission: "reports.forecast"
+    script: |
+      import pandas as pd
+      orders = ctx.datasource("recent-orders")
+      df = pd.DataFrame(orders)
+      df['date'] = pd.to_datetime(df['created_at'])
+      monthly = df.groupby(df['date'].dt.to_period('M'))['total'].sum()
+      forecast = monthly.rolling(3).mean().iloc[-1]
+      return { "monthly": monthly.to_dict(), "next_month": forecast }
+    component: summary-card</code></pre>
+
+      <h3 id="scripting-file">External script file</h3>
+      <p>For larger scripts, reference an external file. The framework resolves the path relative to the YAML file:</p>
+      <pre><code class="language-yaml">datasources:
+  - id: inventory-sync
+    language: python
+    roles: [admin, warehouse]
+    permission: "inventory.sync"
+    script_file: ./scripts/inventory_sync.py
+    params:
+      warehouse_id: { type: string, from: route }
+    timeout: 30s
+
+  - id: custom-validation
+    language: typescript
+    roles: [admin]
+    permission: "po.validate"
+    script_file: ./scripts/validate_po.ts
+    params:
+      po_id: { type: uuid, bind: po-detail.id }</code></pre>
+
+      <h3 id="scripting-ctx">Execution context</h3>
+      <p>Every script receives a <code class="kw">ctx</code> object with access to the current user, parameters, other datasource results, and utility functions:</p>
+      <pre><code class="language-typescript">interface ScriptContext {
+  user: User;                                       // current authenticated user
+  params: Record&lt;string, any&gt;;                      // resolved YAML params
+  datasource(id: string): Promise&lt;any&gt;;             // fetch another datasource
+  db: IRepository;                                  // direct DB access (permission-gated)
+  http: { get, post, put, delete };                 // sandboxed HTTP client
+  log: Logger;                                      // structured logging
+  env: Record&lt;string, string&gt;;                      // allowed environment variables
+}</code></pre>
+    </section>
+
+    <nav class="doc-nav">
+      <div class="doc-nav-slot">
+        <a href="backend.html">← Backend pipeline</a>
+      </div>
+      <div class="doc-nav-slot" style="text-align:right">
+        <a href="reference.html">Reference →</a>
+      </div>
+    </nav>
+
+  </main>
+</div>
+
+<footer>
+  <span class="fmono">ERP Rendering Framework</span>
+  <span class="fmono">Project Specification · July 2026</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+<script>
+const sections = Array.from(document.querySelectorAll('main section[id], main h3[id]'));
+const links = Array.from(document.querySelectorAll('#toc a'));
+const byId = id => links.find(l => l.getAttribute('href') === '#' + id);
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const link = byId(entry.target.id);
+    if (!link) return;
+    links.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

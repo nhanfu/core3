@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Rendering Framework — Backend Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="topbar-brand" href="main.html"><span class="topbar-dot"></span> ERP Rendering Framework</a>
+  <div class="topbar-meta">project specification · july 2026</div>
+</div>
+
+<header class="page-hero">
+  <span class="eyebrow">Data layer</span>
+  <h1>Backend data pipeline</h1>
+  <p class="hero-sub">The repository pattern with permission-gated queries, embedded SQL in YAML, and support for four database engines.</p>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <span class="sidebar-label">Spec navigation</span>
+    <nav id="toc">
+      <div class="nav-group">
+        <a href="main.html">Overview</a>
+        <div class="sub-links">
+          <a href="main.html#vision">Vision</a>
+          <a href="main.html#architecture">Architecture</a>
+          <a href="main.html#pillars">Core pillars</a>
+          <a href="main.html#tech-stack">Tech stack</a>
+          <a href="main.html#principles">Design principles</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="frontend.html">Frontend rendering</a>
+        <div class="sub-links">
+          <a href="frontend.html#frontend-base">Base component</a>
+          <a href="frontend.html#frontend-tree">Component tree</a>
+          <a href="frontend.html#frontend-actions">Actions</a>
+          <a href="frontend.html#frontend-react">React interop</a>
+          <a href="frontend.html#frontend-lego">LEGO assembly</a>
+          <a href="frontend.html#frontend-gridview">Server-first data</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="backend.html" class="current-page">Backend pipeline</a>
+        <div class="sub-links">
+          <a href="#backend-repo">Repository</a>
+          <a href="#backend-roles">Permission gates</a>
+          <a href="#backend-dbs">Databases</a>
+          <a href="#backend-sql">Embedded SQL</a>
+          <a href="#backend-crud">CRUD operations</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="scripting.html">Scripting engine</a>
+        <div class="sub-links">
+          <a href="scripting.html#scripting-runtimes">Runtimes</a>
+          <a href="scripting.html#scripting-inline">Inline scripts</a>
+          <a href="scripting.html#scripting-file">External files</a>
+          <a href="scripting.html#scripting-ctx">Context API</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="reference.html">Reference</a>
+        <div class="sub-links">
+          <a href="reference.html#css">CSS system</a>
+          <a href="reference.html#auth">Auth &amp; authorization</a>
+          <a href="reference.html#protocols">Protocols</a>
+          <a href="reference.html#integrations">Integrations</a>
+          <a href="reference.html#full-example">Full YAML example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <section id="backend">
+      <span class="kicker">Data layer</span>
+      <h2>Backend data pipeline</h2>
+
+      <h3 id="backend-repo">Repository pattern</h3>
+      <p>Each repository implements a common interface. Switching databases is a one-line config change. Every operation — including raw <code class="kw">query()</code> — is gated by the role and permission declared in the YAML datasource definition:</p>
+      <pre><code class="language-typescript">interface IRepository&lt;T&gt; {
+  findById(id: string): Promise&lt;T | null&gt;;
+  findMany(filter: Filter&lt;T&gt;): Promise&lt;T[]&gt;;
+  create(entity: T): Promise&lt;T&gt;;
+  update(id: string, partial: Partial&lt;T&gt;): Promise&lt;T&gt;;
+  delete(id: string): Promise&lt;void&gt;;
+  query(sql: string, params?: any[]): Promise&lt;T[]&gt;;
+}
+
+// Before executing query(), the framework enforces:
+//   1. roles  — user must hold at least one declared role
+//   2. permission — user must have the specific permission
+// Both are declared per-datasource in YAML (see below)</code></pre>
+
+      <h3 id="backend-roles">YAML role &amp; permission gates</h3>
+      <p>Each datasource declares who can access it. The framework rejects the request before the query runs if the user does not satisfy the gate:</p>
+      <pre><code class="language-yaml"># example: role-gated datasource
+datasources:
+  - id: user-profiles
+    db: postgres
+    protocol: http
+    roles: [admin]                     # only admins can execute this query
+    permission: "profile access"       # must also hold this permission
+    query: |
+      SELECT * FROM user_profile
+      WHERE branch_id IN (:allowed_branches)
+    component: EditableGridView        # renders as an editable grid
+
+  - id: order-summary
+    db: postgres
+    protocol: http
+    roles: [admin, manager]
+    permission: "orders.read"
+    query: |
+      SELECT id, customer, total, status FROM orders
+      ORDER BY created_at DESC
+    component: data-table</code></pre>
+
+      <h3 id="backend-dbs">Supported databases</h3>
+      <table class="dtable">
+        <tr><th>Engine</th><th>Use case</th><th>Driver</th></tr>
+        <tr><td>PostgreSQL</td><td>Primary OLTP, multi-user production</td><td><code class="kw">pg</code></td></tr>
+        <tr><td>SQL Server</td><td>Enterprise / legacy integration</td><td><code class="kw">mssql</code></td></tr>
+        <tr><td>SQLite</td><td>Single-user, embedded, edge deployments</td><td><code class="kw">better-sqlite3</code></td></tr>
+        <tr><td>DuckDB</td><td>Analytics, OLAP, large dataset queries</td><td><code class="kw">duckdb-node</code></td></tr>
+      </table>
+
+      <h3 id="backend-sql">Embedded SQL in YAML</h3>
+      <p>Queries are declared inline. The framework parameterizes inputs to prevent injection, applies row-level permission filters from the auth layer, and returns typed results:</p>
+      <pre><code class="language-yaml"># data-source definition in YAML
+datasources:
+  - id: recent-orders
+    db: postgres            # swap to: duckdb | sqlserver | sqlite
+    protocol: http          # or: websocket | sse
+    roles: [admin, sales]
+    permission: "orders.read"
+    query: |
+      SELECT o.id, c.name AS customer, o.total, o.status
+      FROM orders o
+      JOIN customers c ON c.id = o.customer_id
+      WHERE o.created_at > :since
+        AND o.branch_id IN (:allowed_branches)   -- injected by auth
+      ORDER BY o.created_at DESC
+    params:
+      since: { type: date, default: "-30d" }
+    cache: { ttl: 60s }</code></pre>
+
+      <h3 id="backend-crud">CRUD operations</h3>
+      <p>Datasources are not read-only. Each datasource can declare <strong>create</strong>, <strong>update</strong>, and <strong>delete</strong> operations alongside the query. Use default flags for standard table mutations, or custom functions when business logic is involved.</p>
+
+      <h4>Default CRUD flags</h4>
+      <p>Set <code class="kw">crud: true</code> to auto-generate all three mutations from the table schema. Or pick specific operations with an array. The framework generates parameterized INSERT, UPDATE, and DELETE statements — no SQL to write:</p>
+
+      <pre><code class="language-yaml">datasources:
+  # Full CRUD — framework generates all mutations
+  - id: vendors
+    db: postgres
+    table: vendors
+    roles: [admin, purchasing]
+    permission: "vendors.manage"
+    crud: true                    # shorthand: create + update + delete
+    query: |
+      SELECT id, name, code, region, status, created_at
+      FROM vendors
+      ORDER BY name
+
+  # Selective — only allow update and delete, no create
+  - id: po-lines
+    db: postgres
+    table: po_line_items
+    roles: [admin, purchasing]
+    permission: "po.edit"
+    crud: [update, delete]        # array: pick specific operations
+    query: |
+      SELECT li.id, li.item_id, p.name AS item_name,
+             li.qty, li.unit_price, (li.qty * li.unit_price) AS total
+      FROM po_line_items li
+      JOIN products p ON p.id = li.item_id
+      WHERE li.po_id = :po_id
+    params:
+      po_id: { type: uuid, bind: po-detail.id }</code></pre>
+
+      <p>When <code class="kw">crud: true</code>, the framework reads the <code class="kw">table</code> schema and generates:</p>
+      <table class="dtable">
+        <tr><th>Operation</th><th>Generated SQL</th><th>Frontend call</th></tr>
+        <tr><td>Create</td><td><code class="kw">INSERT INTO {table} (...) VALUES (...) RETURNING *</code></td><td><code class="kw">submit("vendors.create", data)</code></td></tr>
+        <tr><td>Update</td><td><code class="kw">UPDATE {table} SET ... WHERE id = :id RETURNING *</code></td><td><code class="kw">submit("vendors.update", { id, ...data })</code></td></tr>
+        <tr><td>Delete</td><td><code class="kw">DELETE FROM {table} WHERE id = :id</code></td><td><code class="kw">submit("vendors.delete", { id })</code></td></tr>
+      </table>
+      <p>Every generated mutation respects the same <code class="kw">roles</code> and <code class="kw">permission</code> gate declared on the datasource. Row-level filters (<code class="kw">:allowed_branches</code>) are injected into the WHERE clause automatically.</p>
+
+      <h4>Custom CRUD functions</h4>
+      <p>When default flags aren't enough — validation, multi-table writes, audit logging, or side effects — declare a custom function for any operation. Mix and match: use defaults for simple operations and functions for complex ones:</p>
+
+      <pre><code class="language-yaml">datasources:
+  - id: purchase-orders
+    db: postgres
+    table: purchase_orders
+    roles: [admin, purchasing]
+    permission: "po.manage"
+    query: |
+      SELECT po.id, po.po_number, v.name AS vendor_name,
+             s.label AS status_label, po.total, po.created_at
+      FROM purchase_orders po
+      JOIN vendors v ON v.id = po.vendor_id
+      JOIN po_status_codes s ON s.code = po.status
+      WHERE po.branch_id IN (:allowed_branches)
+      ORDER BY po.created_at DESC
+
+    # Default delete — no custom logic needed
+    crud: [delete]
+
+    # Custom create — validation + multi-table + auto-numbering
+    create:
+      language: javascript
+      permission: "po.create"
+      script: |
+        const { vendor_id, ship_to, payment_terms, line_items } = ctx.params;
+        if (!line_items?.length) {
+          throw new ValidationError("PO must have at least one line item");
+        }
+        const po = await ctx.db.create("purchase_orders", {
+          po_number: await ctx.db.nextSequence("po_number_seq"),
+          vendor_id, ship_to, payment_terms,
+          status: "draft",
+          total: line_items.reduce((s, li) => s + li.qty * li.unit_price, 0),
+          created_by: ctx.user.id,
+          branch_id: ctx.user.branch_id
+        });
+        for (const li of line_items) {
+          await ctx.db.create("po_line_items", { po_id: po.id, ...li });
+        }
+        return po;
+
+    # Custom update — approval logic + notifications
+    update:
+      language: javascript
+      permission: "po.edit"
+      script: |
+        const { id, ...changes } = ctx.params;
+        const current = await ctx.db.findById("purchase_orders", id);
+        if (current.status === "approved" && !ctx.user.roles.includes("director")) {
+          throw new ValidationError("Cannot edit an approved PO");
+        }
+        if (changes.line_items) {
+          changes.total = changes.line_items
+            .reduce((s, li) => s + li.qty * li.unit_price, 0);
+        }
+        const updated = await ctx.db.update("purchase_orders", id, changes);
+        if (changes.status === "approved") {
+          await ctx.submit("send_notification", {
+            to: "purchasing",
+            message: `PO ${current.po_number} approved`
+          });
+        }
+        return updated;</code></pre>
+
+      <h4>CRUD in the component tree</h4>
+      <p>Components call CRUD operations through the same <code class="kw">submit()</code> method used for any action. The naming convention is <code class="kw">{datasource_id}.{operation}</code>:</p>
+
+      <pre><code class="language-typescript">class VendorRow extends BaseComponent&lt;{ id: string; name: string; editing: boolean }&gt; {
+  async save() {
+    // uses the default update — no custom function needed
+    const updated = await this.submit("vendors.update", {
+      id: this.state.id,
+      name: this.state.name
+    });
+    this.setState({ ...updated, editing: false });
+  }
+
+  async remove() {
+    await this.submit("vendors.delete", { id: this.state.id });
+    // parent grid handles row removal via event handler
+  }
+}
+
+class AddVendorForm extends BaseComponent&lt;{ name: string; code: string }&gt; {
+  async create() {
+    const vendor = await this.submit("vendors.create", this.state);
+    // event handler refreshes the grid with new data
+    this.setState({ name: "", code: "" });
+  }
+}</code></pre>
+    </section>
+
+    <nav class="doc-nav">
+      <div class="doc-nav-slot">
+        <a href="frontend.html">← Frontend rendering</a>
+      </div>
+      <div class="doc-nav-slot" style="text-align:right">
+        <a href="scripting.html">Scripting engine →</a>
+      </div>
+    </nav>
+
+  </main>
+</div>
+
+<footer>
+  <span class="fmono">ERP Rendering Framework</span>
+  <span class="fmono">Project Specification · July 2026</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script>
+const sections = Array.from(document.querySelectorAll('main section[id], main h3[id]'));
+const links = Array.from(document.querySelectorAll('#toc a'));
+const byId = id => links.find(l => l.getAttribute('href') === '#' + id);
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const link = byId(entry.target.id);
+    if (!link) return;
+    links.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

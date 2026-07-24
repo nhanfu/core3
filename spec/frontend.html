@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Rendering Framework — Frontend Rendering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="topbar-brand" href="main.html"><span class="topbar-dot"></span> ERP Rendering Framework</a>
+  <div class="topbar-meta">project specification · july 2026</div>
+</div>
+
+<header class="page-hero">
+  <span class="eyebrow">UI layer</span>
+  <h1>Frontend rendering model</h1>
+  <p class="hero-sub">Every component is a class in a tree, with pure JSON state and full traversal. Under the hood, <code class="kw">html.js</code> handles the DOM for raw speed.</p>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <span class="sidebar-label">Spec navigation</span>
+    <nav id="toc">
+      <div class="nav-group">
+        <a href="main.html">Overview</a>
+        <div class="sub-links">
+          <a href="main.html#vision">Vision</a>
+          <a href="main.html#architecture">Architecture</a>
+          <a href="main.html#pillars">Core pillars</a>
+          <a href="main.html#tech-stack">Tech stack</a>
+          <a href="main.html#principles">Design principles</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="frontend.html" class="current-page">Frontend rendering</a>
+        <div class="sub-links">
+          <a href="#frontend-base">Base component</a>
+          <a href="#frontend-tree">Component tree</a>
+          <a href="#frontend-actions">Actions</a>
+          <a href="#frontend-react">React interop</a>
+          <a href="#frontend-lego">LEGO assembly</a>
+          <a href="#frontend-gridview">Server-first data</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="backend.html">Backend pipeline</a>
+        <div class="sub-links">
+          <a href="backend.html#backend-repo">Repository</a>
+          <a href="backend.html#backend-roles">Permission gates</a>
+          <a href="backend.html#backend-dbs">Databases</a>
+          <a href="backend.html#backend-sql">Embedded SQL</a>
+          <a href="backend.html#backend-crud">CRUD operations</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="scripting.html">Scripting engine</a>
+        <div class="sub-links">
+          <a href="scripting.html#scripting-runtimes">Runtimes</a>
+          <a href="scripting.html#scripting-inline">Inline scripts</a>
+          <a href="scripting.html#scripting-file">External files</a>
+          <a href="scripting.html#scripting-ctx">Context API</a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <a href="reference.html">Reference</a>
+        <div class="sub-links">
+          <a href="reference.html#css">CSS system</a>
+          <a href="reference.html#auth">Auth &amp; authorization</a>
+          <a href="reference.html#protocols">Protocols</a>
+          <a href="reference.html#integrations">Integrations</a>
+          <a href="reference.html#full-example">Full YAML example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <section id="frontend">
+      <span class="kicker">UI layer</span>
+      <h2>Frontend rendering model</h2>
+
+      <h3 id="frontend-base">Base component class</h3>
+      <p>All components inherit from <code class="kw">BaseComponent</code>. The class owns its state as pure JSON, mounts into a DOM target, and exposes lifecycle methods plus full tree traversal:</p>
+      <pre><code class="language-typescript">abstract class BaseComponent&lt;S = any&gt; {
+  state: S;                          // pure JSON — serializable, inspectable, diffable
+  readonly parent: BaseComponent | null;
+  readonly children: BaseComponent[];
+  readonly root: BaseComponent;      // always the top-level page component
+  readonly id: string;
+
+  abstract draw(container: HTMLElement): void;
+  redraw(): void { ... }             // can differ from draw — patch only what changed
+  setState(partial: Partial&lt;S&gt;, redraw?: boolean): void { ... }  // redraw defaults to true
+
+  /** Find a component anywhere in the tree by id */
+  find(id: string): BaseComponent | null;
+
+  /** Submit a named action to the backend */
+  submit(action: string, params?: Record&lt;string, any&gt;): Promise&lt;any&gt;;
+}</code></pre>
+
+      <p><strong>Why <code class="kw">redraw</code> is separate from <code class="kw">draw</code>, and why <code class="kw">setState</code> can skip it.</strong>
+        The framework does not blindly trust the rendering engine to diff efficiently everywhere. <code class="kw">draw()</code> builds the full DOM subtree from scratch — correct but expensive. <code class="kw">redraw()</code> can be overridden to patch only what changed, avoiding a full teardown of the component tree. And <code class="kw">setState(partial, false)</code> lets you batch multiple state changes across the tree before triggering a single coordinated redraw — giving developers explicit control over data flow instead of relying on automatic cascades that may over-render.</p>
+
+      <h3 id="frontend-tree">Component tree &amp; state traversal</h3>
+      <p>Every component lives in a tree. Any node can walk up to its parent, down to its children, or straight to the root. State is always pure JSON — no class instances, no hidden getters, no observables:</p>
+      <pre><code class="language-typescript">class LineItemEditor extends BaseComponent&lt;{ items: LineItem[] }&gt; {
+  draw(el: HTMLElement) {
+    // read parent's state (the PO header)
+    const poHeader = this.parent.state;         // { vendor, ship_to, payment_terms }
+
+    // read root page state (global context)
+    const globalCtx = this.root.state;          // { user, permissions, pageTitle }
+
+    // read sibling data via parent's children
+    const summary = this.parent.children
+      .find(c =&gt; c.id === "po-summary")?.state; // { total, itemCount }
+
+    // collect all children state
+    const allRows = this.children.map(c =&gt; c.state); // [{ qty, price }, ...]
+  }
+}
+
+// Tree structure example:
+//   PageRoot (root.state = global context)
+//   ├── POHeader (parent of LineItemEditor)
+//   │   ├── LineItemEditor
+//   │   │   ├── Row1 (child.state = { qty: 5, price: 100 })
+//   │   │   └── Row2 (child.state = { qty: 3, price: 250 })
+//   │   └── POSummary
+//   └── Sidebar</code></pre>
+
+      <h3 id="frontend-actions">Frontend actions</h3>
+      <p>Components submit named actions to the backend using <code class="kw">submit(action, params)</code>. The action name maps to a handler declared in the YAML — either a SQL mutation, a custom script, or an API call:</p>
+      <pre><code class="language-typescript">class ApproveButton extends BaseComponent&lt;{ loading: boolean }&gt; {
+  draw(el: HTMLElement) {
+    html(el)
+      .button("Approve PO")
+        .cls("btn-primary")
+        .on("click", async () =&gt; {
+          this.setState({ loading: true }, false);   // update state, skip redraw
+
+          const po = this.parent.state;
+          const result = await this.submit("approve_po", {
+            po_id: po.id,
+            approved_by: this.root.state.user.id,
+            line_items: this.parent.children
+              .find(c =&gt; c.id === "line-items")
+              ?.children.map(c =&gt; c.state)
+          });
+
+          this.parent.setState({ status: result.status }); // redraws parent (default)
+        })
+      .end();
+  }
+}</code></pre>
+
+      <pre><code class="language-yaml"># YAML action handlers
+actions:
+  - name: approve_po
+    permission: "po.approve"
+    roles: [manager, director]
+    language: javascript
+    script: |
+      const { po_id, approved_by, line_items } = ctx.params;
+      await ctx.db.update("purchase_orders", po_id, {
+        status: "approved",
+        approved_by,
+        approved_at: new Date()
+      });
+      await ctx.submit("send_notification", {
+        to: "purchasing",
+        message: `PO ${po_id} approved`
+      });
+      return { status: "approved" };
+
+  - name: delete_line_item
+    permission: "po.edit"
+    query: |
+      DELETE FROM po_line_items WHERE id = :id AND po_id = :po_id
+    params:
+      id: { type: uuid }
+      po_id: { type: uuid }</code></pre>
+
+      <h3 id="frontend-react">React interop</h3>
+      <p>For teams that need the React ecosystem (rich date pickers, charting libraries, etc.), a <code class="kw">ReactBridge</code> adapter lets React components live inside the rendering tree. The framework owns the lifecycle; React renders within a managed mount point.</p>
+
+      <h3 id="frontend-lego">LEGO assembly from YAML</h3>
+      <p>A page can be assembled without writing any backend code. The YAML declares which built-in components to use and how to arrange them:</p>
+      <pre><code class="language-yaml"># page: invoice-list.yaml  (frontend-only example)
+layout: split-panel
+components:
+  - type: data-table
+    id: invoices
+    columns: [id, customer, amount, status, date]
+    source: /api/invoices
+    pagination: { size: 50 }
+    actions:
+      - label: Edit
+        route: /invoices/{id}
+      - label: Delete
+        confirm: true
+        submit: delete_invoice
+        params: { id: "{id}" }
+      - label: Mark Paid
+        submit: mark_invoice_paid
+        params: { id: "{id}", paid_at: "now" }
+
+  - type: summary-card
+    id: totals
+    bind: invoices
+    aggregations:
+      - field: amount
+        fn: sum
+        label: Total Revenue
+      - field: status
+        fn: count
+        group: status</code></pre>
+
+      <h3 id="frontend-gridview">Server-first data &amp; component-based rendering</h3>
+      <p>Traditional grid implementations split work awkwardly: the backend returns raw IDs, the frontend resolves them via reference lookups, and column definitions sit in a configuration limbo — neither true components nor pure data. This creates coupling, duplicated logic, and prevents columns from participating in the component tree.</p>
+      <p><strong>The framework takes a different approach:</strong> the server sends a <strong>flat 1D array</strong> with all data fully resolved — every JOIN, lookup, and transformation happens server-side in a single query or function. On the frontend, what were formerly "columns" are now <strong>components</strong> — real <code class="kw">BaseComponent</code> instances that live in the virtual tree, have their own state, can traverse to parent/children/root, and can submit actions to the server. All event handling is centralized in a single class at the page level, inherited from <code class="kw">BaseComponent</code>.</p>
+      <p>This pattern is not GridView-specific. It applies uniformly to <strong>ListView</strong>, <strong>TreeView</strong>, <strong>PDF reports</strong>, or any view that requires complex query and rendering.</p>
+
+      <h4>Server side: all burden here</h4>
+      <p>The backend returns a flat array of fully resolved rows. No reference sets, no client-side lookups. One query (or function) does all the work:</p>
+
+      <pre><code class="language-yaml"># Backend datasource — flat, fully resolved data
+datasources:
+  - id: purchase-orders
+    db: postgres
+    protocol: http
+    roles: [admin, purchasing]
+    permission: "po.read"
+    query: |
+      SELECT
+        po.id,
+        po.po_number,
+        v.name AS vendor_name,
+        v.code AS vendor_code,
+        s.label AS status_label,
+        s.color AS status_color,
+        s.icon AS status_icon,
+        b.name AS branch_name,
+        po.total,
+        po.created_at
+      FROM purchase_orders po
+      JOIN vendors v ON v.id = po.vendor_id
+      JOIN po_status_codes s ON s.code = po.status
+      JOIN branches b ON b.id = po.branch_id
+      WHERE po.branch_id IN (:allowed_branches)
+      ORDER BY po.created_at DESC</code></pre>
+
+      <p><strong>When static SQL isn't enough</strong> — dynamic filters, multi-tenant routing, or data assembled from multiple sources — use a function. The function returns a single flat array:</p>
+
+      <pre><code class="language-yaml"># Programmatic: function returns flat 1D array
+datasources:
+  - id: purchase-orders
+    roles: [admin, purchasing]
+    permission: "po.read"
+    language: javascript
+    script: |
+      const orders = await ctx.db.query(`
+        SELECT
+          po.id, po.po_number,
+          v.name AS vendor_name, v.code AS vendor_code,
+          s.label AS status_label, s.color AS status_color,
+          b.name AS branch_name,
+          po.total, po.created_at
+        FROM purchase_orders po
+        JOIN vendors v ON v.id = po.vendor_id
+        JOIN po_status_codes s ON s.code = po.status
+        JOIN branches b ON b.id = po.branch_id
+        WHERE po.branch_id IN (:branches)
+        ORDER BY po.created_at DESC
+      `, { branches: ctx.user.branches });
+
+      // apply business logic the database can't express
+      return orders.map(o => ({
+        ...o,
+        overdue: o.status_label === 'Pending'
+          && daysSince(o.created_at) > 30,
+        editable: ctx.user.roles.includes('purchasing')
+      }));</code></pre>
+
+      <p>The response shape is intentionally simple — no reference maps, no multi-result sets:</p>
+
+      <pre><code class="language-typescript">interface DataResponse {
+  data: Record&lt;string, any&gt;[];   // flat 1D array — every field already resolved
+  meta: { total: number; page: number; pageSize: number; };
+}</code></pre>
+
+      <h4>Components, not columns</h4>
+      <p>In the frontend YAML, what were formerly called "columns" are now <strong>components</strong>. Each one is a real <code class="kw">BaseComponent</code> instance that participates in the virtual tree — with state, traversal, and actions — just like any other component in the framework:</p>
+
+      <pre><code class="language-yaml"># Frontend: components, not columns
+components:
+  - type: GridView
+    id: po-grid
+    source: purchase-orders
+    pagination: { size: 25 }
+
+    # Each entry is a real component in the virtual tree
+    components:
+      - type: TextCell
+        id: po-number
+        field: po_number
+        label: PO #
+        width: 120
+
+      - type: TextCell
+        id: vendor
+        field: vendor_name
+        label: Vendor
+        secondary: vendor_code
+
+      - type: CurrencyCell
+        id: amount
+        field: total
+        label: Amount
+        align: right
+
+      - type: BadgeCell
+        id: status
+        field: status_label
+        label: Status
+        color: status_color
+        icon: status_icon
+
+      - type: TextCell
+        id: branch
+        field: branch_name
+        label: Branch
+
+      - type: DateCell
+        id: created
+        field: created_at
+        label: Created
+        format: relative</code></pre>
+
+      <p>Because these are real components, each cell instance lives in the tree and has full access to traversal, state, and actions:</p>
+
+      <pre><code class="language-typescript">// Component tree — every cell is a real BaseComponent
+//
+//   PageRoot (root.state = global context)
+//   ├── POGridEvents  (event handler — declared at page level)
+//   ├── GridView (po-grid)
+//   │   ├── Row0
+//   │   │   ├── TextCell (po-number)     ← traversable, has state
+//   │   │   ├── TextCell (vendor)        ← can read grid.state, root.state
+//   │   │   ├── CurrencyCell (amount)    ← can submit actions to server
+//   │   │   ├── BadgeCell (status)       ← redraws independently
+//   │   │   ├── TextCell (branch)        ← finds siblings via parent.children
+//   │   │   └── DateCell (created)       ← participates in draw/redraw cycle
+//   │   ├── Row1
+//   │   │   └── ...
+//   │   └── ...
+//   └── SummaryCard (totals)
+
+class BadgeCell extends BaseComponent&lt;{ value: string; color: string; icon: string }&gt; {
+  draw(el: HTMLElement) {
+    html(el)
+      .span(this.state.value)
+        .cls("badge")
+        .style("background", this.state.color)
+        .attr("data-icon", this.state.icon)
+      .end();
+  }
+
+  // Real component: traverse the tree
+  getRowTotal(): number {
+    const amountCell = this.parent.children.find(c =&gt; c.id === "amount");
+    return amountCell?.state.value ?? 0;
+  }
+
+  // Real component: submit actions
+  async markApproved() {
+    const rowData = this.parent.state;
+    await this.submit("approve_po", { po_id: rowData.id });
+    this.setState({ value: "Approved", color: "#16a34a" });
+  }
+}
+
+class GridView extends BaseComponent&lt;GridViewState&gt; {
+  private componentDefs: ComponentDef[];
+
+  onDataLoad(response: DataResponse) {
+    // flat data — no reference resolution, no lookup maps
+    this.setState({ rows: response.data, meta: response.meta });
+  }
+
+  draw(el: HTMLElement) {
+    const grid = html(el).div().cls("gridview");
+
+    // header from component labels
+    const header = grid.div().cls("grid-header");
+    for (const def of this.componentDefs) {
+      header.div(def.label).cls("grid-th").style("width", def.width).end();
+    }
+    header.end();
+
+    // each row spawns real child components
+    const body = grid.div().cls("grid-body");
+    for (const row of this.state.rows) {
+      const rowComp = this.createChild(RowComponent, { data: row });
+      for (const def of this.componentDefs) {
+        // each cell is a BaseComponent — added to the tree, fully traversable
+        rowComp.createChild(def.type, {
+          value: row[def.field],
+          ...this.extractProps(def, row)
+        });
+      }
+      rowComp.draw(body);
+    }
+    body.end();
+    grid.end();
+  }
+}</code></pre>
+
+      <h4>Page-level event handler</h4>
+      <p>All event listeners for a data view are handled by a <strong>single class</strong> declared at the top level of the page. This class inherits from <code class="kw">BaseComponent</code>, giving it full tree access. The focus is on <strong>data flow</strong> — server → components → user interaction → actions → server. UI interaction is not limited; it is <em>channeled</em> through a predictable, debuggable path:</p>
+
+      <pre><code class="language-typescript">class POGridEvents extends BaseComponent&lt;{ selectedIds: string[] }&gt; {
+  // Declared at page level — one class handles all grid interactions
+
+  onCellClick(cell: BaseComponent, row: Record&lt;string, any&gt;) {
+    // cell is the actual component in the tree — full traversal available
+    if (cell.id === "status") {
+      this.showStatusDropdown(cell, row);
+    }
+  }
+
+  onRowSelect(rows: Record&lt;string, any&gt;[]) {
+    this.setState({ selectedIds: rows.map(r =&gt; r.id) });
+    // update sibling components via tree traversal
+    const summary = this.root.find("totals");
+    summary?.setState({
+      selectedTotal: rows.reduce((s, r) =&gt; s + r.total, 0),
+      selectedCount: rows.length
+    });
+  }
+
+  async onBulkAction(action: string) {
+    const result = await this.submit(action, {
+      po_ids: this.state.selectedIds,
+      user_id: this.root.state.user.id
+    });
+    // server returns updated flat data — just refresh
+    const grid = this.root.find("po-grid");
+    grid?.setState({ rows: result.data });
+  }
+
+  private showStatusDropdown(cell: BaseComponent, row: Record&lt;string, any&gt;) {
+    // UI enhancement — not limited, but channeled through data flow
+    const dropdown = this.root.find("status-dropdown");
+    dropdown?.setState({ visible: true, anchorTo: cell, currentRow: row });
+  }
+}</code></pre>
+
+      <pre><code class="language-yaml"># YAML declaration — event handler at page level
+page:
+  title: Purchase Orders
+
+  # Event handler: single class, declared at top level
+  events:
+    class: POGridEvents
+    handles:
+      - target: po-grid
+        on: [cellClick, rowSelect, bulkAction]
+      - target: po-detail
+        on: [fieldChange, save]</code></pre>
+
+      <h4>Generalizable pattern</h4>
+      <p>This is not a GridView-specific design. The same three-part pattern — <strong>server-first flat data</strong>, <strong>component-based rendering</strong>, <strong>page-level event handler</strong> — applies to any view that requires complex query and rendering:</p>
+
+      <div class="cardgrid">
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>GridView</h4>
+          <p>Tabular data. Components are cells — <code class="kw">TextCell</code>, <code class="kw">BadgeCell</code>, <code class="kw">CurrencyCell</code>. Each cell is traversable and actionable.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>ListView</h4>
+          <p>Vertical list with rich items. Components are list item parts — avatar, title, subtitle, actions. Same flat data, same event handler.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>TreeView</h4>
+          <p>Hierarchical data (org charts, BOM). Server sends flat array with <code class="kw">parent_id</code> — components build the visual hierarchy client-side.</p>
+        </div>
+        <div class="card">
+          <span class="ctag frontend">View</span>
+          <h4>PDF Report</h4>
+          <p>Server sends fully resolved data. Components define report sections — header, table, chart, summary. Same data flow, rendered to PDF instead of DOM.</p>
+        </div>
+      </div>
+
+      <pre><code class="language-yaml"># ListView — same pattern, different view type
+components:
+  - type: ListView
+    id: vendor-list
+    source: vendors-flat        # server sends flat 1D array
+    components:
+      - type: AvatarItem
+        id: vendor-avatar
+        field: logo_url
+      - type: TitleItem
+        id: vendor-name
+        field: name
+        secondary: region
+      - type: StatusItem
+        id: vendor-status
+        field: status_label
+        color: status_color
+
+# TreeView — flat data with parent_id, rendered as hierarchy
+components:
+  - type: TreeView
+    id: category-tree
+    source: categories-flat     # flat array, parent_id builds the tree
+    parentField: parent_id
+    components:
+      - type: TreeLabel
+        id: cat-name
+        field: name
+        icon: icon
+      - type: CountBadge
+        id: cat-count
+        field: product_count</code></pre>
+
+      <p><strong>Why this matters for ERP at scale:</strong></p>
+      <ul>
+        <li><strong>Server owns data complexity.</strong> All JOINs, lookups, and transformations happen in one place — a single query or function. The frontend never resolves references or builds lookup maps. It receives display-ready data.</li>
+        <li><strong>Components are real components.</strong> Every cell, list item, or tree node is a <code class="kw">BaseComponent</code> in the virtual tree — with state, traversal, and actions. No special-case "column definition" rendering.</li>
+        <li><strong>Data flow is explicit.</strong> Server → flat data → components → user events → page-level handler → actions → server. Every step is traceable. No hidden cascades, no implicit reference resolution.</li>
+        <li><strong>Event handling is centralized.</strong> One class per page handles all interactions for all data views. Debuggable, testable, easy to reason about — while still allowing rich UI through the component tree.</li>
+        <li><strong>One pattern, many views.</strong> GridView, ListView, TreeView, PDF — all use the same three-part pattern. Learn it once, apply it everywhere.</li>
+      </ul>
+    </section>
+
+    <nav class="doc-nav">
+      <div class="doc-nav-slot">
+        <a href="main.html">← Overview</a>
+      </div>
+      <div class="doc-nav-slot" style="text-align:right">
+        <a href="backend.html">Backend pipeline →</a>
+      </div>
+    </nav>
+
+  </main>
+</div>
+
+<footer>
+  <span class="fmono">ERP Rendering Framework</span>
+  <span class="fmono">Project Specification · July 2026</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+<script>
+const sections = Array.from(document.querySelectorAll('main section[id], main h3[id]'));
+const links = Array.from(document.querySelectorAll('#toc a'));
+const byId = id => links.find(l => l.getAttribute('href') === '#' + id);
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const link = byId(entry.target.id);
+    if (!link) return;
+    links.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
+  });
+}, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>
