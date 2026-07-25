@@ -1,2 +1,3 @@
-node_modulestms/tms.duckdb
+node_modules
+tms/tms.duckdb
 tms/tms.duckdb.wal
