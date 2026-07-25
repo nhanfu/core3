@@ -1,11 +1,13 @@
-// @ts-nocheck
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
 import { logout, getToken } from '../app.ts';
 import { i18n } from '../i18n.ts';
 
 export class ProfileDrawer extends BaseComponent {
-  constructor(id, state) {
+  _el: HTMLElement | null;
+  _overlay: HTMLElement | null;
+
+  constructor(id: string, state: any) {
     super(id, { open: false, saving: false, ...state });
     this._el = null;
     this._overlay = null;
@@ -14,7 +16,7 @@ export class ProfileDrawer extends BaseComponent {
   open() {
     this.state.open = true;
     if (this._el) {
-      this._overlay.style.display = 'block';
+      if (this._overlay) this._overlay.style.display = 'block';
       this._el.style.display = 'flex';
     } else {
       this.redraw();
@@ -25,15 +27,15 @@ export class ProfileDrawer extends BaseComponent {
     this.state.open = false;
     if (this._el) {
       this._el.style.display = 'none';
-      this._overlay.style.display = 'none';
+      if (this._overlay) this._overlay.style.display = 'none';
     }
   }
 
-  draw(container) {
-    const user = this.state.user;
+  draw(container: HTMLElement) {
+    const user: any = this.state.user;
     const initials = (user?.name || 'U')
       .split(' ')
-      .map(w => w[0])
+      .map((w: string) => w[0])
       .join('')
       .slice(0, 2)
       .toUpperCase();
@@ -182,7 +184,7 @@ export class ProfileDrawer extends BaseComponent {
             changePwBtn.disabled = false;
           }, 2000);
         } catch (err) {
-          pwErrorEl.textContent = err.message;
+          pwErrorEl.textContent = err instanceof Error ? err.message : String(err);
           pwErrorEl.style.display = 'flex';
           changePwBtn.textContent = 'Update password';
           changePwBtn.disabled = false;
@@ -201,7 +203,7 @@ export class ProfileDrawer extends BaseComponent {
       });
   }
 
-  async _saveLang(lang) {
+  async _saveLang(lang: string) {
     try {
       const token = getToken();
       await fetch('/api/v1/profile', {

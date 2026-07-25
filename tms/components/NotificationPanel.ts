@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
 import { getToken } from '../app.ts';
 
-const TYPE_ICONS = {
+const TYPE_ICONS: Record<string, string> = {
   service_overdue:        '🔧',
   trip_completed:         '✅',
   license_expiring:       '📋',
@@ -12,7 +11,7 @@ const TYPE_ICONS = {
   default:                '🔔',
 };
 
-function timeAgo(dateStr) {
+function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'Just now';
@@ -23,7 +22,13 @@ function timeAgo(dateStr) {
 }
 
 export class NotificationPanel extends BaseComponent {
-  constructor(id, state) {
+  _el: HTMLElement | null;
+  _listEl: HTMLElement | null;
+  _pollTimer: ReturnType<typeof setInterval> | null;
+  _outsideHandler: ((e: MouseEvent) => void) | null;
+  _onBadgeChange: ((n: number) => void) | null;
+
+  constructor(id: string, state: any) {
     super(id, { open: false, notifications: [], unread: 0, ...state });
     this._container = null;
     this._el = null;
@@ -41,8 +46,8 @@ export class NotificationPanel extends BaseComponent {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return;
-      const notifications = await res.json();
-      const unread = notifications.filter(n => !n.read).length;
+      const notifications: any[] = await res.json();
+      const unread = notifications.filter((n) => !n.read).length;
       this.state.notifications = notifications;
       this.state.unread = unread;
       this._onBadgeChange?.(unread);
@@ -73,8 +78,8 @@ export class NotificationPanel extends BaseComponent {
       this._renderList();
       // Close on outside click — defer so the bell's own click doesn't immediately close it
       setTimeout(() => {
-        this._outsideHandler = (e) => {
-          if (!this._el?.contains(e.target)) this.close();
+        this._outsideHandler = (e: MouseEvent) => {
+          if (!this._el?.contains(e.target as Node | null)) this.close();
         };
         document.addEventListener('click', this._outsideHandler);
       }, 0);
@@ -100,7 +105,7 @@ export class NotificationPanel extends BaseComponent {
     } catch {
       // silently ignore
     }
-    this.state.notifications.forEach(n => { n.read = true; });
+    (this.state.notifications as any[]).forEach((n) => { n.read = true; });
     this.state.unread = 0;
     this._onBadgeChange?.(0);
     this._renderList();
@@ -109,7 +114,7 @@ export class NotificationPanel extends BaseComponent {
   _renderList() {
     if (!this._listEl) return;
     this._listEl.innerHTML = '';
-    const notifs = this.state.notifications;
+    const notifs: any[] = this.state.notifications || [];
     if (!notifs.length) {
       html.take(this._listEl).div.className('notif-empty').text('No notifications');
       return;
@@ -127,7 +132,7 @@ export class NotificationPanel extends BaseComponent {
     }
   }
 
-  draw(container) {
+  draw(container: HTMLElement) {
     this._el = html.take(container).div
       .className('notif-panel')
       .style('display:none')
@@ -138,7 +143,7 @@ export class NotificationPanel extends BaseComponent {
     html.take(header).button
       .className('notif-mark-all')
       .text('Mark all read')
-      .event('click', (e) => {
+      .event('click', (e: MouseEvent) => {
         e.stopPropagation();
         this.markAllRead();
       });

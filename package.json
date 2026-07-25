@@ -5,7 +5,7 @@
   "workspaces": ["lib", "tms"],
   "scripts": {
     "start": "PORT=3001 bun tms/server.ts",
-    "dev": "PORT=3001 bun --watch tms/server.ts",
+    "dev": "PORT=3001 bun --hot tms/server.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
 import { navigate, logout, getUser } from '../app.ts';
@@ -16,7 +15,12 @@ const NAV = [
 ];
 
 export class AppShell extends BaseComponent {
-  constructor(id, state) {
+  _navEls: Map<string, HTMLElement>;
+  _headerTitle: HTMLElement | null;
+  _notifPanel: NotificationPanel | null;
+  _profileDrawer: ProfileDrawer | null;
+
+  constructor(id: string, state: any) {
     super(id, { activePath: '/fleet', title: 'TMS', ...state });
     this._navEls = new Map();  // path → div element
     this._headerTitle = null;
@@ -24,21 +28,21 @@ export class AppShell extends BaseComponent {
     this._profileDrawer = null;
   }
 
-  setActivePath(path) {
-    this._navEls.forEach((el, p) => {
+  setActivePath(path: string) {
+    this._navEls.forEach((el: HTMLElement, p: string) => {
       el.classList.toggle('active', p === path);
     });
   }
 
-  setTitle(title) {
+  setTitle(title: string) {
     if (this._headerTitle) this._headerTitle.textContent = title;
   }
 
-  draw(container) {
-    const user = this.state.user;
+  draw(container: HTMLElement) {
+    const user: any = this.state.user;
     const initials = (user?.name || 'U')
       .split(' ')
-      .map(w => w[0])
+      .map((w: string) => w[0])
       .join('')
       .slice(0, 2)
       .toUpperCase();
@@ -156,15 +160,15 @@ export class AppShell extends BaseComponent {
 
     // Mount NotificationPanel (renders as a positioned dropdown on document.body)
     this._notifPanel = new NotificationPanel('notif-panel', { unread: 0, open: false });
-    this._notifPanel._onBadgeChange = (n) => {
+    this._notifPanel._onBadgeChange = (n: number) => {
       badge.textContent = n > 0 ? (n > 9 ? '9+' : String(n)) : '';
       badge.style.display = n > 0 ? 'flex' : 'none';
     };
 
     // Toggle panel on bell click
-    bellBtn.addEventListener('click', (e) => {
+    bellBtn.addEventListener('click', (e: MouseEvent) => {
       e.stopPropagation();
-      this._notifPanel.toggle();
+      this._notifPanel?.toggle();
     });
 
     this._notifPanel.mount(document.body);

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { join } from 'node:path';
@@ -19,8 +18,8 @@ const services = createFramework({
   repository: new DuckDbRepository(db),
   auth: new JwtAuthProvider(JWT_SECRET),
 });
-const repository = services.resolve(SERVICE_KEYS.repository);
-const authProvider = services.resolve(SERVICE_KEYS.auth);
+const repository: any = services.resolve(SERVICE_KEYS.repository);
+const authProvider: any = services.resolve(SERVICE_KEYS.auth);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 const CORS_HEADERS = {
@@ -29,19 +28,19 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
-function json(data, status = 200) {
+function json(data: any, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
 }
 
-function apiError(status, message) {
+function apiError(status: number, message: string): Response {
   return json({ error: message }, status);
 }
 
 // ── JWT ───────────────────────────────────────────────────────────────────────
-async function requireAuth(req) {
+async function requireAuth(req: Request) {
   return authProvider.getCurrentUser(req);
 }
 
@@ -65,12 +64,12 @@ const MIME = {
   '.woff2': 'font/woff2',
 };
 
-function mimeFor(path) {
-  const ext = path.slice(path.lastIndexOf('.'));
+function mimeFor(path: string) {
+  const ext = path.slice(path.lastIndexOf('.')) as keyof typeof MIME;
   return MIME[ext] || 'application/octet-stream';
 }
 
-async function serveStatic(pathname) {
+async function serveStatic(pathname: string) {
   const rel = pathname.startsWith('/') ? pathname.slice(1) : pathname;
   const packagePath = rel.startsWith('node_modules/@core3/framework/');
   if (!rel.startsWith('tms/') && !packagePath) return null;
@@ -107,7 +106,7 @@ async function serveSPA() {
 }
 
 // ── DB initialisation ─────────────────────────────────────────────────────────
-async function initDb() {
+async function initDb(): Promise<void> {
   const schemaSQL = readFileSync(join(import.meta.dir, 'db/schema.sql'), 'utf8');
   const seedSQL   = readFileSync(join(import.meta.dir, 'db/seed.sql'),   'utf8');
 
@@ -135,7 +134,7 @@ const SOURCE_FILES = [
 function loadSources() {
   const sources = new Map();
   for (const file of SOURCE_FILES) {
-    const page = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
+    const page: any = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
     for (const source of page.datasources || []) {
       if (!source.id || !source.query || !source.permission) {
         throw new Error(`Datasource in ${file} requires id, permission, and query`);
@@ -148,14 +147,14 @@ function loadSources() {
 }
 
 const SOURCES = loadSources();
-const PAGES = new Map(
+const PAGES = new Map<string, any>(
   SOURCE_FILES.map((file) => {
     const page = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
     return [page.page?.id, page];
   })
 );
 
-function publicPageConfig(page) {
+function publicPageConfig(page: any) {
   const { datasources, ...config } = page;
   return config;
 }
@@ -172,18 +171,19 @@ const TABLE_REGISTRY = {
 };
 
 // ── API handler ───────────────────────────────────────────────────────────────
-async function handleAPI(req, url) {
+async function handleAPI(req: Request, url: URL): Promise<Response> {
   const pathname = url.pathname;
   const method   = req.method;
 
   // ── Auth (no JWT required) ────────────────────────────────────────────────
   if (pathname === '/api/auth/login' && method === 'POST') {
-    const { email, password } = await req.json();
+    const { email, password } = await req.json() as any;
     if (!email || !password) return apiError(400, 'email and password required');
     try {
       return json(await authProvider.login(email, password, repository));
     } catch (err) {
-      return apiError(err.status || 401, err.message || 'Invalid credentials');
+      const error = err as any;
+      return apiError(error.status || 401, error.message || 'Invalid credentials');
     }
   }
 
@@ -195,8 +195,8 @@ async function handleAPI(req, url) {
   // ── All routes below require auth ──────────────────────────────────────────
   const authUser = await requireAuth(req);
 
-  const hasPerm = (perm) => authProvider.hasPermission(authUser, perm);
-  const requirePerm = (perm) => {
+  const hasPerm = (perm: string) => authProvider.hasPermission(authUser, perm);
+  const requirePerm = (perm: string) => {
     if (!hasPerm(perm)) throw { status: 403, message: `Requires permission: ${perm}` };
   };
 
@@ -211,7 +211,7 @@ async function handleAPI(req, url) {
 
   // ── POST /api/query ───────────────────────────────────────────────────────
   if (pathname === '/api/query' && method === 'POST') {
-    const vm = await req.json();
+    const vm = await req.json() as any;
     const src = SOURCES.get(vm.sourceId);
     if (!src) return apiError(404, `Unknown source: ${vm.sourceId}`);
     if (src.permission) requirePerm(src.permission);
@@ -221,10 +221,10 @@ async function handleAPI(req, url) {
 
   // ── POST /api/patch ───────────────────────────────────────────────────────
   if (pathname === '/api/patch' && method === 'POST') {
-    const body = await req.json();
+    const body = await req.json() as any;
     const { table, action, id, changes = [] } = body;
 
-    const tbl = TABLE_REGISTRY[table];
+    const tbl = TABLE_REGISTRY[table as keyof typeof TABLE_REGISTRY];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);
 
@@ -281,8 +281,9 @@ async function handleAPI(req, url) {
       if (!body.current_password) return apiError(400, 'current_password required');
       try {
         await authProvider.changePassword(authUser.sub, body.current_password, body.new_password, repository);
-      } catch (err) {
-        return apiError(err.status || 400, err.message || 'Password change failed');
+    } catch (err) {
+      const error = err as any;
+      return apiError(error.status || 400, error.message || 'Password change failed');
       }
     }
 
@@ -298,7 +299,7 @@ async function handleAPI(req, url) {
   }
 
   if (pathname === '/api/v1/notifications' && method === 'POST') {
-    const body = await req.json();
+    const body = await req.json() as any;
     const created = await repository.createNotification({
       user_id: body.user_id || authUser.sub,
       type: body.type,
@@ -336,7 +337,7 @@ async function handleAPI(req, url) {
 
   if (pathname === '/api/v1/i18n' && method === 'POST') {
     requirePerm('settings.write');
-    const body = await req.json();
+    const body = await req.json() as any;
     await repository.saveTranslation(body);
     return json({ ok: true });
   }
@@ -346,7 +347,7 @@ async function handleAPI(req, url) {
     const id = parseInt(i18nMatch[1]);
     if (method === 'PATCH') {
       requirePerm('settings.write');
-      const { translated } = await req.json();
+      const { translated } = await req.json() as any;
       await repository.updateTranslation(id, translated);
       return json({ ok: true });
     }
@@ -365,8 +366,8 @@ await initDb();
 
 Bun.serve({
   port: PORT,
-  async fetch(req) {
-    const url      = new URL(req.url);
+  async fetch(req: Request) {
+    const url = new URL(req.url);
     const pathname = url.pathname;
 
     // Preflight
@@ -379,7 +380,8 @@ Bun.serve({
       try {
         return await handleAPI(req, url);
       } catch (err) {
-        if (err?.status) return apiError(err.status, err.message);
+        const error = err as any;
+        if (error?.status) return apiError(error.status, error.message);
         console.error('[API error]', err);
         return apiError(500, 'Internal server error');
       }

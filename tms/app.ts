@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { AppShell } from './components/AppShell.ts';
 import { i18n } from './i18n.ts';
 import { renderPage } from '@core3/framework/page-renderer.ts';
@@ -6,12 +5,12 @@ import { registerNavigator } from '@core3/framework/navigate.ts';
 import { client } from '@core3/framework/client.ts';
 
 const TOKEN_KEY = 'tms_token';
-let _user = null;
-let _shell = null;
+let _user: any = null;
+let _shell: AppShell | null = null;
 
 // Routes: string = server page id, function = JS module loader
-const ROUTES = {
-  '/login':        () => import('/tms/pages/login.ts'),
+const ROUTES: Record<string, string | (() => Promise<any>)> = {
+  '/login':        () => import('./pages/login.ts'),
   '/fleet':        'fleet',
   '/drivers':      'drivers',
   '/trips':        'trips',
@@ -20,7 +19,7 @@ const ROUTES = {
   '/settings':     'settings',
 };
 
-const ROUTE_TITLES = {
+const ROUTE_TITLES: Record<string, string> = {
   '/fleet':        'Fleet Overview',
   '/drivers':      'Drivers',
   '/trips':        'Trip Management',
@@ -37,7 +36,7 @@ export function getUser() {
   return _user;
 }
 
-export async function setAuth(token, user) {
+export async function setAuth(token: string, user: any) {
   localStorage.setItem(TOKEN_KEY, token);
   _user = user;
   window.__CORE3_USER__ = user;
@@ -52,16 +51,22 @@ export function logout() {
   navigate('/login');
 }
 
-export async function navigate(path, params = {}) {
+export async function navigate(path: string, params: Record<string, string | number | boolean | null | undefined> = {}) {
   const qs = Object.keys(params).length
-    ? '?' + new URLSearchParams(params).toString()
+    ? '?' + new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params)
+          .filter(([, v]) => v != null)
+          .map(([k, v]) => [k, String(v)])
+      )
+    ).toString()
     : '';
   history.pushState({}, '', path + qs);
   await renderRoute(path);
 }
 
 // apiFetch: wrapper that adds auth header
-export async function apiFetch(url, options = {}) {
+export async function apiFetch(url: string, options: RequestInit = {}) {
   const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -76,10 +81,10 @@ export async function apiFetch(url, options = {}) {
   return res;
 }
 
-async function renderRoute(path) {
+async function renderRoute(path: string) {
   // Normalize: strip trailing slash
   const cleanPath = path === '/' ? '/fleet' : path.replace(/\/$/, '');
-  const loader = ROUTES[cleanPath] || ROUTES['/fleet'];
+  const loader = ROUTES[cleanPath as keyof typeof ROUTES] || ROUTES['/fleet'];
 
   const outlet = document.getElementById('outlet');
   if (!outlet) return;
@@ -97,7 +102,7 @@ async function renderRoute(path) {
   // Update shell active nav + header title
   if (_shell) {
     _shell.setActivePath(cleanPath);
-    _shell.setTitle(i18n.t(pageName, null, ROUTE_TITLES[cleanPath] || 'TMS'));
+    _shell.setTitle(i18n.t(pageName, null, ROUTE_TITLES[cleanPath as keyof typeof ROUTE_TITLES] || 'TMS'));
   }
 
   try {
@@ -115,10 +120,11 @@ async function renderRoute(path) {
     }
   } catch (err) {
     console.error('Route load error:', err);
+    const message = err instanceof Error ? err.message : String(err);
     outlet.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-red-500">
       <div style="font-size:2rem;margin-bottom:8px">&#9888;&#65039;</div>
       <div style="font-weight:600">Failed to load page</div>
-      <div style="font-size:0.8rem;color:var(--color-text-muted);margin-top:4px">${err.message}</div>
+      <div style="font-size:0.8rem;color:var(--color-text-muted);margin-top:4px">${message}</div>
     </div>`;
   }
 }
@@ -126,6 +132,7 @@ async function renderRoute(path) {
 async function bootstrap() {
   const app = document.getElementById('app');
   const token = getToken();
+  if (!app) return;
 
   // No token → login
   if (!token) {
@@ -151,7 +158,7 @@ async function bootstrap() {
   }
 
   // Prefetch global i18n
-  const lang = _user.preferred_lang || 'en';
+  const lang = _user?.preferred_lang || 'en';
   await i18n.setLang(lang);
 
   // Mount app shell
@@ -159,13 +166,13 @@ async function bootstrap() {
   _shell.mount(app);
 
   // Register navigator so page-renderer navigate() calls use SPA pushState
-  registerNavigator((path, params = {}) => {
+  registerNavigator((path: string, params: Record<string, unknown> = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
     ).toString();
     const url = path + (qs ? '?' + qs : '');
     history.pushState({}, '', url);
-    renderRoute(path);
+    void renderRoute(path);
   });
 
   // Navigate to current path (or default to /fleet)
@@ -175,7 +182,7 @@ async function bootstrap() {
 
 // Handle browser back/forward
 window.addEventListener('popstate', () => {
-  renderRoute(window.location.pathname);
+  void renderRoute(window.location.pathname);
 });
 
 bootstrap();

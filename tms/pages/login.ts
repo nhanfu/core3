@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { html } from '@core3/framework/html.ts';
 import { setAuth, navigate } from '../app.ts';
 import { i18n } from '../i18n.ts';
 
-export async function mount(container) {
+export async function mount(container: HTMLElement) {
   // Wrap in login page layout
   const page = html.take(container).div.className('login-page').getContext();
   const card = html.take(page).div.className('login-card').getContext();
@@ -85,7 +84,7 @@ export async function mount(container) {
       await setAuth(token, user);
       await navigate('/fleet');
     } catch (err) {
-      errorEl.textContent = err.message;
+      errorEl.textContent = err instanceof Error ? err.message : String(err);
       errorEl.style.display = 'block';
       btnEl.disabled = false;
       btnEl.textContent = i18n.t('*', null, 'Sign in');
@@ -95,8 +94,8 @@ export async function mount(container) {
   btnEl.addEventListener('click', doLogin);
 
   // Allow Enter key on either field
-  [emailInput, pwInput].forEach(el => {
-    el.addEventListener('keydown', (e) => {
+  [emailInput, pwInput].forEach((el) => {
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Enter') doLogin();
     });
   });

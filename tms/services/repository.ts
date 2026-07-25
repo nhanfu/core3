@@ -1,37 +1,55 @@
-// @ts-nocheck
+type Change = { field: string; value: any };
+type TranslationEntry = {
+  lang: string;
+  page: string;
+  component?: string | null;
+  text: string;
+  translated: string;
+};
 
 export class DuckDbRepository {
-  constructor(db) {
+  db: any;
+
+  constructor(db: any) {
     this.db = db;
   }
 
-  run(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, ...params, (err) => (err ? reject(err) : resolve()));
-    });
+  async withConnection<T>(fn: (conn: any) => Promise<T> | T): Promise<T> {
+    const conn = this.db.connect();
+    try {
+      return await fn(conn);
+    } finally {
+      await new Promise<void>((resolve) => conn.close(() => resolve()));
+    }
   }
 
-  query(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      this.db.all(sql, ...params, (err, rows) => {
+  run(sql: string, params: any[] = []): Promise<void> {
+    return this.withConnection((conn) => new Promise<void>((resolve, reject) => {
+      conn.run(sql, ...params, (err: any) => (err ? reject(err) : resolve()));
+    }));
+  }
+
+  query(sql: string, params: any[] = []): Promise<any[]> {
+    return this.withConnection((conn) => new Promise<any[]>((resolve, reject) => {
+      conn.all(sql, ...params, (err: any, rows: any[]) => {
         if (err) return reject(err);
         resolve((rows || []).map(convertRow));
       });
-    });
+    }));
   }
 
-  async runStatements(sqlText) {
+  async runStatements(sqlText: string): Promise<void> {
     for (const stmt of splitSQL(sqlText)) {
       await this.run(stmt);
     }
   }
 
-  async countRows(table) {
+  async countRows(table: string): Promise<number> {
     const rows = await this.query(`SELECT COUNT(*) AS n FROM ${table}`);
     return Number(rows[0]?.n || 0);
   }
 
-  async getLoginUserByEmail(email) {
+  async getLoginUserByEmail(email: string): Promise<any | null> {
     const rows = await this.query(
       `SELECT u.*, string_agg(r.name, ',') as roles_csv
        FROM users u
@@ -45,11 +63,11 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async refreshUserPasswordHash(userId, hash) {
+  async refreshUserPasswordHash(userId: any, hash: string): Promise<void> {
     await this.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId]);
   }
 
-  async getUserPermissions(userId) {
+  async getUserPermissions(userId: any): Promise<string[]> {
     const perms = await this.query(
       `SELECT DISTINCT p.permission_key
        FROM permissions p
@@ -58,10 +76,10 @@ export class DuckDbRepository {
        WHERE ur.user_id = ?`,
       [userId]
     );
-    return perms.map((p) => p.permission_key);
+    return perms.map((p: any) => p.permission_key);
   }
 
-  async querySource(source, params = {}, skip = 0, top = 25) {
+  async querySource(source: { query: string; single?: boolean }, params: Record<string, any> = {}, skip = 0, top = 25): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
     if (source.single) {
       const rows = await this.query(statement, values);
@@ -82,7 +100,7 @@ export class DuckDbRepository {
     };
   }
 
-  async createRecord(table, changes) {
+  async createRecord(table: string, changes: Change[]): Promise<any> {
     const newId = crypto.randomUUID();
     const cols = ['id', ...changes.map((c) => c.field)].join(', ');
     const vals = [newId, ...changes.map((c) => c.value)];
@@ -94,7 +112,7 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async updateRecord(table, id, changes, timestamps) {
+  async updateRecord(table: string, id: any, changes: Change[], timestamps: boolean): Promise<any> {
     const sets = changes.map((c) => `${c.field} = ?`).join(', ');
     const tsClause = timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
     await this.run(
@@ -105,15 +123,15 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async deleteRecord(table, id) {
+  async deleteRecord(table: string, id: any): Promise<void> {
     await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
   }
 
-  async deleteUserRoles(userId) {
+  async deleteUserRoles(userId: any): Promise<void> {
     await this.run('DELETE FROM user_roles WHERE user_id = ?', [userId]);
   }
 
-  async createUser(changes) {
+  async createUser(changes: Change[]): Promise<any> {
     const rolesChange = changes.find((c) => c.field === 'roles');
     const passwordChange = changes.find((c) => c.field === 'password');
     let regularChanges = changes.filter((c) => c.field !== 'roles' && c.field !== 'password');
@@ -150,7 +168,7 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async updateUser(id, changes) {
+  async updateUser(id: any, changes: Change[]): Promise<any> {
     const rolesChange = changes.find((c) => c.field === 'roles');
     const regularChanges = changes.filter((c) => c.field !== 'roles');
     if (regularChanges.length > 0) {
@@ -179,7 +197,7 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async getProfile(userId) {
+  async getProfile(userId: any): Promise<any> {
     const rows = await this.query(
       `SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
         string_agg(r.name, ',') as roles_csv
@@ -194,12 +212,12 @@ export class DuckDbRepository {
     return { ...rows[0], roles: rows[0].roles_csv ? rows[0].roles_csv.split(',').filter(Boolean) : [] };
   }
 
-  async getUserPasswordHash(userId) {
+  async getUserPasswordHash(userId: any): Promise<string | null> {
     const rows = await this.query('SELECT password_hash FROM users WHERE id = ?', [userId]);
     return rows[0]?.password_hash || null;
   }
 
-  async updateProfile(userId, fields) {
+  async updateProfile(userId: any, fields: Record<string, any>): Promise<boolean | null> {
     if (!Object.keys(fields).length) return null;
     const sets = Object.keys(fields).map((k) => `${k} = ?`).join(', ');
     await this.run(
@@ -209,14 +227,14 @@ export class DuckDbRepository {
     return true;
   }
 
-  async listNotifications(userId) {
+  async listNotifications(userId: any): Promise<any[]> {
     return this.query(
       'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
       [userId]
     );
   }
 
-  async createNotification(notification) {
+  async createNotification(notification: TranslationEntry | any): Promise<any> {
     const id = notification.id || crypto.randomUUID();
     await this.run(
       'INSERT INTO notifications(id, user_id, type, title, body) VALUES(?,?,?,?,?)',
@@ -226,18 +244,18 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async markAllNotificationsRead(userId) {
+  async markAllNotificationsRead(userId: any): Promise<void> {
     await this.run('UPDATE notifications SET read = true WHERE user_id = ?', [userId]);
   }
 
-  async markNotificationRead(notificationId, userId) {
+  async markNotificationRead(notificationId: any, userId: any): Promise<void> {
     await this.run(
       'UPDATE notifications SET read = true WHERE id = ? AND user_id = ?',
       [notificationId, userId]
     );
   }
 
-  async listTranslations({ lang = 'en', page = '', q = '' } = {}) {
+  async listTranslations({ lang = 'en', page = '', q = '' }: { lang?: string; page?: string; q?: string } = {}): Promise<any[]> {
     let where = 'WHERE lang = ?';
     const params = [lang];
     if (page) { where += ' AND page = ?'; params.push(page); }
@@ -248,14 +266,14 @@ export class DuckDbRepository {
     return this.query(`SELECT * FROM translations ${where} ORDER BY page, component, text`, params);
   }
 
-  async getTranslationMap(lang, page) {
+  async getTranslationMap(lang: string, page: string): Promise<Record<string, string>> {
     const rows = await this.query(
       `SELECT text, component, translated FROM translations
        WHERE lang = ? AND (page = ? OR page = '*')
        ORDER BY page`,
       [lang, page]
     );
-    const result = {};
+    const result: Record<string, string> = {};
     for (const row of rows) {
       const key = row.component ? `${row.component}::${row.text}` : row.text;
       result[key] = row.translated;
@@ -263,7 +281,7 @@ export class DuckDbRepository {
     return result;
   }
 
-  async saveTranslation(entry) {
+  async saveTranslation(entry: TranslationEntry): Promise<void> {
     await this.run(
       `INSERT INTO translations(lang, page, component, text, translated)
        VALUES(?,?,?,?,?)
@@ -272,32 +290,32 @@ export class DuckDbRepository {
     );
   }
 
-  async updateTranslation(id, translated) {
+  async updateTranslation(id: any, translated: any): Promise<void> {
     await this.run('UPDATE translations SET translated = ? WHERE id = ?', [translated, id]);
   }
 
-  async deleteTranslation(id) {
+  async deleteTranslation(id: any): Promise<void> {
     await this.run('DELETE FROM translations WHERE id = ?', [id]);
   }
 }
 
-function convertRow(row) {
+function convertRow(row: Record<string, any>): Record<string, any> {
   return Object.fromEntries(Object.entries(row).map(([key, value]) => [
     key,
     typeof value === 'bigint' ? Number(value) : value instanceof Date ? value.toISOString() : value,
   ]));
 }
 
-function bindNamedParams(sql, params = {}) {
-  const values = [];
-  const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_, name) => {
+function bindNamedParams(sql: string, params: Record<string, any> = {}) {
+  const values: any[] = [];
+  const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_: string, name: string) => {
     values.push(params[name] ?? null);
     return '?';
   });
   return { statement, values };
 }
 
-function splitSQL(sql) {
+function splitSQL(sql: string): string[] {
   const noComments = sql.replace(/--[^\n]*/g, '');
   return noComments
     .split(';')

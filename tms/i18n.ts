@@ -1,10 +1,9 @@
-// @ts-nocheck
 class I18n {
-  lang = 'en';
-  _cache = new Map(); // 'en:fleet' → { text: translated, ... }
-  _listeners = new Set();
+  lang: string = 'en';
+  _cache: Map<string, Record<string, string>> = new Map(); // 'en:fleet' → { text: translated, ... }
+  _listeners: Set<(lang: string) => void> = new Set();
 
-  async setLang(lang) {
+  async setLang(lang: string) {
     if (lang === this.lang && this._cache.has(`${lang}:*`)) return;
     this.lang = lang;
     document.documentElement.setAttribute('lang', lang);
@@ -12,10 +11,10 @@ class I18n {
     // Fetch global strings
     await this.prefetch('*');
     // Notify listeners (triggers page redraw if wired up)
-    this._listeners.forEach(fn => fn(lang));
+    this._listeners.forEach((fn) => fn(lang));
   }
 
-  async prefetch(page) {
+  async prefetch(page: string) {
     const key = `${this.lang}:${page}`;
     if (this._cache.has(key)) return;
     try {
@@ -31,7 +30,7 @@ class I18n {
   }
 
   // Translate: looks up page-specific then global
-  t(page, component, text) {
+  t(page: string, component: string | null, text: string) {
     const pageBucket   = this._cache.get(`${this.lang}:${page}`) || {};
     const globalBucket = this._cache.get(`${this.lang}:*`)        || {};
     const lookup = component ? `${component}::${text}` : text;
@@ -42,7 +41,7 @@ class I18n {
       ?? text;
   }
 
-  onChange(fn) {
+  onChange(fn: (lang: string) => void) {
     this._listeners.add(fn);
     return () => this._listeners.delete(fn);
   }

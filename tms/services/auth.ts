@@ -1,12 +1,13 @@
-// @ts-nocheck
 import { SignJWT, jwtVerify } from 'jose';
 
 export class JwtAuthProvider {
-  constructor(secret) {
+  secret: Uint8Array;
+
+  constructor(secret: Uint8Array) {
     this.secret = secret;
   }
 
-  sign(payload) {
+  sign(payload: any) {
     return new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -14,7 +15,7 @@ export class JwtAuthProvider {
       .sign(this.secret);
   }
 
-  async login(email, password, repository) {
+  async login(email: string, password: string, repository: any) {
     const user = await repository.getLoginUserByEmail(email);
     if (!user) throw { status: 401, message: 'Invalid credentials' };
 
@@ -46,7 +47,7 @@ export class JwtAuthProvider {
     return { token, user: tokenPayload };
   }
 
-  async changePassword(userId, currentPassword, newPassword, repository) {
+  async changePassword(userId: any, currentPassword: string, newPassword: string, repository: any) {
     const stored = await repository.getUserPasswordHash(userId);
     if (!stored) throw { status: 404, message: 'User not found' };
     let currentValid = false;
@@ -61,7 +62,7 @@ export class JwtAuthProvider {
     return true;
   }
 
-  async getCurrentUser(request) {
+  async getCurrentUser(request: Request) {
     const auth = request.headers.get('Authorization') || '';
     if (!auth.startsWith('Bearer ')) throw { status: 401, message: 'Unauthorized' };
     try {
@@ -72,11 +73,11 @@ export class JwtAuthProvider {
     }
   }
 
-  hasPermission(user, permission) {
+  hasPermission(user: any, permission: string) {
     return user.permissions?.includes(permission) || false;
   }
 
-  getSecurityContext(user) {
+  getSecurityContext(user: any) {
     return { allowedBranches: user.branches || [], permissions: user.permissions || [] };
   }
 }
