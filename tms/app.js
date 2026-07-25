@@ -8,15 +8,15 @@ const TOKEN_KEY = 'tms_token';
 let _user = null;
 let _shell = null;
 
-// Routes: string = YAML file path, function = JS module loader
+// Routes: string = server page id, function = JS module loader
 const ROUTES = {
   '/login':        () => import('/tms/pages/login.js'),
-  '/fleet':        '/tms/fleet.yaml',
-  '/drivers':      '/tms/drivers.yaml',
-  '/trips':        '/tms/trips.yaml',
-  '/maintenance':  '/tms/maintenance.yaml',
-  '/reports':      '/tms/reports.yaml',
-  '/settings':     '/tms/settings.yaml',
+  '/fleet':        'fleet',
+  '/drivers':      'drivers',
+  '/trips':        'trips',
+  '/maintenance':  'maintenance',
+  '/reports':      'reports',
+  '/settings':     'settings',
 };
 
 const ROUTE_TITLES = {
@@ -102,9 +102,10 @@ async function renderRoute(path) {
   try {
     outlet.innerHTML = '';
     if (typeof loader === 'string') {
-      // YAML route — fetch and render via page-renderer
-      const text = await fetch(loader).then(r => r.text());
-      const config = jsyaml.load(text);
+      // The server strips datasource definitions before returning the page config.
+      const res = await apiFetch(`/api/pages/${loader}`);
+      if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
+      const config = await res.json();
       await renderPage(config, { container: outlet });
     } else {
       // JS module route (e.g. login)

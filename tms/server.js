@@ -116,6 +116,8 @@ function mimeFor(path) {
 async function serveStatic(pathname) {
   const rel = pathname.startsWith('/') ? pathname.slice(1) : pathname;
   if (!rel.startsWith('tms/') && !rel.startsWith('lib/')) return null;
+  // Page YAML contains server-only datasource SQL and must never be served.
+  if (rel.startsWith('tms/') && /\.ya?ml$/i.test(rel)) return null;
   try {
     const file = Bun.file(join(PROJECT_ROOT, rel));
     if (await file.exists()) {
@@ -189,6 +191,17 @@ function loadSources() {
 }
 
 const SOURCES = loadSources();
+const PAGES = new Map(
+  SOURCE_FILES.map((file) => {
+    const page = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
+    return [page.page?.id, page];
+  })
+);
+
+function publicPageConfig(page) {
+  const { datasources, ...config } = page;
+  return config;
+}
 
 function bindNamedParams(sql, params = {}) {
   const values = [];
@@ -219,354 +232,6 @@ async function querySource(source, params, skip, top) {
     meta: { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) },
   };
 }
-
-/* Legacy registry retained below temporarily while the query definitions are
- * migrated to YAML. It is not used by the API. */
-const LEGACY_SOURCES = {
-  trucks: {
-    permission: 'fleet.read',
-    paginated: true,
-    async query(params, skip, top) {
-      const parts = ['1=1'];
-      const qp = [];
-      if (params.status) { parts.push('t.status = ?'); qp.push(params.status); }
-      if (params.type)   { parts.push('t.type = ?');   qp.push(params.type); }
-      if (params.q) {
-        parts.push('(t.plate ILIKE ? OR t.model ILIKE ? OR d.name ILIKE ?)');
-        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
-      }
-      const where = 'WHERE ' + parts.join(' AND ');
-      const [countRow] = await all(
-        `SELECT COUNT(*) as n FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id ${where}`,
-        qp
-      );
-      const total = Number(countRow?.n || 0);
-      const rows = await all(
-        `SELECT t.*, d.name as driver_name, d.phone as driver_phone,
-          (t.next_service IS NOT NULL AND t.next_service < CURRENT_DATE) as overdue_next
-         FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id
-         ${where} ORDER BY t.plate LIMIT ? OFFSET ?`,
-        [...qp, top, skip]
-      );
-      const pageSize = top;
-      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
-      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
-    },
-  },
-
-  trucks_kpis: {
-    permission: 'fleet.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT COUNT(*) as total,
-          COUNT(*) FILTER (WHERE status='Active') as active,
-          COUNT(*) FILTER (WHERE status='Maintenance') as maintenance,
-          COUNT(*) FILTER (WHERE status='Out of Service') as out_of_service,
-          COUNT(*) FILTER (WHERE next_service IS NOT NULL AND next_service < CURRENT_DATE) as overdue_service
-        FROM trucks
-      `);
-      return { data: rows[0] };
-    },
-  },
-
-  drivers: {
-    permission: 'drivers.read',
-    paginated: true,
-    async query(params, skip, top) {
-      const parts = ['1=1'];
-      const qp = [];
-      if (params.status) { parts.push('d.status = ?'); qp.push(params.status); }
-      if (params.q) {
-        parts.push('(d.name ILIKE ? OR d.license_number ILIKE ? OR d.email ILIKE ?)');
-        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
-      }
-      const where = 'WHERE ' + parts.join(' AND ');
-      const [countRow] = await all(`SELECT COUNT(*) as n FROM drivers d ${where}`, qp);
-      const total = Number(countRow?.n || 0);
-      const rows = await all(
-        `SELECT d.*, t.plate as truck_plate,
-          (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE) as license_overdue,
-          (d.license_expiry IS NOT NULL AND d.license_expiry < (CURRENT_DATE + INTERVAL '30 days')) as license_expiring
-         FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id
-         ${where} ORDER BY d.name LIMIT ? OFFSET ?`,
-        [...qp, top, skip]
-      );
-      const pageSize = top;
-      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
-      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
-    },
-  },
-
-  drivers_stats: {
-    permission: 'drivers.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT COUNT(*) as total_count,
-          COUNT(*) FILTER (WHERE status='Active') as active_count,
-          COUNT(*) FILTER (WHERE status='On Leave') as on_leave_count,
-          COUNT(*) FILTER (WHERE license_expiry < (CURRENT_DATE + INTERVAL '30 days')) as expiring_count
-        FROM drivers
-      `);
-      return { data: rows[0] };
-    },
-  },
-
-  trips: {
-    permission: 'trips.read',
-    paginated: true,
-    async query(params, skip, top) {
-      const parts = ['1=1'];
-      const qp = [];
-      if (params.status) { parts.push('tr.status = ?'); qp.push(params.status); }
-      if (params.q) {
-        parts.push('(tr.trip_number ILIKE ? OR tr.origin ILIKE ? OR tr.destination ILIKE ? OR t.plate ILIKE ? OR d.name ILIKE ?)');
-        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
-      }
-      const where = 'WHERE ' + parts.join(' AND ');
-      const [countRow] = await all(
-        `SELECT COUNT(*) as n FROM trips tr
-         LEFT JOIN trucks t ON t.id = tr.truck_id
-         LEFT JOIN drivers d ON d.id = tr.driver_id
-         ${where}`,
-        qp
-      );
-      const total = Number(countRow?.n || 0);
-      const rows = await all(
-        `SELECT tr.*, t.plate as truck_plate, d.name as driver_name
-         FROM trips tr
-         LEFT JOIN trucks t ON t.id = tr.truck_id
-         LEFT JOIN drivers d ON d.id = tr.driver_id
-         ${where} ORDER BY tr.departure_time DESC LIMIT ? OFFSET ?`,
-        [...qp, top, skip]
-      );
-      const pageSize = top;
-      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
-      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
-    },
-  },
-
-  trips_stats: {
-    permission: 'trips.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT
-          COUNT(*) FILTER (WHERE status='Scheduled') as scheduled_count,
-          COUNT(*) FILTER (WHERE status='In Transit') as in_transit_count,
-          COUNT(*) FILTER (WHERE status='Completed' AND DATE(arrival_time)=CURRENT_DATE) as completed_today,
-          COUNT(*) FILTER (WHERE status='Cancelled') as cancelled_count
-        FROM trips
-      `);
-      return { data: rows[0] };
-    },
-  },
-
-  maintenance: {
-    permission: 'maintenance.read',
-    paginated: true,
-    async query(params, skip, top) {
-      const parts = ['1=1'];
-      const qp = [];
-      if (params.status)       { parts.push('m.status = ?');       qp.push(params.status); }
-      if (params.service_type) { parts.push('m.service_type = ?'); qp.push(params.service_type); }
-      if (params.q) {
-        parts.push('(t.plate ILIKE ? OR m.service_type ILIKE ? OR m.notes ILIKE ?)');
-        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
-      }
-      const where = 'WHERE ' + parts.join(' AND ');
-      const [countRow] = await all(
-        `SELECT COUNT(*) as n FROM maintenance m LEFT JOIN trucks t ON t.id = m.truck_id ${where}`,
-        qp
-      );
-      const total = Number(countRow?.n || 0);
-      const rows = await all(
-        `SELECT m.*, t.plate as truck_plate, t.model as truck_model, u.name as technician_name
-         FROM maintenance m
-         LEFT JOIN trucks t ON t.id = m.truck_id
-         LEFT JOIN users u ON u.id = m.technician_id
-         ${where} ORDER BY m.scheduled_date DESC LIMIT ? OFFSET ?`,
-        [...qp, top, skip]
-      );
-      const pageSize = top;
-      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
-      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
-    },
-  },
-
-  maintenance_kpis: {
-    permission: 'maintenance.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT
-          COUNT(*) FILTER (WHERE status='Overdue' OR (status='Scheduled' AND scheduled_date < CURRENT_DATE)) as overdue,
-          COUNT(*) FILTER (WHERE scheduled_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days') AND status='Scheduled') as due_this_week,
-          COUNT(*) FILTER (WHERE status='In Progress') as in_progress,
-          COUNT(*) FILTER (WHERE status='Completed' AND completed_date >= date_trunc('month', CURRENT_DATE)) as completed_month
-        FROM maintenance
-      `);
-      return { data: rows[0] };
-    },
-  },
-
-  branches: {
-    permission: 'settings.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT b.*, COUNT(t.id) as truck_count
-        FROM branches b LEFT JOIN trucks t ON t.branch_id = b.id
-        GROUP BY b.id, b.name, b.city, b.region, b.status, b.created_at, b.updated_at
-        ORDER BY b.name
-      `);
-      return { data: rows };
-    },
-  },
-
-  users: {
-    permission: 'settings.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
-          string_agg(r.name, ',') as roles_csv
-        FROM users u
-        LEFT JOIN user_roles ur ON ur.user_id = u.id
-        LEFT JOIN roles r ON r.id = ur.role_id
-        GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at
-        ORDER BY u.name
-      `);
-      return {
-        data: rows.map((r) => ({
-          ...r,
-          roles: r.roles_csv ? r.roles_csv.split(',').filter(Boolean) : [],
-        })),
-      };
-    },
-  },
-
-  roles: {
-    permission: 'settings.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT r.*, COUNT(p.id) as permission_count
-        FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
-        GROUP BY r.id, r.name, r.description
-        ORDER BY r.name
-      `);
-      return { data: rows };
-    },
-  },
-
-  translations: {
-    permission: 'settings.read',
-    paginated: true,
-    async query(params, skip, top) {
-      const parts = ['1=1'];
-      const qp = [];
-      if (params.lang)        { parts.push('lang = ?');  qp.push(params.lang); }
-      if (params.page_filter) { parts.push('page = ?');  qp.push(params.page_filter); }
-      if (params.q) {
-        parts.push('(text ILIKE ? OR translated ILIKE ?)');
-        qp.push(`%${params.q}%`, `%${params.q}%`);
-      }
-      const where = 'WHERE ' + parts.join(' AND ');
-      const [countRow] = await all(`SELECT COUNT(*) as n FROM translations ${where}`, qp);
-      const total = Number(countRow?.n || 0);
-      const rows = await all(
-        `SELECT * FROM translations ${where} ORDER BY page, component, text LIMIT ? OFFSET ?`,
-        [...qp, top, skip]
-      );
-      const pageSize = top;
-      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
-      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
-    },
-  },
-
-  reports_fleet: {
-    permission: 'reports.read',
-    paginated: false,
-    async query() {
-      const summary = await all(`
-        SELECT
-          COUNT(*) as total_trucks,
-          COUNT(*) FILTER (WHERE status = 'Active') as active_trucks,
-          COUNT(*) FILTER (WHERE status = 'Maintenance') as maintenance_trucks,
-          COUNT(*) FILTER (WHERE status = 'Out of Service') as out_of_service_trucks,
-          ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'Active') / NULLIF(COUNT(*), 0), 1) as utilization_pct,
-          COUNT(driver_id) as assigned_drivers,
-          AVG(mileage) as avg_mileage
-        FROM trucks
-      `);
-      const trucks = await all(`
-        SELECT t.plate, t.model, t.status, t.mileage, t.type,
-          d.name as driver_name, b.name as branch_name
-        FROM trucks t
-        LEFT JOIN drivers d ON d.id = t.driver_id
-        LEFT JOIN branches b ON b.id = t.branch_id
-        ORDER BY t.mileage DESC
-      `);
-      return { summary: summary[0], trucks };
-    },
-  },
-
-  reports_costs: {
-    permission: 'reports.financials',
-    paginated: false,
-    async query() {
-      const breakdown = await all(`
-        SELECT
-          service_type,
-          date_trunc('month', scheduled_date) as month,
-          COUNT(*) as service_count,
-          SUM(cost) as total_cost,
-          AVG(cost) as avg_cost
-        FROM maintenance
-        WHERE status = 'Completed'
-        GROUP BY service_type, date_trunc('month', scheduled_date)
-        ORDER BY month DESC, total_cost DESC
-      `);
-      const overall = await all(`
-        SELECT
-          SUM(cost) as grand_total,
-          AVG(cost) as avg_cost,
-          COUNT(*) as total_services
-        FROM maintenance
-        WHERE status = 'Completed'
-      `);
-      return { breakdown, summary: overall[0] };
-    },
-  },
-
-  reports_drivers: {
-    permission: 'reports.read',
-    paginated: false,
-    async query() {
-      const rows = await all(`
-        SELECT
-          d.id as driver_id,
-          d.name as driver_name,
-          d.status as driver_status,
-          COUNT(tr.id) as total_trips,
-          COUNT(tr.id) FILTER (WHERE tr.status = 'Completed') as completed_trips,
-          COUNT(tr.id) FILTER (WHERE tr.status = 'Cancelled') as cancelled_trips,
-          COALESCE(SUM(tr.distance_km), 0) as total_km,
-          ROUND(
-            100.0 * COUNT(tr.id) FILTER (WHERE tr.status = 'Completed')
-            / NULLIF(COUNT(tr.id), 0), 1
-          ) as completion_rate
-        FROM drivers d
-        LEFT JOIN trips tr ON tr.driver_id = d.id
-        GROUP BY d.id, d.name, d.status
-        ORDER BY completed_trips DESC, total_km DESC
-      `);
-      return { data: rows };
-    },
-  },
-};
 
 // ── TABLE_REGISTRY ────────────────────────────────────────────────────────────
 const TABLE_REGISTRY = {
@@ -653,6 +318,15 @@ async function handleAPI(req, url) {
   const requirePerm = (perm) => {
     if (!hasPerm(perm)) throw { status: 403, message: `Requires permission: ${perm}` };
   };
+
+  // ── GET /api/pages/:id ────────────────────────────────────────────────────
+  const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
+  if (pageMatch && method === 'GET') {
+    const page = PAGES.get(pageMatch[1]);
+    if (!page) return apiError(404, `Unknown page: ${pageMatch[1]}`);
+    for (const permission of page.page?.auth?.require || []) requirePerm(permission);
+    return json(publicPageConfig(page));
+  }
 
   // ── POST /api/query ───────────────────────────────────────────────────────
   if (pathname === '/api/query' && method === 'POST') {
