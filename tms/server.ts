@@ -6,8 +6,8 @@ import { DuckDbRepository } from './services/repository.ts';
 import { JwtAuthProvider } from './services/auth.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
-// tms/server.js → PROJECT_ROOT is one level up
-const PROJECT_ROOT = join(import.meta.dir, '..');
+// TMS is now the package root.
+const PROJECT_ROOT = import.meta.dir;
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'tms-dev-secret-32chars!!!!'
 );
@@ -72,9 +72,9 @@ function mimeFor(path: string) {
 async function serveStatic(pathname: string) {
   const rel = pathname.startsWith('/') ? pathname.slice(1) : pathname;
   const packagePath = rel.startsWith('node_modules/@core3/framework/');
-  if (!rel.startsWith('tms/') && !packagePath) return null;
+  if (rel.includes('..')) return null;
   // Page YAML contains server-only datasource SQL and must never be served.
-  if (rel.startsWith('tms/') && /\.ya?ml$/i.test(rel)) return null;
+  if (rel.startsWith('pages/') && /\.ya?ml$/i.test(rel)) return null;
   try {
     const file = Bun.file(join(PROJECT_ROOT, rel));
     if (await file.exists()) {
@@ -93,7 +93,7 @@ async function serveStatic(pathname: string) {
 }
 
 async function serveSPA() {
-  const file = Bun.file(join(PROJECT_ROOT, 'tms/index.html'));
+  const file = Bun.file(join(PROJECT_ROOT, 'index.html'));
   if (await file.exists()) {
     return new Response(file, {
       headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
