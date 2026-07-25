@@ -3,31 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ERP Rendering Framework — Component Library</title>
+<title>ERP Rendering Framework — Roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
 <link rel="stylesheet" href="spec.css">
 <style>
-  .comp-grid { display: grid; gap: 2rem; }
-  .comp-card {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
+  .comp-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
   .comp-card-head {
     display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
-    padding: 1rem 1.25rem; background: var(--bg-subtle);
-    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem; background: var(--bg-subtle); border-bottom: 1px solid var(--border);
   }
   .comp-card-head h3 { margin: 0; font-size: 1rem; font-family: 'Space Grotesk', sans-serif; }
   .comp-card-body { padding: 1rem 1.25rem; }
   .comp-desc { margin: 0 0 .75rem; font-size: .875rem; color: var(--text-muted); }
-  .comp-file {
-    font-family: 'IBM Plex Mono', monospace; font-size: .72rem;
-    color: var(--indigo); background: #eef2ff; padding: .15rem .5rem;
-    border-radius: 4px; white-space: nowrap;
-  }
   .cat-tag {
     display: inline-block; font-size: .68rem; font-weight: 600; letter-spacing: .04em;
     text-transform: uppercase; padding: .2rem .55rem; border-radius: 99px;
@@ -39,8 +28,21 @@
   .field-table td:first-child { font-family: 'IBM Plex Mono', monospace; color: var(--indigo); white-space: nowrap; }
   .field-table td:nth-child(2) { font-family: 'IBM Plex Mono', monospace; color: #6b7280; white-space: nowrap; }
   .field-table tr:last-child td { border-bottom: none; }
-  .section-intro { margin-bottom: 1.5rem; }
-  .opt { color: #9ca3af; }
+  .phase-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .phase-head { padding: .75rem 1.25rem; background: var(--bg-subtle); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .phase-head span:first-child { font-family: 'Space Grotesk', sans-serif; font-size: .95rem; font-weight: 600; }
+  .phase-body { padding: 1rem 1.25rem; }
+  .badge-done    { font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .6rem;border-radius:99px;background:#dcfce7;color:#15803d }
+  .badge-next    { font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .6rem;border-radius:99px;background:#fef9c3;color:#a16207 }
+  .badge-planned { font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .6rem;border-radius:99px;background:#fef9c3;color:#a16207 }
+  .badge-future  { font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.2rem .6rem;border-radius:99px;background:#f3f4f6;color:#6b7280 }
+  .check-list { list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem;font-size:.875rem }
+  .check-list li { display:flex;align-items:flex-start;gap:.5rem }
+  .done-icon  { color:#16a34a;flex-shrink:0 }
+  .todo-icon  { color:#d1d5db;flex-shrink:0 }
+  .callout { border-left:3px solid var(--indigo);padding:.75rem 1rem;background:#f8f9ff;border-radius:0 8px 8px 0;margin:1.25rem 0 2rem;font-size:.875rem;color:#374151 }
+  .callout strong { display:block;margin-bottom:.35rem;color:var(--indigo) }
+  .comp-grid { display: grid; gap: 1.25rem; }
 </style>
 </head>
 <body>
@@ -51,40 +53,33 @@
 </div>
 
 <header class="page-hero">
-  <span class="eyebrow">UI layer</span>
-  <h1>Component library</h1>
-  <p class="hero-sub">23 components across 7 categories. Each lives in its own file under <code class="kw">lib/components/</code> and extends <code class="kw">BaseComponent</code>. Import individually or via the barrel at <code class="kw">lib/components.js</code>.</p>
+  <span class="eyebrow">Roadmap</span>
+  <h1>Plan &amp; next steps</h1>
+  <p class="hero-sub">Phase status, TMS example design, and the patterns we expect to extract back into the core lib. Component reference is at <a href="components.html">components.html</a>.</p>
 </header>
 
 <div class="layout">
   <aside class="sidebar">
     <span class="sidebar-label">Spec navigation</span>
-    <nav id="toc">
+    <nav>
+      <div class="nav-group"><a href="main.html">Overview</a></div>
+      <div class="nav-group"><a href="frontend.html">Frontend rendering</a></div>
+      <div class="nav-group"><a href="backend.html">Backend pipeline</a></div>
+      <div class="nav-group"><a href="scripting.html">Scripting engine</a></div>
+      <div class="nav-group"><a href="reference.html">Reference</a></div>
       <div class="nav-group">
-        <a href="main.html">Overview</a>
+        <a href="components.html">Component library</a>
       </div>
       <div class="nav-group">
-        <a href="frontend.html">Frontend rendering</a>
-      </div>
-      <div class="nav-group">
-        <a href="backend.html">Backend pipeline</a>
-      </div>
-      <div class="nav-group">
-        <a href="scripting.html">Scripting engine</a>
-      </div>
-      <div class="nav-group">
-        <a href="reference.html">Reference</a>
-      </div>
-      <div class="nav-group">
-        <a href="plan.html" class="current-page">Component library</a>
+        <a href="plan.html" class="current-page">Roadmap</a>
         <div class="sub-links">
-          <a href="#cells">Cell components</a>
-          <a href="#views">Grid &amp; List</a>
-          <a href="#inputs">Form inputs</a>
-          <a href="#form-container">Form container</a>
-          <a href="#kpi">KPI / Summary</a>
-          <a href="#layout">Layout</a>
-          <a href="#controls">Controls</a>
+          <a href="#progress">Progress</a>
+          <a href="#tms">TMS example</a>
+          <a href="#meta-model">Meta model</a>
+          <a href="#backend-comms">Backend comms</a>
+          <a href="#patterns">Patterns to extract</a>
+          <a href="#new-components">New components</a>
+          <a href="#new-props">New YAML props</a>
         </div>
       </div>
     </nav>
@@ -92,302 +87,212 @@
 
   <main class="main">
 
-    <!-- ── Import note ── -->
-    <section>
-      <span class="kicker">Usage</span>
-      <h2>Importing components</h2>
-      <p>All components are available from the barrel or from their individual file:</p>
-      <pre><code class="language-javascript">// Barrel — import any mix
-import { GridView, FormPanel, StatRow, FilterBar } from '/lib/components.js';
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- PROGRESS                                               -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="progress">
+      <span class="kicker">Status</span>
+      <h2>Progress</h2>
+      <div style="display:grid;gap:1.5rem;margin-bottom:2rem">
 
-// Individual file — explicit dependency
-import { GridView }  from '/lib/components/GridView.js';
-import { TextInput } from '/lib/components/TextInput.js';</code></pre>
-      <p>Each component file only imports what it needs (<code class="kw">html</code> singleton, <code class="kw">BaseComponent</code>, helpers). Shared formatting utilities live in <code class="kw">lib/components/helpers.js</code>.</p>
+        <div class="phase-card">
+          <div class="phase-head">
+            <span>Phase 1 — Core library</span>
+            <span class="badge-done">Complete</span>
+          </div>
+          <div class="phase-body">
+            <ul class="check-list">
+              <li><span class="done-icon">✓</span> <code class="kw">lib/html.js</code> — fluent DOM builder singleton</li>
+              <li><span class="done-icon">✓</span> <code class="kw">lib/runtime.js</code> — BaseComponent + component tree</li>
+              <li><span class="done-icon">✓</span> <code class="kw">lib/components/</code> — 23 components, one file each</li>
+              <li><span class="done-icon">✓</span> <code class="kw">lib/components.js</code> — barrel re-export</li>
+              <li><span class="done-icon">✓</span> <code class="kw">lib/interfaces/</code> — component.ts, datasource.ts, auth.ts, runtime.ts</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-head">
+            <span>Phase 1 — Demo &amp; tests</span>
+            <span class="badge-done">Complete</span>
+          </div>
+          <div class="phase-body">
+            <ul class="check-list">
+              <li><span class="done-icon">✓</span> <code class="kw">test/catalog/index.html</code> — visual component catalog</li>
+              <li><span class="done-icon">✓</span> <code class="kw">test/pages/truck-fleet.html</code> — fleet overview demo</li>
+              <li><span class="done-icon">✓</span> <code class="kw">test/pages/truck-detail.html</code> — detail + SplitPanel + FormPanel demo</li>
+              <li><span class="done-icon">✓</span> <code class="kw">test/pages/maintenance.html</code> — maintenance dashboard demo</li>
+              <li><span class="done-icon">✓</span> <code class="kw">test/cases/</code> — base-component, grid-view, form, datasource test specs</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-head">
+            <span>Phase 2 — DuckDB datasource</span>
+            <span class="badge-next">Next up</span>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 .75rem">Must be working before the TMS example, as all TMS pages query data through DuckDB.</p>
+            <ul class="check-list" style="color:var(--text-muted)">
+              <li><span class="todo-icon">○</span> DuckDB WASM in browser — query parquet / JSON files directly</li>
+              <li><span class="todo-icon">○</span> <code class="kw">DataSource</code> adapter — resolves <code>protocol: duckdb</code> in page config</li>
+              <li><span class="todo-icon">○</span> <code class="kw">SqlViewModel</code> query DTO — select, where, orderBy, groupBy, skip, top</li>
+              <li><span class="todo-icon">○</span> <code class="kw">PatchVM</code> write DTO — table + changes array (field, oldVal, value)</li>
+              <li><span class="todo-icon">○</span> Node.js DuckDB package for vitest test cases</li>
+              <li><span class="todo-icon">○</span> <code class="kw">:allowed_branches</code> row-level security injection</li>
+              <li><span class="todo-icon">○</span> TTL cache layer — avoids re-querying within same page load</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-head">
+            <span>Phase 3 — TMS complete example</span>
+            <span class="badge-planned">Planned</span>
+          </div>
+          <div class="phase-body">
+            <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 .75rem">Real-world dogfood. Every friction point feeds back into the core lib as a new component, YAML prop, or pattern.</p>
+            <ul class="check-list" style="color:var(--text-muted)">
+              <li><span class="todo-icon">○</span> <strong style="color:#374151">Fleet module</strong> — truck list, detail, add/edit</li>
+              <li><span class="todo-icon">○</span> <strong style="color:#374151">Driver module</strong> — driver list, profile, assignment workflow</li>
+              <li><span class="todo-icon">○</span> <strong style="color:#374151">Trip module</strong> — trip log, route detail, mileage tracking</li>
+              <li><span class="todo-icon">○</span> <strong style="color:#374151">Maintenance module</strong> — work orders, schedule, cost history</li>
+              <li><span class="todo-icon">○</span> <strong style="color:#374151">Reports module</strong> — fleet utilization, cost analysis, driver performance</li>
+              <li><span class="todo-icon">○</span> <strong style="color:#374151">Settings module</strong> — branches, users, roles, permissions</li>
+              <li><span class="todo-icon">○</span> Extract patterns → new components + YAML props in core lib</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-head">
+            <span>Phase 4 — Scripting engine</span>
+            <span class="badge-planned">Planned</span>
+          </div>
+          <div class="phase-body">
+            <ul class="check-list" style="color:var(--text-muted)">
+              <li><span class="todo-icon">○</span> <code class="kw">new Function</code> sandbox with frozen <code>ScriptContext</code> (user, params, db, http, log, env)</li>
+              <li><span class="todo-icon">○</span> Expression evaluator for <code>show_if</code>, <code>disabled_if</code>, <code>compute</code>, <code>validation</code> props</li>
+              <li><span class="todo-icon">○</span> <code>EventBus</code> — cross-component events via <code>handles</code> config</li>
+              <li><span class="todo-icon">○</span> CRUD scaffolding — auto-generated insert / update / delete from <code>crud: true</code></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase-card">
+          <div class="phase-head">
+            <span>Phase 5 — Packages</span>
+            <span class="badge-future">Future</span>
+          </div>
+          <div class="phase-body">
+            <ul class="check-list" style="color:var(--text-muted)">
+              <li><span class="todo-icon">○</span> <code class="kw">@core3/frontend</code> npm package — runtime + components</li>
+              <li><span class="todo-icon">○</span> <code class="kw">@core3/backend</code> npm package — datasource pipeline, auth, scripting</li>
+              <li><span class="todo-icon">○</span> YAML → JSON page compiler (build step)</li>
+              <li><span class="todo-icon">○</span> vitest setup + CI pipeline</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
-    <!-- CELL COMPONENTS                                        -->
+    <!-- TMS COMPLETE EXAMPLE                                   -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section id="cells">
-      <span class="kicker">Grid rows</span>
-      <h2>Cell components</h2>
-      <p class="section-intro">Cell components render a single value inside a <code class="kw">GridView</code> or <code class="kw">ListView</code> column. <code class="kw">GridView</code> constructs each cell via <code class="kw">CELL_MAP[def.type]</code> and passes the resolved state automatically — you never instantiate cells directly.</p>
+    <section id="tms">
+      <span class="kicker">Phase 3</span>
+      <h2>TMS complete example</h2>
+      <p>Build a full Truck Management System using only YAML page configs and the core lib — no hand-coded UI logic per page. The goal is not just working pages: it is to discover every place the framework falls short, every repeated structure that deserves a shorthand, and every JS expression that could be a YAML property. All of that feeds back into the core lib.</p>
 
-      <div class="comp-grid">
+      <div class="callout">
+        <strong>Pattern-extraction rule</strong>
+        When the same structure appears in two modules, write a YAML shorthand for it. When it appears in three, it becomes a first-class framework concept — a new component, prop, or layout type.
+      </div>
 
-        <!-- TextCell -->
-        <div class="comp-card" id="TextCell">
-          <div class="comp-card-head">
-            <h3>TextCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/TextCell.js</span>
-            </div>
-          </div>
+      <h3 style="font-family:'Space Grotesk',sans-serif;margin-bottom:1rem">Modules &amp; pages</h3>
+      <div class="comp-grid" style="margin-bottom:2rem">
+
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Fleet module</h3><span class="cat-tag">module</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Displays a primary text value with an optional muted secondary line below it. Default cell type when no match is found in CELL_MAP.</p>
             <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <thead><tr><th>Page</th><th>Components used</th><th>YAML concepts exercised</th></tr></thead>
               <tbody>
-                <tr><td>value</td><td>any</td><td>Primary text</td></tr>
-                <tr><td>secondary <span class="opt">?</span></td><td>string | null</td><td>Muted subtitle line</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key for primary value</td></tr>
-                <tr><td>secondary <span class="opt">?</span></td><td>string</td><td>Row key for subtitle value</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Column header text</td></tr>
-                <tr><td>align <span class="opt">?</span></td><td>'left'|'right'|'center'</td><td>Column alignment</td></tr>
+                <tr><td>fleet-list</td><td>StatRow, FilterBar, GridView (BadgeCell, DateCell, ActionCell)</td><td>datasource, pagination, filters[], column defs, navigate_to</td></tr>
+                <tr><td>truck-detail</td><td>SplitPanel, FormPanel (all inputs), GridView (maintenance log), TimelinePanel</td><td>master-detail layout, related datasource, readonly fields, tabs</td></tr>
+                <tr><td>truck-add</td><td>FormPanel, Button</td><td>create CRUD action, required validation, navigate_to on success</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- BadgeCell -->
-        <div class="comp-card" id="BadgeCell">
-          <div class="comp-card-head">
-            <h3>BadgeCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/BadgeCell.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Driver module</h3><span class="cat-tag">module</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Renders a pill badge. Color resolves automatically from <code class="kw">STATUS_COLORS</code> by lowercased value, or can be overridden via <code class="kw">colorField</code>.</p>
             <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <thead><tr><th>Page</th><th>Components used</th><th>YAML concepts exercised</th></tr></thead>
               <tbody>
-                <tr><td>value</td><td>string</td><td>Badge text</td></tr>
-                <tr><td>color <span class="opt">?</span></td><td>string | null</td><td>Tailwind class override (e.g. <code>bg-blue-100 text-blue-800</code>)</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key for badge text</td></tr>
-                <tr><td>colorField <span class="opt">?</span></td><td>string</td><td>Row key whose value overrides badge color</td></tr>
+                <tr><td>driver-list</td><td>StatRow, FilterBar, GridView (AvatarCell, BadgeCell, ActionCell)</td><td>visible_if on row actions, search filter</td></tr>
+                <tr><td>driver-detail</td><td>FormPanel, TabPanel (active trips, history)</td><td>tabs with nested datasources, on_after_save lifecycle</td></tr>
+                <tr><td>assign-driver</td><td>SearchEntry (truck picker), Button, GridView (assignments)</td><td>depends_on cascading — branch → available trucks</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- CurrencyCell -->
-        <div class="comp-card" id="CurrencyCell">
-          <div class="comp-card-head">
-            <h3>CurrencyCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/CurrencyCell.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Trip module</h3><span class="cat-tag">module</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Formats a numeric value as currency using <code class="kw">Intl.NumberFormat</code>. Right-aligned by default.</p>
             <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <thead><tr><th>Page</th><th>Components used</th><th>YAML concepts exercised</th></tr></thead>
               <tbody>
-                <tr><td>value</td><td>number | null</td><td>Numeric amount</td></tr>
-                <tr><td>currency <span class="opt">?</span></td><td>string</td><td>ISO 4217 code, default <code>'USD'</code></td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key for numeric amount</td></tr>
-                <tr><td>currency <span class="opt">?</span></td><td>string</td><td>Default currency code</td></tr>
+                <tr><td>trip-list</td><td>FilterBar (date-range, select), GridView (DateCell, CurrencyCell, NumberCell, BooleanCell)</td><td>multi-field sort, export: csv</td></tr>
+                <tr><td>trip-detail</td><td>StatRow, FormPanel (readonly), ProgressBar (fuel efficiency)</td><td>compute: expression on fields, readonly form mode</td></tr>
+                <tr><td>trip-log</td><td>FormPanel, GridView (summary_row), Button</td><td>summary_row: true, auto-totals</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- NumberCell -->
-        <div class="comp-card" id="NumberCell">
-          <div class="comp-card-head">
-            <h3>NumberCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/NumberCell.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Maintenance module</h3><span class="cat-tag">module</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Formats integers, floats, or percentages with locale-aware separators.</p>
             <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <thead><tr><th>Page</th><th>Components used</th><th>YAML concepts exercised</th></tr></thead>
               <tbody>
-                <tr><td>value</td><td>number | null</td><td>Numeric value</td></tr>
-                <tr><td>format <span class="opt">?</span></td><td>'number'|'percent'</td><td>Default <code>'number'</code></td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key</td></tr>
-                <tr><td>format <span class="opt">?</span></td><td>string</td><td><code>'number'</code> or <code>'percent'</code></td></tr>
+                <tr><td>maintenance-list</td><td>FilterBar, TabPanel (All / Overdue / Scheduled / Done), GridView</td><td>tab-scoped datasource, overdue_field on DateCell</td></tr>
+                <tr><td>work-order</td><td>FormPanel (parts, labour, cost), Button (Mark Done, Reschedule)</td><td>confirm: on destructive action, on_before_save validation</td></tr>
+                <tr><td>schedule</td><td>GridView, ProgressBar row (fleet health, inspections, oil)</td><td>threshold: color bands on ProgressBar</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- DateCell -->
-        <div class="comp-card" id="DateCell">
-          <div class="comp-card-head">
-            <h3>DateCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/DateCell.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Reports module</h3><span class="cat-tag">module</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Renders a date in short, long, or relative format. Turns red when the overdue flag is set.</p>
             <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <thead><tr><th>Page</th><th>Components used</th><th>YAML concepts exercised</th></tr></thead>
               <tbody>
-                <tr><td>value</td><td>string | null</td><td>ISO date or datetime string</td></tr>
-                <tr><td>format <span class="opt">?</span></td><td>'short'|'long'|'relative'</td><td>Default <code>'short'</code></td></tr>
-                <tr><td>overdue <span class="opt">?</span></td><td>boolean</td><td>Renders text in red when true</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key for date value</td></tr>
-                <tr><td>format <span class="opt">?</span></td><td>string</td><td>Display format</td></tr>
-                <tr><td>overdueField <span class="opt">?</span></td><td>string</td><td>Row key whose boolean value drives the red style</td></tr>
+                <tr><td>fleet-utilization</td><td>StatRow, Chart (bar), GridView (PercentCell), ButtonExcel</td><td>group_by datasource, export: xlsx, compute: percent</td></tr>
+                <tr><td>cost-analysis</td><td>FilterBar (date-range, branch), GridView (grouped, summary_row), StatRow</td><td>group_by, summary_row: true, export: pdf</td></tr>
+                <tr><td>driver-performance</td><td>GridView (RankCell, BadgeCell grade, NumberCell)</td><td>computed rank field, conditional badge color via compute:</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <!-- BooleanCell -->
-        <div class="comp-card" id="BooleanCell">
-          <div class="comp-card-head">
-            <h3>BooleanCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/BooleanCell.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Settings module</h3><span class="cat-tag">module</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Displays a green checkmark for true, a gray dash for false/null.</p>
             <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <thead><tr><th>Page</th><th>Components used</th><th>YAML concepts exercised</th></tr></thead>
               <tbody>
-                <tr><td>value</td><td>boolean</td><td>The boolean to render</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key (value is coerced to boolean)</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ActionCell -->
-        <div class="comp-card" id="ActionCell">
-          <div class="comp-card-head">
-            <h3>ActionCell</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">cell</span>
-              <span class="comp-file">lib/components/ActionCell.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Renders one or more inline buttons per row. Clicking calls <code class="kw">submit(action.id, { row })</code> which bubbles to the root <code class="kw">_onAction</code> handler.</p>
-            <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>actions</td><td>ActionDef[]</td><td>Array of button definitions</td></tr>
-                <tr><td>row</td><td>object</td><td>The full data row, passed to the handler</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>ActionDef field</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>id</td><td>string</td><td>Action name emitted to <code>_onAction</code></td></tr>
-                <tr><td>label</td><td>string</td><td>Button text</td></tr>
-                <tr><td>variant <span class="opt">?</span></td><td>'primary'|'danger'|'ghost'</td><td>Color style</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div><!-- /comp-grid -->
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════ -->
-    <!-- GRID & LIST                                            -->
-    <!-- ══════════════════════════════════════════════════════ -->
-    <section id="views">
-      <span class="kicker">Data display</span>
-      <h2>Grid &amp; List</h2>
-
-      <div class="comp-grid">
-
-        <!-- GridView -->
-        <div class="comp-card" id="GridView">
-          <div class="comp-card-head">
-            <h3>GridView</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">view</span>
-              <span class="comp-file">lib/components/GridView.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Tabular data view with pagination, loading skeleton, and per-column cell components. Cells are mounted via <code class="kw">data-cell</code> placeholder attributes so each is a real <code class="kw">BaseComponent</code> in the tree.</p>
-            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new GridView('fleet-grid', {
-  rows: [...],
-  meta: { total: 42, page: 1, pageSize: 10 },
-}, DEFS);</code></pre>
-            <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>rows</td><td>object[]</td><td>Data rows to render</td></tr>
-                <tr><td>meta</td><td>{ total, page, pageSize }</td><td>Drives pagination display and controls</td></tr>
-                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Shows animated skeleton rows</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def (column) prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>type</td><td>string</td><td>Cell class name, e.g. <code>'BadgeCell'</code></td></tr>
-                <tr><td>id</td><td>string</td><td>Unique column key (used for cell mounting)</td></tr>
-                <tr><td>field</td><td>string</td><td>Row key to read the value from</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Column header</td></tr>
-                <tr><td>align <span class="opt">?</span></td><td>'left'|'right'|'center'</td><td>Header and cell alignment</td></tr>
-                <tr><td>…</td><td></td><td>Additional props forwarded to the cell constructor</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ListView -->
-        <div class="comp-card" id="ListView">
-          <div class="comp-card-head">
-            <h3>ListView</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">view</span>
-              <span class="comp-file">lib/components/ListView.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Card-based vertical list. Each item renders a primary field, optional secondary line, and an optional badge. Suited for narrow panels or mobile-friendly layouts.</p>
-            <table class="field-table">
-              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>items</td><td>object[]</td><td>Data items to render</td></tr>
-                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Shows skeleton cards</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Row key for primary text (first def entry)</td></tr>
-                <tr><td>secondary <span class="opt">?</span></td><td>boolean</td><td>Mark a def entry as the subtitle field</td></tr>
-                <tr><td>type <span class="opt">?</span></td><td>'BadgeCell'</td><td>First def with this type is rendered as the badge</td></tr>
+                <tr><td>branches</td><td>GridView, FormPanel (inline)</td><td>inline_edit: true on grid rows</td></tr>
+                <tr><td>users</td><td>GridView (BooleanCell, BadgeCell role), ActionCell (Edit, Deactivate)</td><td>visible_if: "user.hasRole('admin')" on actions</td></tr>
+                <tr><td>roles &amp; permissions</td><td>SplitPanel, ListView (roles), CheckboxInput grid</td><td>permission matrix, can_read / can_write / can_delete flags per row</td></tr>
               </tbody>
             </table>
           </div>
@@ -397,182 +302,264 @@ import { TextInput } from '/lib/components/TextInput.js';</code></pre>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
-    <!-- FORM INPUTS                                            -->
+    <!-- COMPONENT META MODEL                                   -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section id="inputs">
-      <span class="kicker">Data entry</span>
-      <h2>Form inputs</h2>
-      <p class="section-intro">All inputs follow the same pattern: <code class="kw">constructor(id, state, def)</code>. They call <code class="kw">setState({ value }, false)</code> on change so state updates without triggering a full redraw. Register them with <code class="kw">FormPanel.registerField()</code> so the panel can collect and validate values.</p>
+    <section id="meta-model">
+      <span class="kicker">Design</span>
+      <h2>Component meta model</h2>
+      <p>Every component is driven by a <strong>ComponentDef</strong> config object — the declarative description of what to render and how to behave. The runtime reads this object and constructs the component tree. Inspired by the production core2 library's <code class="kw">Component</code> model.</p>
 
-      <div class="comp-grid">
+      <pre><code class="language-javascript">// The full shape of a ComponentDef
+{
+  // Identity
+  type:        string,   // 'GridView' | 'TextInput' | 'BadgeCell' | ...
+  id:          string,   // unique within the page
+  field:       string,   // data row key this component reads/writes
 
-        <div class="comp-card" id="TextInput">
-          <div class="comp-card-head">
-            <h3>TextInput</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">input</span>
-              <span class="comp-file">lib/components/TextInput.js</span>
-            </div>
-          </div>
+  // Display
+  label:       string,
+  align:       'left' | 'right' | 'center',
+  column:      number,   // grid column span (1–12)
+  row:         number,   // grid row position
+
+  // Declarative expressions — evaluated via new Function(expr) with { user, row, state }
+  show_if:     string,   // hide component when falsy  e.g. "user.hasRole('admin')"
+  disabled_if: string,   // disable input when truthy  e.g. "state.saving"
+  default:     string,   // initial value expression   e.g. "'Active'"
+  compute:     string,   // derive cell value per row  e.g. "row.done / row.total"
+  validation:  string,   // returns ValidationRule[]   e.g. "['required', 'minLength:3']"
+
+  // Lifecycle events — map event name → handler name on the page/form
+  events: {
+    on_dom_ready:   string,   // fired after mount
+    on_user_input:  string,   // fired on any field change
+    on_before_save: string,   // fired before FormPanel.submit()
+    on_after_save:  string,   // fired after successful submit
+    on_disposed:    string,   // fired on component unmount
+  },
+
+  // Permissions — resolved from SecurityContext at render time
+  can_read:    boolean,
+  can_write:   boolean,
+  can_delete:  boolean,
+
+  // Data
+  source:        string,   // datasource id for selects, lists, grids
+  query:         string,   // override SQL query
+  pre_query:     string,   // runs before main query (e.g. to seed params)
+  is_realtime:   boolean,  // re-fetches on a polling interval
+  group_by:      string,   // field name to group rows by
+  group_format:  string,   // display template for group headers
+
+  // Linked selects
+  cascade_field:  string,  // sibling field that drives this select's options
+  populate_field: string,  // field to auto-fill when this select changes
+
+  // Actions (for ActionCell, Button, GridView toolbar)
+  actions: ActionDef[],
+
+  // Nested components (for FormPanel, TabPanel, SplitPanel)
+  components: ComponentDef[],
+}</code></pre>
+
+      <h3 style="font-family:'Space Grotesk',sans-serif;margin:1.5rem 0 .75rem">ActionDef</h3>
+      <pre><code class="language-javascript">{
+  id:          string,   // action name passed to submit() / _onAction
+  label:       string,
+  variant:     'primary' | 'secondary' | 'danger' | 'ghost',
+  show_if:     string,   // expression — hide action when falsy
+  disabled_if: string,   // expression — disable when truthy
+  confirm:     string,   // show ConfirmDialog before firing; supports {row.field}
+  navigate_to: string,   // page id to navigate to instead of submitting
+  params:      object,   // extra params; values support {row.field} interpolation
+}</code></pre>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- BACKEND COMMUNICATION                                  -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="backend-comms">
+      <span class="kicker">Design</span>
+      <h2>Backend communication</h2>
+      <p>All data flows through two DTOs: <code class="kw">SqlViewModel</code> for reads and <code class="kw">PatchVM</code> for writes. A single <code class="kw">Client</code> singleton handles JWT auth and token refresh. This mirrors the proven pattern from the production core2 library.</p>
+
+      <h3 style="font-family:'Space Grotesk',sans-serif;margin:1.5rem 0 .75rem">SqlViewModel — query DTO</h3>
+      <pre><code class="language-javascript">// Sent to the datasource adapter for all reads
+{
+  sourceId:   string,    // datasource id from page config
+  action:     string,    // 'query' | 'count' | 'aggregate'
+  params:     object,    // bound values (from FilterBar state, URL params, etc.)
+  select:     string[],  // fields to return; omit for *
+  where:      string,    // SQL WHERE fragment (parameterised)
+  orderBy:    string,    // e.g. 'plate ASC, last_service DESC'
+  groupBy:    string,    // e.g. 'branch_id'
+  skip:       number,    // pagination offset
+  top:        number,    // page size
+  metaConn:   string,    // connection id for metadata queries
+  dataConn:   string,    // connection id for data queries
+}</code></pre>
+
+      <h3 style="font-family:'Space Grotesk',sans-serif;margin:1.5rem 0 .75rem">PatchVM — write DTO</h3>
+      <pre><code class="language-javascript">// Sent for create / update / delete
+{
+  table:   string,          // target table name
+  changes: [
+    { field: string, label: string, oldVal: any, value: any }
+  ],
+  action:  'create' | 'update' | 'delete',
+  id:      string | number, // row id for update/delete
+}</code></pre>
+
+      <h3 style="font-family:'Space Grotesk',sans-serif;margin:1.5rem 0 .75rem">Client singleton</h3>
+      <pre><code class="language-javascript">// lib/client.js — one instance shared by all datasource adapters
+class Client {
+  // Reads API base from &lt;meta name="api"&gt;, then VITE_API_URL, then window.location.origin
+  static resolveApiBase()
+
+  // JWT-aware fetch — silently refreshes access token if expired before each call
+  async submitAsync({ url, method, body, headers })
+
+  // High-level operations
+  async query(vm: SqlViewModel): Promise&lt;DataResponse&gt;
+  async patch(vm: PatchVM):      Promise&lt;{ id: string | number }&gt;
+  async patchMany(vms: PatchVM[]): Promise&lt;void&gt;   // batch upsert, 200/batch
+  async deactivate(ids, table)
+  async hardDelete(ids, table)
+  async uploadFile(file, url)
+}</code></pre>
+
+      <div class="callout" style="margin-top:1.5rem">
+        <strong>DuckDB vs HTTP adapter</strong>
+        In Phase 2, <code>Client.query()</code> routes to DuckDB WASM directly in the browser when <code>protocol: duckdb</code>. When <code>protocol: http</code>, it falls back to a normal fetch to the backend API. The datasource adapter resolves which transport to use at runtime — page configs do not change.
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- PATTERNS TO EXTRACT                                    -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="patterns">
+      <span class="kicker">Phase 3 output</span>
+      <h2>Patterns to extract into the framework</h2>
+      <p>Each pattern is a hypothesis — building the TMS will confirm or refine it. When a pattern shows up in three or more places, it gets promoted to a first-class YAML property or component.</p>
+
+      <div class="comp-grid" style="gap:1rem;margin-bottom:2rem">
+
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Master-detail navigation</h3><span class="cat-tag">layout</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Single-line text field with label, required marker, error message, and readonly mode.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>value</td><td>string</td><td>Current text value</td></tr>
-                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Validation error shown below input</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key used by FormPanel.collectValues()</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
-                <tr><td>required <span class="opt">?</span></td><td>boolean</td><td>Adds asterisk; FormPanel.validate() enforces</td></tr>
-                <tr><td>readonly <span class="opt">?</span></td><td>boolean</td><td>Gray background, no input events</td></tr>
-                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder text</td></tr>
-              </tbody>
-            </table>
+            <p class="comp-desc">Every list page has a View action that navigates to a detail page passing a row ID. Should be fully declarable — no JS handler needed.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">actions:
+  - id: view
+    label: View
+    navigate_to: truck-detail
+    params: { id: "{row.id}" }</code></pre>
           </div>
         </div>
 
-        <div class="comp-card" id="NumberInput">
-          <div class="comp-card-head">
-            <h3>NumberInput</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">input</span>
-              <span class="comp-file">lib/components/NumberInput.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Conditional visibility</h3><span class="cat-tag">access</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Numeric input with optional min, max, and step constraints. State value is <code class="kw">valueAsNumber</code> (a JS number, not a string).</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>value</td><td>number</td><td>Current numeric value</td></tr>
-                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Validation error</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
-                <tr><td>min <span class="opt">?</span></td><td>number</td><td>HTML min attribute</td></tr>
-                <tr><td>max <span class="opt">?</span></td><td>number</td><td>HTML max attribute</td></tr>
-                <tr><td>step <span class="opt">?</span></td><td>number</td><td>HTML step attribute</td></tr>
-              </tbody>
-            </table>
+            <p class="comp-desc">Actions and fields visible only to certain roles. Expression evaluated against <code>{ user, row, state }</code> via <code>new Function</code> — the same pattern core2 uses for <code>showExp</code>.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">- id: deactivate
+  label: Deactivate
+  variant: danger
+  show_if: "user.hasRole('admin')"
+  confirm: "Deactivate {row.name}?"</code></pre>
           </div>
         </div>
 
-        <div class="comp-card" id="SelectInput">
-          <div class="comp-card-head">
-            <h3>SelectInput</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">input</span>
-              <span class="comp-file">lib/components/SelectInput.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Confirm dialog</h3><span class="cat-tag">interaction</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Native <code class="kw">&lt;select&gt;</code> dropdown. Options come from <code class="kw">state.options</code> (static array) or can be replaced by a datasource.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>value</td><td>string</td><td>Currently selected option</td></tr>
-                <tr><td>options</td><td>string[]</td><td>List of option values (labels match values)</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
-                <tr><td>required <span class="opt">?</span></td><td>boolean</td><td>Asterisk + validation</td></tr>
-              </tbody>
-            </table>
+            <p class="comp-desc">Destructive actions need a confirmation step. A <code>confirm</code> string on any ActionDef auto-shows a ConfirmDialog before <code>submit()</code> fires. Message supports <code>{row.field}</code> interpolation.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">- id: delete
+  label: Delete
+  variant: danger
+  confirm: "Delete truck {row.plate}? This cannot be undone."</code></pre>
           </div>
         </div>
 
-        <div class="comp-card" id="DateInput">
-          <div class="comp-card-head">
-            <h3>DateInput</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">input</span>
-              <span class="comp-file">lib/components/DateInput.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Cascading select</h3><span class="cat-tag">form</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Date picker using the native <code class="kw">&lt;input type="date"&gt;</code>. Value is an ISO date string <code class="kw">YYYY-MM-DD</code>.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>value</td><td>string</td><td>ISO date, e.g. <code>'2026-07-25'</code></td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
-                <tr><td>min <span class="opt">?</span></td><td>string</td><td>Earliest allowed date (ISO)</td></tr>
-                <tr><td>max <span class="opt">?</span></td><td>string</td><td>Latest allowed date (ISO)</td></tr>
-              </tbody>
-            </table>
+            <p class="comp-desc">Branch → truck type → available trucks. Each select re-fetches its options when the named sibling changes. Core2 calls this <code>cascadeField</code>; we map it to <code>depends_on</code>.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">- type: SelectInput
+  field: branch_id
+  label: Branch
+- type: SearchEntry
+  field: truck_id
+  label: Truck
+  source: available-trucks
+  depends_on: branch_id</code></pre>
           </div>
         </div>
 
-        <div class="comp-card" id="TextareaInput">
-          <div class="comp-card-head">
-            <h3>TextareaInput</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">input</span>
-              <span class="comp-file">lib/components/TextareaInput.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Computed / derived fields</h3><span class="cat-tag">data</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Multi-line textarea with user-resizable height. Useful for notes, descriptions, and free-text fields.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>value</td><td>string</td><td>Current text content</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
-                <tr><td>rows <span class="opt">?</span></td><td>number</td><td>Initial visible rows, default 3</td></tr>
-                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder text</td></tr>
-              </tbody>
-            </table>
+            <p class="comp-desc">Utilization %, rank, fuel efficiency — calculated from raw row data. Simple inline expressions replace a full datasource script. Core2 uses <code>Utils.isFunction(exp)</code>; we use the same <code>new Function</code> approach.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">- type: NumberCell
+  field: utilization
+  label: Utilization %
+  format: percent
+  compute: "row.active_days / row.total_days"</code></pre>
           </div>
         </div>
 
-        <div class="comp-card" id="CheckboxInput">
-          <div class="comp-card-head">
-            <h3>CheckboxInput</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">input</span>
-              <span class="comp-file">lib/components/CheckboxInput.js</span>
-            </div>
-          </div>
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Export action</h3><span class="cat-tag">data</span></div>
           <div class="comp-card-body">
-            <p class="comp-desc">Single checkbox with an inline label. State value is a native boolean.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>value</td><td>boolean</td><td>Checked state</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
-                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Inline label text</td></tr>
-              </tbody>
-            </table>
+            <p class="comp-desc">Reports need CSV / XLSX / PDF export. Should be a top-level GridView prop that renders ButtonExcel / ButtonPdf in the toolbar — no custom JS.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">type: GridView
+export:
+  - format: xlsx
+    label: Export Excel
+  - format: pdf
+    label: Print report</code></pre>
+          </div>
+        </div>
+
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Summary row</h3><span class="cat-tag">data</span></div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Trip log and cost analysis need a totals row. Should aggregate NumberCell and CurrencyCell columns automatically when <code>summary_row: true</code> is set.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">type: GridView
+summary_row: true</code></pre>
+          </div>
+        </div>
+
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Inline edit</h3><span class="cat-tag">grid</span></div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Settings / Branches needs in-place cell editing. An <code>inline_edit: true</code> column prop toggles a TextCell into a TextInput on click; Blur / Enter commits via <code>submit('cell.update', …)</code>.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">- type: TextCell
+  field: name
+  label: Branch name
+  inline_edit: true</code></pre>
+          </div>
+        </div>
+
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Permission flags</h3><span class="cat-tag">access</span></div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Every component can carry <code>can_read</code>, <code>can_write</code>, <code>can_delete</code> booleans resolved at render time from the current user's <code>SecurityContext</code>. Actions are hidden automatically when the required permission is false.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">type: GridView
+can_write: true
+can_delete: false  # resolved per-user at runtime</code></pre>
+          </div>
+        </div>
+
+        <div class="comp-card">
+          <div class="comp-card-head"><h3>Lifecycle events</h3><span class="cat-tag">behaviour</span></div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Pages need hooks into component lifecycle — e.g. pre-populate a form field after mount, validate before save, refresh a grid after a form submits. Core2 models these as typed <code>Action</code> observables. We expose them as named event handlers in the page config.</p>
+            <pre style="margin:.5rem 0 0"><code class="language-yaml">components:
+  - type: FormPanel
+    id: truck-form
+    events:
+      on_dom_ready:   initForm      # called after mount
+      on_before_save: validatePlate # return false to cancel
+      on_after_save:  refreshGrid   # refresh fleet-grid after save</code></pre>
           </div>
         </div>
 
@@ -580,265 +567,61 @@ import { TextInput } from '/lib/components/TextInput.js';</code></pre>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
-    <!-- FORM CONTAINER                                         -->
+    <!-- NEW COMPONENTS                                         -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section id="form-container">
-      <span class="kicker">Data entry</span>
-      <h2>Form container</h2>
-
-      <div class="comp-grid">
-        <div class="comp-card" id="FormPanel">
-          <div class="comp-card-head">
-            <h3>FormPanel</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">form</span>
-              <span class="comp-file">lib/components/FormPanel.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Container that owns a group of input components. Provides <code class="kw">registerField()</code>, <code class="kw">collectValues()</code>, <code class="kw">validate()</code>, and an async <code class="kw">submit(action, params)</code> that validates then calls the root <code class="kw">_onAction</code>. Renders two named slots: <code class="kw">[data-form-fields]</code> and <code class="kw">[data-form-actions]</code>.</p>
-            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">const form = new FormPanel('truck-form', {}, { title: 'Truck Information' });
-form.mount(container);
-const slot = container.querySelector('[data-form-fields]');
-
-const fPlate = new TextInput('f-plate', { value: '' }, { label: 'Plate', field: 'plate', required: true });
-form.registerField(fPlate);
-fPlate.mount(mkSlot(slot));
-
-await form.submit('truck.update', { id: truck.id });</code></pre>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>saving</td><td>boolean</td><td>Shows spinner while async submit is in flight</td></tr>
-                <tr><td>dirty</td><td>boolean</td><td>True after any field changes</td></tr>
-                <tr><td>values</td><td>object</td><td>Collected field values (via collectValues)</td></tr>
-                <tr><td>errors</td><td>object</td><td>Field-level validation errors</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>title <span class="opt">?</span></td><td>string</td><td>Panel heading</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+    <section id="new-components">
+      <span class="kicker">Phase 3 output</span>
+      <h2>New components the TMS will require</h2>
+      <p>These do not exist yet. They will be built as the TMS surfaces the need for them, then added to <code class="kw">lib/components/</code> and the barrel.</p>
+      <table class="field-table" style="margin-bottom:2rem">
+        <thead><tr><th>Component</th><th>Triggered by</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>SearchEntry</td><td>Driver assign — type-ahead truck picker</td><td>Searchable dropdown backed by a datasource query. Replaces plain SelectInput when the option list is large or dynamic. Mirrors core2's <code>SearchEntry</code>.</td></tr>
+          <tr><td>ConfirmDialog</td><td><code>confirm:</code> on any ActionDef</td><td>Modal with message, Confirm and Cancel. Auto-wired by the runtime when a <code>confirm</code> prop is present on an ActionDef.</td></tr>
+          <tr><td>Chart</td><td>Reports — fleet utilization bar chart</td><td>Bar / line / pie chart via a lightweight chart library (e.g. Chart.js). Driven by a datasource like any other component. Mirrors core2's <code>chart.js</code>.</td></tr>
+          <tr><td>Kanban</td><td>Maintenance — work order board view</td><td>Column-based board. Each column is a status value; cards are draggable between columns and emit <code>submit('card.move', { id, status })</code>. Mirrors core2's <code>kanban.js</code>.</td></tr>
+          <tr><td>ButtonExcel</td><td>Reports — export XLSX</td><td>Toolbar button that serialises the current grid data to an XLSX file using SheetJS. No server round-trip needed.</td></tr>
+          <tr><td>ButtonPdf</td><td>Reports — print / export PDF</td><td>Toolbar button that opens a print-ready view of the grid and triggers the browser print dialog.</td></tr>
+          <tr><td>Section</td><td>Truck detail — collapsible info groups</td><td>Collapsible card with a titled header and a content slot. Groups related form fields. Mirrors core2's <code>section.js</code>.</td></tr>
+          <tr><td>TimelinePanel</td><td>Truck detail — service history</td><td>Vertical timeline of dated events, each with a type badge, description, and optional cost. Replaces a plain grid for chronological data.</td></tr>
+          <tr><td>AvatarCell</td><td>Driver list — photo + name</td><td>Circular avatar with fallback initials, primary text, and secondary line.</td></tr>
+          <tr><td>PercentCell</td><td>Reports — utilization, efficiency</td><td>NumberCell with <code>format: percent</code> and automatic threshold coloring (green / amber / red).</td></tr>
+          <tr><td>RankCell</td><td>Driver performance report</td><td>Colored rank badge (#1, #2…) with an up/down delta indicator from the previous period.</td></tr>
+          <tr><td>LinkCell</td><td>Any master-detail list</td><td>Clickable cell value that fires <code>navigate_to</code> without a separate ActionCell column.</td></tr>
+          <tr><td>EmptyState</td><td>Any zero-row GridView / ListView</td><td>Centered illustration, message, and optional CTA button shown when a datasource returns no rows.</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <!-- ══════════════════════════════════════════════════════ -->
-    <!-- KPI / SUMMARY                                          -->
+    <!-- NEW YAML PROPERTIES                                    -->
     <!-- ══════════════════════════════════════════════════════ -->
-    <section id="kpi">
-      <span class="kicker">Dashboard</span>
-      <h2>KPI &amp; Summary</h2>
-
-      <div class="comp-grid">
-
-        <div class="comp-card" id="StatCard">
-          <div class="comp-card-head">
-            <h3>StatCard</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">kpi</span>
-              <span class="comp-file">lib/components/StatCard.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Single KPI card with label, large value, and optional trend arrow + delta text. Border color is set per card via <code class="kw">color</code>.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>label</td><td>string</td><td>Metric name</td></tr>
-                <tr><td>value</td><td>any</td><td>The value to display large</td></tr>
-                <tr><td>format <span class="opt">?</span></td><td>'currency'|'number'|'percent'</td><td>Auto-formats the value</td></tr>
-                <tr><td>trend <span class="opt">?</span></td><td>'up'|'down'</td><td>Trend arrow direction</td></tr>
-                <tr><td>delta <span class="opt">?</span></td><td>string</td><td>Trend label, e.g. <code>'+3 this month'</code></td></tr>
-                <tr><td>color <span class="opt">?</span></td><td>'indigo'|'green'|'amber'|'red'|'blue'</td><td>Border accent color</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="comp-card" id="StatRow">
-          <div class="comp-card-head">
-            <h3>StatRow</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">kpi</span>
-              <span class="comp-file">lib/components/StatRow.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Responsive grid of <code class="kw">StatCard</code>s. Column count auto-selects from the number of stats (2→2-col, 3→3-col, 4→4-col).</p>
-            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new StatRow('fleet-stats', [
-  { label: 'Total',       value: 42, color: 'indigo' },
-  { label: 'Active',      value: 31, color: 'green', trend: 'up', delta: '+3 this month' },
-  { label: 'Maintenance', value:  7, color: 'amber' },
-  { label: 'Inactive',    value:  4, color: 'red' },
-]).mount(document.getElementById('stat-row'));</code></pre>
-            <p style="font-size:.8rem;color:var(--text-muted);margin-top:.5rem">Constructor: <code class="kw">StatRow(id, stats[])</code> — stats is an array of StatCard state objects.</p>
-          </div>
-        </div>
-
-        <div class="comp-card" id="ProgressBar">
-          <div class="comp-card-head">
-            <h3>ProgressBar</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">kpi</span>
-              <span class="comp-file">lib/components/ProgressBar.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Labeled horizontal bar showing <code class="kw">value / max</code> as a percentage. CSS transition animates width changes.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>label</td><td>string</td><td>Metric label shown above the bar</td></tr>
-                <tr><td>value</td><td>number</td><td>Current value</td></tr>
-                <tr><td>max <span class="opt">?</span></td><td>number</td><td>Maximum value, default 100</td></tr>
-                <tr><td>color <span class="opt">?</span></td><td>'green'|'teal'|'amber'|'red'|'indigo'|'blue'</td><td>Bar fill color</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════ -->
-    <!-- LAYOUT                                                 -->
-    <!-- ══════════════════════════════════════════════════════ -->
-    <section id="layout">
-      <span class="kicker">Structure</span>
-      <h2>Layout</h2>
-
-      <div class="comp-grid">
-
-        <div class="comp-card" id="TabPanel">
-          <div class="comp-card-head">
-            <h3>TabPanel</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">layout</span>
-              <span class="comp-file">lib/components/TabPanel.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Horizontal tab strip with a content area below. Each tab either runs a <code class="kw">render(el)</code> function or renders a raw HTML <code class="kw">content</code> string. Switching tabs calls <code class="kw">setState({ active: i })</code> which redraws only the content slot.</p>
-            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new TabPanel('tabs', { active: 0 }, [
-  { label: 'Trips',  render(el) { new GridView(...).mount(el); } },
-  { label: 'Issues', render(el) { new GridView(...).mount(el); } },
-  { label: 'Docs',   content: '&lt;p&gt;No documents yet&lt;/p&gt;' },
-]);</code></pre>
-            <table class="field-table">
-              <thead><tr><th>Tab entry</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>label</td><td>string</td><td>Tab button text</td></tr>
-                <tr><td>render <span class="opt">?</span></td><td>(el: HTMLElement) =&gt; void</td><td>Mounts components into the content slot</td></tr>
-                <tr><td>content <span class="opt">?</span></td><td>string</td><td>Raw HTML string (alternative to render)</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="comp-card" id="SplitPanel">
-          <div class="comp-card-head">
-            <h3>SplitPanel</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">layout</span>
-              <span class="comp-file">lib/components/SplitPanel.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Two-column CSS grid layout. Left and right children are real <code class="kw">BaseComponent</code> instances registered in the tree. Column widths are set via CSS <code class="kw">fr</code> units.</p>
-            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new SplitPanel('split', formComp, gridComp, {
-  leftWidth:  '2fr',
-  rightWidth: '3fr',
-}).mount(container);</code></pre>
-            <table class="field-table">
-              <thead><tr><th>Constructor param</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>id</td><td>string</td><td>Component ID</td></tr>
-                <tr><td>leftComp</td><td>BaseComponent</td><td>Component mounted in the left column</td></tr>
-                <tr><td>rightComp</td><td>BaseComponent</td><td>Component mounted in the right column</td></tr>
-                <tr><td>opts.leftWidth <span class="opt">?</span></td><td>string</td><td>CSS fr unit, default <code>'2fr'</code></td></tr>
-                <tr><td>opts.rightWidth <span class="opt">?</span></td><td>string</td><td>CSS fr unit, default <code>'3fr'</code></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════ -->
-    <!-- CONTROLS                                               -->
-    <!-- ══════════════════════════════════════════════════════ -->
-    <section id="controls">
-      <span class="kicker">Interaction</span>
-      <h2>Controls</h2>
-
-      <div class="comp-grid">
-
-        <div class="comp-card" id="Button">
-          <div class="comp-card-head">
-            <h3>Button</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">control</span>
-              <span class="comp-file">lib/components/Button.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Action button with four style variants, loading spinner, and disabled state. Clicking calls <code class="kw">submit(def.action || 'click', def.params || {})</code>.</p>
-            <table class="field-table">
-              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Shows spinning icon, disables click</td></tr>
-                <tr><td>disabled <span class="opt">?</span></td><td>boolean</td><td>Grays out and disables click</td></tr>
-              </tbody>
-            </table>
-            <table class="field-table" style="margin-top:.75rem">
-              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>label</td><td>string</td><td>Button text</td></tr>
-                <tr><td>variant <span class="opt">?</span></td><td>'primary'|'secondary'|'danger'|'ghost'</td><td>Visual style</td></tr>
-                <tr><td>action <span class="opt">?</span></td><td>string</td><td>Action name passed to submit(), default <code>'click'</code></td></tr>
-                <tr><td>params <span class="opt">?</span></td><td>object</td><td>Extra params merged into the submit call</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="comp-card" id="FilterBar">
-          <div class="comp-card-head">
-            <h3>FilterBar</h3>
-            <div style="display:flex;gap:.5rem;align-items:center">
-              <span class="cat-tag">control</span>
-              <span class="comp-file">lib/components/FilterBar.js</span>
-            </div>
-          </div>
-          <div class="comp-card-body">
-            <p class="comp-desc">Horizontal bar of filter controls. Supports three field types: <code class="kw">select</code>, <code class="kw">search</code>, and <code class="kw">date-range</code>. Every change calls <code class="kw">submit('filter.change', { values })</code>; the Clear button calls <code class="kw">submit('filter.clear', {})</code>.</p>
-            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">const bar = new FilterBar('fleet-filter', { values: {} }, [
-  { field: 'status', label: 'Status',   type: 'select', options: ['Active', 'Maintenance'] },
-  { field: 'q',      label: 'Search',   type: 'search', placeholder: 'Plate or driver…' },
-  { field: 'due',    label: 'Due Date', type: 'date-range' },
-]);
-bar._onAction = (action, params) => {
-  if (action === 'filter.change') refreshGrid(params.values);
-};</code></pre>
-            <table class="field-table">
-              <thead><tr><th>Filter entry</th><th>Type</th><th>Description</th></tr></thead>
-              <tbody>
-                <tr><td>field</td><td>string</td><td>Key in <code>values</code> object</td></tr>
-                <tr><td>label</td><td>string</td><td>Label above the control</td></tr>
-                <tr><td>type</td><td>'select'|'search'|'date-range'</td><td>Input type to render</td></tr>
-                <tr><td>options <span class="opt">?</span></td><td>string[]</td><td>Options list (select only)</td></tr>
-                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder text (search only)</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
+    <section id="new-props">
+      <span class="kicker">Phase 3 output</span>
+      <h2>New YAML properties for the core lib</h2>
+      <table class="field-table">
+        <thead><tr><th>Property</th><th>Applies to</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>show_if</td><td>Any ComponentDef, ActionDef</td><td>string (expr)</td><td>Expression evaluated with <code>{ user, row, state }</code>. Component or action is hidden when falsy. Replaces core2's <code>showExp</code>.</td></tr>
+          <tr><td>disabled_if</td><td>Any input ComponentDef</td><td>string (expr)</td><td>Disables the input when truthy. Replaces core2's <code>disabledExp</code>.</td></tr>
+          <tr><td>default</td><td>Any input ComponentDef</td><td>string (expr)</td><td>Initial value expression, evaluated once on mount. Replaces core2's <code>defaultVal</code>.</td></tr>
+          <tr><td>compute</td><td>Column def (any cell)</td><td>string (expr)</td><td>Per-row expression; result becomes the cell value. Avoids a full datasource script for simple math.</td></tr>
+          <tr><td>validation</td><td>Input ComponentDef</td><td>string (expr)</td><td>Returns a <code>ValidationRule[]</code>. Replaces core2's <code>validation</code> string evaluated via <code>isFunction</code>.</td></tr>
+          <tr><td>events</td><td>Any ComponentDef</td><td>object</td><td>Maps lifecycle event names (<code>on_dom_ready</code>, <code>on_before_save</code>, <code>on_after_save</code>, <code>on_user_input</code>, <code>on_disposed</code>) to handler names on the page script.</td></tr>
+          <tr><td>can_read / can_write / can_delete</td><td>Any ComponentDef</td><td>boolean</td><td>Resolved from <code>SecurityContext</code> at render time. Actions requiring a missing permission are automatically hidden.</td></tr>
+          <tr><td>navigate_to</td><td>ActionDef, LinkCell</td><td>string</td><td>Page id to navigate to. Params support <code>{row.field}</code> interpolation.</td></tr>
+          <tr><td>confirm</td><td>ActionDef</td><td>string</td><td>Shows ConfirmDialog with this message before submit() fires. Supports <code>{row.field}</code>.</td></tr>
+          <tr><td>depends_on</td><td>SelectInput, SearchEntry</td><td>string (field id)</td><td>Re-fetches <code>source</code> options when the named sibling field changes. Replaces core2's <code>cascadeField</code>.</td></tr>
+          <tr><td>populate_field</td><td>SelectInput, SearchEntry</td><td>string (field id)</td><td>Auto-fills a sibling field from the selected option's data. Replaces core2's <code>populateField</code>.</td></tr>
+          <tr><td>inline_edit</td><td>Column def (TextCell, NumberCell)</td><td>boolean</td><td>Clicking the cell replaces it with an input; Blur / Enter commits via <code>submit('cell.update', …)</code>.</td></tr>
+          <tr><td>summary_row</td><td>GridView</td><td>boolean</td><td>Appends a totals row summing NumberCell and CurrencyCell columns.</td></tr>
+          <tr><td>export</td><td>GridView</td><td>ExportDef[]</td><td>Adds export buttons to the toolbar. <code>format: xlsx | pdf | csv</code>.</td></tr>
+          <tr><td>threshold</td><td>ProgressBar, PercentCell</td><td><code>{ green, amber, red }</code></td><td>Value ranges that set bar or badge color automatically.</td></tr>
+          <tr><td>empty_state</td><td>GridView, ListView</td><td><code>{ message, action? }</code></td><td>Renders EmptyState when datasource returns zero rows.</td></tr>
+          <tr><td>is_realtime</td><td>GridView, StatRow</td><td>boolean</td><td>Re-fetches datasource on a polling interval. Interval configured at datasource level.</td></tr>
+          <tr><td>group_by</td><td>GridView, datasource</td><td>string (field)</td><td>Groups rows by the named field. Renders a collapsible group header row.</td></tr>
+        </tbody>
+      </table>
     </section>
 
   </main>
@@ -846,5 +629,6 @@ bar._onAction = (action, params) => {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
 </body>
 </html>
