@@ -6,11 +6,7 @@
     "noEmit": true,
     "noImplicitAny": true,
     "target": "ES2022",
-    "types": ["node"],
-    "paths": {
-      "@core3/framework": ["./framework-shim.d.ts"],
-      "@core3/framework/*": ["./framework-shim.d.ts"]
-    }
+    "types": ["node"]
   },
   "include": ["./*.ts", "./*.d.ts", "./components/*.ts", "./components/*.d.ts", "./pages/*.ts", "./pages/*.d.ts"]
 }

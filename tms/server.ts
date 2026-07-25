@@ -3,7 +3,8 @@ import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { DuckDbRepository, JwtAuthProvider } from './services.ts';
+import { DuckDbRepository } from './services/repository.ts';
+import { JwtAuthProvider } from './services/auth.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // tms/server.js → PROJECT_ROOT is one level up
@@ -14,15 +15,12 @@ const JWT_SECRET = new TextEncoder().encode(
 
 // ── DuckDB setup ─────────────────────────────────────────────────────────────
 const db = new duckdb.Database(join(import.meta.dir, 'tms.duckdb'));
-const conn = db.connect();
 const services = createFramework({
-  repository: new DuckDbRepository(conn),
+  repository: new DuckDbRepository(db),
   auth: new JwtAuthProvider(JWT_SECRET),
 });
 const repository = services.resolve(SERVICE_KEYS.repository);
 const authProvider = services.resolve(SERVICE_KEYS.auth);
-const run = repository.run.bind(repository);
-const all = repository.query.bind(repository);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 const CORS_HEADERS = {
@@ -114,27 +112,13 @@ async function initDb() {
   const seedSQL   = readFileSync(join(import.meta.dir, 'db/seed.sql'),   'utf8');
 
   // Run schema (idempotent — IF NOT EXISTS)
-  for (const stmt of splitSQL(schemaSQL)) {
-    await run(stmt);
-  }
+  await repository.runStatements(schemaSQL);
 
   // Seed only if roles table is empty
-  const rows = await all('SELECT COUNT(*) as n FROM roles');
-  if (Number(rows[0]?.n) === 0) {
-    for (const stmt of splitSQL(seedSQL)) {
-      await run(stmt);
-    }
+  if (await repository.countRows('roles') === 0) {
+    await repository.runStatements(seedSQL);
     console.log('✓ Database seeded');
   }
-}
-
-/** Split a SQL file into individual statements, stripping -- comments first. */
-function splitSQL(sql) {
-  const noComments = sql.replace(/--[^\n]*/g, '');
-  return noComments
-    .split(';')
-    .map((s) => s.trim())
-    .filter(Boolean);
 }
 
 // ── YAML datasource registry ─────────────────────────────────────────────────
@@ -176,36 +160,6 @@ function publicPageConfig(page) {
   return config;
 }
 
-function bindNamedParams(sql, params = {}) {
-  const values = [];
-  const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_, name) => {
-    values.push(params[name] ?? null);
-    return '?';
-  });
-  return { statement, values };
-}
-
-async function querySource(source, params, skip, top) {
-  const { statement, values } = bindNamedParams(source.query, params);
-  if (source.single) {
-    const rows = await all(statement, values);
-    return { data: rows[0] || {} };
-  }
-
-  const [count] = await all(`SELECT COUNT(*) AS n FROM (${statement}) AS source_rows`, values);
-  const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
-  const offset = Math.max(0, Number(skip) || 0);
-  const rows = await all(
-    `SELECT * FROM (${statement}) AS source_rows LIMIT ? OFFSET ?`,
-    [...values, pageSize, offset]
-  );
-  const total = Number(count?.n || 0);
-  return {
-    data: rows,
-    meta: { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) },
-  };
-}
-
 // ── TABLE_REGISTRY ────────────────────────────────────────────────────────────
 const TABLE_REGISTRY = {
   trucks:       { permission: 'fleet.write',       timestamps: true  },
@@ -226,57 +180,11 @@ async function handleAPI(req, url) {
   if (pathname === '/api/auth/login' && method === 'POST') {
     const { email, password } = await req.json();
     if (!email || !password) return apiError(400, 'email and password required');
-
-    const users = await all(
-      `SELECT u.*, string_agg(r.name, ',') as roles_csv
-       FROM users u
-       LEFT JOIN user_roles ur ON ur.user_id = u.id
-       LEFT JOIN roles r ON r.id = ur.role_id
-       WHERE u.email = ?
-       GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
-                u.preferred_lang, u.created_at, u.updated_at`,
-      [email]
-    );
-    const user = users[0];
-    if (!user) return apiError(401, 'Invalid credentials');
-
-    let valid = false;
-    if (!user.password_hash.startsWith('$')) {
-      // Plaintext seed password — verify then upgrade to bcrypt
-      valid = password === user.password_hash;
-      if (valid) {
-        const hash = await Bun.password.hash(password);
-        await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
-        user.password_hash = hash;
-      }
-    } else {
-      valid = await Bun.password.verify(password, user.password_hash);
+    try {
+      return json(await authProvider.login(email, password, repository));
+    } catch (err) {
+      return apiError(err.status || 401, err.message || 'Invalid credentials');
     }
-    if (!valid) return apiError(401, 'Invalid credentials');
-
-    const roles = user.roles_csv ? user.roles_csv.split(',').filter(Boolean) : [];
-
-    const perms = await all(
-      `SELECT DISTINCT p.permission_key
-       FROM permissions p
-       JOIN roles r ON r.id = p.role_id
-       JOIN user_roles ur ON ur.role_id = r.id
-       WHERE ur.user_id = ?`,
-      [user.id]
-    );
-    const permissions = perms.map((p) => p.permission_key);
-
-    const tokenPayload = {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      avatar_url: user.avatar_url,
-      preferred_lang: user.preferred_lang,
-      roles,
-      permissions,
-    };
-    const token = await authProvider.sign(tokenPayload);
-    return json({ token, user: tokenPayload });
   }
 
   if (pathname === '/api/auth/me' && method === 'GET') {
@@ -307,7 +215,7 @@ async function handleAPI(req, url) {
     const src = SOURCES.get(vm.sourceId);
     if (!src) return apiError(404, `Unknown source: ${vm.sourceId}`);
     if (src.permission) requirePerm(src.permission);
-    const result = await querySource(src, vm.params || {}, vm.skip || 0, vm.top || 25);
+    const result = await repository.querySource(src, vm.params || {}, vm.skip || 0, vm.top || 25);
     return json(result);
   }
 
@@ -322,50 +230,13 @@ async function handleAPI(req, url) {
 
     // ── insert ──────────────────────────────────────────────────────────────
     if (action === 'insert') {
-      const newId = crypto.randomUUID();
-
       if (table === 'users') {
-        const rolesChange    = changes.find((c) => c.field === 'roles');
-        const passwordChange = changes.find((c) => c.field === 'password');
-        let regularChanges   = changes.filter((c) => c.field !== 'roles' && c.field !== 'password');
-        if (passwordChange) {
-          const hash = await Bun.password.hash(passwordChange.value);
-          regularChanges = [...regularChanges, { field: 'password_hash', value: hash }];
-        }
-        const cols = ['id', ...regularChanges.map((c) => c.field)].join(', ');
-        const vals = [newId, ...regularChanges.map((c) => c.value)];
-        await run(
-          `INSERT INTO users(${cols}) VALUES(${vals.map(() => '?').join(', ')})`,
-          vals
-        );
-        if (rolesChange) {
-          const roleNames = Array.isArray(rolesChange.value)
-            ? rolesChange.value
-            : String(rolesChange.value).split(',').filter(Boolean);
-          for (const roleName of roleNames) {
-            const roleRows = await all('SELECT id FROM roles WHERE name = ?', [roleName.trim()]);
-            if (roleRows[0]) {
-              await run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [newId, roleRows[0].id]);
-            }
-          }
-        }
-        const rows = await all(
-          'SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?',
-          [newId]
-        );
-        return json(rows[0], 201);
+        return json(await repository.createUser(changes), 201);
       }
 
       // Generic insert
       if (changes.length === 0) return apiError(400, 'No fields to insert');
-      const cols = ['id', ...changes.map((c) => c.field)].join(', ');
-      const vals = [newId, ...changes.map((c) => c.value)];
-      await run(
-        `INSERT INTO ${table}(${cols}) VALUES(${vals.map(() => '?').join(', ')})`,
-        vals
-      );
-      const rows = await all(`SELECT * FROM ${table} WHERE id = ?`, [newId]);
-      return json(rows[0], 201);
+      return json(await repository.createRecord(table, changes), 201);
     }
 
     // ── update ──────────────────────────────────────────────────────────────
@@ -373,54 +244,21 @@ async function handleAPI(req, url) {
       if (!id) return apiError(400, 'id required for update');
 
       if (table === 'users') {
-        const rolesChange    = changes.find((c) => c.field === 'roles');
-        const regularChanges = changes.filter((c) => c.field !== 'roles');
-        if (regularChanges.length > 0) {
-          const sets = regularChanges.map((c) => `${c.field} = ?`).join(', ');
-          const tsClause = tbl.timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
-          await run(
-            `UPDATE users SET ${sets}${tsClause} WHERE id = ?`,
-            [...regularChanges.map((c) => c.value), id]
-          );
-        }
-        if (rolesChange !== undefined) {
-          const roleNames = Array.isArray(rolesChange.value)
-            ? rolesChange.value
-            : String(rolesChange.value).split(',').filter(Boolean);
-          await run('DELETE FROM user_roles WHERE user_id = ?', [id]);
-          for (const roleName of roleNames) {
-            const roleRows = await all('SELECT id FROM roles WHERE name = ?', [roleName.trim()]);
-            if (roleRows[0]) {
-              await run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [id, roleRows[0].id]);
-            }
-          }
-        }
-        const rows = await all(
-          'SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?',
-          [id]
-        );
-        return json(rows[0]);
+        return json(await repository.updateUser(id, changes));
       }
 
       // Generic update
       if (changes.length === 0) return apiError(400, 'No fields to update');
-      const sets = changes.map((c) => `${c.field} = ?`).join(', ');
-      const tsClause = tbl.timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
-      await run(
-        `UPDATE ${table} SET ${sets}${tsClause} WHERE id = ?`,
-        [...changes.map((c) => c.value), id]
-      );
-      const rows = await all(`SELECT * FROM ${table} WHERE id = ?`, [id]);
-      return json(rows[0]);
+      return json(await repository.updateRecord(table, id, changes, tbl.timestamps));
     }
 
     // ── delete ──────────────────────────────────────────────────────────────
     if (action === 'delete') {
       if (!id) return apiError(400, 'id required for delete');
       if (table === 'users') {
-        await run('DELETE FROM user_roles WHERE user_id = ?', [id]);
+        await repository.deleteUserRoles(id);
       }
-      await run(`DELETE FROM ${table} WHERE id = ?`, [id]);
+      await repository.deleteRecord(table, id);
       return json({ ok: true });
     }
 
@@ -429,18 +267,9 @@ async function handleAPI(req, url) {
 
   // ── PROFILE (self-update) ─────────────────────────────────────────────────
   if (pathname === '/api/v1/profile' && method === 'GET') {
-    const rows = await all(
-      `SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
-        string_agg(r.name, ',') as roles_csv
-       FROM users u
-       LEFT JOIN user_roles ur ON ur.user_id = u.id
-       LEFT JOIN roles r ON r.id = ur.role_id
-       WHERE u.id = ?
-       GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at`,
-      [authUser.sub]
-    );
-    if (!rows[0]) return apiError(404, 'User not found');
-    return json({ ...rows[0], roles: rows[0].roles_csv ? rows[0].roles_csv.split(',').filter(Boolean) : [] });
+    const profile = await repository.getProfile(authUser.sub);
+    if (!profile) return apiError(404, 'User not found');
+    return json(profile);
   }
 
   if (pathname === '/api/v1/profile' && method === 'PATCH') {
@@ -450,59 +279,43 @@ async function handleAPI(req, url) {
 
     if (body.new_password) {
       if (!body.current_password) return apiError(400, 'current_password required');
-      const userRows = await all('SELECT password_hash FROM users WHERE id = ?', [authUser.sub]);
-      if (!userRows[0]) return apiError(404, 'User not found');
-      const stored = userRows[0].password_hash;
-      let currentValid = false;
-      if (!stored.startsWith('$')) {
-        currentValid = body.current_password === stored;
-      } else {
-        currentValid = await Bun.password.verify(body.current_password, stored);
+      try {
+        await authProvider.changePassword(authUser.sub, body.current_password, body.new_password, repository);
+      } catch (err) {
+        return apiError(err.status || 400, err.message || 'Password change failed');
       }
-      if (!currentValid) return apiError(400, 'Current password incorrect');
-      fields.password_hash = await Bun.password.hash(body.new_password);
     }
 
     if (Object.keys(fields).length) {
-      const sets = Object.keys(fields).map((k) => `${k} = ?`).join(', ');
-      await run(
-        `UPDATE users SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...Object.values(fields), authUser.sub]
-      );
+      await repository.updateProfile(authUser.sub, fields);
     }
     return json({ ok: true });
   }
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
   if (pathname === '/api/v1/notifications' && method === 'GET') {
-    const rows = await all(
-      'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 20',
-      [authUser.sub]
-    );
-    return json(rows);
+    return json(await repository.listNotifications(authUser.sub));
   }
 
   if (pathname === '/api/v1/notifications' && method === 'POST') {
     const body = await req.json();
-    const id = crypto.randomUUID();
-    await run(
-      'INSERT INTO notifications(id, user_id, type, title, body) VALUES(?,?,?,?,?)',
-      [id, body.user_id || authUser.sub, body.type, body.title, body.body || null]
-    );
-    return json((await all('SELECT * FROM notifications WHERE id = ?', [id]))[0], 201);
+    const created = await repository.createNotification({
+      user_id: body.user_id || authUser.sub,
+      type: body.type,
+      title: body.title,
+      body: body.body || null,
+    });
+    return json(created, 201);
   }
 
   if (pathname === '/api/v1/notifications/read-all' && method === 'PATCH') {
-    await run('UPDATE notifications SET read = true WHERE user_id = ?', [authUser.sub]);
+    await repository.markAllNotificationsRead(authUser.sub);
     return json({ ok: true });
   }
 
   const notifReadMatch = pathname.match(/^\/api\/v1\/notifications\/([^/]+)\/read$/);
   if (notifReadMatch && method === 'PATCH') {
-    await run(
-      'UPDATE notifications SET read = true WHERE id = ? AND user_id = ?',
-      [notifReadMatch[1], authUser.sub]
-    );
+    await repository.markNotificationRead(notifReadMatch[1], authUser.sub);
     return json({ ok: true });
   }
 
@@ -512,43 +325,19 @@ async function handleAPI(req, url) {
     const lang = url.searchParams.get('lang') || 'en';
     const page = url.searchParams.get('page') || '';
     const q    = url.searchParams.get('q') || '';
-    let where = 'WHERE lang = ?';
-    const params = [lang];
-    if (page) { where += ' AND page = ?'; params.push(page); }
-    if (q) {
-      where += ' AND (text ILIKE ? OR translated ILIKE ?)';
-      params.push(`%${q}%`, `%${q}%`);
-    }
-    const rows = await all(`SELECT * FROM translations ${where} ORDER BY page, component, text`, params);
-    return json(rows);
+    return json(await repository.listTranslations({ lang, page, q }));
   }
 
   if (pathname === '/api/v1/i18n' && method === 'GET') {
     const lang = url.searchParams.get('lang') || 'en';
     const page = url.searchParams.get('page') || '*';
-    const rows = await all(
-      `SELECT text, component, translated FROM translations
-       WHERE lang = ? AND (page = ? OR page = '*')
-       ORDER BY page`,
-      [lang, page]
-    );
-    const result = {};
-    for (const row of rows) {
-      const key = row.component ? `${row.component}::${row.text}` : row.text;
-      result[key] = row.translated;
-    }
-    return json(result);
+    return json(await repository.getTranslationMap(lang, page));
   }
 
   if (pathname === '/api/v1/i18n' && method === 'POST') {
     requirePerm('settings.write');
     const body = await req.json();
-    await run(
-      `INSERT INTO translations(lang, page, component, text, translated)
-       VALUES(?,?,?,?,?)
-       ON CONFLICT ON CONSTRAINT idx_translations DO UPDATE SET translated = EXCLUDED.translated`,
-      [body.lang, body.page, body.component || null, body.text, body.translated]
-    );
+    await repository.saveTranslation(body);
     return json({ ok: true });
   }
 
@@ -558,12 +347,12 @@ async function handleAPI(req, url) {
     if (method === 'PATCH') {
       requirePerm('settings.write');
       const { translated } = await req.json();
-      await run('UPDATE translations SET translated = ? WHERE id = ?', [translated, id]);
+      await repository.updateTranslation(id, translated);
       return json({ ok: true });
     }
     if (method === 'DELETE') {
       requirePerm('settings.write');
-      await run('DELETE FROM translations WHERE id = ?', [id]);
+      await repository.deleteTranslation(id);
       return json({ ok: true });
     }
   }
