@@ -7,9 +7,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DataSourceRunner } from '@core3/backend';
-import { MockAuthProvider } from '../interfaces/auth';
-import type { DataSource } from '../interfaces/datasource';
-import type { User } from '../interfaces/auth';
+import { MockAuthProvider } from '../../lib/interfaces/auth';
+import type { DataSource } from '../../lib/interfaces/datasource';
+import type { User } from '../../lib/interfaces/auth';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 

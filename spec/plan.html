@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Rendering Framework — Component Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+<link rel="stylesheet" href="spec.css">
+<style>
+  .comp-grid { display: grid; gap: 2rem; }
+  .comp-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .comp-card-head {
+    display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+    padding: 1rem 1.25rem; background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-card-head h3 { margin: 0; font-size: 1rem; font-family: 'Space Grotesk', sans-serif; }
+  .comp-card-body { padding: 1rem 1.25rem; }
+  .comp-desc { margin: 0 0 .75rem; font-size: .875rem; color: var(--text-muted); }
+  .comp-file {
+    font-family: 'IBM Plex Mono', monospace; font-size: .72rem;
+    color: var(--indigo); background: #eef2ff; padding: .15rem .5rem;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .cat-tag {
+    display: inline-block; font-size: .68rem; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; padding: .2rem .55rem; border-radius: 99px;
+    background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .field-table { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: .5rem; }
+  .field-table th { text-align: left; padding: .3rem .5rem; background: var(--bg-subtle); color: var(--text-muted); font-weight: 600; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
+  .field-table td { padding: .3rem .5rem; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+  .field-table td:first-child { font-family: 'IBM Plex Mono', monospace; color: var(--indigo); white-space: nowrap; }
+  .field-table td:nth-child(2) { font-family: 'IBM Plex Mono', monospace; color: #6b7280; white-space: nowrap; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .section-intro { margin-bottom: 1.5rem; }
+  .opt { color: #9ca3af; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="topbar-brand" href="main.html"><span class="topbar-dot"></span> ERP Rendering Framework</a>
+  <div class="topbar-meta">project specification · july 2026</div>
+</div>
+
+<header class="page-hero">
+  <span class="eyebrow">UI layer</span>
+  <h1>Component library</h1>
+  <p class="hero-sub">23 components across 7 categories. Each lives in its own file under <code class="kw">lib/components/</code> and extends <code class="kw">BaseComponent</code>. Import individually or via the barrel at <code class="kw">lib/components.js</code>.</p>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <span class="sidebar-label">Spec navigation</span>
+    <nav id="toc">
+      <div class="nav-group">
+        <a href="main.html">Overview</a>
+      </div>
+      <div class="nav-group">
+        <a href="frontend.html">Frontend rendering</a>
+      </div>
+      <div class="nav-group">
+        <a href="backend.html">Backend pipeline</a>
+      </div>
+      <div class="nav-group">
+        <a href="scripting.html">Scripting engine</a>
+      </div>
+      <div class="nav-group">
+        <a href="reference.html">Reference</a>
+      </div>
+      <div class="nav-group">
+        <a href="plan.html" class="current-page">Component library</a>
+        <div class="sub-links">
+          <a href="#cells">Cell components</a>
+          <a href="#views">Grid &amp; List</a>
+          <a href="#inputs">Form inputs</a>
+          <a href="#form-container">Form container</a>
+          <a href="#kpi">KPI / Summary</a>
+          <a href="#layout">Layout</a>
+          <a href="#controls">Controls</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <!-- ── Import note ── -->
+    <section>
+      <span class="kicker">Usage</span>
+      <h2>Importing components</h2>
+      <p>All components are available from the barrel or from their individual file:</p>
+      <pre><code class="language-javascript">// Barrel — import any mix
+import { GridView, FormPanel, StatRow, FilterBar } from '/lib/components.js';
+
+// Individual file — explicit dependency
+import { GridView }  from '/lib/components/GridView.js';
+import { TextInput } from '/lib/components/TextInput.js';</code></pre>
+      <p>Each component file only imports what it needs (<code class="kw">html</code> singleton, <code class="kw">BaseComponent</code>, helpers). Shared formatting utilities live in <code class="kw">lib/components/helpers.js</code>.</p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- CELL COMPONENTS                                        -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="cells">
+      <span class="kicker">Grid rows</span>
+      <h2>Cell components</h2>
+      <p class="section-intro">Cell components render a single value inside a <code class="kw">GridView</code> or <code class="kw">ListView</code> column. <code class="kw">GridView</code> constructs each cell via <code class="kw">CELL_MAP[def.type]</code> and passes the resolved state automatically — you never instantiate cells directly.</p>
+
+      <div class="comp-grid">
+
+        <!-- TextCell -->
+        <div class="comp-card" id="TextCell">
+          <div class="comp-card-head">
+            <h3>TextCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/TextCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Displays a primary text value with an optional muted secondary line below it. Default cell type when no match is found in CELL_MAP.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>any</td><td>Primary text</td></tr>
+                <tr><td>secondary <span class="opt">?</span></td><td>string | null</td><td>Muted subtitle line</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for primary value</td></tr>
+                <tr><td>secondary <span class="opt">?</span></td><td>string</td><td>Row key for subtitle value</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Column header text</td></tr>
+                <tr><td>align <span class="opt">?</span></td><td>'left'|'right'|'center'</td><td>Column alignment</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- BadgeCell -->
+        <div class="comp-card" id="BadgeCell">
+          <div class="comp-card-head">
+            <h3>BadgeCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/BadgeCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Renders a pill badge. Color resolves automatically from <code class="kw">STATUS_COLORS</code> by lowercased value, or can be overridden via <code class="kw">colorField</code>.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Badge text</td></tr>
+                <tr><td>color <span class="opt">?</span></td><td>string | null</td><td>Tailwind class override (e.g. <code>bg-blue-100 text-blue-800</code>)</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for badge text</td></tr>
+                <tr><td>colorField <span class="opt">?</span></td><td>string</td><td>Row key whose value overrides badge color</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CurrencyCell -->
+        <div class="comp-card" id="CurrencyCell">
+          <div class="comp-card-head">
+            <h3>CurrencyCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/CurrencyCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Formats a numeric value as currency using <code class="kw">Intl.NumberFormat</code>. Right-aligned by default.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>number | null</td><td>Numeric amount</td></tr>
+                <tr><td>currency <span class="opt">?</span></td><td>string</td><td>ISO 4217 code, default <code>'USD'</code></td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for numeric amount</td></tr>
+                <tr><td>currency <span class="opt">?</span></td><td>string</td><td>Default currency code</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- NumberCell -->
+        <div class="comp-card" id="NumberCell">
+          <div class="comp-card-head">
+            <h3>NumberCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/NumberCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Formats integers, floats, or percentages with locale-aware separators.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>number | null</td><td>Numeric value</td></tr>
+                <tr><td>format <span class="opt">?</span></td><td>'number'|'percent'</td><td>Default <code>'number'</code></td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key</td></tr>
+                <tr><td>format <span class="opt">?</span></td><td>string</td><td><code>'number'</code> or <code>'percent'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DateCell -->
+        <div class="comp-card" id="DateCell">
+          <div class="comp-card-head">
+            <h3>DateCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/DateCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Renders a date in short, long, or relative format. Turns red when the overdue flag is set.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string | null</td><td>ISO date or datetime string</td></tr>
+                <tr><td>format <span class="opt">?</span></td><td>'short'|'long'|'relative'</td><td>Default <code>'short'</code></td></tr>
+                <tr><td>overdue <span class="opt">?</span></td><td>boolean</td><td>Renders text in red when true</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for date value</td></tr>
+                <tr><td>format <span class="opt">?</span></td><td>string</td><td>Display format</td></tr>
+                <tr><td>overdueField <span class="opt">?</span></td><td>string</td><td>Row key whose boolean value drives the red style</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- BooleanCell -->
+        <div class="comp-card" id="BooleanCell">
+          <div class="comp-card-head">
+            <h3>BooleanCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/BooleanCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Displays a green checkmark for true, a gray dash for false/null.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>boolean</td><td>The boolean to render</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key (value is coerced to boolean)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ActionCell -->
+        <div class="comp-card" id="ActionCell">
+          <div class="comp-card-head">
+            <h3>ActionCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">cell</span>
+              <span class="comp-file">lib/components/ActionCell.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Renders one or more inline buttons per row. Clicking calls <code class="kw">submit(action.id, { row })</code> which bubbles to the root <code class="kw">_onAction</code> handler.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>actions</td><td>ActionDef[]</td><td>Array of button definitions</td></tr>
+                <tr><td>row</td><td>object</td><td>The full data row, passed to the handler</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>ActionDef field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>id</td><td>string</td><td>Action name emitted to <code>_onAction</code></td></tr>
+                <tr><td>label</td><td>string</td><td>Button text</td></tr>
+                <tr><td>variant <span class="opt">?</span></td><td>'primary'|'danger'|'ghost'</td><td>Color style</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /comp-grid -->
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- GRID & LIST                                            -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="views">
+      <span class="kicker">Data display</span>
+      <h2>Grid &amp; List</h2>
+
+      <div class="comp-grid">
+
+        <!-- GridView -->
+        <div class="comp-card" id="GridView">
+          <div class="comp-card-head">
+            <h3>GridView</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">view</span>
+              <span class="comp-file">lib/components/GridView.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Tabular data view with pagination, loading skeleton, and per-column cell components. Cells are mounted via <code class="kw">data-cell</code> placeholder attributes so each is a real <code class="kw">BaseComponent</code> in the tree.</p>
+            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new GridView('fleet-grid', {
+  rows: [...],
+  meta: { total: 42, page: 1, pageSize: 10 },
+}, DEFS);</code></pre>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>rows</td><td>object[]</td><td>Data rows to render</td></tr>
+                <tr><td>meta</td><td>{ total, page, pageSize }</td><td>Drives pagination display and controls</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Shows animated skeleton rows</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def (column) prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>type</td><td>string</td><td>Cell class name, e.g. <code>'BadgeCell'</code></td></tr>
+                <tr><td>id</td><td>string</td><td>Unique column key (used for cell mounting)</td></tr>
+                <tr><td>field</td><td>string</td><td>Row key to read the value from</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Column header</td></tr>
+                <tr><td>align <span class="opt">?</span></td><td>'left'|'right'|'center'</td><td>Header and cell alignment</td></tr>
+                <tr><td>…</td><td></td><td>Additional props forwarded to the cell constructor</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ListView -->
+        <div class="comp-card" id="ListView">
+          <div class="comp-card-head">
+            <h3>ListView</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">view</span>
+              <span class="comp-file">lib/components/ListView.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Card-based vertical list. Each item renders a primary field, optional secondary line, and an optional badge. Suited for narrow panels or mobile-friendly layouts.</p>
+            <table class="field-table">
+              <thead><tr><th>State field</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>items</td><td>object[]</td><td>Data items to render</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Shows skeleton cards</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for primary text (first def entry)</td></tr>
+                <tr><td>secondary <span class="opt">?</span></td><td>boolean</td><td>Mark a def entry as the subtitle field</td></tr>
+                <tr><td>type <span class="opt">?</span></td><td>'BadgeCell'</td><td>First def with this type is rendered as the badge</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- FORM INPUTS                                            -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="inputs">
+      <span class="kicker">Data entry</span>
+      <h2>Form inputs</h2>
+      <p class="section-intro">All inputs follow the same pattern: <code class="kw">constructor(id, state, def)</code>. They call <code class="kw">setState({ value }, false)</code> on change so state updates without triggering a full redraw. Register them with <code class="kw">FormPanel.registerField()</code> so the panel can collect and validate values.</p>
+
+      <div class="comp-grid">
+
+        <div class="comp-card" id="TextInput">
+          <div class="comp-card-head">
+            <h3>TextInput</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">input</span>
+              <span class="comp-file">lib/components/TextInput.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Single-line text field with label, required marker, error message, and readonly mode.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Current text value</td></tr>
+                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Validation error shown below input</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key used by FormPanel.collectValues()</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>required <span class="opt">?</span></td><td>boolean</td><td>Adds asterisk; FormPanel.validate() enforces</td></tr>
+                <tr><td>readonly <span class="opt">?</span></td><td>boolean</td><td>Gray background, no input events</td></tr>
+                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="NumberInput">
+          <div class="comp-card-head">
+            <h3>NumberInput</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">input</span>
+              <span class="comp-file">lib/components/NumberInput.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Numeric input with optional min, max, and step constraints. State value is <code class="kw">valueAsNumber</code> (a JS number, not a string).</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>number</td><td>Current numeric value</td></tr>
+                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Validation error</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>min <span class="opt">?</span></td><td>number</td><td>HTML min attribute</td></tr>
+                <tr><td>max <span class="opt">?</span></td><td>number</td><td>HTML max attribute</td></tr>
+                <tr><td>step <span class="opt">?</span></td><td>number</td><td>HTML step attribute</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="SelectInput">
+          <div class="comp-card-head">
+            <h3>SelectInput</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">input</span>
+              <span class="comp-file">lib/components/SelectInput.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Native <code class="kw">&lt;select&gt;</code> dropdown. Options come from <code class="kw">state.options</code> (static array) or can be replaced by a datasource.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Currently selected option</td></tr>
+                <tr><td>options</td><td>string[]</td><td>List of option values (labels match values)</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>required <span class="opt">?</span></td><td>boolean</td><td>Asterisk + validation</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="DateInput">
+          <div class="comp-card-head">
+            <h3>DateInput</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">input</span>
+              <span class="comp-file">lib/components/DateInput.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Date picker using the native <code class="kw">&lt;input type="date"&gt;</code>. Value is an ISO date string <code class="kw">YYYY-MM-DD</code>.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>ISO date, e.g. <code>'2026-07-25'</code></td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>min <span class="opt">?</span></td><td>string</td><td>Earliest allowed date (ISO)</td></tr>
+                <tr><td>max <span class="opt">?</span></td><td>string</td><td>Latest allowed date (ISO)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="TextareaInput">
+          <div class="comp-card-head">
+            <h3>TextareaInput</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">input</span>
+              <span class="comp-file">lib/components/TextareaInput.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Multi-line textarea with user-resizable height. Useful for notes, descriptions, and free-text fields.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Current text content</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>rows <span class="opt">?</span></td><td>number</td><td>Initial visible rows, default 3</td></tr>
+                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="CheckboxInput">
+          <div class="comp-card-head">
+            <h3>CheckboxInput</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">input</span>
+              <span class="comp-file">lib/components/CheckboxInput.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Single checkbox with an inline label. State value is a native boolean.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>boolean</td><td>Checked state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Inline label text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- FORM CONTAINER                                         -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="form-container">
+      <span class="kicker">Data entry</span>
+      <h2>Form container</h2>
+
+      <div class="comp-grid">
+        <div class="comp-card" id="FormPanel">
+          <div class="comp-card-head">
+            <h3>FormPanel</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">form</span>
+              <span class="comp-file">lib/components/FormPanel.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Container that owns a group of input components. Provides <code class="kw">registerField()</code>, <code class="kw">collectValues()</code>, <code class="kw">validate()</code>, and an async <code class="kw">submit(action, params)</code> that validates then calls the root <code class="kw">_onAction</code>. Renders two named slots: <code class="kw">[data-form-fields]</code> and <code class="kw">[data-form-actions]</code>.</p>
+            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">const form = new FormPanel('truck-form', {}, { title: 'Truck Information' });
+form.mount(container);
+const slot = container.querySelector('[data-form-fields]');
+
+const fPlate = new TextInput('f-plate', { value: '' }, { label: 'Plate', field: 'plate', required: true });
+form.registerField(fPlate);
+fPlate.mount(mkSlot(slot));
+
+await form.submit('truck.update', { id: truck.id });</code></pre>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>saving</td><td>boolean</td><td>Shows spinner while async submit is in flight</td></tr>
+                <tr><td>dirty</td><td>boolean</td><td>True after any field changes</td></tr>
+                <tr><td>values</td><td>object</td><td>Collected field values (via collectValues)</td></tr>
+                <tr><td>errors</td><td>object</td><td>Field-level validation errors</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>title <span class="opt">?</span></td><td>string</td><td>Panel heading</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- KPI / SUMMARY                                          -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="kpi">
+      <span class="kicker">Dashboard</span>
+      <h2>KPI &amp; Summary</h2>
+
+      <div class="comp-grid">
+
+        <div class="comp-card" id="StatCard">
+          <div class="comp-card-head">
+            <h3>StatCard</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">kpi</span>
+              <span class="comp-file">lib/components/StatCard.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Single KPI card with label, large value, and optional trend arrow + delta text. Border color is set per card via <code class="kw">color</code>.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label</td><td>string</td><td>Metric name</td></tr>
+                <tr><td>value</td><td>any</td><td>The value to display large</td></tr>
+                <tr><td>format <span class="opt">?</span></td><td>'currency'|'number'|'percent'</td><td>Auto-formats the value</td></tr>
+                <tr><td>trend <span class="opt">?</span></td><td>'up'|'down'</td><td>Trend arrow direction</td></tr>
+                <tr><td>delta <span class="opt">?</span></td><td>string</td><td>Trend label, e.g. <code>'+3 this month'</code></td></tr>
+                <tr><td>color <span class="opt">?</span></td><td>'indigo'|'green'|'amber'|'red'|'blue'</td><td>Border accent color</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="StatRow">
+          <div class="comp-card-head">
+            <h3>StatRow</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">kpi</span>
+              <span class="comp-file">lib/components/StatRow.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Responsive grid of <code class="kw">StatCard</code>s. Column count auto-selects from the number of stats (2→2-col, 3→3-col, 4→4-col).</p>
+            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new StatRow('fleet-stats', [
+  { label: 'Total',       value: 42, color: 'indigo' },
+  { label: 'Active',      value: 31, color: 'green', trend: 'up', delta: '+3 this month' },
+  { label: 'Maintenance', value:  7, color: 'amber' },
+  { label: 'Inactive',    value:  4, color: 'red' },
+]).mount(document.getElementById('stat-row'));</code></pre>
+            <p style="font-size:.8rem;color:var(--text-muted);margin-top:.5rem">Constructor: <code class="kw">StatRow(id, stats[])</code> — stats is an array of StatCard state objects.</p>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ProgressBar">
+          <div class="comp-card-head">
+            <h3>ProgressBar</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">kpi</span>
+              <span class="comp-file">lib/components/ProgressBar.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Labeled horizontal bar showing <code class="kw">value / max</code> as a percentage. CSS transition animates width changes.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label</td><td>string</td><td>Metric label shown above the bar</td></tr>
+                <tr><td>value</td><td>number</td><td>Current value</td></tr>
+                <tr><td>max <span class="opt">?</span></td><td>number</td><td>Maximum value, default 100</td></tr>
+                <tr><td>color <span class="opt">?</span></td><td>'green'|'teal'|'amber'|'red'|'indigo'|'blue'</td><td>Bar fill color</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- LAYOUT                                                 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="layout">
+      <span class="kicker">Structure</span>
+      <h2>Layout</h2>
+
+      <div class="comp-grid">
+
+        <div class="comp-card" id="TabPanel">
+          <div class="comp-card-head">
+            <h3>TabPanel</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">layout</span>
+              <span class="comp-file">lib/components/TabPanel.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Horizontal tab strip with a content area below. Each tab either runs a <code class="kw">render(el)</code> function or renders a raw HTML <code class="kw">content</code> string. Switching tabs calls <code class="kw">setState({ active: i })</code> which redraws only the content slot.</p>
+            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new TabPanel('tabs', { active: 0 }, [
+  { label: 'Trips',  render(el) { new GridView(...).mount(el); } },
+  { label: 'Issues', render(el) { new GridView(...).mount(el); } },
+  { label: 'Docs',   content: '&lt;p&gt;No documents yet&lt;/p&gt;' },
+]);</code></pre>
+            <table class="field-table">
+              <thead><tr><th>Tab entry</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label</td><td>string</td><td>Tab button text</td></tr>
+                <tr><td>render <span class="opt">?</span></td><td>(el: HTMLElement) =&gt; void</td><td>Mounts components into the content slot</td></tr>
+                <tr><td>content <span class="opt">?</span></td><td>string</td><td>Raw HTML string (alternative to render)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="SplitPanel">
+          <div class="comp-card-head">
+            <h3>SplitPanel</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">layout</span>
+              <span class="comp-file">lib/components/SplitPanel.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Two-column CSS grid layout. Left and right children are real <code class="kw">BaseComponent</code> instances registered in the tree. Column widths are set via CSS <code class="kw">fr</code> units.</p>
+            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">new SplitPanel('split', formComp, gridComp, {
+  leftWidth:  '2fr',
+  rightWidth: '3fr',
+}).mount(container);</code></pre>
+            <table class="field-table">
+              <thead><tr><th>Constructor param</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>id</td><td>string</td><td>Component ID</td></tr>
+                <tr><td>leftComp</td><td>BaseComponent</td><td>Component mounted in the left column</td></tr>
+                <tr><td>rightComp</td><td>BaseComponent</td><td>Component mounted in the right column</td></tr>
+                <tr><td>opts.leftWidth <span class="opt">?</span></td><td>string</td><td>CSS fr unit, default <code>'2fr'</code></td></tr>
+                <tr><td>opts.rightWidth <span class="opt">?</span></td><td>string</td><td>CSS fr unit, default <code>'3fr'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- CONTROLS                                               -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="controls">
+      <span class="kicker">Interaction</span>
+      <h2>Controls</h2>
+
+      <div class="comp-grid">
+
+        <div class="comp-card" id="Button">
+          <div class="comp-card-head">
+            <h3>Button</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">control</span>
+              <span class="comp-file">lib/components/Button.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Action button with four style variants, loading spinner, and disabled state. Clicking calls <code class="kw">submit(def.action || 'click', def.params || {})</code>.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Shows spinning icon, disables click</td></tr>
+                <tr><td>disabled <span class="opt">?</span></td><td>boolean</td><td>Grays out and disables click</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label</td><td>string</td><td>Button text</td></tr>
+                <tr><td>variant <span class="opt">?</span></td><td>'primary'|'secondary'|'danger'|'ghost'</td><td>Visual style</td></tr>
+                <tr><td>action <span class="opt">?</span></td><td>string</td><td>Action name passed to submit(), default <code>'click'</code></td></tr>
+                <tr><td>params <span class="opt">?</span></td><td>object</td><td>Extra params merged into the submit call</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="FilterBar">
+          <div class="comp-card-head">
+            <h3>FilterBar</h3>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span class="cat-tag">control</span>
+              <span class="comp-file">lib/components/FilterBar.js</span>
+            </div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Horizontal bar of filter controls. Supports three field types: <code class="kw">select</code>, <code class="kw">search</code>, and <code class="kw">date-range</code>. Every change calls <code class="kw">submit('filter.change', { values })</code>; the Clear button calls <code class="kw">submit('filter.clear', {})</code>.</p>
+            <pre style="margin:.5rem 0 .75rem"><code class="language-javascript">const bar = new FilterBar('fleet-filter', { values: {} }, [
+  { field: 'status', label: 'Status',   type: 'select', options: ['Active', 'Maintenance'] },
+  { field: 'q',      label: 'Search',   type: 'search', placeholder: 'Plate or driver…' },
+  { field: 'due',    label: 'Due Date', type: 'date-range' },
+]);
+bar._onAction = (action, params) => {
+  if (action === 'filter.change') refreshGrid(params.values);
+};</code></pre>
+            <table class="field-table">
+              <thead><tr><th>Filter entry</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key in <code>values</code> object</td></tr>
+                <tr><td>label</td><td>string</td><td>Label above the control</td></tr>
+                <tr><td>type</td><td>'select'|'search'|'date-range'</td><td>Input type to render</td></tr>
+                <tr><td>options <span class="opt">?</span></td><td>string[]</td><td>Options list (select only)</td></tr>
+                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder text (search only)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+</body>
+</html>
