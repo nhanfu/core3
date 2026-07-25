@@ -1,3 +1,21 @@
-node_modules
+node_modules/
+
+# Local databases and DuckDB runtime files
 tms/tms.duckdb
 tms/tms.duckdb.wal
+*.duckdb.wal
+*.duckdb.tmp
+
+# Build, test, and diagnostic output
+coverage/
+*.tsbuildinfo
+*.log
+*.pid
+
+# Local tooling and environment settings
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
