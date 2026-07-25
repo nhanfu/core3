@@ -1,7 +1,8 @@
 import duckdb from 'duckdb';
-import { SignJWT, jwtVerify } from 'jose';
+import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { DuckDbRepository, JwtAuthProvider } from './services.js';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // tms/server.js → PROJECT_ROOT is one level up
@@ -13,38 +14,14 @@ const JWT_SECRET = new TextEncoder().encode(
 // ── DuckDB setup ─────────────────────────────────────────────────────────────
 const db = new duckdb.Database(join(import.meta.dir, 'tms.duckdb'));
 const conn = db.connect();
-
-/** Execute a mutation (INSERT/UPDATE/DELETE/DDL). Resolves when done. */
-function run(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    conn.run(sql, ...params, (err) => (err ? reject(err) : resolve()));
-  });
-}
-
-/** Execute a SELECT and return an array of plain JS objects. */
-function all(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    conn.all(sql, ...params, (err, rows) => {
-      if (err) return reject(err);
-      resolve((rows || []).map(convertRow));
-    });
-  });
-}
-
-/** Convert DuckDB-native types (BigInt, Date, etc.) to plain JS values. */
-function convertRow(row) {
-  const out = {};
-  for (const [k, v] of Object.entries(row)) {
-    if (typeof v === 'bigint') {
-      out[k] = Number(v);
-    } else if (v instanceof Date) {
-      out[k] = v.toISOString();
-    } else {
-      out[k] = v;
-    }
-  }
-  return out;
-}
+const services = createFramework({
+  repository: new DuckDbRepository(conn),
+  auth: new JwtAuthProvider(JWT_SECRET),
+});
+const repository = services.resolve(SERVICE_KEYS.repository);
+const authProvider = services.resolve(SERVICE_KEYS.auth);
+const run = repository.run.bind(repository);
+const all = repository.query.bind(repository);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 const CORS_HEADERS = {
@@ -65,27 +42,8 @@ function apiError(status, message) {
 }
 
 // ── JWT ───────────────────────────────────────────────────────────────────────
-async function signJWT(payload) {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('8h')
-    .sign(JWT_SECRET);
-}
-
-async function verifyJWT(token) {
-  const { payload } = await jwtVerify(token, JWT_SECRET);
-  return payload;
-}
-
 async function requireAuth(req) {
-  const auth = req.headers.get('Authorization') || '';
-  if (!auth.startsWith('Bearer ')) throw { status: 401, message: 'Unauthorized' };
-  try {
-    return await verifyJWT(auth.slice(7));
-  } catch {
-    throw { status: 401, message: 'Invalid or expired token' };
-  }
+  return authProvider.getCurrentUser(req);
 }
 
 // ── Static file serving ───────────────────────────────────────────────────────
@@ -310,7 +268,7 @@ async function handleAPI(req, url) {
       roles,
       permissions,
     };
-    const token = await signJWT(tokenPayload);
+    const token = await authProvider.sign(tokenPayload);
     return json({ token, user: tokenPayload });
   }
 
@@ -322,7 +280,7 @@ async function handleAPI(req, url) {
   // ── All routes below require auth ──────────────────────────────────────────
   const authUser = await requireAuth(req);
 
-  const hasPerm = (perm) => authUser.permissions?.includes(perm);
+  const hasPerm = (perm) => authProvider.hasPermission(authUser, perm);
   const requirePerm = (perm) => {
     if (!hasPerm(perm)) throw { status: 403, message: `Requires permission: ${perm}` };
   };
