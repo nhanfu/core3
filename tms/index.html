@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TMS — Transport Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/tms/design-system.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Suppress Tailwind's reset so our CSS vars take precedence on shell elements
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      content: ['./tms/**/*.{html,js}', './lib/**/*.js']
+    };
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/tms/app.js"></script>
+</body>
+</html>
