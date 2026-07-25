@@ -103,3 +103,8 @@ datasources:
 ## Specification
 
 Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with architecture diagrams, code samples, and API details.
+
+## Local Development
+
+- Framework tests live under [`lib/test`](lib/test) and run with `bun run test` from [`lib`](lib).
+- The sample app lives under [`apps/tms`](apps/tms) and uses the shared framework package from `lib`.

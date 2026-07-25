@@ -4,9 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "PORT=3001 bun server.ts",
-    "dev": "PORT=3001 bun --hot server.ts",
-    "test": "vitest run --root ../.. --config apps/tms/vitest.config.ts",
-    "test:watch": "vitest --root ../.. --config apps/tms/vitest.config.ts"
+    "dev": "PORT=3001 bun --hot server.ts"
   },
   "dependencies": {
     "@core3/framework": "file:../../lib",

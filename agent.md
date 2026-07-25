@@ -4,32 +4,33 @@ This repository contains two main pieces:
 
 - `lib/`: the shared `@core3/framework` library
 - `apps/tms/`: the transport management app and its package root
+- `lib/test/`: the shared framework test cases
 
-The repo root no longer has its own `package.json`. Run app/package commands from `apps/tms/` unless a task explicitly targets the shared framework or root-level tests.
+The repo root no longer has its own `package.json`. Run framework/package commands from `lib/` and app commands from `apps/tms/` unless a task explicitly targets a different seam.
 
 ## What To Know First
 
 - `apps/tms/package.json` is the active app manifest.
 - `apps/tms/bun.lock` is the active lockfile.
 - `apps/tms/server.ts` is the Bun entry point for the app.
-- `apps/tms/vitest.config.ts` is the Vitest config used by the app scripts.
+- `lib/package.json` is the active framework manifest and owns the test command.
+- `lib/vitest.config.ts` is the Vitest config for the framework test suite.
 - `lib/package.json` defines the local framework package that `apps/tms` consumes through `file:../../lib`.
 
 ## Common Commands
 
-Run these from `apps/tms/`:
+Run these from `lib/`:
 
-- `bun run dev`
-- `bun run start`
 - `bun run test`
+- `bun run test:watch`
 
-The test command is configured to run the repo-level Vitest suite from the `apps/tms` package root.
+The test command is configured to run only the framework test cases under `lib/test/cases`.
 
 ## Repo Layout
 
 - `lib/` holds the reusable framework code: components, runtime, backend, HTML helpers, and related interfaces.
 - `apps/tms/` holds the app-specific server, pages, UI, DB seed/schema, styles, and types.
-- `test/` holds the shared Vitest cases for the framework.
+- `lib/test/` holds the shared Vitest cases for the framework.
 - `spec/` holds architecture and product documentation.
 
 ## Important Path Rules
@@ -61,4 +62,4 @@ If you change framework code in `lib/`, validate the touched area as narrowly as
 - `readme.md` explains the framework-level architecture.
 - `spec/main.html` is the main product/spec reference.
 - `apps/tms/server.ts` contains the app runtime and path assumptions.
-- `apps/tms/vitest.config.ts` contains the current test harness setup.
+- `lib/vitest.config.ts` contains the shared test setup.
