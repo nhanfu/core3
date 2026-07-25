@@ -8,6 +8,7 @@ tms/tms.duckdb.wal
 
 # Build, test, and diagnostic output
 coverage/
+lib/dist/
 *.tsbuildinfo
 *.log
 *.pid

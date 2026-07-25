@@ -4,9 +4,8 @@
   "type": "module",
   "workspaces": ["lib", "tms"],
   "scripts": {
-    "build:framework": "cd lib && bun run build",
-    "start": "bun run build:framework && PORT=3001 bun tms/server.js",
-    "dev": "bun run build:framework && PORT=3001 bun --watch tms/server.js",
+    "start": "PORT=3001 bun tms/server.ts",
+    "dev": "PORT=3001 bun --watch tms/server.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
