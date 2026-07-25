@@ -8,8 +8,24 @@ page:
 datasources:
   - id: drivers_stats
     single: true
+    permission: drivers.read
+    query: |
+      SELECT COUNT(*) AS total_count,
+        COUNT(*) FILTER (WHERE status = 'Active') AS active_count,
+        COUNT(*) FILTER (WHERE status = 'On Leave') AS on_leave_count,
+        COUNT(*) FILTER (WHERE license_expiry < CURRENT_DATE + INTERVAL '30 days') AS expiring_count
+      FROM drivers
   - id: drivers
     single: false
+    permission: drivers.read
+    query: |
+      SELECT d.*, t.plate AS truck_plate,
+        (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE) AS license_overdue,
+        (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE + INTERVAL '30 days') AS license_expiring
+      FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id
+      WHERE (:status IS NULL OR d.status = :status)
+        AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.license_number ILIKE '%' || :q || '%' OR d.email ILIKE '%' || :q || '%')
+      ORDER BY d.name
 
 toolbar:
   - id: add_driver_btn

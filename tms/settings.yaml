@@ -8,12 +8,40 @@ page:
 datasources:
   - id: branches
     single: false
+    permission: settings.read
+    query: |
+      SELECT b.*, COUNT(t.id) AS truck_count
+      FROM branches b LEFT JOIN trucks t ON t.branch_id = b.id
+      GROUP BY b.id, b.name, b.city, b.region, b.status, b.created_at, b.updated_at
+      ORDER BY b.name
   - id: users
     single: false
+    permission: settings.read
+    query: |
+      SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
+        string_agg(r.name, ',') AS roles_csv
+      FROM users u
+      LEFT JOIN user_roles ur ON ur.user_id = u.id
+      LEFT JOIN roles r ON r.id = ur.role_id
+      GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at
+      ORDER BY u.name
   - id: roles
     single: false
+    permission: settings.read
+    query: |
+      SELECT r.*, COUNT(p.id) AS permission_count
+      FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
+      GROUP BY r.id, r.name, r.description
+      ORDER BY r.name
   - id: translations
     single: false
+    permission: settings.read
+    query: |
+      SELECT * FROM translations
+      WHERE (:lang IS NULL OR lang = :lang)
+        AND (:page_filter IS NULL OR page = :page_filter)
+        AND (:q IS NULL OR text ILIKE '%' || :q || '%' OR translated ILIKE '%' || :q || '%')
+      ORDER BY page, component, text
 
 toolbar:
   - id: add_branch_btn

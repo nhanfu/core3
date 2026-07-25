@@ -169,8 +169,60 @@ function splitSQL(sql) {
     .filter(Boolean);
 }
 
-// ── SOURCES registry ──────────────────────────────────────────────────────────
-const SOURCES = {
+// ── YAML datasource registry ─────────────────────────────────────────────────
+// Queries are loaded from the page YAML files, never accepted from API requests.
+const SOURCE_FILES = ['fleet.yaml', 'drivers.yaml', 'trips.yaml', 'maintenance.yaml', 'reports.yaml', 'settings.yaml'];
+
+function loadSources() {
+  const sources = new Map();
+  for (const file of SOURCE_FILES) {
+    const page = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
+    for (const source of page.datasources || []) {
+      if (!source.id || !source.query || !source.permission) {
+        throw new Error(`Datasource in ${file} requires id, permission, and query`);
+      }
+      if (sources.has(source.id)) throw new Error(`Duplicate datasource id: ${source.id}`);
+      sources.set(source.id, source);
+    }
+  }
+  return sources;
+}
+
+const SOURCES = loadSources();
+
+function bindNamedParams(sql, params = {}) {
+  const values = [];
+  const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_, name) => {
+    values.push(params[name] ?? null);
+    return '?';
+  });
+  return { statement, values };
+}
+
+async function querySource(source, params, skip, top) {
+  const { statement, values } = bindNamedParams(source.query, params);
+  if (source.single) {
+    const rows = await all(statement, values);
+    return { data: rows[0] || {} };
+  }
+
+  const [count] = await all(`SELECT COUNT(*) AS n FROM (${statement}) AS source_rows`, values);
+  const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
+  const offset = Math.max(0, Number(skip) || 0);
+  const rows = await all(
+    `SELECT * FROM (${statement}) AS source_rows LIMIT ? OFFSET ?`,
+    [...values, pageSize, offset]
+  );
+  const total = Number(count?.n || 0);
+  return {
+    data: rows,
+    meta: { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) },
+  };
+}
+
+/* Legacy registry retained below temporarily while the query definitions are
+ * migrated to YAML. It is not used by the API. */
+const LEGACY_SOURCES = {
   trucks: {
     permission: 'fleet.read',
     paginated: true,
@@ -605,10 +657,10 @@ async function handleAPI(req, url) {
   // ── POST /api/query ───────────────────────────────────────────────────────
   if (pathname === '/api/query' && method === 'POST') {
     const vm = await req.json();
-    const src = SOURCES[vm.sourceId];
+    const src = SOURCES.get(vm.sourceId);
     if (!src) return apiError(404, `Unknown source: ${vm.sourceId}`);
     if (src.permission) requirePerm(src.permission);
-    const result = await src.query(vm.params || {}, vm.skip || 0, vm.top || 25);
+    const result = await querySource(src, vm.params || {}, vm.skip || 0, vm.top || 25);
     return json(result);
   }
 

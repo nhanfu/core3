@@ -8,8 +8,24 @@ page:
 datasources:
   - id: trips_stats
     single: true
+    permission: trips.read
+    query: |
+      SELECT COUNT(*) FILTER (WHERE status = 'Scheduled') AS scheduled_count,
+        COUNT(*) FILTER (WHERE status = 'In Transit') AS in_transit_count,
+        COUNT(*) FILTER (WHERE status = 'Completed' AND DATE(arrival_time) = CURRENT_DATE) AS completed_today,
+        COUNT(*) FILTER (WHERE status = 'Cancelled') AS cancelled_count
+      FROM trips
   - id: trips
     single: false
+    permission: trips.read
+    query: |
+      SELECT tr.*, t.plate AS truck_plate, d.name AS driver_name
+      FROM trips tr
+      LEFT JOIN trucks t ON t.id = tr.truck_id
+      LEFT JOIN drivers d ON d.id = tr.driver_id
+      WHERE (:status IS NULL OR tr.status = :status)
+        AND (:q IS NULL OR tr.trip_number ILIKE '%' || :q || '%' OR tr.origin ILIKE '%' || :q || '%' OR tr.destination ILIKE '%' || :q || '%' OR t.plate ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
+      ORDER BY tr.departure_time DESC
 
 toolbar:
   - id: add_trip_btn

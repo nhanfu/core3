@@ -8,8 +8,25 @@ page:
 datasources:
   - id: maintenance_kpis
     single: true
+    permission: maintenance.read
+    query: |
+      SELECT COUNT(*) FILTER (WHERE status = 'Overdue' OR (status = 'Scheduled' AND scheduled_date < CURRENT_DATE)) AS overdue,
+        COUNT(*) FILTER (WHERE scheduled_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days' AND status = 'Scheduled') AS due_this_week,
+        COUNT(*) FILTER (WHERE status = 'In Progress') AS in_progress,
+        COUNT(*) FILTER (WHERE status = 'Completed' AND completed_date >= date_trunc('month', CURRENT_DATE)) AS completed_month
+      FROM maintenance
   - id: maintenance
     single: false
+    permission: maintenance.read
+    query: |
+      SELECT m.*, t.plate AS truck_plate, t.model AS truck_model, u.name AS technician_name
+      FROM maintenance m
+      LEFT JOIN trucks t ON t.id = m.truck_id
+      LEFT JOIN users u ON u.id = m.technician_id
+      WHERE (:status IS NULL OR m.status = :status)
+        AND (:service_type IS NULL OR m.service_type = :service_type)
+        AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR m.service_type ILIKE '%' || :q || '%' OR m.notes ILIKE '%' || :q || '%')
+      ORDER BY m.scheduled_date DESC
 
 toolbar:
   - id: add_maintenance_btn

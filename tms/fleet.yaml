@@ -8,8 +8,25 @@ page:
 datasources:
   - id: trucks_kpis
     single: true
+    permission: fleet.read
+    query: |
+      SELECT COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE status = 'Active') AS active,
+        COUNT(*) FILTER (WHERE status = 'Maintenance') AS maintenance,
+        COUNT(*) FILTER (WHERE status = 'Out of Service') AS out_of_service,
+        COUNT(*) FILTER (WHERE next_service IS NOT NULL AND next_service < CURRENT_DATE) AS overdue_service
+      FROM trucks
   - id: trucks
     single: false
+    permission: fleet.read
+    query: |
+      SELECT t.*, d.name AS driver_name, d.phone AS driver_phone,
+        (t.next_service IS NOT NULL AND t.next_service < CURRENT_DATE) AS overdue_next
+      FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id
+      WHERE (:status IS NULL OR t.status = :status)
+        AND (:type IS NULL OR t.type = :type)
+        AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR t.model ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
+      ORDER BY t.plate
 
 toolbar:
   - id: add_truck_btn

@@ -8,10 +8,34 @@ page:
 datasources:
   - id: reports_fleet
     single: true
+    permission: reports.read
+    query: |
+      SELECT COUNT(*) AS total_trucks,
+        COUNT(*) FILTER (WHERE status = 'Active') AS active_trucks,
+        COUNT(*) FILTER (WHERE status = 'Maintenance') AS maintenance_trucks,
+        ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'Active') / NULLIF(COUNT(*), 0), 1) AS utilization_pct,
+        AVG(mileage) AS avg_mileage
+      FROM trucks
   - id: reports_costs
     single: true
+    permission: reports.financials
+    query: |
+      SELECT SUM(cost) AS grand_total, AVG(cost) AS avg_cost, COUNT(*) AS total_services
+      FROM maintenance
+      WHERE status = 'Completed'
   - id: reports_drivers
     single: false
+    permission: reports.read
+    query: |
+      SELECT d.id AS driver_id, d.name AS driver_name, d.status AS driver_status,
+        COUNT(tr.id) AS total_trips,
+        COUNT(tr.id) FILTER (WHERE tr.status = 'Completed') AS completed_trips,
+        COUNT(tr.id) FILTER (WHERE tr.status = 'Cancelled') AS cancelled_trips,
+        COALESCE(SUM(tr.distance_km), 0) AS total_km,
+        ROUND(100.0 * COUNT(tr.id) FILTER (WHERE tr.status = 'Completed') / NULLIF(COUNT(tr.id), 0), 1) AS completion_rate
+      FROM drivers d LEFT JOIN trips tr ON tr.driver_id = d.id
+      GROUP BY d.id, d.name, d.status
+      ORDER BY completed_trips DESC, total_km DESC
 
 components:
   - type: TabGroup
@@ -23,19 +47,19 @@ components:
             source: reports_fleet
             stats:
               - label: Total Trucks
-                field: summary.total_trucks
+                field: total_trucks
                 color: blue
               - label: Active Trucks
-                field: summary.active_trucks
+                field: active_trucks
                 color: green
               - label: In Maintenance
-                field: summary.maintenance_trucks
+                field: maintenance_trucks
                 color: amber
               - label: Utilization %
-                field: summary.utilization_pct
+                field: utilization_pct
                 color: indigo
               - label: Avg Mileage
-                field: summary.avg_mileage
+                field: avg_mileage
                 color: purple
 
       - id: cost-tab
@@ -46,13 +70,13 @@ components:
             source: reports_costs
             stats:
               - label: Grand Total
-                field: summary.grand_total
+                field: grand_total
                 color: red
               - label: Avg Cost per Service
-                field: summary.avg_cost
+                field: avg_cost
                 color: amber
               - label: Total Services
-                field: summary.total_services
+                field: total_services
                 color: blue
 
       - id: driver-tab
