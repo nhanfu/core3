@@ -1,0 +1,644 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TMS Settings — Declarative Page Config
+#
+# This file is the single source of truth for the Settings admin page.
+# The runtime reads this YAML, resolves datasources, evaluates
+# show_if / disabled_if guards, and mounts all components into their
+# designated container elements.
+#
+# Tabs:
+#   1. Branches       — manage physical depot / hub locations
+#   2. Users          — invite users and manage accounts
+#   3. Roles & Perms  — view roles and their permission sets
+# ─────────────────────────────────────────────────────────────────────────────
+
+title: Settings
+
+# ── Page-level metadata ──────────────────────────────────────────────────────
+page:
+  id: settings
+  description: Manage branches, user accounts, and role-based permissions.
+  icon: settings
+  auth:
+    require: [settings.read]     # user must hold this permission to load the page
+    redirect_to: /login          # fallback route if unauthenticated or unauthorized
+
+# ── Datasources ──────────────────────────────────────────────────────────────
+#
+# Each datasource declares a named data feed the runtime can query.
+# Components reference datasources by `id`. Named params (:param) are
+# server-substituted at request time to prevent injection.
+#
+datasources:
+
+  # ── Branches ───────────────────────────────────────────────────────────────
+  - id: branches
+    protocol: http
+    method: GET
+    endpoint: /api/v1/branches
+    roles: [admin, fleet_manager]
+    permission: settings.read
+    # Returns one row per branch with an aggregated truck count.
+    query: >
+      SELECT
+        b.id,
+        b.branch_name,
+        b.code,
+        b.city,
+        b.region,
+        b.country,
+        b.status,
+        COUNT(t.id) AS truck_count
+      FROM branches b
+      LEFT JOIN trucks t ON t.branch_id = b.id
+      GROUP BY b.id
+      ORDER BY b.branch_name ASC
+    cache:
+      ttl: 120s
+      # Cache is invalidated whenever any of these domain events are published
+      bust_on: [branch.created, branch.updated, branch.deactivated, truck.transferred]
+
+  # ── Users ──────────────────────────────────────────────────────────────────
+  - id: users
+    protocol: http
+    method: GET
+    endpoint: /api/v1/users
+    roles: [admin]
+    permission: settings.users.read
+    # Returns one row per user with their roles as an aggregated array.
+    query: >
+      SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.status,
+        u.last_login,
+        array_agg(r.name ORDER BY r.name) AS roles,
+        b.branch_name AS branch
+      FROM users u
+      LEFT JOIN user_roles ur ON ur.user_id = u.id
+      LEFT JOIN roles r       ON r.id = ur.role_id
+      LEFT JOIN branches b    ON b.id = u.primary_branch_id
+      GROUP BY u.id, b.branch_name
+      ORDER BY u.name ASC
+    cache:
+      ttl: 60s
+      bust_on: [user.created, user.updated, user.suspended, user.roles_changed]
+
+  # ── Roles ──────────────────────────────────────────────────────────────────
+  - id: roles
+    protocol: http
+    method: GET
+    endpoint: /api/v1/roles
+    roles: [admin]
+    permission: settings.roles.read
+    # Returns one row per role with permission count and user count.
+    query: >
+      SELECT
+        r.id,
+        r.name,
+        r.description,
+        COUNT(DISTINCT rp.permission_id)              AS permission_count,
+        COUNT(DISTINCT ur.user_id)                    AS user_count,
+        string_agg(DISTINCT p.key, ', ' ORDER BY p.key)
+          FILTER (WHERE row_number() OVER () <= 5)    AS permissions_preview,
+        array_agg(DISTINCT p.key ORDER BY p.key)      AS permissions
+      FROM roles r
+      LEFT JOIN role_permissions rp ON rp.role_id = r.id
+      LEFT JOIN permissions p       ON p.id = rp.permission_id
+      LEFT JOIN user_roles ur       ON ur.role_id = r.id
+      GROUP BY r.id
+      ORDER BY r.name ASC
+    cache:
+      ttl: 300s
+      bust_on: [role.updated, role.permissions_changed]
+
+# ── Components ────────────────────────────────────────────────────────────────
+#
+# Components are mounted into DOM elements identified by `container`.
+# `source` references a datasource id defined above.
+# Field-level `show_if` / `disabled_if` are JS expressions evaluated with
+#   `row`         bound to the current record
+#   `user`        bound to the authenticated session user
+#   `currentUser` alias for `user`
+#
+components:
+
+  # ── Tab container ───────────────────────────────────────────────────────────
+  - type: TabPanel
+    id: settings-tabs
+    container: settings-tabs           # mounts into <div id="settings-tabs">
+    tabs:
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # TAB 1 — Branches
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      - id: branches
+        label: Branches
+        icon: map-pin
+
+        # Toolbar buttons appear above the grid.
+        # `permission` hides the button from users who lack the key.
+        toolbar:
+          - id: add_branch
+            label: "+ Add Branch"
+            variant: primary
+            permission: settings.write
+            action: branch.create      # triggers the action defined in `actions:`
+
+        components:
+          # ── Branch GridView ───────────────────────────────────────────────
+          - type: GridView
+            id: branches-grid
+            source: branches           # binds to the `branches` datasource above
+            page_size: 10
+            selectable: false
+            empty_label: "No branches configured yet."
+
+            columns:
+              # Plain ID column — narrow, non-sortable
+              - type: TextCell
+                id: branch_id
+                field: id
+                label: "ID"
+                min_width: 80
+
+              # Branch name in primary text; branch code in secondary (smaller) text below
+              - type: TextCell
+                id: branch_name
+                field: branch_name
+                label: Branch Name
+                secondary: code        # renders branch code as dimmed sub-text
+                sortable: true
+                min_width: 180
+
+              # City + region stacked in a single cell
+              - type: TextCell
+                id: location
+                field: city
+                label: Location
+                secondary: region
+                sortable: true
+
+              - type: TextCell
+                id: country
+                field: country
+                label: Country
+                sortable: true
+
+              # BadgeCell maps status string → Tailwind colour name
+              - type: BadgeCell
+                id: status
+                field: status
+                label: Status
+                sortable: true
+                colors:
+                  Active:   green
+                  Inactive: gray
+
+              # NumberCell: locale-aware thousands separators, right-aligned
+              - type: NumberCell
+                id: truck_count
+                field: truck_count
+                label: Trucks
+                align: right
+                sortable: true
+                # Color computed at runtime — red if branch has zero trucks
+                color_compute: "row.truck_count === 0 ? 'red' : 'default'"
+
+              # ActionCell: per-row buttons with show_if / disabled_if guards
+              - type: ActionCell
+                id: actions
+                label: ""
+                actions:
+                  - id: branch.edit
+                    label: Edit
+                    variant: primary   # blue link style
+
+                  - id: branch.deactivate
+                    label: Deactivate
+                    variant: danger    # red link style
+                    # show_if: JS expression; row is the current data record
+                    show_if: "row.status === 'Active'"
+                    # disabled_if: button is visible but non-clickable when true
+                    disabled_if: "row.truck_count > 0"
+
+        # ── Branch popup form (opened by branch.create and branch.edit) ─────
+        popup:
+          id: branch-popup
+          title: Branch Details        # overridden to "Edit Branch" when mode === 'edit'
+          width: max-w-xl
+          form:
+            id: branch-form
+            fields:
+              - type: TextInput
+                field: branch_name
+                label: Branch Name
+                required: true
+                placeholder: "e.g. Los Angeles Central"
+
+              - type: TextInput
+                field: code
+                label: Branch Code
+                required: true
+                placeholder: "e.g. LA-01"
+                hint: Short unique identifier — max 10 characters.
+
+              - type: TextInput
+                field: city
+                label: City
+                required: true
+                placeholder: "e.g. Los Angeles"
+
+              # SelectInput: options list is static here; can also reference a datasource
+              - type: SelectInput
+                field: region
+                label: Region
+                required: true
+                options: [West, East, North, South, Central]
+
+              - type: SelectInput
+                field: country
+                label: Country
+                required: true
+                options:
+                  - United States
+                  - Canada
+                  - Mexico
+
+              # Status selector — only visible when editing an existing branch
+              - type: SelectInput
+                field: status
+                label: Status
+                options: [Active, Inactive]
+                show_if: "mode === 'edit'"   # hidden on the create (mode === 'create') form
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # TAB 2 — Users
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      - id: users
+        label: Users
+        icon: users
+
+        toolbar:
+          - id: invite_user
+            label: "+ Invite User"
+            variant: primary
+            permission: settings.users.write
+            action: user.invite
+
+        components:
+          # ── Users GridView ────────────────────────────────────────────────
+          - type: GridView
+            id: users-grid
+            source: users
+            page_size: 10
+            empty_label: "No users found."
+
+            columns:
+              # AvatarCell: renders a coloured circle with the user's initials.
+              # The colour is deterministically derived from the name string.
+              # `size: md` → 32×32 px circle.
+              - type: AvatarCell
+                id: avatar
+                field: name            # string used to derive initials and colour
+                label: ""
+                size: md               # sm | md | lg
+
+              # Name in primary text; email in secondary (smaller, dimmed)
+              - type: TextCell
+                id: name
+                field: name
+                label: Name
+                secondary: email
+                sortable: true
+                min_width: 200
+
+              # `multi: true` — iterates over roles[] and renders a BadgeCell per element.
+              # This is a framework extension over the base BadgeCell type.
+              - type: BadgeCell
+                id: roles
+                field: roles           # expects a string[] from the datasource
+                label: Roles
+                multi: true
+                colors:
+                  admin:         red
+                  fleet_manager: indigo
+                  dispatcher:    blue
+                  driver:        green
+                  maintenance:   amber
+                  viewer:        gray
+
+              - type: BadgeCell
+                id: status
+                field: status
+                label: Status
+                sortable: true
+                colors:
+                  Active:    green
+                  Suspended: red
+                  Pending:   amber
+
+              # DateCell with `format: relative` shows "3 days ago", "Today", etc.
+              - type: DateCell
+                id: last_login
+                field: last_login
+                label: Last Login
+                format: relative
+                sortable: true
+
+              - type: TextCell
+                id: branch
+                field: branch
+                label: Branch
+
+              - type: ActionCell
+                id: actions
+                label: ""
+                actions:
+                  - id: user.edit_roles
+                    label: Edit Roles
+                    variant: primary
+
+                  - id: user.suspend
+                    label: Suspend
+                    variant: danger
+                    show_if: "row.status === 'Active'"
+                    # Suspending an admin requires superadmin privileges; guard at API level too
+                    disabled_if: "row.roles.includes('admin')"
+
+        # ── User-roles popup form ─────────────────────────────────────────────
+        popup:
+          id: user-roles-popup
+          title: Edit User Roles
+          width: max-w-lg
+          form:
+            id: user-roles-form
+            fields:
+              # Read-only context fields — show the user being edited
+              - type: TextInput
+                field: name
+                label: Name
+                readonly: true         # rendered as a disabled input; not submitted
+
+              - type: TextInput
+                field: email
+                label: Email
+                readonly: true
+
+              # Primary role — every user must have exactly one
+              - type: SelectInput
+                field: primary_role
+                label: Primary Role
+                required: true
+                options: [admin, fleet_manager, dispatcher, driver, viewer]
+                hint: This role sets the user's base permission level.
+
+              # Additional roles — zero or more supplemental permission sets
+              - type: CheckboxInput
+                field: extra_roles
+                label: Additional Roles
+                hint: Supplemental roles grant extra permissions on top of the primary role.
+                options:
+                  - label: Fleet Manager
+                    value: fleet_manager
+                  - label: Dispatcher
+                    value: dispatcher
+                  - label: Maintenance Coordinator
+                    value: maintenance
+                  - label: Report Viewer
+                    value: viewer
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # TAB 3 — Roles & Permissions
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      - id: roles
+        label: Roles & Permissions
+        icon: shield
+
+        components:
+          # ── Roles GridView ────────────────────────────────────────────────
+          - type: GridView
+            id: roles-grid
+            source: roles
+            page_size: 10
+            empty_label: "No roles defined."
+            # `expand_row: permissions` — clicking a row expands an inline detail
+            # panel listing the full permissions[] array. (Runtime extension.)
+            expand_row: permissions
+
+            columns:
+              # Role name + description stacked
+              - type: TextCell
+                id: role_name
+                field: name
+                label: Role
+                secondary: description
+                sortable: true
+                min_width: 180
+
+              # How many permissions are currently assigned to this role
+              - type: NumberCell
+                id: permission_count
+                field: permission_count
+                label: Permissions
+                align: right
+                sortable: true
+
+              # How many user accounts hold this role
+              - type: NumberCell
+                id: user_count
+                field: user_count
+                label: Users Assigned
+                align: right
+                sortable: true
+
+              # `permissions_preview` — first five permission keys joined by ", "
+              # Full list is shown in the expanded row panel (see expand_row above)
+              - type: TextCell
+                id: permissions_preview
+                field: permissions_preview
+                label: Key Permissions
+                min_width: 300
+
+              - type: ActionCell
+                id: actions
+                label: ""
+                actions:
+                  - id: role.edit
+                    label: Edit Permissions
+                    variant: primary
+
+                  - id: role.clone
+                    label: Clone
+                    variant: ghost
+
+# ── Actions ───────────────────────────────────────────────────────────────────
+#
+# Canonical action definitions. ActionCell entries above reference these by id.
+# The runtime merges cell-level overrides (show_if, disabled_if, variant) with
+# the defaults declared here. Template strings like {{row.field}} are
+# interpolated at runtime after the user confirms (if a `confirm` is set).
+#
+actions:
+
+  # ── Branch actions ─────────────────────────────────────────────────────────
+
+  - id: branch.create
+    label: Add Branch
+    description: Create a new branch (depot / hub) location.
+    modal: branch-popup            # open this popup when the action fires
+    mutation:
+      method: POST
+      endpoint: /api/v1/branches
+      body:
+        branch_name: "{{form.branch_name}}"
+        code:        "{{form.code}}"
+        city:        "{{form.city}}"
+        region:      "{{form.region}}"
+        country:     "{{form.country}}"
+      on_success:
+        toast: "Branch '{{response.branch_name}}' created successfully."
+        refresh: [branches]        # triggers a re-fetch of the branches datasource
+        close_modal: branch-popup
+      on_error:
+        toast: "Failed to create branch — the code may already be in use."
+        variant: error
+
+  - id: branch.edit
+    label: Edit Branch
+    description: Open the branch form pre-filled with the selected row's values.
+    modal: branch-popup
+    pre_fill: row                  # populates form fields from the current row object
+    mutation:
+      method: PATCH
+      endpoint: "/api/v1/branches/{{row.id}}"
+      on_success:
+        toast: "Branch '{{row.branch_name}}' updated."
+        refresh: [branches]
+        close_modal: branch-popup
+      on_error:
+        toast: "Failed to update branch."
+        variant: error
+
+  - id: branch.deactivate
+    label: Deactivate Branch
+    description: Mark a branch as Inactive. Does not delete it.
+    variant: danger
+    show_if: "row.status === 'Active'"
+    # A branch with trucks still assigned cannot be deactivated — the user
+    # must first transfer those trucks to another branch.
+    disabled_if: "row.truck_count > 0"
+    confirm: >
+      Deactivate {{row.branch_name}}?
+      Reassign all {{row.truck_count}} truck(s) to another branch first.
+    mutation:
+      method: PATCH
+      endpoint: "/api/v1/branches/{{row.id}}"
+      body:
+        status: Inactive
+      on_success:
+        toast: "{{row.branch_name}} has been deactivated."
+        variant: success
+        refresh: [branches]
+      on_error:
+        toast: "Deactivation failed — please reassign all trucks first."
+        variant: error
+
+  # ── User actions ────────────────────────────────────────────────────────────
+
+  - id: user.invite
+    label: Invite User
+    description: Send an invitation email to a new TMS user.
+    modal: invite-user-popup
+    mutation:
+      method: POST
+      endpoint: /api/v1/users/invite
+      on_success:
+        toast: "Invitation sent to {{form.email}}."
+        refresh: [users]
+      on_error:
+        toast: "Could not send invitation — check the email address."
+        variant: error
+
+  - id: user.edit_roles
+    label: Edit Roles
+    description: Change the primary role and supplemental roles for this user.
+    modal: user-roles-popup
+    pre_fill: row                  # row.name, row.email, row.roles pre-fill the form
+    mutation:
+      method: PUT
+      endpoint: "/api/v1/users/{{row.id}}/roles"
+      body:
+        primary_role: "{{form.primary_role}}"
+        extra_roles:  "{{form.extra_roles}}"
+      on_success:
+        toast: "Roles updated for {{row.name}}."
+        refresh: [users]
+        close_modal: user-roles-popup
+      on_error:
+        toast: "Failed to update roles — please try again."
+        variant: error
+
+  - id: user.suspend
+    label: Suspend
+    description: Immediately revoke the user's login access.
+    variant: danger
+    show_if: "row.status === 'Active'"
+    # Admin accounts cannot be suspended through the UI; requires superadmin API call
+    disabled_if: "row.roles.includes('admin')"
+    confirm: >
+      Suspend {{row.name}}?
+      They will be logged out immediately and cannot log back in until reinstated.
+    mutation:
+      method: PATCH
+      endpoint: "/api/v1/users/{{row.id}}"
+      body:
+        status: Suspended
+      on_success:
+        toast: "{{row.name}} has been suspended."
+        refresh: [users]
+      on_error:
+        toast: "Could not suspend {{row.name}} — try again."
+        variant: error
+
+  # ── Role actions ─────────────────────────────────────────────────────────────
+
+  - id: role.edit
+    label: Edit Permissions
+    description: Navigate to the role detail page to manage individual permissions.
+    # `navigate_to` triggers a client-side route change; `params` are query params
+    navigate_to: role-detail
+    params:
+      id: row.id
+
+  - id: role.clone
+    label: Clone Role
+    description: Duplicate the role and its full permission set under a new name.
+    confirm: "Clone the '{{row.name}}' role? A copy will be created for you to customise."
+    mutation:
+      method: POST
+      endpoint: /api/v1/roles/clone
+      body:
+        source_id: row.id
+      on_success:
+        toast: "Role '{{row.name}}' cloned. Edit its permissions now."
+        refresh: [roles]
+      on_error:
+        toast: "Failed to clone role."
+        variant: error
+
+# ── Page-level toolbar ────────────────────────────────────────────────────────
+#
+# These buttons render in the page header, outside the TabPanel.
+# They are typically global operations that apply regardless of the active tab.
+#
+toolbar:
+  - id: export_settings
+    label: Export Config
+    variant: secondary
+    permission: settings.read
+    export:
+      format: json
+      sources: [branches, users, roles]
+      filename: "tms-settings-{{date}}.json"

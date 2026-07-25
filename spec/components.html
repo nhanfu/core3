@@ -47,7 +47,7 @@
 <header class="page-hero">
   <span class="eyebrow">UI layer</span>
   <h1>Component library</h1>
-  <p class="hero-sub">23 components across 7 categories. Each lives in its own file under <code class="kw">lib/components/</code> and extends <code class="kw">BaseComponent</code>. Import individually or via the barrel at <code class="kw">lib/components.js</code>. See <a href="plan.html">plan.html</a> for the full component meta model and upcoming additions.</p>
+  <p class="hero-sub">61 components across 14 categories. Each lives in its own file under <code class="kw">lib/components/</code> and extends <code class="kw">BaseComponent</code>. Import individually or via the barrel at <code class="kw">lib/components.js</code>. See <a href="plan.html">plan.html</a> for the full component meta model and upcoming additions.</p>
 </header>
 
 <div class="layout">
@@ -70,6 +70,13 @@
           <a href="#kpi">KPI / Summary</a>
           <a href="#layout">Layout</a>
           <a href="#controls">Controls</a>
+          <a href="#utilities">Utilities</a>
+          <a href="#form-enhancements">Form enhancements</a>
+          <a href="#advanced-layout">Advanced layout</a>
+          <a href="#advanced-data">Advanced data display</a>
+          <a href="#report-export">Report / export</a>
+          <a href="#specialized">Specialized</a>
+          <a href="#cell-variants">Cell variants</a>
         </div>
       </div>
       <div class="nav-group"><a href="plan.html">Roadmap</a></div>
@@ -712,6 +719,1016 @@ await form.submit('truck.update', { id: truck.id });</code></pre>
                 <tr><td>type</td><td>'select'|'search'|'date-range'</td><td>Input type</td></tr>
                 <tr><td>options <span class="opt">?</span></td><td>string[]</td><td>Options (select only)</td></tr>
                 <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Placeholder (search only)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- UTILITIES                                               -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="utilities">
+      <span class="kicker">Feedback</span>
+      <h2>Utilities</h2>
+      <p style="margin-bottom:1.5rem">Lightweight overlay and feedback components that sit above the normal component tree. Most are singletons or short-lived instances rendered directly into <code class="kw">document.body</code>.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="Toast">
+          <div class="comp-card-head">
+            <h3>Toast</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">utility</span><span class="comp-file">lib/components/Toast.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Transient notification banner that auto-dismisses after a configurable delay.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>message</td><td>string</td><td>Text shown in the toast</td></tr>
+                <tr><td>type <span class="opt">?</span></td><td>'success'|'error'|'warning'|'info'</td><td>Color variant, default <code>'info'</code></td></tr>
+                <tr><td>duration <span class="opt">?</span></td><td>number</td><td>Auto-dismiss ms, default 3000</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>position <span class="opt">?</span></td><td>'top'|'bottom'</td><td>Screen anchor position</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="Spinner">
+          <div class="comp-card-head">
+            <h3>Spinner</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">utility</span><span class="comp-file">lib/components/Spinner.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Animated loading indicator used inline or as a full-area overlay.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>visible <span class="opt">?</span></td><td>boolean</td><td>Show or hide the spinner</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>size <span class="opt">?</span></td><td>'sm'|'md'|'lg'</td><td>Spinner diameter, default <code>'md'</code></td></tr>
+                <tr><td>overlay <span class="opt">?</span></td><td>boolean</td><td>Full-container dim overlay</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ConfirmDialog">
+          <div class="comp-card-head">
+            <h3>ConfirmDialog</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">utility</span><span class="comp-file">lib/components/ConfirmDialog.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Modal confirmation dialog with a message and two action buttons; resolves a Promise on user choice.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>open</td><td>boolean</td><td>Controls dialog visibility</td></tr>
+                <tr><td>message</td><td>string</td><td>Body text of the dialog</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>title <span class="opt">?</span></td><td>string</td><td>Dialog heading</td></tr>
+                <tr><td>confirmLabel <span class="opt">?</span></td><td>string</td><td>Confirm button text, default <code>'OK'</code></td></tr>
+                <tr><td>cancelLabel <span class="opt">?</span></td><td>string</td><td>Cancel button text, default <code>'Cancel'</code></td></tr>
+                <tr><td>danger <span class="opt">?</span></td><td>boolean</td><td>Red confirm button for destructive actions</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="Label">
+          <div class="comp-card-head">
+            <h3>Label</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">utility</span><span class="comp-file">lib/components/Label.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Static text label used to display a field name and its read-only value in a consistent style.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>any</td><td>Value to display</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Caption text shown above the value</td></tr>
+                <tr><td>field <span class="opt">?</span></td><td>string</td><td>Key used when embedded in a data context</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- FORM ENHANCEMENTS                                       -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="form-enhancements">
+      <span class="kicker">Data entry</span>
+      <h2>Form enhancements</h2>
+      <p style="margin-bottom:1.5rem">Richer input widgets that extend beyond the basic HTML input set. All integrate with <code class="kw">FormPanel.registerField()</code> and follow the same <code class="kw">setState({ value })</code> pattern.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="SearchEntry">
+          <div class="comp-card-head">
+            <h3>SearchEntry</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">input</span><span class="comp-file">lib/components/SearchEntry.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Autocomplete search input that fetches suggestions from a datasource and resolves to a single selected record.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>any</td><td>Currently selected record id</td></tr>
+                <tr><td>text <span class="opt">?</span></td><td>string</td><td>Display text for the selected record</td></tr>
+                <tr><td>suggestions <span class="opt">?</span></td><td>object[]</td><td>Live suggestion list</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>datasource</td><td>string</td><td>Datasource id queried for suggestions</td></tr>
+                <tr><td>displayField</td><td>string</td><td>Record key shown as suggestion text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="MultipleSearchEntry">
+          <div class="comp-card-head">
+            <h3>MultipleSearchEntry</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">input</span><span class="comp-file">lib/components/MultipleSearchEntry.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Like <code class="kw">SearchEntry</code> but allows selecting multiple records, displayed as removable chips.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>any[]</td><td>Array of selected record ids</td></tr>
+                <tr><td>chips <span class="opt">?</span></td><td>{ id, text }[]</td><td>Display labels for selected items</td></tr>
+                <tr><td>suggestions <span class="opt">?</span></td><td>object[]</td><td>Live suggestion list</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>datasource</td><td>string</td><td>Datasource id queried for suggestions</td></tr>
+                <tr><td>displayField</td><td>string</td><td>Record key shown as chip / suggestion text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="RichTextBox">
+          <div class="comp-card-head">
+            <h3>RichTextBox</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">input</span><span class="comp-file">lib/components/RichTextBox.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">WYSIWYG rich-text editor; state value is an HTML string persisted to the field.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>HTML content string</td></tr>
+                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Validation error shown below</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>height <span class="opt">?</span></td><td>string</td><td>CSS height of the editor area, default <code>'200px'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="Rating">
+          <div class="comp-card-head">
+            <h3>Rating</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">input</span><span class="comp-file">lib/components/Rating.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Star-rating input; state value is a 1–N integer representing the selected star count.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>number</td><td>Current rating (1 to max)</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>max <span class="opt">?</span></td><td>number</td><td>Number of stars, default 5</td></tr>
+                <tr><td>readonly <span class="opt">?</span></td><td>boolean</td><td>Display-only, no interaction</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="Image">
+          <div class="comp-card-head">
+            <h3>Image</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">input</span><span class="comp-file">lib/components/Image.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Image display and optional upload widget; state value is a URL string pointing to the image resource.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string | null</td><td>URL of the current image</td></tr>
+                <tr><td>uploading <span class="opt">?</span></td><td>boolean</td><td>Progress indicator during upload</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Label text</td></tr>
+                <tr><td>uploadAction <span class="opt">?</span></td><td>string</td><td>Action name called after file selection</td></tr>
+                <tr><td>width / height <span class="opt">?</span></td><td>string</td><td>CSS dimensions of the preview area</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- ADVANCED LAYOUT                                         -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="advanced-layout">
+      <span class="kicker">Structure</span>
+      <h2>Advanced layout</h2>
+      <p style="margin-bottom:1.5rem">Higher-order layout components that compose other components or provide navigation paradigms beyond the basic <code class="kw">TabPanel</code> and <code class="kw">SplitPanel</code>.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="Section">
+          <div class="comp-card-head">
+            <h3>Section</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">layout</span><span class="comp-file">lib/components/Section.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Collapsible card section with a title bar and a slotted content area for child components.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>collapsed <span class="opt">?</span></td><td>boolean</td><td>Whether the body is hidden</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>title</td><td>string</td><td>Section heading text</td></tr>
+                <tr><td>collapsible <span class="opt">?</span></td><td>boolean</td><td>Show collapse toggle, default false</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="TabGroup">
+          <div class="comp-card-head">
+            <h3>TabGroup</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">layout</span><span class="comp-file">lib/components/TabGroup.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Multi-tab container that lazily mounts child component trees only when their tab is first activated.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>active</td><td>string</td><td>Id of the currently active tab</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Tab entry (def)</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>id</td><td>string</td><td>Unique tab identifier</td></tr>
+                <tr><td>label</td><td>string</td><td>Tab button text</td></tr>
+                <tr><td>render</td><td>(el) =&gt; void</td><td>Called once on first activation</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="Paginator">
+          <div class="comp-card-head">
+            <h3>Paginator</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">layout</span><span class="comp-file">lib/components/Paginator.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Standalone pagination control that emits <code class="kw">submit('page.change', { page })</code> on navigation.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>page</td><td>number</td><td>Current page (1-based)</td></tr>
+                <tr><td>total</td><td>number</td><td>Total record count</td></tr>
+                <tr><td>pageSize <span class="opt">?</span></td><td>number</td><td>Records per page, default 10</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="PopupEditor">
+          <div class="comp-card-head">
+            <h3>PopupEditor</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">layout</span><span class="comp-file">lib/components/PopupEditor.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Modal dialog that wraps a <code class="kw">FormPanel</code> and its fields; opens over the current page without a route change.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>open</td><td>boolean</td><td>Controls modal visibility</td></tr>
+                <tr><td>record <span class="opt">?</span></td><td>object</td><td>Initial values pre-filled into the form</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>title</td><td>string</td><td>Modal heading</td></tr>
+                <tr><td>width <span class="opt">?</span></td><td>string</td><td>CSS max-width of the dialog panel</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ActionButton">
+          <div class="comp-card-head">
+            <h3>ActionButton</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">control</span><span class="comp-file">lib/components/ActionButton.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Button with a built-in dropdown of secondary actions revealed via a chevron split.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Primary button spinner</td></tr>
+                <tr><td>open <span class="opt">?</span></td><td>boolean</td><td>Whether the action dropdown is visible</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label</td><td>string</td><td>Primary button text</td></tr>
+                <tr><td>action</td><td>string</td><td>Primary action name</td></tr>
+                <tr><td>actions <span class="opt">?</span></td><td>{ label, action }[]</td><td>Secondary dropdown items</td></tr>
+                <tr><td>variant <span class="opt">?</span></td><td>'primary'|'secondary'</td><td>Visual style of the primary button</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ContextMenu">
+          <div class="comp-card-head">
+            <h3>ContextMenu</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">control</span><span class="comp-file">lib/components/ContextMenu.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Floating context-menu anchored to a trigger element; items call <code class="kw">submit(item.action, item.params)</code> on click.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>open <span class="opt">?</span></td><td>boolean</td><td>Menu visibility</td></tr>
+                <tr><td>x / y <span class="opt">?</span></td><td>number</td><td>Viewport coordinates of the anchor</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Item entry (def)</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>label</td><td>string</td><td>Menu item text</td></tr>
+                <tr><td>action</td><td>string</td><td>Action name emitted on click</td></tr>
+                <tr><td>params <span class="opt">?</span></td><td>object</td><td>Extra params merged into submit</td></tr>
+                <tr><td>danger <span class="opt">?</span></td><td>boolean</td><td>Red text for destructive items</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- ADVANCED DATA DISPLAY                                   -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="advanced-data">
+      <span class="kicker">Data display</span>
+      <h2>Advanced data display</h2>
+      <p style="margin-bottom:1.5rem">Specialised views that extend or combine the base <code class="kw">GridView</code> / <code class="kw">ListView</code> with grouping, hierarchy, comparison, search, or section headers.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="GroupGridView">
+          <div class="comp-card-head">
+            <h3>GroupGridView</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">view</span><span class="comp-file">lib/components/GroupGridView.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Grid with collapsible row groups; each group has a header row showing an aggregate and expands to reveal its detail rows.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>groups</td><td>{ key, label, rows }[]</td><td>Grouped data structure</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def (column) prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>type</td><td>string</td><td>Cell class name, same as GridView</td></tr>
+                <tr><td>field</td><td>string</td><td>Row key to read from</td></tr>
+                <tr><td>groupField <span class="opt">?</span></td><td>string</td><td>Row key used to derive the group aggregate</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="TreeView">
+          <div class="comp-card-head">
+            <h3>TreeView</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">view</span><span class="comp-file">lib/components/TreeView.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Hierarchical tree grid where rows can be expanded to reveal child rows; supports arbitrary nesting depth.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>nodes</td><td>TreeNode[]</td><td>Root nodes; each may carry <code>children[]</code></td></tr>
+                <tr><td>expanded <span class="opt">?</span></td><td>Set&lt;string&gt;</td><td>Set of expanded node ids</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>columns</td><td>ColumnDef[]</td><td>Same column spec as GridView</td></tr>
+                <tr><td>idField <span class="opt">?</span></td><td>string</td><td>Node identity key, default <code>'id'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="CompareGridView">
+          <div class="comp-card-head">
+            <h3>CompareGridView</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">view</span><span class="comp-file">lib/components/CompareGridView.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Side-by-side comparison grid that highlights cell-level differences between two datasets.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>leftRows</td><td>object[]</td><td>Left-side dataset</td></tr>
+                <tr><td>rightRows</td><td>object[]</td><td>Right-side dataset</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>columns</td><td>ColumnDef[]</td><td>Column spec shared by both sides</td></tr>
+                <tr><td>leftLabel / rightLabel <span class="opt">?</span></td><td>string</td><td>Header labels for each side</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ListViewSearch">
+          <div class="comp-card-head">
+            <h3>ListViewSearch</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">view</span><span class="comp-file">lib/components/ListViewSearch.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc"><code class="kw">ListView</code> augmented with an inline search bar that filters items client-side on each keystroke.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>items</td><td>object[]</td><td>Full item list</td></tr>
+                <tr><td>query <span class="opt">?</span></td><td>string</td><td>Current search string</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>searchFields</td><td>string[]</td><td>Item keys searched against query</td></tr>
+                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Search box placeholder text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ListViewSection">
+          <div class="comp-card-head">
+            <h3>ListViewSection</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">view</span><span class="comp-file">lib/components/ListViewSection.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc"><code class="kw">ListView</code> with sticky section headers that group items by a field value.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>items</td><td>object[]</td><td>Data items (must be pre-sorted by group field)</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>groupField</td><td>string</td><td>Item key whose value forms the section header</td></tr>
+                <tr><td>field</td><td>string</td><td>Primary display field inside each list item</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- REPORT / EXPORT                                         -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="report-export">
+      <span class="kicker">Output</span>
+      <h2>Report &amp; export</h2>
+      <p style="margin-bottom:1.5rem">Components that produce file output or visualisations. Export buttons call a backend action that streams the file; the component handles the download handshake.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="Chart">
+          <div class="comp-card-head">
+            <h3>Chart</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">report</span><span class="comp-file">lib/components/Chart.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Data visualisation canvas supporting bar, line, pie, and area chart types via a lightweight charting library.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>data</td><td>object[]</td><td>Chart dataset rows</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton placeholder</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>chartType</td><td>'bar'|'line'|'pie'|'area'</td><td>Chart style</td></tr>
+                <tr><td>xField</td><td>string</td><td>Data key for the x-axis / labels</td></tr>
+                <tr><td>yField</td><td>string</td><td>Data key for the y-axis / values</td></tr>
+                <tr><td>title <span class="opt">?</span></td><td>string</td><td>Chart title shown above</td></tr>
+                <tr><td>height <span class="opt">?</span></td><td>string</td><td>CSS height of the canvas area</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ButtonExcel">
+          <div class="comp-card-head">
+            <h3>ButtonExcel</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">report</span><span class="comp-file">lib/components/ButtonExcel.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Export-to-Excel button that calls a backend action and triggers a <code class="kw">.xlsx</code> file download.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Spinner while the export is in flight</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>action</td><td>string</td><td>Backend action that returns the Excel file</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Button text, default <code>'Export Excel'</code></td></tr>
+                <tr><td>params <span class="opt">?</span></td><td>object</td><td>Extra params forwarded to the action</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ButtonPdf">
+          <div class="comp-card-head">
+            <h3>ButtonPdf</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">report</span><span class="comp-file">lib/components/ButtonPdf.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Export-to-PDF button that calls a backend action and triggers a <code class="kw">.pdf</code> file download or opens it in a new tab.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Spinner while the export is in flight</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>action</td><td>string</td><td>Backend action that returns the PDF file</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Button text, default <code>'Export PDF'</code></td></tr>
+                <tr><td>target <span class="opt">?</span></td><td>'download'|'tab'</td><td>How the PDF is delivered, default <code>'download'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ButtonImportExcel">
+          <div class="comp-card-head">
+            <h3>ButtonImportExcel</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">report</span><span class="comp-file">lib/components/ButtonImportExcel.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">File-picker button that accepts an Excel file, parses it client-side, and calls a backend action with the parsed rows.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Spinner during upload and processing</td></tr>
+                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Import error message</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>action</td><td>string</td><td>Backend action called with parsed rows</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Button text, default <code>'Import Excel'</code></td></tr>
+                <tr><td>sheet <span class="opt">?</span></td><td>number | string</td><td>Sheet index or name to parse, default 0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="PdfReport">
+          <div class="comp-card-head">
+            <h3>PdfReport</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">report</span><span class="comp-file">lib/components/PdfReport.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Inline PDF viewer that renders a report document inside an <code class="kw">&lt;iframe&gt;</code> or <code class="kw">&lt;embed&gt;</code> element.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>src</td><td>string | null</td><td>URL of the PDF to display</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Placeholder while PDF loads</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>height <span class="opt">?</span></td><td>string</td><td>CSS height of the viewer area, default <code>'600px'</code></td></tr>
+                <tr><td>action <span class="opt">?</span></td><td>string</td><td>Action called to fetch the PDF URL</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- SPECIALIZED                                             -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="specialized">
+      <span class="kicker">Domain</span>
+      <h2>Specialized</h2>
+      <p style="margin-bottom:1.5rem">Purpose-built components for specific interaction patterns that do not fit neatly into the generic input, view, or layout categories.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="Kanban">
+          <div class="comp-card-head">
+            <h3>Kanban</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/Kanban.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Drag-and-drop Kanban board with configurable columns; dropping a card emits <code class="kw">submit('card.move', { id, from, to })</code>.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>cards</td><td>object[]</td><td>All cards across all columns</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>columns</td><td>{ id, label }[]</td><td>Column definitions</td></tr>
+                <tr><td>statusField</td><td>string</td><td>Card key that maps to a column id</td></tr>
+                <tr><td>titleField</td><td>string</td><td>Card key displayed as the card title</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="AdvancedSearch">
+          <div class="comp-card-head">
+            <h3>AdvancedSearch</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/AdvancedSearch.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Multi-field query builder that lets users construct complex filter expressions and emits them as a structured criteria object.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>criteria</td><td>Criterion[]</td><td>Active filter conditions</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>fields</td><td>{ id, label, type }[]</td><td>Searchable field definitions</td></tr>
+                <tr><td>action <span class="opt">?</span></td><td>string</td><td>Action emitted on search, default <code>'search'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="QrCode">
+          <div class="comp-card-head">
+            <h3>QrCode</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/QrCode.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Generates and displays a QR code image from a text or URL value.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Text or URL to encode</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>size <span class="opt">?</span></td><td>number</td><td>Pixel size of the generated image, default 128</td></tr>
+                <tr><td>label <span class="opt">?</span></td><td>string</td><td>Caption shown below the QR code</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="CodeEditor">
+          <div class="comp-card-head">
+            <h3>CodeEditor</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/CodeEditor.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Syntax-highlighted code editing area backed by a lightweight editor; state value is the current source string.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Source code content</td></tr>
+                <tr><td>error <span class="opt">?</span></td><td>string | null</td><td>Parse or lint error message</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Key for FormPanel</td></tr>
+                <tr><td>language <span class="opt">?</span></td><td>string</td><td>Syntax language, e.g. <code>'javascript'</code>, <code>'yaml'</code></td></tr>
+                <tr><td>height <span class="opt">?</span></td><td>string</td><td>CSS height of the editor area, default <code>'300px'</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="Chat">
+          <div class="comp-card-head">
+            <h3>Chat</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/Chat.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Threaded chat panel with a scrollable message list and a text-input bar; sending calls <code class="kw">submit('chat.send', { text })</code>.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>messages</td><td>{ id, author, text, ts }[]</td><td>Message history</td></tr>
+                <tr><td>sending <span class="opt">?</span></td><td>boolean</td><td>Spinner while message is in flight</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>currentUser</td><td>string</td><td>Author key for right-aligned own messages</td></tr>
+                <tr><td>placeholder <span class="opt">?</span></td><td>string</td><td>Input placeholder text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="HtmlCode">
+          <div class="comp-card-head">
+            <h3>HtmlCode</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/HtmlCode.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Renders an arbitrary HTML string as live DOM inside a sandboxed container.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>html</td><td>string</td><td>Raw HTML markup to inject</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>sandbox <span class="opt">?</span></td><td>boolean</td><td>Wrap in an <code>&lt;iframe&gt;</code> sandbox, default false</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="ChromeTab">
+          <div class="comp-card-head">
+            <h3>ChromeTab</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">specialized</span><span class="comp-file">lib/components/ChromeTab.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Browser-chrome-style tab strip with closeable tabs and a new-tab button, suited for multi-document interfaces.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>tabs</td><td>{ id, label }[]</td><td>Open tab list</td></tr>
+                <tr><td>active</td><td>string</td><td>Id of the focused tab</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>closeable <span class="opt">?</span></td><td>boolean</td><td>Show close button on each tab, default true</td></tr>
+                <tr><td>addable <span class="opt">?</span></td><td>boolean</td><td>Show new-tab button, default true</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- CELL VARIANTS                                           -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <section id="cell-variants">
+      <span class="kicker">Grid rows</span>
+      <h2>Cell variants</h2>
+      <p style="margin-bottom:1.5rem">Additional cell components that extend the core cell set. Used inside <code class="kw">GridView</code>, <code class="kw">GroupGridView</code>, or <code class="kw">TreeView</code> columns via <code class="kw">CELL_MAP</code>. <code class="kw">EmptyState</code> and <code class="kw">TimelinePanel</code> are standalone display-only components.</p>
+      <div class="comp-grid">
+
+        <div class="comp-card" id="PercentCell">
+          <div class="comp-card-head">
+            <h3>PercentCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">cell</span><span class="comp-file">lib/components/PercentCell.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Renders a 0–100 number as a percentage with an optional inline progress bar.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>number | null</td><td>Percentage value (0–100)</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key</td></tr>
+                <tr><td>showBar <span class="opt">?</span></td><td>boolean</td><td>Render a mini progress bar alongside the text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="LinkCell">
+          <div class="comp-card-head">
+            <h3>LinkCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">cell</span><span class="comp-file">lib/components/LinkCell.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Renders a clickable hyperlink or an internal navigation action inside a grid cell.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Link text</td></tr>
+                <tr><td>href <span class="opt">?</span></td><td>string</td><td>External URL; takes precedence over action</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for link text</td></tr>
+                <tr><td>hrefField <span class="opt">?</span></td><td>string</td><td>Row key for the URL</td></tr>
+                <tr><td>action <span class="opt">?</span></td><td>string</td><td>Action emitted when no href is present</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="AvatarCell">
+          <div class="comp-card-head">
+            <h3>AvatarCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">cell</span><span class="comp-file">lib/components/AvatarCell.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Shows a circular avatar image or initials fallback alongside an optional name label.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>string</td><td>Display name (used for initials and alt text)</td></tr>
+                <tr><td>avatar <span class="opt">?</span></td><td>string</td><td>URL of the avatar image</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key for the display name</td></tr>
+                <tr><td>avatarField <span class="opt">?</span></td><td>string</td><td>Row key for the avatar URL</td></tr>
+                <tr><td>showName <span class="opt">?</span></td><td>boolean</td><td>Render name text next to the avatar</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="RankCell">
+          <div class="comp-card-head">
+            <h3>RankCell</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">cell</span><span class="comp-file">lib/components/RankCell.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Displays a numeric rank with optional medal icon for positions 1–3.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>value</td><td>number</td><td>Rank position (1-based)</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>field</td><td>string</td><td>Row key</td></tr>
+                <tr><td>medals <span class="opt">?</span></td><td>boolean</td><td>Show gold/silver/bronze icons for top 3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="EmptyState">
+          <div class="comp-card-head">
+            <h3>EmptyState</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">display</span><span class="comp-file">lib/components/EmptyState.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Centered placeholder illustration and message shown when a list or view has no data to display.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>message <span class="opt">?</span></td><td>string</td><td>Body text, default <code>'No data found'</code></td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>title <span class="opt">?</span></td><td>string</td><td>Heading above the message</td></tr>
+                <tr><td>icon <span class="opt">?</span></td><td>string</td><td>Icon name or SVG path for the illustration</td></tr>
+                <tr><td>action <span class="opt">?</span></td><td>{ label, action }</td><td>Optional CTA button below the message</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="comp-card" id="TimelinePanel">
+          <div class="comp-card-head">
+            <h3>TimelinePanel</h3>
+            <div style="display:flex;gap:.5rem;align-items:center"><span class="cat-tag">display</span><span class="comp-file">lib/components/TimelinePanel.js</span></div>
+          </div>
+          <div class="comp-card-body">
+            <p class="comp-desc">Vertical timeline of chronological events, each with a timestamp, title, and optional body text.</p>
+            <table class="field-table">
+              <thead><tr><th>State</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>events</td><td>{ ts, title, body? }[]</td><td>Ordered list of timeline events</td></tr>
+                <tr><td>loading <span class="opt">?</span></td><td>boolean</td><td>Skeleton loading state</td></tr>
+              </tbody>
+            </table>
+            <table class="field-table" style="margin-top:.75rem">
+              <thead><tr><th>Def prop</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>tsField</td><td>string</td><td>Event key for the ISO timestamp</td></tr>
+                <tr><td>titleField</td><td>string</td><td>Event key for the heading text</td></tr>
+                <tr><td>bodyField <span class="opt">?</span></td><td>string</td><td>Event key for optional detail text</td></tr>
               </tbody>
             </table>
           </div>

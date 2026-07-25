@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — TMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+<!-- ── Inline YAML page config ── -->
+<script type="text/yaml" id="page-config">
+title: Reports
+page:
+  id: tms-reports
+  description: Fleet utilization, cost analysis, and driver performance reports.
+datasources:
+  - id: fleet_utilization
+  - id: cost_analysis
+  - id: driver_performance
+components:
+  - type: StatRow
+    id: reports-kpis
+    container: stat-row
+    stats:
+      - { label: Fleet Utilization,      field: avg_utilization_pct, format: percent,  color: indigo }
+      - { label: Total Maintenance Cost, field: maintenance_total,   format: currency, color: amber  }
+      - { label: Avg Trip Distance,      field: avg_trip_distance,   format: number,   color: blue   }
+      - { label: On-Time Delivery,       field: on_time_pct,         format: percent,  color: green  }
+  - type: TabPanel
+    id: reports-tabs
+    container: tab-panel
+    tabs:
+      - { id: fleet-utilization,  label: Fleet Utilization  }
+      - { id: cost-analysis,      label: Cost Analysis       }
+      - { id: driver-performance, label: Driver Performance  }
+toolbar:
+  - { type: ButtonExcel, id: export-excel, label: Export Excel }
+  - { type: ButtonPdf,   id: export-pdf,   label: Export PDF   }
+</script>
+
+<!-- ── Nav ── -->
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+    <div class="flex items-center gap-6">
+      <span class="font-bold text-indigo-600 text-lg">TMS</span>
+      <nav class="flex gap-1 text-sm">
+        <a href="fleet.html"       class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Fleet</a>
+        <a href="drivers.html"     class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Drivers</a>
+        <a href="trips.html"       class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Trips</a>
+        <a href="maintenance.html" class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Maintenance</a>
+        <a href="reports.html"     class="px-3 py-1 rounded-md bg-indigo-50 text-indigo-700 font-medium">Reports</a>
+        <a href="settings.html"    class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Settings</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+      <span>Admin User</span>
+      <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">AU</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Page header ── -->
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900" data-page-title>Reports</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Fleet utilization, cost analysis, and driver performance</p>
+      </div>
+      <!-- export buttons mounted here -->
+      <div id="toolbar" class="flex items-center gap-2"></div>
+    </div>
+  </div>
+</div>
+
+<main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+
+  <!-- StatRow -->
+  <div id="stat-row"></div>
+
+  <!-- Tab Panel (chart + grid injected by tab render functions) -->
+  <div id="tab-panel"></div>
+
+</main>
+
+<script type="module">
+import {
+  StatRow, TabPanel, GridView, Chart, ButtonExcel, ButtonPdf,
+  TextCell, BadgeCell, NumberCell, CurrencyCell, PercentCell, RankCell, ActionCell,
+} from '../lib/components.js';
+import { BaseComponent } from '../lib/runtime.js';
+
+// ─── Parse YAML config ────────────────────────────────────────────────────────
+const config = jsyaml.load(document.getElementById('page-config').textContent);
+document.title = (config.title || 'Reports') + ' — TMS';
+
+// ─── Mock data — Fleet Utilization ───────────────────────────────────────────
+const FLEET_ROWS = [
+  { truck_id: 'T001', plate: 'CA-101-ABC', model: 'Freightliner Cascadia', type: 'Semi',      utilization_pct: 92, total_mileage: 18400, trip_count: 28, active_days: 27, branch_id: 'CA-West'  },
+  { truck_id: 'T002', plate: 'CA-102-DEF', model: 'Kenworth T680',         type: 'Semi',      utilization_pct: 78, total_mileage: 14200, trip_count: 23, active_days: 23, branch_id: 'CA-West'  },
+  { truck_id: 'T003', plate: 'TX-201-GHI', model: 'Peterbilt 579',          type: 'Semi',      utilization_pct: 85, total_mileage: 16800, trip_count: 26, active_days: 25, branch_id: 'TX-South' },
+  { truck_id: 'T004', plate: 'FL-301-JKL', model: 'Isuzu NPR',              type: 'Box Truck', utilization_pct: 61, total_mileage: 9200,  trip_count: 18, active_days: 18, branch_id: 'FL-East'  },
+  { truck_id: 'T005', plate: 'TX-202-MNO', model: 'International LT',       type: 'Semi',      utilization_pct: 14, total_mileage: 2100,  trip_count: 4,  active_days: 4,  branch_id: 'TX-South' },
+  { truck_id: 'T006', plate: 'CA-103-PQR', model: 'Ford Transit',            type: 'Box Truck', utilization_pct: 73, total_mileage: 8600,  trip_count: 22, active_days: 22, branch_id: 'CA-West'  },
+  { truck_id: 'T007', plate: 'IL-401-STU', model: 'Mack Anthem',             type: 'Flatbed',   utilization_pct: 68, total_mileage: 13100, trip_count: 20, active_days: 20, branch_id: 'IL-Mid'   },
+  { truck_id: 'T008', plate: 'WA-501-VWX', model: 'Volvo VNL',               type: 'Semi',      utilization_pct: 55, total_mileage: 10400, trip_count: 16, active_days: 16, branch_id: 'WA-North' },
+  { truck_id: 'T009', plate: 'CA-104-YZA', model: 'Kenworth T880',           type: 'Flatbed',   utilization_pct: 80, total_mileage: 15200, trip_count: 24, active_days: 24, branch_id: 'CA-West'  },
+  { truck_id: 'T010', plate: 'FL-302-BCD', model: 'Freightliner M2',         type: 'Box Truck', utilization_pct: 88, total_mileage: 11900, trip_count: 26, active_days: 26, branch_id: 'FL-East'  },
+];
+
+// ─── Mock data — Cost Analysis ────────────────────────────────────────────────
+const COST_ROWS = [
+  { month: 'Feb 2026', category: 'Fuel',        amount: 41200, budget: 40000, variance:  1200, prev_amount: 38900 },
+  { month: 'Feb 2026', category: 'Maintenance', amount: 12400, budget: 14000, variance: -1600, prev_amount: 13800 },
+  { month: 'Feb 2026', category: 'Labour',      amount: 28600, budget: 28000, variance:   600, prev_amount: 27200 },
+  { month: 'Feb 2026', category: 'Insurance',   amount: 8800,  budget: 9000,  variance:  -200, prev_amount: 8800  },
+  { month: 'Mar 2026', category: 'Fuel',        amount: 43800, budget: 40000, variance:  3800, prev_amount: 41200 },
+  { month: 'Mar 2026', category: 'Maintenance', amount: 18900, budget: 14000, variance:  4900, prev_amount: 12400 },
+  { month: 'Mar 2026', category: 'Labour',      amount: 29100, budget: 28000, variance:  1100, prev_amount: 28600 },
+  { month: 'Mar 2026', category: 'Insurance',   amount: 8800,  budget: 9000,  variance:  -200, prev_amount: 8800  },
+  { month: 'Apr 2026', category: 'Fuel',        amount: 39600, budget: 40000, variance:  -400, prev_amount: 43800 },
+  { month: 'Apr 2026', category: 'Maintenance', amount: 11200, budget: 14000, variance: -2800, prev_amount: 18900 },
+  { month: 'Apr 2026', category: 'Labour',      amount: 27800, budget: 28000, variance:  -200, prev_amount: 29100 },
+  { month: 'Apr 2026', category: 'Insurance',   amount: 8800,  budget: 9000,  variance:  -200, prev_amount: 8800  },
+  { month: 'May 2026', category: 'Fuel',        amount: 44100, budget: 40000, variance:  4100, prev_amount: 39600 },
+  { month: 'May 2026', category: 'Maintenance', amount: 15600, budget: 14000, variance:  1600, prev_amount: 11200 },
+  { month: 'May 2026', category: 'Labour',      amount: 30200, budget: 28000, variance:  2200, prev_amount: 27800 },
+  { month: 'May 2026', category: 'Insurance',   amount: 8800,  budget: 9000,  variance:  -200, prev_amount: 8800  },
+  { month: 'Jun 2026', category: 'Fuel',        amount: 40800, budget: 40000, variance:   800, prev_amount: 44100 },
+  { month: 'Jun 2026', category: 'Maintenance', amount: 13400, budget: 14000, variance:  -600, prev_amount: 15600 },
+  { month: 'Jun 2026', category: 'Labour',      amount: 28900, budget: 28000, variance:   900, prev_amount: 30200 },
+  { month: 'Jun 2026', category: 'Insurance',   amount: 8800,  budget: 9000,  variance:  -200, prev_amount: 8800  },
+  { month: 'Jul 2026', category: 'Fuel',        amount: 42300, budget: 40000, variance:  2300, prev_amount: 40800 },
+  { month: 'Jul 2026', category: 'Maintenance', amount: 16100, budget: 14000, variance:  2100, prev_amount: 13400 },
+  { month: 'Jul 2026', category: 'Labour',      amount: 29400, budget: 28000, variance:  1400, prev_amount: 28900 },
+  { month: 'Jul 2026', category: 'Insurance',   amount: 8800,  budget: 9000,  variance:  -200, prev_amount: 8800  },
+];
+
+// ─── Mock data — Driver Performance ──────────────────────────────────────────
+const DRIVER_ROWS = [
+  { rank: 1,  driver_id: 'D001', driver_name: 'Mike Johnson',   trip_count: 28, on_time_pct: 96.4, avg_rating: 4.9, total_mileage: 18400, fuel_efficiency: 8.2, incidents: 0 },
+  { rank: 2,  driver_id: 'D003', driver_name: 'Carlos Rivera',  trip_count: 26, on_time_pct: 92.3, avg_rating: 4.7, total_mileage: 16800, fuel_efficiency: 7.8, incidents: 0 },
+  { rank: 3,  driver_id: 'D009', driver_name: 'Robert Brown',   trip_count: 24, on_time_pct: 91.7, avg_rating: 4.6, total_mileage: 15200, fuel_efficiency: 7.5, incidents: 0 },
+  { rank: 4,  driver_id: 'D010', driver_name: 'Linda Davis',    trip_count: 26, on_time_pct: 88.5, avg_rating: 4.5, total_mileage: 11900, fuel_efficiency: 8.1, incidents: 0 },
+  { rank: 5,  driver_id: 'D002', driver_name: 'Sarah Chen',     trip_count: 23, on_time_pct: 87.0, avg_rating: 4.4, total_mileage: 14200, fuel_efficiency: 7.4, incidents: 1 },
+  { rank: 6,  driver_id: 'D006', driver_name: 'Unassigned',     trip_count: 22, on_time_pct: 86.4, avg_rating: 4.3, total_mileage: 8600,  fuel_efficiency: 9.0, incidents: 0 },
+  { rank: 7,  driver_id: 'D007', driver_name: 'Tom Williams',   trip_count: 20, on_time_pct: 80.0, avg_rating: 4.1, total_mileage: 13100, fuel_efficiency: 6.9, incidents: 1 },
+  { rank: 8,  driver_id: 'D004', driver_name: 'Emily Watson',   trip_count: 18, on_time_pct: 77.8, avg_rating: 4.0, total_mileage: 9200,  fuel_efficiency: 8.8, incidents: 0 },
+  { rank: 9,  driver_id: 'D008', driver_name: 'Diana Park',     trip_count: 16, on_time_pct: 75.0, avg_rating: 3.9, total_mileage: 10400, fuel_efficiency: 7.2, incidents: 2 },
+  { rank: 10, driver_id: 'D005', driver_name: 'James Lee',      trip_count: 4,  on_time_pct: 50.0, avg_rating: 3.2, total_mileage: 2100,  fuel_efficiency: 6.1, incidents: 1 },
+];
+
+const PAGE_SIZE = 10;
+
+// ─── StatRow ─────────────────────────────────────────────────────────────────
+new StatRow('reports-kpis', [
+  { label: 'Fleet Utilization',      value: '74%',    color: 'indigo' },
+  { label: 'Total Maintenance Cost', value: '$87.6K', color: 'amber'  },
+  { label: 'Avg Trip Distance',      value: '582 km', color: 'blue'   },
+  { label: 'On-Time Delivery',       value: '85.1%',  color: 'green'  },
+]).mount(document.getElementById('stat-row'));
+
+// ─── Export action handler (demo alert) ──────────────────────────────────────
+function makeExportHandler(reportName) {
+  return (action, params) => {
+    if (action === 'export.excel') {
+      alert(`Exporting ${reportName} as Excel (${params.filename}.xlsx) — not wired in demo`);
+    } else if (action === 'export.pdf') {
+      alert(`Exporting ${reportName} as PDF (${params.filename}.pdf) — not wired in demo`);
+    }
+  };
+}
+
+// ─── Helper: render chart ─────────────────────────────────────────────────────
+function mountChart(containerId, { data, labels, title, color, width, height }) {
+  const chartComp = new Chart(containerId, { data, labels, title }, { color, width, height });
+  chartComp.mount(document.getElementById(containerId));
+}
+
+// ─── Helper: render export button row ─────────────────────────────────────────
+function mountExportButtons(containerId, reportName, filenameBase) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const excelBtn = new ButtonExcel(`${filenameBase}-excel`, {}, { label: 'Export Excel', filename: filenameBase });
+  excelBtn._onAction = makeExportHandler(reportName);
+  excelBtn.mount(wrap);
+
+  const pdfBtn = new ButtonPdf(`${filenameBase}-pdf`, {}, { label: 'Export PDF', filename: `${filenameBase}-report` });
+  pdfBtn._onAction = makeExportHandler(reportName);
+  pdfBtn.mount(wrap);
+}
+
+// ─── Tab: Fleet Utilization ───────────────────────────────────────────────────
+function renderFleetTab(container) {
+  // Chart
+  const chartWrap = document.createElement('div');
+  chartWrap.id = 'chart-utilization';
+  chartWrap.className = 'bg-white rounded-xl border border-gray-200 p-5 mb-4';
+  container.appendChild(chartWrap);
+
+  mountChart('chart-utilization', {
+    data:   FLEET_ROWS.map(r => r.utilization_pct),
+    labels: FLEET_ROWS.map(r => r.plate.split('-').slice(0, 2).join('-')),
+    title:  'Truck Utilization % (last 30 days)',
+    color:  '#6366f1',
+    width:  760,
+    height: 220,
+  });
+
+  // Export buttons
+  const exportRow = document.createElement('div');
+  exportRow.id = 'export-utilization';
+  exportRow.className = 'flex gap-2 mb-4';
+  container.appendChild(exportRow);
+  mountExportButtons('export-utilization', 'Fleet Utilization', 'fleet-utilization');
+
+  // Grid
+  const gridWrap = document.createElement('div');
+  gridWrap.id = 'grid-utilization';
+  container.appendChild(gridWrap);
+
+  const DEFS_FLEET = [
+    { type: 'TextCell',    id: 'plate',           field: 'plate',           label: 'Truck',          secondary: 'model' },
+    { type: 'BadgeCell',   id: 'type',            field: 'type',            label: 'Type' },
+    { type: 'TextCell',    id: 'utilization_pct', field: 'utilization_pct', label: 'Utilization %',  secondary: null },
+    { type: 'NumberCell',  id: 'total_mileage',   field: 'total_mileage',   label: 'Mileage (km)' },
+    { type: 'NumberCell',  id: 'trip_count',      field: 'trip_count',      label: 'Trips' },
+    { type: 'NumberCell',  id: 'active_days',     field: 'active_days',     label: 'Active Days' },
+    { type: 'TextCell',    id: 'branch_id',       field: 'branch_id',       label: 'Branch' },
+  ];
+
+  const grid = new GridView('grid-fleet', {
+    rows: FLEET_ROWS,
+    meta: { total: FLEET_ROWS.length, page: 1, pageSize: PAGE_SIZE },
+  }, DEFS_FLEET);
+  grid.mount(gridWrap);
+}
+
+// ─── Tab: Cost Analysis ───────────────────────────────────────────────────────
+function renderCostTab(container) {
+  // Aggregate monthly totals for chart
+  const monthTotals = {};
+  for (const r of COST_ROWS) {
+    monthTotals[r.month] = (monthTotals[r.month] || 0) + r.amount;
+  }
+  const months = [...new Set(COST_ROWS.map(r => r.month))];
+  const monthAmounts = months.map(m => monthTotals[m]);
+
+  // Chart
+  const chartWrap = document.createElement('div');
+  chartWrap.id = 'chart-cost';
+  chartWrap.className = 'bg-white rounded-xl border border-gray-200 p-5 mb-4';
+  container.appendChild(chartWrap);
+
+  mountChart('chart-cost', {
+    data:   monthAmounts,
+    labels: months.map(m => m.split(' ')[0]),  // "Feb", "Mar", …
+    title:  'Total Monthly Cost (last 6 months)',
+    color:  '#f59e0b',
+    width:  760,
+    height: 220,
+  });
+
+  // Export buttons
+  const exportRow = document.createElement('div');
+  exportRow.id = 'export-cost';
+  exportRow.className = 'flex gap-2 mb-4';
+  container.appendChild(exportRow);
+  mountExportButtons('export-cost', 'Cost Analysis', 'cost-analysis');
+
+  // Grid
+  const gridWrap = document.createElement('div');
+  gridWrap.id = 'grid-cost';
+  container.appendChild(gridWrap);
+
+  const DEFS_COST = [
+    { type: 'TextCell',     id: 'month',    field: 'month',    label: 'Month'    },
+    { type: 'BadgeCell',    id: 'category', field: 'category', label: 'Category' },
+    { type: 'CurrencyCell', id: 'amount',   field: 'amount',   label: 'Amount'   },
+    { type: 'CurrencyCell', id: 'budget',   field: 'budget',   label: 'Budget'   },
+    { type: 'CurrencyCell', id: 'variance', field: 'variance', label: 'Variance' },
+    {
+      type: 'TextCell', id: 'trend', field: 'prev_amount', label: 'Trend',
+      // compute rendered manually below
+    },
+  ];
+
+  // Add trend compute before GridView renders
+  const enriched = COST_ROWS.map(r => ({
+    ...r,
+    trend: r.prev_amount == null ? '—' : r.amount > r.prev_amount ? '↑ Up' : '↓ Down',
+  }));
+
+  const DEFS_COST2 = [
+    { type: 'TextCell',     id: 'month',    field: 'month',    label: 'Month'    },
+    { type: 'BadgeCell',    id: 'category', field: 'category', label: 'Category' },
+    { type: 'CurrencyCell', id: 'amount',   field: 'amount',   label: 'Amount'   },
+    { type: 'CurrencyCell', id: 'budget',   field: 'budget',   label: 'Budget'   },
+    { type: 'CurrencyCell', id: 'variance', field: 'variance', label: 'Variance' },
+    { type: 'TextCell',     id: 'trend',    field: 'trend',    label: 'Trend'    },
+  ];
+
+  const grid = new GridView('grid-cost', {
+    rows: enriched,
+    meta: { total: enriched.length, page: 1, pageSize: PAGE_SIZE },
+  }, DEFS_COST2);
+  grid.mount(gridWrap);
+}
+
+// ─── Tab: Driver Performance ──────────────────────────────────────────────────
+function renderDriverTab(container) {
+  // Export buttons
+  const exportRow = document.createElement('div');
+  exportRow.id = 'export-drivers';
+  exportRow.className = 'flex gap-2 mb-4';
+  container.appendChild(exportRow);
+  mountExportButtons('export-drivers', 'Driver Performance', 'driver-performance');
+
+  // Grid
+  const gridWrap = document.createElement('div');
+  gridWrap.id = 'grid-drivers';
+  container.appendChild(gridWrap);
+
+  const DEFS_DRIVERS = [
+    { type: 'RankCell',    id: 'rank',             field: 'rank',             label: '#' },
+    { type: 'TextCell',    id: 'driver_name',       field: 'driver_name',      label: 'Driver'         },
+    { type: 'NumberCell',  id: 'trip_count',        field: 'trip_count',       label: 'Trips'          },
+    { type: 'TextCell',    id: 'on_time_pct',       field: 'on_time_pct_fmt',  label: 'On-Time %'      },
+    { type: 'TextCell',    id: 'avg_rating',        field: 'avg_rating_fmt',   label: 'Avg Rating'     },
+    { type: 'NumberCell',  id: 'total_mileage',     field: 'total_mileage',    label: 'Mileage (km)'   },
+    { type: 'TextCell',    id: 'fuel_efficiency',   field: 'fuel_efficiency',  label: 'km/L'           },
+    { type: 'NumberCell',  id: 'incidents',         field: 'incidents',        label: 'Incidents'      },
+  ];
+
+  // Pre-format display values
+  const enriched = DRIVER_ROWS.map(r => ({
+    ...r,
+    on_time_pct_fmt: r.on_time_pct.toFixed(1) + '%',
+    avg_rating_fmt:  r.avg_rating.toFixed(2),
+  }));
+
+  const grid = new GridView('grid-drivers', {
+    rows: enriched,
+    meta: { total: enriched.length, page: 1, pageSize: PAGE_SIZE },
+  }, DEFS_DRIVERS);
+  grid.mount(gridWrap);
+}
+
+// ─── TabPanel ─────────────────────────────────────────────────────────────────
+const tabPanel = new TabPanel('reports-tabs', { active: 0 }, [
+  {
+    label: 'Fleet Utilization',
+    render(container) { renderFleetTab(container); },
+  },
+  {
+    label: 'Cost Analysis',
+    render(container) { renderCostTab(container); },
+  },
+  {
+    label: 'Driver Performance',
+    render(container) { renderDriverTab(container); },
+  },
+]);
+
+tabPanel.mount(document.getElementById('tab-panel'));
+
+// ─── Toolbar export buttons (page-level, defaults to active tab) ───────────────
+const toolbar = document.getElementById('toolbar');
+
+// Fleet Utilization export (always visible)
+const toolbarExcel = new ButtonExcel('toolbar-excel', {}, { label: 'Export Excel', filename: 'tms-report' });
+toolbarExcel._onAction = (action, params) => {
+  alert(`Exporting current report as Excel (${params.filename}.xlsx) — not wired in demo`);
+};
+toolbarExcel.mount(toolbar);
+
+const toolbarPdf = new ButtonPdf('toolbar-pdf', {}, { label: 'Export PDF', filename: 'tms-report' });
+toolbarPdf._onAction = (action, params) => {
+  alert(`Exporting current report as PDF (${params.filename}.pdf) — not wired in demo`);
+};
+toolbarPdf.mount(toolbar);
+</script>
+</body>
+</html>

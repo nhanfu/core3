@@ -1,0 +1,413 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TMS Reports — Declarative Page Config
+#
+# Three report modules: Fleet Utilization, Cost Analysis, Driver Performance.
+# Each has its own datasource, a Chart component, and a GridView.
+# show_if expressions gate columns based on user.role at render time.
+# ─────────────────────────────────────────────────────────────────────────────
+
+title: Reports
+
+# ── Page-level metadata ──────────────────────────────────────────────────────
+page:
+  id: tms-reports
+  description: Fleet utilization, cost analysis, and driver performance reports.
+  icon: bar-chart
+  auth:
+    require: [reports.read]
+    redirect_to: /login
+
+# ── Datasources ──────────────────────────────────────────────────────────────
+datasources:
+  - id: fleet_utilization
+    protocol: http
+    method: GET
+    endpoint: /api/v1/reports/fleet-utilization
+    roles: [admin, fleet_manager, dispatcher]
+    permission: reports.read
+    # Columns: truck_id, plate, model, type, utilization_pct, total_mileage,
+    #          trip_count, idle_hours, active_days, branch_id
+    query: >
+      SELECT
+        t.id          AS truck_id,
+        t.plate,
+        t.model,
+        t.type,
+        ROUND(
+          (COUNT(DISTINCT tr.id)::numeric / NULLIF(30, 0)) * 100, 1
+        )             AS utilization_pct,
+        SUM(tr.distance_km)   AS total_mileage,
+        COUNT(tr.id)          AS trip_count,
+        SUM(tr.idle_hours)    AS idle_hours,
+        COUNT(DISTINCT tr.date::date) AS active_days,
+        t.branch_id
+      FROM trucks t
+      LEFT JOIN trips tr ON tr.truck_id = t.id
+        AND tr.started_at >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY t.id, t.plate, t.model, t.type, t.branch_id
+      ORDER BY utilization_pct DESC
+    params:
+      period: "{{state.period || '30d'}}"
+    cache:
+      ttl: 300s
+      bust_on: [trip.created, trip.completed]
+
+  - id: cost_analysis
+    protocol: http
+    method: GET
+    endpoint: /api/v1/reports/cost-analysis
+    roles: [admin, fleet_manager]
+    permission: reports.financials
+    # Columns: month, category, amount, budget, variance, trend
+    # category: Fuel | Maintenance | Labour | Insurance | Other
+    query: >
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', c.date), 'Mon YYYY') AS month,
+        DATE_TRUNC('month', c.date)                       AS month_sort,
+        c.category,
+        SUM(c.amount)            AS amount,
+        MAX(b.budget)            AS budget,
+        SUM(c.amount) - MAX(b.budget) AS variance,
+        LAG(SUM(c.amount)) OVER (
+          PARTITION BY c.category ORDER BY DATE_TRUNC('month', c.date)
+        ) AS prev_amount
+      FROM costs c
+      LEFT JOIN budgets b
+        ON b.category = c.category
+       AND b.month = DATE_TRUNC('month', c.date)
+      WHERE c.date >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months')
+      GROUP BY DATE_TRUNC('month', c.date), c.category
+      ORDER BY month_sort DESC, c.category
+    cache:
+      ttl: 600s
+
+  - id: driver_performance
+    protocol: http
+    method: GET
+    endpoint: /api/v1/reports/driver-performance
+    roles: [admin, fleet_manager, dispatcher]
+    permission: reports.read
+    # Columns: rank, driver_id, driver_name, trip_count, on_time_pct,
+    #          avg_rating, total_mileage, fuel_efficiency, incidents
+    query: >
+      SELECT
+        RANK() OVER (ORDER BY AVG(t.rating) DESC, COUNT(t.id) DESC) AS rank,
+        d.id   AS driver_id,
+        d.name AS driver_name,
+        COUNT(t.id)                                   AS trip_count,
+        ROUND(
+          SUM(CASE WHEN t.arrived_on_time THEN 1 ELSE 0 END)::numeric
+          / NULLIF(COUNT(t.id), 0) * 100, 1
+        )                                             AS on_time_pct,
+        ROUND(AVG(t.rating), 2)                       AS avg_rating,
+        SUM(t.distance_km)                            AS total_mileage,
+        ROUND(
+          SUM(t.distance_km)::numeric
+          / NULLIF(SUM(t.fuel_litres), 0), 2
+        )                                             AS fuel_efficiency,
+        COUNT(i.id)                                   AS incidents
+      FROM drivers d
+      LEFT JOIN trips t ON t.driver_id = d.id
+        AND t.started_at >= CURRENT_DATE - INTERVAL '30 days'
+      LEFT JOIN incidents i ON i.driver_id = d.id
+        AND i.date >= CURRENT_DATE - INTERVAL '30 days'
+      GROUP BY d.id, d.name
+      HAVING COUNT(t.id) > 0
+      ORDER BY rank ASC
+    cache:
+      ttl: 300s
+
+# ── Components ────────────────────────────────────────────────────────────────
+components:
+
+  # ── Summary stat row ─────────────────────────────────────────────────────────
+  - type: StatRow
+    id: reports-kpis
+    container: stat-row
+    source: fleet_utilization
+    stats:
+      - label: Fleet Utilization
+        field: avg_utilization_pct
+        format: percent
+        color: indigo
+      - label: Total Maintenance Cost
+        field: maintenance_total
+        format: currency
+        color: amber
+      - label: Avg Trip Distance
+        field: avg_trip_distance
+        format: number
+        unit: km
+        color: blue
+      - label: On-Time Delivery
+        field: on_time_pct
+        format: percent
+        color: green
+
+  # ── Tab panel ────────────────────────────────────────────────────────────────
+  - type: TabPanel
+    id: reports-tabs
+    container: tab-panel
+    tabs:
+      - id: fleet-utilization
+        label: Fleet Utilization
+
+      - id: cost-analysis
+        label: Cost Analysis
+        # Only visible to roles with financials permission
+        show_if: "user.permissions.includes('reports.financials')"
+
+      - id: driver-performance
+        label: Driver Performance
+
+  # ── Fleet Utilization: chart + grid ──────────────────────────────────────────
+  - type: Chart
+    id: chart-utilization
+    container: chart-utilization
+    source: fleet_utilization
+    title: Truck Utilization % (last 30 days)
+    chart_type: bar
+    x_field: plate
+    y_field: utilization_pct
+    color: "#6366f1"
+    width: 800
+    height: 220
+
+  - type: GridView
+    id: grid-utilization
+    container: grid-utilization
+    source: fleet_utilization
+    page_size: 10
+    columns:
+      - type: TextCell
+        id: plate
+        field: plate
+        label: Truck
+        secondary: model
+        sortable: true
+
+      - type: BadgeCell
+        id: type
+        field: type
+        label: Type
+
+      - type: PercentCell
+        id: utilization_pct
+        field: utilization_pct
+        label: Utilization %
+        sortable: true
+        align: right
+        # Color: green ≥ 70, amber 40–69, red < 40
+        color_compute: "row.utilization_pct >= 70 ? 'green' : row.utilization_pct >= 40 ? 'amber' : 'red'"
+
+      - type: NumberCell
+        id: total_mileage
+        field: total_mileage
+        label: Mileage (km)
+        format: "#,###"
+        sortable: true
+        align: right
+
+      - type: NumberCell
+        id: trip_count
+        field: trip_count
+        label: Trips
+        sortable: true
+        align: right
+
+      - type: NumberCell
+        id: active_days
+        field: active_days
+        label: Active Days
+        sortable: true
+        align: right
+
+      - type: TextCell
+        id: branch_id
+        field: branch_id
+        label: Branch
+        # Only visible to admins and fleet managers
+        show_if: "user.roles.includes('admin') || user.roles.includes('fleet_manager')"
+
+  # ── Cost Analysis: chart + grid ───────────────────────────────────────────────
+  - type: Chart
+    id: chart-cost
+    container: chart-cost
+    source: cost_analysis
+    title: Monthly Cost by Category (last 6 months)
+    chart_type: bar
+    x_field: month
+    y_field: amount
+    color: "#f59e0b"
+    width: 800
+    height: 220
+    # Only rendered for users with financials permission
+    show_if: "user.permissions.includes('reports.financials')"
+
+  - type: GridView
+    id: grid-cost
+    container: grid-cost
+    source: cost_analysis
+    page_size: 10
+    show_if: "user.permissions.includes('reports.financials')"
+    columns:
+      - type: TextCell
+        id: month
+        field: month
+        label: Month
+        sortable: true
+
+      - type: BadgeCell
+        id: category
+        field: category
+        label: Category
+        colors:
+          Fuel:        amber
+          Maintenance: blue
+          Labour:      indigo
+          Insurance:   purple
+          Other:       gray
+
+      - type: CurrencyCell
+        id: amount
+        field: amount
+        label: Amount
+        currency: USD
+        sortable: true
+        align: right
+
+      - type: CurrencyCell
+        id: budget
+        field: budget
+        label: Budget
+        currency: USD
+        align: right
+        # Only visible to admin
+        show_if: "user.roles.includes('admin')"
+
+      - type: CurrencyCell
+        id: variance
+        field: variance
+        label: Variance
+        currency: USD
+        align: right
+        # Red when over budget (positive variance), green when under
+        color_compute: "row.variance > 0 ? 'red' : 'green'"
+        show_if: "user.roles.includes('admin')"
+
+      - type: TextCell
+        id: trend
+        field: trend
+        label: Trend
+        compute: >
+          row.prev_amount
+            ? (row.amount > row.prev_amount ? '↑ Up' : '↓ Down')
+            : '—'
+
+  # ── Driver Performance: grid only ────────────────────────────────────────────
+  - type: GridView
+    id: grid-drivers
+    container: grid-drivers
+    source: driver_performance
+    page_size: 10
+    columns:
+      - type: RankCell
+        id: rank
+        field: rank
+        label: "#"
+        align: center
+
+      - type: TextCell
+        id: driver_name
+        field: driver_name
+        label: Driver
+        sortable: true
+
+      - type: NumberCell
+        id: trip_count
+        field: trip_count
+        label: Trips
+        sortable: true
+        align: right
+
+      - type: PercentCell
+        id: on_time_pct
+        field: on_time_pct
+        label: On-Time %
+        sortable: true
+        align: right
+        color_compute: "row.on_time_pct >= 90 ? 'green' : row.on_time_pct >= 70 ? 'amber' : 'red'"
+
+      - type: NumberCell
+        id: avg_rating
+        field: avg_rating
+        label: Avg Rating
+        format: "0.0"
+        sortable: true
+        align: right
+
+      - type: NumberCell
+        id: total_mileage
+        field: total_mileage
+        label: Mileage (km)
+        format: "#,###"
+        sortable: true
+        align: right
+
+      - type: NumberCell
+        id: fuel_efficiency
+        field: fuel_efficiency
+        label: km/L
+        format: "0.0"
+        sortable: true
+        align: right
+        # Only visible to fleet managers and admins
+        show_if: "user.roles.includes('admin') || user.roles.includes('fleet_manager')"
+
+      - type: NumberCell
+        id: incidents
+        field: incidents
+        label: Incidents
+        sortable: true
+        align: right
+        color_compute: "row.incidents > 0 ? 'red' : 'default'"
+
+# ── Page-level export toolbar ─────────────────────────────────────────────────
+toolbar:
+  - type: ButtonExcel
+    id: export-utilization-excel
+    label: Export Excel
+    filename: fleet-utilization
+    source: fleet_utilization
+
+  - type: ButtonPdf
+    id: export-utilization-pdf
+    label: Export PDF
+    filename: fleet-utilization-report
+    source: fleet_utilization
+
+  - type: ButtonExcel
+    id: export-cost-excel
+    label: Export Excel
+    filename: cost-analysis
+    source: cost_analysis
+    show_if: "user.permissions.includes('reports.financials')"
+
+  - type: ButtonPdf
+    id: export-cost-pdf
+    label: Export PDF
+    filename: cost-analysis-report
+    source: cost_analysis
+    show_if: "user.permissions.includes('reports.financials')"
+
+  - type: ButtonExcel
+    id: export-drivers-excel
+    label: Export Excel
+    filename: driver-performance
+    source: driver_performance
+
+  - type: ButtonPdf
+    id: export-drivers-pdf
+    label: Export PDF
+    filename: driver-performance-report
+    source: driver_performance

@@ -1,0 +1,106 @@
+page:
+  title: Trip Management
+  subtitle: Track and manage all freight trips
+
+datasource:
+  table: trips
+  fields:
+    - id
+    - trip_number
+    - truck_plate
+    - driver_name
+    - origin
+    - destination
+    - status
+    - departure_time
+    - arrival_time
+    - distance_km
+    - cargo_type
+    - cargo_weight
+
+components:
+  - type: StatRow
+    id: trip-stats
+    stats:
+      - label: Scheduled
+        value_key: scheduled_count
+        color: indigo
+      - label: In Transit
+        value_key: in_transit_count
+        color: blue
+      - label: Completed Today
+        value_key: completed_today
+        color: green
+        trend: up
+      - label: Cancelled
+        value_key: cancelled_count
+        color: red
+
+  - type: FilterBar
+    id: trip-filter
+    filters:
+      - field: status
+        label: Status
+        type: select
+        options:
+          - Scheduled
+          - In Transit
+          - Completed
+          - Cancelled
+      - field: q
+        label: Search
+        type: search
+        placeholder: "Trip #, truck or driver…"
+
+  - type: GridView
+    id: trip-grid
+    pageSize: 8
+    columns:
+      - type: TextCell
+        id: trip_number
+        field: trip_number
+        label: "Trip #"
+        secondary: cargo_type
+      - type: TextCell
+        id: truck
+        field: truck_plate
+        label: Truck / Driver
+        secondary: driver_name
+      - type: TextCell
+        id: route
+        field: origin
+        label: "Origin → Destination"
+        secondary: destination
+      - type: BadgeCell
+        id: status
+        field: status
+        label: Status
+      - type: DateCell
+        id: departure
+        field: departure_time
+        label: Departure
+        format: short
+      - type: DateCell
+        id: arrival
+        field: arrival_time
+        label: Arrival
+        format: short
+      - type: NumberCell
+        id: distance
+        field: distance_km
+        label: Distance (km)
+      - type: TextCell
+        id: cargo
+        field: cargo_type
+        label: Cargo
+        secondary: cargo_weight_display
+      - type: ActionCell
+        id: actions
+        field: ""
+        label: ""
+        actions:
+          - id: view
+            label: View
+          - id: cancel
+            label: Cancel
+            variant: danger

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maintenance — TMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+<!-- ── Inline YAML page config ── -->
+<script type="text/yaml" id="page-config">
+title: Maintenance Dashboard
+page:
+  id: maintenance-dashboard
+  description: Track and manage all vehicle maintenance records across the fleet.
+datasources:
+  - id: maintenance_records
+  - id: maintenance_kpis
+components:
+  - type: StatRow
+    id: maintenance-kpis
+    container: stat-row
+    stats:
+      - { label: Overdue,              field: overdue,              color: red   }
+      - { label: Due This Week,        field: due_this_week,        color: amber }
+      - { label: In Progress,          field: in_progress,          color: blue  }
+      - { label: Completed This Month, field: completed_this_month, color: green }
+  - type: ProgressBar
+    id: progress-fleet-health
+    container: progress-fleet-health
+    label: Fleet Health
+    field: fleet_health_pct
+    color: green
+  - type: ProgressBar
+    id: progress-inspections
+    container: progress-inspections
+    label: Inspections Current
+    field: inspections_current_pct
+    color: indigo
+  - type: ProgressBar
+    id: progress-on-schedule
+    container: progress-on-schedule
+    label: Services on Schedule
+    field: on_schedule_pct
+    color: teal
+  - type: FilterBar
+    id: maintenance-filter
+    container: filter-bar
+    filters:
+      - { field: service_type, label: Service Type, type: select }
+      - { field: technician,   label: Technician,   type: select }
+      - { field: due_date,     label: Due Date Range, type: date-range }
+  - type: TabPanel
+    id: maintenance-tabs
+    container: tab-panel
+    tabs:
+      - { id: all,          label: All           }
+      - { id: overdue,      label: Overdue        }
+      - { id: due-this-week, label: Due This Week }
+      - { id: completed,    label: Completed      }
+actions:
+  - { id: mark_done,    label: Mark Done,    confirm: "Mark this service as completed?" }
+  - { id: reschedule,   label: Reschedule }
+  - { id: view_details, label: View Details }
+</script>
+
+<!-- ── Nav ── -->
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+    <div class="flex items-center gap-6">
+      <span class="font-bold text-indigo-600 text-lg">TMS</span>
+      <nav class="flex gap-1 text-sm">
+        <a href="fleet.html"       class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Fleet</a>
+        <a href="drivers.html"     class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Drivers</a>
+        <a href="trips.html"       class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Trips</a>
+        <a href="maintenance.html" class="px-3 py-1 rounded-md bg-indigo-50 text-indigo-700 font-medium">Maintenance</a>
+        <a href="reports.html"     class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Reports</a>
+        <a href="settings.html"    class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Settings</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+      <span>Admin User</span>
+      <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">AU</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Page header ── -->
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900" data-page-title>Maintenance Dashboard</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Track and manage all vehicle maintenance records</p>
+      </div>
+      <button
+        onclick="alert('Schedule Service — not wired in demo')"
+        class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+        + Schedule Service
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+
+  <!-- StatRow -->
+  <div id="stat-row"></div>
+
+  <!-- Progress Bars Row -->
+  <div class="grid grid-cols-3 gap-4">
+    <div id="progress-fleet-health"></div>
+    <div id="progress-inspections"></div>
+    <div id="progress-on-schedule"></div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div id="filter-bar"></div>
+
+  <!-- Tab Panel -->
+  <div id="tab-panel"></div>
+
+</main>
+
+<script type="module">
+import {
+  StatRow, ProgressBar, FilterBar, TabPanel, GridView, ConfirmDialog,
+  TextCell, BadgeCell, CurrencyCell, DateCell, ActionCell,
+} from '../lib/components.js';
+import { BaseComponent } from '../lib/runtime.js';
+
+// ─── Parse YAML config ────────────────────────────────────────────────────────
+const config = jsyaml.load(document.getElementById('page-config').textContent);
+document.title = (config.title || 'Maintenance') + ' — TMS';
+
+// ─── Mock data ────────────────────────────────────────────────────────────────
+const ALL_RECORDS = [
+  { id: 'M001', truck_plate: 'CA-101-ABC', truck_model: 'Freightliner Cascadia', service_type: 'Oil Change',      status: 'Overdue',     due_date: '2026-07-01', completed_date: null,         technician: 'Bob Martinez', estimated_cost: 250,  actual_cost: null,  priority: 'High',   notes: 'Engine oil dark, filter clogged',      is_overdue: true  },
+  { id: 'M002', truck_plate: 'CA-102-DEF', truck_model: 'Kenworth T680',         service_type: 'Inspection',      status: 'In Progress', due_date: '2026-07-20', completed_date: null,         technician: 'Alice Ford',   estimated_cost: 150,  actual_cost: null,  priority: 'Medium', notes: 'Annual safety inspection',             is_overdue: false },
+  { id: 'M003', truck_plate: 'TX-201-GHI', truck_model: 'Peterbilt 579',          service_type: 'Brake Service',   status: 'Overdue',     due_date: '2026-07-10', completed_date: null,         technician: 'Bob Martinez', estimated_cost: 800,  actual_cost: null,  priority: 'High',   notes: 'Brake pads worn below minimum',        is_overdue: true  },
+  { id: 'M004', truck_plate: 'FL-301-JKL', truck_model: 'Isuzu NPR',              service_type: 'Tire Rotation',   status: 'Scheduled',   due_date: '2026-07-28', completed_date: null,         technician: 'Carl Nguyen',  estimated_cost: 120,  actual_cost: null,  priority: 'Low',    notes: '',                                     is_overdue: false },
+  { id: 'M005', truck_plate: 'TX-202-MNO', truck_model: 'International LT',       service_type: 'Engine Overhaul', status: 'Overdue',     due_date: '2026-06-15', completed_date: null,         technician: 'Alice Ford',   estimated_cost: 4500, actual_cost: null,  priority: 'High',   notes: 'Engine rough at high RPM',             is_overdue: true  },
+  { id: 'M006', truck_plate: 'CA-103-PQR', truck_model: 'Ford Transit',            service_type: 'Oil Change',      status: 'Scheduled',   due_date: '2026-07-30', completed_date: null,         technician: 'Bob Martinez', estimated_cost: 200,  actual_cost: null,  priority: 'Low',    notes: '',                                     is_overdue: false },
+  { id: 'M007', truck_plate: 'IL-401-STU', truck_model: 'Mack Anthem',             service_type: 'Inspection',      status: 'Scheduled',   due_date: '2026-07-27', completed_date: null,         technician: 'Carl Nguyen',  estimated_cost: 180,  actual_cost: null,  priority: 'Medium', notes: 'DOT compliance check',                 is_overdue: false },
+  { id: 'M008', truck_plate: 'WA-501-VWX', truck_model: 'Volvo VNL',               service_type: 'Brake Service',   status: 'In Progress', due_date: '2026-07-19', completed_date: null,         technician: 'Alice Ford',   estimated_cost: 650,  actual_cost: null,  priority: 'High',   notes: 'Rear brake drums replaced',            is_overdue: false },
+  { id: 'M009', truck_plate: 'CA-104-YZA', truck_model: 'Kenworth T880',           service_type: 'Oil Change',      status: 'Scheduled',   due_date: '2026-07-26', completed_date: null,         technician: 'Bob Martinez', estimated_cost: 280,  actual_cost: null,  priority: 'Medium', notes: '',                                     is_overdue: false },
+  { id: 'M010', truck_plate: 'FL-302-BCD', truck_model: 'Freightliner M2',         service_type: 'Tire Rotation',   status: 'Scheduled',   due_date: '2026-07-29', completed_date: null,         technician: 'Carl Nguyen',  estimated_cost: 110,  actual_cost: null,  priority: 'Low',    notes: '',                                     is_overdue: false },
+  { id: 'M011', truck_plate: 'IL-402-EFG', truck_model: 'Western Star 5700',       service_type: 'Engine Overhaul', status: 'Completed',   due_date: '2026-07-05', completed_date: '2026-07-08', technician: 'Alice Ford',   estimated_cost: 5200, actual_cost: 4980,  priority: 'High',   notes: 'Turbo replaced, injectors cleaned',    is_overdue: false },
+  { id: 'M012', truck_plate: 'WA-502-HIJ', truck_model: 'Peterbilt 567',            service_type: 'Oil Change',      status: 'Completed',   due_date: '2026-07-03', completed_date: '2026-07-03', technician: 'Bob Martinez', estimated_cost: 250,  actual_cost: 265,   priority: 'Medium', notes: '',                                     is_overdue: false },
+  { id: 'M013', truck_plate: 'CA-101-ABC', truck_model: 'Freightliner Cascadia',   service_type: 'Inspection',      status: 'Completed',   due_date: '2026-07-10', completed_date: '2026-07-12', technician: 'Carl Nguyen',  estimated_cost: 150,  actual_cost: 150,   priority: 'Medium', notes: 'All systems passed',                   is_overdue: false },
+  { id: 'M014', truck_plate: 'TX-201-GHI', truck_model: 'Peterbilt 579',            service_type: 'Tire Rotation',   status: 'Completed',   due_date: '2026-07-14', completed_date: '2026-07-15', technician: 'Bob Martinez', estimated_cost: 120,  actual_cost: 120,   priority: 'Low',    notes: '',                                     is_overdue: false },
+  { id: 'M015', truck_plate: 'CA-102-DEF', truck_model: 'Kenworth T680',           service_type: 'Brake Service',   status: 'Completed',   due_date: '2026-07-01', completed_date: '2026-07-02', technician: 'Alice Ford',   estimated_cost: 700,  actual_cost: 680,   priority: 'High',   notes: 'Front brake pads replaced',            is_overdue: false },
+];
+
+const PAGE_SIZE = 10;
+
+// ─── Filter helpers ───────────────────────────────────────────────────────────
+const NOW = new Date();
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function isDueThisWeek(rec) {
+  if (rec.status === 'Completed') return false;
+  const due = new Date(rec.due_date + 'T00:00:00');
+  const ms = due - NOW;
+  return ms >= 0 && ms <= ONE_WEEK_MS;
+}
+
+function getTabRows(tabIdx) {
+  const base = applyFilters(ALL_RECORDS);
+  switch (tabIdx) {
+    case 1: return base.filter(r => r.status === 'Overdue');
+    case 2: return base.filter(r => isDueThisWeek(r));
+    case 3: return base.filter(r => r.status === 'Completed');
+    default: return base;
+  }
+}
+
+// ─── Active filters ───────────────────────────────────────────────────────────
+let filters = { service_type: '', technician: '', due_date_from: '', due_date_to: '' };
+
+function applyFilters(rows) {
+  return rows.filter(r => {
+    if (filters.service_type && r.service_type !== filters.service_type) return false;
+    if (filters.technician   && r.technician   !== filters.technician)   return false;
+    if (filters.due_date_from) {
+      if (r.due_date < filters.due_date_from) return false;
+    }
+    if (filters.due_date_to) {
+      if (r.due_date > filters.due_date_to) return false;
+    }
+    return true;
+  });
+}
+
+// ─── Column definitions (shared across all tab grids) ────────────────────────
+const DEFS = [
+  { type: 'TextCell',     id: 'truck',          field: 'truck_plate',    label: 'Truck',        secondary: 'truck_model' },
+  { type: 'BadgeCell',    id: 'service_type',   field: 'service_type',   label: 'Service Type' },
+  { type: 'BadgeCell',    id: 'status',         field: 'status',         label: 'Status' },
+  { type: 'DateCell',     id: 'due_date',       field: 'due_date',       label: 'Due Date',     format: 'relative', overdueField: 'is_overdue' },
+  { type: 'DateCell',     id: 'completed_date', field: 'completed_date', label: 'Completed',    format: 'short' },
+  { type: 'TextCell',     id: 'technician',     field: 'technician',     label: 'Technician' },
+  { type: 'CurrencyCell', id: 'est_cost',       field: 'estimated_cost', label: 'Est. Cost' },
+  { type: 'CurrencyCell', id: 'actual_cost',    field: 'actual_cost',    label: 'Actual Cost' },
+  { type: 'BadgeCell',    id: 'priority',       field: 'priority',       label: 'Priority' },
+  {
+    type: 'ActionCell', id: 'actions', field: '', label: '',
+    actions: [
+      { id: 'mark_done',    label: 'Mark Done',    variant: 'primary' },
+      { id: 'reschedule',   label: 'Reschedule',   variant: 'ghost' },
+      { id: 'view_details', label: 'View Details' },
+    ],
+  },
+];
+
+// ─── Action handler ───────────────────────────────────────────────────────────
+function makeActionHandler(getRows) {
+  return (action, params) => {
+    const row = params.row;
+    if (action === 'mark_done') {
+      if (!confirm(`Mark service '${row.service_type}' for ${row.truck_plate} as completed?`)) return;
+      const rec = ALL_RECORDS.find(r => r.id === row.id);
+      if (rec) {
+        rec.status = 'Completed';
+        rec.completed_date = new Date().toISOString().slice(0, 10);
+        rec.is_overdue = false;
+      }
+      refreshAllGrids();
+    } else if (action === 'reschedule') {
+      alert(`Reschedule ${row.service_type} for ${row.truck_plate} — not wired in demo`);
+    } else if (action === 'view_details') {
+      alert(`View details for M/R ${row.id} — not wired in demo`);
+    }
+  };
+}
+
+// ─── StatRow ─────────────────────────────────────────────────────────────────
+new StatRow('maintenance-stats', [
+  { label: 'Overdue',              value: 3,  color: 'red'   },
+  { label: 'Due This Week',        value: 8,  color: 'amber' },
+  { label: 'In Progress',          value: 2,  color: 'blue'  },
+  { label: 'Completed This Month', value: 22, color: 'green' },
+]).mount(document.getElementById('stat-row'));
+
+// ─── Progress Bars ────────────────────────────────────────────────────────────
+new ProgressBar('pb-fleet',    { label: 'Fleet Health',          value: 78, color: 'green'  }).mount(document.getElementById('progress-fleet-health'));
+new ProgressBar('pb-insp',     { label: 'Inspections Current',   value: 85, color: 'indigo' }).mount(document.getElementById('progress-inspections'));
+new ProgressBar('pb-schedule', { label: 'Services on Schedule',  value: 72, color: 'teal'   }).mount(document.getElementById('progress-on-schedule'));
+
+// ─── FilterBar ────────────────────────────────────────────────────────────────
+const filterBar = new FilterBar('maint-filter', { values: {} }, [
+  {
+    field: 'service_type', label: 'Service Type', type: 'select',
+    options: ['Oil Change', 'Inspection', 'Tire Rotation', 'Brake Service', 'Engine Overhaul'],
+  },
+  {
+    field: 'technician', label: 'Technician', type: 'select',
+    options: ['Alice Ford', 'Bob Martinez', 'Carl Nguyen'],
+  },
+  { field: 'due_date', label: 'Due Date Range', type: 'date-range' },
+]);
+
+filterBar._onAction = (action, params) => {
+  if (action === 'filter.change') {
+    filters.service_type  = params.values.service_type  || '';
+    filters.technician    = params.values.technician    || '';
+    filters.due_date_from = params.values.due_date_from || '';
+    filters.due_date_to   = params.values.due_date_to   || '';
+  } else {
+    filters = { service_type: '', technician: '', due_date_from: '', due_date_to: '' };
+  }
+  refreshAllGrids();
+};
+filterBar.mount(document.getElementById('filter-bar'));
+
+// ─── GridView instances (one per tab) ─────────────────────────────────────────
+const grids = {};
+
+function makeGrid(id, tabIdx) {
+  const rows = getTabRows(tabIdx);
+  const grid = new GridView(id, { rows, meta: { total: rows.length, page: 1, pageSize: PAGE_SIZE } }, DEFS);
+  grid._onAction = makeActionHandler(() => getTabRows(tabIdx));
+  grids[id] = { comp: grid, tabIdx };
+  return grid;
+}
+
+function refreshAllGrids() {
+  for (const [id, entry] of Object.entries(grids)) {
+    const rows = getTabRows(entry.tabIdx);
+    entry.comp.setState({ rows, meta: { total: rows.length, page: 1, pageSize: PAGE_SIZE } });
+  }
+}
+
+// ─── TabPanel ─────────────────────────────────────────────────────────────────
+const tabPanel = new TabPanel('maintenance-tabs', { active: 0 }, [
+  {
+    label: 'All',
+    render(container) {
+      const slot = document.createElement('div');
+      container.appendChild(slot);
+      const g = makeGrid('grid-all', 0);
+      g.mount(slot);
+    },
+  },
+  {
+    label: 'Overdue',
+    render(container) {
+      const slot = document.createElement('div');
+      container.appendChild(slot);
+      const g = makeGrid('grid-overdue', 1);
+      g.mount(slot);
+    },
+  },
+  {
+    label: 'Due This Week',
+    render(container) {
+      const slot = document.createElement('div');
+      container.appendChild(slot);
+      const g = makeGrid('grid-week', 2);
+      g.mount(slot);
+    },
+  },
+  {
+    label: 'Completed',
+    render(container) {
+      const slot = document.createElement('div');
+      container.appendChild(slot);
+      const g = makeGrid('grid-completed', 3);
+      g.mount(slot);
+    },
+  },
+]);
+
+tabPanel.mount(document.getElementById('tab-panel'));
+</script>
+</body>
+</html>
