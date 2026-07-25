@@ -5,11 +5,11 @@
   "scripts": {
     "start": "PORT=3001 bun server.ts",
     "dev": "PORT=3001 bun --hot server.ts",
-    "test": "vitest run --root .. --config tms/vitest.config.ts",
-    "test:watch": "vitest --root .. --config tms/vitest.config.ts"
+    "test": "vitest run --root ../.. --config apps/tms/vitest.config.ts",
+    "test:watch": "vitest --root ../.. --config apps/tms/vitest.config.ts"
   },
   "dependencies": {
-    "@core3/framework": "file:../lib",
+    "@core3/framework": "file:../../lib",
     "duckdb": "^1.1.0",
     "jose": "^5.9.6"
   },

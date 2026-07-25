@@ -1,8 +1,8 @@
 node_modules/
 
 # Local databases and DuckDB runtime files
-tms/tms.duckdb
-tms/tms.duckdb.wal
+apps/tms/tms.duckdb
+apps/tms/tms.duckdb.wal
 *.duckdb.wal
 *.duckdb.tmp
 
