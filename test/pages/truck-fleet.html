@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fleet Overview — TMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+<!-- ── Nav ── -->
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+    <div class="flex items-center gap-6">
+      <span class="font-bold text-indigo-600 text-lg">TMS</span>
+      <nav class="flex gap-1 text-sm">
+        <a href="truck-fleet.html"    class="px-3 py-1 rounded-md bg-indigo-50 text-indigo-700 font-medium">Fleet</a>
+        <a href="truck-detail.html"   class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Truck Detail</a>
+        <a href="maintenance.html"    class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Maintenance</a>
+        <a href="../catalog/index.html" class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Catalog</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+      <span>Admin User</span>
+      <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">AU</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Page header ── -->
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Fleet Overview</h1>
+        <p class="text-sm text-gray-500 mt-0.5">Manage all trucks across all branches</p>
+      </div>
+      <button onclick="alert('Add Truck — not wired in demo')" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+        + Add Truck
+      </button>
+    </div>
+  </div>
+</div>
+
+<main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+
+  <!-- StatRow -->
+  <div id="stat-row"></div>
+
+  <!-- Filters + Bulk action bar -->
+  <div id="filter-bar"></div>
+  <div id="bulk-bar" class="hidden items-center justify-between bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2">
+    <span id="bulk-label" class="text-sm font-medium text-indigo-700">0 trucks selected</span>
+    <div class="flex gap-2">
+      <button onclick="alert('Assign to Route')" class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Assign to Route</button>
+      <button onclick="alert('Export selected')" class="px-3 py-1.5 text-sm bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50">Export</button>
+    </div>
+  </div>
+
+  <!-- GridView -->
+  <div id="fleet-grid"></div>
+
+</main>
+
+<script type="module">
+import {
+  StatRow, FilterBar, GridView,
+  TextCell, BadgeCell, NumberCell, DateCell, ActionCell,
+} from '../lib/components.js';
+import { BaseComponent } from '../lib/runtime.js';
+
+// ─── Mock data ───────────────────────────────────────────────────────────────
+const ALL_TRUCKS = [
+  { id: 'T001', plate: 'CA-101-ABC', model: 'Freightliner Cascadia', driver: 'Mike Johnson',   phone: '+1-555-0101', status: 'Active',         type: 'Semi',      mileage: 125400, lastService: '2026-07-01', nextService: '2026-08-15', overdueNext: false },
+  { id: 'T002', plate: 'CA-102-DEF', model: 'Kenworth T680',         driver: 'Sarah Chen',     phone: '+1-555-0102', status: 'Maintenance',     type: 'Semi',      mileage: 98200,  lastService: '2026-06-15', nextService: '2026-07-15', overdueNext: true  },
+  { id: 'T003', plate: 'TX-201-GHI', model: 'Peterbilt 579',          driver: 'Carlos Rivera',  phone: '+1-555-0103', status: 'Active',         type: 'Semi',      mileage: 210500, lastService: '2026-07-10', nextService: '2026-08-10', overdueNext: false },
+  { id: 'T004', plate: 'FL-301-JKL', model: 'Isuzu NPR',              driver: 'Emily Watson',   phone: '+1-555-0104', status: 'Active',         type: 'Box Truck', mileage: 45800,  lastService: '2026-06-20', nextService: '2026-08-20', overdueNext: false },
+  { id: 'T005', plate: 'TX-202-MNO', model: 'International LT',       driver: 'James Lee',      phone: '+1-555-0105', status: 'Out of Service', type: 'Semi',      mileage: 320100, lastService: '2026-05-01', nextService: '2026-07-01', overdueNext: true  },
+  { id: 'T006', plate: 'CA-103-PQR', model: 'Ford Transit',            driver: 'Unassigned',     phone: null,          status: 'Active',         type: 'Box Truck', mileage: 28400,  lastService: '2026-07-05', nextService: '2026-09-05', overdueNext: false },
+  { id: 'T007', plate: 'IL-401-STU', model: 'Mack Anthem',             driver: 'Tom Williams',   phone: '+1-555-0107', status: 'Active',         type: 'Flatbed',   mileage: 185200, lastService: '2026-06-28', nextService: '2026-07-28', overdueNext: true  },
+  { id: 'T008', plate: 'WA-501-VWX', model: 'Volvo VNL',               driver: 'Diana Park',     phone: '+1-555-0108', status: 'Maintenance',    type: 'Semi',      mileage: 156700, lastService: '2026-07-08', nextService: '2026-08-08', overdueNext: false },
+  { id: 'T009', plate: 'CA-104-YZA', model: 'Kenworth T880',           driver: 'Robert Brown',   phone: '+1-555-0109', status: 'Active',         type: 'Flatbed',   mileage: 234800, lastService: '2026-06-30', nextService: '2026-07-30', overdueNext: false },
+  { id: 'T010', plate: 'FL-302-BCD', model: 'Freightliner M2',         driver: 'Linda Davis',    phone: '+1-555-0110', status: 'Active',         type: 'Box Truck', mileage: 67200,  lastService: '2026-07-12', nextService: '2026-09-12', overdueNext: false },
+  { id: 'T011', plate: 'IL-402-EFG', model: 'Western Star 5700',       driver: 'Kevin Martinez', phone: '+1-555-0111', status: 'Out of Service', type: 'Semi',      mileage: 412000, lastService: '2026-04-15', nextService: '2026-06-15', overdueNext: true  },
+  { id: 'T012', plate: 'WA-502-HIJ', model: 'Peterbilt 567',            driver: 'Nancy Wilson',   phone: '+1-555-0112', status: 'Active',         type: 'Flatbed',   mileage: 142300, lastService: '2026-07-03', nextService: '2026-08-03', overdueNext: false },
+];
+
+const PAGE_SIZE = 8;
+
+// ─── Column definitions ──────────────────────────────────────────────────────
+const DEFS = [
+  { type: 'TextCell',   id: 'plate',       field: 'plate',       label: 'Plate / Model',  secondary: 'model' },
+  { type: 'TextCell',   id: 'driver',      field: 'driver',      label: 'Driver',          secondary: 'phone' },
+  { type: 'BadgeCell',  id: 'status',      field: 'status',      label: 'Status' },
+  { type: 'BadgeCell',  id: 'type',        field: 'type',        label: 'Type' },
+  { type: 'NumberCell', id: 'mileage',     field: 'mileage',     label: 'Mileage (km)' },
+  { type: 'DateCell',   id: 'lastSvc',     field: 'lastService', label: 'Last Service',  format: 'relative' },
+  { type: 'DateCell',   id: 'nextSvc',     field: 'nextService', label: 'Next Service',  format: 'relative', overdueField: 'overdueNext' },
+  { type: 'ActionCell', id: 'actions',     field: '',            label: '',
+    actions: [
+      { id: 'view',    label: 'View' },
+      { id: 'assign',  label: 'Assign' },
+      { id: 'service', label: 'Service', variant: 'ghost' },
+    ]},
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let filters = { status: '', type: '', q: '' };
+let page = 1;
+
+function filtered() {
+  return ALL_TRUCKS.filter(t =>
+    (!filters.status || t.status === filters.status) &&
+    (!filters.type   || t.type   === filters.type) &&
+    (!filters.q      || t.plate.toLowerCase().includes(filters.q.toLowerCase()) ||
+                        t.driver.toLowerCase().includes(filters.q.toLowerCase()))
+  );
+}
+
+// ─── StatRow ─────────────────────────────────────────────────────────────────
+new StatRow('fleet-stats', [
+  { label: 'Total Trucks',    value: 42, color: 'indigo' },
+  { label: 'Active',          value: 31, color: 'green',  trend: 'up', delta: '+3 this month' },
+  { label: 'In Maintenance',  value: 7,  color: 'amber' },
+  { label: 'Out of Service',  value: 4,  color: 'red' },
+]).mount(document.getElementById('stat-row'));
+
+// ─── FilterBar ───────────────────────────────────────────────────────────────
+const filterBar = new FilterBar('fleet-filter', { values: {} }, [
+  { field: 'status', label: 'Status',     type: 'select', options: ['Active', 'Maintenance', 'Out of Service'] },
+  { field: 'type',   label: 'Truck Type', type: 'select', options: ['Semi', 'Box Truck', 'Flatbed'] },
+  { field: 'q',      label: 'Search',     type: 'search', placeholder: 'Plate or driver…' },
+]);
+filterBar._onAction = (action, params) => {
+  if (action === 'filter.change') {
+    filters = { status: params.values.status || '', type: params.values.type || '', q: params.values.q || '' };
+    page = 1;
+    refreshGrid();
+  } else {
+    filters = { status: '', type: '', q: '' };
+    page = 1;
+    refreshGrid();
+  }
+};
+filterBar.mount(document.getElementById('filter-bar'));
+
+// ─── GridView ─────────────────────────────────────────────────────────────────
+let grid;
+
+function refreshGrid() {
+  const rows = filtered();
+  const start = (page - 1) * PAGE_SIZE;
+  const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+  if (!grid) {
+    grid = new GridView('fleet-grid', {
+      rows: pageRows,
+      meta: { total: rows.length, page, pageSize: PAGE_SIZE },
+    }, DEFS);
+
+    // Page-level action handler
+    grid._onAction = (action, params) => {
+      if (action === 'view')    window.location.href = `truck-detail.html?id=${params.row.id}`;
+      else if (action === 'assign')  alert(`Assign ${params.row.plate} to a route`);
+      else if (action === 'service') alert(`Schedule service for ${params.row.plate}`);
+      // Pagination — handled internally by GridView
+    };
+
+    grid.mount(document.getElementById('fleet-grid'));
+  } else {
+    grid.setState({
+      rows: pageRows,
+      meta: { total: rows.length, page, pageSize: PAGE_SIZE },
+    });
+  }
+}
+
+refreshGrid();
+</script>
+</body>
+</html>

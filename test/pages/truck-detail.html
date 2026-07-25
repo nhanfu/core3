@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Truck Detail — TMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+<!-- ── Nav ── -->
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-6 flex items-center justify-between h-14">
+    <div class="flex items-center gap-6">
+      <span class="font-bold text-indigo-600 text-lg">TMS</span>
+      <nav class="flex gap-1 text-sm">
+        <a href="truck-fleet.html"    class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Fleet</a>
+        <a href="truck-detail.html"   class="px-3 py-1 rounded-md bg-indigo-50 text-indigo-700 font-medium">Truck Detail</a>
+        <a href="maintenance.html"    class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Maintenance</a>
+        <a href="../catalog/index.html" class="px-3 py-1 rounded-md text-gray-600 hover:bg-gray-100">Catalog</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3 text-sm text-gray-500">
+      <span>Admin User</span>
+      <div class="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold">AU</div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Breadcrumb + Truck header ── -->
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-6 py-5">
+    <nav class="text-sm text-gray-500 mb-2">
+      <a href="truck-fleet.html" class="hover:text-indigo-600">Fleet</a>
+      <span class="mx-2">›</span>
+      <span class="text-gray-800 font-medium">CA-101-ABC</span>
+    </nav>
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 text-xl">🚛</div>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">CA-101-ABC</h1>
+          <p class="text-sm text-gray-500">Freightliner Cascadia · Semi Truck · <span class="text-green-600 font-medium">Active</span></p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="alert('Assign Route')" class="px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Assign Route</button>
+        <button onclick="alert('Schedule Service')" class="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Schedule Service</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+
+  <!-- StatRow — 3 KPIs -->
+  <div id="stat-row"></div>
+
+  <!-- SplitPanel: FormPanel left | GridView right -->
+  <div id="split-panel"></div>
+
+  <!-- TabPanel: Trips | Issues | Documents -->
+  <div id="tab-panel"></div>
+
+</main>
+
+<script type="module">
+import {
+  StatRow, GridView, FormPanel, SplitPanel, TabPanel, Button,
+  TextInput, NumberInput, SelectInput, DateInput, TextareaInput,
+  TextCell, BadgeCell, CurrencyCell, DateCell, BooleanCell, ActionCell,
+} from '../lib/components.js';
+
+// ─── Mock data ───────────────────────────────────────────────────────────────
+const TRUCK = {
+  id: 'T001', plate: 'CA-101-ABC', model: 'Freightliner Cascadia',
+  driver: 'Mike Johnson', phone: '+1-555-0101', type: 'Semi',
+  mileage: 125400, acquisitionDate: '2021-03-15', notes: 'Runs warm in summer. Check coolant before long hauls.',
+  status: 'Active', branch: 'Los Angeles',
+};
+
+const MAINTENANCE_LOG = [
+  { id: 'M001', date: '2026-07-01', type: 'Oil Change',   status: 'Completed',  cost: 250,  technician: 'Bob Smith' },
+  { id: 'M002', date: '2026-05-15', type: 'Inspection',   status: 'Completed',  cost: 175,  technician: 'Alice Johnson' },
+  { id: 'M003', date: '2026-08-15', type: 'Brake Service',status: 'Scheduled',  cost: 850,  technician: 'Bob Smith' },
+  { id: 'M004', date: '2026-03-20', type: 'Tire Rotation', status: 'Completed',  cost: 120,  technician: 'Mike Brown' },
+  { id: 'M005', date: '2026-07-20', type: 'Oil Change',   status: 'Scheduled',  cost: 250,  technician: 'Alice Johnson' },
+];
+
+const TRIPS = [
+  { id: 'TR001', date: '2026-07-22', route: 'LA → Phoenix',    km: 595, duration: '5h 30m', load: 'General Freight' },
+  { id: 'TR002', date: '2026-07-20', route: 'LA → Las Vegas',  km: 437, duration: '4h 10m', load: 'Palletized Goods' },
+  { id: 'TR003', date: '2026-07-18', route: 'LA → Sacramento', km: 612, duration: '5h 55m', load: 'Refrigerated' },
+  { id: 'TR004', date: '2026-07-15', route: 'LA → Fresno',     km: 320, duration: '3h 20m', load: 'Mixed Cargo' },
+];
+
+const ISSUES = [
+  { id: 'I001', severity: 'Medium',   description: 'Engine warning light intermittent', resolved: false, reported: '2026-07-10' },
+  { id: 'I002', severity: 'Low',      description: 'AC not cooling efficiently',         resolved: true,  reported: '2026-06-28' },
+  { id: 'I003', severity: 'Critical', description: 'Brake fluid low — inspect immediately', resolved: false, reported: '2026-07-20' },
+];
+
+// ─── StatRow ─────────────────────────────────────────────────────────────────
+new StatRow('detail-stats', [
+  { label: 'Total Mileage',       value: '125,400 km', color: 'indigo' },
+  { label: 'Services Completed',  value: 14, color: 'green' },
+  { label: 'Open Issues',         value: 2, color: 'red' },
+]).mount(document.getElementById('stat-row'));
+
+// ─── FormPanel (left side of split) ──────────────────────────────────────────
+const form = new FormPanel('truck-form', {}, { title: 'Truck Information' });
+
+function buildForm(container) {
+  form.mount(container);
+  const fieldsSlot = container.querySelector('[data-form-fields]');
+  const actionsSlot = container.querySelector('[data-form-actions]');
+  const mkSlot = () => { const s = document.createElement('div'); fieldsSlot.appendChild(s); return s; };
+
+  const fPlate = new TextInput('f-plate', { value: TRUCK.plate,  error: null }, { label: 'Plate Number', field: 'plate', required: true, readonly: true });
+  form.registerField(fPlate); fPlate.mount(mkSlot());
+
+  const fType = new SelectInput('f-type', { value: TRUCK.type, options: ['Semi', 'Box Truck', 'Flatbed'] }, { label: 'Truck Type', field: 'type', required: true });
+  form.registerField(fType); fType.mount(mkSlot());
+
+  const fDriver = new TextInput('f-driver', { value: TRUCK.driver, error: null }, { label: 'Assigned Driver', field: 'driver', placeholder: 'Driver name or ID' });
+  form.registerField(fDriver); fDriver.mount(mkSlot());
+
+  const fMileage = new NumberInput('f-mileage', { value: TRUCK.mileage }, { label: 'Current Mileage (km)', field: 'mileage', min: 0, step: 1 });
+  form.registerField(fMileage); fMileage.mount(mkSlot());
+
+  const fAcq = new DateInput('f-acq', { value: TRUCK.acquisitionDate }, { label: 'Acquisition Date', field: 'acquisitionDate' });
+  form.registerField(fAcq); fAcq.mount(mkSlot());
+
+  const fNotes = new TextareaInput('f-notes', { value: TRUCK.notes }, { label: 'Notes', field: 'notes', rows: 3 });
+  form.registerField(fNotes); fNotes.mount(mkSlot());
+
+  // Action buttons
+  const saveBtn = new Button('btn-save', {}, { label: 'Save Changes', variant: 'primary', action: 'truck.update' });
+  saveBtn._onAction = async () => {
+    const result = await form.submit('truck.update', { id: TRUCK.id });
+    if (result) alert('Saved: ' + JSON.stringify(result, null, 2));
+  };
+  saveBtn.mount(actionsSlot);
+
+  const cancelBtn = new Button('btn-cancel', {}, { label: 'Cancel', variant: 'secondary' });
+  cancelBtn.mount(actionsSlot);
+
+  // Wire form submit to demo
+  form._onAction = (action, params) => {
+    console.log('[submit]', action, params);
+    return Promise.resolve({ ok: true, ...params });
+  };
+}
+
+// ─── Maintenance log GridView (right side of split) ──────────────────────────
+const MAINT_DEFS = [
+  { type: 'DateCell',     id: 'date',        field: 'date',        label: 'Date',      format: 'short' },
+  { type: 'BadgeCell',    id: 'type',        field: 'type',        label: 'Service' },
+  { type: 'BadgeCell',    id: 'status',      field: 'status',      label: 'Status' },
+  { type: 'CurrencyCell', id: 'cost',        field: 'cost',        label: 'Cost', align: 'right' },
+  { type: 'TextCell',     id: 'technician',  field: 'technician',  label: 'Technician' },
+];
+
+function buildMaintGrid(container) {
+  const heading = document.createElement('h3');
+  heading.className = 'text-base font-semibold text-gray-900 mb-3';
+  heading.textContent = 'Maintenance Log';
+  container.appendChild(heading);
+
+  const gridWrap = document.createElement('div');
+  container.appendChild(gridWrap);
+
+  new GridView('maint-log', {
+    rows: MAINTENANCE_LOG,
+    meta: { total: MAINTENANCE_LOG.length, page: 1, pageSize: 25 },
+  }, MAINT_DEFS).mount(gridWrap);
+}
+
+// ─── SplitPanel ───────────────────────────────────────────────────────────────
+// Build each panel component as an anonymous "slot" component
+class SlotComponent {
+  constructor(fn) { this.fn = fn; this.parent = null; }
+  mount(el) { this.fn(el); }
+}
+
+const splitEl = document.getElementById('split-panel');
+splitEl.innerHTML = '<div class="grid gap-6" style="grid-template-columns: 2fr 3fr"><div data-panel="left"></div><div data-panel="right"></div></div>';
+buildForm(splitEl.querySelector('[data-panel="left"]'));
+buildMaintGrid(splitEl.querySelector('[data-panel="right"]'));
+
+// ─── TabPanel ─────────────────────────────────────────────────────────────────
+const TRIPS_DEFS = [
+  { type: 'DateCell', id: 'date',  field: 'date',  label: 'Date', format: 'short' },
+  { type: 'TextCell', id: 'route', field: 'route', label: 'Route' },
+  { type: 'TextCell', id: 'load',  field: 'load',  label: 'Cargo' },
+  { type: 'NumberCell', id: 'km',  field: 'km',    label: 'Distance (km)' },
+  { type: 'TextCell', id: 'dur',   field: 'duration', label: 'Duration' },
+];
+
+const ISSUES_DEFS = [
+  { type: 'BadgeCell', id: 'sev',  field: 'severity',    label: 'Severity' },
+  { type: 'TextCell',  id: 'desc', field: 'description', label: 'Issue' },
+  { type: 'DateCell',  id: 'rep',  field: 'reported',    label: 'Reported', format: 'relative' },
+  { type: 'BooleanCell', id: 'res', field: 'resolved',   label: 'Resolved' },
+  { type: 'ActionCell',  id: 'acts', field: '',           label: '',
+    actions: [{ id: 'resolve', label: 'Resolve' }, { id: 'escalate', label: 'Escalate', variant: 'danger' }] },
+];
+
+new TabPanel('detail-tabs', { active: 0 }, [
+  {
+    label: `Trips (${TRIPS.length})`,
+    render(el) {
+      new GridView('trips-grid', { rows: TRIPS, meta: { total: TRIPS.length, page: 1, pageSize: 25 } }, TRIPS_DEFS).mount(el);
+    },
+  },
+  {
+    label: `Issues (${ISSUES.length})`,
+    render(el) {
+      const grid = new GridView('issues-grid', { rows: ISSUES, meta: { total: ISSUES.length, page: 1, pageSize: 25 } }, ISSUES_DEFS);
+      grid._onAction = (action, params) => {
+        if (action === 'resolve') alert(`Mark issue ${params.row.id} as resolved`);
+        else if (action === 'escalate') alert(`Escalate issue: ${params.row.description}`);
+      };
+      grid.mount(el);
+    },
+  },
+  {
+    label: 'Documents',
+    content: `
+      <div class="py-10 text-center">
+        <div class="text-4xl mb-3">📄</div>
+        <p class="text-sm text-gray-500">No documents attached to this truck</p>
+        <button onclick="alert('Upload document')" class="mt-3 px-3 py-1.5 text-sm text-indigo-600 border border-indigo-300 rounded-md hover:bg-indigo-50">Upload Document</button>
+      </div>`,
+  },
+]).mount(document.getElementById('tab-panel'));
+</script>
+</body>
+</html>
