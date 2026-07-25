@@ -173,7 +173,14 @@ function splitSQL(sql) {
 
 // ── YAML datasource registry ─────────────────────────────────────────────────
 // Queries are loaded from the page YAML files, never accepted from API requests.
-const SOURCE_FILES = ['fleet.yaml', 'drivers.yaml', 'trips.yaml', 'maintenance.yaml', 'reports.yaml', 'settings.yaml'];
+const SOURCE_FILES = [
+  'pages/fleet.yaml',
+  'pages/drivers.yaml',
+  'pages/trips.yaml',
+  'pages/maintenance.yaml',
+  'pages/reports.yaml',
+  'pages/settings.yaml',
+];
 
 function loadSources() {
   const sources = new Map();
