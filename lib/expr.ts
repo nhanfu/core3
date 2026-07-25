@@ -6,12 +6,12 @@
  * They CANNOT access window, document, or global scope.
  */
 
-const _cache = new Map();
+const _cache = new Map<string, (...args: any[]) => any>();
 
-function compile(expr) {
+function compile(expr: string) {
   if (_cache.has(expr)) return _cache.get(expr);
   // eslint-disable-next-line no-new-func
-  const fn = new Function('user', 'row', 'state', `"use strict"; return (${expr})`);
+  const fn: any = new Function('user', 'row', 'state', `"use strict"; return (${expr})`);
   _cache.set(expr, fn);
   return fn;
 }
@@ -22,7 +22,7 @@ function compile(expr) {
  * @param {{ user?, row?, state? }} ctx
  * @returns {*}
  */
-export function evalExpr(expr, ctx = {}) {
+export function evalExpr(expr: any, ctx: any = {}) {
   if (!expr || typeof expr !== 'string') return undefined;
   const user  = Object.freeze(ctx.user  || {});
   const row   = Object.freeze(ctx.row   || {});
@@ -40,12 +40,12 @@ export function evalExpr(expr, ctx = {}) {
  * @param {{ row?, state?, user? }} ctx
  * @returns {string}
  */
-export function interpolate(template, ctx = {}) {
+export function interpolate(template: any, ctx: any = {}) {
   if (!template || typeof template !== 'string') return String(template ?? '');
   return template.replace(/\{([\w.]+)\}/g, (_, path) => {
     const parts = path.split('.');
-    let val = ctx;
+    let val: any = ctx;
     for (const p of parts) val = val?.[p];
-    return val ?? '';
+    return String(val ?? '');
   });
 }

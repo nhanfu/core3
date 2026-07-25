@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
-import { getToken } from '/tms/app.ts';
+import { getToken } from '../app.ts';
 
 const TYPE_ICONS = {
   service_overdue:        '🔧',

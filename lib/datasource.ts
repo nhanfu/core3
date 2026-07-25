@@ -6,7 +6,7 @@
 import { client } from './client.ts';
 import { createQuery } from './dtos.ts';
 
-const _cache = new Map();
+const _cache = new Map<string, { data: unknown; expires: number }>();
 
 function parseTtl(ttl = '60s') {
   const m = String(ttl).match(/^(\d+)([smh])$/);
@@ -15,7 +15,7 @@ function parseTtl(ttl = '60s') {
   return parseInt(m[1]) * (unit[m[2]] || 1000);
 }
 
-export async function fetchSource(def, params = {}) {
+export async function fetchSource(def: any, params: Record<string, unknown> = {}) {
   const key = JSON.stringify({ id: def.id, params });
 
   if (def.cache) {
@@ -39,7 +39,7 @@ export async function fetchSource(def, params = {}) {
   return result;
 }
 
-export function clearCache(sourceId) {
+export function clearCache(sourceId: string) {
   for (const key of _cache.keys()) {
     if (key.includes(`"id":"${sourceId}"`)) _cache.delete(key);
   }

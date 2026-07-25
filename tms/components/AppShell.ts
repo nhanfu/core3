@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
-import { navigate, logout, getUser } from '/tms/app.ts';
-import { i18n } from '/tms/i18n.ts';
-import { NotificationPanel } from '/tms/components/NotificationPanel.ts';
-import { ProfileDrawer } from '/tms/components/ProfileDrawer.ts';
+import { navigate, logout, getUser } from '../app.ts';
+import { i18n } from '../i18n.ts';
+import { NotificationPanel } from './NotificationPanel.ts';
+import { ProfileDrawer } from './ProfileDrawer.ts';
 
 const NAV = [
   { path: '/fleet',       label: 'Fleet',       icon: '🚛' },

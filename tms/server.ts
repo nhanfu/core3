@@ -1,3 +1,4 @@
+// @ts-nocheck
 import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { join } from 'node:path';

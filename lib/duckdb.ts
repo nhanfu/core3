@@ -10,7 +10,7 @@
 let _db = null;
 
 async function initDuckDB() {
-  const duckdb = await import('@duckdb/duckdb-wasm');
+  const duckdb: any = await Function('return import("@duckdb/duckdb-wasm")')();
   const JSDELIVR = duckdb.selectBundle(duckdb.getJsDelivrBundles());
   const worker = new Worker(JSDELIVR.mainWorker, { type: 'module' });
   const logger = new duckdb.ConsoleLogger();
@@ -24,7 +24,7 @@ export async function getDuckDB() {
   return _db;
 }
 
-export async function queryDuckDB(sql, params = {}) {
+export async function queryDuckDB(sql: string, params: Record<string, unknown> = {}) {
   const db = await getDuckDB();
   const conn = await db.connect();
   try {

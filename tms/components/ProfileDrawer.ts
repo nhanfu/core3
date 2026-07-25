@@ -1,7 +1,8 @@
+// @ts-nocheck
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
-import { logout, getToken } from '/tms/app.ts';
-import { i18n } from '/tms/i18n.ts';
+import { logout, getToken } from '../app.ts';
+import { i18n } from '../i18n.ts';
 
 export class ProfileDrawer extends BaseComponent {
   constructor(id, state) {

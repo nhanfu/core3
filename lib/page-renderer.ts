@@ -20,25 +20,25 @@ import { navigate, getPageParams } from './navigate.ts';
 
 // ── Component registry ────────────────────────────────────────────────────────
 
-const registry = new Map();
+const registry = new Map<string, any>();
 
-export function register(name, Ctor) {
+export function register(name: string, Ctor: any) {
   registry.set(name, Ctor);
 }
 
-export function registerAll(map) {
+export function registerAll(map: Record<string, any>) {
   for (const [k, v] of Object.entries(map)) registry.set(k, v);
 }
 
 // ── Main render function ──────────────────────────────────────────────────────
 
-export async function renderPage(config, { container = document.body } = {}) {
+export async function renderPage(config: any, { container = document.body }: { container?: HTMLElement } = {}) {
   // Dynamic imports to avoid circular deps
   const { client } = await import('./client.ts');
   const { createQuery } = await import('./dtos.ts');
 
   // 1. Auth check
-  const user = window.__CORE3_USER__ || {};
+  const user: any = window.__CORE3_USER__ || {};
   const requiredPerms = config.page?.auth?.require || [];
   if (requiredPerms.length) {
     const userPerms = user.permissions || [];
@@ -50,14 +50,14 @@ export async function renderPage(config, { container = document.body } = {}) {
 
   // 2. Build context
   const pageParams = getPageParams();
-  const ctx = { user, row: {}, state: pageParams };
+  const ctx: any = { user, row: {}, state: pageParams };
 
   // 3. Fetch datasources
-  const dataMap = {};
-  const filterState = {};    // sourceId -> current filter values object
-  const paginationState = {}; // sourceId -> { skip, top, page }
+  const dataMap: Record<string, any> = {};
+  const filterState: Record<string, any> = {};    // sourceId -> current filter values object
+  const paginationState: Record<string, any> = {}; // sourceId -> { skip, top, page }
   // boundComponents: sourceId -> [{ comp, def, compType: 'GridView'|'StatRow' }]
-  const boundComponents = {};
+  const boundComponents: Record<string, any[]> = {};
 
   const sourceDefs = collectSources(config);
   for (const src of sourceDefs.values()) {
@@ -77,7 +77,7 @@ export async function renderPage(config, { container = document.body } = {}) {
 
   // ── Shared helpers (closures over dataMap, filterState, paginationState) ──
 
-  async function refetchSource(sourceId, filters = {}, skip = 0, top = 25) {
+  async function refetchSource(sourceId: string, filters = {}, skip = 0, top = 25) {
     const result = await client.query(
       createQuery({ sourceId, params: filters, skip, top })
     );
@@ -85,7 +85,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     return result;
   }
 
-  function updateBoundComponents(sourceId, data) {
+  function updateBoundComponents(sourceId: string, data: any) {
     for (const entry of (boundComponents[sourceId] || [])) {
       if (entry.compType === 'GridView') {
         // Use the internal setState via our stored reference (bypasses the override)
@@ -99,7 +99,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     }
   }
 
-  async function refreshSources(sourceIds) {
+  async function refreshSources(sourceIds: string[] = []) {
     for (const sourceId of (sourceIds || [])) {
       const ps = paginationState[sourceId] || { skip: 0, top: 25, page: 1 };
       const fs = filterState[sourceId] || {};
@@ -110,7 +110,7 @@ export async function renderPage(config, { container = document.body } = {}) {
 
   // ── Action handler ────────────────────────────────────────────────────────
 
-  async function handleAction(actionDef, row) {
+  async function handleAction(actionDef: any, row: any) {
     if (!actionDef) return;
     const rowCtx = { ...ctx, row: row || {} };
     const resolved = resolveAction(actionDef, rowCtx);
@@ -169,8 +169,8 @@ export async function renderPage(config, { container = document.body } = {}) {
 
   // ── Form modal ────────────────────────────────────────────────────────────
 
-  async function openFormModal(actionDef, row) {
-    return new Promise(resolve => {
+  async function openFormModal(actionDef: any, row: any) {
+    return new Promise<void>(resolve => {
       // Overlay
       const overlay = document.createElement('div');
       overlay.style.cssText = [
@@ -214,7 +214,7 @@ export async function renderPage(config, { container = document.body } = {}) {
       dialog.appendChild(header);
 
       // Fields
-      const inputs = {}; // field -> { el, fieldDef }
+      const inputs: Record<string, { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any }> = {}; // field -> { el, fieldDef }
       for (const fieldDef of (actionDef.fields || [])) {
         const group = document.createElement('div');
         group.style.cssText = 'margin-bottom:16px;';
@@ -290,9 +290,9 @@ export async function renderPage(config, { container = document.body } = {}) {
       document.body.appendChild(overlay);
 
       // Error banner (created lazily)
-      let errorBanner = null;
+      let errorBanner: HTMLElement | null = null;
 
-      function showError(msg) {
+      function showError(msg: string) {
         if (!errorBanner) {
           errorBanner = document.createElement('div');
           errorBanner.style.cssText = 'margin-top:12px;padding:10px 14px;background:#fef2f2;color:#b91c1c;border-radius:6px;font-size:0.875rem;border:1px solid #fecaca;';
@@ -316,7 +316,7 @@ export async function renderPage(config, { container = document.body } = {}) {
         if (errorBanner) errorBanner.style.display = 'none';
 
         // Validate required fields
-        let firstInvalid = null;
+        let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
         for (const { el, fieldDef } of Object.values(inputs)) {
           const v = el.value?.trim() ?? '';
           if (fieldDef.required && !v) {
@@ -347,7 +347,7 @@ export async function renderPage(config, { container = document.body } = {}) {
           });
           closeModal();
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
-        } catch (err) {
+        } catch (err: any) {
           console.error('[page-renderer] patch error:', err);
           showError(err.message || 'Save failed. Please try again.');
           saveBtn.disabled = false;
@@ -359,7 +359,7 @@ export async function renderPage(config, { container = document.body } = {}) {
 
   // ── Component renderers ───────────────────────────────────────────────────
 
-  async function renderStatRow(def, targetContainer) {
+  async function renderStatRow(def: any, targetContainer: HTMLElement) {
     const { StatRow } = await import('./components/StatRow.ts');
     const sourceData = def.source ? ((dataMap[def.source] || {}).data || {}) : {};
     const getPath = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
@@ -378,7 +378,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     }
   }
 
-  async function renderGridView(def, targetContainer) {
+  async function renderGridView(def: any, targetContainer: HTMLElement) {
     const { GridView } = await import('./components/GridView.ts');
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
@@ -397,7 +397,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     );
 
     // Override _cellState to support YAML `colors` map and `show_if` on action buttons
-    comp._cellState = (colDef, row) => {
+    comp._cellState = (colDef: any, row: any) => {
       const value = row[colDef.field];
       switch (colDef.type) {
         case 'BadgeCell':
@@ -421,7 +421,7 @@ export async function renderPage(config, { container = document.body } = {}) {
           return { value: !!value };
         case 'ActionCell': {
           const rowCtx = { ...ctx, row };
-          const visibleActions = (colDef.actions || []).filter(a =>
+          const visibleActions = (colDef.actions || []).filter((a: any) =>
             !a.show_if || evalExpr(a.show_if, rowCtx)
           );
           return { actions: visibleActions, row };
@@ -441,7 +441,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     // Override setState to intercept internal pagination button clicks
     // Internal pagination fires: this.setState({ meta: { ...meta, page: N } })
     // — no 'rows' key, only 'meta'. We intercept that and do a server fetch.
-    comp.setState = async (partial, redraw = true) => {
+    comp.setState = async (partial: any, redraw = true) => {
       if (
         partial &&
         'meta' in partial &&
@@ -466,7 +466,7 @@ export async function renderPage(config, { container = document.body } = {}) {
 
     // Wire action handler — ActionCell fires this.submit(actionId, { row })
     // which bubbles up via root._onAction to the GridView instance
-    comp._onAction = async (actionId, params) => {
+    comp._onAction = async (actionId: string, params: any) => {
       const row = params?.row || params || {};
       const actionDef = (config.actions || []).find(a => a.id === actionId);
       if (actionDef) {
@@ -487,7 +487,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     }
   }
 
-  async function renderTabGroupDef(def, targetContainer) {
+  async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
     const userPerms = ctx.user.permissions || [];
     const visibleTabs = (def.tabs || []).filter(tab =>
       !tab.permission || userPerms.includes(tab.permission)
@@ -554,7 +554,7 @@ export async function renderPage(config, { container = document.body } = {}) {
     targetContainer.appendChild(wrap);
   }
 
-  async function renderComponentDef(def, targetContainer) {
+  async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     switch (def.type) {
       case 'StatRow':
         await renderStatRow(def, targetContainer);
@@ -568,10 +568,10 @@ export async function renderPage(config, { container = document.body } = {}) {
       default:
         // Fall back to component registry for any custom types
         if (registry.has(def.type)) {
-          const Ctor = registry.get(def.type);
+          const Ctor: any = registry.get(def.type);
           const sourceData = def.source ? (dataMap[def.source] || {}) : {};
           const comp = new Ctor(def.id || def.type, sourceData, def);
-          comp._onAction = async (actionId, params) => {
+          comp._onAction = async (actionId: string, params: any) => {
             const row = params?.row || params || {};
             const actionDef = (config.actions || []).find(a => a.id === actionId);
             if (actionDef) await handleAction(actionDef, row);
@@ -678,13 +678,13 @@ export async function renderPage(config, { container = document.body } = {}) {
   return { dataMap, ctx };
 }
 
-function collectSources(config) {
-  const sources = new Map();
-  const add = (id, def = {}) => {
+function collectSources(config: any) {
+  const sources = new Map<string, any>();
+  const add = (id: string, def: any = {}) => {
     if (!id || sources.has(id)) return;
     sources.set(id, { id, single: def.type === 'StatRow', page_size: def.page_size });
   };
-  const visit = (components = []) => {
+  const visit = (components: any[] = []) => {
     for (const component of components) {
       add(component.source, component);
       for (const tab of component.tabs || []) visit(tab.components);

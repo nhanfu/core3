@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "noImplicitAny": true,
+    "target": "ES2022",
+    "types": ["node"],
+    "paths": {
+      "@core3/framework": ["./framework-shim.d.ts"],
+      "@core3/framework/*": ["./framework-shim.d.ts"]
+    }
+  },
+  "include": ["./*.ts", "./*.d.ts", "./components/*.ts", "./components/*.d.ts", "./pages/*.ts", "./pages/*.d.ts"]
+}

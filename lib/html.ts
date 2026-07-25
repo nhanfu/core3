@@ -334,7 +334,7 @@ export class HTML {
     }
 
     checkbox(value) {
-        this.add(ElementType.input);
+        this.add('input');
         var checkbox = this.context;
         if (checkbox instanceof HTMLInputElement) {
             checkbox.setAttribute("type", "checkbox");

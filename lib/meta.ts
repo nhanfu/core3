@@ -13,7 +13,7 @@ import { evalExpr } from './expr.ts';
  * @param {{ user?, row?, state? }} ctx
  * @returns {{ visible: boolean, disabled: boolean, value: * }}
  */
-export function resolveMeta(def, ctx = {}) {
+export function resolveMeta(def: any, ctx: any = {}) {
   const visible  = def.show_if     ? !!evalExpr(def.show_if,     ctx) : true;
   const disabled = def.disabled_if ? !!evalExpr(def.disabled_if, ctx) : false;
   let value;
@@ -33,7 +33,7 @@ export function resolveMeta(def, ctx = {}) {
  * @param {{ user?, row?, state? }} ctx
  * @returns {{ visible: boolean, disabled: boolean }}
  */
-export function resolveAction(action, ctx = {}) {
+export function resolveAction(action: any, ctx: any = {}) {
   const visible  = action.show_if     ? !!evalExpr(action.show_if,     ctx) : true;
   const disabled = action.disabled_if ? !!evalExpr(action.disabled_if, ctx) : false;
   return { visible, disabled };
@@ -46,7 +46,7 @@ export function resolveAction(action, ctx = {}) {
  * @param {{ user?, row?, state? }} ctx
  * @returns {string|null}  — error message or null if valid
  */
-export function validateField(def, value, ctx = {}) {
+export function validateField(def: any, value: any, ctx: any = {}) {
   if (!def.validation) return null;
   const result = evalExpr(def.validation, { ...ctx, row: { ...(ctx.row || {}), [def.field]: value } });
   if (result === true || result == null) return null;

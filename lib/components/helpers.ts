@@ -30,7 +30,7 @@ export const STATUS_COLORS = {
 export function formatDate(value, format = 'short') {
   if (!value) return '—';
   const d = new Date(String(value).includes('T') ? value : value + 'T00:00:00');
-  if (isNaN(d)) return String(value);
+  if (Number.isNaN(d.getTime())) return String(value);
   if (format === 'relative') {
     const diffMs = Date.now() - d.getTime();
     const absDays = Math.floor(Math.abs(diffMs) / 86400000);

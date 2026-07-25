@@ -3,16 +3,17 @@
  */
 
 class Client {
+  _token: string | null = null;
+  _refreshFn: null | (() => Promise<string>) = null;
+
   constructor() {
-    this._token = null;
-    this._refreshFn = null;
   }
 
-  setToken(token) { this._token = token; }
-  onRefresh(fn) { this._refreshFn = fn; }
+  setToken(token: string | null) { this._token = token; }
+  onRefresh(fn: null | (() => Promise<string>)) { this._refreshFn = fn; }
 
   _headers() {
-    const h = { 'Content-Type': 'application/json' };
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
     if (this._token) h['Authorization'] = `Bearer ${this._token}`;
     return h;
   }

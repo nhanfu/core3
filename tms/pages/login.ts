@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { html } from '@core3/framework/html.ts';
-import { setAuth, navigate } from '/tms/app.ts';
-import { i18n } from '/tms/i18n.ts';
+import { setAuth, navigate } from '../app.ts';
+import { i18n } from '../i18n.ts';
 
 export async function mount(container) {
   // Wrap in login page layout

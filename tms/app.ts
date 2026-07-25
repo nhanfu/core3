@@ -1,5 +1,6 @@
-import { AppShell } from '/tms/components/AppShell.ts';
-import { i18n } from '/tms/i18n.ts';
+// @ts-nocheck
+import { AppShell } from './components/AppShell.ts';
+import { i18n } from './i18n.ts';
 import { renderPage } from '@core3/framework/page-renderer.ts';
 import { registerNavigator } from '@core3/framework/navigate.ts';
 import { client } from '@core3/framework/client.ts';

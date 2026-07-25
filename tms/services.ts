@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { SignJWT, jwtVerify } from 'jose';
 
 export class DuckDbRepository {

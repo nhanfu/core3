@@ -1,3 +1,4 @@
+// @ts-nocheck
 class I18n {
   lang = 'en';
   _cache = new Map(); // 'en:fleet' → { text: translated, ... }

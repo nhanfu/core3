@@ -12,7 +12,17 @@ import { HTML } from './html.ts';
 export { HTML };
 
 export class BaseComponent {
-  constructor(id, initialState = {}) {
+  [key: string]: any;
+
+  id: string;
+  state: any;
+  parent: BaseComponent | null;
+  children: BaseComponent[];
+  _container: HTMLElement | null;
+  _transport?: { submit?: (action: string, params?: Record<string, unknown>) => unknown } | null;
+  _onAction?: (action: string, params?: Record<string, unknown>, source?: BaseComponent) => unknown;
+
+  constructor(id: string, initialState: any = {}) {
     this.id = id;
     this.state = { ...initialState };
     this.parent = null;
@@ -22,16 +32,16 @@ export class BaseComponent {
 
   /** Walk up to the root component (no parent). */
   get root() {
-    let n = this;
-    while (n.parent) n = n.parent;
-    return n;
+    let n: BaseComponent | null = this;
+    while (n?.parent) n = n.parent;
+    return n ?? this;
   }
 
   /**
    * Merge partial into state.
    * @param {boolean} redraw  default true — clears container and calls draw() again
    */
-  setState(partial, redraw = true) {
+  setState(partial: any, redraw = true) {
     Object.assign(this.state, partial);
     if (redraw) this.redraw();
   }
@@ -52,7 +62,7 @@ export class BaseComponent {
    * @param {string|object} stateOrId
    * @param {object} [maybeState]
    */
-  createChild(Ctor, stateOrId, maybeState) {
+  createChild(Ctor: new (id: string, state?: any) => BaseComponent, stateOrId: string | any, maybeState?: any) {
     let id, state;
     if (typeof stateOrId === 'string') {
       id = stateOrId;
@@ -72,7 +82,7 @@ export class BaseComponent {
    * @param {string} id
    * @returns {BaseComponent|null}
    */
-  find(id) {
+  find(id: string) {
     if (this.id === id) return this;
     for (const child of this.children) {
       const result = child.find(id);
@@ -82,7 +92,7 @@ export class BaseComponent {
   }
 
   /** Mount into a DOM container (sets _container and calls draw). */
-  mount(container) {
+  mount(container: HTMLElement) {
     this._container = container;
     this.draw(container);
   }
@@ -94,7 +104,7 @@ export class BaseComponent {
    *   2. root._onAction(action, params, source)   — set on page root components
    *   3. throws Error                              — no handler registered
    */
-  async submit(action, params = {}) {
+  async submit(action: string, params: any = {}) {
     if (typeof this._transport?.submit === 'function') {
       return this._transport.submit(action, params);
     }
@@ -109,5 +119,5 @@ export class BaseComponent {
    * Override in subclasses — render into container.
    * @param {HTMLElement} container
    */
-  draw(container) {}
+  draw(container: HTMLElement) {}
 }
