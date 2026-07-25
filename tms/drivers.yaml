@@ -1,0 +1,166 @@
+title: Drivers
+
+page:
+  id: drivers
+  auth:
+    require: [drivers.read]
+
+datasources:
+  - id: drivers_stats
+    single: true
+  - id: drivers
+    single: false
+
+toolbar:
+  - id: add_driver_btn
+    label: "+ Add Driver"
+    variant: primary
+    permission: drivers.write
+    action: add_driver
+
+filters:
+  source: drivers
+  fields:
+    - field: status
+      label: Status
+      type: select
+      options: [Active, On Leave, Inactive]
+    - field: q
+      label: Search
+      type: search
+      placeholder: "Name, license or email..."
+
+components:
+  - type: StatRow
+    source: drivers_stats
+    stats:
+      - label: Total Drivers
+        field: total_count
+        color: blue
+      - label: Active
+        field: active_count
+        color: green
+      - label: On Leave
+        field: on_leave_count
+        color: amber
+      - label: License Expiring
+        field: expiring_count
+        color: orange
+
+  - type: GridView
+    source: drivers
+    page_size: 8
+    columns:
+      - type: TextCell
+        field: name
+        label: Name
+      - type: TextCell
+        field: phone
+        label: Phone
+        secondary: email
+      - type: TextCell
+        field: license_number
+        label: License #
+      - type: BadgeCell
+        field: status
+        label: Status
+        colors:
+          Active: green
+          On Leave: amber
+          Inactive: red
+      - type: TextCell
+        field: truck_plate
+        label: Assigned Truck
+      - type: DateCell
+        field: license_expiry
+        label: License Expiry
+        format: short
+        overdueField: license_overdue
+      - type: ActionCell
+        label: ""
+        actions:
+          - id: edit_driver
+            label: Edit
+            variant: ghost
+            show_if: "user.permissions.includes('drivers.write')"
+          - id: delete_driver
+            label: Delete
+            variant: danger
+            show_if: "user.permissions.includes('drivers.write')"
+
+actions:
+  - id: add_driver
+    type: form
+    title: Add Driver
+    table: drivers
+    operation: insert
+    prefill: null
+    refresh: [drivers, drivers_stats]
+    fields:
+      - field: name
+        label: Name
+        type: text
+        required: true
+      - field: phone
+        label: Phone
+        type: text
+        required: false
+      - field: email
+        label: Email
+        type: text
+        required: false
+      - field: license_number
+        label: License Number
+        type: text
+        required: true
+      - field: license_expiry
+        label: License Expiry
+        type: date
+        required: true
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Active, On Leave, Inactive]
+        default: Active
+
+  - id: edit_driver
+    type: form
+    title: Edit Driver
+    table: drivers
+    operation: update
+    prefill: row
+    refresh: [drivers, drivers_stats]
+    fields:
+      - field: name
+        label: Name
+        type: text
+        required: true
+      - field: phone
+        label: Phone
+        type: text
+        required: false
+      - field: email
+        label: Email
+        type: text
+        required: false
+      - field: license_number
+        label: License Number
+        type: text
+        required: true
+      - field: license_expiry
+        label: License Expiry
+        type: date
+        required: true
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Active, On Leave, Inactive]
+        default: Active
+
+  - id: delete_driver
+    type: delete
+    confirm: "Delete driver {{row.name}}?"
+    table: drivers
+    refresh: [drivers, drivers_stats]

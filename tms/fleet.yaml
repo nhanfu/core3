@@ -1,0 +1,213 @@
+title: Fleet Overview
+
+page:
+  id: fleet
+  auth:
+    require: [fleet.read]
+
+datasources:
+  - id: trucks_kpis
+    single: true
+  - id: trucks
+    single: false
+
+toolbar:
+  - id: add_truck_btn
+    label: "+ Add Truck"
+    variant: primary
+    permission: fleet.write
+    action: add_truck
+
+filters:
+  source: trucks
+  fields:
+    - field: status
+      label: Status
+      type: select
+      options: [Active, Maintenance, Out of Service]
+    - field: type
+      label: Type
+      type: select
+      options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker]
+    - field: q
+      label: Search
+      type: search
+      placeholder: "Plate, model or driver..."
+
+components:
+  - type: StatRow
+    source: trucks_kpis
+    stats:
+      - label: Total Trucks
+        field: total
+        color: blue
+      - label: Active
+        field: active
+        color: green
+      - label: In Maintenance
+        field: maintenance
+        color: amber
+      - label: Out of Service
+        field: out_of_service
+        color: red
+      - label: Service Overdue
+        field: overdue_service
+        color: orange
+
+  - type: GridView
+    source: trucks
+    page_size: 8
+    columns:
+      - type: TextCell
+        field: plate
+        label: Plate
+        secondary: model
+      - type: TextCell
+        field: driver_name
+        label: Driver
+        secondary: driver_phone
+      - type: BadgeCell
+        field: status
+        label: Status
+        colors:
+          Active: green
+          Maintenance: amber
+          Out of Service: red
+      - type: BadgeCell
+        field: type
+        label: Type
+        colors:
+          Semi: indigo
+          Box Truck: blue
+          Flatbed: purple
+          Refrigerated: cyan
+          Tanker: teal
+      - type: NumberCell
+        field: mileage
+        label: Mileage
+        format: "#,###"
+      - type: DateCell
+        field: last_service
+        label: Last Service
+        format: relative
+      - type: DateCell
+        field: next_service
+        label: Next Service
+        format: relative
+        overdueField: overdue_next
+      - type: ActionCell
+        label: ""
+        actions:
+          - id: edit_truck
+            label: Edit
+            variant: ghost
+            show_if: "user.permissions.includes('fleet.write')"
+          - id: delete_truck
+            label: Delete
+            variant: danger
+            show_if: "user.permissions.includes('fleet.write')"
+
+actions:
+  - id: add_truck
+    type: form
+    title: Add Truck
+    table: trucks
+    operation: insert
+    prefill: null
+    refresh: [trucks, trucks_kpis]
+    fields:
+      - field: plate
+        label: Plate
+        type: text
+        required: true
+      - field: model
+        label: Model
+        type: text
+        required: false
+      - field: type
+        label: Type
+        type: select
+        required: false
+        options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker]
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Active, Maintenance, Out of Service]
+        default: Active
+      - field: mileage
+        label: Mileage
+        type: number
+        required: false
+        default: 0
+      - field: driver_id
+        label: Driver ID
+        type: text
+        required: false
+      - field: last_service
+        label: Last Service
+        type: date
+        required: false
+      - field: next_service
+        label: Next Service
+        type: date
+        required: false
+      - field: notes
+        label: Notes
+        type: textarea
+        required: false
+
+  - id: edit_truck
+    type: form
+    title: Edit Truck
+    table: trucks
+    operation: update
+    prefill: row
+    refresh: [trucks, trucks_kpis]
+    fields:
+      - field: plate
+        label: Plate
+        type: text
+        required: true
+      - field: model
+        label: Model
+        type: text
+        required: false
+      - field: type
+        label: Type
+        type: select
+        required: false
+        options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker]
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Active, Maintenance, Out of Service]
+        default: Active
+      - field: mileage
+        label: Mileage
+        type: number
+        required: false
+        default: 0
+      - field: driver_id
+        label: Driver ID
+        type: text
+        required: false
+      - field: last_service
+        label: Last Service
+        type: date
+        required: false
+      - field: next_service
+        label: Next Service
+        type: date
+        required: false
+      - field: notes
+        label: Notes
+        type: textarea
+        required: false
+
+  - id: delete_truck
+    type: delete
+    confirm: "Delete truck {{row.plate}}?"
+    table: trucks
+    refresh: [trucks, trucks_kpis]

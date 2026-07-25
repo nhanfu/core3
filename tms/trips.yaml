@@ -1,0 +1,222 @@
+title: Trip Management
+
+page:
+  id: trips
+  auth:
+    require: [trips.read]
+
+datasources:
+  - id: trips_stats
+    single: true
+  - id: trips
+    single: false
+
+toolbar:
+  - id: add_trip_btn
+    label: "+ Schedule Trip"
+    variant: primary
+    permission: trips.write
+    action: add_trip
+
+filters:
+  source: trips
+  fields:
+    - field: status
+      label: Status
+      type: select
+      options: [Scheduled, In Transit, Completed, Cancelled]
+    - field: q
+      label: Search
+      type: search
+      placeholder: "Trip #, origin or destination..."
+
+components:
+  - type: StatRow
+    source: trips_stats
+    stats:
+      - label: Scheduled
+        field: scheduled_count
+        color: blue
+      - label: In Transit
+        field: in_transit_count
+        color: indigo
+      - label: Completed Today
+        field: completed_today
+        color: green
+      - label: Cancelled
+        field: cancelled_count
+        color: red
+
+  - type: GridView
+    source: trips
+    page_size: 8
+    columns:
+      - type: TextCell
+        field: trip_number
+        label: Trip #
+      - type: TextCell
+        field: origin
+        label: Route
+        secondary: destination
+      - type: TextCell
+        field: truck_plate
+        label: Truck
+        secondary: driver_name
+      - type: BadgeCell
+        field: status
+        label: Status
+        colors:
+          Scheduled: blue
+          In Transit: indigo
+          Completed: green
+          Cancelled: red
+      - type: DateCell
+        field: departure_time
+        label: Departure
+        format: short
+      - type: DateCell
+        field: arrival_time
+        label: Arrival
+        format: short
+      - type: NumberCell
+        field: distance_km
+        label: Distance (km)
+        format: "#,###"
+      - type: ActionCell
+        label: ""
+        actions:
+          - id: edit_trip
+            label: Edit
+            variant: ghost
+            show_if: "user.permissions.includes('trips.write')"
+          - id: cancel_trip
+            label: Cancel
+            variant: danger
+            show_if: "user.permissions.includes('trips.write')"
+
+actions:
+  - id: add_trip
+    type: form
+    title: Schedule Trip
+    table: trips
+    operation: insert
+    prefill: null
+    refresh: [trips, trips_stats]
+    fields:
+      - field: trip_number
+        label: Trip #
+        type: text
+        required: false
+      - field: origin
+        label: Origin
+        type: text
+        required: true
+      - field: destination
+        label: Destination
+        type: text
+        required: true
+      - field: truck_id
+        label: Truck ID
+        type: text
+        required: false
+      - field: driver_id
+        label: Driver ID
+        type: text
+        required: false
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Scheduled, In Transit, Completed, Cancelled]
+        default: Scheduled
+      - field: departure_time
+        label: Departure Time
+        type: date
+        required: false
+      - field: arrival_time
+        label: Arrival Time
+        type: date
+        required: false
+      - field: distance_km
+        label: Distance (km)
+        type: number
+        required: false
+      - field: cargo_type
+        label: Cargo Type
+        type: text
+        required: false
+      - field: cargo_weight
+        label: Cargo Weight (kg)
+        type: number
+        required: false
+      - field: notes
+        label: Notes
+        type: textarea
+        required: false
+
+  - id: edit_trip
+    type: form
+    title: Edit Trip
+    table: trips
+    operation: update
+    prefill: row
+    refresh: [trips, trips_stats]
+    fields:
+      - field: trip_number
+        label: Trip #
+        type: text
+        required: false
+      - field: origin
+        label: Origin
+        type: text
+        required: true
+      - field: destination
+        label: Destination
+        type: text
+        required: true
+      - field: truck_id
+        label: Truck ID
+        type: text
+        required: false
+      - field: driver_id
+        label: Driver ID
+        type: text
+        required: false
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Scheduled, In Transit, Completed, Cancelled]
+        default: Scheduled
+      - field: departure_time
+        label: Departure Time
+        type: date
+        required: false
+      - field: arrival_time
+        label: Arrival Time
+        type: date
+        required: false
+      - field: distance_km
+        label: Distance (km)
+        type: number
+        required: false
+      - field: cargo_type
+        label: Cargo Type
+        type: text
+        required: false
+      - field: cargo_weight
+        label: Cargo Weight (kg)
+        type: number
+        required: false
+      - field: notes
+        label: Notes
+        type: textarea
+        required: false
+
+  - id: cancel_trip
+    type: patch
+    confirm: "Cancel this trip?"
+    table: trips
+    body:
+      status: Cancelled
+    refresh: [trips, trips_stats]

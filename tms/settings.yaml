@@ -1,0 +1,282 @@
+title: Settings
+
+page:
+  id: settings
+  auth:
+    require: [settings.read]
+
+datasources:
+  - id: branches
+    single: false
+  - id: users
+    single: false
+  - id: roles
+    single: false
+  - id: translations
+    single: false
+
+toolbar:
+  - id: add_branch_btn
+    label: "+ Add Branch"
+    variant: secondary
+    permission: settings.write
+    action: add_branch
+  - id: add_user_btn
+    label: "+ Invite User"
+    variant: primary
+    permission: settings.write
+    action: add_user
+
+filters:
+  source: translations
+  fields:
+    - field: lang
+      label: Language
+      type: select
+      options: [en, vi]
+    - field: page_filter
+      label: Page
+      type: select
+      options: ["*", fleet, drivers, trips, maintenance, reports, settings]
+    - field: q
+      label: Search
+      type: search
+      placeholder: "Key or text..."
+
+components:
+  - type: TabGroup
+    tabs:
+      - id: branches-tab
+        label: Branches
+        permission: settings.read
+        components:
+          - type: GridView
+            source: branches
+            page_size: 20
+            columns:
+              - type: TextCell
+                field: name
+                label: Name
+              - type: TextCell
+                field: city
+                label: City
+                secondary: region
+              - type: BadgeCell
+                field: status
+                label: Status
+                colors:
+                  Active: green
+                  Inactive: red
+              - type: NumberCell
+                field: truck_count
+                label: Trucks
+                format: "#,###"
+              - type: ActionCell
+                label: ""
+                actions:
+                  - id: edit_branch
+                    label: Edit
+                    variant: ghost
+                    show_if: "user.permissions.includes('settings.write')"
+                  - id: delete_branch
+                    label: Delete
+                    variant: danger
+                    show_if: "user.permissions.includes('settings.write')"
+
+      - id: users-tab
+        label: Users
+        permission: settings.read
+        components:
+          - type: GridView
+            source: users
+            page_size: 20
+            columns:
+              - type: TextCell
+                field: name
+                label: Name
+              - type: TextCell
+                field: email
+                label: Email
+              - type: TextCell
+                field: roles_csv
+                label: Roles
+              - type: TextCell
+                field: preferred_lang
+                label: Language
+              - type: ActionCell
+                label: ""
+                actions:
+                  - id: edit_user
+                    label: Edit
+                    variant: ghost
+                    show_if: "user.permissions.includes('settings.write')"
+
+      - id: roles-tab
+        label: Roles
+        permission: settings.read
+        components:
+          - type: GridView
+            source: roles
+            page_size: 20
+            columns:
+              - type: TextCell
+                field: name
+                label: Role
+              - type: TextCell
+                field: description
+                label: Description
+              - type: NumberCell
+                field: permission_count
+                label: Permissions
+                format: "#,###"
+
+      - id: translations-tab
+        label: Translations
+        permission: settings.write
+        components:
+          - type: GridView
+            source: translations
+            page_size: 15
+            columns:
+              - type: TextCell
+                field: lang
+                label: Lang
+              - type: TextCell
+                field: page
+                label: Page
+              - type: TextCell
+                field: component
+                label: Component
+              - type: TextCell
+                field: text
+                label: Key
+              - type: TextCell
+                field: translated
+                label: Translation
+              - type: ActionCell
+                label: ""
+                actions:
+                  - id: edit_translation
+                    label: Edit
+                    variant: ghost
+                    show_if: "user.permissions.includes('settings.write')"
+
+actions:
+  - id: add_branch
+    type: form
+    title: Add Branch
+    table: branches
+    operation: insert
+    prefill: null
+    refresh: [branches]
+    fields:
+      - field: name
+        label: Name
+        type: text
+        required: true
+      - field: city
+        label: City
+        type: text
+        required: true
+      - field: region
+        label: Region
+        type: text
+        required: false
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Active, Inactive]
+        default: Active
+
+  - id: edit_branch
+    type: form
+    title: Edit Branch
+    table: branches
+    operation: update
+    prefill: row
+    refresh: [branches]
+    fields:
+      - field: name
+        label: Name
+        type: text
+        required: true
+      - field: city
+        label: City
+        type: text
+        required: true
+      - field: region
+        label: Region
+        type: text
+        required: false
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Active, Inactive]
+        default: Active
+
+  - id: delete_branch
+    type: delete
+    confirm: "Delete branch {{row.name}}?"
+    table: branches
+    refresh: [branches]
+
+  - id: add_user
+    type: form
+    title: Invite User
+    table: users
+    operation: insert
+    prefill: null
+    refresh: [users]
+    fields:
+      - field: name
+        label: Name
+        type: text
+        required: true
+      - field: email
+        label: Email
+        type: text
+        required: true
+      - field: password
+        label: Initial Password
+        type: text
+        required: true
+      - field: roles
+        label: Role (e.g. admin)
+        type: text
+        required: false
+
+  - id: edit_user
+    type: form
+    title: Edit User
+    table: users
+    operation: update
+    prefill: row
+    refresh: [users]
+    fields:
+      - field: name
+        label: Name
+        type: text
+        required: false
+      - field: email
+        label: Email
+        type: text
+        required: false
+      - field: roles
+        label: Roles (comma-separated)
+        type: text
+        required: false
+
+  - id: edit_translation
+    type: form
+    title: Edit Translation
+    table: translations
+    operation: update
+    prefill: row
+    refresh: [translations]
+    fields:
+      - field: translated
+        label: Translated Text
+        type: textarea
+        required: true

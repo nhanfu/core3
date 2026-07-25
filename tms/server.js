@@ -169,6 +169,364 @@ function splitSQL(sql) {
     .filter(Boolean);
 }
 
+// ── SOURCES registry ──────────────────────────────────────────────────────────
+const SOURCES = {
+  trucks: {
+    permission: 'fleet.read',
+    paginated: true,
+    async query(params, skip, top) {
+      const parts = ['1=1'];
+      const qp = [];
+      if (params.status) { parts.push('t.status = ?'); qp.push(params.status); }
+      if (params.type)   { parts.push('t.type = ?');   qp.push(params.type); }
+      if (params.q) {
+        parts.push('(t.plate ILIKE ? OR t.model ILIKE ? OR d.name ILIKE ?)');
+        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
+      }
+      const where = 'WHERE ' + parts.join(' AND ');
+      const [countRow] = await all(
+        `SELECT COUNT(*) as n FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id ${where}`,
+        qp
+      );
+      const total = Number(countRow?.n || 0);
+      const rows = await all(
+        `SELECT t.*, d.name as driver_name, d.phone as driver_phone,
+          (t.next_service IS NOT NULL AND t.next_service < CURRENT_DATE) as overdue_next
+         FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id
+         ${where} ORDER BY t.plate LIMIT ? OFFSET ?`,
+        [...qp, top, skip]
+      );
+      const pageSize = top;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
+    },
+  },
+
+  trucks_kpis: {
+    permission: 'fleet.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT COUNT(*) as total,
+          COUNT(*) FILTER (WHERE status='Active') as active,
+          COUNT(*) FILTER (WHERE status='Maintenance') as maintenance,
+          COUNT(*) FILTER (WHERE status='Out of Service') as out_of_service,
+          COUNT(*) FILTER (WHERE next_service IS NOT NULL AND next_service < CURRENT_DATE) as overdue_service
+        FROM trucks
+      `);
+      return { data: rows[0] };
+    },
+  },
+
+  drivers: {
+    permission: 'drivers.read',
+    paginated: true,
+    async query(params, skip, top) {
+      const parts = ['1=1'];
+      const qp = [];
+      if (params.status) { parts.push('d.status = ?'); qp.push(params.status); }
+      if (params.q) {
+        parts.push('(d.name ILIKE ? OR d.license_number ILIKE ? OR d.email ILIKE ?)');
+        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
+      }
+      const where = 'WHERE ' + parts.join(' AND ');
+      const [countRow] = await all(`SELECT COUNT(*) as n FROM drivers d ${where}`, qp);
+      const total = Number(countRow?.n || 0);
+      const rows = await all(
+        `SELECT d.*, t.plate as truck_plate,
+          (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE) as license_overdue,
+          (d.license_expiry IS NOT NULL AND d.license_expiry < (CURRENT_DATE + INTERVAL '30 days')) as license_expiring
+         FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id
+         ${where} ORDER BY d.name LIMIT ? OFFSET ?`,
+        [...qp, top, skip]
+      );
+      const pageSize = top;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
+    },
+  },
+
+  drivers_stats: {
+    permission: 'drivers.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT COUNT(*) as total_count,
+          COUNT(*) FILTER (WHERE status='Active') as active_count,
+          COUNT(*) FILTER (WHERE status='On Leave') as on_leave_count,
+          COUNT(*) FILTER (WHERE license_expiry < (CURRENT_DATE + INTERVAL '30 days')) as expiring_count
+        FROM drivers
+      `);
+      return { data: rows[0] };
+    },
+  },
+
+  trips: {
+    permission: 'trips.read',
+    paginated: true,
+    async query(params, skip, top) {
+      const parts = ['1=1'];
+      const qp = [];
+      if (params.status) { parts.push('tr.status = ?'); qp.push(params.status); }
+      if (params.q) {
+        parts.push('(tr.trip_number ILIKE ? OR tr.origin ILIKE ? OR tr.destination ILIKE ? OR t.plate ILIKE ? OR d.name ILIKE ?)');
+        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
+      }
+      const where = 'WHERE ' + parts.join(' AND ');
+      const [countRow] = await all(
+        `SELECT COUNT(*) as n FROM trips tr
+         LEFT JOIN trucks t ON t.id = tr.truck_id
+         LEFT JOIN drivers d ON d.id = tr.driver_id
+         ${where}`,
+        qp
+      );
+      const total = Number(countRow?.n || 0);
+      const rows = await all(
+        `SELECT tr.*, t.plate as truck_plate, d.name as driver_name
+         FROM trips tr
+         LEFT JOIN trucks t ON t.id = tr.truck_id
+         LEFT JOIN drivers d ON d.id = tr.driver_id
+         ${where} ORDER BY tr.departure_time DESC LIMIT ? OFFSET ?`,
+        [...qp, top, skip]
+      );
+      const pageSize = top;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
+    },
+  },
+
+  trips_stats: {
+    permission: 'trips.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT
+          COUNT(*) FILTER (WHERE status='Scheduled') as scheduled_count,
+          COUNT(*) FILTER (WHERE status='In Transit') as in_transit_count,
+          COUNT(*) FILTER (WHERE status='Completed' AND DATE(arrival_time)=CURRENT_DATE) as completed_today,
+          COUNT(*) FILTER (WHERE status='Cancelled') as cancelled_count
+        FROM trips
+      `);
+      return { data: rows[0] };
+    },
+  },
+
+  maintenance: {
+    permission: 'maintenance.read',
+    paginated: true,
+    async query(params, skip, top) {
+      const parts = ['1=1'];
+      const qp = [];
+      if (params.status)       { parts.push('m.status = ?');       qp.push(params.status); }
+      if (params.service_type) { parts.push('m.service_type = ?'); qp.push(params.service_type); }
+      if (params.q) {
+        parts.push('(t.plate ILIKE ? OR m.service_type ILIKE ? OR m.notes ILIKE ?)');
+        qp.push(`%${params.q}%`, `%${params.q}%`, `%${params.q}%`);
+      }
+      const where = 'WHERE ' + parts.join(' AND ');
+      const [countRow] = await all(
+        `SELECT COUNT(*) as n FROM maintenance m LEFT JOIN trucks t ON t.id = m.truck_id ${where}`,
+        qp
+      );
+      const total = Number(countRow?.n || 0);
+      const rows = await all(
+        `SELECT m.*, t.plate as truck_plate, t.model as truck_model, u.name as technician_name
+         FROM maintenance m
+         LEFT JOIN trucks t ON t.id = m.truck_id
+         LEFT JOIN users u ON u.id = m.technician_id
+         ${where} ORDER BY m.scheduled_date DESC LIMIT ? OFFSET ?`,
+        [...qp, top, skip]
+      );
+      const pageSize = top;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
+    },
+  },
+
+  maintenance_kpis: {
+    permission: 'maintenance.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT
+          COUNT(*) FILTER (WHERE status='Overdue' OR (status='Scheduled' AND scheduled_date < CURRENT_DATE)) as overdue,
+          COUNT(*) FILTER (WHERE scheduled_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days') AND status='Scheduled') as due_this_week,
+          COUNT(*) FILTER (WHERE status='In Progress') as in_progress,
+          COUNT(*) FILTER (WHERE status='Completed' AND completed_date >= date_trunc('month', CURRENT_DATE)) as completed_month
+        FROM maintenance
+      `);
+      return { data: rows[0] };
+    },
+  },
+
+  branches: {
+    permission: 'settings.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT b.*, COUNT(t.id) as truck_count
+        FROM branches b LEFT JOIN trucks t ON t.branch_id = b.id
+        GROUP BY b.id, b.name, b.city, b.region, b.status, b.created_at, b.updated_at
+        ORDER BY b.name
+      `);
+      return { data: rows };
+    },
+  },
+
+  users: {
+    permission: 'settings.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
+          string_agg(r.name, ',') as roles_csv
+        FROM users u
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+        LEFT JOIN roles r ON r.id = ur.role_id
+        GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at
+        ORDER BY u.name
+      `);
+      return {
+        data: rows.map((r) => ({
+          ...r,
+          roles: r.roles_csv ? r.roles_csv.split(',').filter(Boolean) : [],
+        })),
+      };
+    },
+  },
+
+  roles: {
+    permission: 'settings.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT r.*, COUNT(p.id) as permission_count
+        FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
+        GROUP BY r.id, r.name, r.description
+        ORDER BY r.name
+      `);
+      return { data: rows };
+    },
+  },
+
+  translations: {
+    permission: 'settings.read',
+    paginated: true,
+    async query(params, skip, top) {
+      const parts = ['1=1'];
+      const qp = [];
+      if (params.lang)        { parts.push('lang = ?');  qp.push(params.lang); }
+      if (params.page_filter) { parts.push('page = ?');  qp.push(params.page_filter); }
+      if (params.q) {
+        parts.push('(text ILIKE ? OR translated ILIKE ?)');
+        qp.push(`%${params.q}%`, `%${params.q}%`);
+      }
+      const where = 'WHERE ' + parts.join(' AND ');
+      const [countRow] = await all(`SELECT COUNT(*) as n FROM translations ${where}`, qp);
+      const total = Number(countRow?.n || 0);
+      const rows = await all(
+        `SELECT * FROM translations ${where} ORDER BY page, component, text LIMIT ? OFFSET ?`,
+        [...qp, top, skip]
+      );
+      const pageSize = top;
+      const page = pageSize > 0 ? Math.floor(skip / pageSize) + 1 : 1;
+      return { data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } };
+    },
+  },
+
+  reports_fleet: {
+    permission: 'reports.read',
+    paginated: false,
+    async query() {
+      const summary = await all(`
+        SELECT
+          COUNT(*) as total_trucks,
+          COUNT(*) FILTER (WHERE status = 'Active') as active_trucks,
+          COUNT(*) FILTER (WHERE status = 'Maintenance') as maintenance_trucks,
+          COUNT(*) FILTER (WHERE status = 'Out of Service') as out_of_service_trucks,
+          ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'Active') / NULLIF(COUNT(*), 0), 1) as utilization_pct,
+          COUNT(driver_id) as assigned_drivers,
+          AVG(mileage) as avg_mileage
+        FROM trucks
+      `);
+      const trucks = await all(`
+        SELECT t.plate, t.model, t.status, t.mileage, t.type,
+          d.name as driver_name, b.name as branch_name
+        FROM trucks t
+        LEFT JOIN drivers d ON d.id = t.driver_id
+        LEFT JOIN branches b ON b.id = t.branch_id
+        ORDER BY t.mileage DESC
+      `);
+      return { summary: summary[0], trucks };
+    },
+  },
+
+  reports_costs: {
+    permission: 'reports.financials',
+    paginated: false,
+    async query() {
+      const breakdown = await all(`
+        SELECT
+          service_type,
+          date_trunc('month', scheduled_date) as month,
+          COUNT(*) as service_count,
+          SUM(cost) as total_cost,
+          AVG(cost) as avg_cost
+        FROM maintenance
+        WHERE status = 'Completed'
+        GROUP BY service_type, date_trunc('month', scheduled_date)
+        ORDER BY month DESC, total_cost DESC
+      `);
+      const overall = await all(`
+        SELECT
+          SUM(cost) as grand_total,
+          AVG(cost) as avg_cost,
+          COUNT(*) as total_services
+        FROM maintenance
+        WHERE status = 'Completed'
+      `);
+      return { breakdown, summary: overall[0] };
+    },
+  },
+
+  reports_drivers: {
+    permission: 'reports.read',
+    paginated: false,
+    async query() {
+      const rows = await all(`
+        SELECT
+          d.id as driver_id,
+          d.name as driver_name,
+          d.status as driver_status,
+          COUNT(tr.id) as total_trips,
+          COUNT(tr.id) FILTER (WHERE tr.status = 'Completed') as completed_trips,
+          COUNT(tr.id) FILTER (WHERE tr.status = 'Cancelled') as cancelled_trips,
+          COALESCE(SUM(tr.distance_km), 0) as total_km,
+          ROUND(
+            100.0 * COUNT(tr.id) FILTER (WHERE tr.status = 'Completed')
+            / NULLIF(COUNT(tr.id), 0), 1
+          ) as completion_rate
+        FROM drivers d
+        LEFT JOIN trips tr ON tr.driver_id = d.id
+        GROUP BY d.id, d.name, d.status
+        ORDER BY completed_trips DESC, total_km DESC
+      `);
+      return { data: rows };
+    },
+  },
+};
+
+// ── TABLE_REGISTRY ────────────────────────────────────────────────────────────
+const TABLE_REGISTRY = {
+  trucks:       { permission: 'fleet.write',       timestamps: true  },
+  drivers:      { permission: 'drivers.write',     timestamps: true  },
+  trips:        { permission: 'trips.write',        timestamps: true  },
+  maintenance:  { permission: 'maintenance.write',  timestamps: true  },
+  branches:     { permission: 'settings.write',     timestamps: true  },
+  users:        { permission: 'settings.write',     timestamps: true  },
+  translations: { permission: 'settings.write',     timestamps: false },
+};
+
 // ── API handler ───────────────────────────────────────────────────────────────
 async function handleAPI(req, url) {
   const pathname = url.pathname;
@@ -244,520 +602,130 @@ async function handleAPI(req, url) {
     if (!hasPerm(perm)) throw { status: 403, message: `Requires permission: ${perm}` };
   };
 
-  // ── TRUCKS ────────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/trucks/kpis' && method === 'GET') {
-    requirePerm('fleet.read');
-    const rows = await all(`
-      SELECT
-        COUNT(*) as total,
-        COUNT(*) FILTER (WHERE status = 'Active') as active,
-        COUNT(*) FILTER (WHERE status = 'Maintenance') as maintenance,
-        COUNT(*) FILTER (WHERE status = 'Out of Service') as out_of_service,
-        COUNT(*) FILTER (WHERE next_service IS NOT NULL AND next_service < CURRENT_DATE) as overdue_service
-      FROM trucks
-    `);
-    return json(rows[0]);
+  // ── POST /api/query ───────────────────────────────────────────────────────
+  if (pathname === '/api/query' && method === 'POST') {
+    const vm = await req.json();
+    const src = SOURCES[vm.sourceId];
+    if (!src) return apiError(404, `Unknown source: ${vm.sourceId}`);
+    if (src.permission) requirePerm(src.permission);
+    const result = await src.query(vm.params || {}, vm.skip || 0, vm.top || 25);
+    return json(result);
   }
 
-  if (pathname === '/api/v1/trucks' && method === 'GET') {
-    requirePerm('fleet.read');
-    const status   = url.searchParams.get('status') || '';
-    const q        = url.searchParams.get('q') || '';
-    const page     = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const pageSize = Math.max(1, parseInt(url.searchParams.get('pageSize') || '8'));
-    const offset   = (page - 1) * pageSize;
-
-    let where = 'WHERE 1=1';
-    const params = [];
-    if (status) { where += ' AND t.status = ?'; params.push(status); }
-    if (q) {
-      where += ' AND (t.plate ILIKE ? OR t.model ILIKE ? OR d.name ILIKE ?)';
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
-    }
-
-    const [countRow] = await all(
-      `SELECT COUNT(*) as n FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id ${where}`,
-      params
-    );
-    const total = Number(countRow?.n || 0);
-
-    const rows = await all(
-      `SELECT t.*, d.name as driver_name, d.phone as driver_phone,
-        (t.next_service IS NOT NULL AND t.next_service < CURRENT_DATE) as overdue_next
-       FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id
-       ${where} ORDER BY t.plate LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
-    );
-    return json({ data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } });
-  }
-
-  if (pathname === '/api/v1/trucks' && method === 'POST') {
-    requirePerm('fleet.write');
+  // ── POST /api/patch ───────────────────────────────────────────────────────
+  if (pathname === '/api/patch' && method === 'POST') {
     const body = await req.json();
-    const id = crypto.randomUUID();
-    await run(
-      `INSERT INTO trucks(id, plate, model, type, status, mileage, driver_id, last_service, next_service, branch_id, notes)
-       VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, body.plate, body.model, body.type, body.status || 'Active',
-       body.mileage || 0, body.driver_id || null, body.last_service || null,
-       body.next_service || null, body.branch_id || null, body.notes || null]
-    );
-    const rows = await all('SELECT * FROM trucks WHERE id = ?', [id]);
-    return json(rows[0], 201);
-  }
+    const { table, action, id, changes = [] } = body;
 
-  const truckMatch = pathname.match(/^\/api\/v1\/trucks\/([^/]+)$/);
-  if (truckMatch) {
-    const id = truckMatch[1];
-    if (method === 'GET') {
-      requirePerm('fleet.read');
-      const rows = await all(
-        'SELECT t.*, d.name as driver_name, d.phone as driver_phone FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id WHERE t.id = ?',
-        [id]
-      );
-      return rows[0] ? json(rows[0]) : apiError(404, 'Truck not found');
-    }
-    if (method === 'PATCH') {
-      requirePerm('fleet.write');
-      const body = await req.json();
-      if (Object.keys(body).length === 0) return apiError(400, 'No fields to update');
-      const sets = Object.keys(body).map((k) => `${k} = ?`).join(', ');
-      await run(
-        `UPDATE trucks SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...Object.values(body), id]
-      );
-      const rows = await all('SELECT * FROM trucks WHERE id = ?', [id]);
-      return rows[0] ? json(rows[0]) : apiError(404, 'Truck not found');
-    }
-    if (method === 'DELETE') {
-      requirePerm('fleet.write');
-      await run('DELETE FROM trucks WHERE id = ?', [id]);
-      return json({ ok: true });
-    }
-  }
+    const tbl = TABLE_REGISTRY[table];
+    if (!tbl) return apiError(404, `Unknown table: ${table}`);
+    requirePerm(tbl.permission);
 
-  // ── DRIVERS ───────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/drivers/stats' && method === 'GET') {
-    requirePerm('drivers.read');
-    const rows = await all(`
-      SELECT
-        COUNT(*) as total_count,
-        COUNT(*) FILTER (WHERE status = 'Active') as active_count,
-        COUNT(*) FILTER (WHERE status = 'On Leave') as on_leave_count,
-        COUNT(*) FILTER (WHERE license_expiry < (CURRENT_DATE + INTERVAL '30 days')) as expiring_count
-      FROM drivers
-    `);
-    return json(rows[0]);
-  }
+    // ── insert ──────────────────────────────────────────────────────────────
+    if (action === 'insert') {
+      const newId = crypto.randomUUID();
 
-  if (pathname === '/api/v1/drivers' && method === 'GET') {
-    requirePerm('drivers.read');
-    const status   = url.searchParams.get('status') || '';
-    const q        = url.searchParams.get('q') || '';
-    const page     = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const pageSize = Math.max(1, parseInt(url.searchParams.get('pageSize') || '8'));
-    const offset   = (page - 1) * pageSize;
-
-    let where = 'WHERE 1=1';
-    const params = [];
-    if (status) { where += ' AND d.status = ?'; params.push(status); }
-    if (q) {
-      where += ' AND (d.name ILIKE ? OR d.license_number ILIKE ? OR d.email ILIKE ?)';
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
-    }
-
-    const [countRow] = await all(`SELECT COUNT(*) as n FROM drivers d ${where}`, params);
-    const total = Number(countRow?.n || 0);
-
-    const rows = await all(
-      `SELECT d.*, t.plate as truck_plate,
-        (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE) as license_overdue,
-        (d.license_expiry IS NOT NULL AND d.license_expiry < (CURRENT_DATE + INTERVAL '30 days')) as license_expiring
-       FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id
-       ${where} ORDER BY d.name LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
-    );
-    return json({ data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } });
-  }
-
-  if (pathname === '/api/v1/drivers' && method === 'POST') {
-    requirePerm('drivers.write');
-    const body = await req.json();
-    const id = crypto.randomUUID();
-    await run(
-      'INSERT INTO drivers(id, name, phone, email, license_number, license_expiry, status) VALUES(?,?,?,?,?,?,?)',
-      [id, body.name, body.phone || null, body.email || null,
-       body.license_number || null, body.license_expiry || null, body.status || 'Active']
-    );
-    const rows = await all('SELECT * FROM drivers WHERE id = ?', [id]);
-    return json(rows[0], 201);
-  }
-
-  const driverMatch = pathname.match(/^\/api\/v1\/drivers\/([^/]+)$/);
-  if (driverMatch) {
-    const id = driverMatch[1];
-    if (method === 'GET') {
-      requirePerm('drivers.read');
-      const rows = await all(
-        'SELECT d.*, t.plate as truck_plate FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id WHERE d.id = ?',
-        [id]
-      );
-      return rows[0] ? json(rows[0]) : apiError(404, 'Driver not found');
-    }
-    if (method === 'PATCH') {
-      requirePerm('drivers.write');
-      const body = await req.json();
-      if (Object.keys(body).length === 0) return apiError(400, 'No fields to update');
-      const sets = Object.keys(body).map((k) => `${k} = ?`).join(', ');
-      await run(
-        `UPDATE drivers SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...Object.values(body), id]
-      );
-      const rows = await all('SELECT * FROM drivers WHERE id = ?', [id]);
-      return rows[0] ? json(rows[0]) : apiError(404, 'Driver not found');
-    }
-    if (method === 'DELETE') {
-      requirePerm('drivers.write');
-      await run('DELETE FROM drivers WHERE id = ?', [id]);
-      return json({ ok: true });
-    }
-  }
-
-  // ── TRIPS ─────────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/trips/stats' && method === 'GET') {
-    requirePerm('trips.read');
-    const rows = await all(`
-      SELECT
-        COUNT(*) FILTER (WHERE status = 'Scheduled') as scheduled_count,
-        COUNT(*) FILTER (WHERE status = 'In Transit') as in_transit_count,
-        COUNT(*) FILTER (WHERE status = 'Completed' AND DATE(arrival_time) = CURRENT_DATE) as completed_today,
-        COUNT(*) FILTER (WHERE status = 'Cancelled') as cancelled_count
-      FROM trips
-    `);
-    return json(rows[0]);
-  }
-
-  if (pathname === '/api/v1/trips' && method === 'GET') {
-    requirePerm('trips.read');
-    const status   = url.searchParams.get('status') || '';
-    const q        = url.searchParams.get('q') || '';
-    const page     = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const pageSize = Math.max(1, parseInt(url.searchParams.get('pageSize') || '8'));
-    const offset   = (page - 1) * pageSize;
-
-    let where = 'WHERE 1=1';
-    const params = [];
-    if (status) { where += ' AND tr.status = ?'; params.push(status); }
-    if (q) {
-      where += ' AND (tr.trip_number ILIKE ? OR tr.origin ILIKE ? OR tr.destination ILIKE ? OR t.plate ILIKE ? OR d.name ILIKE ?)';
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`);
-    }
-
-    const [countRow] = await all(
-      `SELECT COUNT(*) as n FROM trips tr
-       LEFT JOIN trucks t ON t.id = tr.truck_id
-       LEFT JOIN drivers d ON d.id = tr.driver_id
-       ${where}`,
-      params
-    );
-    const total = Number(countRow?.n || 0);
-
-    const rows = await all(
-      `SELECT tr.*, t.plate as truck_plate, d.name as driver_name
-       FROM trips tr
-       LEFT JOIN trucks t ON t.id = tr.truck_id
-       LEFT JOIN drivers d ON d.id = tr.driver_id
-       ${where} ORDER BY tr.departure_time DESC LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
-    );
-    return json({ data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } });
-  }
-
-  if (pathname === '/api/v1/trips' && method === 'POST') {
-    requirePerm('trips.write');
-    const body = await req.json();
-    const id = crypto.randomUUID();
-    const tripNum = body.trip_number || ('TRP-' + Date.now().toString().slice(-6));
-    await run(
-      `INSERT INTO trips(id, trip_number, truck_id, driver_id, origin, destination, status,
-         departure_time, arrival_time, distance_km, cargo_type, cargo_weight, notes)
-       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, tripNum, body.truck_id || null, body.driver_id || null,
-       body.origin, body.destination, body.status || 'Scheduled',
-       body.departure_time || null, body.arrival_time || null,
-       body.distance_km || null, body.cargo_type || null,
-       body.cargo_weight || null, body.notes || null]
-    );
-    const rows = await all('SELECT * FROM trips WHERE id = ?', [id]);
-    return json(rows[0], 201);
-  }
-
-  const tripMatch = pathname.match(/^\/api\/v1\/trips\/([^/]+)$/);
-  if (tripMatch) {
-    const id = tripMatch[1];
-    if (method === 'GET') {
-      requirePerm('trips.read');
-      const rows = await all(
-        `SELECT tr.*, t.plate as truck_plate, d.name as driver_name
-         FROM trips tr
-         LEFT JOIN trucks t ON t.id = tr.truck_id
-         LEFT JOIN drivers d ON d.id = tr.driver_id
-         WHERE tr.id = ?`,
-        [id]
-      );
-      return rows[0] ? json(rows[0]) : apiError(404, 'Trip not found');
-    }
-    if (method === 'PATCH') {
-      requirePerm('trips.write');
-      const body = await req.json();
-      if (Object.keys(body).length === 0) return apiError(400, 'No fields to update');
-      const sets = Object.keys(body).map((k) => `${k} = ?`).join(', ');
-      await run(
-        `UPDATE trips SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...Object.values(body), id]
-      );
-      const rows = await all('SELECT * FROM trips WHERE id = ?', [id]);
-      return rows[0] ? json(rows[0]) : apiError(404, 'Trip not found');
-    }
-    if (method === 'DELETE') {
-      requirePerm('trips.write');
-      await run('DELETE FROM trips WHERE id = ?', [id]);
-      return json({ ok: true });
-    }
-  }
-
-  // ── MAINTENANCE ───────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/maintenance/kpis' && method === 'GET') {
-    requirePerm('maintenance.read');
-    const rows = await all(`
-      SELECT
-        COUNT(*) FILTER (WHERE status = 'Overdue' OR (status = 'Scheduled' AND scheduled_date < CURRENT_DATE)) as overdue,
-        COUNT(*) FILTER (WHERE scheduled_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 days') AND status = 'Scheduled') as due_this_week,
-        COUNT(*) FILTER (WHERE status = 'In Progress') as in_progress,
-        COUNT(*) FILTER (WHERE status = 'Completed' AND completed_date >= date_trunc('month', CURRENT_DATE)) as completed_month
-      FROM maintenance
-    `);
-    return json(rows[0]);
-  }
-
-  if (pathname === '/api/v1/maintenance' && method === 'GET') {
-    requirePerm('maintenance.read');
-    const status       = url.searchParams.get('status') || '';
-    const service_type = url.searchParams.get('service_type') || '';
-    const q            = url.searchParams.get('q') || '';
-    const page         = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const pageSize     = Math.max(1, parseInt(url.searchParams.get('pageSize') || '8'));
-    const offset       = (page - 1) * pageSize;
-
-    let where = 'WHERE 1=1';
-    const params = [];
-    if (status)       { where += ' AND m.status = ?'; params.push(status); }
-    if (service_type) { where += ' AND m.service_type = ?'; params.push(service_type); }
-    if (q) {
-      where += ' AND (t.plate ILIKE ? OR m.service_type ILIKE ? OR m.notes ILIKE ?)';
-      params.push(`%${q}%`, `%${q}%`, `%${q}%`);
-    }
-
-    const [countRow] = await all(
-      `SELECT COUNT(*) as n FROM maintenance m LEFT JOIN trucks t ON t.id = m.truck_id ${where}`,
-      params
-    );
-    const total = Number(countRow?.n || 0);
-
-    const rows = await all(
-      `SELECT m.*, t.plate as truck_plate, t.model as truck_model, u.name as technician_name
-       FROM maintenance m
-       LEFT JOIN trucks t ON t.id = m.truck_id
-       LEFT JOIN users u ON u.id = m.technician_id
-       ${where} ORDER BY m.scheduled_date DESC LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
-    );
-    return json({ data: rows, meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) } });
-  }
-
-  if (pathname === '/api/v1/maintenance' && method === 'POST') {
-    requirePerm('maintenance.write');
-    const body = await req.json();
-    const id = crypto.randomUUID();
-    await run(
-      `INSERT INTO maintenance(id, truck_id, service_type, status, scheduled_date, technician_id, cost, notes)
-       VALUES(?,?,?,?,?,?,?,?)`,
-      [id, body.truck_id, body.service_type, body.status || 'Scheduled',
-       body.scheduled_date, body.technician_id || null,
-       body.cost || null, body.notes || null]
-    );
-    const rows = await all(
-      'SELECT m.*, t.plate as truck_plate FROM maintenance m LEFT JOIN trucks t ON t.id = m.truck_id WHERE m.id = ?',
-      [id]
-    );
-    return json(rows[0], 201);
-  }
-
-  const maintMatch = pathname.match(/^\/api\/v1\/maintenance\/([^/]+)$/);
-  if (maintMatch) {
-    const id = maintMatch[1];
-    if (method === 'GET') {
-      requirePerm('maintenance.read');
-      const rows = await all(
-        'SELECT m.*, t.plate as truck_plate, t.model as truck_model FROM maintenance m LEFT JOIN trucks t ON t.id = m.truck_id WHERE m.id = ?',
-        [id]
-      );
-      return rows[0] ? json(rows[0]) : apiError(404, 'Maintenance record not found');
-    }
-    if (method === 'PATCH') {
-      requirePerm('maintenance.write');
-      const body = await req.json();
-      if (Object.keys(body).length === 0) return apiError(400, 'No fields to update');
-      const sets = Object.keys(body).map((k) => `${k} = ?`).join(', ');
-      await run(
-        `UPDATE maintenance SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...Object.values(body), id]
-      );
-      const rows = await all('SELECT * FROM maintenance WHERE id = ?', [id]);
-      return rows[0] ? json(rows[0]) : apiError(404, 'Maintenance record not found');
-    }
-    if (method === 'DELETE') {
-      requirePerm('maintenance.write');
-      await run('DELETE FROM maintenance WHERE id = ?', [id]);
-      return json({ ok: true });
-    }
-  }
-
-  // ── BRANCHES ──────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/branches') {
-    if (method === 'GET') {
-      requirePerm('settings.read');
-      const rows = await all(
-        `SELECT b.*, COUNT(t.id) as truck_count
-         FROM branches b LEFT JOIN trucks t ON t.branch_id = b.id
-         GROUP BY b.id, b.name, b.city, b.region, b.status, b.created_at, b.updated_at
-         ORDER BY b.name`
-      );
-      return json(rows);
-    }
-    if (method === 'POST') {
-      requirePerm('settings.write');
-      const body = await req.json();
-      const id = crypto.randomUUID();
-      await run(
-        'INSERT INTO branches(id, name, city, region, status) VALUES(?,?,?,?,?)',
-        [id, body.name, body.city, body.region || null, body.status || 'Active']
-      );
-      const rows = await all('SELECT * FROM branches WHERE id = ?', [id]);
-      return json(rows[0], 201);
-    }
-  }
-
-  const branchMatch = pathname.match(/^\/api\/v1\/branches\/([^/]+)$/);
-  if (branchMatch) {
-    const id = branchMatch[1];
-    if (method === 'GET') {
-      requirePerm('settings.read');
-      const rows = await all('SELECT * FROM branches WHERE id = ?', [id]);
-      return rows[0] ? json(rows[0]) : apiError(404, 'Branch not found');
-    }
-    if (method === 'PATCH') {
-      requirePerm('settings.write');
-      const body = await req.json();
-      if (Object.keys(body).length === 0) return apiError(400, 'No fields to update');
-      const sets = Object.keys(body).map((k) => `${k} = ?`).join(', ');
-      await run(
-        `UPDATE branches SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...Object.values(body), id]
-      );
-      const rows = await all('SELECT * FROM branches WHERE id = ?', [id]);
-      return rows[0] ? json(rows[0]) : apiError(404, 'Branch not found');
-    }
-    if (method === 'DELETE') {
-      requirePerm('settings.write');
-      await run('DELETE FROM branches WHERE id = ?', [id]);
-      return json({ ok: true });
-    }
-  }
-
-  // ── USERS ─────────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/users' && method === 'GET') {
-    requirePerm('settings.read');
-    const role = url.searchParams.get('role') || '';
-    let sql = `
-      SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
-        string_agg(r.name, ',') as roles_csv
-      FROM users u
-      LEFT JOIN user_roles ur ON ur.user_id = u.id
-      LEFT JOIN roles r ON r.id = ur.role_id
-    `;
-    const params = [];
-    if (role) { sql += ' WHERE r.name = ?'; params.push(role); }
-    sql += ' GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at ORDER BY u.name';
-    const rows = await all(sql, params);
-    return json(rows.map((r) => ({ ...r, roles: r.roles_csv ? r.roles_csv.split(',').filter(Boolean) : [] })));
-  }
-
-  if (pathname === '/api/v1/users' && method === 'POST') {
-    requirePerm('settings.write');
-    const body = await req.json();
-    const id = crypto.randomUUID();
-    const hash = await Bun.password.hash(body.password || 'changeme123');
-    await run(
-      'INSERT INTO users(id, email, name, password_hash) VALUES(?,?,?,?)',
-      [id, body.email, body.name, hash]
-    );
-    if (body.role) {
-      const roleRows = await all('SELECT id FROM roles WHERE name = ?', [body.role]);
-      if (roleRows[0]) {
-        await run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [id, roleRows[0].id]);
-      }
-    }
-    const rows = await all('SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?', [id]);
-    return json(rows[0], 201);
-  }
-
-  const userMatch = pathname.match(/^\/api\/v1\/users\/([^/]+)$/);
-  if (userMatch) {
-    const id = userMatch[1];
-    if (method === 'GET') {
-      requirePerm('settings.read');
-      const rows = await all(
-        `SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at,
-          string_agg(r.name, ',') as roles_csv
-         FROM users u
-         LEFT JOIN user_roles ur ON ur.user_id = u.id
-         LEFT JOIN roles r ON r.id = ur.role_id
-         WHERE u.id = ?
-         GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at`,
-        [id]
-      );
-      if (!rows[0]) return apiError(404, 'User not found');
-      return json({ ...rows[0], roles: rows[0].roles_csv ? rows[0].roles_csv.split(',').filter(Boolean) : [] });
-    }
-    if (method === 'PATCH') {
-      requirePerm('settings.write');
-      const body = await req.json();
-      const { roles: newRoles, ...fields } = body;
-      if (Object.keys(fields).length) {
-        const sets = Object.keys(fields).map((k) => `${k} = ?`).join(', ');
+      if (table === 'users') {
+        const rolesChange    = changes.find((c) => c.field === 'roles');
+        const passwordChange = changes.find((c) => c.field === 'password');
+        let regularChanges   = changes.filter((c) => c.field !== 'roles' && c.field !== 'password');
+        if (passwordChange) {
+          const hash = await Bun.password.hash(passwordChange.value);
+          regularChanges = [...regularChanges, { field: 'password_hash', value: hash }];
+        }
+        const cols = ['id', ...regularChanges.map((c) => c.field)].join(', ');
+        const vals = [newId, ...regularChanges.map((c) => c.value)];
         await run(
-          `UPDATE users SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-          [...Object.values(fields), id]
+          `INSERT INTO users(${cols}) VALUES(${vals.map(() => '?').join(', ')})`,
+          vals
         );
-      }
-      if (Array.isArray(newRoles)) {
-        await run('DELETE FROM user_roles WHERE user_id = ?', [id]);
-        for (const roleName of newRoles) {
-          const roleRows = await all('SELECT id FROM roles WHERE name = ?', [roleName]);
-          if (roleRows[0]) {
-            await run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [id, roleRows[0].id]);
+        if (rolesChange) {
+          const roleNames = Array.isArray(rolesChange.value)
+            ? rolesChange.value
+            : String(rolesChange.value).split(',').filter(Boolean);
+          for (const roleName of roleNames) {
+            const roleRows = await all('SELECT id FROM roles WHERE name = ?', [roleName.trim()]);
+            if (roleRows[0]) {
+              await run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [newId, roleRows[0].id]);
+            }
           }
         }
+        const rows = await all(
+          'SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?',
+          [newId]
+        );
+        return json(rows[0], 201);
       }
+
+      // Generic insert
+      if (changes.length === 0) return apiError(400, 'No fields to insert');
+      const cols = ['id', ...changes.map((c) => c.field)].join(', ');
+      const vals = [newId, ...changes.map((c) => c.value)];
+      await run(
+        `INSERT INTO ${table}(${cols}) VALUES(${vals.map(() => '?').join(', ')})`,
+        vals
+      );
+      const rows = await all(`SELECT * FROM ${table} WHERE id = ?`, [newId]);
+      return json(rows[0], 201);
+    }
+
+    // ── update ──────────────────────────────────────────────────────────────
+    if (action === 'update') {
+      if (!id) return apiError(400, 'id required for update');
+
+      if (table === 'users') {
+        const rolesChange    = changes.find((c) => c.field === 'roles');
+        const regularChanges = changes.filter((c) => c.field !== 'roles');
+        if (regularChanges.length > 0) {
+          const sets = regularChanges.map((c) => `${c.field} = ?`).join(', ');
+          const tsClause = tbl.timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
+          await run(
+            `UPDATE users SET ${sets}${tsClause} WHERE id = ?`,
+            [...regularChanges.map((c) => c.value), id]
+          );
+        }
+        if (rolesChange !== undefined) {
+          const roleNames = Array.isArray(rolesChange.value)
+            ? rolesChange.value
+            : String(rolesChange.value).split(',').filter(Boolean);
+          await run('DELETE FROM user_roles WHERE user_id = ?', [id]);
+          for (const roleName of roleNames) {
+            const roleRows = await all('SELECT id FROM roles WHERE name = ?', [roleName.trim()]);
+            if (roleRows[0]) {
+              await run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [id, roleRows[0].id]);
+            }
+          }
+        }
+        const rows = await all(
+          'SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?',
+          [id]
+        );
+        return json(rows[0]);
+      }
+
+      // Generic update
+      if (changes.length === 0) return apiError(400, 'No fields to update');
+      const sets = changes.map((c) => `${c.field} = ?`).join(', ');
+      const tsClause = tbl.timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
+      await run(
+        `UPDATE ${table} SET ${sets}${tsClause} WHERE id = ?`,
+        [...changes.map((c) => c.value), id]
+      );
+      const rows = await all(`SELECT * FROM ${table} WHERE id = ?`, [id]);
+      return json(rows[0]);
+    }
+
+    // ── delete ──────────────────────────────────────────────────────────────
+    if (action === 'delete') {
+      if (!id) return apiError(400, 'id required for delete');
+      if (table === 'users') {
+        await run('DELETE FROM user_roles WHERE user_id = ?', [id]);
+      }
+      await run(`DELETE FROM ${table} WHERE id = ?`, [id]);
       return json({ ok: true });
     }
-    if (method === 'DELETE') {
-      requirePerm('settings.write');
-      await run('DELETE FROM user_roles WHERE user_id = ?', [id]);
-      await run('DELETE FROM users WHERE id = ?', [id]);
-      return json({ ok: true });
-    }
+
+    return apiError(400, `Unknown action: ${action}`);
   }
 
   // ── PROFILE (self-update) ─────────────────────────────────────────────────
@@ -804,26 +772,6 @@ async function handleAPI(req, url) {
       );
     }
     return json({ ok: true });
-  }
-
-  // ── ROLES ─────────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/roles' && method === 'GET') {
-    requirePerm('settings.read');
-    const rows = await all(
-      `SELECT r.*, COUNT(p.id) as permission_count
-       FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
-       GROUP BY r.id, r.name, r.description
-       ORDER BY r.name`
-    );
-    return json(rows);
-  }
-
-  if (pathname === '/api/v1/roles' && method === 'POST') {
-    requirePerm('settings.write');
-    const body = await req.json();
-    const id = crypto.randomUUID();
-    await run('INSERT INTO roles(id, name, description) VALUES(?,?,?)', [id, body.name, body.description || null]);
-    return json((await all('SELECT * FROM roles WHERE id = ?', [id]))[0], 201);
   }
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
@@ -919,79 +867,6 @@ async function handleAPI(req, url) {
       await run('DELETE FROM translations WHERE id = ?', [id]);
       return json({ ok: true });
     }
-  }
-
-  // ── REPORTS ───────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/reports/fleet-utilization' && method === 'GET') {
-    requirePerm('reports.read');
-    const summary = await all(`
-      SELECT
-        COUNT(*) as total_trucks,
-        COUNT(*) FILTER (WHERE status = 'Active') as active_trucks,
-        COUNT(*) FILTER (WHERE status = 'Maintenance') as maintenance_trucks,
-        COUNT(*) FILTER (WHERE status = 'Out of Service') as out_of_service_trucks,
-        ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'Active') / NULLIF(COUNT(*), 0), 1) as utilization_pct,
-        COUNT(driver_id) as assigned_drivers,
-        AVG(mileage) as avg_mileage
-      FROM trucks
-    `);
-    const trucks = await all(`
-      SELECT t.plate, t.model, t.status, t.mileage, t.type,
-        d.name as driver_name, b.name as branch_name
-      FROM trucks t
-      LEFT JOIN drivers d ON d.id = t.driver_id
-      LEFT JOIN branches b ON b.id = t.branch_id
-      ORDER BY t.mileage DESC
-    `);
-    return json({ summary: summary[0], trucks });
-  }
-
-  if (pathname === '/api/v1/reports/cost-analysis' && method === 'GET') {
-    requirePerm('reports.read');
-    const rows = await all(`
-      SELECT
-        service_type,
-        date_trunc('month', scheduled_date) as month,
-        COUNT(*) as service_count,
-        SUM(cost) as total_cost,
-        AVG(cost) as avg_cost
-      FROM maintenance
-      WHERE status = 'Completed'
-      GROUP BY service_type, date_trunc('month', scheduled_date)
-      ORDER BY month DESC, total_cost DESC
-    `);
-    const overall = await all(`
-      SELECT
-        SUM(cost) as grand_total,
-        AVG(cost) as avg_cost,
-        COUNT(*) as total_services
-      FROM maintenance
-      WHERE status = 'Completed'
-    `);
-    return json({ breakdown: rows, summary: overall[0] });
-  }
-
-  if (pathname === '/api/v1/reports/driver-performance' && method === 'GET') {
-    requirePerm('reports.read');
-    const rows = await all(`
-      SELECT
-        d.id as driver_id,
-        d.name as driver_name,
-        d.status as driver_status,
-        COUNT(tr.id) as total_trips,
-        COUNT(tr.id) FILTER (WHERE tr.status = 'Completed') as completed_trips,
-        COUNT(tr.id) FILTER (WHERE tr.status = 'Cancelled') as cancelled_trips,
-        COALESCE(SUM(tr.distance_km), 0) as total_km,
-        ROUND(
-          100.0 * COUNT(tr.id) FILTER (WHERE tr.status = 'Completed')
-          / NULLIF(COUNT(tr.id), 0), 1
-        ) as completion_rate
-      FROM drivers d
-      LEFT JOIN trips tr ON tr.driver_id = d.id
-      GROUP BY d.id, d.name, d.status
-      ORDER BY completed_trips DESC, total_km DESC
-    `);
-    return json(rows);
   }
 
   return apiError(404, 'API route not found');

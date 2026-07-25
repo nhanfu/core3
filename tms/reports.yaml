@@ -1,0 +1,94 @@
+title: Reports
+
+page:
+  id: reports
+  auth:
+    require: [reports.read]
+
+datasources:
+  - id: reports_fleet
+    single: true
+  - id: reports_costs
+    single: true
+  - id: reports_drivers
+    single: false
+
+components:
+  - type: TabGroup
+    tabs:
+      - id: fleet-tab
+        label: Fleet Utilization
+        components:
+          - type: StatRow
+            source: reports_fleet
+            stats:
+              - label: Total Trucks
+                field: summary.total_trucks
+                color: blue
+              - label: Active Trucks
+                field: summary.active_trucks
+                color: green
+              - label: In Maintenance
+                field: summary.maintenance_trucks
+                color: amber
+              - label: Utilization %
+                field: summary.utilization_pct
+                color: indigo
+              - label: Avg Mileage
+                field: summary.avg_mileage
+                color: purple
+
+      - id: cost-tab
+        label: Cost Analysis
+        permission: reports.financials
+        components:
+          - type: StatRow
+            source: reports_costs
+            stats:
+              - label: Grand Total
+                field: summary.grand_total
+                color: red
+              - label: Avg Cost per Service
+                field: summary.avg_cost
+                color: amber
+              - label: Total Services
+                field: summary.total_services
+                color: blue
+
+      - id: driver-tab
+        label: Driver Performance
+        components:
+          - type: GridView
+            source: reports_drivers
+            page_size: 20
+            columns:
+              - type: TextCell
+                field: driver_name
+                label: Driver
+              - type: BadgeCell
+                field: driver_status
+                label: Status
+                colors:
+                  Active: green
+                  On Leave: amber
+                  Inactive: red
+              - type: NumberCell
+                field: total_trips
+                label: Total Trips
+                format: "#,###"
+              - type: NumberCell
+                field: completed_trips
+                label: Completed
+                format: "#,###"
+              - type: NumberCell
+                field: cancelled_trips
+                label: Cancelled
+                format: "#,###"
+              - type: NumberCell
+                field: total_km
+                label: Total km
+                format: "#,###"
+              - type: NumberCell
+                field: completion_rate
+                label: Completion %
+                format: "#,###"

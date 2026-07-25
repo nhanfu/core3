@@ -1,0 +1,227 @@
+title: Maintenance
+
+page:
+  id: maintenance
+  auth:
+    require: [maintenance.read]
+
+datasources:
+  - id: maintenance_kpis
+    single: true
+  - id: maintenance
+    single: false
+
+toolbar:
+  - id: add_maintenance_btn
+    label: "+ Schedule Service"
+    variant: primary
+    permission: maintenance.write
+    action: add_maintenance
+
+filters:
+  source: maintenance
+  fields:
+    - field: status
+      label: Status
+      type: select
+      options: [Scheduled, In Progress, Completed, Overdue]
+    - field: service_type
+      label: Service Type
+      type: select
+      options:
+        - Oil Change
+        - Tire Rotation
+        - Brake Service
+        - Engine Overhaul
+        - Transmission Service
+        - AC Repair
+        - Electrical
+        - Body Repair
+        - Annual Inspection
+        - Other
+    - field: q
+      label: Search
+      type: search
+      placeholder: "Plate or service type..."
+
+components:
+  - type: StatRow
+    source: maintenance_kpis
+    stats:
+      - label: Overdue
+        field: overdue
+        color: red
+      - label: Due This Week
+        field: due_this_week
+        color: orange
+      - label: In Progress
+        field: in_progress
+        color: blue
+      - label: Completed This Month
+        field: completed_month
+        color: green
+
+  - type: GridView
+    source: maintenance
+    page_size: 8
+    columns:
+      - type: TextCell
+        field: truck_plate
+        label: Truck
+        secondary: truck_model
+      - type: TextCell
+        field: service_type
+        label: Service Type
+      - type: BadgeCell
+        field: status
+        label: Status
+        colors:
+          Scheduled: blue
+          In Progress: indigo
+          Completed: green
+          Overdue: red
+      - type: DateCell
+        field: scheduled_date
+        label: Scheduled
+        format: short
+      - type: DateCell
+        field: completed_date
+        label: Completed
+        format: short
+      - type: NumberCell
+        field: cost
+        label: Cost ($)
+        format: "#,###"
+      - type: TextCell
+        field: technician_name
+        label: Technician
+      - type: ActionCell
+        label: ""
+        actions:
+          - id: edit_maintenance
+            label: Edit
+            variant: ghost
+            show_if: "user.permissions.includes('maintenance.write')"
+          - id: mark_done
+            label: Mark Done
+            variant: secondary
+            show_if: "user.permissions.includes('maintenance.write')"
+          - id: delete_maintenance
+            label: Delete
+            variant: danger
+            show_if: "user.permissions.includes('maintenance.write')"
+
+actions:
+  - id: add_maintenance
+    type: form
+    title: Schedule Service
+    table: maintenance
+    operation: insert
+    prefill: null
+    refresh: [maintenance, maintenance_kpis]
+    fields:
+      - field: truck_id
+        label: Truck ID
+        type: text
+        required: true
+      - field: service_type
+        label: Service Type
+        type: select
+        required: true
+        options:
+          - Oil Change
+          - Tire Rotation
+          - Brake Service
+          - Engine Overhaul
+          - Transmission Service
+          - AC Repair
+          - Electrical
+          - Body Repair
+          - Annual Inspection
+          - Other
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Scheduled, In Progress, Completed, Overdue]
+        default: Scheduled
+      - field: scheduled_date
+        label: Scheduled Date
+        type: date
+        required: true
+      - field: technician_id
+        label: Technician ID
+        type: text
+        required: false
+      - field: cost
+        label: Cost ($)
+        type: number
+        required: false
+      - field: notes
+        label: Notes
+        type: textarea
+        required: false
+
+  - id: edit_maintenance
+    type: form
+    title: Edit Service Record
+    table: maintenance
+    operation: update
+    prefill: row
+    refresh: [maintenance, maintenance_kpis]
+    fields:
+      - field: truck_id
+        label: Truck ID
+        type: text
+        required: true
+      - field: service_type
+        label: Service Type
+        type: select
+        required: true
+        options:
+          - Oil Change
+          - Tire Rotation
+          - Brake Service
+          - Engine Overhaul
+          - Transmission Service
+          - AC Repair
+          - Electrical
+          - Body Repair
+          - Annual Inspection
+          - Other
+      - field: status
+        label: Status
+        type: select
+        required: false
+        options: [Scheduled, In Progress, Completed, Overdue]
+        default: Scheduled
+      - field: scheduled_date
+        label: Scheduled Date
+        type: date
+        required: true
+      - field: technician_id
+        label: Technician ID
+        type: text
+        required: false
+      - field: cost
+        label: Cost ($)
+        type: number
+        required: false
+      - field: notes
+        label: Notes
+        type: textarea
+        required: false
+
+  - id: mark_done
+    type: patch
+    confirm: "Mark this job as completed?"
+    table: maintenance
+    body:
+      status: Completed
+    refresh: [maintenance, maintenance_kpis]
+
+  - id: delete_maintenance
+    type: delete
+    confirm: "Delete this maintenance record?"
+    table: maintenance
+    refresh: [maintenance, maintenance_kpis]

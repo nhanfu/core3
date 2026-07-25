@@ -1,19 +1,22 @@
 import { AppShell } from '/tms/components/AppShell.js';
 import { i18n } from '/tms/i18n.js';
+import { renderPage } from '/lib/page-renderer.js';
+import { registerNavigator } from '/lib/navigate.js';
+import { client } from '/lib/client.js';
 
 const TOKEN_KEY = 'tms_token';
 let _user = null;
 let _shell = null;
 
-// Lazy route loaders — each returns a module with export async function mount(container)
+// Routes: string = YAML file path, function = JS module loader
 const ROUTES = {
   '/login':        () => import('/tms/pages/login.js'),
-  '/fleet':        () => import('/tms/pages/fleet.js'),
-  '/drivers':      () => import('/tms/pages/drivers.js'),
-  '/trips':        () => import('/tms/pages/trips.js'),
-  '/maintenance':  () => import('/tms/pages/maintenance.js'),
-  '/reports':      () => import('/tms/pages/reports.js'),
-  '/settings':     () => import('/tms/pages/settings.js'),
+  '/fleet':        '/tms/fleet.yaml',
+  '/drivers':      '/tms/drivers.yaml',
+  '/trips':        '/tms/trips.yaml',
+  '/maintenance':  '/tms/maintenance.yaml',
+  '/reports':      '/tms/reports.yaml',
+  '/settings':     '/tms/settings.yaml',
 };
 
 const ROUTE_TITLES = {
@@ -36,12 +39,15 @@ export function getUser() {
 export async function setAuth(token, user) {
   localStorage.setItem(TOKEN_KEY, token);
   _user = user;
+  window.__CORE3_USER__ = user;
+  client.setToken(token);
 }
 
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   _user = null;
   _shell = null;
+  client.setToken(null);
   navigate('/login');
 }
 
@@ -94,9 +100,17 @@ async function renderRoute(path) {
   }
 
   try {
-    const mod = await loader();
     outlet.innerHTML = '';
-    await mod.mount(outlet);
+    if (typeof loader === 'string') {
+      // YAML route — fetch and render via page-renderer
+      const text = await fetch(loader).then(r => r.text());
+      const config = jsyaml.load(text);
+      await renderPage(config, { container: outlet });
+    } else {
+      // JS module route (e.g. login)
+      const mod = await loader();
+      await mod.mount(outlet);
+    }
   } catch (err) {
     console.error('Route load error:', err);
     outlet.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-red-500">
@@ -125,6 +139,8 @@ async function bootstrap() {
     });
     if (!res.ok) throw new Error('Token invalid');
     _user = await res.json();
+    window.__CORE3_USER__ = _user;
+    client.setToken(token);
   } catch {
     localStorage.removeItem(TOKEN_KEY);
     app.innerHTML = '<div id="outlet"></div>';
@@ -139,6 +155,16 @@ async function bootstrap() {
   // Mount app shell
   _shell = new AppShell('app-shell', { user: _user });
   _shell.mount(app);
+
+  // Register navigator so page-renderer navigate() calls use SPA pushState
+  registerNavigator((path, params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+    ).toString();
+    const url = path + (qs ? '?' + qs : '');
+    history.pushState({}, '', url);
+    renderRoute(path);
+  });
 
   // Navigate to current path (or default to /fleet)
   const path = window.location.pathname || '/fleet';
