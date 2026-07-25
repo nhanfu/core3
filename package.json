@@ -1,6 +1,8 @@
 {
-  "name": "core3",
+  "name": "core3-workspace",
+  "private": true,
   "type": "module",
+  "workspaces": ["lib", "tms"],
   "scripts": {
     "start": "PORT=3001 bun tms/server.js",
     "dev": "PORT=3001 bun --watch tms/server.js",

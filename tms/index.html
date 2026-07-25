@@ -9,11 +9,14 @@
   <link rel="stylesheet" href="/tms/design-system.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+  <script type="importmap">
+    { "imports": { "@core3/framework/": "/node_modules/@core3/framework/" } }
+  </script>
   <script>
     // Suppress Tailwind's reset so our CSS vars take precedence on shell elements
     tailwind.config = {
       corePlugins: { preflight: false },
-      content: ['./tms/**/*.{html,js}', './lib/**/*.js']
+      content: ['./tms/**/*.{html,js}', './node_modules/@core3/framework/**/*.js']
     };
   </script>
 </head>

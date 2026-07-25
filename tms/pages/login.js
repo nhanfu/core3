@@ -1,4 +1,4 @@
-import { html } from '/lib/html.js';
+import { html } from '@core3/framework/html.js';
 import { setAuth, navigate } from '/tms/app.js';
 import { i18n } from '/tms/i18n.js';
 

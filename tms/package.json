@@ -1,0 +1,8 @@
+{
+  "name": "@core3/tms",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@core3/framework": "workspace:*"
+  }
+}

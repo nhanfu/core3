@@ -115,7 +115,8 @@ function mimeFor(path) {
 
 async function serveStatic(pathname) {
   const rel = pathname.startsWith('/') ? pathname.slice(1) : pathname;
-  if (!rel.startsWith('tms/') && !rel.startsWith('lib/')) return null;
+  const packagePath = rel.startsWith('node_modules/@core3/framework/');
+  if (!rel.startsWith('tms/') && !packagePath) return null;
   // Page YAML contains server-only datasource SQL and must never be served.
   if (rel.startsWith('tms/') && /\.ya?ml$/i.test(rel)) return null;
   try {

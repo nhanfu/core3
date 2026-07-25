@@ -1,5 +1,5 @@
-import { BaseComponent } from '/lib/runtime.js';
-import { html } from '/lib/html.js';
+import { BaseComponent } from '@core3/framework/runtime.js';
+import { html } from '@core3/framework/html.js';
 import { navigate, logout, getUser } from '/tms/app.js';
 import { i18n } from '/tms/i18n.js';
 import { NotificationPanel } from '/tms/components/NotificationPanel.js';
