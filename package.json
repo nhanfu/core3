@@ -4,8 +4,9 @@
   "type": "module",
   "workspaces": ["lib", "tms"],
   "scripts": {
-    "start": "PORT=3001 bun tms/server.js",
-    "dev": "PORT=3001 bun --watch tms/server.js",
+    "build:framework": "cd lib && bun run build",
+    "start": "bun run build:framework && PORT=3001 bun tms/server.js",
+    "dev": "bun run build:framework && PORT=3001 bun --watch tms/server.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -14,8 +15,10 @@
     "jose": "^5.9.6"
   },
   "devDependencies": {
-    "vitest": "^3.0.0",
+    "@types/node": "^26.1.1",
+    "jest-extended": "^4.0.0",
     "jsdom": "^25.0.0",
-    "jest-extended": "^4.0.0"
+    "typescript": "^7.0.2",
+    "vitest": "^3.0.0"
   }
 }

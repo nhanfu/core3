@@ -2,8 +2,12 @@
   "name": "@core3/framework",
   "version": "0.1.0",
   "type": "module",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./*": "./*"
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./*": "./dist/*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
   }
 }

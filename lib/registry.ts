@@ -8,22 +8,22 @@ export const SERVICE_KEYS = Object.freeze({
 });
 
 export class ServiceRegistry {
-  #services = new Map();
+  #services = new Map<string, unknown>();
 
-  register(key, implementation) {
+  register<T>(key: string, implementation: T): this {
     if (!implementation) throw new Error(`Cannot register empty service: ${key}`);
     this.#services.set(key, implementation);
     return this;
   }
 
-  resolve(key) {
+  resolve<T>(key: string): T {
     const implementation = this.#services.get(key);
     if (!implementation) throw new Error(`Service is not registered: ${key}`);
-    return implementation;
+    return implementation as T;
   }
 }
 
-export function createFramework(config = {}) {
+export function createFramework(config: { repository?: unknown; auth?: unknown } = {}) {
   const registry = new ServiceRegistry();
   if (config.repository) registry.register(SERVICE_KEYS.repository, config.repository);
   if (config.auth) registry.register(SERVICE_KEYS.auth, config.auth);
