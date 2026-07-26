@@ -54,6 +54,7 @@ datasources:
         (SELECT COUNT(*) FROM customers WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS new_customer_count,
         (SELECT COALESCE(SUM(cost_amount), 0) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS cost_total,
         (SELECT COALESCE(SUM(profit_amount), 0) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS profit_total,
+        (SELECT ROUND(100.0 * COALESCE(SUM(profit_amount), 0) / NULLIF((SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)), 0), 1) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS profit_margin,
         (SELECT COUNT(*) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS quote_count,
         (SELECT COALESCE(SUM(amount), 0) FROM accounting_entries WHERE kind = 'debit_note' AND status <> 'Paid') AS receivables_outstanding,
         (SELECT COALESCE(SUM(amount), 0) FROM accounting_entries WHERE kind = 'payment_request' AND status NOT IN ('Paid', 'Cancelled')) AS payables_outstanding,
@@ -153,9 +154,9 @@ components:
       - { label: Doanh thu, field: revenue_total, format: currency, currency: VND, color: blue }
       - { label: Chi phí, field: cost_total, format: currency, currency: VND, color: amber }
       - { label: Lợi nhuận, field: profit_total, format: currency, currency: VND, color: green }
+      - { label: Biên lãi, field: profit_margin, format: percent, color: green }
       - { label: Số đơn hàng, field: order_count, color: indigo }
       - { label: Khách hàng mới, field: new_customer_count, color: blue }
-      - { label: Số báo giá, field: quote_count, color: indigo }
 
   - type: StatRow
     source: dashboard_kpis
