@@ -20,6 +20,7 @@ import { CHAT_ACTION_REGISTRY } from './services/chat-actions.ts';
 import { CONTACT_ACTION_REGISTRY } from './services/contact-actions.ts';
 import { APPROVAL_ACTION_REGISTRY } from './services/approval-actions.ts';
 import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
+import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -150,6 +151,10 @@ async function initDb(): Promise<void> {
     ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS resource_id VARCHAR;
     ALTER TABLE quotes ADD COLUMN IF NOT EXISTS cost_amount DECIMAL(18,2) DEFAULT 0;
     ALTER TABLE quotes ADD COLUMN IF NOT EXISTS profit_amount DECIMAL(18,2) DEFAULT 0;
+    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS prefix VARCHAR;
+    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS sequence_width INTEGER DEFAULT 4;
+    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS reset_cadence VARCHAR DEFAULT 'never';
+    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS next_sequence BIGINT DEFAULT 1;
     CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
     UPDATE trucks SET capacity_kg = CASE type
       WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
@@ -483,7 +488,7 @@ const TABLE_REGISTRY = {
     fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'sort_order'],
     scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
-  system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
+  system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
   branches:     { permission: 'settings.write',     timestamps: true  },
   users:        { permission: 'settings.write',     timestamps: true  },
   translations: { permission: 'settings.write',     timestamps: false },
@@ -629,13 +634,14 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const contactActionDefinition = CONTACT_ACTION_REGISTRY[actionName];
     const approvalActionDefinition = APPROVAL_ACTION_REGISTRY[actionName];
     const templateActionDefinition = TEMPLATE_ACTION_REGISTRY[actionName];
+    const codeRuleActionDefinition = CODE_RULE_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
       || lineItemActionDefinition
       || chatActionDefinition
       || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || templateActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || templateActionDefinition || codeRuleActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(resolvedActionDefinition.permission);
 
@@ -705,6 +711,16 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         actionName,
         activityActor,
       ));
+    }
+    if (codeRuleActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      const [rule] = await repository.query("SELECT code, prefix, config_value, sequence_width, reset_cadence, next_sequence FROM system_configs WHERE id = ? AND kind = 'code_rule'", [body.id]);
+      if (!rule) return apiError(404, 'Code rule not found');
+      const prefix = String(rule.prefix || rule.config_value || rule.code || 'CODE');
+      const width = Math.max(1, Math.min(12, Number(rule.sequence_width) || 4));
+      const sequence = String(Number(rule.next_sequence) || 1).padStart(width, '0');
+      const year = new Date().getUTCFullYear();
+      return json({ preview: prefix.replace('{YYYY}', String(year)).replace(/\{SEQ(?::\d+)?\}/g, sequence), reset_cadence: rule.reset_cadence || 'never' });
     }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 

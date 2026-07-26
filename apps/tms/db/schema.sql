@@ -434,6 +434,9 @@ CREATE TABLE IF NOT EXISTS system_configs (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   kind VARCHAR NOT NULL CHECK (kind IN ('code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage')),
   code VARCHAR NOT NULL, name VARCHAR NOT NULL, config_value VARCHAR, description VARCHAR,
+  prefix VARCHAR, sequence_width INTEGER NOT NULL DEFAULT 4 CHECK (sequence_width BETWEEN 1 AND 12),
+  reset_cadence VARCHAR NOT NULL DEFAULT 'never' CHECK (reset_cadence IN ('never', 'monthly', 'yearly')),
+  next_sequence BIGINT NOT NULL DEFAULT 1 CHECK (next_sequence >= 1),
   status VARCHAR NOT NULL DEFAULT 'Active', sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(kind, code)
