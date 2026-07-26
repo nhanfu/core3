@@ -61,7 +61,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Customer and partner create/edit forms now use owner lookup options that preserve existing assignments and include active employees.
 - Location create/edit forms now use a datasource-backed area lookup instead of free-form area IDs.
 - Areas now support a persisted parent relationship, parent display, and ancestor-walking cycle validation; workflow audit covers self-parent and two-node cycle rejection.
-- Area, department, and ledger-account grids now render hierarchy depth indentation from their persisted parent relationships.
+- Area, department, and ledger-account grids now render hierarchy depth indentation and keyboard-accessible collapse/expand controls from persisted parent relationships.
 - Departments now support a persisted parent relationship, parent display, and ancestor-walking cycle validation.
 - Department create/edit forms now use a branch lookup instead of free-form branch IDs.
 - Quote create/edit forms now use a customer lookup preserving legacy quote customer values.
