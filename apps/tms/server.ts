@@ -339,6 +339,7 @@ const SOURCE_FILES = [
   'pages/timesheets.yaml',
   'pages/shifts.yaml',
   'pages/payroll.yaml',
+  'pages/payroll-detail.yaml',
   'pages/catalog-container-types.yaml',
   'pages/catalog-vehicle-types.yaml',
   'pages/catalog-units.yaml',

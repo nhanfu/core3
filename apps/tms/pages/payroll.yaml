@@ -6,6 +6,17 @@ page:
     require: [hr.read]
 
 datasources:
+  - id: payroll_totals
+    single: true
+    permission: hr.read
+    query: |
+      SELECT COUNT(*) AS payroll_count,
+        COALESCE(SUM(net_salary), 0) AS net_total,
+        COALESCE(SUM(CASE WHEN status = 'Paid' THEN net_salary ELSE 0 END), 0) AS paid_total,
+        COALESCE(SUM(CASE WHEN status IN ('Draft', 'Approved') THEN net_salary ELSE 0 END), 0) AS pending_total
+      FROM payrolls
+      WHERE (:from_date IS NULL OR pay_month >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR pay_month < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
   - id: payroll
     single: false
     permission: hr.read
@@ -23,6 +34,8 @@ datasources:
       FROM payrolls p
       LEFT JOIN employees e ON e.id = p.employee_id
       WHERE (NULLIF(:status, '') IS NULL OR p.status = :status)
+        AND (:from_date IS NULL OR p.pay_month >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR p.pay_month < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR p.code ILIKE '%' || :q || '%' OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%')
       ORDER BY p.pay_month DESC, p.created_at DESC
 
@@ -36,8 +49,14 @@ toolbar:
 components:
   - type: ListToolbar
     source: payroll
+    filter_sources: [payroll, payroll_totals]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ tháng', to_label: 'Đến tháng' }
     filter_field: q
     search: { label: Tìm kiếm bảng lương, placeholder: 'Tìm mã bảng lương, mã hoặc tên nhân viên...' }
+    actions: [{ id: payroll.export, label: 'Xuất CSV', icon: '↓' }]
+  - type: StatRow
+    source: payroll_totals
+    stats: [{ label: Bảng lương, field: payroll_count, color: blue }, { label: Tổng thực lãnh, field: net_total, color: teal }, { label: Đã chi, field: paid_total, color: green }, { label: Chờ xử lý, field: pending_total, color: amber }]
   - type: StatusTabs
     source: payroll
     filter_field: status
@@ -69,6 +88,7 @@ components:
         sortable: false
         align: right
         actions:
+          - { id: view_payroll, label: Chi tiết, variant: primary }
           - { id: edit_payroll, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
           - { id: approve_payroll, label: Duyệt, variant: primary, show_if: "row.status === 'Draft' && user.permissions.includes('hr.approve')" }
           - { id: reopen_payroll, label: Mở lại, variant: ghost, show_if: "row.status === 'Approved' && user.permissions.includes('hr.approve')" }
@@ -76,6 +96,7 @@ components:
           - { id: delete_payroll, label: Xóa, variant: danger, show_if: "row.status === 'Draft'" }
 
 actions:
+  - { id: view_payroll, type: navigate, navigate_to: /hr/payroll/detail, params: { id: '{row.id}' } }
   - id: add_payroll
     type: form
     title: Lập bảng lương

@@ -1,0 +1,39 @@
+title: Chi tiết bảng lương
+page: { id: payroll-detail, auth: { require: [hr.read] } }
+datasources:
+  - id: payroll_detail
+    single: true
+    permission: hr.read
+    query: |
+      SELECT p.id, p.code, p.employee_id, CAST(p.pay_month AS VARCHAR) AS pay_month,
+        p.base_salary, p.allowance, p.deduction, p.net_salary, p.status,
+        e.code AS employee_code, e.name AS employee_name, e.department,
+        CASE p.status WHEN 'Draft' THEN 'Nháp' WHEN 'Approved' THEN 'Đã duyệt' ELSE 'Đã chi' END AS status_label
+      FROM payrolls p JOIN employees e ON e.id = p.employee_id WHERE p.id = :id
+  - id: payroll_activity
+    single: false
+    permission: hr.read
+    query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'payrolls' AND resource_id = :id ORDER BY created_at DESC"
+components:
+  - { type: DocumentSummary, source: payroll_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Nháp: slate, Đã duyệt: amber, Đã chi: green }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: department, label: Phòng ban }, { field: pay_month, label: Tháng lương }, { field: base_salary, label: Lương cơ bản }, { field: allowance, label: Phụ cấp }, { field: deduction, label: Khấu trừ }, { field: net_salary, label: Thực lãnh }] }
+  - type: ApprovalTimeline
+    source: payroll_activity
+    title: Lịch sử bảng lương
+    actor_field: actor_name
+    action_field: action
+    detail_field: detail
+    timestamp_field: created_at
+toolbar:
+  - { id: back_payroll, label: '← Danh sách bảng lương', variant: secondary, action: back_payroll }
+  - { id: edit_payroll_detail, label: Sửa bảng lương, variant: primary, permission: hr.write, action: edit_payroll_detail }
+actions:
+  - { id: back_payroll, type: navigate, navigate_to: /hr/payroll }
+  - id: edit_payroll_detail
+    type: form
+    title: Cập nhật bảng lương
+    table: payrolls
+    operation: update
+    prefill: source
+    prefill_source: payroll_detail
+    refresh: [payroll_detail, payroll_activity]
+    fields: [{ field: code, label: Số bảng lương, type: text, required: true }, { field: employee_id, label: Mã nhân viên, type: text, required: true }, { field: pay_month, label: Tháng lương, type: date, required: true }, { field: base_salary, label: Lương cơ bản, type: number }, { field: allowance, label: Phụ cấp, type: number }, { field: deduction, label: Khấu trừ, type: number }, { field: net_salary, label: Thực lãnh, type: number }]
