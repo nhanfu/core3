@@ -34,6 +34,10 @@ export class Chart extends BaseComponent {
       this.drawLineChart(ctx, width, height, labels, series, color);
       return;
     }
+    if (variant === 'pie') {
+      this.drawPieChart(ctx, width, height, labels, data);
+      return;
+    }
     const values = data.map(value => Number(value) || 0);
     const max = Math.max(...values, 1);
     const barCount = data.length;
@@ -98,6 +102,35 @@ export class Chart extends BaseComponent {
       const x = pad.left + index * pointStep;
       ctx.textAlign = 'center';
       ctx.fillText(String(label), x, height - 8);
+    });
+  }
+
+  private drawPieChart(ctx: CanvasRenderingContext2D, width: number, height: number, labels: string[], data: number[]) {
+    const palette = ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#06b6d4'];
+    const total = data.reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0) || 1;
+    const radius = Math.min(height * 0.38, width * 0.28);
+    const centerX = width * 0.36;
+    const centerY = height * 0.52;
+    let angle = -Math.PI / 2;
+    ctx.clearRect(0, 0, width, height);
+    data.forEach((value, index) => {
+      const slice = (Math.max(0, Number(value) || 0) / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, angle, angle + slice);
+      ctx.closePath();
+      ctx.fillStyle = palette[index % palette.length];
+      ctx.fill();
+      angle += slice;
+    });
+    ctx.font = '11px sans-serif';
+    labels.forEach((label, index) => {
+      const y = 28 + index * 22;
+      ctx.fillStyle = palette[index % palette.length];
+      ctx.fillRect(width * 0.67, y - 9, 10, 10);
+      ctx.fillStyle = '#374151';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${label} (${Number(data[index]) || 0})`, width * 0.71, y);
     });
   }
 }

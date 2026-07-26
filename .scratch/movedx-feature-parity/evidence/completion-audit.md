@@ -21,6 +21,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.
 - Dashboard includes declarative monthly revenue/cost/profit line data plus trip-status chart data.
 - Dashboard chart slots sit side by side at desktop width and wrap naturally at tablet width without document overflow.
+- Trip-status chart uses the shared pie variant to match the supplied reference composition.
 
 ## Not Proven
 

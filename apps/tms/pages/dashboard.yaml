@@ -188,6 +188,7 @@ components:
     title: Tổng quan trạng thái chuyến
     label_field: status
     value_field: trip_count
+    variant: pie
     layout: inline
     width: 400
     height: 260
