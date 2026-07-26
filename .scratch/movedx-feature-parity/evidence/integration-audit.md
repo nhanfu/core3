@@ -28,6 +28,7 @@ TMS_BASE_URL=http://localhost:3341 bun run audit:workflows
 - 0 datasource SQL/runtime failures.
 - 52 registered SPA routes mounted in a real browser with 0 route or console-error failures; shared column chooser, status-tab, search, safe editor-open/dismiss, sortable-header, next-page, and export controls were exercised when present.
 - The browser audit uses bounded CDP evaluations and reports per-route timeouts as failures instead of hanging indefinitely.
+- Browser audit output also reports aggregate chooser, tab, search, editor, sort, pagination, and export control counts per run.
 - The repeatable page audit also checks all 52 registered SPA paths for direct shell responses and page-loader mappings: 0 deep-link or mapping failures.
 - 13 representative named workflow transitions completed with zero failures across orders, quotes, financial documents, payroll, and trips.
 

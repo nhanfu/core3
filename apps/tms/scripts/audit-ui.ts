@@ -48,6 +48,10 @@ const send = (method: string, params: Record<string, unknown> = {}) => new Promi
 });
 const evaluate = async (expression: string) => {
   const result = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
+  if (result.result?.exceptionDetails) {
+    const description = result.result.exceptionDetails.exception?.description || result.result.exceptionDetails.text || 'runtime evaluation failed';
+    throw new Error(description);
+  }
   return result.result?.result?.value;
 };
 const evaluateWithTimeout = async (expression: string, label: string, timeoutMs = 5000) => {
@@ -71,12 +75,13 @@ await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(to
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
+const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, export: 0 };
 for (const route of targets) {
   consoleErrors.length = 0;
   try {
     await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${route}`)}`, `${route} navigation`);
-    await new Promise((resolve) => setTimeout(resolve, 650));
-    await evaluateWithTimeout(`(() => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const exercisedJson = await evaluateWithTimeout(`JSON.stringify((() => {
     const outlet = document.querySelector('#outlet');
     const summaries = [...(outlet?.querySelectorAll('summary') || [])].filter((item) => /^(Columns|Cột)$/.test(item.textContent?.trim() || ''));
     summaries[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -88,17 +93,21 @@ for (const route of targets) {
       setter?.call(search, 'audit');
       search.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    const editor = [...(outlet?.querySelectorAll('button') || [])].find((item) => /^(\+|Thêm|Mời|Chấm|Phân|Sửa|Cập nhật)/.test(item.textContent?.trim() || ''));
+    const editor = [...(outlet?.querySelectorAll('button') || [])].find((item) => /^(\\+|Thêm|Mời|Chấm|Phân|Sửa|Cập nhật)/.test(item.textContent?.trim() || ''));
     editor?.click();
     if (editor) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    const sortable = outlet?.querySelector('button[data-sort-field]') as HTMLButtonElement | null;
+    const sortable = outlet?.querySelector('button[data-sort-field]');
     sortable?.click();
-    const nextPage = [...(outlet?.querySelectorAll('button') || [])].find((item) => item.textContent?.trim() === '›' && !(item as HTMLButtonElement).disabled) as HTMLButtonElement | undefined;
+    const nextPage = [...(outlet?.querySelectorAll('button') || [])].find((item) => item.textContent?.trim() === '›' && !item.disabled);
     nextPage?.click();
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
     return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor), sortable: Boolean(sortable), pagination: Boolean(nextPage), export: Boolean(exportButton) };
-    })()`, `${route} control exercise`);
+    })())`, `${route} control exercise`);
+    const exercised = typeof exercisedJson === 'string' ? JSON.parse(exercisedJson) : exercisedJson;
+    for (const key of Object.keys(controlCounts) as Array<keyof typeof controlCounts>) {
+      if (exercised?.[key]) controlCounts[key]++;
+    }
     await new Promise((resolve) => setTimeout(resolve, 250));
     const state = await evaluateWithTimeout(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${route} state read`);
     if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
@@ -112,5 +121,6 @@ for (const route of targets) {
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
+console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const failure of failures) console.error(failure);
 if (failures.length) process.exit(1);
