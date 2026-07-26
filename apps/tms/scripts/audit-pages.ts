@@ -44,7 +44,10 @@ const pages = readdirSync(pageDir).filter((file) => file.endsWith('.yaml')).sort
 let pageFailures = 0;
 let sourceFailures = 0;
 let directFailures = 0;
+let routeMappingFailures = 0;
 let sourceCount = 0;
+const routeBlock = appSource.slice(appSource.indexOf('const ROUTES'), appSource.indexOf('const ROUTE_TITLES'));
+const loaderIds = new Set([...routeBlock.matchAll(/:\s*'([^']+)'/g)].map((match) => match[1]));
 
 for (const file of pages) {
   const page = Bun.YAML.parse(readFileSync(join(pageDir, file), 'utf8')) as Page;
@@ -53,6 +56,10 @@ for (const file of pages) {
     pageFailures++;
     console.error(`PAGE ${file}: missing page.id`);
     continue;
+  }
+  if (!loaderIds.has(pageId)) {
+    routeMappingFailures++;
+    console.error(`ROUTE ${pageId}: no SPA loader mapping`);
   }
   const pageResult = await request(`/api/pages/${pageId}`, { headers });
   if (!pageResult.response.ok) {
@@ -84,5 +91,5 @@ for (const route of new Set(routes)) {
   }
 }
 
-console.log(`pages=${pages.length} sources=${sourceCount} direct_routes=${new Set(routes).size} page_failures=${pageFailures} source_failures=${sourceFailures} direct_failures=${directFailures}`);
-if (pageFailures || sourceFailures || directFailures) process.exit(1);
+console.log(`pages=${pages.length} sources=${sourceCount} direct_routes=${new Set(routes).size} page_failures=${pageFailures} source_failures=${sourceFailures} direct_failures=${directFailures} route_mapping_failures=${routeMappingFailures}`);
+if (pageFailures || sourceFailures || directFailures || routeMappingFailures) process.exit(1);

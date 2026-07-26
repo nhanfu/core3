@@ -6,10 +6,10 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 
 - 68 page YAML definitions load through the authenticated page API.
 - 122 server-owned datasource definitions execute successfully on a fresh seeded database.
-- 51 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
+- 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
-- Every registered SPA path serves the shell on direct navigation; deep-link 404s are covered by the route audit.
+- Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database workflow audit completes 13 representative named transitions across orders, quotes, financial documents, payroll, and trip cancellation.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 137/137.
 

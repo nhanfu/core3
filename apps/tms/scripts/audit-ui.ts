@@ -52,7 +52,9 @@ const evaluate = async (expression: string) => {
 };
 
 await send('Runtime.enable');
-await evaluate(`localStorage.setItem('tms_token', ${JSON.stringify(token)}); location.href = ${JSON.stringify(`${baseUrl}/`)}`);
+await evaluate(`location.href = ${JSON.stringify(`${baseUrl}/`)}`);
+await new Promise((resolve) => setTimeout(resolve, 500));
+await evaluate(`localStorage.setItem('tms_token', ${JSON.stringify(token)}); location.reload()`);
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
