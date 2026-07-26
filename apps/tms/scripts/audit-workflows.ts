@@ -91,6 +91,58 @@ const validationRejections = [
   ['chat.messages.send', { id: 'chat-thread-ops-south', content: '' }],
 ] as const;
 for (const [action, payload] of validationRejections) await expectActionRejected(action, payload);
+const auditCode = `AUDIT-${Date.now()}`;
+const patchRequest = async (body: Record<string, unknown>, expectedStatus: number) => {
+  const response = await fetch(`${baseUrl}/api/patch`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+  if (response.status !== expectedStatus) {
+    throw new Error(`patch expected ${expectedStatus}, got ${response.status}`);
+  }
+  return response.json();
+};
+const createdMaster = await patchRequest({
+  table: 'master_data',
+  action: 'insert',
+  scope: 'unit',
+  changes: [
+    { field: 'code', value: auditCode },
+    { field: 'name', value: 'Audit unit' },
+    { field: 'status', value: 'Active' },
+  ],
+}, 201);
+if (!createdMaster?.id) throw new Error('master-data create did not return an id');
+await patchRequest({
+  table: 'master_data',
+  action: 'update',
+  scope: 'unit',
+  id: createdMaster.id,
+  changes: [{ field: 'name', value: 'Audit unit updated' }],
+}, 200);
+await patchRequest({
+  table: 'master_data',
+  action: 'delete',
+  scope: 'unit',
+  id: createdMaster.id,
+  changes: [],
+}, 200);
+await patchRequest({
+  table: 'orders',
+  action: 'update',
+  id: 'order-01',
+  changes: [{ field: 'status', value: 'Approved' }],
+}, 400);
+const invalidImport = new FormData();
+invalidImport.append('file', new File(['not,valid\n'], 'audit.csv', { type: 'text/csv' }));
+invalidImport.append('meta', JSON.stringify({ kind: 'master_data_import', scope: 'unit' }));
+const importResponse = await fetch(`${baseUrl}/api/upload`, {
+  method: 'POST',
+  headers: { Authorization: headers.Authorization },
+  body: invalidImport,
+});
+if (importResponse.status !== 400) throw new Error(`invalid import expected 400, got ${importResponse.status}`);
 const restrictedLogin = await fetch(`${baseUrl}/api/auth/login`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
@@ -100,4 +152,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} permission_denials=1 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 permission_denials=1 failures=0`);

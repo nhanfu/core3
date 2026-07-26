@@ -13,7 +13,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
-- A disposable fresh-database workflow audit completes 29 named transitions, 6 invalid-transition rejection checks, 3 invalid-payload validation checks, and a least-privilege `403` check across workflow, builder, chat, and authorization boundaries.
+- A disposable fresh-database action audit completes 29 named transitions, 6 invalid-transition rejection checks, 3 invalid-payload validation checks, one master-data create/update/delete round-trip, one malformed-import rejection, and a least-privilege `403` check.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 150/150.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
