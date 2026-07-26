@@ -337,12 +337,40 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   } catch (error) {
     uiMutationFailures.push(`quotes UI mutation: ${error instanceof Error ? error.message : String(error)}`);
   }
+  try {
+    await evaluateWithTimeout("location.hash = '#/hr/payroll'", 'payroll mutation navigation');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const mutationState = await evaluateWithTimeout(`(async () => {
+      const previousConfirm = window.confirm;
+      const previousAlert = window.alert;
+      window.confirm = () => true;
+      window.alert = () => {};
+      const readPayroll = () => [...document.querySelectorAll('#outlet tbody tr')]
+        .find((row) => row.textContent?.includes('BL202607004'))?.textContent || '';
+      const approve = document.querySelector('button[data-grid-row-action="approve_payroll:payroll-04"]');
+      approve?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const approved = readPayroll();
+      const pay = document.querySelector('button[data-grid-row-action="pay_payroll:payroll-04"]');
+      pay?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const paid = readPayroll();
+      window.confirm = previousConfirm;
+      window.alert = previousAlert;
+      return { approve: Boolean(approve), pay: Boolean(pay), approved, paid };
+    })()`, 'payroll mutation state');
+    if (!mutationState?.approve || !mutationState.approved.includes('Đã duyệt')) uiMutationFailures.push('payroll UI approve did not persist Approved');
+    if (!mutationState?.pay || !mutationState.paid.includes('Đã chi')) uiMutationFailures.push('payroll UI pay did not persist Paid');
+    if (consoleErrors.length) uiMutationFailures.push(`payroll UI mutation console errors: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    uiMutationFailures.push(`payroll UI mutation: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 failures.push(...uiMutationFailures);
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 3 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 4 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);

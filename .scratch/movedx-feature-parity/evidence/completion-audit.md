@@ -78,7 +78,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Advances now calculate linked settlement and outstanding amounts, while settlements expose a validated linked-advance selector and reference column; workflow audit covers invalid-link rejection.
 - Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - Ledger accounts now support persisted parent relationships, parent display, datasource-backed parent selection, and server-side self-parent validation.
-- An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve, units master-data create/edit/delete, and quote send/accept; all three phases pass with zero UI mutation failures on a fresh seeded database.
+- An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve, units master-data create/edit/delete, quote send/accept, and payroll approve/pay; all four phases pass with zero UI mutation failures on a fresh seeded database.
 
 ## Not Proven
 
