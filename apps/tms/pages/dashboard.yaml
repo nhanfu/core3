@@ -74,6 +74,21 @@ datasources:
       WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
       GROUP BY status
       ORDER BY trip_count DESC, status
+  - id: dashboard_financial_monthly
+    single: false
+    permission: fleet.read
+    query: |
+      SELECT month, SUM(revenue) AS revenue, SUM(cost) AS cost, SUM(profit) AS profit
+      FROM (
+        SELECT strftime(order_date, '%Y-%m') AS month, total_amount AS revenue, 0 AS cost, 0 AS profit
+        FROM orders
+        WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        UNION ALL
+        SELECT strftime(created_at, '%Y-%m') AS month, 0 AS revenue, cost_amount AS cost, profit_amount AS profit
+        FROM quotes
+        WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      ) grouped
+      GROUP BY month ORDER BY month
   - id: dashboard_dispatch_queue
     single: false
     permission: fleet.read
@@ -155,6 +170,18 @@ components:
       - { label: Tổng bảng lương, field: payroll_total, format: currency, currency: VND, color: blue }
       - { label: Chuyến hoàn thành, field: completed_trips, color: green }
 
+  - type: Chart
+    source: dashboard_financial_monthly
+    title: Doanh thu · Chi phí · Lợi nhuận theo tháng
+    label_field: month
+    value_field: revenue
+    variant: line
+    width: 680
+    height: 260
+    series:
+      - { field: revenue, label: Doanh thu, color: '#2563eb' }
+      - { field: cost, label: Chi phí, color: '#f59e0b' }
+      - { field: profit, label: Lợi nhuận, color: '#10b981' }
   - type: Chart
     source: dashboard_trip_status
     title: Tổng quan trạng thái chuyến

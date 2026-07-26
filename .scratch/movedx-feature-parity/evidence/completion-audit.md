@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 122 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 123 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
@@ -19,6 +19,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.
+- Dashboard includes declarative monthly revenue/cost/profit line data plus trip-status chart data.
 
 ## Not Proven
 

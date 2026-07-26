@@ -925,6 +925,11 @@ export async function renderPage(config: any, { container = document.body }: { c
       title: def.title || '',
       labels: rows.map((row: any) => String(row[labelField] ?? '—')),
       data: rows.map((row: any) => Number(row[valueField]) || 0),
+      series: (def.series || []).map((item: any) => ({
+        label: item.label || item.field,
+        color: item.color,
+        data: rows.map((row: any) => Number(row[item.field]) || 0),
+      })),
     };
   }
 
