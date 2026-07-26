@@ -18,6 +18,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Operations navigation now exposes all six reference entries and maps each to a registered SPA route.
 - The shell reads the seeded company profile through an authenticated server endpoint and renders tenant identity in the header; it is not hard-coded in the client.
 - The shared header exposes the reference theme toggle, persists the light/dim preference in browser storage, and renders the authenticated user name beside the profile avatar.
+- The shared header renders the reference attendance clock with a compact live `HH:mm` label.
 - The shared header also exposes functional sidebar collapse, attendance, and chat controls; collapse keeps the icon rail usable without horizontal overflow.
 - The shared sidebar footer renders the reference `© 2026 MovedX · v0.1` marker and hides it cleanly in the collapsed rail.
 - Authenticated shell mount shows a dynamic, dismissible welcome toast matching the reference overlay state.

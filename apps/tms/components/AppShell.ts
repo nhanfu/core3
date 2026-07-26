@@ -382,7 +382,7 @@ export class AppShell extends BaseComponent {
       .getContext();
 
     const attendanceBtn = html.take(actions).button
-      .className('header-icon-btn')
+      .className('header-icon-btn attendance-btn')
       .attr('type', 'button')
       .attr('title', 'Chấm công')
       .attr('aria-label', 'Chấm công')
@@ -390,6 +390,9 @@ export class AppShell extends BaseComponent {
       .getContext();
     const attendanceIcon = html.take(attendanceBtn).span.getContext();
     appendIcon(attendanceIcon, 'clock');
+    html.take(attendanceBtn).span.className('header-time').text(
+      new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()),
+    );
 
     const chatBtn = html.take(actions).button
       .className('header-icon-btn')
