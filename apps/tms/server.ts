@@ -19,6 +19,7 @@ import { LINE_ITEM_ACTION_REGISTRY } from './services/line-item-actions.ts';
 import { CHAT_ACTION_REGISTRY } from './services/chat-actions.ts';
 import { CONTACT_ACTION_REGISTRY } from './services/contact-actions.ts';
 import { APPROVAL_ACTION_REGISTRY } from './services/approval-actions.ts';
+import { TRIP_ACTION_REGISTRY } from './services/trip-actions.ts';
 import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
 import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
 import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
@@ -412,6 +413,7 @@ const REGISTERED_NAMED_ACTIONS = new Set([
   ...Object.keys(CHAT_ACTION_REGISTRY),
   ...Object.keys(CONTACT_ACTION_REGISTRY),
   ...Object.keys(APPROVAL_ACTION_REGISTRY),
+  ...Object.keys(TRIP_ACTION_REGISTRY),
   ...Object.keys(TEMPLATE_ACTION_REGISTRY),
   ...Object.keys(CODE_RULE_ACTION_REGISTRY),
   ...Object.keys(ROLE_ACTION_REGISTRY),
@@ -710,6 +712,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const chatActionDefinition = CHAT_ACTION_REGISTRY[actionName];
     const contactActionDefinition = CONTACT_ACTION_REGISTRY[actionName];
     const approvalActionDefinition = APPROVAL_ACTION_REGISTRY[actionName];
+    const tripActionDefinition = TRIP_ACTION_REGISTRY[actionName];
     const templateActionDefinition = TEMPLATE_ACTION_REGISTRY[actionName];
     const codeRuleActionDefinition = CODE_RULE_ACTION_REGISTRY[actionName];
     const roleActionDefinition = ROLE_ACTION_REGISTRY[actionName];
@@ -720,7 +723,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       || lineItemActionDefinition
       || chatActionDefinition
       || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(resolvedActionDefinition.permission);
 
@@ -779,6 +782,10 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         actionName,
         activityActor,
       ));
+    }
+    if (tripActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      return json(await repository.cancelTrip(body.id, actionName, activityActor));
     }
     if (templateActionDefinition) {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');

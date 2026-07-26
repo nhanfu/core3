@@ -946,6 +946,27 @@ export class DuckDbRepository {
     });
   }
 
+  async cancelTrip(tripId: string, action: string, actor: { id?: string | null; name: string }): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [trip] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
+        if (!trip) throw { status: 404, message: 'Trip not found' };
+        if (!['Scheduled', 'In Transit'].includes(String(trip.status))) {
+          throw { status: 409, message: `Trip cannot be cancelled while ${trip.status}` };
+        }
+        await runOnConnection(conn, 'UPDATE trips SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', ['Cancelled', tripId]);
+        await runOnConnection(conn, 'INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?,?)', [crypto.randomUUID(), actor.id || null, actor.name, action, 'trips', tripId, `Cancelled trip ${trip.trip_number}`]);
+        const [updated] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
+        await runOnConnection(conn, 'COMMIT');
+        return updated;
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK');
+        throw error;
+      }
+    });
+  }
+
   async mutatePrintTemplateBlock(
     operation: 'create' | 'update' | 'delete' | 'move_up' | 'move_down',
     templateId: string,

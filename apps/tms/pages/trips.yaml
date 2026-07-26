@@ -116,12 +116,6 @@ actions:
         label: Driver ID
         type: text
         required: false
-      - field: status
-        label: Status
-        type: select
-        required: false
-        options: [Scheduled, In Transit, Completed, Cancelled]
-        default: Scheduled
       - field: departure_time
         label: Departure Time
         type: date
@@ -207,9 +201,8 @@ actions:
         required: false
 
   - id: cancel_trip
-    type: patch
+    type: server
+    action: trips.cancel
     confirm: "Cancel this trip?"
-    table: trips
-    body:
-      status: Cancelled
+    params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
