@@ -145,6 +145,21 @@ export class DuckDbRepository {
     return row || null;
   }
 
+  async createContractDocument(contractId: string, file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string }, actor: { id?: string | null; name: string }) {
+    const [contract] = await this.query('SELECT id FROM employment_contracts WHERE id = ?', [contractId]);
+    if (!contract) throw { status: 404, message: 'Contract not found' };
+    const id = crypto.randomUUID();
+    await this.run('INSERT INTO contract_documents(id, contract_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)', [id, contractId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null]);
+    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'upload', resource: 'employment_contracts', resourceId: contractId, detail: `Uploaded ${file.fileName}` });
+    const [row] = await this.query('SELECT id, contract_id, file_name, mime_type, size_bytes, created_at FROM contract_documents WHERE id = ?', [id]);
+    return row;
+  }
+
+  async getContractDocument(documentId: string) {
+    const [row] = await this.query('SELECT d.*, c.id AS contract_id FROM contract_documents d JOIN employment_contracts c ON c.id = d.contract_id WHERE d.id = ?', [documentId]);
+    return row || null;
+  }
+
   async importMasterData(scope: string, csvText: string, actor: { id?: string | null; name: string }) {
     const allowed = new Set(['container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency']);
     if (!allowed.has(scope)) throw { status: 400, message: 'Invalid master-data scope' };

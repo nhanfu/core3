@@ -18,6 +18,10 @@ datasources:
       SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity WHERE resource = 'employment_contracts' AND resource_id = :id
       ORDER BY created_at DESC
+  - id: contract_documents
+    single: false
+    permission: hr.read
+    query: "SELECT id, contract_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM contract_documents WHERE contract_id = :id ORDER BY created_at DESC"
 components:
   - { type: DocumentSummary, source: contract_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: blue }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: job_title, label: Chức danh }, { field: department, label: Phòng ban }, { field: contract_type_label, label: Loại hợp đồng }, { field: start_date, label: Hiệu lực từ }, { field: end_date, label: Hiệu lực đến }, { field: base_salary, label: Lương cơ bản }] }
   - type: ApprovalTimeline
@@ -27,11 +31,21 @@ components:
     action_field: action
     detail_field: detail
     timestamp_field: created_at
+  - type: DataGrid
+    source: contract_documents
+    page_size: 20
+    column_chooser: true
+    row_key: id
+    empty_state: { title: Chưa có tài liệu hợp đồng }
+    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_contract_document, label: Tải xuống, variant: ghost }] }]
 toolbar:
   - { id: back_contracts, label: '← Danh sách hợp đồng', variant: secondary, action: back_contracts }
   - { id: edit_contract_detail, label: Sửa hợp đồng, variant: primary, permission: hr.write, action: edit_contract_detail }
+  - { id: upload_contract_document, label: '+ Tải tài liệu', variant: secondary, permission: hr.write, action: upload_contract_document }
 actions:
   - { id: back_contracts, type: navigate, navigate_to: /hr/contracts }
+  - { id: upload_contract_document, type: upload, kind: contract_document, params: { contract_id: '{state.id}' }, refresh: [contract_documents, contract_activity] }
+  - { id: download_contract_document, type: download, kind: contract_document }
   - id: edit_contract_detail
     type: form
     title: Cập nhật hợp đồng

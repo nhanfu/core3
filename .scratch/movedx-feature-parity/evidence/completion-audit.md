@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 123 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 124 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Fifteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
@@ -53,6 +53,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Role management now includes server-validated `all`/`branch`/`own` view-scope configuration in list/detail YAML and the shared source-prefilled editor; workflow audit covers valid and rejected scope updates.
 - Shared list exports now render the reference `Xuất Excel` label and produce `.xlsx` downloads with escaped text and numeric cells.
 - Master-data imports accept both CSV and OOXML `.xlsx` workbooks; the fresh workflow audit verifies a generated XLSX round-trip alongside malformed-CSV rejection.
+- Contract detail pages now expose permission-gated attachment upload/download flows backed by `contract_documents`; the fresh workflow audit verifies one stored contract upload and authenticated byte-for-byte download.
 - An opt-in fresh-browser mutation audit performs normal pointer clicks for `submit_order` and `approve_order`, then verifies the order row persists `Pending Approval` and `Approved`; it passes with zero UI mutation failures.
 
 ## Not Proven

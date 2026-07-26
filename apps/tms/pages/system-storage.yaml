@@ -6,8 +6,8 @@ datasources:
     permission: system.read
     query: |
       SELECT
-        (SELECT COUNT(*) FROM chat_attachments) + (SELECT COUNT(*) FROM employee_documents) AS file_count,
-        (SELECT COALESCE(SUM(size_bytes), 0) FROM chat_attachments) + (SELECT COALESCE(SUM(size_bytes), 0) FROM employee_documents) AS used_bytes,
+        (SELECT COUNT(*) FROM chat_attachments) + (SELECT COUNT(*) FROM employee_documents) + (SELECT COUNT(*) FROM contract_documents) AS file_count,
+        (SELECT COALESCE(SUM(size_bytes), 0) FROM chat_attachments) + (SELECT COALESCE(SUM(size_bytes), 0) FROM employee_documents) + (SELECT COALESCE(SUM(size_bytes), 0) FROM contract_documents) AS used_bytes,
         (SELECT config_value FROM system_configs WHERE kind = 'storage' AND code = 'LOCAL' LIMIT 1) AS storage_root
   - { id: storage_configs, single: false, permission: system.read, query: "SELECT id, code, name, config_value, description, status, sort_order, created_at FROM system_configs WHERE kind = 'storage' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY sort_order, code" }
 toolbar: [{ id: add_storage_config, label: '+ Thêm cấu hình kho', variant: primary, permission: system.write, action: add_storage_config }]
