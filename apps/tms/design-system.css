@@ -507,6 +507,59 @@ body {
 
 .avatar-btn:hover { opacity: 0.9; }
 
+.shell-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 300px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-panel);
+  animation: shell-toast-in 180ms ease-out;
+}
+
+.shell-toast-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  color: var(--color-success);
+}
+
+.shell-toast-message {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.shell-toast-close {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.shell-toast-close:hover { color: var(--color-text); }
+
+@keyframes shell-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Collapsed navigation keeps the icon rail available without changing routes. */
 .app-layout.sidebar-collapsed .app-sidebar { width: 72px; }
 .app-layout.sidebar-collapsed .sidebar-logo { padding-left: 22px; padding-right: 22px; }
