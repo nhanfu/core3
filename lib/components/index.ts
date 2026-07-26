@@ -60,3 +60,5 @@ export { CodeEditor }           from './CodeEditor.ts';
 export { Chat }                 from './Chat.ts';
 export { HtmlCode }             from './HtmlCode.ts';
 export { ChromeTab }            from './ChromeTab.ts';
+export { ListToolbar }          from './ListToolbar.ts';
+export { StatusTabs }           from './StatusTabs.ts';

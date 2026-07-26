@@ -1,0 +1,136 @@
+import { BaseComponent } from '../runtime.ts';
+
+export type ListToolbarAction = {
+  id: string;
+  label?: string;
+  icon?: string;
+  title?: string;
+  action?: string;
+  params?: Record<string, unknown>;
+  variant?: 'primary' | 'secondary' | 'ghost';
+  disabled?: boolean;
+};
+
+export type ListToolbarDefinition = {
+  search?: false | {
+    placeholder?: string;
+    action?: string;
+    label?: string;
+  };
+  actions?: ListToolbarAction[];
+};
+
+/**
+ * Shared resource-list controls: a keyword search plus optional utility
+ * actions such as advanced filters, export, column selection, and help.
+ */
+export class ListToolbar extends BaseComponent {
+  def: ListToolbarDefinition;
+
+  constructor(
+    id: string,
+    state: { query?: string } = {},
+    def: ListToolbarDefinition = {},
+  ) {
+    super(id, state);
+    this.def = def;
+  }
+
+  draw(container: HTMLElement) {
+    const root = document.createElement('div');
+    root.className = 'flex flex-wrap items-center justify-between gap-3 bg-white';
+
+    if (this.def.search !== false) {
+      const searchDef = this.def.search || {};
+      const searchWrap = document.createElement('div');
+      searchWrap.className = 'relative min-w-[260px] flex-1 sm:max-w-md';
+
+      const searchIcon = document.createElement('span');
+      searchIcon.className = 'pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400';
+      searchIcon.textContent = '⌕';
+      searchWrap.append(searchIcon);
+
+      const input = document.createElement('input');
+      input.type = 'search';
+      input.dataset.listSearch = 'true';
+      input.className = 'h-10 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+      input.value = this.state.query || '';
+      input.placeholder = searchDef.placeholder || 'Search…';
+      input.setAttribute('aria-label', searchDef.label || 'Search list');
+      input.addEventListener('input', () => this.setState({ query: input.value }, false));
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') this.emitSearch(searchDef.action);
+      });
+      searchWrap.append(input);
+
+      if (input.value) {
+        const clear = document.createElement('button');
+        clear.type = 'button';
+        clear.className = 'absolute inset-y-0 right-2 px-1 text-slate-400 hover:text-slate-700';
+        clear.textContent = '×';
+        clear.setAttribute('aria-label', 'Clear search');
+        clear.addEventListener('click', () => {
+          this.setState({ query: '' });
+          this.submit(searchDef.action || 'search', { query: '', value: '' });
+        });
+        searchWrap.append(clear);
+      }
+
+      root.append(searchWrap);
+    } else {
+      root.append(document.createElement('div'));
+    }
+
+    const actions = this.def.actions || [];
+    if (actions.length) {
+      const actionBar = document.createElement('div');
+      actionBar.className = 'flex flex-wrap items-center justify-end gap-2';
+      for (const action of actions) actionBar.append(this.renderAction(action));
+      root.append(actionBar);
+    }
+
+    container.append(root);
+  }
+
+  private emitSearch(action?: string) {
+    const query = this.state.query || '';
+    this.submit(action || 'search', { query, value: query });
+  }
+
+  private renderAction(action: ListToolbarAction) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.toolbarAction = action.id;
+    button.className = [
+      'inline-flex h-10 items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors',
+      this.actionClass(action.variant),
+      action.disabled ? 'cursor-not-allowed opacity-50' : '',
+      !action.label ? 'w-10 px-0' : '',
+    ].filter(Boolean).join(' ');
+    button.title = action.title || action.label || action.id;
+    button.setAttribute('aria-label', action.title || action.label || action.id);
+    button.disabled = Boolean(action.disabled);
+
+    if (action.icon) {
+      const icon = document.createElement('span');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = action.icon;
+      button.append(icon);
+    }
+    if (action.label) button.append(document.createTextNode(action.label));
+
+    if (!action.disabled) {
+      button.addEventListener('click', () => {
+        this.submit(action.action || action.id, { id: action.id, ...(action.params || {}) });
+      });
+    }
+
+    return button;
+  }
+
+  private actionClass(variant: ListToolbarAction['variant']) {
+    if (variant === 'primary') return 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700';
+    if (variant === 'ghost') return 'border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900';
+    return 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50';
+  }
+}
