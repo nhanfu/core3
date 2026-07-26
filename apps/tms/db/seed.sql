@@ -151,6 +151,8 @@ INSERT INTO areas (id, code, name, region, description, status) VALUES
 ('area-02', 'MT', 'Miền Trung', 'Trung Bộ', 'Khu vực vận hành miền Trung', 'Active'),
 ('area-03', 'MB', 'Miền Bắc', 'Bắc Bộ', 'Khu vực vận hành phía Bắc', 'Active'),
 ('area-04', 'OLD', 'Khu vực cũ', 'Khác', 'Không còn sử dụng', 'Inactive');
+UPDATE areas SET parent_id = 'area-01' WHERE id = 'area-03';
+UPDATE areas SET parent_id = 'area-03' WHERE id = 'area-04';
 
 -- ── Organization ───────────────────────────────────────────────────────────
 INSERT INTO company_profiles (id, name, short_name, tax_code, address, invoice_address, phone, email, website, bank_name, bank_account, notes) VALUES
@@ -162,6 +164,7 @@ INSERT INTO departments (id, code, name, branch_id, status) VALUES
 ('department-03', 'KT', 'Phòng Kế toán', 'branch-hcm', 'Active'),
 ('department-04', 'HCNS', 'Phòng Hành chính - Nhân sự', 'branch-hcm', 'Active'),
 ('department-05', 'OLD', 'Phòng cũ', 'branch-hn', 'Inactive');
+UPDATE departments SET parent_id = 'department-01' WHERE id = 'department-04';
 
 INSERT INTO teams (id, code, name, department_id, status) VALUES
 ('team-01', 'KD-NHAP', 'Kinh doanh Hàng nhập', 'department-01', 'Active'),
@@ -380,6 +383,7 @@ INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, curr
 ('acct-ledger-01', 'ledger_account', '111', 'Tiền mặt', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền mặt', 10),
 ('acct-ledger-02', 'ledger_account', '112', 'Tiền gửi ngân hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền gửi ngân hàng', 20),
 ('acct-ledger-03', 'ledger_account', '131', 'Phải thu khách hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Công nợ phải thu', 30);
+UPDATE accounting_entries SET parent_id = 'acct-ledger-01' WHERE id IN ('acct-ledger-02', 'acct-ledger-03');
 INSERT INTO accounting_entry_lines (
   id, entry_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
 ) VALUES

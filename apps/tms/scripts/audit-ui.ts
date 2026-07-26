@@ -15,10 +15,15 @@ const { token } = await login.json() as { token: string };
 
 const appSource = readFileSync(new URL('../app.ts', import.meta.url), 'utf8');
 const mutationOnly = process.env.TMS_AUDIT_MUTATIONS_ONLY === '1';
+const treeOnly = process.env.TMS_AUDIT_TREE_ONLY === '1';
 const routes = [...appSource.matchAll(/^\s*'([^']+)'\s*:/gm)]
   .map((match) => match[1])
   .filter((route) => route.startsWith('/') && route !== '/login');
-const targets = mutationOnly ? [] : [...new Set(routes)];
+const targets = mutationOnly
+  ? []
+  : treeOnly
+    ? ['/areas', '/org/departments', '/accounting/ledger-accounts']
+    : [...new Set(routes)];
 
 const pageList = await (await fetch(`${cdpUrl}/json/list`)).json() as Array<{ type: string; webSocketDebuggerUrl?: string }>;
 const page = pageList.find((item) => item.type === 'page' && item.webSocketDebuggerUrl);
@@ -82,7 +87,7 @@ await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(to
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
-const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, reorder: 0, rowAction: 0, export: 0 };
+const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, reorder: 0, tree: 0, rowAction: 0, export: 0 };
 const routeCoverage: Array<{ route: string; controls: Record<string, number> }> = [];
 for (const route of targets) {
   consoleErrors.length = 0;
@@ -115,6 +120,12 @@ for (const route of targets) {
       pageSize.value = pageSize.options[pageSize.options.length - 1].value;
       pageSize.dispatchEvent(new Event('change', { bubbles: true }));
     }
+    const treeToggles = [...(outlet?.querySelectorAll('button[aria-label="Collapse row"]') || [])];
+    if (treeToggles[0]) {
+      treeToggles[0].click();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      outlet?.querySelector('button[aria-label="Expand row"]')?.click();
+    }
     const reorderRows = [...(outlet?.querySelectorAll('tbody tr[data-reorder-row]') || [])];
     if (reorderRows.length > 1) {
       reorderRows[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
@@ -143,7 +154,7 @@ for (const route of targets) {
     window.fetch = previousFetch;
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
-    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), rowAction: rowActions.length, export: Number(Boolean(exportButton)) };
+    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), tree: treeToggles.length, rowAction: rowActions.length, export: Number(Boolean(exportButton)) };
     })()`, `${route} control exercise`);
     const exercised = typeof exercisedJson === 'string' ? JSON.parse(exercisedJson) : exercisedJson;
     for (const key of Object.keys(controlCounts) as Array<keyof typeof controlCounts>) {
@@ -181,7 +192,7 @@ const detailTargets = [
   { target: '/system/approval-flows/detail?id=sys-03', needle: 'ORDER_APPROVAL' },
 ] as const;
 const detailFailures: string[] = [];
-for (const { target, needle } of (mutationOnly ? [] : detailTargets)) {
+for (const { target, needle } of (mutationOnly || treeOnly ? [] : detailTargets)) {
   consoleErrors.length = 0;
   try {
     await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${target}`)}`, `${target} navigation`);
@@ -223,8 +234,9 @@ failures.push(...desktopFailures);
 const uiMutationFailures: string[] = [];
 if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   try {
+    await evaluateWithTimeout("[...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000').forEach((overlay) => overlay.remove())", 'mutation overlay cleanup');
     await evaluateWithTimeout("location.hash = '#/orders'", 'orders mutation navigation');
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
       const previousConfirm = window.confirm;
       const previousAlert = window.alert;
@@ -252,7 +264,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   }
   try {
     await evaluateWithTimeout("location.hash = '#/catalog/units'", 'units CRUD mutation navigation');
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
       [...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000').forEach((overlay) => overlay.remove());
       const code = 'UI-AUDIT-' + Date.now();
@@ -311,7 +323,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   }
   try {
     await evaluateWithTimeout("location.hash = '#/quotes'", 'quotes mutation navigation');
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
       const previousConfirm = window.confirm;
       const previousAlert = window.alert;
@@ -339,7 +351,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   }
   try {
     await evaluateWithTimeout("location.hash = '#/hr/payroll'", 'payroll mutation navigation');
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
       const previousConfirm = window.confirm;
       const previousAlert = window.alert;
@@ -367,7 +379,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   }
   try {
     await evaluateWithTimeout("location.hash = '#/accounting/debit-notes'", 'debit-note mutation navigation');
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
       const previousConfirm = window.confirm;
       const previousAlert = window.alert;
