@@ -332,6 +332,18 @@ body {
   font-size: 0.68rem;
 }
 
+.stat-card-clickable {
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+.stat-card-clickable:hover,
+.stat-card-clickable:focus-visible {
+  border-color: var(--color-primary-mid);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+  outline: none;
+  transform: translateY(-1px);
+}
+
 /* ── Header internals ── */
 .header-title {
   font-size: 1rem;

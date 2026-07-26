@@ -87,7 +87,7 @@ const COLUMN_KEYS = new Set([
 ]);
 const ROW_ACTION_KEYS = new Set(['id', 'label', 'variant', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
-const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color']);
+const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
 const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style', 'default_preset']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'placeholder']);
@@ -480,6 +480,7 @@ function validateStats(value: unknown, path: string, issues: string[]) {
     rejectUnknownKeys(stat, STAT_KEYS, statPath, issues);
     requireString(stat.label, `${statPath}.label`, issues);
     requireString(stat.field, `${statPath}.field`, issues);
+    if (stat.navigate_to !== undefined) requireString(stat.navigate_to, `${statPath}.navigate_to`, issues);
   });
 }
 

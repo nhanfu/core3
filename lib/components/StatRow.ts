@@ -5,10 +5,11 @@ import { StatCard } from './StatCard.ts';
 export class StatRow extends BaseComponent {
   title: string;
 
-  constructor(id, stats = [], title = '') {
+  constructor(id, stats = [], title = '', onNavigate: ((path: string) => void) | null = null) {
     super(id, {});
     this.stats = stats;
     this.title = title;
+    this.onNavigate = onNavigate;
   }
 
   draw(container) {
@@ -27,7 +28,7 @@ export class StatRow extends BaseComponent {
 
     this.stats.forEach((stat, i) => {
       const slot = html.take(grid).div.getContext();
-      const card = new StatCard(`${this.id}-${i}`, stat);
+      const card = new StatCard(`${this.id}-${i}`, { ...stat, onNavigate: this.onNavigate });
       card.parent = this;
       this.children.push(card);
       card.draw(slot);
