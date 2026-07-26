@@ -1,15 +1,30 @@
 # ERP Rendering Framework
 
-A TypeScript library for building ERP interfaces. YAML-driven components, embedded SQL, OOP rendering, full CRUD, and custom scripting — shipped as two packages (`@core3/backend`, `@core3/frontend`) that client projects install and configure.
+A shared TypeScript framework for processing client YAML and rendering ERP pages. The framework provides YAML-driven components, embedded SQL, OOP rendering, CRUD, and controlled extension points through the `@core3/framework` package.
+
+## Vision
+
+Core3 aims to be a YAML-driven software framework. YAML should be used throughout development so that client projects can progressively describe their complete systems declaratively, with as little handwritten client code as possible.
+
+The intended scope of YAML includes:
+
+- page layout and composition
+- design-system and UI decisions
+- business logic and workflows
+- database management, including partitioning and sharding
+- deployment and operational configuration
+
+The repository’s [`lib`](lib) directory is a shared, client-agnostic library. It should process client YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/tms`](apps/tms) is the sample client project where those declarations and any remaining app-specific code live.
+
+Other code remains possible when YAML cannot yet express a requirement, but it should be minimal transitional glue with a path toward a YAML-based solution.
 
 ## Packages
 
 ```
-@core3/frontend    — YAML→JSON parser, component tree, BaseComponent, html.js, Tailwind
-@core3/backend     — repository pattern, CRUD engine, scripting sandbox, auth interface, protocols
+@core3/framework   — YAML processing, page rendering, components, runtime, backend primitives, and interfaces
 ```
 
-Client projects install both and register their YAML folders and custom component implementations.
+Client projects consume the shared framework and provide their YAML and app-specific integration.
 
 ## How it works
 
