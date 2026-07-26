@@ -234,6 +234,19 @@ CREATE TABLE IF NOT EXISTS accounting_entries (
   UNIQUE(kind, code)
 );
 
+CREATE TABLE IF NOT EXISTS system_configs (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind VARCHAR NOT NULL CHECK (kind IN ('code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage')),
+  code VARCHAR NOT NULL, name VARCHAR NOT NULL, config_value VARCHAR, description VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Active', sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(kind, code)
+);
+CREATE TABLE IF NOT EXISTS system_activity (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL,
+  resource VARCHAR NOT NULL, detail VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS maintenance (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   truck_id VARCHAR NOT NULL,

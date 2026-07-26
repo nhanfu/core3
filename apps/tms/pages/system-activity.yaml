@@ -1,0 +1,18 @@
+title: Lịch sử thao tác
+page: { id: system-activity, auth: { require: [system.read] } }
+datasources:
+  - id: system_activity
+    single: false
+    permission: system.read
+    query: |
+      SELECT id, actor_name, action, resource, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity
+      WHERE (:q IS NULL OR actor_name ILIKE '%' || :q || '%' OR action ILIKE '%' || :q || '%' OR resource ILIKE '%' || :q || '%') ORDER BY created_at DESC
+components:
+  - { type: ListToolbar, source: system_activity, filter_field: q, search: { label: Tìm kiếm lịch sử, placeholder: 'Tìm người thao tác hoặc tài nguyên...' } }
+  - type: DataGrid
+    source: system_activity
+    page_size: 30
+    row_key: id
+    empty_state: { title: Không có lịch sử thao tác }
+    columns: [{ field: actor_name, label: Người thao tác }, { field: action, label: Hành động }, { field: resource, label: Tài nguyên }, { field: detail, label: Chi tiết }, { field: created_at, label: Thời gian }]
+actions: []

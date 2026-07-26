@@ -50,14 +50,10 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/org/teams': () => import('./pages/placeholder.ts'),
   '/org/users': 'users',
   '/org/roles': 'roles',
-  '/system/activity': () => import('./pages/placeholder.ts'),
-  '/system/code-rules': () => import('./pages/placeholder.ts'),
-  '/system/print-templates': () => import('./pages/placeholder.ts'),
-  '/system/approval-flows': () => import('./pages/placeholder.ts'),
-  '/system/shipment-types': () => import('./pages/placeholder.ts'),
-  '/system/trip-statuses': () => import('./pages/placeholder.ts'),
-  '/system/fee-rules': () => import('./pages/placeholder.ts'),
-  '/system/storage': () => import('./pages/placeholder.ts'),
+  '/system/activity': 'system-activity', '/system/code-rules': 'system-code-rules',
+  '/system/print-templates': () => import('./pages/placeholder.ts'), '/system/approval-flows': () => import('./pages/placeholder.ts'),
+  '/system/shipment-types': () => import('./pages/placeholder.ts'), '/system/trip-statuses': () => import('./pages/placeholder.ts'),
+  '/system/fee-rules': () => import('./pages/placeholder.ts'), '/system/storage': () => import('./pages/placeholder.ts'),
 };
 
 const ROUTE_TITLES: Record<string, string> = {

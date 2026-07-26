@@ -35,7 +35,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-19', 'role-admin', 'accounting.read'),
 ('perm-adm-20', 'role-admin', 'accounting.write'),
 ('perm-adm-21', 'role-admin', 'hr.read'),
-('perm-adm-22', 'role-admin', 'hr.write');
+('perm-adm-22', 'role-admin', 'hr.write'),
+('perm-adm-23', 'role-admin', 'system.read'),
+('perm-adm-24', 'role-admin', 'system.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -231,6 +233,18 @@ INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, curr
 ('acct-ledger-01', 'ledger_account', '111', 'Tiền mặt', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền mặt', 10),
 ('acct-ledger-02', 'ledger_account', '112', 'Tiền gửi ngân hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền gửi ngân hàng', 20),
 ('acct-ledger-03', 'ledger_account', '131', 'Phải thu khách hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Công nợ phải thu', 30);
+
+INSERT INTO system_configs (id, kind, code, name, config_value, description, status, sort_order) VALUES
+('sys-01', 'code_rule', 'ORDER', 'Mã đơn hàng', 'DH-{YYYY}-{SEQ:4}', 'Quy tắc sinh mã đơn hàng', 'Active', 10),
+('sys-02', 'print_template', 'ORDER', 'Phiếu xác nhận đơn hàng', 'order-confirmation', 'Mẫu in đơn hàng', 'Active', 10),
+('sys-03', 'approval_flow', 'ORDER_APPROVAL', 'Duyệt đơn hàng', 'draft>pending>approved', 'Quy trình duyệt đơn hàng', 'Active', 10),
+('sys-04', 'shipment_type', 'FCL', 'Nguyên container', 'container', 'Loại hình vận chuyển', 'Active', 10),
+('sys-05', 'trip_status', 'SCHEDULED', 'Đã lên lịch', 'scheduled', 'Trạng thái chuyến', 'Active', 10),
+('sys-06', 'fee_rule', 'DISTANCE', 'Cước theo quãng đường', 'distance_km * rate', 'Công thức phí', 'Active', 10),
+('sys-07', 'storage', 'LOCAL', 'Kho tệp đính kèm', '/data/uploads', 'Vị trí lưu tệp', 'Active', 10);
+INSERT INTO system_activity (id, actor_name, action, resource, detail, created_at) VALUES
+('act-01', 'Admin User', 'Cập nhật', 'Quy tắc mã đơn hàng', 'Đổi tiền tố mã', '2026-07-25 09:30:00'),
+('act-02', 'Admin User', 'Duyệt', 'Đề nghị thanh toán', 'Đã duyệt đề nghị chi', '2026-07-24 14:20:00');
 
 -- ── Maintenance ───────────────────────────────────────────────────────────────
 INSERT INTO maintenance (id, truck_id, service_type, status, scheduled_date, completed_date, technician_id, cost, notes) VALUES

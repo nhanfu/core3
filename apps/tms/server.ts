@@ -179,6 +179,8 @@ async function initDb(): Promise<void> {
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-adm-22', 'role-admin', 'hr.write'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.write');
+    INSERT INTO permissions (id, role_id, permission_key) SELECT 'perm-adm-23', 'role-admin', 'system.read' WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'system.read');
+    INSERT INTO permissions (id, role_id, permission_key) SELECT 'perm-adm-24', 'role-admin', 'system.write' WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'system.write');
   `);
 }
 
@@ -212,6 +214,7 @@ const SOURCE_FILES = [
   'pages/accounting-settlements.yaml',
   'pages/accounting-invoice-templates.yaml',
   'pages/accounting-ledger-accounts.yaml',
+  'pages/system-activity.yaml', 'pages/system-code-rules.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
@@ -302,6 +305,7 @@ const TABLE_REGISTRY = {
     fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'sort_order'],
     scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
+  system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
   branches:     { permission: 'settings.write',     timestamps: true  },
   users:        { permission: 'settings.write',     timestamps: true  },
   translations: { permission: 'settings.write',     timestamps: false },
