@@ -365,12 +365,45 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   } catch (error) {
     uiMutationFailures.push(`payroll UI mutation: ${error instanceof Error ? error.message : String(error)}`);
   }
+  try {
+    await evaluateWithTimeout("location.hash = '#/accounting/debit-notes'", 'debit-note mutation navigation');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const mutationState = await evaluateWithTimeout(`(async () => {
+      const previousConfirm = window.confirm;
+      const previousAlert = window.alert;
+      window.confirm = () => true;
+      window.alert = () => {};
+      const readNote = () => [...document.querySelectorAll('#outlet tbody tr')]
+        .find((row) => row.textContent?.includes('GBN-0001'))?.textContent || '';
+      const submit = document.querySelector('button[data-grid-row-action="submit_debit_note:acct-debit-01"]');
+      submit?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const pending = readNote();
+      const approve = document.querySelector('button[data-grid-row-action="approve_debit_note:acct-debit-01"]');
+      approve?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const approved = readNote();
+      const pay = document.querySelector('button[data-grid-row-action="pay_debit_note:acct-debit-01"]');
+      pay?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const paid = readNote();
+      window.confirm = previousConfirm;
+      window.alert = previousAlert;
+      return { submit: Boolean(submit), approve: Boolean(approve), pay: Boolean(pay), pending, approved, paid };
+    })()`, 'debit-note mutation state');
+    if (!mutationState?.submit || !mutationState.pending.includes('Đang duyệt')) uiMutationFailures.push('debit-note UI submit did not persist Pending Approval');
+    if (!mutationState?.approve || !mutationState.approved.includes('Đã duyệt')) uiMutationFailures.push('debit-note UI approve did not persist Approved');
+    if (!mutationState?.pay || !mutationState.paid.includes('Đã thanh toán')) uiMutationFailures.push('debit-note UI pay did not persist Paid');
+    if (consoleErrors.length) uiMutationFailures.push(`debit-note UI mutation console errors: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    uiMutationFailures.push(`debit-note UI mutation: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 failures.push(...uiMutationFailures);
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 4 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 5 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
