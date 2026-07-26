@@ -33,6 +33,10 @@ datasources:
       FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
       GROUP BY r.id, r.name, r.description, r.view_scope
       ORDER BY r.name
+  - id: settings_role_lookup
+    single: false
+    permission: settings.read
+    query: "SELECT name AS value, name AS label FROM roles ORDER BY name"
   - id: translations
     single: false
     permission: settings.read
@@ -271,8 +275,10 @@ actions:
         type: text
         required: true
       - field: roles
-        label: Role (e.g. admin)
-        type: text
+        label: Roles
+        type: select
+        options_source: settings_role_lookup
+        multiple: true
         required: false
 
   - id: edit_user
@@ -292,8 +298,10 @@ actions:
         type: text
         required: false
       - field: roles
-        label: Roles (comma-separated)
-        type: text
+        label: Roles
+        type: select
+        options_source: settings_role_lookup
+        multiple: true
         required: false
 
   - id: edit_translation
