@@ -60,7 +60,21 @@ for (const route of targets) {
   consoleErrors.length = 0;
   await evaluate(`location.hash = ${JSON.stringify(`#${route}`)}`);
   await new Promise((resolve) => setTimeout(resolve, 650));
-  const state = await evaluate(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`);
+  const state = await evaluate(`(() => {
+    const outlet = document.querySelector('#outlet');
+    const summaries = [...(outlet?.querySelectorAll('summary') || [])].filter((item) => /^(Columns|Cột)$/.test(item.textContent?.trim() || ''));
+    summaries[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const tabs = [...(outlet?.querySelectorAll('button') || [])].filter((item) => /^(Tất cả|Sẵn sàng|Bảo dưỡng|Hoạt động|Đang dùng|Nháp)$/.test(item.textContent?.trim() || ''));
+    tabs[0]?.click();
+    const search = [...(outlet?.querySelectorAll('input[type="search"]') || [])][0];
+    if (search) {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      setter?.call(search, 'audit');
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    return { title: document.title, outlet: outlet?.textContent || '', hash: location.hash, chooser: summaries.length, tabs: tabs.length, search: Boolean(search) };
+  })()`);
+  await new Promise((resolve) => setTimeout(resolve, 250));
   if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
     failures.push(`${route}: outlet did not render`);
   }
