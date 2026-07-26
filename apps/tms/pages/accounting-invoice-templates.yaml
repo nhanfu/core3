@@ -7,6 +7,10 @@ datasources:
     query: |
       SELECT id, code, name, description, currency, status, sort_order, created_at FROM accounting_entries
       WHERE kind = 'invoice_template' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY sort_order, code
+  - id: invoice_currency_lookup
+    single: false
+    permission: accounting.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' ORDER BY label"
 toolbar: [{ id: add_invoice_template_btn, label: '+ Thêm mẫu hóa đơn', variant: primary, permission: accounting.write, action: add_invoice_template }]
 components:
   - { type: ListToolbar, source: invoice_templates, filter_field: q, search: { label: Tìm kiếm mẫu hóa đơn, placeholder: 'Tìm mã, tên hoặc mô tả...' }, actions: [{ id: invoice_templates.export, label: 'Xuất CSV', icon: '↓' }] }
@@ -39,7 +43,7 @@ actions:
     scope: invoice_template
     operation: insert
     refresh: [invoice_templates]
-    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: description, label: Nội dung mẫu, type: richtext, tokens: [invoice.number, invoice.customer, invoice.total, invoice.tax] }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: select, options_source: invoice_currency_lookup, default: VND }, { field: description, label: Nội dung mẫu, type: richtext, tokens: [invoice.number, invoice.customer, invoice.total, invoice.tax] }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
   - id: edit_invoice_template
     type: form
     title: Cập nhật mẫu hóa đơn
@@ -48,5 +52,5 @@ actions:
     operation: update
     prefill: row
     refresh: [invoice_templates]
-    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: text }, { field: description, label: Nội dung mẫu, type: richtext, tokens: [invoice.number, invoice.customer, invoice.total, invoice.tax] }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: select, options_source: invoice_currency_lookup }, { field: description, label: Nội dung mẫu, type: richtext, tokens: [invoice.number, invoice.customer, invoice.total, invoice.tax] }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
   - { id: delete_invoice_template, type: delete, table: accounting_entries, scope: invoice_template, confirm: 'Xóa mẫu hóa đơn {{row.name}}?', refresh: [invoice_templates] }
