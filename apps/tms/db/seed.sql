@@ -99,12 +99,12 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 
 -- ── Users ────────────────────────────────────────────────────────────────────
 -- password_hash stored as plaintext; server detects and upgrades on first login
-INSERT INTO users (id, email, name, password_hash, preferred_lang) VALUES
-('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en'),
-('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi'),
-('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en'),
-('user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi'),
-('user-hr', 'hr@tms.local', 'HR Officer', 'hr123', 'vi');
+INSERT INTO users (id, email, name, password_hash, preferred_lang, branch_id, department_id) VALUES
+('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en', 'branch-hcm', 'department-04'),
+('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi', 'branch-hcm', 'department-02'),
+('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en', 'branch-hcm', 'department-02'),
+('user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi', 'branch-hcm', 'department-03'),
+('user-hr', 'hr@tms.local', 'HR Officer', 'hr123', 'vi', 'branch-hcm', 'department-04');
 
 -- ── HR ─────────────────────────────────────────────────────────────────────
 INSERT INTO employees (id, code, name, job_title, phone, email, department, start_date, dependents, status) VALUES

@@ -18,6 +18,7 @@ export class JwtAuthProvider {
   async login(email: string, password: string, repository: any) {
     const user = await repository.getLoginUserByEmail(email);
     if (!user) throw { status: 401, message: 'Invalid credentials' };
+    if (user.enabled === false) throw { status: 403, message: 'Account is disabled' };
 
     let valid = false;
     if (!user.password_hash.startsWith('$')) {
@@ -34,6 +35,7 @@ export class JwtAuthProvider {
 
     const roles = user.roles_csv ? user.roles_csv.split(',').filter(Boolean) : [];
     const permissions = await repository.getUserPermissions(user.id);
+    await repository.recordUserLogin(user.id);
     const tokenPayload = {
       sub: user.id,
       email: user.email,

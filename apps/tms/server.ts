@@ -157,6 +157,10 @@ async function initDb(): Promise<void> {
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS reset_cadence VARCHAR DEFAULT 'never';
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS next_sequence BIGINT DEFAULT 1;
     ALTER TABLE teams ADD COLUMN IF NOT EXISTS manager_id VARCHAR;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT true;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id VARCHAR;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
     INSERT INTO order_workflow_states(order_id, status)
     SELECT o.id, o.status
     FROM orders o

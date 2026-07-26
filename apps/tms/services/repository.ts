@@ -161,7 +161,8 @@ export class DuckDbRepository {
        LEFT JOIN roles r ON r.id = ur.role_id
        WHERE u.email = ?
        GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
-                u.preferred_lang, u.created_at, u.updated_at`,
+                u.preferred_lang, u.enabled, u.branch_id, u.department_id,
+                u.last_login, u.created_at, u.updated_at`,
       [email]
     );
     return rows[0] || null;
@@ -169,6 +170,10 @@ export class DuckDbRepository {
 
   async refreshUserPasswordHash(userId: any, hash: string): Promise<void> {
     await this.run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, userId]);
+  }
+
+  async recordUserLogin(userId: any): Promise<void> {
+    await this.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [userId]);
   }
 
   async getUserPermissions(userId: any): Promise<string[]> {

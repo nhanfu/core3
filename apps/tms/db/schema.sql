@@ -21,6 +21,10 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR NOT NULL,
   avatar_url VARCHAR,
   preferred_lang VARCHAR DEFAULT 'en',
+  enabled BOOLEAN DEFAULT true,
+  branch_id VARCHAR,
+  department_id VARCHAR,
+  last_login TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

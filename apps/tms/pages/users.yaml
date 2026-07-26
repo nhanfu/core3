@@ -3,23 +3,51 @@ page:
   id: users
   auth: { require: [settings.read] }
 datasources:
+  - id: org_user_totals
+    single: true
+    permission: settings.read
+    query: |
+      SELECT COUNT(*) AS total_users,
+        SUM(CASE WHEN COALESCE(enabled, true) THEN 1 ELSE 0 END) AS active_users,
+        SUM(CASE WHEN COALESCE(enabled, true) THEN 0 ELSE 1 END) AS disabled_users
+      FROM users
   - id: org_users
     single: false
     permission: settings.read
     query: |
-      SELECT u.id, u.name, u.email, u.preferred_lang, u.created_at,
+      SELECT u.id, u.name, u.email, u.preferred_lang,
+        COALESCE(u.enabled, true) AS enabled,
+        CASE WHEN COALESCE(u.enabled, true) THEN 'Active' ELSE 'Inactive' END AS status,
+        b.name AS branch_name, d.name AS department_name,
+        u.last_login, u.created_at,
         string_agg(r.name, ', ') AS roles_csv
-      FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id
+      FROM users u
+      LEFT JOIN branches b ON b.id = u.branch_id
+      LEFT JOIN departments d ON d.id = u.department_id
+      LEFT JOIN user_roles ur ON ur.user_id = u.id
       LEFT JOIN roles r ON r.id = ur.role_id
-      WHERE (:q IS NULL OR u.name ILIKE '%' || :q || '%' OR u.email ILIKE '%' || :q || '%')
-      GROUP BY u.id, u.name, u.email, u.preferred_lang, u.created_at
+      WHERE (:status IS NULL OR (CASE WHEN COALESCE(u.enabled, true) THEN 'Active' ELSE 'Inactive' END) = :status)
+        AND (:q IS NULL OR u.name ILIKE '%' || :q || '%' OR u.email ILIKE '%' || :q || '%'
+          OR COALESCE(b.name, '') ILIKE '%' || :q || '%' OR COALESCE(d.name, '') ILIKE '%' || :q || '%')
+      GROUP BY u.id, u.name, u.email, u.preferred_lang, u.enabled,
+        u.branch_id, u.department_id, b.name, d.name, u.last_login, u.created_at
       ORDER BY u.name
 components:
+  - type: StatRow
+    source: org_user_totals
+    stats:
+      - { label: Tổng tài khoản, field: total_users, color: blue }
+      - { label: Đang hoạt động, field: active_users, color: green }
+      - { label: Đã khóa, field: disabled_users, color: red }
   - type: ListToolbar
     source: org_users
     filter_field: q
-    search: { label: Tìm kiếm người dùng, placeholder: 'Tìm tên hoặc email...' }
+    search: { label: Tìm kiếm người dùng, placeholder: 'Tìm tên, email, chi nhánh hoặc phòng ban...' }
     actions: [{ id: org_users.export, label: 'Xuất CSV', icon: '↓' }]
+  - type: StatusTabs
+    source: org_users
+    filter_field: status
+    tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang hoạt động }, { id: Inactive, label: Đã khóa }]
   - type: DataGrid
     source: org_users
     page_size: 20
@@ -29,7 +57,11 @@ components:
     columns:
       - { field: id, label: Mã HT, sortable: true }
       - { field: name, label: Người dùng, type: PrimaryEntityCell, secondary: email }
+      - { field: status, label: Trạng thái, type: StatusChip, colors: { Active: green, Inactive: red } }
+      - { field: branch_name, label: Chi nhánh }
+      - { field: department_name, label: Phòng ban }
       - { field: roles_csv, label: Vai trò }
+      - { field: last_login, label: Đăng nhập gần nhất, type: DateCell }
       - { field: preferred_lang, label: Ngôn ngữ }
       - { field: created_at, label: Ngày tạo, type: DateCell }
       - field: actions
