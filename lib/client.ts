@@ -99,6 +99,19 @@ class Client {
     if (!res.ok) throw Object.assign(new Error('Upload failed'), { status: res.status });
     return res.json();
   }
+
+  async downloadFile(path, fileName = 'download') {
+    const res = await fetch(`${this._resolveBase()}${path}`, {
+      headers: this._token ? { Authorization: `Bearer ${this._token}` } : {},
+    });
+    if (!res.ok) throw Object.assign(new Error('Download failed'), { status: res.status });
+    const url = URL.createObjectURL(await res.blob());
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 }
 
 export const client = new Client();

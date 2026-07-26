@@ -30,9 +30,11 @@ export class ChatWorkspace extends BaseComponent {
     super(id, {
       threads: [],
       messages: [],
+      attachments: [],
       activeThreadId: null,
       query: '',
       inputValue: '',
+      selectedFile: null,
       ...state,
     });
     this.def = def;
@@ -41,6 +43,7 @@ export class ChatWorkspace extends BaseComponent {
   draw(container: HTMLElement) {
     const threads = Array.isArray(this.state.threads) ? this.state.threads : [];
     const messages = Array.isArray(this.state.messages) ? this.state.messages : [];
+    const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
     if (!threads.some((thread: any) => thread.id === this.state.activeThreadId)) {
       this.state.activeThreadId = threads[0]?.id || null;
     }
@@ -50,7 +53,7 @@ export class ChatWorkspace extends BaseComponent {
       'section',
       'grid min-h-[560px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm',
     );
-    root.style.height = 'calc(100vh - 156px)';
+    root.style.height = 'calc(100vh - 204px)';
     root.style.gridTemplateColumns = 'minmax(250px, 320px) minmax(0, 1fr)';
     container.appendChild(root);
 
@@ -196,15 +199,26 @@ export class ChatWorkspace extends BaseComponent {
           : 'max-w-[76%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm',
         String(message.body || ''),
       ));
-      const attachments = String(message.attachment_names || '').split('|').filter(Boolean);
-      if (attachments.length) {
+      const messageAttachments = attachments.filter(
+        (attachment: any) => attachment.message_id === message.id,
+      );
+      if (messageAttachments.length) {
         const attachmentRow = createElement('div', 'mt-1 flex flex-wrap justify-end gap-1');
-        for (const fileName of attachments) {
-          attachmentRow.appendChild(createElement(
-            'span',
-            'rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-500',
-            fileName,
-          ));
+        for (const attachment of messageAttachments) {
+          const attachmentButton = createElement(
+            'button',
+            'rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 hover:border-blue-300 hover:text-blue-700',
+            `Tệp: ${attachment.file_name}`,
+          );
+          attachmentButton.type = 'button';
+          attachmentButton.addEventListener('click', () => {
+            if (this.def.download_action) {
+              void this.submit(this.def.download_action, {
+                row: { id: attachment.id, file_name: attachment.file_name },
+              });
+            }
+          });
+          attachmentRow.appendChild(attachmentButton);
         }
         row.appendChild(attachmentRow);
       }
@@ -216,6 +230,17 @@ export class ChatWorkspace extends BaseComponent {
     });
 
     const composer = createElement('form', 'flex items-end gap-2 border-t border-slate-200 bg-white p-4');
+    const fileInput = createElement('input');
+    fileInput.type = 'file';
+    fileInput.hidden = true;
+    fileInput.setAttribute('aria-label', 'Chọn tệp đính kèm');
+    const attachButton = createElement(
+      'button',
+      'btn btn-secondary min-h-11 flex-none',
+      this.state.selectedFile ? 'Đổi tệp' : 'Đính kèm',
+    );
+    attachButton.type = 'button';
+    attachButton.addEventListener('click', () => fileInput.click());
     const input = createElement('textarea', 'form-input min-h-11 flex-1 resize-none');
     input.rows = 1;
     input.maxLength = 4000;
@@ -224,9 +249,27 @@ export class ChatWorkspace extends BaseComponent {
     input.value = String(this.state.inputValue || '');
     const sendButton = createElement('button', 'btn btn-primary min-h-11 flex-none', 'Gửi');
     sendButton.type = 'submit';
-    composer.append(input, sendButton);
+    composer.append(fileInput, attachButton, input, sendButton);
     main.appendChild(composer);
+    if (this.state.selectedFile) {
+      const selected = createElement(
+        'div',
+        'border-t border-slate-100 bg-white px-4 pb-2 text-xs text-slate-500',
+        `Tệp đã chọn: ${this.state.selectedFile.name}`,
+      );
+      main.insertBefore(selected, composer);
+    }
 
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0] || null;
+      if (file && file.size > 5 * 1024 * 1024) {
+        alert('Tệp đính kèm không được vượt quá 5 MB');
+        fileInput.value = '';
+        return;
+      }
+      this.state.selectedFile = file;
+      this.redraw();
+    });
     input.addEventListener('input', () => {
       this.state.inputValue = input.value;
     });
@@ -239,14 +282,23 @@ export class ChatWorkspace extends BaseComponent {
     composer.addEventListener('submit', async (event) => {
       event.preventDefault();
       const content = input.value.trim();
-      if (!content || !this.def.send_action) return;
+      const file = this.state.selectedFile;
+      if (!content && !file) return;
       input.disabled = true;
+      attachButton.disabled = true;
       sendButton.disabled = true;
       sendButton.textContent = 'Đang gửi...';
       this.state.inputValue = '';
-      await this.submit(this.def.send_action, {
-        row: { id: activeThread.id, content },
-      });
+      this.state.selectedFile = null;
+      if (file && this.def.upload_action) {
+        await this.submit(this.def.upload_action, {
+          row: { id: activeThread.id, content, file },
+        });
+      } else if (this.def.send_action) {
+        await this.submit(this.def.send_action, {
+          row: { id: activeThread.id, content },
+        });
+      }
     });
   }
 }

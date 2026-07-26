@@ -2,7 +2,7 @@ import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { validatePageDefinition } from '@core3/framework/yaml/schema.ts';
 import { join } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { DuckDbRepository } from './services/repository.ts';
 import { JwtAuthProvider } from './services/auth.ts';
 import { ORDER_ACTION_REGISTRY, orderWorkflow } from './services/order-workflow.ts';
@@ -22,6 +22,7 @@ const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
 const PROJECT_ROOT = import.meta.dir;
 const DB_PATH = process.env.TMS_DB_PATH || join(PROJECT_ROOT, 'tms.duckdb');
+const UPLOAD_ROOT = process.env.TMS_UPLOAD_ROOT || join(PROJECT_ROOT, '.data', 'uploads');
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'tms-dev-secret-32chars!!!!'
 );
@@ -524,6 +525,69 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     id: authUser.sub ? String(authUser.sub) : null,
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
   };
+
+  if (pathname === '/api/upload' && method === 'POST') {
+    requirePerm('chat.write');
+    const form = await req.formData();
+    const file = form.get('file');
+    let meta: any = {};
+    try {
+      meta = JSON.parse(String(form.get('meta') || '{}'));
+    } catch {
+      return apiError(400, 'Invalid upload metadata');
+    }
+    if (!(file instanceof File)) return apiError(400, 'file required');
+    if (meta.kind !== 'chat_attachment') return apiError(400, 'Unsupported upload kind');
+    if (typeof meta.thread_id !== 'string' || !meta.thread_id) {
+      return apiError(400, 'thread_id required');
+    }
+    if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
+      return apiError(400, 'Attachment must be between 1 byte and 5 MB');
+    }
+
+    const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, '_').slice(-120) || 'attachment';
+    const storageKey = `${crypto.randomUUID()}-${safeName}`;
+    mkdirSync(UPLOAD_ROOT, { recursive: true });
+    const targetPath = join(UPLOAD_ROOT, storageKey);
+    writeFileSync(targetPath, Buffer.from(await file.arrayBuffer()));
+    try {
+      return json(await repository.sendChatAttachment(
+        meta.thread_id,
+        meta.content,
+        {
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          sizeBytes: file.size,
+          storageKey,
+        },
+        activityActor,
+      ));
+    } catch (error) {
+      try {
+        unlinkSync(targetPath);
+      } catch {}
+      throw error;
+    }
+  }
+
+  const attachmentMatch = pathname.match(/^\/api\/chat\/attachments\/([A-Za-z0-9-]+)$/);
+  if (attachmentMatch && method === 'GET') {
+    requirePerm('chat.read');
+    const attachment = await repository.getChatAttachment(
+      attachmentMatch[1],
+      String(authUser.sub),
+    );
+    if (!attachment) return apiError(404, 'Attachment not found');
+    const file = Bun.file(join(UPLOAD_ROOT, attachment.storage_key));
+    if (!(await file.exists())) return apiError(404, 'Attachment file not found');
+    return new Response(file, {
+      headers: {
+        'Content-Type': attachment.mime_type || 'application/octet-stream',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(attachment.file_name)}`,
+        ...CORS_HEADERS,
+      },
+    });
+  }
 
   // ── GET /api/pages/:id ────────────────────────────────────────────────────
   const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);

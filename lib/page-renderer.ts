@@ -116,6 +116,8 @@ export async function renderPage(config: any, { container = document.body }: { c
         entry._origSetState({ threads: data.data || [] }, true);
       } else if (entry.compType === 'ChatMessages') {
         entry._origSetState({ messages: data.data || [] }, true);
+      } else if (entry.compType === 'ChatAttachments') {
+        entry._origSetState({ attachments: data.data || [] }, true);
       }
     }
   }
@@ -220,6 +222,37 @@ export async function renderPage(config: any, { container = document.body }: { c
           resolveActionParams(actionDef.params, rowCtx),
         );
         break;
+
+      case 'upload': {
+        if (actionDef.kind !== 'chat_attachment' || !(row?.file instanceof File)) {
+          alert('Attachment file required');
+          break;
+        }
+        try {
+          await client.uploadFile(row.file, {
+            kind: actionDef.kind,
+            thread_id: row.id,
+            content: row.content,
+          });
+          if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+        } catch (error) {
+          alert(error instanceof Error ? error.message : 'Upload failed');
+        }
+        break;
+      }
+
+      case 'download': {
+        if (actionDef.kind !== 'chat_attachment' || !row?.id) break;
+        try {
+          await client.downloadFile(
+            `/chat/attachments/${encodeURIComponent(String(row.id))}`,
+            String(row.file_name || 'attachment'),
+          );
+        } catch (error) {
+          alert(error instanceof Error ? error.message : 'Download failed');
+        }
+        break;
+      }
 
       default:
         console.warn(`[page-renderer] Unknown action type: ${actionDef.type}`);
@@ -748,11 +781,13 @@ export async function renderPage(config: any, { container = document.body }: { c
     const { ChatWorkspace } = await import('./components/ChatWorkspace.ts');
     const threadSource = def.source;
     const messageSource = def.message_source;
+    const attachmentSource = def.attachment_source;
     const comp = new ChatWorkspace(
       `chat-workspace-${def.id || threadSource || Date.now()}`,
       {
         threads: dataMap[threadSource]?.data || [],
         messages: dataMap[messageSource]?.data || [],
+        attachments: dataMap[attachmentSource]?.data || [],
         currentUserId: ctx.user.sub,
       },
       def,
@@ -779,6 +814,13 @@ export async function renderPage(config: any, { container = document.body }: { c
       comp,
       def,
       compType: 'ChatMessages',
+      _origSetState,
+    });
+    if (!boundComponents[attachmentSource]) boundComponents[attachmentSource] = [];
+    boundComponents[attachmentSource].push({
+      comp,
+      def,
+      compType: 'ChatAttachments',
       _origSetState,
     });
   }
@@ -1093,6 +1135,11 @@ function collectSources(config: any) {
       if (component.message_source) {
         add(component.message_source, {
           page_size: component.message_page_size,
+        });
+      }
+      if (component.attachment_source) {
+        add(component.attachment_source, {
+          page_size: component.attachment_page_size || 100,
         });
       }
       for (const tab of component.tabs || []) visit(tab.components);

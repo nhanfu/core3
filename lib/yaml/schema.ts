@@ -30,7 +30,7 @@ export type ComponentDefinition = {
 
 export type ActionDefinition = {
   id: string;
-  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server';
+  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download';
   [key: string]: unknown;
 };
 
@@ -105,6 +105,8 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params']),
   server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params']),
+  upload: new Set(['id', 'type', 'kind', 'refresh']),
+  download: new Set(['id', 'type', 'kind']),
 };
 
 const COMPONENT_KEYS = new Map<string, Set<string>>([
@@ -125,9 +127,12 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'id',
     'source',
     'message_source',
+    'attachment_source',
     'page_size',
     'message_page_size',
     'send_action',
+    'upload_action',
+    'download_action',
     'mark_read_action',
     'search_placeholder',
     'empty_threads',
@@ -342,7 +347,8 @@ function validateComponents(
     }
     if (component.type === 'ChatWorkspace') {
       requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
-      for (const key of ['send_action', 'mark_read_action']) {
+      requireSource(component.attachment_source, `${path}.attachment_source`, datasourceIds, options, issues);
+      for (const key of ['send_action', 'upload_action', 'download_action', 'mark_read_action']) {
         requireString(component[key], `${path}.${key}`, issues);
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
           issues.push(`${path}.${key} references unknown action "${component[key]}"`);

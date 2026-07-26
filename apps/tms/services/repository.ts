@@ -363,6 +363,112 @@ export class DuckDbRepository {
     });
   }
 
+  async sendChatAttachment(
+    threadId: string,
+    content: unknown,
+    attachment: {
+      fileName: string;
+      mimeType: string;
+      sizeBytes: number;
+      storageKey: string;
+    },
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    const actorId = String(actor.id || '');
+    const body = String(content || '').trim() || `Đã gửi tệp ${attachment.fileName}`;
+    if (!actorId) throw { status: 401, message: 'Authenticated user required' };
+    if (body.length > 4000) {
+      throw { status: 400, message: 'message content must be 4000 characters or fewer' };
+    }
+
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [thread] = await queryOnConnection(
+          conn,
+          `SELECT t.id, t.title
+           FROM chat_threads t
+           JOIN chat_participants p ON p.thread_id = t.id
+           WHERE t.id = ? AND p.user_id = ?`,
+          [threadId, actorId],
+        );
+        if (!thread) throw { status: 404, message: 'Chat thread not found' };
+
+        const messageId = crypto.randomUUID();
+        const attachmentId = crypto.randomUUID();
+        await runOnConnection(
+          conn,
+          `INSERT INTO chat_messages(id, thread_id, sender_id, body)
+           VALUES(?,?,?,?)`,
+          [messageId, threadId, actorId, body],
+        );
+        await runOnConnection(
+          conn,
+          `INSERT INTO chat_attachments(
+            id, message_id, file_name, mime_type, size_bytes, storage_key
+          ) VALUES(?,?,?,?,?,?)`,
+          [
+            attachmentId,
+            messageId,
+            attachment.fileName,
+            attachment.mimeType,
+            attachment.sizeBytes,
+            attachment.storageKey,
+          ],
+        );
+        await runOnConnection(
+          conn,
+          'UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [threadId],
+        );
+        await runOnConnection(
+          conn,
+          `UPDATE chat_participants
+           SET last_read_at = CURRENT_TIMESTAMP
+           WHERE thread_id = ? AND user_id = ?`,
+          [threadId, actorId],
+        );
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actorId,
+            actor.name,
+            'chat.attachments.upload',
+            'chat_threads',
+            threadId,
+            `Uploaded ${attachment.fileName} in ${thread.title}`,
+          ],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return {
+          id: attachmentId,
+          message_id: messageId,
+          thread_id: threadId,
+          file_name: attachment.fileName,
+        };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async getChatAttachment(attachmentId: string, userId: string): Promise<any | null> {
+    const rows = await this.query(
+      `SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key
+       FROM chat_attachments a
+       JOIN chat_messages m ON m.id = a.message_id
+       JOIN chat_participants p ON p.thread_id = m.thread_id
+       WHERE a.id = ? AND p.user_id = ?`,
+      [attachmentId, userId],
+    );
+    return rows[0] || null;
+  }
+
   async markChatThreadRead(threadId: string, userId: string): Promise<{ ok: true }> {
     const participants = await this.query(
       'SELECT thread_id FROM chat_participants WHERE thread_id = ? AND user_id = ?',

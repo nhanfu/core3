@@ -191,12 +191,20 @@ describe('YAML page schema', () => {
       permission: 'chat.read',
       query: 'SELECT id, thread_id, body FROM chat_messages',
     });
+    page.datasources.push({
+      id: 'attachments',
+      permission: 'chat.read',
+      query: 'SELECT id, message_id FROM chat_attachments',
+    });
     page.toolbar = [];
     page.components = [{
       type: 'ChatWorkspace',
       source: 'orders',
       message_source: 'messages',
+      attachment_source: 'attachments',
       send_action: 'send_message',
+      upload_action: 'upload_attachment',
+      download_action: 'download_attachment',
       mark_read_action: 'mark_read',
     }];
     page.actions = [
@@ -212,6 +220,17 @@ describe('YAML page schema', () => {
         type: 'server',
         action: 'chat.threads.mark_read',
         refresh: ['orders'],
+      },
+      {
+        id: 'upload_attachment',
+        type: 'upload',
+        kind: 'chat_attachment',
+        refresh: ['messages', 'attachments'],
+      },
+      {
+        id: 'download_attachment',
+        type: 'download',
+        kind: 'chat_attachment',
       },
     ];
 

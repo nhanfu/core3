@@ -49,6 +49,17 @@ datasources:
       JOIN chat_participants mine
         ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
       ORDER BY m.created_at
+  - id: chat_attachments
+    single: false
+    permission: chat.read
+    query: |
+      SELECT a.id, a.message_id, m.thread_id, a.file_name, a.mime_type,
+        CAST(a.size_bytes AS DOUBLE) AS size_bytes
+      FROM chat_attachments a
+      JOIN chat_messages m ON m.id = a.message_id
+      JOIN chat_participants mine
+        ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
+      ORDER BY a.created_at
 
 toolbar:
   - { id: new_thread_btn, label: '+ Cuộc trò chuyện', variant: primary, permission: chat.write, action: create_thread }
@@ -57,9 +68,12 @@ components:
   - type: ChatWorkspace
     source: chat_threads
     message_source: chat_messages
+    attachment_source: chat_attachments
     page_size: 50
     message_page_size: 100
     send_action: send_message
+    upload_action: upload_attachment
+    download_action: download_attachment
     mark_read_action: mark_thread_read
     search_placeholder: Tìm cuộc trò chuyện...
     empty_threads: Chưa có cuộc trò chuyện
@@ -83,3 +97,10 @@ actions:
     type: server
     action: chat.threads.mark_read
     refresh: [chat_threads]
+  - id: upload_attachment
+    type: upload
+    kind: chat_attachment
+    refresh: [chat_threads, chat_messages, chat_attachments]
+  - id: download_attachment
+    type: download
+    kind: chat_attachment

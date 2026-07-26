@@ -29,8 +29,15 @@ function createWorkspace() {
         is_own: false,
       },
     ],
+    attachments: [{
+      id: 'attachment-1',
+      message_id: 'message-1',
+      file_name: 'proof.pdf',
+    }],
   }, {
     send_action: 'send_message',
+    upload_action: 'upload_attachment',
+    download_action: 'download_attachment',
     mark_read_action: 'mark_read',
     search_placeholder: 'Search threads',
   });
@@ -69,6 +76,28 @@ describe('ChatWorkspace', () => {
 
     expect(submit).toHaveBeenCalledWith('send_message', {
       row: { id: 'thread-1', content: 'Persistent message' },
+    });
+  });
+
+  it('submits selected files and exposes persisted attachments', async () => {
+    const { container, submit } = createWorkspace();
+    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const file = new File(['proof'], 'proof.txt', { type: 'text/plain' });
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    const refreshedForm = container.querySelector<HTMLFormElement>('form')!;
+    refreshedForm.dispatchEvent(new SubmitEvent('submit', { bubbles: true, cancelable: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(submit).toHaveBeenCalledWith('upload_attachment', {
+      row: { id: 'thread-1', content: '', file },
+    });
+
+    const download = [...container.querySelectorAll<HTMLButtonElement>('button')]
+      .find((button) => button.textContent === 'Tệp: proof.pdf')!;
+    download.click();
+    expect(submit).toHaveBeenCalledWith('download_attachment', {
+      row: { id: 'attachment-1', file_name: 'proof.pdf' },
     });
   });
 });
