@@ -44,6 +44,15 @@ async function expectActionRejected(action: string, payload: Record<string, unkn
   }
 }
 
+async function expectActionSuccess(action: string, payload: Record<string, unknown>) {
+  const response = await fetch(`${baseUrl}/api/actions/${action}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(`${action}: expected success, got ${response.status}`);
+}
+
 // These records are consumed only on a disposable freshly seeded database.
 const checks = [
   ['orders.submit_for_approval', 'order-01', 'Pending Approval'],
@@ -93,6 +102,10 @@ const validationRejections = [
   ['chat.messages.send', { id: 'chat-thread-ops-south', content: '' }],
 ] as const;
 for (const [action, payload] of validationRejections) await expectActionRejected(action, payload);
+await expectActionSuccess('system.approval_steps.move_down', { id: 'sys-03', step_id: 'flow-step-01' });
+await expectActionSuccess('system.approval_steps.move_up', { id: 'sys-03', step_id: 'flow-step-01' });
+await expectActionSuccess('system.print_blocks.move_down', { id: 'sys-02', block_id: 'tpl-block-01' });
+await expectActionSuccess('system.print_blocks.move_up', { id: 'sys-02', block_id: 'tpl-block-01' });
 const auditCode = `AUDIT-${Date.now()}`;
 const patchRequest = async (body: Record<string, unknown>, expectedStatus: number) => {
   const response = await fetch(`${baseUrl}/api/patch`, {
@@ -241,4 +254,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 area_hierarchy_rejections=2 ledger_hierarchy_rejections=1 accounting_link_rejections=1 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 reorder_roundtrips=2 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 area_hierarchy_rejections=2 ledger_hierarchy_rejections=1 accounting_link_rejections=1 failures=0`);

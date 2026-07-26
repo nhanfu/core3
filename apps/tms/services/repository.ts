@@ -1016,8 +1016,10 @@ export class DuckDbRepository {
           const order = operation === 'move_up' ? 'DESC' : 'ASC';
           const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM approval_flow_steps WHERE flow_id = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [flowId, current.sequence]);
           if (neighbor) {
-            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
+            const [temporary] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM approval_flow_steps WHERE flow_id = ?', [flowId]);
+            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [temporary.sequence, current.id]);
             await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [current.sequence, neighbor.id]);
+            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
           }
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, operation === 'move_up' ? 'Đưa bước lên' : 'Đưa bước xuống']);
         }
@@ -1104,8 +1106,10 @@ export class DuckDbRepository {
           const order = operation === 'move_up' ? 'DESC' : 'ASC';
           const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM print_template_blocks WHERE template_id = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [templateId, current.sequence]);
           if (neighbor) {
-            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
+            const [temporary] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM print_template_blocks WHERE template_id = ?', [templateId]);
+            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [temporary.sequence, current.id]);
             await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [current.sequence, neighbor.id]);
+            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
           }
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, operation === 'move_up' ? 'Đưa khối lên' : 'Đưa khối xuống']);
         }
