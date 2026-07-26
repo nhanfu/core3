@@ -47,7 +47,7 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/login',
+  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/login',
 ]);
 
 const MIME = {
@@ -127,6 +127,17 @@ async function initDb(): Promise<void> {
       WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
       WHEN 'Box Truck' THEN 5000 ELSE 0 END
     WHERE capacity_kg IS NULL OR capacity_kg = 0;
+
+    INSERT INTO permissions(id, role_id, permission_key)
+    SELECT 'perm-adm-13', id, 'crm.read'
+    FROM roles
+    WHERE name = 'admin'
+      AND NOT EXISTS (SELECT 1 FROM permissions WHERE id = 'perm-adm-13');
+    INSERT INTO permissions(id, role_id, permission_key)
+    SELECT 'perm-adm-14', id, 'crm.write'
+    FROM roles
+    WHERE name = 'admin'
+      AND NOT EXISTS (SELECT 1 FROM permissions WHERE id = 'perm-adm-14');
   `);
 
   // Seed only if roles table is empty
@@ -141,6 +152,7 @@ async function initDb(): Promise<void> {
 const SOURCE_FILES = [
   'pages/dashboard.yaml',
   'pages/vehicles.yaml',
+  'pages/customers.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
@@ -183,6 +195,11 @@ const TABLE_REGISTRY = {
   drivers:      { permission: 'drivers.write',     timestamps: true  },
   trips:        { permission: 'trips.write',        timestamps: true  },
   maintenance:  { permission: 'maintenance.write',  timestamps: true  },
+  customers:    {
+    permission: 'crm.write',
+    timestamps: true,
+    fields: ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status'],
+  },
   branches:     { permission: 'settings.write',     timestamps: true  },
   users:        { permission: 'settings.write',     timestamps: true  },
   translations: { permission: 'settings.write',     timestamps: false },
@@ -245,6 +262,9 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const tbl = TABLE_REGISTRY[table as keyof typeof TABLE_REGISTRY];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);
+    if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
+      return apiError(400, 'Invalid field for this resource');
+    }
 
     // ── insert ──────────────────────────────────────────────────────────────
     if (action === 'insert') {

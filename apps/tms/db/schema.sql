@@ -50,6 +50,21 @@ CREATE TABLE IF NOT EXISTS drivers (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS customers (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  tax_code VARCHAR,
+  phone VARCHAR,
+  email VARCHAR,
+  stage VARCHAR DEFAULT 'Lead' CHECK (stage IN ('Lead', 'Contacting', 'Customer')),
+  owner_name VARCHAR,
+  visibility VARCHAR DEFAULT 'Public' CHECK (visibility IN ('Public', 'Private')),
+  status VARCHAR DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS trucks (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   plate VARCHAR NOT NULL UNIQUE,

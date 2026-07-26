@@ -25,7 +25,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-09', 'role-admin', 'reports.read'),
 ('perm-adm-10', 'role-admin', 'reports.financials'),
 ('perm-adm-11', 'role-admin', 'settings.read'),
-('perm-adm-12', 'role-admin', 'settings.write');
+('perm-adm-12', 'role-admin', 'settings.write'),
+('perm-adm-13', 'role-admin', 'crm.read'),
+('perm-adm-14', 'role-admin', 'crm.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -56,6 +58,15 @@ INSERT INTO users (id, email, name, password_hash, preferred_lang) VALUES
 ('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en'),
 ('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi'),
 ('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en');
+
+-- ── Customers ──────────────────────────────────────────────────────────────
+INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name, visibility, status) VALUES
+('customer-01', 'KH001', 'Công ty CP Nhựa Bình Minh', '0312234578', '028-3810-1234', 'logistics@binhminh.vn', 'Customer', 'Lê Hoàng Nam', 'Public', 'Active'),
+('customer-02', 'KH002', 'Công ty CP Xuất nhập khẩu Sài Gòn Logistics', '0302234568', '028-3822-4567', 'ops@sglogistics.vn', 'Customer', 'Phạm Thị Thu Hà', 'Private', 'Active'),
+('customer-03', 'KH003', 'Công ty TNHH Thương mại Minh Phát', '0301234567', '028-3930-9898', 'contact@minhphat.vn', 'Contacting', 'Lê Hoàng Nam', 'Private', 'Active'),
+('customer-04', 'KH004', 'Công ty TNHH Giày da Pou Yuen', '0309234575', '0274-388-0101', 'shipping@pouyuen.vn', 'Contacting', 'Vũ Minh Quân', 'Public', 'Active'),
+('customer-05', 'KH005', 'Công ty CP Dầu thực vật Tường An', '0326234592', '028-3822-4545', 'procurement@tuongan.vn', 'Lead', 'Bùi Thị Kim Chi', 'Public', 'Active'),
+('customer-06', 'KH006', 'Công ty TNHH Hóa chất Đông Á', '0311234577', '028-3772-6464', 'sale@hoachatdonga.vn', 'Lead', 'Hoàng Việt Anh', 'Private', 'Inactive');
 
 -- ── User Roles ────────────────────────────────────────────────────────────────
 INSERT INTO user_roles (user_id, role_id) VALUES
