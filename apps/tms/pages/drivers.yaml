@@ -29,6 +29,10 @@ datasources:
       WHERE (:status IS NULL OR d.status = :status)
         AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.license_number ILIKE '%' || :q || '%' OR d.phone ILIKE '%' || :q || '%')
       ORDER BY d.name
+  - id: driver_vehicle_lookup
+    single: false
+    permission: drivers.read
+    query: "SELECT id AS value, plate || ' - ' || model AS label FROM trucks ORDER BY plate"
 
 toolbar:
   - id: add_driver_btn
@@ -104,7 +108,7 @@ actions:
       - { field: email, label: Email, type: text }
       - { field: license_number, label: Số giấy phép, type: text, required: true }
       - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
-      - { field: assigned_truck_id, label: Mã HT phương tiện, type: text }
+      - { field: assigned_truck_id, label: Phương tiện phụ trách, type: select, options_source: driver_vehicle_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive], default: Active }
   - id: edit_driver
     type: form
@@ -119,7 +123,7 @@ actions:
       - { field: email, label: Email, type: text }
       - { field: license_number, label: Số giấy phép, type: text, required: true }
       - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
-      - { field: assigned_truck_id, label: Mã HT phương tiện, type: text }
+      - { field: assigned_truck_id, label: Phương tiện phụ trách, type: select, options_source: driver_vehicle_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive] }
   - id: delete_driver
     type: delete

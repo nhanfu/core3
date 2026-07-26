@@ -26,6 +26,10 @@ datasources:
       WHERE (:status IS NULL OR t.status = :status)
         AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR t.model ILIKE '%' || :q || '%' OR t.type ILIKE '%' || :q || '%')
       ORDER BY t.created_at DESC, t.plate
+  - id: vehicle_branch_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM branches ORDER BY name"
 
 toolbar:
   - id: add_vehicle_btn
@@ -119,7 +123,7 @@ actions:
       - { field: plate, label: Biển số / số hiệu, type: text, required: true }
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
       - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
-      - { field: branch_id, label: Mã HT chi nhánh, type: text }
+      - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service], default: Active }
       - { field: capacity_kg, label: Tải trọng (kg), type: number, default: 0 }
       - { field: notes, label: Ghi chú, type: textarea }
@@ -134,7 +138,7 @@ actions:
       - { field: plate, label: Biển số / số hiệu, type: text, required: true }
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
       - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
-      - { field: branch_id, label: Mã HT chi nhánh, type: text }
+      - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service] }
       - { field: capacity_kg, label: Tải trọng (kg), type: number }
       - { field: notes, label: Ghi chú, type: textarea }
