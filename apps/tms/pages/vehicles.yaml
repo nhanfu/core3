@@ -48,6 +48,7 @@ components:
     source: vehicles
     filter_field: status
     show_counts: false
+    variant: toggle
     tabs:
       - { id: Active, label: Hoạt động }
       - { id: 'Out of Service', label: Ngưng hoạt động }

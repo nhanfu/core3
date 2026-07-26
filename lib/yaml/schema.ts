@@ -122,7 +122,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help'])],
-  ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs', 'show_counts'])],
+  ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs', 'show_counts', 'variant'])],
   ['TabGroup', new Set(['type', 'tabs'])],
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],

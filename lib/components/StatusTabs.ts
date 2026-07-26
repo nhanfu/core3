@@ -11,6 +11,7 @@ export type StatusTab = {
 
 export type StatusTabsOptions = {
   showCounts?: boolean;
+  variant?: 'tabs' | 'toggle';
 };
 
 /**
@@ -21,17 +22,21 @@ export type StatusTabsOptions = {
 export class StatusTabs extends BaseComponent {
   tabs: StatusTab[];
   showCounts: boolean;
+  variant: 'tabs' | 'toggle';
 
   constructor(id: string, state: { active?: string } = {}, tabs: StatusTab[] = [], options: StatusTabsOptions = {}) {
     super(id, state);
     this.tabs = tabs;
     this.showCounts = options.showCounts !== false;
+    this.variant = options.variant || 'tabs';
   }
 
   draw(container: HTMLElement) {
     const active = this.state.active ?? this.tabs[0]?.id;
     const tabList = document.createElement('div');
-    tabList.className = 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4';
+    tabList.className = this.variant === 'toggle'
+      ? 'flex min-w-max items-center gap-2 bg-white'
+      : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4';
     tabList.setAttribute('role', 'tablist');
     tabList.setAttribute('aria-label', 'Status filters');
 
@@ -41,10 +46,17 @@ export class StatusTabs extends BaseComponent {
       button.type = 'button';
       button.dataset.statusTab = tab.id;
       button.className = [
-        'inline-flex h-11 items-center gap-2 border-b-2 px-0.5 text-sm font-medium transition-colors',
+        'inline-flex items-center gap-2 text-sm font-medium transition-colors',
+        this.variant === 'toggle'
+          ? 'h-10 rounded-md border px-3'
+          : 'h-11 border-b-2 px-0.5',
         selected
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900',
+          ? this.variant === 'toggle'
+            ? 'border-blue-300 bg-blue-50 text-blue-700'
+            : 'border-blue-600 text-blue-600'
+          : this.variant === 'toggle'
+            ? 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+            : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900',
         tab.disabled ? 'cursor-not-allowed opacity-50' : '',
       ].filter(Boolean).join(' ');
       button.textContent = tab.label;

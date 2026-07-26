@@ -8,12 +8,13 @@ describe('StatusTabs', () => {
       'vehicle-status',
       { active: 'Active' },
       [{ id: 'Active', label: 'Hoạt động', count: 8 }, { id: 'Out of Service', label: 'Ngưng hoạt động', count: 2 }],
-      { showCounts: false },
+      { showCounts: false, variant: 'toggle' },
     ).mount(container);
 
     expect(container.querySelectorAll('[role="tab"]')).toHaveLength(2);
     expect(container.textContent).toContain('Hoạt động');
     expect(container.textContent).not.toContain('8');
     expect(container.textContent).not.toContain('2');
+    expect(container.querySelector('[data-status-tab="Active"]')?.className).toContain('rounded-md');
   });
 });

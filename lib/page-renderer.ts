@@ -947,7 +947,7 @@ export async function renderPage(config: any, { container = document.body }: { c
       `status-tabs-${def.source || def.id || Date.now()}`,
       { active: def.active || tabs[0]?.id },
       tabs,
-      { showCounts: def.show_counts !== false },
+      { showCounts: def.show_counts !== false, variant: def.variant || 'tabs' },
     );
     comp._onAction = async (_actionId: string, params: any) => {
       const sourceId = def.source;
