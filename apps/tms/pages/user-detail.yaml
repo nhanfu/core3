@@ -40,11 +40,13 @@ components:
   - type: DataGrid
     source: user_roles
     page_size: 30
+    column_chooser: true
     row_key: role_id
     columns: [{ field: role_name, label: Vai trò }, { field: status_label, label: Trạng thái, type: StatusChip, colors: { 'Đã gán': green, 'Chưa gán': neutral } }, { field: actions, label: '', sortable: false, actions: [{ id: grant_user_role, label: Gán vai trò, variant: primary, show_if: "!row.enabled && user.permissions.includes('settings.write')" }, { id: revoke_user_role, label: Thu hồi, variant: danger, show_if: "row.enabled && user.permissions.includes('settings.write')" }] }]
   - type: DataGrid
     source: user_permissions
     page_size: 50
+    column_chooser: true
     row_key: permission_key
     columns: [{ field: permission_key, label: Quyền hiệu lực }]
   - type: ApprovalTimeline

@@ -36,6 +36,7 @@ components:
   - type: DataGrid
     source: role_permissions
     page_size: 50
+    column_chooser: true
     row_key: permission_key
     columns:
       - { field: permission_key, label: Quyền }
