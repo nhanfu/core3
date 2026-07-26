@@ -398,10 +398,10 @@ export async function renderPage(config: any, { container = document.body }: { c
             optEl.textContent = String(opt);
             el.appendChild(optEl);
           }
-        } else if (fieldDef.type === 'textarea') {
+        } else if (fieldDef.type === 'textarea' || fieldDef.type === 'richtext') {
           el = document.createElement('textarea');
-          el.className = 'form-input';
-          el.style.cssText = 'width:100%;height:72px;box-sizing:border-box;resize:vertical;';
+          el.className = fieldDef.type === 'richtext' ? 'form-input template-richtext' : 'form-input';
+          el.style.cssText = `width:100%;height:${fieldDef.type === 'richtext' ? '132px' : '72px'};box-sizing:border-box;resize:vertical;`;
         } else {
           el = document.createElement('input');
           el.type = fieldDef.type || 'text';
@@ -424,6 +424,29 @@ export async function renderPage(config: any, { container = document.body }: { c
         el.value = String(initialValue ?? '');
 
         group.appendChild(el);
+        if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
+          const tokenBar = document.createElement('div');
+          tokenBar.className = 'template-token-picker';
+          tokenBar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;';
+          for (const token of fieldDef.tokens) {
+            const tokenButton = document.createElement('button');
+            tokenButton.type = 'button';
+            tokenButton.className = 'template-token';
+            tokenButton.textContent = `{{${token}}}`;
+            tokenButton.style.cssText = 'border:1px solid #c7d2fe;border-radius:999px;background:#eef2ff;color:#3730a3;padding:3px 8px;font-size:12px;cursor:pointer;';
+            tokenButton.addEventListener('click', () => {
+              const start = el.selectionStart ?? el.value.length;
+              const end = el.selectionEnd ?? start;
+              const insertion = `{{${token}}}`;
+              el.value = `${el.value.slice(0, start)}${insertion}${el.value.slice(end)}`;
+              el.selectionStart = el.selectionEnd = start + insertion.length;
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.focus();
+            });
+            tokenBar.appendChild(tokenButton);
+          }
+          group.appendChild(tokenBar);
+        }
         dialog.appendChild(group);
         inputs[fieldDef.field] = { el, fieldDef };
       }

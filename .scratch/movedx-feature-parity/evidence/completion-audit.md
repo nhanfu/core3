@@ -13,7 +13,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database workflow audit completes 29 named transitions across every order, quote, financial-document, payroll, and trip workflow transition shape.
-- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 149/149.
+- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 150/150.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
 - Dashboard task cards now expose validated, keyboard-accessible navigation to the owning order, trip, accounting, and HR routes, preserving status and unassigned-trip filters.
@@ -45,6 +45,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Dashboard chart slots sit side by side at desktop width and wrap naturally at tablet width without document overflow.
 - Trip-status chart uses the shared pie variant to match the supplied reference composition.
 - Approval-flow and print-template detail grids now support declarative drag-and-drop row ordering backed by their existing server-authorized move actions; the DataGrid reorder hook is covered by a focused component test.
+- Print-template block forms now use a shared rich-text field with declarative token-picker buttons for order number, customer, route, and line tokens.
 
 ## Not Proven
 

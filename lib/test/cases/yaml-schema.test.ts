@@ -123,6 +123,7 @@ describe('YAML page schema', () => {
   it('accepts document detail components and named server forms', () => {
     const page = validPage() as any;
     page.toolbar = [];
+    page.components = [];
     page.components = [
       {
         type: 'DocumentSummary',
@@ -159,6 +160,27 @@ describe('YAML page schema', () => {
       params: { id: '{state.id}' },
       refresh: ['orders'],
       fields: [{ field: 'description', label: 'Description', type: 'text', required: true }],
+    }];
+
+    expect(() => validatePageDefinition(page)).not.toThrow();
+  });
+
+  it('accepts rich-text fields with declarative template tokens', () => {
+    const page = validPage() as any;
+    page.toolbar = [];
+    page.components = [];
+    page.actions = [{
+      id: 'edit_template',
+      type: 'form',
+      title: 'Edit template',
+      table: 'print_template_blocks',
+      operation: 'update',
+      fields: [{
+        field: 'content',
+        label: 'Content',
+        type: 'richtext',
+        tokens: ['order.order_number', 'order.route'],
+      }],
     }];
 
     expect(() => validatePageDefinition(page)).not.toThrow();
