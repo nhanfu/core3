@@ -1536,6 +1536,14 @@ export class DuckDbRepository {
     return { ...rows[0], roles: rows[0].roles_csv ? rows[0].roles_csv.split(',').filter(Boolean) : [] };
   }
 
+  async getCompanyProfile(): Promise<any> {
+    const rows = await this.query(
+      `SELECT id, name, short_name, tax_code, address, phone, email, website
+       FROM company_profiles ORDER BY created_at ASC LIMIT 1`,
+    );
+    return rows[0] || null;
+  }
+
   async getUserPasswordHash(userId: any): Promise<string | null> {
     const rows = await this.query('SELECT password_hash FROM users WHERE id = ?', [userId]);
     return rows[0]?.password_hash || null;

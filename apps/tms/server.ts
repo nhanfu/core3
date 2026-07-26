@@ -1089,6 +1089,12 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     return json(profile);
   }
 
+  if (pathname === '/api/v1/company' && method === 'GET') {
+    const company = await repository.getCompanyProfile();
+    if (!company) return apiError(404, 'Company profile not found');
+    return json(company);
+  }
+
   if (pathname === '/api/v1/profile' && method === 'PATCH') {
     const body = await req.json();
     const allowed = ['name', 'preferred_lang', 'avatar_url'];

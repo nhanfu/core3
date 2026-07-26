@@ -246,7 +246,14 @@ async function bootstrap() {
   await i18n.setLang(lang);
 
   // Mount app shell
-  _shell = new AppShell('app-shell', { user: _user });
+  let company: any = null;
+  try {
+    const companyRes = await fetch('/api/v1/company', { headers: { Authorization: `Bearer ${token}` } });
+    if (companyRes.ok) company = await companyRes.json();
+  } catch {
+    // The shell can still render if a deployment has no company profile yet.
+  }
+  _shell = new AppShell('app-shell', { user: _user, company });
   _shell.mount(app);
 
   // Register navigator so page-renderer navigate() calls use SPA pushState

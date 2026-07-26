@@ -250,6 +250,10 @@ export class AppShell extends BaseComponent {
 
     // Global command search mirrors the reference header search while keeping
     // navigation declarative in this route registry.
+    const tenantContext = html.take(header).div.className('tenant-context').getContext();
+    html.take(tenantContext).span.className('tenant-context-name').text(
+      this.state.company?.short_name || this.state.company?.name || 'TMS',
+    );
     const globalSearch = html.take(header).div.className('global-search').getContext();
     const globalSearchIcon = html.take(globalSearch).span.className('global-search-icon').getContext();
     appendIcon(globalSearchIcon, 'search');
