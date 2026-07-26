@@ -79,7 +79,9 @@ for (const route of targets) {
     sortable?.click();
     const nextPage = [...(outlet?.querySelectorAll('button') || [])].find((item) => item.textContent?.trim() === '›' && !(item as HTMLButtonElement).disabled) as HTMLButtonElement | undefined;
     nextPage?.click();
-    return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor), sortable: Boolean(sortable), pagination: Boolean(nextPage) };
+    const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
+    exportButton?.click();
+    return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor), sortable: Boolean(sortable), pagination: Boolean(nextPage), export: Boolean(exportButton) };
   })()`);
   await new Promise((resolve) => setTimeout(resolve, 250));
   const state = await evaluate(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`);
