@@ -249,12 +249,69 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   } catch (error) {
     uiMutationFailures.push(`orders UI mutation: ${error instanceof Error ? error.message : String(error)}`);
   }
+  try {
+    await evaluateWithTimeout("location.hash = '#/catalog/units'", 'units CRUD mutation navigation');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const mutationState = await evaluateWithTimeout(`(async () => {
+      const code = 'UI-AUDIT-' + Date.now();
+      const previousConfirm = window.confirm;
+      const previousAlert = window.alert;
+      window.confirm = () => true;
+      window.alert = () => {};
+      const findRow = () => [...document.querySelectorAll('#outlet tbody tr')].find((row) => row.textContent?.includes(code));
+      const openForm = async (button: Element) => {
+        (button as HTMLElement).click();
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        return document.querySelector('div[style*="z-index:1000"]');
+      };
+      const saveForm = async (dialog: Element, values: Record<string, string>) => {
+        const fields = [...dialog.querySelectorAll('input, textarea, select')] as Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+        for (const field of fields) {
+          const key = (field.previousElementSibling?.textContent || '').replace(/\\s*\\*$/, '').trim();
+          if (values[key] !== undefined) {
+            const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value')?.set;
+            setter?.call(field, values[key]);
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+        [...dialog.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Save')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 900));
+      };
+      const addButton = [...document.querySelectorAll('#outlet button')].find((button) => /^\\+ Thêm đơn vị/.test(button.textContent?.trim() || ''));
+      if (!addButton) throw new Error('units add button not found');
+      const addDialog = await openForm(addButton);
+      if (!addDialog) throw new Error('units add dialog did not open');
+      await saveForm(addDialog, { 'Mã': code, 'Đơn vị tính': 'UI audit unit' });
+      const createdRow = findRow();
+      if (!createdRow) throw new Error('units create did not persist a row');
+      const editButton = createdRow.querySelector('button[data-grid-row-action^="edit_unit:"]');
+      if (!editButton) throw new Error('units edit action not found');
+      const editDialog = await openForm(editButton);
+      if (!editDialog) throw new Error('units edit dialog did not open');
+      await saveForm(editDialog, { 'Đơn vị tính': 'UI audit unit updated' });
+      const editedRow = findRow();
+      if (!editedRow?.textContent?.includes('UI audit unit updated')) throw new Error('units edit did not persist');
+      const deleteButton = editedRow.querySelector('button[data-grid-row-action^="delete_unit:"]');
+      if (!deleteButton) throw new Error('units delete action not found');
+      (deleteButton as HTMLElement).click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const deleted = !findRow();
+      window.confirm = previousConfirm;
+      window.alert = previousAlert;
+      return { created: true, edited: true, deleted };
+    })()`, 'units CRUD mutation');
+    if (!mutationState?.created || !mutationState?.edited || !mutationState?.deleted) uiMutationFailures.push('units UI CRUD did not persist create/edit/delete');
+    if (consoleErrors.length) uiMutationFailures.push(`units UI mutation console errors: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    uiMutationFailures.push(`units UI CRUD mutation: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 failures.push(...uiMutationFailures);
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 1 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 2 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
