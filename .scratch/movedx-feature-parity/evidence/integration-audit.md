@@ -14,6 +14,12 @@ For browser route smoke coverage, with the local headless CDP page running:
 TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run audit:ui
 ```
 
+For named workflow transitions on a disposable fresh database:
+
+```sh
+TMS_BASE_URL=http://localhost:3341 bun run audit:workflows
+```
+
 ## Results
 
 - 68 YAML page definitions loaded through `GET /api/pages/:id` with the admin permission set.
@@ -22,6 +28,7 @@ TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run aud
 - 0 datasource SQL/runtime failures.
 - 51 registered SPA routes mounted in a real browser with 0 route or console-error failures; shared column chooser, status-tab, search, safe editor-open/dismiss, sortable-header, next-page, and export controls were exercised when present.
 - 51 registered SPA paths also return the SPA shell on direct navigation (no deep-link 404s).
+- 13 representative named workflow transitions completed with zero failures across orders, quotes, financial documents, payroll, and trips.
 
 The command discovers all 68 YAML files, fetches each page through the public
 page endpoint, derives null bind parameters from each server-owned query, and

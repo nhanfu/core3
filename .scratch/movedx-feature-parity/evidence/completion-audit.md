@@ -10,12 +10,13 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path serves the shell on direct navigation; deep-link 404s are covered by the route audit.
+- A disposable fresh-database workflow audit completes 13 representative named transitions across orders, quotes, financial documents, payroll, and trip cancellation.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 137/137.
 
 ## Not Proven
 
 - The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
-- The PRD asks for automated interaction coverage for every control. The browser audit now exercises shared column choosers, status tabs, search inputs, safe editor open/dismiss behavior, sortable headers, next-page controls, and exports when present; it does not yet cover every workflow transition.
+- The PRD asks for automated interaction coverage for every control. The browser audit exercises shared list controls, and the workflow audit covers 13 representative named transitions; exhaustive per-control interaction coverage is still not proven.
 
 ## Current commands
 
