@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 147 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 148 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Sixteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, company settings, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
@@ -65,6 +65,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Department create/edit forms now use a branch lookup instead of free-form branch IDs.
 - Quote create/edit forms now use a customer lookup preserving legacy quote customer values.
 - Shift assignment and timesheet forms now use employee and shift lookup selectors instead of raw IDs.
+- Payroll create/edit forms now use an employee lookup selector instead of a raw employee ID.
 - User create/edit forms now support native multi-select role assignment backed by the role lookup datasource.
 - Order create/edit forms now use a customer lookup sourced from active CRM customers instead of free-form names.
 - Vehicle forms now use a branch lookup, and driver forms use a vehicle lookup, replacing raw internal IDs.

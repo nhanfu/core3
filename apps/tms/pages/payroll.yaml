@@ -38,6 +38,10 @@ datasources:
         AND (:to_date IS NULL OR p.pay_month < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR p.code ILIKE '%' || :q || '%' OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%')
       ORDER BY p.pay_month DESC, p.created_at DESC
+  - id: payroll_employee_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
 
 toolbar:
   - id: add_payroll_btn
@@ -106,7 +110,7 @@ actions:
     refresh: [payroll]
     fields:
       - { field: code, label: Số bảng lương, type: text, required: true }
-      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: employee_id, label: Nhân viên, type: select, options_source: payroll_employee_lookup, required: true }
       - { field: pay_month, label: Tháng lương, type: date, required: true }
       - { field: base_salary, label: Lương cơ bản, type: number, default: 0 }
       - { field: allowance, label: Phụ cấp, type: number, default: 0 }
@@ -121,7 +125,7 @@ actions:
     refresh: [payroll]
     fields:
       - { field: code, label: Số bảng lương, type: text, required: true }
-      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: employee_id, label: Nhân viên, type: select, options_source: payroll_employee_lookup, required: true }
       - { field: pay_month, label: Tháng lương, type: date, required: true }
       - { field: base_salary, label: Lương cơ bản, type: number }
       - { field: allowance, label: Phụ cấp, type: number }
