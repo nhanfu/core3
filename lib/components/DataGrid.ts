@@ -13,6 +13,15 @@ export interface DataGridColumn {
   sortable?: boolean;
   /** Formats a value without giving the formatter direct DOM access. */
   format?: (value: unknown, row: DataGridRow) => string;
+  /** Renders a semantic cell while preserving DataGrid ownership of the row. */
+  render?: (container: HTMLElement, value: unknown, row: DataGridRow) => void;
+  rowActions?: DataGridRowAction[];
+}
+
+export interface DataGridRowAction {
+  id: string;
+  label: string;
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
 }
 
 export interface DataGridAction {
@@ -30,6 +39,8 @@ export interface DataGridOptions {
   emptyState?: { title?: string; description?: string };
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
+  /** The renderer owns fetching; DataGrid only requests a different page. */
+  onPageChange?: (page: number) => void;
 }
 
 /**
@@ -86,6 +97,11 @@ export class DataGrid extends BaseComponent {
     this.setState({ selectedIds });
     this.options.onSelectionChange?.(selectedIds);
     if (typeof this.state.onSelectionChange === 'function') this.state.onSelectionChange(selectedIds);
+  }
+
+  private setPage(page: number) {
+    this.options.onPageChange?.(page);
+    if (typeof this.state.onPageChange === 'function') this.state.onPageChange(page);
   }
 
   private actionClass(variant?: DataGridAction['variant']) {
@@ -185,20 +201,52 @@ export class DataGrid extends BaseComponent {
         for (const column of this.columns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
-          const text = column.format ? column.format(value, row) : value == null || value === '' ? '—' : String(value);
-          html.take(tr).tdata.className(`px-4 py-3 text-sm text-gray-700 ${align}`).text(text);
+          const cell = html.take(tr).tdata.className(`px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
+          if (column.rowActions?.length) {
+            const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
+            for (const action of column.rowActions) {
+              const button = html.take(actionBar).button
+                .className(`rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
+                .dataAttr('grid-row-action', `${action.id}:${id}`)
+                .text(action.label)
+                .getContext();
+              button.addEventListener('click', () => this.submit(action.id, { row }));
+            }
+          } else if (column.render) {
+            column.render(cell, value, row);
+          } else {
+            const text = column.format ? column.format(value, row) : value == null || value === '' ? '—' : String(value);
+            cell.textContent = text;
+          }
         }
       });
     }
 
     if (meta.total != null) {
-      const summary = html.take(root).div.className('border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
+      const summary = html.take(root).div.className('flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
       const total = Number(meta.total);
       const page = Number(meta.page || 1);
       const pageSize = Number(meta.pageSize || rows.length || 1);
       const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
       const end = Math.min(page * pageSize, total);
-      html.take(summary).text(`${start}–${end} of ${total}`);
+      html.take(summary).span.text(`${start}–${end} of ${total}`);
+
+      const pages = Math.max(1, Math.ceil(total / pageSize));
+      if (pages > 1) {
+        const controls = html.take(summary).div.className('inline-flex items-center gap-1').getContext();
+        const addButton = (label: string, targetPage: number, disabled: boolean, ariaLabel: string) => {
+          const button = html.take(controls).button
+            .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50')
+            .text(label)
+            .getContext() as HTMLButtonElement;
+          button.setAttribute('aria-label', ariaLabel);
+          button.disabled = disabled;
+          if (!disabled) button.addEventListener('click', () => this.setPage(targetPage));
+        };
+        addButton('‹', page - 1, page <= 1, 'Previous page');
+        html.take(controls).span.className('px-2 text-xs text-gray-500').text(`${page} / ${pages}`);
+        addButton('›', page + 1, page >= pages, 'Next page');
+      }
     }
   }
 }

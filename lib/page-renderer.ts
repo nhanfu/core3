@@ -110,6 +110,24 @@ export async function renderPage(config: any, { container = document.body }: { c
     }
   }
 
+  async function applySourceFilters(sourceId: string, values: Record<string, unknown> = {}) {
+    const normalized = Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [key, value === '' ? null : value])
+    );
+    filterState[sourceId] = normalized;
+    paginationState[sourceId] = {
+      skip: 0,
+      top: paginationState[sourceId]?.top || 25,
+      page: 1,
+    };
+    try {
+      const data = await refetchSource(sourceId, normalized, 0, paginationState[sourceId].top);
+      updateBoundComponents(sourceId, data);
+    } catch (err) {
+      console.error('[page-renderer] filter fetch error:', err);
+    }
+  }
+
   // ── Action handler ────────────────────────────────────────────────────────
 
   async function handleAction(actionDef: any, row: any) {
@@ -493,12 +511,42 @@ export async function renderPage(config: any, { container = document.body }: { c
     const { DataGrid } = await import('./components/DataGrid.ts');
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+    const pageSize = def.page_size || 25;
     const columns = (def.columns || []).map((column: any, index: number) => ({
       id: column.id || column.field || `column-${index}`,
       field: column.field,
       label: column.label || '',
       align: column.align,
       sortable: column.sortable !== false,
+      rowActions: column.actions,
+      render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
+        if (column.type === 'StatusChip') {
+          const chip = document.createElement('span');
+          const tone = column.colors?.[String(value)] || column.tone || 'neutral';
+          chip.className = `data-grid-status data-grid-status-${tone}`;
+          chip.textContent = value == null || value === '' ? '—' : String(value);
+          cell.appendChild(chip);
+          return;
+        }
+        if (column.type === 'PrimaryEntityCell') {
+          const primary = document.createElement('div');
+          primary.className = 'data-grid-primary';
+          primary.textContent = value == null || value === '' ? '—' : String(value);
+          cell.appendChild(primary);
+          if (column.secondary) {
+            const secondary = document.createElement('div');
+            secondary.className = 'data-grid-secondary';
+            secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
+            cell.appendChild(secondary);
+          }
+          return;
+        }
+        if (column.type === 'WeightCell') {
+          cell.textContent = value == null || value === '' ? '—' : `${Number(value).toLocaleString()} ${column.unit || 'kg'}`;
+          return;
+        }
+        cell.textContent = value == null || value === '' ? '—' : String(value);
+      } : undefined,
     }));
     const comp = new DataGrid(
       `data-grid-${sourceId || def.id || Date.now()}`,
@@ -510,13 +558,27 @@ export async function renderPage(config: any, { container = document.body }: { c
         emptyState: def.empty_state,
       },
       columns,
-      { rowKey: def.row_key || 'id', selectable: !!def.selectable }
+      {
+        rowKey: def.row_key || 'id',
+        selectable: !!def.selectable,
+        onPageChange: async (page: number) => {
+          const nextPage = Math.max(1, page);
+          const newSkip = (nextPage - 1) * pageSize;
+          paginationState[sourceId] = { skip: newSkip, top: pageSize, page: nextPage };
+          try {
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, pageSize);
+            updateBoundComponents(sourceId, data);
+          } catch (err) {
+            console.error('[page-renderer] pagination fetch error:', err);
+          }
+        },
+      }
     );
 
     const _origSetState = comp.setState.bind(comp);
     comp._onAction = async (actionId: string, params: any) => {
       const actionDef = (config.actions || []).find(action => action.id === actionId);
-      if (actionDef) await handleAction(actionDef, params || {});
+      if (actionDef) await handleAction(actionDef, params?.row || params || {});
     };
 
     const slot = document.createElement('div');
@@ -528,6 +590,50 @@ export async function renderPage(config: any, { container = document.body }: { c
       if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
       boundComponents[sourceId].push({ comp, def, compType: 'DataGrid', _origSetState });
     }
+  }
+
+  async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
+    const { StatusTabs } = await import('./components/StatusTabs.ts');
+    const comp = new StatusTabs(
+      `status-tabs-${def.source || def.id || Date.now()}`,
+      { active: def.active || def.tabs?.[0]?.id },
+      def.tabs || []
+    );
+    comp._onAction = async (_actionId: string, params: any) => {
+      const sourceId = def.source;
+      if (!sourceId) return;
+      const field = def.filter_field || 'status';
+      const next = { ...(filterState[sourceId] || {}), [field]: params?.status };
+      await applySourceFilters(sourceId, next);
+    };
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '16px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+  }
+
+  async function renderListToolbar(def: any, targetContainer: HTMLElement) {
+    const { ListToolbar } = await import('./components/ListToolbar.ts');
+    const comp = new ListToolbar(
+      `list-toolbar-${def.source || def.id || Date.now()}`,
+      { query: filterState[def.source || '']?.[def.filter_field || 'q'] || '' },
+      { search: def.search, actions: def.actions }
+    );
+    comp._onAction = async (actionId: string, params: any) => {
+      const sourceId = def.source;
+      if (!sourceId) return;
+      if (actionId === 'search' || actionId === def.search?.action) {
+        const field = def.filter_field || 'q';
+        await applySourceFilters(sourceId, { ...(filterState[sourceId] || {}), [field]: params?.query || '' });
+        return;
+      }
+      const actionDef = (config.actions || []).find(action => action.id === actionId);
+      if (actionDef) await handleAction(actionDef, params || {});
+    };
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '16px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
   }
 
   function chartState(def: any, sourceResult: any) {
@@ -639,6 +745,12 @@ export async function renderPage(config: any, { container = document.body }: { c
       case 'DataGrid':
         await renderDataGrid(def, targetContainer);
         break;
+      case 'StatusTabs':
+        await renderStatusTabs(def, targetContainer);
+        break;
+      case 'ListToolbar':
+        await renderListToolbar(def, targetContainer);
+        break;
       case 'TabGroup':
         await renderTabGroupDef(def, targetContainer);
         break;
@@ -727,24 +839,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         return;
       }
 
-      filterState[filterSourceId] = values;
-      paginationState[filterSourceId] = {
-        skip: 0,
-        top: paginationState[filterSourceId]?.top || 25,
-        page: 1,
-      };
-
-      try {
-        const data = await refetchSource(
-          filterSourceId,
-          values,
-          0,
-          paginationState[filterSourceId].top
-        );
-        updateBoundComponents(filterSourceId, data);
-      } catch (err) {
-        console.error('[page-renderer] filter fetch error:', err);
-      }
+      await applySourceFilters(filterSourceId, values);
     };
 
     filterBar.mount(filterSlot);
@@ -761,7 +856,14 @@ export async function renderPage(config: any, { container = document.body }: { c
 function collectSources(config: any) {
   const sources = new Map<string, any>();
   const add = (id: string, def: any = {}) => {
-    if (!id || sources.has(id)) return;
+    if (!id) return;
+    const existing = sources.get(id);
+    if (existing) {
+      // A toolbar/tabs component may reference the source before its grid.
+      // Keep the grid's page size rather than freezing the default at 25.
+      if (def.page_size) existing.page_size = def.page_size;
+      return;
+    }
     sources.set(id, { id, single: def.type === 'StatRow', page_size: def.page_size });
   };
   const visit = (components: any[] = []) => {

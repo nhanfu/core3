@@ -78,6 +78,23 @@ describe('DataGrid', () => {
     expect(cell.textContent).toContain('Create an order to begin.');
   });
 
+  it('lets a semantic column renderer own its cell contents', () => {
+    const grid = new DataGrid('vehicles', { rows: [{ id: 'v1', status: 'Ready' }] }, [
+      {
+        field: 'status',
+        label: 'Status',
+        render: (cell, value) => {
+          const badge = document.createElement('span');
+          badge.className = 'status-chip ready';
+          badge.textContent = String(value);
+          cell.appendChild(badge);
+        },
+      },
+    ]);
+    const container = mount(grid);
+    expect(container.querySelector('.status-chip.ready')?.textContent).toBe('Ready');
+  });
+
   it('passes the selected rows to default actions', async () => {
     const grid = new DataGrid('orders', {
       rows,
@@ -91,5 +108,31 @@ describe('DataGrid', () => {
     container.querySelector<HTMLButtonElement>('[data-grid-action="export"]')!.click();
     await Promise.resolve();
     expect(submit).toHaveBeenCalledWith('export', { format: 'xlsx', selectedIds: ['a'] });
+  });
+
+  it('emits an individual row with a row action', async () => {
+    const grid = new DataGrid('vehicles', { rows }, [
+      { field: 'code', label: 'Code' },
+      { field: 'actions', label: '', rowActions: [{ id: 'edit', label: 'Edit', variant: 'ghost' }] },
+    ]);
+    const submit = vi.fn().mockResolvedValue({ ok: true });
+    grid._transport = { submit };
+    const container = mount(grid);
+    container.querySelector<HTMLButtonElement>('[data-grid-row-action="edit:b"]')!.click();
+    await Promise.resolve();
+    expect(submit).toHaveBeenCalledWith('edit', { row: rows[0] });
+  });
+
+  it('requests the next server page without slicing client-side rows', () => {
+    const onPageChange = vi.fn();
+    const grid = new DataGrid('orders', {
+      rows,
+      meta: { total: 12, page: 1, pageSize: 2 },
+    }, columns, { onPageChange });
+    const container = mount(grid);
+
+    container.querySelector<HTMLButtonElement>('[aria-label="Next page"]')!.click();
+    expect(onPageChange).toHaveBeenCalledWith(2);
+    expect(grid.state.rows).toEqual(rows);
   });
 });

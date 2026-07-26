@@ -12,7 +12,7 @@ let _shell: AppShell | null = null;
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/login':        () => import('./pages/login.ts'),
   '/dashboard':    'dashboard',
-  '/vehicles':     'fleet',
+  '/vehicles':     'vehicles',
   '/drivers':      'drivers',
   '/orders':       () => import('./pages/placeholder.ts'),
   '/chat':         () => import('./pages/placeholder.ts'),

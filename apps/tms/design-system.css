@@ -433,6 +433,28 @@ body {
   line-height: 1.6;
 }
 
+/* ── Reusable resource-grid cells ── */
+.data-grid-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 9px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.data-grid-status-green { background: #ecfdf3; color: #027a48; }
+.data-grid-status-blue { background: #eff8ff; color: #175cd3; }
+.data-grid-status-amber { background: #fffaeb; color: #b54708; }
+.data-grid-status-red { background: #fef3f2; color: #b42318; }
+.data-grid-status-neutral { background: #f2f4f7; color: #475467; }
+
+.data-grid-primary { color: var(--color-text); font-weight: 600; }
+.data-grid-secondary { margin-top: 2px; color: var(--color-text-muted); font-size: 0.75rem; }
+
 /* ── Notification panel ── */
 .notif-panel {
   position: absolute;

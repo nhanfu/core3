@@ -8,12 +8,13 @@ import { JwtAuthProvider } from './services/auth.ts';
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
 const PROJECT_ROOT = import.meta.dir;
+const DB_PATH = process.env.TMS_DB_PATH || join(PROJECT_ROOT, 'tms.duckdb');
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'tms-dev-secret-32chars!!!!'
 );
 
 // ── DuckDB setup ─────────────────────────────────────────────────────────────
-const db = new duckdb.Database(join(import.meta.dir, 'tms.duckdb'));
+const db = new duckdb.Database(DB_PATH);
 const services = createFramework({
   repository: new DuckDbRepository(db),
   auth: new JwtAuthProvider(JWT_SECRET),
@@ -118,6 +119,15 @@ async function initDb(): Promise<void> {
 
   // Run schema (idempotent — IF NOT EXISTS)
   await repository.runStatements(schemaSQL);
+  // This additive migration keeps existing local development databases aligned
+  // with the seed schema without resetting user-entered truck records.
+  await repository.runStatements(`
+    ALTER TABLE trucks ADD COLUMN IF NOT EXISTS capacity_kg INTEGER DEFAULT 0;
+    UPDATE trucks SET capacity_kg = CASE type
+      WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
+      WHEN 'Box Truck' THEN 5000 ELSE 0 END
+    WHERE capacity_kg IS NULL OR capacity_kg = 0;
+  `);
 
   // Seed only if roles table is empty
   if (await repository.countRows('roles') === 0) {
@@ -130,6 +140,7 @@ async function initDb(): Promise<void> {
 // Queries are loaded from the page YAML files, never accepted from API requests.
 const SOURCE_FILES = [
   'pages/dashboard.yaml',
+  'pages/vehicles.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',

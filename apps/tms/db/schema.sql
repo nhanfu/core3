@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS trucks (
   model VARCHAR NOT NULL,
   type VARCHAR NOT NULL,
   status VARCHAR DEFAULT 'Active',
+  capacity_kg INTEGER DEFAULT 0,
   mileage INTEGER DEFAULT 0,
   driver_id VARCHAR,
   last_service DATE,

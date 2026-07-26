@@ -77,19 +77,19 @@ INSERT INTO drivers (id, name, phone, email, license_number, license_expiry, sta
 ('driver-10', 'Vo Thi Lan',      '+84-901-001-010', 'vo.lan@tms.local',       'VN-DL-001010', '2025-09-05', 'Suspended', 'truck-10');
 
 -- ── Trucks ────────────────────────────────────────────────────────────────────
-INSERT INTO trucks (id, plate, model, type, status, mileage, driver_id, last_service, next_service, branch_id, notes) VALUES
-('truck-01', 'CA-101-ABC', 'Freightliner Cascadia', 'Semi',         'Active',         125400, 'driver-01', '2026-07-01', '2026-08-15', 'branch-hcm', NULL),
-('truck-02', 'CA-102-DEF', 'Kenworth T680',         'Semi',         'Maintenance',     98200, 'driver-02', '2026-06-15', '2026-07-15', 'branch-hcm', 'Oil leak repair in progress'),
-('truck-03', 'TX-201-GHI', 'Peterbilt 579',         'Semi',         'Active',         210500, 'driver-03', '2026-07-10', '2026-08-10', 'branch-hn',  NULL),
-('truck-04', 'FL-301-JKL', 'Isuzu NPR',             'Box Truck',    'Active',          45800, 'driver-04', '2026-06-20', '2026-08-20', 'branch-dn',  NULL),
-('truck-05', 'TX-202-MNO', 'International LT',      'Semi',         'Out of Service', 320100, 'driver-05', '2026-05-01', '2026-07-01', 'branch-hn',  'Engine failure, awaiting parts'),
-('truck-06', 'CA-103-PQR', 'Ford Transit',           'Box Truck',    'Active',          28400, NULL,        '2026-07-05', '2026-09-05', 'branch-hcm', NULL),
-('truck-07', 'IL-401-STU', 'Mack Anthem',            'Flatbed',      'Active',         185200, 'driver-07', '2026-06-28', '2026-07-28', 'branch-hcm', NULL),
-('truck-08', 'WA-501-VWX', 'Volvo VNL',             'Semi',         'Maintenance',    156700, 'driver-08', '2026-07-08', '2026-08-08', 'branch-dn',  'Scheduled brake overhaul'),
-('truck-09', 'CA-104-YZA', 'Kenworth T880',          'Flatbed',      'Active',         234800, 'driver-09', '2026-06-30', '2026-07-30', 'branch-hn',  NULL),
-('truck-10', 'FL-302-BCD', 'Freightliner M2',        'Box Truck',    'Active',          67200, 'driver-10', '2026-07-12', '2026-09-12', 'branch-dn',  NULL),
-('truck-11', 'IL-402-EFG', 'Western Star 5700',      'Semi',         'Out of Service', 412000, NULL,        '2026-04-15', '2026-06-15', 'branch-hn',  'Decommissioned — awaiting disposal'),
-('truck-12', 'WA-502-HIJ', 'Peterbilt 567',          'Flatbed',      'Active',         142300, NULL,        '2026-07-03', '2026-08-03', 'branch-hcm', NULL);
+INSERT INTO trucks (id, plate, model, type, status, capacity_kg, mileage, driver_id, last_service, next_service, branch_id, notes) VALUES
+('truck-01', 'CA-101-ABC', 'Freightliner Cascadia', 'Semi',         'Active',         20000, 125400, 'driver-01', '2026-07-01', '2026-08-15', 'branch-hcm', NULL),
+('truck-02', 'CA-102-DEF', 'Kenworth T680',         'Semi',         'Maintenance',    20000,  98200, 'driver-02', '2026-06-15', '2026-07-15', 'branch-hcm', 'Oil leak repair in progress'),
+('truck-03', 'TX-201-GHI', 'Peterbilt 579',         'Semi',         'Active',         22000, 210500, 'driver-03', '2026-07-10', '2026-08-10', 'branch-hn',  NULL),
+('truck-04', 'FL-301-JKL', 'Isuzu NPR',             'Box Truck',    'Active',          5000,  45800, 'driver-04', '2026-06-20', '2026-08-20', 'branch-dn',  NULL),
+('truck-05', 'TX-202-MNO', 'International LT',      'Semi',         'Out of Service', 20000, 320100, 'driver-05', '2026-05-01', '2026-07-01', 'branch-hn',  'Engine failure, awaiting parts'),
+('truck-06', 'CA-103-PQR', 'Ford Transit',           'Box Truck',    'Active',          1500,  28400, NULL,        '2026-07-05', '2026-09-05', 'branch-hcm', NULL),
+('truck-07', 'IL-401-STU', 'Mack Anthem',            'Flatbed',      'Active',         18000, 185200, 'driver-07', '2026-06-28', '2026-07-28', 'branch-hcm', NULL),
+('truck-08', 'WA-501-VWX', 'Volvo VNL',             'Semi',         'Maintenance',    22000, 156700, 'driver-08', '2026-07-08', '2026-08-08', 'branch-dn',  'Scheduled brake overhaul'),
+('truck-09', 'CA-104-YZA', 'Kenworth T880',          'Flatbed',      'Active',         17000, 234800, 'driver-09', '2026-06-30', '2026-07-30', 'branch-hn',  NULL),
+('truck-10', 'FL-302-BCD', 'Freightliner M2',        'Box Truck',    'Active',          6500,  67200, 'driver-10', '2026-07-12', '2026-09-12', 'branch-dn',  NULL),
+('truck-11', 'IL-402-EFG', 'Western Star 5700',      'Semi',         'Out of Service', 20000, 412000, NULL,        '2026-04-15', '2026-06-15', 'branch-hn',  'Decommissioned — awaiting disposal'),
+('truck-12', 'WA-502-HIJ', 'Peterbilt 567',          'Flatbed',      'Active',         18000, 142300, NULL,        '2026-07-03', '2026-08-03', 'branch-hcm', NULL);
 
 -- ── Trips ────────────────────────────────────────────────────────────────────
 INSERT INTO trips (id, trip_number, truck_id, driver_id, origin, destination, status, departure_time, arrival_time, distance_km, cargo_type, cargo_weight, notes) VALUES

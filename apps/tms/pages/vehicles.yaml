@@ -1,0 +1,131 @@
+title: Phương tiện
+
+page:
+  id: vehicles
+  auth:
+    require: [fleet.read]
+
+datasources:
+  - id: vehicles
+    single: false
+    permission: fleet.read
+    query: |
+      SELECT t.id, t.plate, t.model, t.type AS vehicle_type,
+        b.name AS owner_name, t.capacity_kg,
+        CASE t.status
+          WHEN 'Active' THEN 'Sẵn sàng'
+          WHEN 'Maintenance' THEN 'Bảo dưỡng'
+          WHEN 'Out of Service' THEN 'Ngưng hoạt động'
+          ELSE t.status
+        END AS availability,
+        'Admin User' AS created_by, t.created_at
+      FROM trucks t
+      LEFT JOIN branches b ON b.id = t.branch_id
+      WHERE (:status IS NULL OR t.status = :status)
+        AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR t.model ILIKE '%' || :q || '%' OR t.type ILIKE '%' || :q || '%')
+      ORDER BY t.created_at DESC, t.plate
+
+toolbar:
+  - id: add_vehicle_btn
+    label: '+ Thêm phương tiện'
+    variant: primary
+    permission: fleet.write
+    action: add_vehicle
+
+components:
+  - type: ListToolbar
+    source: vehicles
+    filter_field: q
+    search:
+      label: Tìm kiếm phương tiện
+      placeholder: 'Tìm theo biển số / số hiệu, tên, hãng...'
+  - type: StatusTabs
+    source: vehicles
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Sẵn sàng }
+      - { id: Maintenance, label: Bảo dưỡng }
+      - { id: 'Out of Service', label: Ngưng hoạt động }
+  - type: DataGrid
+    source: vehicles
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state:
+      title: Không có phương tiện
+      description: Thử thay đổi bộ lọc hoặc tạo phương tiện mới.
+    columns:
+      - field: id
+        label: Mã HT
+        sortable: true
+      - field: plate
+        label: Biển số / số hiệu
+        type: PrimaryEntityCell
+        secondary: model
+      - field: vehicle_type
+        label: Loại phương tiện
+      - field: model
+        label: Hãng
+      - field: owner_name
+        label: Nhà xe
+      - field: capacity_kg
+        label: Tải trọng
+        type: WeightCell
+        align: right
+      - field: availability
+        label: Trạng thái
+        type: StatusChip
+        colors:
+          Sẵn sàng: green
+          Bảo dưỡng: amber
+          Ngưng hoạt động: red
+      - field: created_by
+        label: Người tạo
+      - field: created_at
+        label: Ngày giờ tạo
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - id: edit_vehicle
+            label: Sửa
+            variant: ghost
+          - id: delete_vehicle
+            label: Xóa
+            variant: danger
+
+actions:
+  - id: add_vehicle
+    type: form
+    title: Thêm phương tiện
+    table: trucks
+    operation: insert
+    refresh: [vehicles]
+    fields:
+      - { field: plate, label: Biển số / số hiệu, type: text, required: true }
+      - { field: model, label: Hãng / mẫu xe, type: text, required: true }
+      - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service], default: Active }
+      - { field: capacity_kg, label: Tải trọng (kg), type: number, default: 0 }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: edit_vehicle
+    type: form
+    title: Cập nhật phương tiện
+    table: trucks
+    operation: update
+    prefill: row
+    refresh: [vehicles]
+    fields:
+      - { field: plate, label: Biển số / số hiệu, type: text, required: true }
+      - { field: model, label: Hãng / mẫu xe, type: text, required: true }
+      - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service] }
+      - { field: capacity_kg, label: Tải trọng (kg), type: number }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: delete_vehicle
+    type: delete
+    confirm: 'Xóa phương tiện {{row.plate}}?'
+    table: trucks
+    refresh: [vehicles]
