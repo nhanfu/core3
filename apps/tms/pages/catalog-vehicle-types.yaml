@@ -25,6 +25,7 @@ components:
     source: vehicle_types
     filter_field: q
     search: { label: Tìm kiếm loại xe, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+    actions: [{ id: vehicle_types.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: vehicle_types
     filter_field: status

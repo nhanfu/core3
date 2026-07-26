@@ -25,6 +25,7 @@ components:
     source: units
     filter_field: q
     search: { label: Tìm kiếm đơn vị tính, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+    actions: [{ id: units.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: units
     filter_field: status

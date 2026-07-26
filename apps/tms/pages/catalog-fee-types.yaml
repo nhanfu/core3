@@ -25,6 +25,7 @@ components:
     source: fee_types
     filter_field: q
     search: { label: Tìm kiếm loại phí, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+    actions: [{ id: fee_types.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: fee_types
     filter_field: status

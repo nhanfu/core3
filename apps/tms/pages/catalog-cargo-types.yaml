@@ -25,6 +25,7 @@ components:
     source: cargo_types
     filter_field: q
     search: { label: Tìm kiếm loại hàng hóa, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+    actions: [{ id: cargo_types.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: cargo_types
     filter_field: status

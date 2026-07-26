@@ -25,6 +25,7 @@ components:
     source: container_types
     filter_field: q
     search: { label: Tìm kiếm loại container, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+    actions: [{ id: container_types.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: container_types
     filter_field: status

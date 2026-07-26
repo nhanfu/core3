@@ -25,6 +25,7 @@ components:
     source: currencies
     filter_field: q
     search: { label: Tìm kiếm tiền tệ, placeholder: 'Tìm mã, tên hoặc ký hiệu...' }
+    actions: [{ id: currencies.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: currencies
     filter_field: status
