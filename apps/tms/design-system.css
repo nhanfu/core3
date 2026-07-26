@@ -293,6 +293,59 @@ body {
   color: var(--color-text);
 }
 
+.global-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(360px, 34vw);
+  height: 36px;
+  margin-right: 20px;
+  padding: 0 11px;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.global-search:focus-within {
+  border-color: var(--color-primary-mid);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.global-search-icon { display: inline-flex; width: 15px; height: 15px; }
+.global-search-icon .svg-icon { display: contents; }
+.global-search-icon svg { width: 15px; height: 15px; }
+
+.global-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.global-search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: none;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.global-search-results.open { display: grid; gap: 2px; }
+.global-search-result { padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-text); text-align: left; cursor: pointer; font: inherit; }
+.global-search-result:hover, .global-search-result:focus-visible { background: var(--color-primary-light); color: var(--color-primary); outline: 0; }
+.global-search-empty { padding: 9px 10px; color: var(--color-text-muted); font-size: 0.8rem; }
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -960,6 +1013,8 @@ body {
 }
 
 @media (max-width: 1100px) {
+  .global-search { width: min(280px, 30vw); margin-right: 12px; }
+
   .coming-soon {
     gap: 36px;
     min-height: 430px;
@@ -972,6 +1027,8 @@ body {
 }
 
 @media (max-width: 760px) {
+  .global-search { display: none; }
+
   .coming-soon {
     grid-template-columns: 1fr;
     gap: 32px;

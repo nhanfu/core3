@@ -105,6 +105,11 @@ const NAV_GROUPS: NavGroup[] = [
   ] },
 ];
 
+const GLOBAL_SEARCH_ITEMS = [
+  DASHBOARD,
+  ...NAV_GROUPS.flatMap(group => group.items),
+];
+
 export class AppShell extends BaseComponent {
   _navEls: Map<string, HTMLElement>;
   _groupEls: Map<string, HTMLElement>;
@@ -234,6 +239,51 @@ export class AppShell extends BaseComponent {
 
     // Header
     const header = html.take(main).header.className('app-header').getContext();
+
+    // Global command search mirrors the reference header search while keeping
+    // navigation declarative in this route registry.
+    const globalSearch = html.take(header).div.className('global-search').getContext();
+    const globalSearchIcon = html.take(globalSearch).span.className('global-search-icon').getContext();
+    appendIcon(globalSearchIcon, 'search');
+    const globalSearchInput = html.take(globalSearch).input
+      .type('search')
+      .attr('placeholder', 'Tìm nhanh...')
+      .attr('aria-label', 'Tìm nhanh')
+      .getContext();
+    const globalSearchResults = html.take(globalSearch).div.className('global-search-results').getContext();
+    const renderGlobalSearch = () => {
+      const query = globalSearchInput.value.trim().toLocaleLowerCase('vi');
+      globalSearchResults.innerHTML = '';
+      if (!query) {
+        globalSearchResults.classList.remove('open');
+        return;
+      }
+      const matches = GLOBAL_SEARCH_ITEMS.filter(item => item.label.toLocaleLowerCase('vi').includes(query)).slice(0, 8);
+      for (const item of matches) {
+        const result = html.take(globalSearchResults).button
+          .className('global-search-result')
+          .attr('type', 'button')
+          .text(item.label)
+          .event('click', () => {
+            globalSearchInput.value = '';
+            globalSearchResults.classList.remove('open');
+            void navigate(item.path);
+          })
+          .getContext();
+        result.dataset.path = item.path;
+      }
+      if (matches.length === 0) {
+        html.take(globalSearchResults).div.className('global-search-empty').text('Không tìm thấy trang').getContext();
+      }
+      globalSearchResults.classList.add('open');
+    };
+    globalSearchInput.addEventListener('input', renderGlobalSearch);
+    globalSearchInput.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        globalSearchInput.value = '';
+        globalSearchResults.classList.remove('open');
+      }
+    });
 
     // Header left — page title
     this._headerTitle = html.take(header).div.className('header-title').text('TMS').getContext();
