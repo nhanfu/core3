@@ -167,6 +167,12 @@ async function initDb(): Promise<void> {
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-adm-18', 'role-admin', 'catalog.write'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'catalog.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-19', 'role-admin', 'accounting.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-20', 'role-admin', 'accounting.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.write');
   `);
 }
 
@@ -187,6 +193,14 @@ const SOURCE_FILES = [
   'pages/catalog-cargo-types.yaml',
   'pages/catalog-fee-types.yaml',
   'pages/catalog-currencies.yaml',
+  'pages/accounting-debit-notes.yaml',
+  'pages/accounting-debit-note-summary.yaml',
+  'pages/accounting-payment-requests.yaml',
+  'pages/accounting-payment-request-summary.yaml',
+  'pages/accounting-advances.yaml',
+  'pages/accounting-settlements.yaml',
+  'pages/accounting-invoice-templates.yaml',
+  'pages/accounting-ledger-accounts.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
@@ -245,6 +259,12 @@ const TABLE_REGISTRY = {
     timestamps: true,
     fields: ['code', 'name', 'description', 'symbol', 'decimals', 'status', 'sort_order'],
     scopes: ['container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency'],
+  },
+  accounting_entries: {
+    permission: 'accounting.write',
+    timestamps: true,
+    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'sort_order'],
+    scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
   branches:     { permission: 'settings.write',     timestamps: true  },
   users:        { permission: 'settings.write',     timestamps: true  },
@@ -315,8 +335,8 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       return apiError(400, 'Invalid resource scope');
     }
 
-    if (table === 'master_data' && action !== 'insert') {
-      const existing = await repository.query('SELECT kind FROM master_data WHERE id = ?', [id]);
+    if ('scopes' in tbl && action !== 'insert') {
+      const existing = await repository.query(`SELECT kind FROM ${table} WHERE id = ?`, [id]);
       if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
     }
 
@@ -328,7 +348,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
 
       // Generic insert
       if (changes.length === 0) return apiError(400, 'No fields to insert');
-      const scopedChanges = table === 'master_data'
+      const scopedChanges = 'scopes' in tbl
         ? [{ field: 'kind', value: scope }, ...changes]
         : changes;
       return json(await repository.createRecord(table, scopedChanges), 201);

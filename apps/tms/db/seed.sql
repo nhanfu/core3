@@ -31,7 +31,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-15', 'role-admin', 'orders.read'),
 ('perm-adm-16', 'role-admin', 'orders.write'),
 ('perm-adm-17', 'role-admin', 'catalog.read'),
-('perm-adm-18', 'role-admin', 'catalog.write');
+('perm-adm-18', 'role-admin', 'catalog.write'),
+('perm-adm-19', 'role-admin', 'accounting.read'),
+('perm-adm-20', 'role-admin', 'accounting.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -170,6 +172,24 @@ INSERT INTO master_data (id, kind, code, name, description, symbol, decimals, st
 ('catalog-currency-01', 'currency', 'VND', 'Việt Nam đồng', 'Đồng tiền hạch toán mặc định', '₫', 0, 'Active', 10),
 ('catalog-currency-02', 'currency', 'USD', 'Đô la Mỹ', 'United States dollar', '$', 2, 'Active', 20),
 ('catalog-currency-03', 'currency', 'EUR', 'Euro', 'European euro', '€', 2, 'Active', 30);
+
+-- ── Accounting records ──────────────────────────────────────────────────────
+INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, currency, status, document_date, due_date, description, sort_order) VALUES
+('acct-debit-01', 'debit_note', 'GBN-0001', 'Cước vận chuyển tháng 7', 'Công ty CP Đại Phát', 32600000, 'VND', 'Draft', '2026-07-24', '2026-08-05', 'Đối soát tuyến Hà Nội - Đà Nẵng', 10),
+('acct-debit-02', 'debit_note', 'GBN-0002', 'Phụ phí giao hàng', 'Công ty TNHH Minh Long', 8400000, 'VND', 'Pending Approval', '2026-07-23', '2026-08-03', 'Phụ phí giao hàng Nha Trang', 20),
+('acct-debit-03', 'debit_note', 'GBN-0003', 'Cước container', 'Công ty CP Xuất nhập khẩu Sao', 17400000, 'VND', 'Approved', '2026-07-20', '2026-07-30', 'Cước vận chuyển container', 30),
+('acct-pay-01', 'payment_request', 'DNC-0001', 'Thanh toán dầu diesel', 'Petrolimex Sài Gòn', 12800000, 'VND', 'Pending Approval', '2026-07-25', '2026-07-28', 'Chi phí nhiên liệu tuần 30', 10),
+('acct-pay-02', 'payment_request', 'DNC-0002', 'Thanh toán phí cầu đường', 'VETC', 6300000, 'VND', 'Approved', '2026-07-23', '2026-07-27', 'Phí ETC tháng 7', 20),
+('acct-pay-03', 'payment_request', 'DNC-0003', 'Thanh toán sửa chữa xe', 'Garage Hưng Phát', 9200000, 'VND', 'Draft', '2026-07-22', '2026-07-29', 'Bảo dưỡng xe đầu kéo', 30),
+('acct-advance-01', 'advance', 'TU-0001', 'Tạm ứng công tác', 'Nguyễn Văn An', 5000000, 'VND', 'Approved', '2026-07-24', '2026-07-31', 'Tạm ứng chuyến công tác Hà Nội', 10),
+('acct-advance-02', 'advance', 'TU-0002', 'Tạm ứng chi phí chuyến', 'Trần Thị Bích', 7500000, 'VND', 'Draft', '2026-07-25', '2026-08-01', 'Chi phí giao hàng liên tỉnh', 20),
+('acct-settle-01', 'settlement', 'HU-0001', 'Hoàn ứng công tác', 'Nguyễn Văn An', 1200000, 'VND', 'Approved', '2026-07-25', NULL, 'Hoàn lại phần tạm ứng chưa sử dụng', 10),
+('acct-settle-02', 'settlement', 'HU-0002', 'Quyết toán chuyến xe', 'Trần Thị Bích', 6800000, 'VND', 'Pending Approval', '2026-07-24', NULL, 'Quyết toán chi phí chuyến xe', 20),
+('acct-invoice-01', 'invoice_template', 'HD-DV', 'Hóa đơn dịch vụ vận chuyển', NULL, 0, 'VND', 'Active', NULL, NULL, 'Mẫu hóa đơn dịch vụ vận tải nội địa', 10),
+('acct-invoice-02', 'invoice_template', 'HD-CN', 'Hóa đơn cước container', NULL, 0, 'VND', 'Active', NULL, NULL, 'Mẫu hóa đơn cho dịch vụ container', 20),
+('acct-ledger-01', 'ledger_account', '111', 'Tiền mặt', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền mặt', 10),
+('acct-ledger-02', 'ledger_account', '112', 'Tiền gửi ngân hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền gửi ngân hàng', 20),
+('acct-ledger-03', 'ledger_account', '131', 'Phải thu khách hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Công nợ phải thu', 30);
 
 -- ── Maintenance ───────────────────────────────────────────────────────────────
 INSERT INTO maintenance (id, truck_id, service_type, status, scheduled_date, completed_date, technician_id, cost, notes) VALUES

@@ -1,0 +1,51 @@
+title: Hệ thống tài khoản
+page: { id: accounting-ledger-accounts, auth: { require: [accounting.read] } }
+datasources:
+  - id: ledger_accounts
+    single: false
+    permission: accounting.read
+    query: |
+      SELECT id, code, name, description, currency, status, sort_order, created_at FROM accounting_entries
+      WHERE kind = 'ledger_account' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY sort_order, code
+toolbar: [{ id: add_ledger_account_btn, label: '+ Thêm tài khoản', variant: primary, permission: accounting.write, action: add_ledger_account }]
+components:
+  - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Tìm kiếm tài khoản, placeholder: 'Tìm số hiệu, tên hoặc diễn giải...' } }
+  - { type: StatusTabs, source: ledger_accounts, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang sử dụng }, { id: Inactive, label: Ngưng sử dụng }] }
+  - type: DataGrid
+    source: ledger_accounts
+    page_size: 20
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có tài khoản kế toán }
+    columns:
+      - { field: code, label: Số hiệu, sortable: true }
+      - { field: name, label: Tên tài khoản, type: PrimaryEntityCell, secondary: description }
+      - { field: currency, label: Tiền tệ }
+      - { field: sort_order, label: Thứ tự, align: right }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
+      - field: actions
+        label: ''
+        sortable: false
+        actions: [{ id: edit_ledger_account, label: Sửa, variant: ghost }, { id: delete_ledger_account, label: Xóa, variant: danger }]
+actions:
+  - id: add_ledger_account
+    type: form
+    title: Thêm tài khoản kế toán
+    table: accounting_entries
+    scope: ledger_account
+    operation: insert
+    refresh: [ledger_accounts]
+    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+  - id: edit_ledger_account
+    type: form
+    title: Cập nhật tài khoản kế toán
+    table: accounting_entries
+    scope: ledger_account
+    operation: update
+    prefill: row
+    refresh: [ledger_accounts]
+    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: currency, label: Tiền tệ, type: text }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+  - { id: delete_ledger_account, type: delete, table: accounting_entries, scope: ledger_account, confirm: 'Xóa tài khoản {{row.code}}?', refresh: [ledger_accounts] }

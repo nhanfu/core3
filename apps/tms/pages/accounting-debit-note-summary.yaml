@@ -1,0 +1,31 @@
+title: Tổng hợp giấy báo nợ
+page: { id: accounting-debit-note-summary, auth: { require: [accounting.read] } }
+datasources:
+  - id: debit_note_summary
+    single: false
+    permission: accounting.read
+    query: |
+      SELECT COALESCE(counterparty, 'Chưa xác định') AS counterparty, status, currency,
+        COUNT(*) AS document_count, SUM(amount) AS total_amount,
+        CAST(MAX(document_date) AS VARCHAR) AS latest_document_date
+      FROM accounting_entries
+      WHERE kind = 'debit_note' AND (:status IS NULL OR status = :status)
+        AND (:q IS NULL OR counterparty ILIKE '%' || :q || '%' OR status ILIKE '%' || :q || '%')
+      GROUP BY counterparty, status, currency
+      ORDER BY total_amount DESC, counterparty
+components:
+  - { type: ListToolbar, source: debit_note_summary, filter_field: q, search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' } }
+  - { type: StatusTabs, source: debit_note_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }] }
+  - type: DataGrid
+    source: debit_note_summary
+    page_size: 20
+    row_key: counterparty
+    empty_state: { title: Không có dữ liệu tổng hợp }
+    columns:
+      - { field: counterparty, label: Đối tác, sortable: true }
+      - { field: status, label: Trạng thái, type: StatusChip, colors: { Draft: neutral, Pending Approval: amber, Approved: green } }
+      - { field: document_count, label: Số chứng từ, align: right }
+      - { field: total_amount, label: Tổng giá trị, align: right }
+      - { field: currency, label: Tiền tệ }
+      - { field: latest_document_date, label: Chứng từ gần nhất }
+actions: []

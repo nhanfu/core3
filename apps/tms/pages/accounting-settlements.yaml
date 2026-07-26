@@ -1,0 +1,52 @@
+title: Hoàn ứng
+page: { id: accounting-settlements, auth: { require: [accounting.read] } }
+datasources:
+  - id: settlements
+    single: false
+    permission: accounting.read
+    query: |
+      SELECT id, code, name, counterparty, amount, currency, status, CAST(document_date AS VARCHAR) AS document_date, description, created_at
+      FROM accounting_entries WHERE kind = 'settlement' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%') ORDER BY document_date DESC, code
+toolbar: [{ id: add_settlement_btn, label: '+ Thêm hoàn ứng', variant: primary, permission: accounting.write, action: add_settlement }]
+components:
+  - { type: ListToolbar, source: settlements, filter_field: q, search: { label: Tìm kiếm hoàn ứng, placeholder: 'Tìm số chứng từ hoặc người hoàn...' } }
+  - { type: StatusTabs, source: settlements, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }] }
+  - type: DataGrid
+    source: settlements
+    page_size: 20
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có hoàn ứng }
+    columns:
+      - { field: code, label: Số chứng từ, sortable: true }
+      - { field: name, label: Nội dung, type: PrimaryEntityCell, secondary: counterparty }
+      - { field: document_date, label: Ngày hoàn ứng }
+      - { field: amount, label: Giá trị, align: right }
+      - { field: currency, label: Tiền tệ }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Draft: neutral, Pending Approval: amber, Approved: green }
+      - field: actions
+        label: ''
+        sortable: false
+        actions: [{ id: edit_settlement, label: Sửa, variant: ghost }, { id: delete_settlement, label: Xóa, variant: danger }]
+actions:
+  - id: add_settlement
+    type: form
+    title: Thêm hoàn ứng
+    table: accounting_entries
+    scope: settlement
+    operation: insert
+    refresh: [settlements]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved], default: Draft }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - id: edit_settlement
+    type: form
+    title: Cập nhật hoàn ứng
+    table: accounting_entries
+    scope: settlement
+    operation: update
+    prefill: row
+    refresh: [settlements]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: amount, label: Giá trị, type: number }, { field: currency, label: Tiền tệ, type: text }, { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved] }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - { id: delete_settlement, type: delete, table: accounting_entries, scope: settlement, confirm: 'Xóa hoàn ứng {{row.code}}?', refresh: [settlements] }

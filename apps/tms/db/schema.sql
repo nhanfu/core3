@@ -148,6 +148,24 @@ CREATE TABLE IF NOT EXISTS master_data (
   UNIQUE(kind, code)
 );
 
+CREATE TABLE IF NOT EXISTS accounting_entries (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind VARCHAR NOT NULL CHECK (kind IN ('debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account')),
+  code VARCHAR NOT NULL,
+  name VARCHAR NOT NULL,
+  counterparty VARCHAR,
+  amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+  currency VARCHAR NOT NULL DEFAULT 'VND',
+  status VARCHAR NOT NULL DEFAULT 'Draft',
+  document_date DATE,
+  due_date DATE,
+  description VARCHAR,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(kind, code)
+);
+
 CREATE TABLE IF NOT EXISTS maintenance (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   truck_id VARCHAR NOT NULL,

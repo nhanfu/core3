@@ -1,0 +1,59 @@
+title: Đề nghị thanh toán
+page: { id: accounting-payment-requests, auth: { require: [accounting.read] } }
+datasources:
+  - id: payment_requests
+    single: false
+    permission: accounting.read
+    query: |
+      SELECT id, code, name, counterparty, amount, currency, status, CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
+      FROM accounting_entries WHERE kind = 'payment_request' AND (:status IS NULL OR status = :status)
+        AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%')
+      ORDER BY document_date DESC, code
+toolbar:
+  - { id: add_payment_request_btn, label: '+ Thêm đề nghị chi', variant: primary, permission: accounting.write, action: add_payment_request }
+components:
+  - { type: ListToolbar, source: payment_requests, filter_field: q, search: { label: Tìm kiếm đề nghị chi, placeholder: 'Tìm số chứng từ hoặc đối tác...' } }
+  - type: StatusTabs
+    source: payment_requests
+    filter_field: status
+    tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }]
+  - type: DataGrid
+    source: payment_requests
+    page_size: 20
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có đề nghị thanh toán }
+    columns:
+      - { field: code, label: Số chứng từ, sortable: true }
+      - { field: name, label: Nội dung, type: PrimaryEntityCell, secondary: counterparty }
+      - { field: document_date, label: Ngày đề nghị }
+      - { field: due_date, label: Hạn thanh toán }
+      - { field: amount, label: Giá trị, align: right }
+      - { field: currency, label: Tiền tệ }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Draft: neutral, Pending Approval: amber, Approved: green }
+      - field: actions
+        label: ''
+        sortable: false
+        actions: [{ id: edit_payment_request, label: Sửa, variant: ghost }, { id: delete_payment_request, label: Xóa, variant: danger }]
+actions:
+  - id: add_payment_request
+    type: form
+    title: Thêm đề nghị thanh toán
+    table: accounting_entries
+    scope: payment_request
+    operation: insert
+    refresh: [payment_requests]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved], default: Draft }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - id: edit_payment_request
+    type: form
+    title: Cập nhật đề nghị thanh toán
+    table: accounting_entries
+    scope: payment_request
+    operation: update
+    prefill: row
+    refresh: [payment_requests]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: amount, label: Giá trị, type: number }, { field: currency, label: Tiền tệ, type: text }, { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved] }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - { id: delete_payment_request, type: delete, table: accounting_entries, scope: payment_request, confirm: 'Xóa đề nghị chi {{row.code}}?', refresh: [payment_requests] }
