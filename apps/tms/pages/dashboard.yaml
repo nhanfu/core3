@@ -44,8 +44,14 @@ datasources:
         (SELECT COUNT(*) FROM drivers WHERE status = 'Active') AS active_drivers,
         (SELECT COUNT(*) FROM containers WHERE status = 'Available') AS available_containers,
         (SELECT COUNT(*) FROM trips WHERE status = 'Completed' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS completed_trips,
+        (SELECT COUNT(*) FROM trips WHERE status = 'Cancelled' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS cancelled_trips,
+        (SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'Completed') / NULLIF(COUNT(*), 0), 1) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS completion_rate,
+        (SELECT ROUND(AVG(date_diff('minute', departure_time, arrival_time)) / 60.0, 1) FROM trips WHERE arrival_time IS NOT NULL AND departure_time IS NOT NULL AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS average_trip_hours,
+        (SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE truck_id IS NULL) / NULLIF(COUNT(*), 0), 1) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS unassigned_rate,
         (SELECT COALESCE(SUM(distance_km), 0) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS total_distance_km,
         (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS revenue_total,
+        (SELECT COUNT(*) FROM orders WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS order_count,
+        (SELECT COUNT(*) FROM customers WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS new_customer_count,
         (SELECT COALESCE(SUM(cost_amount), 0) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS cost_total,
         (SELECT COALESCE(SUM(profit_amount), 0) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS profit_total,
         (SELECT COUNT(*) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS quote_count,
@@ -91,57 +97,59 @@ components:
     actions: [{ id: dashboard_dispatch_queue.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: dashboard_kpis
-    stats:
-      - label: Tổng số chuyến
-        field: total_trips
-        color: blue
-      - label: Đang vận chuyển
-        field: in_transit
-        color: indigo
-      - label: Chờ điều phối
-        field: scheduled
-        color: amber
-      - label: Bảo dưỡng quá hạn
-        field: overdue_maintenance
-        color: red
-      - label: Phương tiện hoạt động
-        field: active_trucks
-        color: green
-
-  - type: StatRow
-    source: dashboard_kpis
+    title: Việc cần làm
     stats:
       - { label: Đơn nháp, field: draft_orders, color: indigo }
       - { label: Đơn chờ duyệt, field: pending_orders, color: amber }
       - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red }
+      - { label: Chuyến đang chạy, field: in_transit, color: blue }
       - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red }
       - { label: Chi phí chờ duyệt, field: expense_approvals, color: amber }
       - { label: Hợp đồng sắp hết hạn, field: expiring_contracts, color: amber }
 
   - type: StatRow
     source: dashboard_kpis
+    title: Vận hành
     stats:
-      - { label: Tài xế hoạt động, field: active_drivers, color: blue }
-      - { label: Container sẵn sàng, field: available_containers, color: blue }
-      - { label: Chuyến hoàn thành, field: completed_trips, color: green }
-      - { label: Tổng km, field: total_distance_km, color: indigo }
+      - { label: Tổng chuyến, field: total_trips, color: blue }
+      - { label: Hoàn thành, field: completed_trips, color: green }
+      - { label: Tỷ lệ hoàn thành, field: completion_rate, format: percent, color: green }
+      - { label: TB thời gian chạy (giờ), field: average_trip_hours, format: number, color: indigo }
+      - { label: Tỷ lệ chưa điều xe, field: unassigned_rate, format: percent, color: amber }
+      - { label: Hủy, field: cancelled_trips, color: red }
+
+  - type: StatRow
+    source: dashboard_kpis
+    title: Doanh thu · Chi phí
+    stats:
+      - { label: Doanh thu, field: revenue_total, format: currency, currency: VND, color: blue }
+      - { label: Chi phí, field: cost_total, format: currency, currency: VND, color: amber }
+      - { label: Lợi nhuận, field: profit_total, format: currency, currency: VND, color: green }
+      - { label: Số đơn hàng, field: order_count, color: indigo }
+      - { label: Khách hàng mới, field: new_customer_count, color: blue }
       - { label: Số báo giá, field: quote_count, color: indigo }
 
   - type: StatRow
     source: dashboard_kpis
+    title: Công nợ · Dòng tiền
     stats:
-      - { label: Doanh thu đơn hàng, field: revenue_total, color: blue }
-      - { label: Chi phí báo giá, field: cost_total, color: amber }
-      - { label: Lợi nhuận báo giá, field: profit_total, color: green }
-      - { label: Công nợ phải thu, field: receivables_outstanding, color: blue }
-      - { label: Công nợ phải trả, field: payables_outstanding, color: red }
+      - { label: Công nợ phải thu, field: receivables_outstanding, format: currency, currency: VND, color: blue }
+      - { label: Công nợ phải trả, field: payables_outstanding, format: currency, currency: VND, color: red }
+      - { label: Tạm ứng còn lại, field: advances_outstanding, format: currency, currency: VND, color: amber }
+      - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red }
+      - { label: Chi phí chờ duyệt, field: expense_approvals, color: amber }
+      - { label: Tổng km, field: total_distance_km, format: number, color: indigo }
 
   - type: StatRow
     source: dashboard_kpis
+    title: Nhân sự
     stats:
-      - { label: Tạm ứng còn lại, field: advances_outstanding, color: amber }
       - { label: Nhân sự hoạt động, field: active_employees, color: blue }
-      - { label: Tổng bảng lương, field: payroll_total, color: blue }
+      - { label: Hợp đồng sắp hết hạn, field: expiring_contracts, color: amber }
+      - { label: Tài xế hoạt động, field: active_drivers, color: blue }
+      - { label: Container sẵn sàng, field: available_containers, color: blue }
+      - { label: Tổng bảng lương, field: payroll_total, format: currency, currency: VND, color: blue }
+      - { label: Chuyến hoàn thành, field: completed_trips, color: green }
 
   - type: Chart
     source: dashboard_trip_status

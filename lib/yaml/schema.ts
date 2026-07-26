@@ -82,7 +82,7 @@ const COLUMN_KEYS = new Set([
 ]);
 const ROW_ACTION_KEYS = new Set(['id', 'label', 'variant', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
-const STAT_KEYS = new Set(['label', 'field', 'color']);
+const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
 const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'placeholder']);
@@ -118,7 +118,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filters', 'filter_sources'])],
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs'])],
   ['TabGroup', new Set(['type', 'tabs'])],
-  ['StatRow', new Set(['type', 'source', 'stats'])],
+  ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],

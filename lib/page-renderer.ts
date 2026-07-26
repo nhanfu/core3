@@ -497,7 +497,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const getPath = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
     const mappedStats = (def.stats || []).map(s => ({ ...s, value: getPath(sourceData, s.field) }));
 
-    const comp = new StatRow(`stat-row-${def.source || Date.now()}`, mappedStats);
+    const comp = new StatRow(`stat-row-${def.source || Date.now()}`, mappedStats, def.title || '');
     const slot = document.createElement('div');
     slot.style.marginBottom = '24px';
     targetContainer.appendChild(slot);

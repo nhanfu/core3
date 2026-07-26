@@ -4,10 +4,10 @@ import { fmtCurrency, fmtNumber } from './helpers.ts';
 
 export class StatCard extends BaseComponent {
   draw(container) {
-    const { label, value, format = null, delta = null, trend = null, color = 'indigo' } = this.state;
+    const { label, value, format = null, currency = 'USD', delta = null, trend = null, color = 'indigo' } = this.state;
 
     let displayValue = value;
-    if (format === 'currency') displayValue = fmtCurrency(value);
+    if (format === 'currency') displayValue = fmtCurrency(value, currency);
     else if (format === 'number') displayValue = fmtNumber(value);
     else if (format === 'percent') displayValue = value + '%';
 

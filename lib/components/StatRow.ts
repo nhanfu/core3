@@ -3,9 +3,12 @@ import { BaseComponent } from '../runtime.ts';
 import { StatCard } from './StatCard.ts';
 
 export class StatRow extends BaseComponent {
-  constructor(id, stats = []) {
+  title: string;
+
+  constructor(id, stats = [], title = '') {
     super(id, {});
     this.stats = stats;
+    this.title = title;
   }
 
   draw(container) {
@@ -15,7 +18,11 @@ export class StatRow extends BaseComponent {
                   : cols === 3 ? 'grid-cols-3'
                   : cols === 4 ? 'grid-cols-4'
                   : cols === 5 ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
-                  : 'grid-cols-2 md:grid-cols-4';
+                  : cols === 7 ? 'grid-cols-2 md:grid-cols-4 xl:grid-cols-7'
+                  : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-6';
+    if (this.title) {
+      html.take(container).h3.className('mb-3 text-sm font-semibold text-slate-900').text(this.title);
+    }
     const grid = html.take(container).div.className(`grid ${gridCls} gap-4`).getContext();
 
     this.stats.forEach((stat, i) => {
