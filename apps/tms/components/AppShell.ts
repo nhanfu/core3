@@ -24,6 +24,7 @@ const ICON_PATHS: Record<string, string> = {
   '⌖': '<circle cx="12" cy="10" r="6"/><circle cx="12" cy="10" r="2"/><path d="M12 16v5"/>',
   '▣': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v14M16 5v14"/>',
   '≡': '<path d="M5 6h14M5 12h14M5 18h14"/>',
+  '≋': '<path d="M5 7h14M5 12h10M5 17h14"/>',
   '₫': '<path d="M7 4h6a5 5 0 0 1 0 10H7V4Zm0 0v16M4 8h12M4 18h12"/>',
   '⌂': '<path d="m3 10 9-7 9 7v10H3V10Z"/><path d="M9 20v-6h6v6"/>',
   '◷': '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -45,8 +46,11 @@ const DASHBOARD: NavItem = { path: '/dashboard', label: 'Tổng quan', icon: '�
 const NAV_GROUPS: NavGroup[] = [
   { id: 'operations', label: 'ĐIỀU HÀNH', count: 6, items: [
     { path: '/orders', label: 'Đơn hàng', icon: '□' },
+    { path: '/trips', label: 'Chuyến', icon: '≋' },
+    { path: '/maintenance', label: 'Điều phương tiện', icon: '▣' },
     { path: '/chat', label: 'Tin nhắn', icon: '◇' },
     { path: '/schedule', label: 'Lịch điều', icon: '◫' },
+    { path: '/reports', label: 'Báo cáo', icon: '▥' },
   ] },
   { id: 'sales', label: 'KINH DOANH', count: 6, items: [
     { path: '/customers', label: 'Khách hàng', icon: '○' },
