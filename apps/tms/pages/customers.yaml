@@ -13,6 +13,7 @@ datasources:
     permission: crm.read
     query: |
       SELECT c.id, c.code, c.name, c.tax_code, c.phone, c.email, c.stage, c.visibility, c.status,
+        'Khách hàng' AS entity_type,
         CASE c.stage
           WHEN 'Lead' THEN 'Khách tiềm năng'
           WHEN 'Contacting' THEN 'Đang tiếp cận'
@@ -20,6 +21,7 @@ datasources:
           ELSE c.stage
         END AS stage_label,
         c.owner_name,
+        'Admin User' AS created_by,
         CASE c.visibility WHEN 'Private' THEN 'Riêng' ELSE 'Công khai' END AS visibility_label,
         CASE c.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label,
         c.created_at
@@ -80,6 +82,11 @@ components:
         type: PrimaryEntityCell
         secondary: name
         avatar: building
+      - field: entity_type
+        label: Loại
+        type: StatusChip
+        colors:
+          Khách hàng: neutral
       - field: tax_code
         label: Mã số thuế
       - field: stage_label
@@ -103,6 +110,8 @@ components:
         colors:
           Hoạt động: green
           Ngưng hoạt động: red
+      - field: created_by
+        label: Người tạo
       - field: created_at
         label: Ngày giờ tạo
       - field: actions

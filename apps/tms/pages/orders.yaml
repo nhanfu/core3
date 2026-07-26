@@ -86,7 +86,8 @@ components:
       description: Thử thay đổi bộ lọc hoặc tạo đơn hàng mới.
     columns:
       - { field: id, label: Mã HT, sortable: true }
-      - { field: order_number, label: Mã đơn, type: PrimaryEntityCell, secondary: customer_name }
+      - { field: order_number, label: Mã đơn, type: PrimaryEntityCell }
+      - { field: customer_name, label: Khách hàng }
       - { field: order_date, label: Ngày đơn, sortable: true }
       - field: status_label
         label: Trạng thái

@@ -6,6 +6,7 @@
 - [x] `+ Thêm khách hàng` shares the page-header row and is right aligned.
 - [x] The header renders the `Phạm vi xem: Toàn công ty` scope pill.
 - [x] Primary customer cells render the reference building SVG avatar and legal-name subtitle.
+- [x] Customer rows expose the reference `Loại` and `Người tạo` metadata columns.
 - [x] The grid renders a server-page-aware row-number column after selection.
 
 - [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.
