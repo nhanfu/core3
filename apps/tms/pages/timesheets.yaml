@@ -32,6 +32,14 @@ datasources:
         AND (:to_date IS NULL OR t.work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR CAST(t.work_date AS VARCHAR) ILIKE '%' || :q || '%')
       ORDER BY t.work_date DESC, e.name
+  - id: timesheet_employee_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+  - id: timesheet_shift_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM work_shifts ORDER BY name"
 
 toolbar:
   - id: add_timesheet_btn
@@ -93,9 +101,9 @@ actions:
     operation: insert
     refresh: [timesheets]
     fields:
-      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: employee_id, label: Nhân viên, type: select, options_source: timesheet_employee_lookup, required: true }
       - { field: work_date, label: Ngày công, type: date, required: true }
-      - { field: shift_id, label: Mã HT ca làm, type: text }
+      - { field: shift_id, label: Ca làm việc, type: select, options_source: timesheet_shift_lookup }
       - { field: hours, label: Số giờ, type: number, default: 8 }
       - { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }
       - { field: notes, label: Ghi chú, type: textarea }
@@ -107,9 +115,9 @@ actions:
     prefill: row
     refresh: [timesheets]
     fields:
-      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: employee_id, label: Nhân viên, type: select, options_source: timesheet_employee_lookup, required: true }
       - { field: work_date, label: Ngày công, type: date, required: true }
-      - { field: shift_id, label: Mã HT ca làm, type: text }
+      - { field: shift_id, label: Ca làm việc, type: select, options_source: timesheet_shift_lookup }
       - { field: hours, label: Số giờ, type: number }
       - { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent] }
       - { field: notes, label: Ghi chú, type: textarea }

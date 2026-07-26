@@ -28,6 +28,14 @@ datasources:
         AND (:to_date IS NULL OR t.work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:assignment_q IS NULL OR e.code ILIKE '%' || :assignment_q || '%' OR e.name ILIKE '%' || :assignment_q || '%')
       ORDER BY t.work_date DESC, e.name
+  - id: shift_employee_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+  - id: shift_definition_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM work_shifts WHERE status = 'Active' ORDER BY name"
 
 toolbar:
   - id: add_shift_btn
@@ -98,7 +106,7 @@ actions:
     table: timesheets
     operation: insert
     refresh: [shift_assignments]
-    fields: [{ field: employee_id, label: Mã nhân viên, type: text, required: true }, { field: work_date, label: Ngày phân ca, type: date, required: true }, { field: shift_id, label: Mã ca, type: text, required: true }, { field: hours, label: Số giờ, type: number, default: 8 }, { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }]
+    fields: [{ field: employee_id, label: Nhân viên, type: select, options_source: shift_employee_lookup, required: true }, { field: work_date, label: Ngày phân ca, type: date, required: true }, { field: shift_id, label: Ca làm việc, type: select, options_source: shift_definition_lookup, required: true }, { field: hours, label: Số giờ, type: number, default: 8 }, { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }]
   - id: add_shift
     type: form
     title: Thêm ca làm việc
