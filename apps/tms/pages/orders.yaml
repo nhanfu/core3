@@ -46,6 +46,10 @@ components:
     search:
       label: Tìm kiếm đơn hàng
       placeholder: 'Tìm mã đơn, khách hàng, tên hàng...'
+    actions:
+      - { id: orders.advanced-filter, label: 'Bộ lọc', icon: '⚙' }
+      - { id: orders.columns, label: 'Cột', icon: '▦' }
+      - { id: orders.export, label: 'Xuất CSV', icon: '↓' }
   - type: StatusTabs
     source: orders
     filter_field: status
