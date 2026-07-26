@@ -41,6 +41,7 @@ components:
     search:
       label: Tìm kiếm chuyến
       placeholder: 'Tìm theo mã chuyến, điểm đi hoặc điểm đến...'
+    actions: [{ id: trips.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: trips
     filter_field: status
@@ -53,6 +54,7 @@ components:
   - type: DataGrid
     source: trips
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state:

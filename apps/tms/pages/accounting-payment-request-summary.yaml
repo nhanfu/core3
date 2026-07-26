@@ -44,6 +44,7 @@ components:
   - type: DataGrid
     source: payment_request_summary
     page_size: 20
+    column_chooser: true
     row_key: counterparty
     empty_state: { title: Không có dữ liệu tổng hợp }
     columns:

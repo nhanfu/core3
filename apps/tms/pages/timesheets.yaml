@@ -62,6 +62,7 @@ components:
   - type: DataGrid
     source: timesheets
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có dữ liệu chấm công, description: Thử thay đổi bộ lọc hoặc tạo chấm công mới. }

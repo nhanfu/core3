@@ -42,6 +42,7 @@ components:
     source: shifts
     filter_field: q
     search: { label: Tìm kiếm ca làm việc, placeholder: 'Tìm mã hoặc tên ca...' }
+    actions: [{ id: shifts.export, label: 'Xuất CSV', icon: '↓' }]
   - type: ListToolbar
     source: shift_assignments
     filter_sources: [shift_assignments]
@@ -59,6 +60,7 @@ components:
   - type: DataGrid
     source: shifts
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có ca làm việc, description: Thử thay đổi bộ lọc hoặc tạo ca mới. }
@@ -83,6 +85,7 @@ components:
   - type: DataGrid
     source: shift_assignments
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có phân ca }
     columns: [{ field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }, { field: work_date, label: Ngày }, { field: shift_code, label: Ca, type: PrimaryEntityCell, secondary: shift_name }, { field: hours, label: Số giờ, align: right }, { field: status, label: Trạng thái }]

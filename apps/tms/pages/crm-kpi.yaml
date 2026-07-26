@@ -23,6 +23,7 @@ components:
   - type: DataGrid
     source: crm_stage_kpis
     page_size: 20
+    column_chooser: true
     row_key: metric
     columns:
       - { field: metric, label: Giai đoạn }
