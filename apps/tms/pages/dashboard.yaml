@@ -1,4 +1,4 @@
-title: Dashboard
+title: Tổng quan
 
 page:
   id: dashboard
@@ -20,7 +20,12 @@ datasources:
     single: false
     permission: fleet.read
     query: |
-      SELECT status, COUNT(*) AS trip_count
+      SELECT CASE status
+        WHEN 'Scheduled' THEN 'Đã lên lịch'
+        WHEN 'In Transit' THEN 'Đang vận chuyển'
+        WHEN 'Completed' THEN 'Hoàn thành'
+        WHEN 'Cancelled' THEN 'Đã hủy'
+        ELSE status END AS status, COUNT(*) AS trip_count
       FROM trips
       GROUP BY status
       ORDER BY trip_count DESC, status
@@ -28,7 +33,8 @@ datasources:
     single: false
     permission: fleet.read
     query: |
-      SELECT t.id, t.trip_number, t.origin, t.destination, t.status,
+      SELECT t.id, t.trip_number, t.origin, t.destination,
+        CASE t.status WHEN 'Scheduled' THEN 'Đã lên lịch' WHEN 'In Transit' THEN 'Đang vận chuyển' ELSE t.status END AS status,
         t.departure_time, tr.plate AS truck_plate, d.name AS driver_name
       FROM trips t
       LEFT JOIN trucks tr ON tr.id = t.truck_id
@@ -40,25 +46,25 @@ components:
   - type: StatRow
     source: dashboard_kpis
     stats:
-      - label: Total Trips
+      - label: Tổng số chuyến
         field: total_trips
         color: blue
-      - label: In Transit
+      - label: Đang vận chuyển
         field: in_transit
         color: indigo
-      - label: Awaiting Dispatch
+      - label: Chờ điều phối
         field: scheduled
         color: amber
-      - label: Overdue Maintenance
+      - label: Bảo dưỡng quá hạn
         field: overdue_maintenance
         color: red
-      - label: Active Trucks
+      - label: Phương tiện hoạt động
         field: active_trucks
         color: green
 
   - type: Chart
     source: dashboard_trip_status
-    title: Trip Status Overview
+    title: Tổng quan trạng thái chuyến
     label_field: status
     value_field: trip_count
     width: 680
@@ -71,22 +77,22 @@ components:
     columns:
       - type: TextCell
         field: trip_number
-        label: Trip
+        label: Mã chuyến
       - type: TextCell
         field: origin
-        label: Origin
+        label: Tuyến đường
         secondary: destination
       - type: TextCell
         field: truck_plate
-        label: Truck
+        label: Phương tiện
         secondary: driver_name
       - type: BadgeCell
         field: status
-        label: Status
+        label: Trạng thái
         colors:
-          Scheduled: amber
-          In Transit: blue
+          Đã lên lịch: amber
+          Đang vận chuyển: blue
       - type: DateCell
         field: departure_time
-        label: Departure
+        label: Khởi hành
         format: short
