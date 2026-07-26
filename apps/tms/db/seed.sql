@@ -143,6 +143,10 @@ INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name
 ('customer-04', 'KH004', 'Công ty TNHH Giày da Pou Yuen', '0309234575', '0274-388-0101', 'shipping@pouyuen.vn', 'Contacting', 'Vũ Minh Quân', 'Public', 'Active'),
 ('customer-05', 'KH005', 'Công ty CP Dầu thực vật Tường An', '0326234592', '028-3822-4545', 'procurement@tuongan.vn', 'Lead', 'Bùi Thị Kim Chi', 'Public', 'Active'),
 ('customer-06', 'KH006', 'Công ty TNHH Hóa chất Đông Á', '0311234577', '028-3772-6464', 'sale@hoachatdonga.vn', 'Lead', 'Hoàng Việt Anh', 'Private', 'Inactive');
+INSERT INTO quotes (id, code, customer_name, title, amount, status, valid_until) VALUES
+('quote-01', 'BG-0001', 'Công ty CP Nhựa Bình Minh', 'Báo giá tuyến HCM - Hà Nội', 48600000, 'Sent', '2026-08-15'),
+('quote-02', 'BG-0002', 'Công ty TNHH Thương mại Minh Phát', 'Báo giá hàng lẻ', 14200000, 'Draft', '2026-08-10'),
+('quote-03', 'BG-0003', 'Công ty CP Dầu thực vật Tường An', 'Báo giá hàng lạnh', 59300000, 'Accepted', '2026-08-20');
 
 -- ── Partners ───────────────────────────────────────────────────────────────
 INSERT INTO partners (id, code, name, tax_code, phone, email, partner_type, owner_name, visibility, status) VALUES

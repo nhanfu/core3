@@ -203,6 +203,7 @@ const SOURCE_FILES = [
   'pages/orders.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
+  'pages/quotes.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
   'pages/containers.yaml',
@@ -279,6 +280,7 @@ const TABLE_REGISTRY = {
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status'],
   },
+  quotes: { permission: 'crm.write', timestamps: true, fields: ['code', 'customer_name', 'title', 'amount', 'status', 'valid_until'] },
   partners:     {
     permission: 'crm.write',
     timestamps: true,
