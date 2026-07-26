@@ -18,6 +18,7 @@ export type ListToolbarDefinition = {
     label?: string;
   };
   actions?: ListToolbarAction[];
+  date_range?: { from_field?: string; to_field?: string; from_label?: string; to_label?: string };
 };
 
 /**
@@ -79,6 +80,25 @@ export class ListToolbar extends BaseComponent {
       root.append(searchWrap);
     } else {
       root.append(document.createElement('div'));
+    }
+
+    if (this.def.date_range) {
+      const range = document.createElement('div');
+      range.className = 'flex flex-wrap items-center gap-2';
+      const fields = [
+        { key: this.def.date_range.from_field || 'from_date', label: this.def.date_range.from_label || 'Từ ngày' },
+        { key: this.def.date_range.to_field || 'to_date', label: this.def.date_range.to_label || 'Đến ngày' },
+      ];
+      for (const field of fields) {
+        const input = document.createElement('input');
+        input.type = 'date';
+        input.value = String((this.state as any)[field.key] || '');
+        input.className = 'h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+        input.setAttribute('aria-label', field.label);
+        input.addEventListener('change', () => this.submit('date-range', { [field.key]: input.value }));
+        range.append(input);
+      }
+      root.append(range);
     }
 
     const actions = this.def.actions || [];

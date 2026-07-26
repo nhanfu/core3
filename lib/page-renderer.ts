@@ -851,8 +851,8 @@ export async function renderPage(config: any, { container = document.body }: { c
     const { ListToolbar } = await import('./components/ListToolbar.ts');
     const comp = new ListToolbar(
       `list-toolbar-${def.source || def.id || Date.now()}`,
-      { query: filterState[def.source || '']?.[def.filter_field || 'q'] || '' },
-      { search: def.search, actions: def.actions }
+      { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '' },
+      { search: def.search, actions: def.actions, date_range: def.date_range }
     );
     comp._onAction = async (actionId: string, params: any) => {
       const sourceId = def.source;
@@ -860,6 +860,10 @@ export async function renderPage(config: any, { container = document.body }: { c
       if (actionId === 'search' || actionId === def.search?.action) {
         const field = def.filter_field || 'q';
         await applySourceFilters(sourceId, { ...(filterState[sourceId] || {}), [field]: params?.query || '' });
+        return;
+      }
+      if (actionId === 'date-range') {
+        await applySourceFilters(sourceId, { ...(filterState[sourceId] || {}), ...params });
         return;
       }
       if (actionId.endsWith('.export')) {

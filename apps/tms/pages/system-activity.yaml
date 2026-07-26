@@ -9,9 +9,16 @@ datasources:
         CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity
       WHERE (:q IS NULL OR actor_name ILIKE '%' || :q || '%' OR action ILIKE '%' || :q || '%' OR resource ILIKE '%' || :q || '%' OR resource_id ILIKE '%' || :q || '%')
+        AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
       ORDER BY created_at DESC
 components:
-  - { type: ListToolbar, source: system_activity, filter_field: q, search: { label: Tìm kiếm lịch sử, placeholder: 'Tìm người thao tác hoặc tài nguyên...' } }
+  - type: ListToolbar
+    source: system_activity
+    filter_field: q
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    search: { label: Tìm kiếm lịch sử, placeholder: 'Tìm người thao tác hoặc tài nguyên...' }
+    actions: [{ id: system_activity.export, label: 'Xuất CSV', icon: '↓' }]
   - type: DataGrid
     source: system_activity
     page_size: 30
