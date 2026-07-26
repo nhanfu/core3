@@ -469,6 +469,7 @@ CREATE TABLE IF NOT EXISTS accounting_entries (
   due_date DATE,
   description VARCHAR,
   linked_advance_id VARCHAR,
+  parent_id VARCHAR,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -5,8 +5,12 @@ datasources:
     single: false
     permission: accounting.read
     query: |
-      SELECT id, code, name, description, currency, status, sort_order, created_at FROM accounting_entries
-      WHERE kind = 'ledger_account' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY sort_order, code
+      SELECT a.id, a.code, a.name, a.description, a.currency, a.status, a.sort_order, a.parent_id, p.name AS parent_name, a.created_at FROM accounting_entries a
+      LEFT JOIN accounting_entries p ON p.id = a.parent_id AND p.kind = 'ledger_account'
+      WHERE a.kind = 'ledger_account' AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.description ILIKE '%' || :q || '%') ORDER BY a.sort_order, a.code
+  - id: ledger_account_parent_lookup
+    permission: accounting.read
+    query: SELECT id, code, name FROM accounting_entries WHERE kind = 'ledger_account' ORDER BY code
 toolbar: [{ id: add_ledger_account_btn, label: '+ Thêm tài khoản', variant: primary, permission: accounting.write, action: add_ledger_account }]
 components:
   - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Tìm kiếm tài khoản, placeholder: 'Tìm số hiệu, tên hoặc diễn giải...' }, actions: [{ id: ledger_accounts.export, label: 'Xuất CSV', icon: '↓' }] }
@@ -21,6 +25,7 @@ components:
     columns:
       - { field: code, label: Số hiệu, sortable: true }
       - { field: name, label: Tên tài khoản, type: PrimaryEntityCell, secondary: description }
+      - { field: parent_name, label: Tài khoản cha }
       - { field: currency, label: Tiền tệ }
       - { field: sort_order, label: Thứ tự, align: right }
       - field: status
@@ -39,7 +44,7 @@ actions:
     scope: ledger_account
     operation: insert
     refresh: [ledger_accounts]
-    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: parent_id, label: Tài khoản cha, type: select, options_source: ledger_account_parent_lookup }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
   - id: edit_ledger_account
     type: form
     title: Cập nhật tài khoản kế toán
@@ -48,5 +53,5 @@ actions:
     operation: update
     prefill: row
     refresh: [ledger_accounts]
-    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: currency, label: Tiền tệ, type: text }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: parent_id, label: Tài khoản cha, type: select, options_source: ledger_account_parent_lookup }, { field: currency, label: Tiền tệ, type: text }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
   - { id: delete_ledger_account, type: delete, table: accounting_entries, scope: ledger_account, confirm: 'Xóa tài khoản {{row.code}}?', refresh: [ledger_accounts] }

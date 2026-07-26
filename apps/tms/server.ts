@@ -191,6 +191,7 @@ async function initDb(): Promise<void> {
     ALTER TABLE areas ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
     ALTER TABLE departments ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
     ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS linked_advance_id VARCHAR;
+    ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
     CREATE TABLE IF NOT EXISTS currency_rates (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       currency_code VARCHAR NOT NULL UNIQUE,
@@ -585,7 +586,7 @@ const TABLE_REGISTRY = {
   accounting_entries: {
     permission: 'accounting.write',
     timestamps: true,
-    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'linked_advance_id', 'sort_order'],
+    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'linked_advance_id', 'parent_id', 'sort_order'],
     scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
   system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
@@ -1041,6 +1042,20 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (linkedId) {
         const [advance] = await repository.query("SELECT id FROM accounting_entries WHERE id = ? AND kind = 'advance'", [linkedId]);
         if (!advance) return apiError(400, 'Linked advance not found');
+      }
+    }
+    if (table === 'accounting_entries' && scope === 'ledger_account' && changes.some((change: any) => change.field === 'parent_id')) {
+      const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
+      if (parentId && String(parentId) === String(id)) return apiError(400, 'Ledger account cannot be its own parent');
+      if (parentId) {
+        const [parent] = await repository.query("SELECT id FROM accounting_entries WHERE id = ? AND kind = 'ledger_account'", [parentId]);
+        if (!parent) return apiError(400, 'Parent ledger account not found');
+        let cursor = String(parentId);
+        for (let depth = 0; depth < 100 && cursor; depth++) {
+          if (cursor === String(id)) return apiError(400, 'Ledger account hierarchy cycle detected');
+          const [ancestor] = await repository.query("SELECT parent_id FROM accounting_entries WHERE id = ? AND kind = 'ledger_account'", [cursor]);
+          cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
+        }
       }
     }
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
