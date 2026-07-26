@@ -16,9 +16,10 @@ export class StatCard extends BaseComponent {
       indigo: 'border-indigo-200', blue: 'border-blue-200',
     }[color] || 'border-gray-200';
 
-    const card = html.take(container).div.className(`bg-white rounded-xl border ${borderCls} p-5 flex flex-col`).getContext();
-    html.take(card).p.className('text-sm font-medium text-gray-500').text(String(label ?? ''));
-    html.take(card).p.className('mt-2 text-3xl font-bold text-gray-900 tabular-nums').text(String(displayValue ?? '—'));
+    const card = html.take(container).div.className(`stat-card bg-white rounded-xl border ${borderCls} p-4 flex flex-col`).getContext();
+    card.style.minHeight = '88px';
+    html.take(card).p.className('text-sm font-medium leading-4 text-gray-500').text(String(label ?? ''));
+    html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—'));
 
     if (trend) {
       const trendDiv = html.take(card).div.className(`flex items-center gap-1 mt-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`).getContext();

@@ -509,7 +509,7 @@ export async function renderPage(config: any, { container = document.body }: { c
 
     const comp = new StatRow(`stat-row-${def.source || Date.now()}`, mappedStats, def.title || '');
     const slot = document.createElement('div');
-    slot.style.marginBottom = '24px';
+    slot.style.marginBottom = '16px';
     targetContainer.appendChild(slot);
     comp.mount(slot);
 
