@@ -37,7 +37,6 @@ components:
     source: vehicle_types
     column_chooser: true
     page_size: 20
-    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có loại xe, description: Tạo loại xe đầu tiên để sử dụng trong danh mục. }
