@@ -6,6 +6,9 @@ datasources:
     permission: crm.read
     query: |
       SELECT (SELECT COUNT(*) FROM customers WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS customer_count,
+        (SELECT COUNT(*) FROM employees WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS employee_count,
+        (SELECT COUNT(*) FROM teams WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS team_count,
+        (SELECT COUNT(*) FROM company_profiles) AS company_count,
         (SELECT COUNT(*) FROM customers WHERE stage = 'Lead' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS lead_count,
         (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_count,
         (SELECT COALESCE(SUM(amount), 0) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_value,
@@ -31,6 +34,9 @@ components:
     source: crm_kpis
     stats:
       - { label: Khách hàng, field: customer_count, color: blue }
+      - { label: Nhân viên, field: employee_count, color: indigo }
+      - { label: Team, field: team_count, color: teal }
+      - { label: Công ty, field: company_count, color: slate }
       - { label: Khách tiềm năng, field: lead_count, color: amber }
       - { label: Báo giá chấp nhận, field: accepted_quote_count, color: green }
       - { label: Giá trị báo giá, field: accepted_quote_value, color: teal }
