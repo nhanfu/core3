@@ -27,6 +27,14 @@ datasources:
         AND (:type IS NULL OR t.type = :type)
         AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR t.model ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
       ORDER BY t.plate
+  - id: fleet_driver_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' UNION SELECT DISTINCT d.id AS value, d.name AS label FROM trucks t JOIN drivers d ON d.id = t.driver_id WHERE t.driver_id IS NOT NULL ORDER BY label"
+  - id: fleet_type_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' ORDER BY label"
 
 toolbar:
   - id: add_truck_btn
@@ -145,7 +153,7 @@ actions:
         label: Type
         type: select
         required: false
-        options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker]
+        options_source: fleet_type_lookup
       - field: status
         label: Status
         type: select
@@ -159,7 +167,8 @@ actions:
         default: 0
       - field: driver_id
         label: Driver ID
-        type: text
+        type: select
+        options_source: fleet_driver_lookup
         required: false
       - field: last_service
         label: Last Service
@@ -194,7 +203,7 @@ actions:
         label: Type
         type: select
         required: false
-        options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker]
+        options_source: fleet_type_lookup
       - field: status
         label: Status
         type: select
@@ -208,7 +217,8 @@ actions:
         default: 0
       - field: driver_id
         label: Driver ID
-        type: text
+        type: select
+        options_source: fleet_driver_lookup
         required: false
       - field: last_service
         label: Last Service
