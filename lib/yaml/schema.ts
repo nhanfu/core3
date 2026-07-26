@@ -5,6 +5,7 @@ export type PageAuthDefinition = {
 export type PageDefinition = {
   id: string;
   auth?: PageAuthDefinition;
+  breadcrumb?: string[];
 };
 
 export type DatasourceDefinition = {
@@ -61,7 +62,7 @@ const ROOT_KEYS = new Set([
   'components',
   'actions',
 ]);
-const PAGE_KEYS = new Set(['id', 'auth']);
+const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'variant', 'permission', 'action']);
@@ -175,6 +176,7 @@ export function validatePageDefinition(
   if (isRecord(input.page)) {
     rejectUnknownKeys(input.page, PAGE_KEYS, 'page', issues);
     requireString(input.page.id, 'page.id', issues);
+    if (input.page.breadcrumb !== undefined) requireStringArray(input.page.breadcrumb, 'page.breadcrumb', issues);
     if (input.page.auth !== undefined) {
       requireRecord(input.page.auth, 'page.auth', issues);
       if (isRecord(input.page.auth)) {

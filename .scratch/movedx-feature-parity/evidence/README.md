@@ -28,6 +28,9 @@ of the audit.
 - The sidebar has the MovedX mark/tagline, menu search, dashboard, seven
   collapsible module groups, footer version, and an expand/collapse control.
   Expanded groups retain their indented child links and a blue active row.
+- Audited resource lists render a declarative breadcrumb and current page title
+  above the toolbar (`Quản lý › Đơn hàng`, `Kinh doanh › Khách hàng`, and
+  `Quản lý › Phương tiện`).
 - The primary action and active navigation color is strong blue (`#2563eb`
   appearance). Surfaces are white, outlined with pale blue-grey borders, use
   8--12 px radii, and rely on subtle shadows rather than heavy fills.

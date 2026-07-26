@@ -1187,7 +1187,35 @@ export async function renderPage(config: any, { container = document.body }: { c
   // Set document title
   if (config.title) document.title = config.title;
 
-  // 5. Render toolbar
+  // 5. Render the optional reference-style breadcrumb/page header.
+  if (config.page?.breadcrumb?.length) {
+    const pageHeader = document.createElement('div');
+    pageHeader.className = 'page-header';
+    const heading = document.createElement('div');
+    const breadcrumb = document.createElement('div');
+    breadcrumb.className = 'page-breadcrumb';
+    for (const [index, item] of config.page.breadcrumb.entries()) {
+      if (index) {
+        const separator = document.createElement('span');
+        separator.className = 'page-breadcrumb-separator';
+        separator.textContent = '›';
+        breadcrumb.append(separator);
+      }
+      const crumb = document.createElement('span');
+      crumb.className = index === config.page.breadcrumb.length - 1 ? 'page-breadcrumb-current' : 'page-breadcrumb-link';
+      crumb.textContent = item;
+      breadcrumb.append(crumb);
+    }
+    heading.append(breadcrumb);
+    const title = document.createElement('h1');
+    title.className = 'page-title';
+    title.textContent = config.title || config.page.breadcrumb.at(-1) || '';
+    heading.append(title);
+    pageHeader.append(heading);
+    pageDiv.appendChild(pageHeader);
+  }
+
+  // 6. Render toolbar
   if (config.toolbar?.length) {
     const toolbarDiv = document.createElement('div');
     toolbarDiv.className = 'page-toolbar';
@@ -1213,7 +1241,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     pageDiv.appendChild(toolbarDiv);
   }
 
-  // 6. Render filter bar
+  // 7. Render filter bar
   if (config.filters) {
     const { FilterBar } = await import('./components/FilterBar.ts');
     const filterSourceId = config.filters.source;
@@ -1244,7 +1272,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     filterBar.mount(filterSlot);
   }
 
-  // 7. Render components
+  // 8. Render components
   for (const def of (config.components || [])) {
     await renderComponentDef(def, pageDiv);
   }

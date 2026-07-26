@@ -2,6 +2,7 @@ title: Đơn hàng
 
 page:
   id: orders
+  breadcrumb: [Quản lý, Đơn hàng]
   auth:
     require: [orders.read]
 

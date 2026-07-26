@@ -2,6 +2,7 @@ title: Khách hàng
 
 page:
   id: customers
+  breadcrumb: [Kinh doanh, Khách hàng]
   auth:
     require: [crm.read]
 

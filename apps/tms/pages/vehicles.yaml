@@ -2,6 +2,7 @@ title: Phương tiện
 
 page:
   id: vehicles
+  breadcrumb: [Quản lý, Phương tiện]
   auth:
     require: [fleet.read]
 

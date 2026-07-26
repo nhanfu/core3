@@ -2,6 +2,8 @@
 
 ## Visible controls
 
+- The page header renders `Quản lý › Phương tiện` above the list controls.
+
 - Vehicle list supports search, availability tabs, CSV export, column chooser, and CRUD actions.
 - Rows expose plate/model, vehicle type, branch, capacity, translated availability, creator, and timestamp.
 - Vehicle detail shows status, service dates, mileage, assigned driver/license, maintenance history, and trip history.

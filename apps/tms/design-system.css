@@ -1061,6 +1061,19 @@ body {
   letter-spacing: -0.02em;
 }
 
+.page-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.page-breadcrumb-link { color: var(--color-text-secondary); }
+.page-breadcrumb-current { color: var(--color-text); font-weight: 600; }
+.page-breadcrumb-separator { color: var(--color-text-muted); font-size: 1rem; }
+
 .page-subtitle {
   font-size: 0.8rem;
   color: var(--color-text-muted);

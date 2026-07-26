@@ -2,6 +2,8 @@
 
 ## Local interaction checklist
 
+- [x] The page header renders `Kinh doanh › Khách hàng` above the list controls.
+
 - [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.
 
 - [x] Search and lifecycle tabs filter the customer list.
