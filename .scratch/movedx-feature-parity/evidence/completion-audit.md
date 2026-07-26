@@ -14,6 +14,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - List-toolbar Excel exports now refetch the complete active filtered dataset in bounded server pages and emit a dependency-free OOXML workbook; explicit CSV fallback remains available.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
+- `bun apps/tms/scripts/audit-evidence.ts` verifies `page_yaml=68`, `evidence_dirs=71`, `controls=71`, `local_desktop=71`, and `local_tablet=71` with no missing local artifacts; it reports the limited reference capture set separately (`reference_dirs=1`).
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database action audit completes 29 named transitions, 6 invalid-transition rejection checks, 3 invalid-payload validation checks, one master-data create/update/delete round-trip, two approval/print reorder round-trips, one malformed-import rejection, and a least-privilege `403` check.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 152/152.
@@ -98,7 +99,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 
 ## Not Proven
 
-- The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
+- The PRD requires reference desktop/tablet captures for every route. The workspace contains reference files for only one route directory, so additional reference-state parity cannot be verified from local evidence.
 - The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, tree toggle, and row action per route (52 routes plus 16 populated details, 0 failures; 330 sortable headers, 142 tabs, 45 choosers, 4 tree toggles, 377 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape, and the opt-in fresh-browser mutation phase verifies six representative lifecycle/CRUD flows through normal UI clicks.
 
 ## Current commands
@@ -111,6 +112,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 # (cd apps/tms && TMS_BASE_URL=http://localhost:3419 TMS_CDP_URL=http://localhost:9222 bun scripts/audit-ui.ts)
 (cd apps/tms && TMS_BASE_URL=http://localhost:3425 bun scripts/audit-workflows.ts)
 (cd apps/tms && TMS_BASE_URL=http://localhost:3435 TMS_CDP_URL=http://localhost:9222 TMS_AUDIT_MUTATIONS=1 bun scripts/audit-ui.ts)
+(cd apps/tms && bun scripts/audit-evidence.ts)
 (cd lib && bun run test)
 ```
 
