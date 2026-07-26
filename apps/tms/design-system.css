@@ -12,6 +12,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* The dim theme is intentionally token-based so all shared controls switch together. */
+:root[data-theme='dim'] {
+  --color-primary-light: #172554;
+  --color-primary-mid: #60a5fa;
+  --color-surface: #172033;
+  --color-bg: #0f172a;
+  --color-border: #334155;
+  --color-border-light: #1e293b;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-success-light: #052e16;
+  --color-warning-light: #451a03;
+  --color-danger-light: #450a0a;
+  --shadow-panel: 0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+}
+
+:root[data-theme='dim'] body { background: var(--color-bg); }
+
 /* ── App shell layout ── */
 .app-layout {
   display: flex;
@@ -345,6 +364,7 @@ body {
   white-space: nowrap;
 }
 .tenant-context-name { overflow: hidden; text-overflow: ellipsis; }
+:root[data-theme='dim'] .tenant-context { color: var(--color-text-secondary); }
 .global-search-icon .svg-icon { display: contents; }
 .global-search-icon svg { width: 15px; height: 15px; }
 
@@ -381,6 +401,31 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.header-user-identity {
+  max-width: 160px;
+  display: grid;
+  gap: 1px;
+  text-align: right;
+  line-height: 1.2;
+}
+
+.header-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.header-user-role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
 }
 
 .header-icon-btn {
@@ -459,6 +504,10 @@ body {
 }
 
 .avatar-btn:hover { opacity: 0.9; }
+
+@media (max-width: 720px) {
+  .header-user-identity { display: none; }
+}
 
 /* ── Parity placeholder ── */
 .parity-placeholder {

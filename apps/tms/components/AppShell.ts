@@ -11,6 +11,8 @@ type NavGroup = { id: string; label: string; count: number; items: NavItem[] };
 const ICON_PATHS: Record<string, string> = {
   search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/>',
   bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/>',
+  moon: '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>',
   '▦': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   '□': '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>',
   '◇': '<path d="m12 3 8 9-8 9-8-9 8-9Z"/><path d="M12 7v10M8 12h8"/>',
@@ -113,6 +115,8 @@ const GLOBAL_SEARCH_ITEMS = [
   DASHBOARD,
   ...NAV_GROUPS.flatMap(group => group.items),
 ];
+
+const THEME_STORAGE_KEY = 'tms_theme';
 
 export class AppShell extends BaseComponent {
   _navEls: Map<string, HTMLElement>;
@@ -303,6 +307,26 @@ export class AppShell extends BaseComponent {
     // Header right — actions
     const actions = html.take(header).div.className('header-actions').getContext();
 
+    // Theme toggle mirrors the reference shell and persists the preference per browser.
+    const themeButton = html.take(actions).button
+      .className('header-icon-btn theme-toggle')
+      .attr('type', 'button')
+      .getContext();
+    const themeIcon = html.take(themeButton).span.getContext();
+    const applyTheme = (theme: 'light' | 'dim') => {
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      themeButton.title = theme === 'dim' ? 'Use light theme' : 'Use dim theme';
+      themeButton.setAttribute('aria-label', themeButton.title);
+      themeIcon.innerHTML = '';
+      appendIcon(themeIcon, theme === 'dim' ? 'sun' : 'moon');
+    };
+    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    applyTheme(storedTheme === 'dim' ? 'dim' : 'light');
+    themeButton.addEventListener('click', () => {
+      applyTheme(document.documentElement.dataset.theme === 'dim' ? 'light' : 'dim');
+    });
+
     // Language toggle
     const langToggle = html.take(actions).div.className('lang-toggle').getContext();
     const langEN = html.take(langToggle).button
@@ -353,11 +377,15 @@ export class AppShell extends BaseComponent {
       .style('display:none')
       .getContext();
 
-    // Avatar / profile button
+    // User identity and profile button
+    const userIdentity = html.take(actions).div.className('header-user-identity').getContext();
+    html.take(userIdentity).div.className('header-user-name').text(user?.name || 'User');
+    html.take(userIdentity).div.className('header-user-role').text((user?.roles || []).join(', '));
     html.take(actions).button
       .className('avatar-btn')
       .text(initials)
       .attr('title', user?.name || 'Profile')
+      .attr('aria-label', user?.name || 'Profile')
       .event('click', () => this._profileDrawer?.open());
 
     // Content outlet
