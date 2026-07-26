@@ -14,6 +14,10 @@ datasources:
     single: false
     permission: hr.read
     query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'payrolls' AND resource_id = :id ORDER BY created_at DESC"
+  - id: payroll_detail_employee_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
 components:
   - { type: DocumentSummary, source: payroll_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Nháp: blue, Đã duyệt: amber, Đã chi: green }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: department, label: Phòng ban }, { field: pay_month, label: Tháng lương }, { field: base_salary, label: Lương cơ bản }, { field: allowance, label: Phụ cấp }, { field: deduction, label: Khấu trừ }, { field: net_salary, label: Thực lãnh }] }
   - type: ApprovalTimeline
@@ -36,4 +40,4 @@ actions:
     prefill: source
     prefill_source: payroll_detail
     refresh: [payroll_detail, payroll_activity]
-    fields: [{ field: code, label: Số bảng lương, type: text, required: true }, { field: employee_id, label: Mã nhân viên, type: text, required: true }, { field: pay_month, label: Tháng lương, type: date, required: true }, { field: base_salary, label: Lương cơ bản, type: number }, { field: allowance, label: Phụ cấp, type: number }, { field: deduction, label: Khấu trừ, type: number }, { field: net_salary, label: Thực lãnh, type: number }]
+    fields: [{ field: code, label: Số bảng lương, type: text, required: true }, { field: employee_id, label: Nhân viên, type: select, options_source: payroll_detail_employee_lookup, required: true }, { field: pay_month, label: Tháng lương, type: date, required: true }, { field: base_salary, label: Lương cơ bản, type: number }, { field: allowance, label: Phụ cấp, type: number }, { field: deduction, label: Khấu trừ, type: number }, { field: net_salary, label: Thực lãnh, type: number }]

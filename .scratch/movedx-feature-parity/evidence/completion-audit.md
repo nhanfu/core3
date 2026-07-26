@@ -66,6 +66,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Quote create/edit forms now use a customer lookup preserving legacy quote customer values.
 - Shift assignment and timesheet forms now use employee and shift lookup selectors instead of raw IDs.
 - Payroll create/edit forms now use an employee lookup selector instead of a raw employee ID.
+- Payroll detail editors now use the same employee lookup selector instead of a raw employee ID.
 - Contract list and detail editors now use employee lookup selectors instead of raw employee IDs.
 - Container create/edit forms now use a location lookup selector instead of a raw location ID.
 - Container forms now source container types from catalog master data while preserving existing type codes.
