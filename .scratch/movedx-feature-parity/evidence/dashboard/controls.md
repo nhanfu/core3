@@ -15,6 +15,7 @@
 
 ## Interaction checks
 
+- Activate each task card with mouse and keyboard; verify it opens the owning list with the card's status filter preserved.
 - Enter a trip, route, vehicle, or driver term and confirm the dispatch queue filters server-side.
 - Select each period preset and confirm all KPI and table datasources refresh together.
 - Initial dashboard load selects `Tháng này`, fills both date fields, and applies those bounds to every dashboard datasource.
