@@ -47,7 +47,7 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/login',
+  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/login',
 ]);
 
 const MIME = {
@@ -172,6 +172,7 @@ const SOURCE_FILES = [
   'pages/vehicles.yaml',
   'pages/customers.yaml',
   'pages/branches.yaml',
+  'pages/partners.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
@@ -219,6 +220,11 @@ const TABLE_REGISTRY = {
     permission: 'crm.write',
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status'],
+  },
+  partners:     {
+    permission: 'crm.write',
+    timestamps: true,
+    fields: ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'],
   },
   branches:     { permission: 'settings.write',     timestamps: true  },
   users:        { permission: 'settings.write',     timestamps: true  },

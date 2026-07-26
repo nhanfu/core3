@@ -65,6 +65,21 @@ CREATE TABLE IF NOT EXISTS customers (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS partners (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  tax_code VARCHAR,
+  phone VARCHAR,
+  email VARCHAR,
+  partner_type VARCHAR DEFAULT 'Supplier' CHECK (partner_type IN ('Carrier', 'Supplier', 'ShippingLine', 'Warehouse', 'Depot', 'Other')),
+  owner_name VARCHAR,
+  visibility VARCHAR DEFAULT 'Public' CHECK (visibility IN ('Public', 'Private')),
+  status VARCHAR DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS trucks (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   plate VARCHAR NOT NULL UNIQUE,

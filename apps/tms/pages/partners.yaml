@@ -1,0 +1,150 @@
+title: Đối tượng
+
+page:
+  id: partners
+  auth:
+    require: [crm.read]
+
+datasources:
+  - id: partners
+    single: false
+    permission: crm.read
+    query: |
+      SELECT p.id, p.code, p.name, p.tax_code, p.phone, p.email,
+        p.partner_type, p.owner_name, p.visibility, p.status,
+        CASE p.partner_type
+          WHEN 'Carrier' THEN 'Nhà xe'
+          WHEN 'Supplier' THEN 'Nhà cung cấp'
+          WHEN 'ShippingLine' THEN 'Hãng tàu'
+          WHEN 'Warehouse' THEN 'Kho / bãi'
+          WHEN 'Depot' THEN 'Depot'
+          ELSE 'Khác'
+        END AS partner_type_label,
+        CASE p.visibility WHEN 'Private' THEN 'Riêng' ELSE 'Công khai' END AS visibility_label,
+        CASE p.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label,
+        p.created_at
+      FROM partners p
+      WHERE (NULLIF(:partner_type, '') IS NULL OR p.partner_type = :partner_type)
+        AND (:q IS NULL OR p.code ILIKE '%' || :q || '%'
+          OR p.name ILIKE '%' || :q || '%'
+          OR p.tax_code ILIKE '%' || :q || '%'
+          OR p.phone ILIKE '%' || :q || '%')
+      ORDER BY p.created_at DESC, p.name
+
+toolbar:
+  - id: add_partner_btn
+    label: '+ Thêm đối tượng'
+    variant: primary
+    permission: crm.write
+    action: add_partner
+
+components:
+  - type: ListToolbar
+    source: partners
+    filter_field: q
+    search:
+      label: Tìm kiếm đối tượng
+      placeholder: 'Tìm mã, tên, MST, SĐT...'
+  - type: StatusTabs
+    source: partners
+    filter_field: partner_type
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Carrier, label: Nhà xe }
+      - { id: Supplier, label: Nhà cung cấp }
+      - { id: ShippingLine, label: Hãng tàu }
+  - type: DataGrid
+    source: partners
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state:
+      title: Không có đối tượng
+      description: Thử thay đổi bộ lọc hoặc tạo đối tượng mới.
+    columns:
+      - field: id
+        label: Mã HT
+        sortable: true
+      - field: code
+        label: Mã / tên
+        type: PrimaryEntityCell
+        secondary: name
+      - field: tax_code
+        label: Mã số thuế
+      - field: partner_type_label
+        label: Loại
+        type: StatusChip
+        colors:
+          Nhà xe: blue
+          Nhà cung cấp: amber
+          Hãng tàu: teal
+          Kho / bãi: violet
+          Depot: indigo
+          Khác: slate
+      - field: owner_name
+        label: Sale phụ trách
+      - field: phone
+        label: Liên hệ chính
+        type: PrimaryEntityCell
+        secondary: email
+      - field: visibility_label
+        label: Hiển thị
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors:
+          Hoạt động: green
+          Ngưng hoạt động: red
+      - field: created_at
+        label: Ngày giờ tạo
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - id: edit_partner
+            label: Sửa
+            variant: ghost
+          - id: delete_partner
+            label: Xóa
+            variant: danger
+
+actions:
+  - id: add_partner
+    type: form
+    title: Thêm đối tượng
+    table: partners
+    operation: insert
+    refresh: [partners]
+    fields:
+      - { field: code, label: Mã đối tượng, type: text, required: true }
+      - { field: name, label: Tên đối tượng, type: text, required: true }
+      - { field: tax_code, label: Mã số thuế, type: text }
+      - { field: phone, label: Số điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: partner_type, label: Loại đối tượng, type: select, options: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other], default: Supplier }
+      - { field: owner_name, label: Sale phụ trách, type: text }
+      - { field: visibility, label: Hiển thị, type: select, options: [Public, Private], default: Public }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+  - id: edit_partner
+    type: form
+    title: Cập nhật đối tượng
+    table: partners
+    operation: update
+    prefill: row
+    refresh: [partners]
+    fields:
+      - { field: code, label: Mã đối tượng, type: text, required: true }
+      - { field: name, label: Tên đối tượng, type: text, required: true }
+      - { field: tax_code, label: Mã số thuế, type: text }
+      - { field: phone, label: Số điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: partner_type, label: Loại đối tượng, type: select, options: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other] }
+      - { field: owner_name, label: Sale phụ trách, type: text }
+      - { field: visibility, label: Hiển thị, type: select, options: [Public, Private] }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+  - id: delete_partner
+    type: delete
+    confirm: 'Xóa đối tượng {{row.name}}?'
+    table: partners
+    refresh: [partners]

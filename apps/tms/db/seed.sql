@@ -72,6 +72,15 @@ INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name
 ('customer-05', 'KH005', 'Công ty CP Dầu thực vật Tường An', '0326234592', '028-3822-4545', 'procurement@tuongan.vn', 'Lead', 'Bùi Thị Kim Chi', 'Public', 'Active'),
 ('customer-06', 'KH006', 'Công ty TNHH Hóa chất Đông Á', '0311234577', '028-3772-6464', 'sale@hoachatdonga.vn', 'Lead', 'Hoàng Việt Anh', 'Private', 'Inactive');
 
+-- ── Partners ───────────────────────────────────────────────────────────────
+INSERT INTO partners (id, code, name, tax_code, phone, email, partner_type, owner_name, visibility, status) VALUES
+('partner-01', 'NX001', 'Công ty Vận tải Thành Đạt', '0310876543', '028-3822-0988', 'ops@thanhdat.vn', 'Carrier', 'Phạm Thị Thu Hà', 'Public', 'Active'),
+('partner-02', 'NCC001', 'Công ty TNHH ForwardX', '0318875081', '028-3778-0101', 'contact@forwardx.vn', 'Supplier', 'Lê Hoàng Nam', 'Private', 'Active'),
+('partner-03', 'HT001', 'Maersk Việt Nam', '0380567890', '028-3911-2000', 'booking@maersk.vn', 'ShippingLine', 'Vũ Minh Quân', 'Public', 'Active'),
+('partner-04', 'KB001', 'Kho hàng không Tân Sơn Nhất', '0307234573', '028-3844-0102', 'warehouse@tcs.vn', 'Warehouse', 'Bùi Thị Kim Chi', 'Public', 'Active'),
+('partner-05', 'DP001', 'Depot Tân Thuận', '0312234599', '028-3771-0202', 'yard@tantuan.vn', 'Depot', 'Hoàng Việt Anh', 'Private', 'Active'),
+('partner-06', 'NCC002', 'Công ty CP Dịch vụ Cảng Sài Gòn', '0316234567', '028-3829-1000', 'sales@saigonport.vn', 'Supplier', 'Phạm Thị Thu Hà', 'Public', 'Inactive');
+
 -- ── User Roles ────────────────────────────────────────────────────────────────
 INSERT INTO user_roles (user_id, role_id) VALUES
 ('user-admin', 'role-admin'),
