@@ -309,12 +309,40 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   } catch (error) {
     uiMutationFailures.push(`units UI CRUD mutation: ${error instanceof Error ? error.message : String(error)}`);
   }
+  try {
+    await evaluateWithTimeout("location.hash = '#/quotes'", 'quotes mutation navigation');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const mutationState = await evaluateWithTimeout(`(async () => {
+      const previousConfirm = window.confirm;
+      const previousAlert = window.alert;
+      window.confirm = () => true;
+      window.alert = () => {};
+      const readQuote = () => [...document.querySelectorAll('#outlet tbody tr')]
+        .find((row) => row.textContent?.includes('BG-0002'))?.textContent || '';
+      const send = document.querySelector('button[data-grid-row-action="send_quote:quote-02"]');
+      send?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const sent = readQuote();
+      const accept = document.querySelector('button[data-grid-row-action="accept_quote:quote-02"]');
+      accept?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const accepted = readQuote();
+      window.confirm = previousConfirm;
+      window.alert = previousAlert;
+      return { send: Boolean(send), accept: Boolean(accept), sent, accepted };
+    })()`, 'quotes mutation state');
+    if (!mutationState?.send || !mutationState.sent.includes('Đã gửi')) uiMutationFailures.push('quotes UI send did not persist Sent');
+    if (!mutationState?.accept || !mutationState.accepted.includes('Đã chấp nhận')) uiMutationFailures.push('quotes UI accept did not persist Accepted');
+    if (consoleErrors.length) uiMutationFailures.push(`quotes UI mutation console errors: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    uiMutationFailures.push(`quotes UI mutation: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 failures.push(...uiMutationFailures);
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 2 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 3 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
