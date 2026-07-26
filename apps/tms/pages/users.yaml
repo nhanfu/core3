@@ -1,0 +1,32 @@
+title: Người dùng
+page:
+  id: users
+  auth: { require: [settings.read] }
+datasources:
+  - id: org_users
+    single: false
+    permission: settings.read
+    query: |
+      SELECT u.id, u.name, u.email, u.preferred_lang, u.created_at,
+        string_agg(r.name, ', ') AS roles_csv
+      FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id
+      LEFT JOIN roles r ON r.id = ur.role_id
+      WHERE (:q IS NULL OR u.name ILIKE '%' || :q || '%' OR u.email ILIKE '%' || :q || '%')
+      GROUP BY u.id, u.name, u.email, u.preferred_lang, u.created_at
+      ORDER BY u.name
+components:
+  - type: ListToolbar
+    source: org_users
+    filter_field: q
+    search: { label: Tìm kiếm người dùng, placeholder: 'Tìm tên hoặc email...' }
+  - type: DataGrid
+    source: org_users
+    page_size: 20
+    row_key: id
+    empty_state: { title: Không có người dùng }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: name, label: Người dùng, type: PrimaryEntityCell, secondary: email }
+      - { field: roles_csv, label: Vai trò }
+      - { field: preferred_lang, label: Ngôn ngữ }
+      - { field: created_at, label: Ngày tạo, type: DateCell }

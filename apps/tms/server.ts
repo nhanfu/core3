@@ -179,6 +179,8 @@ const SOURCE_FILES = [
   'pages/customers.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
+  'pages/users.yaml',
+  'pages/roles.yaml',
   'pages/catalog-container-types.yaml',
   'pages/catalog-vehicle-types.yaml',
   'pages/catalog-units.yaml',
