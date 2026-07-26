@@ -89,6 +89,9 @@ components:
         sortable: false
         align: right
         actions:
+          - id: view_vehicle
+            label: Chi tiết
+            variant: primary
           - id: edit_vehicle
             label: Sửa
             variant: ghost
@@ -97,6 +100,7 @@ components:
             variant: danger
 
 actions:
+  - { id: view_vehicle, type: navigate, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }
   - id: add_vehicle
     type: form
     title: Thêm phương tiện

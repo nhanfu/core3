@@ -12,7 +12,7 @@ let _shell: AppShell | null = null;
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/login':        () => import('./pages/login.ts'),
   '/dashboard':    'dashboard',
-  '/vehicles':     'vehicles',
+  '/vehicles':     'vehicles', '/vehicles/detail': 'vehicle-detail',
   '/drivers':      'drivers', '/drivers/detail': 'driver-detail',
   '/orders':       'orders',
   '/orders/detail': 'order-detail',
@@ -78,7 +78,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/accounting/ledger-accounts': 'Hệ thống tài khoản',
   '/hr/employees': 'Nhân viên', '/hr/employees/detail': 'Chi tiết nhân viên', '/hr/contracts': 'Hợp đồng', '/hr/contracts/detail': 'Chi tiết hợp đồng', '/hr/payroll/detail': 'Chi tiết bảng lương',
   '/hr/timesheets': 'Chấm công', '/hr/shifts': 'Ca làm việc', '/hr/payroll': 'Bảng lương',
-  '/drivers': 'Tài xế', '/drivers/detail': 'Chi tiết tài xế', '/vehicles': 'Phương tiện', '/containers': 'Container',
+  '/drivers': 'Tài xế', '/drivers/detail': 'Chi tiết tài xế', '/vehicles': 'Phương tiện', '/vehicles/detail': 'Chi tiết phương tiện', '/containers': 'Container',
   '/locations': 'Địa điểm', '/areas': 'Khu vực', '/areas/detail': 'Chi tiết khu vực',
   '/catalog/container-types': 'Loại container', '/catalog/vehicle-types': 'Loại xe',
   '/catalog/units': 'Đơn vị tính', '/catalog/cargo-types': 'Loại hàng hóa',
