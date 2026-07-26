@@ -1469,7 +1469,11 @@ export class DuckDbRepository {
 
   async updateUser(id: any, changes: Change[]): Promise<any> {
     const rolesChange = changes.find((c) => c.field === 'roles');
-    const regularChanges = changes.filter((c) => c.field !== 'roles');
+    const passwordChange = changes.find((c) => c.field === 'password');
+    let regularChanges = changes.filter((c) => c.field !== 'roles' && c.field !== 'password');
+    if (passwordChange) {
+      regularChanges = [...regularChanges, { field: 'password_hash', value: await Bun.password.hash(passwordChange.value) }];
+    }
     if (regularChanges.length > 0) {
       const sets = regularChanges.map((c) => `${c.field} = ?`).join(', ');
       await this.run(

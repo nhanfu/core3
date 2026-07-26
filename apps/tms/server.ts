@@ -532,7 +532,11 @@ const TABLE_REGISTRY = {
   },
   system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
   branches:     { permission: 'settings.write',     timestamps: true  },
-  users:        { permission: 'settings.write',     timestamps: true  },
+  users: {
+    permission: 'settings.write',
+    timestamps: true,
+    fields: ['email', 'name', 'avatar_url', 'preferred_lang', 'enabled', 'branch_id', 'department_id', 'roles', 'password'],
+  },
   translations: { permission: 'settings.write',     timestamps: false },
 };
 
