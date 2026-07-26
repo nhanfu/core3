@@ -14,7 +14,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 148/148.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
-- Dashboard task cards now expose validated, keyboard-accessible navigation to the owning order, trip, accounting, and HR routes.
+- Dashboard task cards now expose validated, keyboard-accessible navigation to the owning order, trip, accounting, and HR routes, preserving status and unassigned-trip filters.
 - Dashboard financial KPI row now includes the reference date-bounded profit-margin card instead of the non-reference quote-count card.
 - Operations navigation now exposes all six reference entries and maps each to a registered SPA route.
 - The shell reads the seeded company profile through an authenticated server endpoint and renders tenant identity in the header; it is not hard-coded in the client.

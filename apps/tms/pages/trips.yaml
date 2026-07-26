@@ -24,6 +24,7 @@ datasources:
       LEFT JOIN trucks t ON t.id = tr.truck_id
       LEFT JOIN drivers d ON d.id = tr.driver_id
       WHERE (:status IS NULL OR tr.status = :status)
+        AND (NULLIF(:unassigned, '') IS NULL OR (:unassigned = 'true' AND tr.truck_id IS NULL))
         AND (:q IS NULL OR tr.trip_number ILIKE '%' || :q || '%' OR tr.origin ILIKE '%' || :q || '%' OR tr.destination ILIKE '%' || :q || '%' OR t.plate ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
       ORDER BY tr.departure_time DESC
 
