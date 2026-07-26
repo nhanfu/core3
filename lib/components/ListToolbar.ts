@@ -18,7 +18,13 @@ export type ListToolbarDefinition = {
     label?: string;
   };
   actions?: ListToolbarAction[];
-  date_range?: { from_field?: string; to_field?: string; from_label?: string; to_label?: string };
+  date_range?: {
+    from_field?: string;
+    to_field?: string;
+    from_label?: string;
+    to_label?: string;
+    presets?: Array<'today' | 'week' | 'month' | 'quarter' | 'year' | 'all'>;
+  };
   filter_sources?: string[];
 };
 
@@ -86,9 +92,38 @@ export class ListToolbar extends BaseComponent {
     if (this.def.date_range) {
       const range = document.createElement('div');
       range.className = 'flex flex-wrap items-center gap-2';
+      const dateRange = this.def.date_range;
+      if (dateRange.presets?.length) {
+        const select = document.createElement('select');
+        select.className = 'h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+        select.setAttribute('aria-label', 'Khoảng thời gian');
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Khoảng thời gian';
+        select.append(placeholder);
+        const labels: Record<string, string> = {
+          today: 'Hôm nay', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', all: 'Tất cả thời gian',
+        };
+        for (const preset of dateRange.presets) {
+          const option = document.createElement('option');
+          option.value = preset;
+          option.textContent = labels[preset] || preset;
+          select.append(option);
+        }
+        select.addEventListener('change', () => {
+          const value = select.value as typeof dateRange.presets[number] | '';
+          if (!value) return;
+          const dates = this.resolvePreset(value);
+          this.submit('date-range', {
+            [(dateRange.from_field || 'from_date')]: dates.from,
+            [(dateRange.to_field || 'to_date')]: dates.to,
+          });
+        });
+        range.append(select);
+      }
       const fields = [
-        { key: this.def.date_range.from_field || 'from_date', label: this.def.date_range.from_label || 'Từ ngày' },
-        { key: this.def.date_range.to_field || 'to_date', label: this.def.date_range.to_label || 'Đến ngày' },
+        { key: dateRange.from_field || 'from_date', label: dateRange.from_label || 'Từ ngày' },
+        { key: dateRange.to_field || 'to_date', label: dateRange.to_label || 'Đến ngày' },
       ];
       for (const field of fields) {
         const input = document.createElement('input');
@@ -111,6 +146,22 @@ export class ListToolbar extends BaseComponent {
     }
 
     container.append(root);
+  }
+
+  private resolvePreset(preset: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all') {
+    if (preset === 'all') return { from: '', to: '' };
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (preset === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    if (preset === 'month') start.setDate(1);
+    if (preset === 'quarter') {
+      start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+    }
+    if (preset === 'year') start.setMonth(0, 1);
+    const format = (date: Date) => [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+      .map((part, index) => index === 0 ? String(part) : String(part).padStart(2, '0'))
+      .join('-');
+    return { from: format(start), to: format(today) };
   }
 
   private emitSearch(action?: string) {

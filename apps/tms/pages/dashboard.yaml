@@ -68,7 +68,7 @@ components:
   - type: ListToolbar
     source: dashboard_dispatch_queue
     filter_sources: [dashboard_kpis, dashboard_trip_status, dashboard_dispatch_queue, dashboard_routes, dashboard_customers]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     actions: [{ id: dashboard_dispatch_queue.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: dashboard_kpis

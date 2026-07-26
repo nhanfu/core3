@@ -84,6 +84,7 @@ const ROW_ACTION_KEYS = new Set(['id', 'label', 'variant', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'color']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
+const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
   'label',
@@ -361,6 +362,7 @@ function validateComponents(
     validateTabs(component.tabs, `${path}.tabs`, datasourceIds, actionIds, options, issues);
     validateStats(component.stats, `${path}.stats`, issues);
     validateSearch(component.search, `${path}.search`, issues);
+    validateDateRange(component.date_range, `${path}.date_range`, issues);
     validateComponentActions(component.actions, `${path}.actions`, issues);
     if (component.empty_state !== undefined) {
       requireRecord(component.empty_state, `${path}.empty_state`, issues);
@@ -468,6 +470,28 @@ function validateSearch(value: unknown, path: string, issues: string[]) {
   if (value === undefined || value === false) return;
   requireRecord(value, path, issues);
   if (isRecord(value)) rejectUnknownKeys(value, SEARCH_KEYS, path, issues);
+}
+
+function validateDateRange(value: unknown, path: string, issues: string[]) {
+  if (value === undefined) return;
+  requireRecord(value, path, issues);
+  if (!isRecord(value)) return;
+  rejectUnknownKeys(value, DATE_RANGE_KEYS, path, issues);
+  for (const key of ['from_field', 'to_field', 'from_label', 'to_label']) {
+    if (value[key] !== undefined) requireString(value[key], `${path}.${key}`, issues);
+  }
+  if (value.presets !== undefined) {
+    if (!Array.isArray(value.presets)) {
+      issues.push(`${path}.presets must be an array`);
+    } else {
+      const allowed = new Set(['today', 'week', 'month', 'quarter', 'year', 'all']);
+      value.presets.forEach((preset, index) => {
+        if (typeof preset !== 'string' || !allowed.has(preset)) {
+          issues.push(`${path}.presets[${index}] must be one of today, week, month, quarter, year, all`);
+        }
+      });
+    }
+  }
 }
 
 function validateComponentActions(value: unknown, path: string, issues: string[]) {

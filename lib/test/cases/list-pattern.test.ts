@@ -101,4 +101,19 @@ describe('ListToolbar', () => {
     expect(container.querySelector('[data-list-search]')).toBeNull();
     expect(container.querySelector('[data-toolbar-action="refresh"]')).not.toBeNull();
   });
+
+  it('emits date bounds for a selected period preset', () => {
+    const component = new ListToolbar('toolbar', {}, {
+      search: false,
+      date_range: { presets: ['month', 'all'] },
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+    const select = container.querySelector<HTMLSelectElement>('select[aria-label="Khoảng thời gian"]')!;
+
+    select.value = 'all';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+
+    expect(submit).toHaveBeenCalledWith('date-range', { from_date: '', to_date: '' });
+  });
 });
