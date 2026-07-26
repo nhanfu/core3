@@ -241,6 +241,8 @@ export async function renderPage(config: any, { container = document.body }: { c
             uploadMeta.content = row.content;
           } else if (actionDef.kind === 'employee_document') {
             uploadMeta.employee_id = resolveActionParams(actionDef.params || { employee_id: '{state.id}' }, { ...ctx, row: row || {} }).employee_id;
+          } else if (actionDef.kind === 'master_data_import') {
+            uploadMeta.scope = actionDef.scope;
           }
           await client.uploadFile(uploadFile, {
             ...uploadMeta,

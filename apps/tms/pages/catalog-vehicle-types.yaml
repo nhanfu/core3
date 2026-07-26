@@ -25,7 +25,7 @@ components:
     source: vehicle_types
     filter_field: q
     search: { label: Tìm kiếm loại xe, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: vehicle_types.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: vehicle_types.export, label: 'Xuất CSV', icon: '↓' }, { id: import_vehicle_types, label: 'Nhập CSV', icon: '↑' }]
   - type: StatusTabs
     source: vehicle_types
     filter_field: status
@@ -57,6 +57,7 @@ components:
           - { id: delete_vehicle_type, label: Xóa, variant: danger }
 
 actions:
+  - { id: import_vehicle_types, type: upload, kind: master_data_import, scope: vehicle_type, refresh: [vehicle_types] }
   - id: add_vehicle_type
     type: form
     title: Thêm loại xe

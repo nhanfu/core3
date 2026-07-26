@@ -104,6 +104,55 @@ export class DuckDbRepository {
     return row || null;
   }
 
+  async importMasterData(scope: string, csvText: string, actor: { id?: string | null; name: string }) {
+    const allowed = new Set(['container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency']);
+    if (!allowed.has(scope)) throw { status: 400, message: 'Invalid master-data scope' };
+    const lines = csvText.replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim());
+    if (lines.length < 2 || lines.length > 1001) throw { status: 400, message: 'CSV must contain 1 to 1000 data rows' };
+    const parse = (line: string) => {
+      const cells: string[] = [];
+      let cell = ''; let quoted = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"' && line[i + 1] === '"') { cell += '"'; i++; continue; }
+        if (ch === '"') { quoted = !quoted; continue; }
+        if (ch === ',' && !quoted) { cells.push(cell.trim()); cell = ''; continue; }
+        cell += ch;
+      }
+      cells.push(cell.trim());
+      return cells;
+    };
+    const header = parse(lines[0]).map(value => value.toLowerCase());
+    if (header[0] !== 'code' || header[1] !== 'name') throw { status: 400, message: 'CSV headers must start with code,name' };
+    const codeIndex = header.indexOf('code'); const nameIndex = header.indexOf('name');
+    const descriptionIndex = header.indexOf('description'); const symbolIndex = header.indexOf('symbol');
+    const decimalsIndex = header.indexOf('decimals'); const statusIndex = header.indexOf('status'); const sortIndex = header.indexOf('sort_order');
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        let imported = 0;
+        for (const line of lines.slice(1)) {
+          const cells = parse(line); const code = cells[codeIndex] || ''; const name = cells[nameIndex] || '';
+          if (!code || !name) throw { status: 400, message: 'code and name are required for every row' };
+          const description = descriptionIndex >= 0 ? cells[descriptionIndex] || null : null;
+          const symbol = symbolIndex >= 0 ? cells[symbolIndex] || null : null;
+          const decimals = decimalsIndex >= 0 && cells[decimalsIndex] ? Number(cells[decimalsIndex]) : 0;
+          const status = statusIndex >= 0 && cells[statusIndex] ? cells[statusIndex] : 'Active';
+          const sortOrder = sortIndex >= 0 && cells[sortIndex] ? Number(cells[sortIndex]) : 0;
+          if (!Number.isInteger(decimals) || decimals < 0 || decimals > 6 || !Number.isInteger(sortOrder) || !['Active', 'Inactive'].includes(status)) throw { status: 400, message: `Invalid values for ${code}` };
+          await runOnConnection(conn, `INSERT INTO master_data(id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(kind, code) DO UPDATE SET name = excluded.name, description = excluded.description, symbol = excluded.symbol, decimals = excluded.decimals, status = excluded.status, sort_order = excluded.sort_order`, [crypto.randomUUID(), scope, code, name, description, symbol, decimals, status, sortOrder]);
+          imported++;
+        }
+        await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, detail) VALUES(?,?,?,?,?)', [actor.id || null, actor.name, 'import', 'master_data', `Imported ${imported} ${scope} records`]);
+        await runOnConnection(conn, 'COMMIT');
+        return { imported, scope };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK');
+        throw error;
+      }
+    });
+  }
+
   async getLoginUserByEmail(email: string): Promise<any | null> {
     const rows = await this.query(
       `SELECT u.*, string_agg(r.name, ',') as roles_csv

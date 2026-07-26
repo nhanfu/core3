@@ -25,7 +25,7 @@ components:
     source: fee_types
     filter_field: q
     search: { label: Tìm kiếm loại phí, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: fee_types.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: fee_types.export, label: 'Xuất CSV', icon: '↓' }, { id: import_fee_types, label: 'Nhập CSV', icon: '↑' }]
   - type: StatusTabs
     source: fee_types
     filter_field: status
@@ -57,6 +57,7 @@ components:
           - { id: delete_fee_type, label: Xóa, variant: danger }
 
 actions:
+  - { id: import_fee_types, type: upload, kind: master_data_import, scope: fee_type, refresh: [fee_types] }
   - id: add_fee_type
     type: form
     title: Thêm loại phí

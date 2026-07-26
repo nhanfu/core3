@@ -25,7 +25,7 @@ components:
     source: currencies
     filter_field: q
     search: { label: Tìm kiếm tiền tệ, placeholder: 'Tìm mã, tên hoặc ký hiệu...' }
-    actions: [{ id: currencies.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: currencies.export, label: 'Xuất CSV', icon: '↓' }, { id: import_currencies, label: 'Nhập CSV', icon: '↑' }]
   - type: StatusTabs
     source: currencies
     filter_field: status
@@ -59,6 +59,7 @@ components:
           - { id: delete_currency, label: Xóa, variant: danger }
 
 actions:
+  - { id: import_currencies, type: upload, kind: master_data_import, scope: currency, refresh: [currencies] }
   - id: add_currency
     type: form
     title: Thêm tiền tệ

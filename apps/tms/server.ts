@@ -553,13 +553,19 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       return apiError(400, 'Invalid upload metadata');
     }
     if (!(file instanceof File)) return apiError(400, 'file required');
-    if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document') return apiError(400, 'Unsupported upload kind');
+    if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
     if (meta.kind === 'chat_attachment') {
       requirePerm('chat.write');
       if (typeof meta.thread_id !== 'string' || !meta.thread_id) return apiError(400, 'thread_id required');
-    } else {
+    } else if (meta.kind === 'employee_document') {
       requirePerm('hr.write');
       if (typeof meta.employee_id !== 'string' || !meta.employee_id) return apiError(400, 'employee_id required');
+    } else {
+      requirePerm('catalog.write');
+      if (typeof meta.scope !== 'string' || !meta.scope) return apiError(400, 'scope required');
+      if (file.size > 2 * 1024 * 1024) return apiError(400, 'Import CSV must be 2 MB or smaller');
+      const result = await repository.importMasterData(meta.scope, await file.text(), activityActor);
+      return json(result);
     }
     if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
       return apiError(400, 'Attachment must be between 1 byte and 5 MB');
