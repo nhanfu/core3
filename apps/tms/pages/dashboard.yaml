@@ -133,8 +133,8 @@ components:
       - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red, navigate_to: '/trips?status=Scheduled' }
       - { label: Chuyến đang chạy, field: in_transit, color: blue, navigate_to: '/trips?status=In%20Transit' }
       - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red, navigate_to: /accounting/debit-notes }
-      - { label: Đề nghị chi chờ duyệt, field: expense_approvals, color: amber, navigate_to: /accounting/payment-requests }
-      - { label: HĐ sắp hết hạn, field: expiring_contracts, color: amber, navigate_to: /hr/contracts }
+      - { label: Đề nghị chi chờ duyệt, field: expense_approvals, color: amber, navigate_to: '/accounting/payment-requests?status=Pending%20Approval' }
+      - { label: HĐ sắp hết hạn, field: expiring_contracts, color: amber, navigate_to: '/hr/contracts?status=Expiring' }
 
   - type: StatRow
     source: dashboard_kpis
