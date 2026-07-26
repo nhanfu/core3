@@ -707,6 +707,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       { ...(vm.params || {}), current_user_id: authUser.sub },
       vm.skip || 0,
       vm.top || 25,
+      typeof vm.facetField === 'string' ? vm.facetField : undefined,
     );
     return json(result);
   }

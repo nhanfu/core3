@@ -128,7 +128,34 @@ export async function renderPage(config: any, { container = document.body }: { c
         entry._origSetState({ messages: data.data || [] }, true);
       } else if (entry.compType === 'ChatAttachments') {
         entry._origSetState({ attachments: data.data || [] }, true);
+      } else if (entry.compType === 'StatusTabs') {
+        void refreshStatusTabCounts(sourceId, entry);
       }
+    }
+  }
+
+  async function refreshStatusTabCounts(sourceId: string, entry: any) {
+    const field = entry.def.filter_field || 'status';
+    const filters = { ...(filterState[sourceId] || {}) };
+    delete filters[field];
+    try {
+      const facetResult = await client.query(createQuery({
+        sourceId,
+        params: { ...pageParams, ...filters },
+        skip: 0,
+        top: 1,
+        facetField: field,
+      }));
+      const facets = facetResult.meta?.facets || {};
+      entry.comp.tabs = (entry.def.tabs || []).map((tab: any) => ({
+        ...tab,
+        count: tab.count !== undefined ? tab.count : tab.id === ''
+          ? Number(facetResult.meta?.total ?? 0)
+          : Number(facets[String(tab.id)] || 0),
+      }));
+      entry.comp.redraw();
+    } catch (error) {
+      console.error(`[page-renderer] status facet error for "${sourceId}":`, error);
     }
   }
 
@@ -876,11 +903,30 @@ export async function renderPage(config: any, { container = document.body }: { c
     const sourceResult = def.source ? dataMap[def.source] || {} : {};
     const rows = Array.isArray(sourceResult.data) ? sourceResult.data : [];
     const field = def.filter_field || 'status';
+    let facets: Record<string, number> = {};
+    let facetTotal: number | undefined;
+    if (def.source) {
+      const filters = { ...(filterState[def.source] || {}) };
+      delete filters[field];
+      try {
+        const facetResult = await client.query(createQuery({
+          sourceId: def.source,
+          params: { ...pageParams, ...filters },
+          skip: 0,
+          top: 1,
+          facetField: field,
+        }));
+        facets = facetResult.meta?.facets || {};
+        facetTotal = Number(facetResult.meta?.total ?? 0);
+      } catch (error) {
+        console.error(`[page-renderer] status facet error for "${def.source}":`, error);
+      }
+    }
     const tabs = (def.tabs || []).map((tab: any) => {
       if (tab.count !== undefined) return tab;
       const count = tab.id === ''
-        ? Number(sourceResult.meta?.total ?? rows.length)
-        : rows.filter((row: any) => String(row[field] ?? '') === String(tab.id)).length;
+        ? facetTotal ?? Number(sourceResult.meta?.total ?? rows.length)
+        : facets[String(tab.id)] ?? rows.filter((row: any) => String(row[field] ?? '') === String(tab.id)).length;
       return { ...tab, count };
     });
     const comp = new StatusTabs(
@@ -899,6 +945,10 @@ export async function renderPage(config: any, { container = document.body }: { c
     slot.style.marginBottom = '16px';
     targetContainer.appendChild(slot);
     comp.mount(slot);
+    if (def.source) {
+      if (!boundComponents[def.source]) boundComponents[def.source] = [];
+      boundComponents[def.source].push({ comp, def, compType: 'StatusTabs' });
+    }
   }
 
   async function renderListToolbar(def: any, targetContainer: HTMLElement) {

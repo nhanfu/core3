@@ -40,6 +40,7 @@ be recaptured from the read-only tenant before final visual-parity signoff.
   vehicle dispatch, chat, schedule, and reports.
 - [x] Lifecycle tabs show datasource-backed counts for all, draft, approval,
   approved, and cancelled orders.
+- [x] Counts are returned by a server facet query and remain correct independently of the 50-row page size.
 - [x] Shared DataGrid keeps list rows dense with single-line truncation for long
   customer, route, and metadata cells while retaining horizontal overflow.
 - [x] Pagination defaults to 50 rows and offers server-backed 10/25/50/100 page-size choices.

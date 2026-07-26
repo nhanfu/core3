@@ -10,7 +10,7 @@ datasources:
     single: false
     permission: drivers.read
     query: |
-      SELECT d.id, d.name, d.phone, d.email, d.license_number, d.license_expiry,
+      SELECT d.id, d.name, d.phone, d.email, d.license_number, d.license_expiry, d.status,
         t.plate AS truck_plate,
         CASE d.status
           WHEN 'Active' THEN 'Đang hoạt động'

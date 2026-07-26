@@ -234,7 +234,7 @@ export class DuckDbRepository {
     });
   }
 
-  async querySource(source: { query: string; single?: boolean }, params: Record<string, any> = {}, skip = 0, top = 25): Promise<any> {
+  async querySource(source: { query: string; single?: boolean }, params: Record<string, any> = {}, skip = 0, top = 25, facetField?: string): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
     if (source.single) {
       const rows = await this.query(statement, values);
@@ -249,9 +249,23 @@ export class DuckDbRepository {
       [...values, pageSize, offset]
     );
     const total = Number(count?.n || 0);
+    const meta: any = { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) };
+    if (facetField && /^[A-Za-z_][A-Za-z0-9_]*$/.test(facetField)) {
+      try {
+        const facetRows = await this.query(
+          `SELECT CAST(source_rows."${facetField}" AS VARCHAR) AS value, COUNT(*) AS n FROM (${statement}) AS source_rows GROUP BY source_rows."${facetField}"`,
+          values,
+        );
+        meta.facets = Object.fromEntries(facetRows.map((row: any) => [String(row.value ?? ''), Number(row.n || 0)]));
+      } catch {
+        // Facets are optional enrichment; a legacy projection without the
+        // requested field must not make the underlying list unavailable.
+        meta.facets = {};
+      }
+    }
     return {
       data: rows,
-      meta: { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) },
+      meta,
     };
   }
 

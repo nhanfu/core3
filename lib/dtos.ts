@@ -14,10 +14,11 @@ export function createQuery(options: any = {}) {
     groupBy = [],
     skip = 0,
     top = 25,
+    facetField = null,
     metaConn = null,
     dataConn = null,
   } = options;
-  return { sourceId, action, params, select, where, orderBy, groupBy, skip, top, metaConn, dataConn };
+  return { sourceId, action, params, select, where, orderBy, groupBy, skip, top, facetField, metaConn, dataConn };
 }
 
 export function createPatch(options: any = {}) {
