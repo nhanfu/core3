@@ -603,7 +603,9 @@ export async function renderPage(config: any, { container = document.body }: { c
   async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     const GridCtor = def.type === 'LineItemGrid'
       ? (await import('./components/LineItemGrid.ts')).LineItemGrid
-      : (await import('./components/DataGrid.ts')).DataGrid;
+      : def.type === 'ContactGrid'
+        ? (await import('./components/ContactGrid.ts')).ContactGrid
+        : (await import('./components/DataGrid.ts')).DataGrid;
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
     const pageSize = def.page_size || 25;
@@ -994,6 +996,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         await renderDataGrid(def, targetContainer);
         break;
       case 'LineItemGrid':
+        await renderDataGrid(def, targetContainer);
+        break;
+      case 'ContactGrid':
         await renderDataGrid(def, targetContainer);
         break;
       case 'DocumentSummary':

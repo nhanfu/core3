@@ -120,6 +120,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
+  ['ContactGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
   ['ApprovalTimeline', new Set(['type', 'source', 'title', 'actor_field', 'action_field', 'detail_field', 'timestamp_field'])],
   ['ChatWorkspace', new Set([

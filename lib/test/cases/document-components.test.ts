@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ApprovalTimeline } from '../../components/ApprovalTimeline.ts';
+import { ContactGrid } from '../../components/ContactGrid.ts';
 import { DataGrid } from '../../components/DataGrid.ts';
 import { DocumentSummary } from '../../components/DocumentSummary.ts';
 import { LineItemGrid } from '../../components/LineItemGrid.ts';
@@ -62,5 +63,6 @@ describe('document detail components', () => {
   it('keeps line-item grids on the shared DataGrid behavior', () => {
     const grid = new LineItemGrid('lines', { rows: [] }, []);
     expect(grid).toBeInstanceOf(DataGrid);
+    expect(new ContactGrid('contacts', { rows: [] }, [])).toBeInstanceOf(DataGrid);
   });
 });

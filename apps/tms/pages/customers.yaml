@@ -97,6 +97,9 @@ components:
         sortable: false
         align: right
         actions:
+          - id: view_customer
+            label: Chi tiết
+            variant: ghost
           - id: edit_customer
             label: Sửa
             variant: ghost
@@ -105,6 +108,7 @@ components:
             variant: danger
 
 actions:
+  - { id: view_customer, type: navigate, navigate_to: /crm/entities/detail, params: { id: '{row.id}', kind: customer, back: /customers } }
   - id: add_customer
     type: form
     title: Thêm khách hàng

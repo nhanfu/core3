@@ -192,6 +192,13 @@ INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name
 ('customer-04', 'KH004', 'Công ty TNHH Giày da Pou Yuen', '0309234575', '0274-388-0101', 'shipping@pouyuen.vn', 'Contacting', 'Vũ Minh Quân', 'Public', 'Active'),
 ('customer-05', 'KH005', 'Công ty CP Dầu thực vật Tường An', '0326234592', '028-3822-4545', 'procurement@tuongan.vn', 'Lead', 'Bùi Thị Kim Chi', 'Public', 'Active'),
 ('customer-06', 'KH006', 'Công ty TNHH Hóa chất Đông Á', '0311234577', '028-3772-6464', 'sale@hoachatdonga.vn', 'Lead', 'Hoàng Việt Anh', 'Private', 'Inactive');
+
+INSERT INTO customer_contacts (id, customer_id, name, role_title, phone, email, is_primary, notes) VALUES
+('customer-contact-01', 'customer-01', 'Nguyễn Thanh Hà', 'Trưởng phòng Logistics', '0908-111-201', 'ha.nguyen@minhlong.vn', true, 'Liên hệ điều phối chính'),
+('customer-contact-02', 'customer-01', 'Trần Quốc Huy', 'Kế toán công nợ', '0908-111-202', 'huy.tran@minhlong.vn', false, 'Nhận chứng từ đối soát'),
+('customer-contact-03', 'customer-02', 'Lê Minh Anh', 'Quản lý chuỗi cung ứng', '0908-222-101', 'anh.le@daiphat.vn', true, NULL),
+('customer-contact-04', 'customer-03', 'Phạm Thu Trang', 'Mua hàng', '0908-333-101', 'trang.pham@minhphat.vn', true, NULL),
+('customer-contact-05', 'customer-04', 'Võ Hoàng Nam', 'Điều phối kho', '0908-444-101', 'nam.vo@globaltextile.vn', true, NULL);
 INSERT INTO quotes (id, code, customer_name, title, amount, status, valid_until) VALUES
 ('quote-01', 'BG-0001', 'Công ty CP Nhựa Bình Minh', 'Báo giá tuyến HCM - Hà Nội', 48600000, 'Sent', '2026-08-15'),
 ('quote-02', 'BG-0002', 'Công ty TNHH Thương mại Minh Phát', 'Báo giá hàng lẻ', 14200000, 'Draft', '2026-08-10'),
@@ -215,6 +222,13 @@ INSERT INTO partners (id, code, name, tax_code, phone, email, partner_type, owne
 ('partner-04', 'KB001', 'Kho hàng không Tân Sơn Nhất', '0307234573', '028-3844-0102', 'warehouse@tcs.vn', 'Warehouse', 'Bùi Thị Kim Chi', 'Public', 'Active'),
 ('partner-05', 'DP001', 'Depot Tân Thuận', '0312234599', '028-3771-0202', 'yard@tantuan.vn', 'Depot', 'Hoàng Việt Anh', 'Private', 'Active'),
 ('partner-06', 'NCC002', 'Công ty CP Dịch vụ Cảng Sài Gòn', '0316234567', '028-3829-1000', 'sales@saigonport.vn', 'Supplier', 'Phạm Thị Thu Hà', 'Public', 'Inactive');
+
+INSERT INTO partner_contacts (id, partner_id, name, role_title, phone, email, is_primary, notes) VALUES
+('partner-contact-01', 'partner-01', 'Trần Minh Tâm', 'Điều hành đội xe', '0909-111-301', 'tam.tran@thanhdat.vn', true, 'Liên hệ điều xe'),
+('partner-contact-02', 'partner-01', 'Ngô Thùy Linh', 'Kế toán', '0909-111-302', 'linh.ngo@thanhdat.vn', false, NULL),
+('partner-contact-03', 'partner-02', 'Đặng Quốc Bảo', 'Giám đốc vận hành', '0909-222-101', 'bao.dang@forwardx.vn', true, NULL),
+('partner-contact-04', 'partner-03', 'Mai Thanh Vân', 'Customer Service', '0909-333-101', 'van.mai@maersk.com', true, NULL),
+('partner-contact-05', 'partner-04', 'Bùi Đức Long', 'Quản lý kho', '0909-444-101', 'long.bui@tcs.vn', true, NULL);
 
 -- ── User Roles ────────────────────────────────────────────────────────────────
 INSERT INTO user_roles (user_id, role_id) VALUES
@@ -383,6 +397,9 @@ INSERT INTO system_configs (id, kind, code, name, config_value, description, sta
 ('sys-05', 'trip_status', 'SCHEDULED', 'Đã lên lịch', 'scheduled', 'Trạng thái chuyến', 'Active', 10),
 ('sys-06', 'fee_rule', 'DISTANCE', 'Cước theo quãng đường', 'distance_km * rate', 'Công thức phí', 'Active', 10),
 ('sys-07', 'storage', 'LOCAL', 'Kho tệp đính kèm', '/data/uploads', 'Vị trí lưu tệp', 'Active', 10);
+INSERT INTO approval_flow_steps (id, flow_id, sequence, name, approver_role, min_amount, status) VALUES
+('flow-step-01', 'sys-03', 10, 'Kiểm tra chứng từ', 'Sales Manager', 0, 'Active'),
+('flow-step-02', 'sys-03', 20, 'Phê duyệt giá', 'Finance Manager', 10000000, 'Active');
 INSERT INTO system_activity (id, actor_name, action, resource, detail, created_at) VALUES
 ('act-01', 'Admin User', 'Cập nhật', 'Quy tắc mã đơn hàng', 'Đổi tiền tố mã', '2026-07-25 09:30:00'),
 ('act-02', 'Admin User', 'Duyệt', 'Đề nghị thanh toán', 'Đã duyệt đề nghị chi', '2026-07-24 14:20:00');

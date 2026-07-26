@@ -1,0 +1,151 @@
+title: Chi tiết đối tượng CRM
+page: { id: crm-entity-detail, auth: { require: [crm.read] } }
+
+datasources:
+  - id: crm_entity_detail
+    single: true
+    permission: crm.read
+    query: |
+      SELECT c.id, 'customer' AS kind, c.code, c.name, c.tax_code, c.phone, c.email,
+        c.owner_name, c.visibility,
+        CASE c.visibility WHEN 'Private' THEN 'Riêng' ELSE 'Công khai' END AS visibility_label,
+        CASE c.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label,
+        CASE c.stage WHEN 'Lead' THEN 'Khách tiềm năng'
+          WHEN 'Contacting' THEN 'Đang tiếp cận'
+          WHEN 'Customer' THEN 'Khách hàng' ELSE c.stage END AS category_label,
+        'Giai đoạn CRM' AS category_name, CAST(c.created_at AS VARCHAR) AS created_at
+      FROM customers c
+      WHERE :kind = 'customer' AND c.id = :id
+      UNION ALL
+      SELECT p.id, 'partner', p.code, p.name, p.tax_code, p.phone, p.email,
+        p.owner_name, p.visibility,
+        CASE p.visibility WHEN 'Private' THEN 'Riêng' ELSE 'Công khai' END,
+        CASE p.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END,
+        CASE p.partner_type WHEN 'Carrier' THEN 'Nhà xe'
+          WHEN 'Supplier' THEN 'Nhà cung cấp'
+          WHEN 'ShippingLine' THEN 'Hãng tàu'
+          WHEN 'Warehouse' THEN 'Kho / bãi'
+          WHEN 'Depot' THEN 'Depot' ELSE 'Khác' END,
+        'Loại đối tượng', CAST(p.created_at AS VARCHAR)
+      FROM partners p
+      WHERE :kind = 'partner' AND p.id = :id
+  - id: crm_entity_contacts
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, customer_id AS entity_id, name, role_title, phone, email,
+        is_primary, CASE WHEN is_primary THEN 'Liên hệ chính' ELSE 'Liên hệ phụ' END AS primary_label,
+        notes, CAST(created_at AS VARCHAR) AS created_at
+      FROM customer_contacts
+      WHERE :kind = 'customer' AND customer_id = :id
+      UNION ALL
+      SELECT id, partner_id, name, role_title, phone, email,
+        is_primary, CASE WHEN is_primary THEN 'Liên hệ chính' ELSE 'Liên hệ phụ' END,
+        notes, CAST(created_at AS VARCHAR)
+      FROM partner_contacts
+      WHERE :kind = 'partner' AND partner_id = :id
+      ORDER BY is_primary DESC, created_at, name
+  - id: crm_entity_activity
+    single: false
+    permission: crm.read
+    query: |
+      SELECT actor_name, action,
+        CASE WHEN action LIKE '%.contacts.create' THEN 'Thêm người liên hệ'
+          WHEN action LIKE '%.contacts.update' THEN 'Cập nhật người liên hệ'
+          WHEN action LIKE '%.contacts.delete' THEN 'Xóa người liên hệ'
+          ELSE action END AS action_label,
+        detail, CAST(created_at AS VARCHAR) AS created_at
+      FROM system_activity
+      WHERE resource = CASE WHEN :kind = 'customer' THEN 'customers' ELSE 'partners' END
+        AND resource_id = :id
+      UNION ALL
+      SELECT 'Hệ thống', 'created', 'Đã tạo', 'Khởi tạo đối tượng CRM',
+        CAST(created_at AS VARCHAR)
+      FROM customers WHERE :kind = 'customer' AND id = :id
+      UNION ALL
+      SELECT 'Hệ thống', 'created', 'Đã tạo', 'Khởi tạo đối tượng CRM',
+        CAST(created_at AS VARCHAR)
+      FROM partners WHERE :kind = 'partner' AND id = :id
+      ORDER BY created_at DESC
+
+toolbar:
+  - { id: back_crm_btn, label: '← Danh sách', variant: secondary, action: back_crm }
+
+components:
+  - type: DocumentSummary
+    source: crm_entity_detail
+    title_field: code
+    subtitle_field: name
+    status_field: status_label
+    status_colors: { Hoạt động: green, Ngưng hoạt động: red }
+    columns:
+      - { field: category_label, label: Phân loại }
+      - { field: tax_code, label: Mã số thuế }
+      - { field: owner_name, label: Sale phụ trách }
+      - { field: visibility_label, label: Phạm vi hiển thị }
+      - { field: phone, label: Điện thoại chính }
+      - { field: email, label: Email chính }
+  - type: ContactGrid
+    source: crm_entity_contacts
+    title: Người liên hệ
+    description: Liên hệ chính được đồng bộ lên thông tin đối tượng.
+    page_size: 25
+    row_key: id
+    actions:
+      - { id: add_crm_contact, label: '+ Thêm người liên hệ', variant: primary, permission: crm.write }
+    empty_state: { title: Chưa có người liên hệ }
+    columns:
+      - { field: name, label: Họ tên, type: PrimaryEntityCell, secondary: role_title }
+      - { field: phone, label: Điện thoại }
+      - { field: email, label: Email }
+      - { field: primary_label, label: Vai trò, type: StatusChip, colors: { Liên hệ chính: green, Liên hệ phụ: neutral } }
+      - { field: notes, label: Ghi chú }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: edit_crm_contact, label: Sửa, variant: ghost, show_if: "user.permissions.includes('crm.write')" }
+          - { id: delete_crm_contact, label: Xóa, variant: danger, show_if: "user.permissions.includes('crm.write')" }
+  - type: ApprovalTimeline
+    source: crm_entity_activity
+    title: Lịch sử liên hệ
+    actor_field: actor_name
+    action_field: action_label
+    detail_field: detail
+    timestamp_field: created_at
+
+actions:
+  - { id: back_crm, type: navigate, navigate_to: '{state.back}' }
+  - id: add_crm_contact
+    type: server_form
+    title: Thêm người liên hệ
+    action: crm.contacts.create
+    params: { id: '{state.id}', kind: '{state.kind}' }
+    refresh: [crm_entity_contacts, crm_entity_detail, crm_entity_activity]
+    fields:
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: role_title, label: Chức vụ, type: text }
+      - { field: phone, label: Điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: is_primary, label: Liên hệ chính, type: select, options: [false, true], default: false }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: edit_crm_contact
+    type: server_form
+    title: Cập nhật người liên hệ
+    action: crm.contacts.update
+    prefill: row
+    params: { id: '{state.id}', kind: '{state.kind}', contact_id: '{row.id}' }
+    refresh: [crm_entity_contacts, crm_entity_detail, crm_entity_activity]
+    fields:
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: role_title, label: Chức vụ, type: text }
+      - { field: phone, label: Điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: is_primary, label: Liên hệ chính, type: select, options: [false, true] }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: delete_crm_contact
+    type: server
+    action: crm.contacts.delete
+    confirm: 'Xóa người liên hệ {{row.name}}?'
+    params: { id: '{state.id}', kind: '{state.kind}', contact_id: '{row.id}' }
+    refresh: [crm_entity_contacts, crm_entity_detail, crm_entity_activity]

@@ -17,6 +17,8 @@ import {
 } from './services/business-workflow.ts';
 import { LINE_ITEM_ACTION_REGISTRY } from './services/line-item-actions.ts';
 import { CHAT_ACTION_REGISTRY } from './services/chat-actions.ts';
+import { CONTACT_ACTION_REGISTRY } from './services/contact-actions.ts';
+import { APPROVAL_ACTION_REGISTRY } from './services/approval-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -312,6 +314,7 @@ const SOURCE_FILES = [
   'pages/order-detail.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
+  'pages/crm-entity-detail.yaml',
   'pages/quotes.yaml', 'pages/quote-detail.yaml', 'pages/crm-dashboard.yaml', 'pages/crm-kpi.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
@@ -344,7 +347,7 @@ const SOURCE_FILES = [
   'pages/accounting-invoice-templates.yaml',
   'pages/accounting-ledger-accounts.yaml',
   'pages/system-activity.yaml', 'pages/system-code-rules.yaml',
-  'pages/system-print-templates.yaml', 'pages/system-approval-flows.yaml', 'pages/system-shipment-types.yaml',
+  'pages/system-print-templates.yaml', 'pages/system-approval-flows.yaml', 'pages/system-approval-flow-detail.yaml', 'pages/system-shipment-types.yaml',
   'pages/system-trip-statuses.yaml', 'pages/system-fee-rules.yaml', 'pages/system-storage.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
@@ -622,13 +625,17 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const businessActionDefinition = BUSINESS_ACTION_REGISTRY[actionName];
     const lineItemActionDefinition = LINE_ITEM_ACTION_REGISTRY[actionName];
     const chatActionDefinition = CHAT_ACTION_REGISTRY[actionName];
+    const contactActionDefinition = CONTACT_ACTION_REGISTRY[actionName];
+    const approvalActionDefinition = APPROVAL_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
       || lineItemActionDefinition
-      || chatActionDefinition;
-    if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
-    requirePerm(actionDefinition.permission);
+      || chatActionDefinition
+      || contactActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition;
+    if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
+    requirePerm(resolvedActionDefinition.permission);
 
     const body = await req.json() as any;
     if (chatActionDefinition) {
@@ -643,6 +650,48 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         return json(await repository.sendChatMessage(body.id, body.content, activityActor));
       }
       return json(await repository.markChatThreadRead(body.id, String(authUser.sub)));
+    }
+    if (contactActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      const domain = contactActionDefinition.domain === 'crm'
+        ? body.kind
+        : contactActionDefinition.domain;
+      if (domain !== 'customer' && domain !== 'partner') {
+        return apiError(400, 'Invalid CRM contact kind');
+      }
+      const isCustomer = domain === 'customer';
+      return json(await repository.mutateCrmContact(
+        isCustomer
+          ? {
+              parentTable: 'customers',
+              contactTable: 'customer_contacts',
+              parentKey: 'customer_id',
+              label: 'Customer',
+            }
+          : {
+              parentTable: 'partners',
+              contactTable: 'partner_contacts',
+              parentKey: 'partner_id',
+              label: 'Partner',
+            },
+        contactActionDefinition.operation,
+        body.id,
+        typeof body.contact_id === 'string' ? body.contact_id : null,
+        body.values && typeof body.values === 'object' ? body.values : {},
+        actionName,
+        activityActor,
+      ));
+    }
+    if (approvalActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      return json(await repository.mutateApprovalFlowStep(
+        approvalActionDefinition.operation,
+        body.id,
+        typeof body.step_id === 'string' ? body.step_id : null,
+        body.values && typeof body.values === 'object' ? body.values : {},
+        actionName,
+        activityActor,
+      ));
     }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 

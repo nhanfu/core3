@@ -102,6 +102,9 @@ components:
         sortable: false
         align: right
         actions:
+          - id: view_partner
+            label: Chi tiết
+            variant: ghost
           - id: edit_partner
             label: Sửa
             variant: ghost
@@ -110,6 +113,7 @@ components:
             variant: danger
 
 actions:
+  - { id: view_partner, type: navigate, navigate_to: /crm/entities/detail, params: { id: '{row.id}', kind: partner, back: /partners } }
   - id: add_partner
     type: form
     title: Thêm đối tượng

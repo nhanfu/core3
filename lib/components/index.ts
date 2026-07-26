@@ -58,6 +58,7 @@ export { DocumentSummary }      from './DocumentSummary.ts';
 export { MoneySummary }         from './MoneySummary.ts';
 export { ApprovalTimeline }     from './ApprovalTimeline.ts';
 export { ChatWorkspace }        from './ChatWorkspace.ts';
+export { ContactGrid }          from './ContactGrid.ts';
 export { Kanban }               from './Kanban.ts';
 export { AdvancedSearch }       from './AdvancedSearch.ts';
 export { QrCode }               from './QrCode.ts';

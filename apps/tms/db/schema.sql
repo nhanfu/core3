@@ -103,6 +103,20 @@ CREATE TABLE IF NOT EXISTS customers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS customer_contacts (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id VARCHAR NOT NULL REFERENCES customers(id),
+  name VARCHAR NOT NULL,
+  role_title VARCHAR,
+  phone VARCHAR,
+  email VARCHAR,
+  is_primary BOOLEAN NOT NULL DEFAULT false,
+  notes VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_customer_contacts_customer ON customer_contacts(customer_id);
+
 CREATE TABLE IF NOT EXISTS quotes (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, customer_name VARCHAR NOT NULL,
   title VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL DEFAULT 0,
@@ -143,6 +157,19 @@ CREATE TABLE IF NOT EXISTS partners (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS partner_contacts (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  partner_id VARCHAR NOT NULL REFERENCES partners(id),
+  name VARCHAR NOT NULL,
+  role_title VARCHAR,
+  phone VARCHAR,
+  email VARCHAR,
+  is_primary BOOLEAN NOT NULL DEFAULT false,
+  notes VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_partner_contacts_partner ON partner_contacts(partner_id);
 
 CREATE TABLE IF NOT EXISTS employees (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -411,6 +438,19 @@ CREATE TABLE IF NOT EXISTS system_configs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(kind, code)
 );
+CREATE TABLE IF NOT EXISTS approval_flow_steps (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  flow_id VARCHAR NOT NULL REFERENCES system_configs(id),
+  sequence INTEGER NOT NULL,
+  name VARCHAR NOT NULL,
+  approver_role VARCHAR NOT NULL,
+  min_amount DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (min_amount >= 0),
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(flow_id, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_approval_flow_steps_flow ON approval_flow_steps(flow_id, sequence);
 CREATE TABLE IF NOT EXISTS system_activity (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_id VARCHAR,

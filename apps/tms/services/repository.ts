@@ -39,6 +39,21 @@ function normalizeLineValues(values: Record<string, unknown>, hasCost: boolean) 
   };
 }
 
+function normalizeContactValues(values: Record<string, unknown>) {
+  const name = String(values.name || '').trim();
+  const roleTitle = String(values.role_title || '').trim();
+  const phone = String(values.phone || '').trim();
+  const email = String(values.email || '').trim().toLowerCase();
+  const notes = String(values.notes || '').trim();
+  const isPrimary = values.is_primary === true || String(values.is_primary).toLowerCase() === 'true';
+  if (!name) throw { status: 400, message: 'contact name required' };
+  if (!phone && !email) throw { status: 400, message: 'contact phone or email required' };
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw { status: 400, message: 'invalid contact email' };
+  }
+  return { name, roleTitle, phone, email, notes, isPrimary };
+}
+
 export class DuckDbRepository {
   db: any;
 
@@ -149,7 +164,13 @@ export class DuckDbRepository {
   }
 
   async deleteRecord(table: string, id: any): Promise<void> {
-    if (table !== 'orders' && table !== 'quotes' && table !== 'accounting_entries') {
+    if (
+      table !== 'orders'
+      && table !== 'quotes'
+      && table !== 'accounting_entries'
+      && table !== 'customers'
+      && table !== 'partners'
+    ) {
       await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
       return;
     }
@@ -163,14 +184,22 @@ export class DuckDbRepository {
               ? 'order_lines'
               : table === 'quotes'
                 ? 'quote_lines'
-                : 'accounting_entry_lines'
+                : table === 'accounting_entries'
+                  ? 'accounting_entry_lines'
+                  : table === 'customers'
+                    ? 'customer_contacts'
+                    : 'partner_contacts'
           }
            WHERE ${
              table === 'orders'
                ? 'order_id'
                : table === 'quotes'
                  ? 'quote_id'
-                 : 'entry_id'
+                 : table === 'accounting_entries'
+                   ? 'entry_id'
+                   : table === 'customers'
+                     ? 'customer_id'
+                     : 'partner_id'
            } = ?`,
           [id],
         );
@@ -482,6 +511,258 @@ export class DuckDbRepository {
       [threadId, userId],
     );
     return { ok: true };
+  }
+
+  async mutateCrmContact(
+    config: {
+      parentTable: 'customers' | 'partners';
+      contactTable: 'customer_contacts' | 'partner_contacts';
+      parentKey: 'customer_id' | 'partner_id';
+      label: string;
+    },
+    operation: 'create' | 'update' | 'delete',
+    parentId: string,
+    contactId: string | null,
+    values: Record<string, unknown>,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [parent] = await queryOnConnection(
+          conn,
+          `SELECT id, code, name FROM ${config.parentTable} WHERE id = ?`,
+          [parentId],
+        );
+        if (!parent) throw { status: 404, message: `${config.label} not found` };
+
+        let contact: any = null;
+        let auditName = '';
+        let deletedPrimary = false;
+        if (operation === 'delete') {
+          if (!contactId) throw { status: 400, message: 'contact_id required' };
+          const [existing] = await queryOnConnection(
+            conn,
+            `SELECT * FROM ${config.contactTable}
+             WHERE id = ? AND ${config.parentKey} = ?`,
+            [contactId, parentId],
+          );
+          if (!existing) throw { status: 404, message: 'Contact not found' };
+          auditName = existing.name;
+          deletedPrimary = Boolean(existing.is_primary);
+          await runOnConnection(
+            conn,
+            `DELETE FROM ${config.contactTable}
+             WHERE id = ? AND ${config.parentKey} = ?`,
+            [contactId, parentId],
+          );
+        } else {
+          const normalized = normalizeContactValues(values);
+          let makePrimary = normalized.isPrimary;
+          if (operation === 'create') {
+            const [{ count }] = await queryOnConnection(
+              conn,
+              `SELECT COUNT(*) AS count FROM ${config.contactTable} WHERE ${config.parentKey} = ?`,
+              [parentId],
+            );
+            makePrimary = makePrimary || Number(count) === 0;
+          }
+          if (makePrimary) {
+            await runOnConnection(
+              conn,
+              `UPDATE ${config.contactTable}
+               SET is_primary = false, updated_at = CURRENT_TIMESTAMP
+               WHERE ${config.parentKey} = ?`,
+              [parentId],
+            );
+          }
+
+          if (operation === 'create') {
+            const id = crypto.randomUUID();
+            await runOnConnection(
+              conn,
+              `INSERT INTO ${config.contactTable}(
+                id, ${config.parentKey}, name, role_title, phone, email, is_primary, notes
+              ) VALUES(?,?,?,?,?,?,?,?)`,
+              [
+                id,
+                parentId,
+                normalized.name,
+                normalized.roleTitle || null,
+                normalized.phone || null,
+                normalized.email || null,
+                makePrimary,
+                normalized.notes || null,
+              ],
+            );
+            [contact] = await queryOnConnection(
+              conn,
+              `SELECT * FROM ${config.contactTable} WHERE id = ?`,
+              [id],
+            );
+          } else {
+            if (!contactId) throw { status: 400, message: 'contact_id required' };
+            const [existing] = await queryOnConnection(
+              conn,
+              `SELECT * FROM ${config.contactTable}
+               WHERE id = ? AND ${config.parentKey} = ?`,
+              [contactId, parentId],
+            );
+            if (!existing) throw { status: 404, message: 'Contact not found' };
+            // A parent must retain one primary contact. Choosing another
+            // contact as primary is the supported way to demote this record.
+            makePrimary = makePrimary || Boolean(existing.is_primary);
+            await runOnConnection(
+              conn,
+              `UPDATE ${config.contactTable}
+               SET name = ?, role_title = ?, phone = ?, email = ?, is_primary = ?,
+                 notes = ?, updated_at = CURRENT_TIMESTAMP
+               WHERE id = ? AND ${config.parentKey} = ?`,
+              [
+                normalized.name,
+                normalized.roleTitle || null,
+                normalized.phone || null,
+                normalized.email || null,
+                makePrimary,
+                normalized.notes || null,
+                contactId,
+                parentId,
+              ],
+            );
+            [contact] = await queryOnConnection(
+              conn,
+              `SELECT * FROM ${config.contactTable} WHERE id = ?`,
+              [contactId],
+            );
+          }
+          auditName = normalized.name;
+        }
+
+        if (deletedPrimary) {
+          const [replacement] = await queryOnConnection(
+            conn,
+            `SELECT id FROM ${config.contactTable}
+             WHERE ${config.parentKey} = ?
+             ORDER BY created_at, id
+             LIMIT 1`,
+            [parentId],
+          );
+          if (replacement) {
+            await runOnConnection(
+              conn,
+              `UPDATE ${config.contactTable}
+               SET is_primary = true, updated_at = CURRENT_TIMESTAMP
+               WHERE id = ?`,
+              [replacement.id],
+            );
+          }
+        }
+
+        const [primary] = await queryOnConnection(
+          conn,
+          `SELECT phone, email FROM ${config.contactTable}
+           WHERE ${config.parentKey} = ? AND is_primary = true
+           ORDER BY created_at
+           LIMIT 1`,
+          [parentId],
+        );
+        if (primary) {
+          await runOnConnection(
+            conn,
+            `UPDATE ${config.parentTable}
+             SET phone = ?, email = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?`,
+            [primary.phone || null, primary.email || null, parentId],
+          );
+        }
+
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actor.id || null,
+            actor.name,
+            action,
+            config.parentTable,
+            parentId,
+            `${parent.code}: ${operation} contact ${auditName}`,
+          ],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return { contact, parent_id: parentId };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async mutateApprovalFlowStep(
+    operation: 'create' | 'update' | 'delete' | 'move_up' | 'move_down',
+    flowId: string,
+    stepId: string | null,
+    values: Record<string, unknown>,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [flow] = await queryOnConnection(conn, "SELECT id, code, name FROM system_configs WHERE id = ? AND kind = 'approval_flow'", [flowId]);
+        if (!flow) throw { status: 404, message: 'Approval flow not found' };
+        if (operation === 'create' || operation === 'update') {
+          const name = String(values.name || '').trim();
+          const approverRole = String(values.approver_role || '').trim();
+          const minAmount = Number(values.min_amount || 0);
+          const status = String(values.status || 'Active');
+          if (!name || !approverRole) throw { status: 400, message: 'step name and approver role required' };
+          if (!Number.isFinite(minAmount) || minAmount < 0) throw { status: 400, message: 'min_amount must be zero or greater' };
+          if (!['Active', 'Inactive'].includes(status)) throw { status: 400, message: 'invalid step status' };
+          if (operation === 'create') {
+            const [last] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) AS sequence FROM approval_flow_steps WHERE flow_id = ?', [flowId]);
+            const id = crypto.randomUUID();
+            await runOnConnection(conn, 'INSERT INTO approval_flow_steps(id, flow_id, sequence, name, approver_role, min_amount, status) VALUES(?,?,?,?,?,?,?)', [id, flowId, Number(last?.sequence || 0) + 10, name, approverRole, minAmount, status]);
+            await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', id, `Thêm bước ${name}`]);
+            const [row] = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE id = ?', [id]);
+            await runOnConnection(conn, 'COMMIT');
+            return row;
+          }
+          if (!stepId) throw { status: 400, message: 'step_id required' };
+          const [existing] = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          if (!existing) throw { status: 404, message: 'Approval step not found' };
+          await runOnConnection(conn, 'UPDATE approval_flow_steps SET name = ?, approver_role = ?, min_amount = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND flow_id = ?', [name, approverRole, minAmount, status, stepId, flowId]);
+          await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, `Cập nhật bước ${name}`]);
+        } else if (operation === 'delete') {
+          if (!stepId) throw { status: 400, message: 'step_id required' };
+          const [existing] = await queryOnConnection(conn, 'SELECT name FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          if (!existing) throw { status: 404, message: 'Approval step not found' };
+          await runOnConnection(conn, 'DELETE FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, `Xóa bước ${existing.name}`]);
+        } else {
+          if (!stepId) throw { status: 400, message: 'step_id required' };
+          const [current] = await queryOnConnection(conn, 'SELECT id, sequence FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          if (!current) throw { status: 404, message: 'Approval step not found' };
+          const direction = operation === 'move_up' ? '<' : '>';
+          const order = operation === 'move_up' ? 'DESC' : 'ASC';
+          const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM approval_flow_steps WHERE flow_id = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [flowId, current.sequence]);
+          if (neighbor) {
+            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
+            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [current.sequence, neighbor.id]);
+          }
+          await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, operation === 'move_up' ? 'Đưa bước lên' : 'Đưa bước xuống']);
+        }
+        const rows = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE flow_id = ? ORDER BY sequence, id', [flowId]);
+        await runOnConnection(conn, 'COMMIT');
+        return { data: rows };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK');
+        throw error;
+      }
+    });
   }
 
   async transitionOrder(
