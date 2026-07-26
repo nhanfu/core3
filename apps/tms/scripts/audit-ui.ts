@@ -410,12 +410,41 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   } catch (error) {
     uiMutationFailures.push(`debit-note UI mutation: ${error instanceof Error ? error.message : String(error)}`);
   }
+  try {
+    await evaluateWithTimeout("location.hash = '#/chat'", 'chat mutation navigation');
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    const mutationState = await evaluateWithTimeout(`(async () => {
+      const previousAlert = window.alert;
+      window.alert = () => {};
+      const thread = [...document.querySelectorAll('#outlet button[aria-label^="Mở cuộc trò chuyện"]')]
+        .find((button) => button.textContent?.includes('Điều phối miền Nam'));
+      thread?.click();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const input = document.querySelector('#outlet textarea[aria-label="Nội dung tin nhắn"]');
+      const send = [...document.querySelectorAll('#outlet button[type="submit"]')]
+        .find((button) => button.textContent?.includes('Gửi'));
+      if (input) {
+        const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+        setter?.call(input, 'UI audit chat message');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      send?.click();
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const messages = document.querySelector('#outlet')?.textContent || '';
+      window.alert = previousAlert;
+      return { thread: Boolean(thread), send: Boolean(send), sent: messages.includes('UI audit chat message') };
+    })()`, 'chat mutation state');
+    if (!mutationState?.thread || !mutationState?.send || !mutationState.sent) uiMutationFailures.push(`chat UI mutation did not persist message: ${JSON.stringify(mutationState)}`);
+    if (consoleErrors.length) uiMutationFailures.push(`chat UI mutation console errors: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    uiMutationFailures.push(`chat UI mutation: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 failures.push(...uiMutationFailures);
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 5 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 6 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);

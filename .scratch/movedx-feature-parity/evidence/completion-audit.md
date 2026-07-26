@@ -90,12 +90,12 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - The legacy fleet editor now shares vehicle-type and active-driver lookups with the canonical fleet route.
 - Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - Ledger accounts now support persisted parent relationships, parent display, datasource-backed parent selection, and server-side self-parent validation.
-- An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve, units master-data create/edit/delete, quote send/accept, payroll approve/pay, and debit-note submit/approve/pay; all five phases pass with zero UI mutation failures on a fresh seeded database.
+- An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve, units master-data create/edit/delete, quote send/accept, payroll approve/pay, debit-note submit/approve/pay, and Chat mark-read/send; all six phases pass with zero UI mutation failures on a fresh seeded database.
 
 ## Not Proven
 
 - The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
-- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, tree toggle, and row action per route (52 routes plus 16 populated details, 0 failures; 330 sortable headers, 142 tabs, 45 choosers, 4 tree toggles, 377 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape, and the opt-in fresh-browser mutation phase verifies five representative lifecycle/CRUD flows through normal UI clicks.
+- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, tree toggle, and row action per route (52 routes plus 16 populated details, 0 failures; 330 sortable headers, 142 tabs, 45 choosers, 4 tree toggles, 377 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape, and the opt-in fresh-browser mutation phase verifies six representative lifecycle/CRUD flows through normal UI clicks.
 
 ## Current commands
 
