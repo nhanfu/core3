@@ -393,6 +393,8 @@ INSERT INTO accounting_entry_lines (
 ('acct-line-08', 'acct-advance-02', 10, 'Chi phí giao hàng liên tỉnh', 1, 'Khoản', 7500000, 0, 7500000),
 ('acct-line-09', 'acct-settle-01', 10, 'Hoàn lại tạm ứng chưa sử dụng', 1, 'Khoản', 1200000, 0, 1200000),
 ('acct-line-10', 'acct-settle-02', 10, 'Quyết toán chi phí chuyến xe', 1, 'Khoản', 6800000, 0, 6800000);
+UPDATE accounting_entries SET linked_advance_id = 'acct-advance-01' WHERE id = 'acct-settle-01';
+UPDATE accounting_entries SET linked_advance_id = 'acct-advance-02' WHERE id = 'acct-settle-02';
 
 INSERT INTO system_configs (id, kind, code, name, config_value, description, status, sort_order) VALUES
 ('sys-01', 'code_rule', 'ORDER', 'Mã đơn hàng', 'DH-{YYYY}-{SEQ:4}', 'Quy tắc sinh mã đơn hàng', 'Active', 10),

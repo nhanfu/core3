@@ -154,6 +154,13 @@ await patchRequest({
   id: 'area-01',
   changes: [{ field: 'parent_id', value: 'area-01' }],
 }, 400);
+await patchRequest({
+  table: 'accounting_entries',
+  action: 'update',
+  scope: 'settlement',
+  id: 'acct-settle-01',
+  changes: [{ field: 'linked_advance_id', value: 'acct-pay-01' }],
+}, 400);
 const currencySync = await fetch(`${baseUrl}/api/actions/catalog.currencies.sync_rates`, {
   method: 'POST',
   headers,
@@ -215,4 +222,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 area_hierarchy_rejections=1 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 area_hierarchy_rejections=1 accounting_link_rejections=1 failures=0`);

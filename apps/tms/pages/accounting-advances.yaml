@@ -5,13 +5,16 @@ datasources:
     single: false
     permission: accounting.read
     query: |
-      SELECT id, code, name, counterparty, amount, currency,
-        printf('%,.0f', COALESCE(amount, 0)) AS amount_display, status,
+      SELECT a.id, a.code, a.name, a.counterparty, a.amount, a.currency,
+        printf('%,.0f', COALESCE(a.amount, 0)) AS amount_display,
+        COALESCE((SELECT SUM(s.amount) FROM accounting_entries s WHERE s.kind = 'settlement' AND s.linked_advance_id = a.id), 0) AS settled_amount,
+        COALESCE(a.amount, 0) - COALESCE((SELECT SUM(s.amount) FROM accounting_entries s WHERE s.kind = 'settlement' AND s.linked_advance_id = a.id), 0) AS outstanding_amount,
+        a.status,
         CASE status WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt'
           WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Cancelled' THEN 'Đã hủy'
           ELSE status END AS status_label,
         CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
-      FROM accounting_entries WHERE kind = 'advance' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%') ORDER BY document_date DESC, code
+      FROM accounting_entries a WHERE a.kind = 'advance' AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.counterparty ILIKE '%' || :q || '%') ORDER BY a.document_date DESC, a.code
 toolbar: [{ id: add_advance_btn, label: '+ Thêm tạm ứng', variant: primary, permission: accounting.write, action: add_advance }]
 components:
   - { type: ListToolbar, source: advances, filter_field: q, search: { label: Tìm kiếm tạm ứng, placeholder: 'Tìm số chứng từ hoặc người nhận...' }, actions: [{ id: advances.export, label: 'Xuất CSV', icon: '↓' }] }
@@ -29,6 +32,7 @@ components:
       - { field: document_date, label: Ngày tạm ứng }
       - { field: due_date, label: Hạn hoàn ứng }
       - { field: amount_display, label: Giá trị, align: right }
+      - { field: outstanding_amount, label: Còn phải hoàn, align: right }
       - { field: currency, label: Tiền tệ }
       - field: status_label
         label: Trạng thái

@@ -190,6 +190,7 @@ async function initDb(): Promise<void> {
     UPDATE roles SET view_scope = 'all' WHERE view_scope IS NULL;
     ALTER TABLE areas ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
     ALTER TABLE departments ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
+    ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS linked_advance_id VARCHAR;
     CREATE TABLE IF NOT EXISTS currency_rates (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       currency_code VARCHAR NOT NULL UNIQUE,
@@ -584,7 +585,7 @@ const TABLE_REGISTRY = {
   accounting_entries: {
     permission: 'accounting.write',
     timestamps: true,
-    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'sort_order'],
+    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'linked_advance_id', 'sort_order'],
     scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
   system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
@@ -1021,6 +1022,13 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (parentId) {
         const [parent] = await repository.query('SELECT id FROM departments WHERE id = ?', [parentId]);
         if (!parent) return apiError(400, 'Parent department not found');
+      }
+    }
+    if (table === 'accounting_entries' && changes.some((change: any) => change.field === 'linked_advance_id')) {
+      const linkedId = changes.find((change: any) => change.field === 'linked_advance_id')?.value;
+      if (linkedId) {
+        const [advance] = await repository.query("SELECT id FROM accounting_entries WHERE id = ? AND kind = 'advance'", [linkedId]);
+        if (!advance) return apiError(400, 'Linked advance not found');
       }
     }
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
