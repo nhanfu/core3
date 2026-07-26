@@ -56,7 +56,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   const dataMap: Record<string, any> = {};
   const filterState: Record<string, any> = {};    // sourceId -> current filter values object
   const paginationState: Record<string, any> = {}; // sourceId -> { skip, top, page }
-  // boundComponents: sourceId -> [{ comp, def, compType: 'GridView'|'StatRow'|'Chart' }]
+  // boundComponents: sourceId -> [{ comp, def, compType: 'GridView'|'DataGrid'|'StatRow'|'Chart' }]
   const boundComponents: Record<string, any[]> = {};
 
   const sourceDefs = collectSources(config);
@@ -87,7 +87,7 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   function updateBoundComponents(sourceId: string, data: any) {
     for (const entry of (boundComponents[sourceId] || [])) {
-      if (entry.compType === 'GridView') {
+      if (entry.compType === 'GridView' || entry.compType === 'DataGrid') {
         // Use the internal setState via our stored reference (bypasses the override)
         entry._origSetState({ rows: data.data || [], meta: data.meta }, true);
       } else if (entry.compType === 'StatRow') {
@@ -489,6 +489,47 @@ export async function renderPage(config: any, { container = document.body }: { c
     }
   }
 
+  async function renderDataGrid(def: any, targetContainer: HTMLElement) {
+    const { DataGrid } = await import('./components/DataGrid.ts');
+    const sourceId = def.source;
+    const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+    const columns = (def.columns || []).map((column: any, index: number) => ({
+      id: column.id || column.field || `column-${index}`,
+      field: column.field,
+      label: column.label || '',
+      align: column.align,
+      sortable: column.sortable !== false,
+    }));
+    const comp = new DataGrid(
+      `data-grid-${sourceId || def.id || Date.now()}`,
+      {
+        rows: sourceResult.data || [],
+        meta: sourceResult.meta || {},
+        actions: def.actions || [],
+        selectable: !!def.selectable,
+        emptyState: def.empty_state,
+      },
+      columns,
+      { rowKey: def.row_key || 'id', selectable: !!def.selectable }
+    );
+
+    const _origSetState = comp.setState.bind(comp);
+    comp._onAction = async (actionId: string, params: any) => {
+      const actionDef = (config.actions || []).find(action => action.id === actionId);
+      if (actionDef) await handleAction(actionDef, params || {});
+    };
+
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+
+    if (sourceId) {
+      if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
+      boundComponents[sourceId].push({ comp, def, compType: 'DataGrid', _origSetState });
+    }
+  }
+
   function chartState(def: any, sourceResult: any) {
     const rows = Array.isArray(sourceResult?.data) ? sourceResult.data : [];
     const labelField = def.label_field || 'label';
@@ -594,6 +635,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         break;
       case 'GridView':
         await renderGridView(def, targetContainer);
+        break;
+      case 'DataGrid':
+        await renderDataGrid(def, targetContainer);
         break;
       case 'TabGroup':
         await renderTabGroupDef(def, targetContainer);
