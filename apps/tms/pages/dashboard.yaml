@@ -102,11 +102,20 @@ datasources:
       WHERE t.status IN ('Scheduled', 'In Transit')
         AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:q IS NULL OR t.trip_number ILIKE '%' || :q || '%'
+          OR t.origin ILIKE '%' || :q || '%'
+          OR t.destination ILIKE '%' || :q || '%'
+          OR tr.plate ILIKE '%' || :q || '%'
+          OR d.name ILIKE '%' || :q || '%')
       ORDER BY CASE t.status WHEN 'In Transit' THEN 0 ELSE 1 END, t.departure_time
 
 components:
   - type: ListToolbar
     source: dashboard_dispatch_queue
+    filter_field: q
+    search:
+      label: Tìm kiếm tổng quan
+      placeholder: 'Tìm chuyến, tuyến, phương tiện...'
     filter_sources: [dashboard_kpis, dashboard_trip_status, dashboard_dispatch_queue, dashboard_routes, dashboard_customers]
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [month, previous_month, quarter, year, last_12_months], preset_style: segmented, default_preset: month }
     actions: [{ id: dashboard_dispatch_queue.export, label: 'Xuất CSV', icon: '↓' }]

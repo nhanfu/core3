@@ -29,6 +29,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Audited customer and order grids now expose the reference type/creator and separate order/customer columns.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
+- Dashboard toolbar now matches the reference search and CSV-export controls, with server-backed dispatch search fields.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.
 - Dashboard includes declarative monthly revenue/cost/profit line data plus trip-status chart data.
 - Dashboard chart slots sit side by side at desktop width and wrap naturally at tablet width without document overflow.

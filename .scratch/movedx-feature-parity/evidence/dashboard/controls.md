@@ -2,6 +2,7 @@
 
 ## Visible controls
 
+- The toolbar exposes the reference dashboard search field and `Xuất CSV` action.
 - Global route search, period presets, date range, and CSV export are available.
 - KPI cards are grouped into the reference sections `Việc cần làm`, `Vận hành`, `Doanh thu · Chi phí`, `Công nợ · Dòng tiền`, and `Nhân sự`.
 - Financial KPI cards use VND formatting and task cards expose draft, approval, dispatch, overdue, and expiring-contract work items.
@@ -10,6 +11,7 @@
 
 ## Interaction checks
 
+- Enter a trip, route, vehicle, or driver term and confirm the dispatch queue filters server-side.
 - Select each period preset and confirm all KPI and table datasources refresh together.
 - Initial dashboard load selects `Tháng này`, fills both date fields, and applies those bounds to every dashboard datasource.
 - Enter a custom date range and verify route/customer totals change.
