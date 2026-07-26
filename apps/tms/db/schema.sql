@@ -378,6 +378,13 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_order_date ON orders(order_date);
+-- Workflow status is kept separately because DuckDB cannot update a parent
+-- row while foreign-key children reference it.
+CREATE TABLE IF NOT EXISTS order_workflow_states (
+  order_id VARCHAR PRIMARY KEY,
+  status VARCHAR NOT NULL CHECK (status IN ('Draft', 'Pending Approval', 'Approved', 'Cancelled')),
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE IF NOT EXISTS order_lines (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id VARCHAR NOT NULL REFERENCES orders(id),

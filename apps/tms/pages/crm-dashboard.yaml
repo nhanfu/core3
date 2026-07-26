@@ -9,7 +9,7 @@ datasources:
         (SELECT COUNT(*) FROM customers WHERE stage = 'Lead' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS lead_count,
         (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_count,
         (SELECT COALESCE(SUM(amount), 0) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_value,
-        (SELECT COUNT(*) FROM orders WHERE status = 'Approved' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS approved_order_count
+        (SELECT COUNT(*) FROM orders o WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS approved_order_count
   - id: crm_quote_pipeline
     single: false
     permission: crm.read

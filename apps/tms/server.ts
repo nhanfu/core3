@@ -157,6 +157,10 @@ async function initDb(): Promise<void> {
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS reset_cadence VARCHAR DEFAULT 'never';
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS next_sequence BIGINT DEFAULT 1;
     ALTER TABLE teams ADD COLUMN IF NOT EXISTS manager_id VARCHAR;
+    INSERT INTO order_workflow_states(order_id, status)
+    SELECT o.id, o.status
+    FROM orders o
+    WHERE NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = o.id);
     CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
     UPDATE trucks SET capacity_kg = CASE type
       WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
@@ -899,7 +903,12 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
     }
     if (table === 'orders' && (action === 'update' || action === 'delete')) {
-      const [order] = await repository.query('SELECT status FROM orders WHERE id = ?', [id]);
+      const [order] = await repository.query(
+        `SELECT COALESCE(s.status, o.status) AS status
+         FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
+         WHERE o.id = ?`,
+        [id],
+      );
       if (!order) return apiError(404, 'Order not found');
       if (order.status !== 'Draft') {
         return apiError(409, `Order cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${order.status}`);

@@ -7,8 +7,9 @@ datasources:
     permission: orders.read
     query: |
       SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
-        CAST(o.order_date AS VARCHAR) AS order_date, o.status,
-        CASE o.status WHEN 'Draft' THEN 'Nháp'
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Nháp'
           WHEN 'Pending Approval' THEN 'Đang duyệt'
           WHEN 'Approved' THEN 'Đã duyệt'
           WHEN 'Cancelled' THEN 'Đã hủy' ELSE o.status END AS status_label,
@@ -30,7 +31,7 @@ datasources:
         printf('%,.0f ₫', l.unit_price) AS unit_price_display,
         printf('%.2f%%', l.tax_rate) AS tax_rate_display,
         printf('%,.0f ₫', l.line_total) AS line_total_display,
-        o.status AS parent_status
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS parent_status
       FROM order_lines l
       JOIN orders o ON o.id = l.order_id
       WHERE l.order_id = :id

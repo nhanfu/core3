@@ -12,8 +12,8 @@ datasources:
     query: |
       SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
-        o.status,
-        CASE o.status
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
           WHEN 'Draft' THEN 'Nháp'
           WHEN 'Pending Approval' THEN 'Đang duyệt'
           WHEN 'Approved' THEN 'Đã duyệt'
@@ -24,7 +24,7 @@ datasources:
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, CAST(o.created_at AS VARCHAR) AS created_at
       FROM orders o
-      WHERE (:status IS NULL OR o.status = :status)
+      WHERE (:status IS NULL OR COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = :status)
         AND (:shipment_type IS NULL OR o.shipment_type = :shipment_type)
         AND (:transport_method IS NULL OR o.transport_method = :transport_method)
         AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))

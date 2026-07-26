@@ -962,22 +962,26 @@ export class DuckDbRepository {
       try {
         const rows = await queryOnConnection(
           conn,
-          'SELECT * FROM orders WHERE id = ?',
+          `SELECT o.*, COALESCE(s.status, o.status) AS workflow_status
+           FROM orders o
+           LEFT JOIN order_workflow_states s ON s.order_id = o.id
+           WHERE o.id = ?`,
           [orderId],
         );
         const order = rows[0];
         if (!order) throw { status: 404, message: 'Order not found' };
-        if (!allowedFrom.includes(order.status)) {
+        if (!allowedFrom.includes(order.workflow_status)) {
           throw {
             status: 409,
-            message: `Action "${action}" is not allowed while order is "${order.status}"`,
+            message: `Action "${action}" is not allowed while order is "${order.workflow_status}"`,
           };
         }
-
         await runOnConnection(
           conn,
-          'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = ?',
-          [targetStatus, orderId, order.status],
+           `INSERT INTO order_workflow_states(order_id, status, updated_at)
+           VALUES(?,?,?)
+           ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
+          [orderId, targetStatus, new Date()],
         );
         await runOnConnection(
           conn,
@@ -991,16 +995,19 @@ export class DuckDbRepository {
             action,
             'orders',
             orderId,
-            `${order.order_number}: ${order.status} -> ${targetStatus}`,
+            `${order.order_number}: ${order.workflow_status} -> ${targetStatus}`,
           ],
         );
         const [updated] = await queryOnConnection(
           conn,
-          'SELECT * FROM orders WHERE id = ?',
+          `SELECT o.*, COALESCE(s.status, o.status) AS status
+           FROM orders o
+           LEFT JOIN order_workflow_states s ON s.order_id = o.id
+           WHERE o.id = ?`,
           [orderId],
         );
         await runOnConnection(conn, 'COMMIT');
-        return { ...updated, previous_status: order.status };
+        return { ...updated, previous_status: order.workflow_status };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK').catch(() => {});
         throw error;
