@@ -2,6 +2,7 @@ title: Loại container
 
 page:
   id: catalog-container-types
+  breadcrumb: [Danh mục, Loại container]
   auth:
     require: [catalog.read]
 
@@ -25,10 +26,11 @@ components:
     source: container_types
     filter_field: q
     search: { label: Tìm kiếm loại container, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: container_types.export, label: 'Xuất CSV', icon: '↓' }, { id: import_container_types, label: 'Nhập CSV', icon: '↑' }]
+    actions: [{ id: container_types.export, label: 'Xuất Excel', icon: download, params: { format: xlsx } }, { id: import_container_types, label: 'Nhập Excel', icon: upload }]
   - type: StatusTabs
     source: container_types
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang sử dụng }
@@ -54,13 +56,14 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_container_type, label: Sửa, variant: ghost }
-          - { id: delete_container_type, label: Xóa, variant: danger }
+          - { id: edit_container_type, label: Sửa, variant: ghost, permission: catalog.write }
+          - { id: delete_container_type, label: Xóa, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: import_container_types, type: upload, kind: master_data_import, scope: container_type, refresh: [container_types] }
+  - { id: import_container_types, type: upload, permission: catalog.write, kind: master_data_import, scope: container_type, refresh: [container_types] }
   - id: add_container_type
     type: form
+    permission: catalog.write
     title: Thêm loại container
     table: master_data
     scope: container_type
@@ -71,9 +74,10 @@ actions:
       - { field: name, label: Tên loại container, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_container_type
     type: form
+    permission: catalog.write
     title: Cập nhật loại container
     table: master_data
     scope: container_type
@@ -85,5 +89,5 @@ actions:
       - { field: name, label: Tên loại container, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
-  - { id: delete_container_type, type: delete, table: master_data, scope: container_type, confirm: 'Xóa loại container {{row.name}}?', refresh: [container_types] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { id: delete_container_type, type: delete, permission: catalog.write, table: master_data, scope: container_type, confirm: 'Xóa loại container {{row.name}}?', refresh: [container_types] }

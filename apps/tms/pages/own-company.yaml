@@ -1,6 +1,7 @@
 title: Công ty chủ quản
 page:
   id: own-company
+  breadcrumb: [Tổ chức & phân quyền, Công ty chủ quản]
   auth: { require: [settings.read] }
 datasources:
   - id: own_company
@@ -31,21 +32,22 @@ components:
         label: ''
         sortable: false
         align: right
-        actions: [{ id: edit_company, label: Cập nhật, variant: ghost }]
+        actions: [{ id: edit_company, label: Cập nhật, variant: ghost, permission: settings.write }]
   - type: DataGrid
     source: company_documents
     page_size: 20
     column_chooser: true
     row_key: id
     empty_state: { title: Chưa có tài liệu công ty }
-    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_company_document, label: Tải xuống, variant: ghost }] }]
+    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_company_document, label: Tải xuống, variant: ghost, permission: settings.read }] }]
 toolbar:
   - { id: upload_company_document, label: '+ Tải tài liệu', variant: secondary, permission: settings.write, action: upload_company_document }
 actions:
-  - { id: upload_company_document, type: upload, kind: company_document, params: { company_id: '{state.company_profile.id}' }, refresh: [company_documents] }
-  - { id: download_company_document, type: download, kind: company_document }
+  - { id: upload_company_document, type: upload, permission: settings.write, kind: company_document, params: { company_id: '{state.company_profile.id}' }, refresh: [company_documents] }
+  - { id: download_company_document, type: download, permission: settings.read, kind: company_document }
   - id: edit_company
     type: form
+    permission: settings.write
     title: Thông tin công ty chủ quản
     table: company_profiles
     operation: update

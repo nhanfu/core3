@@ -1,5 +1,5 @@
 title: Báo giá
-page: { id: quotes, auth: { require: [crm.read] } }
+page: { id: quotes, breadcrumb: [Kinh doanh, Báo giá], auth: { require: [crm.read] } }
 
 datasources:
   - id: quotes
@@ -26,7 +26,7 @@ datasources:
   - id: quote_customer_lookup
     single: false
     permission: crm.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM quotes WHERE customer_name IS NOT NULL AND customer_name <> '' ORDER BY label"
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM quotes WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 
 toolbar:
   - { id: add_quote, label: '+ Thêm báo giá', variant: primary, permission: crm.write, action: add_quote }
@@ -37,10 +37,11 @@ components:
     filter_field: q
     search: { label: Tìm báo giá, placeholder: 'Tìm mã, khách hàng hoặc nội dung...' }
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
-    actions: [{ id: quotes.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: quotes.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: quotes
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Draft, label: Nháp }
@@ -52,6 +53,7 @@ components:
     page_size: 20
     column_chooser: true
     row_key: id
+    empty_state: { title: Chưa có báo giá }
     columns:
       - { field: code, label: Mã }
       - { field: title, label: Báo giá, type: PrimaryEntityCell, secondary: customer_name }
@@ -67,17 +69,18 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: view_quote, label: Chi tiết, variant: secondary }
-          - { id: edit_quote, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
-          - { id: send_quote, label: Gửi, variant: primary, show_if: "row.status === 'Draft'" }
-          - { id: accept_quote, label: Chấp nhận, variant: primary, show_if: "row.status === 'Sent'" }
-          - { id: revise_quote, label: Sửa lại, variant: ghost, show_if: "row.status === 'Sent'" }
-          - { id: cancel_quote, label: Hủy, variant: danger, show_if: "['Draft', 'Sent'].includes(row.status)" }
-          - { id: delete_quote, label: Xóa, variant: danger, show_if: "row.status === 'Draft'" }
+          - { id: view_quote, label: Chi tiết, variant: secondary, permission: crm.read }
+          - { id: edit_quote, label: Sửa, variant: ghost, permission: crm.write, show_if: "row.status === 'Draft'" }
+          - { id: send_quote, label: Gửi, variant: primary, permission: crm.write, show_if: "row.status === 'Draft'" }
+          - { id: accept_quote, label: Chấp nhận, variant: primary, permission: crm.write, show_if: "row.status === 'Sent'" }
+          - { id: revise_quote, label: Sửa lại, variant: ghost, permission: crm.write, show_if: "row.status === 'Sent'" }
+          - { id: cancel_quote, label: Hủy, variant: danger, permission: crm.write, show_if: "['Draft', 'Sent'].includes(row.status)" }
+          - { id: delete_quote, label: Xóa, variant: danger, permission: crm.write, show_if: "row.status === 'Draft'" }
 
 actions:
   - id: add_quote
     type: form
+    permission: crm.write
     title: Thêm báo giá
     table: quotes
     operation: insert
@@ -89,6 +92,7 @@ actions:
       - { field: valid_until, label: Hiệu lực đến, type: date }
   - id: edit_quote
     type: form
+    permission: crm.write
     title: Cập nhật báo giá
     table: quotes
     operation: update
@@ -101,10 +105,11 @@ actions:
       - { field: valid_until, label: Hiệu lực đến, type: date }
   - id: view_quote
     type: navigate
+    permission: crm.read
     navigate_to: /quotes/detail
     params: { id: '{row.id}' }
-  - { id: send_quote, type: server, action: quotes.send, confirm: 'Gửi báo giá {{row.code}}?', refresh: [quotes] }
-  - { id: accept_quote, type: server, action: quotes.accept, confirm: 'Xác nhận khách hàng chấp nhận {{row.code}}?', refresh: [quotes] }
-  - { id: revise_quote, type: server, action: quotes.revise, confirm: 'Đưa báo giá {{row.code}} về nháp để sửa?', refresh: [quotes] }
-  - { id: cancel_quote, type: server, action: quotes.cancel, confirm: 'Hủy báo giá {{row.code}}?', refresh: [quotes] }
-  - { id: delete_quote, type: delete, table: quotes, confirm: 'Xóa báo giá {{row.code}}?', refresh: [quotes] }
+  - { id: send_quote, type: server, permission: crm.write, action: quotes.send, confirm: 'Gửi báo giá {{row.code}}?', refresh: [quotes] }
+  - { id: accept_quote, type: server, permission: crm.write, action: quotes.accept, confirm: 'Xác nhận khách hàng chấp nhận {{row.code}}?', refresh: [quotes] }
+  - { id: revise_quote, type: server, permission: crm.write, action: quotes.revise, confirm: 'Đưa báo giá {{row.code}} về nháp để sửa?', refresh: [quotes] }
+  - { id: cancel_quote, type: server, permission: crm.write, action: quotes.cancel, confirm: 'Hủy báo giá {{row.code}}?', refresh: [quotes] }
+  - { id: delete_quote, type: delete, permission: crm.write, table: quotes, confirm: 'Xóa báo giá {{row.code}}?', refresh: [quotes] }

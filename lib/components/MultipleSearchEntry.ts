@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class MultipleSearchEntry extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -13,13 +14,13 @@ export class MultipleSearchEntry extends BaseComponent {
     const wrap = html.take(container).div.className('flex flex-col gap-1').getContext();
 
     if (d.label) {
-      html.take(wrap).label.className('text-sm font-medium text-gray-700').text(d.label);
+      html.take(wrap).label.className('core3-token-form-label text-sm font-medium text-gray-700').text(d.label);
     }
 
     const fieldWrap = html.take(wrap).div.className('relative').getContext();
 
     const chipRow = html.take(fieldWrap).div
-      .className('flex flex-wrap gap-1 min-h-[38px] px-2 py-1.5 border border-gray-300 rounded-md bg-white focus-within:ring-2 focus-within:ring-indigo-500 cursor-text')
+      .className('core3-token-form-control flex flex-wrap gap-1 min-h-[38px] px-2 py-1.5 border border-gray-300 rounded-md bg-white focus-within:ring-2 focus-within:ring-indigo-500 cursor-text')
       .getContext();
 
     for (const chip of value) {
@@ -29,8 +30,8 @@ export class MultipleSearchEntry extends BaseComponent {
       html.take(chipEl).text(String(chip));
       const rmBtn = html.take(chipEl).button
         .className('text-indigo-500 hover:text-indigo-800 leading-none font-bold')
-        .text('×')
         .getContext();
+      appendIcon(rmBtn, 'x');
       rmBtn.addEventListener('click', e => {
         e.stopPropagation();
         this.setState({ value: this.state.value.filter(v => v !== chip) }, false);

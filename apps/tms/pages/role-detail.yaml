@@ -1,5 +1,5 @@
 title: Chi tiết vai trò
-page: { id: role-detail, auth: { require: [settings.read] } }
+page: { id: role-detail, breadcrumb: [Tổ chức & phân quyền, Vai trò, Chi tiết], auth: { require: [settings.read] } }
 datasources:
   - id: role_detail
     single: true
@@ -29,7 +29,7 @@ datasources:
       JOIN users u ON u.id = ur.user_id
       LEFT JOIN branches b ON b.id = u.branch_id
       LEFT JOIN departments d ON d.id = u.department_id
-      WHERE ur.role_id = :id
+      WHERE ur.role_id = :id AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
       ORDER BY u.name
 components:
   - { type: DocumentSummary, source: role_detail, title_field: name, subtitle_field: description, columns: [{ field: id, label: Mã vai trò }, { field: view_scope, label: Phạm vi xem }] }
@@ -38,6 +38,7 @@ components:
     page_size: 50
     column_chooser: true
     row_key: permission_key
+    empty_state: { title: Chưa có quyền trong vai trò }
     columns:
       - { field: permission_key, label: Quyền }
       - { field: status_label, label: Trạng thái, type: StatusChip, colors: { 'Đã cấp': green, 'Chưa cấp': neutral } }
@@ -45,8 +46,8 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: grant_permission, label: Cấp quyền, variant: primary, show_if: "!row.enabled && user.permissions.includes('settings.write')" }
-          - { id: revoke_permission, label: Thu hồi, variant: danger, show_if: "row.enabled && user.permissions.includes('settings.write')" }
+          - { id: grant_permission, label: Cấp quyền, variant: primary, permission: settings.write, show_if: "!row.enabled" }
+          - { id: revoke_permission, label: Thu hồi, variant: danger, permission: settings.write, show_if: "row.enabled" }
   - type: DataGrid
     source: role_users
     page_size: 20
@@ -59,10 +60,10 @@ components:
       - { field: department_name, label: Phòng ban }
       - { field: enabled, label: Kích hoạt, type: BooleanCell }
 toolbar:
-  - { id: back_roles, label: '← Danh sách vai trò', variant: secondary, action: back_roles }
+  - { id: back_roles, label: 'Danh sách vai trò', icon: arrow-left, variant: secondary, action: back_roles }
   - { id: edit_role_scope, label: 'Cập nhật phạm vi xem', variant: secondary, permission: settings.write, action: edit_role_scope }
 actions:
   - { id: back_roles, type: navigate, navigate_to: /org/roles }
-  - { id: edit_role_scope, type: form, title: Cập nhật phạm vi xem vai trò, table: roles, operation: update, prefill: source, prefill_source: role_detail, refresh: [role_detail, role_permissions, role_users], fields: [{ field: view_scope, label: Phạm vi xem, type: select, options: [all, branch, own], required: true }] }
-  - { id: grant_permission, type: server, action: settings.roles.grant_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }
-  - { id: revoke_permission, type: server, action: settings.roles.revoke_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }
+  - { id: edit_role_scope, type: form, permission: settings.write, title: Cập nhật phạm vi xem vai trò, table: roles, operation: update, prefill: source, prefill_source: role_detail, refresh: [role_detail, role_permissions, role_users], fields: [{ field: view_scope, label: Phạm vi xem, type: select, options: [{ id: all, label: Toàn công ty }, { id: branch, label: Theo chi nhánh }, { id: own, label: Cá nhân phụ trách }], required: true }] }
+  - { id: grant_permission, type: server, permission: settings.write, action: settings.roles.grant_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }
+  - { id: revoke_permission, type: server, permission: settings.write, action: settings.roles.revoke_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }

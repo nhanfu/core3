@@ -34,7 +34,7 @@ datasources:
   - id: vehicle_type_lookup
     single: false
     permission: fleet.read
-    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' ORDER BY label"
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 
 toolbar:
   - id: add_vehicle_btn
@@ -50,7 +50,7 @@ components:
     search:
       label: Tìm kiếm phương tiện
       placeholder: 'Tìm theo biển số / số hiệu, tên, hãng...'
-    actions: [{ id: vehicles.export, label: '', title: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: vehicles.export, label: '', title: 'Xuất CSV', icon: download }]
     advanced_filter: true
     help: true
   - type: StatusTabs
@@ -59,7 +59,9 @@ components:
     show_counts: false
     variant: toggle
     tabs:
-      - { id: Active, label: Hoạt động }
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Sẵn sàng }
+      - { id: Maintenance, label: Bảo dưỡng }
       - { id: 'Out of Service', label: Ngưng hoạt động }
   - type: DataGrid
     source: vehicles
@@ -109,17 +111,21 @@ components:
           - id: view_vehicle
             label: Chi tiết
             variant: primary
+            permission: fleet.read
           - id: edit_vehicle
             label: Sửa
             variant: ghost
+            permission: fleet.write
           - id: delete_vehicle
             label: Xóa
             variant: danger
+            permission: fleet.write
 
 actions:
-  - { id: view_vehicle, type: navigate, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }
+  - { id: view_vehicle, type: navigate, permission: fleet.read, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }
   - id: add_vehicle
     type: form
+    permission: fleet.write
     title: Thêm phương tiện
     table: trucks
     operation: insert
@@ -129,11 +135,12 @@ actions:
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
       - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_type_lookup }
       - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }], default: Active }
       - { field: capacity_kg, label: Tải trọng (kg), type: number, default: 0 }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: edit_vehicle
     type: form
+    permission: fleet.write
     title: Cập nhật phương tiện
     table: trucks
     operation: update
@@ -144,11 +151,12 @@ actions:
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
       - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_type_lookup }
       - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }] }
       - { field: capacity_kg, label: Tải trọng (kg), type: number }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: delete_vehicle
     type: delete
+    permission: fleet.write
     confirm: 'Xóa phương tiện {{row.plate}}?'
     table: trucks
     refresh: [vehicles]

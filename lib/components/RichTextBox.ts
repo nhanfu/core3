@@ -14,10 +14,10 @@ export class RichTextBox extends BaseComponent {
     const wrap = html.take(container).div.className('flex flex-col gap-1').getContext();
 
     if (d.label) {
-      html.take(wrap).label.className('text-sm font-medium text-gray-700').text(d.label);
+      html.take(wrap).label.className('core3-token-form-label text-sm font-medium text-gray-700').text(d.label);
     }
 
-    const toolbar = html.take(wrap).div.className('flex gap-1 px-2 py-1 border border-b-0 border-gray-300 rounded-t-md bg-gray-50').getContext();
+    const toolbar = html.take(wrap).div.className('core3-token-form-toolbar flex gap-1 px-2 py-1 border border-b-0 border-gray-300 rounded-t-md bg-gray-50').getContext();
 
     const boldBtn = html.take(toolbar).button
       .className('px-2 py-0.5 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded')
@@ -30,7 +30,7 @@ export class RichTextBox extends BaseComponent {
       .getContext();
 
     const editor = html.take(wrap).div
-      .className('w-full px-3 py-2 text-sm border border-gray-300 rounded-b-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 overflow-y-auto')
+      .className('core3-token-form-control w-full px-3 py-2 text-sm border border-gray-300 rounded-b-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 overflow-y-auto')
       .attr('contenteditable', 'true')
       .style(`min-height: ${rows * 1.5}rem;`)
       .getContext();

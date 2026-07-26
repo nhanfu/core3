@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url VARCHAR,
   preferred_lang VARCHAR DEFAULT 'en',
   enabled BOOLEAN DEFAULT true,
-  branch_id VARCHAR,
+  branch_id VARCHAR REFERENCES branches(id),
   department_id VARCHAR,
   last_login TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -31,14 +31,17 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS user_roles (
+  -- DuckDB treats updates to a referenced parent row as a delete/insert;
+  -- user profile updates must remain valid while role membership exists.
+  -- Repository authorization validates this membership relation explicitly.
   user_id VARCHAR NOT NULL,
-  role_id VARCHAR NOT NULL,
+  role_id VARCHAR NOT NULL REFERENCES roles(id),
   PRIMARY KEY (user_id, role_id)
 );
 
 CREATE TABLE IF NOT EXISTS permissions (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-  role_id VARCHAR NOT NULL,
+  role_id VARCHAR NOT NULL REFERENCES roles(id),
   permission_key VARCHAR NOT NULL
 );
 
@@ -93,6 +96,7 @@ CREATE TABLE IF NOT EXISTS drivers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_drivers_assigned_truck ON drivers(assigned_truck_id);
 
 CREATE TABLE IF NOT EXISTS customers (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -108,9 +112,13 @@ CREATE TABLE IF NOT EXISTS customers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_customers_visibility_owner ON customers(visibility, owner_name);
+CREATE INDEX IF NOT EXISTS idx_customers_stage_status ON customers(stage, status);
 CREATE TABLE IF NOT EXISTS customer_contacts (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id VARCHAR NOT NULL REFERENCES customers(id),
+  -- Repository validates this mutable parent link; DuckDB rejects any update
+  -- to a referenced parent row, even when the primary key is unchanged.
+  customer_id VARCHAR NOT NULL,
   name VARCHAR NOT NULL,
   role_title VARCHAR,
   phone VARCHAR,
@@ -131,6 +139,7 @@ CREATE TABLE IF NOT EXISTS quotes (
   branch_id VARCHAR,
   valid_until DATE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_quotes_branch ON quotes(branch_id);
 CREATE TABLE IF NOT EXISTS quote_lines (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   quote_id VARCHAR NOT NULL REFERENCES quotes(id),
@@ -163,9 +172,13 @@ CREATE TABLE IF NOT EXISTS partners (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_partners_visibility_owner ON partners(visibility, owner_name);
+CREATE INDEX IF NOT EXISTS idx_partners_type_status ON partners(partner_type, status);
 CREATE TABLE IF NOT EXISTS partner_contacts (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-  partner_id VARCHAR NOT NULL REFERENCES partners(id),
+  -- Repository validates this mutable parent link; DuckDB rejects any update
+  -- to a referenced parent row, even when the primary key is unchanged.
+  partner_id VARCHAR NOT NULL,
   name VARCHAR NOT NULL,
   role_title VARCHAR,
   phone VARCHAR,
@@ -195,7 +208,7 @@ CREATE TABLE IF NOT EXISTS employees (
 CREATE TABLE IF NOT EXISTS employment_contracts (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,
-  employee_id VARCHAR NOT NULL,
+  employee_id VARCHAR NOT NULL REFERENCES employees(id),
   contract_type VARCHAR NOT NULL DEFAULT 'FixedTerm' CHECK (contract_type IN ('Probation', 'FixedTerm', 'Indefinite')),
   start_date DATE NOT NULL,
   end_date DATE,
@@ -241,9 +254,9 @@ CREATE TABLE IF NOT EXISTS work_shifts (
 
 CREATE TABLE IF NOT EXISTS timesheets (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-  employee_id VARCHAR NOT NULL,
+  employee_id VARCHAR NOT NULL REFERENCES employees(id),
   work_date DATE NOT NULL,
-  shift_id VARCHAR,
+  shift_id VARCHAR REFERENCES work_shifts(id),
   hours DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (hours >= 0 AND hours <= 24),
   status VARCHAR NOT NULL DEFAULT 'Present' CHECK (status IN ('Present', 'Absent', 'Leave')),
   notes VARCHAR,
@@ -255,7 +268,7 @@ CREATE TABLE IF NOT EXISTS timesheets (
 CREATE TABLE IF NOT EXISTS payrolls (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,
-  employee_id VARCHAR NOT NULL,
+  employee_id VARCHAR NOT NULL REFERENCES employees(id),
   pay_month DATE NOT NULL,
   base_salary DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (base_salary >= 0),
   allowance DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (allowance >= 0),
@@ -271,6 +284,8 @@ CREATE TABLE IF NOT EXISTS areas (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,
   name VARCHAR NOT NULL,
+  -- Hierarchy changes are validated in the repository. DuckDB rejects updates
+  -- to a parent row while descendants still reference it.
   parent_id VARCHAR,
   region VARCHAR,
   description VARCHAR,
@@ -311,8 +326,8 @@ CREATE TABLE IF NOT EXISTS departments (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,
   name VARCHAR NOT NULL,
-  parent_id VARCHAR,
-  branch_id VARCHAR,
+  parent_id VARCHAR REFERENCES departments(id),
+  branch_id VARCHAR REFERENCES branches(id),
   status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -322,8 +337,8 @@ CREATE TABLE IF NOT EXISTS teams (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,
   name VARCHAR NOT NULL,
-  department_id VARCHAR,
-  manager_id VARCHAR,
+  department_id VARCHAR REFERENCES departments(id),
+  manager_id VARCHAR REFERENCES employees(id),
   status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -336,7 +351,10 @@ CREATE TABLE IF NOT EXISTS locations (
   location_type VARCHAR NOT NULL DEFAULT 'Other' CHECK (location_type IN ('Port', 'Warehouse', 'Depot', 'Customer', 'Other')),
   address VARCHAR,
   city VARCHAR,
+  -- Area assignment is scope- and cycle-validated by the repository so area
+  -- hierarchy edits remain possible on DuckDB.
   area_id VARCHAR,
+  branch_id VARCHAR REFERENCES branches(id),
   status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -347,7 +365,8 @@ CREATE TABLE IF NOT EXISTS containers (
   container_number VARCHAR NOT NULL UNIQUE,
   container_type VARCHAR NOT NULL DEFAULT '20DC',
   owner_name VARCHAR,
-  location_id VARCHAR,
+  location_id VARCHAR REFERENCES locations(id),
+  branch_id VARCHAR REFERENCES branches(id),
   status VARCHAR NOT NULL DEFAULT 'Available' CHECK (status IN ('Available', 'InUse', 'Maintenance', 'Inactive')),
   notes VARCHAR,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -362,10 +381,10 @@ CREATE TABLE IF NOT EXISTS trucks (
   status VARCHAR DEFAULT 'Active',
   capacity_kg INTEGER DEFAULT 0,
   mileage INTEGER DEFAULT 0,
-  driver_id VARCHAR,
+  driver_id VARCHAR REFERENCES drivers(id),
   last_service DATE,
   next_service DATE,
-  branch_id VARCHAR,
+  branch_id VARCHAR REFERENCES branches(id),
   notes VARCHAR,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -374,8 +393,9 @@ CREATE TABLE IF NOT EXISTS trucks (
 CREATE TABLE IF NOT EXISTS trips (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   trip_number VARCHAR NOT NULL UNIQUE,
-  truck_id VARCHAR,
-  driver_id VARCHAR,
+  truck_id VARCHAR REFERENCES trucks(id),
+  driver_id VARCHAR REFERENCES drivers(id),
+  branch_id VARCHAR REFERENCES branches(id),
   origin VARCHAR NOT NULL,
   destination VARCHAR NOT NULL,
   status VARCHAR DEFAULT 'Scheduled',
@@ -401,7 +421,7 @@ CREATE TABLE IF NOT EXISTS orders (
   transport_method VARCHAR,
   trip_count INTEGER NOT NULL DEFAULT 0,
   total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
-  branch_id VARCHAR,
+  branch_id VARCHAR REFERENCES branches(id),
   created_by VARCHAR NOT NULL DEFAULT 'Admin User',
   notes VARCHAR,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -409,6 +429,28 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_order_date ON orders(order_date);
+CREATE INDEX IF NOT EXISTS idx_users_branch ON users(branch_id);
+CREATE INDEX IF NOT EXISTS idx_users_department ON users(department_id);
+CREATE INDEX IF NOT EXISTS idx_permissions_role ON permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_employment_contracts_employee ON employment_contracts(employee_id);
+CREATE INDEX IF NOT EXISTS idx_timesheets_employee ON timesheets(employee_id, work_date);
+CREATE INDEX IF NOT EXISTS idx_timesheets_shift ON timesheets(shift_id);
+CREATE INDEX IF NOT EXISTS idx_payrolls_employee ON payrolls(employee_id, pay_month);
+CREATE INDEX IF NOT EXISTS idx_areas_parent ON areas(parent_id);
+CREATE INDEX IF NOT EXISTS idx_departments_parent ON departments(parent_id);
+CREATE INDEX IF NOT EXISTS idx_departments_branch ON departments(branch_id);
+CREATE INDEX IF NOT EXISTS idx_teams_department ON teams(department_id);
+CREATE INDEX IF NOT EXISTS idx_teams_manager ON teams(manager_id);
+CREATE INDEX IF NOT EXISTS idx_locations_area ON locations(area_id);
+CREATE INDEX IF NOT EXISTS idx_locations_branch ON locations(branch_id);
+CREATE INDEX IF NOT EXISTS idx_containers_location ON containers(location_id);
+CREATE INDEX IF NOT EXISTS idx_containers_branch ON containers(branch_id);
+CREATE INDEX IF NOT EXISTS idx_trucks_driver ON trucks(driver_id);
+CREATE INDEX IF NOT EXISTS idx_trucks_branch ON trucks(branch_id);
+CREATE INDEX IF NOT EXISTS idx_trips_truck ON trips(truck_id);
+CREATE INDEX IF NOT EXISTS idx_trips_driver ON trips(driver_id);
+CREATE INDEX IF NOT EXISTS idx_trips_branch ON trips(branch_id);
+CREATE INDEX IF NOT EXISTS idx_orders_branch ON orders(branch_id);
 -- Workflow status is kept separately because DuckDB cannot update a parent
 -- row while foreign-key children reference it.
 CREATE TABLE IF NOT EXISTS order_workflow_states (
@@ -478,9 +520,14 @@ CREATE TABLE IF NOT EXISTS accounting_entries (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(kind, code)
 );
+CREATE INDEX IF NOT EXISTS idx_accounting_entries_branch ON accounting_entries(branch_id);
+CREATE INDEX IF NOT EXISTS idx_accounting_entries_linked_advance ON accounting_entries(linked_advance_id);
+CREATE INDEX IF NOT EXISTS idx_accounting_entries_parent ON accounting_entries(parent_id);
 CREATE TABLE IF NOT EXISTS accounting_entry_lines (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-  entry_id VARCHAR NOT NULL REFERENCES accounting_entries(id),
+  -- Repository validates this mutable parent link; DuckDB rejects updates to
+  -- a referenced parent row even when its primary key is unchanged.
+  entry_id VARCHAR NOT NULL,
   sequence INTEGER NOT NULL DEFAULT 10,
   description VARCHAR NOT NULL,
   quantity DECIMAL(18,3) NOT NULL DEFAULT 1 CHECK (quantity > 0),
@@ -543,6 +590,7 @@ CREATE TABLE IF NOT EXISTS system_activity (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_system_activity_created_at ON system_activity(created_at);
+CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
 
 CREATE TABLE IF NOT EXISTS maintenance (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -557,6 +605,8 @@ CREATE TABLE IF NOT EXISTS maintenance (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_maintenance_truck_date ON maintenance(truck_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_maintenance_technician ON maintenance(technician_id);
 
 CREATE TABLE IF NOT EXISTS notifications (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -567,6 +617,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   read BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created ON notifications(user_id, read, created_at);
 
 CREATE SEQUENCE IF NOT EXISTS translations_id_seq START 1;
 

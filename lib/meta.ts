@@ -34,7 +34,8 @@ export function resolveMeta(def: any, ctx: any = {}) {
  * @returns {{ visible: boolean, disabled: boolean }}
  */
 export function resolveAction(action: any, ctx: any = {}) {
-  const visible  = action.show_if     ? !!evalExpr(action.show_if,     ctx) : true;
+  const visible  = Boolean(!action.permission || ctx.user?.permissions?.includes(action.permission))
+    && (action.show_if ? !!evalExpr(action.show_if, ctx) : true);
   const disabled = action.disabled_if ? !!evalExpr(action.disabled_if, ctx) : false;
   return { visible, disabled };
 }

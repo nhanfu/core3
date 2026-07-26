@@ -25,6 +25,7 @@ function formatTimestamp(value: unknown) {
 
 export class ChatWorkspace extends BaseComponent {
   def: any;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(id: string, state: any = {}, def: any = {}) {
     super(id, {
@@ -40,7 +41,22 @@ export class ChatWorkspace extends BaseComponent {
     this.def = def;
   }
 
+  private startRefreshTimer() {
+    const interval = Number(this.def.refresh_interval_ms || 0);
+    if (interval < 1000 || this.refreshTimer || typeof this.def.on_refresh !== 'function') return;
+    this.refreshTimer = setInterval(() => {
+      void Promise.resolve(this.def.on_refresh()).catch(() => {});
+    }, interval);
+  }
+
+  dispose() {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
+    this.refreshTimer = null;
+    super.dispose();
+  }
+
   draw(container: HTMLElement) {
+    this.startRefreshTimer();
     const threads = Array.isArray(this.state.threads) ? this.state.threads : [];
     const messages = Array.isArray(this.state.messages) ? this.state.messages : [];
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];

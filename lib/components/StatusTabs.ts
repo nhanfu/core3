@@ -11,7 +11,7 @@ export type StatusTab = {
 
 export type StatusTabsOptions = {
   showCounts?: boolean;
-  variant?: 'tabs' | 'toggle';
+  variant?: 'tabs' | 'toggle' | 'contained';
 };
 
 /**
@@ -22,7 +22,7 @@ export type StatusTabsOptions = {
 export class StatusTabs extends BaseComponent {
   tabs: StatusTab[];
   showCounts: boolean;
-  variant: 'tabs' | 'toggle';
+  variant: 'tabs' | 'toggle' | 'contained';
 
   constructor(id: string, state: { active?: string } = {}, tabs: StatusTab[] = [], options: StatusTabsOptions = {}) {
     super(id, state);
@@ -34,11 +34,13 @@ export class StatusTabs extends BaseComponent {
   draw(container: HTMLElement) {
     const active = this.state.active ?? this.tabs[0]?.id;
     const tabList = document.createElement('div');
-    tabList.className = this.variant === 'toggle'
+    tabList.className = `core3-token-status-tabs ${this.variant === 'toggle'
       ? 'flex min-w-max items-center gap-2 bg-white'
-      : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4';
+      : this.variant === 'contained'
+        ? 'core3-status-tabs-contained flex min-w-max items-end gap-5 rounded-t-lg border-x border-t border-slate-200 bg-white px-4 pt-1'
+      : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4'}`;
     tabList.setAttribute('role', 'tablist');
-    tabList.setAttribute('aria-label', 'Status filters');
+    tabList.setAttribute('aria-label', 'Bộ lọc trạng thái');
 
     for (const tab of this.tabs) {
       const selected = tab.id === active;
@@ -46,16 +48,23 @@ export class StatusTabs extends BaseComponent {
       button.type = 'button';
       button.dataset.statusTab = tab.id;
       button.className = [
+        'core3-token-status-tab',
         'inline-flex items-center gap-2 text-sm font-medium transition-colors',
         this.variant === 'toggle'
           ? 'h-10 rounded-md border px-3'
-          : 'h-11 border-b-2 px-0.5',
+          : this.variant === 'contained'
+            ? 'h-11 rounded-t-md border-b-2 px-3'
+            : 'h-11 border-b-2 px-0.5',
         selected
           ? this.variant === 'toggle'
             ? 'border-blue-300 bg-blue-50 text-blue-700'
+            : this.variant === 'contained'
+              ? 'border-blue-600 bg-blue-50 text-blue-700'
             : 'border-blue-600 text-blue-600'
           : this.variant === 'toggle'
             ? 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+            : this.variant === 'contained'
+              ? 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
             : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900',
         tab.disabled ? 'cursor-not-allowed opacity-50' : '',
       ].filter(Boolean).join(' ');
@@ -66,9 +75,9 @@ export class StatusTabs extends BaseComponent {
 
       if (this.showCounts && tab.count !== undefined) {
         const count = document.createElement('span');
-        count.className = selected
+        count.className = `core3-token-status-count ${selected
           ? 'rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-700'
-          : 'rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600';
+          : 'rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600'}`;
         count.textContent = String(tab.count);
         button.append(count);
       }

@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class EmptyState extends BaseComponent {
   draw(container) {
@@ -8,7 +9,8 @@ export class EmptyState extends BaseComponent {
       .className('flex flex-col items-center justify-center py-12 px-4 w-full text-center')
       .getContext();
 
-    html.take(wrap).div.className('text-5xl mb-4').text('📋');
+    const icon = html.take(wrap).div.className('text-5xl mb-4').getContext();
+    appendIcon(icon, 'file');
     html.take(wrap).p.className('text-base font-semibold text-gray-900').text(String(title));
 
     if (description) {

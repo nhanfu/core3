@@ -12,6 +12,6 @@ describe('StatCard navigation', () => {
     card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(onNavigate).toHaveBeenCalledTimes(2);
     expect(onNavigate).toHaveBeenCalledWith('/orders');
-    expect(container.querySelector('.stat-card-arrow')?.textContent).toBe('→');
+    expect(container.querySelector('.stat-card-arrow svg')).not.toBeNull();
   });
 });

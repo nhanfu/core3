@@ -2,6 +2,7 @@ title: Lịch điều
 
 page:
   id: schedule
+  breadcrumb: [Điều hành, Lịch điều]
   auth:
     require: [dispatch.read]
 

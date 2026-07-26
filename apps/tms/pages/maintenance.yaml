@@ -1,4 +1,4 @@
-title: Maintenance
+title: Bảo dưỡng
 
 page:
   id: maintenance
@@ -40,68 +40,71 @@ datasources:
 
 toolbar:
   - id: add_maintenance_btn
-    label: "+ Schedule Service"
+    label: "+ Lên lịch bảo dưỡng"
     variant: primary
     permission: maintenance.write
     action: add_maintenance
 
 filters:
   source: maintenance
+  all_label: Tất cả
+  clear_label: Xóa bộ lọc
   fields:
     - field: status
-      label: Status
+      label: Trạng thái
       type: select
-      options: [Scheduled, In Progress, Completed, Overdue]
+      options: [{ id: Scheduled, label: Đã lên lịch }, { id: 'In Progress', label: Đang thực hiện }, { id: Completed, label: Hoàn thành }, { id: Overdue, label: Quá hạn }]
     - field: service_type
-      label: Service Type
+      label: Loại bảo dưỡng
       type: select
       options:
-        - Oil Change
-        - Tire Rotation
-        - Brake Service
-        - Engine Overhaul
-        - Transmission Service
-        - AC Repair
-        - Electrical
-        - Body Repair
-        - Annual Inspection
-        - Other
+        - { id: 'Oil Change', label: Thay dầu }
+        - { id: 'Tire Rotation', label: Đảo lốp }
+        - { id: 'Brake Service', label: Bảo dưỡng phanh }
+        - { id: 'Engine Overhaul', label: Đại tu động cơ }
+        - { id: 'Transmission Service', label: Bảo dưỡng hộp số }
+        - { id: 'AC Repair', label: Sửa điều hòa }
+        - { id: Electrical, label: Điện }
+        - { id: 'Body Repair', label: Sửa thân vỏ }
+        - { id: 'Annual Inspection', label: Kiểm định định kỳ }
+        - { id: Other, label: Khác }
     - field: q
-      label: Search
+      label: Tìm kiếm
       type: search
-      placeholder: "Plate or service type..."
+      placeholder: "Biển số hoặc loại bảo dưỡng..."
 
 components:
   - type: StatRow
     source: maintenance_kpis
     stats:
-      - label: Overdue
+      - label: Quá hạn
         field: overdue
         color: red
-      - label: Due This Week
+      - label: Đến hạn tuần này
         field: due_this_week
         color: amber
-      - label: In Progress
+      - label: Đang thực hiện
         field: in_progress
         color: blue
-      - label: Completed This Month
+      - label: Hoàn thành tháng này
         field: completed_month
         color: green
 
   - type: GridView
     source: maintenance
     page_size: 8
+    empty_state: { title: Không có lịch bảo dưỡng, description: Thử thay đổi bộ lọc hoặc lên lịch bảo dưỡng mới. }
     columns:
       - type: TextCell
         field: truck_plate
-        label: Truck
+        label: Phương tiện
         secondary: truck_model
       - type: TextCell
         field: service_type
-        label: Service Type
+        label: Loại bảo dưỡng
       - type: BadgeCell
         field: status
-        label: Status
+        label: Trạng thái
         colors:
           Scheduled: blue
           In Progress: indigo
@@ -109,51 +112,52 @@ components:
           Overdue: red
       - type: DateCell
         field: scheduled_date
-        label: Scheduled
+        label: Ngày dự kiến
         format: short
       - type: DateCell
         field: completed_date
-        label: Completed
+        label: Ngày hoàn thành
         format: short
       - type: NumberCell
         field: cost
-        label: Cost ($)
+        label: Chi phí (VNĐ)
         format: "#,###"
       - type: TextCell
         field: technician_name
-        label: Technician
+        label: Kỹ thuật viên
       - type: ActionCell
         label: ""
         actions:
           - id: edit_maintenance
-            label: Edit
+            label: Sửa
             variant: ghost
-            show_if: "user.permissions.includes('maintenance.write')"
+            permission: maintenance.write
           - id: mark_done
-            label: Mark Done
+            label: Đánh dấu hoàn thành
             variant: secondary
-            show_if: "user.permissions.includes('maintenance.write')"
+            permission: maintenance.write
           - id: delete_maintenance
-            label: Delete
+            label: Xóa
             variant: danger
-            show_if: "user.permissions.includes('maintenance.write')"
+            permission: maintenance.write
 
 actions:
   - id: add_maintenance
     type: form
-    title: Schedule Service
+    permission: maintenance.write
+    title: Lên lịch bảo dưỡng
     table: maintenance
     operation: insert
     prefill: null
     refresh: [maintenance, maintenance_kpis]
     fields:
       - field: truck_id
-        label: Truck ID
+        label: Mã phương tiện
         type: select
         options_source: maintenance_truck_lookup
         required: true
       - field: service_type
-        label: Service Type
+        label: Loại bảo dưỡng
         type: select
         required: true
         options:
@@ -168,44 +172,45 @@ actions:
           - Annual Inspection
           - Other
       - field: status
-        label: Status
+        label: Trạng thái
         type: select
         required: false
-        options: [Scheduled, In Progress, Completed, Overdue]
+        options: [{ id: Scheduled, label: Đã lên lịch }, { id: 'In Progress', label: Đang thực hiện }, { id: Completed, label: Hoàn thành }, { id: Overdue, label: Quá hạn }]
         default: Scheduled
       - field: scheduled_date
-        label: Scheduled Date
+        label: Ngày dự kiến
         type: date
         required: true
       - field: technician_id
-        label: Technician ID
+        label: Mã kỹ thuật viên
         type: select
         options_source: maintenance_technician_lookup
         required: false
       - field: cost
-        label: Cost ($)
+        label: Chi phí (VNĐ)
         type: number
         required: false
       - field: notes
-        label: Notes
+        label: Ghi chú
         type: textarea
         required: false
 
   - id: edit_maintenance
     type: form
-    title: Edit Service Record
+    permission: maintenance.write
+    title: Cập nhật bảo dưỡng
     table: maintenance
     operation: update
     prefill: row
     refresh: [maintenance, maintenance_kpis]
     fields:
       - field: truck_id
-        label: Truck ID
+        label: Mã phương tiện
         type: select
         options_source: maintenance_truck_lookup
         required: true
       - field: service_type
-        label: Service Type
+        label: Loại bảo dưỡng
         type: select
         required: true
         options:
@@ -220,32 +225,33 @@ actions:
           - Annual Inspection
           - Other
       - field: status
-        label: Status
+        label: Trạng thái
         type: select
         required: false
-        options: [Scheduled, In Progress, Completed, Overdue]
+        options: [{ id: Scheduled, label: Đã lên lịch }, { id: 'In Progress', label: Đang thực hiện }, { id: Completed, label: Hoàn thành }, { id: Overdue, label: Quá hạn }]
         default: Scheduled
       - field: scheduled_date
-        label: Scheduled Date
+        label: Ngày dự kiến
         type: date
         required: true
       - field: technician_id
-        label: Technician ID
+        label: Mã kỹ thuật viên
         type: select
         options_source: maintenance_technician_lookup
         required: false
       - field: cost
-        label: Cost ($)
+        label: Chi phí (VNĐ)
         type: number
         required: false
       - field: notes
-        label: Notes
+        label: Ghi chú
         type: textarea
         required: false
 
   - id: mark_done
     type: patch
-    confirm: "Mark this job as completed?"
+    permission: maintenance.write
+    confirm: "Đánh dấu công việc này đã hoàn thành?"
     table: maintenance
     body:
       status: Completed
@@ -253,6 +259,7 @@ actions:
 
   - id: delete_maintenance
     type: delete
-    confirm: "Delete this maintenance record?"
+    permission: maintenance.write
+    confirm: "Xóa bản ghi bảo dưỡng này?"
     table: maintenance
     refresh: [maintenance, maintenance_kpis]

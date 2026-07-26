@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon, hasIcon } from './Icon.ts';
 
 export class ActionCell extends BaseComponent {
   draw(container) {
@@ -11,10 +12,9 @@ export class ActionCell extends BaseComponent {
         danger:  'text-red-600 hover:text-red-900',
         ghost:   'text-gray-400 hover:text-gray-600',
       }[a.variant] || 'text-gray-600 hover:text-gray-900';
-      html.take(wrap)
+      const button = html.take(wrap)
         .button.className(`text-sm font-medium ${cls} transition-colors`)
         .dataAttr('action-id', a.id)
-        .text(a.label)
         .event('click', () => {
           const { onAction, row: r } = this.state;
           if (typeof onAction === 'function') {
@@ -22,7 +22,16 @@ export class ActionCell extends BaseComponent {
           } else {
             this.submit(a.id, { row: r });
           }
-        });
+        })
+        .getContext();
+      if (a.icon) {
+        const icon = document.createElement('span');
+        icon.setAttribute('aria-hidden', 'true');
+        if (hasIcon(a.icon)) appendIcon(icon, a.icon);
+        else icon.textContent = a.icon;
+        button.appendChild(icon);
+      }
+      button.appendChild(document.createTextNode(a.label));
     }
   }
 }

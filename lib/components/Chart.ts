@@ -9,9 +9,10 @@ export class Chart extends BaseComponent {
 
   draw(container) {
     const { data = [], labels = [], series = [], title = '' } = this.state;
-    const { width = 560, height = 240, color = '#6366f1', variant = 'bar' } = this.def;
+    const { width = 560, height = 240, color = 'indigo', variant = 'bar' } = this.def;
+    const chartColor = this.resolveColor(color, '#6366f1');
 
-    const wrap = html.take(container).div.className('flex flex-col items-start gap-2').getContext();
+    const wrap = html.take(container).div.className('core3-chart flex flex-col items-start gap-2').getContext();
 
     if (title) {
       html.take(wrap).h3.className('text-sm font-semibold text-gray-700').text(title);
@@ -21,17 +22,24 @@ export class Chart extends BaseComponent {
       .canvas
       .attr('width', String(width))
       .attr('height', String(height))
+      .attr('role', 'img')
+      .attr('aria-label', title || 'Biểu đồ')
       .className('rounded border border-gray-200 bg-white')
       .getContext();
 
     if (!data.length) {
-      html.take(wrap).p.className('text-sm text-gray-400 py-8 w-full text-center').text('No chart data');
+      html.take(wrap).p.className('text-sm text-gray-400 py-8 w-full text-center').text('Không có dữ liệu biểu đồ');
       return;
     }
 
+    const summary = series.length
+      ? series.map(item => `${item.label}: ${item.data.map((value, index) => `${labels[index] ?? ''} ${value}`).join(', ')}`).join('; ')
+      : labels.map((label, index) => `${label}: ${data[index]}`).join(', ');
+    html.take(wrap).div.className('sr-only').attr('aria-live', 'polite').text(summary);
+
     const ctx = canvasEl.getContext('2d');
     if (variant === 'line' && series.length) {
-      this.drawLineChart(ctx, width, height, labels, series, color);
+      this.drawLineChart(ctx, width, height, labels, series, chartColor);
       return;
     }
     if (variant === 'pie') {
@@ -54,7 +62,7 @@ export class Chart extends BaseComponent {
       const x = pad.left + i * (barW + barGap);
       const y = pad.top + chartH - barH;
 
-      ctx.fillStyle = color;
+      ctx.fillStyle = chartColor;
       ctx.fillRect(x, y, barW, barH);
 
       if (labels[i] != null) {
@@ -64,6 +72,24 @@ export class Chart extends BaseComponent {
         ctx.fillText(String(labels[i]), x + barW / 2, height - 6);
       }
     });
+  }
+
+  private resolveColor(color: unknown, fallback: string) {
+    const semantic: Record<string, string> = {
+      blue: '--color-primary',
+      indigo: '--color-indigo',
+      green: '--color-success',
+      amber: '--color-warning',
+      red: '--color-danger',
+      teal: '--color-teal',
+    };
+    const key = String(color || '').trim();
+    const token = semantic[key];
+    if (!token) return key || fallback;
+    const value = typeof getComputedStyle === 'function'
+      ? getComputedStyle(document.documentElement).getPropertyValue(token).trim()
+      : '';
+    return value || fallback;
   }
 
   private drawLineChart(ctx: CanvasRenderingContext2D, width: number, height: number, labels: string[], series: any[], fallbackColor: string) {
@@ -89,7 +115,7 @@ export class Chart extends BaseComponent {
         x: pad.left + index * pointStep,
         y: pad.top + chartH - (Number(value) / max) * chartH,
       }));
-      ctx.strokeStyle = item.color || (seriesIndex === 0 ? fallbackColor : '#10b981');
+      ctx.strokeStyle = item.color ? this.resolveColor(item.color, fallbackColor) : (seriesIndex === 0 ? fallbackColor : this.resolveColor('green', '#10b981'));
       ctx.lineWidth = 2;
       ctx.beginPath();
       points.forEach((point, index) => index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y));
@@ -106,7 +132,7 @@ export class Chart extends BaseComponent {
   }
 
   private drawPieChart(ctx: CanvasRenderingContext2D, width: number, height: number, labels: string[], data: number[]) {
-    const palette = ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#06b6d4'];
+    const palette = ['green', 'amber', 'red', 'blue', 'indigo', 'teal'].map(color => this.resolveColor(color, '#6366f1'));
     const total = data.reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0) || 1;
     const radius = Math.min(height * 0.38, width * 0.28);
     const centerX = width * 0.36;

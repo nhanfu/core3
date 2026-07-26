@@ -1,5 +1,5 @@
 title: Tin nhắn
-page: { id: chat, auth: { require: [chat.read] } }
+page: { id: chat, breadcrumb: [Điều hành, Tin nhắn], auth: { require: [chat.read] } }
 
 datasources:
   - id: chat_threads
@@ -75,6 +75,7 @@ components:
     upload_action: upload_attachment
     download_action: download_attachment
     mark_read_action: mark_thread_read
+    refresh_interval_ms: 5000
     search_placeholder: Tìm cuộc trò chuyện...
     empty_threads: Chưa có cuộc trò chuyện
     empty_messages: Chọn một cuộc trò chuyện để bắt đầu
@@ -82,6 +83,7 @@ components:
 actions:
   - id: create_thread
     type: server_form
+    permission: chat.write
     title: Tạo cuộc trò chuyện
     action: chat.threads.create
     refresh: [chat_threads, chat_messages]
@@ -90,17 +92,21 @@ actions:
       - { field: participant_emails, label: Email người tham gia (phân cách bằng dấu phẩy), type: text, required: true }
   - id: send_message
     type: server
+    permission: chat.write
     action: chat.messages.send
     params: { content: '{row.content}' }
     refresh: [chat_threads, chat_messages]
   - id: mark_thread_read
     type: server
+    permission: chat.read
     action: chat.threads.mark_read
     refresh: [chat_threads]
   - id: upload_attachment
     type: upload
+    permission: chat.write
     kind: chat_attachment
     refresh: [chat_threads, chat_messages, chat_attachments]
   - id: download_attachment
     type: download
+    permission: chat.read
     kind: chat_attachment

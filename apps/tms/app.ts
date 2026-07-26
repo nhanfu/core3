@@ -85,7 +85,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/catalog/units': 'Đơn vị tính', '/catalog/cargo-types': 'Loại hàng hóa',
   '/catalog/fee-types': 'Loại phí', '/catalog/currencies': 'Tiền tệ',
   '/org/own-company': 'Công ty chủ quản', '/org/branches': 'Chi nhánh', '/org/branches/detail': 'Chi tiết chi nhánh', '/org/departments/detail': 'Chi tiết phòng ban', '/org/roles/detail': 'Chi tiết vai trò', '/org/users/detail': 'Chi tiết người dùng',
-  '/org/departments': 'Phòng ban', '/org/teams': 'Team', '/org/users': 'Người dùng',
+  '/org/departments': 'Phòng ban', '/org/teams': 'Đội nhóm', '/org/users': 'Người dùng',
   '/org/roles': 'Vai trò', '/system/activity': 'Lịch sử thao tác',
   '/system/code-rules': 'Cấu hình sinh mã', '/system/print-templates': 'Mẫu in',
   '/system/approval-flows': 'Quy trình duyệt',
@@ -125,8 +125,11 @@ export async function setAuth(token: string, user: any) {
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
   _user = null;
+  _shell?.dispose();
   _shell = null;
   client.setToken(null);
+  const app = document.getElementById('app');
+  if (app) app.innerHTML = '<div id="outlet"></div>';
   navigate('/login');
 }
 
@@ -196,6 +199,7 @@ async function renderRoute(path: string) {
       const res = await apiFetch(`/api/pages/${loader}`);
       if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
       const config = await res.json();
+      config.locale = 'vi';
       await renderPage(config, { container: outlet });
     } else {
       // JS module route (e.g. login)
@@ -253,7 +257,14 @@ async function bootstrap() {
   } catch {
     // The shell can still render if a deployment has no company profile yet.
   }
-  _shell = new AppShell('app-shell', { user: _user, company });
+  _shell = new AppShell('app-shell', {
+    user: _user,
+    company,
+    onLanguageChange: async () => {
+      const currentPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
+      await renderRoute(currentPath);
+    },
+  });
   _shell.mount(app);
 
   // Register navigator so page-renderer navigate() calls use SPA pushState

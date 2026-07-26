@@ -319,7 +319,14 @@ export class DuckDbRepository {
     });
   }
 
-  async querySource(source: { query: string; single?: boolean }, params: Record<string, any> = {}, skip = 0, top = 25, facetField?: string): Promise<any> {
+  async querySource(
+    source: { query: string; single?: boolean },
+    params: Record<string, any> = {},
+    skip = 0,
+    top = 25,
+    facetField?: string,
+    sort?: { field?: unknown; direction?: unknown },
+  ): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
     if (source.single) {
       const rows = await this.query(statement, values);
@@ -329,8 +336,13 @@ export class DuckDbRepository {
     const [count] = await this.query(`SELECT COUNT(*) AS n FROM (${statement}) AS source_rows`, values);
     const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
     const offset = Math.max(0, Number(skip) || 0);
+    const sortField = typeof sort?.field === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(sort.field)
+      ? sort.field
+      : null;
+    const sortDirection = sort?.direction === 'desc' ? 'DESC' : 'ASC';
+    const sortClause = sortField ? ` ORDER BY source_rows."${sortField}" ${sortDirection} NULLS LAST` : '';
     const rows = await this.query(
-      `SELECT * FROM (${statement}) AS source_rows LIMIT ? OFFSET ?`,
+      `SELECT * FROM (${statement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
       [...values, pageSize, offset]
     );
     const total = Number(count?.n || 0);
@@ -1047,17 +1059,28 @@ export class DuckDbRepository {
     });
   }
 
-  async cancelTrip(tripId: string, action: string, actor: { id?: string | null; name: string }): Promise<any> {
+  async transitionTrip(
+    tripId: string,
+    operation: 'start' | 'complete' | 'cancel',
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
         const [trip] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
         if (!trip) throw { status: 404, message: 'Trip not found' };
-        if (!['Scheduled', 'In Transit'].includes(String(trip.status))) {
-          throw { status: 409, message: `Trip cannot be cancelled while ${trip.status}` };
+        const currentStatus = String(trip.status);
+        const transition = operation === 'start'
+          ? { from: ['Scheduled'], to: 'In Transit', label: 'start' }
+          : operation === 'complete'
+            ? { from: ['In Transit'], to: 'Completed', label: 'complete' }
+            : { from: ['Scheduled', 'In Transit'], to: 'Cancelled', label: 'cancel' };
+        if (!transition.from.includes(currentStatus)) {
+          throw { status: 409, message: `Trip cannot ${transition.label} while ${currentStatus}` };
         }
-        await runOnConnection(conn, 'UPDATE trips SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', ['Cancelled', tripId]);
-        await runOnConnection(conn, 'INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?,?)', [crypto.randomUUID(), actor.id || null, actor.name, action, 'trips', tripId, `Cancelled trip ${trip.trip_number}`]);
+        await runOnConnection(conn, 'UPDATE trips SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [transition.to, tripId]);
+        await runOnConnection(conn, 'INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?,?)', [crypto.randomUUID(), actor.id || null, actor.name, action, 'trips', tripId, `Trip ${trip.trip_number}: ${currentStatus} -> ${transition.to}`]);
         const [updated] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
         await runOnConnection(conn, 'COMMIT');
         return updated;
@@ -1087,9 +1110,11 @@ export class DuckDbRepository {
           const tokenKey = String(values.token_key || '').trim();
           const content = String(values.content || '').trim();
           const status = String(values.status || 'Active');
+          const allowedTokenKeys = new Set(['order.order_number', 'order.customer_name', 'order.route', 'order.lines']);
           if (!label) throw { status: 400, message: 'block label required' };
           if (!['text', 'token', 'table', 'spacer'].includes(blockType)) throw { status: 400, message: 'invalid block type' };
           if (blockType === 'token' && !tokenKey) throw { status: 400, message: 'token key required' };
+          if (tokenKey && !allowedTokenKeys.has(tokenKey)) throw { status: 400, message: 'invalid token key' };
           if (blockType === 'text' && !content) throw { status: 400, message: 'text content required' };
           if (!['Active', 'Inactive'].includes(status)) throw { status: 400, message: 'invalid block status' };
           if (operation === 'create') {

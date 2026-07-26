@@ -1,6 +1,7 @@
 title: Người dùng
 page:
   id: users
+  breadcrumb: [Tổ chức & phân quyền, Người dùng]
   auth: { require: [settings.read] }
 datasources:
   - id: org_user_totals
@@ -74,10 +75,11 @@ components:
     source: org_users
     filter_field: q
     search: { label: Tìm kiếm người dùng, placeholder: 'Tìm tên, email, chi nhánh hoặc phòng ban...' }
-    actions: [{ id: org_users.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: org_users.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: org_users
     filter_field: status
+    variant: contained
     tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang hoạt động }, { id: Inactive, label: Đã khóa }]
   - type: DataGrid
     source: org_users
@@ -98,13 +100,14 @@ components:
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: view_user, label: Chi tiết, variant: primary }, { id: edit_user, label: Sửa, variant: ghost, show_if: "user.permissions.includes('settings.write')" }]
+        actions: [{ id: view_user, label: Chi tiết, variant: primary, permission: settings.read }, { id: edit_user, label: Sửa, variant: ghost, permission: settings.write }]
 toolbar:
   - { id: add_user_btn, label: '+ Mời người dùng', variant: primary, permission: settings.write, action: add_user }
 actions:
-  - { id: view_user, type: navigate, navigate_to: /org/users/detail, params: { id: '{row.id}' } }
+  - { id: view_user, type: navigate, permission: settings.read, navigate_to: /org/users/detail, params: { id: '{row.id}' } }
   - id: add_user
     type: form
+    permission: settings.write
     title: Mời người dùng
     table: users
     operation: insert
@@ -115,10 +118,11 @@ actions:
       - { field: password, label: Mật khẩu khởi tạo, type: text, required: true }
       - { field: branch_id, label: Chi nhánh, type: select, options_source: branch_lookup }
       - { field: department_id, label: Phòng ban, type: select, options_source: department_lookup }
-      - { field: enabled, label: Kích hoạt, type: select, options: [true, false], default: true }
-      - { field: roles, label: Vai trò, type: select, options_source: role_lookup, multiple: true }
+      - { field: enabled, label: Kích hoạt, type: select, options: [{ id: true, label: Đang kích hoạt }, { id: false, label: Đã khóa }], default: true }
+      - { field: roles, label: Vai trò, type: multi-select, options_source: role_lookup, search_placeholder: 'Tìm vai trò...', multiple: true }
   - id: edit_user
     type: form
+    permission: settings.write
     title: Cập nhật người dùng
     table: users
     operation: update
@@ -129,5 +133,5 @@ actions:
       - { field: email, label: Email, type: text }
       - { field: branch_id, label: Chi nhánh, type: select, options_source: branch_lookup }
       - { field: department_id, label: Phòng ban, type: select, options_source: department_lookup }
-      - { field: enabled, label: Kích hoạt, type: select, options: [true, false] }
-      - { field: roles, label: Vai trò, type: select, options_source: role_lookup, multiple: true }
+      - { field: enabled, label: Kích hoạt, type: select, options: [{ id: true, label: Đang kích hoạt }, { id: false, label: Đã khóa }] }
+      - { field: roles, label: Vai trò, type: multi-select, options_source: role_lookup, search_placeholder: 'Tìm vai trò...', multiple: true }

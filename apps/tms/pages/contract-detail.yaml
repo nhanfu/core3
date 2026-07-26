@@ -1,5 +1,5 @@
 title: Chi tiết hợp đồng
-page: { id: contract-detail, auth: { require: [hr.read] } }
+page: { id: contract-detail, breadcrumb: [Nhân sự, Hợp đồng, Chi tiết], auth: { require: [hr.read] } }
 datasources:
   - id: contract_detail
     single: true
@@ -33,6 +33,8 @@ components:
   - type: ApprovalTimeline
     source: contract_activity
     title: Lịch sử hợp đồng
+    empty_state: { title: Chưa có hoạt động hợp đồng }
+    action_labels: { create: Đã tạo, update: Cập nhật, upload: Tải tài liệu lên, delete: Xóa }
     actor_field: actor_name
     action_field: action
     detail_field: detail
@@ -43,21 +45,22 @@ components:
     column_chooser: true
     row_key: id
     empty_state: { title: Chưa có tài liệu hợp đồng }
-    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_contract_document, label: Tải xuống, variant: ghost }] }]
+    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_contract_document, label: Tải xuống, variant: ghost, permission: hr.read }] }]
 toolbar:
-  - { id: back_contracts, label: '← Danh sách hợp đồng', variant: secondary, action: back_contracts }
+  - { id: back_contracts, label: 'Danh sách hợp đồng', icon: arrow-left, variant: secondary, action: back_contracts }
   - { id: edit_contract_detail, label: Sửa hợp đồng, variant: primary, permission: hr.write, action: edit_contract_detail }
   - { id: upload_contract_document, label: '+ Tải tài liệu', variant: secondary, permission: hr.write, action: upload_contract_document }
 actions:
   - { id: back_contracts, type: navigate, navigate_to: /hr/contracts }
-  - { id: upload_contract_document, type: upload, kind: contract_document, params: { contract_id: '{state.id}' }, refresh: [contract_documents, contract_activity] }
-  - { id: download_contract_document, type: download, kind: contract_document }
+  - { id: upload_contract_document, type: upload, permission: hr.write, kind: contract_document, params: { contract_id: '{state.id}' }, refresh: [contract_documents, contract_activity] }
+  - { id: download_contract_document, type: download, permission: hr.read, kind: contract_document }
   - id: edit_contract_detail
     type: form
+    permission: hr.write
     title: Cập nhật hợp đồng
     table: employment_contracts
     operation: update
     prefill: source
     prefill_source: contract_detail
     refresh: [contract_detail, contract_activity]
-    fields: [{ field: code, label: Mã hợp đồng, type: text, required: true }, { field: employee_id, label: Nhân viên, type: select, options_source: contract_detail_employee_lookup, required: true }, { field: contract_type, label: Loại hợp đồng, type: select, options: [Probation, FixedTerm, Indefinite] }, { field: start_date, label: Hiệu lực từ, type: date, required: true }, { field: end_date, label: Hiệu lực đến, type: date }, { field: base_salary, label: Lương cơ bản, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Expiring, Expired, Terminated] }]
+    fields: [{ field: code, label: Mã hợp đồng, type: text, required: true }, { field: employee_id, label: Nhân viên, type: select, options_source: contract_detail_employee_lookup, required: true }, { field: contract_type, label: Loại hợp đồng, type: select, options: [{ id: Probation, label: Thử việc }, { id: FixedTerm, label: Xác định thời hạn }, { id: Indefinite, label: Không xác định thời hạn }] }, { field: start_date, label: Hiệu lực từ, type: date, required: true }, { field: end_date, label: Hiệu lực đến, type: date }, { field: base_salary, label: Lương cơ bản, type: money, currency: VND }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hiệu lực }, { id: Expiring, label: Sắp hết hạn }, { id: Expired, label: Hết hạn }, { id: Terminated, label: Đã chấm dứt }] }]

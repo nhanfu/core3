@@ -1,5 +1,5 @@
 title: Chi tiết nhân viên
-page: { id: employee-detail, auth: { require: [hr.read] } }
+page: { id: employee-detail, breadcrumb: [Nhân sự, Nhân viên, Chi tiết], auth: { require: [hr.read] } }
 datasources:
   - id: employee_detail
     single: true
@@ -46,6 +46,8 @@ components:
   - type: ApprovalTimeline
     source: employee_activity
     title: Lịch sử nhân viên
+    empty_state: { title: Chưa có hoạt động nhân viên }
+    action_labels: { create: Đã tạo, update: Cập nhật, upload: Tải tài liệu lên, delete: Xóa }
     actor_field: actor_name
     action_field: action
     detail_field: detail
@@ -56,21 +58,22 @@ components:
     column_chooser: true
     row_key: id
     empty_state: { title: Chưa có tài liệu nhân sự }
-    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_employee_document, label: Tải xuống, variant: ghost }] }]
+    columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_employee_document, label: Tải xuống, variant: ghost, permission: hr.read }] }]
 toolbar:
-  - { id: back_employees, label: '← Danh sách nhân viên', variant: secondary, action: back_employees }
+  - { id: back_employees, label: 'Danh sách nhân viên', icon: arrow-left, variant: secondary, action: back_employees }
   - { id: edit_employee_detail, label: Sửa thông tin, variant: primary, permission: hr.write, action: edit_employee_detail }
   - { id: upload_employee_document, label: '+ Tải tài liệu', variant: secondary, permission: hr.write, action: upload_employee_document }
 actions:
   - { id: back_employees, type: navigate, navigate_to: /hr/employees }
-  - { id: upload_employee_document, type: upload, kind: employee_document, params: { employee_id: '{state.id}' }, refresh: [employee_documents, employee_activity] }
-  - { id: download_employee_document, type: download, kind: employee_document }
+  - { id: upload_employee_document, type: upload, permission: hr.write, kind: employee_document, params: { employee_id: '{state.id}' }, refresh: [employee_documents, employee_activity] }
+  - { id: download_employee_document, type: download, permission: hr.read, kind: employee_document }
   - id: edit_employee_detail
     type: form
+    permission: hr.write
     title: Cập nhật nhân viên
     table: employees
     operation: update
     prefill: source
     prefill_source: employee_detail
     refresh: [employee_detail, employee_activity]
-    fields: [{ field: code, label: Mã nhân viên, type: text, required: true }, { field: name, label: Họ tên, type: text, required: true }, { field: job_title, label: Chức danh, type: text }, { field: phone, label: Số điện thoại, type: text }, { field: email, label: Email, type: text }, { field: department, label: Phòng ban, type: select, options_source: employee_detail_department_lookup }, { field: start_date, label: Ngày vào làm, type: date }, { field: dependents, label: Người phụ thuộc, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive] }]
+    fields: [{ field: code, label: Mã nhân viên, type: text, required: true }, { field: name, label: Họ tên, type: text, required: true }, { field: job_title, label: Chức danh, type: text }, { field: phone, label: Số điện thoại, type: text }, { field: email, label: Email, type: text }, { field: department, label: Phòng ban, type: select, options_source: employee_detail_department_lookup }, { field: start_date, label: Ngày vào làm, type: date }, { field: dependents, label: Người phụ thuộc, type: number }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang làm việc }, { id: OnLeave, label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }] }]

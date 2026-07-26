@@ -108,7 +108,9 @@ for (const route of targets) {
     }
     const editor = [...(outlet?.querySelectorAll('button') || [])].find((item) => /^(\\+|Thêm|Mời|Chấm|Phân|Sửa|Cập nhật)/.test(item.textContent?.trim() || ''));
     editor?.click();
+    const editorDialog = Boolean(document.querySelector('[role="dialog"]'));
     if (editor) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const editorClosed = !document.querySelector('[role="dialog"]');
     const sortables = [...(outlet?.querySelectorAll('button[data-sort-field]') || [])];
     sortables.forEach((button) => button.click());
     const pagination = [...(outlet?.querySelectorAll('button') || [])]
@@ -154,13 +156,14 @@ for (const route of targets) {
     window.fetch = previousFetch;
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
-    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), tree: treeToggles.length, rowAction: rowActions.length, export: Number(Boolean(exportButton)) };
+    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), editorDialog, editorClosed, sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), tree: treeToggles.length, rowAction: rowActions.length, export: Number(Boolean(exportButton)) };
     })()`, `${route} control exercise`);
     const exercised = typeof exercisedJson === 'string' ? JSON.parse(exercisedJson) : exercisedJson;
     for (const key of Object.keys(controlCounts) as Array<keyof typeof controlCounts>) {
       controlCounts[key] += Number(exercised?.[key] || 0);
     }
     routeCoverage.push({ route, controls: exercised || {} });
+    if (exercised?.editorDialog && !exercised.editorClosed) failures.push(`${route}: form dialog did not close on Escape`);
     await new Promise((resolve) => setTimeout(resolve, 250));
     const state = await evaluateWithTimeout(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash, viewport: innerWidth, overflow: document.documentElement.scrollWidth > innerWidth + 2 })`, `${route} state read`);
     if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
@@ -234,7 +237,7 @@ failures.push(...desktopFailures);
 const uiMutationFailures: string[] = [];
 if (process.env.TMS_AUDIT_MUTATIONS === '1') {
   try {
-    await evaluateWithTimeout("[...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000').forEach((overlay) => overlay.remove())", 'mutation overlay cleanup');
+    await evaluateWithTimeout("document.querySelectorAll('.core3-form-overlay').forEach((overlay) => overlay.remove())", 'mutation overlay cleanup');
     await evaluateWithTimeout("location.hash = '#/orders'", 'orders mutation navigation');
     await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
@@ -266,7 +269,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
     await evaluateWithTimeout("location.hash = '#/catalog/units'", 'units CRUD mutation navigation');
     await new Promise((resolve) => setTimeout(resolve, 2500));
     const mutationState = await evaluateWithTimeout(`(async () => {
-      [...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000').forEach((overlay) => overlay.remove());
+      document.querySelectorAll('.core3-form-overlay').forEach((overlay) => overlay.remove());
       const code = 'UI-AUDIT-' + Date.now();
       const previousConfirm = window.confirm;
       const previousAlert = window.alert;
@@ -276,7 +279,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
       const openForm = async (button) => {
         button.click();
         await new Promise((resolve) => setTimeout(resolve, 400));
-        const overlays = [...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000');
+        const overlays = [...document.querySelectorAll('.core3-form-overlay')];
         return overlays.at(-1) || null;
       };
       const saveForm = async (dialog, values) => {
@@ -290,7 +293,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
             field.dispatchEvent(new Event('change', { bubbles: true }));
           }
         }
-        [...dialog.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Save')?.click();
+        [...dialog.querySelectorAll('button')].find((button) => ['Lưu', 'Save'].includes(button.textContent?.trim() || ''))?.click();
         await new Promise((resolve) => setTimeout(resolve, 900));
       };
       const addButton = [...document.querySelectorAll('#outlet button')].find((button) => (button.textContent?.trim() || '').startsWith('+ Thêm đơn vị'));

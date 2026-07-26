@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class PopupEditor extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -25,10 +26,12 @@ export class PopupEditor extends BaseComponent {
       .div.className('flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0')
       .getContext();
     html.take(header).h3.className('text-base font-semibold text-gray-900').text(title);
-    html.take(header)
+    const close = html.take(header)
       .button.className('text-gray-400 hover:text-gray-600 text-xl leading-none')
-      .text('×')
-      .event('click', () => this.setState({ open: false }));
+      .attr('aria-label', 'Đóng')
+      .getContext();
+    appendIcon(close, 'x');
+    close.addEventListener('click', () => this.setState({ open: false }));
 
     const body = html.take(panel).div.className('overflow-y-auto p-6 grow').getContext();
 

@@ -19,7 +19,9 @@ export class ApprovalTimeline extends BaseComponent {
       .text(String(this.def.title || 'Approval history'));
 
     if (!events.length) {
-      html.take(root).p.className('text-sm text-gray-400').text('No activity yet');
+      const empty = this.def.empty_state || {};
+      html.take(root).p.className('text-sm text-gray-400').text(empty.title || 'No activity yet');
+      if (empty.description) html.take(root).p.className('mt-1 text-sm text-gray-400').text(empty.description);
       return;
     }
 
@@ -33,9 +35,12 @@ export class ApprovalTimeline extends BaseComponent {
       }
       const content = html.take(row).div.className('min-w-0 flex-1').getContext();
       const header = html.take(content).div.className('flex flex-wrap items-center justify-between gap-2').getContext();
+      const configuredAction = event[this.def.action_field || 'action_label'];
+      const rawAction = event.action;
+      const actionLabel = (rawAction && this.def.action_labels?.[rawAction]) || configuredAction || rawAction || 'Activity';
       html.take(header).span
         .className('text-sm font-medium text-gray-900')
-        .text(String(event[this.def.action_field || 'action_label'] || event.action || 'Activity'));
+        .text(String(actionLabel));
       html.take(header).span
         .className('text-xs text-gray-400')
         .text(String(event[this.def.timestamp_field || 'created_at'] || ''));

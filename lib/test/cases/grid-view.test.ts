@@ -74,6 +74,17 @@ describe('GridView rendering', () => {
     expect(el.querySelectorAll('tbody tr').length).toBe(1); // empty row
   });
 
+  it('renders declarative localized empty-state copy', () => {
+    const grid = new GridView('g-empty', {
+      rows: [],
+      meta: { total: 0, page: 1, pageSize: 25 },
+    }, SAMPLE_DEFS, { emptyState: { title: 'Không có phương tiện', description: 'Thử bộ lọc khác.' } });
+    const el = mount(grid);
+    expect(el.textContent).toContain('Không có phương tiện');
+    expect(el.textContent).toContain('Thử bộ lọc khác.');
+    expect(el.querySelectorAll('tbody tr').length).toBe(1);
+  });
+
   it('renders a skeleton when state.loading is true', () => {
     const grid = new GridView('g1', {
       rows: [],
@@ -116,6 +127,35 @@ describe('GridView pagination', () => {
     const buttons = el.querySelectorAll<HTMLButtonElement>('button');
     const nextBtn = Array.from(buttons).find(b => /next/i.test(b.textContent ?? ''));
     expect(nextBtn?.disabled).toBe(true);
+  });
+
+  it('supports localized pagination labels', () => {
+    const grid = new GridView('localized-grid', {
+      rows: SAMPLE_ROWS,
+      meta: { total: 30, page: 1, pageSize: 3 },
+    }, SAMPLE_DEFS, { labels: { summaryOf: 'trên', previousPage: '← Trước', nextPage: 'Sau →' } });
+    const el = mount(grid);
+    expect(el.textContent).toContain('1–3 trên 30');
+    expect(el.textContent).toContain('Sau →');
+  });
+});
+
+describe('GridView sorting', () => {
+  it('renders sortable SVG indicators and emits server sort state', () => {
+    const onSort = vi.fn();
+    const grid = new GridView('g-sort', {
+      rows: [{ id: 'a', code: 'A' }],
+      meta: { total: 1, page: 1, pageSize: 25 },
+    }, [{ field: 'code', label: 'Mã' }], { onSort });
+    const container = mount(grid);
+
+    const button = container.querySelector<HTMLButtonElement>('[data-sort-field="code"]')!;
+    expect(button.querySelector('svg')).not.toBeNull();
+    button.click();
+
+    expect(grid.state.sort).toEqual({ field: 'code', direction: 'asc' });
+    expect(onSort).toHaveBeenCalledWith({ field: 'code', direction: 'asc' });
+    expect(container.querySelector('[data-sort-field="code"]')?.getAttribute('aria-sort')).toBe('ascending');
   });
 });
 
@@ -234,8 +274,12 @@ describe('DateCell', () => {
   });
 
   it('renders relative date when format is "relative"', () => {
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    const cell = new DateCell('c', { value: yesterday, format: 'relative' });
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const localYesterday = [yesterday.getFullYear(), yesterday.getMonth() + 1, yesterday.getDate()]
+      .map((part, index) => index === 0 ? String(part) : String(part).padStart(2, '0'))
+      .join('-');
+    const cell = new DateCell('c', { value: localYesterday, format: 'relative' });
     const el = document.createElement('td');
     cell.draw(el);
     expect(el.textContent).toMatch(/yesterday|1 day ago/i);
@@ -253,11 +297,12 @@ describe('DateCell', () => {
 
 describe('ActionCell', () => {
   it('renders one button per action', () => {
-    const actions = [{ id: 'view', label: 'View' }, { id: 'delete', label: 'Delete', variant: 'danger' as const }];
+    const actions = [{ id: 'view', label: 'View', icon: 'arrow-right' }, { id: 'delete', label: 'Delete', variant: 'danger' as const }];
     const cell = new ActionCell('c', { actions, row: { id: '1' }, loading: false });
     const el = document.createElement('td');
     cell.draw(el);
     expect(el.querySelectorAll('button').length).toBe(2);
+    expect(el.querySelector('button svg')).not.toBeNull();
   });
 
   it('calls onAction when a button is clicked', async () => {

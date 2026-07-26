@@ -100,4 +100,24 @@ describe('ChatWorkspace', () => {
       row: { id: 'attachment-1', file_name: 'proof.pdf' },
     });
   });
+
+  it('refreshes on the configured interval and stops after disposal', async () => {
+    vi.useFakeTimers();
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const component = new ChatWorkspace('chat-refresh', {
+      threads: [],
+    }, {
+      refresh_interval_ms: 1000,
+      on_refresh: refresh,
+    });
+    const container = document.createElement('div');
+    component.mount(container);
+
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    component.dispose();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
 });

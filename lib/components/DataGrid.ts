@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon, hasIcon } from './Icon.ts';
 
 type DataGridRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';
@@ -21,6 +22,7 @@ export interface DataGridColumn {
 export interface DataGridRowAction {
   id: string;
   label: string;
+  icon?: string;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   visible?: (row: DataGridRow) => boolean;
 }
@@ -28,6 +30,7 @@ export interface DataGridRowAction {
 export interface DataGridAction {
   id: string;
   label: string;
+  icon?: string;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   disabled?: boolean;
   params?: Record<string, unknown>;
@@ -35,6 +38,16 @@ export interface DataGridAction {
 }
 
 export interface DataGridOptions {
+  labels?: {
+    rowNumber?: string;
+    selectAll?: string;
+    selectRow?: (id: string) => string;
+    expandRow?: string;
+    collapseRow?: string;
+    summaryOf?: string;
+    previousPage?: string;
+    nextPage?: string;
+  };
   rowKey?: string;
   rowNumbers?: boolean;
   selectable?: boolean;
@@ -153,18 +166,29 @@ export class DataGrid extends BaseComponent {
     const visibleColumns = this.columns.filter(column => visibleColumnIds.has(column.id || column.field));
     const selectedIds = this.selectedIds();
     const selected = new Set(selectedIds);
+    const labels = {
+      rowNumber: 'Row number',
+      selectAll: 'Chọn tất cả dòng',
+      selectRow: (id: string) => `Select row ${id}`,
+      expandRow: 'Expand row',
+      collapseRow: 'Collapse row',
+      summaryOf: 'of',
+      previousPage: 'Previous page',
+      nextPage: 'Next page',
+      ...this.options.labels,
+    };
     const rowReorder = this.options.onRowReorder;
     let draggedRow: DataGridRow | null = null;
 
-    const root = html.take(container).div.className('rounded-lg border border-gray-200 bg-white').getContext();
+    const root = html.take(container).div.className('core3-token-panel rounded-lg border border-gray-200 bg-white').getContext();
     const title = meta.title || this.state.title;
     const description = meta.description || this.state.description;
     if (title || description || actions.length || this.options.columnChooser) {
-      const toolbar = html.take(root).div.className('flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
+      const toolbar = html.take(root).div.className('core3-token-toolbar flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
       if (title || description) {
         const copy = html.take(toolbar).div.getContext();
-        if (title) html.take(copy).h3.className('text-sm font-semibold text-gray-900').text(String(title));
-        if (description) html.take(copy).p.className('mt-1 text-sm text-gray-500').text(String(description));
+        if (title) html.take(copy).h3.className('core3-token-heading text-sm font-semibold text-gray-900').text(String(title));
+        if (description) html.take(copy).p.className('core3-token-muted mt-1 text-sm text-gray-500').text(String(description));
       }
       if (actions.length) {
         const actionBar = html.take(toolbar).div.className('flex flex-wrap items-center gap-2').getContext();
@@ -172,8 +196,15 @@ export class DataGrid extends BaseComponent {
           const button = html.take(actionBar).button
             .className(`inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${this.actionClass(action.variant)}`)
             .dataAttr('grid-action', action.id)
-            .text(action.label)
             .getContext();
+          if (action.icon) {
+            const icon = document.createElement('span');
+            icon.setAttribute('aria-hidden', 'true');
+            if (hasIcon(action.icon)) appendIcon(icon, action.icon);
+            else icon.textContent = action.icon;
+            button.appendChild(icon);
+          }
+          button.appendChild(document.createTextNode(action.label));
           if (action.disabled) button.setAttribute('disabled', '');
           else button.addEventListener('click', () => {
             const context = { selectedIds: this.selectedIds(), action };
@@ -184,13 +215,13 @@ export class DataGrid extends BaseComponent {
       }
       if (this.options.columnChooser) {
         const chooser = html.take(toolbar).details.className('relative').getContext();
-        html.take(chooser).summary.className('cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Columns');
-        const menu = html.take(chooser).div.className('absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
+        html.take(chooser).summary.className('core3-token-control cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Cột');
+        const menu = html.take(chooser).div.className('core3-token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
         for (const column of this.columns) {
-          const label = html.take(menu).label.className('flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
+          const label = html.take(menu).label.className('core3-token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
           const checkbox = html.take(label).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
           checkbox.checked = visibleColumnIds.has(column.id || column.field);
-          checkbox.setAttribute('aria-label', `Show ${column.label}`);
+          checkbox.setAttribute('aria-label', `Hiển thị ${column.label}`);
           checkbox.addEventListener('change', () => {
             const next = new Set(visibleColumnIds);
             checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
@@ -206,12 +237,12 @@ export class DataGrid extends BaseComponent {
     }
 
     const scroll = html.take(root).div.className('overflow-x-auto').getContext();
-    const table = html.take(scroll).table.className('min-w-full divide-y divide-gray-200').getContext();
-    const headerRow = html.take(table).thead.className('bg-gray-50').trow.getContext();
+    const table = html.take(scroll).table.className('core3-token-table min-w-full divide-y divide-gray-200').getContext();
+    const headerRow = html.take(table).thead.className('core3-token-header bg-gray-50').trow.getContext();
 
     if (selectable) {
       const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-      checkbox.setAttribute('aria-label', 'Select all rows');
+      checkbox.setAttribute('aria-label', 'Chọn tất cả dòng');
       checkbox.checked = rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index)));
       checkbox.indeterminate = selected.size > 0 && !checkbox.checked;
       checkbox.addEventListener('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
@@ -220,7 +251,7 @@ export class DataGrid extends BaseComponent {
     if (rowNumbers) {
       html.take(headerRow).th
         .className('w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500')
-        .attr('aria-label', 'Row number');
+        .attr('aria-label', labels.rowNumber);
     }
 
     const sort = this.state.sort as { field?: string; direction?: SortDirection } | undefined;
@@ -230,17 +261,19 @@ export class DataGrid extends BaseComponent {
       const sortable = column.sortable === true;
       if (sortable) {
         const active = sort?.field === column.field;
-        const button = html.take(th).button.className('inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
-        button.style.cssText = 'appearance:none;border:0;background:transparent;padding:0;font:inherit;color:inherit;';
+        const button = html.take(th).button.className('core3-sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
         button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
-        html.take(button).span.className('text-gray-400').text(active ? (sort?.direction === 'desc' ? '↓' : '↑') : '↕');
+        const indicator = document.createElement('span');
+        indicator.className = 'core3-sort-indicator text-gray-400';
+        appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
+        button.append(indicator);
         button.addEventListener('click', () => this.setSort(column.field));
       } else {
         html.take(th).text(column.label);
       }
     }
 
-    const tbody = html.take(table).tbody.className('divide-y divide-gray-100 bg-white').getContext();
+    const tbody = html.take(table).tbody.className('core3-token-body divide-y divide-gray-100 bg-white').getContext();
     if (!rows.length) {
       const empty = this.options.emptyState || (this.state.emptyState as DataGridOptions['emptyState']) || {};
       const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0) + (rowNumbers ? 1 : 0))).className('px-4 py-12 text-center').getContext();
@@ -249,7 +282,7 @@ export class DataGrid extends BaseComponent {
     } else {
       rows.forEach((row, index) => {
         const id = this.rowId(row, index);
-        const tr = html.take(tbody).trow.className('transition-colors hover:bg-gray-50').getContext();
+        const tr = html.take(tbody).trow.className('core3-token-row transition-colors hover:bg-gray-50').getContext();
         if (rowReorder) {
           tr.draggable = true;
           tr.dataset.reorderRow = id;
@@ -277,7 +310,7 @@ export class DataGrid extends BaseComponent {
         }
         if (selectable) {
           const checkbox = html.take(tr).tdata.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-          checkbox.setAttribute('aria-label', `Select row ${id}`);
+          checkbox.setAttribute('aria-label', labels.selectRow(id));
           checkbox.checked = selected.has(id);
           checkbox.addEventListener('change', () => {
             const next = new Set(this.selectedIds());
@@ -295,11 +328,7 @@ export class DataGrid extends BaseComponent {
         for (const column of visibleColumns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
-          const cell = html.take(tr).tdata.className(`max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
-          cell.style.maxWidth = '240px';
-          cell.style.overflow = 'hidden';
-          cell.style.textOverflow = 'ellipsis';
-          cell.style.whiteSpace = 'nowrap';
+          const cell = html.take(tr).tdata.className(`core3-token-cell core3-grid-cell max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
           if (column.rowActions?.length) {
             const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
             for (const action of column.rowActions) {
@@ -307,8 +336,15 @@ export class DataGrid extends BaseComponent {
               const button = html.take(actionBar).button
                 .className(`rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
                 .dataAttr('grid-row-action', `${action.id}:${id}`)
-                .text(action.label)
                 .getContext();
+              if (action.icon) {
+                const icon = document.createElement('span');
+                icon.setAttribute('aria-hidden', 'true');
+                if (hasIcon(action.icon)) appendIcon(icon, action.icon);
+                else icon.textContent = action.icon;
+                button.appendChild(icon);
+              }
+              button.appendChild(document.createTextNode(action.label));
               button.addEventListener('click', () => this.submit(action.id, { row }));
             }
           } else if (column.render) {
@@ -325,7 +361,7 @@ export class DataGrid extends BaseComponent {
               const isCollapsed = collapsed.has(id);
               toggle.type = 'button';
               toggle.className = 'mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-100';
-              toggle.setAttribute('aria-label', isCollapsed ? 'Expand row' : 'Collapse row');
+              toggle.setAttribute('aria-label', isCollapsed ? labels.expandRow : labels.collapseRow);
               toggle.setAttribute('aria-expanded', String(!isCollapsed));
               toggle.textContent = isCollapsed ? '+' : '-';
               toggle.addEventListener('click', () => {
@@ -341,13 +377,13 @@ export class DataGrid extends BaseComponent {
     }
 
     if (meta.total != null) {
-      const summary = html.take(root).div.className('flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
+      const summary = html.take(root).div.className('core3-token-summary flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
       const total = Number(meta.total);
       const page = Number(meta.page || 1);
       const pageSize = Number(meta.pageSize || rows.length || 1);
       const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
       const end = Math.min(page * pageSize, total);
-      html.take(summary).span.text(`${start}–${end} of ${total}`);
+      html.take(summary).span.text(`${start}–${end} ${labels.summaryOf} ${total}`);
 
       const pages = Math.max(1, Math.ceil(total / pageSize));
       const controls = html.take(summary).div.className('inline-flex items-center gap-2').getContext();
@@ -380,9 +416,9 @@ export class DataGrid extends BaseComponent {
           button.disabled = disabled;
           if (!disabled) button.addEventListener('click', () => this.setPage(targetPage));
         };
-        addButton('‹', page - 1, page <= 1, 'Previous page');
+        addButton('‹', page - 1, page <= 1, labels.previousPage);
         html.take(controls).span.className('px-2 text-xs text-gray-500').text(`${page} / ${pages}`);
-        addButton('›', page + 1, page >= pages, 'Next page');
+        addButton('›', page + 1, page >= pages, labels.nextPage);
       }
     }
   }

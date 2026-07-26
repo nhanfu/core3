@@ -2,6 +2,7 @@ title: Nhân viên
 
 page:
   id: employees
+  breadcrumb: [Nhân sự, Nhân viên]
   auth:
     require: [hr.read]
 
@@ -35,10 +36,11 @@ components:
     source: employees
     filter_field: q
     search: { label: Tìm kiếm nhân viên, placeholder: 'Tìm mã, tên, SĐT, email...' }
-    actions: [{ id: employees.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: employees.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: employees
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang làm việc }
@@ -68,14 +70,15 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: view_employee, label: Chi tiết, variant: primary }
-          - { id: edit_employee, label: Sửa, variant: ghost }
-          - { id: delete_employee, label: Xóa, variant: danger }
+          - { id: view_employee, label: Chi tiết, variant: primary, permission: hr.read }
+          - { id: edit_employee, label: Sửa, variant: ghost, permission: hr.write }
+          - { id: delete_employee, label: Xóa, variant: danger, permission: hr.write }
 
 actions:
-  - { id: view_employee, type: navigate, navigate_to: /hr/employees/detail, params: { id: '{row.id}' } }
+  - { id: view_employee, type: navigate, permission: hr.read, navigate_to: /hr/employees/detail, params: { id: '{row.id}' } }
   - id: add_employee
     type: form
+    permission: hr.write
     title: Thêm nhân viên
     table: employees
     operation: insert
@@ -89,9 +92,10 @@ actions:
       - { field: department, label: Phòng ban, type: select, options_source: employee_department_lookup }
       - { field: start_date, label: Ngày vào làm, type: date }
       - { field: dependents, label: Người phụ thuộc, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang làm việc }, { id: OnLeave, label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
   - id: edit_employee
     type: form
+    permission: hr.write
     title: Cập nhật nhân viên
     table: employees
     operation: update
@@ -106,9 +110,10 @@ actions:
       - { field: department, label: Phòng ban, type: select, options_source: employee_department_lookup }
       - { field: start_date, label: Ngày vào làm, type: date }
       - { field: dependents, label: Người phụ thuộc, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang làm việc }, { id: OnLeave, label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }] }
   - id: delete_employee
     type: delete
+    permission: hr.write
     confirm: 'Xóa nhân viên {{row.name}}?'
     table: employees
     refresh: [employees]

@@ -5,6 +5,7 @@
   "scripts": {
     "start": "PORT=3001 bun server.ts",
     "dev": "PORT=3001 bun --hot server.ts",
+    "test": "vitest run --environment jsdom",
     "audit": "bun scripts/audit-pages.ts",
     "audit:ui": "bun scripts/audit-ui.ts",
     "audit:workflows": "bun scripts/audit-workflows.ts"

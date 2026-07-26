@@ -2,6 +2,8 @@ export type PageAuthDefinition = {
   require?: string[];
 };
 
+const isString = (value: unknown): value is string => typeof value === 'string';
+
 export type PageDefinition = {
   id: string;
   auth?: PageAuthDefinition;
@@ -18,9 +20,11 @@ export type DatasourceDefinition = {
 export type ToolbarDefinition = {
   id: string;
   label: string;
+  icon?: string;
   action: string;
   permission?: string;
   variant?: string;
+  show_if?: string;
 };
 
 export type ComponentDefinition = {
@@ -32,11 +36,13 @@ export type ComponentDefinition = {
 export type ActionDefinition = {
   id: string;
   type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download';
+  permission?: string;
   [key: string]: unknown;
 };
 
 export type PageConfig = {
   title?: string;
+  locale?: string;
   scope?: { label: string; value: string };
   page: PageDefinition;
   datasources?: DatasourceDefinition[];
@@ -56,6 +62,7 @@ export type PageValidationOptions = {
 
 const ROOT_KEYS = new Set([
   'title',
+  'locale',
   'scope',
   'page',
   'datasources',
@@ -68,10 +75,10 @@ const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
 const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
-const TOOLBAR_KEYS = new Set(['id', 'label', 'variant', 'permission', 'action']);
-const FILTER_KEYS = new Set(['source', 'fields']);
+const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
+const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
-const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'options', 'options_source', 'multiple', 'default', 'tokens']);
+const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'options', 'options_source', 'multiple', 'default', 'tokens', 'show_if', 'placeholder', 'search_placeholder', 'currency', 'decimals', 'min', 'max', 'step']);
 const COLUMN_KEYS = new Set([
   'field',
   'label',
@@ -85,7 +92,7 @@ const COLUMN_KEYS = new Set([
   'format',
   'overdueField',
 ]);
-const ROW_ACTION_KEYS = new Set(['id', 'label', 'variant', 'show_if']);
+const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
@@ -104,24 +111,35 @@ const COMPONENT_ACTION_KEYS = new Set([
   'show_if',
 ]);
 const EMPTY_STATE_KEYS = new Set(['title', 'description']);
+const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']);
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
-  form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params']),
-  delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope']),
-  patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope']),
-  navigate: new Set(['id', 'type', 'navigate_to', 'params']),
-  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params']),
-  upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope']),
-  download: new Set(['id', 'type', 'kind']),
+  form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission']),
+  delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission']),
+  patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
+  navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
+  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field']),
+  upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
+  download: new Set(['id', 'type', 'kind', 'permission']),
 };
+const PERMISSION_REQUIRED_ACTION_TYPES = new Set<ActionDefinition['type']>([
+  'form',
+  'server_form',
+  'delete',
+  'patch',
+  'server',
+  'upload',
+  'download',
+]);
 
 const COMPONENT_KEYS = new Map<string, Set<string>>([
-  ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label'])],
+  ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
-  ['GridView', new Set(['type', 'source', 'page_size', 'columns'])],
-  ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help'])],
+  ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
+  ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
+  ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs', 'show_counts', 'variant'])],
   ['TabGroup', new Set(['type', 'tabs'])],
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
@@ -130,7 +148,8 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['ContactGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
-  ['ApprovalTimeline', new Set(['type', 'source', 'title', 'actor_field', 'action_field', 'detail_field', 'timestamp_field'])],
+  ['ApprovalTimeline', new Set(['type', 'source', 'title', 'empty_state', 'action_labels', 'actor_field', 'action_field', 'detail_field', 'timestamp_field'])],
+  ['TemplatePreview', new Set(['type', 'id', 'source', 'template_source'])],
   ['ChatWorkspace', new Set([
     'type',
     'id',
@@ -143,6 +162,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'upload_action',
     'download_action',
     'mark_read_action',
+    'refresh_interval_ms',
     'search_placeholder',
     'empty_threads',
     'empty_messages',
@@ -176,6 +196,7 @@ export function validatePageDefinition(
   if (!isRecord(input)) throw new PageSchemaError(['page config must be an object']);
 
   rejectUnknownKeys(input, ROOT_KEYS, 'page config', issues);
+  if (input.locale !== undefined) requireString(input.locale, 'locale', issues);
   if (input.scope !== undefined) {
     requireRecord(input.scope, 'scope', issues);
     if (isRecord(input.scope)) {
@@ -249,11 +270,15 @@ function validateActions(
     if (!isRecord(action)) return;
     requireString(action.id, `${path}.id`, issues);
     requireString(action.type, `${path}.type`, issues);
+    if (action.permission !== undefined) requireString(action.permission, `${path}.permission`, issues);
     const type = action.type as ActionDefinition['type'];
     const allowedKeys = ACTION_KEYS[type];
     if (!allowedKeys) {
       issues.push(`${path}.type has unsupported value "${String(action.type)}"`);
       return;
+    }
+    if (PERMISSION_REQUIRED_ACTION_TYPES.has(type)) {
+      requireString(action.permission, `${path}.permission`, issues);
     }
     rejectUnknownKeys(action, allowedKeys, path, issues);
     if (typeof action.id === 'string') addUnique(ids, action.id, `${path}.id`, 'action', issues);
@@ -282,6 +307,10 @@ function validateActions(
       if (action.params !== undefined && !isRecord(action.params)) {
         issues.push(`${path}.params must be an object`);
       }
+      if (action.result !== undefined && action.result !== 'alert') {
+        issues.push(`${path}.result must be "alert" when provided`);
+      }
+      if (action.result_field !== undefined) requireString(action.result_field, `${path}.result_field`, issues);
     }
 
     validateRefresh(action.refresh, `${path}.refresh`, datasourceIds, options, issues);
@@ -302,7 +331,9 @@ function validateToolbar(value: unknown, actionIds: Set<string>, issues: string[
     rejectUnknownKeys(item, TOOLBAR_KEYS, path, issues);
     requireString(item.id, `${path}.id`, issues);
     requireString(item.label, `${path}.label`, issues);
+    if (item.icon !== undefined) requireString(item.icon, `${path}.icon`, issues);
     requireString(item.action, `${path}.action`, issues);
+    if (item.show_if !== undefined) requireString(item.show_if, `${path}.show_if`, issues);
     if (typeof item.id === 'string') addUnique(ids, item.id, `${path}.id`, 'toolbar item', issues);
     if (typeof item.action === 'string' && !actionIds.has(item.action)) {
       issues.push(`${path}.action references unknown action "${item.action}"`);
@@ -321,6 +352,8 @@ function validateFilters(
   if (!isRecord(value)) return;
   rejectUnknownKeys(value, FILTER_KEYS, 'filters', issues);
   requireSource(value.source, 'filters.source', datasourceIds, options, issues);
+  if (value.all_label !== undefined) requireString(value.all_label, 'filters.all_label', issues);
+  if (value.clear_label !== undefined) requireString(value.clear_label, 'filters.clear_label', issues);
   if (!Array.isArray(value.fields)) {
     issues.push('filters.fields must be an array');
     return;
@@ -367,6 +400,10 @@ function validateComponents(
     if (component.source !== undefined) {
       requireSource(component.source, `${path}.source`, datasourceIds, options, issues);
     }
+    if (component.template_source !== undefined) {
+      requireString(component.template_source, `${path}.template_source`, issues);
+      requireSource(component.template_source, `${path}.template_source`, datasourceIds, options, issues);
+    }
     if (component.type === 'ChatWorkspace') {
       requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
       requireSource(component.attachment_source, `${path}.attachment_source`, datasourceIds, options, issues);
@@ -375,6 +412,27 @@ function validateComponents(
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
           issues.push(`${path}.${key} references unknown action "${component[key]}"`);
         }
+      }
+    }
+    if (component.type === 'ApprovalTimeline' && component.action_labels !== undefined) {
+      if (!isRecord(component.action_labels)) {
+        issues.push(`${path}.action_labels must be an object`);
+      } else {
+        for (const [key, value] of Object.entries(component.action_labels)) {
+          if (typeof value !== 'string' || !value.trim()) issues.push(`${path}.action_labels.${key} must be a non-empty string`);
+        }
+      }
+    }
+    if (component.type === 'Chart') {
+      if (component.color !== undefined && (!isString(component.color) || !CHART_COLORS.has(component.color))) {
+        issues.push(`${path}.color must be a semantic chart color`);
+      }
+      if (Array.isArray(component.series)) {
+        component.series.forEach((series, seriesIndex) => {
+          if (isRecord(series) && series.color !== undefined && (!isString(series.color) || !CHART_COLORS.has(series.color))) {
+            issues.push(`${path}.series[${seriesIndex}].color must be a semantic chart color`);
+          }
+        });
       }
     }
 
@@ -407,10 +465,32 @@ function validateFields(value: unknown, path: string, issues: string[]) {
     requireString(field.field, `${fieldPath}.field`, issues);
     requireString(field.label, `${fieldPath}.label`, issues);
     requireString(field.type, `${fieldPath}.type`, issues);
+    if (field.show_if !== undefined) requireString(field.show_if, `${fieldPath}.show_if`, issues);
+    if (field.options !== undefined) validateOptionList(field.options, `${fieldPath}.options`, issues);
     if (field.tokens !== undefined) {
       if (!Array.isArray(field.tokens) || field.tokens.some(token => typeof token !== 'string')) {
         issues.push(`${fieldPath}.tokens must be an array of strings`);
       }
+    }
+  });
+}
+
+function validateOptionList(value: unknown, path: string, issues: string[]) {
+  if (!Array.isArray(value)) {
+    issues.push(`${path} must be an array`);
+    return;
+  }
+  value.forEach((option, index) => {
+    if (option === null || typeof option !== 'object') return;
+    const optionPath = `${path}[${index}]`;
+    requireRecord(option, optionPath, issues);
+    if (!isRecord(option)) return;
+    rejectUnknownKeys(option, new Set(['id', 'value', 'code', 'label', 'name']), optionPath, issues);
+    if (option.id === undefined && option.value === undefined && option.code === undefined) {
+      issues.push(`${optionPath} must define id, value, or code`);
+    }
+    if (option.label === undefined && option.name === undefined) {
+      issues.push(`${optionPath} must define label or name`);
     }
   });
 }
@@ -441,6 +521,8 @@ function validateColumns(value: unknown, path: string, actionIds: Set<string>, i
           rejectUnknownKeys(action, ROW_ACTION_KEYS, actionPath, issues);
           requireString(action.id, `${actionPath}.id`, issues);
           requireString(action.label, `${actionPath}.label`, issues);
+          if (action.icon !== undefined) requireString(action.icon, `${actionPath}.icon`, issues);
+          if (action.permission !== undefined) requireString(action.permission, `${actionPath}.permission`, issues);
           if (typeof action.id === 'string' && !actionIds.has(action.id)) {
             issues.push(`${actionPath}.id references unknown action "${action.id}"`);
           }

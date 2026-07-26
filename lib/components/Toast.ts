@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class Toast extends BaseComponent {
   draw(container) {
@@ -19,9 +20,11 @@ export class Toast extends BaseComponent {
       .getContext();
 
     html.take(wrap).span.text(String(message));
-    html.take(wrap)
+    const close = html.take(wrap)
       .button.className('ml-auto text-current opacity-60 hover:opacity-100 transition-opacity font-bold')
-      .text('×')
-      .event('click', () => this.setState({ visible: false }));
+      .attr('aria-label', 'Đóng')
+      .getContext();
+    appendIcon(close, 'x');
+    close.addEventListener('click', () => this.setState({ visible: false }));
   }
 }

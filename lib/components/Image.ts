@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class Image extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -25,8 +26,8 @@ export class Image extends BaseComponent {
       const placeholder = html.take(wrap).div
         .className(`flex items-center justify-center bg-gray-100 text-gray-400 text-2xl ${roundedCls} ${borderCls}`)
         .style(styleStr || 'width:100px;height:100px;')
-        .text('📷')
         .getContext();
+      appendIcon(placeholder, 'image');
       return;
     }
 

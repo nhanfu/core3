@@ -2,6 +2,7 @@ title: Tiền tệ
 
 page:
   id: catalog-currencies
+  breadcrumb: [Danh mục, Tiền tệ]
   auth:
     require: [catalog.read]
 
@@ -30,10 +31,11 @@ components:
     source: currencies
     filter_field: q
     search: { label: Tìm kiếm tiền tệ, placeholder: 'Tìm mã, tên hoặc ký hiệu...' }
-    actions: [{ id: currencies.export, label: 'Xuất CSV', icon: '↓' }, { id: import_currencies, label: 'Nhập CSV', icon: '↑' }]
+    actions: [{ id: currencies.export, label: 'Xuất CSV', icon: download }, { id: import_currencies, label: 'Nhập CSV', icon: upload }]
   - type: StatusTabs
     source: currencies
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang sử dụng }
@@ -64,14 +66,15 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_currency, label: Sửa, variant: ghost }
-          - { id: delete_currency, label: Xóa, variant: danger }
+          - { id: edit_currency, label: Sửa, variant: ghost, permission: catalog.write }
+          - { id: delete_currency, label: Xóa, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: sync_currency_rates, type: server, action: catalog.currencies.sync_rates, refresh: [currencies] }
-  - { id: import_currencies, type: upload, kind: master_data_import, scope: currency, refresh: [currencies] }
+  - { id: sync_currency_rates, type: server, permission: catalog.write, action: catalog.currencies.sync_rates, refresh: [currencies] }
+  - { id: import_currencies, type: upload, permission: catalog.write, kind: master_data_import, scope: currency, refresh: [currencies] }
   - id: add_currency
     type: form
+    permission: catalog.write
     title: Thêm tiền tệ
     table: master_data
     scope: currency
@@ -84,9 +87,10 @@ actions:
       - { field: decimals, label: Số chữ số lẻ, type: number, default: 2 }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_currency
     type: form
+    permission: catalog.write
     title: Cập nhật tiền tệ
     table: master_data
     scope: currency
@@ -100,5 +104,5 @@ actions:
       - { field: decimals, label: Số chữ số lẻ, type: number }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
-  - { id: delete_currency, type: delete, table: master_data, scope: currency, confirm: 'Xóa tiền tệ {{row.name}}?', refresh: [currencies] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { id: delete_currency, type: delete, permission: catalog.write, table: master_data, scope: currency, confirm: 'Xóa tiền tệ {{row.name}}?', refresh: [currencies] }

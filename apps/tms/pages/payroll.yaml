@@ -2,6 +2,7 @@ title: Bảng lương
 
 page:
   id: payroll
+  breadcrumb: [Nhân sự, Bảng lương]
   auth:
     require: [hr.read]
 
@@ -60,13 +61,14 @@ components:
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ tháng', to_label: 'Đến tháng', presets: [today, week, month, quarter, year, all] }
     filter_field: q
     search: { label: Tìm kiếm bảng lương, placeholder: 'Tìm mã bảng lương, mã hoặc tên nhân viên...' }
-    actions: [{ id: payroll.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: payroll.export, label: 'Xuất CSV', icon: download }]
   - type: StatRow
     source: payroll_totals
     stats: [{ label: Bảng lương, field: payroll_count, color: blue }, { label: Tổng thực lãnh, field: net_total, color: blue }, { label: Đã chi, field: paid_total, color: green }, { label: Chờ xử lý, field: pending_total, color: amber }]
   - type: StatusTabs
     source: payroll
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Draft, label: Nháp }
@@ -96,17 +98,18 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: view_payroll, label: Chi tiết, variant: primary }
-          - { id: edit_payroll, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
-          - { id: approve_payroll, label: Duyệt, variant: primary, show_if: "row.status === 'Draft' && user.permissions.includes('hr.approve')" }
-          - { id: reopen_payroll, label: Mở lại, variant: ghost, show_if: "row.status === 'Approved' && user.permissions.includes('hr.approve')" }
-          - { id: pay_payroll, label: Xác nhận chi, variant: primary, show_if: "row.status === 'Approved' && user.permissions.includes('hr.pay')" }
-          - { id: delete_payroll, label: Xóa, variant: danger, show_if: "row.status === 'Draft'" }
+          - { id: view_payroll, label: Chi tiết, variant: primary, permission: hr.read }
+          - { id: edit_payroll, label: Sửa, variant: ghost, permission: hr.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_payroll, label: Duyệt, variant: primary, permission: hr.approve, show_if: "row.status === 'Draft'" }
+          - { id: reopen_payroll, label: Mở lại, variant: ghost, permission: hr.approve, show_if: "row.status === 'Approved'" }
+          - { id: pay_payroll, label: Xác nhận chi, variant: primary, permission: hr.pay, show_if: "row.status === 'Approved'" }
+          - { id: delete_payroll, label: Xóa, variant: danger, permission: hr.write, show_if: "row.status === 'Draft'" }
 
 actions:
-  - { id: view_payroll, type: navigate, navigate_to: /hr/payroll/detail, params: { id: '{row.id}' } }
+  - { id: view_payroll, type: navigate, permission: hr.read, navigate_to: /hr/payroll/detail, params: { id: '{row.id}' } }
   - id: add_payroll
     type: form
+    permission: hr.write
     title: Lập bảng lương
     table: payrolls
     operation: insert
@@ -115,12 +118,13 @@ actions:
       - { field: code, label: Số bảng lương, type: text, required: true }
       - { field: employee_id, label: Nhân viên, type: select, options_source: payroll_employee_lookup, required: true }
       - { field: pay_month, label: Tháng lương, type: date, required: true }
-      - { field: base_salary, label: Lương cơ bản, type: number, default: 0 }
-      - { field: allowance, label: Phụ cấp, type: number, default: 0 }
-      - { field: deduction, label: Khấu trừ, type: number, default: 0 }
-      - { field: net_salary, label: Thực lãnh, type: number, default: 0 }
+      - { field: base_salary, label: Lương cơ bản, type: money, currency: VND, default: 0 }
+      - { field: allowance, label: Phụ cấp, type: money, currency: VND, default: 0 }
+      - { field: deduction, label: Khấu trừ, type: money, currency: VND, default: 0 }
+      - { field: net_salary, label: Thực lãnh, type: money, currency: VND, default: 0 }
   - id: edit_payroll
     type: form
+    permission: hr.write
     title: Cập nhật bảng lương
     table: payrolls
     operation: update
@@ -130,15 +134,16 @@ actions:
       - { field: code, label: Số bảng lương, type: text, required: true }
       - { field: employee_id, label: Nhân viên, type: select, options_source: payroll_employee_lookup, required: true }
       - { field: pay_month, label: Tháng lương, type: date, required: true }
-      - { field: base_salary, label: Lương cơ bản, type: number }
-      - { field: allowance, label: Phụ cấp, type: number }
-      - { field: deduction, label: Khấu trừ, type: number }
-      - { field: net_salary, label: Thực lãnh, type: number }
-  - { id: approve_payroll, type: server, action: hr.payroll.approve, confirm: 'Duyệt bảng lương {{row.code}}?', refresh: [payroll] }
-  - { id: reopen_payroll, type: server, action: hr.payroll.reopen, confirm: 'Mở lại bảng lương {{row.code}} để chỉnh sửa?', refresh: [payroll] }
-  - { id: pay_payroll, type: server, action: hr.payroll.mark_paid, confirm: 'Xác nhận đã chi bảng lương {{row.code}}?', refresh: [payroll] }
+      - { field: base_salary, label: Lương cơ bản, type: money, currency: VND }
+      - { field: allowance, label: Phụ cấp, type: money, currency: VND }
+      - { field: deduction, label: Khấu trừ, type: money, currency: VND }
+      - { field: net_salary, label: Thực lãnh, type: money, currency: VND }
+  - { id: approve_payroll, type: server, permission: hr.approve, action: hr.payroll.approve, confirm: 'Duyệt bảng lương {{row.code}}?', refresh: [payroll] }
+  - { id: reopen_payroll, type: server, permission: hr.approve, action: hr.payroll.reopen, confirm: 'Mở lại bảng lương {{row.code}} để chỉnh sửa?', refresh: [payroll] }
+  - { id: pay_payroll, type: server, permission: hr.pay, action: hr.payroll.mark_paid, confirm: 'Xác nhận đã chi bảng lương {{row.code}}?', refresh: [payroll] }
   - id: delete_payroll
     type: delete
+    permission: hr.write
     confirm: 'Xóa bảng lương {{row.code}}?'
     table: payrolls
     refresh: [payroll]

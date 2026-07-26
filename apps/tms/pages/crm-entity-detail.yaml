@@ -1,5 +1,5 @@
 title: Chi tiết đối tượng CRM
-page: { id: crm-entity-detail, auth: { require: [crm.read] } }
+page: { id: crm-entity-detail, breadcrumb: [Kinh doanh, Đối tượng, Chi tiết], auth: { require: [crm.read] } }
 
 datasources:
   - id: crm_entity_detail
@@ -7,7 +7,7 @@ datasources:
     permission: crm.read
     query: |
       SELECT c.id, 'customer' AS kind, c.code, c.name, c.tax_code, c.phone, c.email,
-        c.owner_name, c.visibility,
+        c.owner_name, c.visibility, c.status AS status, c.stage AS stage, NULL AS partner_type,
         CASE c.visibility WHEN 'Private' THEN 'Riêng' ELSE 'Công khai' END AS visibility_label,
         CASE c.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label,
         CASE c.stage WHEN 'Lead' THEN 'Khách tiềm năng'
@@ -21,7 +21,7 @@ datasources:
           OR (:view_scope = 'own' AND c.owner_name = :current_user_name))
       UNION ALL
       SELECT p.id, 'partner', p.code, p.name, p.tax_code, p.phone, p.email,
-        p.owner_name, p.visibility,
+        p.owner_name, p.visibility, p.status, NULL AS stage, p.partner_type,
         CASE p.visibility WHEN 'Private' THEN 'Riêng' ELSE 'Công khai' END,
         CASE p.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END,
         CASE p.partner_type WHEN 'Carrier' THEN 'Nhà xe'
@@ -83,7 +83,8 @@ datasources:
       ORDER BY created_at DESC
 
 toolbar:
-  - { id: back_crm_btn, label: '← Danh sách', variant: secondary, action: back_crm }
+  - { id: back_crm_btn, label: 'Danh sách', icon: arrow-left, variant: secondary, action: back_crm }
+  - { id: edit_crm_entity, label: Sửa đối tượng, variant: primary, permission: crm.write, action: edit_crm_entity }
 
 components:
   - type: DocumentSummary
@@ -118,11 +119,12 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: edit_crm_contact, label: Sửa, variant: ghost, show_if: "user.permissions.includes('crm.write')" }
-          - { id: delete_crm_contact, label: Xóa, variant: danger, show_if: "user.permissions.includes('crm.write')" }
+          - { id: edit_crm_contact, label: Sửa, variant: ghost, permission: crm.write }
+          - { id: delete_crm_contact, label: Xóa, variant: danger, permission: crm.write }
   - type: ApprovalTimeline
     source: crm_entity_activity
     title: Lịch sử liên hệ
+    empty_state: { title: Chưa có hoạt động liên hệ }
     actor_field: actor_name
     action_field: action_label
     detail_field: detail
@@ -130,8 +132,29 @@ components:
 
 actions:
   - { id: back_crm, type: navigate, navigate_to: '{state.back}' }
+  - id: edit_crm_entity
+    type: server_form
+    permission: crm.write
+    title: Cập nhật đối tượng CRM
+    action: crm.entities.update
+    prefill: source
+    prefill_source: crm_entity_detail
+    params: { id: '{state.id}', kind: '{state.kind}' }
+    refresh: [crm_entity_detail, crm_entity_contacts, crm_entity_activity]
+    fields:
+      - { field: code, label: Mã đối tượng, type: text, required: true }
+      - { field: name, label: Tên đối tượng, type: text, required: true }
+      - { field: tax_code, label: Mã số thuế, type: text }
+      - { field: phone, label: Điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: stage, label: Giai đoạn CRM, type: select, show_if: "state.kind === 'customer'", options: [{ id: Lead, label: Khách tiềm năng }, { id: Contacting, label: Đang tiếp cận }, { id: Customer, label: Khách hàng }] }
+      - { field: partner_type, label: Loại đối tác, type: select, show_if: "state.kind === 'partner'", options: [{ id: Carrier, label: Nhà xe }, { id: Supplier, label: Nhà cung cấp }, { id: ShippingLine, label: Hãng tàu }, { id: Warehouse, label: Kho / bãi }, { id: Depot, label: Depot }, { id: Other, label: Khác }] }
+      - { field: owner_name, label: Sale phụ trách, type: text }
+      - { field: visibility, label: Phạm vi hiển thị, type: select, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
   - id: add_crm_contact
     type: server_form
+    permission: crm.write
     title: Thêm người liên hệ
     action: crm.contacts.create
     params: { id: '{state.id}', kind: '{state.kind}' }
@@ -141,10 +164,11 @@ actions:
       - { field: role_title, label: Chức vụ, type: text }
       - { field: phone, label: Điện thoại, type: text }
       - { field: email, label: Email, type: text }
-      - { field: is_primary, label: Liên hệ chính, type: select, options: [false, true], default: false }
+      - { field: is_primary, label: Liên hệ chính, type: select, options: [{ id: false, label: Không }, { id: true, label: Có }], default: false }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: edit_crm_contact
     type: server_form
+    permission: crm.write
     title: Cập nhật người liên hệ
     action: crm.contacts.update
     prefill: row
@@ -155,10 +179,11 @@ actions:
       - { field: role_title, label: Chức vụ, type: text }
       - { field: phone, label: Điện thoại, type: text }
       - { field: email, label: Email, type: text }
-      - { field: is_primary, label: Liên hệ chính, type: select, options: [false, true] }
+      - { field: is_primary, label: Liên hệ chính, type: select, options: [{ id: false, label: Không }, { id: true, label: Có }] }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: delete_crm_contact
     type: server
+    permission: crm.write
     action: crm.contacts.delete
     confirm: 'Xóa người liên hệ {{row.name}}?'
     params: { id: '{state.id}', kind: '{state.kind}', contact_id: '{row.id}' }

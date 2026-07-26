@@ -1,5 +1,5 @@
 title: Chi tiết chi nhánh
-page: { id: branch-detail, auth: { require: [settings.read] } }
+page: { id: branch-detail, breadcrumb: [Tổ chức & phân quyền, Chi nhánh, Chi tiết], auth: { require: [settings.read] } }
 datasources:
   - id: branch_detail
     single: true
@@ -41,6 +41,21 @@ components:
     empty_state: { title: Chưa có nhân viên }
     columns: [{ field: code, label: Mã nhân viên }, { field: name, label: Họ tên }, { field: job_title, label: Chức danh }, { field: status, label: Trạng thái }]
 toolbar:
-  - { id: back_branches, label: '← Danh sách chi nhánh', variant: secondary, action: back_branches }
+  - { id: back_branches, label: 'Danh sách chi nhánh', icon: arrow-left, variant: secondary, action: back_branches }
+  - { id: edit_branch_detail, label: Sửa chi nhánh, variant: primary, permission: settings.write, action: edit_branch_detail }
 actions:
   - { id: back_branches, type: navigate, navigate_to: /org/branches }
+  - id: edit_branch_detail
+    type: form
+    permission: settings.write
+    title: Cập nhật chi nhánh
+    table: branches
+    operation: update
+    prefill: source
+    prefill_source: branch_detail
+    refresh: [branch_detail, branch_departments, branch_trucks, branch_employees]
+    fields:
+      - { field: name, label: Tên chi nhánh, type: text, required: true }
+      - { field: city, label: Tỉnh / thành phố, type: text, required: true }
+      - { field: region, label: Khu vực, type: text }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }

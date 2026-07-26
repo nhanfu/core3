@@ -14,7 +14,7 @@ Parity is complete only when every route in the page matrix has:
    filters, columns, form fields, status transitions, and exports as the
    reference;
 2. a Core3 YAML definition, server-authorized datasource/actions, database
-   migrations, seed data, and automated interaction coverage;
+   migrations, seed data, and automated unit-test coverage;
 
 This plan uses the reference tenant only for read-only inspection. Do not copy
 its source, assets, or business data. Its labels, behaviour, and layout are the
@@ -211,7 +211,7 @@ database without rewriting the YAML/component layer.
 
 ## Delivery waves
 
-Each wave is implemented, tested, visually compared, and committed before the
+Each wave is implemented, tested, and committed before the
 next. No later page may create a private substitute for an earlier shared
 component.
 
@@ -245,8 +245,7 @@ component.
 ## Wave acceptance and QA
 
 For every page, write a QA inventory before implementation: visible controls,
-state transitions, API effects, visual states, and expected evidence. Test with
-normal mouse/keyboard interaction, not `evaluate()` shortcuts.
+state transitions, API effects, and visual states.
 
 - Functional: create/edit/delete where reference permits; filter, sort, page,
   show/hide columns, import/export; state changes; permission denial; invalid

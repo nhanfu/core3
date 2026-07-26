@@ -1,6 +1,7 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
 import { fmtCurrency, fmtNumber } from './helpers.ts';
+import { appendIcon } from './Icon.ts';
 
 export class StatCard extends BaseComponent {
   draw(container) {
@@ -36,13 +37,14 @@ export class StatCard extends BaseComponent {
     if (state.navigate_to) {
       const arrow = document.createElement('span');
       arrow.className = 'stat-card-arrow';
-      arrow.textContent = '→';
+      appendIcon(arrow, 'arrow-right');
       valueEl.append(arrow);
     }
 
     if (trend) {
       const trendDiv = html.take(card).div.className(`flex items-center gap-1 mt-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`).getContext();
-      html.take(trendDiv).span.text(trend === 'up' ? '↑' : '↓');
+      const trendIcon = html.take(trendDiv).span.getContext();
+      appendIcon(trendIcon, trend === 'up' ? 'arrow-up' : 'arrow-down');
       html.take(trendDiv).span.className('text-xs font-medium').text(String(delta ?? ''));
     }
   }

@@ -24,4 +24,21 @@ describe('PageIntro', () => {
     expect(container.textContent).toContain('Tổng quan vận hành');
     expect(container.textContent).toContain('Theo dõi hoạt động hôm nay');
   });
+
+  it('supports the compact dashboard layout with a right-aligned greeting', () => {
+    (globalThis as any).__CORE3_USER__ = { name: 'Admin User' };
+    const container = mount(new PageIntro('dashboard-intro', {
+      greeting: 'Xin chào',
+      title: 'Tổng quan',
+      greeting_side: 'right',
+      compact: true,
+      action_label: 'Mẹo',
+    }));
+
+    expect(container.querySelector('.page-intro-compact')).not.toBeNull();
+    expect(container.querySelector('.page-intro-greeting')?.textContent).toBe('Xin chào, Admin User');
+    expect(container.querySelector('h2')?.textContent).toBe('Tổng quan');
+    expect(container.querySelector('.page-intro-action svg')).not.toBeNull();
+    expect(container.querySelector('.page-intro-action')?.textContent).toBe('');
+  });
 });

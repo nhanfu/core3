@@ -6,7 +6,7 @@
 - [x] `Chi tiết` carries partner ID, kind, and back route through the SPA hash.
 - [x] The shared CRM detail component renders partner classification, owner,
   visibility, primary phone/email, contacts, and activity.
-- [x] Partner contact actions use the FK-backed partner table through validated
+- [x] Partner contact actions use the repository-validated partner contact table through validated
   `crm.contacts.*` actions, never a browser-owned table name.
 - [x] Primary-contact and parent synchronization rules are shared with
   customers.

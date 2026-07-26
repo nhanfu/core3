@@ -2,6 +2,7 @@ title: Container
 
 page:
   id: containers
+  breadcrumb: [Danh mục, Container]
   auth:
     require: [dispatch.read]
 
@@ -14,21 +15,22 @@ datasources:
         CASE c.status WHEN 'Available' THEN 'Sẵn sàng' WHEN 'InUse' THEN 'Đang sử dụng' WHEN 'Maintenance' THEN 'Bảo dưỡng' ELSE 'Ngưng hoạt động' END AS status_label
       FROM containers c
       LEFT JOIN locations l ON l.id = c.location_id
-      WHERE (NULLIF(:status, '') IS NULL OR c.status = :status)
+      WHERE (:view_scope = 'all' OR c.branch_id = :current_branch_id)
+        AND (NULLIF(:status, '') IS NULL OR c.status = :status)
         AND (:q IS NULL OR c.container_number ILIKE '%' || :q || '%' OR c.container_type ILIKE '%' || :q || '%' OR c.owner_name ILIKE '%' || :q || '%')
       ORDER BY c.created_at DESC, c.container_number
   - id: container_location_lookup
     single: false
     permission: dispatch.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM locations ORDER BY name"
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM locations WHERE (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY name"
   - id: container_type_lookup
     single: false
     permission: dispatch.read
-    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'container_type' AND status = 'Active' UNION SELECT DISTINCT container_type AS value, container_type AS label FROM containers WHERE container_type IS NOT NULL AND container_type <> '' ORDER BY label"
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'container_type' AND status = 'Active' UNION SELECT DISTINCT container_type AS value, container_type AS label FROM containers WHERE container_type IS NOT NULL AND container_type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
   - id: container_owner_lookup
     single: false
     permission: dispatch.read
-    query: "SELECT name AS value, name AS label FROM partners WHERE status = 'Active' UNION SELECT DISTINCT owner_name AS value, owner_name AS label FROM containers WHERE owner_name IS NOT NULL AND owner_name <> '' ORDER BY label"
+    query: "SELECT name AS value, name AS label FROM partners WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT owner_name AS value, owner_name AS label FROM containers WHERE owner_name IS NOT NULL AND owner_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 
 toolbar:
   - id: add_container_btn
@@ -42,10 +44,11 @@ components:
     source: containers
     filter_field: q
     search: { label: Tìm kiếm container, placeholder: 'Tìm số container, loại hoặc chủ sở hữu...' }
-    actions: [{ id: containers.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: containers.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: containers
     filter_field: status
+    show_counts: false
     tabs:
       - { id: '', label: Tất cả }
       - { id: Available, label: Sẵn sàng }
@@ -74,12 +77,13 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_container, label: Sửa, variant: ghost }
-          - { id: delete_container, label: Xóa, variant: danger }
+          - { id: edit_container, label: Sửa, variant: ghost, permission: dispatch.write }
+          - { id: delete_container, label: Xóa, variant: danger, permission: dispatch.write }
 
 actions:
   - id: add_container
     type: form
+    permission: dispatch.write
     title: Thêm container
     table: containers
     operation: insert
@@ -89,10 +93,11 @@ actions:
       - { field: container_type, label: Loại container, type: select, options_source: container_type_lookup, default: 20DC }
       - { field: owner_name, label: Chủ sở hữu, type: select, options_source: container_owner_lookup }
       - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive], default: Available }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Available, label: Sẵn sàng }, { id: InUse, label: Đang sử dụng }, { id: Maintenance, label: Bảo dưỡng }, { id: Inactive, label: Ngưng hoạt động }], default: Available }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: edit_container
     type: form
+    permission: dispatch.write
     title: Cập nhật container
     table: containers
     operation: update
@@ -103,10 +108,11 @@ actions:
       - { field: container_type, label: Loại container, type: select, options_source: container_type_lookup }
       - { field: owner_name, label: Chủ sở hữu, type: select, options_source: container_owner_lookup }
       - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Available, label: Sẵn sàng }, { id: InUse, label: Đang sử dụng }, { id: Maintenance, label: Bảo dưỡng }, { id: Inactive, label: Ngưng hoạt động }] }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: delete_container
     type: delete
+    permission: dispatch.write
     confirm: 'Xóa container {{row.container_number}}?'
     table: containers
     refresh: [containers]

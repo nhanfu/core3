@@ -1,7 +1,9 @@
 title: Đối tượng
+scope: { label: 'Phạm vi xem', value: 'Toàn công ty' }
 
 page:
   id: partners
+  breadcrumb: [Kinh doanh, Đối tượng]
   auth:
     require: [crm.read]
 
@@ -10,7 +12,7 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT p.id, p.code, p.name, p.tax_code, p.phone, p.email,
+      SELECT p.id, REPLACE(UPPER(p.id), 'PARTNER-', 'DT') AS system_code, p.code, p.name, p.tax_code, p.phone, p.email,
         p.partner_type, p.owner_name, p.visibility, p.status,
         CASE p.partner_type
           WHEN 'Carrier' THEN 'Nhà xe'
@@ -38,7 +40,7 @@ datasources:
   - id: partner_owner_lookup
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM employees WHERE status = 'Active' UNION SELECT DISTINCT owner_name AS value, owner_name AS label FROM partners WHERE owner_name IS NOT NULL AND owner_name <> '' ORDER BY label"
+    query: "SELECT e.name AS value, e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.status = 'Active' AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) UNION SELECT DISTINCT owner_name AS value, owner_name AS label FROM partners WHERE owner_name IS NOT NULL AND owner_name <> '' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) ORDER BY label"
 
 toolbar:
   - id: add_partner_btn
@@ -54,13 +56,14 @@ components:
     search:
       label: Tìm kiếm đối tượng
       placeholder: 'Tìm mã, tên, MST, SĐT...'
-    actions: [{ id: partners.export, label: 'Xuất CSV', icon: '↓' }]
-    filters:
-      - { field: visibility, label: Hiển thị, placeholder: Tất cả hiển thị, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
-      - { field: status, label: Trạng thái, placeholder: Tất cả trạng thái, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
+    search_button: true
+    actions: [{ id: partners.export, label: 'Xuất CSV', icon: download }]
+    help: true
   - type: StatusTabs
     source: partners
     filter_field: partner_type
+    show_counts: true
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Carrier, label: Nhà xe }
@@ -76,7 +79,7 @@ components:
       title: Không có đối tượng
       description: Thử thay đổi bộ lọc hoặc tạo đối tượng mới.
     columns:
-      - field: id
+      - field: system_code
         label: Mã HT
         sortable: true
       - field: code
@@ -101,16 +104,6 @@ components:
         label: Liên hệ chính
         type: PrimaryEntityCell
         secondary: email
-      - field: visibility_label
-        label: Hiển thị
-      - field: status_label
-        label: Trạng thái
-        type: StatusChip
-        colors:
-          Hoạt động: green
-          Ngưng hoạt động: red
-      - field: created_at
-        label: Ngày giờ tạo
       - field: actions
         label: ''
         sortable: false
@@ -119,17 +112,21 @@ components:
           - id: view_partner
             label: Chi tiết
             variant: ghost
+            permission: crm.read
           - id: edit_partner
             label: Sửa
             variant: ghost
+            permission: crm.write
           - id: delete_partner
             label: Xóa
             variant: danger
+            permission: crm.write
 
 actions:
-  - { id: view_partner, type: navigate, navigate_to: /crm/entities/detail, params: { id: '{row.id}', kind: partner, back: /partners } }
+  - { id: view_partner, type: navigate, permission: crm.read, navigate_to: /crm/entities/detail, params: { id: '{row.id}', kind: partner, back: /partners } }
   - id: add_partner
     type: form
+    permission: crm.write
     title: Thêm đối tượng
     table: partners
     operation: insert
@@ -140,12 +137,13 @@ actions:
       - { field: tax_code, label: Mã số thuế, type: text }
       - { field: phone, label: Số điện thoại, type: text }
       - { field: email, label: Email, type: text }
-      - { field: partner_type, label: Loại đối tượng, type: select, options: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other], default: Supplier }
+      - { field: partner_type, label: Loại đối tượng, type: select, options: [{ id: Carrier, label: Nhà vận chuyển }, { id: Supplier, label: Nhà cung cấp }, { id: ShippingLine, label: Hãng tàu }, { id: Warehouse, label: Kho }, { id: Depot, label: Depot }, { id: Other, label: Khác }], default: Supplier }
       - { field: owner_name, label: Sale phụ trách, type: select, options_source: partner_owner_lookup }
-      - { field: visibility, label: Hiển thị, type: select, options: [Public, Private], default: Public }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: visibility, label: Hiển thị, type: select, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }], default: Public }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
   - id: edit_partner
     type: form
+    permission: crm.write
     title: Cập nhật đối tượng
     table: partners
     operation: update
@@ -157,12 +155,13 @@ actions:
       - { field: tax_code, label: Mã số thuế, type: text }
       - { field: phone, label: Số điện thoại, type: text }
       - { field: email, label: Email, type: text }
-      - { field: partner_type, label: Loại đối tượng, type: select, options: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other] }
+      - { field: partner_type, label: Loại đối tượng, type: select, options: [{ id: Carrier, label: Nhà vận chuyển }, { id: Supplier, label: Nhà cung cấp }, { id: ShippingLine, label: Hãng tàu }, { id: Warehouse, label: Kho }, { id: Depot, label: Depot }, { id: Other, label: Khác }] }
       - { field: owner_name, label: Sale phụ trách, type: select, options_source: partner_owner_lookup }
-      - { field: visibility, label: Hiển thị, type: select, options: [Public, Private] }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+      - { field: visibility, label: Hiển thị, type: select, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
   - id: delete_partner
     type: delete
+    permission: crm.write
     confirm: 'Xóa đối tượng {{row.name}}?'
     table: partners
     refresh: [partners]

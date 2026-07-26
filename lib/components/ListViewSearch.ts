@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 import { appendBadge } from './helpers.ts';
 
 export class ListViewSearch extends BaseComponent {
@@ -14,7 +15,8 @@ export class ListViewSearch extends BaseComponent {
     const wrap = html.take(container).div.className('flex flex-col gap-3').getContext();
 
     const searchWrap = html.take(wrap).div.className('relative flex items-center').getContext();
-    html.take(searchWrap).span.className('absolute left-2.5 text-gray-400 text-sm pointer-events-none select-none').text('⌕');
+    const searchIcon = html.take(searchWrap).span.className('absolute left-2.5 text-gray-400 text-sm pointer-events-none select-none').getContext();
+    appendIcon(searchIcon, 'search');
     const inp = html.take(searchWrap)
       .input.type('text')
       .className('w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')

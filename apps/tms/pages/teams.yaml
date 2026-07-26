@@ -1,6 +1,7 @@
-title: Team
+title: Đội nhóm
 page:
   id: teams
+  breadcrumb: [Tổ chức & phân quyền, Đội nhóm]
   auth: { require: [settings.read] }
 datasources:
   - id: teams
@@ -21,16 +22,17 @@ datasources:
     permission: settings.read
     query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM employees WHERE status = 'Active' ORDER BY name"
 toolbar:
-  - { id: add_team_btn, label: '+ Thêm team', variant: primary, permission: settings.write, action: add_team }
+  - { id: add_team_btn, label: '+ Thêm đội nhóm', variant: primary, permission: settings.write, action: add_team }
 components:
   - type: ListToolbar
     source: teams
     filter_field: q
-    search: { label: Tìm kiếm team, placeholder: 'Tìm mã, tên hoặc phòng ban...' }
-    actions: [{ id: teams.export, label: 'Xuất CSV', icon: '↓' }]
+    search: { label: Tìm kiếm đội nhóm, placeholder: 'Tìm mã, tên hoặc phòng ban...' }
+    actions: [{ id: teams.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: teams
     filter_field: status
+    variant: contained
     tabs: [{ id: '', label: Tất cả }, { id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
   - type: DataGrid
     source: teams
@@ -38,7 +40,7 @@ components:
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có team, description: Thử thay đổi bộ lọc hoặc tạo team mới. }
+    empty_state: { title: Không có đội nhóm, description: Thử thay đổi bộ lọc hoặc tạo đội nhóm mới. }
     columns:
       - { field: id, label: Mã HT, sortable: true }
       - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
@@ -50,21 +52,23 @@ components:
         label: ''
         sortable: false
         align: right
-        actions: [{ id: edit_team, label: Sửa, variant: ghost }, { id: delete_team, label: Xóa, variant: danger }]
+        actions: [{ id: edit_team, label: Sửa, variant: ghost, permission: settings.write }, { id: delete_team, label: Xóa, variant: danger, permission: settings.write }]
 actions:
   - id: add_team
     type: form
-    title: Thêm team
+    permission: settings.write
+    title: Thêm đội nhóm
     table: teams
     operation: insert
     refresh: [teams]
-    fields: [{ field: code, label: Mã team, type: text, required: true }, { field: name, label: Tên team, type: text, required: true }, { field: department_id, label: Phòng ban, type: select, options_source: team_department_lookup }, { field: manager_id, label: Người phụ trách, type: select, options_source: team_manager_lookup }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Mã đội nhóm, type: text, required: true }, { field: name, label: Tên đội nhóm, type: text, required: true }, { field: department_id, label: Phòng ban, type: select, options_source: team_department_lookup }, { field: manager_id, label: Người phụ trách, type: select, options_source: team_manager_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }]
   - id: edit_team
     type: form
-    title: Cập nhật team
+    permission: settings.write
+    title: Cập nhật đội nhóm
     table: teams
     operation: update
     prefill: row
     refresh: [teams]
-    fields: [{ field: code, label: Mã team, type: text, required: true }, { field: name, label: Tên team, type: text, required: true }, { field: department_id, label: Phòng ban, type: select, options_source: team_department_lookup }, { field: manager_id, label: Người phụ trách, type: select, options_source: team_manager_lookup }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
-  - { id: delete_team, type: delete, confirm: 'Xóa team {{row.name}}?', table: teams, refresh: [teams] }
+    fields: [{ field: code, label: Mã đội nhóm, type: text, required: true }, { field: name, label: Tên đội nhóm, type: text, required: true }, { field: department_id, label: Phòng ban, type: select, options_source: team_department_lookup }, { field: manager_id, label: Người phụ trách, type: select, options_source: team_manager_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }]
+  - { id: delete_team, type: delete, permission: settings.write, confirm: 'Xóa đội nhóm {{row.name}}?', table: teams, refresh: [teams] }

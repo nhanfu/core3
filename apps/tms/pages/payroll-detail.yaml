@@ -1,5 +1,5 @@
 title: Chi tiết bảng lương
-page: { id: payroll-detail, auth: { require: [hr.read] } }
+page: { id: payroll-detail, breadcrumb: [Nhân sự, Bảng lương, Chi tiết], auth: { require: [hr.read] } }
 datasources:
   - id: payroll_detail
     single: true
@@ -24,21 +24,24 @@ components:
   - type: ApprovalTimeline
     source: payroll_activity
     title: Lịch sử bảng lương
+    empty_state: { title: Chưa có hoạt động bảng lương }
+    action_labels: { create: Đã tạo, update: Cập nhật, approve: Đã duyệt, mark_paid: Đã thanh toán, reopen: Mở lại, delete: Xóa }
     actor_field: actor_name
     action_field: action
     detail_field: detail
     timestamp_field: created_at
 toolbar:
-  - { id: back_payroll, label: '← Danh sách bảng lương', variant: secondary, action: back_payroll }
-  - { id: edit_payroll_detail, label: Sửa bảng lương, variant: primary, permission: hr.write, action: edit_payroll_detail }
+  - { id: back_payroll, label: 'Danh sách bảng lương', icon: arrow-left, variant: secondary, action: back_payroll }
+  - { id: edit_payroll_detail, label: Sửa bảng lương, variant: primary, permission: hr.write, show_if: "state.payroll_detail.status === 'Draft'", action: edit_payroll_detail }
 actions:
   - { id: back_payroll, type: navigate, navigate_to: /hr/payroll }
   - id: edit_payroll_detail
     type: form
+    permission: hr.write
     title: Cập nhật bảng lương
     table: payrolls
     operation: update
     prefill: source
     prefill_source: payroll_detail
     refresh: [payroll_detail, payroll_activity]
-    fields: [{ field: code, label: Số bảng lương, type: text, required: true }, { field: employee_id, label: Nhân viên, type: select, options_source: payroll_detail_employee_lookup, required: true }, { field: pay_month, label: Tháng lương, type: date, required: true }, { field: base_salary, label: Lương cơ bản, type: number }, { field: allowance, label: Phụ cấp, type: number }, { field: deduction, label: Khấu trừ, type: number }, { field: net_salary, label: Thực lãnh, type: number }]
+    fields: [{ field: code, label: Số bảng lương, type: text, required: true }, { field: employee_id, label: Nhân viên, type: select, options_source: payroll_detail_employee_lookup, required: true }, { field: pay_month, label: Tháng lương, type: date, required: true }, { field: base_salary, label: Lương cơ bản, type: money, currency: VND }, { field: allowance, label: Phụ cấp, type: money, currency: VND }, { field: deduction, label: Khấu trừ, type: money, currency: VND }, { field: net_salary, label: Thực lãnh, type: money, currency: VND }]

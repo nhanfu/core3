@@ -11,6 +11,7 @@ export function createQuery(options: any = {}) {
     select = [],
     where = {},
     orderBy = [],
+    sort = undefined,
     groupBy = [],
     skip = 0,
     top = 25,
@@ -18,7 +19,7 @@ export function createQuery(options: any = {}) {
     metaConn = null,
     dataConn = null,
   } = options;
-  return { sourceId, action, params, select, where, orderBy, groupBy, skip, top, facetField, metaConn, dataConn };
+  return { sourceId, action, params, select, where, orderBy, groupBy, sort, skip, top, facetField, metaConn, dataConn };
 }
 
 export function createPatch(options: any = {}) {

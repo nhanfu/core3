@@ -1,4 +1,5 @@
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export type ComingSoonState = {
   eyebrow?: string;
@@ -30,7 +31,7 @@ export class ComingSoon extends BaseComponent {
     artwork.className = 'coming-soon-artwork';
     artwork.setAttribute('aria-hidden', 'true');
     artwork.dataset.icon = icon;
-    artwork.append(this.calendarIcon());
+    appendIcon(artwork, icon);
 
     const copy = document.createElement('div');
     copy.className = 'coming-soon-copy';
@@ -54,30 +55,5 @@ export class ComingSoon extends BaseComponent {
 
     section.append(artwork, copy);
     container.append(section);
-  }
-
-  private calendarIcon() {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('width', '40');
-    svg.setAttribute('height', '40');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '1.6');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-
-    for (const pathValue of [
-      'M8 2v4',
-      'M16 2v4',
-      'M3 10h18',
-      'M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z',
-      'm9.5 16 1.5 1.5 3.5-4',
-    ]) {
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', pathValue);
-      svg.append(path);
-    }
-    return svg;
   }
 }

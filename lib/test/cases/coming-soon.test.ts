@@ -23,10 +23,11 @@ describe('ComingSoon', () => {
 
   it('renders an inline SVG without exposing decorative artwork to assistive technology', () => {
     const container = document.createElement('div');
-    new ComingSoon('schedule-state', { icon: 'calendar' }).mount(container);
+    new ComingSoon('schedule-state', { icon: 'warning' }).mount(container);
 
-    const artwork = container.querySelector('[data-icon="calendar"]');
+    const artwork = container.querySelector('[data-icon="warning"]');
     expect(artwork?.getAttribute('aria-hidden')).toBe('true');
     expect(artwork?.querySelector('svg')).not.toBeNull();
+    expect(artwork?.querySelector('svg path')?.getAttribute('d')).toContain('12 3');
   });
 });

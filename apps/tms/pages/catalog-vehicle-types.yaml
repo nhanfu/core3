@@ -2,6 +2,7 @@ title: Loại xe
 
 page:
   id: catalog-vehicle-types
+  breadcrumb: [Danh mục, Loại xe]
   auth:
     require: [catalog.read]
 
@@ -25,10 +26,11 @@ components:
     source: vehicle_types
     filter_field: q
     search: { label: Tìm kiếm loại xe, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: vehicle_types.export, label: 'Xuất CSV', icon: '↓' }, { id: import_vehicle_types, label: 'Nhập CSV', icon: '↑' }]
+    actions: [{ id: vehicle_types.export, label: 'Xuất CSV', icon: download }, { id: import_vehicle_types, label: 'Nhập CSV', icon: upload }]
   - type: StatusTabs
     source: vehicle_types
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang sử dụng }
@@ -54,13 +56,14 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_vehicle_type, label: Sửa, variant: ghost }
-          - { id: delete_vehicle_type, label: Xóa, variant: danger }
+          - { id: edit_vehicle_type, label: Sửa, variant: ghost, permission: catalog.write }
+          - { id: delete_vehicle_type, label: Xóa, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: import_vehicle_types, type: upload, kind: master_data_import, scope: vehicle_type, refresh: [vehicle_types] }
+  - { id: import_vehicle_types, type: upload, permission: catalog.write, kind: master_data_import, scope: vehicle_type, refresh: [vehicle_types] }
   - id: add_vehicle_type
     type: form
+    permission: catalog.write
     title: Thêm loại xe
     table: master_data
     scope: vehicle_type
@@ -71,9 +74,10 @@ actions:
       - { field: name, label: Tên loại xe, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_vehicle_type
     type: form
+    permission: catalog.write
     title: Cập nhật loại xe
     table: master_data
     scope: vehicle_type
@@ -85,5 +89,5 @@ actions:
       - { field: name, label: Tên loại xe, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
-  - { id: delete_vehicle_type, type: delete, table: master_data, scope: vehicle_type, confirm: 'Xóa loại xe {{row.name}}?', refresh: [vehicle_types] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { id: delete_vehicle_type, type: delete, permission: catalog.write, table: master_data, scope: vehicle_type, confirm: 'Xóa loại xe {{row.name}}?', refresh: [vehicle_types] }

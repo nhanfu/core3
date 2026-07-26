@@ -62,6 +62,8 @@ describe('ListToolbar', () => {
     const { container } = mount(new ListToolbar('toolbar', {}, definition));
     const input = container.querySelector<HTMLInputElement>('[data-list-search]')!;
 
+    expect(container.querySelector('.core3-token-toolbar')).not.toBeNull();
+    expect(input.className).toContain('core3-token-input');
     expect(input.placeholder).toBe('Search order, customer, cargo…');
     expect(container.querySelectorAll('[data-toolbar-action]')).toHaveLength(3);
     expect(container.querySelector('[data-toolbar-action="advanced"]')?.getAttribute('aria-label'))
@@ -83,6 +85,19 @@ describe('ListToolbar', () => {
     expect(submit).toHaveBeenCalledWith('orders.search', { query: 'ORD-1001', value: 'ORD-1001' });
   });
 
+  it('renders an optional semantic search button that emits the current query', () => {
+    const component = new ListToolbar('toolbar', { query: 'KH001' }, {
+      search: { action: 'customers.search' },
+      search_button: true,
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+
+    expect(container.querySelector('[data-list-search-submit] svg')).not.toBeNull();
+    (container.querySelector('[data-list-search-submit]') as HTMLButtonElement).click();
+    expect(submit).toHaveBeenCalledWith('customers.search', { query: 'KH001', value: 'KH001' });
+  });
+
   it('emits the action-specific params for utility buttons', () => {
     const component = new ListToolbar('toolbar', {}, definition);
     const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
@@ -101,6 +116,26 @@ describe('ListToolbar', () => {
 
     expect(container.querySelector('[data-list-search]')).toBeNull();
     expect(container.querySelector('[data-toolbar-action="refresh"]')).not.toBeNull();
+  });
+
+  it('uses Vietnamese defaults for the shared search control', () => {
+    const { container } = mount(new ListToolbar('toolbar', {}, {}));
+    const input = container.querySelector<HTMLInputElement>('input[type="search"]')!;
+    expect(input.placeholder).toBe('Tìm kiếm…');
+    expect(input.getAttribute('aria-label')).toBe('Tìm kiếm danh sách');
+  });
+
+  it('can keep actions inline with a date range', () => {
+    const { container } = mount(new ListToolbar('toolbar', {}, {
+      search: false,
+      date_range: { presets: ['month'], preset_style: 'segmented' },
+      actions: [{ id: 'export', label: 'Export' }],
+      actions_inline: true,
+    }));
+
+    expect(container.querySelector('[data-date-preset="month"]')).not.toBeNull();
+    expect(container.querySelector('[data-toolbar-action="export"]')).not.toBeNull();
+    expect(container.querySelector('.basis-full')).toBeNull();
   });
 
   it('emits date bounds for a selected period preset', () => {
@@ -151,6 +186,23 @@ describe('ListToolbar', () => {
     expect(rolling.from_date).toMatch(/^\d{4}-\d{2}-01$/);
   });
 
+  it('retains manually edited date bounds and clears the preset state', () => {
+    const component = new ListToolbar('toolbar', { preset: 'month' }, {
+      search: false,
+      date_range: { presets: ['month', 'all'] },
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+    const from = container.querySelector<HTMLInputElement>('input[aria-label="Từ ngày"]')!;
+
+    from.value = '2026-07-10';
+    from.dispatchEvent(new Event('change', { bubbles: true }));
+
+    expect(component.state.from_date).toBe('2026-07-10');
+    expect(component.state.preset).toBeUndefined();
+    expect(submit).toHaveBeenCalledWith('date-range', { from_date: '2026-07-10' });
+  });
+
   it('emits typed filter values from declarative selects', () => {
     const component = new ListToolbar('toolbar', {}, {
       search: false,
@@ -164,6 +216,22 @@ describe('ListToolbar', () => {
     select.dispatchEvent(new Event('change', { bubbles: true }));
 
     expect(submit).toHaveBeenCalledWith('filter', { transport_method: 'sea' });
+  });
+
+  it('retains declarative filter values for later redraws', () => {
+    const component = new ListToolbar('toolbar', {}, {
+      search: false,
+      filters: [{ field: 'status', label: 'Trạng thái', options: ['Active', 'Inactive'] }],
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+    const select = container.querySelector<HTMLSelectElement>('select[aria-label="Trạng thái"]')!;
+
+    select.value = 'Inactive';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+
+    expect(component.state.status).toBe('Inactive');
+    expect(submit).toHaveBeenCalledWith('filter', { status: 'Inactive' });
   });
 
   it('renders an empty option list when a filter is supplied by a datasource', () => {
@@ -201,6 +269,16 @@ describe('ListToolbar', () => {
 });
 
 describe('FilterBar', () => {
+  it('supports declarative localized select and clear labels', () => {
+    const component = new FilterBar('localized-filters', { values: {} }, [{
+      field: 'status', label: 'Trạng thái', type: 'select', options: [{ value: 'Active', label: 'Đang dùng' }],
+    }], { all: 'Tất cả', clear: 'Xóa bộ lọc' });
+    const container = document.createElement('div');
+    component.mount(container);
+    expect(container.querySelector('option')?.textContent).toBe('Tất cả');
+    expect(container.querySelector('button')?.textContent).toBe('Xóa bộ lọc');
+  });
+
   it('preserves datasource option labels while emitting values', () => {
     const component = new FilterBar('filters', { values: { type: 'SEMI' } }, [{
       field: 'type',

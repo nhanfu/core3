@@ -1,5 +1,5 @@
 title: Tổng hợp đề nghị chi
-page: { id: accounting-payment-request-summary, auth: { require: [accounting.read] } }
+page: { id: accounting-payment-request-summary, breadcrumb: [Kế toán, Tổng hợp đề nghị chi], auth: { require: [accounting.read] } }
 datasources:
   - id: payment_request_totals
     single: true
@@ -49,11 +49,11 @@ components:
     filter_sources: [payment_request_summary, payment_request_totals, payment_request_status_breakdown]
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' }
-    actions: [{ id: payment_request_summary.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: payment_request_summary.export, label: 'Xuất CSV', icon: download }]
   - type: StatRow
     source: payment_request_totals
     stats: [{ label: Số chứng từ, field: document_count, color: blue }, { label: Tổng giá trị, field: total_amount, color: blue }, { label: Còn phải chi, field: outstanding_amount, color: amber }, { label: Đã thanh toán, field: paid_amount, color: green }]
-  - { type: Chart, source: payment_request_status_breakdown, title: Đề nghị chi theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: '#0f766e' }
+  - { type: Chart, source: payment_request_status_breakdown, title: Đề nghị chi theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: teal }
   - { type: StatusTabs, source: payment_request_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }] }
   - type: DataGrid
     source: payment_request_summary

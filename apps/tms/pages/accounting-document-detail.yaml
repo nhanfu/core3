@@ -1,5 +1,5 @@
 title: Chi tiết chứng từ
-page: { id: accounting-document-detail, auth: { require: [accounting.read] } }
+page: { id: accounting-document-detail, breadcrumb: [Kế toán, Chi tiết chứng từ], auth: { require: [accounting.read] } }
 
 datasources:
   - id: accounting_document_detail
@@ -74,7 +74,8 @@ datasources:
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM accounting_entry_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
 
 toolbar:
-  - { id: back_accounting_btn, label: '← Danh sách chứng từ', variant: secondary, action: back_accounting }
+  - { id: back_accounting_btn, label: 'Danh sách chứng từ', icon: arrow-left, variant: secondary, action: back_accounting }
+  - { id: edit_accounting_document, label: Sửa chứng từ, variant: primary, permission: accounting.write, show_if: "state.accounting_document_detail.status === 'Draft'", action: edit_accounting_document }
 
 components:
   - type: DocumentSummary
@@ -111,8 +112,8 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: edit_accounting_line, label: Sửa, variant: ghost, show_if: "row.parent_status === 'Draft' && user.permissions.includes('accounting.write')" }
-          - { id: delete_accounting_line, label: Xóa, variant: danger, show_if: "row.parent_status === 'Draft' && user.permissions.includes('accounting.write')" }
+          - { id: edit_accounting_line, label: Sửa, variant: ghost, permission: accounting.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: delete_accounting_line, label: Xóa, variant: danger, permission: accounting.write, show_if: "row.parent_status === 'Draft'" }
   - type: MoneySummary
     source: accounting_document_detail
     title: Tổng cộng
@@ -121,6 +122,7 @@ components:
   - type: ApprovalTimeline
     source: accounting_document_timeline
     title: Lịch sử chứng từ
+    empty_state: { title: Chưa có hoạt động chứng từ }
     actor_field: actor_name
     action_field: action_label
     detail_field: detail
@@ -128,8 +130,26 @@ components:
 
 actions:
   - { id: back_accounting, type: navigate, navigate_to: '{state.back}' }
+  - id: edit_accounting_document
+    type: server_form
+    permission: accounting.write
+    title: Cập nhật chứng từ
+    action: accounting.documents.update
+    prefill: source
+    prefill_source: accounting_document_detail
+    params: { id: '{state.id}', kind: '{state.kind}' }
+    refresh: [accounting_document_detail, accounting_document_lines, accounting_document_timeline]
+    fields:
+      - { field: code, label: Số chứng từ, type: text, required: true }
+      - { field: name, label: Nội dung, type: text, required: true }
+      - { field: counterparty, label: Đối tác / người nhận, type: text }
+      - { field: currency, label: Tiền tệ, type: text, required: true }
+      - { field: document_date, label: Ngày chứng từ, type: date }
+      - { field: due_date, label: Hạn thanh toán / hoàn ứng, type: date }
+      - { field: description, label: Ghi chú, type: textarea }
   - id: add_accounting_line
     type: server_form
+    permission: accounting.write
     title: Thêm dòng chi tiết
     action: accounting.documents.lines.create
     params: { id: '{state.id}' }
@@ -138,10 +158,11 @@ actions:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, default: 1, required: true }
       - { field: unit, label: Đơn vị, type: select, options_source: accounting_unit_lookup, default: Khoản, required: true }
-      - { field: unit_price, label: Đơn giá, type: number, default: 0, required: true }
+      - { field: unit_price, label: Đơn giá, type: money, currency: VND, default: 0, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, default: 0, required: true }
   - id: edit_accounting_line
     type: server_form
+    permission: accounting.write
     title: Cập nhật dòng chi tiết
     action: accounting.documents.lines.update
     prefill: row
@@ -151,10 +172,11 @@ actions:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, required: true }
       - { field: unit, label: Đơn vị, type: select, options_source: accounting_unit_lookup, required: true }
-      - { field: unit_price, label: Đơn giá, type: number, required: true }
+      - { field: unit_price, label: Đơn giá, type: money, currency: VND, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, required: true }
   - id: delete_accounting_line
     type: server
+    permission: accounting.write
     action: accounting.documents.lines.delete
     confirm: 'Xóa dòng chi tiết {{row.description}}?'
     params: { id: '{state.id}', line_id: '{row.id}' }

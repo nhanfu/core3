@@ -36,7 +36,9 @@ function changeInput(el: HTMLElement, value: string) {
 describe('TextInput', () => {
   it('renders with the current value from state', () => {
     const { el } = mount(new TextInput('f', { value: 'Hello', error: null }));
-    expect(el.querySelector<HTMLInputElement>('input')!.value).toBe('Hello');
+    const input = el.querySelector<HTMLInputElement>('input')!;
+    expect(input.value).toBe('Hello');
+    expect(input.className).toContain('core3-token-form-control');
   });
 
   it('renders label text', () => {

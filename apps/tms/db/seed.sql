@@ -180,6 +180,8 @@ INSERT INTO locations (id, code, name, location_type, address, city, area_id, st
 ('location-03', 'KHOHN', 'Kho hàng không Nội Bài', 'Warehouse', 'Phú Minh, Sóc Sơn', 'Hà Nội', 'area-03', 'Active'),
 ('location-04', 'DEPOTTT', 'Depot Tân Thuận', 'Depot', 'Quận 7', 'TP. Hồ Chí Minh', 'area-01', 'Active'),
 ('location-05', 'KHOOLD', 'Kho cũ Bình Dương', 'Warehouse', 'Thuận An', 'Bình Dương', 'area-01', 'Inactive');
+UPDATE locations SET branch_id = 'branch-hcm';
+UPDATE locations SET branch_id = 'branch-hn' WHERE id = 'location-03';
 
 INSERT INTO containers (id, container_number, container_type, owner_name, location_id, status, notes) VALUES
 ('container-01', 'MSKU1234567', '20DC', 'Maersk Việt Nam', 'location-01', 'Available', NULL),
@@ -187,6 +189,7 @@ INSERT INTO containers (id, container_number, container_type, owner_name, locati
 ('container-03', 'OOLU3456789', '40HC', 'OOCL', 'location-01', 'Maintenance', 'Kiểm tra vỏ container'),
 ('container-04', 'CMAU4567890', '20RF', 'CMA CGM', 'location-03', 'Available', NULL),
 ('container-05', 'TEMU5678901', '20DC', 'ONE', 'location-04', 'Inactive', 'Đã trả depot');
+UPDATE containers c SET branch_id = l.branch_id FROM locations l WHERE c.location_id = l.id;
 
 -- ── Customers ──────────────────────────────────────────────────────────────
 INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name, visibility, status) VALUES
@@ -312,6 +315,10 @@ INSERT INTO trips (id, trip_number, truck_id, driver_id, origin, destination, st
 ('trip-13',  'TRP-013', 'truck-02', 'driver-02', 'Ho Chi Minh City', 'Da Nang',          'Completed',  '2026-07-05 06:00:00', '2026-07-05 22:30:00',   964.00, 'Chemicals',      11000.00, NULL),
 ('trip-14',  'TRP-014', 'truck-08', 'driver-08', 'Ha Noi',           'Hai Phong',        'Completed',  '2026-07-08 08:00:00', '2026-07-08 11:30:00',   121.00, 'Seafood',         5500.00, 'Refrigerated cargo'),
 ('trip-15',  'TRP-015', 'truck-09', 'driver-09', 'Can Tho',          'Ho Chi Minh City', 'In Transit', '2026-07-25 10:00:00', NULL,                    178.00, 'Rice',           21000.00, NULL);
+
+UPDATE trips
+SET branch_id = (SELECT branch_id FROM trucks WHERE trucks.id = trips.truck_id)
+WHERE branch_id IS NULL AND truck_id IS NOT NULL;
 
 -- ── Orders ──────────────────────────────────────────────────────────────────
 INSERT INTO orders (id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, created_by, notes) VALUES
@@ -516,12 +523,36 @@ INSERT INTO translations (lang, page, component, text, translated) VALUES
 ('vi', '*', NULL, 'Loading',          'Đang tải'),
 ('en', '*', NULL, 'No data',          'No data'),
 ('vi', '*', NULL, 'No data',          'Không có dữ liệu'),
+('en', '*', NULL, 'No notifications', 'No notifications'),
+('vi', '*', NULL, 'No notifications', 'Không có thông báo'),
 ('en', '*', NULL, 'Error',            'Error'),
 ('vi', '*', NULL, 'Error',            'Lỗi'),
 ('en', '*', NULL, 'Confirm',          'Confirm'),
 ('vi', '*', NULL, 'Confirm',          'Xác nhận'),
 ('en', '*', NULL, 'Close',            'Close'),
 ('vi', '*', NULL, 'Close',            'Đóng'),
+('en', '*', NULL, 'Language',         'Language'),
+('vi', '*', NULL, 'Language',         'Ngôn ngữ'),
+('en', '*', NULL, 'Change Password',  'Change Password'),
+('vi', '*', NULL, 'Change Password',  'Đổi mật khẩu'),
+('en', '*', NULL, 'Current password', 'Current password'),
+('vi', '*', NULL, 'Current password', 'Mật khẩu hiện tại'),
+('en', '*', NULL, 'New password',     'New password'),
+('vi', '*', NULL, 'New password',     'Mật khẩu mới'),
+('en', '*', NULL, 'Confirm new password', 'Confirm new password'),
+('vi', '*', NULL, 'Confirm new password', 'Xác nhận mật khẩu mới'),
+('en', '*', NULL, 'Update password',  'Update password'),
+('vi', '*', NULL, 'Update password',  'Cập nhật mật khẩu'),
+('en', '*', NULL, 'Updating…',        'Updating…'),
+('vi', '*', NULL, 'Updating…',        'Đang cập nhật…'),
+('en', '*', NULL, 'All fields required', 'All fields required'),
+('vi', '*', NULL, 'All fields required', 'Vui lòng nhập đủ các trường'),
+('en', '*', NULL, 'Passwords do not match', 'Passwords do not match'),
+('vi', '*', NULL, 'Passwords do not match', 'Mật khẩu không khớp'),
+('en', '*', NULL, 'Password must be at least 8 characters', 'Password must be at least 8 characters'),
+('vi', '*', NULL, 'Password must be at least 8 characters', 'Mật khẩu phải có ít nhất 8 ký tự'),
+('en', '*', NULL, 'Password updated ✓', 'Password updated ✓'),
+('vi', '*', NULL, 'Password updated ✓', 'Đã cập nhật mật khẩu ✓'),
 ('en', '*', NULL, 'Name',             'Name'),
 ('vi', '*', NULL, 'Name',             'Tên'),
 ('en', '*', NULL, 'Email',            'Email'),
@@ -639,8 +670,16 @@ INSERT INTO translations (lang, page, component, text, translated) VALUES
 ('vi', 'login', NULL, 'Welcome back',              'Chào mừng trở lại'),
 ('en', 'login', NULL, 'Sign in to your account',  'Sign in to your account'),
 ('vi', 'login', NULL, 'Sign in to your account',  'Đăng nhập vào tài khoản của bạn'),
+('en', 'login', NULL, 'Email',                    'Email'),
+('vi', 'login', NULL, 'Email',                    'Email'),
 ('en', 'login', NULL, 'Password',                 'Password'),
 ('vi', 'login', NULL, 'Password',                 'Mật khẩu'),
+('en', 'login', NULL, 'Sign in',                  'Sign in'),
+('vi', 'login', NULL, 'Sign in',                  'Đăng nhập'),
+('en', 'login', NULL, 'Demo credentials:',        'Demo credentials:'),
+('vi', 'login', NULL, 'Demo credentials:',        'Thông tin đăng nhập mẫu:'),
+('en', 'login', NULL, 'Email and password are required.', 'Email and password are required.'),
+('vi', 'login', NULL, 'Email and password are required.', 'Vui lòng nhập email và mật khẩu.'),
 ('en', 'login', NULL, 'Forgot password?',         'Forgot password?'),
 ('vi', 'login', NULL, 'Forgot password?',         'Quên mật khẩu?'),
 ('en', 'login', NULL, 'Signing in...',             'Signing in...'),

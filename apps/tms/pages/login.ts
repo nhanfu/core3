@@ -1,4 +1,5 @@
 import { html } from '@core3/framework/html.ts';
+import { appendIcon } from '@core3/framework/components/Icon.ts';
 import { getDefaultRoute, setAuth } from '../app.ts';
 import { i18n } from '../i18n.ts';
 
@@ -9,19 +10,20 @@ export async function mount(container: HTMLElement) {
 
   // Logo
   const logo = html.take(card).div.className('login-logo').getContext();
-  html.take(logo).div.className('login-logo-icon').text('🚛');
-  html.take(logo).div.className('login-logo-title').text('TMS');
-  html.take(logo).div.className('login-logo-sub').text('Transport Management System');
+  const logoIcon = html.take(logo).div.className('login-logo-icon').getContext();
+  appendIcon(logoIcon, 'truck');
+  html.take(logo).div.className('login-logo-title').text('MovedX');
+  html.take(logo).div.className('login-logo-sub').text('Điều xe & Quản lý vận tải');
 
   // Title
-  html.take(card).div.className('login-title').text(i18n.t('*', null, 'Sign in') + ' to your account');
+  html.take(card).div.className('login-title').text(i18n.t('login', null, 'Sign in to your account'));
 
   // Error banner (hidden by default)
   const errorEl = html.take(card).div.className('login-error').style('display:none').getContext();
 
   // Email field
   const emailGroup = html.take(card).div.className('form-group').getContext();
-  html.take(emailGroup).label.className('form-label').text('Email');
+  html.take(emailGroup).label.className('form-label').text(i18n.t('login', null, 'Email'));
   const emailInput = html.take(emailGroup).input
     .type('email')
     .className('form-input')
@@ -32,7 +34,7 @@ export async function mount(container: HTMLElement) {
 
   // Password field
   const pwGroup = html.take(card).div.className('form-group').getContext();
-  html.take(pwGroup).label.className('form-label').text('Password');
+  html.take(pwGroup).label.className('form-label').text(i18n.t('login', null, 'Password'));
   const pwInput = html.take(pwGroup).input
     .type('password')
     .className('form-input')
@@ -45,12 +47,12 @@ export async function mount(container: HTMLElement) {
   const btnEl = html.take(card).button
     .className('btn btn-primary btn-full')
     .style('margin-top:8px')
-    .text(i18n.t('*', null, 'Sign in'))
+    .text(i18n.t('login', null, 'Sign in'))
     .getContext();
 
   // Demo credentials footer
   const footer = html.take(card).div.className('login-footer').getContext();
-  html.take(footer).div.text('Demo credentials:');
+  html.take(footer).div.text(i18n.t('login', null, 'Demo credentials:'));
   html.take(footer).div.text('admin@tms.local / admin123');
   html.take(footer).div.text('manager@tms.local / fleet123');
 
@@ -60,13 +62,13 @@ export async function mount(container: HTMLElement) {
     errorEl.style.display = 'none';
 
     if (!email || !password) {
-      errorEl.textContent = 'Email and password are required.';
+      errorEl.textContent = i18n.t('login', null, 'Email and password are required.');
       errorEl.style.display = 'block';
       return;
     }
 
     btnEl.disabled = true;
-    btnEl.innerHTML = '<span class="spinner"></span> Signing in…';
+    btnEl.innerHTML = `<span class="spinner"></span> ${i18n.t('login', null, 'Signing in...')}`;
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -77,7 +79,7 @@ export async function mount(container: HTMLElement) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || 'Login failed');
+        throw new Error(err.error || i18n.t('login', null, 'Invalid credentials'));
       }
 
       const { token, user } = await res.json();
@@ -92,7 +94,7 @@ export async function mount(container: HTMLElement) {
       errorEl.textContent = err instanceof Error ? err.message : String(err);
       errorEl.style.display = 'block';
       btnEl.disabled = false;
-      btnEl.textContent = i18n.t('*', null, 'Sign in');
+      btnEl.textContent = i18n.t('login', null, 'Sign in');
     }
   }
 

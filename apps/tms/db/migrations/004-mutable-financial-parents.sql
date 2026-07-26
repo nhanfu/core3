@@ -1,0 +1,21 @@
+-- DuckDB cannot update a referenced financial parent row, even when its
+-- primary key is unchanged. Financial line mutations validate the parent in
+-- the repository before changing this link.
+CREATE TABLE accounting_entry_lines_without_fk (
+  id VARCHAR PRIMARY KEY,
+  entry_id VARCHAR NOT NULL,
+  sequence INTEGER NOT NULL DEFAULT 10,
+  description VARCHAR NOT NULL,
+  quantity DECIMAL(18,3) NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  unit VARCHAR NOT NULL DEFAULT 'Khoản',
+  unit_price DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 100),
+  line_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(entry_id, sequence)
+);
+INSERT INTO accounting_entry_lines_without_fk SELECT * FROM accounting_entry_lines;
+DROP TABLE accounting_entry_lines;
+ALTER TABLE accounting_entry_lines_without_fk RENAME TO accounting_entry_lines;
+CREATE INDEX IF NOT EXISTS idx_accounting_entry_lines_entry ON accounting_entry_lines(entry_id);

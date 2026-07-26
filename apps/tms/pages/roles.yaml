@@ -1,6 +1,7 @@
 title: Vai trò
 page:
   id: roles
+  breadcrumb: [Tổ chức & phân quyền, Vai trò]
   auth: { require: [settings.read] }
 datasources:
   - id: org_roles
@@ -8,9 +9,10 @@ datasources:
     permission: settings.read
     query: |
       SELECT r.id, r.name, r.description, r.view_scope, COUNT(DISTINCT p.id) AS permission_count,
-        COUNT(DISTINCT ur.user_id) AS user_count
+        COUNT(DISTINCT CASE WHEN :view_scope = 'all' OR u.branch_id = :current_branch_id THEN ur.user_id END) AS user_count
       FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
         LEFT JOIN user_roles ur ON ur.role_id = r.id
+        LEFT JOIN users u ON u.id = ur.user_id
       WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.description ILIKE '%' || :q || '%')
       GROUP BY r.id, r.name, r.description, r.view_scope
       ORDER BY r.name
@@ -19,7 +21,7 @@ components:
     source: org_roles
     filter_field: q
     search: { label: Tìm kiếm vai trò, placeholder: 'Tìm tên hoặc mô tả...' }
-    actions: [{ id: org_roles.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: org_roles.export, label: 'Xuất CSV', icon: download }]
   - type: DataGrid
     source: org_roles
     page_size: 20
@@ -35,6 +37,6 @@ components:
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: view_role, label: Chi tiết, variant: primary }]
+        actions: [{ id: view_role, label: Chi tiết, variant: primary, permission: settings.read }]
 actions:
-  - { id: view_role, type: navigate, navigate_to: /org/roles/detail, params: { id: '{row.id}' } }
+  - { id: view_role, type: navigate, permission: settings.read, navigate_to: /org/roles/detail, params: { id: '{row.id}' } }

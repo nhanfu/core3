@@ -3,7 +3,7 @@ import { BaseComponent } from '../runtime.ts';
 
 export class ConfirmDialog extends BaseComponent {
   draw(container) {
-    const { open = false, title = 'Confirm', message = 'Are you sure?', confirmLabel = 'Confirm', cancelLabel = 'Cancel', variant = 'danger' } = this.state;
+    const { open = false, title = 'Xác nhận', message = 'Bạn có chắc chắn không?', confirmLabel = 'Xác nhận', cancelLabel = 'Hủy', variant = 'danger' } = this.state;
     if (!open) return;
 
     const overlay = html.take(container)

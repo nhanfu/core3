@@ -2,6 +2,7 @@ title: Đơn vị tính
 
 page:
   id: catalog-units
+  breadcrumb: [Danh mục, Đơn vị tính]
   auth:
     require: [catalog.read]
 
@@ -25,10 +26,11 @@ components:
     source: units
     filter_field: q
     search: { label: Tìm kiếm đơn vị tính, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: units.export, label: 'Xuất CSV', icon: '↓' }, { id: import_units, label: 'Nhập CSV', icon: '↑' }]
+    actions: [{ id: units.export, label: 'Xuất CSV', icon: download }, { id: import_units, label: 'Nhập CSV', icon: upload }]
   - type: StatusTabs
     source: units
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang sử dụng }
@@ -54,13 +56,14 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_unit, label: Sửa, variant: ghost }
-          - { id: delete_unit, label: Xóa, variant: danger }
+          - { id: edit_unit, label: Sửa, variant: ghost, permission: catalog.write }
+          - { id: delete_unit, label: Xóa, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: import_units, type: upload, kind: master_data_import, scope: unit, refresh: [units] }
+  - { id: import_units, type: upload, permission: catalog.write, kind: master_data_import, scope: unit, refresh: [units] }
   - id: add_unit
     type: form
+    permission: catalog.write
     title: Thêm đơn vị tính
     table: master_data
     scope: unit
@@ -71,9 +74,10 @@ actions:
       - { field: name, label: Đơn vị tính, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_unit
     type: form
+    permission: catalog.write
     title: Cập nhật đơn vị tính
     table: master_data
     scope: unit
@@ -85,5 +89,5 @@ actions:
       - { field: name, label: Đơn vị tính, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
-  - { id: delete_unit, type: delete, table: master_data, scope: unit, confirm: 'Xóa đơn vị tính {{row.name}}?', refresh: [units] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { id: delete_unit, type: delete, permission: catalog.write, table: master_data, scope: unit, confirm: 'Xóa đơn vị tính {{row.name}}?', refresh: [units] }

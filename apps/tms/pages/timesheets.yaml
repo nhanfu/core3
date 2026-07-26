@@ -2,6 +2,7 @@ title: Chấm công
 
 page:
   id: timesheets
+  breadcrumb: [Nhân sự, Chấm công]
   auth:
     require: [hr.read]
 
@@ -58,13 +59,14 @@ components:
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     filter_field: q
     search: { label: Tìm kiếm chấm công, placeholder: 'Tìm mã, tên nhân viên hoặc ngày công...' }
-    actions: [{ id: timesheets.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: timesheets.export, label: 'Xuất CSV', icon: download }]
   - type: StatRow
     source: timesheet_totals
     stats: [{ label: Bản ghi, field: record_count, color: blue }, { label: Tổng giờ, field: total_hours, color: indigo }, { label: Có mặt, field: present_count, color: green }, { label: Nghỉ phép, field: leave_count, color: amber }, { label: Vắng mặt, field: absent_count, color: red }]
   - type: StatusTabs
     source: timesheets
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Present, label: Có mặt }
@@ -93,12 +95,13 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_timesheet, label: Sửa, variant: ghost }
-          - { id: delete_timesheet, label: Xóa, variant: danger }
+          - { id: edit_timesheet, label: Sửa, variant: ghost, permission: hr.write }
+          - { id: delete_timesheet, label: Xóa, variant: danger, permission: hr.write }
 
 actions:
   - id: add_timesheet
     type: form
+    permission: hr.write
     title: Chấm công
     table: timesheets
     operation: insert
@@ -108,10 +111,11 @@ actions:
       - { field: work_date, label: Ngày công, type: date, required: true }
       - { field: shift_id, label: Ca làm việc, type: select, options_source: timesheet_shift_lookup }
       - { field: hours, label: Số giờ, type: number, default: 8 }
-      - { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Present, label: Có mặt }, { id: Leave, label: Nghỉ phép }, { id: Absent, label: Vắng mặt }], default: Present }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: edit_timesheet
     type: form
+    permission: hr.write
     title: Cập nhật chấm công
     table: timesheets
     operation: update
@@ -122,10 +126,11 @@ actions:
       - { field: work_date, label: Ngày công, type: date, required: true }
       - { field: shift_id, label: Ca làm việc, type: select, options_source: timesheet_shift_lookup }
       - { field: hours, label: Số giờ, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Present, label: Có mặt }, { id: Leave, label: Nghỉ phép }, { id: Absent, label: Vắng mặt }] }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: delete_timesheet
     type: delete
+    permission: hr.write
     confirm: 'Xóa chấm công {{row.employee_name}}?'
     table: timesheets
     refresh: [timesheets]

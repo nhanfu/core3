@@ -36,6 +36,7 @@ declare module '@core3/framework/runtime.ts' {
     ): C;
     find(id: string): BaseComponent | null;
     mount(container: HTMLElement): void;
+    dispose(): void;
     submit(action: string, params?: Record<string, unknown>): Promise<unknown>;
     draw(container: HTMLElement): void;
   }
@@ -46,6 +47,11 @@ declare module '@core3/framework/html.ts' {
   export class HTML {
     [key: string]: any;
   }
+}
+
+declare module '@core3/framework/components/Icon.ts' {
+  export function appendIcon(target: HTMLElement, name: string, label?: string): void;
+  export function hasIcon(name: string): boolean;
 }
 
 declare module '@core3/framework/navigate.ts' {

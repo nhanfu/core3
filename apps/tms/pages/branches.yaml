@@ -2,6 +2,7 @@ title: Chi nhánh
 
 page:
   id: branches
+  breadcrumb: [Tổ chức & phân quyền, Chi nhánh]
   auth:
     require: [settings.read]
 
@@ -32,10 +33,11 @@ components:
     search:
       label: Tìm kiếm chi nhánh
       placeholder: 'Tìm theo tên, tỉnh thành, khu vực...'
-    actions: [{ id: org_branches.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: org_branches.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: org_branches
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Hoạt động }
@@ -62,14 +64,15 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: view_branch, label: Chi tiết, variant: primary }
-          - { id: edit_branch, label: Sửa, variant: ghost }
-          - { id: delete_branch, label: Xóa, variant: danger }
+          - { id: view_branch, label: Chi tiết, variant: primary, permission: settings.read }
+          - { id: edit_branch, label: Sửa, variant: ghost, permission: settings.write }
+          - { id: delete_branch, label: Xóa, variant: danger, permission: settings.write }
 
 actions:
-  - { id: view_branch, type: navigate, navigate_to: /org/branches/detail, params: { id: '{row.id}' } }
+  - { id: view_branch, type: navigate, permission: settings.read, navigate_to: /org/branches/detail, params: { id: '{row.id}' } }
   - id: add_branch
     type: form
+    permission: settings.write
     title: Thêm chi nhánh
     table: branches
     operation: insert
@@ -78,9 +81,10 @@ actions:
       - { field: name, label: Tên chi nhánh, type: text, required: true }
       - { field: city, label: Tỉnh / thành phố, type: text, required: true }
       - { field: region, label: Khu vực, type: text }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
   - id: edit_branch
     type: form
+    permission: settings.write
     title: Cập nhật chi nhánh
     table: branches
     operation: update
@@ -90,9 +94,10 @@ actions:
       - { field: name, label: Tên chi nhánh, type: text, required: true }
       - { field: city, label: Tỉnh / thành phố, type: text, required: true }
       - { field: region, label: Khu vực, type: text }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
   - id: delete_branch
     type: delete
+    permission: settings.write
     confirm: 'Xóa chi nhánh {{row.name}}?'
     table: branches
     refresh: [org_branches]

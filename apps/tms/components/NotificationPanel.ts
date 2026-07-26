@@ -1,19 +1,32 @@
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
+import { appendIcon } from '@core3/framework/components/Icon.ts';
 import { getToken } from '../app.ts';
+import { i18n } from '../i18n.ts';
 
 const TYPE_ICONS: Record<string, string> = {
-  service_overdue:        '🔧',
-  trip_completed:         '✅',
-  license_expiring:       '📋',
-  maintenance_scheduled:  '📅',
-  user_invited:           '👤',
-  default:                '🔔',
+  alert:                 'warning',
+  warning:               'warning',
+  info:                  'info',
+  success:               'check',
+  service_overdue:        'wrench',
+  trip_completed:         'check',
+  license_expiring:       'document',
+  maintenance_scheduled:  'calendar',
+  user_invited:           'users',
+  default:                'bell',
 };
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
+  if (i18n.lang === 'vi') {
+    if (mins < 1) return 'Vừa xong';
+    if (mins < 60) return `${mins} phút trước`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    return `${Math.floor(hours / 24)} ngày trước`;
+  }
   if (mins < 1) return 'Just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
@@ -69,6 +82,16 @@ export class NotificationPanel extends BaseComponent {
     }
   }
 
+  dispose() {
+    this.stopPolling();
+    this.close();
+    this._onBadgeChange = null;
+    this._el?.remove();
+    this._el = null;
+    this._listEl = null;
+    super.dispose();
+  }
+
   toggle() {
     if (this.state.open) {
       this.close();
@@ -111,20 +134,54 @@ export class NotificationPanel extends BaseComponent {
     this._renderList();
   }
 
+  async markRead(notificationId: string) {
+    try {
+      const token = getToken();
+      const response = await fetch(`/api/v1/notifications/${encodeURIComponent(notificationId)}/read`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) return;
+    } catch {
+      return;
+    }
+    const notification = (this.state.notifications as any[]).find(item => String(item.id) === String(notificationId));
+    if (!notification || notification.read) return;
+    notification.read = true;
+    this.state.unread = Math.max(0, Number(this.state.unread || 0) - 1);
+    this._onBadgeChange?.(this.state.unread);
+    this._renderList();
+  }
+
+  refreshLanguage() {
+    if (!this._el) return;
+    const title = this._el.querySelector('.notif-panel-title');
+    if (title) title.textContent = i18n.t('*', null, 'Notifications');
+    const markAll = this._el.querySelector('.notif-mark-all');
+    if (markAll) markAll.textContent = i18n.t('*', null, 'Mark all read');
+    this._renderList();
+  }
+
   _renderList() {
     if (!this._listEl) return;
     this._listEl.innerHTML = '';
     const notifs: any[] = this.state.notifications || [];
     if (!notifs.length) {
-      html.take(this._listEl).div.className('notif-empty').text('No notifications');
+      html.take(this._listEl).div.className('notif-empty').text(i18n.t('*', null, 'No notifications'));
       return;
     }
     for (const n of notifs) {
       const icon = TYPE_ICONS[n.type] || TYPE_ICONS.default;
-      const item = html.take(this._listEl).div
+      const item = html.take(this._listEl).button
         .className('notif-item' + (!n.read ? ' unread' : ''))
+        .attr('type', 'button')
+        .attr('aria-label', `${n.read ? '' : 'Chưa đọc: '}${n.title}`)
         .getContext();
-      html.take(item).div.className('notif-item-icon').text(icon);
+      item.addEventListener('click', () => {
+        if (!n.read) void this.markRead(String(n.id));
+      });
+      const iconTarget = html.take(item).span.className('notif-item-icon').getContext();
+      appendIcon(iconTarget, icon, n.title || '');
       const body = html.take(item).div.className('notif-item-body').getContext();
       html.take(body).div.className('notif-item-title').text(n.title);
       if (n.body) html.take(body).div.className('notif-item-text').text(n.body);
@@ -139,10 +196,10 @@ export class NotificationPanel extends BaseComponent {
       .getContext();
 
     const header = html.take(this._el).div.className('notif-panel-header').getContext();
-    html.take(header).span.className('notif-panel-title').text('Notifications');
+    html.take(header).span.className('notif-panel-title').text(i18n.t('*', null, 'Notifications'));
     html.take(header).button
       .className('notif-mark-all')
-      .text('Mark all read')
+      .text(i18n.t('*', null, 'Mark all read'))
       .event('click', (e: MouseEvent) => {
         e.stopPropagation();
         this.markAllRead();

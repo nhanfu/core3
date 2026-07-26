@@ -38,6 +38,7 @@ function validPage() {
       {
         id: 'add_order',
         type: 'form',
+        permission: 'orders.write',
         title: 'Add order',
         table: 'orders',
         operation: 'insert',
@@ -47,6 +48,7 @@ function validPage() {
       {
         id: 'edit_order',
         type: 'form',
+        permission: 'orders.write',
         title: 'Edit order',
         table: 'orders',
         operation: 'update',
@@ -176,6 +178,7 @@ describe('YAML page schema', () => {
     page.actions = [{
       id: 'add_line',
       type: 'server_form',
+      permission: 'orders.write',
       title: 'Add line',
       action: 'orders.lines.create',
       params: { id: '{state.id}' },
@@ -193,6 +196,7 @@ describe('YAML page schema', () => {
     page.actions = [{
       id: 'edit_template',
       type: 'form',
+      permission: 'system.write',
       title: 'Edit template',
       table: 'print_template_blocks',
       operation: 'update',
@@ -207,6 +211,15 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(page)).not.toThrow();
   });
 
+  it('accepts semantic chart colors and rejects raw visual values', () => {
+    const page = validPage() as any;
+    page.components = [{ type: 'Chart', source: 'orders', color: 'teal', series: [{ field: 'amount', label: 'Amount', color: 'blue' }] }];
+    expect(() => validatePageDefinition(page)).not.toThrow();
+
+    page.components[0].color = '#2563eb';
+    expect(() => validatePageDefinition(page)).toThrow(/semantic chart color/);
+  });
+
   it('accepts named server actions without client-owned table or target state', () => {
     const page = validPage() as any;
     page.components[0].columns[1].actions.push({
@@ -217,6 +230,7 @@ describe('YAML page schema', () => {
     page.actions.push({
       id: 'submit_order',
       type: 'server',
+      permission: 'orders.write',
       action: 'orders.submit_for_approval',
       confirm: 'Submit this order?',
       refresh: ['orders'],
@@ -254,6 +268,7 @@ describe('YAML page schema', () => {
       {
         id: 'send_message',
         type: 'server',
+        permission: 'chat.write',
         action: 'chat.messages.send',
         params: { content: '{row.content}' },
         refresh: ['messages'],
@@ -261,18 +276,21 @@ describe('YAML page schema', () => {
       {
         id: 'mark_read',
         type: 'server',
+        permission: 'chat.read',
         action: 'chat.threads.mark_read',
         refresh: ['orders'],
       },
       {
         id: 'upload_attachment',
         type: 'upload',
+        permission: 'chat.write',
         kind: 'chat_attachment',
         refresh: ['messages', 'attachments'],
       },
       {
         id: 'download_attachment',
         type: 'download',
+        permission: 'chat.read',
         kind: 'chat_attachment',
       },
     ];
@@ -280,5 +298,12 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(page)).not.toThrow();
     page.components[0].message_source = 'missing';
     expect(() => validatePageDefinition(page)).toThrow(/unknown datasource "missing"/);
+  });
+
+  it('requires permissions on mutating action definitions', () => {
+    const page = validPage() as any;
+    delete page.actions[0].permission;
+
+    expect(() => validatePageDefinition(page)).toThrow(/actions\[0\]\.permission must be a non-empty string/);
   });
 });

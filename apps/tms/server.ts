@@ -2,7 +2,7 @@ import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { validatePageDefinition } from '@core3/framework/yaml/schema.ts';
 import { join } from 'node:path';
-import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { DuckDbRepository } from './services/repository.ts';
 import { JwtAuthProvider } from './services/auth.ts';
 import { ORDER_ACTION_REGISTRY, orderWorkflow } from './services/order-workflow.ts';
@@ -25,6 +25,13 @@ import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
 import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
 import { CURRENCY_ACTION_REGISTRY } from './services/currency-actions.ts';
 import { xlsxToCsv } from './services/xlsx-import.ts';
+
+const CRM_ENTITY_ACTION_REGISTRY: Record<string, { permission: string }> = {
+  'crm.entities.update': { permission: 'crm.write' },
+} as const;
+const ACCOUNTING_DOCUMENT_ACTION_REGISTRY: Record<string, { permission: string }> = {
+  'accounting.documents.update': { permission: 'accounting.write' },
+} as const;
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -169,64 +176,20 @@ async function initDb(): Promise<void> {
 
   // Run schema (idempotent — IF NOT EXISTS)
   await repository.runStatements(schemaSQL);
-  // This additive migration keeps existing local development databases aligned
-  // with the seed schema without resetting user-entered truck records.
   await repository.runStatements(`
-    ALTER TABLE trucks ADD COLUMN IF NOT EXISTS capacity_kg INTEGER DEFAULT 0;
-    ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS actor_id VARCHAR;
-    ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS resource_id VARCHAR;
-    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS cost_amount DECIMAL(18,2) DEFAULT 0;
-    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS profit_amount DECIMAL(18,2) DEFAULT 0;
-    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
-    ALTER TABLE orders ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
-    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS prefix VARCHAR;
-    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS sequence_width INTEGER DEFAULT 4;
-    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS reset_cadence VARCHAR DEFAULT 'never';
-    ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS next_sequence BIGINT DEFAULT 1;
-    ALTER TABLE teams ADD COLUMN IF NOT EXISTS manager_id VARCHAR;
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT true;
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id VARCHAR;
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
-    ALTER TABLE roles ADD COLUMN IF NOT EXISTS view_scope VARCHAR DEFAULT 'all';
-    UPDATE roles SET view_scope = 'all' WHERE view_scope IS NULL;
-    ALTER TABLE areas ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
-    ALTER TABLE departments ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
-    ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS linked_advance_id VARCHAR;
-    ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
-    ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
-    CREATE TABLE IF NOT EXISTS currency_rates (
-      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
-      currency_code VARCHAR NOT NULL UNIQUE,
-      rate_to_vnd DECIMAL(18,6) NOT NULL CHECK (rate_to_vnd > 0),
-      effective_date DATE NOT NULL DEFAULT CURRENT_DATE,
-      source VARCHAR NOT NULL DEFAULT 'demo-config',
-      synced_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version VARCHAR PRIMARY KEY,
+      applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_currency_rates_code ON currency_rates(currency_code);
-    INSERT INTO order_workflow_states(order_id, status)
-    SELECT o.id, o.status
-    FROM orders o
-    WHERE NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = o.id);
-    CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
-    UPDATE trucks SET capacity_kg = CASE type
-      WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
-      WHEN 'Box Truck' THEN 5000 ELSE 0 END
-    WHERE capacity_kg IS NULL OR capacity_kg = 0;
-
-    INSERT INTO permissions(id, role_id, permission_key)
-    SELECT 'perm-adm-13', id, 'crm.read'
-    FROM roles
-    WHERE name = 'admin'
-      AND NOT EXISTS (SELECT 1 FROM permissions WHERE id = 'perm-adm-13');
-    INSERT INTO permissions(id, role_id, permission_key)
-    SELECT 'perm-adm-14', id, 'crm.write'
-    FROM roles
-    WHERE name = 'admin'
-      AND NOT EXISTS (SELECT 1 FROM permissions WHERE id = 'perm-adm-14');
   `);
-
+  const migrationDir = join(import.meta.dir, 'db/migrations');
+  for (const migrationFile of readdirSync(migrationDir).filter(file => file.endsWith('.sql')).sort()) {
+    const version = migrationFile.split('-', 1)[0];
+    const applied = await repository.query('SELECT 1 FROM schema_migrations WHERE version = ?', [version]);
+    if (applied.length) continue;
+    await repository.runStatements(readFileSync(join(migrationDir, migrationFile), 'utf8'));
+    await repository.run('INSERT INTO schema_migrations(version) VALUES(?)', [version]);
+  }
   // Seed only if roles table is empty
   if (await repository.countRows('roles') === 0) {
     await repository.runStatements(seedSQL);
@@ -462,6 +425,8 @@ const REGISTERED_NAMED_ACTIONS = new Set([
   ...Object.keys(ROLE_ACTION_REGISTRY),
   ...Object.keys(USER_ROLE_ACTION_REGISTRY),
   ...Object.keys(CURRENCY_ACTION_REGISTRY),
+  ...Object.keys(CRM_ENTITY_ACTION_REGISTRY),
+  ...Object.keys(ACCOUNTING_DOCUMENT_ACTION_REGISTRY),
 ]);
 
 for (const [pageId, page] of PAGES) {
@@ -508,7 +473,7 @@ const TABLE_REGISTRY = {
   trips: {
     permission: 'trips.write',
     timestamps: true,
-    fields: ['trip_number', 'truck_id', 'driver_id', 'origin', 'destination', 'status', 'departure_time', 'arrival_time', 'distance_km', 'cargo_type', 'cargo_weight', 'notes'],
+    fields: ['trip_number', 'truck_id', 'driver_id', 'branch_id', 'origin', 'destination', 'status', 'departure_time', 'arrival_time', 'distance_km', 'cargo_type', 'cargo_weight', 'notes'],
   },
   maintenance: {
     permission: 'maintenance.write',
@@ -529,12 +494,12 @@ const TABLE_REGISTRY = {
   containers: {
     permission: 'dispatch.write',
     timestamps: true,
-    fields: ['container_number', 'container_type', 'owner_name', 'location_id', 'status', 'notes'],
+    fields: ['container_number', 'container_type', 'owner_name', 'location_id', 'branch_id', 'status', 'notes'],
   },
   locations: {
     permission: 'dispatch.write',
     timestamps: true,
-    fields: ['code', 'name', 'location_type', 'address', 'city', 'area_id', 'status'],
+    fields: ['code', 'name', 'location_type', 'address', 'city', 'area_id', 'branch_id', 'status'],
   },
   areas: {
     permission: 'dispatch.write',
@@ -694,6 +659,10 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
       return row?.branch_id ? String(row.branch_id) : null;
     }
+    if (resourceTable === 'locations' || resourceTable === 'containers') {
+      const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
+      return row?.branch_id ? String(row.branch_id) : null;
+    }
     return null;
   };
   const recordInCurrentBranch = async (resourceTable: string, resourceId: string) => {
@@ -847,6 +816,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       vm.skip || 0,
       vm.top || 25,
       typeof vm.facetField === 'string' ? vm.facetField : undefined,
+      vm.sort,
     );
     return json(result);
   }
@@ -868,13 +838,15 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const roleActionDefinition = ROLE_ACTION_REGISTRY[actionName];
     const userRoleActionDefinition = USER_ROLE_ACTION_REGISTRY[actionName];
     const currencyActionDefinition = CURRENCY_ACTION_REGISTRY[actionName];
+    const crmEntityActionDefinition = CRM_ENTITY_ACTION_REGISTRY[actionName];
+    const accountingDocumentActionDefinition = ACCOUNTING_DOCUMENT_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
       || lineItemActionDefinition
       || chatActionDefinition
       || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition || currencyActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition || currencyActionDefinition || crmEntityActionDefinition || accountingDocumentActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(resolvedActionDefinition.permission);
 
@@ -882,6 +854,63 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if (currencyActionDefinition) {
       const configured = configuredCurrencyRates();
       return json(await repository.syncCurrencyRates(configured.rates, configured.source, activityActor));
+    }
+    if (crmEntityActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      if (body.kind !== 'customer' && body.kind !== 'partner') return apiError(400, 'Invalid CRM entity kind');
+      if (!(await crmEntityInScope(body.kind, body.id))) return apiError(403, 'Record is outside the current view scope');
+      const values = body.values && typeof body.values === 'object' ? body.values : {};
+      const table = body.kind === 'customer' ? 'customers' : 'partners';
+      const fields = body.kind === 'customer'
+        ? ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status']
+        : ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'];
+      const changes = fields
+        .filter((field) => Object.prototype.hasOwnProperty.call(values, field))
+        .map((field) => ({ field, value: values[field] }));
+      if (!changes.some((change) => change.field === 'code' && String(change.value || '').trim())) return apiError(400, 'code required');
+      if (!changes.some((change) => change.field === 'name' && String(change.value || '').trim())) return apiError(400, 'name required');
+      if (body.kind === 'customer' && !['Lead', 'Contacting', 'Customer'].includes(String(values.stage || ''))) return apiError(400, 'Invalid customer stage');
+      if (body.kind === 'partner' && !['Carrier', 'Supplier', 'ShippingLine', 'Warehouse', 'Depot', 'Other'].includes(String(values.partner_type || ''))) return apiError(400, 'Invalid partner type');
+      if (!['Public', 'Private'].includes(String(values.visibility || ''))) return apiError(400, 'Invalid visibility');
+      if (!['Active', 'Inactive'].includes(String(values.status || ''))) return apiError(400, 'Invalid status');
+      const updated = await repository.updateRecord(table, body.id, changes, true);
+      if (!updated) return apiError(404, 'CRM entity not found');
+      await repository.recordActivity({
+        actorId: activityActor.id,
+        actorName: activityActor.name,
+        action: 'update',
+        resource: table,
+        resourceId: body.id,
+        detail: `Updated fields: ${changes.map((change) => change.field).join(', ')}`,
+      });
+      return json(updated);
+    }
+    if (accountingDocumentActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      if (!FINANCIAL_WORKFLOW_SCOPES.has(String(body.kind))) return apiError(400, 'Invalid financial document kind');
+      if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
+      const [existing] = await repository.query('SELECT kind, status FROM accounting_entries WHERE id = ?', [body.id]);
+      if (!existing || existing.kind !== body.kind) return apiError(404, 'Financial document not found');
+      if (existing.status !== 'Draft') return apiError(409, `Financial document cannot be edited while ${existing.status}`);
+      const values = body.values && typeof body.values === 'object' ? body.values : {};
+      const fields = ['code', 'name', 'counterparty', 'currency', 'document_date', 'due_date', 'description'];
+      const changes = fields
+        .filter((field) => Object.prototype.hasOwnProperty.call(values, field))
+        .map((field) => ({ field, value: values[field] }));
+      if (!changes.some((change) => change.field === 'code' && String(change.value || '').trim())) return apiError(400, 'code required');
+      if (!changes.some((change) => change.field === 'name' && String(change.value || '').trim())) return apiError(400, 'name required');
+      if (!changes.some((change) => change.field === 'currency' && String(change.value || '').trim())) return apiError(400, 'currency required');
+      const updated = await repository.updateRecord('accounting_entries', body.id, changes, true);
+      if (!updated) return apiError(404, 'Financial document not found');
+      await repository.recordActivity({
+        actorId: activityActor.id,
+        actorName: activityActor.name,
+        action: 'update',
+        resource: 'accounting_entries',
+        resourceId: body.id,
+        detail: `Updated fields: ${changes.map((change) => change.field).join(', ')}`,
+      });
+      return json(updated);
     }
     if (chatActionDefinition) {
       if (chatActionDefinition.operation === 'create_thread') {
@@ -941,7 +970,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     }
     if (tripActionDefinition) {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      return json(await repository.cancelTrip(body.id, actionName, activityActor));
+      return json(await repository.transitionTrip(body.id, tripActionDefinition.operation, actionName, activityActor));
     }
     if (templateActionDefinition) {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
@@ -972,6 +1001,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if (userRoleActionDefinition) {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (typeof body.role_id !== 'string' || !body.role_id) return apiError(400, 'role_id required');
+      if (!(await recordInCurrentBranch('users', body.id))) return apiError(403, 'User is outside the current view scope');
       return json(await repository.mutateUserRole(userRoleActionDefinition.operation, body.id, body.role_id, actionName, activityActor));
     }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
@@ -1090,7 +1120,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (resourceTable === 'users' || resourceTable === 'employees' || resourceTable === 'employment_contracts' || resourceTable === 'timesheets' || resourceTable === 'payrolls') {
         return branchForScopedResource(resourceTable, resourceId);
       }
-      if (resourceTable === 'accounting_entries' || resourceTable === 'orders' || resourceTable === 'quotes') return branchForScopedResource(resourceTable, resourceId);
+      if (resourceTable === 'accounting_entries' || resourceTable === 'orders' || resourceTable === 'quotes' || resourceTable === 'locations' || resourceTable === 'containers') return branchForScopedResource(resourceTable, resourceId);
       if (resourceTable === 'drivers') {
         const [row] = await repository.query(
           'SELECT t.branch_id FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id WHERE d.id = ?',
@@ -1100,7 +1130,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       }
       if (resourceTable === 'trips' || resourceTable === 'maintenance') {
         const [row] = await repository.query(
-          `SELECT t.branch_id FROM ${resourceTable} r LEFT JOIN trucks t ON t.id = r.truck_id WHERE r.id = ?`,
+          `SELECT COALESCE(r.branch_id, t.branch_id) AS branch_id FROM ${resourceTable} r LEFT JOIN trucks t ON t.id = r.truck_id WHERE r.id = ?`,
           [resourceId],
         );
         return row?.branch_id ? String(row.branch_id) : null;
@@ -1120,6 +1150,11 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       const [row] = await repository.query('SELECT branch_id FROM departments WHERE id = ?', [String(departmentId)]);
       return row?.branch_id ? String(row.branch_id) : null;
     };
+    if (table === 'trips' && action === 'insert' && !changes.some((change: any) => change.field === 'branch_id')) {
+      const truckId = changes.find((change: any) => change.field === 'truck_id')?.value;
+      const truckBranch = truckId ? await branchForRow('trucks', String(truckId)) : null;
+      if (truckBranch) changes = [...changes, { field: 'branch_id', value: truckBranch }];
+    }
     if (table === 'customers' || table === 'partners') {
       const kind = table === 'customers' ? 'customer' : 'partner';
       if (action === 'insert') {
@@ -1138,6 +1173,11 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         if (table === 'trucks' || table === 'departments') {
           const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
           if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          if (table === 'departments') {
+            const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
+            const parentBranch = parentId ? await departmentBranch(parentId) : currentBranchId;
+            if (!parentBranch || parentBranch !== currentBranchId) return rejectOutOfScope();
+          }
           if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
         }
         if (table === 'teams') {
@@ -1146,12 +1186,18 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         }
         if (table === 'drivers' || table === 'trips' || table === 'maintenance') {
           const truckId = changes.find((change: any) => change.field === (table === 'drivers' ? 'assigned_truck_id' : 'truck_id'))?.value;
-          const branchId = truckId ? await branchForRow('trucks', String(truckId)) : null;
+          const requestedBranch = table === 'trips' ? changes.find((change: any) => change.field === 'branch_id')?.value : null;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          const branchId = truckId ? await branchForRow('trucks', String(truckId)) : (requestedBranch ? String(requestedBranch) : currentBranchId);
           if (!branchId || branchId !== currentBranchId) return rejectOutOfScope();
+          if (table === 'trips' && !requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
         }
         if (table === 'users') {
           const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
           if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          const departmentId = changes.find((change: any) => change.field === 'department_id')?.value;
+          const departmentScope = departmentId ? await departmentBranch(departmentId) : currentBranchId;
+          if (!departmentScope || departmentScope !== currentBranchId) return rejectOutOfScope();
           if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
         }
         if (table === 'employees') {
@@ -1174,13 +1220,30 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
           if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
           if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
         }
+        if (table === 'locations' || table === 'containers') {
+          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          if (table === 'containers') {
+            const locationId = changes.find((change: any) => change.field === 'location_id')?.value;
+            const locationBranch = locationId ? await branchForRow('locations', String(locationId)) : currentBranchId;
+            if (!locationBranch || locationBranch !== currentBranchId) return rejectOutOfScope();
+          }
+          if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
+        }
       } else if (id) {
         const rowBranch = await branchForRow(table, String(id));
-        if ((table === 'drivers' || table === 'trips' || table === 'maintenance' || table === 'users' || table === 'employees' || table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls' || table === 'accounting_entries' || table === 'orders' || table === 'quotes') && !rowBranch) return rejectOutOfScope();
+        if ((table === 'drivers' || table === 'trips' || table === 'maintenance' || table === 'users' || table === 'employees' || table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls' || table === 'accounting_entries' || table === 'orders' || table === 'quotes' || table === 'locations' || table === 'containers') && !rowBranch) return rejectOutOfScope();
         if (rowBranch && rowBranch !== currentBranchId) return rejectOutOfScope();
         if (table === 'trucks' || table === 'departments') {
           const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
           if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'departments' && action === 'update') {
+          const parentChange = changes.find((change: any) => change.field === 'parent_id');
+          if (parentChange) {
+            const parentBranch = parentChange.value ? await departmentBranch(parentChange.value) : currentBranchId;
+            if (!parentBranch || parentBranch !== currentBranchId) return rejectOutOfScope();
+          }
         }
         if (table === 'teams' && action === 'update') {
           const departmentId = changes.find((change: any) => change.field === 'department_id')?.value;
@@ -1190,14 +1253,23 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         if ((table === 'drivers' || table === 'trips' || table === 'maintenance') && action === 'update') {
           const truckField = table === 'drivers' ? 'assigned_truck_id' : 'truck_id';
           const truckChange = changes.find((change: any) => change.field === truckField);
-          if (truckChange) {
+          if (truckChange && truckChange.value) {
             const nextBranch = await branchForRow('trucks', String(truckChange.value || ''));
             if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
+          }
+          if (table === 'trips') {
+            const branchChange = changes.find((change: any) => change.field === 'branch_id');
+            if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
           }
         }
         if (table === 'users' && action === 'update') {
           const branchChange = changes.find((change: any) => change.field === 'branch_id');
           if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
+          const departmentChange = changes.find((change: any) => change.field === 'department_id');
+          if (departmentChange) {
+            const departmentScope = await departmentBranch(departmentChange.value);
+            if (!departmentScope || departmentScope !== currentBranchId) return rejectOutOfScope();
+          }
         }
         if (table === 'employees' && action === 'update') {
           const departmentChange = changes.find((change: any) => change.field === 'department');
@@ -1221,11 +1293,57 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
           const branchChange = changes.find((change: any) => change.field === 'branch_id');
           if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
         }
+        if ((table === 'locations' || table === 'containers') && action === 'update') {
+          const branchChange = changes.find((change: any) => change.field === 'branch_id');
+          if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
+          if (table === 'containers') {
+            const locationChange = changes.find((change: any) => change.field === 'location_id');
+            if (locationChange) {
+              const nextBranch = await branchForRow('locations', String(locationChange.value || ''));
+              if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
+            }
+          }
+        }
       }
     }
 
     if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
       return apiError(400, 'Invalid field for this resource');
+    }
+    const changedValue = (field: string) => changes.find((change: any) => change.field === field)?.value;
+    const hasChanged = (field: string) => changes.some((change: any) => change.field === field);
+    const validateCatalogValue = (field: string, validate: (value: unknown) => boolean, message: string) => {
+      if (hasChanged(field) && !validate(changedValue(field))) return message;
+      return null;
+    };
+    if (table === 'master_data' || table === 'system_configs') {
+      if (action === 'insert' && (!String(changedValue('code') || '').trim() || !String(changedValue('name') || '').trim())) {
+        return apiError(400, 'code and name are required');
+      }
+      for (const [field, validate, message] of [
+        ['code', (value: unknown) => Boolean(String(value || '').trim()), 'code is required'],
+        ['name', (value: unknown) => Boolean(String(value || '').trim()), 'name is required'],
+        ['status', (value: unknown) => ['Active', 'Inactive'].includes(String(value)), 'status must be Active or Inactive'],
+        ['sort_order', (value: unknown) => Number.isInteger(Number(value)) && Number(value) >= 0, 'sort_order must be a non-negative integer'],
+      ] as const) {
+        const error = validateCatalogValue(field, validate, message);
+        if (error) return apiError(400, error);
+      }
+    }
+    if (table === 'master_data') {
+      const error = validateCatalogValue('decimals', (value) => Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 6, 'decimals must be an integer from 0 to 6');
+      if (error) return apiError(400, error);
+    }
+    if (table === 'system_configs' && scope === 'code_rule') {
+      for (const [field, validate, message] of [
+        ['prefix', (value: unknown) => Boolean(String(value || '').trim()), 'prefix is required'],
+        ['sequence_width', (value: unknown) => Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 12, 'sequence_width must be an integer from 1 to 12'],
+        ['next_sequence', (value: unknown) => Number.isInteger(Number(value)) && Number(value) >= 1, 'next_sequence must be a positive integer'],
+        ['reset_cadence', (value: unknown) => ['never', 'monthly', 'yearly'].includes(String(value)), 'reset_cadence is invalid'],
+      ] as const) {
+        const error = validateCatalogValue(field, validate, message);
+        if (error) return apiError(400, error);
+      }
     }
     if (table === 'roles' && changes.some((change: any) => change.field === 'view_scope' && !['all', 'branch', 'own'].includes(String(change.value)))) {
       return apiError(400, 'Invalid role view scope');

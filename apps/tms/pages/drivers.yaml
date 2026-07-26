@@ -2,6 +2,7 @@ title: Tài xế
 
 page:
   id: drivers
+  breadcrumb: [Danh mục, Tài xế]
   auth:
     require: [drivers.read]
 
@@ -28,6 +29,8 @@ datasources:
       LEFT JOIN trucks t ON t.id = d.assigned_truck_id
       WHERE (:status IS NULL OR d.status = :status)
         AND (:view_scope = 'all' OR t.branch_id = :current_branch_id)
+        AND (:from_date IS NULL OR d.license_expiry >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR d.license_expiry < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.license_number ILIKE '%' || :q || '%' OR d.phone ILIKE '%' || :q || '%')
       ORDER BY d.name
   - id: driver_vehicle_lookup
@@ -49,10 +52,13 @@ components:
     search:
       label: Tìm kiếm tài xế
       placeholder: 'Tìm theo tên, số điện thoại, giấy phép...'
-    actions: [{ id: drivers.export, label: 'Xuất CSV', icon: '↓' }]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Hạn giấy phép từ', to_label: 'Hạn giấy phép đến', presets: [today, week, month, quarter, year, all] }
+    actions: [{ id: drivers.export, label: 'Xuất CSV', icon: download }]
   - type: StatusTabs
     source: drivers
     filter_field: status
+    show_counts: false
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang hoạt động }
@@ -91,14 +97,15 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: view_driver, label: Chi tiết, variant: primary }
-          - { id: edit_driver, label: Sửa, variant: ghost }
-          - { id: delete_driver, label: Xóa, variant: danger }
+          - { id: view_driver, label: Chi tiết, variant: primary, permission: drivers.read }
+          - { id: edit_driver, label: Sửa, variant: ghost, permission: drivers.write }
+          - { id: delete_driver, label: Xóa, variant: danger, permission: drivers.write }
 
 actions:
-  - { id: view_driver, type: navigate, navigate_to: /drivers/detail, params: { id: '{row.id}' } }
+  - { id: view_driver, type: navigate, permission: drivers.read, navigate_to: /drivers/detail, params: { id: '{row.id}' } }
   - id: add_driver
     type: form
+    permission: drivers.write
     title: Thêm tài xế
     table: drivers
     operation: insert
@@ -110,9 +117,10 @@ actions:
       - { field: license_number, label: Số giấy phép, type: text, required: true }
       - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
       - { field: assigned_truck_id, label: Phương tiện phụ trách, type: select, options_source: driver_vehicle_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang hoạt động }, { id: 'On Leave', label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
   - id: edit_driver
     type: form
+    permission: drivers.write
     title: Cập nhật tài xế
     table: drivers
     operation: update
@@ -125,9 +133,10 @@ actions:
       - { field: license_number, label: Số giấy phép, type: text, required: true }
       - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
       - { field: assigned_truck_id, label: Phương tiện phụ trách, type: select, options_source: driver_vehicle_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang hoạt động }, { id: 'On Leave', label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }] }
   - id: delete_driver
     type: delete
+    permission: drivers.write
     confirm: 'Xóa tài xế {{row.name}}?'
     table: drivers
     refresh: [drivers]

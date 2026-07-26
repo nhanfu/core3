@@ -2,6 +2,7 @@ title: Ca làm việc
 
 page:
   id: shifts
+  breadcrumb: [Nhân sự, Ca làm việc]
   auth:
     require: [hr.read]
 
@@ -52,17 +53,28 @@ components:
     source: shifts
     filter_field: q
     search: { label: Tìm kiếm ca làm việc, placeholder: 'Tìm mã hoặc tên ca...' }
-    actions: [{ id: shifts.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: shifts.export, label: 'Xuất CSV', icon: download }]
   - type: ListToolbar
     source: shift_assignments
     filter_sources: [shift_assignments]
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     filter_field: assignment_q
     search: { label: Tìm phân ca, placeholder: 'Tìm nhân viên...' }
-    actions: [{ id: shift_assignments.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: shift_assignments.export, label: 'Xuất CSV', icon: download }]
+  - type: ScheduleGrid
+    source: shift_assignments
+    title: Lịch phân ca
+    date_field: work_date
+    resource_field: employee_code
+    resource_label_field: employee_name
+    title_field: shift_code
+    subtitle_field: shift_name
+    status_field: status
+    empty_state: { title: Chưa có lịch phân ca, description: Thử thay đổi khoảng thời gian hoặc thêm phân ca mới. }
   - type: StatusTabs
     source: shifts
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Hoạt động }
@@ -90,8 +102,8 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_shift, label: Sửa, variant: ghost }
-          - { id: delete_shift, label: Xóa, variant: danger }
+          - { id: edit_shift, label: Sửa, variant: ghost, permission: hr.write }
+          - { id: delete_shift, label: Xóa, variant: danger, permission: hr.write }
   - type: DataGrid
     source: shift_assignments
     page_size: 20
@@ -104,13 +116,15 @@ components:
 actions:
   - id: add_shift_assignment
     type: form
+    permission: hr.write
     title: Phân ca cho nhân viên
     table: timesheets
     operation: insert
     refresh: [shift_assignments]
-    fields: [{ field: employee_id, label: Nhân viên, type: select, options_source: shift_employee_lookup, required: true }, { field: work_date, label: Ngày phân ca, type: date, required: true }, { field: shift_id, label: Ca làm việc, type: select, options_source: shift_definition_lookup, required: true }, { field: hours, label: Số giờ, type: number, default: 8 }, { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }]
+    fields: [{ field: employee_id, label: Nhân viên, type: select, options_source: shift_employee_lookup, required: true }, { field: work_date, label: Ngày phân ca, type: date, required: true }, { field: shift_id, label: Ca làm việc, type: select, options_source: shift_definition_lookup, required: true }, { field: hours, label: Số giờ, type: number, default: 8 }, { field: status, label: Trạng thái, type: select, options: [{ id: Present, label: Có mặt }, { id: Leave, label: Nghỉ phép }, { id: Absent, label: Vắng mặt }], default: Present }]
   - id: add_shift
     type: form
+    permission: hr.write
     title: Thêm ca làm việc
     table: work_shifts
     operation: insert
@@ -121,9 +135,10 @@ actions:
       - { field: start_time, label: Giờ bắt đầu, type: time, required: true }
       - { field: end_time, label: Giờ kết thúc, type: time, required: true }
       - { field: break_minutes, label: Nghỉ giữa ca (phút), type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_shift
     type: form
+    permission: hr.write
     title: Cập nhật ca làm việc
     table: work_shifts
     operation: update
@@ -135,9 +150,10 @@ actions:
       - { field: start_time, label: Giờ bắt đầu, type: time, required: true }
       - { field: end_time, label: Giờ kết thúc, type: time, required: true }
       - { field: break_minutes, label: Nghỉ giữa ca (phút), type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
   - id: delete_shift
     type: delete
+    permission: hr.write
     confirm: 'Xóa ca làm việc {{row.name}}?'
     table: work_shifts
     refresh: [shifts]

@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class AdvancedSearch extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -57,8 +58,8 @@ export class AdvancedSearch extends BaseComponent {
 
       const removeBtn = html.take(row).button
         .className('text-gray-400 hover:text-red-500 transition-colors text-xl leading-none px-1')
-        .text('×')
         .getContext();
+      appendIcon(removeBtn, 'x');
       removeBtn.addEventListener('click', () => {
         const newFilters = this.state.filters.filter((_, i) => i !== idx);
         this.setState({ filters: newFilters });

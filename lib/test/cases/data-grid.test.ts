@@ -27,10 +27,32 @@ describe('DataGrid', () => {
 
     const container = mount(grid);
 
+    expect(container.querySelector('.core3-token-panel')).not.toBeNull();
+    expect(container.querySelector('.core3-token-table')).not.toBeNull();
     expect(container.textContent).toContain('Orders');
     expect(container.textContent).toContain('Current orders');
     expect(container.querySelector('[data-grid-action="create"]')?.textContent).toBe('Add order');
     expect(container.textContent).toContain('6–10 of 12');
+  });
+
+  it('supports localized pagination and row-accessibility labels', () => {
+    const grid = new DataGrid('localized-orders', {
+      rows,
+      meta: { total: 12, page: 2, pageSize: 5 },
+      rowNumbers: true,
+    }, columns, {
+      labels: {
+        rowNumber: 'Số dòng',
+        selectRow: id => `Chọn dòng ${id}`,
+        summaryOf: 'trên',
+        previousPage: 'Trang trước',
+        nextPage: 'Trang sau',
+      },
+    });
+    const container = mount(grid);
+    expect(container.textContent).toContain('6–10 trên 12');
+    expect(container.querySelector('[aria-label="Số dòng"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Trang trước"]')).not.toBeNull();
   });
 
   it('sorts rows when a sortable header is clicked and reports the new sort', () => {
@@ -42,6 +64,7 @@ describe('DataGrid', () => {
     sortButton.click();
     expect(grid.state.sort).toEqual({ field: 'code', direction: 'asc' });
     expect(onSort).toHaveBeenCalledWith({ field: 'code', direction: 'asc' });
+    expect(sortButton.querySelector('svg')).not.toBeNull();
     expect(container.querySelector('tbody tr td')?.textContent).toBe('A-100');
 
     container.querySelector<HTMLButtonElement>('[data-sort-field="code"]')!.click();
@@ -59,7 +82,7 @@ describe('DataGrid', () => {
     expect(grid.state.selectedIds).toEqual(['b']);
     expect(onSelectionChange).toHaveBeenLastCalledWith(['b']);
 
-    const selectAll = container.querySelector<HTMLInputElement>('input[aria-label="Select all rows"]')!;
+    const selectAll = container.querySelector<HTMLInputElement>('input[aria-label="Chọn tất cả dòng"]')!;
     selectAll.checked = true;
     selectAll.dispatchEvent(new Event('change', { bubbles: true }));
     expect(grid.state.selectedIds).toEqual(['b', 'a']);
@@ -102,16 +125,16 @@ describe('DataGrid', () => {
     const container = mount(grid);
     const cell = container.querySelector('tbody td') as HTMLElement;
 
+    expect(cell.className).toContain('core3-grid-cell');
     expect(cell.className).toContain('text-ellipsis');
-    expect(cell.style.whiteSpace).toBe('nowrap');
-    expect(cell.style.maxWidth).toBe('240px');
+    expect(cell.getAttribute('style')).toBeNull();
   });
 
   it('passes the selected rows to default actions', async () => {
     const grid = new DataGrid('orders', {
       rows,
       selectedIds: ['a'],
-      actions: [{ id: 'export', label: 'Export', params: { format: 'xlsx' } }],
+      actions: [{ id: 'export', label: 'Export', icon: 'download', params: { format: 'xlsx' } }],
     }, columns);
     const submit = vi.fn().mockResolvedValue({ ok: true });
     grid._transport = { submit };
@@ -120,17 +143,19 @@ describe('DataGrid', () => {
     container.querySelector<HTMLButtonElement>('[data-grid-action="export"]')!.click();
     await Promise.resolve();
     expect(submit).toHaveBeenCalledWith('export', { format: 'xlsx', selectedIds: ['a'] });
+    expect(container.querySelector('[data-grid-action="export"] svg')).not.toBeNull();
   });
 
   it('emits an individual row with a row action', async () => {
     const grid = new DataGrid('vehicles', { rows }, [
       { field: 'code', label: 'Code' },
-      { field: 'actions', label: '', rowActions: [{ id: 'edit', label: 'Edit', variant: 'ghost' }] },
+      { field: 'actions', label: '', rowActions: [{ id: 'edit', label: 'Edit', icon: 'arrow-right', variant: 'ghost' }] },
     ]);
     const submit = vi.fn().mockResolvedValue({ ok: true });
     grid._transport = { submit };
     const container = mount(grid);
     container.querySelector<HTMLButtonElement>('[data-grid-row-action="edit:b"]')!.click();
+    expect(container.querySelector('[data-grid-row-action="edit:b"] svg')).not.toBeNull();
     await Promise.resolve();
     expect(submit).toHaveBeenCalledWith('edit', { row: rows[0] });
   });
@@ -226,13 +251,14 @@ describe('DataGrid', () => {
   it('supports declarative column visibility without losing the remaining columns', async () => {
     const grid = new DataGrid('orders', { rows }, columns, { columnChooser: true });
     const container = mount(grid);
-    const amount = container.querySelector<HTMLInputElement>('input[aria-label="Show Amount"]')!;
+    const amount = container.querySelector<HTMLInputElement>('input[aria-label="Hiển thị Amount"]')!;
 
     amount.checked = false;
     amount.dispatchEvent(new Event('change', { bubbles: true }));
     await Promise.resolve();
 
     expect(grid.state.visibleColumns).toEqual(['code']);
+    expect(container.querySelector('summary')?.textContent).toBe('Cột');
     expect(container.querySelector('thead')?.textContent).toContain('Code');
     expect(container.querySelector('thead')?.textContent).not.toContain('Amount');
     expect(container.querySelector('tbody tr')?.querySelectorAll('td')).toHaveLength(1);

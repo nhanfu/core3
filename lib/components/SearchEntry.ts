@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon } from './Icon.ts';
 
 export class SearchEntry extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -11,11 +12,12 @@ export class SearchEntry extends BaseComponent {
     const { value = '', placeholder = '' } = this.state;
     const wrap = html.take(container).div.className('relative flex items-center').getContext();
 
-    html.take(wrap).span.className('absolute left-2.5 text-gray-400 text-sm pointer-events-none select-none').text('🔍');
+    const searchIcon = html.take(wrap).span.className('absolute left-2.5 text-gray-400 text-sm pointer-events-none select-none').getContext();
+    appendIcon(searchIcon, 'search');
 
     const inp = html.take(wrap)
       .input.type('text')
-      .className('w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
+      .className('core3-token-form-control w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
       .value(String(value))
       .getContext();
 
@@ -29,8 +31,8 @@ export class SearchEntry extends BaseComponent {
     if (value) {
       const clr = html.take(wrap).button
         .className('absolute right-2 text-gray-400 hover:text-gray-600 text-sm leading-none')
-        .text('×')
         .getContext();
+      appendIcon(clr, 'x');
       clr.addEventListener('click', () => this.setState({ value: '' }));
     }
   }

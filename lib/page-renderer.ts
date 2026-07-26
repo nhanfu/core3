@@ -18,7 +18,10 @@ import { evalExpr, interpolate } from './expr.ts';
 import { resolveAction } from './meta.ts';
 import { navigate, getPageParams } from './navigate.ts';
 import { validatePageDefinition } from './yaml/schema.ts';
+import { appendIcon, hasIcon } from './components/Icon.ts';
 import { resolveDatePreset } from './components/ListToolbar.ts';
+import { AsyncSelect } from './components/AsyncSelect.ts';
+import { MoneyInput } from './components/MoneyInput.ts';
 
 // ── Component registry ────────────────────────────────────────────────────────
 
@@ -69,6 +72,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   const dataMap: Record<string, any> = {};
   const filterState: Record<string, any> = {};    // sourceId -> current filter values object
   const paginationState: Record<string, any> = {}; // sourceId -> { skip, top, page }
+  const sortState: Record<string, { field: string; direction: 'asc' | 'desc' } | undefined> = {};
   // boundComponents: sourceId -> [{ comp, def, compType: 'GridView'|'DataGrid'|'StatRow'|'Chart' }]
   const boundComponents: Record<string, any[]> = {};
 
@@ -95,9 +99,15 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   // ── Shared helpers (closures over dataMap, filterState, paginationState) ──
 
-  async function refetchSource(sourceId: string, filters = {}, skip = 0, top = 25) {
+  async function refetchSource(
+    sourceId: string,
+    filters = {},
+    skip = 0,
+    top = 25,
+    sort = sortState[sourceId],
+  ) {
     const result = await client.query(
-      createQuery({ sourceId, params: { ...pageParams, ...filters }, skip, top })
+      createQuery({ sourceId, params: { ...pageParams, ...filters }, sort, skip, top })
     );
     dataMap[sourceId] = result;
     if (result?.data && !Array.isArray(result.data)) {
@@ -108,7 +118,7 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   function updateBoundComponents(sourceId: string, data: any) {
     for (const entry of (boundComponents[sourceId] || [])) {
-      if (entry.compType === 'GridView' || entry.compType === 'DataGrid') {
+      if (entry.compType === 'GridView' || entry.compType === 'DataGrid' || entry.compType === 'ScheduleGrid') {
         // Use the internal setState via our stored reference (bypasses the override)
         entry._origSetState({ rows: data.data || [], meta: data.meta }, true);
       } else if (entry.compType === 'StatRow') {
@@ -120,6 +130,11 @@ export async function renderPage(config: any, { container = document.body }: { c
         entry.comp.setState(chartState(entry.def, data), true);
       } else if (entry.compType === 'SingleRecord') {
         entry._origSetState({ record: data.data || {} }, true);
+      } else if (entry.compType === 'TemplatePreview') {
+        entry._origSetState({
+          blocks: Array.isArray(data.data) ? data.data : [],
+          template: (dataMap[entry.def.template_source]?.data || {}) as Record<string, unknown>,
+        }, true);
       } else if (entry.compType === 'Timeline') {
         entry._origSetState({ events: data.data || [] }, true);
       } else if (entry.compType === 'ChatThreads') {
@@ -129,12 +144,13 @@ export async function renderPage(config: any, { container = document.body }: { c
       } else if (entry.compType === 'ChatAttachments') {
         entry._origSetState({ attachments: data.data || [] }, true);
       } else if (entry.compType === 'StatusTabs') {
-        void refreshStatusTabCounts(sourceId, entry);
+        if (entry.def.show_counts !== false) void refreshStatusTabCounts(sourceId, entry);
       }
     }
   }
 
   async function refreshStatusTabCounts(sourceId: string, entry: any) {
+    if (entry.def.show_counts === false) return;
     const field = entry.def.filter_field || 'status';
     const filters = { ...(filterState[sourceId] || {}) };
     delete filters[field];
@@ -243,10 +259,15 @@ export async function renderPage(config: any, { container = document.body }: { c
           if (!confirm(msg)) return;
         }
         try {
-          await client.action(actionDef.action, {
+          const result = await client.action(actionDef.action, {
             id: row?.id ?? null,
             ...resolveActionParams(actionDef.params, rowCtx),
           });
+          if (actionDef.result === 'alert') {
+            const field = actionDef.result_field || 'message';
+            const value = result && typeof result === 'object' ? result[field] : result;
+            alert(String(value ?? 'Thành công'));
+          }
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Action failed';
@@ -344,41 +365,33 @@ export async function renderPage(config: any, { container = document.body }: { c
       const formRecord = row || sourceRecord || {};
       // Overlay
       const overlay = document.createElement('div');
-      overlay.style.cssText = [
-        'position:fixed',
-        'inset:0',
-        'background:rgba(0,0,0,.45)',
-        'z-index:1000',
-        'display:flex',
-        'align-items:center',
-        'justify-content:center',
-      ].join(';') + ';';
+      overlay.className = 'core3-form-overlay';
+      overlay.setAttribute('aria-hidden', 'false');
 
       // Dialog
       const dialog = document.createElement('div');
-      dialog.style.cssText = [
-        'background:#fff',
-        'border-radius:12px',
-        'padding:28px',
-        'width:480px',
-        'max-width:95vw',
-        'max-height:90vh',
-        'overflow-y:auto',
-        'box-shadow:0 25px 50px rgba(0,0,0,.2)',
-      ].join(';') + ';';
+      dialog.className = 'core3-form-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.tabIndex = -1;
 
       // Header
       const header = document.createElement('div');
-      header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;';
+      header.className = 'core3-form-header';
 
       const titleEl = document.createElement('h2');
-      titleEl.style.cssText = 'font-size:1.125rem;font-weight:600;color:#111827;margin:0;';
+      titleEl.className = 'core3-form-title';
+      const titleId = `form-dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      titleEl.id = titleId;
+      dialog.setAttribute('aria-labelledby', titleId);
       titleEl.textContent = actionDef.title || '';
 
       const closeBtn = document.createElement('button');
-      closeBtn.textContent = '✕';
-      closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:1.25rem;color:#9ca3af;padding:0;line-height:1;';
+      closeBtn.className = 'core3-form-close';
+      appendIcon(closeBtn, 'x');
       closeBtn.type = 'button';
+      closeBtn.setAttribute('aria-label', 'Đóng');
+      closeBtn.title = 'Đóng';
 
       header.appendChild(titleEl);
       header.appendChild(closeBtn);
@@ -387,28 +400,75 @@ export async function renderPage(config: any, { container = document.body }: { c
       // Fields
       const inputs: Record<string, { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any }> = {}; // field -> { el, fieldDef }
       for (const fieldDef of (actionDef.fields || [])) {
+        if (fieldDef.show_if && !Boolean(evalExpr(fieldDef.show_if, { ...ctx, row: row || {} }))) continue;
         const group = document.createElement('div');
-        group.style.cssText = 'margin-bottom:16px;';
+        group.className = 'core3-form-field';
 
         const label = document.createElement('label');
-        label.style.cssText = 'display:block;font-size:0.875rem;font-weight:500;color:#374151;margin-bottom:4px;';
+        label.className = 'core3-form-label';
         label.textContent = fieldDef.label + (fieldDef.required ? ' *' : '');
+        const fieldId = `form-field-${fieldDef.field}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        label.htmlFor = fieldId;
         group.appendChild(label);
 
+        // Determine initial value before constructing either a native control
+        // or a searchable lookup adapter.
+        let initialValue = fieldDef.default ?? '';
+        const prefillRecord = actionDef.prefill === 'source' ? sourceRecord : row;
+        if ((actionDef.prefill === 'row' || actionDef.prefill === 'source') && prefillRecord) {
+          initialValue = prefillRecord[fieldDef.field] ?? fieldDef.default ?? '';
+        }
+        if (fieldDef.type === 'date' && initialValue && typeof initialValue === 'string') {
+          initialValue = initialValue.slice(0, 10);
+        } else if (fieldDef.type === 'datetime' && initialValue && typeof initialValue === 'string') {
+          initialValue = initialValue.replace('Z', '').slice(0, 16);
+        }
+
         let el;
-        if (fieldDef.type === 'select') {
+        let usesAsyncSelect = false;
+        let usesMoneyInput = false;
+        if (fieldDef.type === 'async-select' || fieldDef.type === 'multi-select') {
+          const optionRows = fieldDef.options_source
+            ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
+            : [];
+          const options = fieldDef.options_source
+            ? optionRows.map((option: any) => ({ value: String(option.value ?? option.id ?? option.code ?? ''), label: String(option.label ?? option.name ?? option.value ?? option.id ?? option.code ?? '') }))
+            : (fieldDef.options || []).map((option: any) => {
+              if (option && typeof option === 'object') {
+                const value = option.value ?? option.id ?? option.code;
+                return { value: String(value ?? ''), label: String(option.label ?? option.name ?? value ?? '') };
+              }
+              return { value: String(option ?? ''), label: String(option ?? '') };
+            });
+          const lookup = new AsyncSelect(fieldId, { value: initialValue }, {
+            options,
+            multiple: fieldDef.type === 'multi-select' || fieldDef.multiple === true,
+            placeholder: fieldDef.placeholder,
+            search_placeholder: fieldDef.search_placeholder,
+          });
+          lookup.mount(group);
+          el = lookup.input;
+          usesAsyncSelect = true;
+        } else if (fieldDef.type === 'money') {
+          const money = new MoneyInput(fieldId, { value: initialValue }, {
+            currency: fieldDef.currency,
+            decimals: fieldDef.decimals,
+            placeholder: fieldDef.placeholder,
+          });
+          money.mount(group);
+          el = money.input;
+          usesMoneyInput = true;
+        } else if (fieldDef.type === 'select') {
           el = document.createElement('select');
-          el.className = 'form-select';
-          el.style.cssText = 'width:100%;box-sizing:border-box;';
+          el.className = `form-select core3-form-control${fieldDef.multiple ? ' core3-form-control-multiple' : ''}`;
           if (fieldDef.multiple) {
             el.multiple = true;
-            el.style.minHeight = '96px';
           }
 
           if (!fieldDef.multiple) {
             const emptyOpt = document.createElement('option');
             emptyOpt.value = '';
-            emptyOpt.textContent = 'Select…';
+            emptyOpt.textContent = 'Chọn…';
             el.appendChild(emptyOpt);
           }
 
@@ -417,7 +477,13 @@ export async function renderPage(config: any, { container = document.body }: { c
             : [];
           const options = fieldDef.options_source
             ? optionRows.map((option: any) => ({ value: option.value ?? option.id ?? option.code, label: option.label ?? option.name ?? option.value ?? option.id ?? option.code }))
-            : (fieldDef.options || []).map((option: any) => ({ value: option, label: option }));
+            : (fieldDef.options || []).map((option: any) => {
+              if (option && typeof option === 'object') {
+                const value = option.value ?? option.id ?? option.code;
+                return { value, label: option.label ?? option.name ?? value };
+              }
+              return { value: option, label: option };
+            });
           for (const opt of options) {
             const optEl = document.createElement('option');
             optEl.value = String(opt.value ?? '');
@@ -426,43 +492,32 @@ export async function renderPage(config: any, { container = document.body }: { c
           }
         } else if (fieldDef.type === 'textarea' || fieldDef.type === 'richtext') {
           el = document.createElement('textarea');
-          el.className = fieldDef.type === 'richtext' ? 'form-input template-richtext' : 'form-input';
-          el.style.cssText = `width:100%;height:${fieldDef.type === 'richtext' ? '132px' : '72px'};box-sizing:border-box;resize:vertical;`;
+          el.className = fieldDef.type === 'richtext'
+            ? 'form-input template-richtext core3-form-control core3-form-richtext'
+            : 'form-input core3-form-control core3-form-textarea';
         } else {
           el = document.createElement('input');
-          el.type = fieldDef.type || 'text';
-          el.className = 'form-input';
-          el.style.cssText = 'width:100%;box-sizing:border-box;';
+          el.type = fieldDef.type === 'datetime' ? 'datetime-local' : (fieldDef.type || 'text');
+          el.className = 'form-input core3-form-control';
         }
+        el.id = fieldId;
 
-        // Determine initial value
-        let initialValue = fieldDef.default ?? '';
-        const prefillRecord = actionDef.prefill === 'source' ? sourceRecord : row;
-        if ((actionDef.prefill === 'row' || actionDef.prefill === 'source') && prefillRecord) {
-          initialValue = prefillRecord[fieldDef.field] ?? fieldDef.default ?? '';
-        }
-        // Date inputs must be YYYY-MM-DD
-        if (fieldDef.type === 'date' && initialValue && typeof initialValue === 'string') {
-          initialValue = initialValue.slice(0, 10);
-        }
         if (fieldDef.type === 'select' && fieldDef.multiple) {
           const selected = new Set(Array.isArray(initialValue) ? initialValue.map(String) : String(initialValue || '').split(',').map(value => value.trim()).filter(Boolean));
           for (const option of Array.from((el as HTMLSelectElement).options)) option.selected = selected.has(option.value);
-        } else {
+        } else if (!usesAsyncSelect) {
           el.value = String(initialValue ?? '');
         }
 
-        group.appendChild(el);
+        if (!usesAsyncSelect && !usesMoneyInput) group.appendChild(el);
         if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
           const tokenBar = document.createElement('div');
-          tokenBar.className = 'template-token-picker';
-          tokenBar.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;';
+          tokenBar.className = 'template-token-picker core3-form-token-bar';
           for (const token of fieldDef.tokens) {
             const tokenButton = document.createElement('button');
             tokenButton.type = 'button';
-            tokenButton.className = 'template-token';
+            tokenButton.className = 'template-token core3-form-token';
             tokenButton.textContent = `{{${token}}}`;
-            tokenButton.style.cssText = 'border:1px solid #c7d2fe;border-radius:999px;background:#eef2ff;color:#3730a3;padding:3px 8px;font-size:12px;cursor:pointer;';
             tokenButton.addEventListener('click', () => {
               const start = el.selectionStart ?? el.value.length;
               const end = el.selectionEnd ?? start;
@@ -482,17 +537,17 @@ export async function renderPage(config: any, { container = document.body }: { c
 
       // Footer
       const footer = document.createElement('div');
-      footer.style.cssText = 'display:flex;justify-content:flex-end;gap:12px;margin-top:24px;';
+      footer.className = 'core3-form-footer';
 
       const cancelBtn = document.createElement('button');
       cancelBtn.type = 'button';
       cancelBtn.className = 'btn btn-secondary';
-      cancelBtn.textContent = 'Cancel';
+      cancelBtn.textContent = 'Hủy';
 
       const saveBtn = document.createElement('button');
       saveBtn.type = 'button';
       saveBtn.className = 'btn btn-primary';
-      saveBtn.textContent = 'Save';
+      saveBtn.textContent = 'Lưu';
 
       footer.appendChild(cancelBtn);
       footer.appendChild(saveBtn);
@@ -503,11 +558,12 @@ export async function renderPage(config: any, { container = document.body }: { c
 
       // Error banner (created lazily)
       let errorBanner: HTMLElement | null = null;
+      let closed = false;
 
       function showError(msg: string) {
         if (!errorBanner) {
           errorBanner = document.createElement('div');
-          errorBanner.style.cssText = 'margin-top:12px;padding:10px 14px;background:#fef2f2;color:#b91c1c;border-radius:6px;font-size:0.875rem;border:1px solid #fecaca;';
+          errorBanner.className = 'core3-form-error';
           footer.insertAdjacentElement('beforebegin', errorBanner);
         }
         errorBanner.textContent = msg;
@@ -515,13 +571,22 @@ export async function renderPage(config: any, { container = document.body }: { c
       }
 
       function closeModal() {
+        if (closed) return;
+        closed = true;
+        document.removeEventListener('keydown', onKeyDown);
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
         resolve();
+      }
+
+      function onKeyDown(event: KeyboardEvent) {
+        if (event.key === 'Escape') closeModal();
       }
 
       closeBtn.addEventListener('click', closeModal);
       cancelBtn.addEventListener('click', closeModal);
       overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+      document.addEventListener('keydown', onKeyDown);
+      (Object.values(inputs)[0]?.el || dialog).focus();
 
       saveBtn.addEventListener('click', async () => {
         // Reset error
@@ -530,10 +595,12 @@ export async function renderPage(config: any, { container = document.body }: { c
         // Validate required fields
         let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
         for (const { el, fieldDef } of Object.values(inputs)) {
-          const v = el instanceof HTMLSelectElement && el.multiple
+          const v = fieldDef.type === 'multi-select'
+            ? el.value.split(',').map(value => value.trim()).filter(Boolean)
+            : el instanceof HTMLSelectElement && el.multiple
             ? Array.from(el.selectedOptions).map(option => option.value)
             : el.value?.trim() ?? '';
-          if (fieldDef.required && !v) {
+          if (fieldDef.required && (Array.isArray(v) ? v.length === 0 : !v)) {
             el.style.borderColor = '#ef4444';
             if (!firstInvalid) firstInvalid = el;
           } else {
@@ -547,13 +614,15 @@ export async function renderPage(config: any, { container = document.body }: { c
 
         const changes = Object.entries(inputs).map(([field, { el }]) => ({
           field,
-          value: el instanceof HTMLSelectElement && el.multiple
+          value: inputs[field].fieldDef.type === 'multi-select'
+            ? el.value.split(',').map(value => value.trim()).filter(Boolean)
+            : el instanceof HTMLSelectElement && el.multiple
             ? Array.from(el.selectedOptions).map(option => option.value)
             : el.value,
         }));
 
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving…';
+        saveBtn.textContent = 'Đang lưu…';
         try {
           if (actionDef.type === 'server_form') {
             const actionContext = { ...ctx, row: row || {} };
@@ -574,9 +643,9 @@ export async function renderPage(config: any, { container = document.body }: { c
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (err: any) {
           console.error('[page-renderer] patch error:', err);
-          showError(err.message || 'Save failed. Please try again.');
+          showError(err.message || 'Lưu thất bại. Vui lòng thử lại.');
           saveBtn.disabled = false;
-          saveBtn.textContent = 'Save';
+          saveBtn.textContent = 'Lưu';
         }
       });
     });
@@ -597,7 +666,8 @@ export async function renderPage(config: any, { container = document.body }: { c
       path => void navigate(path),
     );
     const slot = document.createElement('div');
-    slot.style.marginBottom = '16px';
+    slot.className = def.variant === 'contained' ? 'core3-status-tabs-slot-contained' : '';
+    slot.style.marginBottom = def.variant === 'contained' ? '0' : '16px';
     targetContainer.appendChild(slot);
     comp.mount(slot);
 
@@ -639,7 +709,25 @@ export async function renderPage(config: any, { container = document.body }: { c
     const comp = new GridView(
       `grid-${sourceId || Date.now()}`,
       { rows: sourceResult.data || [], meta: sourceResult.meta },
-      columnDefs
+      columnDefs,
+      {
+        emptyState: def.empty_state,
+        labels: def.labels || (config.locale === 'vi' ? {
+          summaryOf: 'trên',
+          previousPage: '← Trước',
+          nextPage: 'Sau →',
+        } : undefined),
+        onSort: async (sort: { field: string; direction: 'asc' | 'desc' }) => {
+          sortState[sourceId] = sort;
+          paginationState[sourceId] = { skip: 0, top: paginationState[sourceId]?.top || pageSize, page: 1 };
+          try {
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId].top, sort);
+            updateBoundComponents(sourceId, data);
+          } catch (err) {
+            console.error('[page-renderer] legacy grid sort fetch error:', err);
+          }
+        },
+      }
     );
 
     // Override _cellState to support YAML `colors` map and `show_if` on action buttons
@@ -668,7 +756,8 @@ export async function renderPage(config: any, { container = document.body }: { c
         case 'ActionCell': {
           const rowCtx = { ...ctx, row };
           const visibleActions = (colDef.actions || []).filter((a: any) =>
-            !a.show_if || evalExpr(a.show_if, rowCtx)
+            (!a.permission || ctx.user.permissions?.includes(a.permission))
+            && (!a.show_if || evalExpr(a.show_if, rowCtx))
           );
           return { actions: visibleActions, row };
         }
@@ -753,9 +842,12 @@ export async function renderPage(config: any, { container = document.body }: { c
       sortable: column.sortable !== false,
       rowActions: column.actions?.map((action: any) => ({
         ...action,
-        visible: action.show_if
-          ? (row: any) => Boolean(evalExpr(action.show_if, { ...ctx, row }))
-          : undefined,
+        visible: (row: any) => {
+          const actionDef = (config.actions || []).find((candidate: any) => candidate.id === action.id);
+          const permission = action.permission || actionDef?.permission;
+          return Boolean(!permission || ctx.user.permissions?.includes(permission))
+            && (!action.show_if || Boolean(evalExpr(action.show_if, { ...ctx, row })));
+        },
       })),
       render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
         if (def.tree && index === 0) {
@@ -848,9 +940,18 @@ export async function renderPage(config: any, { container = document.body }: { c
         selectable: !!def.selectable,
         columnChooser: def.column_chooser === true,
         rowNumbers: def.row_numbers === true,
+        labels: config.locale === 'vi' ? {
+          rowNumber: 'Số dòng',
+          selectRow: (id: string) => `Chọn dòng ${id}`,
+          expandRow: 'Mở rộng dòng',
+          collapseRow: 'Thu gọn dòng',
+          summaryOf: 'trên',
+          previousPage: 'Trang trước',
+          nextPage: 'Trang sau',
+        } : undefined,
         pageSizeOptions,
         tree: def.tree ? { parentField: 'parent_id' } : undefined,
-        onPageChange: async (page: number) => {
+      onPageChange: async (page: number) => {
           const nextPage = Math.max(1, page);
           const currentPageSize = paginationState[sourceId]?.top || pageSize;
           const newSkip = (nextPage - 1) * currentPageSize;
@@ -860,6 +961,16 @@ export async function renderPage(config: any, { container = document.body }: { c
             updateBoundComponents(sourceId, data);
           } catch (err) {
             console.error('[page-renderer] pagination fetch error:', err);
+          }
+        },
+        onSort: async (sort: { field: string; direction: 'asc' | 'desc' }) => {
+          sortState[sourceId] = sort;
+          paginationState[sourceId] = { skip: 0, top: paginationState[sourceId]?.top || pageSize, page: 1 };
+          try {
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId].top, sort);
+            updateBoundComponents(sourceId, data);
+          } catch (err) {
+            console.error('[page-renderer] sort fetch error:', err);
           }
         },
         onPageSizeChange: async (nextSize: number) => {
@@ -901,6 +1012,24 @@ export async function renderPage(config: any, { container = document.body }: { c
     if (sourceId) {
       if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
       boundComponents[sourceId].push({ comp, def, compType: 'DataGrid', _origSetState });
+    }
+  }
+
+  async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
+    const { ScheduleGrid } = await import('./components/ScheduleGrid.ts');
+    const sourceResult = dataMap[def.source] || { data: [] };
+    const component = new ScheduleGrid(
+      `schedule-grid-${def.source || def.id || Date.now()}`,
+      { rows: Array.isArray(sourceResult.data) ? sourceResult.data : [] },
+      def,
+    );
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    component.mount(slot);
+    if (def.source) {
+      if (!boundComponents[def.source]) boundComponents[def.source] = [];
+      boundComponents[def.source].push({ comp: component, def, compType: 'ScheduleGrid', _origSetState: component.setState.bind(component) });
     }
   }
 
@@ -982,6 +1111,11 @@ export async function renderPage(config: any, { container = document.body }: { c
       },
       def,
     );
+    if (def.refresh_interval_ms) {
+      def.on_refresh = async () => {
+        await refreshSources([threadSource, messageSource, attachmentSource].filter(Boolean));
+      };
+    }
     const _origSetState = comp.setState.bind(comp);
     comp._onAction = async (actionId: string, params: any) => {
       const actionDef = (config.actions || []).find(action => action.id === actionId);
@@ -1022,7 +1156,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const field = def.filter_field || 'status';
     let facets: Record<string, number> = {};
     let facetTotal: number | undefined;
-    if (def.source) {
+    if (def.source && def.show_counts !== false) {
       const filters = { ...(filterState[def.source] || {}) };
       delete filters[field];
       try {
@@ -1084,7 +1218,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const comp = new ListToolbar(
       `list-toolbar-${def.source || def.id || Date.now()}`,
       { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '', preset: def.date_range?.default_preset },
-      { search: def.search, actions: def.actions, date_range: def.date_range, filters, filter_sources: def.filter_sources, advanced_filter: def.advanced_filter, help: def.help }
+      { search: def.search, search_button: def.search_button, actions: def.actions, date_range: def.date_range, filters, filter_sources: def.filter_sources, advanced_filter: def.advanced_filter, help: def.help, actions_inline: def.actions_inline }
     );
     comp._onAction = async (actionId: string, params: any) => {
       const sourceId = def.source;
@@ -1200,14 +1334,17 @@ export async function renderPage(config: any, { container = document.body }: { c
 
     // Build tab UI with plain DOM
     const wrap = document.createElement('div');
-    wrap.style.marginBottom = '24px';
+    wrap.className = 'core3-tab-group';
 
     const tabBar = document.createElement('div');
-    tabBar.style.cssText = 'display:flex;border-bottom:1px solid #e5e7eb;gap:0;';
+    tabBar.className = 'core3-tab-bar';
+    tabBar.setAttribute('role', 'tablist');
 
     const panels = tabContainers.map((tc, i) => {
       const panel = document.createElement('div');
-      panel.style.cssText = `padding-top:16px;${i === 0 ? '' : 'display:none;'}`;
+      panel.className = `core3-tab-panel${i === 0 ? '' : ' core3-tab-panel-hidden'}`;
+      panel.id = `${config.page.id}-tab-panel-${i}`;
+      panel.setAttribute('role', 'tabpanel');
       panel.appendChild(tc);
       return panel;
     });
@@ -1216,28 +1353,21 @@ export async function renderPage(config: any, { container = document.body }: { c
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.textContent = tab.label;
-      btn.style.cssText = [
-        'padding:10px 16px',
-        'font-size:0.875rem',
-        'border:none',
-        'background:none',
-        'cursor:pointer',
-        `border-bottom:2px solid ${i === 0 ? '#4f46e5' : 'transparent'}`,
-        `color:${i === 0 ? '#4338ca' : '#6b7280'}`,
-        `font-weight:${i === 0 ? '600' : '500'}`,
-        'margin-bottom:-1px',
-        'transition:color 0.15s,border-color 0.15s',
-      ].join(';') + ';';
+      btn.className = `core3-tab-button${i === 0 ? ' is-active' : ''}`;
+      btn.setAttribute('aria-selected', String(i === 0));
+      btn.setAttribute('role', 'tab');
+      btn.id = `${config.page.id}-tab-${i}`;
+      btn.setAttribute('aria-controls', panels[i].id);
+      panels[i].setAttribute('aria-labelledby', btn.id);
       return btn;
     });
 
     tabBtns.forEach((btn, i) => {
       btn.addEventListener('click', () => {
         tabBtns.forEach((b, j) => {
-          b.style.borderBottomColor = j === i ? '#4f46e5' : 'transparent';
-          b.style.color = j === i ? '#4338ca' : '#6b7280';
-          b.style.fontWeight = j === i ? '600' : '500';
-          panels[j].style.display = j === i ? '' : 'none';
+          b.classList.toggle('is-active', j === i);
+          b.setAttribute('aria-selected', String(j === i));
+          panels[j].classList.toggle('core3-tab-panel-hidden', j !== i);
         });
       });
       tabBar.appendChild(btn);
@@ -1275,6 +1405,9 @@ export async function renderPage(config: any, { container = document.body }: { c
       case 'DataGrid':
         await renderDataGrid(def, targetContainer);
         break;
+      case 'ScheduleGrid':
+        await renderScheduleGrid(def, targetContainer);
+        break;
       case 'LineItemGrid':
         await renderDataGrid(def, targetContainer);
         break;
@@ -1289,6 +1422,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         break;
       case 'ApprovalTimeline':
         await renderApprovalTimeline(def, targetContainer);
+        break;
+      case 'TemplatePreview':
+        await renderTemplatePreview(def, targetContainer);
         break;
       case 'ChatWorkspace':
         await renderChatWorkspace(def, targetContainer);
@@ -1323,6 +1459,30 @@ export async function renderPage(config: any, { container = document.body }: { c
         } else {
           console.warn(`[page-renderer] Unknown component type: ${def.type}`);
         }
+    }
+  }
+
+  async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
+    const { TemplatePreview } = await import('./components/TemplatePreview.ts');
+    const component = new TemplatePreview(
+      `template-preview-${def.id || def.source || Date.now()}`,
+      {
+        template: (dataMap[def.template_source]?.data || {}) as Record<string, unknown>,
+        blocks: (dataMap[def.source]?.data || []) as Array<Record<string, unknown>>,
+      },
+    );
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    component.mount(slot);
+    if (def.source) {
+      if (!boundComponents[def.source]) boundComponents[def.source] = [];
+      boundComponents[def.source].push({
+        comp: component,
+        def,
+        compType: 'TemplatePreview',
+        _origSetState: component.setState.bind(component),
+      });
     }
   }
 
@@ -1374,14 +1534,22 @@ export async function renderPage(config: any, { container = document.body }: { c
     toolbarDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;';
 
     for (const btn of config.toolbar) {
+      if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
       if (btn.permission) {
         const userPerms = ctx.user.permissions || [];
         if (!userPerms.includes(btn.permission)) continue;
       }
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `btn btn-${btn.variant || 'secondary'}`;
-      button.textContent = btn.label;
+      button.className = `btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`;
+      if (btn.icon) {
+        const icon = document.createElement('span');
+        icon.setAttribute('aria-hidden', 'true');
+        if (hasIcon(btn.icon)) appendIcon(icon, btn.icon);
+        else icon.textContent = btn.icon;
+        button.appendChild(icon);
+      }
+      if (btn.label) button.appendChild(document.createTextNode(btn.label));
       button.addEventListener('click', async () => {
         const actionDef = (config.actions || []).find(a => a.id === btn.action);
         if (actionDef) await handleAction(actionDef, null);
@@ -1422,7 +1590,8 @@ export async function renderPage(config: any, { container = document.body }: { c
     const filterBar = new FilterBar(
       'page-filter-bar',
       { values: {} },
-      filters
+      filters,
+      { all: config.filters.all_label, clear: config.filters.clear_label },
     );
 
     filterBar._onAction = async (actionId, params) => {
@@ -1481,5 +1650,8 @@ function collectSources(config: any) {
   visit(config.components);
   add(config.filters?.source);
   for (const field of config.filters?.fields || []) add(field.options_source);
+  for (const action of config.actions || []) {
+    for (const field of action.fields || []) add(field.options_source);
+  }
   return sources;
 }

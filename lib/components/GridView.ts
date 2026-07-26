@@ -9,13 +9,31 @@ import { BooleanCell } from './BooleanCell.ts';
 import { ActionCell } from './ActionCell.ts';
 import { AvatarCell } from './AvatarCell.ts';
 import { PercentCell } from './PercentCell.ts';
+import { appendIcon } from './Icon.ts';
 
 const CELL_MAP = { TextCell, BadgeCell, CurrencyCell, NumberCell, DateCell, BooleanCell, ActionCell, AvatarCell, PercentCell };
 
+export type GridViewOptions = {
+  onSort?: (sort: { field: string; direction: 'asc' | 'desc' }) => void;
+  emptyState?: { title?: string; description?: string };
+  labels?: { summaryOf?: string; previousPage?: string; nextPage?: string };
+};
+
 export class GridView extends BaseComponent {
-  constructor(id, state, defs = []) {
+  options: GridViewOptions;
+
+  constructor(id, state, defs = [], options: GridViewOptions = {}) {
     super(id, state);
     this.defs = defs;
+    this.options = options;
+  }
+
+  private setSort(field: string) {
+    const previous = this.state.sort as { field?: string; direction?: 'asc' | 'desc' } | undefined;
+    const direction = previous?.field === field && previous.direction === 'asc' ? 'desc' : 'asc';
+    const sort = { field, direction } as const;
+    this.setState({ sort });
+    this.options.onSort?.(sort);
   }
 
   _cellState(def, row) {
@@ -36,16 +54,36 @@ export class GridView extends BaseComponent {
   draw(container) {
     this.children = [];
     const { rows = [], meta = {}, loading = false } = this.state;
+    const labels = { summaryOf: 'of', previousPage: '← Prev', nextPage: 'Next →', ...this.options.labels };
 
     const outerDiv = html.take(container).div.className('overflow-x-auto rounded-lg border border-gray-200').getContext();
     const table    = html.take(outerDiv).table.className('min-w-full divide-y divide-gray-200').getContext();
     const theadRow = html.take(table).thead.className('bg-gray-50').trow.getContext();
 
+    const sort = this.state.sort as { field?: string; direction?: 'asc' | 'desc' } | undefined;
     for (const d of this.defs) {
       const align = d.align === 'right' ? 'text-right' : d.align === 'center' ? 'text-center' : 'text-left';
-      html.take(theadRow)
+      const th = html.take(theadRow)
         .th.className(`px-4 py-3 ${align} text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap`)
-        .text(d.label || '');
+        .getContext();
+      const sortable = d.sortable !== false && d.type !== 'ActionCell' && d.field && d.field !== 'actions';
+      if (!sortable) {
+        th.textContent = d.label || '';
+        continue;
+      }
+      const active = sort?.field === d.field;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'core3-sort-button inline-flex items-center gap-1 hover:text-gray-900';
+      button.dataset.sortField = d.field;
+      button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
+      button.textContent = d.label || '';
+      const indicator = document.createElement('span');
+      indicator.className = 'core3-sort-indicator text-gray-400';
+      appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
+      button.append(indicator);
+      button.addEventListener('click', () => this.setSort(d.field));
+      th.append(button);
     }
 
     const tbody = html.take(table).tbody.className('bg-white divide-y divide-gray-100').getContext();
@@ -58,10 +96,15 @@ export class GridView extends BaseComponent {
         }
       }
     } else if (!rows.length) {
-      html.take(tbody).trow
+      const empty = this.options.emptyState || {};
+      const emptyCell = html.take(tbody).trow
         .tdata.attr('colspan', String(this.defs.length))
           .className('px-4 py-10 text-center text-sm text-gray-400')
-          .text('No records found');
+          .getContext();
+      html.take(emptyCell).div.text(empty.title || 'No records found');
+      if (empty.description) {
+        html.take(emptyCell).div.className('mt-1').text(empty.description);
+      }
     } else {
       for (const row of rows) {
         const tr = html.take(tbody).trow.className('hover:bg-gray-50 transition-colors').getContext();
@@ -79,15 +122,15 @@ export class GridView extends BaseComponent {
       const endN   = Math.min(page * pageSize, total);
 
       const pagDiv  = html.take(outerDiv).div.className('flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white rounded-b-lg').getContext();
-      html.take(pagDiv).span.className('text-sm text-gray-600').text(`${startN}–${endN} of ${total}`);
+      html.take(pagDiv).span.className('text-sm text-gray-600').text(`${startN}–${endN} ${labels.summaryOf} ${total}`);
       const ctrlDiv = html.take(pagDiv).div.className('flex items-center gap-2').getContext();
 
-      const prevBtn = html.take(ctrlDiv).button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed').text('← Prev').getContext();
+      const prevBtn = html.take(ctrlDiv).button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed').text(labels.previousPage).getContext();
       if (page <= 1) prevBtn.setAttribute('disabled', '');
 
       html.take(ctrlDiv).span.className('text-sm text-gray-500 px-1').text(`${page} / ${totalPages}`);
 
-      const nextBtn = html.take(ctrlDiv).button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed').text('Next →').getContext();
+      const nextBtn = html.take(ctrlDiv).button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed').text(labels.nextPage).getContext();
       if (page >= totalPages) nextBtn.setAttribute('disabled', '');
 
       prevBtn.addEventListener('click', () => {

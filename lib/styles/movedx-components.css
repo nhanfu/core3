@@ -1,0 +1,313 @@
+/* Shared MovedX component surfaces. Keep page renderers declarative and token-backed. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.core3-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15 23 42 / 45%);
+  padding: var(--content-gutter);
+}
+
+.core3-form-dialog {
+  width: min(480px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+  color: var(--color-text);
+}
+
+.core3-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.core3-form-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.core3-form-close {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.core3-form-close:hover,
+.core3-form-close:focus-visible {
+  color: var(--color-text);
+}
+
+.core3-form-field { margin-bottom: 16px; }
+
+.core3-form-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.core3-form-control {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.core3-form-control-multiple { min-height: 96px; }
+
+.core3-form-textarea {
+  height: 72px;
+  resize: vertical;
+}
+
+.core3-form-richtext {
+  height: 132px;
+  resize: vertical;
+}
+
+.core3-form-token-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.core3-form-token {
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-hover);
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.core3-form-token:hover,
+.core3-form-token:focus-visible {
+  background: var(--color-primary-mid);
+  color: var(--color-surface);
+}
+
+.core3-form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.core3-form-error {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-danger-light);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+:root[data-theme='dim'] .core3-form-overlay { background: rgb(2 6 23 / 65%); }
+
+.core3-tab-group { margin-bottom: 24px; }
+
+.core3-tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.core3-tab-panel { padding-top: 16px; }
+.core3-tab-panel-hidden { display: none; }
+
+.core3-tab-button {
+  margin-bottom: -1px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color var(--transition), border-color var(--transition);
+}
+
+.core3-tab-button:hover,
+.core3-tab-button:focus-visible,
+.core3-tab-button.is-active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
+.core3-tab-button.is-active { font-weight: 600; }
+
+/* A reference resource list keeps its lifecycle tabs and grid in one card. */
+.core3-status-tabs-slot-contained {
+  margin-bottom: 0 !important;
+}
+
+.core3-status-tabs-slot-contained + div {
+  margin-bottom: 24px !important;
+}
+
+.core3-status-tabs-slot-contained + div > .rounded-lg {
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.core3-sort-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+.core3-sort-indicator,
+.core3-sort-indicator .svg-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
+
+.core3-grid-cell {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Shared list surfaces consume the visual tokens even when the runtime also
+ * supplies utility classes. This keeps the dim theme coherent across every
+ * DataGrid and StatusTabs instance. */
+.core3-token-panel,
+.core3-token-control,
+.core3-token-menu,
+.core3-token-body,
+.core3-token-status-tabs,
+.core3-token-status-tab {
+  background-color: var(--color-surface) !important;
+}
+
+.core3-token-panel,
+.core3-token-menu,
+.core3-token-table,
+.core3-token-summary,
+.core3-token-status-tab {
+  border-color: var(--color-border) !important;
+}
+
+.core3-token-heading,
+.core3-token-cell,
+.core3-token-label,
+.core3-token-control,
+.core3-token-status-tab,
+.core3-token-summary,
+.core3-token-muted {
+  color: var(--color-text-secondary) !important;
+}
+
+.core3-token-heading { color: var(--color-text) !important; }
+.core3-token-muted,
+.core3-token-summary { color: var(--color-text-muted) !important; }
+.core3-token-status-tab[aria-selected='true'] {
+  background-color: var(--color-primary-light) !important;
+  border-bottom-color: var(--color-primary) !important;
+  color: var(--color-primary-hover) !important;
+}
+.core3-token-status-count { color: var(--color-text-secondary) !important; }
+
+.core3-token-toolbar,
+.core3-token-control,
+.core3-token-control-group,
+.core3-token-input {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.core3-token-input::placeholder { color: var(--color-text-muted) !important; }
+.core3-token-preset { color: var(--color-text-secondary) !important; }
+.core3-token-preset[class*='bg-blue-600'] {
+  background-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+
+.core3-token-form-panel,
+.core3-token-form-control,
+.core3-token-form-toolbar {
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+
+.core3-token-form-label,
+.core3-token-form-heading { color: var(--color-text) !important; }
+.core3-token-form-check { accent-color: var(--color-primary) !important; }
+
+.core3-schedule-grid {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+.core3-schedule-title {
+  margin: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.core3-schedule-scroll { overflow-x: auto; }
+.core3-schedule-table { width: 100%; min-width: 720px; border-collapse: collapse; color: var(--color-text-secondary); font-size: 0.8125rem; }
+.core3-schedule-table th,
+.core3-schedule-table td { padding: 12px 14px; border-right: 1px solid var(--color-border-light); border-bottom: 1px solid var(--color-border-light); text-align: left; vertical-align: top; }
+.core3-schedule-table thead th { background: var(--color-bg); color: var(--color-text-muted); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+.core3-schedule-resource { width: 180px; min-width: 180px; background: var(--color-surface); color: var(--color-text); font-weight: 600; }
+.core3-schedule-assignment { min-width: 112px; background: var(--color-primary-light); color: var(--color-primary-hover); }
+.core3-schedule-assignment strong,
+.core3-schedule-assignment span { display: block; }
+.core3-schedule-assignment span { margin-top: 3px; color: var(--color-text-secondary); font-size: 0.75rem; }
+.core3-schedule-empty-cell { color: var(--color-text-muted); text-align: center !important; }
+.core3-schedule-empty { padding: 36px 20px; color: var(--color-text-muted); text-align: center; }
+.core3-schedule-empty p { margin: 6px 0 0; font-size: 0.8125rem; }
+
+.core3-async-select { position: relative; display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px; padding: 6px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.core3-async-select-selected { display: flex; flex-wrap: wrap; gap: 5px; }
+.core3-async-select-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: var(--radius-full); background: var(--color-primary-light); color: var(--color-primary-hover); font-size: 0.75rem; }
+.core3-async-select-chip-remove { border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; font-size: 0.9rem; line-height: 1; }
+.core3-async-select-search { min-width: 120px; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: 0.875rem; }
+.core3-async-select-options { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; padding: 4px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-md); }
+.core3-async-select-option { display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-text-secondary); cursor: pointer; text-align: left; font-size: 0.8125rem; }
+.core3-async-select-option:hover, .core3-async-select-option.is-selected { background: var(--color-primary-light); color: var(--color-primary-hover); }
+.core3-async-select-empty { padding: 10px; color: var(--color-text-muted); font-size: 0.8125rem; }
+.core3-money-input { width: 100%; }
+.core3-money-input-display { text-align: right; font-variant-numeric: tabular-nums; }

@@ -1,5 +1,5 @@
 title: Chi tiết phương tiện
-page: { id: vehicle-detail, auth: { require: [fleet.read] } }
+page: { id: vehicle-detail, breadcrumb: [Quản lý, Phương tiện, Chi tiết], auth: { require: [fleet.read] } }
 datasources:
   - id: vehicle_detail
     single: true
@@ -18,6 +18,18 @@ datasources:
     single: false
     permission: fleet.read
     query: "SELECT tr.id, tr.trip_number, tr.origin, tr.destination, tr.status, CAST(tr.departure_time AS VARCHAR) AS departure_time FROM trips tr JOIN trucks t ON t.id = tr.truck_id WHERE tr.truck_id = :id AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY tr.departure_time DESC"
+  - id: vehicle_detail_branch_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM branches WHERE (:view_scope = 'all' OR id = :current_branch_id) ORDER BY name"
+  - id: vehicle_detail_type_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+  - id: vehicle_detail_driver_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' ORDER BY name"
 components:
   - { type: DocumentSummary, source: vehicle_detail, title_field: plate, subtitle_field: model, status_field: status_label, status_colors: { 'Sẵn sàng': green, 'Bảo dưỡng': amber, 'Ngưng hoạt động': red }, columns: [{ field: type, label: Loại xe }, { field: branch_name, label: Chi nhánh }, { field: capacity_kg, label: Tải trọng }, { field: mileage, label: Số km }, { field: last_service, label: Bảo dưỡng gần nhất }, { field: next_service, label: Bảo dưỡng kế tiếp }, { field: driver_name, label: Tài xế phụ trách }, { field: license_number, label: Giấy phép }] }
   - type: DataGrid
@@ -35,6 +47,28 @@ components:
     empty_state: { title: Chưa có chuyến xe }
     columns: [{ field: trip_number, label: Chuyến }, { field: origin, label: Điểm đi }, { field: destination, label: Điểm đến }, { field: departure_time, label: Khởi hành }, { field: status, label: Trạng thái }]
 toolbar:
-  - { id: back_vehicles, label: '← Danh sách phương tiện', variant: secondary, action: back_vehicles }
+  - { id: back_vehicles, label: 'Danh sách phương tiện', icon: arrow-left, variant: secondary, action: back_vehicles }
+  - { id: edit_vehicle_detail, label: Sửa phương tiện, variant: primary, permission: fleet.write, action: edit_vehicle_detail }
 actions:
   - { id: back_vehicles, type: navigate, navigate_to: /vehicles }
+  - id: edit_vehicle_detail
+    type: form
+    permission: fleet.write
+    title: Cập nhật phương tiện
+    table: trucks
+    operation: update
+    prefill: source
+    prefill_source: vehicle_detail
+    refresh: [vehicle_detail, vehicle_maintenance, vehicle_trips]
+    fields:
+      - { field: plate, label: Biển số / số hiệu, type: text, required: true }
+      - { field: model, label: Hãng / mẫu xe, type: text, required: true }
+      - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_detail_type_lookup }
+      - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_detail_branch_lookup }
+      - { field: driver_id, label: Tài xế phụ trách, type: select, options_source: vehicle_detail_driver_lookup }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }] }
+      - { field: capacity_kg, label: Tải trọng (kg), type: number }
+      - { field: mileage, label: Số km, type: number }
+      - { field: last_service, label: Bảo dưỡng gần nhất, type: date }
+      - { field: next_service, label: Bảo dưỡng kế tiếp, type: date }
+      - { field: notes, label: Ghi chú, type: textarea }

@@ -2,6 +2,7 @@ title: Loại phí
 
 page:
   id: catalog-fee-types
+  breadcrumb: [Danh mục, Loại phí]
   auth:
     require: [catalog.read]
 
@@ -25,10 +26,11 @@ components:
     source: fee_types
     filter_field: q
     search: { label: Tìm kiếm loại phí, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: fee_types.export, label: 'Xuất CSV', icon: '↓' }, { id: import_fee_types, label: 'Nhập CSV', icon: '↑' }]
+    actions: [{ id: fee_types.export, label: 'Xuất CSV', icon: download }, { id: import_fee_types, label: 'Nhập CSV', icon: upload }]
   - type: StatusTabs
     source: fee_types
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang sử dụng }
@@ -54,13 +56,14 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_fee_type, label: Sửa, variant: ghost }
-          - { id: delete_fee_type, label: Xóa, variant: danger }
+          - { id: edit_fee_type, label: Sửa, variant: ghost, permission: catalog.write }
+          - { id: delete_fee_type, label: Xóa, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: import_fee_types, type: upload, kind: master_data_import, scope: fee_type, refresh: [fee_types] }
+  - { id: import_fee_types, type: upload, permission: catalog.write, kind: master_data_import, scope: fee_type, refresh: [fee_types] }
   - id: add_fee_type
     type: form
+    permission: catalog.write
     title: Thêm loại phí
     table: master_data
     scope: fee_type
@@ -71,9 +74,10 @@ actions:
       - { field: name, label: Loại phí, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_fee_type
     type: form
+    permission: catalog.write
     title: Cập nhật loại phí
     table: master_data
     scope: fee_type
@@ -85,5 +89,5 @@ actions:
       - { field: name, label: Loại phí, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
-  - { id: delete_fee_type, type: delete, table: master_data, scope: fee_type, confirm: 'Xóa loại phí {{row.name}}?', refresh: [fee_types] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { id: delete_fee_type, type: delete, permission: catalog.write, table: master_data, scope: fee_type, confirm: 'Xóa loại phí {{row.name}}?', refresh: [fee_types] }

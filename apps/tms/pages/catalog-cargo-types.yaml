@@ -2,6 +2,7 @@ title: Loại hàng hóa
 
 page:
   id: catalog-cargo-types
+  breadcrumb: [Danh mục, Loại hàng hóa]
   auth:
     require: [catalog.read]
 
@@ -25,10 +26,11 @@ components:
     source: cargo_types
     filter_field: q
     search: { label: Tìm kiếm loại hàng hóa, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: cargo_types.export, label: 'Xuất CSV', icon: '↓' }, { id: import_cargo_types, label: 'Nhập CSV', icon: '↑' }]
+    actions: [{ id: cargo_types.export, label: 'Xuất CSV', icon: download }, { id: import_cargo_types, label: 'Nhập CSV', icon: upload }]
   - type: StatusTabs
     source: cargo_types
     filter_field: status
+    variant: contained
     tabs:
       - { id: '', label: Tất cả }
       - { id: Active, label: Đang sử dụng }
@@ -54,13 +56,14 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_cargo_type, label: Sửa, variant: ghost }
-          - { id: delete_cargo_type, label: Xóa, variant: danger }
+          - { id: edit_cargo_type, label: Sửa, variant: ghost, permission: catalog.write }
+          - { id: delete_cargo_type, label: Xóa, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: import_cargo_types, type: upload, kind: master_data_import, scope: cargo_type, refresh: [cargo_types] }
+  - { id: import_cargo_types, type: upload, permission: catalog.write, kind: master_data_import, scope: cargo_type, refresh: [cargo_types] }
   - id: add_cargo_type
     type: form
+    permission: catalog.write
     title: Thêm loại hàng hóa
     table: master_data
     scope: cargo_type
@@ -71,9 +74,10 @@ actions:
       - { field: name, label: Loại hàng hóa, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
   - id: edit_cargo_type
     type: form
+    permission: catalog.write
     title: Cập nhật loại hàng hóa
     table: master_data
     scope: cargo_type
@@ -85,5 +89,5 @@ actions:
       - { field: name, label: Loại hàng hóa, type: text, required: true }
       - { field: description, label: Mô tả, type: textarea }
       - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
-  - { id: delete_cargo_type, type: delete, table: master_data, scope: cargo_type, confirm: 'Xóa loại hàng hóa {{row.name}}?', refresh: [cargo_types] }
+      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { id: delete_cargo_type, type: delete, permission: catalog.write, table: master_data, scope: cargo_type, confirm: 'Xóa loại hàng hóa {{row.name}}?', refresh: [cargo_types] }
