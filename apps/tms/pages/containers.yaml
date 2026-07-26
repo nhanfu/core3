@@ -17,6 +17,10 @@ datasources:
       WHERE (NULLIF(:status, '') IS NULL OR c.status = :status)
         AND (:q IS NULL OR c.container_number ILIKE '%' || :q || '%' OR c.container_type ILIKE '%' || :q || '%' OR c.owner_name ILIKE '%' || :q || '%')
       ORDER BY c.created_at DESC, c.container_number
+  - id: container_location_lookup
+    single: false
+    permission: dispatch.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM locations ORDER BY name"
 
 toolbar:
   - id: add_container_btn
@@ -76,7 +80,7 @@ actions:
       - { field: container_number, label: Số container, type: text, required: true }
       - { field: container_type, label: Loại container, type: select, options: [20DC, 40DC, 40HC, 20RF, 40RF], default: 20DC }
       - { field: owner_name, label: Chủ sở hữu, type: text }
-      - { field: location_id, label: Mã HT địa điểm, type: text }
+      - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive], default: Available }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: edit_container
@@ -90,7 +94,7 @@ actions:
       - { field: container_number, label: Số container, type: text, required: true }
       - { field: container_type, label: Loại container, type: select, options: [20DC, 40DC, 40HC, 20RF, 40RF] }
       - { field: owner_name, label: Chủ sở hữu, type: text }
-      - { field: location_id, label: Mã HT địa điểm, type: text }
+      - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive] }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: delete_container
