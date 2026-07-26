@@ -178,7 +178,7 @@ export class AppShell extends BaseComponent {
     logoMark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 17 10-10M7 7h4v4M17 17h-4v-4"/><path d="m5 12 3-3M19 12l-3 3"/></svg>';
     const logoCopy = html.take(logoIdentity).div.getContext();
     html.take(logoCopy).div.className('sidebar-logo-text').text('MovedX');
-    html.take(logoCopy).div.className('sidebar-logo-sub').text('Điều xe & Quản lý vận tải');
+    html.take(logoCopy).div.className('sidebar-logo-sub').text('Điều xe & Tài xế');
 
     const menuSearch = html.take(sidebar).div.className('sidebar-menu-search').getContext();
     const menuSearchIcon = html.take(menuSearch).span.className('sidebar-menu-search-icon').getContext();
