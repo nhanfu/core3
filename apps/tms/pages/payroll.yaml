@@ -68,6 +68,7 @@ components:
   - type: DataGrid
     source: payroll
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có bảng lương, description: Thử thay đổi bộ lọc hoặc lập bảng lương mới. }
