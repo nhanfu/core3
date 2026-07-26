@@ -133,8 +133,8 @@ components:
       - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red }
       - { label: Chuyến đang chạy, field: in_transit, color: blue }
       - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red }
-      - { label: Chi phí chờ duyệt, field: expense_approvals, color: amber }
-      - { label: Hợp đồng sắp hết hạn, field: expiring_contracts, color: amber }
+      - { label: Đề nghị chi chờ duyệt, field: expense_approvals, color: amber }
+      - { label: HĐ sắp hết hạn, field: expiring_contracts, color: amber }
 
   - type: StatRow
     source: dashboard_kpis

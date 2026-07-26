@@ -7,6 +7,7 @@
 - KPI cards are grouped into the reference sections `Việc cần làm`, `Vận hành`, `Doanh thu · Chi phí`, `Công nợ · Dòng tiền`, and `Nhân sự`.
 - The revenue section includes the reference `Biên lãi` percentage card alongside revenue, cost, profit, orders, and new customers.
 - Financial KPI cards use VND formatting and task cards expose draft, approval, dispatch, overdue, and expiring-contract work items.
+- Task cards use the reference Vietnamese labels `Đề nghị chi chờ duyệt` and `HĐ sắp hết hạn`.
 - Trip status chart, dispatch queue, top routes, and top customers remain below the KPI regions.
 - Monthly revenue, cost, and profit are rendered as a multi-series chart alongside trip-status chart data.
 
