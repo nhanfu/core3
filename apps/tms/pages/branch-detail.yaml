@@ -1,0 +1,43 @@
+title: Chi tiết chi nhánh
+page: { id: branch-detail, auth: { require: [settings.read] } }
+datasources:
+  - id: branch_detail
+    single: true
+    permission: settings.read
+    query: "SELECT id, name, city, region, status FROM branches WHERE id = :id"
+  - id: branch_departments
+    single: false
+    permission: settings.read
+    query: "SELECT d.id, d.code, d.name, d.status, COUNT(t.id) AS team_count FROM departments d LEFT JOIN teams t ON t.department_id = d.id WHERE d.branch_id = :id GROUP BY d.id, d.code, d.name, d.status ORDER BY d.name"
+  - id: branch_trucks
+    single: false
+    permission: settings.read
+    query: "SELECT t.id, t.plate, t.type, t.status FROM trucks t WHERE t.branch_id = :id ORDER BY t.plate"
+  - id: branch_employees
+    single: false
+    permission: settings.read
+    query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' WHERE d.branch_id = :id ORDER BY e.name"
+components:
+  - { type: DocumentSummary, source: branch_detail, title_field: name, subtitle_field: city, status_field: status, columns: [{ field: region, label: Khu vực }] }
+  - type: DataGrid
+    source: branch_departments
+    page_size: 30
+    row_key: id
+    empty_state: { title: Chưa có phòng ban }
+    columns: [{ field: code, label: Mã phòng ban }, { field: name, label: Phòng ban }, { field: team_count, label: Số team, align: right }, { field: status, label: Trạng thái }]
+  - type: DataGrid
+    source: branch_trucks
+    page_size: 30
+    row_key: id
+    empty_state: { title: Chưa có phương tiện }
+    columns: [{ field: plate, label: Biển số }, { field: type, label: Loại xe }, { field: status, label: Trạng thái }]
+  - type: DataGrid
+    source: branch_employees
+    page_size: 30
+    row_key: id
+    empty_state: { title: Chưa có nhân viên }
+    columns: [{ field: code, label: Mã nhân viên }, { field: name, label: Họ tên }, { field: job_title, label: Chức danh }, { field: status, label: Trạng thái }]
+toolbar:
+  - { id: back_branches, label: '← Danh sách chi nhánh', variant: secondary, action: back_branches }
+actions:
+  - { id: back_branches, type: navigate, navigate_to: /org/branches }

@@ -59,10 +59,12 @@ components:
         sortable: false
         align: right
         actions:
+          - { id: view_branch, label: Chi tiết, variant: primary }
           - { id: edit_branch, label: Sửa, variant: ghost }
           - { id: delete_branch, label: Xóa, variant: danger }
 
 actions:
+  - { id: view_branch, type: navigate, navigate_to: /org/branches/detail, params: { id: '{row.id}' } }
   - id: add_branch
     type: form
     title: Thêm chi nhánh

@@ -325,6 +325,7 @@ const SOURCE_FILES = [
   'pages/crm-entity-detail.yaml',
   'pages/quotes.yaml', 'pages/quote-detail.yaml', 'pages/crm-dashboard.yaml', 'pages/crm-kpi.yaml',
   'pages/branches.yaml',
+  'pages/branch-detail.yaml',
   'pages/partners.yaml',
   'pages/areas.yaml',
   'pages/own-company.yaml',
