@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "PORT=3001 bun server.ts",
-    "dev": "PORT=3001 bun --hot server.ts"
+    "dev": "PORT=3001 bun --hot server.ts",
+    "audit": "bun scripts/audit-pages.ts"
   },
   "dependencies": {
     "@core3/framework": "file:../../lib",
