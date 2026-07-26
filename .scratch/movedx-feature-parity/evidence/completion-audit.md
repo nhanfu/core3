@@ -9,6 +9,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Fifteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
+- The same browser route matrix reruns at an explicit 1440 x 1000 desktop viewport with zero route, console, or document-overflow failures.
 - The browser parity audit exercises every discovered shared control on all 52 routes with zero failures at 1024 x 768, including 317 sortable headers, 142 status tabs, 44 column choosers, 401 row actions dispatched with mutation POSTs blocked, 20 exports, and all discovered search/editor controls.
 - List-toolbar CSV exports now refetch the complete active filtered dataset in bounded server pages instead of exporting only the visible page.
 - Every page YAML has a route-specific evidence directory and controls checklist.
@@ -59,6 +60,9 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ```sh
 (cd apps/tms && TMS_BASE_URL=http://localhost:3339 bun run audit)
 (cd apps/tms && TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run audit:ui)
+# The browser audit also accepts an isolated seeded server, for example:
+# TMS_DB_PATH=/tmp/core3-parity-3419.duckdb TMS_UPLOAD_ROOT=/tmp/core3-uploads-3419 PORT=3419 bun server.ts
+# (cd apps/tms && TMS_BASE_URL=http://localhost:3419 TMS_CDP_URL=http://localhost:9222 bun scripts/audit-ui.ts)
 (cd lib && bun run test)
 ```
 

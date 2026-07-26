@@ -196,9 +196,31 @@ for (const { target, needle } of detailTargets) {
 }
 failures.push(...detailFailures);
 
+const desktopFailures: string[] = [];
+await send('Emulation.setDeviceMetricsOverride', {
+  width: 1440,
+  height: 1000,
+  deviceScaleFactor: 1,
+  mobile: false,
+});
+for (const route of targets) {
+  consoleErrors.length = 0;
+  try {
+    await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${route}`)}`, `${route} desktop navigation`);
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const state = await evaluateWithTimeout(`({ outlet: document.querySelector('#outlet')?.textContent || '', overflow: document.documentElement.scrollWidth > innerWidth + 2 })`, `${route} desktop state read`);
+    if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) desktopFailures.push(`${route}: desktop outlet did not render`);
+    if (state?.overflow) desktopFailures.push(`${route}: document overflows desktop viewport`);
+    if (consoleErrors.length) desktopFailures.push(`${route}: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    desktopFailures.push(`${route}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+failures.push(...desktopFailures);
+
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`viewport=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
