@@ -155,30 +155,30 @@ for (const route of targets) {
 }
 
 const detailTargets = [
-  '/orders/detail?id=order-01',
-  '/quotes/detail?id=quote-01',
-  '/accounting/documents/detail?id=acct-debit-01&kind=debit_note',
-  '/hr/employees/detail?id=employee-01',
-  '/hr/contracts/detail?id=contract-05',
-  '/hr/payroll/detail?id=payroll-04',
-  '/vehicles/detail?id=truck-01',
-  '/drivers/detail?id=driver-01',
-  '/org/branches/detail?id=branch-hcm',
-  '/org/departments/detail?id=department-04',
-  '/org/users/detail?id=user-admin',
-  '/org/roles/detail?id=role-admin',
-  '/areas/detail?id=area-hcm',
-  '/system/print-templates/detail?id=sys-02',
-  '/system/approval-flows/detail?id=sys-03',
+  { target: '/orders/detail?id=order-01', needle: 'DH-2026-0001' },
+  { target: '/quotes/detail?id=quote-01', needle: 'BG-0001' },
+  { target: '/accounting/documents/detail?id=acct-debit-01&kind=debit_note', needle: 'GBN-0001' },
+  { target: '/hr/employees/detail?id=employee-01', needle: 'NV001' },
+  { target: '/hr/contracts/detail?id=contract-05', needle: 'HD005' },
+  { target: '/hr/payroll/detail?id=payroll-04', needle: 'BL202607004' },
+  { target: '/vehicles/detail?id=truck-01', needle: 'CA-101-ABC' },
+  { target: '/drivers/detail?id=driver-01', needle: 'VN-DL-001001' },
+  { target: '/org/branches/detail?id=branch-hcm', needle: 'Ho Chi Minh City Branch' },
+  { target: '/org/departments/detail?id=department-04', needle: 'HCNS' },
+  { target: '/org/users/detail?id=user-admin', needle: 'admin@tms.local' },
+  { target: '/org/roles/detail?id=role-admin', needle: 'Full system access' },
+  { target: '/areas/detail?id=area-01', needle: 'Miền Nam' },
+  { target: '/system/print-templates/detail?id=sys-02', needle: 'ORDER' },
+  { target: '/system/approval-flows/detail?id=sys-03', needle: 'ORDER_APPROVAL' },
 ] as const;
 const detailFailures: string[] = [];
-for (const target of detailTargets) {
+for (const { target, needle } of detailTargets) {
   consoleErrors.length = 0;
   try {
     await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${target}`)}`, `${target} navigation`);
     await new Promise((resolve) => setTimeout(resolve, 1500));
     const state = await evaluateWithTimeout(`({ outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${target} state read`);
-    if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
+    if (!state?.outlet || !state.outlet.includes(needle) || /Failed to load page|Route load error/i.test(state.outlet)) {
       detailFailures.push(`${target}: populated detail did not render`);
     }
     if (consoleErrors.length) detailFailures.push(`${target}: ${consoleErrors.join(' | ')}`);

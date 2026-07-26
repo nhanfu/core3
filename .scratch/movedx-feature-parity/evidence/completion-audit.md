@@ -7,7 +7,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - 68 page YAML definitions load through the authenticated page API.
 - 123 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
-- Fifteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, print-template, and approval-flow editors) also mount with zero browser failures.
+- Fifteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The browser parity audit exercises every discovered shared control on all 52 routes with zero failures, including 317 sortable headers, 142 status tabs, 44 column choosers, 401 row actions dispatched with mutation POSTs blocked, 20 exports, and all discovered search/editor controls.
 - List-toolbar CSV exports now refetch the complete active filtered dataset in bounded server pages instead of exporting only the visible page.
 - Every page YAML has a route-specific evidence directory and controls checklist.
