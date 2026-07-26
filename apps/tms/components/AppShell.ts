@@ -8,6 +8,38 @@ import { ProfileDrawer } from './ProfileDrawer.ts';
 type NavItem = { path: string; label: string; icon: string };
 type NavGroup = { id: string; label: string; count: number; items: NavItem[] };
 
+const ICON_PATHS: Record<string, string> = {
+  search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/>',
+  '▦': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  '□': '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5"/>',
+  '◇': '<path d="m12 3 8 9-8 9-8-9 8-9Z"/><path d="M12 7v10M8 12h8"/>',
+  '◫': '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 13h3M13 13h3M8 17h3"/>',
+  '○': '<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 3.5-6 8-6s7.2 2 8 6"/>',
+  '△': '<path d="m12 3 9 18H3L12 3Z"/><path d="M12 9v5M12 17h.01"/>',
+  '▤': '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h5M8 18h3"/>',
+  '◈': '<path d="m12 2 9 10-9 10-9-10 9-10Z"/><circle cx="12" cy="12" r="2"/>',
+  '▧': '<path d="M5 3h10l4 4v14H5V3Z"/><path d="M15 3v5h5M8 12h8M8 16h6"/>',
+  '▥': '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h8M8 19h8"/>',
+  '⌖': '<circle cx="12" cy="10" r="6"/><circle cx="12" cy="10" r="2"/><path d="M12 16v5"/>',
+  '▣': '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M8 5v14M16 5v14"/>',
+  '≡': '<path d="M5 6h14M5 12h14M5 18h14"/>',
+  '₫': '<path d="M7 4h6a5 5 0 0 1 0 10H7V4Zm0 0v16M4 8h12M4 18h12"/>',
+  '⌂': '<path d="m3 10 9-7 9 7v10H3V10Z"/><path d="M9 20v-6h6v6"/>',
+  '◷': '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  '#': '<path d="M9 3 7 21M17 3l-2 18M4 9h16M3 15h16"/>',
+  '◉': '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+};
+
+function appendIcon(target: HTMLElement, name: string, label?: string) {
+  const icon = document.createElement('span');
+  icon.className = 'svg-icon';
+  icon.setAttribute('aria-hidden', label ? 'false' : 'true');
+  if (label) icon.setAttribute('aria-label', label);
+  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || '<circle cx="12" cy="12" r="8"/>'}</svg>`;
+  target.append(icon);
+}
+
 const DASHBOARD: NavItem = { path: '/dashboard', label: 'Tổng quan', icon: '▦' };
 
 const NAV_GROUPS: NavGroup[] = [
@@ -128,7 +160,8 @@ export class AppShell extends BaseComponent {
     html.take(logo).div.className('sidebar-logo-sub').text('Điều xe & Quản lý vận tải');
 
     const menuSearch = html.take(sidebar).div.className('sidebar-menu-search').getContext();
-    html.take(menuSearch).span.className('sidebar-menu-search-icon').text('⌕');
+    const menuSearchIcon = html.take(menuSearch).span.className('sidebar-menu-search-icon').getContext();
+    appendIcon(menuSearchIcon, 'search');
     const menuSearchInput = html.take(menuSearch).input
       .type('search')
       .attr('placeholder', 'Tìm menu...')
@@ -145,7 +178,8 @@ export class AppShell extends BaseComponent {
         .event('click', () => navigate(item.path))
         .getContext();
       navItem.dataset.search = item.label.toLocaleLowerCase('vi');
-      html.take(navItem).span.className('nav-item-icon').text(item.icon);
+      const navIcon = html.take(navItem).span.className('nav-item-icon').getContext();
+      appendIcon(navIcon, item.icon);
       html.take(navItem).span.className('nav-item-label').text(i18n.t('*', null, item.label));
       this._navEls.set(item.path, navItem);
     };
@@ -248,7 +282,8 @@ export class AppShell extends BaseComponent {
       .className('header-icon-btn')
       .attr('title', 'Notifications')
       .getContext();
-    html.take(bellBtn).span.text('🔔');
+    const bellIcon = html.take(bellBtn).span.getContext();
+    appendIcon(bellIcon, 'bell', 'Notifications');
 
     // Notification badge (hidden until unread count > 0)
     const badge = html.take(bellBtn).span
