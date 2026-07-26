@@ -944,6 +944,11 @@ export async function renderPage(config: any, { container = document.body }: { c
 
     const slot = document.createElement('div');
     slot.style.marginBottom = '24px';
+    if (def.layout === 'inline') {
+      slot.style.display = 'inline-block';
+      slot.style.verticalAlign = 'top';
+      slot.style.marginRight = '16px';
+    }
     targetContainer.appendChild(slot);
     comp.mount(slot);
 

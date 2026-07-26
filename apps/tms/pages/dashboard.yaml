@@ -176,7 +176,8 @@ components:
     label_field: month
     value_field: revenue
     variant: line
-    width: 680
+    layout: inline
+    width: 640
     height: 260
     series:
       - { field: revenue, label: Doanh thu, color: '#2563eb' }
@@ -187,7 +188,8 @@ components:
     title: Tổng quan trạng thái chuyến
     label_field: status
     value_field: trip_count
-    width: 680
+    layout: inline
+    width: 400
     height: 260
     color: '#4f46e5'
 

@@ -120,7 +120,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs'])],
   ['TabGroup', new Set(['type', 'tabs'])],
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
-  ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series'])],
+  ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['ContactGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],

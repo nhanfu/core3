@@ -20,6 +20,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.
 - Dashboard includes declarative monthly revenue/cost/profit line data plus trip-status chart data.
+- Dashboard chart slots sit side by side at desktop width and wrap naturally at tablet width without document overflow.
 
 ## Not Proven
 
