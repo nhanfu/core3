@@ -19,6 +19,7 @@ export type ListToolbarDefinition = {
   };
   actions?: ListToolbarAction[];
   date_range?: { from_field?: string; to_field?: string; from_label?: string; to_label?: string };
+  filter_sources?: string[];
 };
 
 /**

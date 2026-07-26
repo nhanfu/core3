@@ -869,7 +869,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const comp = new ListToolbar(
       `list-toolbar-${def.source || def.id || Date.now()}`,
       { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '' },
-      { search: def.search, actions: def.actions, date_range: def.date_range }
+      { search: def.search, actions: def.actions, date_range: def.date_range, filter_sources: def.filter_sources }
     );
     comp._onAction = async (actionId: string, params: any) => {
       const sourceId = def.source;
@@ -880,7 +880,8 @@ export async function renderPage(config: any, { container = document.body }: { c
         return;
       }
       if (actionId === 'date-range') {
-        await applySourceFilters(sourceId, { ...(filterState[sourceId] || {}), ...params });
+        const targets = def.filter_sources || [sourceId];
+        for (const target of targets) await applySourceFilters(target, { ...(filterState[target] || {}), ...params });
         return;
       }
       if (actionId.endsWith('.export')) {

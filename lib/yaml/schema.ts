@@ -113,7 +113,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'columns'])],
-  ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range'])],
+  ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filter_sources'])],
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs'])],
   ['TabGroup', new Set(['type', 'tabs'])],
   ['StatRow', new Set(['type', 'source', 'stats'])],

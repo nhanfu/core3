@@ -5,23 +5,28 @@ datasources:
     single: true
     permission: crm.read
     query: |
-      SELECT (SELECT COUNT(*) FROM customers) AS customer_count,
-        (SELECT COUNT(*) FROM customers WHERE stage = 'Lead') AS lead_count,
-        (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted') AS accepted_quote_count,
-        (SELECT COALESCE(SUM(amount), 0) FROM quotes WHERE status = 'Accepted') AS accepted_quote_value,
-        (SELECT COUNT(*) FROM orders WHERE status = 'Approved') AS approved_order_count
+      SELECT (SELECT COUNT(*) FROM customers WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS customer_count,
+        (SELECT COUNT(*) FROM customers WHERE stage = 'Lead' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS lead_count,
+        (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_count,
+        (SELECT COALESCE(SUM(amount), 0) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_value,
+        (SELECT COUNT(*) FROM orders WHERE status = 'Approved' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS approved_order_count
   - id: crm_quote_pipeline
     single: false
     permission: crm.read
     query: |
-      SELECT status AS label, COUNT(*) AS value FROM quotes GROUP BY status ORDER BY status
+      SELECT status AS label, COUNT(*) AS value FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) GROUP BY status ORDER BY status
   - id: crm_recent_quotes
     single: false
     permission: crm.read
     query: |
       SELECT code, title, customer_name, amount, status, CAST(valid_until AS VARCHAR) AS valid_until
-      FROM quotes ORDER BY created_at DESC
+      FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) ORDER BY created_at DESC
 components:
+  - type: ListToolbar
+    source: crm_recent_quotes
+    filter_sources: [crm_kpis, crm_quote_pipeline, crm_recent_quotes]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    actions: [{ id: crm_recent_quotes.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: crm_kpis
     stats:

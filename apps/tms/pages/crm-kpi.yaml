@@ -7,13 +7,18 @@ datasources:
     query: |
       SELECT stage AS metric, COUNT(*) AS customer_count,
         SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) AS active_count
-      FROM customers GROUP BY stage ORDER BY stage
+      FROM customers WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) GROUP BY stage ORDER BY stage
   - id: crm_quote_kpis
     single: false
     permission: crm.read
     query: |
-      SELECT status AS label, COUNT(*) AS value FROM quotes GROUP BY status ORDER BY status
+      SELECT status AS label, COUNT(*) AS value FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) GROUP BY status ORDER BY status
 components:
+  - type: ListToolbar
+    source: crm_stage_kpis
+    filter_sources: [crm_stage_kpis, crm_quote_kpis]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    actions: [{ id: crm_stage_kpis.export, label: 'Xuất CSV', icon: '↓' }]
   - { type: Chart, source: crm_quote_kpis, title: Báo giá theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: '#0f766e' }
   - type: DataGrid
     source: crm_stage_kpis
