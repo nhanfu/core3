@@ -16,6 +16,7 @@ import {
   quoteWorkflow,
 } from './services/business-workflow.ts';
 import { LINE_ITEM_ACTION_REGISTRY } from './services/line-item-actions.ts';
+import { CHAT_ACTION_REGISTRY } from './services/chat-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -261,6 +262,42 @@ async function initDb(): Promise<void> {
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-dp-08', 'role-dispatcher', 'dispatch.write'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-adm-r', 'role-admin', 'chat.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'chat.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-adm-w', 'role-admin', 'chat.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'chat.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-fm-r', 'role-fleet-manager', 'chat.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-fleet-manager' AND permission_key = 'chat.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-fm-w', 'role-fleet-manager', 'chat.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-fleet-manager' AND permission_key = 'chat.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-dp-r', 'role-dispatcher', 'chat.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'chat.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-dp-w', 'role-dispatcher', 'chat.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'chat.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-ac-r', 'role-accountant', 'chat.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'chat.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-ac-w', 'role-accountant', 'chat.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'chat.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-hr-r', 'role-hr-officer', 'chat.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'chat.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-hr-w', 'role-hr-officer', 'chat.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'chat.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-mc-r', 'role-mechanic', 'chat.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-mechanic' AND permission_key = 'chat.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-chat-mc-w', 'role-mechanic', 'chat.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-mechanic' AND permission_key = 'chat.write');
   `);
 }
 
@@ -268,6 +305,7 @@ async function initDb(): Promise<void> {
 // Queries are loaded from the page YAML files, never accepted from API requests.
 const SOURCE_FILES = [
   'pages/dashboard.yaml',
+  'pages/chat.yaml',
   'pages/schedule.yaml',
   'pages/orders.yaml',
   'pages/order-detail.yaml',
@@ -301,6 +339,7 @@ const SOURCE_FILES = [
   'pages/accounting-payment-request-summary.yaml',
   'pages/accounting-advances.yaml',
   'pages/accounting-settlements.yaml',
+  'pages/accounting-document-detail.yaml',
   'pages/accounting-invoice-templates.yaml',
   'pages/accounting-ledger-accounts.yaml',
   'pages/system-activity.yaml', 'pages/system-code-rules.yaml',
@@ -501,7 +540,12 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const src = SOURCES.get(vm.sourceId);
     if (!src) return apiError(404, `Unknown source: ${vm.sourceId}`);
     if (src.permission) requirePerm(src.permission);
-    const result = await repository.querySource(src, vm.params || {}, vm.skip || 0, vm.top || 25);
+    const result = await repository.querySource(
+      src,
+      { ...(vm.params || {}), current_user_id: authUser.sub },
+      vm.skip || 0,
+      vm.top || 25,
+    );
     return json(result);
   }
 
@@ -513,18 +557,34 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const financialActionDefinition = FINANCIAL_ACTION_REGISTRY[actionName];
     const businessActionDefinition = BUSINESS_ACTION_REGISTRY[actionName];
     const lineItemActionDefinition = LINE_ITEM_ACTION_REGISTRY[actionName];
+    const chatActionDefinition = CHAT_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
-      || lineItemActionDefinition;
+      || lineItemActionDefinition
+      || chatActionDefinition;
     if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(actionDefinition.permission);
 
     const body = await req.json() as any;
+    if (chatActionDefinition) {
+      if (chatActionDefinition.operation === 'create_thread') {
+        return json(await repository.createChatThread(
+          body.values && typeof body.values === 'object' ? body.values : {},
+          activityActor,
+        ));
+      }
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      if (chatActionDefinition.operation === 'send_message') {
+        return json(await repository.sendChatMessage(body.id, body.content, activityActor));
+      }
+      return json(await repository.markChatThreadRead(body.id, String(authUser.sub)));
+    }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 
     if (lineItemActionDefinition) {
       const isOrder = lineItemActionDefinition.domain === 'order';
+      const isQuote = lineItemActionDefinition.domain === 'quote';
       return json(await repository.mutateDocumentLine(
         isOrder
           ? {
@@ -533,13 +593,22 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
               parentKey: 'order_id',
               label: 'Order',
               hasCost: false,
+              totalField: 'total_amount',
             }
-          : {
+          : isQuote ? {
               parentTable: 'quotes',
               lineTable: 'quote_lines',
               parentKey: 'quote_id',
               label: 'Quote',
               hasCost: true,
+              totalField: 'amount',
+            } : {
+              parentTable: 'accounting_entries',
+              lineTable: 'accounting_entry_lines',
+              parentKey: 'entry_id',
+              label: 'Financial document',
+              hasCost: false,
+              totalField: 'amount',
             },
         lineItemActionDefinition.operation,
         body.id,
@@ -615,9 +684,9 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if (
       table === 'accounting_entries'
       && FINANCIAL_WORKFLOW_SCOPES.has(scope)
-      && changes.some((change: any) => change.field === 'status')
+      && changes.some((change: any) => change.field === 'status' || change.field === 'amount')
     ) {
-      return apiError(400, 'Financial document status requires a named action');
+      return apiError(400, 'Financial document status and amount require named actions');
     }
     if (
       (table === 'quotes' || table === 'payrolls')

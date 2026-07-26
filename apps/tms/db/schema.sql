@@ -37,6 +37,45 @@ CREATE TABLE IF NOT EXISTS permissions (
   permission_key VARCHAR NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS chat_threads (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR NOT NULL,
+  thread_type VARCHAR NOT NULL DEFAULT 'Group' CHECK (thread_type IN ('Direct', 'Group')),
+  created_by VARCHAR NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_participants (
+  thread_id VARCHAR NOT NULL REFERENCES chat_threads(id),
+  user_id VARCHAR NOT NULL REFERENCES users(id),
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_read_at TIMESTAMP,
+  PRIMARY KEY (thread_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_chat_participants_user ON chat_participants(user_id, thread_id);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  thread_id VARCHAR NOT NULL REFERENCES chat_threads(id),
+  sender_id VARCHAR NOT NULL REFERENCES users(id),
+  body VARCHAR NOT NULL CHECK (length(body) BETWEEN 1 AND 4000),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  edited_at TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages(thread_id, created_at);
+
+CREATE TABLE IF NOT EXISTS chat_attachments (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id VARCHAR NOT NULL REFERENCES chat_messages(id),
+  file_name VARCHAR NOT NULL,
+  mime_type VARCHAR,
+  size_bytes BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes >= 0),
+  storage_key VARCHAR NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_chat_attachments_message ON chat_attachments(message_id);
+
 CREATE TABLE IF NOT EXISTS drivers (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR NOT NULL,
@@ -348,6 +387,21 @@ CREATE TABLE IF NOT EXISTS accounting_entries (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(kind, code)
 );
+CREATE TABLE IF NOT EXISTS accounting_entry_lines (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  entry_id VARCHAR NOT NULL REFERENCES accounting_entries(id),
+  sequence INTEGER NOT NULL DEFAULT 10,
+  description VARCHAR NOT NULL,
+  quantity DECIMAL(18,3) NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  unit VARCHAR NOT NULL DEFAULT 'Khoản',
+  unit_price DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 100),
+  line_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(entry_id, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_accounting_entry_lines_entry ON accounting_entry_lines(entry_id);
 
 CREATE TABLE IF NOT EXISTS system_configs (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),

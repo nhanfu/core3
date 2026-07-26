@@ -112,6 +112,10 @@ export async function renderPage(config: any, { container = document.body }: { c
         entry._origSetState({ record: data.data || {} }, true);
       } else if (entry.compType === 'Timeline') {
         entry._origSetState({ events: data.data || [] }, true);
+      } else if (entry.compType === 'ChatThreads') {
+        entry._origSetState({ threads: data.data || [] }, true);
+      } else if (entry.compType === 'ChatMessages') {
+        entry._origSetState({ messages: data.data || [] }, true);
       }
     }
   }
@@ -212,7 +216,7 @@ export async function renderPage(config: any, { container = document.body }: { c
 
       case 'navigate':
         navigate(
-          actionDef.navigate_to,
+          interpolate(actionDef.navigate_to, rowCtx),
           resolveActionParams(actionDef.params, rowCtx),
         );
         break;
@@ -740,6 +744,45 @@ export async function renderPage(config: any, { container = document.body }: { c
     });
   }
 
+  async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
+    const { ChatWorkspace } = await import('./components/ChatWorkspace.ts');
+    const threadSource = def.source;
+    const messageSource = def.message_source;
+    const comp = new ChatWorkspace(
+      `chat-workspace-${def.id || threadSource || Date.now()}`,
+      {
+        threads: dataMap[threadSource]?.data || [],
+        messages: dataMap[messageSource]?.data || [],
+        currentUserId: ctx.user.sub,
+      },
+      def,
+    );
+    const _origSetState = comp.setState.bind(comp);
+    comp._onAction = async (actionId: string, params: any) => {
+      const actionDef = (config.actions || []).find(action => action.id === actionId);
+      if (actionDef) await handleAction(actionDef, params?.row || params || {});
+    };
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+
+    if (!boundComponents[threadSource]) boundComponents[threadSource] = [];
+    boundComponents[threadSource].push({
+      comp,
+      def,
+      compType: 'ChatThreads',
+      _origSetState,
+    });
+    if (!boundComponents[messageSource]) boundComponents[messageSource] = [];
+    boundComponents[messageSource].push({
+      comp,
+      def,
+      compType: 'ChatMessages',
+      _origSetState,
+    });
+  }
+
   async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
     const { StatusTabs } = await import('./components/StatusTabs.ts');
     const comp = new StatusTabs(
@@ -920,6 +963,9 @@ export async function renderPage(config: any, { container = document.body }: { c
       case 'ApprovalTimeline':
         await renderApprovalTimeline(def, targetContainer);
         break;
+      case 'ChatWorkspace':
+        await renderChatWorkspace(def, targetContainer);
+        break;
       case 'StatusTabs':
         await renderStatusTabs(def, targetContainer);
         break;
@@ -1044,6 +1090,11 @@ function collectSources(config: any) {
   const visit = (components: any[] = []) => {
     for (const component of components) {
       add(component.source, component);
+      if (component.message_source) {
+        add(component.message_source, {
+          page_size: component.message_page_size,
+        });
+      }
       for (const tab of component.tabs || []) visit(tab.components);
     }
   };

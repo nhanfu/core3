@@ -84,8 +84,9 @@ export async function mount(container: HTMLElement) {
       await setAuth(token, user);
       // Hash-only navigation would reuse the unauthenticated document and
       // bypass bootstrap's shell mount. Reload after setting the target hash
-      // so the authenticated application frame is created first.
-      window.location.hash = getDefaultRoute(user);
+      // so the authenticated application frame is created first. replaceState
+      // avoids firing an unauthenticated hashchange render just before reload.
+      window.history.replaceState(null, '', `#${getDefaultRoute(user)}`);
       window.location.reload();
     } catch (err) {
       errorEl.textContent = err instanceof Error ? err.message : String(err);

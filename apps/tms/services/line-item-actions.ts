@@ -1,4 +1,4 @@
-export type LineItemDomain = 'order' | 'quote';
+export type LineItemDomain = 'order' | 'quote' | 'accounting';
 export type LineItemOperation = 'create' | 'update' | 'delete';
 
 export type LineItemActionDefinition = {
@@ -37,5 +37,20 @@ export const LINE_ITEM_ACTION_REGISTRY: Record<string, LineItemActionDefinition>
     domain: 'quote',
     operation: 'delete',
     permission: 'crm.write',
+  },
+  'accounting.documents.lines.create': {
+    domain: 'accounting',
+    operation: 'create',
+    permission: 'accounting.write',
+  },
+  'accounting.documents.lines.update': {
+    domain: 'accounting',
+    operation: 'update',
+    permission: 'accounting.write',
+  },
+  'accounting.documents.lines.delete': {
+    domain: 'accounting',
+    operation: 'delete',
+    permission: 'accounting.write',
   },
 };

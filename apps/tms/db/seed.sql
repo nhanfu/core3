@@ -46,7 +46,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-28', 'role-admin', 'accounting.approve'),
 ('perm-adm-29', 'role-admin', 'accounting.pay'),
 ('perm-adm-30', 'role-admin', 'hr.approve'),
-('perm-adm-31', 'role-admin', 'hr.pay');
+('perm-adm-31', 'role-admin', 'hr.pay'),
+('perm-adm-32', 'role-admin', 'chat.read'),
+('perm-adm-33', 'role-admin', 'chat.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -56,7 +58,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-fm-04', 'role-fleet-manager', 'drivers.write'),
 ('perm-fm-05', 'role-fleet-manager', 'maintenance.read'),
 ('perm-fm-06', 'role-fleet-manager', 'maintenance.write'),
-('perm-fm-07', 'role-fleet-manager', 'reports.read');
+('perm-fm-07', 'role-fleet-manager', 'reports.read'),
+('perm-fm-08', 'role-fleet-manager', 'chat.read'),
+('perm-fm-09', 'role-fleet-manager', 'chat.write');
 
 -- dispatcher
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -67,23 +71,31 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-dp-05', 'role-dispatcher', 'orders.read'),
 ('perm-dp-06', 'role-dispatcher', 'orders.write'),
 ('perm-dp-07', 'role-dispatcher', 'dispatch.read'),
-('perm-dp-08', 'role-dispatcher', 'dispatch.write');
+('perm-dp-08', 'role-dispatcher', 'dispatch.write'),
+('perm-dp-09', 'role-dispatcher', 'chat.read'),
+('perm-dp-10', 'role-dispatcher', 'chat.write');
 
 -- accountant
 INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-ac-01', 'role-accountant', 'accounting.read'),
-('perm-ac-02', 'role-accountant', 'accounting.write');
+('perm-ac-02', 'role-accountant', 'accounting.write'),
+('perm-ac-03', 'role-accountant', 'chat.read'),
+('perm-ac-04', 'role-accountant', 'chat.write');
 
 -- hr_officer
 INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-hr-01', 'role-hr-officer', 'hr.read'),
-('perm-hr-02', 'role-hr-officer', 'hr.write');
+('perm-hr-02', 'role-hr-officer', 'hr.write'),
+('perm-hr-03', 'role-hr-officer', 'chat.read'),
+('perm-hr-04', 'role-hr-officer', 'chat.write');
 
 -- mechanic
 INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-mc-01', 'role-mechanic', 'maintenance.read'),
 ('perm-mc-02', 'role-mechanic', 'maintenance.write'),
-('perm-mc-03', 'role-mechanic', 'fleet.read');
+('perm-mc-03', 'role-mechanic', 'fleet.read'),
+('perm-mc-04', 'role-mechanic', 'chat.read'),
+('perm-mc-05', 'role-mechanic', 'chat.write');
 
 -- ── Users ────────────────────────────────────────────────────────────────────
 -- password_hash stored as plaintext; server detects and upgrades on first login
@@ -212,6 +224,29 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 ('user-accountant', 'role-accountant'),
 ('user-hr', 'role-hr-officer');
 
+-- ── Chat ───────────────────────────────────────────────────────────────────
+INSERT INTO chat_threads (id, title, thread_type, created_by, created_at, updated_at) VALUES
+('chat-thread-ops-south', 'Điều phối miền Nam', 'Group', 'user-disp', '2026-07-26 08:45:00', '2026-07-26 09:15:00'),
+('chat-thread-minh-long', 'Khách hàng Minh Long', 'Group', 'user-admin', '2026-07-26 08:20:00', '2026-07-26 08:48:00'),
+('chat-thread-finance', 'Đối soát kế toán', 'Group', 'user-accountant', '2026-07-25 16:00:00', '2026-07-25 16:25:00');
+
+INSERT INTO chat_participants (thread_id, user_id, joined_at, last_read_at) VALUES
+('chat-thread-ops-south', 'user-admin', '2026-07-26 08:45:00', '2026-07-26 09:10:00'),
+('chat-thread-ops-south', 'user-fleet', '2026-07-26 08:45:00', '2026-07-26 09:15:00'),
+('chat-thread-ops-south', 'user-disp', '2026-07-26 08:45:00', '2026-07-26 09:15:00'),
+('chat-thread-minh-long', 'user-admin', '2026-07-26 08:20:00', '2026-07-26 08:48:00'),
+('chat-thread-minh-long', 'user-disp', '2026-07-26 08:20:00', '2026-07-26 08:48:00'),
+('chat-thread-finance', 'user-admin', '2026-07-25 16:00:00', '2026-07-25 16:10:00'),
+('chat-thread-finance', 'user-accountant', '2026-07-25 16:00:00', '2026-07-25 16:25:00');
+
+INSERT INTO chat_messages (id, thread_id, sender_id, body, created_at) VALUES
+('chat-message-01', 'chat-thread-ops-south', 'user-disp', 'Đơn DH-2026-0007 đã sẵn sàng điều xe.', '2026-07-26 09:12:00'),
+('chat-message-02', 'chat-thread-ops-south', 'user-admin', 'Đã phân công xe CA-101-ABC.', '2026-07-26 09:15:00'),
+('chat-message-03', 'chat-thread-minh-long', 'user-disp', 'Khách hàng cần cập nhật ETA chuyến HCM - Đà Nẵng.', '2026-07-26 08:42:00'),
+('chat-message-04', 'chat-thread-minh-long', 'user-admin', 'Dự kiến giao lúc 16:30 hôm nay.', '2026-07-26 08:48:00'),
+('chat-message-05', 'chat-thread-finance', 'user-accountant', 'Giấy báo nợ GBN-0001 đã sẵn sàng đối soát.', '2026-07-25 16:20:00'),
+('chat-message-06', 'chat-thread-finance', 'user-admin', 'Đã nhận, vui lòng bổ sung biên bản giao hàng.', '2026-07-25 16:25:00');
+
 -- ── Drivers ──────────────────────────────────────────────────────────────────
 INSERT INTO drivers (id, name, phone, email, license_number, license_expiry, status, assigned_truck_id) VALUES
 ('driver-01', 'Nguyen Van An',    '+84-901-001-001', 'nguyen.an@tms.local',    'VN-DL-001001', '2027-06-30', 'Active',    'truck-01'),
@@ -326,6 +361,19 @@ INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, curr
 ('acct-ledger-01', 'ledger_account', '111', 'Tiền mặt', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền mặt', 10),
 ('acct-ledger-02', 'ledger_account', '112', 'Tiền gửi ngân hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền gửi ngân hàng', 20),
 ('acct-ledger-03', 'ledger_account', '131', 'Phải thu khách hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Công nợ phải thu', 30);
+INSERT INTO accounting_entry_lines (
+  id, entry_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
+) VALUES
+('acct-line-01', 'acct-debit-01', 10, 'Cước vận chuyển tháng 7', 1, 'Khoản', 32600000, 0, 32600000),
+('acct-line-02', 'acct-debit-02', 10, 'Phụ phí giao hàng Nha Trang', 1, 'Khoản', 8400000, 0, 8400000),
+('acct-line-03', 'acct-debit-03', 10, 'Cước vận chuyển container', 1, 'Khoản', 17400000, 0, 17400000),
+('acct-line-04', 'acct-pay-01', 10, 'Chi phí nhiên liệu tuần 30', 1, 'Khoản', 12800000, 0, 12800000),
+('acct-line-05', 'acct-pay-02', 10, 'Phí ETC tháng 7', 1, 'Khoản', 6300000, 0, 6300000),
+('acct-line-06', 'acct-pay-03', 10, 'Bảo dưỡng xe đầu kéo', 1, 'Khoản', 9200000, 0, 9200000),
+('acct-line-07', 'acct-advance-01', 10, 'Tạm ứng chuyến công tác Hà Nội', 1, 'Khoản', 5000000, 0, 5000000),
+('acct-line-08', 'acct-advance-02', 10, 'Chi phí giao hàng liên tỉnh', 1, 'Khoản', 7500000, 0, 7500000),
+('acct-line-09', 'acct-settle-01', 10, 'Hoàn lại tạm ứng chưa sử dụng', 1, 'Khoản', 1200000, 0, 1200000),
+('acct-line-10', 'acct-settle-02', 10, 'Quyết toán chi phí chuyến xe', 1, 'Khoản', 6800000, 0, 6800000);
 
 INSERT INTO system_configs (id, kind, code, name, config_value, description, status, sort_order) VALUES
 ('sys-01', 'code_rule', 'ORDER', 'Mã đơn hàng', 'DH-{YYYY}-{SEQ:4}', 'Quy tắc sinh mã đơn hàng', 'Active', 10),

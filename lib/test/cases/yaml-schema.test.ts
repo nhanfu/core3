@@ -183,4 +183,40 @@ describe('YAML page schema', () => {
     expect(page.actions.at(-1)).not.toHaveProperty('table');
     expect(page.actions.at(-1)).not.toHaveProperty('body');
   });
+
+  it('validates chat workspace source and action references', () => {
+    const page = validPage() as any;
+    page.datasources.push({
+      id: 'messages',
+      permission: 'chat.read',
+      query: 'SELECT id, thread_id, body FROM chat_messages',
+    });
+    page.toolbar = [];
+    page.components = [{
+      type: 'ChatWorkspace',
+      source: 'orders',
+      message_source: 'messages',
+      send_action: 'send_message',
+      mark_read_action: 'mark_read',
+    }];
+    page.actions = [
+      {
+        id: 'send_message',
+        type: 'server',
+        action: 'chat.messages.send',
+        params: { content: '{row.content}' },
+        refresh: ['messages'],
+      },
+      {
+        id: 'mark_read',
+        type: 'server',
+        action: 'chat.threads.mark_read',
+        refresh: ['orders'],
+      },
+    ];
+
+    expect(() => validatePageDefinition(page)).not.toThrow();
+    page.components[0].message_source = 'missing';
+    expect(() => validatePageDefinition(page)).toThrow(/unknown datasource "missing"/);
+  });
 });

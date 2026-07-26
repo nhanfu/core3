@@ -149,7 +149,7 @@ export class DuckDbRepository {
   }
 
   async deleteRecord(table: string, id: any): Promise<void> {
-    if (table !== 'orders' && table !== 'quotes') {
+    if (table !== 'orders' && table !== 'quotes' && table !== 'accounting_entries') {
       await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
       return;
     }
@@ -158,8 +158,20 @@ export class DuckDbRepository {
       try {
         await runOnConnection(
           conn,
-          `DELETE FROM ${table === 'orders' ? 'order_lines' : 'quote_lines'}
-           WHERE ${table === 'orders' ? 'order_id' : 'quote_id'} = ?`,
+          `DELETE FROM ${
+            table === 'orders'
+              ? 'order_lines'
+              : table === 'quotes'
+                ? 'quote_lines'
+                : 'accounting_entry_lines'
+          }
+           WHERE ${
+             table === 'orders'
+               ? 'order_id'
+               : table === 'quotes'
+                 ? 'quote_id'
+                 : 'entry_id'
+           } = ?`,
           [id],
         );
         await runOnConnection(conn, `DELETE FROM ${table} WHERE id = ?`, [id]);
@@ -193,6 +205,177 @@ export class DuckDbRepository {
         event.detail || null,
       ],
     );
+  }
+
+  async createChatThread(
+    values: Record<string, unknown>,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    const actorId = String(actor.id || '');
+    const title = String(values.title || '').trim();
+    const requestedEmails = [...new Set(
+      String(values.participant_emails || '')
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean),
+    )];
+    if (!actorId) throw { status: 401, message: 'Authenticated user required' };
+    if (!title) throw { status: 400, message: 'title required' };
+    if (title.length > 160) throw { status: 400, message: 'title must be 160 characters or fewer' };
+
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const users = requestedEmails.length
+          ? await queryOnConnection(
+              conn,
+              `SELECT id, lower(email) AS email
+               FROM users
+               WHERE lower(email) IN (${requestedEmails.map(() => '?').join(', ')})`,
+              requestedEmails,
+            )
+          : [];
+        const foundEmails = new Set(users.map((user: any) => user.email));
+        const unknownEmails = requestedEmails.filter((email) => !foundEmails.has(email));
+        if (unknownEmails.length) {
+          throw {
+            status: 400,
+            message: `Unknown participant email: ${unknownEmails.join(', ')}`,
+          };
+        }
+
+        const participantIds = [...new Set([actorId, ...users.map((user: any) => String(user.id))])];
+        const threadId = crypto.randomUUID();
+        await runOnConnection(
+          conn,
+          `INSERT INTO chat_threads(id, title, thread_type, created_by)
+           VALUES(?,?,?,?)`,
+          [threadId, title, participantIds.length === 2 ? 'Direct' : 'Group', actorId],
+        );
+        for (const userId of participantIds) {
+          await runOnConnection(
+            conn,
+            `INSERT INTO chat_participants(thread_id, user_id, last_read_at)
+             VALUES(?,?,CURRENT_TIMESTAMP)`,
+            [threadId, userId],
+          );
+        }
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actorId,
+            actor.name,
+            'chat.threads.create',
+            'chat_threads',
+            threadId,
+            `Created chat thread ${title}`,
+          ],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return {
+          id: threadId,
+          title,
+          thread_type: participantIds.length === 2 ? 'Direct' : 'Group',
+          participant_count: participantIds.length,
+        };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async sendChatMessage(
+    threadId: string,
+    content: unknown,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    const actorId = String(actor.id || '');
+    const body = String(content || '').trim();
+    if (!actorId) throw { status: 401, message: 'Authenticated user required' };
+    if (!body) throw { status: 400, message: 'message content required' };
+    if (body.length > 4000) {
+      throw { status: 400, message: 'message content must be 4000 characters or fewer' };
+    }
+
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [thread] = await queryOnConnection(
+          conn,
+          `SELECT t.id, t.title
+           FROM chat_threads t
+           JOIN chat_participants p ON p.thread_id = t.id
+           WHERE t.id = ? AND p.user_id = ?`,
+          [threadId, actorId],
+        );
+        if (!thread) throw { status: 404, message: 'Chat thread not found' };
+
+        const messageId = crypto.randomUUID();
+        await runOnConnection(
+          conn,
+          `INSERT INTO chat_messages(id, thread_id, sender_id, body)
+           VALUES(?,?,?,?)`,
+          [messageId, threadId, actorId, body],
+        );
+        await runOnConnection(
+          conn,
+          'UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [threadId],
+        );
+        await runOnConnection(
+          conn,
+          `UPDATE chat_participants
+           SET last_read_at = CURRENT_TIMESTAMP
+           WHERE thread_id = ? AND user_id = ?`,
+          [threadId, actorId],
+        );
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actorId,
+            actor.name,
+            'chat.messages.send',
+            'chat_threads',
+            threadId,
+            `Sent message in ${thread.title}`,
+          ],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return {
+          id: messageId,
+          thread_id: threadId,
+          sender_id: actorId,
+          body,
+        };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async markChatThreadRead(threadId: string, userId: string): Promise<{ ok: true }> {
+    const participants = await this.query(
+      'SELECT thread_id FROM chat_participants WHERE thread_id = ? AND user_id = ?',
+      [threadId, userId],
+    );
+    if (!participants[0]) throw { status: 404, message: 'Chat thread not found' };
+    await this.run(
+      `UPDATE chat_participants
+       SET last_read_at = CURRENT_TIMESTAMP
+       WHERE thread_id = ? AND user_id = ?`,
+      [threadId, userId],
+    );
+    return { ok: true };
   }
 
   async transitionOrder(
@@ -380,11 +563,12 @@ export class DuckDbRepository {
 
   async mutateDocumentLine(
     config: {
-      parentTable: 'orders' | 'quotes';
-      lineTable: 'order_lines' | 'quote_lines';
-      parentKey: 'order_id' | 'quote_id';
-      label: 'Order' | 'Quote';
+      parentTable: 'orders' | 'quotes' | 'accounting_entries';
+      lineTable: 'order_lines' | 'quote_lines' | 'accounting_entry_lines';
+      parentKey: 'order_id' | 'quote_id' | 'entry_id';
+      label: 'Order' | 'Quote' | 'Financial document';
       hasCost: boolean;
+      totalField: 'total_amount' | 'amount';
     },
     operation: 'create' | 'update' | 'delete',
     parentId: string,
@@ -519,7 +703,8 @@ export class DuckDbRepository {
         } else {
           await runOnConnection(
             conn,
-            `UPDATE orders SET total_amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            `UPDATE ${config.parentTable}
+             SET ${config.totalField} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [Number(totals.amount || 0), parentId],
           );
         }
@@ -548,7 +733,7 @@ export class DuckDbRepository {
                 cost_amount: Number(totals.cost_amount || 0),
                 profit_amount: Number(totals.amount || 0) - Number(totals.cost_amount || 0),
               }
-            : { total_amount: Number(totals.amount || 0) },
+            : { [config.totalField]: Number(totals.amount || 0) },
         };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK').catch(() => {});

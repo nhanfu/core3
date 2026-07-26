@@ -120,6 +120,19 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
   ['ApprovalTimeline', new Set(['type', 'source', 'title', 'actor_field', 'action_field', 'detail_field', 'timestamp_field'])],
+  ['ChatWorkspace', new Set([
+    'type',
+    'id',
+    'source',
+    'message_source',
+    'page_size',
+    'message_page_size',
+    'send_action',
+    'mark_read_action',
+    'search_placeholder',
+    'empty_threads',
+    'empty_messages',
+  ])],
 ]);
 
 export class PageSchemaError extends Error {
@@ -326,6 +339,15 @@ function validateComponents(
     rejectUnknownKeys(component, allowedKeys, path, issues);
     if (component.source !== undefined) {
       requireSource(component.source, `${path}.source`, datasourceIds, options, issues);
+    }
+    if (component.type === 'ChatWorkspace') {
+      requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
+      for (const key of ['send_action', 'mark_read_action']) {
+        requireString(component[key], `${path}.${key}`, issues);
+        if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
+          issues.push(`${path}.${key} references unknown action "${component[key]}"`);
+        }
+      }
     }
 
     validateColumns(component.columns, `${path}.columns`, actionIds, issues);

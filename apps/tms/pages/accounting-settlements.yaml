@@ -36,6 +36,7 @@ components:
         label: ''
         sortable: false
         actions:
+          - { id: view_settlement, label: Chi tiết, variant: secondary }
           - { id: edit_settlement, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
           - { id: submit_settlement, label: Trình duyệt, variant: primary, show_if: "row.status === 'Draft'" }
           - { id: approve_settlement, label: Duyệt, variant: primary, show_if: "row.status === 'Pending Approval' && user.permissions.includes('accounting.approve')" }
@@ -50,7 +51,7 @@ actions:
     scope: settlement
     operation: insert
     refresh: [settlements]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - id: edit_settlement
     type: form
     title: Cập nhật hoàn ứng
@@ -59,7 +60,8 @@ actions:
     operation: update
     prefill: row
     refresh: [settlements]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: amount, label: Giá trị, type: number }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - { id: view_settlement, type: navigate, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: settlement, back: /accounting/settlements } }
   - { id: submit_settlement, type: server, action: accounting.settlements.submit_for_approval, confirm: 'Trình duyệt hoàn ứng {{row.code}}?', refresh: [settlements] }
   - { id: approve_settlement, type: server, action: accounting.settlements.approve, confirm: 'Duyệt hoàn ứng {{row.code}}?', refresh: [settlements] }
   - { id: reject_settlement, type: server, action: accounting.settlements.reject, confirm: 'Từ chối hoàn ứng {{row.code}}?', refresh: [settlements] }

@@ -37,6 +37,7 @@ components:
         label: ''
         sortable: false
         actions:
+          - { id: view_advance, label: Chi tiết, variant: secondary }
           - { id: edit_advance, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
           - { id: submit_advance, label: Trình duyệt, variant: primary, show_if: "row.status === 'Draft'" }
           - { id: approve_advance, label: Duyệt, variant: primary, show_if: "row.status === 'Pending Approval' && user.permissions.includes('accounting.approve')" }
@@ -51,7 +52,7 @@ actions:
     scope: advance
     operation: insert
     refresh: [advances]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - id: edit_advance
     type: form
     title: Cập nhật tạm ứng
@@ -60,7 +61,8 @@ actions:
     operation: update
     prefill: row
     refresh: [advances]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: amount, label: Giá trị, type: number }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - { id: view_advance, type: navigate, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: advance, back: /accounting/advances } }
   - { id: submit_advance, type: server, action: accounting.advances.submit_for_approval, confirm: 'Trình duyệt tạm ứng {{row.code}}?', refresh: [advances] }
   - { id: approve_advance, type: server, action: accounting.advances.approve, confirm: 'Duyệt tạm ứng {{row.code}}?', refresh: [advances] }
   - { id: reject_advance, type: server, action: accounting.advances.reject, confirm: 'Từ chối tạm ứng {{row.code}}?', refresh: [advances] }
