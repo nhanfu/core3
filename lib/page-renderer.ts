@@ -847,6 +847,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         columnChooser: def.column_chooser === true,
         rowNumbers: def.row_numbers === true,
         pageSizeOptions,
+        tree: def.tree ? { parentField: 'parent_id' } : undefined,
         onPageChange: async (page: number) => {
           const nextPage = Math.max(1, page);
           const currentPageSize = paginationState[sourceId]?.top || pageSize;

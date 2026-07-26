@@ -49,6 +49,8 @@ export interface DataGridOptions {
   onPageSizeChange?: (pageSize: number) => void;
   /** Optional drag-and-drop row ordering hook. */
   onRowReorder?: (fromRow: DataGridRow, toRow: DataGridRow) => void | Promise<void>;
+  /** Optional parent/child navigation for master-data trees. */
+  tree?: { parentField?: string };
 }
 
 /**
@@ -123,7 +125,22 @@ export class DataGrid extends BaseComponent {
 
   draw(container: HTMLElement) {
     this.children = [];
-    const rows = this.sortedRows((this.state.rows as DataGridRow[] | undefined) || []);
+    const allRows = this.sortedRows((this.state.rows as DataGridRow[] | undefined) || []);
+    const treeParentField = this.options.tree?.parentField || 'parent_id';
+    const collapsed = new Set(Array.isArray(this.state.collapsedTreeIds) ? this.state.collapsedTreeIds.map(String) : []);
+    const hiddenByCollapsedAncestor = (row: DataGridRow) => {
+      if (!this.options.tree) return false;
+      let parentId = row[treeParentField] == null ? '' : String(row[treeParentField]);
+      const seen = new Set<string>();
+      while (parentId && !seen.has(parentId)) {
+        seen.add(parentId);
+        if (collapsed.has(parentId)) return true;
+        const parent = allRows.find(candidate => this.rowId(candidate, 0) === parentId);
+        parentId = parent?.[treeParentField] == null ? '' : String(parent[treeParentField]);
+      }
+      return false;
+    };
+    const rows = allRows.filter(row => !hiddenByCollapsedAncestor(row));
     const meta = (this.state.meta as Record<string, unknown> | undefined) || {};
     const actions = (this.state.actions as DataGridAction[] | undefined) || [];
     const selectable = this.options.selectable || this.state.selectable === true;
@@ -299,6 +316,25 @@ export class DataGrid extends BaseComponent {
           } else {
             const text = column.format ? column.format(value, row) : value == null || value === '' ? '—' : String(value);
             cell.textContent = text;
+          }
+          if (this.options.tree && column === visibleColumns[0]) {
+            const id = this.rowId(row, index);
+            const hasChildren = allRows.some(candidate => String(candidate[treeParentField] ?? '') === id);
+            if (hasChildren) {
+              const toggle = document.createElement('button');
+              const isCollapsed = collapsed.has(id);
+              toggle.type = 'button';
+              toggle.className = 'mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-100';
+              toggle.setAttribute('aria-label', isCollapsed ? 'Expand row' : 'Collapse row');
+              toggle.setAttribute('aria-expanded', String(!isCollapsed));
+              toggle.textContent = isCollapsed ? '+' : '-';
+              toggle.addEventListener('click', () => {
+                const next = new Set(collapsed);
+                isCollapsed ? next.delete(id) : next.add(id);
+                this.setState({ collapsedTreeIds: [...next] });
+              });
+              cell.prepend(toggle);
+            }
           }
         }
       });
