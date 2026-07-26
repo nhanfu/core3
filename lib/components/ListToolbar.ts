@@ -30,6 +30,7 @@ export type ListToolbarDefinition = {
     from_label?: string;
     to_label?: string;
     presets?: Array<'today' | 'week' | 'month' | 'quarter' | 'year' | 'all'>;
+    preset_style?: 'select' | 'segmented';
   };
   filter_sources?: string[];
 };
@@ -100,32 +101,50 @@ export class ListToolbar extends BaseComponent {
       range.className = 'flex flex-wrap items-center gap-2';
       const dateRange = this.def.date_range;
       if (dateRange.presets?.length) {
-        const select = document.createElement('select');
-        select.className = 'h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
-        select.setAttribute('aria-label', 'Khoảng thời gian');
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Khoảng thời gian';
-        select.append(placeholder);
         const labels: Record<string, string> = {
           today: 'Hôm nay', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', all: 'Tất cả thời gian',
         };
-        for (const preset of dateRange.presets) {
-          const option = document.createElement('option');
-          option.value = preset;
-          option.textContent = labels[preset] || preset;
-          select.append(option);
-        }
-        select.addEventListener('change', () => {
-          const value = select.value as typeof dateRange.presets[number] | '';
-          if (!value) return;
+        const submitPreset = (value: typeof dateRange.presets[number]) => {
           const dates = this.resolvePreset(value);
           this.submit('date-range', {
             [(dateRange.from_field || 'from_date')]: dates.from,
             [(dateRange.to_field || 'to_date')]: dates.to,
           });
-        });
-        range.append(select);
+        };
+        if (dateRange.preset_style === 'segmented') {
+          const segments = document.createElement('div');
+          segments.className = 'flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1';
+          segments.setAttribute('aria-label', 'Khoảng thời gian');
+          for (const preset of dateRange.presets) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.dataset.datePreset = preset;
+            button.className = 'rounded px-2.5 py-1.5 text-sm text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700';
+            button.textContent = labels[preset] || preset;
+            button.addEventListener('click', () => submitPreset(preset));
+            segments.append(button);
+          }
+          range.append(segments);
+        } else {
+          const select = document.createElement('select');
+          select.className = 'h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+          select.setAttribute('aria-label', 'Khoảng thời gian');
+          const placeholder = document.createElement('option');
+          placeholder.value = '';
+          placeholder.textContent = 'Khoảng thời gian';
+          select.append(placeholder);
+          for (const preset of dateRange.presets) {
+            const option = document.createElement('option');
+            option.value = preset;
+            option.textContent = labels[preset] || preset;
+            select.append(option);
+          }
+          select.addEventListener('change', () => {
+            const value = select.value as typeof dateRange.presets[number] | '';
+            if (value) submitPreset(value);
+          });
+          range.append(select);
+        }
       }
       const fields = [
         { key: dateRange.from_field || 'from_date', label: dateRange.from_label || 'Từ ngày' },

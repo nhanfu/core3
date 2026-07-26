@@ -84,7 +84,7 @@ const ROW_ACTION_KEYS = new Set(['id', 'label', 'variant', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'color']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
-const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets']);
+const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
@@ -493,6 +493,9 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
         }
       });
     }
+  }
+  if (value.preset_style !== undefined && value.preset_style !== 'select' && value.preset_style !== 'segmented') {
+    issues.push(`${path}.preset_style must be select or segmented`);
   }
 }
 

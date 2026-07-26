@@ -117,6 +117,21 @@ describe('ListToolbar', () => {
     expect(submit).toHaveBeenCalledWith('date-range', { from_date: '', to_date: '' });
   });
 
+  it('renders segmented period presets when requested', () => {
+    const component = new ListToolbar('toolbar', {}, {
+      search: false,
+      date_range: { presets: ['month', 'all'], preset_style: 'segmented' },
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+    const button = container.querySelector<HTMLButtonElement>('[data-date-preset="month"]')!;
+
+    button.click();
+
+    expect(submit).toHaveBeenCalledWith('date-range', expect.objectContaining({ from_date: expect.any(String) }));
+    expect(container.querySelector('select[aria-label="Khoảng thời gian"]')).toBeNull();
+  });
+
   it('emits typed filter values from declarative selects', () => {
     const component = new ListToolbar('toolbar', {}, {
       search: false,
