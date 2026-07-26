@@ -17,7 +17,7 @@ components:
   - type: ListToolbar
     source: crm_stage_kpis
     filter_sources: [crm_stage_kpis, crm_quote_kpis]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     actions: [{ id: crm_stage_kpis.export, label: 'Xuất CSV', icon: '↓' }]
   - { type: Chart, source: crm_quote_kpis, title: Báo giá theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: '#0f766e' }
   - type: DataGrid

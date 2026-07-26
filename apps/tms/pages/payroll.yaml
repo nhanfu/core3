@@ -50,7 +50,7 @@ components:
   - type: ListToolbar
     source: payroll
     filter_sources: [payroll, payroll_totals]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ tháng', to_label: 'Đến tháng' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ tháng', to_label: 'Đến tháng', presets: [today, week, month, quarter, year, all] }
     filter_field: q
     search: { label: Tìm kiếm bảng lương, placeholder: 'Tìm mã bảng lương, mã hoặc tên nhân viên...' }
     actions: [{ id: payroll.export, label: 'Xuất CSV', icon: '↓' }]

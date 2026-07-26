@@ -25,7 +25,7 @@ components:
   - type: ListToolbar
     source: crm_recent_quotes
     filter_sources: [crm_kpis, crm_quote_pipeline, crm_recent_quotes]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     actions: [{ id: crm_recent_quotes.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: crm_kpis

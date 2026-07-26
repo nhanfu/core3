@@ -45,7 +45,7 @@ components:
   - type: ListToolbar
     source: shift_assignments
     filter_sources: [shift_assignments]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     filter_field: assignment_q
     search: { label: Tìm phân ca, placeholder: 'Tìm nhân viên...' }
     actions: [{ id: shift_assignments.export, label: 'Xuất CSV', icon: '↓' }]

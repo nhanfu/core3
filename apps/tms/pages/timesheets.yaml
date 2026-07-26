@@ -44,7 +44,7 @@ components:
   - type: ListToolbar
     source: timesheets
     filter_sources: [timesheets, timesheet_totals]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     filter_field: q
     search: { label: Tìm kiếm chấm công, placeholder: 'Tìm mã, tên nhân viên hoặc ngày công...' }
     actions: [{ id: timesheets.export, label: 'Xuất CSV', icon: '↓' }]

@@ -34,7 +34,7 @@ components:
   - type: ListToolbar
     source: payment_request_summary
     filter_sources: [payment_request_summary, payment_request_totals]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' }
     actions: [{ id: payment_request_summary.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
