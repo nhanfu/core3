@@ -22,12 +22,14 @@ components:
   - type: DataGrid
     source: vehicle_maintenance
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có lịch bảo dưỡng }
     columns: [{ field: service_type, label: Hạng mục }, { field: status, label: Trạng thái }, { field: scheduled_date, label: Dự kiến }, { field: completed_date, label: Hoàn thành }, { field: cost, label: Chi phí, align: right }, { field: notes, label: Ghi chú }]
   - type: DataGrid
     source: vehicle_trips
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có chuyến xe }
     columns: [{ field: trip_number, label: Chuyến }, { field: origin, label: Điểm đi }, { field: destination, label: Điểm đến }, { field: departure_time, label: Khởi hành }, { field: status, label: Trạng thái }]
