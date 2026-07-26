@@ -134,6 +134,29 @@ export class DuckDbRepository {
     return perms.map((p: any) => p.permission_key);
   }
 
+  async mutateRolePermission(operation: 'grant' | 'revoke', roleId: string, permissionKey: string, action: string, actor: { id?: string | null; name: string }) {
+    if (!/^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/.test(permissionKey)) throw { status: 400, message: 'Invalid permission key' };
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [role] = await queryOnConnection(conn, 'SELECT id, name FROM roles WHERE id = ?', [roleId]);
+        if (!role) throw { status: 404, message: 'Role not found' };
+        if (operation === 'grant') {
+          await runOnConnection(conn, 'INSERT INTO permissions(id, role_id, permission_key) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = ? AND permission_key = ?)', [crypto.randomUUID(), roleId, permissionKey, roleId, permissionKey]);
+        } else {
+          await runOnConnection(conn, 'DELETE FROM permissions WHERE role_id = ? AND permission_key = ?', [roleId, permissionKey]);
+        }
+        await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'roles', roleId, `${operation === 'grant' ? 'Cấp' : 'Thu hồi'} quyền ${permissionKey}`]);
+        const rows = await queryOnConnection(conn, 'SELECT permission_key FROM permissions WHERE role_id = ? ORDER BY permission_key', [roleId]);
+        await runOnConnection(conn, 'COMMIT');
+        return { role_id: roleId, permissions: rows.map((row: any) => row.permission_key) };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK');
+        throw error;
+      }
+    });
+  }
+
   async querySource(source: { query: string; single?: boolean }, params: Record<string, any> = {}, skip = 0, top = 25): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
     if (source.single) {

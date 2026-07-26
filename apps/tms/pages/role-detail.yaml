@@ -1,0 +1,42 @@
+title: Chi tiết vai trò
+page: { id: role-detail, auth: { require: [settings.read] } }
+datasources:
+  - id: role_detail
+    single: true
+    permission: settings.read
+    query: "SELECT id, name, description FROM roles WHERE id = :id"
+  - id: role_permissions
+    single: false
+    permission: settings.read
+    query: |
+      SELECT catalog.permission_key, CASE WHEN p.id IS NULL THEN false ELSE true END AS enabled,
+        CASE WHEN p.id IS NULL THEN 'Chưa cấp' ELSE 'Đã cấp' END AS status_label
+      FROM (VALUES
+        ('orders.read'), ('orders.write'), ('orders.approve'), ('crm.read'), ('crm.write'),
+        ('accounting.read'), ('accounting.write'), ('accounting.approve'), ('accounting.pay'),
+        ('hr.read'), ('hr.write'), ('hr.approve'), ('hr.pay'), ('fleet.read'), ('fleet.write'),
+        ('dispatch.read'), ('dispatch.write'), ('system.read'), ('system.write'), ('settings.read'), ('settings.write'), ('chat.read'), ('chat.write')
+      ) AS catalog(permission_key)
+      LEFT JOIN permissions p ON p.permission_key = catalog.permission_key AND p.role_id = :id
+      ORDER BY catalog.permission_key
+components:
+  - { type: DocumentSummary, source: role_detail, title_field: name, subtitle_field: description, columns: [{ field: id, label: Mã vai trò }] }
+  - type: DataGrid
+    source: role_permissions
+    page_size: 50
+    row_key: permission_key
+    columns:
+      - { field: permission_key, label: Quyền }
+      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { 'Đã cấp': green, 'Chưa cấp': neutral } }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: grant_permission, label: Cấp quyền, variant: primary, show_if: "!row.enabled && user.permissions.includes('settings.write')" }
+          - { id: revoke_permission, label: Thu hồi, variant: danger, show_if: "row.enabled && user.permissions.includes('settings.write')" }
+toolbar:
+  - { id: back_roles, label: '← Danh sách vai trò', variant: secondary, action: back_roles }
+actions:
+  - { id: back_roles, type: navigate, navigate_to: /org/roles }
+  - { id: grant_permission, type: server, action: settings.roles.grant_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }
+  - { id: revoke_permission, type: server, action: settings.roles.revoke_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }

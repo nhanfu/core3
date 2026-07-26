@@ -26,3 +26,9 @@ components:
       - { field: id, label: Mã HT, sortable: true }
       - { field: name, label: Vai trò, type: PrimaryEntityCell, secondary: description }
       - { field: permission_count, label: Số quyền, align: right }
+      - field: actions
+        label: ''
+        sortable: false
+        actions: [{ id: view_role, label: Chi tiết, variant: primary }]
+actions:
+  - { id: view_role, type: navigate, navigate_to: /org/roles/detail, params: { id: '{row.id}' } }
