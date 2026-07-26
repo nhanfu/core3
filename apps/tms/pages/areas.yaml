@@ -7,9 +7,13 @@ datasources:
     single: false
     permission: dispatch.read
     query: |
-      SELECT a.*, CASE a.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM areas a
+      SELECT a.*, p.name AS parent_name, CASE a.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM areas a LEFT JOIN areas p ON p.id = a.parent_id
       WHERE (NULLIF(:status, '') IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.region ILIKE '%' || :q || '%')
       ORDER BY a.created_at DESC, a.name
+  - id: area_parent_lookup
+    single: false
+    permission: dispatch.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM areas ORDER BY name"
 toolbar:
   - { id: add_area_btn, label: '+ Thêm khu vực', variant: primary, permission: dispatch.write, action: add_area }
 components:
@@ -32,6 +36,7 @@ components:
       - { field: id, label: Mã HT, sortable: true }
       - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
       - { field: region, label: Vùng miền }
+      - { field: parent_name, label: Khu vực cha }
       - { field: description, label: Ghi chú }
       - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
       - { field: created_at, label: Ngày giờ tạo }
@@ -48,7 +53,7 @@ actions:
     table: areas
     operation: insert
     refresh: [areas]
-    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: parent_id, label: Khu vực cha, type: select, options_source: area_parent_lookup }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
   - id: edit_area
     type: form
     title: Cập nhật khu vực
@@ -56,5 +61,5 @@ actions:
     operation: update
     prefill: row
     refresh: [areas]
-    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: parent_id, label: Khu vực cha, type: select, options_source: area_parent_lookup }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
   - { id: delete_area, type: delete, confirm: 'Xóa khu vực {{row.name}}?', table: areas, refresh: [areas] }
