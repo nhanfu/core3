@@ -363,6 +363,7 @@ export async function renderPage(config: any, { container = document.body }: { c
             table: actionDef.table,
             action: actionDef.operation,
             id: row?.id ?? null,
+            scope: actionDef.scope,
             changes,
           });
           closeModal();

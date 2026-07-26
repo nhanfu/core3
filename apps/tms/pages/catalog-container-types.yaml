@@ -1,0 +1,86 @@
+title: Loại container
+
+page:
+  id: catalog-container-types
+  auth:
+    require: [catalog.read]
+
+datasources:
+  - id: container_types
+    single: false
+    permission: catalog.read
+    query: |
+      SELECT id, code, name, description, status, sort_order, created_at
+      FROM master_data
+      WHERE kind = 'container_type'
+        AND (:status IS NULL OR status = :status)
+        AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%')
+      ORDER BY sort_order, code
+
+toolbar:
+  - { id: add_container_type_btn, label: '+ Thêm loại container', variant: primary, permission: catalog.write, action: add_container_type }
+
+components:
+  - type: ListToolbar
+    source: container_types
+    filter_field: q
+    search: { label: Tìm kiếm loại container, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+  - type: StatusTabs
+    source: container_types
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Đang sử dụng }
+      - { id: Inactive, label: Ngưng sử dụng }
+  - type: DataGrid
+    source: container_types
+    page_size: 20
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có loại container, description: Tạo loại container đầu tiên để sử dụng trong điều hành. }
+    columns:
+      - { field: code, label: Mã, sortable: true }
+      - { field: name, label: Tên loại container, type: PrimaryEntityCell, secondary: description }
+      - { field: sort_order, label: Thứ tự, align: right }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
+      - { field: created_at, label: Ngày tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_container_type, label: Sửa, variant: ghost }
+          - { id: delete_container_type, label: Xóa, variant: danger }
+
+actions:
+  - id: add_container_type
+    type: form
+    title: Thêm loại container
+    table: master_data
+    scope: container_type
+    operation: insert
+    refresh: [container_types]
+    fields:
+      - { field: code, label: Mã, type: text, required: true }
+      - { field: name, label: Tên loại container, type: text, required: true }
+      - { field: description, label: Mô tả, type: textarea }
+      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+  - id: edit_container_type
+    type: form
+    title: Cập nhật loại container
+    table: master_data
+    scope: container_type
+    operation: update
+    prefill: row
+    refresh: [container_types]
+    fields:
+      - { field: code, label: Mã, type: text, required: true }
+      - { field: name, label: Tên loại container, type: text, required: true }
+      - { field: description, label: Mô tả, type: textarea }
+      - { field: sort_order, label: Thứ tự, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+  - { id: delete_container_type, type: delete, table: master_data, scope: container_type, confirm: 'Xóa loại container {{row.name}}?', refresh: [container_types] }

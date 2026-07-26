@@ -161,6 +161,12 @@ async function initDb(): Promise<void> {
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-dp-06', 'role-dispatcher', 'orders.write'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'orders.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-17', 'role-admin', 'catalog.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'catalog.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-18', 'role-admin', 'catalog.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'catalog.write');
   `);
 }
 
@@ -173,6 +179,12 @@ const SOURCE_FILES = [
   'pages/customers.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
+  'pages/catalog-container-types.yaml',
+  'pages/catalog-vehicle-types.yaml',
+  'pages/catalog-units.yaml',
+  'pages/catalog-cargo-types.yaml',
+  'pages/catalog-fee-types.yaml',
+  'pages/catalog-currencies.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
@@ -225,6 +237,12 @@ const TABLE_REGISTRY = {
     permission: 'crm.write',
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'],
+  },
+  master_data: {
+    permission: 'catalog.write',
+    timestamps: true,
+    fields: ['code', 'name', 'description', 'symbol', 'decimals', 'status', 'sort_order'],
+    scopes: ['container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency'],
   },
   branches:     { permission: 'settings.write',     timestamps: true  },
   users:        { permission: 'settings.write',     timestamps: true  },
@@ -283,13 +301,21 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
   // ── POST /api/patch ───────────────────────────────────────────────────────
   if (pathname === '/api/patch' && method === 'POST') {
     const body = await req.json() as any;
-    const { table, action, id, changes = [] } = body;
+    const { table, action, id, changes = [], scope } = body;
 
     const tbl = TABLE_REGISTRY[table as keyof typeof TABLE_REGISTRY];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);
     if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
       return apiError(400, 'Invalid field for this resource');
+    }
+    if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
+      return apiError(400, 'Invalid resource scope');
+    }
+
+    if (table === 'master_data' && action !== 'insert') {
+      const existing = await repository.query('SELECT kind FROM master_data WHERE id = ?', [id]);
+      if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
     }
 
     // ── insert ──────────────────────────────────────────────────────────────
@@ -300,7 +326,10 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
 
       // Generic insert
       if (changes.length === 0) return apiError(400, 'No fields to insert');
-      return json(await repository.createRecord(table, changes), 201);
+      const scopedChanges = table === 'master_data'
+        ? [{ field: 'kind', value: scope }, ...changes]
+        : changes;
+      return json(await repository.createRecord(table, scopedChanges), 201);
     }
 
     // ── update ──────────────────────────────────────────────────────────────

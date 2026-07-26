@@ -1,0 +1,92 @@
+title: Tiền tệ
+
+page:
+  id: catalog-currencies
+  auth:
+    require: [catalog.read]
+
+datasources:
+  - id: currencies
+    single: false
+    permission: catalog.read
+    query: |
+      SELECT id, code, name, description, symbol, decimals, status, sort_order, created_at
+      FROM master_data
+      WHERE kind = 'currency'
+        AND (:status IS NULL OR status = :status)
+        AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR symbol ILIKE '%' || :q || '%')
+      ORDER BY sort_order, code
+
+toolbar:
+  - { id: add_currency_btn, label: '+ Thêm tiền tệ', variant: primary, permission: catalog.write, action: add_currency }
+
+components:
+  - type: ListToolbar
+    source: currencies
+    filter_field: q
+    search: { label: Tìm kiếm tiền tệ, placeholder: 'Tìm mã, tên hoặc ký hiệu...' }
+  - type: StatusTabs
+    source: currencies
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Đang sử dụng }
+      - { id: Inactive, label: Ngưng sử dụng }
+  - type: DataGrid
+    source: currencies
+    page_size: 20
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có tiền tệ, description: Tạo tiền tệ đầu tiên để sử dụng trong báo giá. }
+    columns:
+      - { field: code, label: Mã, sortable: true }
+      - { field: name, label: Tiền tệ, type: PrimaryEntityCell, secondary: description }
+      - { field: symbol, label: Ký hiệu, align: center }
+      - { field: decimals, label: Số lẻ, align: right }
+      - { field: sort_order, label: Thứ tự, align: right }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
+      - { field: created_at, label: Ngày tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_currency, label: Sửa, variant: ghost }
+          - { id: delete_currency, label: Xóa, variant: danger }
+
+actions:
+  - id: add_currency
+    type: form
+    title: Thêm tiền tệ
+    table: master_data
+    scope: currency
+    operation: insert
+    refresh: [currencies]
+    fields:
+      - { field: code, label: Mã ISO, type: text, required: true }
+      - { field: name, label: Tên tiền tệ, type: text, required: true }
+      - { field: symbol, label: Ký hiệu, type: text }
+      - { field: decimals, label: Số chữ số lẻ, type: number, default: 2 }
+      - { field: description, label: Mô tả, type: textarea }
+      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+  - id: edit_currency
+    type: form
+    title: Cập nhật tiền tệ
+    table: master_data
+    scope: currency
+    operation: update
+    prefill: row
+    refresh: [currencies]
+    fields:
+      - { field: code, label: Mã ISO, type: text, required: true }
+      - { field: name, label: Tên tiền tệ, type: text, required: true }
+      - { field: symbol, label: Ký hiệu, type: text }
+      - { field: decimals, label: Số chữ số lẻ, type: number }
+      - { field: description, label: Mô tả, type: textarea }
+      - { field: sort_order, label: Thứ tự, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+  - { id: delete_currency, type: delete, table: master_data, scope: currency, confirm: 'Xóa tiền tệ {{row.name}}?', refresh: [currencies] }

@@ -29,7 +29,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-13', 'role-admin', 'crm.read'),
 ('perm-adm-14', 'role-admin', 'crm.write'),
 ('perm-adm-15', 'role-admin', 'orders.read'),
-('perm-adm-16', 'role-admin', 'orders.write');
+('perm-adm-16', 'role-admin', 'orders.write'),
+('perm-adm-17', 'role-admin', 'catalog.read'),
+('perm-adm-18', 'role-admin', 'catalog.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -147,6 +149,27 @@ INSERT INTO orders (id, order_number, customer_name, customer_legal_name, order_
 ('order-10', 'DH-2026-0010', 'Công ty CP Nông sản Miền Tây', 'Mien Tay Agriculture JSC', '2026-07-20', 'Approved', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 2, 59300000, 'Admin User', NULL),
 ('order-11', 'DH-2026-0011', 'Công ty TNHH Gia Phúc', 'Gia Phuc Co., Ltd.', '2026-07-20', 'Cancelled', 'Hàng lẻ', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 0, 7600000, 'Admin User', 'Khách hàng hủy đơn'),
 ('order-12', 'DH-2026-0012', 'Công ty CP Phú Mỹ', 'Phu My JSC', '2026-07-19', 'Cancelled', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 0, 16800000, 'Admin User', 'Không đủ phương tiện');
+
+-- ── Catalog master data ─────────────────────────────────────────────────────
+INSERT INTO master_data (id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES
+('catalog-ct-01', 'container_type', '20GP', 'Container khô 20 feet', 'Container bách hóa tiêu chuẩn 20 feet', NULL, NULL, 'Active', 10),
+('catalog-ct-02', 'container_type', '40GP', 'Container khô 40 feet', 'Container bách hóa tiêu chuẩn 40 feet', NULL, NULL, 'Active', 20),
+('catalog-ct-03', 'container_type', '40HC', 'Container cao 40 feet', 'Container high-cube 40 feet', NULL, NULL, 'Active', 30),
+('catalog-vt-01', 'vehicle_type', 'SEMI', 'Đầu kéo', 'Xe đầu kéo container', NULL, NULL, 'Active', 10),
+('catalog-vt-02', 'vehicle_type', 'BOX', 'Xe thùng', 'Xe tải thùng kín', NULL, NULL, 'Active', 20),
+('catalog-vt-03', 'vehicle_type', 'FLATBED', 'Xe sàn', 'Xe tải sàn chở hàng cồng kềnh', NULL, NULL, 'Active', 30),
+('catalog-unit-01', 'unit', 'KG', 'Kilogram', 'Đơn vị khối lượng', NULL, NULL, 'Active', 10),
+('catalog-unit-02', 'unit', 'TON', 'Tấn', 'Một nghìn kilogram', NULL, NULL, 'Active', 20),
+('catalog-unit-03', 'unit', 'CBM', 'Mét khối', 'Đơn vị thể tích', NULL, NULL, 'Active', 30),
+('catalog-cargo-01', 'cargo_type', 'GENERAL', 'Hàng tổng hợp', 'Hàng bách hóa thông thường', NULL, NULL, 'Active', 10),
+('catalog-cargo-02', 'cargo_type', 'REEFER', 'Hàng lạnh', 'Hàng cần kiểm soát nhiệt độ', NULL, NULL, 'Active', 20),
+('catalog-cargo-03', 'cargo_type', 'HAZMAT', 'Hàng nguy hiểm', 'Yêu cầu quy trình vận chuyển riêng', NULL, NULL, 'Active', 30),
+('catalog-fee-01', 'fee_type', 'FREIGHT', 'Cước vận chuyển', 'Phí vận chuyển cơ bản', NULL, NULL, 'Active', 10),
+('catalog-fee-02', 'fee_type', 'LOADING', 'Phí bốc xếp', 'Phí bốc dỡ hàng hóa', NULL, NULL, 'Active', 20),
+('catalog-fee-03', 'fee_type', 'WAITING', 'Phí chờ', 'Phí chờ xe hoặc hàng', NULL, NULL, 'Active', 30),
+('catalog-currency-01', 'currency', 'VND', 'Việt Nam đồng', 'Đồng tiền hạch toán mặc định', '₫', 0, 'Active', 10),
+('catalog-currency-02', 'currency', 'USD', 'Đô la Mỹ', 'United States dollar', '$', 2, 'Active', 20),
+('catalog-currency-03', 'currency', 'EUR', 'Euro', 'European euro', '€', 2, 'Active', 30);
 
 -- ── Maintenance ───────────────────────────────────────────────────────────────
 INSERT INTO maintenance (id, truck_id, service_type, status, scheduled_date, completed_date, technician_id, cost, notes) VALUES

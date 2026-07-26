@@ -133,6 +133,21 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS master_data (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind VARCHAR NOT NULL CHECK (kind IN ('container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency')),
+  code VARCHAR NOT NULL,
+  name VARCHAR NOT NULL,
+  description VARCHAR,
+  symbol VARCHAR,
+  decimals INTEGER,
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(kind, code)
+);
+
 CREATE TABLE IF NOT EXISTS maintenance (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   truck_id VARCHAR NOT NULL,

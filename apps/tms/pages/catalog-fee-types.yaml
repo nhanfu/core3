@@ -1,0 +1,86 @@
+title: Loại phí
+
+page:
+  id: catalog-fee-types
+  auth:
+    require: [catalog.read]
+
+datasources:
+  - id: fee_types
+    single: false
+    permission: catalog.read
+    query: |
+      SELECT id, code, name, description, status, sort_order, created_at
+      FROM master_data
+      WHERE kind = 'fee_type'
+        AND (:status IS NULL OR status = :status)
+        AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%')
+      ORDER BY sort_order, code
+
+toolbar:
+  - { id: add_fee_type_btn, label: '+ Thêm loại phí', variant: primary, permission: catalog.write, action: add_fee_type }
+
+components:
+  - type: ListToolbar
+    source: fee_types
+    filter_field: q
+    search: { label: Tìm kiếm loại phí, placeholder: 'Tìm mã, tên hoặc mô tả...' }
+  - type: StatusTabs
+    source: fee_types
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Đang sử dụng }
+      - { id: Inactive, label: Ngưng sử dụng }
+  - type: DataGrid
+    source: fee_types
+    page_size: 20
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có loại phí, description: Tạo loại phí đầu tiên để sử dụng trong báo giá và thanh toán. }
+    columns:
+      - { field: code, label: Mã, sortable: true }
+      - { field: name, label: Loại phí, type: PrimaryEntityCell, secondary: description }
+      - { field: sort_order, label: Thứ tự, align: right }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
+      - { field: created_at, label: Ngày tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_fee_type, label: Sửa, variant: ghost }
+          - { id: delete_fee_type, label: Xóa, variant: danger }
+
+actions:
+  - id: add_fee_type
+    type: form
+    title: Thêm loại phí
+    table: master_data
+    scope: fee_type
+    operation: insert
+    refresh: [fee_types]
+    fields:
+      - { field: code, label: Mã, type: text, required: true }
+      - { field: name, label: Loại phí, type: text, required: true }
+      - { field: description, label: Mô tả, type: textarea }
+      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+  - id: edit_fee_type
+    type: form
+    title: Cập nhật loại phí
+    table: master_data
+    scope: fee_type
+    operation: update
+    prefill: row
+    refresh: [fee_types]
+    fields:
+      - { field: code, label: Mã, type: text, required: true }
+      - { field: name, label: Loại phí, type: text, required: true }
+      - { field: description, label: Mô tả, type: textarea }
+      - { field: sort_order, label: Thứ tự, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+  - { id: delete_fee_type, type: delete, table: master_data, scope: fee_type, confirm: 'Xóa loại phí {{row.name}}?', refresh: [fee_types] }
