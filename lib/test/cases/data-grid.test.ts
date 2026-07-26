@@ -179,6 +179,21 @@ describe('DataGrid', () => {
     expect(grid.state.rows).toEqual(rows);
   });
 
+  it('renders page-size choices and reports a server-backed size change', () => {
+    const onPageSizeChange = vi.fn();
+    const grid = new DataGrid('orders', {
+      rows,
+      meta: { total: 120, page: 1, pageSize: 50 },
+    }, columns, { pageSizeOptions: [10, 50, 100], onPageSizeChange });
+    const container = mount(grid);
+    const select = container.querySelector<HTMLSelectElement>('select[aria-label="Số dòng"]')!;
+
+    expect(select.value).toBe('50');
+    select.value = '100';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(onPageSizeChange).toHaveBeenCalledWith(100);
+  });
+
   it('supports declarative column visibility without losing the remaining columns', async () => {
     const grid = new DataGrid('orders', { rows }, columns, { columnChooser: true });
     const container = mount(grid);

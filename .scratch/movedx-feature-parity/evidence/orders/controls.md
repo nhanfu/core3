@@ -42,6 +42,7 @@ be recaptured from the read-only tenant before final visual-parity signoff.
   approved, and cancelled orders.
 - [x] Shared DataGrid keeps list rows dense with single-line truncation for long
   customer, route, and metadata cells while retaining horizontal overflow.
+- [x] Pagination defaults to 50 rows and offers server-backed 10/25/50/100 page-size choices.
 
 ## Local evidence
 

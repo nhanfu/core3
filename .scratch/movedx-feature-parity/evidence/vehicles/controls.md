@@ -15,6 +15,7 @@
 - Open `truck-02` and verify the assigned driver, maintenance entry, and trip history.
 - Toggle list and detail table column choosers without losing the active route.
 - Edit capacity/status and confirm the list/detail relationship refreshes.
+- Pagination defaults to 50 rows and offers server-backed 10/25/50/100 page-size choices.
 
 ## Responsive check
 

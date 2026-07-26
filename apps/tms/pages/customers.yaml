@@ -60,7 +60,8 @@ components:
       - { id: Customer, label: Khách hàng }
   - type: DataGrid
     source: customers
-    page_size: 10
+    page_size: 50
+    page_size_options: [10, 25, 50, 100]
     column_chooser: true
     row_key: id
     selectable: true

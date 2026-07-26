@@ -43,6 +43,9 @@ export interface DataGridOptions {
   onSelectionChange?: (selectedIds: string[]) => void;
   /** The renderer owns fetching; DataGrid only requests a different page. */
   onPageChange?: (page: number) => void;
+  /** Optional server-backed page-size choices shown in the footer. */
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 /**
@@ -267,8 +270,27 @@ export class DataGrid extends BaseComponent {
       html.take(summary).span.text(`${start}–${end} of ${total}`);
 
       const pages = Math.max(1, Math.ceil(total / pageSize));
+      const controls = html.take(summary).div.className('inline-flex items-center gap-2').getContext();
+      if (this.options.pageSizeOptions?.length) {
+        html.take(controls).span.className('text-xs text-gray-500').text('Số dòng');
+        const select = html.take(controls).select
+          .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700')
+          .attr('aria-label', 'Số dòng')
+          .getContext() as HTMLSelectElement;
+        for (const optionValue of this.options.pageSizeOptions) {
+          const option = document.createElement('option');
+          option.value = String(optionValue);
+          option.textContent = String(optionValue);
+          option.selected = optionValue === pageSize;
+          select.append(option);
+        }
+        select.value = String(pageSize);
+        select.addEventListener('change', () => {
+          const next = Number(select.value);
+          if (Number.isFinite(next) && next > 0) this.options.onPageSizeChange?.(next);
+        });
+      }
       if (pages > 1) {
-        const controls = html.take(summary).div.className('inline-flex items-center gap-1').getContext();
         const addButton = (label: string, targetPage: number, disabled: boolean, ariaLabel: string) => {
           const button = html.take(controls).button
             .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50')

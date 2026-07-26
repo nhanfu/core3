@@ -638,6 +638,9 @@ export async function renderPage(config: any, { container = document.body }: { c
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
     const pageSize = def.page_size || 25;
+    const pageSizeOptions = (def.page_size_options || [])
+      .map(Number)
+      .filter((value: number) => Number.isFinite(value) && value > 0);
     const columns = (def.columns || []).map((column: any, index: number) => ({
       id: column.id || column.field || `column-${index}`,
       field: column.field,
@@ -715,15 +718,26 @@ export async function renderPage(config: any, { container = document.body }: { c
         rowKey: def.row_key || 'id',
         selectable: !!def.selectable,
         columnChooser: def.column_chooser === true,
+        pageSizeOptions,
         onPageChange: async (page: number) => {
           const nextPage = Math.max(1, page);
-          const newSkip = (nextPage - 1) * pageSize;
-          paginationState[sourceId] = { skip: newSkip, top: pageSize, page: nextPage };
+          const currentPageSize = paginationState[sourceId]?.top || pageSize;
+          const newSkip = (nextPage - 1) * currentPageSize;
+          paginationState[sourceId] = { skip: newSkip, top: currentPageSize, page: nextPage };
           try {
-            const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, pageSize);
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, currentPageSize);
             updateBoundComponents(sourceId, data);
           } catch (err) {
             console.error('[page-renderer] pagination fetch error:', err);
+          }
+        },
+        onPageSizeChange: async (nextSize: number) => {
+          paginationState[sourceId] = { skip: 0, top: nextSize, page: 1 };
+          try {
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, nextSize);
+            updateBoundComponents(sourceId, data);
+          } catch (err) {
+            console.error('[page-renderer] page-size fetch error:', err);
           }
         },
       }

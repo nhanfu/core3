@@ -114,7 +114,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
 const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
-  ['DataGrid', new Set(['type', 'source', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser'])],
+  ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help'])],
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs'])],

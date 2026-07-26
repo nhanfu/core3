@@ -22,6 +22,7 @@
 - [x] 1440 x 1000 and 1024 x 768 have no document overflow.
 - [x] Create, edit, delete, navigation, and datasource refreshes produce no
   console errors or failed responses.
+- [x] Pagination defaults to 50 rows and offers server-backed 10/25/50/100 page-size choices.
 
 ## Evidence
 
