@@ -12,7 +12,8 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT c.id, c.code, c.name, c.tax_code, c.phone, c.email, c.stage, c.visibility, c.status,
+      SELECT c.id, REPLACE(UPPER(c.id), 'CUSTOMER-', 'KH') AS system_code,
+        c.code, c.name, c.tax_code, c.phone, c.email, c.stage, c.visibility, c.status,
         'Khách hàng' AS entity_type,
         CASE c.stage
           WHEN 'Lead' THEN 'Khách tiềm năng'
@@ -74,7 +75,7 @@ components:
       title: Không có khách hàng
       description: Thử thay đổi bộ lọc hoặc tạo khách hàng mới.
     columns:
-      - field: id
+      - field: system_code
         label: Mã HT
         sortable: true
       - field: code

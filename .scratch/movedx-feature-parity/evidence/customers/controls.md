@@ -8,6 +8,7 @@
 - [x] Primary customer cells render the reference building SVG avatar and legal-name subtitle.
 - [x] Customer rows expose the reference `Loại` and `Người tạo` metadata columns.
 - [x] The grid renders a server-page-aware row-number column after selection.
+- [x] The grid renders a human-facing `KH...` customer identifier in `Mã HT`; internal IDs remain action keys.
 
 - [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.
 
