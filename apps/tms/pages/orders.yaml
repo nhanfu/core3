@@ -40,6 +40,10 @@ datasources:
     single: false
     permission: orders.read
     query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' ORDER BY label"
+  - id: order_shipment_type_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM system_configs WHERE kind = 'shipment_type' AND status = 'Active' UNION SELECT DISTINCT shipment_type AS value, shipment_type AS label FROM orders WHERE shipment_type IS NOT NULL AND shipment_type <> '' ORDER BY label"
 
 toolbar:
   - id: add_order_btn
@@ -132,7 +136,7 @@ actions:
       - { field: customer_name, label: Khách hàng, type: select, options_source: order_customer_lookup, required: true }
       - { field: customer_legal_name, label: Tên pháp lý, type: text }
       - { field: order_date, label: Ngày đơn, type: date, required: true }
-      - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
+      - { field: shipment_type, label: Loại hình, type: select, options_source: order_shipment_type_lookup }
       - { field: route, label: Tuyến, type: text }
       - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không], default: Đường bộ }
       - { field: trip_count, label: Số chuyến, type: number, default: 0 }
@@ -149,7 +153,7 @@ actions:
       - { field: customer_name, label: Khách hàng, type: select, options_source: order_customer_lookup, required: true }
       - { field: customer_legal_name, label: Tên pháp lý, type: text }
       - { field: order_date, label: Ngày đơn, type: date, required: true }
-      - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
+      - { field: shipment_type, label: Loại hình, type: select, options_source: order_shipment_type_lookup }
       - { field: route, label: Tuyến, type: text }
       - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không] }
       - { field: trip_count, label: Số chuyến, type: number }
