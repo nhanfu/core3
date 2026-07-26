@@ -15,6 +15,19 @@ datasources:
       WHERE (NULLIF(:status, '') IS NULL OR s.status = :status)
         AND (:q IS NULL OR s.code ILIKE '%' || :q || '%' OR s.name ILIKE '%' || :q || '%')
       ORDER BY s.created_at DESC, s.name
+  - id: shift_assignments
+    single: false
+    permission: hr.read
+    query: |
+      SELECT t.id, t.employee_id, e.code AS employee_code, e.name AS employee_name,
+        CAST(t.work_date AS VARCHAR) AS work_date, t.shift_id, s.code AS shift_code,
+        s.name AS shift_name, t.hours, t.status
+      FROM timesheets t JOIN employees e ON e.id = t.employee_id
+        LEFT JOIN work_shifts s ON s.id = t.shift_id
+      WHERE (:from_date IS NULL OR t.work_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR t.work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:assignment_q IS NULL OR e.code ILIKE '%' || :assignment_q || '%' OR e.name ILIKE '%' || :assignment_q || '%')
+      ORDER BY t.work_date DESC, e.name
 
 toolbar:
   - id: add_shift_btn
@@ -22,12 +35,20 @@ toolbar:
     variant: primary
     permission: hr.write
     action: add_shift
+  - { id: add_shift_assignment_btn, label: '+ Phân ca', variant: secondary, permission: hr.write, action: add_shift_assignment }
 
 components:
   - type: ListToolbar
     source: shifts
     filter_field: q
     search: { label: Tìm kiếm ca làm việc, placeholder: 'Tìm mã hoặc tên ca...' }
+  - type: ListToolbar
+    source: shift_assignments
+    filter_sources: [shift_assignments]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    filter_field: assignment_q
+    search: { label: Tìm phân ca, placeholder: 'Tìm nhân viên...' }
+    actions: [{ id: shift_assignments.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: shifts
     filter_field: status
@@ -59,8 +80,22 @@ components:
         actions:
           - { id: edit_shift, label: Sửa, variant: ghost }
           - { id: delete_shift, label: Xóa, variant: danger }
+  - type: DataGrid
+    source: shift_assignments
+    page_size: 20
+    row_key: id
+    empty_state: { title: Chưa có phân ca }
+    columns: [{ field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }, { field: work_date, label: Ngày }, { field: shift_code, label: Ca, type: PrimaryEntityCell, secondary: shift_name }, { field: hours, label: Số giờ, align: right }, { field: status, label: Trạng thái }]
+    selectable: true
 
 actions:
+  - id: add_shift_assignment
+    type: form
+    title: Phân ca cho nhân viên
+    table: timesheets
+    operation: insert
+    refresh: [shift_assignments]
+    fields: [{ field: employee_id, label: Mã nhân viên, type: text, required: true }, { field: work_date, label: Ngày phân ca, type: date, required: true }, { field: shift_id, label: Mã ca, type: text, required: true }, { field: hours, label: Số giờ, type: number, default: 8 }, { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }]
   - id: add_shift
     type: form
     title: Thêm ca làm việc
