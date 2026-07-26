@@ -22,6 +22,10 @@ datasources:
         AND (:q IS NULL OR code ILIKE '%' || :q || '%'
           OR customer_name ILIKE '%' || :q || '%' OR title ILIKE '%' || :q || '%')
       ORDER BY created_at DESC
+  - id: quote_customer_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM quotes WHERE customer_name IS NOT NULL AND customer_name <> '' ORDER BY label"
 
 toolbar:
   - { id: add_quote, label: '+ Thêm báo giá', variant: primary, permission: crm.write, action: add_quote }
@@ -79,7 +83,7 @@ actions:
     refresh: [quotes]
     fields:
       - { field: code, label: Mã, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: select, options_source: quote_customer_lookup, required: true }
       - { field: title, label: Nội dung, type: text, required: true }
       - { field: valid_until, label: Hiệu lực đến, type: date }
   - id: edit_quote
@@ -91,7 +95,7 @@ actions:
     refresh: [quotes]
     fields:
       - { field: code, label: Mã, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: select, options_source: quote_customer_lookup, required: true }
       - { field: title, label: Nội dung, type: text, required: true }
       - { field: valid_until, label: Hiệu lực đến, type: date }
   - id: view_quote
