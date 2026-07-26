@@ -69,6 +69,12 @@ const evaluateWithTimeout = async (expression: string, label: string, timeoutMs 
 };
 
 await send('Runtime.enable');
+await send('Emulation.setDeviceMetricsOverride', {
+  width: 1024,
+  height: 768,
+  deviceScaleFactor: 1,
+  mobile: false,
+});
 await evaluateWithTimeout(`location.href = ${JSON.stringify(`${baseUrl}/`)}`, 'initial navigation');
 await new Promise((resolve) => setTimeout(resolve, 500));
 await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(token)}); location.reload()`, 'authentication reload');
@@ -144,10 +150,11 @@ for (const route of targets) {
     }
     routeCoverage.push({ route, controls: exercised || {} });
     await new Promise((resolve) => setTimeout(resolve, 250));
-    const state = await evaluateWithTimeout(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${route} state read`);
+    const state = await evaluateWithTimeout(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash, viewport: innerWidth, overflow: document.documentElement.scrollWidth > innerWidth + 2 })`, `${route} state read`);
     if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
       failures.push(`${route}: outlet did not render`);
     }
+    if (state?.overflow) failures.push(`${route}: document overflows tablet viewport`);
     if (consoleErrors.length) failures.push(`${route}: ${consoleErrors.join(' | ')}`);
   } catch (error) {
     failures.push(`${route}: ${error instanceof Error ? error.message : String(error)}`);
@@ -177,10 +184,11 @@ for (const { target, needle } of detailTargets) {
   try {
     await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${target}`)}`, `${target} navigation`);
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    const state = await evaluateWithTimeout(`({ outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${target} state read`);
+    const state = await evaluateWithTimeout(`({ outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash, viewport: innerWidth, overflow: document.documentElement.scrollWidth > innerWidth + 2 })`, `${target} state read`);
     if (!state?.outlet || !state.outlet.includes(needle) || /Failed to load page|Route load error/i.test(state.outlet)) {
       detailFailures.push(`${target}: populated detail did not render`);
     }
+    if (state?.overflow) detailFailures.push(`${target}: document overflows tablet viewport`);
     if (consoleErrors.length) detailFailures.push(`${target}: ${consoleErrors.join(' | ')}`);
   } catch (error) {
     detailFailures.push(`${target}: ${error instanceof Error ? error.message : String(error)}`);
@@ -190,7 +198,7 @@ failures.push(...detailFailures);
 
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`details=${detailTargets.length} detail_failures=${detailFailures.length}`);
+console.log(`viewport=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
