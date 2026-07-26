@@ -84,7 +84,7 @@ const ROW_ACTION_KEYS = new Set(['id', 'label', 'variant', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
-const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style']);
+const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style', 'default_preset']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',

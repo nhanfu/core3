@@ -18,6 +18,7 @@ import { evalExpr, interpolate } from './expr.ts';
 import { resolveAction } from './meta.ts';
 import { navigate, getPageParams } from './navigate.ts';
 import { validatePageDefinition } from './yaml/schema.ts';
+import { resolveDatePreset } from './components/ListToolbar.ts';
 
 // ── Component registry ────────────────────────────────────────────────────────
 
@@ -52,7 +53,16 @@ export async function renderPage(config: any, { container = document.body }: { c
   }
 
   // 2. Build context
-  const pageParams = getPageParams();
+  const pageParams = { ...getPageParams() };
+  const initialDateFilters: Record<string, string> = {};
+  for (const component of config.components || []) {
+    const range = component.type === 'ListToolbar' ? component.date_range : undefined;
+    if (!range?.default_preset) continue;
+    const dates = resolveDatePreset(range.default_preset);
+    initialDateFilters[range.from_field || 'from_date'] = dates.from;
+    initialDateFilters[range.to_field || 'to_date'] = dates.to;
+  }
+  Object.assign(pageParams, initialDateFilters);
   const ctx: any = { user, row: {}, state: pageParams };
 
   // 3. Fetch datasources
@@ -66,7 +76,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   for (const src of sourceDefs.values()) {
     const pageSize = src.page_size || 25;
     paginationState[src.id] = { skip: 0, top: pageSize, page: 1 };
-    filterState[src.id] = {};
+    filterState[src.id] = { ...initialDateFilters };
     try {
       const result = await client.query(
         createQuery({ sourceId: src.id, params: pageParams, skip: 0, top: pageSize })
@@ -871,7 +881,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const { ListToolbar } = await import('./components/ListToolbar.ts');
     const comp = new ListToolbar(
       `list-toolbar-${def.source || def.id || Date.now()}`,
-      { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '' },
+      { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '', preset: def.date_range?.default_preset },
       { search: def.search, actions: def.actions, date_range: def.date_range, filters: def.filters, filter_sources: def.filter_sources }
     );
     comp._onAction = async (actionId: string, params: any) => {

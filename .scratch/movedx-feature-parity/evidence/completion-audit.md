@@ -17,6 +17,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Operations navigation now exposes all six reference entries and maps each to a registered SPA route.
 - The shell reads the seeded company profile through an authenticated server endpoint and renders tenant identity in the header; it is not hard-coded in the client.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
+- Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 
 ## Not Proven
 

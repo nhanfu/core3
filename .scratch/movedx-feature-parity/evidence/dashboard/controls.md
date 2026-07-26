@@ -10,6 +10,7 @@
 ## Interaction checks
 
 - Select each period preset and confirm all KPI and table datasources refresh together.
+- Initial dashboard load selects `Tháng này`, fills both date fields, and applies those bounds to every dashboard datasource.
 - Enter a custom date range and verify route/customer totals change.
 - Export the dispatch queue and confirm the filtered rows are present.
 - Use global search to navigate directly to another registered route.

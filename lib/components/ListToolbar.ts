@@ -32,6 +32,7 @@ export type ListToolbarDefinition = {
     to_label?: string;
     presets?: Array<'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all'>;
     preset_style?: 'select' | 'segmented';
+    default_preset?: 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
   };
   filter_sources?: string[];
 };
@@ -107,6 +108,7 @@ export class ListToolbar extends BaseComponent {
         };
         const submitPreset = (value: typeof dateRange.presets[number]) => {
           const dates = this.resolvePreset(value);
+          this.setState({ ...dates, preset: value }, false);
           this.submit('date-range', {
             [(dateRange.from_field || 'from_date')]: dates.from,
             [(dateRange.to_field || 'to_date')]: dates.to,
@@ -120,7 +122,7 @@ export class ListToolbar extends BaseComponent {
             const button = document.createElement('button');
             button.type = 'button';
             button.dataset.datePreset = preset;
-            button.className = 'rounded px-2.5 py-1.5 text-sm text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700';
+            button.className = `rounded px-2.5 py-1.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${this.state.preset === preset ? 'bg-blue-600 text-white' : 'text-slate-700'}`;
             button.textContent = labels[preset] || preset;
             button.addEventListener('click', () => submitPreset(preset));
             segments.append(button);
@@ -140,6 +142,7 @@ export class ListToolbar extends BaseComponent {
             option.textContent = labels[preset] || preset;
             select.append(option);
           }
+          select.value = String((this.state as any).preset || '');
           select.addEventListener('change', () => {
             const value = select.value as typeof dateRange.presets[number] | '';
             if (value) submitPreset(value);
@@ -198,26 +201,8 @@ export class ListToolbar extends BaseComponent {
     container.append(root);
   }
 
-  private resolvePreset(preset: 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all') {
-    if (preset === 'all') return { from: '', to: '' };
-    const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    let end = today;
-    if (preset === 'previous_month') {
-      start.setMonth(start.getMonth() - 1, 1);
-      end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-    }
-    if (preset === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
-    if (preset === 'month') start.setDate(1);
-    if (preset === 'quarter') {
-      start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
-    }
-    if (preset === 'year') start.setMonth(0, 1);
-    if (preset === 'last_12_months') start.setMonth(start.getMonth() - 11, 1);
-    const format = (date: Date) => [date.getFullYear(), date.getMonth() + 1, date.getDate()]
-      .map((part, index) => index === 0 ? String(part) : String(part).padStart(2, '0'))
-      .join('-');
-    return { from: format(start), to: format(end) };
+  private resolvePreset(preset: DateRangePreset) {
+    return resolveDatePreset(preset);
   }
 
   private emitSearch(action?: string) {
@@ -262,4 +247,26 @@ export class ListToolbar extends BaseComponent {
     if (variant === 'ghost') return 'border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900';
     return 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50';
   }
+}
+
+export type DateRangePreset = 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
+
+export function resolveDatePreset(preset: DateRangePreset, now = new Date()) {
+  if (preset === 'all') return { from: '', to: '' };
+  const today = new Date(now);
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  let end = today;
+  if (preset === 'previous_month') {
+    start.setMonth(start.getMonth() - 1, 1);
+    end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+  }
+  if (preset === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  if (preset === 'month') start.setDate(1);
+  if (preset === 'quarter') start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+  if (preset === 'year') start.setMonth(0, 1);
+  if (preset === 'last_12_months') start.setMonth(start.getMonth() - 11, 1);
+  const format = (date: Date) => [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+    .map((part, index) => index === 0 ? String(part) : String(part).padStart(2, '0'))
+    .join('-');
+  return { from: format(start), to: format(end) };
 }
