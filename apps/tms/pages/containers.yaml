@@ -25,6 +25,10 @@ datasources:
     single: false
     permission: dispatch.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'container_type' AND status = 'Active' UNION SELECT DISTINCT container_type AS value, container_type AS label FROM containers WHERE container_type IS NOT NULL AND container_type <> '' ORDER BY label"
+  - id: container_owner_lookup
+    single: false
+    permission: dispatch.read
+    query: "SELECT name AS value, name AS label FROM partners WHERE status = 'Active' UNION SELECT DISTINCT owner_name AS value, owner_name AS label FROM containers WHERE owner_name IS NOT NULL AND owner_name <> '' ORDER BY label"
 
 toolbar:
   - id: add_container_btn
@@ -83,7 +87,7 @@ actions:
     fields:
       - { field: container_number, label: Số container, type: text, required: true }
       - { field: container_type, label: Loại container, type: select, options_source: container_type_lookup, default: 20DC }
-      - { field: owner_name, label: Chủ sở hữu, type: text }
+      - { field: owner_name, label: Chủ sở hữu, type: select, options_source: container_owner_lookup }
       - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive], default: Available }
       - { field: notes, label: Ghi chú, type: textarea }
@@ -97,7 +101,7 @@ actions:
     fields:
       - { field: container_number, label: Số container, type: text, required: true }
       - { field: container_type, label: Loại container, type: select, options_source: container_type_lookup }
-      - { field: owner_name, label: Chủ sở hữu, type: text }
+      - { field: owner_name, label: Chủ sở hữu, type: select, options_source: container_owner_lookup }
       - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive] }
       - { field: notes, label: Ghi chú, type: textarea }
