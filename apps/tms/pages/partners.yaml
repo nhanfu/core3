@@ -32,6 +32,10 @@ datasources:
           OR p.tax_code ILIKE '%' || :q || '%'
           OR p.phone ILIKE '%' || :q || '%')
       ORDER BY p.created_at DESC, p.name
+  - id: partner_owner_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM employees WHERE status = 'Active' UNION SELECT DISTINCT owner_name AS value, owner_name AS label FROM partners WHERE owner_name IS NOT NULL AND owner_name <> '' ORDER BY label"
 
 toolbar:
   - id: add_partner_btn
@@ -134,7 +138,7 @@ actions:
       - { field: phone, label: Số điện thoại, type: text }
       - { field: email, label: Email, type: text }
       - { field: partner_type, label: Loại đối tượng, type: select, options: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other], default: Supplier }
-      - { field: owner_name, label: Sale phụ trách, type: text }
+      - { field: owner_name, label: Sale phụ trách, type: select, options_source: partner_owner_lookup }
       - { field: visibility, label: Hiển thị, type: select, options: [Public, Private], default: Public }
       - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
   - id: edit_partner
@@ -151,7 +155,7 @@ actions:
       - { field: phone, label: Số điện thoại, type: text }
       - { field: email, label: Email, type: text }
       - { field: partner_type, label: Loại đối tượng, type: select, options: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other] }
-      - { field: owner_name, label: Sale phụ trách, type: text }
+      - { field: owner_name, label: Sale phụ trách, type: select, options_source: partner_owner_lookup }
       - { field: visibility, label: Hiển thị, type: select, options: [Public, Private] }
       - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
   - id: delete_partner
