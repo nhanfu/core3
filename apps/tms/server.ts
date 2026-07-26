@@ -1,9 +1,15 @@
 import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
+import { validatePageDefinition } from '@core3/framework/yaml/schema.ts';
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { DuckDbRepository } from './services/repository.ts';
 import { JwtAuthProvider } from './services/auth.ts';
+import { ORDER_ACTION_REGISTRY, orderWorkflow } from './services/order-workflow.ts';
+import {
+  FINANCIAL_ACTION_REGISTRY,
+  financialWorkflow,
+} from './services/financial-workflow.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -12,6 +18,12 @@ const DB_PATH = process.env.TMS_DB_PATH || join(PROJECT_ROOT, 'tms.duckdb');
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'tms-dev-secret-32chars!!!!'
 );
+const FINANCIAL_WORKFLOW_SCOPES = new Set([
+  'debit_note',
+  'payment_request',
+  'advance',
+  'settlement',
+]);
 
 // ── DuckDB setup ─────────────────────────────────────────────────────────────
 const db = new duckdb.Database(DB_PATH);
@@ -123,6 +135,9 @@ async function initDb(): Promise<void> {
   // with the seed schema without resetting user-entered truck records.
   await repository.runStatements(`
     ALTER TABLE trucks ADD COLUMN IF NOT EXISTS capacity_kg INTEGER DEFAULT 0;
+    ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS actor_id VARCHAR;
+    ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS resource_id VARCHAR;
+    CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
     UPDATE trucks SET capacity_kg = CASE type
       WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
       WHEN 'Box Truck' THEN 5000 ELSE 0 END
@@ -188,6 +203,30 @@ async function initDb(): Promise<void> {
     SELECT 'perm-adm-26', 'role-admin', 'dispatch.write'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'dispatch.write');
     INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-27', 'role-admin', 'orders.approve'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'orders.approve');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-28', 'role-admin', 'accounting.approve'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.approve');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-29', 'role-admin', 'accounting.pay'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.pay');
+    INSERT INTO roles (id, name, description)
+    SELECT 'role-accountant', 'accountant', 'Accounting document preparation'
+    WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 'role-accountant');
+    INSERT INTO users (id, email, name, password_hash, preferred_lang)
+    SELECT 'user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi'
+    WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 'user-accountant');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-ac-01', 'role-accountant', 'accounting.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'accounting.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-ac-02', 'role-accountant', 'accounting.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'accounting.write');
+    INSERT INTO user_roles (user_id, role_id)
+    SELECT 'user-accountant', 'role-accountant'
+    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 'user-accountant' AND role_id = 'role-accountant');
+    INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-dp-07', 'role-dispatcher', 'dispatch.read'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.read');
     INSERT INTO permissions (id, role_id, permission_key)
@@ -200,6 +239,7 @@ async function initDb(): Promise<void> {
 // Queries are loaded from the page YAML files, never accepted from API requests.
 const SOURCE_FILES = [
   'pages/dashboard.yaml',
+  'pages/schedule.yaml',
   'pages/orders.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
@@ -248,10 +288,8 @@ function loadSources() {
   const sources = new Map();
   for (const file of SOURCE_FILES) {
     const page: any = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
+    validatePageDefinition(page);
     for (const source of page.datasources || []) {
-      if (!source.id || !source.query || !source.permission) {
-        throw new Error(`Datasource in ${file} requires id, permission, and query`);
-      }
       if (sources.has(source.id)) throw new Error(`Duplicate datasource id: ${source.id}`);
       sources.set(source.id, source);
     }
@@ -274,7 +312,22 @@ function publicPageConfig(page: any) {
 
 // ── TABLE_REGISTRY ────────────────────────────────────────────────────────────
 const TABLE_REGISTRY = {
-  orders:       { permission: 'orders.write',      timestamps: true  },
+  orders: {
+    permission: 'orders.write',
+    timestamps: true,
+    fields: [
+      'order_number',
+      'customer_name',
+      'customer_legal_name',
+      'order_date',
+      'shipment_type',
+      'route',
+      'transport_method',
+      'trip_count',
+      'total_amount',
+      'notes',
+    ],
+  },
   trucks:       { permission: 'fleet.write',       timestamps: true  },
   drivers:      { permission: 'drivers.write',     timestamps: true  },
   trips:        { permission: 'trips.write',        timestamps: true  },
@@ -392,6 +445,10 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
   const requirePerm = (perm: string) => {
     if (!hasPerm(perm)) throw { status: 403, message: `Requires permission: ${perm}` };
   };
+  const activityActor = {
+    id: authUser.sub ? String(authUser.sub) : null,
+    name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
+  };
 
   // ── GET /api/pages/:id ────────────────────────────────────────────────────
   const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
@@ -412,6 +469,43 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     return json(result);
   }
 
+  // ── POST /api/actions/:name ───────────────────────────────────────────────
+  const namedActionMatch = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
+  if (namedActionMatch && method === 'POST') {
+    const actionName = namedActionMatch[1];
+    const orderActionDefinition = ORDER_ACTION_REGISTRY[actionName];
+    const financialActionDefinition = FINANCIAL_ACTION_REGISTRY[actionName];
+    const actionDefinition = orderActionDefinition || financialActionDefinition;
+    if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
+    requirePerm(actionDefinition.permission);
+
+    const body = await req.json() as any;
+    if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+
+    if (orderActionDefinition) {
+      const transition = orderWorkflow.get(orderActionDefinition.action);
+      const order = await repository.transitionOrder(
+        body.id,
+        transition.from,
+        transition.to,
+        actionName,
+        activityActor,
+      );
+      return json(order);
+    }
+
+    const transition = financialWorkflow.get(financialActionDefinition.action);
+    const document = await repository.transitionAccountingEntry(
+      body.id,
+      financialActionDefinition.kind,
+      transition.from,
+      transition.to,
+      actionName,
+      activityActor,
+    );
+    return json(document);
+  }
+
   // ── POST /api/patch ───────────────────────────────────────────────────────
   if (pathname === '/api/patch' && method === 'POST') {
     const body = await req.json() as any;
@@ -426,16 +520,56 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
       return apiError(400, 'Invalid resource scope');
     }
+    if (
+      table === 'accounting_entries'
+      && FINANCIAL_WORKFLOW_SCOPES.has(scope)
+      && changes.some((change: any) => change.field === 'status')
+    ) {
+      return apiError(400, 'Financial document status requires a named action');
+    }
 
     if ('scopes' in tbl && action !== 'insert') {
       const existing = await repository.query(`SELECT kind FROM ${table} WHERE id = ?`, [id]);
       if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
     }
+    if (table === 'orders' && (action === 'update' || action === 'delete')) {
+      const [order] = await repository.query('SELECT status FROM orders WHERE id = ?', [id]);
+      if (!order) return apiError(404, 'Order not found');
+      if (order.status !== 'Draft') {
+        return apiError(409, `Order cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${order.status}`);
+      }
+    }
+    if (
+      table === 'accounting_entries'
+      && FINANCIAL_WORKFLOW_SCOPES.has(scope)
+      && (action === 'update' || action === 'delete')
+    ) {
+      const [document] = await repository.query(
+        'SELECT status FROM accounting_entries WHERE id = ? AND kind = ?',
+        [id, scope],
+      );
+      if (!document) return apiError(404, 'Financial document not found');
+      if (document.status !== 'Draft') {
+        return apiError(
+          409,
+          `Financial document cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${document.status}`,
+        );
+      }
+    }
 
     // ── insert ──────────────────────────────────────────────────────────────
     if (action === 'insert') {
       if (table === 'users') {
-        return json(await repository.createUser(changes), 201);
+        const created = await repository.createUser(changes);
+        await repository.recordActivity({
+          actorId: activityActor.id,
+          actorName: activityActor.name,
+          action: 'create',
+          resource: table,
+          resourceId: created?.id,
+          detail: `Created ${table} record`,
+        });
+        return json(created, 201);
       }
 
       // Generic insert
@@ -443,7 +577,16 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       const scopedChanges = 'scopes' in tbl
         ? [{ field: 'kind', value: scope }, ...changes]
         : changes;
-      return json(await repository.createRecord(table, scopedChanges), 201);
+      const created = await repository.createRecord(table, scopedChanges);
+      await repository.recordActivity({
+        actorId: activityActor.id,
+        actorName: activityActor.name,
+        action: 'create',
+        resource: table,
+        resourceId: created?.id,
+        detail: `Created ${scope || table} record`,
+      });
+      return json(created, 201);
     }
 
     // ── update ──────────────────────────────────────────────────────────────
@@ -451,21 +594,52 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (!id) return apiError(400, 'id required for update');
 
       if (table === 'users') {
-        return json(await repository.updateUser(id, changes));
+        const updated = await repository.updateUser(id, changes);
+        await repository.recordActivity({
+          actorId: activityActor.id,
+          actorName: activityActor.name,
+          action: 'update',
+          resource: table,
+          resourceId: String(id),
+          detail: `Updated fields: ${changes.map((change: any) => change.field).join(', ')}`,
+        });
+        return json(updated);
       }
 
       // Generic update
       if (changes.length === 0) return apiError(400, 'No fields to update');
-      return json(await repository.updateRecord(table, id, changes, tbl.timestamps));
+      const updated = await repository.updateRecord(table, id, changes, tbl.timestamps);
+      if (!updated) return apiError(404, 'Resource not found');
+      await repository.recordActivity({
+        actorId: activityActor.id,
+        actorName: activityActor.name,
+        action: 'update',
+        resource: table,
+        resourceId: String(id),
+        detail: `Updated fields: ${changes.map((change: any) => change.field).join(', ')}`,
+      });
+      return json(updated);
     }
 
     // ── delete ──────────────────────────────────────────────────────────────
     if (action === 'delete') {
       if (!id) return apiError(400, 'id required for delete');
+      if (!('scopes' in tbl) && table !== 'orders') {
+        const existing = await repository.query(`SELECT id FROM ${table} WHERE id = ?`, [id]);
+        if (!existing[0]) return apiError(404, 'Resource not found');
+      }
       if (table === 'users') {
         await repository.deleteUserRoles(id);
       }
       await repository.deleteRecord(table, id);
+      await repository.recordActivity({
+        actorId: activityActor.id,
+        actorName: activityActor.name,
+        action: 'delete',
+        resource: table,
+        resourceId: String(id),
+        detail: `Deleted ${scope || table} record`,
+      });
       return json({ ok: true });
     }
 

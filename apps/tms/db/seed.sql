@@ -9,6 +9,7 @@ INSERT INTO roles (id, name, description) VALUES
 ('role-admin',         'admin',         'Full system access'),
 ('role-fleet-manager', 'fleet_manager', 'Fleet and driver management'),
 ('role-dispatcher',    'dispatcher',    'Trip scheduling and dispatch'),
+('role-accountant',    'accountant',    'Accounting document preparation'),
 ('role-mechanic',      'mechanic',      'Maintenance and service records');
 
 -- ── Permissions ──────────────────────────────────────────────────────────────
@@ -39,7 +40,10 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-23', 'role-admin', 'system.read'),
 ('perm-adm-24', 'role-admin', 'system.write'),
 ('perm-adm-25', 'role-admin', 'dispatch.read'),
-('perm-adm-26', 'role-admin', 'dispatch.write');
+('perm-adm-26', 'role-admin', 'dispatch.write'),
+('perm-adm-27', 'role-admin', 'orders.approve'),
+('perm-adm-28', 'role-admin', 'accounting.approve'),
+('perm-adm-29', 'role-admin', 'accounting.pay');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -62,6 +66,11 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-dp-07', 'role-dispatcher', 'dispatch.read'),
 ('perm-dp-08', 'role-dispatcher', 'dispatch.write');
 
+-- accountant
+INSERT INTO permissions (id, role_id, permission_key) VALUES
+('perm-ac-01', 'role-accountant', 'accounting.read'),
+('perm-ac-02', 'role-accountant', 'accounting.write');
+
 -- mechanic
 INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-mc-01', 'role-mechanic', 'maintenance.read'),
@@ -73,7 +82,8 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 INSERT INTO users (id, email, name, password_hash, preferred_lang) VALUES
 ('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en'),
 ('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi'),
-('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en');
+('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en'),
+('user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi');
 
 -- ── HR ─────────────────────────────────────────────────────────────────────
 INSERT INTO employees (id, code, name, job_title, phone, email, department, start_date, dependents, status) VALUES
@@ -179,7 +189,8 @@ INSERT INTO partners (id, code, name, tax_code, phone, email, partner_type, owne
 INSERT INTO user_roles (user_id, role_id) VALUES
 ('user-admin', 'role-admin'),
 ('user-fleet', 'role-fleet-manager'),
-('user-disp',  'role-dispatcher');
+('user-disp',  'role-dispatcher'),
+('user-accountant', 'role-accountant');
 
 -- ── Drivers ──────────────────────────────────────────────────────────────────
 INSERT INTO drivers (id, name, phone, email, license_number, license_expiry, status, assigned_truck_id) VALUES

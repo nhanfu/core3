@@ -54,11 +54,11 @@ components:
     source: orders
     filter_field: status
     tabs:
-      - { id: '', label: Tất cả, count: 12 }
-      - { id: Draft, label: Nháp, count: 3 }
-      - { id: Pending Approval, label: Đang duyệt, count: 3 }
-      - { id: Approved, label: Đã duyệt, count: 4 }
-      - { id: Cancelled, label: Đã hủy, count: 2 }
+      - { id: '', label: Tất cả }
+      - { id: Draft, label: Nháp }
+      - { id: Pending Approval, label: Đang duyệt }
+      - { id: Approved, label: Đã duyệt }
+      - { id: Cancelled, label: Đã hủy }
   - type: DataGrid
     source: orders
     page_size: 10
@@ -91,8 +91,12 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_order, label: Sửa, variant: ghost }
-          - { id: delete_order, label: Xóa, variant: danger }
+          - { id: edit_order, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
+          - { id: submit_order, label: Trình duyệt, variant: primary, show_if: "row.status === 'Draft'" }
+          - { id: approve_order, label: Duyệt, variant: primary, show_if: "row.status === 'Pending Approval' && user.permissions.includes('orders.approve')" }
+          - { id: reject_order, label: Từ chối, variant: ghost, show_if: "row.status === 'Pending Approval' && user.permissions.includes('orders.approve')" }
+          - { id: cancel_order, label: Hủy, variant: danger, show_if: "row.status !== 'Cancelled'" }
+          - { id: delete_order, label: Xóa, variant: danger, show_if: "row.status === 'Draft'" }
 
 actions:
   - id: add_order
@@ -106,7 +110,6 @@ actions:
       - { field: customer_name, label: Khách hàng, type: text, required: true }
       - { field: customer_legal_name, label: Tên pháp lý, type: text }
       - { field: order_date, label: Ngày đơn, type: date, required: true }
-      - { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved, Cancelled], default: Draft }
       - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
       - { field: route, label: Tuyến, type: text }
       - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không], default: Đường bộ }
@@ -125,13 +128,32 @@ actions:
       - { field: customer_name, label: Khách hàng, type: text, required: true }
       - { field: customer_legal_name, label: Tên pháp lý, type: text }
       - { field: order_date, label: Ngày đơn, type: date, required: true }
-      - { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved, Cancelled] }
       - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
       - { field: route, label: Tuyến, type: text }
       - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không] }
       - { field: trip_count, label: Số chuyến, type: number }
       - { field: total_amount, label: Tổng tiền (₫), type: number }
       - { field: notes, label: Ghi chú, type: textarea }
+  - id: submit_order
+    type: server
+    action: orders.submit_for_approval
+    confirm: 'Trình duyệt đơn hàng {{row.order_number}}?'
+    refresh: [orders]
+  - id: approve_order
+    type: server
+    action: orders.approve
+    confirm: 'Duyệt đơn hàng {{row.order_number}}?'
+    refresh: [orders]
+  - id: reject_order
+    type: server
+    action: orders.reject
+    confirm: 'Từ chối và trả đơn hàng {{row.order_number}} về trạng thái nháp?'
+    refresh: [orders]
+  - id: cancel_order
+    type: server
+    action: orders.cancel
+    confirm: 'Hủy đơn hàng {{row.order_number}}?'
+    refresh: [orders]
   - id: delete_order
     type: delete
     confirm: 'Xóa đơn hàng {{row.order_number}}?'

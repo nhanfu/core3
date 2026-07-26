@@ -5,8 +5,12 @@ datasources:
     single: false
     permission: accounting.read
     query: |
-      SELECT COALESCE(counterparty, 'Chưa xác định') AS counterparty, status, currency,
-        COUNT(*) AS document_count, SUM(amount) AS total_amount,
+      SELECT COALESCE(counterparty, 'Chưa xác định') AS counterparty, status,
+        CASE status WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt'
+          WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Paid' THEN 'Đã thanh toán'
+          WHEN 'Cancelled' THEN 'Đã hủy' ELSE status END AS status_label,
+        currency, COUNT(*) AS document_count,
+        printf('%,.0f', COALESCE(SUM(amount), 0)) AS total_amount_display,
         CAST(MAX(document_date) AS VARCHAR) AS latest_document_date
       FROM accounting_entries
       WHERE kind = 'payment_request' AND (:status IS NULL OR status = :status)
@@ -15,7 +19,7 @@ datasources:
       ORDER BY total_amount DESC, counterparty
 components:
   - { type: ListToolbar, source: payment_request_summary, filter_field: q, search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' } }
-  - { type: StatusTabs, source: payment_request_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }] }
+  - { type: StatusTabs, source: payment_request_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }] }
   - type: DataGrid
     source: payment_request_summary
     page_size: 20
@@ -23,9 +27,9 @@ components:
     empty_state: { title: Không có dữ liệu tổng hợp }
     columns:
       - { field: counterparty, label: Đối tác, sortable: true }
-      - { field: status, label: Trạng thái, type: StatusChip, colors: { Draft: neutral, Pending Approval: amber, Approved: green } }
+      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red } }
       - { field: document_count, label: Số chứng từ, align: right }
-      - { field: total_amount, label: Tổng giá trị, align: right }
+      - { field: total_amount_display, label: Tổng giá trị, align: right }
       - { field: currency, label: Tiền tệ }
       - { field: latest_document_date, label: Chứng từ gần nhất }
 actions: []

@@ -62,3 +62,4 @@ export { HtmlCode }             from './HtmlCode.ts';
 export { ChromeTab }            from './ChromeTab.ts';
 export { ListToolbar }          from './ListToolbar.ts';
 export { StatusTabs }           from './StatusTabs.ts';
+export { ComingSoon }           from './ComingSoon.ts';

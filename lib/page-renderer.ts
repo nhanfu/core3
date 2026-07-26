@@ -17,6 +17,7 @@
 import { evalExpr, interpolate } from './expr.ts';
 import { resolveAction } from './meta.ts';
 import { navigate, getPageParams } from './navigate.ts';
+import { validatePageDefinition } from './yaml/schema.ts';
 
 // ── Component registry ────────────────────────────────────────────────────────
 
@@ -33,6 +34,8 @@ export function registerAll(map: Record<string, any>) {
 // ── Main render function ──────────────────────────────────────────────────────
 
 export async function renderPage(config: any, { container = document.body }: { container?: HTMLElement } = {}) {
+  validatePageDefinition(config, { allowExternalSources: true });
+
   // Dynamic imports to avoid circular deps
   const { client } = await import('./client.ts');
   const { createQuery } = await import('./dtos.ts');
@@ -170,6 +173,21 @@ export async function renderPage(config: any, { container = document.body }: { c
           changes,
         });
         if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+        break;
+      }
+
+      case 'server': {
+        if (actionDef.confirm) {
+          const msg = interpolate(actionDef.confirm, { ...ctx, row: row || {} });
+          if (!confirm(msg)) return;
+        }
+        try {
+          await client.action(actionDef.action, { id: row?.id ?? null });
+          if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Action failed';
+          alert(message);
+        }
         break;
       }
 
@@ -519,7 +537,12 @@ export async function renderPage(config: any, { container = document.body }: { c
       label: column.label || '',
       align: column.align,
       sortable: column.sortable !== false,
-      rowActions: column.actions,
+      rowActions: column.actions?.map((action: any) => ({
+        ...action,
+        visible: action.show_if
+          ? (row: any) => Boolean(evalExpr(action.show_if, { ...ctx, row }))
+          : undefined,
+      })),
       render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
         if (column.type === 'StatusChip') {
           const chip = document.createElement('span');
@@ -758,6 +781,14 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     switch (def.type) {
+      case 'ComingSoon': {
+        const { ComingSoon } = await import('./components/ComingSoon.ts');
+        const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);
+        const slot = document.createElement('div');
+        targetContainer.appendChild(slot);
+        component.mount(slot);
+        break;
+      }
       case 'StatRow':
         await renderStatRow(def, targetContainer);
         break;

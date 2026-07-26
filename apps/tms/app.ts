@@ -16,7 +16,7 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/drivers':      'drivers',
   '/orders':       'orders',
   '/chat':         () => import('./pages/chat.ts'),
-  '/schedule':     'trips',
+  '/schedule':     'schedule',
   '/customers':    'customers',
   '/partners':     'partners',
   '/quotes':       'quotes', '/crm/dashboard': 'crm-dashboard', '/crm/kpi': 'crm-kpi',

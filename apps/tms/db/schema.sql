@@ -278,6 +278,8 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_order_date ON orders(order_date);
 
 CREATE TABLE IF NOT EXISTS master_data (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -321,9 +323,16 @@ CREATE TABLE IF NOT EXISTS system_configs (
   UNIQUE(kind, code)
 );
 CREATE TABLE IF NOT EXISTS system_activity (
-  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL,
-  resource VARCHAR NOT NULL, detail VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_id VARCHAR,
+  actor_name VARCHAR NOT NULL,
+  action VARCHAR NOT NULL,
+  resource VARCHAR NOT NULL,
+  resource_id VARCHAR,
+  detail VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_system_activity_created_at ON system_activity(created_at);
 
 CREATE TABLE IF NOT EXISTS maintenance (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),

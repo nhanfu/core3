@@ -59,6 +59,13 @@ class Client {
     });
   }
 
+  async action(name, params = {}) {
+    return this._fetch(`${this._resolveBase()}/actions/${encodeURIComponent(name)}`, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
   async patchMany(vms) {
     return this._fetch(`${this._resolveBase()}/patch-many`, {
       method: 'POST',

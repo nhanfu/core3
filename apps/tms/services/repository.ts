@@ -24,18 +24,11 @@ export class DuckDbRepository {
   }
 
   run(sql: string, params: any[] = []): Promise<void> {
-    return this.withConnection((conn) => new Promise<void>((resolve, reject) => {
-      conn.run(sql, ...params, (err: any) => (err ? reject(err) : resolve()));
-    }));
+    return this.withConnection((conn) => runOnConnection(conn, sql, params));
   }
 
   query(sql: string, params: any[] = []): Promise<any[]> {
-    return this.withConnection((conn) => new Promise<any[]>((resolve, reject) => {
-      conn.all(sql, ...params, (err: any, rows: any[]) => {
-        if (err) return reject(err);
-        resolve((rows || []).map(convertRow));
-      });
-    }));
+    return this.withConnection((conn) => queryOnConnection(conn, sql, params));
   }
 
   async runStatements(sqlText: string): Promise<void> {
@@ -125,6 +118,149 @@ export class DuckDbRepository {
 
   async deleteRecord(table: string, id: any): Promise<void> {
     await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
+  }
+
+  async recordActivity(event: {
+    actorId?: string | null;
+    actorName: string;
+    action: string;
+    resource: string;
+    resourceId?: string | null;
+    detail?: string | null;
+  }): Promise<void> {
+    await this.run(
+      `INSERT INTO system_activity(
+        id, actor_id, actor_name, action, resource, resource_id, detail
+      ) VALUES(?,?,?,?,?,?,?)`,
+      [
+        crypto.randomUUID(),
+        event.actorId || null,
+        event.actorName,
+        event.action,
+        event.resource,
+        event.resourceId || null,
+        event.detail || null,
+      ],
+    );
+  }
+
+  async transitionOrder(
+    orderId: string,
+    allowedFrom: readonly string[],
+    targetStatus: string,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const rows = await queryOnConnection(
+          conn,
+          'SELECT * FROM orders WHERE id = ?',
+          [orderId],
+        );
+        const order = rows[0];
+        if (!order) throw { status: 404, message: 'Order not found' };
+        if (!allowedFrom.includes(order.status)) {
+          throw {
+            status: 409,
+            message: `Action "${action}" is not allowed while order is "${order.status}"`,
+          };
+        }
+
+        await runOnConnection(
+          conn,
+          'UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = ?',
+          [targetStatus, orderId, order.status],
+        );
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actor.id || null,
+            actor.name,
+            action,
+            'orders',
+            orderId,
+            `${order.order_number}: ${order.status} -> ${targetStatus}`,
+          ],
+        );
+        const [updated] = await queryOnConnection(
+          conn,
+          'SELECT * FROM orders WHERE id = ?',
+          [orderId],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return { ...updated, previous_status: order.status };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async transitionAccountingEntry(
+    entryId: string,
+    kind: string,
+    allowedFrom: readonly string[],
+    targetStatus: string,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const rows = await queryOnConnection(
+          conn,
+          'SELECT * FROM accounting_entries WHERE id = ? AND kind = ?',
+          [entryId, kind],
+        );
+        const entry = rows[0];
+        if (!entry) throw { status: 404, message: 'Financial document not found' };
+        if (!allowedFrom.includes(entry.status)) {
+          throw {
+            status: 409,
+            message: `Action "${action}" is not allowed while document is "${entry.status}"`,
+          };
+        }
+
+        await runOnConnection(
+          conn,
+          `UPDATE accounting_entries
+           SET status = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND kind = ? AND status = ?`,
+          [targetStatus, entryId, kind, entry.status],
+        );
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actor.id || null,
+            actor.name,
+            action,
+            'accounting_entries',
+            entryId,
+            `${kind}:${entry.code}: ${entry.status} -> ${targetStatus}`,
+          ],
+        );
+        const [updated] = await queryOnConnection(
+          conn,
+          'SELECT * FROM accounting_entries WHERE id = ? AND kind = ?',
+          [entryId, kind],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return { ...updated, previous_status: entry.status };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
   }
 
   async deleteUserRoles(userId: any): Promise<void> {
@@ -304,6 +440,21 @@ function convertRow(row: Record<string, any>): Record<string, any> {
     key,
     typeof value === 'bigint' ? Number(value) : value instanceof Date ? value.toISOString() : value,
   ]));
+}
+
+function runOnConnection(conn: any, sql: string, params: any[] = []): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    conn.run(sql, ...params, (err: any) => (err ? reject(err) : resolve()));
+  });
+}
+
+function queryOnConnection(conn: any, sql: string, params: any[] = []): Promise<any[]> {
+  return new Promise<any[]>((resolve, reject) => {
+    conn.all(sql, ...params, (err: any, rows: any[]) => {
+      if (err) return reject(err);
+      resolve((rows || []).map(convertRow));
+    });
+  });
 }
 
 function bindNamedParams(sql: string, params: Record<string, any> = {}) {

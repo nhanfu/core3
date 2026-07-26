@@ -123,6 +123,37 @@ describe('DataGrid', () => {
     expect(submit).toHaveBeenCalledWith('edit', { row: rows[0] });
   });
 
+  it('hides row actions that are unavailable for the row state', () => {
+    const grid = new DataGrid('orders', {
+      rows: [
+        { id: 'draft', status: 'Draft' },
+        { id: 'approved', status: 'Approved' },
+      ],
+    }, [
+      { field: 'status', label: 'Status' },
+      {
+        field: 'actions',
+        label: '',
+        rowActions: [
+          {
+            id: 'approve',
+            label: 'Approve',
+            visible: row => row.status === 'Pending Approval',
+          },
+          {
+            id: 'cancel',
+            label: 'Cancel',
+            visible: row => row.status !== 'Cancelled',
+          },
+        ],
+      },
+    ]);
+
+    const container = mount(grid);
+    expect(container.querySelectorAll('[data-grid-row-action^="approve:"]')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-grid-row-action^="cancel:"]')).toHaveLength(2);
+  });
+
   it('requests the next server page without slicing client-side rows', () => {
     const onPageChange = vi.fn();
     const grid = new DataGrid('orders', {

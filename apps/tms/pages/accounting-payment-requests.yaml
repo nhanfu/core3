@@ -5,7 +5,12 @@ datasources:
     single: false
     permission: accounting.read
     query: |
-      SELECT id, code, name, counterparty, amount, currency, status, CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
+      SELECT id, code, name, counterparty, amount, currency,
+        printf('%,.0f', COALESCE(amount, 0)) AS amount_display, status,
+        CASE status WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt'
+          WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Paid' THEN 'Đã thanh toán'
+          WHEN 'Cancelled' THEN 'Đã hủy' ELSE status END AS status_label,
+        CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
       FROM accounting_entries WHERE kind = 'payment_request' AND (:status IS NULL OR status = :status)
         AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%')
       ORDER BY document_date DESC, code
@@ -16,7 +21,7 @@ components:
   - type: StatusTabs
     source: payment_requests
     filter_field: status
-    tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }]
+    tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }]
   - type: DataGrid
     source: payment_requests
     page_size: 20
@@ -28,16 +33,23 @@ components:
       - { field: name, label: Nội dung, type: PrimaryEntityCell, secondary: counterparty }
       - { field: document_date, label: Ngày đề nghị }
       - { field: due_date, label: Hạn thanh toán }
-      - { field: amount, label: Giá trị, align: right }
+      - { field: amount_display, label: Giá trị, align: right }
       - { field: currency, label: Tiền tệ }
-      - field: status
+      - field: status_label
         label: Trạng thái
         type: StatusChip
-        colors: { Draft: neutral, Pending Approval: amber, Approved: green }
+        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red }
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: edit_payment_request, label: Sửa, variant: ghost }, { id: delete_payment_request, label: Xóa, variant: danger }]
+        actions:
+          - { id: edit_payment_request, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
+          - { id: submit_payment_request, label: Trình duyệt, variant: primary, show_if: "row.status === 'Draft'" }
+          - { id: approve_payment_request, label: Duyệt, variant: primary, show_if: "row.status === 'Pending Approval' && user.permissions.includes('accounting.approve')" }
+          - { id: reject_payment_request, label: Từ chối, variant: ghost, show_if: "row.status === 'Pending Approval' && user.permissions.includes('accounting.approve')" }
+          - { id: pay_payment_request, label: Đã thanh toán, variant: primary, show_if: "row.status === 'Approved' && user.permissions.includes('accounting.pay')" }
+          - { id: cancel_payment_request, label: Hủy, variant: danger, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
+          - { id: delete_payment_request, label: Xóa, variant: danger, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_payment_request
     type: form
@@ -46,7 +58,7 @@ actions:
     scope: payment_request
     operation: insert
     refresh: [payment_requests]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved], default: Draft }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - id: edit_payment_request
     type: form
     title: Cập nhật đề nghị thanh toán
@@ -55,5 +67,10 @@ actions:
     operation: update
     prefill: row
     refresh: [payment_requests]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: amount, label: Giá trị, type: number }, { field: currency, label: Tiền tệ, type: text }, { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved] }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: amount, label: Giá trị, type: number }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+  - { id: submit_payment_request, type: server, action: accounting.payment_requests.submit_for_approval, confirm: 'Trình duyệt đề nghị chi {{row.code}}?', refresh: [payment_requests] }
+  - { id: approve_payment_request, type: server, action: accounting.payment_requests.approve, confirm: 'Duyệt đề nghị chi {{row.code}}?', refresh: [payment_requests] }
+  - { id: reject_payment_request, type: server, action: accounting.payment_requests.reject, confirm: 'Từ chối đề nghị chi {{row.code}}?', refresh: [payment_requests] }
+  - { id: pay_payment_request, type: server, action: accounting.payment_requests.mark_paid, confirm: 'Xác nhận đã thanh toán đề nghị chi {{row.code}}?', refresh: [payment_requests] }
+  - { id: cancel_payment_request, type: server, action: accounting.payment_requests.cancel, confirm: 'Hủy đề nghị chi {{row.code}}?', refresh: [payment_requests] }
   - { id: delete_payment_request, type: delete, table: accounting_entries, scope: payment_request, confirm: 'Xóa đề nghị chi {{row.code}}?', refresh: [payment_requests] }

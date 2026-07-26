@@ -61,12 +61,34 @@ declare module '@core3/framework/page-renderer.ts' {
   export function registerAll(map: Record<string, any>): void;
 }
 
+declare module '@core3/framework/yaml/schema.ts' {
+  export function validatePageDefinition(
+    config: unknown,
+    options?: { allowExternalSources?: boolean },
+  ): unknown;
+}
+
+declare module '@core3/framework/workflow.ts' {
+  export type WorkflowTransition<State extends string = string> = {
+    from: readonly State[];
+    to: State;
+  };
+
+  export class StateWorkflow<Action extends string, State extends string> {
+    constructor(definition: Record<Action, WorkflowTransition<State>>);
+    transition(action: Action, currentState: State): State;
+    get(action: Action): WorkflowTransition<State>;
+    available(currentState: State): Action[];
+  }
+}
+
 declare module '@core3/framework/client.ts' {
   export const client: {
     setToken(token: string | null): void;
     onRefresh(fn: null | (() => Promise<string>)): void;
     query(vm: any): Promise<any>;
     patch(vm: any): Promise<any>;
+    action(name: string, params?: Record<string, unknown>): Promise<any>;
     patchMany(vms: any): Promise<any>;
     deactivate(table: string, id: string | number): Promise<any>;
     hardDelete(table: string, id: string | number): Promise<any>;

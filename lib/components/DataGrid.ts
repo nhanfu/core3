@@ -22,6 +22,7 @@ export interface DataGridRowAction {
   id: string;
   label: string;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  visible?: (row: DataGridRow) => boolean;
 }
 
 export interface DataGridAction {
@@ -170,6 +171,7 @@ export class DataGrid extends BaseComponent {
       if (sortable) {
         const active = sort?.field === column.field;
         const button = html.take(th).button.className('inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
+        button.style.cssText = 'appearance:none;border:0;background:transparent;padding:0;font:inherit;color:inherit;';
         button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
         html.take(button).span.className('text-gray-400').text(active ? (sort?.direction === 'desc' ? '↓' : '↑') : '↕');
         button.addEventListener('click', () => this.setSort(column.field));
@@ -205,6 +207,7 @@ export class DataGrid extends BaseComponent {
           if (column.rowActions?.length) {
             const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
             for (const action of column.rowActions) {
+              if (action.visible && !action.visible(row)) continue;
               const button = html.take(actionBar).button
                 .className(`rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
                 .dataAttr('grid-row-action', `${action.id}:${id}`)
