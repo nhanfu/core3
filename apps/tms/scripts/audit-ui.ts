@@ -75,7 +75,8 @@ await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(to
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
-const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, export: 0 };
+const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, export: 0 };
+const routeCoverage: Array<{ route: string; controls: Record<string, number> }> = [];
 for (const route of targets) {
   consoleErrors.length = 0;
   try {
@@ -96,18 +97,26 @@ for (const route of targets) {
     const editor = [...(outlet?.querySelectorAll('button') || [])].find((item) => /^(\\+|Thêm|Mời|Chấm|Phân|Sửa|Cập nhật)/.test(item.textContent?.trim() || ''));
     editor?.click();
     if (editor) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    const sortable = outlet?.querySelector('button[data-sort-field]');
-    sortable?.click();
-    const nextPage = [...(outlet?.querySelectorAll('button') || [])].find((item) => item.textContent?.trim() === '›' && !item.disabled);
-    nextPage?.click();
+    const sortables = [...(outlet?.querySelectorAll('button[data-sort-field]') || [])];
+    sortables.forEach((button) => button.click());
+    const pagination = [...(outlet?.querySelectorAll('button') || [])]
+      .filter((item) => ['‹', '›'].includes(item.textContent?.trim() || '') && !item.disabled);
+    pagination.forEach((button) => button.click());
+    const pageSize = [...(outlet?.querySelectorAll('select') || [])]
+      .find((select) => [...select.options].some((option) => ['10', '25', '50', '100'].includes(option.value)));
+    if (pageSize && pageSize.options.length > 1) {
+      pageSize.value = pageSize.options[pageSize.options.length - 1].value;
+      pageSize.dispatchEvent(new Event('change', { bubbles: true }));
+    }
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
-    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: Number(Boolean(sortable)), pagination: Number(Boolean(nextPage)), export: Number(Boolean(exportButton)) };
+    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), export: Number(Boolean(exportButton)) };
     })())`, `${route} control exercise`);
     const exercised = typeof exercisedJson === 'string' ? JSON.parse(exercisedJson) : exercisedJson;
     for (const key of Object.keys(controlCounts) as Array<keyof typeof controlCounts>) {
       controlCounts[key] += Number(exercised?.[key] || 0);
     }
+    routeCoverage.push({ route, controls: exercised || {} });
     await new Promise((resolve) => setTimeout(resolve, 250));
     const state = await evaluateWithTimeout(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${route} state read`);
     if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
@@ -122,5 +131,8 @@ for (const route of targets) {
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
+for (const { route, controls } of routeCoverage) {
+  console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
+}
 for (const failure of failures) console.error(failure);
 if (failures.length) process.exit(1);
