@@ -11,6 +11,9 @@ type NavGroup = { id: string; label: string; count: number; items: NavItem[] };
 const ICON_PATHS: Record<string, string> = {
   search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/>',
   bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  message: '<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.3 8.3 0 0 1-3.4-.7L4 20l1.3-3.3A7.2 7.2 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/>',
+  panel: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16"/>',
   moon: '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>',
   '▦': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
@@ -255,6 +258,19 @@ export class AppShell extends BaseComponent {
     // Global command search mirrors the reference header search while keeping
     // navigation declarative in this route registry.
     const tenantContext = html.take(header).div.className('tenant-context').getContext();
+    const sidebarToggle = html.take(tenantContext).button
+      .className('header-icon-btn sidebar-toggle')
+      .attr('type', 'button')
+      .attr('title', 'Thu gọn menu')
+      .attr('aria-label', 'Thu gọn menu')
+      .getContext();
+    const sidebarToggleIcon = html.take(sidebarToggle).span.getContext();
+    appendIcon(sidebarToggleIcon, 'panel');
+    sidebarToggle.addEventListener('click', () => {
+      const collapsed = layout.classList.toggle('sidebar-collapsed');
+      sidebarToggle.title = collapsed ? 'Mở rộng menu' : 'Thu gọn menu';
+      sidebarToggle.setAttribute('aria-label', sidebarToggle.title);
+    });
     html.take(tenantContext).span.className('tenant-context-name').text(
       this.state.company?.short_name || this.state.company?.name || 'TMS',
     );
@@ -363,6 +379,26 @@ export class AppShell extends BaseComponent {
       })
       .getContext();
 
+    const attendanceBtn = html.take(actions).button
+      .className('header-icon-btn')
+      .attr('type', 'button')
+      .attr('title', 'Chấm công')
+      .attr('aria-label', 'Chấm công')
+      .event('click', () => navigate('/hr/timesheets'))
+      .getContext();
+    const attendanceIcon = html.take(attendanceBtn).span.getContext();
+    appendIcon(attendanceIcon, 'clock');
+
+    const chatBtn = html.take(actions).button
+      .className('header-icon-btn')
+      .attr('type', 'button')
+      .attr('title', 'Tin nhắn')
+      .attr('aria-label', 'Tin nhắn')
+      .event('click', () => navigate('/chat'))
+      .getContext();
+    const chatIcon = html.take(chatBtn).span.getContext();
+    appendIcon(chatIcon, 'message');
+
     // Notification bell button — rendered as a container so we can add badge inside
     const bellBtn = html.take(actions).button
       .className('header-icon-btn')
@@ -376,6 +412,9 @@ export class AppShell extends BaseComponent {
       .className('notif-badge')
       .style('display:none')
       .getContext();
+
+    // Keep the theme switch beside notification controls, as in the reference header.
+    actions.append(themeButton);
 
     // User identity and profile button
     const userIdentity = html.take(actions).div.className('header-user-identity').getContext();

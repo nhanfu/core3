@@ -22,6 +22,9 @@ of the audit.
 - The top header is 64 px high, translucent white with a light bottom border.
   It contains company identity, locale, attendance/time, chat, notification
   badge, theme switch, and user/avatar menu.
+- The header's menu control collapses the sidebar to an icon rail while
+  preserving route navigation; attendance and chat controls navigate to their
+  shared TMS pages.
 - The sidebar has the MovedX mark/tagline, menu search, dashboard, seven
   collapsible module groups, footer version, and an expand/collapse control.
   Expanded groups retain their indented child links and a blue active row.

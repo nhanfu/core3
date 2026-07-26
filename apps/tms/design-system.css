@@ -357,6 +357,7 @@ body {
 .tenant-context {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   min-width: 150px;
   color: #334155;
   font-size: 0.85rem;
@@ -365,6 +366,7 @@ body {
 }
 .tenant-context-name { overflow: hidden; text-overflow: ellipsis; }
 :root[data-theme='dim'] .tenant-context { color: var(--color-text-secondary); }
+.tenant-context .sidebar-toggle { flex: 0 0 auto; }
 .global-search-icon .svg-icon { display: contents; }
 .global-search-icon svg { width: 15px; height: 15px; }
 
@@ -504,6 +506,23 @@ body {
 }
 
 .avatar-btn:hover { opacity: 0.9; }
+
+/* Collapsed navigation keeps the icon rail available without changing routes. */
+.app-layout.sidebar-collapsed .app-sidebar { width: 72px; }
+.app-layout.sidebar-collapsed .sidebar-logo { padding-left: 22px; padding-right: 22px; }
+.app-layout.sidebar-collapsed .sidebar-logo-text,
+.app-layout.sidebar-collapsed .sidebar-logo-sub,
+.app-layout.sidebar-collapsed .sidebar-menu-search input,
+.app-layout.sidebar-collapsed .sidebar-group-label,
+.app-layout.sidebar-collapsed .sidebar-group-count,
+.app-layout.sidebar-collapsed .sidebar-group-chevron,
+.app-layout.sidebar-collapsed .sidebar-user > div:not(.sidebar-avatar) { display: none; }
+.app-layout.sidebar-collapsed .sidebar-menu-search { justify-content: center; margin-left: 12px; margin-right: 12px; padding: 0; }
+.app-layout.sidebar-collapsed .sidebar-nav { padding-left: 10px; padding-right: 10px; }
+.app-layout.sidebar-collapsed .nav-item { justify-content: center; padding-left: 8px; padding-right: 8px; }
+.app-layout.sidebar-collapsed .sidebar-group-button { display: none; }
+.app-layout.sidebar-collapsed .sidebar-group-items { display: grid; padding-left: 0; }
+.app-layout.sidebar-collapsed .sidebar-footer { padding-left: 20px; padding-right: 20px; }
 
 @media (max-width: 720px) {
   .header-user-identity { display: none; }
