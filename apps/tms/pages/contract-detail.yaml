@@ -1,0 +1,43 @@
+title: Chi tiết hợp đồng
+page: { id: contract-detail, auth: { require: [hr.read] } }
+datasources:
+  - id: contract_detail
+    single: true
+    permission: hr.read
+    query: |
+      SELECT c.id, c.code, c.employee_id, c.contract_type, c.start_date, c.end_date,
+        c.base_salary, c.status, e.code AS employee_code, e.name AS employee_name,
+        e.job_title, e.department,
+        CASE c.contract_type WHEN 'Probation' THEN 'Thử việc' WHEN 'Indefinite' THEN 'Không xác định thời hạn' ELSE 'Xác định thời hạn' END AS contract_type_label,
+        CASE c.status WHEN 'Expiring' THEN 'Sắp hết hạn' WHEN 'Expired' THEN 'Hết hạn' WHEN 'Terminated' THEN 'Đã chấm dứt' ELSE 'Hiệu lực' END AS status_label
+      FROM employment_contracts c JOIN employees e ON e.id = c.employee_id WHERE c.id = :id
+  - id: contract_activity
+    single: false
+    permission: hr.read
+    query: |
+      SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at
+      FROM system_activity WHERE resource = 'employment_contracts' AND resource_id = :id
+      ORDER BY created_at DESC
+components:
+  - { type: DocumentSummary, source: contract_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: slate }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: job_title, label: Chức danh }, { field: department, label: Phòng ban }, { field: contract_type_label, label: Loại hợp đồng }, { field: start_date, label: Hiệu lực từ }, { field: end_date, label: Hiệu lực đến }, { field: base_salary, label: Lương cơ bản }] }
+  - type: ApprovalTimeline
+    source: contract_activity
+    title: Lịch sử hợp đồng
+    actor_field: actor_name
+    action_field: action
+    detail_field: detail
+    timestamp_field: created_at
+toolbar:
+  - { id: back_contracts, label: '← Danh sách hợp đồng', variant: secondary, action: back_contracts }
+  - { id: edit_contract_detail, label: Sửa hợp đồng, variant: primary, permission: hr.write, action: edit_contract_detail }
+actions:
+  - { id: back_contracts, type: navigate, navigate_to: /hr/contracts }
+  - id: edit_contract_detail
+    type: form
+    title: Cập nhật hợp đồng
+    table: employment_contracts
+    operation: update
+    prefill: source
+    prefill_source: contract_detail
+    refresh: [contract_detail, contract_activity]
+    fields: [{ field: code, label: Mã hợp đồng, type: text, required: true }, { field: employee_id, label: Mã nhân viên, type: text, required: true }, { field: contract_type, label: Loại hợp đồng, type: select, options: [Probation, FixedTerm, Indefinite] }, { field: start_date, label: Hiệu lực từ, type: date, required: true }, { field: end_date, label: Hiệu lực đến, type: date }, { field: base_salary, label: Lương cơ bản, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Expiring, Expired, Terminated] }]

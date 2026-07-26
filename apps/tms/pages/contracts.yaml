@@ -62,10 +62,12 @@ components:
         sortable: false
         align: right
         actions:
+          - { id: view_contract, label: Chi tiết, variant: primary }
           - { id: edit_contract, label: Sửa, variant: ghost }
           - { id: delete_contract, label: Xóa, variant: danger }
 
 actions:
+  - { id: view_contract, type: navigate, navigate_to: /hr/contracts/detail, params: { id: '{row.id}' } }
   - id: add_contract
     type: form
     title: Thêm hợp đồng
