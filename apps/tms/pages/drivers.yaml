@@ -39,6 +39,7 @@ components:
     search:
       label: Tìm kiếm tài xế
       placeholder: 'Tìm theo tên, số điện thoại, giấy phép...'
+    actions: [{ id: drivers.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: drivers
     filter_field: status

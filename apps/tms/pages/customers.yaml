@@ -43,6 +43,7 @@ components:
     search:
       label: Tìm kiếm khách hàng
       placeholder: 'Tìm mã, tên, MST, SĐT...'
+    actions: [{ id: customers.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: customers
     filter_field: stage

@@ -31,6 +31,7 @@ components:
     source: contracts
     filter_field: q
     search: { label: Tìm kiếm hợp đồng, placeholder: 'Tìm mã hợp đồng, mã hoặc tên nhân viên...' }
+    actions: [{ id: contracts.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: contracts
     filter_field: status

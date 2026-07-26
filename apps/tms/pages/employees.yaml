@@ -29,6 +29,7 @@ components:
     source: employees
     filter_field: q
     search: { label: Tìm kiếm nhân viên, placeholder: 'Tìm mã, tên, SĐT, email...' }
+    actions: [{ id: employees.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: employees
     filter_field: status

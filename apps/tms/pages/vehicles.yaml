@@ -39,6 +39,7 @@ components:
     search:
       label: Tìm kiếm phương tiện
       placeholder: 'Tìm theo biển số / số hiệu, tên, hãng...'
+    actions: [{ id: vehicles.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: vehicles
     filter_field: status

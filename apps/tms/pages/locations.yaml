@@ -31,6 +31,7 @@ components:
     source: locations
     filter_field: q
     search: { label: Tìm kiếm địa điểm, placeholder: 'Tìm mã, tên, thành phố hoặc địa chỉ...' }
+    actions: [{ id: locations.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: locations
     filter_field: status

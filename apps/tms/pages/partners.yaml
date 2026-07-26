@@ -45,6 +45,7 @@ components:
     search:
       label: Tìm kiếm đối tượng
       placeholder: 'Tìm mã, tên, MST, SĐT...'
+    actions: [{ id: partners.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: partners
     filter_field: partner_type

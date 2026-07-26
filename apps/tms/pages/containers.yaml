@@ -30,6 +30,7 @@ components:
     source: containers
     filter_field: q
     search: { label: Tìm kiếm container, placeholder: 'Tìm số container, loại hoặc chủ sở hữu...' }
+    actions: [{ id: containers.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: containers
     filter_field: status
