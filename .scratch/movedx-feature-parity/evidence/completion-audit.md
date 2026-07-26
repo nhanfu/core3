@@ -14,7 +14,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Not Proven
 
 - The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
-- The PRD asks for automated interaction coverage for every control. The browser audit now exercises shared column choosers, status tabs, and search inputs when present; it does not yet cover every editor, export, sort, pagination, or workflow transition.
+- The PRD asks for automated interaction coverage for every control. The browser audit now exercises shared column choosers, status tabs, search inputs, and safe editor open/dismiss behavior when present; it does not yet cover every export, sort, pagination, or workflow transition.
 
 ## Current commands
 

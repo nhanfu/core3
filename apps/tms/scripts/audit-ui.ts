@@ -60,7 +60,7 @@ for (const route of targets) {
   consoleErrors.length = 0;
   await evaluate(`location.hash = ${JSON.stringify(`#${route}`)}`);
   await new Promise((resolve) => setTimeout(resolve, 650));
-  const state = await evaluate(`(() => {
+  await evaluate(`(() => {
     const outlet = document.querySelector('#outlet');
     const summaries = [...(outlet?.querySelectorAll('summary') || [])].filter((item) => /^(Columns|Cột)$/.test(item.textContent?.trim() || ''));
     summaries[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -72,9 +72,13 @@ for (const route of targets) {
       setter?.call(search, 'audit');
       search.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    return { title: document.title, outlet: outlet?.textContent || '', hash: location.hash, chooser: summaries.length, tabs: tabs.length, search: Boolean(search) };
+    const editor = [...(outlet?.querySelectorAll('button') || [])].find((item) => /^(\+|Thêm|Mời|Chấm|Phân|Sửa|Cập nhật)/.test(item.textContent?.trim() || ''));
+    editor?.click();
+    if (editor) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor) };
   })()`);
   await new Promise((resolve) => setTimeout(resolve, 250));
+  const state = await evaluate(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`);
   if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
     failures.push(`${route}: outlet did not render`);
   }
