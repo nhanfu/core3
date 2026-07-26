@@ -203,7 +203,7 @@ const SOURCE_FILES = [
   'pages/orders.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
-  'pages/quotes.yaml',
+  'pages/quotes.yaml', 'pages/crm-dashboard.yaml', 'pages/crm-kpi.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
   'pages/areas.yaml',

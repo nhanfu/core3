@@ -1,0 +1,44 @@
+title: Tổng hợp CRM
+page: { id: crm-dashboard, auth: { require: [crm.read] } }
+datasources:
+  - id: crm_kpis
+    single: true
+    permission: crm.read
+    query: |
+      SELECT (SELECT COUNT(*) FROM customers) AS customer_count,
+        (SELECT COUNT(*) FROM customers WHERE stage = 'Lead') AS lead_count,
+        (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted') AS accepted_quote_count,
+        (SELECT COALESCE(SUM(amount), 0) FROM quotes WHERE status = 'Accepted') AS accepted_quote_value,
+        (SELECT COUNT(*) FROM orders WHERE status = 'Approved') AS approved_order_count
+  - id: crm_quote_pipeline
+    single: false
+    permission: crm.read
+    query: |
+      SELECT status AS label, COUNT(*) AS value FROM quotes GROUP BY status ORDER BY status
+  - id: crm_recent_quotes
+    single: false
+    permission: crm.read
+    query: |
+      SELECT code, title, customer_name, amount, status, CAST(valid_until AS VARCHAR) AS valid_until
+      FROM quotes ORDER BY created_at DESC
+components:
+  - type: StatRow
+    source: crm_kpis
+    stats:
+      - { label: Khách hàng, field: customer_count, color: blue }
+      - { label: Khách tiềm năng, field: lead_count, color: amber }
+      - { label: Báo giá chấp nhận, field: accepted_quote_count, color: green }
+      - { label: Giá trị báo giá, field: accepted_quote_value, color: teal }
+      - { label: Đơn đã duyệt, field: approved_order_count, color: indigo }
+  - { type: Chart, source: crm_quote_pipeline, title: Phễu báo giá, label_field: label, value_field: value, width: 560, height: 240, color: '#2563eb' }
+  - type: DataGrid
+    source: crm_recent_quotes
+    page_size: 10
+    row_key: code
+    columns:
+      - { field: code, label: Mã }
+      - { field: title, label: Báo giá, type: PrimaryEntityCell, secondary: customer_name }
+      - { field: amount, label: Giá trị, align: right }
+      - { field: valid_until, label: Hiệu lực đến }
+      - { field: status, label: Trạng thái, type: StatusChip, colors: { Draft: neutral, Sent: blue, Accepted: green } }
+actions: []

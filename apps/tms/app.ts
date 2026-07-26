@@ -19,7 +19,7 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/schedule':     'trips',
   '/customers':    'customers',
   '/partners':     'partners',
-  '/quotes':       'quotes', '/crm/dashboard': () => import('./pages/placeholder.ts'), '/crm/kpi': () => import('./pages/placeholder.ts'),
+  '/quotes':       'quotes', '/crm/dashboard': 'crm-dashboard', '/crm/kpi': 'crm-kpi',
   '/accounting/debit-notes': 'accounting-debit-notes',
   '/accounting/debit-note-summary': 'accounting-debit-note-summary',
   '/accounting/payment-requests': 'accounting-payment-requests',
