@@ -30,6 +30,10 @@ datasources:
     single: false
     permission: fleet.read
     query: "SELECT id AS value, name AS label FROM branches ORDER BY name"
+  - id: vehicle_type_lookup
+    single: false
+    permission: fleet.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' ORDER BY label"
 
 toolbar:
   - id: add_vehicle_btn
@@ -122,7 +126,7 @@ actions:
     fields:
       - { field: plate, label: Biển số / số hiệu, type: text, required: true }
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
-      - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
+      - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_type_lookup }
       - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service], default: Active }
       - { field: capacity_kg, label: Tải trọng (kg), type: number, default: 0 }
@@ -137,7 +141,7 @@ actions:
     fields:
       - { field: plate, label: Biển số / số hiệu, type: text, required: true }
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
-      - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
+      - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_type_lookup }
       - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service] }
       - { field: capacity_kg, label: Tải trọng (kg), type: number }
