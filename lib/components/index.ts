@@ -6,6 +6,7 @@ export { DateCell }       from './DateCell.ts';
 export { BooleanCell }    from './BooleanCell.ts';
 export { ActionCell }     from './ActionCell.ts';
 export { GridView }       from './GridView.ts';
+export { DataGrid }       from './DataGrid.ts';
 export { ListView }       from './ListView.ts';
 export { TextInput }      from './TextInput.ts';
 export { NumberInput }    from './NumberInput.ts';
