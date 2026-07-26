@@ -75,7 +75,11 @@ for (const route of targets) {
     const editor = [...(outlet?.querySelectorAll('button') || [])].find((item) => /^(\+|Thêm|Mời|Chấm|Phân|Sửa|Cập nhật)/.test(item.textContent?.trim() || ''));
     editor?.click();
     if (editor) document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor) };
+    const sortable = outlet?.querySelector('button[data-sort-field]') as HTMLButtonElement | null;
+    sortable?.click();
+    const nextPage = [...(outlet?.querySelectorAll('button') || [])].find((item) => item.textContent?.trim() === '›' && !(item as HTMLButtonElement).disabled) as HTMLButtonElement | undefined;
+    nextPage?.click();
+    return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor), sortable: Boolean(sortable), pagination: Boolean(nextPage) };
   })()`);
   await new Promise((resolve) => setTimeout(resolve, 250));
   const state = await evaluate(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`);
