@@ -33,7 +33,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-17', 'role-admin', 'catalog.read'),
 ('perm-adm-18', 'role-admin', 'catalog.write'),
 ('perm-adm-19', 'role-admin', 'accounting.read'),
-('perm-adm-20', 'role-admin', 'accounting.write');
+('perm-adm-20', 'role-admin', 'accounting.write'),
+('perm-adm-21', 'role-admin', 'hr.read'),
+('perm-adm-22', 'role-admin', 'hr.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -66,6 +68,45 @@ INSERT INTO users (id, email, name, password_hash, preferred_lang) VALUES
 ('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en'),
 ('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi'),
 ('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en');
+
+-- ── HR ─────────────────────────────────────────────────────────────────────
+INSERT INTO employees (id, code, name, job_title, phone, email, department, start_date, dependents, status) VALUES
+('employee-01', 'NV001', 'Lê Hoàng Nam', 'Trưởng phòng Kinh doanh', '0980-542-089', 'nam.le@tms.local', 'Kinh doanh', '2024-10-24', 2, 'Active'),
+('employee-02', 'NV002', 'Phạm Thị Thu Hà', 'Trưởng nhóm KD Hàng nhập', '0912-289-181', 'ha.pham@tms.local', 'Kinh doanh', '2024-04-27', 1, 'Active'),
+('employee-03', 'NV003', 'Đỗ Thị Ngọc Ánh', 'Nhân viên Kinh doanh', '0929-717-608', 'anh.do@tms.local', 'Kinh doanh', '2025-11-10', 1, 'Active'),
+('employee-04', 'NV004', 'Đinh Văn Toàn', 'Chuyên viên Nhân sự', '0944-526-531', 'toan.dinh@tms.local', 'Hành chính - Nhân sự', '2025-11-22', 0, 'Active'),
+('employee-05', 'NV005', 'Tạ Minh Hiếu', 'Kế toán công nợ', '0919-551-205', 'hieu.ta@tms.local', 'Kế toán', '2026-01-20', 1, 'OnLeave'),
+('employee-06', 'NV006', 'Hồ Văn Lâm', 'Kỹ thuật viên bảo dưỡng', '0986-494-850', 'lam.ho@tms.local', 'Kỹ thuật - Bảo dưỡng', '2025-10-13', 2, 'Inactive');
+
+INSERT INTO employment_contracts (id, code, employee_id, contract_type, start_date, end_date, base_salary, status) VALUES
+('contract-01', 'HD001', 'employee-01', 'Indefinite', '2024-10-24', NULL, 28000000, 'Active'),
+('contract-02', 'HD002', 'employee-02', 'FixedTerm', '2025-01-01', '2026-12-31', 22000000, 'Active'),
+('contract-03', 'HD003', 'employee-03', 'FixedTerm', '2025-11-10', '2026-11-09', 16000000, 'Active'),
+('contract-04', 'HD004', 'employee-04', 'Indefinite', '2025-11-22', NULL, 18000000, 'Active'),
+('contract-05', 'HD005', 'employee-05', 'FixedTerm', '2025-01-20', '2026-07-31', 17000000, 'Expiring'),
+('contract-06', 'HD006', 'employee-06', 'Probation', '2025-10-13', '2025-12-13', 12000000, 'Expired');
+
+INSERT INTO work_shifts (id, code, name, start_time, end_time, break_minutes, status) VALUES
+('shift-01', 'HC', 'Hành chính', '08:00', '17:00', 60, 'Active'),
+('shift-02', 'SANG', 'Ca sáng', '06:00', '14:00', 30, 'Active'),
+('shift-03', 'CHIEU', 'Ca chiều', '14:00', '22:00', 30, 'Active'),
+('shift-04', 'DEM', 'Ca đêm', '22:00', '06:00', 30, 'Active'),
+('shift-05', 'CU', 'Ca cũ', '08:30', '17:30', 60, 'Inactive');
+
+INSERT INTO timesheets (id, employee_id, work_date, shift_id, hours, status, notes) VALUES
+('timesheet-01', 'employee-01', '2026-07-24', 'shift-01', 8, 'Present', NULL),
+('timesheet-02', 'employee-02', '2026-07-24', 'shift-01', 8, 'Present', NULL),
+('timesheet-03', 'employee-03', '2026-07-24', 'shift-01', 8, 'Present', NULL),
+('timesheet-04', 'employee-04', '2026-07-24', 'shift-01', 8, 'Present', NULL),
+('timesheet-05', 'employee-05', '2026-07-24', 'shift-01', 0, 'Leave', 'Nghỉ phép'),
+('timesheet-06', 'employee-06', '2026-07-24', 'shift-02', 0, 'Absent', 'Nghỉ việc');
+
+INSERT INTO payrolls (id, code, employee_id, pay_month, base_salary, allowance, deduction, net_salary, status) VALUES
+('payroll-01', 'BL202607001', 'employee-01', '2026-07-01', 28000000, 3000000, 2500000, 28500000, 'Paid'),
+('payroll-02', 'BL202607002', 'employee-02', '2026-07-01', 22000000, 2500000, 2100000, 22400000, 'Paid'),
+('payroll-03', 'BL202607003', 'employee-03', '2026-07-01', 16000000, 1500000, 1500000, 16000000, 'Approved'),
+('payroll-04', 'BL202607004', 'employee-04', '2026-07-01', 18000000, 1500000, 1700000, 17800000, 'Draft'),
+('payroll-05', 'BL202607005', 'employee-05', '2026-07-01', 17000000, 1000000, 900000, 17100000, 'Draft');
 
 -- ── Customers ──────────────────────────────────────────────────────────────
 INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name, visibility, status) VALUES

@@ -80,6 +80,74 @@ CREATE TABLE IF NOT EXISTS partners (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS employees (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  job_title VARCHAR,
+  phone VARCHAR,
+  email VARCHAR,
+  department VARCHAR,
+  start_date DATE,
+  dependents INTEGER NOT NULL DEFAULT 0 CHECK (dependents >= 0),
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'OnLeave', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS employment_contracts (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  employee_id VARCHAR NOT NULL,
+  contract_type VARCHAR NOT NULL DEFAULT 'FixedTerm' CHECK (contract_type IN ('Probation', 'FixedTerm', 'Indefinite')),
+  start_date DATE NOT NULL,
+  end_date DATE,
+  base_salary DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (base_salary >= 0),
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Expiring', 'Expired', 'Terminated')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS work_shifts (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  start_time VARCHAR NOT NULL,
+  end_time VARCHAR NOT NULL,
+  break_minutes INTEGER NOT NULL DEFAULT 0 CHECK (break_minutes >= 0),
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS timesheets (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  employee_id VARCHAR NOT NULL,
+  work_date DATE NOT NULL,
+  shift_id VARCHAR,
+  hours DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (hours >= 0 AND hours <= 24),
+  status VARCHAR NOT NULL DEFAULT 'Present' CHECK (status IN ('Present', 'Absent', 'Leave')),
+  notes VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(employee_id, work_date)
+);
+
+CREATE TABLE IF NOT EXISTS payrolls (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  employee_id VARCHAR NOT NULL,
+  pay_month DATE NOT NULL,
+  base_salary DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (base_salary >= 0),
+  allowance DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (allowance >= 0),
+  deduction DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (deduction >= 0),
+  net_salary DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (net_salary >= 0),
+  status VARCHAR NOT NULL DEFAULT 'Draft' CHECK (status IN ('Draft', 'Approved', 'Paid')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(employee_id, pay_month)
+);
+
 CREATE TABLE IF NOT EXISTS trucks (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   plate VARCHAR NOT NULL UNIQUE,

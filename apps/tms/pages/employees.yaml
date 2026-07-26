@@ -1,0 +1,104 @@
+title: Nhân viên
+
+page:
+  id: employees
+  auth:
+    require: [hr.read]
+
+datasources:
+  - id: employees
+    single: false
+    permission: hr.read
+    query: |
+      SELECT e.*,
+        CASE e.status WHEN 'OnLeave' THEN 'Nghỉ phép' WHEN 'Inactive' THEN 'Ngưng làm việc' ELSE 'Đang làm việc' END AS status_label
+      FROM employees e
+      WHERE (NULLIF(:status, '') IS NULL OR e.status = :status)
+        AND (:q IS NULL OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.phone ILIKE '%' || :q || '%' OR e.email ILIKE '%' || :q || '%')
+      ORDER BY e.created_at DESC, e.name
+
+toolbar:
+  - id: add_employee_btn
+    label: '+ Thêm nhân viên'
+    variant: primary
+    permission: hr.write
+    action: add_employee
+
+components:
+  - type: ListToolbar
+    source: employees
+    filter_field: q
+    search: { label: Tìm kiếm nhân viên, placeholder: 'Tìm mã, tên, SĐT, email...' }
+  - type: StatusTabs
+    source: employees
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Đang làm việc }
+      - { id: OnLeave, label: Nghỉ phép }
+      - { id: Inactive, label: Ngưng làm việc }
+  - type: DataGrid
+    source: employees
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có nhân viên, description: Thử thay đổi bộ lọc hoặc tạo nhân viên mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: name, label: Họ tên, type: PrimaryEntityCell, secondary: job_title }
+      - { field: code, label: Mã nhân viên }
+      - { field: phone, label: Điện thoại, type: PrimaryEntityCell, secondary: email }
+      - { field: start_date, label: Ngày vào làm }
+      - { field: dependents, label: Người phụ thuộc, align: right }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Đang làm việc: green, Nghỉ phép: amber, Ngưng làm việc: red }
+      - { field: created_at, label: Ngày giờ tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_employee, label: Sửa, variant: ghost }
+          - { id: delete_employee, label: Xóa, variant: danger }
+
+actions:
+  - id: add_employee
+    type: form
+    title: Thêm nhân viên
+    table: employees
+    operation: insert
+    refresh: [employees]
+    fields:
+      - { field: code, label: Mã nhân viên, type: text, required: true }
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: job_title, label: Chức danh, type: text }
+      - { field: phone, label: Số điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: department, label: Phòng ban, type: text }
+      - { field: start_date, label: Ngày vào làm, type: date }
+      - { field: dependents, label: Người phụ thuộc, type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive], default: Active }
+  - id: edit_employee
+    type: form
+    title: Cập nhật nhân viên
+    table: employees
+    operation: update
+    prefill: row
+    refresh: [employees]
+    fields:
+      - { field: code, label: Mã nhân viên, type: text, required: true }
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: job_title, label: Chức danh, type: text }
+      - { field: phone, label: Số điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: department, label: Phòng ban, type: text }
+      - { field: start_date, label: Ngày vào làm, type: date }
+      - { field: dependents, label: Người phụ thuộc, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive] }
+  - id: delete_employee
+    type: delete
+    confirm: 'Xóa nhân viên {{row.name}}?'
+    table: employees
+    refresh: [employees]

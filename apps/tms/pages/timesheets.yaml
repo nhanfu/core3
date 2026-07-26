@@ -1,0 +1,99 @@
+title: Chấm công
+
+page:
+  id: timesheets
+  auth:
+    require: [hr.read]
+
+datasources:
+  - id: timesheets
+    single: false
+    permission: hr.read
+    query: |
+      SELECT t.*, e.code AS employee_code, e.name AS employee_name, s.code AS shift_code, s.name AS shift_name,
+        CASE t.status WHEN 'Present' THEN 'Có mặt' WHEN 'Leave' THEN 'Nghỉ phép' ELSE 'Vắng mặt' END AS status_label
+      FROM timesheets t
+      LEFT JOIN employees e ON e.id = t.employee_id
+      LEFT JOIN work_shifts s ON s.id = t.shift_id
+      WHERE (NULLIF(:status, '') IS NULL OR t.status = :status)
+        AND (:q IS NULL OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR CAST(t.work_date AS VARCHAR) ILIKE '%' || :q || '%')
+      ORDER BY t.work_date DESC, e.name
+
+toolbar:
+  - id: add_timesheet_btn
+    label: '+ Chấm công'
+    variant: primary
+    permission: hr.write
+    action: add_timesheet
+
+components:
+  - type: ListToolbar
+    source: timesheets
+    filter_field: q
+    search: { label: Tìm kiếm chấm công, placeholder: 'Tìm mã, tên nhân viên hoặc ngày công...' }
+  - type: StatusTabs
+    source: timesheets
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Present, label: Có mặt }
+      - { id: Leave, label: Nghỉ phép }
+      - { id: Absent, label: Vắng mặt }
+  - type: DataGrid
+    source: timesheets
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có dữ liệu chấm công, description: Thử thay đổi bộ lọc hoặc tạo chấm công mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }
+      - { field: work_date, label: Ngày công }
+      - { field: shift_code, label: Ca làm, type: PrimaryEntityCell, secondary: shift_name }
+      - { field: hours, label: Số giờ, align: right }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Có mặt: green, Nghỉ phép: amber, Vắng mặt: red }
+      - { field: notes, label: Ghi chú }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_timesheet, label: Sửa, variant: ghost }
+          - { id: delete_timesheet, label: Xóa, variant: danger }
+
+actions:
+  - id: add_timesheet
+    type: form
+    title: Chấm công
+    table: timesheets
+    operation: insert
+    refresh: [timesheets]
+    fields:
+      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: work_date, label: Ngày công, type: date, required: true }
+      - { field: shift_id, label: Mã HT ca làm, type: text }
+      - { field: hours, label: Số giờ, type: number, default: 8 }
+      - { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent], default: Present }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: edit_timesheet
+    type: form
+    title: Cập nhật chấm công
+    table: timesheets
+    operation: update
+    prefill: row
+    refresh: [timesheets]
+    fields:
+      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: work_date, label: Ngày công, type: date, required: true }
+      - { field: shift_id, label: Mã HT ca làm, type: text }
+      - { field: hours, label: Số giờ, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Present, Leave, Absent] }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: delete_timesheet
+    type: delete
+    confirm: 'Xóa chấm công {{row.employee_name}}?'
+    table: timesheets
+    refresh: [timesheets]

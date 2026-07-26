@@ -1,0 +1,104 @@
+title: Bảng lương
+
+page:
+  id: payroll
+  auth:
+    require: [hr.read]
+
+datasources:
+  - id: payroll
+    single: false
+    permission: hr.read
+    query: |
+      SELECT p.*, e.code AS employee_code, e.name AS employee_name,
+        CASE p.status WHEN 'Draft' THEN 'Nháp' WHEN 'Approved' THEN 'Đã duyệt' ELSE 'Đã chi' END AS status_label
+      FROM payrolls p
+      LEFT JOIN employees e ON e.id = p.employee_id
+      WHERE (NULLIF(:status, '') IS NULL OR p.status = :status)
+        AND (:q IS NULL OR p.code ILIKE '%' || :q || '%' OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%')
+      ORDER BY p.pay_month DESC, p.created_at DESC
+
+toolbar:
+  - id: add_payroll_btn
+    label: '+ Lập bảng lương'
+    variant: primary
+    permission: hr.write
+    action: add_payroll
+
+components:
+  - type: ListToolbar
+    source: payroll
+    filter_field: q
+    search: { label: Tìm kiếm bảng lương, placeholder: 'Tìm mã bảng lương, mã hoặc tên nhân viên...' }
+  - type: StatusTabs
+    source: payroll
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Draft, label: Nháp }
+      - { id: Approved, label: Đã duyệt }
+      - { id: Paid, label: Đã chi }
+  - type: DataGrid
+    source: payroll
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có bảng lương, description: Thử thay đổi bộ lọc hoặc lập bảng lương mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: code, label: Số bảng lương }
+      - { field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }
+      - { field: pay_month, label: Tháng lương }
+      - { field: base_salary, label: Lương cơ bản, align: right }
+      - { field: allowance, label: Phụ cấp, align: right }
+      - { field: deduction, label: Khấu trừ, align: right }
+      - { field: net_salary, label: Thực lãnh, align: right }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Nháp: slate, Đã duyệt: amber, Đã chi: green }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_payroll, label: Sửa, variant: ghost }
+          - { id: delete_payroll, label: Xóa, variant: danger }
+
+actions:
+  - id: add_payroll
+    type: form
+    title: Lập bảng lương
+    table: payrolls
+    operation: insert
+    refresh: [payroll]
+    fields:
+      - { field: code, label: Số bảng lương, type: text, required: true }
+      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: pay_month, label: Tháng lương, type: date, required: true }
+      - { field: base_salary, label: Lương cơ bản, type: number, default: 0 }
+      - { field: allowance, label: Phụ cấp, type: number, default: 0 }
+      - { field: deduction, label: Khấu trừ, type: number, default: 0 }
+      - { field: net_salary, label: Thực lãnh, type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Draft, Approved, Paid], default: Draft }
+  - id: edit_payroll
+    type: form
+    title: Cập nhật bảng lương
+    table: payrolls
+    operation: update
+    prefill: row
+    refresh: [payroll]
+    fields:
+      - { field: code, label: Số bảng lương, type: text, required: true }
+      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: pay_month, label: Tháng lương, type: date, required: true }
+      - { field: base_salary, label: Lương cơ bản, type: number }
+      - { field: allowance, label: Phụ cấp, type: number }
+      - { field: deduction, label: Khấu trừ, type: number }
+      - { field: net_salary, label: Thực lãnh, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Draft, Approved, Paid] }
+  - id: delete_payroll
+    type: delete
+    confirm: 'Xóa bảng lương {{row.code}}?'
+    table: payrolls
+    refresh: [payroll]

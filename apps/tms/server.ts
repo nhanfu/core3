@@ -47,7 +47,7 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/login',
+  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/hr/employees', '/hr/contracts', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/login',
 ]);
 
 const MIME = {
@@ -173,6 +173,12 @@ async function initDb(): Promise<void> {
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-adm-20', 'role-admin', 'accounting.write'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-21', 'role-admin', 'hr.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-22', 'role-admin', 'hr.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.write');
   `);
 }
 
@@ -187,6 +193,11 @@ const SOURCE_FILES = [
   'pages/partners.yaml',
   'pages/users.yaml',
   'pages/roles.yaml',
+  'pages/employees.yaml',
+  'pages/contracts.yaml',
+  'pages/timesheets.yaml',
+  'pages/shifts.yaml',
+  'pages/payroll.yaml',
   'pages/catalog-container-types.yaml',
   'pages/catalog-vehicle-types.yaml',
   'pages/catalog-units.yaml',
@@ -253,6 +264,31 @@ const TABLE_REGISTRY = {
     permission: 'crm.write',
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'],
+  },
+  employees:    {
+    permission: 'hr.write',
+    timestamps: true,
+    fields: ['code', 'name', 'job_title', 'phone', 'email', 'department', 'start_date', 'dependents', 'status'],
+  },
+  employment_contracts: {
+    permission: 'hr.write',
+    timestamps: true,
+    fields: ['code', 'employee_id', 'contract_type', 'start_date', 'end_date', 'base_salary', 'status'],
+  },
+  work_shifts: {
+    permission: 'hr.write',
+    timestamps: true,
+    fields: ['code', 'name', 'start_time', 'end_time', 'break_minutes', 'status'],
+  },
+  timesheets: {
+    permission: 'hr.write',
+    timestamps: true,
+    fields: ['employee_id', 'work_date', 'shift_id', 'hours', 'status', 'notes'],
+  },
+  payrolls: {
+    permission: 'hr.write',
+    timestamps: true,
+    fields: ['code', 'employee_id', 'pay_month', 'base_salary', 'allowance', 'deduction', 'net_salary', 'status'],
   },
   master_data: {
     permission: 'catalog.write',

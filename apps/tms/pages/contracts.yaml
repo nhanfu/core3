@@ -1,0 +1,102 @@
+title: Hợp đồng
+
+page:
+  id: contracts
+  auth:
+    require: [hr.read]
+
+datasources:
+  - id: contracts
+    single: false
+    permission: hr.read
+    query: |
+      SELECT c.*, e.code AS employee_code, e.name AS employee_name,
+        CASE c.contract_type WHEN 'Probation' THEN 'Thử việc' WHEN 'Indefinite' THEN 'Không xác định thời hạn' ELSE 'Xác định thời hạn' END AS contract_type_label,
+        CASE c.status WHEN 'Expiring' THEN 'Sắp hết hạn' WHEN 'Expired' THEN 'Hết hạn' WHEN 'Terminated' THEN 'Đã chấm dứt' ELSE 'Hiệu lực' END AS status_label
+      FROM employment_contracts c
+      LEFT JOIN employees e ON e.id = c.employee_id
+      WHERE (NULLIF(:status, '') IS NULL OR c.status = :status)
+        AND (:q IS NULL OR c.code ILIKE '%' || :q || '%' OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%')
+      ORDER BY c.end_date NULLS LAST, c.created_at DESC
+
+toolbar:
+  - id: add_contract_btn
+    label: '+ Thêm hợp đồng'
+    variant: primary
+    permission: hr.write
+    action: add_contract
+
+components:
+  - type: ListToolbar
+    source: contracts
+    filter_field: q
+    search: { label: Tìm kiếm hợp đồng, placeholder: 'Tìm mã hợp đồng, mã hoặc tên nhân viên...' }
+  - type: StatusTabs
+    source: contracts
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Hiệu lực }
+      - { id: Expiring, label: Sắp hết hạn }
+      - { id: Expired, label: Hết hạn }
+  - type: DataGrid
+    source: contracts
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có hợp đồng, description: Thử thay đổi bộ lọc hoặc tạo hợp đồng mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: code, label: Hợp đồng }
+      - { field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }
+      - { field: contract_type_label, label: Loại hợp đồng }
+      - { field: start_date, label: Hiệu lực từ }
+      - { field: end_date, label: Hiệu lực đến }
+      - { field: base_salary, label: Lương cơ bản, align: right }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: slate }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_contract, label: Sửa, variant: ghost }
+          - { id: delete_contract, label: Xóa, variant: danger }
+
+actions:
+  - id: add_contract
+    type: form
+    title: Thêm hợp đồng
+    table: employment_contracts
+    operation: insert
+    refresh: [contracts]
+    fields:
+      - { field: code, label: Mã hợp đồng, type: text, required: true }
+      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: contract_type, label: Loại hợp đồng, type: select, options: [Probation, FixedTerm, Indefinite], default: FixedTerm }
+      - { field: start_date, label: Hiệu lực từ, type: date, required: true }
+      - { field: end_date, label: Hiệu lực đến, type: date }
+      - { field: base_salary, label: Lương cơ bản, type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Expiring, Expired, Terminated], default: Active }
+  - id: edit_contract
+    type: form
+    title: Cập nhật hợp đồng
+    table: employment_contracts
+    operation: update
+    prefill: row
+    refresh: [contracts]
+    fields:
+      - { field: code, label: Mã hợp đồng, type: text, required: true }
+      - { field: employee_id, label: Mã HT nhân viên, type: text, required: true }
+      - { field: contract_type, label: Loại hợp đồng, type: select, options: [Probation, FixedTerm, Indefinite] }
+      - { field: start_date, label: Hiệu lực từ, type: date, required: true }
+      - { field: end_date, label: Hiệu lực đến, type: date }
+      - { field: base_salary, label: Lương cơ bản, type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Expiring, Expired, Terminated] }
+  - id: delete_contract
+    type: delete
+    confirm: 'Xóa hợp đồng {{row.code}}?'
+    table: employment_contracts
+    refresh: [contracts]

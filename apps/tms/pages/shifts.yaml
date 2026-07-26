@@ -1,0 +1,95 @@
+title: Ca làm việc
+
+page:
+  id: shifts
+  auth:
+    require: [hr.read]
+
+datasources:
+  - id: shifts
+    single: false
+    permission: hr.read
+    query: |
+      SELECT s.*, CASE s.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label
+      FROM work_shifts s
+      WHERE (NULLIF(:status, '') IS NULL OR s.status = :status)
+        AND (:q IS NULL OR s.code ILIKE '%' || :q || '%' OR s.name ILIKE '%' || :q || '%')
+      ORDER BY s.created_at DESC, s.name
+
+toolbar:
+  - id: add_shift_btn
+    label: '+ Thêm ca làm việc'
+    variant: primary
+    permission: hr.write
+    action: add_shift
+
+components:
+  - type: ListToolbar
+    source: shifts
+    filter_field: q
+    search: { label: Tìm kiếm ca làm việc, placeholder: 'Tìm mã hoặc tên ca...' }
+  - type: StatusTabs
+    source: shifts
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Hoạt động }
+      - { id: Inactive, label: Ngưng hoạt động }
+  - type: DataGrid
+    source: shifts
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có ca làm việc, description: Thử thay đổi bộ lọc hoặc tạo ca mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
+      - { field: start_time, label: Bắt đầu }
+      - { field: end_time, label: Kết thúc }
+      - { field: break_minutes, label: Nghỉ giữa ca (phút), align: right }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Hoạt động: green, Ngưng hoạt động: red }
+      - { field: created_at, label: Ngày giờ tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_shift, label: Sửa, variant: ghost }
+          - { id: delete_shift, label: Xóa, variant: danger }
+
+actions:
+  - id: add_shift
+    type: form
+    title: Thêm ca làm việc
+    table: work_shifts
+    operation: insert
+    refresh: [shifts]
+    fields:
+      - { field: code, label: Mã ca, type: text, required: true }
+      - { field: name, label: Tên ca, type: text, required: true }
+      - { field: start_time, label: Giờ bắt đầu, type: time, required: true }
+      - { field: end_time, label: Giờ kết thúc, type: time, required: true }
+      - { field: break_minutes, label: Nghỉ giữa ca (phút), type: number, default: 0 }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+  - id: edit_shift
+    type: form
+    title: Cập nhật ca làm việc
+    table: work_shifts
+    operation: update
+    prefill: row
+    refresh: [shifts]
+    fields:
+      - { field: code, label: Mã ca, type: text, required: true }
+      - { field: name, label: Tên ca, type: text, required: true }
+      - { field: start_time, label: Giờ bắt đầu, type: time, required: true }
+      - { field: end_time, label: Giờ kết thúc, type: time, required: true }
+      - { field: break_minutes, label: Nghỉ giữa ca (phút), type: number }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+  - id: delete_shift
+    type: delete
+    confirm: 'Xóa ca làm việc {{row.name}}?'
+    table: work_shifts
+    refresh: [shifts]
