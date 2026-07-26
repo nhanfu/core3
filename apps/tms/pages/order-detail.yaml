@@ -58,6 +58,10 @@ datasources:
         CAST(created_at AS VARCHAR)
       FROM orders WHERE id = :id
       ORDER BY created_at DESC
+  - id: order_unit_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM order_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
 
 toolbar:
   - { id: back_orders_btn, label: '← Danh sách đơn hàng', variant: secondary, action: back_orders }
@@ -124,7 +128,7 @@ actions:
     fields:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, default: 1, required: true }
-      - { field: unit, label: Đơn vị, type: text, default: Chuyến, required: true }
+      - { field: unit, label: Đơn vị, type: select, options_source: order_unit_lookup, default: Chuyến, required: true }
       - { field: unit_price, label: Đơn giá, type: number, default: 0, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, default: 0, required: true }
   - id: edit_order_line
@@ -137,7 +141,7 @@ actions:
     fields:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, required: true }
-      - { field: unit, label: Đơn vị, type: text, required: true }
+      - { field: unit, label: Đơn vị, type: select, options_source: order_unit_lookup, required: true }
       - { field: unit_price, label: Đơn giá, type: number, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, required: true }
   - id: delete_order_line

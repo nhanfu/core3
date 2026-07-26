@@ -64,6 +64,10 @@ datasources:
         CAST(created_at AS VARCHAR)
       FROM accounting_entries WHERE id = :id AND kind = :kind
       ORDER BY created_at DESC
+  - id: accounting_unit_lookup
+    single: false
+    permission: accounting.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM accounting_entry_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
 
 toolbar:
   - { id: back_accounting_btn, label: '← Danh sách chứng từ', variant: secondary, action: back_accounting }
@@ -129,7 +133,7 @@ actions:
     fields:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, default: 1, required: true }
-      - { field: unit, label: Đơn vị, type: text, default: Khoản, required: true }
+      - { field: unit, label: Đơn vị, type: select, options_source: accounting_unit_lookup, default: Khoản, required: true }
       - { field: unit_price, label: Đơn giá, type: number, default: 0, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, default: 0, required: true }
   - id: edit_accounting_line
@@ -142,7 +146,7 @@ actions:
     fields:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, required: true }
-      - { field: unit, label: Đơn vị, type: text, required: true }
+      - { field: unit, label: Đơn vị, type: select, options_source: accounting_unit_lookup, required: true }
       - { field: unit_price, label: Đơn giá, type: number, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, required: true }
   - id: delete_accounting_line

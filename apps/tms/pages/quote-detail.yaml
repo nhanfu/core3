@@ -62,6 +62,10 @@ datasources:
         CAST(created_at AS VARCHAR)
       FROM quotes WHERE id = :id
       ORDER BY created_at DESC
+  - id: quote_unit_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM quote_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
 
 toolbar:
   - { id: back_quotes_btn, label: '← Danh sách báo giá', variant: secondary, action: back_quotes }
@@ -129,7 +133,7 @@ actions:
     fields:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, default: 1, required: true }
-      - { field: unit, label: Đơn vị, type: text, default: Chuyến, required: true }
+      - { field: unit, label: Đơn vị, type: select, options_source: quote_unit_lookup, default: Chuyến, required: true }
       - { field: unit_price, label: Giá bán, type: number, default: 0, required: true }
       - { field: cost_price, label: Giá vốn, type: number, default: 0, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, default: 0, required: true }
@@ -143,7 +147,7 @@ actions:
     fields:
       - { field: description, label: Nội dung, type: text, required: true }
       - { field: quantity, label: Số lượng, type: number, required: true }
-      - { field: unit, label: Đơn vị, type: text, required: true }
+      - { field: unit, label: Đơn vị, type: select, options_source: quote_unit_lookup, required: true }
       - { field: unit_price, label: Giá bán, type: number, required: true }
       - { field: cost_price, label: Giá vốn, type: number, required: true }
       - { field: tax_rate, label: Thuế suất (%), type: number, required: true }
