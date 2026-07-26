@@ -10,13 +10,14 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Sixteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, company settings, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
 - The same browser route matrix reruns at an explicit 1440 x 1000 desktop viewport with zero route, console, or document-overflow failures.
-- The browser parity audit exercises every discovered shared control on all 52 routes with zero failures at 1024 x 768, including 321 sortable headers, 142 status tabs, 44 column choosers, 401 row actions dispatched with mutation POSTs blocked, 20 exports, and all discovered search/editor controls.
+- The browser parity audit exercises every discovered shared control on all 52 routes with zero failures at 1024 x 768, including 330 sortable headers, 142 status tabs, 45 column choosers, 401 row actions dispatched with mutation POSTs blocked, 20 exports, and all discovered search/editor controls.
 - List-toolbar Excel exports now refetch the complete active filtered dataset in bounded server pages and emit a dependency-free OOXML workbook; explicit CSV fallback remains available.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database action audit completes 29 named transitions, 6 invalid-transition rejection checks, 3 invalid-payload validation checks, one master-data create/update/delete round-trip, two approval/print reorder round-trips, one malformed-import rejection, and a least-privilege `403` check.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 152/152.
+- Shared YAML delete and patch actions now forward their declared resource scope to the server, and the browser CRUD audit verifies scoped unit deletion.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
 - Dashboard task cards now expose validated, keyboard-accessible navigation to the owning order, trip, accounting, and HR routes, preserving status and unassigned-trip filters.
@@ -77,7 +78,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Advances now calculate linked settlement and outstanding amounts, while settlements expose a validated linked-advance selector and reference column; workflow audit covers invalid-link rejection.
 - Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - Ledger accounts now support persisted parent relationships, parent display, datasource-backed parent selection, and server-side self-parent validation.
-- An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve and the units master-data create/edit/delete flow; the order persistence path is proven, while the expanded CRUD phase is implemented but awaits a non-hanging CDP run for authoritative evidence.
+- An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve and the units master-data create/edit/delete flow; both phases pass with zero UI mutation failures on a fresh seeded database.
 
 ## Not Proven
 

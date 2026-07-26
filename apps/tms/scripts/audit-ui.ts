@@ -14,10 +14,11 @@ if (!login.ok) throw new Error(`login failed: ${login.status}`);
 const { token } = await login.json() as { token: string };
 
 const appSource = readFileSync(new URL('../app.ts', import.meta.url), 'utf8');
+const mutationOnly = process.env.TMS_AUDIT_MUTATIONS_ONLY === '1';
 const routes = [...appSource.matchAll(/^\s*'([^']+)'\s*:/gm)]
   .map((match) => match[1])
   .filter((route) => route.startsWith('/') && route !== '/login');
-const targets = [...new Set(routes)];
+const targets = mutationOnly ? [] : [...new Set(routes)];
 
 const pageList = await (await fetch(`${cdpUrl}/json/list`)).json() as Array<{ type: string; webSocketDebuggerUrl?: string }>;
 const page = pageList.find((item) => item.type === 'page' && item.webSocketDebuggerUrl);
@@ -180,7 +181,7 @@ const detailTargets = [
   { target: '/system/approval-flows/detail?id=sys-03', needle: 'ORDER_APPROVAL' },
 ] as const;
 const detailFailures: string[] = [];
-for (const { target, needle } of detailTargets) {
+for (const { target, needle } of (mutationOnly ? [] : detailTargets)) {
   consoleErrors.length = 0;
   try {
     await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${target}`)}`, `${target} navigation`);
@@ -253,21 +254,23 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
     await evaluateWithTimeout("location.hash = '#/catalog/units'", 'units CRUD mutation navigation');
     await new Promise((resolve) => setTimeout(resolve, 1200));
     const mutationState = await evaluateWithTimeout(`(async () => {
+      [...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000').forEach((overlay) => overlay.remove());
       const code = 'UI-AUDIT-' + Date.now();
       const previousConfirm = window.confirm;
       const previousAlert = window.alert;
       window.confirm = () => true;
       window.alert = () => {};
       const findRow = () => [...document.querySelectorAll('#outlet tbody tr')].find((row) => row.textContent?.includes(code));
-      const openForm = async (button: Element) => {
-        (button as HTMLElement).click();
-        await new Promise((resolve) => setTimeout(resolve, 150));
-        return document.querySelector('div[style*="z-index:1000"]');
+      const openForm = async (button) => {
+        button.click();
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        const overlays = [...document.body.children].filter((element) => element instanceof HTMLElement && element.style.zIndex === '1000');
+        return overlays.at(-1) || null;
       };
-      const saveForm = async (dialog: Element, values: Record<string, string>) => {
-        const fields = [...dialog.querySelectorAll('input, textarea, select')] as Array<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+      const saveForm = async (dialog, values) => {
+        const fields = [...dialog.querySelectorAll('input, textarea, select')];
         for (const field of fields) {
-          const key = (field.previousElementSibling?.textContent || '').replace(/\\s*\\*$/, '').trim();
+          const key = (field.previousElementSibling?.textContent || '').replace(' *', '').trim();
           if (values[key] !== undefined) {
             const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value')?.set;
             setter?.call(field, values[key]);
@@ -278,7 +281,7 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
         [...dialog.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Save')?.click();
         await new Promise((resolve) => setTimeout(resolve, 900));
       };
-      const addButton = [...document.querySelectorAll('#outlet button')].find((button) => /^\\+ Thêm đơn vị/.test(button.textContent?.trim() || ''));
+      const addButton = [...document.querySelectorAll('#outlet button')].find((button) => (button.textContent?.trim() || '').startsWith('+ Thêm đơn vị'));
       if (!addButton) throw new Error('units add button not found');
       const addDialog = await openForm(addButton);
       if (!addDialog) throw new Error('units add dialog did not open');
@@ -294,14 +297,14 @@ if (process.env.TMS_AUDIT_MUTATIONS === '1') {
       if (!editedRow?.textContent?.includes('UI audit unit updated')) throw new Error('units edit did not persist');
       const deleteButton = editedRow.querySelector('button[data-grid-row-action^="delete_unit:"]');
       if (!deleteButton) throw new Error('units delete action not found');
-      (deleteButton as HTMLElement).click();
+      deleteButton.click();
       await new Promise((resolve) => setTimeout(resolve, 900));
       const deleted = !findRow();
       window.confirm = previousConfirm;
       window.alert = previousAlert;
       return { created: true, edited: true, deleted };
     })()`, 'units CRUD mutation');
-    if (!mutationState?.created || !mutationState?.edited || !mutationState?.deleted) uiMutationFailures.push('units UI CRUD did not persist create/edit/delete');
+    if (!mutationState?.created || !mutationState?.edited || !mutationState?.deleted) uiMutationFailures.push(`units UI CRUD did not persist create/edit/delete: ${JSON.stringify(mutationState)}`);
     if (consoleErrors.length) uiMutationFailures.push(`units UI mutation console errors: ${consoleErrors.join(' | ')}`);
   } catch (error) {
     uiMutationFailures.push(`units UI CRUD mutation: ${error instanceof Error ? error.message : String(error)}`);

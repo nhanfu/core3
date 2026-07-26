@@ -213,6 +213,7 @@ export async function renderPage(config: any, { container = document.body }: { c
           table: actionDef.table,
           action: 'delete',
           id: row?.id ?? null,
+          scope: actionDef.scope,
           changes: [],
         });
         if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
@@ -229,6 +230,7 @@ export async function renderPage(config: any, { container = document.body }: { c
           table: actionDef.table,
           action: 'update',
           id: row?.id ?? null,
+          scope: actionDef.scope,
           changes,
         });
         if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
