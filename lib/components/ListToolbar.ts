@@ -1,4 +1,5 @@
 import { BaseComponent } from '../runtime.ts';
+import { appendIcon, hasIcon } from './Icon.ts';
 
 export type ListToolbarAction = {
   id: string;
@@ -62,7 +63,7 @@ export class ListToolbar extends BaseComponent {
 
       const searchIcon = document.createElement('span');
       searchIcon.className = 'pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400';
-      searchIcon.textContent = '⌕';
+      appendIcon(searchIcon, 'search');
       searchWrap.append(searchIcon);
 
       const input = document.createElement('input');
@@ -241,7 +242,8 @@ export class ListToolbar extends BaseComponent {
     if (action.icon) {
       const icon = document.createElement('span');
       icon.setAttribute('aria-hidden', 'true');
-      icon.textContent = action.icon;
+      if (hasIcon(action.icon)) appendIcon(icon, action.icon);
+      else icon.textContent = action.icon;
       button.append(icon);
     }
     if (action.label) button.append(document.createTextNode(action.label));

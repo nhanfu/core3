@@ -66,6 +66,7 @@ describe('ListToolbar', () => {
     expect(container.querySelectorAll('[data-toolbar-action]')).toHaveLength(3);
     expect(container.querySelector('[data-toolbar-action="advanced"]')?.getAttribute('aria-label'))
       .toBe('Advanced search');
+    expect(container.querySelector('[data-toolbar-action="export"] svg')).not.toBeNull();
   });
 
   it('keeps query state while typing and emits search on Enter', () => {
