@@ -4,7 +4,17 @@ datasources:
   - id: user_detail
     single: true
     permission: settings.read
-    query: "SELECT id, email, name, preferred_lang, CAST(created_at AS VARCHAR) AS created_at FROM users WHERE id = :id"
+    query: |
+      SELECT u.id, u.email, u.name, u.preferred_lang,
+        COALESCE(u.enabled, true) AS enabled,
+        CASE WHEN COALESCE(u.enabled, true) THEN 'Active' ELSE 'Inactive' END AS status,
+        b.name AS branch_name, d.name AS department_name,
+        CAST(u.last_login AS VARCHAR) AS last_login,
+        CAST(u.created_at AS VARCHAR) AS created_at
+      FROM users u
+      LEFT JOIN branches b ON b.id = u.branch_id
+      LEFT JOIN departments d ON d.id = u.department_id
+      WHERE u.id = :id
   - id: user_roles
     single: false
     permission: settings.read
@@ -26,7 +36,7 @@ datasources:
     permission: settings.read
     query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'users' AND resource_id = :id ORDER BY created_at DESC"
 components:
-  - { type: DocumentSummary, source: user_detail, title_field: name, subtitle_field: email, columns: [{ field: preferred_lang, label: Ngôn ngữ }, { field: created_at, label: Ngày tạo }] }
+  - { type: DocumentSummary, source: user_detail, title_field: name, subtitle_field: email, columns: [{ field: status, label: Trạng thái, type: StatusChip }, { field: branch_name, label: Chi nhánh }, { field: department_name, label: Phòng ban }, { field: preferred_lang, label: Ngôn ngữ }, { field: last_login, label: Đăng nhập gần nhất }, { field: created_at, label: Ngày tạo }] }
   - type: DataGrid
     source: user_roles
     page_size: 30

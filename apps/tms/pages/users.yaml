@@ -67,6 +67,36 @@ components:
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: view_user, label: Chi tiết, variant: primary }]
+        actions: [{ id: view_user, label: Chi tiết, variant: primary }, { id: edit_user, label: Sửa, variant: ghost, show_if: "user.permissions.includes('settings.write')" }]
+toolbar:
+  - { id: add_user_btn, label: '+ Mời người dùng', variant: primary, permission: settings.write, action: add_user }
 actions:
   - { id: view_user, type: navigate, navigate_to: /org/users/detail, params: { id: '{row.id}' } }
+  - id: add_user
+    type: form
+    title: Mời người dùng
+    table: users
+    operation: insert
+    refresh: [org_users, org_user_totals]
+    fields:
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: email, label: Email, type: text, required: true }
+      - { field: password, label: Mật khẩu khởi tạo, type: text, required: true }
+      - { field: branch_id, label: Mã HT chi nhánh, type: text }
+      - { field: department_id, label: Mã HT phòng ban, type: text }
+      - { field: enabled, label: Kích hoạt, type: select, options: [true, false], default: true }
+      - { field: roles, label: Vai trò, type: text }
+  - id: edit_user
+    type: form
+    title: Cập nhật người dùng
+    table: users
+    operation: update
+    prefill: row
+    refresh: [org_users, org_user_totals]
+    fields:
+      - { field: name, label: Họ tên, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: branch_id, label: Mã HT chi nhánh, type: text }
+      - { field: department_id, label: Mã HT phòng ban, type: text }
+      - { field: enabled, label: Kích hoạt, type: select, options: [true, false] }
+      - { field: roles, label: Vai trò, type: text }
