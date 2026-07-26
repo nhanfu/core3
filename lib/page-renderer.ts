@@ -398,11 +398,17 @@ export async function renderPage(config: any, { container = document.body }: { c
           el = document.createElement('select');
           el.className = 'form-select';
           el.style.cssText = 'width:100%;box-sizing:border-box;';
+          if (fieldDef.multiple) {
+            el.multiple = true;
+            el.style.minHeight = '96px';
+          }
 
-          const emptyOpt = document.createElement('option');
-          emptyOpt.value = '';
-          emptyOpt.textContent = 'Select…';
-          el.appendChild(emptyOpt);
+          if (!fieldDef.multiple) {
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = 'Select…';
+            el.appendChild(emptyOpt);
+          }
 
           const optionRows = fieldDef.options_source
             ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
@@ -437,7 +443,12 @@ export async function renderPage(config: any, { container = document.body }: { c
         if (fieldDef.type === 'date' && initialValue && typeof initialValue === 'string') {
           initialValue = initialValue.slice(0, 10);
         }
-        el.value = String(initialValue ?? '');
+        if (fieldDef.type === 'select' && fieldDef.multiple) {
+          const selected = new Set(Array.isArray(initialValue) ? initialValue.map(String) : String(initialValue || '').split(',').map(value => value.trim()).filter(Boolean));
+          for (const option of Array.from((el as HTMLSelectElement).options)) option.selected = selected.has(option.value);
+        } else {
+          el.value = String(initialValue ?? '');
+        }
 
         group.appendChild(el);
         if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
@@ -517,7 +528,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         // Validate required fields
         let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
         for (const { el, fieldDef } of Object.values(inputs)) {
-          const v = el.value?.trim() ?? '';
+          const v = el instanceof HTMLSelectElement && el.multiple
+            ? Array.from(el.selectedOptions).map(option => option.value)
+            : el.value?.trim() ?? '';
           if (fieldDef.required && !v) {
             el.style.borderColor = '#ef4444';
             if (!firstInvalid) firstInvalid = el;
@@ -532,7 +545,9 @@ export async function renderPage(config: any, { container = document.body }: { c
 
         const changes = Object.entries(inputs).map(([field, { el }]) => ({
           field,
-          value: el.value,
+          value: el instanceof HTMLSelectElement && el.multiple
+            ? Array.from(el.selectedOptions).map(option => option.value)
+            : el.value,
         }));
 
         saveBtn.disabled = true;

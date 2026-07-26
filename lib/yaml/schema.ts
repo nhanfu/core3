@@ -71,7 +71,7 @@ const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'variant', 'permission', 'action']);
 const FILTER_KEYS = new Set(['source', 'fields']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'placeholder']);
-const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'options', 'options_source', 'default', 'tokens']);
+const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'options', 'options_source', 'multiple', 'default', 'tokens']);
 const COLUMN_KEYS = new Set([
   'field',
   'label',

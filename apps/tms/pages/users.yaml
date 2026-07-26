@@ -19,6 +19,10 @@ datasources:
     single: false
     permission: settings.read
     query: "SELECT id AS value, name AS label FROM departments WHERE status = 'Active' ORDER BY name"
+  - id: role_lookup
+    single: false
+    permission: settings.read
+    query: "SELECT name AS value, name AS label FROM roles ORDER BY name"
   - id: org_seat_usage
     single: true
     permission: settings.read
@@ -37,7 +41,8 @@ datasources:
         CASE WHEN COALESCE(u.enabled, true) THEN 'Active' ELSE 'Inactive' END AS status,
         b.name AS branch_name, d.name AS department_name,
         u.last_login, u.created_at,
-        string_agg(r.name, ', ') AS roles_csv
+        string_agg(r.name, ', ') AS roles_csv,
+        string_agg(r.name, ',') AS roles
       FROM users u
       LEFT JOIN branches b ON b.id = u.branch_id
       LEFT JOIN departments d ON d.id = u.department_id
@@ -108,7 +113,7 @@ actions:
       - { field: branch_id, label: Chi nhánh, type: select, options_source: branch_lookup }
       - { field: department_id, label: Phòng ban, type: select, options_source: department_lookup }
       - { field: enabled, label: Kích hoạt, type: select, options: [true, false], default: true }
-      - { field: roles, label: Vai trò, type: text }
+      - { field: roles, label: Vai trò, type: select, options_source: role_lookup, multiple: true }
   - id: edit_user
     type: form
     title: Cập nhật người dùng
@@ -122,4 +127,4 @@ actions:
       - { field: branch_id, label: Chi nhánh, type: select, options_source: branch_lookup }
       - { field: department_id, label: Phòng ban, type: select, options_source: department_lookup }
       - { field: enabled, label: Kích hoạt, type: select, options: [true, false] }
-      - { field: roles, label: Vai trò, type: text }
+      - { field: roles, label: Vai trò, type: select, options_source: role_lookup, multiple: true }
