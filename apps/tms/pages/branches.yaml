@@ -1,0 +1,93 @@
+title: Chi nhánh
+
+page:
+  id: branches
+  auth:
+    require: [settings.read]
+
+datasources:
+  - id: org_branches
+    single: false
+    permission: settings.read
+    query: |
+      SELECT b.id, b.name, b.city, b.region, b.status, COUNT(t.id) AS truck_count, b.created_at
+      FROM branches b LEFT JOIN trucks t ON t.branch_id = b.id
+      WHERE (:status IS NULL OR b.status = :status)
+        AND (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.city ILIKE '%' || :q || '%' OR b.region ILIKE '%' || :q || '%')
+      GROUP BY b.id, b.name, b.city, b.region, b.status, b.created_at
+      ORDER BY b.name
+
+toolbar:
+  - id: add_branch_btn
+    label: '+ Thêm chi nhánh'
+    variant: primary
+    permission: settings.write
+    action: add_branch
+
+components:
+  - type: ListToolbar
+    source: org_branches
+    filter_field: q
+    search:
+      label: Tìm kiếm chi nhánh
+      placeholder: 'Tìm theo tên, tỉnh thành, khu vực...'
+  - type: StatusTabs
+    source: org_branches
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Hoạt động }
+      - { id: Inactive, label: Ngưng hoạt động }
+  - type: DataGrid
+    source: org_branches
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có chi nhánh, description: Thử thay đổi bộ lọc hoặc tạo chi nhánh mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: name, label: Tên chi nhánh, type: PrimaryEntityCell, secondary: city }
+      - { field: region, label: Khu vực }
+      - { field: truck_count, label: Số phương tiện, align: right }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
+      - { field: created_at, label: Ngày tạo, type: DateCell }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_branch, label: Sửa, variant: ghost }
+          - { id: delete_branch, label: Xóa, variant: danger }
+
+actions:
+  - id: add_branch
+    type: form
+    title: Thêm chi nhánh
+    table: branches
+    operation: insert
+    refresh: [org_branches]
+    fields:
+      - { field: name, label: Tên chi nhánh, type: text, required: true }
+      - { field: city, label: Tỉnh / thành phố, type: text, required: true }
+      - { field: region, label: Khu vực, type: text }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
+  - id: edit_branch
+    type: form
+    title: Cập nhật chi nhánh
+    table: branches
+    operation: update
+    prefill: row
+    refresh: [org_branches]
+    fields:
+      - { field: name, label: Tên chi nhánh, type: text, required: true }
+      - { field: city, label: Tỉnh / thành phố, type: text, required: true }
+      - { field: region, label: Khu vực, type: text }
+      - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
+  - id: delete_branch
+    type: delete
+    confirm: 'Xóa chi nhánh {{row.name}}?'
+    table: branches
+    refresh: [org_branches]

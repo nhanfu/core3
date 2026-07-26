@@ -45,7 +45,7 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/catalog/fee-types': () => import('./pages/placeholder.ts'),
   '/catalog/currencies': () => import('./pages/placeholder.ts'),
   '/org/own-company': () => import('./pages/placeholder.ts'),
-  '/org/branches': () => import('./pages/placeholder.ts'),
+  '/org/branches': 'branches',
   '/org/departments': () => import('./pages/placeholder.ts'),
   '/org/teams': () => import('./pages/placeholder.ts'),
   '/org/users': () => import('./pages/placeholder.ts'),

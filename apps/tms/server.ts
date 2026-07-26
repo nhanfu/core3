@@ -171,6 +171,7 @@ const SOURCE_FILES = [
   'pages/orders.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
+  'pages/branches.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
