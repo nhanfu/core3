@@ -32,7 +32,13 @@ export class StatCard extends BaseComponent {
     }
     card.style.minHeight = '88px';
     html.take(card).p.className('text-sm font-medium leading-4 text-gray-500').text(String(label ?? ''));
-    html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—'));
+    const valueEl = html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—')).getContext();
+    if (state.navigate_to) {
+      const arrow = document.createElement('span');
+      arrow.className = 'stat-card-arrow';
+      arrow.textContent = '→';
+      valueEl.append(arrow);
+    }
 
     if (trend) {
       const trendDiv = html.take(card).div.className(`flex items-center gap-1 mt-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`).getContext();

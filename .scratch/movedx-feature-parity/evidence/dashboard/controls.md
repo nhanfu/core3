@@ -6,6 +6,7 @@
 - Global route search, period presets, date range, and CSV export are available.
 - KPI cards are grouped into the reference sections `Việc cần làm`, `Vận hành`, `Doanh thu · Chi phí`, `Công nợ · Dòng tiền`, and `Nhân sự`.
 - The seven task cards are keyboard/mouse actionable and navigate to their owning operational lists.
+- Navigable task cards render the reference `→` affordance beside their values.
 - The revenue section includes the reference `Biên lãi` percentage card alongside revenue, cost, profit, orders, and new customers.
 - Financial KPI cards use VND formatting and task cards expose draft, approval, dispatch, overdue, and expiring-contract work items.
 - Task cards use the reference Vietnamese labels `Đề nghị chi chờ duyệt` and `HĐ sắp hết hạn`.

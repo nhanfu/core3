@@ -343,6 +343,13 @@ body {
   outline: none;
   transform: translateY(-1px);
 }
+.stat-card-arrow {
+  margin-left: 6px;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  font-weight: 500;
+  vertical-align: 0.08em;
+}
 
 /* ── Header internals ── */
 .header-title {
