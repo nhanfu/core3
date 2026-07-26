@@ -194,6 +194,17 @@ describe('DataGrid', () => {
     expect(onPageSizeChange).toHaveBeenCalledWith(100);
   });
 
+  it('renders server-page-aware row numbers when enabled', () => {
+    const grid = new DataGrid('orders', {
+      rows,
+      meta: { total: 12, page: 2, pageSize: 2 },
+    }, columns, { rowNumbers: true });
+    const container = mount(grid);
+
+    expect(container.querySelector('[aria-label="Row number"]')).not.toBeNull();
+    expect(container.querySelector('tbody tr td')?.textContent).toBe('3');
+  });
+
   it('supports declarative column visibility without losing the remaining columns', async () => {
     const grid = new DataGrid('orders', { rows }, columns, { columnChooser: true });
     const container = mount(grid);

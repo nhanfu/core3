@@ -738,6 +738,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         },
         actions: componentActions,
         selectable: !!def.selectable,
+        rowNumbers: def.row_numbers === true,
         emptyState: def.empty_state,
       },
       columns,
@@ -745,6 +746,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         rowKey: def.row_key || 'id',
         selectable: !!def.selectable,
         columnChooser: def.column_chooser === true,
+        rowNumbers: def.row_numbers === true,
         pageSizeOptions,
         onPageChange: async (page: number) => {
           const nextPage = Math.max(1, page);

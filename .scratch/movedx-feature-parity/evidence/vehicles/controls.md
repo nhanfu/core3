@@ -4,6 +4,7 @@
 
 - The page header renders `Quản lý › Phương tiện` above the list controls.
 - The primary add action shares the page-header row and is right aligned.
+- The grid renders a server-page-aware row-number column after selection.
 
 - Vehicle list supports search, availability tabs, CSV export, column chooser, and CRUD actions.
 - Rows expose plate/model, vehicle type, branch, capacity, translated availability, creator, and timestamp.

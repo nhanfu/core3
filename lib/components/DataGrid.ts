@@ -36,6 +36,7 @@ export interface DataGridAction {
 
 export interface DataGridOptions {
   rowKey?: string;
+  rowNumbers?: boolean;
   selectable?: boolean;
   columnChooser?: boolean;
   emptyState?: { title?: string; description?: string };
@@ -124,6 +125,7 @@ export class DataGrid extends BaseComponent {
     const meta = (this.state.meta as Record<string, unknown> | undefined) || {};
     const actions = (this.state.actions as DataGridAction[] | undefined) || [];
     const selectable = this.options.selectable || this.state.selectable === true;
+    const rowNumbers = this.options.rowNumbers === true || this.state.rowNumbers === true;
     const visibleColumnIds = new Set(
       Array.isArray(this.state.visibleColumns)
         ? this.state.visibleColumns.map(String)
@@ -194,6 +196,12 @@ export class DataGrid extends BaseComponent {
       checkbox.addEventListener('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
     }
 
+    if (rowNumbers) {
+      html.take(headerRow).th
+        .className('w-12 px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500')
+        .attr('aria-label', 'Row number');
+    }
+
     const sort = this.state.sort as { field?: string; direction?: SortDirection } | undefined;
     for (const column of visibleColumns) {
       const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
@@ -214,7 +222,7 @@ export class DataGrid extends BaseComponent {
     const tbody = html.take(table).tbody.className('divide-y divide-gray-100 bg-white').getContext();
     if (!rows.length) {
       const empty = this.options.emptyState || (this.state.emptyState as DataGridOptions['emptyState']) || {};
-      const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0))).className('px-4 py-12 text-center').getContext();
+      const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0) + (rowNumbers ? 1 : 0))).className('px-4 py-12 text-center').getContext();
       html.take(cell).p.className('text-sm font-medium text-gray-900').text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.className('mt-1 text-sm text-gray-500').text(empty.description);
     } else {
@@ -230,6 +238,13 @@ export class DataGrid extends BaseComponent {
             checkbox.checked ? next.add(id) : next.delete(id);
             this.setSelectedIds([...next]);
           });
+        }
+        if (rowNumbers) {
+          const page = Number(meta.page || 1);
+          const pageSize = Number(meta.pageSize || rows.length || 1);
+          html.take(tr).tdata
+            .className('w-12 px-3 py-3 text-center text-sm text-slate-500')
+            .text(String((page - 1) * pageSize + index + 1));
         }
         for (const column of visibleColumns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
