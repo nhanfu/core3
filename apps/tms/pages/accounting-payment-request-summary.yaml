@@ -1,6 +1,17 @@
 title: Tổng hợp đề nghị chi
 page: { id: accounting-payment-request-summary, auth: { require: [accounting.read] } }
 datasources:
+  - id: payment_request_totals
+    single: true
+    permission: accounting.read
+    query: |
+      SELECT COUNT(*) AS document_count,
+        COALESCE(SUM(amount), 0) AS total_amount,
+        COALESCE(SUM(CASE WHEN status IN ('Draft', 'Pending Approval', 'Approved') THEN amount ELSE 0 END), 0) AS outstanding_amount,
+        COALESCE(SUM(CASE WHEN status = 'Paid' THEN amount ELSE 0 END), 0) AS paid_amount
+      FROM accounting_entries
+      WHERE kind = 'payment_request' AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
   - id: payment_request_summary
     single: false
     permission: accounting.read
@@ -14,11 +25,21 @@ datasources:
         CAST(MAX(document_date) AS VARCHAR) AS latest_document_date
       FROM accounting_entries
       WHERE kind = 'payment_request' AND (:status IS NULL OR status = :status)
+        AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR counterparty ILIKE '%' || :q || '%' OR status ILIKE '%' || :q || '%')
       GROUP BY counterparty, status, currency
       ORDER BY SUM(amount) DESC, counterparty
 components:
-  - { type: ListToolbar, source: payment_request_summary, filter_field: q, search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' } }
+  - type: ListToolbar
+    source: payment_request_summary
+    filter_sources: [payment_request_summary, payment_request_totals]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' }
+    actions: [{ id: payment_request_summary.export, label: 'Xuất CSV', icon: '↓' }]
+  - type: StatRow
+    source: payment_request_totals
+    stats: [{ label: Số chứng từ, field: document_count, color: blue }, { label: Tổng giá trị, field: total_amount, color: teal }, { label: Còn phải chi, field: outstanding_amount, color: amber }, { label: Đã thanh toán, field: paid_amount, color: green }]
   - { type: StatusTabs, source: payment_request_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }] }
   - type: DataGrid
     source: payment_request_summary
