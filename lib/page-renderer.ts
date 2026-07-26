@@ -404,10 +404,16 @@ export async function renderPage(config: any, { container = document.body }: { c
           emptyOpt.textContent = 'Select…';
           el.appendChild(emptyOpt);
 
-          for (const opt of (fieldDef.options || [])) {
+          const optionRows = fieldDef.options_source
+            ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
+            : [];
+          const options = fieldDef.options_source
+            ? optionRows.map((option: any) => ({ value: option.value ?? option.id ?? option.code, label: option.label ?? option.name ?? option.value ?? option.id ?? option.code }))
+            : (fieldDef.options || []).map((option: any) => ({ value: option, label: option }));
+          for (const opt of options) {
             const optEl = document.createElement('option');
-            optEl.value = String(opt);
-            optEl.textContent = String(opt);
+            optEl.value = String(opt.value ?? '');
+            optEl.textContent = String(opt.label ?? opt.value ?? '');
             el.appendChild(optEl);
           }
         } else if (fieldDef.type === 'textarea' || fieldDef.type === 'richtext') {

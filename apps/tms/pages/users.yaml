@@ -11,6 +11,14 @@ datasources:
         SUM(CASE WHEN COALESCE(enabled, true) THEN 1 ELSE 0 END) AS active_users,
         SUM(CASE WHEN COALESCE(enabled, true) THEN 0 ELSE 1 END) AS disabled_users
       FROM users
+  - id: branch_lookup
+    single: false
+    permission: settings.read
+    query: "SELECT id AS value, name AS label FROM branches WHERE status = 'Active' ORDER BY name"
+  - id: department_lookup
+    single: false
+    permission: settings.read
+    query: "SELECT id AS value, name AS label FROM departments WHERE status = 'Active' ORDER BY name"
   - id: org_seat_usage
     single: true
     permission: settings.read
@@ -97,8 +105,8 @@ actions:
       - { field: name, label: Họ tên, type: text, required: true }
       - { field: email, label: Email, type: text, required: true }
       - { field: password, label: Mật khẩu khởi tạo, type: text, required: true }
-      - { field: branch_id, label: Mã HT chi nhánh, type: text }
-      - { field: department_id, label: Mã HT phòng ban, type: text }
+      - { field: branch_id, label: Chi nhánh, type: select, options_source: branch_lookup }
+      - { field: department_id, label: Phòng ban, type: select, options_source: department_lookup }
       - { field: enabled, label: Kích hoạt, type: select, options: [true, false], default: true }
       - { field: roles, label: Vai trò, type: text }
   - id: edit_user
@@ -111,7 +119,7 @@ actions:
     fields:
       - { field: name, label: Họ tên, type: text }
       - { field: email, label: Email, type: text }
-      - { field: branch_id, label: Mã HT chi nhánh, type: text }
-      - { field: department_id, label: Mã HT phòng ban, type: text }
+      - { field: branch_id, label: Chi nhánh, type: select, options_source: branch_lookup }
+      - { field: department_id, label: Phòng ban, type: select, options_source: department_lookup }
       - { field: enabled, label: Kích hoạt, type: select, options: [true, false] }
       - { field: roles, label: Vai trò, type: text }
