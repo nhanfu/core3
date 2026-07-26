@@ -17,6 +17,7 @@ components:
   - type: DataGrid
     source: area_locations
     page_size: 50
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có địa điểm trong khu vực }
     columns: [{ field: code, label: Mã địa điểm }, { field: name, label: Địa điểm }, { field: location_type_label, label: Loại }, { field: city, label: Thành phố }, { field: address, label: Địa chỉ }, { field: status, label: Trạng thái }]
