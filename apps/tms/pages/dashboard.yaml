@@ -34,7 +34,26 @@ datasources:
         (SELECT COUNT(*) FROM trips WHERE status = 'In Transit' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS in_transit,
         (SELECT COUNT(*) FROM trips WHERE status = 'Scheduled' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS scheduled,
         (SELECT COUNT(*) FROM maintenance WHERE status = 'Overdue') AS overdue_maintenance,
-        (SELECT COUNT(*) FROM trucks WHERE status = 'Active') AS active_trucks
+        (SELECT COUNT(*) FROM trucks WHERE status = 'Active') AS active_trucks,
+        (SELECT COUNT(*) FROM orders WHERE status = 'Draft') AS draft_orders,
+        (SELECT COUNT(*) FROM orders WHERE status = 'Pending Approval') AS pending_orders,
+        (SELECT COUNT(*) FROM trips WHERE status IN ('Scheduled', 'In Transit') AND truck_id IS NULL) AS unassigned_trips,
+        (SELECT COUNT(*) FROM accounting_entries WHERE kind = 'debit_note' AND status <> 'Paid' AND due_date < CURRENT_DATE) AS overdue_debit_notes,
+        (SELECT COUNT(*) FROM accounting_entries WHERE kind = 'payment_request' AND status = 'Pending Approval') AS expense_approvals,
+        (SELECT COUNT(*) FROM employment_contracts WHERE status = 'Expiring' OR (end_date IS NOT NULL AND end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL 30 DAY)) AS expiring_contracts,
+        (SELECT COUNT(*) FROM drivers WHERE status = 'Active') AS active_drivers,
+        (SELECT COUNT(*) FROM containers WHERE status = 'Available') AS available_containers,
+        (SELECT COUNT(*) FROM trips WHERE status = 'Completed' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS completed_trips,
+        (SELECT COALESCE(SUM(distance_km), 0) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS total_distance_km,
+        (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS revenue_total,
+        (SELECT COALESCE(SUM(cost_amount), 0) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS cost_total,
+        (SELECT COALESCE(SUM(profit_amount), 0) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS profit_total,
+        (SELECT COUNT(*) FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS quote_count,
+        (SELECT COALESCE(SUM(amount), 0) FROM accounting_entries WHERE kind = 'debit_note' AND status <> 'Paid') AS receivables_outstanding,
+        (SELECT COALESCE(SUM(amount), 0) FROM accounting_entries WHERE kind = 'payment_request' AND status NOT IN ('Paid', 'Cancelled')) AS payables_outstanding,
+        (SELECT COALESCE(SUM(amount), 0) FROM accounting_entries WHERE kind = 'advance' AND status NOT IN ('Cancelled', 'Settled')) AS advances_outstanding,
+        (SELECT COUNT(*) FROM employees WHERE status = 'Active') AS active_employees,
+        (SELECT COALESCE(SUM(net_salary), 0) FROM payrolls WHERE (:from_date IS NULL OR pay_month >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR pay_month <= CAST(:to_date AS DATE))) AS payroll_total
   - id: dashboard_trip_status
     single: false
     permission: fleet.read
@@ -88,6 +107,41 @@ components:
       - label: Phương tiện hoạt động
         field: active_trucks
         color: green
+
+  - type: StatRow
+    source: dashboard_kpis
+    stats:
+      - { label: Đơn nháp, field: draft_orders, color: indigo }
+      - { label: Đơn chờ duyệt, field: pending_orders, color: amber }
+      - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red }
+      - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red }
+      - { label: Chi phí chờ duyệt, field: expense_approvals, color: amber }
+      - { label: Hợp đồng sắp hết hạn, field: expiring_contracts, color: amber }
+
+  - type: StatRow
+    source: dashboard_kpis
+    stats:
+      - { label: Tài xế hoạt động, field: active_drivers, color: blue }
+      - { label: Container sẵn sàng, field: available_containers, color: blue }
+      - { label: Chuyến hoàn thành, field: completed_trips, color: green }
+      - { label: Tổng km, field: total_distance_km, color: indigo }
+      - { label: Số báo giá, field: quote_count, color: indigo }
+
+  - type: StatRow
+    source: dashboard_kpis
+    stats:
+      - { label: Doanh thu đơn hàng, field: revenue_total, color: blue }
+      - { label: Chi phí báo giá, field: cost_total, color: amber }
+      - { label: Lợi nhuận báo giá, field: profit_total, color: green }
+      - { label: Công nợ phải thu, field: receivables_outstanding, color: blue }
+      - { label: Công nợ phải trả, field: payables_outstanding, color: red }
+
+  - type: StatRow
+    source: dashboard_kpis
+    stats:
+      - { label: Tạm ứng còn lại, field: advances_outstanding, color: amber }
+      - { label: Nhân sự hoạt động, field: active_employees, color: blue }
+      - { label: Tổng bảng lương, field: payroll_total, color: blue }
 
   - type: Chart
     source: dashboard_trip_status
