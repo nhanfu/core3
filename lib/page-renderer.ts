@@ -1407,7 +1407,10 @@ export async function renderPage(config: any, { container = document.body }: { c
       return {
         ...field,
         options: Array.isArray(rows)
-          ? rows.map((row: any) => String(row.value ?? row.id ?? row.name ?? ''))
+          ? rows.map((row: any) => ({
+            value: String(row.value ?? row.id ?? row.name ?? ''),
+            label: String(row.label ?? row.name ?? row.value ?? row.id ?? ''),
+          }))
           : [],
       };
     });

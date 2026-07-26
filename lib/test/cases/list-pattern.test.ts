@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ListToolbar, StatusTabs } from '@core3/frontend/components';
+import { FilterBar, ListToolbar, StatusTabs } from '@core3/frontend/components';
 
 function mount<T extends { mount(container: HTMLElement): void }>(component: T) {
   const container = document.createElement('div');
@@ -197,5 +197,22 @@ describe('ListToolbar', () => {
     expect(container.querySelector('[data-toolbar-help]')?.textContent).toContain('Dùng tìm kiếm');
     help.click();
     expect(container.querySelector('[data-toolbar-help]')).toBeNull();
+  });
+});
+
+describe('FilterBar', () => {
+  it('preserves datasource option labels while emitting values', () => {
+    const component = new FilterBar('filters', { values: { type: 'SEMI' } }, [{
+      field: 'type',
+      label: 'Vehicle type',
+      type: 'select',
+      options: [{ value: 'SEMI', label: 'SEMI - Đầu kéo' }],
+    }]);
+    const container = document.createElement('div');
+    component.mount(container);
+    const option = container.querySelectorAll('option')[1]!;
+
+    expect(option.textContent).toBe('SEMI - Đầu kéo');
+    expect(option.value).toBe('SEMI');
   });
 });

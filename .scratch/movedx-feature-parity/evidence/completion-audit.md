@@ -31,7 +31,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Authenticated shell mount shows a dynamic, dismissible welcome toast matching the reference overlay state.
 - Shared list toolbars expose SVG advanced-filter and help controls; advanced fields start collapsed on resource lists and can be opened without losing filter state.
 - Shared list-toolbar filters now support validated datasource-backed option lists; order shipment filtering consumes the system shipment-type catalog.
-- Legacy FilterBar selects now support validated datasource-backed options; the fleet type filter consumes the vehicle-type catalog.
+- Legacy FilterBar selects now support validated datasource-backed value/label options; the fleet type filter consumes the vehicle-type catalog labels.
 - Audited resource lists default to the reference 50-row density and support server-backed 10/25/50/100 page-size changes.
 - Status-tab badges use server-owned full-dataset facets rather than the current page slice; orders, vehicles, and drivers were verified against fresh seeded counts.
 - Audited resource lists now render declarative reference-style breadcrumbs and current titles without affecting dashboard intro composition.

@@ -21,8 +21,10 @@ export class FilterBar extends BaseComponent {
           .getContext();
         html.take(sel).option.value('').text('All');
         for (const o of (f.options || [])) {
-          const opt = html.take(sel).option.value(String(o)).text(String(o)).getContext();
-          if (values[f.field] === o) opt.setAttribute('selected', '');
+          const value = typeof o === 'object' ? (o.value ?? o.id ?? '') : o;
+          const label = typeof o === 'object' ? (o.label ?? value) : o;
+          const opt = html.take(sel).option.value(String(value)).text(String(label)).getContext();
+          if (String(values[f.field] ?? '') === String(value)) opt.setAttribute('selected', '');
         }
         sel.addEventListener('change', e => {
           const newValues = { ...this.state.values, [f.field]: e.target.value };
