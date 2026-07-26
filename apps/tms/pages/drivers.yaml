@@ -75,10 +75,12 @@ components:
         sortable: false
         align: right
         actions:
+          - { id: view_driver, label: Chi tiết, variant: primary }
           - { id: edit_driver, label: Sửa, variant: ghost }
           - { id: delete_driver, label: Xóa, variant: danger }
 
 actions:
+  - { id: view_driver, type: navigate, navigate_to: /drivers/detail, params: { id: '{row.id}' } }
   - id: add_driver
     type: form
     title: Thêm tài xế

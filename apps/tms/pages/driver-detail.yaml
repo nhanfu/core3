@@ -1,0 +1,30 @@
+title: Chi tiết tài xế
+page: { id: driver-detail, auth: { require: [drivers.read] } }
+datasources:
+  - id: driver_detail
+    single: true
+    permission: drivers.read
+    query: |
+      SELECT d.id, d.name, d.phone, d.email, d.license_number, CAST(d.license_expiry AS VARCHAR) AS license_expiry,
+        d.status, t.plate AS truck_plate,
+        CASE WHEN d.license_expiry < CURRENT_DATE THEN 'Đã hết hạn' WHEN d.license_expiry <= CURRENT_DATE + INTERVAL 30 DAY THEN 'Sắp hết hạn' ELSE 'Còn hiệu lực' END AS compliance_label
+      FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id WHERE d.id = :id
+  - id: driver_trips
+    single: false
+    permission: drivers.read
+    query: |
+      SELECT tr.id, tr.trip_number, tr.origin, tr.destination, tr.status, CAST(tr.departure_time AS VARCHAR) AS departure_time,
+        CAST(tr.arrival_time AS VARCHAR) AS arrival_time
+      FROM trips tr WHERE tr.driver_id = :id ORDER BY tr.departure_time DESC
+components:
+  - { type: DocumentSummary, source: driver_detail, title_field: name, subtitle_field: license_number, status_field: compliance_label, status_colors: { 'Còn hiệu lực': green, 'Sắp hết hạn': amber, 'Đã hết hạn': red }, columns: [{ field: phone, label: Điện thoại }, { field: email, label: Email }, { field: license_expiry, label: Hạn giấy phép }, { field: truck_plate, label: Phương tiện }, { field: status, label: Trạng thái }] }
+  - type: DataGrid
+    source: driver_trips
+    page_size: 30
+    row_key: id
+    empty_state: { title: Chưa có chuyến xe }
+    columns: [{ field: trip_number, label: Chuyến }, { field: origin, label: Điểm đi }, { field: destination, label: Điểm đến }, { field: departure_time, label: Khởi hành }, { field: arrival_time, label: Hoàn thành }, { field: status, label: Trạng thái }]
+toolbar:
+  - { id: back_drivers, label: '← Danh sách tài xế', variant: secondary, action: back_drivers }
+actions:
+  - { id: back_drivers, type: navigate, navigate_to: /drivers }

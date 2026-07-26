@@ -367,6 +367,7 @@ const SOURCE_FILES = [
   'pages/system-trip-statuses.yaml', 'pages/system-fee-rules.yaml', 'pages/system-storage.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
+  'pages/driver-detail.yaml',
   'pages/trips.yaml',
   'pages/maintenance.yaml',
   'pages/reports.yaml',
