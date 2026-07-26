@@ -73,7 +73,17 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/containers', '/locations', '/areas', '/org/own-company', '/org/departments', '/org/teams', '/hr/employees', '/hr/contracts', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/login',
+  '/', '/login', '/dashboard', '/fleet', '/drivers', '/drivers/detail', '/trips', '/maintenance', '/reports', '/settings',
+  '/orders', '/orders/detail', '/chat', '/schedule',
+  '/customers', '/partners', '/crm/entities/detail', '/quotes', '/quotes/detail', '/crm/dashboard', '/crm/kpi',
+  '/accounting/debit-notes', '/accounting/debit-note-summary', '/accounting/payment-requests', '/accounting/payment-request-summary',
+  '/accounting/advances', '/accounting/settlements', '/accounting/documents/detail', '/accounting/invoice-templates', '/accounting/ledger-accounts',
+  '/hr/employees', '/hr/employees/detail', '/hr/contracts', '/hr/contracts/detail', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/hr/payroll/detail',
+  '/vehicles', '/vehicles/detail', '/containers', '/locations', '/areas', '/areas/detail',
+  '/catalog/container-types', '/catalog/vehicle-types', '/catalog/units', '/catalog/cargo-types', '/catalog/fee-types', '/catalog/currencies',
+  '/org/own-company', '/org/branches', '/org/branches/detail', '/org/departments', '/org/departments/detail', '/org/teams', '/org/users', '/org/users/detail', '/org/roles', '/org/roles/detail',
+  '/system/activity', '/system/code-rules', '/system/print-templates', '/system/print-templates/detail', '/system/approval-flows', '/system/approval-flows/detail',
+  '/system/shipment-types', '/system/trip-statuses', '/system/fee-rules', '/system/storage',
 ]);
 
 const MIME = {

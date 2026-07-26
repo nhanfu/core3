@@ -9,6 +9,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - 51 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
+- Every registered SPA path serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 137/137.
 
 ## Not Proven
