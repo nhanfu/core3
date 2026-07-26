@@ -1007,6 +1007,14 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     switch (def.type) {
+      case 'PageIntro': {
+        const { PageIntro } = await import('./components/PageIntro.ts');
+        const component = new PageIntro(def.id || `${config.page.id}-intro`, def);
+        const slot = document.createElement('div');
+        targetContainer.appendChild(slot);
+        component.mount(slot);
+        break;
+      }
       case 'ComingSoon': {
         const { ComingSoon } = await import('./components/ComingSoon.ts');
         const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);

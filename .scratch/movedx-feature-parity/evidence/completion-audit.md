@@ -11,11 +11,12 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database workflow audit completes 13 representative named transitions across orders, quotes, financial documents, payroll, and trip cancellation.
-- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 140/140.
+- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 141/141.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
 - Operations navigation now exposes all six reference entries and maps each to a registered SPA route.
 - The shell reads the seeded company profile through an authenticated server endpoint and renders tenant identity in the header; it is not hard-coded in the client.
+- Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 
 ## Not Proven
 
