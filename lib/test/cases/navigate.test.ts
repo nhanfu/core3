@@ -24,4 +24,10 @@ describe('page parameters', () => {
 
     expect(getPageParams()).toEqual({ id: 'order-01' });
   });
+
+  it('decodes status filters from dashboard hash links', () => {
+    window.history.replaceState({}, '', '/#/orders?status=Pending%20Approval');
+
+    expect(getPageParams()).toEqual({ status: 'Pending Approval' });
+  });
 });
