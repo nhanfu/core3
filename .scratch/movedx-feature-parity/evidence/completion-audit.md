@@ -53,11 +53,12 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Role management now includes server-validated `all`/`branch`/`own` view-scope configuration in list/detail YAML and the shared source-prefilled editor; workflow audit covers valid and rejected scope updates.
 - Shared list exports now render the reference `Xuất Excel` label and produce `.xlsx` downloads with escaped text and numeric cells.
 - Master-data imports accept both CSV and OOXML `.xlsx` workbooks; the fresh workflow audit verifies a generated XLSX round-trip alongside malformed-CSV rejection.
+- An opt-in fresh-browser mutation audit performs normal pointer clicks for `submit_order` and `approve_order`, then verifies the order row persists `Pending Approval` and `Approved`; it passes with zero UI mutation failures.
 
 ## Not Proven
 
 - The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
-- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, and row action per route (52 routes plus 15 populated details, 0 failures; 321 sortable headers, 142 tabs, 44 choosers, 401 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape; full server-side mutation effects still need broader UI-level checks.
+- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, and row action per route (52 routes plus 15 populated details, 0 failures; 321 sortable headers, 142 tabs, 44 choosers, 401 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape, and the opt-in fresh-browser mutation phase verifies submit/approve persistence through normal UI clicks.
 
 ## Current commands
 
@@ -68,6 +69,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 # TMS_DB_PATH=/tmp/core3-parity-3419.duckdb TMS_UPLOAD_ROOT=/tmp/core3-uploads-3419 PORT=3419 bun server.ts
 # (cd apps/tms && TMS_BASE_URL=http://localhost:3419 TMS_CDP_URL=http://localhost:9222 bun scripts/audit-ui.ts)
 (cd apps/tms && TMS_BASE_URL=http://localhost:3425 bun scripts/audit-workflows.ts)
+(cd apps/tms && TMS_BASE_URL=http://localhost:3435 TMS_CDP_URL=http://localhost:9222 TMS_AUDIT_MUTATIONS=1 bun scripts/audit-ui.ts)
 (cd lib && bun run test)
 ```
 

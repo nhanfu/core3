@@ -218,9 +218,42 @@ for (const route of targets) {
 }
 failures.push(...desktopFailures);
 
+const uiMutationFailures: string[] = [];
+if (process.env.TMS_AUDIT_MUTATIONS === '1') {
+  try {
+    await evaluateWithTimeout("location.hash = '#/orders'", 'orders mutation navigation');
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const mutationState = await evaluateWithTimeout(`(async () => {
+      const previousConfirm = window.confirm;
+      const previousAlert = window.alert;
+      window.confirm = () => true;
+      window.alert = () => {};
+      const readOrder = () => [...document.querySelectorAll('#outlet tbody tr')]
+        .find((row) => row.textContent?.includes('DH-2026-0001'))?.textContent || '';
+      const submit = document.querySelector('button[data-grid-row-action="submit_order:order-01"]');
+      submit?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const pending = readOrder();
+      const approve = document.querySelector('button[data-grid-row-action="approve_order:order-01"]');
+      approve?.click();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const approved = readOrder();
+      window.confirm = previousConfirm;
+      window.alert = previousAlert;
+      return { submit: Boolean(submit), approve: Boolean(approve), pending, approved };
+    })()`, 'orders mutation state');
+    if (!mutationState?.submit || !mutationState.pending.includes('Đang duyệt')) uiMutationFailures.push('orders UI submit did not persist Pending Approval');
+    if (!mutationState?.approve || !mutationState.approved.includes('Đã duyệt')) uiMutationFailures.push('orders UI approve did not persist Approved');
+    if (consoleErrors.length) uiMutationFailures.push(`orders UI mutation console errors: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    uiMutationFailures.push(`orders UI mutation: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+failures.push(...uiMutationFailures);
+
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
-console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length}`);
+console.log(`tablet=1024x768 details=${detailTargets.length} detail_failures=${detailFailures.length} desktop=1440x1000 desktop_failures=${desktopFailures.length} ui_mutations=${process.env.TMS_AUDIT_MUTATIONS === '1' ? 1 : 0} ui_mutation_failures=${uiMutationFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
