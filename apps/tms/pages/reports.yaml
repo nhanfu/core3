@@ -60,7 +60,7 @@ components:
                 color: indigo
               - label: Avg Mileage
                 field: avg_mileage
-                color: purple
+                color: indigo
 
       - id: cost-tab
         label: Cost Analysis

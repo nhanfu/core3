@@ -69,7 +69,7 @@ components:
         color: red
       - label: Service Overdue
         field: overdue_service
-        color: orange
+        color: amber
 
   - type: GridView
     source: trucks

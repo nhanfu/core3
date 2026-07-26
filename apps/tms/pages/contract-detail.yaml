@@ -19,7 +19,7 @@ datasources:
       FROM system_activity WHERE resource = 'employment_contracts' AND resource_id = :id
       ORDER BY created_at DESC
 components:
-  - { type: DocumentSummary, source: contract_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: slate }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: job_title, label: Chức danh }, { field: department, label: Phòng ban }, { field: contract_type_label, label: Loại hợp đồng }, { field: start_date, label: Hiệu lực từ }, { field: end_date, label: Hiệu lực đến }, { field: base_salary, label: Lương cơ bản }] }
+  - { type: DocumentSummary, source: contract_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: blue }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: job_title, label: Chức danh }, { field: department, label: Phòng ban }, { field: contract_type_label, label: Loại hợp đồng }, { field: start_date, label: Hiệu lực từ }, { field: end_date, label: Hiệu lực đến }, { field: base_salary, label: Lương cơ bản }] }
   - type: ApprovalTimeline
     source: contract_activity
     title: Lịch sử hợp đồng

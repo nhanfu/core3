@@ -109,7 +109,7 @@ components:
       - { label: Doanh thu, field: amount_display, color: blue }
       - { label: Giá vốn, field: cost_amount_display, color: amber }
       - { label: Lợi nhuận, field: profit_amount_display, color: green }
-      - { label: Biên lợi nhuận, field: margin_display, color: teal }
+      - { label: Biên lợi nhuận, field: margin_display, color: indigo }
   - type: ApprovalTimeline
     source: quote_detail_timeline
     title: Lịch sử báo giá

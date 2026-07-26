@@ -70,7 +70,7 @@ components:
         color: red
       - label: Due This Week
         field: due_this_week
-        color: orange
+        color: amber
       - label: In Progress
         field: in_progress
         color: blue
