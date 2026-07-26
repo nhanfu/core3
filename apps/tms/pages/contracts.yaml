@@ -15,7 +15,9 @@ datasources:
         CASE c.status WHEN 'Expiring' THEN 'Sắp hết hạn' WHEN 'Expired' THEN 'Hết hạn' WHEN 'Terminated' THEN 'Đã chấm dứt' ELSE 'Hiệu lực' END AS status_label
       FROM employment_contracts c
       LEFT JOIN employees e ON e.id = c.employee_id
-      WHERE (NULLIF(:status, '') IS NULL OR c.status = :status)
+      LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (NULLIF(:status, '') IS NULL OR c.status = :status)
         AND (:from_date IS NULL OR c.start_date >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR c.start_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR c.code ILIKE '%' || :q || '%' OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%')
@@ -23,7 +25,7 @@ datasources:
   - id: contract_employee_lookup
     single: false
     permission: hr.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+    query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 
 toolbar:
   - id: add_contract_btn

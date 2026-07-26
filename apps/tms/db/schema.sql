@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS quotes (
   cost_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
   profit_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
   status VARCHAR NOT NULL DEFAULT 'Draft',
+  branch_id VARCHAR,
   valid_until DATE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS quote_lines (
@@ -400,6 +401,7 @@ CREATE TABLE IF NOT EXISTS orders (
   transport_method VARCHAR,
   trip_count INTEGER NOT NULL DEFAULT 0,
   total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+  branch_id VARCHAR,
   created_by VARCHAR NOT NULL DEFAULT 'Admin User',
   notes VARCHAR,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -468,6 +470,7 @@ CREATE TABLE IF NOT EXISTS accounting_entries (
   document_date DATE,
   due_date DATE,
   description VARCHAR,
+  branch_id VARCHAR,
   linked_advance_id VARCHAR,
   parent_id VARCHAR,
   sort_order INTEGER NOT NULL DEFAULT 0,

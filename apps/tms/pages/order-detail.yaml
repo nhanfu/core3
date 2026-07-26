@@ -17,7 +17,7 @@ datasources:
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, o.notes
       FROM orders o
-      WHERE o.id = :id
+      WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
   - id: order_detail_lines
     single: false
     permission: orders.read
@@ -34,7 +34,7 @@ datasources:
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS parent_status
       FROM order_lines l
       JOIN orders o ON o.id = l.order_id
-      WHERE l.order_id = :id
+      WHERE l.order_id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
       ORDER BY l.sequence
   - id: order_detail_timeline
     single: false
@@ -53,10 +53,11 @@ datasources:
         detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity
       WHERE resource = 'orders' AND resource_id = :id
+        AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM orders o WHERE o.id = :id AND o.branch_id = :current_branch_id))
       UNION ALL
       SELECT created_by, 'created', 'Đã tạo', 'Khởi tạo đơn hàng',
         CAST(created_at AS VARCHAR)
-      FROM orders WHERE id = :id
+      FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)
       ORDER BY created_at DESC
   - id: order_unit_lookup
     single: false

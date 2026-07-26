@@ -7,14 +7,14 @@ datasources:
     query: |
       SELECT a.id, a.code, a.name, a.counterparty, a.amount, a.currency,
         printf('%,.0f', COALESCE(a.amount, 0)) AS amount_display,
-        COALESCE((SELECT SUM(s.amount) FROM accounting_entries s WHERE s.kind = 'settlement' AND s.linked_advance_id = a.id), 0) AS settled_amount,
-        COALESCE(a.amount, 0) - COALESCE((SELECT SUM(s.amount) FROM accounting_entries s WHERE s.kind = 'settlement' AND s.linked_advance_id = a.id), 0) AS outstanding_amount,
+        COALESCE((SELECT SUM(s.amount) FROM accounting_entries s WHERE s.kind = 'settlement' AND s.linked_advance_id = a.id AND (:view_scope = 'all' OR s.branch_id = :current_branch_id)), 0) AS settled_amount,
+        COALESCE(a.amount, 0) - COALESCE((SELECT SUM(s.amount) FROM accounting_entries s WHERE s.kind = 'settlement' AND s.linked_advance_id = a.id AND (:view_scope = 'all' OR s.branch_id = :current_branch_id)), 0) AS outstanding_amount,
         a.status,
         CASE status WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt'
           WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Cancelled' THEN 'Đã hủy'
           ELSE status END AS status_label,
         CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
-      FROM accounting_entries a WHERE a.kind = 'advance' AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.counterparty ILIKE '%' || :q || '%') ORDER BY a.document_date DESC, a.code
+      FROM accounting_entries a WHERE a.kind = 'advance' AND (:view_scope = 'all' OR a.branch_id = :current_branch_id) AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.counterparty ILIKE '%' || :q || '%') ORDER BY a.document_date DESC, a.code
   - id: advance_currency_lookup
     single: false
     permission: accounting.read

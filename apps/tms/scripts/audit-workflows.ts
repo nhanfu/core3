@@ -118,6 +118,263 @@ const patchRequest = async (body: Record<string, unknown>, expectedStatus: numbe
   }
   return response.json();
 };
+const querySource = async (sourceId: string, requestHeaders = headers, params: Record<string, unknown> = {}) => {
+  const response = await fetch(`${baseUrl}/api/query`, {
+    method: 'POST',
+    headers: requestHeaders,
+    body: JSON.stringify({ sourceId, params, top: 100 }),
+  });
+  if (!response.ok) throw new Error(`${sourceId}: expected query success, got ${response.status}`);
+  return response.json() as Promise<{ data?: unknown[]; meta?: { total?: number } }>;
+};
+
+const allVehicles = await querySource('vehicles');
+const allDashboard = await querySource('dashboard_kpis');
+const allCustomers = await querySource('customers');
+const allPartners = await querySource('partners');
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-fleet-manager',
+  changes: [{ field: 'view_scope', value: 'branch' }],
+}, 200);
+const fleetLogin = await fetch(`${baseUrl}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ email: 'fleet@tms.local', password: 'fleet123' }),
+});
+if (!fleetLogin.ok) throw new Error(`fleet scope login failed: ${fleetLogin.status}`);
+const { token: fleetToken, user: fleetUser } = await fleetLogin.json() as { token: string; user: { view_scope?: string; branch_id?: string } };
+if (fleetUser.view_scope !== 'branch' || !fleetUser.branch_id) {
+  throw new Error(`branch scope was not included in fleet session: ${JSON.stringify(fleetUser)}`);
+}
+const fleetVehicles = await querySource('vehicles', {
+  Authorization: `Bearer ${fleetToken}`,
+  'content-type': 'application/json',
+});
+if (Number(fleetVehicles.meta?.total || 0) >= Number(allVehicles.meta?.total || 0)) {
+  throw new Error(`branch scope did not reduce vehicle visibility: all=${allVehicles.meta?.total} fleet=${fleetVehicles.meta?.total}`);
+}
+const fleetDashboard = await querySource('dashboard_kpis', {
+  Authorization: `Bearer ${fleetToken}`,
+  'content-type': 'application/json',
+});
+const allTripCount = Number((allDashboard.data as any)?.total_trips || 0);
+const fleetTripCount = Number((fleetDashboard.data as any)?.total_trips || 0);
+if (fleetTripCount >= allTripCount) {
+  throw new Error(`branch scope did not reduce dashboard trip visibility: all=${allTripCount} fleet=${fleetTripCount}`);
+}
+const outOfScopeMutation = await fetch(`${baseUrl}/api/patch`, {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${fleetToken}`, 'content-type': 'application/json' },
+  body: JSON.stringify({
+    table: 'trucks',
+    action: 'update',
+    id: 'truck-03',
+    changes: [{ field: 'notes', value: 'scope audit must reject this' }],
+  }),
+});
+if (outOfScopeMutation.status !== 403) {
+  throw new Error(`branch scope mutation expected 403, got ${outOfScopeMutation.status}`);
+}
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-fleet-manager',
+  changes: [{ field: 'view_scope', value: 'all' }],
+}, 200);
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-admin',
+  changes: [{ field: 'view_scope', value: 'own' }],
+}, 200);
+const ownAdminLogin = await fetch(`${baseUrl}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ email: 'admin@tms.local', password: 'admin123' }),
+});
+if (!ownAdminLogin.ok) throw new Error(`own-scope admin login failed: ${ownAdminLogin.status}`);
+const { token: ownAdminToken } = await ownAdminLogin.json() as { token: string };
+const ownHeaders = { Authorization: `Bearer ${ownAdminToken}`, 'content-type': 'application/json' };
+const ownCustomers = await querySource('customers', ownHeaders);
+const ownPartners = await querySource('partners', ownHeaders);
+if (Number(ownCustomers.meta?.total || 0) >= Number(allCustomers.meta?.total || 0)) {
+  throw new Error(`own scope did not reduce customer visibility: all=${allCustomers.meta?.total} own=${ownCustomers.meta?.total}`);
+}
+if (Number(ownPartners.meta?.total || 0) >= Number(allPartners.meta?.total || 0)) {
+  throw new Error(`own scope did not reduce partner visibility: all=${allPartners.meta?.total} own=${ownPartners.meta?.total}`);
+}
+const hiddenPrivateCustomer = await querySource('crm_entity_detail', ownHeaders, { kind: 'customer', id: 'customer-02' });
+if (Object.keys((hiddenPrivateCustomer.data as any) || {}).length) throw new Error('own scope leaked another owner private customer');
+const hiddenCustomerMutation = await fetch(`${baseUrl}/api/patch`, {
+  method: 'POST',
+  headers: ownHeaders,
+  body: JSON.stringify({
+    table: 'customers',
+    action: 'update',
+    id: 'customer-02',
+    changes: [{ field: 'phone', value: 'scope audit must reject this' }],
+  }),
+});
+if (hiddenCustomerMutation.status !== 403) {
+  throw new Error(`own scope CRM mutation expected 403, got ${hiddenCustomerMutation.status}`);
+}
+const hiddenContactMutation = await fetch(`${baseUrl}/api/actions/crm.contacts.create`, {
+  method: 'POST',
+  headers: ownHeaders,
+  body: JSON.stringify({
+    id: 'customer-02',
+    kind: 'customer',
+    values: { name: 'Scope audit must reject this', phone: '000' },
+  }),
+});
+if (hiddenContactMutation.status !== 403) {
+  throw new Error(`own scope CRM contact mutation expected 403, got ${hiddenContactMutation.status}`);
+}
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-admin',
+  changes: [{ field: 'view_scope', value: 'all' }],
+}, 200);
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-admin',
+  changes: [{ field: 'view_scope', value: 'branch' }],
+}, 200);
+const scopedAdminLogin = await fetch(`${baseUrl}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ email: 'admin@tms.local', password: 'admin123' }),
+});
+if (!scopedAdminLogin.ok) throw new Error(`scoped admin login failed: ${scopedAdminLogin.status}`);
+const { token: scopedAdminToken } = await scopedAdminLogin.json() as { token: string };
+const scopedHeaders = { Authorization: `Bearer ${scopedAdminToken}`, 'content-type': 'application/json' };
+const hiddenBranch = await querySource('branch_detail', scopedHeaders, { id: 'branch-hn' });
+if (Object.keys((hiddenBranch.data as any) || {}).length) throw new Error('branch detail leaked an out-of-scope branch');
+const hiddenDriver = await querySource('driver_detail', scopedHeaders, { id: 'driver-03' });
+if (Object.keys((hiddenDriver.data as any) || {}).length) throw new Error('driver detail leaked an out-of-scope driver');
+const scopedEmployees = await querySource('employees', scopedHeaders);
+const scopedContracts = await querySource('contracts', scopedHeaders);
+const scopedTimesheets = await querySource('timesheets', scopedHeaders);
+const scopedPayroll = await querySource('payroll', scopedHeaders);
+const allEmployees = await querySource('employees');
+const allContracts = await querySource('contracts');
+const allTimesheets = await querySource('timesheets');
+const allPayroll = await querySource('payroll');
+for (const [label, scoped, all] of [
+  ['employees', scopedEmployees, allEmployees],
+  ['contracts', scopedContracts, allContracts],
+  ['timesheets', scopedTimesheets, allTimesheets],
+  ['payroll', scopedPayroll, allPayroll],
+] as const) {
+  if (Number(scoped.meta?.total || 0) >= Number(all.meta?.total || 0)) {
+    throw new Error(`branch scope did not reduce ${label} visibility: all=${all.meta?.total} scoped=${scoped.meta?.total}`);
+  }
+}
+const hiddenEmployee = await querySource('employee_detail', scopedHeaders, { id: 'employee-06' });
+if (Object.keys((hiddenEmployee.data as any) || {}).length) throw new Error('employee detail leaked an out-of-scope employee');
+const outOfScopeEmployeeMutation = await fetch(`${baseUrl}/api/patch`, {
+  method: 'POST',
+  headers: scopedHeaders,
+  body: JSON.stringify({
+    table: 'employees',
+    action: 'update',
+    id: 'employee-06',
+    changes: [{ field: 'phone', value: 'scope audit must reject this' }],
+  }),
+});
+if (outOfScopeEmployeeMutation.status !== 403) {
+  throw new Error(`branch scope HR mutation expected 403, got ${outOfScopeEmployeeMutation.status}`);
+}
+const scopedTrips = await querySource('trips', scopedHeaders);
+const scopedMaintenance = await querySource('maintenance', scopedHeaders);
+const allTrips = await querySource('trips');
+const allMaintenance = await querySource('maintenance');
+if (Number(scopedTrips.meta?.total || 0) >= Number(allTrips.meta?.total || 0)) {
+  throw new Error(`branch scope did not reduce legacy trip visibility: all=${allTrips.meta?.total} scoped=${scopedTrips.meta?.total}`);
+}
+if (Number(scopedMaintenance.meta?.total || 0) >= Number(allMaintenance.meta?.total || 0)) {
+  throw new Error(`branch scope did not reduce legacy maintenance visibility: all=${allMaintenance.meta?.total} scoped=${scopedMaintenance.meta?.total}`);
+}
+const outOfScopeTripMutation = await fetch(`${baseUrl}/api/patch`, {
+  method: 'POST',
+  headers: scopedHeaders,
+  body: JSON.stringify({
+    table: 'trips',
+    action: 'update',
+    id: 'trip-02',
+    changes: [{ field: 'notes', value: 'scope audit must reject this' }],
+  }),
+});
+if (outOfScopeTripMutation.status !== 403) {
+  throw new Error(`branch scope trip mutation expected 403, got ${outOfScopeTripMutation.status}`);
+}
+const scopedDebitNotes = await querySource('debit_notes', scopedHeaders);
+const allDebitNotes = await querySource('debit_notes', headers);
+if (Number(scopedDebitNotes.meta?.total || 0) >= Number(allDebitNotes.meta?.total || 0)) {
+  throw new Error(`branch scope did not reduce accounting visibility: all=${allDebitNotes.meta?.total} scoped=${scopedDebitNotes.meta?.total}`);
+}
+const hiddenAccountingDocument = await querySource('accounting_document_detail', scopedHeaders, { id: 'acct-debit-03', kind: 'debit_note' });
+if (Object.keys((hiddenAccountingDocument.data as any) || {}).length) throw new Error('accounting detail leaked an out-of-scope document');
+const outOfScopeAccountingMutation = await fetch(`${baseUrl}/api/patch`, {
+  method: 'POST',
+  headers: scopedHeaders,
+  body: JSON.stringify({
+    table: 'accounting_entries',
+    action: 'update',
+    scope: 'debit_note',
+    id: 'acct-debit-03',
+    changes: [{ field: 'description', value: 'scope audit must reject this' }],
+  }),
+});
+if (outOfScopeAccountingMutation.status !== 403) {
+  throw new Error(`branch scope accounting mutation expected 403, got ${outOfScopeAccountingMutation.status}`);
+}
+const scopedOrders = await querySource('orders', scopedHeaders);
+const scopedQuotes = await querySource('quotes', scopedHeaders);
+const allOrders = await querySource('orders', headers);
+const allQuotes = await querySource('quotes', headers);
+if (Number(scopedOrders.meta?.total || 0) >= Number(allOrders.meta?.total || 0)) {
+  throw new Error(`branch scope did not reduce order visibility: all=${allOrders.meta?.total} scoped=${scopedOrders.meta?.total}`);
+}
+if (Number(scopedQuotes.meta?.total || 0) >= Number(allQuotes.meta?.total || 0)) {
+  throw new Error(`branch scope did not reduce quote visibility: all=${allQuotes.meta?.total} scoped=${scopedQuotes.meta?.total}`);
+}
+const hiddenOrder = await querySource('order_detail', scopedHeaders, { id: 'order-03' });
+const hiddenQuote = await querySource('quote_detail', scopedHeaders, { id: 'quote-03' });
+if (Object.keys((hiddenOrder.data as any) || {}).length) throw new Error('order detail leaked an out-of-scope order');
+if (Object.keys((hiddenQuote.data as any) || {}).length) throw new Error('quote detail leaked an out-of-scope quote');
+const outOfScopeOrderMutation = await fetch(`${baseUrl}/api/actions/orders.cancel`, {
+  method: 'POST',
+  headers: scopedHeaders,
+  body: JSON.stringify({ id: 'order-03' }),
+});
+if (outOfScopeOrderMutation.status !== 403) {
+  throw new Error(`branch scope order action expected 403, got ${outOfScopeOrderMutation.status}`);
+}
+const outOfScopeQuoteMutation = await fetch(`${baseUrl}/api/patch`, {
+  method: 'POST',
+  headers: scopedHeaders,
+  body: JSON.stringify({
+    table: 'quotes',
+    action: 'update',
+    id: 'quote-03',
+    changes: [{ field: 'title', value: 'scope audit must reject this' }],
+  }),
+});
+if (outOfScopeQuoteMutation.status !== 403) {
+  throw new Error(`branch scope quote mutation expected 403, got ${outOfScopeQuoteMutation.status}`);
+}
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-admin',
+  changes: [{ field: 'view_scope', value: 'all' }],
+}, 200);
+
 const createdMaster = await patchRequest({
   table: 'master_data',
   action: 'insert',
@@ -161,6 +418,12 @@ await patchRequest({
   id: 'role-admin',
   changes: [{ field: 'view_scope', value: 'invalid' }],
 }, 400);
+await patchRequest({
+  table: 'roles',
+  action: 'update',
+  id: 'role-admin',
+  changes: [{ field: 'view_scope', value: 'all' }],
+}, 200);
 await patchRequest({
   table: 'areas',
   action: 'update',
@@ -254,4 +517,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 reorder_roundtrips=2 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 area_hierarchy_rejections=2 ledger_hierarchy_rejections=1 accounting_link_rejections=1 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 reorder_roundtrips=2 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 role_scope_updates=9 scope_mutation_denials=2 scope_crm_mutation_denials=2 scope_hr_mutation_denials=1 scope_accounting_mutation_denials=1 scope_commercial_mutation_denials=2 scope_detail_denials=6 scope_visibility_denials=1 area_hierarchy_rejections=2 ledger_hierarchy_rejections=1 accounting_link_rejections=1 failures=0`);

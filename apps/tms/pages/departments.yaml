@@ -8,7 +8,10 @@ datasources:
     permission: settings.read
     query: |
       SELECT d.*, b.name AS branch_name, p.name AS parent_name, CASE d.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM departments d LEFT JOIN branches b ON b.id = d.branch_id LEFT JOIN departments p ON p.id = d.parent_id
-      WHERE (NULLIF(:status, '') IS NULL OR d.status = :status) AND (:q IS NULL OR d.code ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%' OR b.name ILIKE '%' || :q || '%') ORDER BY d.created_at DESC, d.name
+      WHERE (NULLIF(:status, '') IS NULL OR d.status = :status)
+        AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (:q IS NULL OR d.code ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%' OR b.name ILIKE '%' || :q || '%')
+      ORDER BY d.created_at DESC, d.name
   - id: department_parent_lookup
     single: false
     permission: settings.read
@@ -16,7 +19,7 @@ datasources:
   - id: department_branch_lookup
     single: false
     permission: settings.read
-    query: "SELECT id AS value, name AS label FROM branches ORDER BY name"
+    query: "SELECT id AS value, name AS label FROM branches WHERE (:view_scope = 'all' OR id = :current_branch_id) ORDER BY name"
 toolbar:
   - { id: add_department_btn, label: '+ Thêm phòng ban', variant: primary, permission: settings.write, action: add_department }
 components:

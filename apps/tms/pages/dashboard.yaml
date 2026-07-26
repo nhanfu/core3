@@ -12,9 +12,10 @@ datasources:
     query: |
       SELECT origin || ' → ' || destination AS route, COUNT(*) AS trip_count,
         COALESCE(SUM(distance_km), 0) AS total_distance_km
-      FROM trips
+      FROM trips t
       WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))
       GROUP BY origin, destination ORDER BY trip_count DESC, route
   - id: dashboard_customers
     single: false
@@ -30,25 +31,25 @@ datasources:
     permission: fleet.read
     query: |
       SELECT
-        (SELECT COUNT(*) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS total_trips,
-        (SELECT COUNT(*) FROM trips WHERE status = 'In Transit' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS in_transit,
-        (SELECT COUNT(*) FROM trips WHERE status = 'Scheduled' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS scheduled,
+        (SELECT COUNT(*) FROM trips t WHERE (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS total_trips,
+        (SELECT COUNT(*) FROM trips t WHERE t.status = 'In Transit' AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS in_transit,
+        (SELECT COUNT(*) FROM trips t WHERE t.status = 'Scheduled' AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS scheduled,
         (SELECT COUNT(*) FROM maintenance WHERE status = 'Overdue') AS overdue_maintenance,
-        (SELECT COUNT(*) FROM trucks WHERE status = 'Active') AS active_trucks,
+        (SELECT COUNT(*) FROM trucks t WHERE t.status = 'Active' AND (:view_scope = 'all' OR t.branch_id = :current_branch_id)) AS active_trucks,
         (SELECT COUNT(*) FROM orders WHERE status = 'Draft') AS draft_orders,
         (SELECT COUNT(*) FROM orders WHERE status = 'Pending Approval') AS pending_orders,
-        (SELECT COUNT(*) FROM trips WHERE status IN ('Scheduled', 'In Transit') AND truck_id IS NULL) AS unassigned_trips,
+        (SELECT COUNT(*) FROM trips t WHERE t.status IN ('Scheduled', 'In Transit') AND t.truck_id IS NULL AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS unassigned_trips,
         (SELECT COUNT(*) FROM accounting_entries WHERE kind = 'debit_note' AND status <> 'Paid' AND due_date < CURRENT_DATE) AS overdue_debit_notes,
         (SELECT COUNT(*) FROM accounting_entries WHERE kind = 'payment_request' AND status = 'Pending Approval') AS expense_approvals,
         (SELECT COUNT(*) FROM employment_contracts WHERE status = 'Expiring' OR (end_date IS NOT NULL AND end_date BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL 30 DAY)) AS expiring_contracts,
-        (SELECT COUNT(*) FROM drivers WHERE status = 'Active') AS active_drivers,
+        (SELECT COUNT(*) FROM drivers d WHERE d.status = 'Active' AND (:view_scope = 'all' OR d.assigned_truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS active_drivers,
         (SELECT COUNT(*) FROM containers WHERE status = 'Available') AS available_containers,
-        (SELECT COUNT(*) FROM trips WHERE status = 'Completed' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS completed_trips,
-        (SELECT COUNT(*) FROM trips WHERE status = 'Cancelled' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS cancelled_trips,
-        (SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'Completed') / NULLIF(COUNT(*), 0), 1) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS completion_rate,
-        (SELECT ROUND(AVG(date_diff('minute', departure_time, arrival_time)) / 60.0, 1) FROM trips WHERE arrival_time IS NOT NULL AND departure_time IS NOT NULL AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS average_trip_hours,
-        (SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE truck_id IS NULL) / NULLIF(COUNT(*), 0), 1) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS unassigned_rate,
-        (SELECT COALESCE(SUM(distance_km), 0) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS total_distance_km,
+        (SELECT COUNT(*) FROM trips t WHERE t.status = 'Completed' AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS completed_trips,
+        (SELECT COUNT(*) FROM trips t WHERE t.status = 'Cancelled' AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS cancelled_trips,
+        (SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE t.status = 'Completed') / NULLIF(COUNT(*), 0), 1) FROM trips t WHERE (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS completion_rate,
+        (SELECT ROUND(AVG(date_diff('minute', t.departure_time, t.arrival_time)) / 60.0, 1) FROM trips t WHERE t.arrival_time IS NOT NULL AND t.departure_time IS NOT NULL AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS average_trip_hours,
+        (SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE t.truck_id IS NULL) / NULLIF(COUNT(*), 0), 1) FROM trips t WHERE (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS unassigned_rate,
+        (SELECT COALESCE(SUM(t.distance_km), 0) FROM trips t WHERE (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))) AS total_distance_km,
         (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS revenue_total,
         (SELECT COUNT(*) FROM orders WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS order_count,
         (SELECT COUNT(*) FROM customers WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS new_customer_count,
@@ -71,8 +72,9 @@ datasources:
         WHEN 'Completed' THEN 'Hoàn thành'
         WHEN 'Cancelled' THEN 'Đã hủy'
         ELSE status END AS status, COUNT(*) AS trip_count
-      FROM trips
-      WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      FROM trips t
+      WHERE (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))
       GROUP BY status
       ORDER BY trip_count DESC, status
   - id: dashboard_financial_monthly
@@ -103,6 +105,7 @@ datasources:
       WHERE t.status IN ('Scheduled', 'In Transit')
         AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:view_scope = 'all' OR t.truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id))
         AND (:q IS NULL OR t.trip_number ILIKE '%' || :q || '%'
           OR t.origin ILIKE '%' || :q || '%'
           OR t.destination ILIKE '%' || :q || '%'
@@ -130,8 +133,8 @@ components:
     stats:
       - { label: Đơn nháp, field: draft_orders, color: indigo, navigate_to: '/orders?status=Draft' }
       - { label: Đơn chờ duyệt, field: pending_orders, color: amber, navigate_to: '/orders?status=Pending%20Approval' }
-      - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red, navigate_to: '/trips?status=Scheduled&unassigned=true' }
-      - { label: Chuyến đang chạy, field: in_transit, color: blue, navigate_to: '/trips?status=In%20Transit' }
+      - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red, navigate_to: /orders }
+      - { label: Chuyến đang chạy, field: in_transit, color: blue, navigate_to: /orders }
       - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red, navigate_to: /accounting/debit-notes }
       - { label: Đề nghị chi chờ duyệt, field: expense_approvals, color: amber, navigate_to: '/accounting/payment-requests?status=Pending%20Approval' }
       - { label: HĐ sắp hết hạn, field: expiring_contracts, color: amber, navigate_to: '/hr/contracts?status=Expiring' }

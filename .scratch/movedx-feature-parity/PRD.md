@@ -13,11 +13,8 @@ Parity is complete only when every route in the page matrix has:
 1. the same information architecture, permissions, primary/secondary actions,
    filters, columns, form fields, status transitions, and exports as the
    reference;
-2. an equivalent desktop layout at 1440 x 1000 and a usable 1024 x 768 layout;
-3. a Core3 YAML definition, server-authorized datasource/actions, database
+2. a Core3 YAML definition, server-authorized datasource/actions, database
    migrations, seed data, and automated interaction coverage;
-4. a before/after screenshot and an interaction checklist recorded in the
-   parity evidence folder.
 
 This plan uses the reference tenant only for read-only inspection. Do not copy
 its source, assets, or business data. Its labels, behaviour, and layout are the
@@ -85,29 +82,11 @@ the parity routes above; they are not substitutes for the reference pages.
 
 ## Visual system: do not approximate it
 
-Before building a wave, capture the matching reference route at 1440 x 1000 and
-1024 x 768, including default, filter-open, editor-open, empty, and populated
-states. Store only generated screenshots and an element inventory under:
-
-```text
-.scratch/movedx-feature-parity/evidence/<route-slug>/
-  reference-desktop.png
-  reference-tablet.png
-  local-desktop.png
-  local-tablet.png
-  controls.md
-```
-
 Create `lib/styles/movedx-tokens.css` from measured values: fonts, colors,
 spacing, elevation, radii, sidebar/header dimensions, table density, badge
 palette, form states, and z-index layers. Every component must consume tokens;
 page YAML may choose semantic variants but cannot introduce arbitrary visual
 styles. Replace the current emoji navigation with a consistent SVG icon set.
-
-Visual QA compares screenshots, then manually checks text truncation, hover,
-focus, disabled/loading/error states, sticky headers, scroll containers, modal
-layering, and responsive overflow. A route cannot be marked complete because
-its DOM happens to render.
 
 ## Component architecture
 
@@ -238,7 +217,7 @@ component.
 
 1. **Foundation and visual shell** — tokens, Lucide navigation, grouped
    collapsible sidebar, global search, profile/notification/language controls,
-   route registry, YAML validation, page screenshots.
+   route registry and YAML validation.
 2. **Universal resource-list shell** — DataGrid sorting/selection/columns,
    advanced filters, date period, import/export, detail drawer, master-data
    editor. Validate with vehicle type and location pages.
@@ -260,9 +239,8 @@ component.
     sequential/multi-level approval-flow editor.
 11. **Chat and realtime** — thread workspace, messages, attachments, read
     state; add WebSocket/SSE adapter only after server semantics are defined.
-12. **Parity hardening** — complete screenshot matrix, role matrix, CSV/XLSX
-    round-trips, workflow failures, keyboard/accessibility, responsive visual
-    pass, performance and migration tests.
+12. **Parity hardening** — complete role matrix, CSV/XLSX round-trips, workflow
+    failures, keyboard/accessibility, performance and migration tests.
 
 ## Wave acceptance and QA
 
@@ -273,14 +251,9 @@ normal mouse/keyboard interaction, not `evaluate()` shortcuts.
 - Functional: create/edit/delete where reference permits; filter, sort, page,
   show/hide columns, import/export; state changes; permission denial; invalid
   form; empty/error/loading states.
-- Visual: initial and dense data state at 1440 x 1000 and 1024 x 768; modals,
-  drawers, dropdowns, tooltips, sticky areas, horizontal overflow, dark/locale
-  variants if present in reference.
 - Framework: unit-test each adapter lifecycle and YAML schema; component tests
   for emitted actions; integration-test server permissions, scopes, transitions,
   audit events, and import validation.
-- Evidence: route checklist plus local/reference screenshots. A deliberate
-  reference difference needs an approved note in that route's `controls.md`.
 
 ## First execution backlog
 

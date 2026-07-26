@@ -13,13 +13,15 @@ datasources:
       SELECT e.*,
         CASE e.status WHEN 'OnLeave' THEN 'Nghỉ phép' WHEN 'Inactive' THEN 'Ngưng làm việc' ELSE 'Đang làm việc' END AS status_label
       FROM employees e
-      WHERE (NULLIF(:status, '') IS NULL OR e.status = :status)
+      LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (NULLIF(:status, '') IS NULL OR e.status = :status)
         AND (:q IS NULL OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.phone ILIKE '%' || :q || '%' OR e.email ILIKE '%' || :q || '%')
       ORDER BY e.created_at DESC, e.name
   - id: employee_department_lookup
     single: false
     permission: hr.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM departments WHERE status = 'Active' UNION SELECT DISTINCT department AS value, department AS label FROM employees WHERE department IS NOT NULL AND department <> '' ORDER BY label"
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM departments WHERE status = 'Active' AND (:view_scope = 'all' OR branch_id = :current_branch_id) UNION SELECT DISTINCT e.department AS value, e.department AS label FROM employees e JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.department IS NOT NULL AND e.department <> '' AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY label"
 
 toolbar:
   - id: add_employee_btn

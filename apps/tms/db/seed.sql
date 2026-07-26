@@ -143,7 +143,8 @@ INSERT INTO payrolls (id, code, employee_id, pay_month, base_salary, allowance, 
 ('payroll-02', 'BL202607002', 'employee-02', '2026-07-01', 22000000, 2500000, 2100000, 22400000, 'Paid'),
 ('payroll-03', 'BL202607003', 'employee-03', '2026-07-01', 16000000, 1500000, 1500000, 16000000, 'Approved'),
 ('payroll-04', 'BL202607004', 'employee-04', '2026-07-01', 18000000, 1500000, 1700000, 17800000, 'Draft'),
-('payroll-05', 'BL202607005', 'employee-05', '2026-07-01', 17000000, 1000000, 900000, 17100000, 'Draft');
+('payroll-05', 'BL202607005', 'employee-05', '2026-07-01', 17000000, 1000000, 900000, 17100000, 'Draft'),
+('payroll-06', 'BL202607006', 'employee-06', '2026-07-01', 12000000, 500000, 500000, 12000000, 'Draft');
 
 -- ── Dispatch master data ───────────────────────────────────────────────────
 INSERT INTO areas (id, code, name, region, description, status) VALUES
@@ -209,6 +210,8 @@ INSERT INTO quotes (id, code, customer_name, title, amount, status, valid_until)
 UPDATE quotes SET
   cost_amount = CASE id WHEN 'quote-01' THEN 39000000 WHEN 'quote-02' THEN 11400000 ELSE 47500000 END,
   profit_amount = CASE id WHEN 'quote-01' THEN 9600000 WHEN 'quote-02' THEN 2800000 ELSE 11800000 END;
+UPDATE quotes SET branch_id = 'branch-hcm';
+UPDATE quotes SET branch_id = 'branch-hn' WHERE id = 'quote-03';
 INSERT INTO quote_lines (
   id, quote_id, sequence, description, quantity, unit, unit_price, cost_price,
   tax_rate, line_total, cost_total
@@ -324,6 +327,8 @@ INSERT INTO orders (id, order_number, customer_name, customer_legal_name, order_
 ('order-10', 'DH-2026-0010', 'Công ty CP Nông sản Miền Tây', 'Mien Tay Agriculture JSC', '2026-07-20', 'Approved', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 2, 59300000, 'Admin User', NULL),
 ('order-11', 'DH-2026-0011', 'Công ty TNHH Gia Phúc', 'Gia Phuc Co., Ltd.', '2026-07-20', 'Cancelled', 'Hàng lẻ', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 0, 7600000, 'Admin User', 'Khách hàng hủy đơn'),
 ('order-12', 'DH-2026-0012', 'Công ty CP Phú Mỹ', 'Phu My JSC', '2026-07-19', 'Cancelled', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 0, 16800000, 'Admin User', 'Không đủ phương tiện');
+UPDATE orders SET branch_id = 'branch-hcm';
+UPDATE orders SET branch_id = 'branch-hn' WHERE id = 'order-03';
 INSERT INTO order_lines (
   id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
 ) VALUES
@@ -383,6 +388,8 @@ INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, curr
 ('acct-ledger-01', 'ledger_account', '111', 'Tiền mặt', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền mặt', 10),
 ('acct-ledger-02', 'ledger_account', '112', 'Tiền gửi ngân hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Tài khoản tiền gửi ngân hàng', 20),
 ('acct-ledger-03', 'ledger_account', '131', 'Phải thu khách hàng', NULL, 0, 'VND', 'Active', NULL, NULL, 'Công nợ phải thu', 30);
+UPDATE accounting_entries SET branch_id = 'branch-hcm';
+UPDATE accounting_entries SET branch_id = 'branch-hn' WHERE id = 'acct-debit-03';
 UPDATE accounting_entries SET parent_id = 'acct-ledger-01' WHERE id IN ('acct-ledger-02', 'acct-ledger-03');
 INSERT INTO accounting_entry_lines (
   id, entry_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total

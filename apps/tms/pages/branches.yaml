@@ -13,6 +13,7 @@ datasources:
       SELECT b.id, b.name, b.city, b.region, b.status, COUNT(t.id) AS truck_count, b.created_at
       FROM branches b LEFT JOIN trucks t ON t.branch_id = b.id
       WHERE (:status IS NULL OR b.status = :status)
+        AND (:view_scope = 'all' OR b.id = :current_branch_id)
         AND (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.city ILIKE '%' || :q || '%' OR b.region ILIKE '%' || :q || '%')
       GROUP BY b.id, b.name, b.city, b.region, b.status, b.created_at
       ORDER BY b.name

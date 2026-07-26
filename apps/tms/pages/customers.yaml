@@ -30,6 +30,9 @@ datasources:
       WHERE (NULLIF(:stage, '') IS NULL OR c.stage = :stage)
         AND (NULLIF(:visibility, '') IS NULL OR c.visibility = :visibility)
         AND (NULLIF(:status, '') IS NULL OR c.status = :status)
+        AND (:view_scope = 'all'
+          OR (:view_scope = 'branch' AND (c.visibility = 'Public' OR c.owner_name = :current_user_name))
+          OR (:view_scope = 'own' AND c.owner_name = :current_user_name))
         AND (:q IS NULL OR c.code ILIKE '%' || :q || '%'
           OR c.name ILIKE '%' || :q || '%'
           OR c.tax_code ILIKE '%' || :q || '%'

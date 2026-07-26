@@ -27,6 +27,9 @@ datasources:
       WHERE (NULLIF(:partner_type, '') IS NULL OR p.partner_type = :partner_type)
         AND (NULLIF(:visibility, '') IS NULL OR p.visibility = :visibility)
         AND (NULLIF(:status, '') IS NULL OR p.status = :status)
+        AND (:view_scope = 'all'
+          OR (:view_scope = 'branch' AND (p.visibility = 'Public' OR p.owner_name = :current_user_name))
+          OR (:view_scope = 'own' AND p.owner_name = :current_user_name))
         AND (:q IS NULL OR p.code ILIKE '%' || :q || '%'
           OR p.name ILIKE '%' || :q || '%'
           OR p.tax_code ILIKE '%' || :q || '%'

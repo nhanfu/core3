@@ -8,7 +8,10 @@ datasources:
     permission: settings.read
     query: |
       SELECT t.*, d.name AS department_name, e.name AS manager_name, CASE t.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM teams t LEFT JOIN departments d ON d.id = t.department_id LEFT JOIN employees e ON e.id = t.manager_id
-      WHERE (NULLIF(:status, '') IS NULL OR t.status = :status) AND (:q IS NULL OR t.code ILIKE '%' || :q || '%' OR t.name ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%') ORDER BY t.created_at DESC, t.name
+      WHERE (NULLIF(:status, '') IS NULL OR t.status = :status)
+        AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (:q IS NULL OR t.code ILIKE '%' || :q || '%' OR t.name ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
+      ORDER BY t.created_at DESC, t.name
   - id: team_department_lookup
     single: false
     permission: settings.read

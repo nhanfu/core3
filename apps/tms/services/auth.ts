@@ -42,6 +42,8 @@ export class JwtAuthProvider {
       name: user.name,
       avatar_url: user.avatar_url,
       preferred_lang: user.preferred_lang,
+      branch_id: user.branch_id || null,
+      view_scope: user.view_scope || 'all',
       roles,
       permissions,
     };

@@ -24,14 +24,16 @@ datasources:
         s.name AS shift_name, t.hours, t.status
       FROM timesheets t JOIN employees e ON e.id = t.employee_id
         LEFT JOIN work_shifts s ON s.id = t.shift_id
-      WHERE (:from_date IS NULL OR t.work_date >= CAST(:from_date AS DATE))
+        LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (:from_date IS NULL OR t.work_date >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR t.work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:assignment_q IS NULL OR e.code ILIKE '%' || :assignment_q || '%' OR e.name ILIKE '%' || :assignment_q || '%')
       ORDER BY t.work_date DESC, e.name
   - id: shift_employee_lookup
     single: false
     permission: hr.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+    query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
   - id: shift_definition_lookup
     single: false
     permission: hr.read

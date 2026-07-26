@@ -16,6 +16,7 @@ datasources:
         COUNT(*) FILTER (WHERE status = 'Out of Service') AS out_of_service,
         COUNT(*) FILTER (WHERE next_service IS NOT NULL AND next_service < CURRENT_DATE) AS overdue_service
       FROM trucks
+      WHERE (:view_scope = 'all' OR branch_id = :current_branch_id)
   - id: trucks
     single: false
     permission: fleet.read
@@ -23,18 +24,19 @@ datasources:
       SELECT t.*, d.name AS driver_name, d.phone AS driver_phone,
         (t.next_service IS NOT NULL AND t.next_service < CURRENT_DATE) AS overdue_next
       FROM trucks t LEFT JOIN drivers d ON d.id = t.driver_id
-      WHERE (:status IS NULL OR t.status = :status)
+      WHERE (:view_scope = 'all' OR t.branch_id = :current_branch_id)
+        AND (:status IS NULL OR t.status = :status)
         AND (:type IS NULL OR t.type = :type)
         AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR t.model ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
       ORDER BY t.plate
   - id: fleet_driver_lookup
     single: false
     permission: fleet.read
-    query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' UNION SELECT DISTINCT d.id AS value, d.name AS label FROM trucks t JOIN drivers d ON d.id = t.driver_id WHERE t.driver_id IS NOT NULL ORDER BY label"
+    query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' AND (:view_scope = 'all' OR assigned_truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id)) UNION SELECT DISTINCT d.id AS value, d.name AS label FROM trucks t JOIN drivers d ON d.id = t.driver_id WHERE t.driver_id IS NOT NULL AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY label"
   - id: fleet_type_lookup
     single: false
     permission: fleet.read
-    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' ORDER BY label"
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 
 toolbar:
   - id: add_truck_btn

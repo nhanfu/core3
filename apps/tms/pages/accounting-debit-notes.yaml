@@ -11,7 +11,7 @@ datasources:
           WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Paid' THEN 'Đã thanh toán'
           WHEN 'Cancelled' THEN 'Đã hủy' ELSE status END AS status_label,
         CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
-      FROM accounting_entries WHERE kind = 'debit_note' AND (:status IS NULL OR status = :status)
+      FROM accounting_entries WHERE kind = 'debit_note' AND (:view_scope = 'all' OR branch_id = :current_branch_id) AND (:status IS NULL OR status = :status)
         AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%')
       ORDER BY document_date DESC, code
   - id: debit_note_currency_lookup

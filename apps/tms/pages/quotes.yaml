@@ -16,7 +16,8 @@ datasources:
           ELSE status END AS status_label,
         CAST(valid_until AS VARCHAR) AS valid_until, created_at
       FROM quotes
-      WHERE (:status IS NULL OR status = :status)
+      WHERE (:view_scope = 'all' OR branch_id = :current_branch_id)
+        AND (:status IS NULL OR status = :status)
         AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR code ILIKE '%' || :q || '%'

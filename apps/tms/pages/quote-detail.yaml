@@ -17,7 +17,7 @@ datasources:
         CASE WHEN COALESCE(q.amount, 0) = 0 THEN '0.00%'
           ELSE printf('%.2f%%', q.profit_amount * 100.0 / q.amount) END AS margin_display
       FROM quotes q
-      WHERE q.id = :id
+      WHERE q.id = :id AND (:view_scope = 'all' OR q.branch_id = :current_branch_id)
   - id: quote_detail_lines
     single: false
     permission: crm.read
@@ -38,7 +38,7 @@ datasources:
         q.status AS parent_status
       FROM quote_lines l
       JOIN quotes q ON q.id = l.quote_id
-      WHERE l.quote_id = :id
+      WHERE l.quote_id = :id AND (:view_scope = 'all' OR q.branch_id = :current_branch_id)
       ORDER BY l.sequence
   - id: quote_detail_timeline
     single: false
@@ -57,10 +57,11 @@ datasources:
         detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity
       WHERE resource = 'quotes' AND resource_id = :id
+        AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM quotes q WHERE q.id = :id AND q.branch_id = :current_branch_id))
       UNION ALL
       SELECT 'Hệ thống', 'created', 'Đã tạo', 'Khởi tạo báo giá',
         CAST(created_at AS VARCHAR)
-      FROM quotes WHERE id = :id
+      FROM quotes WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)
       ORDER BY created_at DESC
   - id: quote_unit_lookup
     single: false

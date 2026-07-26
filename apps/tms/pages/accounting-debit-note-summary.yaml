@@ -10,7 +10,7 @@ datasources:
         COALESCE(SUM(CASE WHEN status IN ('Draft', 'Pending Approval', 'Approved') THEN amount ELSE 0 END), 0) AS outstanding_amount,
         COALESCE(SUM(CASE WHEN status = 'Paid' THEN amount ELSE 0 END), 0) AS paid_amount
       FROM accounting_entries
-      WHERE kind = 'debit_note' AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
+      WHERE kind = 'debit_note' AND (:view_scope = 'all' OR branch_id = :current_branch_id) AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
   - id: debit_note_summary
     single: false
@@ -24,7 +24,7 @@ datasources:
         printf('%,.0f', COALESCE(SUM(amount), 0)) AS total_amount_display,
         CAST(MAX(document_date) AS VARCHAR) AS latest_document_date
       FROM accounting_entries
-      WHERE kind = 'debit_note' AND (:status IS NULL OR status = :status)
+      WHERE kind = 'debit_note' AND (:view_scope = 'all' OR branch_id = :current_branch_id) AND (:status IS NULL OR status = :status)
         AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR counterparty ILIKE '%' || :q || '%' OR status ILIKE '%' || :q || '%')
@@ -39,7 +39,7 @@ datasources:
         WHEN 'Cancelled' THEN 'Đã hủy' ELSE status END AS label,
         COUNT(*) AS value
       FROM accounting_entries
-      WHERE kind = 'debit_note'
+      WHERE kind = 'debit_note' AND (:view_scope = 'all' OR branch_id = :current_branch_id)
         AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
       GROUP BY status ORDER BY value DESC

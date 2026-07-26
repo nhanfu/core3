@@ -8,29 +8,32 @@ datasources:
       SELECT e.id, e.code, e.name, e.job_title, e.phone, e.email, e.department,
         CAST(e.start_date AS VARCHAR) AS start_date, e.dependents, e.status,
         CASE e.status WHEN 'OnLeave' THEN 'Nghỉ phép' WHEN 'Inactive' THEN 'Ngưng làm việc' ELSE 'Đang làm việc' END AS status_label
-      FROM employees e WHERE e.id = :id
+      FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE e.id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)
   - id: employee_contracts
     single: false
     permission: hr.read
     query: |
       SELECT c.id, c.code, c.contract_type, CAST(c.start_date AS VARCHAR) AS start_date,
         CAST(c.end_date AS VARCHAR) AS end_date, c.base_salary, c.status
-      FROM employment_contracts c WHERE c.employee_id = :id ORDER BY c.start_date DESC
+      FROM employment_contracts c JOIN employees e ON e.id = c.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE c.employee_id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY c.start_date DESC
   - id: employee_activity
     single: false
     permission: hr.read
     query: |
       SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity WHERE resource = 'employees' AND resource_id = :id
+        AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = :id AND d.branch_id = :current_branch_id))
       ORDER BY created_at DESC
   - id: employee_detail_department_lookup
     single: false
     permission: hr.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM departments WHERE status = 'Active' UNION SELECT DISTINCT department AS value, department AS label FROM employees WHERE department IS NOT NULL AND department <> '' ORDER BY label"
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM departments WHERE status = 'Active' AND (:view_scope = 'all' OR branch_id = :current_branch_id) UNION SELECT DISTINCT e.department AS value, e.department AS label FROM employees e JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.department IS NOT NULL AND e.department <> '' AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY label"
   - id: employee_documents
     single: false
     permission: hr.read
-    query: "SELECT id, employee_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM employee_documents WHERE employee_id = :id ORDER BY created_at DESC"
+    query: "SELECT id, employee_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM employee_documents WHERE employee_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = :id AND d.branch_id = :current_branch_id)) ORDER BY created_at DESC"
 components:
   - { type: DocumentSummary, source: employee_detail, title_field: name, subtitle_field: code, status_field: status_label, status_colors: { Đang làm việc: green, Nghỉ phép: amber, Ngưng làm việc: red }, columns: [{ field: job_title, label: Chức danh }, { field: department, label: Phòng ban }, { field: phone, label: Điện thoại }, { field: email, label: Email }, { field: start_date, label: Ngày vào làm }, { field: dependents, label: Người phụ thuộc }] }
   - type: DataGrid

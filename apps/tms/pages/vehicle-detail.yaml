@@ -8,15 +8,16 @@ datasources:
       SELECT t.id, t.plate, t.model, t.type, t.status, t.capacity_kg, t.mileage, t.last_service, t.next_service,
         b.name AS branch_name, d.name AS driver_name, d.license_number,
         CASE WHEN t.status = 'Out of Service' THEN 'Ngưng hoạt động' WHEN t.status = 'Maintenance' THEN 'Bảo dưỡng' ELSE 'Sẵn sàng' END AS status_label
-      FROM trucks t LEFT JOIN branches b ON b.id = t.branch_id LEFT JOIN drivers d ON d.id = t.driver_id WHERE t.id = :id
+      FROM trucks t LEFT JOIN branches b ON b.id = t.branch_id LEFT JOIN drivers d ON d.id = t.driver_id
+      WHERE t.id = :id AND (:view_scope = 'all' OR t.branch_id = :current_branch_id)
   - id: vehicle_maintenance
     single: false
     permission: fleet.read
-    query: "SELECT id, service_type, status, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date, cost, notes FROM maintenance WHERE truck_id = :id ORDER BY scheduled_date DESC"
+    query: "SELECT m.id, m.service_type, m.status, CAST(m.scheduled_date AS VARCHAR) AS scheduled_date, CAST(m.completed_date AS VARCHAR) AS completed_date, m.cost, m.notes FROM maintenance m JOIN trucks t ON t.id = m.truck_id WHERE m.truck_id = :id AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY m.scheduled_date DESC"
   - id: vehicle_trips
     single: false
     permission: fleet.read
-    query: "SELECT id, trip_number, origin, destination, status, CAST(departure_time AS VARCHAR) AS departure_time FROM trips WHERE truck_id = :id ORDER BY departure_time DESC"
+    query: "SELECT tr.id, tr.trip_number, tr.origin, tr.destination, tr.status, CAST(tr.departure_time AS VARCHAR) AS departure_time FROM trips tr JOIN trucks t ON t.id = tr.truck_id WHERE tr.truck_id = :id AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY tr.departure_time DESC"
 components:
   - { type: DocumentSummary, source: vehicle_detail, title_field: plate, subtitle_field: model, status_field: status_label, status_colors: { 'Sẵn sàng': green, 'Bảo dưỡng': amber, 'Ngưng hoạt động': red }, columns: [{ field: type, label: Loại xe }, { field: branch_name, label: Chi nhánh }, { field: capacity_kg, label: Tải trọng }, { field: mileage, label: Số km }, { field: last_service, label: Bảo dưỡng gần nhất }, { field: next_service, label: Bảo dưỡng kế tiếp }, { field: driver_name, label: Tài xế phụ trách }, { field: license_number, label: Giấy phép }] }
   - type: DataGrid

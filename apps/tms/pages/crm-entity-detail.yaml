@@ -16,6 +16,9 @@ datasources:
         'Giai đoạn CRM' AS category_name, CAST(c.created_at AS VARCHAR) AS created_at
       FROM customers c
       WHERE :kind = 'customer' AND c.id = :id
+        AND (:view_scope = 'all'
+          OR (:view_scope = 'branch' AND (c.visibility = 'Public' OR c.owner_name = :current_user_name))
+          OR (:view_scope = 'own' AND c.owner_name = :current_user_name))
       UNION ALL
       SELECT p.id, 'partner', p.code, p.name, p.tax_code, p.phone, p.email,
         p.owner_name, p.visibility,
@@ -29,6 +32,9 @@ datasources:
         'Loại đối tượng', CAST(p.created_at AS VARCHAR)
       FROM partners p
       WHERE :kind = 'partner' AND p.id = :id
+        AND (:view_scope = 'all'
+          OR (:view_scope = 'branch' AND (p.visibility = 'Public' OR p.owner_name = :current_user_name))
+          OR (:view_scope = 'own' AND p.owner_name = :current_user_name))
   - id: crm_entity_contacts
     single: false
     permission: crm.read
@@ -38,12 +44,14 @@ datasources:
         notes, CAST(created_at AS VARCHAR) AS created_at
       FROM customer_contacts
       WHERE :kind = 'customer' AND customer_id = :id
+        AND EXISTS (SELECT 1 FROM customers c WHERE c.id = customer_id AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (c.visibility = 'Public' OR c.owner_name = :current_user_name)) OR (:view_scope = 'own' AND c.owner_name = :current_user_name)))
       UNION ALL
       SELECT id, partner_id, name, role_title, phone, email,
         is_primary, CASE WHEN is_primary THEN 'Liên hệ chính' ELSE 'Liên hệ phụ' END,
         notes, CAST(created_at AS VARCHAR)
       FROM partner_contacts
       WHERE :kind = 'partner' AND partner_id = :id
+        AND EXISTS (SELECT 1 FROM partners p WHERE p.id = partner_id AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (p.visibility = 'Public' OR p.owner_name = :current_user_name)) OR (:view_scope = 'own' AND p.owner_name = :current_user_name)))
       ORDER BY is_primary DESC, created_at, name
   - id: crm_entity_activity
     single: false
@@ -58,14 +66,20 @@ datasources:
       FROM system_activity
       WHERE resource = CASE WHEN :kind = 'customer' THEN 'customers' ELSE 'partners' END
         AND resource_id = :id
+        AND (
+          (:kind = 'customer' AND EXISTS (SELECT 1 FROM customers c WHERE c.id = :id AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (c.visibility = 'Public' OR c.owner_name = :current_user_name)) OR (:view_scope = 'own' AND c.owner_name = :current_user_name))))
+          OR (:kind = 'partner' AND EXISTS (SELECT 1 FROM partners p WHERE p.id = :id AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (p.visibility = 'Public' OR p.owner_name = :current_user_name)) OR (:view_scope = 'own' AND p.owner_name = :current_user_name))))
+        )
       UNION ALL
       SELECT 'Hệ thống', 'created', 'Đã tạo', 'Khởi tạo đối tượng CRM',
         CAST(created_at AS VARCHAR)
-      FROM customers WHERE :kind = 'customer' AND id = :id
+      FROM customers c WHERE :kind = 'customer' AND c.id = :id
+        AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (c.visibility = 'Public' OR c.owner_name = :current_user_name)) OR (:view_scope = 'own' AND c.owner_name = :current_user_name))
       UNION ALL
       SELECT 'Hệ thống', 'created', 'Đã tạo', 'Khởi tạo đối tượng CRM',
         CAST(created_at AS VARCHAR)
-      FROM partners WHERE :kind = 'partner' AND id = :id
+      FROM partners p WHERE :kind = 'partner' AND p.id = :id
+        AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (p.visibility = 'Public' OR p.owner_name = :current_user_name)) OR (:view_scope = 'own' AND p.owner_name = :current_user_name))
       ORDER BY created_at DESC
 
 toolbar:

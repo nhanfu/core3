@@ -9,15 +9,16 @@ datasources:
         p.base_salary, p.allowance, p.deduction, p.net_salary, p.status,
         e.code AS employee_code, e.name AS employee_name, e.department,
         CASE p.status WHEN 'Draft' THEN 'Nháp' WHEN 'Approved' THEN 'Đã duyệt' ELSE 'Đã chi' END AS status_label
-      FROM payrolls p JOIN employees e ON e.id = p.employee_id WHERE p.id = :id
+      FROM payrolls p JOIN employees e ON e.id = p.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE p.id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)
   - id: payroll_activity
     single: false
     permission: hr.read
-    query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'payrolls' AND resource_id = :id ORDER BY created_at DESC"
+    query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'payrolls' AND resource_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM payrolls p JOIN employees e ON e.id = p.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE p.id = :id AND d.branch_id = :current_branch_id)) ORDER BY created_at DESC"
   - id: payroll_detail_employee_lookup
     single: false
     permission: hr.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+    query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 components:
   - { type: DocumentSummary, source: payroll_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Nháp: blue, Đã duyệt: amber, Đã chi: green }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: department, label: Phòng ban }, { field: pay_month, label: Tháng lương }, { field: base_salary, label: Lương cơ bản }, { field: allowance, label: Phụ cấp }, { field: deduction, label: Khấu trừ }, { field: net_salary, label: Thực lãnh }] }
   - type: ApprovalTimeline

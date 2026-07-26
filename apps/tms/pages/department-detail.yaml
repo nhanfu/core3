@@ -4,15 +4,15 @@ datasources:
   - id: department_detail
     single: true
     permission: settings.read
-    query: "SELECT d.id, d.code, d.name, d.branch_id, b.name AS branch_name, d.status FROM departments d LEFT JOIN branches b ON b.id = d.branch_id WHERE d.id = :id"
+    query: "SELECT d.id, d.code, d.name, d.branch_id, b.name AS branch_name, d.status FROM departments d LEFT JOIN branches b ON b.id = d.branch_id WHERE d.id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)"
   - id: department_teams
     single: false
     permission: settings.read
-    query: "SELECT t.id, t.code, t.name, t.manager_id, e.name AS manager_name, t.status FROM teams t LEFT JOIN employees e ON e.id = t.manager_id WHERE t.department_id = :id ORDER BY t.name"
+    query: "SELECT t.id, t.code, t.name, t.manager_id, e.name AS manager_name, t.status FROM teams t JOIN departments d ON d.id = t.department_id LEFT JOIN employees e ON e.id = t.manager_id WHERE t.department_id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY t.name"
   - id: department_employees
     single: false
     permission: settings.read
-    query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON d.id = :id WHERE e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' ORDER BY e.name"
+    query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON d.id = :id WHERE e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 components:
   - { type: DocumentSummary, source: department_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: branch_name, label: Chi nhánh }] }
   - type: DataGrid

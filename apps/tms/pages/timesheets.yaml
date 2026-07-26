@@ -11,13 +11,14 @@ datasources:
     permission: hr.read
     query: |
       SELECT COUNT(*) AS record_count,
-        COALESCE(SUM(hours), 0) AS total_hours,
-        SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present_count,
-        SUM(CASE WHEN status = 'Leave' THEN 1 ELSE 0 END) AS leave_count,
-        SUM(CASE WHEN status = 'Absent' THEN 1 ELSE 0 END) AS absent_count
-      FROM timesheets
-      WHERE (:from_date IS NULL OR work_date >= CAST(:from_date AS DATE))
-        AND (:to_date IS NULL OR work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        COALESCE(SUM(t.hours), 0) AS total_hours,
+        SUM(CASE WHEN t.status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+        SUM(CASE WHEN t.status = 'Leave' THEN 1 ELSE 0 END) AS leave_count,
+        SUM(CASE WHEN t.status = 'Absent' THEN 1 ELSE 0 END) AS absent_count
+      FROM timesheets t JOIN employees e ON e.id = t.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (:from_date IS NULL OR t.work_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR t.work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
   - id: timesheets
     single: false
     permission: hr.read
@@ -27,7 +28,9 @@ datasources:
       FROM timesheets t
       LEFT JOIN employees e ON e.id = t.employee_id
       LEFT JOIN work_shifts s ON s.id = t.shift_id
-      WHERE (NULLIF(:status, '') IS NULL OR t.status = :status)
+      LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (NULLIF(:status, '') IS NULL OR t.status = :status)
         AND (:from_date IS NULL OR t.work_date >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR t.work_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR CAST(t.work_date AS VARCHAR) ILIKE '%' || :q || '%')
@@ -35,7 +38,7 @@ datasources:
   - id: timesheet_employee_lookup
     single: false
     permission: hr.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+    query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
   - id: timesheet_shift_lookup
     single: false
     permission: hr.read

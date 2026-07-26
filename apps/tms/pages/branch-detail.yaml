@@ -4,19 +4,19 @@ datasources:
   - id: branch_detail
     single: true
     permission: settings.read
-    query: "SELECT id, name, city, region, status FROM branches WHERE id = :id"
+    query: "SELECT id, name, city, region, status FROM branches WHERE id = :id AND (:view_scope = 'all' OR id = :current_branch_id)"
   - id: branch_departments
     single: false
     permission: settings.read
-    query: "SELECT d.id, d.code, d.name, d.status, COUNT(t.id) AS team_count FROM departments d LEFT JOIN teams t ON t.department_id = d.id WHERE d.branch_id = :id GROUP BY d.id, d.code, d.name, d.status ORDER BY d.name"
+    query: "SELECT d.id, d.code, d.name, d.status, COUNT(t.id) AS team_count FROM departments d LEFT JOIN teams t ON t.department_id = d.id WHERE d.branch_id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) GROUP BY d.id, d.code, d.name, d.status ORDER BY d.name"
   - id: branch_trucks
     single: false
     permission: settings.read
-    query: "SELECT t.id, t.plate, t.type, t.status FROM trucks t WHERE t.branch_id = :id ORDER BY t.plate"
+    query: "SELECT t.id, t.plate, t.type, t.status FROM trucks t WHERE t.branch_id = :id AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY t.plate"
   - id: branch_employees
     single: false
     permission: settings.read
-    query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' WHERE d.branch_id = :id ORDER BY e.name"
+    query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' WHERE d.branch_id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 components:
   - { type: DocumentSummary, source: branch_detail, title_field: name, subtitle_field: city, status_field: status, columns: [{ field: region, label: Khu vực }] }
   - type: DataGrid

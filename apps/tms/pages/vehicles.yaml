@@ -24,12 +24,13 @@ datasources:
       FROM trucks t
       LEFT JOIN branches b ON b.id = t.branch_id
       WHERE (:status IS NULL OR t.status = :status)
+        AND (:view_scope = 'all' OR t.branch_id = :current_branch_id)
         AND (:q IS NULL OR t.plate ILIKE '%' || :q || '%' OR t.model ILIKE '%' || :q || '%' OR t.type ILIKE '%' || :q || '%')
       ORDER BY t.created_at DESC, t.plate
   - id: vehicle_branch_lookup
     single: false
     permission: fleet.read
-    query: "SELECT id AS value, name AS label FROM branches ORDER BY name"
+    query: "SELECT id AS value, name AS label FROM branches WHERE (:view_scope = 'all' OR id = :current_branch_id) ORDER BY name"
   - id: vehicle_type_lookup
     single: false
     permission: fleet.read

@@ -177,6 +177,8 @@ async function initDb(): Promise<void> {
     ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS resource_id VARCHAR;
     ALTER TABLE quotes ADD COLUMN IF NOT EXISTS cost_amount DECIMAL(18,2) DEFAULT 0;
     ALTER TABLE quotes ADD COLUMN IF NOT EXISTS profit_amount DECIMAL(18,2) DEFAULT 0;
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS prefix VARCHAR;
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS sequence_width INTEGER DEFAULT 4;
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS reset_cadence VARCHAR DEFAULT 'never';
@@ -192,6 +194,7 @@ async function initDb(): Promise<void> {
     ALTER TABLE departments ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
     ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS linked_advance_id VARCHAR;
     ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
+    ALTER TABLE accounting_entries ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
     CREATE TABLE IF NOT EXISTS currency_rates (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       currency_code VARCHAR NOT NULL UNIQUE,
@@ -489,6 +492,7 @@ const TABLE_REGISTRY = {
       'transport_method',
       'trip_count',
       'notes',
+      'branch_id',
     ],
   },
   trucks: {
@@ -516,7 +520,7 @@ const TABLE_REGISTRY = {
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status'],
   },
-  quotes: { permission: 'crm.write', timestamps: true, fields: ['code', 'customer_name', 'title', 'status', 'valid_until'] },
+  quotes: { permission: 'crm.write', timestamps: true, fields: ['code', 'customer_name', 'title', 'status', 'valid_until', 'branch_id'] },
   partners:     {
     permission: 'crm.write',
     timestamps: true,
@@ -586,7 +590,7 @@ const TABLE_REGISTRY = {
   accounting_entries: {
     permission: 'accounting.write',
     timestamps: true,
-    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'linked_advance_id', 'parent_id', 'sort_order'],
+    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'branch_id', 'linked_advance_id', 'parent_id', 'sort_order'],
     scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
   system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
@@ -648,6 +652,55 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     id: authUser.sub ? String(authUser.sub) : null,
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
   };
+  const crmEntityInScope = async (kind: 'customer' | 'partner', id: string) => {
+    const table = kind === 'customer' ? 'customers' : 'partners';
+    const [row] = await repository.query(
+      `SELECT owner_name, visibility FROM ${table} WHERE id = ?`,
+      [id],
+    );
+    if (!row || String(authUser.view_scope || 'all') === 'all') return Boolean(row);
+    const ownerName = String(row.owner_name || '');
+    if (String(authUser.view_scope) === 'own') return ownerName === activityActor.name;
+    return String(row.visibility || 'Public') === 'Public' || ownerName === activityActor.name;
+  };
+  const branchForScopedResource = async (resourceTable: string, resourceId: string) => {
+    if (resourceTable === 'users') {
+      const [row] = await repository.query('SELECT branch_id FROM users WHERE id = ?', [resourceId]);
+      return row?.branch_id ? String(row.branch_id) : null;
+    }
+    if (resourceTable === 'employees') {
+      const [row] = await repository.query(
+        "SELECT d.branch_id FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = ?",
+        [resourceId],
+      );
+      return row?.branch_id ? String(row.branch_id) : null;
+    }
+    if (resourceTable === 'employment_contracts' || resourceTable === 'timesheets' || resourceTable === 'payrolls') {
+      const [row] = await repository.query(
+        `SELECT d.branch_id
+         FROM ${resourceTable} r
+         JOIN employees e ON e.id = r.employee_id
+         LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+         WHERE r.id = ?`,
+        [resourceId],
+      );
+      return row?.branch_id ? String(row.branch_id) : null;
+    }
+    if (resourceTable === 'accounting_entries') {
+      const [row] = await repository.query('SELECT branch_id FROM accounting_entries WHERE id = ?', [resourceId]);
+      return row?.branch_id ? String(row.branch_id) : null;
+    }
+    if (resourceTable === 'orders' || resourceTable === 'quotes') {
+      const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
+      return row?.branch_id ? String(row.branch_id) : null;
+    }
+    return null;
+  };
+  const recordInCurrentBranch = async (resourceTable: string, resourceId: string) => {
+    if (String(authUser.view_scope || 'all') === 'all') return true;
+    const branchId = await branchForScopedResource(resourceTable, resourceId);
+    return Boolean(branchId && branchId === String(authUser.branch_id || ''));
+  };
 
   if (pathname === '/api/upload' && method === 'POST') {
     const form = await req.formData();
@@ -666,9 +719,11 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     } else if (meta.kind === 'employee_document') {
       requirePerm('hr.write');
       if (typeof meta.employee_id !== 'string' || !meta.employee_id) return apiError(400, 'employee_id required');
+      if (!(await recordInCurrentBranch('employees', meta.employee_id))) return apiError(403, 'Record is outside the current view scope');
     } else if (meta.kind === 'contract_document') {
       requirePerm('hr.write');
       if (typeof meta.contract_id !== 'string' || !meta.contract_id) return apiError(400, 'contract_id required');
+      if (!(await recordInCurrentBranch('employment_contracts', meta.contract_id))) return apiError(403, 'Record is outside the current view scope');
     } else if (meta.kind === 'company_document') {
       requirePerm('settings.write');
       if (typeof meta.company_id !== 'string' || !meta.company_id) return apiError(400, 'company_id required');
@@ -717,6 +772,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     requirePerm('hr.read');
     const document = await repository.getContractDocument(contractDocumentMatch[1]);
     if (!document) return apiError(404, 'Contract document not found');
+    if (!(await recordInCurrentBranch('employment_contracts', String(document.contract_id)))) return apiError(403, 'Record is outside the current view scope');
     const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
     if (!(await file.exists())) return apiError(404, 'Contract document file not found');
     return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
@@ -737,6 +793,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     requirePerm('hr.read');
     const document = await repository.getEmployeeDocument(employeeDocumentMatch[1]);
     if (!document) return apiError(404, 'Employee document not found');
+    if (!(await recordInCurrentBranch('employees', String(document.employee_id)))) return apiError(403, 'Record is outside the current view scope');
     const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
     if (!(await file.exists())) return apiError(404, 'Employee document file not found');
     return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
@@ -778,7 +835,15 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if (src.permission) requirePerm(src.permission);
     const result = await repository.querySource(
       src,
-      { ...(vm.params || {}), current_user_id: authUser.sub },
+      {
+        ...(vm.params || {}),
+        // These values are server-owned. Client filters cannot impersonate a
+        // different branch or view scope.
+        current_user_id: String(authUser.sub || ''),
+        current_user_name: String(authUser.name || ''),
+        current_branch_id: String(authUser.branch_id || ''),
+        view_scope: String(authUser.view_scope || 'all'),
+      },
       vm.skip || 0,
       vm.top || 25,
       typeof vm.facetField === 'string' ? vm.facetField : undefined,
@@ -839,6 +904,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (domain !== 'customer' && domain !== 'partner') {
         return apiError(400, 'Invalid CRM contact kind');
       }
+      if (!(await crmEntityInScope(domain, body.id))) return apiError(403, 'Record is outside the current view scope');
       const isCustomer = domain === 'customer';
       return json(await repository.mutateCrmContact(
         isCustomer
@@ -913,6 +979,11 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if (lineItemActionDefinition) {
       const isOrder = lineItemActionDefinition.domain === 'order';
       const isQuote = lineItemActionDefinition.domain === 'quote';
+      if (!isOrder && !isQuote && !(await recordInCurrentBranch('accounting_entries', body.id))) {
+        return apiError(403, 'Record is outside the current view scope');
+      }
+      if (isOrder && !(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
+      if (isQuote && !(await recordInCurrentBranch('quotes', body.id))) return apiError(403, 'Record is outside the current view scope');
       return json(await repository.mutateDocumentLine(
         isOrder
           ? {
@@ -948,6 +1019,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     }
 
     if (orderActionDefinition) {
+      if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
       const transition = orderWorkflow.get(orderActionDefinition.action);
       const order = await repository.transitionOrder(
         body.id,
@@ -960,6 +1032,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     }
 
     if (financialActionDefinition) {
+      if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
       const transition = financialWorkflow.get(financialActionDefinition.action);
       const document = await repository.transitionAccountingEntry(
         body.id,
@@ -973,6 +1046,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     }
 
     if (businessActionDefinition.domain === 'quote') {
+      if (!(await recordInCurrentBranch('quotes', body.id))) return apiError(403, 'Record is outside the current view scope');
       const transition = quoteWorkflow.get(businessActionDefinition.action);
       return json(await repository.transitionBusinessRecord(
         { table: 'quotes', label: 'Quote' },
@@ -984,6 +1058,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       ));
     }
 
+    if (!(await recordInCurrentBranch('payrolls', body.id))) return apiError(403, 'Record is outside the current view scope');
     const transition = payrollWorkflow.get(businessActionDefinition.action);
     return json(await repository.transitionBusinessRecord(
       { table: 'payrolls', label: 'Payroll' },
@@ -998,11 +1073,157 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
   // ── POST /api/patch ───────────────────────────────────────────────────────
   if (pathname === '/api/patch' && method === 'POST') {
     const body = await req.json() as any;
-    const { table, action, id, changes = [], scope } = body;
+    let { table, action, id, changes = [], scope } = body;
 
     const tbl = TABLE_REGISTRY[table as keyof typeof TABLE_REGISTRY];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);
+
+    const scopedBranch = String(authUser.view_scope || 'all') !== 'all';
+    const currentBranchId = String(authUser.branch_id || '');
+    const rejectOutOfScope = () => apiError(403, 'Record is outside the current view scope');
+    const branchForRow = async (resourceTable: string, resourceId: string) => {
+      if (resourceTable === 'trucks' || resourceTable === 'departments') {
+        const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
+        return row?.branch_id ? String(row.branch_id) : null;
+      }
+      if (resourceTable === 'users' || resourceTable === 'employees' || resourceTable === 'employment_contracts' || resourceTable === 'timesheets' || resourceTable === 'payrolls') {
+        return branchForScopedResource(resourceTable, resourceId);
+      }
+      if (resourceTable === 'accounting_entries' || resourceTable === 'orders' || resourceTable === 'quotes') return branchForScopedResource(resourceTable, resourceId);
+      if (resourceTable === 'drivers') {
+        const [row] = await repository.query(
+          'SELECT t.branch_id FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id WHERE d.id = ?',
+          [resourceId],
+        );
+        return row?.branch_id ? String(row.branch_id) : null;
+      }
+      if (resourceTable === 'trips' || resourceTable === 'maintenance') {
+        const [row] = await repository.query(
+          `SELECT t.branch_id FROM ${resourceTable} r LEFT JOIN trucks t ON t.id = r.truck_id WHERE r.id = ?`,
+          [resourceId],
+        );
+        return row?.branch_id ? String(row.branch_id) : null;
+      }
+      if (resourceTable === 'branches') return resourceId;
+      if (resourceTable === 'teams') {
+        const [row] = await repository.query(
+          'SELECT d.branch_id FROM teams t LEFT JOIN departments d ON d.id = t.department_id WHERE t.id = ?',
+          [resourceId],
+        );
+        return row?.branch_id ? String(row.branch_id) : null;
+      }
+      return null;
+    };
+    const departmentBranch = async (departmentId: unknown) => {
+      if (!departmentId) return null;
+      const [row] = await repository.query('SELECT branch_id FROM departments WHERE id = ?', [String(departmentId)]);
+      return row?.branch_id ? String(row.branch_id) : null;
+    };
+    if (table === 'customers' || table === 'partners') {
+      const kind = table === 'customers' ? 'customer' : 'partner';
+      if (action === 'insert') {
+        const ownerChange = changes.find((change: any) => change.field === 'owner_name');
+        if (scopedBranch && ownerChange && String(ownerChange.value || '') !== activityActor.name) return rejectOutOfScope();
+        if (scopedBranch && !ownerChange) changes = [...changes, { field: 'owner_name', value: activityActor.name }];
+      } else if (id && !(await crmEntityInScope(kind, String(id)))) {
+        return rejectOutOfScope();
+      }
+    }
+
+    if (scopedBranch) {
+      if (!currentBranchId) return rejectOutOfScope();
+      if (action === 'insert') {
+        if (table === 'branches') return rejectOutOfScope();
+        if (table === 'trucks' || table === 'departments') {
+          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
+        }
+        if (table === 'teams') {
+          const branchId = await departmentBranch(changes.find((change: any) => change.field === 'department_id')?.value);
+          if (branchId && branchId !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'drivers' || table === 'trips' || table === 'maintenance') {
+          const truckId = changes.find((change: any) => change.field === (table === 'drivers' ? 'assigned_truck_id' : 'truck_id'))?.value;
+          const branchId = truckId ? await branchForRow('trucks', String(truckId)) : null;
+          if (!branchId || branchId !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'users') {
+          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
+        }
+        if (table === 'employees') {
+          const department = changes.find((change: any) => change.field === 'department')?.value;
+          const [row] = department ? await repository.query('SELECT branch_id FROM departments WHERE name ILIKE ? LIMIT 1', [`%${String(department)}%`]) : [];
+          if (!row?.branch_id || String(row.branch_id) !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls') {
+          const employeeId = changes.find((change: any) => change.field === 'employee_id')?.value;
+          const employeeBranch = employeeId ? await branchForScopedResource('employees', String(employeeId)) : null;
+          if (!employeeBranch || employeeBranch !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'accounting_entries') {
+          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
+        }
+        if (table === 'orders' || table === 'quotes') {
+          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+          if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
+        }
+      } else if (id) {
+        const rowBranch = await branchForRow(table, String(id));
+        if ((table === 'drivers' || table === 'trips' || table === 'maintenance' || table === 'users' || table === 'employees' || table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls' || table === 'accounting_entries' || table === 'orders' || table === 'quotes') && !rowBranch) return rejectOutOfScope();
+        if (rowBranch && rowBranch !== currentBranchId) return rejectOutOfScope();
+        if (table === 'trucks' || table === 'departments') {
+          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
+          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'teams' && action === 'update') {
+          const departmentId = changes.find((change: any) => change.field === 'department_id')?.value;
+          const nextBranch = await departmentBranch(departmentId);
+          if (nextBranch && nextBranch !== currentBranchId) return rejectOutOfScope();
+        }
+        if ((table === 'drivers' || table === 'trips' || table === 'maintenance') && action === 'update') {
+          const truckField = table === 'drivers' ? 'assigned_truck_id' : 'truck_id';
+          const truckChange = changes.find((change: any) => change.field === truckField);
+          if (truckChange) {
+            const nextBranch = await branchForRow('trucks', String(truckChange.value || ''));
+            if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
+          }
+        }
+        if (table === 'users' && action === 'update') {
+          const branchChange = changes.find((change: any) => change.field === 'branch_id');
+          if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
+        }
+        if (table === 'employees' && action === 'update') {
+          const departmentChange = changes.find((change: any) => change.field === 'department');
+          if (departmentChange) {
+            const [nextDepartment] = await repository.query('SELECT branch_id FROM departments WHERE name ILIKE ? LIMIT 1', [`%${String(departmentChange.value || '')}%`]);
+            if (!nextDepartment?.branch_id || String(nextDepartment.branch_id) !== currentBranchId) return rejectOutOfScope();
+          }
+        }
+        if ((table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls') && action === 'update') {
+          const employeeChange = changes.find((change: any) => change.field === 'employee_id');
+          if (employeeChange) {
+            const nextBranch = await branchForScopedResource('employees', String(employeeChange.value || ''));
+            if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
+          }
+        }
+        if (table === 'accounting_entries' && action === 'update') {
+          const branchChange = changes.find((change: any) => change.field === 'branch_id');
+          if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
+        }
+        if ((table === 'orders' || table === 'quotes') && action === 'update') {
+          const branchChange = changes.find((change: any) => change.field === 'branch_id');
+          if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
+        }
+      }
+    }
+
     if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
       return apiError(400, 'Invalid field for this resource');
     }

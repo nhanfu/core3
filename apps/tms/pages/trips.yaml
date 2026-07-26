@@ -10,11 +10,12 @@ datasources:
     single: true
     permission: trips.read
     query: |
-      SELECT COUNT(*) FILTER (WHERE status = 'Scheduled') AS scheduled_count,
-        COUNT(*) FILTER (WHERE status = 'In Transit') AS in_transit_count,
-        COUNT(*) FILTER (WHERE status = 'Completed' AND DATE(arrival_time) = CURRENT_DATE) AS completed_today,
-        COUNT(*) FILTER (WHERE status = 'Cancelled') AS cancelled_count
-      FROM trips
+      SELECT COUNT(*) FILTER (WHERE tr.status = 'Scheduled') AS scheduled_count,
+        COUNT(*) FILTER (WHERE tr.status = 'In Transit') AS in_transit_count,
+        COUNT(*) FILTER (WHERE tr.status = 'Completed' AND DATE(tr.arrival_time) = CURRENT_DATE) AS completed_today,
+        COUNT(*) FILTER (WHERE tr.status = 'Cancelled') AS cancelled_count
+      FROM trips tr LEFT JOIN trucks t ON t.id = tr.truck_id
+      WHERE (:view_scope = 'all' OR t.branch_id = :current_branch_id)
   - id: trips
     single: false
     permission: trips.read
@@ -23,22 +24,23 @@ datasources:
       FROM trips tr
       LEFT JOIN trucks t ON t.id = tr.truck_id
       LEFT JOIN drivers d ON d.id = tr.driver_id
-      WHERE (:status IS NULL OR tr.status = :status)
+      WHERE (:view_scope = 'all' OR t.branch_id = :current_branch_id)
+        AND (:status IS NULL OR tr.status = :status)
         AND (NULLIF(:unassigned, '') IS NULL OR (:unassigned = 'true' AND tr.truck_id IS NULL))
         AND (:q IS NULL OR tr.trip_number ILIKE '%' || :q || '%' OR tr.origin ILIKE '%' || :q || '%' OR tr.destination ILIKE '%' || :q || '%' OR t.plate ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%')
       ORDER BY tr.departure_time DESC
   - id: trip_truck_lookup
     single: false
     permission: trips.read
-    query: "SELECT id AS value, plate || ' - ' || model AS label FROM trucks UNION SELECT DISTINCT t.id AS value, t.plate || ' - ' || t.model AS label FROM trips tr JOIN trucks t ON t.id = tr.truck_id WHERE tr.truck_id IS NOT NULL ORDER BY label"
+    query: "SELECT id AS value, plate || ' - ' || model AS label FROM trucks WHERE (:view_scope = 'all' OR branch_id = :current_branch_id) UNION SELECT DISTINCT t.id AS value, t.plate || ' - ' || t.model AS label FROM trips tr JOIN trucks t ON t.id = tr.truck_id WHERE tr.truck_id IS NOT NULL AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY label"
   - id: trip_driver_lookup
     single: false
     permission: trips.read
-    query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' UNION SELECT DISTINCT d.id AS value, d.name AS label FROM trips tr JOIN drivers d ON d.id = tr.driver_id WHERE tr.driver_id IS NOT NULL ORDER BY label"
+    query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' AND (:view_scope = 'all' OR assigned_truck_id IN (SELECT id FROM trucks WHERE branch_id = :current_branch_id)) UNION SELECT DISTINCT d.id AS value, d.name AS label FROM trips tr JOIN trucks t ON t.id = tr.truck_id JOIN drivers d ON d.id = tr.driver_id WHERE tr.driver_id IS NOT NULL AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY label"
   - id: trip_cargo_type_lookup
     single: false
     permission: trips.read
-    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'cargo_type' AND status = 'Active' UNION SELECT DISTINCT cargo_type AS value, cargo_type AS label FROM trips WHERE cargo_type IS NOT NULL AND cargo_type <> '' ORDER BY label"
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'cargo_type' AND status = 'Active' UNION SELECT DISTINCT tr.cargo_type AS value, tr.cargo_type AS label FROM trips tr LEFT JOIN trucks t ON t.id = tr.truck_id WHERE tr.cargo_type IS NOT NULL AND tr.cargo_type <> '' AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY label"
 
 toolbar:
   - id: add_trip_btn

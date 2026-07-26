@@ -226,7 +226,21 @@ export class DuckDbRepository {
 
   async getLoginUserByEmail(email: string): Promise<any | null> {
     const rows = await this.query(
-      `SELECT u.*, string_agg(r.name, ',') as roles_csv
+      `SELECT u.*,
+              string_agg(r.name, ',') AS roles_csv,
+              COALESCE(
+                (
+                  SELECT CASE
+                    WHEN bool_or(scope_role.view_scope = 'all') THEN 'all'
+                    WHEN bool_or(scope_role.view_scope = 'branch') THEN 'branch'
+                    ELSE 'own'
+                  END
+                  FROM user_roles scope_ur
+                  JOIN roles scope_role ON scope_role.id = scope_ur.role_id
+                  WHERE scope_ur.user_id = u.id
+                ),
+                'all'
+              ) AS view_scope
        FROM users u
        LEFT JOIN user_roles ur ON ur.user_id = u.id
        LEFT JOIN roles r ON r.id = ur.role_id

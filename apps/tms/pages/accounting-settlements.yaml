@@ -11,11 +11,11 @@ datasources:
           WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Cancelled' THEN 'Đã hủy'
           ELSE s.status END AS status_label,
         CAST(s.document_date AS VARCHAR) AS document_date, s.description, s.created_at
-      FROM accounting_entries s LEFT JOIN accounting_entries a ON a.id = s.linked_advance_id AND a.kind = 'advance' WHERE s.kind = 'settlement' AND (:status IS NULL OR s.status = :status) AND (:q IS NULL OR s.code ILIKE '%' || :q || '%' OR s.name ILIKE '%' || :q || '%' OR s.counterparty ILIKE '%' || :q || '%') ORDER BY s.document_date DESC, s.code
+      FROM accounting_entries s LEFT JOIN accounting_entries a ON a.id = s.linked_advance_id AND a.kind = 'advance' WHERE s.kind = 'settlement' AND (:view_scope = 'all' OR s.branch_id = :current_branch_id) AND (:status IS NULL OR s.status = :status) AND (:q IS NULL OR s.code ILIKE '%' || :q || '%' OR s.name ILIKE '%' || :q || '%' OR s.counterparty ILIKE '%' || :q || '%') ORDER BY s.document_date DESC, s.code
   - id: settlement_advance_lookup
     single: false
     permission: accounting.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM accounting_entries WHERE kind = 'advance' AND status <> 'Cancelled' ORDER BY document_date DESC, code"
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM accounting_entries WHERE kind = 'advance' AND (:view_scope = 'all' OR branch_id = :current_branch_id) AND status <> 'Cancelled' ORDER BY document_date DESC, code"
   - id: settlement_currency_lookup
     single: false
     permission: accounting.read

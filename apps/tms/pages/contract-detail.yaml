@@ -10,22 +10,24 @@ datasources:
         e.job_title, e.department,
         CASE c.contract_type WHEN 'Probation' THEN 'Thử việc' WHEN 'Indefinite' THEN 'Không xác định thời hạn' ELSE 'Xác định thời hạn' END AS contract_type_label,
         CASE c.status WHEN 'Expiring' THEN 'Sắp hết hạn' WHEN 'Expired' THEN 'Hết hạn' WHEN 'Terminated' THEN 'Đã chấm dứt' ELSE 'Hiệu lực' END AS status_label
-      FROM employment_contracts c JOIN employees e ON e.id = c.employee_id WHERE c.id = :id
+      FROM employment_contracts c JOIN employees e ON e.id = c.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE c.id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)
   - id: contract_activity
     single: false
     permission: hr.read
     query: |
       SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity WHERE resource = 'employment_contracts' AND resource_id = :id
+        AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employment_contracts c JOIN employees e ON e.id = c.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE c.id = :id AND d.branch_id = :current_branch_id))
       ORDER BY created_at DESC
   - id: contract_documents
     single: false
     permission: hr.read
-    query: "SELECT id, contract_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM contract_documents WHERE contract_id = :id ORDER BY created_at DESC"
+    query: "SELECT id, contract_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM contract_documents WHERE contract_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employment_contracts c JOIN employees e ON e.id = c.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE c.id = :id AND d.branch_id = :current_branch_id)) ORDER BY created_at DESC"
   - id: contract_detail_employee_lookup
     single: false
     permission: hr.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+    query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 components:
   - { type: DocumentSummary, source: contract_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: blue }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: job_title, label: Chức danh }, { field: department, label: Phòng ban }, { field: contract_type_label, label: Loại hợp đồng }, { field: start_date, label: Hiệu lực từ }, { field: end_date, label: Hiệu lực đến }, { field: base_salary, label: Lương cơ bản }] }
   - type: ApprovalTimeline

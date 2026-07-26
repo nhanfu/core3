@@ -14,7 +14,7 @@ datasources:
       FROM users u
       LEFT JOIN branches b ON b.id = u.branch_id
       LEFT JOIN departments d ON d.id = u.department_id
-      WHERE u.id = :id
+      WHERE u.id = :id AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
   - id: user_roles
     single: false
     permission: settings.read
@@ -23,6 +23,7 @@ datasources:
         CASE WHEN ur.user_id IS NULL THEN false ELSE true END AS enabled,
         CASE WHEN ur.user_id IS NULL THEN 'Chưa gán' ELSE 'Đã gán' END AS status_label
       FROM roles r LEFT JOIN user_roles ur ON ur.role_id = r.id AND ur.user_id = :id
+      WHERE (:view_scope = 'all' OR EXISTS (SELECT 1 FROM users u WHERE u.id = :id AND u.branch_id = :current_branch_id))
       ORDER BY r.name
   - id: user_permissions
     single: false
@@ -30,11 +31,11 @@ datasources:
     query: |
       SELECT DISTINCT p.permission_key
       FROM permissions p JOIN user_roles ur ON ur.role_id = p.role_id
-      WHERE ur.user_id = :id ORDER BY p.permission_key
+      WHERE ur.user_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM users u WHERE u.id = :id AND u.branch_id = :current_branch_id)) ORDER BY p.permission_key
   - id: user_activity
     single: false
     permission: settings.read
-    query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'users' AND resource_id = :id ORDER BY created_at DESC"
+    query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'users' AND resource_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM users u WHERE u.id = :id AND u.branch_id = :current_branch_id)) ORDER BY created_at DESC"
 components:
   - { type: DocumentSummary, source: user_detail, title_field: name, subtitle_field: email, columns: [{ field: status, label: Trạng thái, type: StatusChip }, { field: branch_name, label: Chi nhánh }, { field: department_name, label: Phòng ban }, { field: preferred_lang, label: Ngôn ngữ }, { field: last_login, label: Đăng nhập gần nhất }, { field: created_at, label: Ngày tạo }] }
   - type: DataGrid

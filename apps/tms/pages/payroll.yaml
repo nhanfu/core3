@@ -11,12 +11,13 @@ datasources:
     permission: hr.read
     query: |
       SELECT COUNT(*) AS payroll_count,
-        COALESCE(SUM(net_salary), 0) AS net_total,
-        COALESCE(SUM(CASE WHEN status = 'Paid' THEN net_salary ELSE 0 END), 0) AS paid_total,
-        COALESCE(SUM(CASE WHEN status IN ('Draft', 'Approved') THEN net_salary ELSE 0 END), 0) AS pending_total
-      FROM payrolls
-      WHERE (:from_date IS NULL OR pay_month >= CAST(:from_date AS DATE))
-        AND (:to_date IS NULL OR pay_month < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        COALESCE(SUM(p.net_salary), 0) AS net_total,
+        COALESCE(SUM(CASE WHEN p.status = 'Paid' THEN p.net_salary ELSE 0 END), 0) AS paid_total,
+        COALESCE(SUM(CASE WHEN p.status IN ('Draft', 'Approved') THEN p.net_salary ELSE 0 END), 0) AS pending_total
+      FROM payrolls p JOIN employees e ON e.id = p.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (:from_date IS NULL OR p.pay_month >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR p.pay_month < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
   - id: payroll
     single: false
     permission: hr.read
@@ -33,7 +34,9 @@ datasources:
         CASE p.status WHEN 'Draft' THEN 'Nháp' WHEN 'Approved' THEN 'Đã duyệt' ELSE 'Đã chi' END AS status_label
       FROM payrolls p
       LEFT JOIN employees e ON e.id = p.employee_id
-      WHERE (NULLIF(:status, '') IS NULL OR p.status = :status)
+      LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
+      WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id)
+        AND (NULLIF(:status, '') IS NULL OR p.status = :status)
         AND (:from_date IS NULL OR p.pay_month >= CAST(:from_date AS DATE))
         AND (:to_date IS NULL OR p.pay_month < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL OR p.code ILIKE '%' || :q || '%' OR e.code ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%')
@@ -41,7 +44,7 @@ datasources:
   - id: payroll_employee_lookup
     single: false
     permission: hr.read
-    query: "SELECT id AS value, code || ' - ' || name AS label FROM employees ORDER BY name"
+    query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 
 toolbar:
   - id: add_payroll_btn

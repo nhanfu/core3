@@ -7,10 +7,10 @@ datasources:
     query: |
       SELECT a.id, a.code, a.name, a.description, a.currency, a.status, a.sort_order, a.parent_id, p.name AS parent_name, a.created_at FROM accounting_entries a
       LEFT JOIN accounting_entries p ON p.id = a.parent_id AND p.kind = 'ledger_account'
-      WHERE a.kind = 'ledger_account' AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.description ILIKE '%' || :q || '%') ORDER BY a.sort_order, a.code
+      WHERE a.kind = 'ledger_account' AND (:view_scope = 'all' OR a.branch_id = :current_branch_id) AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.description ILIKE '%' || :q || '%') ORDER BY a.sort_order, a.code
   - id: ledger_account_parent_lookup
     permission: accounting.read
-    query: SELECT id, code, name FROM accounting_entries WHERE kind = 'ledger_account' ORDER BY code
+    query: SELECT id, code, name FROM accounting_entries WHERE kind = 'ledger_account' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY code
   - id: ledger_currency_lookup
     single: false
     permission: accounting.read

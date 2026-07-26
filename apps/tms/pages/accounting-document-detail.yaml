@@ -22,6 +22,7 @@ datasources:
         a.description
       FROM accounting_entries a
       WHERE a.id = :id AND a.kind = :kind
+        AND (:view_scope = 'all' OR a.branch_id = :current_branch_id)
         AND a.kind IN ('debit_note', 'payment_request', 'advance', 'settlement')
   - id: accounting_document_lines
     single: false
@@ -40,6 +41,7 @@ datasources:
       FROM accounting_entry_lines l
       JOIN accounting_entries a ON a.id = l.entry_id
       WHERE l.entry_id = :id AND a.kind = :kind
+        AND (:view_scope = 'all' OR a.branch_id = :current_branch_id)
       ORDER BY l.sequence
   - id: accounting_document_timeline
     single: false
@@ -59,10 +61,12 @@ datasources:
         detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity
       WHERE resource = 'accounting_entries' AND resource_id = :id
+        AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM accounting_entries a WHERE a.id = :id AND a.branch_id = :current_branch_id))
       UNION ALL
       SELECT 'Hệ thống', 'created', 'Đã tạo', 'Khởi tạo chứng từ',
         CAST(created_at AS VARCHAR)
       FROM accounting_entries WHERE id = :id AND kind = :kind
+        AND (:view_scope = 'all' OR branch_id = :current_branch_id)
       ORDER BY created_at DESC
   - id: accounting_unit_lookup
     single: false

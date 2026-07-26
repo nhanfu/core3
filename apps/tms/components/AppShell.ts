@@ -6,7 +6,7 @@ import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
 
 type NavItem = { path: string; label: string; icon: string };
-type NavGroup = { id: string; label: string; count: number; items: NavItem[] };
+type NavGroup = { id: string; label: string; items: NavItem[] };
 
 const ICON_PATHS: Record<string, string> = {
   search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/>',
@@ -50,22 +50,19 @@ function appendIcon(target: HTMLElement, name: string, label?: string) {
 const DASHBOARD: NavItem = { path: '/dashboard', label: 'Tổng quan', icon: '▦' };
 
 const NAV_GROUPS: NavGroup[] = [
-  { id: 'operations', label: 'ĐIỀU HÀNH', count: 6, items: [
+  { id: 'operations', label: 'ĐIỀU HÀNH', items: [
     { path: '/orders', label: 'Đơn hàng', icon: '□' },
-    { path: '/trips', label: 'Chuyến', icon: '≋' },
-    { path: '/maintenance', label: 'Điều phương tiện', icon: '▣' },
     { path: '/chat', label: 'Tin nhắn', icon: '◇' },
     { path: '/schedule', label: 'Lịch điều', icon: '◫' },
-    { path: '/reports', label: 'Báo cáo', icon: '▥' },
   ] },
-  { id: 'sales', label: 'KINH DOANH', count: 6, items: [
+  { id: 'sales', label: 'KINH DOANH', items: [
     { path: '/customers', label: 'Khách hàng', icon: '○' },
     { path: '/partners', label: 'Đối tượng', icon: '◌' },
     { path: '/quotes', label: 'Báo giá', icon: '△' },
     { path: '/crm/dashboard', label: 'Tổng hợp CRM', icon: '▤' },
     { path: '/crm/kpi', label: 'Chỉ tiêu KPI', icon: '◈' },
   ] },
-  { id: 'accounting', label: 'KẾ TOÁN', count: 11, items: [
+  { id: 'accounting', label: 'KẾ TOÁN', items: [
     { path: '/accounting/debit-notes', label: 'Giấy báo nợ', icon: '▧' },
     { path: '/accounting/debit-note-summary', label: 'Tổng hợp giấy báo nợ', icon: '▤' },
     { path: '/accounting/payment-requests', label: 'Đề nghị thanh toán', icon: '▧' },
@@ -75,14 +72,14 @@ const NAV_GROUPS: NavGroup[] = [
     { path: '/accounting/invoice-templates', label: 'Mẫu hóa đơn', icon: '□' },
     { path: '/accounting/ledger-accounts', label: 'Hệ thống tài khoản', icon: '▥' },
   ] },
-  { id: 'hr', label: 'NHÂN SỰ', count: 6, items: [
+  { id: 'hr', label: 'NHÂN SỰ', items: [
     { path: '/hr/employees', label: 'Nhân viên', icon: '○' },
     { path: '/hr/contracts', label: 'Hợp đồng', icon: '□' },
     { path: '/hr/timesheets', label: 'Chấm công', icon: '▦' },
     { path: '/hr/shifts', label: 'Ca làm việc', icon: '◫' },
     { path: '/hr/payroll', label: 'Bảng lương', icon: '▧' },
   ] },
-  { id: 'catalog', label: 'DANH MỤC', count: 11, items: [
+  { id: 'catalog', label: 'DANH MỤC', items: [
     { path: '/drivers', label: 'Tài xế', icon: '○' },
     { path: '/vehicles', label: 'Phương tiện', icon: '▣' },
     { path: '/containers', label: 'Container', icon: '□' },
@@ -95,7 +92,7 @@ const NAV_GROUPS: NavGroup[] = [
     { path: '/catalog/fee-types', label: 'Loại phí', icon: '◈' },
     { path: '/catalog/currencies', label: 'Tiền tệ', icon: '₫' },
   ] },
-  { id: 'organization', label: 'TỔ CHỨC & PHÂN QUYỀN', count: 6, items: [
+  { id: 'organization', label: 'TỔ CHỨC & PHÂN QUYỀN', items: [
     { path: '/org/own-company', label: 'Công ty chủ quản', icon: '▦' },
     { path: '/org/branches', label: 'Chi nhánh', icon: '⌂' },
     { path: '/org/departments', label: 'Phòng ban', icon: '▤' },
@@ -103,7 +100,7 @@ const NAV_GROUPS: NavGroup[] = [
     { path: '/org/users', label: 'Người dùng', icon: '○' },
     { path: '/org/roles', label: 'Vai trò', icon: '◇' },
   ] },
-  { id: 'system', label: 'HỆ THỐNG', count: 8, items: [
+  { id: 'system', label: 'HỆ THỐNG', items: [
     { path: '/system/activity', label: 'Lịch sử thao tác', icon: '◷' },
     { path: '/system/code-rules', label: 'Cấu hình sinh mã', icon: '#' },
     { path: '/system/print-templates', label: 'Mẫu in', icon: '▧' },
@@ -219,7 +216,7 @@ export class AppShell extends BaseComponent {
         .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
         .getContext();
       html.take(button).span.className('sidebar-group-label').text(groupDef.label);
-      html.take(button).span.className('sidebar-group-count').text(String(groupDef.count));
+      html.take(button).span.className('sidebar-group-count').text(String(groupDef.items.length));
       html.take(button).span.className('sidebar-group-chevron').text('⌄');
       button.addEventListener('click', () => {
         const open = !this.state.openGroups[groupDef.id];

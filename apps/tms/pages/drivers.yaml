@@ -27,12 +27,13 @@ datasources:
       FROM drivers d
       LEFT JOIN trucks t ON t.id = d.assigned_truck_id
       WHERE (:status IS NULL OR d.status = :status)
+        AND (:view_scope = 'all' OR t.branch_id = :current_branch_id)
         AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.license_number ILIKE '%' || :q || '%' OR d.phone ILIKE '%' || :q || '%')
       ORDER BY d.name
   - id: driver_vehicle_lookup
     single: false
     permission: drivers.read
-    query: "SELECT id AS value, plate || ' - ' || model AS label FROM trucks ORDER BY plate"
+    query: "SELECT id AS value, plate || ' - ' || model AS label FROM trucks WHERE (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY plate"
 
 toolbar:
   - id: add_driver_btn
