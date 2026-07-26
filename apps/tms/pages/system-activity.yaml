@@ -22,6 +22,7 @@ components:
   - type: DataGrid
     source: system_activity
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Không có lịch sử thao tác }
     columns: [{ field: actor_name, label: Người thao tác }, { field: action, label: Hành động }, { field: resource, label: Tài nguyên }, { field: resource_id, label: Mã bản ghi }, { field: detail, label: Chi tiết }, { field: created_at, label: Thời gian }]
