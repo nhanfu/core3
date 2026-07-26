@@ -1,0 +1,26 @@
+title: Chi tiết khu vực
+page: { id: area-detail, auth: { require: [dispatch.read] } }
+datasources:
+  - id: area_detail
+    single: true
+    permission: dispatch.read
+    query: "SELECT id, code, name, region, description, status FROM areas WHERE id = :id"
+  - id: area_locations
+    single: false
+    permission: dispatch.read
+    query: |
+      SELECT l.id, l.code, l.name, l.location_type, l.city, l.address, l.status,
+        CASE l.location_type WHEN 'Port' THEN 'Cảng' WHEN 'Warehouse' THEN 'Kho / bãi' WHEN 'Depot' THEN 'Depot' WHEN 'Customer' THEN 'Khách hàng' ELSE 'Khác' END AS location_type_label
+      FROM locations l WHERE l.area_id = :id ORDER BY l.name
+components:
+  - { type: DocumentSummary, source: area_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: region, label: Vùng miền }, { field: description, label: Ghi chú }] }
+  - type: DataGrid
+    source: area_locations
+    page_size: 50
+    row_key: id
+    empty_state: { title: Chưa có địa điểm trong khu vực }
+    columns: [{ field: code, label: Mã địa điểm }, { field: name, label: Địa điểm }, { field: location_type_label, label: Loại }, { field: city, label: Thành phố }, { field: address, label: Địa chỉ }, { field: status, label: Trạng thái }]
+toolbar:
+  - { id: back_areas, label: '← Danh sách khu vực', variant: secondary, action: back_areas }
+actions:
+  - { id: back_areas, type: navigate, navigate_to: /areas }

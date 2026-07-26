@@ -328,6 +328,7 @@ const SOURCE_FILES = [
   'pages/branch-detail.yaml',
   'pages/partners.yaml',
   'pages/areas.yaml',
+  'pages/area-detail.yaml',
   'pages/own-company.yaml',
   'pages/departments.yaml',
   'pages/department-detail.yaml',

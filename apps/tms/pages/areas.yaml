@@ -38,8 +38,9 @@ components:
         label: ''
         sortable: false
         align: right
-        actions: [{ id: edit_area, label: Sửa, variant: ghost }, { id: delete_area, label: Xóa, variant: danger }]
+        actions: [{ id: view_area, label: Chi tiết, variant: primary }, { id: edit_area, label: Sửa, variant: ghost }, { id: delete_area, label: Xóa, variant: danger }]
 actions:
+  - { id: view_area, type: navigate, navigate_to: /areas/detail, params: { id: '{row.id}' } }
   - id: add_area
     type: form
     title: Thêm khu vực
