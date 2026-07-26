@@ -1071,10 +1071,20 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   async function renderListToolbar(def: any, targetContainer: HTMLElement) {
     const { ListToolbar } = await import('./components/ListToolbar.ts');
+    const filters = (def.filters || []).map((filter: any) => {
+      if (!filter.options_source) return filter;
+      const rows = dataMap[filter.options_source]?.data;
+      return {
+        ...filter,
+        options: Array.isArray(rows)
+          ? rows.map((row: any) => ({ id: String(row.value ?? row.id ?? ''), label: String(row.label ?? row.name ?? row.value ?? row.id ?? '') }))
+          : [],
+      };
+    });
     const comp = new ListToolbar(
       `list-toolbar-${def.source || def.id || Date.now()}`,
       { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '', preset: def.date_range?.default_preset },
-      { search: def.search, actions: def.actions, date_range: def.date_range, filters: def.filters, filter_sources: def.filter_sources, advanced_filter: def.advanced_filter, help: def.help }
+      { search: def.search, actions: def.actions, date_range: def.date_range, filters, filter_sources: def.filter_sources, advanced_filter: def.advanced_filter, help: def.help }
     );
     comp._onAction = async (actionId: string, params: any) => {
       const sourceId = def.source;

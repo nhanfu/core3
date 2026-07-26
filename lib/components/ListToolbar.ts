@@ -22,7 +22,8 @@ export type ListToolbarDefinition = {
   filters?: Array<{
     field: string;
     label: string;
-    options: Array<string | { id: string; label: string }>;
+    options?: Array<string | { id: string; label: string }>;
+    options_source?: string;
     placeholder?: string;
   }>;
   date_range?: {
@@ -186,7 +187,7 @@ export class ListToolbar extends BaseComponent {
         placeholder.value = '';
         placeholder.textContent = filter.placeholder || filter.label;
         select.append(placeholder);
-        for (const optionDef of filter.options) {
+        for (const optionDef of filter.options || []) {
           const option = document.createElement('option');
           option.value = typeof optionDef === 'string' ? optionDef : optionDef.id;
           option.textContent = typeof optionDef === 'string' ? optionDef : optionDef.label;

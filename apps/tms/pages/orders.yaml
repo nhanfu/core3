@@ -64,7 +64,7 @@ components:
       - field: shipment_type
         label: Loại hình
         placeholder: Tất cả loại hình
-        options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh]
+        options_source: order_shipment_type_lookup
       - field: transport_method
         label: Hình thức
         placeholder: Tất cả hình thức

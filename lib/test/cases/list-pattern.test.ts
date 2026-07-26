@@ -166,6 +166,13 @@ describe('ListToolbar', () => {
     expect(submit).toHaveBeenCalledWith('filter', { transport_method: 'sea' });
   });
 
+  it('renders an empty option list when a filter is supplied by a datasource', () => {
+    const { container } = mount(new ListToolbar('toolbar', {}, {
+      filters: [{ field: 'shipment_type', label: 'Shipment type', options_source: 'shipment_types' }],
+    }));
+    expect(container.querySelectorAll('select option')).toHaveLength(1);
+  });
+
   it('collapses advanced fields until the filter control is opened', () => {
     const { container } = mount(new ListToolbar('toolbar', {}, {
       search: false,

@@ -90,7 +90,7 @@ const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
 const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style', 'default_preset']);
-const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'placeholder']);
+const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'options_source', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
   'label',
@@ -533,9 +533,12 @@ function validateToolbarFilters(value: unknown, path: string, issues: string[]) 
     rejectUnknownKeys(filter, TOOLBAR_FILTER_KEYS, filterPath, issues);
     requireString(filter.field, `${filterPath}.field`, issues);
     requireString(filter.label, `${filterPath}.label`, issues);
-    if (!Array.isArray(filter.options)) {
+    if (filter.options_source !== undefined) {
+      requireString(filter.options_source, `${filterPath}.options_source`, issues);
+    } else if (!Array.isArray(filter.options)) {
       issues.push(`${filterPath}.options must be an array`);
-    } else {
+    }
+    if (Array.isArray(filter.options)) {
       filter.options.forEach((option: unknown, optionIndex: number) => {
         if (typeof option === 'string') return;
         const optionPath = `${filterPath}.options[${optionIndex}]`;
