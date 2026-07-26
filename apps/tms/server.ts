@@ -189,6 +189,7 @@ async function initDb(): Promise<void> {
     ALTER TABLE roles ADD COLUMN IF NOT EXISTS view_scope VARCHAR DEFAULT 'all';
     UPDATE roles SET view_scope = 'all' WHERE view_scope IS NULL;
     ALTER TABLE areas ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
+    ALTER TABLE departments ADD COLUMN IF NOT EXISTS parent_id VARCHAR;
     CREATE TABLE IF NOT EXISTS currency_rates (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       currency_code VARCHAR NOT NULL UNIQUE,
@@ -542,7 +543,7 @@ const TABLE_REGISTRY = {
   departments: {
     permission: 'settings.write',
     timestamps: true,
-    fields: ['code', 'name', 'branch_id', 'status'],
+    fields: ['code', 'name', 'parent_id', 'branch_id', 'status'],
   },
   teams: {
     permission: 'settings.write',
@@ -1012,6 +1013,14 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (parentId) {
         const [parent] = await repository.query('SELECT id FROM areas WHERE id = ?', [parentId]);
         if (!parent) return apiError(400, 'Parent area not found');
+      }
+    }
+    if (table === 'departments' && changes.some((change: any) => change.field === 'parent_id')) {
+      const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
+      if (parentId && String(parentId) === String(id)) return apiError(400, 'Department cannot be its own parent');
+      if (parentId) {
+        const [parent] = await repository.query('SELECT id FROM departments WHERE id = ?', [parentId]);
+        if (!parent) return apiError(400, 'Parent department not found');
       }
     }
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {

@@ -310,6 +310,7 @@ CREATE TABLE IF NOT EXISTS departments (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,
   name VARCHAR NOT NULL,
+  parent_id VARCHAR,
   branch_id VARCHAR,
   status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
