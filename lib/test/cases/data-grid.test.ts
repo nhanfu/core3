@@ -219,4 +219,17 @@ describe('DataGrid', () => {
     expect(container.querySelector('thead')?.textContent).not.toContain('Amount');
     expect(container.querySelector('tbody tr')?.querySelectorAll('td')).toHaveLength(1);
   });
+
+  it('supports drag-and-drop row reordering through the caller hook', () => {
+    const onRowReorder = vi.fn();
+    const grid = new DataGrid('approval-steps', { rows }, columns, { onRowReorder });
+    const container = mount(grid);
+    const renderedRows = container.querySelectorAll<HTMLTableRowElement>('tbody tr[data-reorder-row]');
+
+    renderedRows[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
+    renderedRows[1].dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+
+    expect(renderedRows[0].draggable).toBe(true);
+    expect(onRowReorder).toHaveBeenCalledWith(rows[0], rows[1]);
+  });
 });

@@ -47,6 +47,8 @@ export interface DataGridOptions {
   /** Optional server-backed page-size choices shown in the footer. */
   pageSizeOptions?: number[];
   onPageSizeChange?: (pageSize: number) => void;
+  /** Optional drag-and-drop row ordering hook. */
+  onRowReorder?: (fromRow: DataGridRow, toRow: DataGridRow) => void | Promise<void>;
 }
 
 /**
@@ -134,6 +136,8 @@ export class DataGrid extends BaseComponent {
     const visibleColumns = this.columns.filter(column => visibleColumnIds.has(column.id || column.field));
     const selectedIds = this.selectedIds();
     const selected = new Set(selectedIds);
+    const rowReorder = this.options.onRowReorder;
+    let draggedRow: DataGridRow | null = null;
 
     const root = html.take(container).div.className('rounded-lg border border-gray-200 bg-white').getContext();
     const title = meta.title || this.state.title;
@@ -229,6 +233,31 @@ export class DataGrid extends BaseComponent {
       rows.forEach((row, index) => {
         const id = this.rowId(row, index);
         const tr = html.take(tbody).trow.className('transition-colors hover:bg-gray-50').getContext();
+        if (rowReorder) {
+          tr.draggable = true;
+          tr.dataset.reorderRow = id;
+          tr.classList.add('cursor-grab', 'active:cursor-grabbing');
+          tr.addEventListener('dragstart', event => {
+            draggedRow = row;
+            tr.setAttribute('aria-grabbed', 'true');
+            const transfer = (event as DragEvent).dataTransfer;
+            if (transfer) {
+              transfer.effectAllowed = 'move';
+              transfer.setData('text/plain', id);
+            }
+          });
+          tr.addEventListener('dragend', () => {
+            draggedRow = null;
+            tr.setAttribute('aria-grabbed', 'false');
+          });
+          tr.addEventListener('dragover', event => event.preventDefault());
+          tr.addEventListener('drop', event => {
+            event.preventDefault();
+            if (draggedRow && this.rowId(draggedRow, index) !== id) {
+              void rowReorder(draggedRow, row);
+            }
+          });
+        }
         if (selectable) {
           const checkbox = html.take(tr).tdata.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
           checkbox.setAttribute('aria-label', `Select row ${id}`);

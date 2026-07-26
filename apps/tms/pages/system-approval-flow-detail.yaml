@@ -14,6 +14,7 @@ components:
   - type: DataGrid
     source: approval_steps
     page_size: 50
+    reorder: { up_action: move_step_up, down_action: move_step_down }
     column_chooser: true
     row_key: id
     empty_state: { title: Chưa có bước duyệt, description: Thêm bước đầu tiên cho quy trình. }

@@ -75,7 +75,7 @@ await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(to
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
-const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, export: 0 };
+const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, reorder: 0, export: 0 };
 const routeCoverage: Array<{ route: string; controls: Record<string, number> }> = [];
 for (const route of targets) {
   consoleErrors.length = 0;
@@ -108,9 +108,14 @@ for (const route of targets) {
       pageSize.value = pageSize.options[pageSize.options.length - 1].value;
       pageSize.dispatchEvent(new Event('change', { bubbles: true }));
     }
+    const reorderRows = [...(outlet?.querySelectorAll('tbody tr[data-reorder-row]') || [])];
+    if (reorderRows.length > 1) {
+      reorderRows[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
+      reorderRows[1].dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    }
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
-    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), export: Number(Boolean(exportButton)) };
+    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), export: Number(Boolean(exportButton)) };
     })())`, `${route} control exercise`);
     const exercised = typeof exercisedJson === 'string' ? JSON.parse(exercisedJson) : exercisedJson;
     for (const key of Object.keys(controlCounts) as Array<keyof typeof controlCounts>) {

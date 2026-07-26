@@ -14,6 +14,7 @@ components:
   - type: DataGrid
     source: template_blocks
     page_size: 50
+    reorder: { up_action: move_block_up, down_action: move_block_down }
     column_chooser: true
     row_key: id
     empty_state: { title: Mẫu in chưa có khối nội dung, description: 'Thêm văn bản, token hoặc bảng vào mẫu.' }

@@ -744,6 +744,13 @@ export async function renderPage(config: any, { container = document.body }: { c
       if (action.permission && !ctx.user.permissions?.includes(action.permission)) return false;
       return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
     });
+    const reorder = def.reorder && typeof def.reorder === 'object' ? def.reorder : null;
+    const reorderActions = reorder
+      ? {
+        up: (config.actions || []).find((action: any) => action.id === reorder.up_action),
+        down: (config.actions || []).find((action: any) => action.id === reorder.down_action),
+      }
+      : null;
     const comp = new GridCtor(
       `data-grid-${sourceId || def.id || Date.now()}`,
       {
@@ -786,6 +793,19 @@ export async function renderPage(config: any, { container = document.body }: { c
             console.error('[page-renderer] page-size fetch error:', err);
           }
         },
+        onRowReorder: reorderActions?.up || reorderActions?.down
+          ? async (fromRow: any, toRow: any) => {
+            const rows = (dataMap[sourceId]?.data || []) as any[];
+            const fromIndex = rows.findIndex(row => String(row?.id) === String(fromRow?.id));
+            const toIndex = rows.findIndex(row => String(row?.id) === String(toRow?.id));
+            if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+            const actionDef = fromIndex > toIndex ? reorderActions?.up : reorderActions?.down;
+            if (!actionDef) return;
+            for (let step = fromIndex; step !== toIndex; step += fromIndex > toIndex ? -1 : 1) {
+              await handleAction(actionDef, fromRow);
+            }
+          }
+          : undefined,
       }
     );
 
