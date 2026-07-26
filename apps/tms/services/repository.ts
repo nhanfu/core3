@@ -1219,14 +1219,19 @@ export class DuckDbRepository {
       try {
         const [parent] = await queryOnConnection(
           conn,
-          `SELECT * FROM ${config.parentTable} WHERE id = ?`,
+          config.parentTable === 'orders'
+            ? `SELECT o.*, COALESCE(s.status, o.status) AS workflow_status
+               FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
+               WHERE o.id = ?`
+            : `SELECT * FROM ${config.parentTable} WHERE id = ?`,
           [parentId],
         );
         if (!parent) throw { status: 404, message: `${config.label} not found` };
-        if (parent.status !== 'Draft') {
+        const parentStatus = config.parentTable === 'orders' ? parent.workflow_status : parent.status;
+        if (parentStatus !== 'Draft') {
           throw {
             status: 409,
-            message: `${config.label} lines cannot be changed while ${parent.status}`,
+            message: `${config.label} lines cannot be changed while ${parentStatus}`,
           };
         }
 
@@ -1338,12 +1343,49 @@ export class DuckDbRepository {
             [amount, costAmount, amount - costAmount, parentId],
           );
         } else {
-          await runOnConnection(
-            conn,
-            `UPDATE ${config.parentTable}
-             SET ${config.totalField} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            [Number(totals.amount || 0), parentId],
-          );
+          if (config.parentTable === 'orders') {
+            const currentLines = await queryOnConnection(
+              conn,
+              'SELECT id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total, created_at, updated_at FROM order_lines WHERE order_id = ? ORDER BY sequence, id',
+              [parentId],
+            );
+            const [workflowState] = await queryOnConnection(
+              conn,
+              'SELECT order_id, status, updated_at FROM order_workflow_states WHERE order_id = ?',
+              [parentId],
+            );
+            await runOnConnection(conn, 'DELETE FROM order_lines WHERE order_id = ?', [parentId]);
+            if (workflowState) await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [parentId]);
+            await runOnConnection(
+              conn,
+              'UPDATE orders SET total_amount = ?, updated_at = ? WHERE id = ?',
+              [Number(totals.amount || 0), new Date(), parentId],
+            );
+            if (workflowState) {
+              await runOnConnection(
+                conn,
+                'INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(?,?,?)',
+                [workflowState.order_id, workflowState.status, workflowState.updated_at],
+              );
+            }
+            for (const currentLine of currentLines) {
+              await runOnConnection(
+                conn,
+                `INSERT INTO order_lines(
+                  id, order_id, sequence, description, quantity, unit, unit_price,
+                  tax_rate, line_total, created_at, updated_at
+                ) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
+                [currentLine.id, currentLine.order_id, currentLine.sequence, currentLine.description, currentLine.quantity, currentLine.unit, currentLine.unit_price, currentLine.tax_rate, currentLine.line_total, currentLine.created_at, currentLine.updated_at],
+              );
+            }
+          } else {
+            await runOnConnection(
+              conn,
+              `UPDATE ${config.parentTable}
+               SET ${config.totalField} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+              [Number(totals.amount || 0), parentId],
+            );
+          }
         }
 
         await runOnConnection(
