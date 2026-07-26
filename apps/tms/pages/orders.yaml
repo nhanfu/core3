@@ -25,6 +25,8 @@ datasources:
         o.created_by, CAST(o.created_at AS VARCHAR) AS created_at
       FROM orders o
       WHERE (:status IS NULL OR o.status = :status)
+        AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR o.order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
         AND (:q IS NULL
           OR o.order_number ILIKE '%' || :q || '%'
           OR o.customer_name ILIKE '%' || :q || '%'
@@ -46,9 +48,8 @@ components:
     search:
       label: Tìm kiếm đơn hàng
       placeholder: 'Tìm mã đơn, khách hàng, tên hàng...'
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     actions:
-      - { id: orders.advanced-filter, label: 'Bộ lọc', icon: '⚙' }
-      - { id: orders.columns, label: 'Cột', icon: '▦' }
       - { id: orders.export, label: 'Xuất CSV', icon: '↓' }
   - type: StatusTabs
     source: orders
