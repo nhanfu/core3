@@ -263,6 +263,9 @@ export class DuckDbRepository {
   }
 
   async updateRecord(table: string, id: any, changes: Change[], timestamps: boolean): Promise<any> {
+    if (table === 'orders') {
+      return this.updateOrderRecord(id, changes, timestamps);
+    }
     const sets = changes.map((c) => `${c.field} = ?`).join(', ');
     const tsClause = timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
     await this.run(
@@ -271,6 +274,58 @@ export class DuckDbRepository {
     );
     const rows = await this.query(`SELECT * FROM ${table} WHERE id = ?`, [id]);
     return rows[0] || null;
+  }
+
+  private async updateOrderRecord(id: any, changes: Change[], timestamps: boolean): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const lines = await queryOnConnection(
+          conn,
+          'SELECT id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total, created_at, updated_at FROM order_lines WHERE order_id = ? ORDER BY sequence, id',
+          [id],
+        );
+        const [workflowState] = await queryOnConnection(
+          conn,
+          'SELECT order_id, status, updated_at FROM order_workflow_states WHERE order_id = ?',
+          [id],
+        );
+        if (lines.length) await runOnConnection(conn, 'DELETE FROM order_lines WHERE order_id = ?', [id]);
+        if (workflowState) await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [id]);
+
+        const sets = changes.map((change) => `${change.field} = ?`).join(', ');
+        const values = [...changes.map((change) => change.value), ...(timestamps ? [new Date()] : []), id];
+        await runOnConnection(
+          conn,
+          `UPDATE orders SET ${sets}${timestamps ? ', updated_at = ?' : ''} WHERE id = ?`,
+          values,
+        );
+
+        if (workflowState) {
+          await runOnConnection(
+            conn,
+            'INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(?,?,?)',
+            [workflowState.order_id, workflowState.status, workflowState.updated_at],
+          );
+        }
+        for (const line of lines) {
+          await runOnConnection(
+            conn,
+            `INSERT INTO order_lines(
+              id, order_id, sequence, description, quantity, unit, unit_price,
+              tax_rate, line_total, created_at, updated_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
+            [line.id, line.order_id, line.sequence, line.description, line.quantity, line.unit, line.unit_price, line.tax_rate, line.line_total, line.created_at, line.updated_at],
+          );
+        }
+        const [updated] = await queryOnConnection(conn, 'SELECT * FROM orders WHERE id = ?', [id]);
+        await runOnConnection(conn, 'COMMIT');
+        return updated || null;
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
   }
 
   async deleteRecord(table: string, id: any): Promise<void> {
@@ -318,6 +373,9 @@ export class DuckDbRepository {
            } = ?`,
         [id],
       );
+        if (table === 'orders') {
+          await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [id]);
+        }
         if (table === 'system_configs') {
           await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE template_id = ?', [id]);
         }
