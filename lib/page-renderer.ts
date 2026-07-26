@@ -1019,7 +1019,25 @@ export async function renderPage(config: any, { container = document.body }: { c
         const { downloadCsv, toCsv } = await import('./list-utils.ts');
         const grid = (config.components || []).find(component => component.type === 'DataGrid' && component.source === sourceId);
         const columns = (grid?.columns || []).filter(column => column.field && column.field !== 'actions');
-        downloadCsv(`${config.page?.id || sourceId}-export`, toCsv(dataMap[sourceId]?.data || [], columns));
+        const current = dataMap[sourceId] || { data: [], meta: {} };
+        const total = Math.max(Number(current.meta?.total) || 0, Array.isArray(current.data) ? current.data.length : 0);
+        const exportRows: any[] = [];
+        const exportPageSize = 100;
+        try {
+          for (let skip = 0; skip < total; skip += exportPageSize) {
+            const result = await client.query(createQuery({
+              sourceId,
+              params: { ...pageParams, ...(filterState[sourceId] || {}) },
+              skip,
+              top: exportPageSize,
+            }));
+            exportRows.push(...(Array.isArray(result?.data) ? result.data : []));
+            if (!result?.data?.length) break;
+          }
+        } catch (error) {
+          console.error(`[page-renderer] Export fetch failed for "${sourceId}"`, error);
+        }
+        downloadCsv(`${config.page?.id || sourceId}-export`, toCsv(exportRows.length ? exportRows : (current.data || []), columns));
         return;
       }
       const actionDef = (config.actions || []).find(action => action.id === actionId);
