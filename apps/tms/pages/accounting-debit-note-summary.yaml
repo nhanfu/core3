@@ -30,16 +30,30 @@ datasources:
         AND (:q IS NULL OR counterparty ILIKE '%' || :q || '%' OR status ILIKE '%' || :q || '%')
       GROUP BY counterparty, status, currency
       ORDER BY SUM(amount) DESC, counterparty
+  - id: debit_note_status_breakdown
+    single: false
+    permission: accounting.read
+    query: |
+      SELECT CASE status WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt'
+        WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Paid' THEN 'Đã thanh toán'
+        WHEN 'Cancelled' THEN 'Đã hủy' ELSE status END AS label,
+        COUNT(*) AS value
+      FROM accounting_entries
+      WHERE kind = 'debit_note'
+        AND (:from_date IS NULL OR document_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      GROUP BY status ORDER BY value DESC
 components:
   - type: ListToolbar
     source: debit_note_summary
-    filter_sources: [debit_note_summary, debit_note_totals]
+    filter_sources: [debit_note_summary, debit_note_totals, debit_note_status_breakdown]
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' }
     actions: [{ id: debit_note_summary.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: debit_note_totals
-    stats: [{ label: Số chứng từ, field: document_count, color: blue }, { label: Tổng giá trị, field: total_amount, color: teal }, { label: Còn phải thu, field: outstanding_amount, color: amber }, { label: Đã thanh toán, field: paid_amount, color: green }]
+    stats: [{ label: Số chứng từ, field: document_count, color: blue }, { label: Tổng giá trị, field: total_amount, color: blue }, { label: Còn phải thu, field: outstanding_amount, color: amber }, { label: Đã thanh toán, field: paid_amount, color: green }]
+  - { type: Chart, source: debit_note_status_breakdown, title: Chứng từ theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: '#2563eb' }
   - { type: StatusTabs, source: debit_note_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }] }
   - type: DataGrid
     source: debit_note_summary
