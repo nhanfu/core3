@@ -233,9 +233,9 @@ components:
     source: dashboard_routes
     page_size: 10
     row_key: route
-    columns: [{ field: route, label: Tuyến đường }, { field: trip_count, label: Số chuyến, align: right }, { field: total_distance_km, label: Tổng km, align: right }]
+    columns: [{ field: route, label: Tuyến đường, sortable: true }, { field: trip_count, label: Số chuyến, align: right, sortable: true }, { field: total_distance_km, label: Tổng km, align: right, sortable: true }]
   - type: DataGrid
     source: dashboard_customers
     page_size: 10
     row_key: customer_name
-    columns: [{ field: customer_name, label: Khách hàng }, { field: order_count, label: Số đơn, align: right }, { field: total_amount, label: Giá trị đơn, align: right }]
+    columns: [{ field: customer_name, label: Khách hàng, sortable: true }, { field: order_count, label: Số đơn, align: right, sortable: true }, { field: total_amount, label: Giá trị đơn, align: right, sortable: true }]

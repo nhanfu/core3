@@ -9,6 +9,7 @@
 - Financial KPI cards use VND formatting and task cards expose draft, approval, dispatch, overdue, and expiring-contract work items.
 - Task cards use the reference Vietnamese labels `Đề nghị chi chờ duyệt` and `HĐ sắp hết hạn`.
 - Trip status chart, dispatch queue, top routes, and top customers remain below the KPI regions.
+- Top route and customer grids explicitly expose sortable columns.
 - Monthly revenue, cost, and profit are rendered as a multi-series chart alongside trip-status chart data.
 
 ## Interaction checks
