@@ -23,6 +23,8 @@ datasources:
         c.created_at
       FROM customers c
       WHERE (NULLIF(:stage, '') IS NULL OR c.stage = :stage)
+        AND (NULLIF(:visibility, '') IS NULL OR c.visibility = :visibility)
+        AND (NULLIF(:status, '') IS NULL OR c.status = :status)
         AND (:q IS NULL OR c.code ILIKE '%' || :q || '%'
           OR c.name ILIKE '%' || :q || '%'
           OR c.tax_code ILIKE '%' || :q || '%'
@@ -44,6 +46,9 @@ components:
       label: Tìm kiếm khách hàng
       placeholder: 'Tìm mã, tên, MST, SĐT...'
     actions: [{ id: customers.export, label: 'Xuất CSV', icon: '↓' }]
+    filters:
+      - { field: visibility, label: Hiển thị, placeholder: Tất cả hiển thị, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
+      - { field: status, label: Trạng thái, placeholder: Tất cả trạng thái, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
   - type: StatusTabs
     source: customers
     filter_field: stage

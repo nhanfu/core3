@@ -25,6 +25,8 @@ datasources:
         p.created_at
       FROM partners p
       WHERE (NULLIF(:partner_type, '') IS NULL OR p.partner_type = :partner_type)
+        AND (NULLIF(:visibility, '') IS NULL OR p.visibility = :visibility)
+        AND (NULLIF(:status, '') IS NULL OR p.status = :status)
         AND (:q IS NULL OR p.code ILIKE '%' || :q || '%'
           OR p.name ILIKE '%' || :q || '%'
           OR p.tax_code ILIKE '%' || :q || '%'
@@ -46,6 +48,9 @@ components:
       label: Tìm kiếm đối tượng
       placeholder: 'Tìm mã, tên, MST, SĐT...'
     actions: [{ id: partners.export, label: 'Xuất CSV', icon: '↓' }]
+    filters:
+      - { field: visibility, label: Hiển thị, placeholder: Tất cả hiển thị, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
+      - { field: status, label: Trạng thái, placeholder: Tất cả trạng thái, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
   - type: StatusTabs
     source: partners
     filter_field: partner_type
