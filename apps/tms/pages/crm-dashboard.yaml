@@ -24,10 +24,27 @@ datasources:
     query: |
       SELECT code, title, customer_name, amount, status, CAST(valid_until AS VARCHAR) AS valid_until
       FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) ORDER BY created_at DESC
+  - id: crm_customer_value
+    single: false
+    permission: crm.read
+    query: |
+      SELECT customer_name, COUNT(*) AS quote_count, COALESCE(SUM(amount), 0) AS quote_value
+      FROM quotes
+      WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      GROUP BY customer_name ORDER BY quote_value DESC, customer_name
+  - id: crm_employee_breakdown
+    single: false
+    permission: crm.read
+    query: |
+      SELECT department, COUNT(*) AS employee_count,
+        SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) AS active_count
+      FROM employees
+      WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      GROUP BY department ORDER BY employee_count DESC, department
 components:
   - type: ListToolbar
     source: crm_recent_quotes
-    filter_sources: [crm_kpis, crm_quote_pipeline, crm_recent_quotes]
+    filter_sources: [crm_kpis, crm_quote_pipeline, crm_recent_quotes, crm_customer_value, crm_employee_breakdown]
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     actions: [{ id: crm_recent_quotes.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
@@ -53,4 +70,24 @@ components:
       - { field: amount, label: Giá trị, align: right }
       - { field: valid_until, label: Hiệu lực đến }
       - { field: status, label: Trạng thái, type: StatusChip, colors: { Draft: neutral, Sent: blue, Accepted: green } }
+  - type: DataGrid
+    source: crm_customer_value
+    page_size: 10
+    column_chooser: true
+    row_key: customer_name
+    empty_state: { title: Chưa có xếp hạng khách hàng }
+    columns:
+      - { field: customer_name, label: Khách hàng, sortable: true }
+      - { field: quote_count, label: Số báo giá, align: right }
+      - { field: quote_value, label: Giá trị báo giá, align: right }
+  - type: DataGrid
+    source: crm_employee_breakdown
+    page_size: 10
+    column_chooser: true
+    row_key: department
+    empty_state: { title: Chưa có phân bổ nhân sự }
+    columns:
+      - { field: department, label: Bộ phận, sortable: true }
+      - { field: employee_count, label: Nhân sự, align: right }
+      - { field: active_count, label: Đang hoạt động, align: right }
 actions: []

@@ -46,6 +46,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Dashboard toolbar now matches the reference search and CSV-export controls, with server-backed dispatch search fields.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.
 - Dashboard includes declarative monthly revenue/cost/profit line data plus trip-status chart data.
+- CRM dashboard now includes period-filtered ranked customer-value and employee/department breakdown grids alongside KPI and quote-pipeline metrics.
 - Dashboard chart slots sit side by side at desktop width and wrap naturally at tablet width without document overflow.
 - Trip-status chart uses the shared pie variant to match the supplied reference composition.
 - Approval-flow and print-template detail grids now support declarative drag-and-drop row ordering backed by their existing server-authorized move actions; the DataGrid reorder hook is covered by a focused component test.
