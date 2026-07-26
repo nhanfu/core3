@@ -859,10 +859,20 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
     const { StatusTabs } = await import('./components/StatusTabs.ts');
+    const sourceResult = def.source ? dataMap[def.source] || {} : {};
+    const rows = Array.isArray(sourceResult.data) ? sourceResult.data : [];
+    const field = def.filter_field || 'status';
+    const tabs = (def.tabs || []).map((tab: any) => {
+      if (tab.count !== undefined) return tab;
+      const count = tab.id === ''
+        ? Number(sourceResult.meta?.total ?? rows.length)
+        : rows.filter((row: any) => String(row[field] ?? '') === String(tab.id)).length;
+      return { ...tab, count };
+    });
     const comp = new StatusTabs(
       `status-tabs-${def.source || def.id || Date.now()}`,
-      { active: def.active || def.tabs?.[0]?.id },
-      def.tabs || []
+      { active: def.active || tabs[0]?.id },
+      tabs,
     );
     comp._onAction = async (_actionId: string, params: any) => {
       const sourceId = def.source;

@@ -36,6 +36,8 @@ be recaptured from the read-only tenant before final visual-parity signoff.
 - [x] Browser console contains no errors after transition and refresh.
 - [x] Operations navigation exposes the six reference entries: orders, trips,
   vehicle dispatch, chat, schedule, and reports.
+- [x] Lifecycle tabs show datasource-backed counts for all, draft, approval,
+  approved, and cancelled orders.
 - [x] Shared DataGrid keeps list rows dense with single-line truncation for long
   customer, route, and metadata cells while retaining horizontal overflow.
 
