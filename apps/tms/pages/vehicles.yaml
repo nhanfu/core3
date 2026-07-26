@@ -11,7 +11,8 @@ datasources:
     single: false
     permission: fleet.read
     query: |
-      SELECT t.id, t.plate, t.model, t.status, t.type AS vehicle_type,
+      SELECT t.id, REPLACE(UPPER(t.id), 'TRUCK-', 'XE') AS system_code,
+        t.plate, t.model, t.status, t.type AS vehicle_type,
         b.name AS owner_name, t.capacity_kg,
         CASE t.status
           WHEN 'Active' THEN 'Sẵn sàng'
@@ -63,7 +64,7 @@ components:
       title: Không có phương tiện
       description: Thử thay đổi bộ lọc hoặc tạo phương tiện mới.
     columns:
-      - field: id
+      - field: system_code
         label: Mã HT
         sortable: true
       - field: plate
