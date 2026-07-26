@@ -6,7 +6,7 @@ const login = await fetch(`${baseUrl}/api/auth/login`, {
 });
 if (!login.ok) throw new Error(`login failed: ${login.status}`);
 const { token } = await login.json() as { token: string };
-const headers = { Authorization: `Bearer ${token}`, 'content-type': 'application/json' };
+let headers = { Authorization: `Bearer ${token}`, 'content-type': 'application/json' };
 
 async function transition(action: string, id: string, expected: string) {
   const response = await fetch(`${baseUrl}/api/actions/${action}`, {
@@ -91,4 +91,13 @@ const validationRejections = [
   ['chat.messages.send', { id: 'chat-thread-ops-south', content: '' }],
 ] as const;
 for (const [action, payload] of validationRejections) await expectActionRejected(action, payload);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} failures=0`);
+const restrictedLogin = await fetch(`${baseUrl}/api/auth/login`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ email: 'accountant@tms.local', password: 'accountant123' }),
+});
+if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedLogin.status}`);
+const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
+headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
+await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} permission_denials=1 failures=0`);
