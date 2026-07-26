@@ -14,11 +14,12 @@ datasources:
       FROM accounting_entries WHERE kind = 'settlement' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%') ORDER BY document_date DESC, code
 toolbar: [{ id: add_settlement_btn, label: '+ Thêm hoàn ứng', variant: primary, permission: accounting.write, action: add_settlement }]
 components:
-  - { type: ListToolbar, source: settlements, filter_field: q, search: { label: Tìm kiếm hoàn ứng, placeholder: 'Tìm số chứng từ hoặc người hoàn...' } }
+  - { type: ListToolbar, source: settlements, filter_field: q, search: { label: Tìm kiếm hoàn ứng, placeholder: 'Tìm số chứng từ hoặc người hoàn...' }, actions: [{ id: settlements.export, label: 'Xuất CSV', icon: '↓' }] }
   - { type: StatusTabs, source: settlements, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Cancelled, label: Đã hủy }] }
   - type: DataGrid
     source: settlements
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có hoàn ứng }

@@ -17,7 +17,7 @@ datasources:
 toolbar:
   - { id: add_debit_note_btn, label: '+ Thêm giấy báo nợ', variant: primary, permission: accounting.write, action: add_debit_note }
 components:
-  - { type: ListToolbar, source: debit_notes, filter_field: q, search: { label: Tìm kiếm giấy báo nợ, placeholder: 'Tìm số chứng từ hoặc đối tác...' } }
+  - { type: ListToolbar, source: debit_notes, filter_field: q, search: { label: Tìm kiếm giấy báo nợ, placeholder: 'Tìm số chứng từ hoặc đối tác...' }, actions: [{ id: debit_notes.export, label: 'Xuất CSV', icon: '↓' }] }
   - type: StatusTabs
     source: debit_notes
     filter_field: status
@@ -25,6 +25,7 @@ components:
   - type: DataGrid
     source: debit_notes
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có giấy báo nợ }

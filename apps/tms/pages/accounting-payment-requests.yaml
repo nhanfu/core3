@@ -17,7 +17,7 @@ datasources:
 toolbar:
   - { id: add_payment_request_btn, label: '+ Thêm đề nghị chi', variant: primary, permission: accounting.write, action: add_payment_request }
 components:
-  - { type: ListToolbar, source: payment_requests, filter_field: q, search: { label: Tìm kiếm đề nghị chi, placeholder: 'Tìm số chứng từ hoặc đối tác...' } }
+  - { type: ListToolbar, source: payment_requests, filter_field: q, search: { label: Tìm kiếm đề nghị chi, placeholder: 'Tìm số chứng từ hoặc đối tác...' }, actions: [{ id: payment_requests.export, label: 'Xuất CSV', icon: '↓' }] }
   - type: StatusTabs
     source: payment_requests
     filter_field: status
@@ -25,6 +25,7 @@ components:
   - type: DataGrid
     source: payment_requests
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có đề nghị thanh toán }

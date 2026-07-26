@@ -14,11 +14,12 @@ datasources:
       FROM accounting_entries WHERE kind = 'advance' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%') ORDER BY document_date DESC, code
 toolbar: [{ id: add_advance_btn, label: '+ Thêm tạm ứng', variant: primary, permission: accounting.write, action: add_advance }]
 components:
-  - { type: ListToolbar, source: advances, filter_field: q, search: { label: Tìm kiếm tạm ứng, placeholder: 'Tìm số chứng từ hoặc người nhận...' } }
+  - { type: ListToolbar, source: advances, filter_field: q, search: { label: Tìm kiếm tạm ứng, placeholder: 'Tìm số chứng từ hoặc người nhận...' }, actions: [{ id: advances.export, label: 'Xuất CSV', icon: '↓' }] }
   - { type: StatusTabs, source: advances, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Cancelled, label: Đã hủy }] }
   - type: DataGrid
     source: advances
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có tạm ứng }
