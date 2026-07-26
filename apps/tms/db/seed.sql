@@ -401,7 +401,8 @@ INSERT INTO system_configs (id, kind, code, name, config_value, description, sta
 ('sys-04', 'shipment_type', 'FCL', 'Nguyên container', 'container', 'Loại hình vận chuyển', 'Active', 10),
 ('sys-05', 'trip_status', 'SCHEDULED', 'Đã lên lịch', 'scheduled', 'Trạng thái chuyến', 'Active', 10),
 ('sys-06', 'fee_rule', 'DISTANCE', 'Cước theo quãng đường', 'distance_km * rate', 'Công thức phí', 'Active', 10),
-('sys-07', 'storage', 'LOCAL', 'Kho tệp đính kèm', '/data/uploads', 'Vị trí lưu tệp', 'Active', 10);
+('sys-07', 'storage', 'LOCAL', 'Kho tệp đính kèm', '/data/uploads', 'Vị trí lưu tệp', 'Active', 10),
+('sys-08', 'organization', 'USER_SEATS', 'Số chỗ người dùng', '50', 'Giới hạn tài khoản người dùng theo gói', 'Active', 10);
 INSERT INTO approval_flow_steps (id, flow_id, sequence, name, approver_role, min_amount, status) VALUES
 ('flow-step-01', 'sys-03', 10, 'Kiểm tra chứng từ', 'Sales Manager', 0, 'Active'),
 ('flow-step-02', 'sys-03', 20, 'Phê duyệt giá', 'Finance Manager', 10000000, 'Active');

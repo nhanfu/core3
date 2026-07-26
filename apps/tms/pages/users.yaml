@@ -11,6 +11,15 @@ datasources:
         SUM(CASE WHEN COALESCE(enabled, true) THEN 1 ELSE 0 END) AS active_users,
         SUM(CASE WHEN COALESCE(enabled, true) THEN 0 ELSE 1 END) AS disabled_users
       FROM users
+  - id: org_seat_usage
+    single: true
+    permission: settings.read
+    query: |
+      SELECT
+        SUM(CASE WHEN COALESCE(enabled, true) THEN 1 ELSE 0 END) AS used_seats,
+        CAST(COALESCE((SELECT config_value FROM system_configs WHERE kind = 'organization' AND code = 'USER_SEATS' AND status = 'Active' LIMIT 1), '50') AS INTEGER) AS seat_limit,
+        CAST(COALESCE((SELECT config_value FROM system_configs WHERE kind = 'organization' AND code = 'USER_SEATS' AND status = 'Active' LIMIT 1), '50') AS INTEGER) - SUM(CASE WHEN COALESCE(enabled, true) THEN 1 ELSE 0 END) AS available_seats
+      FROM users
   - id: org_users
     single: false
     permission: settings.read
@@ -39,6 +48,12 @@ components:
       - { label: Tổng tài khoản, field: total_users, color: blue }
       - { label: Đang hoạt động, field: active_users, color: green }
       - { label: Đã khóa, field: disabled_users, color: red }
+  - type: StatRow
+    source: org_seat_usage
+    stats:
+      - { label: Chỗ đã dùng, field: used_seats, color: indigo }
+      - { label: Chỗ còn lại, field: available_seats, color: green }
+      - { label: Tổng số chỗ, field: seat_limit, color: blue }
   - type: ListToolbar
     source: org_users
     filter_field: q
