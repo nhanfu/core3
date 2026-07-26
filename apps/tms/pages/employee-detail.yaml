@@ -32,6 +32,7 @@ components:
   - type: DataGrid
     source: employee_contracts
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có hợp đồng }
     columns: [{ field: code, label: Hợp đồng }, { field: contract_type, label: Loại }, { field: start_date, label: Từ ngày }, { field: end_date, label: Đến ngày }, { field: base_salary, label: Lương cơ bản, align: right }, { field: status, label: Trạng thái }]
@@ -45,6 +46,7 @@ components:
   - type: DataGrid
     source: employee_documents
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có tài liệu nhân sự }
     columns: [{ field: file_name, label: Tên tệp }, { field: mime_type, label: Loại }, { field: size_bytes, label: Dung lượng, align: right }, { field: created_at, label: Ngày tải lên }, { field: actions, label: '', sortable: false, actions: [{ id: download_employee_document, label: Tải xuống, variant: ghost }] }]
