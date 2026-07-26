@@ -1014,6 +1014,12 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (parentId) {
         const [parent] = await repository.query('SELECT id FROM areas WHERE id = ?', [parentId]);
         if (!parent) return apiError(400, 'Parent area not found');
+        let cursor = String(parentId);
+        for (let depth = 0; depth < 100 && cursor; depth++) {
+          if (cursor === String(id)) return apiError(400, 'Area hierarchy cycle detected');
+          const [ancestor] = await repository.query('SELECT parent_id FROM areas WHERE id = ?', [cursor]);
+          cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
+        }
       }
     }
     if (table === 'departments' && changes.some((change: any) => change.field === 'parent_id')) {
@@ -1022,6 +1028,12 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (parentId) {
         const [parent] = await repository.query('SELECT id FROM departments WHERE id = ?', [parentId]);
         if (!parent) return apiError(400, 'Parent department not found');
+        let cursor = String(parentId);
+        for (let depth = 0; depth < 100 && cursor; depth++) {
+          if (cursor === String(id)) return apiError(400, 'Department hierarchy cycle detected');
+          const [ancestor] = await repository.query('SELECT parent_id FROM departments WHERE id = ?', [cursor]);
+          cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
+        }
       }
     }
     if (table === 'accounting_entries' && changes.some((change: any) => change.field === 'linked_advance_id')) {

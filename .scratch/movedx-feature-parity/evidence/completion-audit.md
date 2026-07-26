@@ -60,8 +60,8 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Team create/edit forms now use datasource-backed department and active-employee manager lookups.
 - Customer and partner create/edit forms now use owner lookup options that preserve existing assignments and include active employees.
 - Location create/edit forms now use a datasource-backed area lookup instead of free-form area IDs.
-- Areas now support a persisted parent relationship, parent display, and server-validated parent selection for hierarchy editing; workflow audit covers self-parent rejection.
-- Departments now support a persisted parent relationship, parent display, and server-validated parent selection for hierarchy editing.
+- Areas now support a persisted parent relationship, parent display, and ancestor-walking cycle validation; workflow audit covers self-parent and two-node cycle rejection.
+- Departments now support a persisted parent relationship, parent display, and ancestor-walking cycle validation.
 - Department create/edit forms now use a branch lookup instead of free-form branch IDs.
 - Quote create/edit forms now use a customer lookup preserving legacy quote customer values.
 - User create/edit forms now support native multi-select role assignment backed by the role lookup datasource.
