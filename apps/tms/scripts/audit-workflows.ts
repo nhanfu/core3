@@ -31,6 +31,17 @@ async function expectRejected(action: string, id: string, expectedStatus = 409) 
   }
 }
 
+async function expectActionRejected(action: string, payload: Record<string, unknown>, expectedStatus = 400) {
+  const response = await fetch(`${baseUrl}/api/actions/${action}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  });
+  if (response.status !== expectedStatus) {
+    throw new Error(`${action}: expected rejection ${expectedStatus}, got ${response.status}`);
+  }
+}
+
 // These records are consumed only on a disposable freshly seeded database.
 const checks = [
   ['orders.submit_for_approval', 'order-01', 'Pending Approval'],
@@ -74,4 +85,10 @@ const rejected = [
   ['trips.cancel', 'trip-01'],
 ] as const;
 for (const [action, id] of rejected) await expectRejected(action, id);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} failures=0`);
+const validationRejections = [
+  ['system.approval_steps.create', { id: 'sys-03', values: {} }],
+  ['system.print_blocks.create', { id: 'sys-02', values: { block_type: 'text', label: '', content: '' } }],
+  ['chat.messages.send', { id: 'chat-thread-ops-south', content: '' }],
+] as const;
+for (const [action, payload] of validationRejections) await expectActionRejected(action, payload);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} failures=0`);
