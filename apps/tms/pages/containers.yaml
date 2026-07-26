@@ -1,0 +1,98 @@
+title: Container
+
+page:
+  id: containers
+  auth:
+    require: [dispatch.read]
+
+datasources:
+  - id: containers
+    single: false
+    permission: dispatch.read
+    query: |
+      SELECT c.*, l.code AS location_code, l.name AS location_name,
+        CASE c.status WHEN 'Available' THEN 'Sẵn sàng' WHEN 'InUse' THEN 'Đang sử dụng' WHEN 'Maintenance' THEN 'Bảo dưỡng' ELSE 'Ngưng hoạt động' END AS status_label
+      FROM containers c
+      LEFT JOIN locations l ON l.id = c.location_id
+      WHERE (NULLIF(:status, '') IS NULL OR c.status = :status)
+        AND (:q IS NULL OR c.container_number ILIKE '%' || :q || '%' OR c.container_type ILIKE '%' || :q || '%' OR c.owner_name ILIKE '%' || :q || '%')
+      ORDER BY c.created_at DESC, c.container_number
+
+toolbar:
+  - id: add_container_btn
+    label: '+ Thêm container'
+    variant: primary
+    permission: dispatch.write
+    action: add_container
+
+components:
+  - type: ListToolbar
+    source: containers
+    filter_field: q
+    search: { label: Tìm kiếm container, placeholder: 'Tìm số container, loại hoặc chủ sở hữu...' }
+  - type: StatusTabs
+    source: containers
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Available, label: Sẵn sàng }
+      - { id: InUse, label: Đang sử dụng }
+      - { id: Maintenance, label: Bảo dưỡng }
+      - { id: Inactive, label: Ngưng hoạt động }
+  - type: DataGrid
+    source: containers
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có container, description: Thử thay đổi bộ lọc hoặc tạo container mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: container_number, label: Số container, type: PrimaryEntityCell, secondary: container_type }
+      - { field: owner_name, label: Chủ sở hữu }
+      - { field: location_code, label: Vị trí, type: PrimaryEntityCell, secondary: location_name }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Sẵn sàng: green, Đang sử dụng: blue, Bảo dưỡng: amber, Ngưng hoạt động: red }
+      - { field: created_at, label: Ngày giờ tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_container, label: Sửa, variant: ghost }
+          - { id: delete_container, label: Xóa, variant: danger }
+
+actions:
+  - id: add_container
+    type: form
+    title: Thêm container
+    table: containers
+    operation: insert
+    refresh: [containers]
+    fields:
+      - { field: container_number, label: Số container, type: text, required: true }
+      - { field: container_type, label: Loại container, type: select, options: [20DC, 40DC, 40HC, 20RF, 40RF], default: 20DC }
+      - { field: owner_name, label: Chủ sở hữu, type: text }
+      - { field: location_id, label: Mã HT địa điểm, type: text }
+      - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive], default: Available }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: edit_container
+    type: form
+    title: Cập nhật container
+    table: containers
+    operation: update
+    prefill: row
+    refresh: [containers]
+    fields:
+      - { field: container_number, label: Số container, type: text, required: true }
+      - { field: container_type, label: Loại container, type: select, options: [20DC, 40DC, 40HC, 20RF, 40RF] }
+      - { field: owner_name, label: Chủ sở hữu, type: text }
+      - { field: location_id, label: Mã HT địa điểm, type: text }
+      - { field: status, label: Trạng thái, type: select, options: [Available, InUse, Maintenance, Inactive] }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: delete_container
+    type: delete
+    confirm: 'Xóa container {{row.container_number}}?'
+    table: containers
+    refresh: [containers]

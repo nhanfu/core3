@@ -47,7 +47,7 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/hr/employees', '/hr/contracts', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/login',
+  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/containers', '/locations', '/hr/employees', '/hr/contracts', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/login',
 ]);
 
 const MIME = {
@@ -181,6 +181,18 @@ async function initDb(): Promise<void> {
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.write');
     INSERT INTO permissions (id, role_id, permission_key) SELECT 'perm-adm-23', 'role-admin', 'system.read' WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'system.read');
     INSERT INTO permissions (id, role_id, permission_key) SELECT 'perm-adm-24', 'role-admin', 'system.write' WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'system.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-25', 'role-admin', 'dispatch.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'dispatch.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-26', 'role-admin', 'dispatch.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'dispatch.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-dp-07', 'role-dispatcher', 'dispatch.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-dp-08', 'role-dispatcher', 'dispatch.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.write');
   `);
 }
 
@@ -193,6 +205,8 @@ const SOURCE_FILES = [
   'pages/customers.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
+  'pages/containers.yaml',
+  'pages/locations.yaml',
   'pages/users.yaml',
   'pages/roles.yaml',
   'pages/employees.yaml',
@@ -267,6 +281,16 @@ const TABLE_REGISTRY = {
     permission: 'crm.write',
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'],
+  },
+  containers: {
+    permission: 'dispatch.write',
+    timestamps: true,
+    fields: ['container_number', 'container_type', 'owner_name', 'location_id', 'status', 'notes'],
+  },
+  locations: {
+    permission: 'dispatch.write',
+    timestamps: true,
+    fields: ['code', 'name', 'location_type', 'address', 'city', 'area_id', 'status'],
   },
   employees:    {
     permission: 'hr.write',

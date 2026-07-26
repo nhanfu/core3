@@ -148,6 +148,42 @@ CREATE TABLE IF NOT EXISTS payrolls (
   UNIQUE(employee_id, pay_month)
 );
 
+CREATE TABLE IF NOT EXISTS areas (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  region VARCHAR,
+  description VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS locations (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  location_type VARCHAR NOT NULL DEFAULT 'Other' CHECK (location_type IN ('Port', 'Warehouse', 'Depot', 'Customer', 'Other')),
+  address VARCHAR,
+  city VARCHAR,
+  area_id VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS containers (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  container_number VARCHAR NOT NULL UNIQUE,
+  container_type VARCHAR NOT NULL DEFAULT '20DC',
+  owner_name VARCHAR,
+  location_id VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Available' CHECK (status IN ('Available', 'InUse', 'Maintenance', 'Inactive')),
+  notes VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS trucks (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   plate VARCHAR NOT NULL UNIQUE,

@@ -37,7 +37,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-21', 'role-admin', 'hr.read'),
 ('perm-adm-22', 'role-admin', 'hr.write'),
 ('perm-adm-23', 'role-admin', 'system.read'),
-('perm-adm-24', 'role-admin', 'system.write');
+('perm-adm-24', 'role-admin', 'system.write'),
+('perm-adm-25', 'role-admin', 'dispatch.read'),
+('perm-adm-26', 'role-admin', 'dispatch.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -56,7 +58,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-dp-03', 'role-dispatcher', 'fleet.read'),
 ('perm-dp-04', 'role-dispatcher', 'drivers.read'),
 ('perm-dp-05', 'role-dispatcher', 'orders.read'),
-('perm-dp-06', 'role-dispatcher', 'orders.write');
+('perm-dp-06', 'role-dispatcher', 'orders.write'),
+('perm-dp-07', 'role-dispatcher', 'dispatch.read'),
+('perm-dp-08', 'role-dispatcher', 'dispatch.write');
 
 -- mechanic
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -109,6 +113,27 @@ INSERT INTO payrolls (id, code, employee_id, pay_month, base_salary, allowance, 
 ('payroll-03', 'BL202607003', 'employee-03', '2026-07-01', 16000000, 1500000, 1500000, 16000000, 'Approved'),
 ('payroll-04', 'BL202607004', 'employee-04', '2026-07-01', 18000000, 1500000, 1700000, 17800000, 'Draft'),
 ('payroll-05', 'BL202607005', 'employee-05', '2026-07-01', 17000000, 1000000, 900000, 17100000, 'Draft');
+
+-- ── Dispatch master data ───────────────────────────────────────────────────
+INSERT INTO areas (id, code, name, region, description, status) VALUES
+('area-01', 'MN', 'Miền Nam', 'Nam Bộ', 'Khu vực vận hành phía Nam', 'Active'),
+('area-02', 'MT', 'Miền Trung', 'Trung Bộ', 'Khu vực vận hành miền Trung', 'Active'),
+('area-03', 'MB', 'Miền Bắc', 'Bắc Bộ', 'Khu vực vận hành phía Bắc', 'Active'),
+('area-04', 'OLD', 'Khu vực cũ', 'Khác', 'Không còn sử dụng', 'Inactive');
+
+INSERT INTO locations (id, code, name, location_type, address, city, area_id, status) VALUES
+('location-01', 'CATLAI', 'Cảng Cát Lái', 'Port', 'Đường Nguyễn Thị Định, TP. Thủ Đức', 'TP. Hồ Chí Minh', 'area-01', 'Active'),
+('location-02', 'TCIT', 'Cảng Tân Cảng - Cái Mép', 'Port', 'Phú Mỹ', 'Bà Rịa - Vũng Tàu', 'area-01', 'Active'),
+('location-03', 'KHOHN', 'Kho hàng không Nội Bài', 'Warehouse', 'Phú Minh, Sóc Sơn', 'Hà Nội', 'area-03', 'Active'),
+('location-04', 'DEPOTTT', 'Depot Tân Thuận', 'Depot', 'Quận 7', 'TP. Hồ Chí Minh', 'area-01', 'Active'),
+('location-05', 'KHOOLD', 'Kho cũ Bình Dương', 'Warehouse', 'Thuận An', 'Bình Dương', 'area-01', 'Inactive');
+
+INSERT INTO containers (id, container_number, container_type, owner_name, location_id, status, notes) VALUES
+('container-01', 'MSKU1234567', '20DC', 'Maersk Việt Nam', 'location-01', 'Available', NULL),
+('container-02', 'TGHU2345678', '40HC', 'Hapag-Lloyd', 'location-02', 'InUse', 'Đang giao hàng'),
+('container-03', 'OOLU3456789', '40HC', 'OOCL', 'location-01', 'Maintenance', 'Kiểm tra vỏ container'),
+('container-04', 'CMAU4567890', '20RF', 'CMA CGM', 'location-03', 'Available', NULL),
+('container-05', 'TEMU5678901', '20DC', 'ONE', 'location-04', 'Inactive', 'Đã trả depot');
 
 -- ── Customers ──────────────────────────────────────────────────────────────
 INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name, visibility, status) VALUES
