@@ -6,14 +6,33 @@ page:
     require: [fleet.read]
 
 datasources:
+  - id: dashboard_routes
+    single: false
+    permission: fleet.read
+    query: |
+      SELECT origin || ' → ' || destination AS route, COUNT(*) AS trip_count,
+        COALESCE(SUM(distance_km), 0) AS total_distance_km
+      FROM trips
+      WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      GROUP BY origin, destination ORDER BY trip_count DESC, route
+  - id: dashboard_customers
+    single: false
+    permission: fleet.read
+    query: |
+      SELECT customer_name, COUNT(*) AS order_count, COALESCE(SUM(total_amount), 0) AS total_amount
+      FROM orders
+      WHERE (:from_date IS NULL OR order_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+      GROUP BY customer_name ORDER BY order_count DESC, total_amount DESC
   - id: dashboard_kpis
     single: true
     permission: fleet.read
     query: |
       SELECT
-        (SELECT COUNT(*) FROM trips) AS total_trips,
-        (SELECT COUNT(*) FROM trips WHERE status = 'In Transit') AS in_transit,
-        (SELECT COUNT(*) FROM trips WHERE status = 'Scheduled') AS scheduled,
+        (SELECT COUNT(*) FROM trips WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS total_trips,
+        (SELECT COUNT(*) FROM trips WHERE status = 'In Transit' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS in_transit,
+        (SELECT COUNT(*) FROM trips WHERE status = 'Scheduled' AND (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS scheduled,
         (SELECT COUNT(*) FROM maintenance WHERE status = 'Overdue') AS overdue_maintenance,
         (SELECT COUNT(*) FROM trucks WHERE status = 'Active') AS active_trucks
   - id: dashboard_trip_status
@@ -27,6 +46,7 @@ datasources:
         WHEN 'Cancelled' THEN 'Đã hủy'
         ELSE status END AS status, COUNT(*) AS trip_count
       FROM trips
+      WHERE (:from_date IS NULL OR departure_time >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
       GROUP BY status
       ORDER BY trip_count DESC, status
   - id: dashboard_dispatch_queue
@@ -40,9 +60,16 @@ datasources:
       LEFT JOIN trucks tr ON tr.id = t.truck_id
       LEFT JOIN drivers d ON d.id = t.driver_id
       WHERE t.status IN ('Scheduled', 'In Transit')
+        AND (:from_date IS NULL OR t.departure_time >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR t.departure_time < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
       ORDER BY CASE t.status WHEN 'In Transit' THEN 0 ELSE 1 END, t.departure_time
 
 components:
+  - type: ListToolbar
+    source: dashboard_dispatch_queue
+    filter_sources: [dashboard_kpis, dashboard_trip_status, dashboard_dispatch_queue, dashboard_routes, dashboard_customers]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày' }
+    actions: [{ id: dashboard_dispatch_queue.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: dashboard_kpis
     stats:
@@ -96,3 +123,13 @@ components:
         field: departure_time
         label: Khởi hành
         format: short
+  - type: DataGrid
+    source: dashboard_routes
+    page_size: 10
+    row_key: route
+    columns: [{ field: route, label: Tuyến đường }, { field: trip_count, label: Số chuyến, align: right }, { field: total_distance_km, label: Tổng km, align: right }]
+  - type: DataGrid
+    source: dashboard_customers
+    page_size: 10
+    row_key: customer_name
+    columns: [{ field: customer_name, label: Khách hàng }, { field: order_count, label: Số đơn, align: right }, { field: total_amount, label: Giá trị đơn, align: right }]
