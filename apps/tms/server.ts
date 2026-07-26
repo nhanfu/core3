@@ -23,6 +23,7 @@ import { TRIP_ACTION_REGISTRY } from './services/trip-actions.ts';
 import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
 import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
 import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
+import { CURRENCY_ACTION_REGISTRY } from './services/currency-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -38,6 +39,18 @@ const FINANCIAL_WORKFLOW_SCOPES = new Set([
   'advance',
   'settlement',
 ]);
+const DEFAULT_CURRENCY_RATES: Record<string, number> = { VND: 1, USD: 25400, EUR: 27600 };
+function configuredCurrencyRates(): { rates: Record<string, number>; source: string } {
+  const raw = process.env.TMS_CURRENCY_RATES_JSON;
+  if (!raw) return { rates: DEFAULT_CURRENCY_RATES, source: 'demo-config' };
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('object required');
+    return { rates: parsed as Record<string, number>, source: 'environment' };
+  } catch {
+    throw Object.assign(new Error('TMS_CURRENCY_RATES_JSON must be a JSON object'), { status: 400 });
+  }
+}
 
 // ── DuckDB setup ─────────────────────────────────────────────────────────────
 const db = new duckdb.Database(DB_PATH);
@@ -172,6 +185,16 @@ async function initDb(): Promise<void> {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id VARCHAR;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
+    CREATE TABLE IF NOT EXISTS currency_rates (
+      id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+      currency_code VARCHAR NOT NULL UNIQUE,
+      rate_to_vnd DECIMAL(18,6) NOT NULL CHECK (rate_to_vnd > 0),
+      effective_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      source VARCHAR NOT NULL DEFAULT 'demo-config',
+      synced_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_currency_rates_code ON currency_rates(currency_code);
     INSERT INTO order_workflow_states(order_id, status)
     SELECT o.id, o.status
     FROM orders o
@@ -428,6 +451,7 @@ const REGISTERED_NAMED_ACTIONS = new Set([
   ...Object.keys(CODE_RULE_ACTION_REGISTRY),
   ...Object.keys(ROLE_ACTION_REGISTRY),
   ...Object.keys(USER_ROLE_ACTION_REGISTRY),
+  ...Object.keys(CURRENCY_ACTION_REGISTRY),
 ]);
 
 for (const [pageId, page] of PAGES) {
@@ -728,17 +752,22 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const codeRuleActionDefinition = CODE_RULE_ACTION_REGISTRY[actionName];
     const roleActionDefinition = ROLE_ACTION_REGISTRY[actionName];
     const userRoleActionDefinition = USER_ROLE_ACTION_REGISTRY[actionName];
+    const currencyActionDefinition = CURRENCY_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
       || lineItemActionDefinition
       || chatActionDefinition
       || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition || currencyActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(resolvedActionDefinition.permission);
 
     const body = await req.json() as any;
+    if (currencyActionDefinition) {
+      const configured = configuredCurrencyRates();
+      return json(await repository.syncCurrencyRates(configured.rates, configured.source, activityActor));
+    }
     if (chatActionDefinition) {
       if (chatActionDefinition.operation === 'create_thread') {
         return json(await repository.createChatThread(

@@ -420,6 +420,17 @@ CREATE TABLE IF NOT EXISTS master_data (
   UNIQUE(kind, code)
 );
 
+CREATE TABLE IF NOT EXISTS currency_rates (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  currency_code VARCHAR NOT NULL UNIQUE,
+  rate_to_vnd DECIMAL(18,6) NOT NULL CHECK (rate_to_vnd > 0),
+  effective_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  source VARCHAR NOT NULL DEFAULT 'demo-config',
+  synced_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_currency_rates_code ON currency_rates(currency_code);
+
 CREATE TABLE IF NOT EXISTS accounting_entries (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   kind VARCHAR NOT NULL CHECK (kind IN ('debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account')),

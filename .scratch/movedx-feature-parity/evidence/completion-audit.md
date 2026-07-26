@@ -49,6 +49,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Trip-status chart uses the shared pie variant to match the supplied reference composition.
 - Approval-flow and print-template detail grids now support declarative drag-and-drop row ordering backed by their existing server-authorized move actions; the DataGrid reorder hook is covered by a focused component test.
 - Print-template block forms now use a shared rich-text field with declarative token-picker buttons for order number, customer, route, and line tokens.
+- Currency catalog now includes server-owned rate-to-VND/effective-date/source fields and an audited, permission-gated synchronization action; the fresh workflow audit verifies all three seeded rates persist.
 
 ## Not Proven
 
@@ -63,6 +64,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 # The browser audit also accepts an isolated seeded server, for example:
 # TMS_DB_PATH=/tmp/core3-parity-3419.duckdb TMS_UPLOAD_ROOT=/tmp/core3-uploads-3419 PORT=3419 bun server.ts
 # (cd apps/tms && TMS_BASE_URL=http://localhost:3419 TMS_CDP_URL=http://localhost:9222 bun scripts/audit-ui.ts)
+(cd apps/tms && TMS_BASE_URL=http://localhost:3425 bun scripts/audit-workflows.ts)
 (cd lib && bun run test)
 ```
 

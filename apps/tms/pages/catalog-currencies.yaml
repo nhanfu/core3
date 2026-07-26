@@ -10,15 +10,20 @@ datasources:
     single: false
     permission: catalog.read
     query: |
-      SELECT id, code, name, description, symbol, decimals, status, sort_order, created_at
-      FROM master_data
-      WHERE kind = 'currency'
-        AND (:status IS NULL OR status = :status)
-        AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR symbol ILIKE '%' || :q || '%')
-      ORDER BY sort_order, code
+      SELECT m.id, m.code, m.name, m.description, m.symbol, m.decimals, m.status, m.sort_order,
+        COALESCE(r.rate_to_vnd, CASE WHEN m.code = 'VND' THEN 1 ELSE NULL END) AS rate_to_vnd,
+        CAST(r.effective_date AS VARCHAR) AS rate_effective_date,
+        r.source AS rate_source, r.synced_at AS rate_synced_at, m.created_at
+      FROM master_data m
+      LEFT JOIN currency_rates r ON r.currency_code = m.code
+      WHERE m.kind = 'currency'
+        AND (:status IS NULL OR m.status = :status)
+        AND (:q IS NULL OR m.code ILIKE '%' || :q || '%' OR m.name ILIKE '%' || :q || '%' OR m.symbol ILIKE '%' || :q || '%')
+      ORDER BY m.sort_order, m.code
 
 toolbar:
   - { id: add_currency_btn, label: '+ Thêm tiền tệ', variant: primary, permission: catalog.write, action: add_currency }
+  - { id: sync_currency_rates_btn, label: 'Đồng bộ tỷ giá', variant: secondary, permission: catalog.write, action: sync_currency_rates }
 
 components:
   - type: ListToolbar
@@ -45,6 +50,9 @@ components:
       - { field: name, label: Tiền tệ, type: PrimaryEntityCell, secondary: description }
       - { field: symbol, label: Ký hiệu, align: center }
       - { field: decimals, label: Số lẻ, align: right }
+      - { field: rate_to_vnd, label: Tỷ giá / VND, align: right }
+      - { field: rate_effective_date, label: Ngày hiệu lực }
+      - { field: rate_source, label: Nguồn }
       - { field: sort_order, label: Thứ tự, align: right }
       - field: status
         label: Trạng thái
@@ -60,6 +68,7 @@ components:
           - { id: delete_currency, label: Xóa, variant: danger }
 
 actions:
+  - { id: sync_currency_rates, type: server, action: catalog.currencies.sync_rates, refresh: [currencies] }
   - { id: import_currencies, type: upload, kind: master_data_import, scope: currency, refresh: [currencies] }
   - id: add_currency
     type: form

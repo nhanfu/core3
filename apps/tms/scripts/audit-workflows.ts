@@ -134,6 +134,24 @@ await patchRequest({
   id: 'order-01',
   changes: [{ field: 'status', value: 'Approved' }],
 }, 400);
+const currencySync = await fetch(`${baseUrl}/api/actions/catalog.currencies.sync_rates`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({}),
+});
+if (!currencySync.ok) throw new Error(`currency sync expected 200, got ${currencySync.status}`);
+const currencySyncBody = await currencySync.json() as { synced?: number };
+if (currencySyncBody.synced !== 3) throw new Error(`currency sync expected 3 rates, got ${JSON.stringify(currencySyncBody)}`);
+const currencyQuery = await fetch(`${baseUrl}/api/query`, {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({ sourceId: 'currencies', top: 20 }),
+});
+if (!currencyQuery.ok) throw new Error(`currency query expected 200, got ${currencyQuery.status}`);
+const currencyRows = await currencyQuery.json() as { data?: Array<{ code?: string; rate_to_vnd?: number }> };
+if (currencyRows.data?.find((row) => row.code === 'USD')?.rate_to_vnd !== 25400) {
+  throw new Error(`currency rate did not persist: ${JSON.stringify(currencyRows.data)}`);
+}
 const invalidImport = new FormData();
 invalidImport.append('file', new File(['not,valid\n'], 'audit.csv', { type: 'text/csv' }));
 invalidImport.append('meta', JSON.stringify({ kind: 'master_data_import', scope: 'unit' }));
@@ -152,4 +170,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 permission_denials=1 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 permission_denials=1 currency_sync=1 failures=0`);

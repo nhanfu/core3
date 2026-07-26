@@ -99,6 +99,47 @@ export class DuckDbRepository {
     return row;
   }
 
+  async syncCurrencyRates(
+    rates: Record<string, number>,
+    source: string,
+    actor: { id?: string | null; name: string },
+  ) {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        const updated: Array<{ currency_code: string; rate_to_vnd: number }> = [];
+        for (const [currencyCode, rawRate] of Object.entries(rates)) {
+          const code = String(currencyCode).trim().toUpperCase();
+          const rate = Number(rawRate);
+          if (!/^[A-Z]{3}$/.test(code) || !Number.isFinite(rate) || rate <= 0) continue;
+          await runOnConnection(conn, `
+            INSERT INTO currency_rates(id, currency_code, rate_to_vnd, effective_date, source, synced_at, updated_at)
+            VALUES(?,?,?,?,?,?,?)
+            ON CONFLICT(currency_code) DO UPDATE SET
+              rate_to_vnd = excluded.rate_to_vnd,
+              effective_date = excluded.effective_date,
+              source = excluded.source,
+              synced_at = excluded.synced_at,
+              updated_at = excluded.updated_at
+          `, [crypto.randomUUID(), code, rate, today, source, now, now]);
+          updated.push({ currency_code: code, rate_to_vnd: rate });
+        }
+        if (!updated.length) throw Object.assign(new Error('No valid currency rates supplied'), { status: 400 });
+        await runOnConnection(conn, `
+          INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail)
+          VALUES(gen_random_uuid(), ?, ?, 'sync_rates', 'currencies', NULL, ?)
+        `, [actor.id || null, actor.name, `Synchronized ${updated.length} currency rates from ${source}`]);
+        await runOnConnection(conn, 'COMMIT');
+        return { synced: updated.length, source, rates: updated };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
   async getEmployeeDocument(documentId: string) {
     const [row] = await this.query('SELECT d.*, e.id AS employee_id FROM employee_documents d JOIN employees e ON e.id = d.employee_id WHERE d.id = ?', [documentId]);
     return row || null;

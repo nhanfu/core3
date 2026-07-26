@@ -358,6 +358,11 @@ INSERT INTO master_data (id, kind, code, name, description, symbol, decimals, st
 ('catalog-currency-02', 'currency', 'USD', 'Đô la Mỹ', 'United States dollar', '$', 2, 'Active', 20),
 ('catalog-currency-03', 'currency', 'EUR', 'Euro', 'European euro', '€', 2, 'Active', 30);
 
+INSERT INTO currency_rates (id, currency_code, rate_to_vnd, effective_date, source) VALUES
+('currency-rate-vnd', 'VND', 1, CURRENT_DATE, 'seed'),
+('currency-rate-usd', 'USD', 25400, CURRENT_DATE, 'seed'),
+('currency-rate-eur', 'EUR', 27600, CURRENT_DATE, 'seed');
+
 -- ── Accounting records ──────────────────────────────────────────────────────
 INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, currency, status, document_date, due_date, description, sort_order) VALUES
 ('acct-debit-01', 'debit_note', 'GBN-0001', 'Cước vận chuyển tháng 7', 'Công ty CP Đại Phát', 32600000, 'VND', 'Draft', '2026-07-24', '2026-08-05', 'Đối soát tuyến Hà Nội - Đà Nẵng', 10),
