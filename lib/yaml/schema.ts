@@ -70,7 +70,7 @@ const SCOPE_KEYS = new Set(['label', 'value']);
 const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'variant', 'permission', 'action']);
 const FILTER_KEYS = new Set(['source', 'fields']);
-const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'placeholder']);
+const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
 const FIELD_KEYS = new Set(['field', 'label', 'type', 'required', 'options', 'options_source', 'multiple', 'default', 'tokens']);
 const COLUMN_KEYS = new Set([
   'field',
@@ -333,6 +333,10 @@ function validateFilters(
     requireString(field.field, `${path}.field`, issues);
     requireString(field.label, `${path}.label`, issues);
     requireString(field.type, `${path}.type`, issues);
+    if (field.options_source !== undefined) {
+      requireString(field.options_source, `${path}.options_source`, issues);
+      requireSource(field.options_source, `${path}.options_source`, datasourceIds, options, issues);
+    }
   });
 }
 

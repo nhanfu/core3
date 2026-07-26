@@ -53,7 +53,7 @@ filters:
     - field: type
       label: Type
       type: select
-      options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker]
+      options_source: fleet_type_lookup
     - field: q
       label: Search
       type: search

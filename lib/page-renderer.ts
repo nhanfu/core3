@@ -1401,6 +1401,16 @@ export async function renderPage(config: any, { container = document.body }: { c
   if (config.filters) {
     const { FilterBar } = await import('./components/FilterBar.ts');
     const filterSourceId = config.filters.source;
+    const filters = (config.filters.fields || []).map((field: any) => {
+      if (!field.options_source) return field;
+      const rows = dataMap[field.options_source]?.data;
+      return {
+        ...field,
+        options: Array.isArray(rows)
+          ? rows.map((row: any) => String(row.value ?? row.id ?? row.name ?? ''))
+          : [],
+      };
+    });
 
     const filterSlot = document.createElement('div');
     filterSlot.style.marginBottom = '20px';
@@ -1409,7 +1419,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const filterBar = new FilterBar(
       'page-filter-bar',
       { values: {} },
-      config.filters.fields || []
+      filters
     );
 
     filterBar._onAction = async (actionId, params) => {
@@ -1467,5 +1477,6 @@ function collectSources(config: any) {
   };
   visit(config.components);
   add(config.filters?.source);
+  for (const field of config.filters?.fields || []) add(field.options_source);
   return sources;
 }

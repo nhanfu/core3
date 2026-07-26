@@ -74,6 +74,16 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(page)).toThrow(/unknown datasource "missing_source"/);
   });
 
+  it('validates datasource-backed legacy filter references', () => {
+    const page = validPage() as any;
+    page.filters = {
+      source: 'orders',
+      fields: [{ field: 'status', label: 'Status', type: 'select', options_source: 'missing_source' }],
+    };
+
+    expect(() => validatePageDefinition(page)).toThrow(/unknown datasource "missing_source"/);
+  });
+
   it('rejects unknown root, component, and action properties', () => {
     const page = validPage() as any;
     page.script = 'alert(1)';
