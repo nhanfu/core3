@@ -400,6 +400,11 @@ INSERT INTO system_configs (id, kind, code, name, config_value, description, sta
 INSERT INTO approval_flow_steps (id, flow_id, sequence, name, approver_role, min_amount, status) VALUES
 ('flow-step-01', 'sys-03', 10, 'Kiểm tra chứng từ', 'Sales Manager', 0, 'Active'),
 ('flow-step-02', 'sys-03', 20, 'Phê duyệt giá', 'Finance Manager', 10000000, 'Active');
+INSERT INTO print_template_blocks (id, template_id, sequence, block_type, label, token_key, content, status) VALUES
+('tpl-block-01', 'sys-02', 10, 'text', 'Tiêu đề phiếu', NULL, 'PHIẾU XÁC NHẬN ĐƠN HÀNG', 'Active'),
+('tpl-block-02', 'sys-02', 20, 'token', 'Mã đơn hàng', 'order.order_number', NULL, 'Active'),
+('tpl-block-03', 'sys-02', 30, 'token', 'Tên khách hàng', 'order.customer_name', NULL, 'Active'),
+('tpl-block-04', 'sys-02', 40, 'table', 'Danh sách cước', 'order.lines', NULL, 'Active');
 INSERT INTO system_activity (id, actor_name, action, resource, detail, created_at) VALUES
 ('act-01', 'Admin User', 'Cập nhật', 'Quy tắc mã đơn hàng', 'Đổi tiền tố mã', '2026-07-25 09:30:00'),
 ('act-02', 'Admin User', 'Duyệt', 'Đề nghị thanh toán', 'Đã duyệt đề nghị chi', '2026-07-24 14:20:00');

@@ -1,0 +1,55 @@
+title: Chi tiết mẫu in
+page: { id: system-print-template-detail, auth: { require: [system.read] } }
+datasources:
+  - id: print_template
+    single: true
+    permission: system.read
+    query: "SELECT id, code, name, description, status, config_value FROM system_configs WHERE id = :id AND kind = 'print_template'"
+  - id: template_blocks
+    single: false
+    permission: system.read
+    query: "SELECT id, template_id, sequence, block_type, label, token_key, content, status FROM print_template_blocks WHERE template_id = :id ORDER BY sequence, id"
+components:
+  - { type: DocumentSummary, source: print_template, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Mô tả }, { field: config_value, label: Mã mẫu }] }
+  - type: DataGrid
+    source: template_blocks
+    page_size: 50
+    row_key: id
+    empty_state: { title: Mẫu in chưa có khối nội dung, description: 'Thêm văn bản, token hoặc bảng vào mẫu.' }
+    columns:
+      - { field: sequence, label: Thứ tự, align: right }
+      - { field: block_type, label: Loại khối }
+      - { field: label, label: Nhãn }
+      - { field: token_key, label: Token }
+      - { field: content, label: Nội dung }
+      - { field: status, label: Trạng thái }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: move_block_up, label: Lên, variant: ghost, show_if: "user.permissions.includes('system.write')" }
+          - { id: move_block_down, label: Xuống, variant: ghost, show_if: "user.permissions.includes('system.write')" }
+          - { id: edit_block, label: Sửa, variant: ghost, show_if: "user.permissions.includes('system.write')" }
+          - { id: delete_block, label: Xóa, variant: danger, show_if: "user.permissions.includes('system.write')" }
+toolbar:
+  - { id: back_print_templates, label: '← Danh sách mẫu in', variant: secondary, action: back_print_templates }
+  - { id: add_block, label: '+ Thêm khối', variant: primary, permission: system.write, action: add_block }
+actions:
+  - { id: back_print_templates, type: navigate, navigate_to: /system/print-templates }
+  - id: add_block
+    type: server_form
+    title: Thêm khối mẫu in
+    action: system.print_blocks.create
+    params: { id: '{state.id}' }
+    refresh: [template_blocks]
+    fields: [{ field: block_type, label: Loại khối, type: select, options: [text, token, table, spacer], default: text, required: true }, { field: label, label: Nhãn, type: text, required: true }, { field: token_key, label: Token dữ liệu, type: text }, { field: content, label: Nội dung văn bản, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+  - id: edit_block
+    type: server_form
+    title: Cập nhật khối mẫu in
+    action: system.print_blocks.update
+    params: { id: '{state.id}', block_id: '{row.id}' }
+    refresh: [template_blocks]
+    fields: [{ field: block_type, label: Loại khối, type: select, options: [text, token, table, spacer], required: true }, { field: label, label: Nhãn, type: text, required: true }, { field: token_key, label: Token dữ liệu, type: text }, { field: content, label: Nội dung văn bản, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+  - { id: delete_block, type: server, action: system.print_blocks.delete, confirm: 'Xóa khối này?', refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
+  - { id: move_block_up, type: server, action: system.print_blocks.move_up, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
+  - { id: move_block_down, type: server, action: system.print_blocks.move_down, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }

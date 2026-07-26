@@ -170,6 +170,7 @@ export class DuckDbRepository {
       && table !== 'accounting_entries'
       && table !== 'customers'
       && table !== 'partners'
+      && table !== 'system_configs'
     ) {
       await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
       return;
@@ -177,8 +178,8 @@ export class DuckDbRepository {
     await this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        await runOnConnection(
-          conn,
+      await runOnConnection(
+        conn,
           `DELETE FROM ${
             table === 'orders'
               ? 'order_lines'
@@ -188,7 +189,9 @@ export class DuckDbRepository {
                   ? 'accounting_entry_lines'
                   : table === 'customers'
                     ? 'customer_contacts'
-                    : 'partner_contacts'
+                    : table === 'partners'
+                      ? 'partner_contacts'
+                      : 'approval_flow_steps'
           }
            WHERE ${
              table === 'orders'
@@ -197,12 +200,17 @@ export class DuckDbRepository {
                  ? 'quote_id'
                  : table === 'accounting_entries'
                    ? 'entry_id'
-                   : table === 'customers'
+                 : table === 'customers'
                      ? 'customer_id'
-                     : 'partner_id'
+                     : table === 'partners'
+                       ? 'partner_id'
+                       : 'flow_id'
            } = ?`,
-          [id],
-        );
+        [id],
+      );
+        if (table === 'system_configs') {
+          await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE template_id = ?', [id]);
+        }
         await runOnConnection(conn, `DELETE FROM ${table} WHERE id = ?`, [id]);
         await runOnConnection(conn, 'COMMIT');
       } catch (error) {
@@ -756,6 +764,73 @@ export class DuckDbRepository {
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, operation === 'move_up' ? 'Đưa bước lên' : 'Đưa bước xuống']);
         }
         const rows = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE flow_id = ? ORDER BY sequence, id', [flowId]);
+        await runOnConnection(conn, 'COMMIT');
+        return { data: rows };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK');
+        throw error;
+      }
+    });
+  }
+
+  async mutatePrintTemplateBlock(
+    operation: 'create' | 'update' | 'delete' | 'move_up' | 'move_down',
+    templateId: string,
+    blockId: string | null,
+    values: Record<string, unknown>,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [template] = await queryOnConnection(conn, "SELECT id, code, name FROM system_configs WHERE id = ? AND kind = 'print_template'", [templateId]);
+        if (!template) throw { status: 404, message: 'Print template not found' };
+        if (operation === 'create' || operation === 'update') {
+          const blockType = String(values.block_type || 'text');
+          const label = String(values.label || '').trim();
+          const tokenKey = String(values.token_key || '').trim();
+          const content = String(values.content || '').trim();
+          const status = String(values.status || 'Active');
+          if (!label) throw { status: 400, message: 'block label required' };
+          if (!['text', 'token', 'table', 'spacer'].includes(blockType)) throw { status: 400, message: 'invalid block type' };
+          if (blockType === 'token' && !tokenKey) throw { status: 400, message: 'token key required' };
+          if (blockType === 'text' && !content) throw { status: 400, message: 'text content required' };
+          if (!['Active', 'Inactive'].includes(status)) throw { status: 400, message: 'invalid block status' };
+          if (operation === 'create') {
+            const [last] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) AS sequence FROM print_template_blocks WHERE template_id = ?', [templateId]);
+            const id = crypto.randomUUID();
+            await runOnConnection(conn, 'INSERT INTO print_template_blocks(id, template_id, sequence, block_type, label, token_key, content, status) VALUES(?,?,?,?,?,?,?,?)', [id, templateId, Number(last?.sequence || 0) + 10, blockType, label, tokenKey || null, content || null, status]);
+            await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', id, `Thêm khối ${label}`]);
+            const [row] = await queryOnConnection(conn, 'SELECT * FROM print_template_blocks WHERE id = ?', [id]);
+            await runOnConnection(conn, 'COMMIT');
+            return row;
+          }
+          if (!blockId) throw { status: 400, message: 'block_id required' };
+          const [existing] = await queryOnConnection(conn, 'SELECT id FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          if (!existing) throw { status: 404, message: 'Print block not found' };
+          await runOnConnection(conn, 'UPDATE print_template_blocks SET block_type = ?, label = ?, token_key = ?, content = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND template_id = ?', [blockType, label, tokenKey || null, content || null, status, blockId, templateId]);
+          await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, `Cập nhật khối ${label}`]);
+        } else if (operation === 'delete') {
+          if (!blockId) throw { status: 400, message: 'block_id required' };
+          const [existing] = await queryOnConnection(conn, 'SELECT label FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          if (!existing) throw { status: 404, message: 'Print block not found' };
+          await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, `Xóa khối ${existing.label}`]);
+        } else {
+          if (!blockId) throw { status: 400, message: 'block_id required' };
+          const [current] = await queryOnConnection(conn, 'SELECT id, sequence FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          if (!current) throw { status: 404, message: 'Print block not found' };
+          const direction = operation === 'move_up' ? '<' : '>';
+          const order = operation === 'move_up' ? 'DESC' : 'ASC';
+          const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM print_template_blocks WHERE template_id = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [templateId, current.sequence]);
+          if (neighbor) {
+            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
+            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [current.sequence, neighbor.id]);
+          }
+          await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, operation === 'move_up' ? 'Đưa khối lên' : 'Đưa khối xuống']);
+        }
+        const rows = await queryOnConnection(conn, 'SELECT * FROM print_template_blocks WHERE template_id = ? ORDER BY sequence, id', [templateId]);
         await runOnConnection(conn, 'COMMIT');
         return { data: rows };
       } catch (error) {

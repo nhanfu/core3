@@ -451,6 +451,20 @@ CREATE TABLE IF NOT EXISTS approval_flow_steps (
   UNIQUE(flow_id, sequence)
 );
 CREATE INDEX IF NOT EXISTS idx_approval_flow_steps_flow ON approval_flow_steps(flow_id, sequence);
+CREATE TABLE IF NOT EXISTS print_template_blocks (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id VARCHAR NOT NULL REFERENCES system_configs(id),
+  sequence INTEGER NOT NULL,
+  block_type VARCHAR NOT NULL CHECK (block_type IN ('text', 'token', 'table', 'spacer')),
+  label VARCHAR NOT NULL,
+  token_key VARCHAR,
+  content VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(template_id, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_print_template_blocks_template ON print_template_blocks(template_id, sequence);
 CREATE TABLE IF NOT EXISTS system_activity (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_id VARCHAR,

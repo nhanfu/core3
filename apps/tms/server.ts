@@ -19,6 +19,7 @@ import { LINE_ITEM_ACTION_REGISTRY } from './services/line-item-actions.ts';
 import { CHAT_ACTION_REGISTRY } from './services/chat-actions.ts';
 import { CONTACT_ACTION_REGISTRY } from './services/contact-actions.ts';
 import { APPROVAL_ACTION_REGISTRY } from './services/approval-actions.ts';
+import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -347,7 +348,7 @@ const SOURCE_FILES = [
   'pages/accounting-invoice-templates.yaml',
   'pages/accounting-ledger-accounts.yaml',
   'pages/system-activity.yaml', 'pages/system-code-rules.yaml',
-  'pages/system-print-templates.yaml', 'pages/system-approval-flows.yaml', 'pages/system-approval-flow-detail.yaml', 'pages/system-shipment-types.yaml',
+  'pages/system-print-templates.yaml', 'pages/system-print-template-detail.yaml', 'pages/system-approval-flows.yaml', 'pages/system-approval-flow-detail.yaml', 'pages/system-shipment-types.yaml',
   'pages/system-trip-statuses.yaml', 'pages/system-fee-rules.yaml', 'pages/system-storage.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
@@ -627,13 +628,14 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const chatActionDefinition = CHAT_ACTION_REGISTRY[actionName];
     const contactActionDefinition = CONTACT_ACTION_REGISTRY[actionName];
     const approvalActionDefinition = APPROVAL_ACTION_REGISTRY[actionName];
+    const templateActionDefinition = TEMPLATE_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
       || lineItemActionDefinition
       || chatActionDefinition
       || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || templateActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(resolvedActionDefinition.permission);
 
@@ -688,6 +690,17 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         approvalActionDefinition.operation,
         body.id,
         typeof body.step_id === 'string' ? body.step_id : null,
+        body.values && typeof body.values === 'object' ? body.values : {},
+        actionName,
+        activityActor,
+      ));
+    }
+    if (templateActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      return json(await repository.mutatePrintTemplateBlock(
+        templateActionDefinition.operation,
+        body.id,
+        typeof body.block_id === 'string' ? body.block_id : null,
         body.values && typeof body.values === 'object' ? body.values : {},
         actionName,
         activityActor,
