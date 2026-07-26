@@ -448,10 +448,26 @@ const TABLE_REGISTRY = {
       'notes',
     ],
   },
-  trucks:       { permission: 'fleet.write',       timestamps: true  },
-  drivers:      { permission: 'drivers.write',     timestamps: true  },
-  trips:        { permission: 'trips.write',        timestamps: true  },
-  maintenance:  { permission: 'maintenance.write',  timestamps: true  },
+  trucks: {
+    permission: 'fleet.write',
+    timestamps: true,
+    fields: ['plate', 'model', 'type', 'status', 'capacity_kg', 'mileage', 'driver_id', 'last_service', 'next_service', 'branch_id', 'notes'],
+  },
+  drivers: {
+    permission: 'drivers.write',
+    timestamps: true,
+    fields: ['name', 'phone', 'email', 'license_number', 'license_expiry', 'status', 'assigned_truck_id'],
+  },
+  trips: {
+    permission: 'trips.write',
+    timestamps: true,
+    fields: ['trip_number', 'truck_id', 'driver_id', 'origin', 'destination', 'status', 'departure_time', 'arrival_time', 'distance_km', 'cargo_type', 'cargo_weight', 'notes'],
+  },
+  maintenance: {
+    permission: 'maintenance.write',
+    timestamps: true,
+    fields: ['truck_id', 'service_type', 'status', 'scheduled_date', 'completed_date', 'technician_id', 'cost', 'notes'],
+  },
   customers:    {
     permission: 'crm.write',
     timestamps: true,
@@ -531,7 +547,11 @@ const TABLE_REGISTRY = {
     scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
   },
   system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
-  branches:     { permission: 'settings.write',     timestamps: true  },
+  branches: {
+    permission: 'settings.write',
+    timestamps: true,
+    fields: ['name', 'city', 'region', 'status'],
+  },
   users: {
     permission: 'settings.write',
     timestamps: true,
