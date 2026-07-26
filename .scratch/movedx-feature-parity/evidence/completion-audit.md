@@ -7,7 +7,8 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - 68 page YAML definitions load through the authenticated page API.
 - 123 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
-- The browser parity audit exercises every discovered shared control on all 52 routes with zero failures, including 317 sortable headers, 142 status tabs, 44 column choosers, 401 row actions dispatched with mutation POSTs blocked, 39 exports, and all discovered search/editor controls.
+- Fifteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, print-template, and approval-flow editors) also mount with zero browser failures.
+- The browser parity audit exercises every discovered shared control on all 52 routes with zero failures, including 317 sortable headers, 142 status tabs, 44 column choosers, 401 row actions dispatched with mutation POSTs blocked, 20 exports, and all discovered search/editor controls.
 - List-toolbar CSV exports now refetch the complete active filtered dataset in bounded server pages instead of exporting only the visible page.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
@@ -50,7 +51,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Not Proven
 
 - The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
-- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, and row action per route (52 routes, 0 failures; 317 sortable headers, 142 tabs, 44 choosers, 401 row actions, 39 exports). Named workflow coverage spans every registered workflow transition shape; full server-side mutation effects and detail-only permutations still need broader UI-level checks.
+- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, and row action per route (52 routes plus 15 populated details, 0 failures; 317 sortable headers, 142 tabs, 44 choosers, 401 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape; full server-side mutation effects still need broader UI-level checks.
 
 ## Current commands
 

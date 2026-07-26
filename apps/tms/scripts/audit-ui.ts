@@ -154,8 +154,43 @@ for (const route of targets) {
   }
 }
 
+const detailTargets = [
+  '/orders/detail?id=order-01',
+  '/quotes/detail?id=quote-01',
+  '/accounting/documents/detail?id=acct-debit-01&kind=debit_note',
+  '/hr/employees/detail?id=employee-01',
+  '/hr/contracts/detail?id=contract-05',
+  '/hr/payroll/detail?id=payroll-04',
+  '/vehicles/detail?id=truck-01',
+  '/drivers/detail?id=driver-01',
+  '/org/branches/detail?id=branch-hcm',
+  '/org/departments/detail?id=department-04',
+  '/org/users/detail?id=user-admin',
+  '/org/roles/detail?id=role-admin',
+  '/areas/detail?id=area-hcm',
+  '/system/print-templates/detail?id=sys-02',
+  '/system/approval-flows/detail?id=sys-03',
+] as const;
+const detailFailures: string[] = [];
+for (const target of detailTargets) {
+  consoleErrors.length = 0;
+  try {
+    await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${target}`)}`, `${target} navigation`);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const state = await evaluateWithTimeout(`({ outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${target} state read`);
+    if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
+      detailFailures.push(`${target}: populated detail did not render`);
+    }
+    if (consoleErrors.length) detailFailures.push(`${target}: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    detailFailures.push(`${target}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+failures.push(...detailFailures);
+
 socket.close();
 console.log(`routes=${targets.length} failures=${failures.length}`);
+console.log(`details=${detailTargets.length} detail_failures=${detailFailures.length}`);
 console.log(`controls=${Object.entries(controlCounts).map(([key, count]) => `${key}:${count}`).join(' ')}`);
 for (const { route, controls } of routeCoverage) {
   console.log(`coverage ${route} ${Object.entries(controls).map(([key, count]) => `${key}:${count}`).join(' ')}`);
