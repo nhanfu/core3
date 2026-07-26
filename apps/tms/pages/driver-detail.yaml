@@ -21,6 +21,7 @@ components:
   - type: DataGrid
     source: driver_trips
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có chuyến xe }
     columns: [{ field: trip_number, label: Chuyến }, { field: origin, label: Điểm đi }, { field: destination, label: Điểm đến }, { field: departure_time, label: Khởi hành }, { field: arrival_time, label: Hoàn thành }, { field: status, label: Trạng thái }]
