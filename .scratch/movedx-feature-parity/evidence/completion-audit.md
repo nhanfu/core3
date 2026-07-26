@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 129 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 131 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Sixteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, company settings, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
@@ -57,6 +57,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - The own-company settings page now exposes permission-gated attachment upload/download flows backed by `company_documents`; the fresh workflow audit verifies one stored company upload and authenticated byte-for-byte download.
 - Organization users now expose a server-backed seat-usage summary (`used`, `available`, and configured limit) sourced from the seeded organization capacity setting.
 - User create/edit forms now use datasource-backed branch and department selects instead of free-form internal IDs.
+- Team create/edit forms now use datasource-backed department and active-employee manager lookups.
 - An opt-in fresh-browser mutation audit performs normal pointer clicks for `submit_order` and `approve_order`, then verifies the order row persists `Pending Approval` and `Approved`; it passes with zero UI mutation failures.
 
 ## Not Proven
