@@ -132,6 +132,24 @@ describe('ListToolbar', () => {
     expect(container.querySelector('select[aria-label="Khoảng thời gian"]')).toBeNull();
   });
 
+  it('supports the dashboard previous-month and rolling-year presets', () => {
+    const component = new ListToolbar('toolbar', {}, {
+      search: false,
+      date_range: { presets: ['previous_month', 'last_12_months'], preset_style: 'segmented' },
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+
+    container.querySelector<HTMLButtonElement>('[data-date-preset="previous_month"]')!.click();
+    const previous = submit.mock.calls[0][1] as { from_date: string; to_date: string };
+    container.querySelector<HTMLButtonElement>('[data-date-preset="last_12_months"]')!.click();
+    const rolling = submit.mock.calls[1][1] as { from_date: string; to_date: string };
+
+    expect(previous.from_date).toMatch(/^\d{4}-\d{2}-01$/);
+    expect(previous.to_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(rolling.from_date).toMatch(/^\d{4}-\d{2}-01$/);
+  });
+
   it('emits typed filter values from declarative selects', () => {
     const component = new ListToolbar('toolbar', {}, {
       search: false,

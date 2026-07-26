@@ -486,10 +486,10 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
     if (!Array.isArray(value.presets)) {
       issues.push(`${path}.presets must be an array`);
     } else {
-      const allowed = new Set(['today', 'week', 'month', 'quarter', 'year', 'all']);
+      const allowed = new Set(['today', 'previous_month', 'week', 'month', 'quarter', 'year', 'last_12_months', 'all']);
       value.presets.forEach((preset, index) => {
         if (typeof preset !== 'string' || !allowed.has(preset)) {
-          issues.push(`${path}.presets[${index}] must be one of today, week, month, quarter, year, all`);
+          issues.push(`${path}.presets[${index}] must be one of today, previous_month, week, month, quarter, year, last_12_months, all`);
         }
       });
     }

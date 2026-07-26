@@ -29,7 +29,7 @@ export type ListToolbarDefinition = {
     to_field?: string;
     from_label?: string;
     to_label?: string;
-    presets?: Array<'today' | 'week' | 'month' | 'quarter' | 'year' | 'all'>;
+    presets?: Array<'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all'>;
     preset_style?: 'select' | 'segmented';
   };
   filter_sources?: string[];
@@ -102,7 +102,7 @@ export class ListToolbar extends BaseComponent {
       const dateRange = this.def.date_range;
       if (dateRange.presets?.length) {
         const labels: Record<string, string> = {
-          today: 'Hôm nay', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', all: 'Tất cả thời gian',
+          today: 'Hôm nay', previous_month: 'Tháng trước', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', last_12_months: '12 tháng', all: 'Tất cả thời gian',
         };
         const submitPreset = (value: typeof dateRange.presets[number]) => {
           const dates = this.resolvePreset(value);
@@ -197,20 +197,26 @@ export class ListToolbar extends BaseComponent {
     container.append(root);
   }
 
-  private resolvePreset(preset: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all') {
+  private resolvePreset(preset: 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all') {
     if (preset === 'all') return { from: '', to: '' };
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    let end = today;
+    if (preset === 'previous_month') {
+      start.setMonth(start.getMonth() - 1, 1);
+      end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    }
     if (preset === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
     if (preset === 'month') start.setDate(1);
     if (preset === 'quarter') {
       start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
     }
     if (preset === 'year') start.setMonth(0, 1);
+    if (preset === 'last_12_months') start.setMonth(start.getMonth() - 11, 1);
     const format = (date: Date) => [date.getFullYear(), date.getMonth() + 1, date.getDate()]
       .map((part, index) => index === 0 ? String(part) : String(part).padStart(2, '0'))
       .join('-');
-    return { from: format(start), to: format(today) };
+    return { from: format(start), to: format(end) };
   }
 
   private emitSearch(action?: string) {
