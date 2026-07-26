@@ -205,6 +205,24 @@ describe('DataGrid', () => {
     expect(container.querySelector('tbody tr td')?.textContent).toBe('3');
   });
 
+  it('collapses and expands child rows in a tree grid', async () => {
+    const grid = new DataGrid('areas', {
+      rows: [
+        { id: 'root', code: 'ROOT', parent_id: null },
+        { id: 'child', code: 'CHILD', parent_id: 'root' },
+      ],
+    }, [{ field: 'code', label: 'Code' }], { tree: { parentField: 'parent_id' } });
+    const container = mount(grid);
+    const toggle = container.querySelector<HTMLButtonElement>('[aria-label="Collapse row"]')!;
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2);
+
+    toggle.click();
+    await Promise.resolve();
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
+    expect(grid.state.collapsedTreeIds).toEqual(['root']);
+    expect(container.querySelector('[aria-label="Expand row"]')).not.toBeNull();
+  });
+
   it('supports declarative column visibility without losing the remaining columns', async () => {
     const grid = new DataGrid('orders', { rows }, columns, { columnChooser: true });
     const container = mount(grid);
