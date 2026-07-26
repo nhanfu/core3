@@ -91,6 +91,7 @@ components:
         sortable: false
         align: right
         actions:
+          - { id: view_order, label: Chi tiết, variant: secondary }
           - { id: edit_order, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
           - { id: submit_order, label: Trình duyệt, variant: primary, show_if: "row.status === 'Draft'" }
           - { id: approve_order, label: Duyệt, variant: primary, show_if: "row.status === 'Pending Approval' && user.permissions.includes('orders.approve')" }
@@ -114,7 +115,6 @@ actions:
       - { field: route, label: Tuyến, type: text }
       - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không], default: Đường bộ }
       - { field: trip_count, label: Số chuyến, type: number, default: 0 }
-      - { field: total_amount, label: Tổng tiền (₫), type: number, default: 0 }
       - { field: notes, label: Ghi chú, type: textarea }
   - id: edit_order
     type: form
@@ -132,8 +132,11 @@ actions:
       - { field: route, label: Tuyến, type: text }
       - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không] }
       - { field: trip_count, label: Số chuyến, type: number }
-      - { field: total_amount, label: Tổng tiền (₫), type: number }
       - { field: notes, label: Ghi chú, type: textarea }
+  - id: view_order
+    type: navigate
+    navigate_to: /orders/detail
+    params: { id: '{row.id}' }
   - id: submit_order
     type: server
     action: orders.submit_for_approval

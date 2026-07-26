@@ -16,7 +16,7 @@ datasources:
       WHERE kind = 'payment_request' AND (:status IS NULL OR status = :status)
         AND (:q IS NULL OR counterparty ILIKE '%' || :q || '%' OR status ILIKE '%' || :q || '%')
       GROUP BY counterparty, status, currency
-      ORDER BY total_amount DESC, counterparty
+      ORDER BY SUM(amount) DESC, counterparty
 components:
   - { type: ListToolbar, source: payment_request_summary, filter_field: q, search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' } }
   - { type: StatusTabs, source: payment_request_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }] }

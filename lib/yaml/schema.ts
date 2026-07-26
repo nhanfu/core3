@@ -30,7 +30,7 @@ export type ComponentDefinition = {
 
 export type ActionDefinition = {
   id: string;
-  type: 'form' | 'delete' | 'patch' | 'navigate' | 'server';
+  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server';
   [key: string]: unknown;
 };
 
@@ -93,15 +93,18 @@ const COMPONENT_ACTION_KEYS = new Set([
   'params',
   'variant',
   'disabled',
+  'permission',
+  'show_if',
 ]);
 const EMPTY_STATE_KEYS = new Set(['title', 'description']);
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'refresh', 'fields', 'scope']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'refresh', 'fields', 'params']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params']),
-  server: new Set(['id', 'type', 'action', 'confirm', 'refresh']),
+  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params']),
 };
 
 const COMPONENT_KEYS = new Map<string, Set<string>>([
@@ -113,6 +116,10 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['TabGroup', new Set(['type', 'tabs'])],
   ['StatRow', new Set(['type', 'source', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color'])],
+  ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
+  ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
+  ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
+  ['ApprovalTimeline', new Set(['type', 'source', 'title', 'actor_field', 'action_field', 'detail_field', 'timestamp_field'])],
 ]);
 
 export class PageSchemaError extends Error {
@@ -222,6 +229,13 @@ function validateActions(
         issues.push(`${path}.operation must be "insert" or "update"`);
       }
       validateFields(action.fields, `${path}.fields`, issues);
+    } else if (type === 'server_form') {
+      requireString(action.title, `${path}.title`, issues);
+      requireString(action.action, `${path}.action`, issues);
+      validateFields(action.fields, `${path}.fields`, issues);
+      if (action.params !== undefined && !isRecord(action.params)) {
+        issues.push(`${path}.params must be an object`);
+      }
     } else if (type === 'delete' || type === 'patch') {
       requireString(action.table, `${path}.table`, issues);
       if (type === 'patch' && !isRecord(action.body)) issues.push(`${path}.body must be an object`);
@@ -229,6 +243,9 @@ function validateActions(
       requireString(action.navigate_to, `${path}.navigate_to`, issues);
     } else if (type === 'server') {
       requireString(action.action, `${path}.action`, issues);
+      if (action.params !== undefined && !isRecord(action.params)) {
+        issues.push(`${path}.params must be an object`);
+      }
     }
 
     validateRefresh(action.refresh, `${path}.refresh`, datasourceIds, options, issues);

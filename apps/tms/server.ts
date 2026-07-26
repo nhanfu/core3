@@ -10,6 +10,12 @@ import {
   FINANCIAL_ACTION_REGISTRY,
   financialWorkflow,
 } from './services/financial-workflow.ts';
+import {
+  BUSINESS_ACTION_REGISTRY,
+  payrollWorkflow,
+  quoteWorkflow,
+} from './services/business-workflow.ts';
+import { LINE_ITEM_ACTION_REGISTRY } from './services/line-item-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -137,6 +143,8 @@ async function initDb(): Promise<void> {
     ALTER TABLE trucks ADD COLUMN IF NOT EXISTS capacity_kg INTEGER DEFAULT 0;
     ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS actor_id VARCHAR;
     ALTER TABLE system_activity ADD COLUMN IF NOT EXISTS resource_id VARCHAR;
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS cost_amount DECIMAL(18,2) DEFAULT 0;
+    ALTER TABLE quotes ADD COLUMN IF NOT EXISTS profit_amount DECIMAL(18,2) DEFAULT 0;
     CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
     UPDATE trucks SET capacity_kg = CASE type
       WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
@@ -211,6 +219,12 @@ async function initDb(): Promise<void> {
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-adm-29', 'role-admin', 'accounting.pay'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.pay');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-30', 'role-admin', 'hr.approve'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.approve');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-31', 'role-admin', 'hr.pay'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.pay');
     INSERT INTO roles (id, name, description)
     SELECT 'role-accountant', 'accountant', 'Accounting document preparation'
     WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 'role-accountant');
@@ -226,6 +240,21 @@ async function initDb(): Promise<void> {
     INSERT INTO user_roles (user_id, role_id)
     SELECT 'user-accountant', 'role-accountant'
     WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 'user-accountant' AND role_id = 'role-accountant');
+    INSERT INTO roles (id, name, description)
+    SELECT 'role-hr-officer', 'hr_officer', 'HR and payroll preparation'
+    WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 'role-hr-officer');
+    INSERT INTO users (id, email, name, password_hash, preferred_lang)
+    SELECT 'user-hr', 'hr@tms.local', 'HR Officer', 'hr123', 'vi'
+    WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 'user-hr');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-hr-01', 'role-hr-officer', 'hr.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'hr.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-hr-02', 'role-hr-officer', 'hr.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'hr.write');
+    INSERT INTO user_roles (user_id, role_id)
+    SELECT 'user-hr', 'role-hr-officer'
+    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 'user-hr' AND role_id = 'role-hr-officer');
     INSERT INTO permissions (id, role_id, permission_key)
     SELECT 'perm-dp-07', 'role-dispatcher', 'dispatch.read'
     WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.read');
@@ -241,9 +270,10 @@ const SOURCE_FILES = [
   'pages/dashboard.yaml',
   'pages/schedule.yaml',
   'pages/orders.yaml',
+  'pages/order-detail.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
-  'pages/quotes.yaml', 'pages/crm-dashboard.yaml', 'pages/crm-kpi.yaml',
+  'pages/quotes.yaml', 'pages/quote-detail.yaml', 'pages/crm-dashboard.yaml', 'pages/crm-kpi.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
   'pages/areas.yaml',
@@ -324,7 +354,6 @@ const TABLE_REGISTRY = {
       'route',
       'transport_method',
       'trip_count',
-      'total_amount',
       'notes',
     ],
   },
@@ -337,7 +366,7 @@ const TABLE_REGISTRY = {
     timestamps: true,
     fields: ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status'],
   },
-  quotes: { permission: 'crm.write', timestamps: true, fields: ['code', 'customer_name', 'title', 'amount', 'status', 'valid_until'] },
+  quotes: { permission: 'crm.write', timestamps: true, fields: ['code', 'customer_name', 'title', 'status', 'valid_until'] },
   partners:     {
     permission: 'crm.write',
     timestamps: true,
@@ -438,6 +467,13 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     return json(user);
   }
 
+  // Translation reads are needed by the unauthenticated login shell.
+  if (pathname === '/api/v1/i18n' && method === 'GET') {
+    const lang = url.searchParams.get('lang') || 'en';
+    const page = url.searchParams.get('page') || '*';
+    return json(await repository.getTranslationMap(lang, page));
+  }
+
   // ── All routes below require auth ──────────────────────────────────────────
   const authUser = await requireAuth(req);
 
@@ -475,12 +511,44 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const actionName = namedActionMatch[1];
     const orderActionDefinition = ORDER_ACTION_REGISTRY[actionName];
     const financialActionDefinition = FINANCIAL_ACTION_REGISTRY[actionName];
-    const actionDefinition = orderActionDefinition || financialActionDefinition;
+    const businessActionDefinition = BUSINESS_ACTION_REGISTRY[actionName];
+    const lineItemActionDefinition = LINE_ITEM_ACTION_REGISTRY[actionName];
+    const actionDefinition = orderActionDefinition
+      || financialActionDefinition
+      || businessActionDefinition
+      || lineItemActionDefinition;
     if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(actionDefinition.permission);
 
     const body = await req.json() as any;
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+
+    if (lineItemActionDefinition) {
+      const isOrder = lineItemActionDefinition.domain === 'order';
+      return json(await repository.mutateDocumentLine(
+        isOrder
+          ? {
+              parentTable: 'orders',
+              lineTable: 'order_lines',
+              parentKey: 'order_id',
+              label: 'Order',
+              hasCost: false,
+            }
+          : {
+              parentTable: 'quotes',
+              lineTable: 'quote_lines',
+              parentKey: 'quote_id',
+              label: 'Quote',
+              hasCost: true,
+            },
+        lineItemActionDefinition.operation,
+        body.id,
+        typeof body.line_id === 'string' ? body.line_id : null,
+        body.values && typeof body.values === 'object' ? body.values : {},
+        actionName,
+        activityActor,
+      ));
+    }
 
     if (orderActionDefinition) {
       const transition = orderWorkflow.get(orderActionDefinition.action);
@@ -494,16 +562,40 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       return json(order);
     }
 
-    const transition = financialWorkflow.get(financialActionDefinition.action);
-    const document = await repository.transitionAccountingEntry(
+    if (financialActionDefinition) {
+      const transition = financialWorkflow.get(financialActionDefinition.action);
+      const document = await repository.transitionAccountingEntry(
+        body.id,
+        financialActionDefinition.kind,
+        transition.from,
+        transition.to,
+        actionName,
+        activityActor,
+      );
+      return json(document);
+    }
+
+    if (businessActionDefinition.domain === 'quote') {
+      const transition = quoteWorkflow.get(businessActionDefinition.action);
+      return json(await repository.transitionBusinessRecord(
+        { table: 'quotes', label: 'Quote' },
+        body.id,
+        transition.from,
+        transition.to,
+        actionName,
+        activityActor,
+      ));
+    }
+
+    const transition = payrollWorkflow.get(businessActionDefinition.action);
+    return json(await repository.transitionBusinessRecord(
+      { table: 'payrolls', label: 'Payroll' },
       body.id,
-      financialActionDefinition.kind,
       transition.from,
       transition.to,
       actionName,
       activityActor,
-    );
-    return json(document);
+    ));
   }
 
   // ── POST /api/patch ───────────────────────────────────────────────────────
@@ -526,6 +618,12 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       && changes.some((change: any) => change.field === 'status')
     ) {
       return apiError(400, 'Financial document status requires a named action');
+    }
+    if (
+      (table === 'quotes' || table === 'payrolls')
+      && changes.some((change: any) => change.field === 'status')
+    ) {
+      return apiError(400, `${table === 'quotes' ? 'Quote' : 'Payroll'} status requires a named action`);
     }
 
     if ('scopes' in tbl && action !== 'insert') {
@@ -553,6 +651,22 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
         return apiError(
           409,
           `Financial document cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${document.status}`,
+        );
+      }
+    }
+    if (
+      (table === 'quotes' || table === 'payrolls')
+      && (action === 'update' || action === 'delete')
+    ) {
+      const [record] = await repository.query(
+        `SELECT status FROM ${table} WHERE id = ?`,
+        [id],
+      );
+      if (!record) return apiError(404, `${table === 'quotes' ? 'Quote' : 'Payroll'} not found`);
+      if (record.status !== 'Draft') {
+        return apiError(
+          409,
+          `${table === 'quotes' ? 'Quote' : 'Payroll'} cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${record.status}`,
         );
       }
     }
@@ -708,12 +822,6 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const page = url.searchParams.get('page') || '';
     const q    = url.searchParams.get('q') || '';
     return json(await repository.listTranslations({ lang, page, q }));
-  }
-
-  if (pathname === '/api/v1/i18n' && method === 'GET') {
-    const lang = url.searchParams.get('lang') || 'en';
-    const page = url.searchParams.get('page') || '*';
-    return json(await repository.getTranslationMap(lang, page));
   }
 
   if (pathname === '/api/v1/i18n' && method === 'POST') {

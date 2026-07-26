@@ -1,5 +1,5 @@
 import { html } from '@core3/framework/html.ts';
-import { setAuth } from '../app.ts';
+import { getDefaultRoute, setAuth } from '../app.ts';
 import { i18n } from '../i18n.ts';
 
 export async function mount(container: HTMLElement) {
@@ -85,7 +85,7 @@ export async function mount(container: HTMLElement) {
       // Hash-only navigation would reuse the unauthenticated document and
       // bypass bootstrap's shell mount. Reload after setting the target hash
       // so the authenticated application frame is created first.
-      window.location.hash = '/dashboard';
+      window.location.hash = getDefaultRoute(user);
       window.location.reload();
     } catch (err) {
       errorEl.textContent = err instanceof Error ? err.message : String(err);

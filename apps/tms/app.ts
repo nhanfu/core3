@@ -15,11 +15,13 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/vehicles':     'vehicles',
   '/drivers':      'drivers',
   '/orders':       'orders',
+  '/orders/detail': 'order-detail',
   '/chat':         () => import('./pages/chat.ts'),
   '/schedule':     'schedule',
   '/customers':    'customers',
   '/partners':     'partners',
-  '/quotes':       'quotes', '/crm/dashboard': 'crm-dashboard', '/crm/kpi': 'crm-kpi',
+  '/quotes':       'quotes', '/quotes/detail': 'quote-detail',
+  '/crm/dashboard': 'crm-dashboard', '/crm/kpi': 'crm-kpi',
   '/accounting/debit-notes': 'accounting-debit-notes',
   '/accounting/debit-note-summary': 'accounting-debit-note-summary',
   '/accounting/payment-requests': 'accounting-payment-requests',
@@ -56,8 +58,10 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Tổng quan',
-  '/orders': 'Đơn hàng', '/chat': 'Tin nhắn', '/schedule': 'Lịch điều',
+  '/orders': 'Đơn hàng', '/orders/detail': 'Chi tiết đơn hàng',
+  '/chat': 'Tin nhắn', '/schedule': 'Lịch điều',
   '/customers': 'Khách hàng', '/partners': 'Đối tượng', '/quotes': 'Báo giá',
+  '/quotes/detail': 'Chi tiết báo giá',
   '/crm/dashboard': 'Tổng hợp CRM', '/crm/kpi': 'Chỉ tiêu KPI',
   '/accounting/debit-notes': 'Giấy báo nợ',
   '/accounting/debit-note-summary': 'Tổng hợp giấy báo nợ',
@@ -89,6 +93,17 @@ export function getToken() {
 
 export function getUser() {
   return _user;
+}
+
+export function getDefaultRoute(user: any = _user) {
+  const permissions = new Set<string>(user?.permissions || []);
+  if (permissions.has('fleet.read')) return '/dashboard';
+  if (permissions.has('orders.read')) return '/orders';
+  if (permissions.has('crm.read')) return '/customers';
+  if (permissions.has('accounting.read')) return '/accounting/debit-notes';
+  if (permissions.has('hr.read')) return '/hr/employees';
+  if (permissions.has('system.read')) return '/system/activity';
+  return '/login';
 }
 
 export async function setAuth(token: string, user: any) {
@@ -232,13 +247,13 @@ async function bootstrap() {
 
   // Match the reference app's hash-routing model. Keeping routing client-side
   // also avoids a server allowlist change for every new parity route.
-  const hashPath = window.location.hash.slice(1).split('?')[0] || '/dashboard';
+  const hashPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
   await renderRoute(hashPath);
 }
 
 // Handle browser back/forward and direct hash navigation.
 window.addEventListener('hashchange', () => {
-  const hashPath = window.location.hash.slice(1).split('?')[0] || '/dashboard';
+  const hashPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
   void renderRoute(hashPath);
 });
 

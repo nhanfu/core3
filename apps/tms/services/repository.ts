@@ -7,6 +7,38 @@ type TranslationEntry = {
   translated: string;
 };
 
+function normalizeLineValues(values: Record<string, unknown>, hasCost: boolean) {
+  const description = String(values.description || '').trim();
+  const unit = String(values.unit || '').trim() || 'Chuyến';
+  const quantity = Number(values.quantity);
+  const unitPrice = Number(values.unit_price);
+  const costPrice = hasCost ? Number(values.cost_price) : 0;
+  const taxRate = Number(values.tax_rate || 0);
+  if (!description) throw { status: 400, message: 'description required' };
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    throw { status: 400, message: 'quantity must be greater than zero' };
+  }
+  if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+    throw { status: 400, message: 'unit_price must be zero or greater' };
+  }
+  if (hasCost && (!Number.isFinite(costPrice) || costPrice < 0)) {
+    throw { status: 400, message: 'cost_price must be zero or greater' };
+  }
+  if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) {
+    throw { status: 400, message: 'tax_rate must be between zero and 100' };
+  }
+  return {
+    description,
+    unit,
+    quantity,
+    unitPrice,
+    costPrice,
+    taxRate,
+    lineTotal: Math.round(quantity * unitPrice * (1 + taxRate / 100) * 100) / 100,
+    costTotal: Math.round(quantity * costPrice * 100) / 100,
+  };
+}
+
 export class DuckDbRepository {
   db: any;
 
@@ -117,7 +149,26 @@ export class DuckDbRepository {
   }
 
   async deleteRecord(table: string, id: any): Promise<void> {
-    await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
+    if (table !== 'orders' && table !== 'quotes') {
+      await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
+      return;
+    }
+    await this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        await runOnConnection(
+          conn,
+          `DELETE FROM ${table === 'orders' ? 'order_lines' : 'quote_lines'}
+           WHERE ${table === 'orders' ? 'order_id' : 'quote_id'} = ?`,
+          [id],
+        );
+        await runOnConnection(conn, `DELETE FROM ${table} WHERE id = ?`, [id]);
+        await runOnConnection(conn, 'COMMIT');
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
   }
 
   async recordActivity(event: {
@@ -256,6 +307,249 @@ export class DuckDbRepository {
         );
         await runOnConnection(conn, 'COMMIT');
         return { ...updated, previous_status: entry.status };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async transitionBusinessRecord(
+    config: {
+      table: 'quotes' | 'payrolls';
+      label: string;
+    },
+    recordId: string,
+    allowedFrom: readonly string[],
+    targetStatus: string,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const rows = await queryOnConnection(
+          conn,
+          `SELECT * FROM ${config.table} WHERE id = ?`,
+          [recordId],
+        );
+        const record = rows[0];
+        if (!record) throw { status: 404, message: `${config.label} not found` };
+        if (!allowedFrom.includes(record.status)) {
+          throw {
+            status: 409,
+            message: `Action "${action}" is not allowed while ${config.label.toLowerCase()} is "${record.status}"`,
+          };
+        }
+
+        await runOnConnection(
+          conn,
+          `UPDATE ${config.table}
+           SET status = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND status = ?`,
+          [targetStatus, recordId, record.status],
+        );
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actor.id || null,
+            actor.name,
+            action,
+            config.table,
+            recordId,
+            `${record.code}: ${record.status} -> ${targetStatus}`,
+          ],
+        );
+        const [updated] = await queryOnConnection(
+          conn,
+          `SELECT * FROM ${config.table} WHERE id = ?`,
+          [recordId],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return { ...updated, previous_status: record.status };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
+  async mutateDocumentLine(
+    config: {
+      parentTable: 'orders' | 'quotes';
+      lineTable: 'order_lines' | 'quote_lines';
+      parentKey: 'order_id' | 'quote_id';
+      label: 'Order' | 'Quote';
+      hasCost: boolean;
+    },
+    operation: 'create' | 'update' | 'delete',
+    parentId: string,
+    lineId: string | null,
+    values: Record<string, unknown>,
+    action: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [parent] = await queryOnConnection(
+          conn,
+          `SELECT * FROM ${config.parentTable} WHERE id = ?`,
+          [parentId],
+        );
+        if (!parent) throw { status: 404, message: `${config.label} not found` };
+        if (parent.status !== 'Draft') {
+          throw {
+            status: 409,
+            message: `${config.label} lines cannot be changed while ${parent.status}`,
+          };
+        }
+
+        let line: any = null;
+        if (operation === 'delete') {
+          if (!lineId) throw { status: 400, message: 'line_id required' };
+          [line] = await queryOnConnection(
+            conn,
+            `SELECT * FROM ${config.lineTable} WHERE id = ? AND ${config.parentKey} = ?`,
+            [lineId, parentId],
+          );
+          if (!line) throw { status: 404, message: 'Line item not found' };
+          await runOnConnection(
+            conn,
+            `DELETE FROM ${config.lineTable} WHERE id = ? AND ${config.parentKey} = ?`,
+            [lineId, parentId],
+          );
+        } else {
+          const normalized = normalizeLineValues(values, config.hasCost);
+          if (operation === 'create') {
+            const [sequenceRow] = await queryOnConnection(
+              conn,
+              `SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence
+               FROM ${config.lineTable} WHERE ${config.parentKey} = ?`,
+              [parentId],
+            );
+            lineId = crypto.randomUUID();
+            const columns = [
+              'id', config.parentKey, 'sequence', 'description', 'quantity',
+              'unit', 'unit_price',
+              ...(config.hasCost ? ['cost_price'] : []),
+              'tax_rate', 'line_total',
+              ...(config.hasCost ? ['cost_total'] : []),
+            ];
+            const params = [
+              lineId,
+              parentId,
+              Number(sequenceRow?.next_sequence || 10),
+              normalized.description,
+              normalized.quantity,
+              normalized.unit,
+              normalized.unitPrice,
+              ...(config.hasCost ? [normalized.costPrice] : []),
+              normalized.taxRate,
+              normalized.lineTotal,
+              ...(config.hasCost ? [normalized.costTotal] : []),
+            ];
+            await runOnConnection(
+              conn,
+              `INSERT INTO ${config.lineTable}(${columns.join(', ')})
+               VALUES(${columns.map(() => '?').join(', ')})`,
+              params,
+            );
+          } else {
+            if (!lineId) throw { status: 400, message: 'line_id required' };
+            const [existingLine] = await queryOnConnection(
+              conn,
+              `SELECT id FROM ${config.lineTable} WHERE id = ? AND ${config.parentKey} = ?`,
+              [lineId, parentId],
+            );
+            if (!existingLine) throw { status: 404, message: 'Line item not found' };
+            const assignments = [
+              'description = ?', 'quantity = ?', 'unit = ?', 'unit_price = ?',
+              ...(config.hasCost ? ['cost_price = ?'] : []),
+              'tax_rate = ?', 'line_total = ?',
+              ...(config.hasCost ? ['cost_total = ?'] : []),
+              'updated_at = CURRENT_TIMESTAMP',
+            ];
+            const params = [
+              normalized.description,
+              normalized.quantity,
+              normalized.unit,
+              normalized.unitPrice,
+              ...(config.hasCost ? [normalized.costPrice] : []),
+              normalized.taxRate,
+              normalized.lineTotal,
+              ...(config.hasCost ? [normalized.costTotal] : []),
+              lineId,
+              parentId,
+            ];
+            await runOnConnection(
+              conn,
+              `UPDATE ${config.lineTable} SET ${assignments.join(', ')}
+               WHERE id = ? AND ${config.parentKey} = ?`,
+              params,
+            );
+          }
+          [line] = await queryOnConnection(
+            conn,
+            `SELECT * FROM ${config.lineTable} WHERE id = ? AND ${config.parentKey} = ?`,
+            [lineId, parentId],
+          );
+        }
+
+        const [totals] = await queryOnConnection(
+          conn,
+          `SELECT COALESCE(SUM(line_total), 0) AS amount
+            ${config.hasCost ? ', COALESCE(SUM(cost_total), 0) AS cost_amount' : ''}
+           FROM ${config.lineTable} WHERE ${config.parentKey} = ?`,
+          [parentId],
+        );
+        if (config.hasCost) {
+          const amount = Number(totals.amount || 0);
+          const costAmount = Number(totals.cost_amount || 0);
+          await runOnConnection(
+            conn,
+            `UPDATE quotes SET amount = ?, cost_amount = ?, profit_amount = ?,
+             updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [amount, costAmount, amount - costAmount, parentId],
+          );
+        } else {
+          await runOnConnection(
+            conn,
+            `UPDATE orders SET total_amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            [Number(totals.amount || 0), parentId],
+          );
+        }
+
+        await runOnConnection(
+          conn,
+          `INSERT INTO system_activity(
+            id, actor_id, actor_name, action, resource, resource_id, detail
+          ) VALUES(?,?,?,?,?,?,?)`,
+          [
+            crypto.randomUUID(),
+            actor.id || null,
+            actor.name,
+            action,
+            config.parentTable,
+            parentId,
+            `${parent.code || parent.order_number}: ${operation} line ${line?.description || ''}`.trim(),
+          ],
+        );
+        await runOnConnection(conn, 'COMMIT');
+        return {
+          line: operation === 'delete' ? null : line,
+          totals: config.hasCost
+            ? {
+                amount: Number(totals.amount || 0),
+                cost_amount: Number(totals.cost_amount || 0),
+                profit_amount: Number(totals.amount || 0) - Number(totals.cost_amount || 0),
+              }
+            : { total_amount: Number(totals.amount || 0) },
+        };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK').catch(() => {});
         throw error;

@@ -10,6 +10,7 @@ INSERT INTO roles (id, name, description) VALUES
 ('role-fleet-manager', 'fleet_manager', 'Fleet and driver management'),
 ('role-dispatcher',    'dispatcher',    'Trip scheduling and dispatch'),
 ('role-accountant',    'accountant',    'Accounting document preparation'),
+('role-hr-officer',    'hr_officer',    'HR and payroll preparation'),
 ('role-mechanic',      'mechanic',      'Maintenance and service records');
 
 -- ── Permissions ──────────────────────────────────────────────────────────────
@@ -43,7 +44,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-26', 'role-admin', 'dispatch.write'),
 ('perm-adm-27', 'role-admin', 'orders.approve'),
 ('perm-adm-28', 'role-admin', 'accounting.approve'),
-('perm-adm-29', 'role-admin', 'accounting.pay');
+('perm-adm-29', 'role-admin', 'accounting.pay'),
+('perm-adm-30', 'role-admin', 'hr.approve'),
+('perm-adm-31', 'role-admin', 'hr.pay');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -71,6 +74,11 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-ac-01', 'role-accountant', 'accounting.read'),
 ('perm-ac-02', 'role-accountant', 'accounting.write');
 
+-- hr_officer
+INSERT INTO permissions (id, role_id, permission_key) VALUES
+('perm-hr-01', 'role-hr-officer', 'hr.read'),
+('perm-hr-02', 'role-hr-officer', 'hr.write');
+
 -- mechanic
 INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-mc-01', 'role-mechanic', 'maintenance.read'),
@@ -83,7 +91,8 @@ INSERT INTO users (id, email, name, password_hash, preferred_lang) VALUES
 ('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en'),
 ('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi'),
 ('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en'),
-('user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi');
+('user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi'),
+('user-hr', 'hr@tms.local', 'HR Officer', 'hr123', 'vi');
 
 -- ── HR ─────────────────────────────────────────────────────────────────────
 INSERT INTO employees (id, code, name, job_title, phone, email, department, start_date, dependents, status) VALUES
@@ -175,6 +184,16 @@ INSERT INTO quotes (id, code, customer_name, title, amount, status, valid_until)
 ('quote-01', 'BG-0001', 'Công ty CP Nhựa Bình Minh', 'Báo giá tuyến HCM - Hà Nội', 48600000, 'Sent', '2026-08-15'),
 ('quote-02', 'BG-0002', 'Công ty TNHH Thương mại Minh Phát', 'Báo giá hàng lẻ', 14200000, 'Draft', '2026-08-10'),
 ('quote-03', 'BG-0003', 'Công ty CP Dầu thực vật Tường An', 'Báo giá hàng lạnh', 59300000, 'Accepted', '2026-08-20');
+UPDATE quotes SET
+  cost_amount = CASE id WHEN 'quote-01' THEN 39000000 WHEN 'quote-02' THEN 11400000 ELSE 47500000 END,
+  profit_amount = CASE id WHEN 'quote-01' THEN 9600000 WHEN 'quote-02' THEN 2800000 ELSE 11800000 END;
+INSERT INTO quote_lines (
+  id, quote_id, sequence, description, quantity, unit, unit_price, cost_price,
+  tax_rate, line_total, cost_total
+) VALUES
+('quote-line-01', 'quote-01', 10, 'Cước vận chuyển HCM - Hà Nội', 1, 'Chuyến', 45000000, 39000000, 8, 48600000, 39000000),
+('quote-line-02', 'quote-02', 10, 'Cước vận chuyển hàng lẻ', 1, 'Lô', 14200000, 11400000, 0, 14200000, 11400000),
+('quote-line-03', 'quote-03', 10, 'Cước vận chuyển lạnh', 1, 'Chuyến', 59300000, 47500000, 0, 59300000, 47500000);
 
 -- ── Partners ───────────────────────────────────────────────────────────────
 INSERT INTO partners (id, code, name, tax_code, phone, email, partner_type, owner_name, visibility, status) VALUES
@@ -190,7 +209,8 @@ INSERT INTO user_roles (user_id, role_id) VALUES
 ('user-admin', 'role-admin'),
 ('user-fleet', 'role-fleet-manager'),
 ('user-disp',  'role-dispatcher'),
-('user-accountant', 'role-accountant');
+('user-accountant', 'role-accountant'),
+('user-hr', 'role-hr-officer');
 
 -- ── Drivers ──────────────────────────────────────────────────────────────────
 INSERT INTO drivers (id, name, phone, email, license_number, license_expiry, status, assigned_truck_id) VALUES
@@ -252,6 +272,21 @@ INSERT INTO orders (id, order_number, customer_name, customer_legal_name, order_
 ('order-10', 'DH-2026-0010', 'Công ty CP Nông sản Miền Tây', 'Mien Tay Agriculture JSC', '2026-07-20', 'Approved', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 2, 59300000, 'Admin User', NULL),
 ('order-11', 'DH-2026-0011', 'Công ty TNHH Gia Phúc', 'Gia Phuc Co., Ltd.', '2026-07-20', 'Cancelled', 'Hàng lẻ', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 0, 7600000, 'Admin User', 'Khách hàng hủy đơn'),
 ('order-12', 'DH-2026-0012', 'Công ty CP Phú Mỹ', 'Phu My JSC', '2026-07-19', 'Cancelled', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 0, 16800000, 'Admin User', 'Không đủ phương tiện');
+INSERT INTO order_lines (
+  id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
+) VALUES
+('order-line-01', 'order-01', 10, 'Cước vận chuyển Hồ Chí Minh - Đà Nẵng', 1, 'Lô', 18500000, 0, 18500000),
+('order-line-02', 'order-02', 10, 'Cước vận chuyển Hà Nội - Hải Phòng', 1, 'Chuyến', 12600000, 0, 12600000),
+('order-line-03', 'order-03', 10, 'Cước vận chuyển lạnh Cần Thơ - Hồ Chí Minh', 1, 'Chuyến', 21800000, 0, 21800000),
+('order-line-04', 'order-04', 10, 'Cước vận chuyển Hồ Chí Minh - Nha Trang', 1, 'Lô', 14200000, 0, 14200000),
+('order-line-05', 'order-05', 10, 'Cước vận chuyển Hà Nội - Đà Nẵng', 1, 'Chuyến', 32600000, 0, 32600000),
+('order-line-06', 'order-06', 10, 'Cước container Hải Phòng - Hà Nội', 1, 'Container', 17400000, 0, 17400000),
+('order-line-07', 'order-07', 10, 'Cước vận chuyển Hồ Chí Minh - Hà Nội', 2, 'Chuyến', 24300000, 0, 48600000),
+('order-line-08', 'order-08', 10, 'Cước hàng lẻ Đà Nẵng - Huế', 1, 'Lô', 9200000, 0, 9200000),
+('order-line-09', 'order-09', 10, 'Cước hàng lẻ Hồ Chí Minh - Biên Hòa', 1, 'Lô', 11800000, 0, 11800000),
+('order-line-10', 'order-10', 10, 'Cước lạnh Cần Thơ - Hà Nội', 2, 'Chuyến', 29650000, 0, 59300000),
+('order-line-11', 'order-11', 10, 'Cước hàng lẻ Hồ Chí Minh - Vũng Tàu', 1, 'Lô', 7600000, 0, 7600000),
+('order-line-12', 'order-12', 10, 'Cước vận chuyển Đà Nẵng - Quy Nhơn', 1, 'Chuyến', 16800000, 0, 16800000);
 
 -- ── Catalog master data ─────────────────────────────────────────────────────
 INSERT INTO master_data (id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES

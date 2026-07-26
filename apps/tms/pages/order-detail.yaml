@@ -1,0 +1,147 @@
+title: Chi tiết đơn hàng
+page: { id: order-detail, auth: { require: [orders.read] } }
+
+datasources:
+  - id: order_detail
+    single: true
+    permission: orders.read
+    query: |
+      SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
+        CAST(o.order_date AS VARCHAR) AS order_date, o.status,
+        CASE o.status WHEN 'Draft' THEN 'Nháp'
+          WHEN 'Pending Approval' THEN 'Đang duyệt'
+          WHEN 'Approved' THEN 'Đã duyệt'
+          WHEN 'Cancelled' THEN 'Đã hủy' ELSE o.status END AS status_label,
+        o.shipment_type, o.route, o.transport_method, o.trip_count,
+        printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        o.created_by, o.notes
+      FROM orders o
+      WHERE o.id = :id
+  - id: order_detail_lines
+    single: false
+    permission: orders.read
+    query: |
+      SELECT l.id, l.order_id AS document_id, l.sequence, l.description,
+        CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
+        CAST(l.unit_price AS DOUBLE) AS unit_price,
+        CAST(l.tax_rate AS DOUBLE) AS tax_rate,
+        CAST(l.line_total AS DOUBLE) AS line_total,
+        printf('%,.3f', l.quantity) AS quantity_display,
+        printf('%,.0f ₫', l.unit_price) AS unit_price_display,
+        printf('%.2f%%', l.tax_rate) AS tax_rate_display,
+        printf('%,.0f ₫', l.line_total) AS line_total_display,
+        o.status AS parent_status
+      FROM order_lines l
+      JOIN orders o ON o.id = l.order_id
+      WHERE l.order_id = :id
+      ORDER BY l.sequence
+  - id: order_detail_timeline
+    single: false
+    permission: orders.read
+    query: |
+      SELECT actor_name, action,
+        CASE action
+          WHEN 'orders.submit_for_approval' THEN 'Trình duyệt'
+          WHEN 'orders.approve' THEN 'Đã duyệt'
+          WHEN 'orders.reject' THEN 'Từ chối'
+          WHEN 'orders.cancel' THEN 'Đã hủy'
+          WHEN 'orders.lines.create' THEN 'Thêm dòng chi phí'
+          WHEN 'orders.lines.update' THEN 'Cập nhật dòng chi phí'
+          WHEN 'orders.lines.delete' THEN 'Xóa dòng chi phí'
+          ELSE action END AS action_label,
+        detail, CAST(created_at AS VARCHAR) AS created_at
+      FROM system_activity
+      WHERE resource = 'orders' AND resource_id = :id
+      UNION ALL
+      SELECT created_by, 'created', 'Đã tạo', 'Khởi tạo đơn hàng',
+        CAST(created_at AS VARCHAR)
+      FROM orders WHERE id = :id
+      ORDER BY created_at DESC
+
+toolbar:
+  - { id: back_orders_btn, label: '← Danh sách đơn hàng', variant: secondary, action: back_orders }
+
+components:
+  - type: DocumentSummary
+    source: order_detail
+    title_field: order_number
+    subtitle_field: customer_name
+    status_field: status_label
+    status_colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã hủy: red }
+    columns:
+      - { field: order_date, label: Ngày đơn }
+      - { field: shipment_type, label: Loại hình }
+      - { field: route, label: Tuyến }
+      - { field: transport_method, label: Hình thức }
+      - { field: trip_count, label: Số chuyến }
+      - { field: created_by, label: Người tạo }
+      - { field: notes, label: Ghi chú }
+  - type: LineItemGrid
+    source: order_detail_lines
+    title: Chi tiết cước
+    description: Tổng tiền đơn hàng được tính trực tiếp từ các dòng cước.
+    page_size: 50
+    row_key: id
+    actions:
+      - { id: add_order_line, label: '+ Thêm dòng', variant: primary, permission: orders.write, show_if: "state.order_detail.status === 'Draft'" }
+    empty_state: { title: Chưa có dòng cước, description: Thêm ít nhất một dòng trước khi trình duyệt. }
+    columns:
+      - { field: sequence, label: STT, align: right }
+      - { field: description, label: Nội dung }
+      - { field: quantity_display, label: Số lượng, align: right }
+      - { field: unit, label: Đơn vị }
+      - { field: unit_price_display, label: Đơn giá, align: right }
+      - { field: tax_rate_display, label: Thuế, align: right }
+      - { field: line_total_display, label: Thành tiền, align: right }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: edit_order_line, label: Sửa, variant: ghost, show_if: "row.parent_status === 'Draft' && user.permissions.includes('orders.write')" }
+          - { id: delete_order_line, label: Xóa, variant: danger, show_if: "row.parent_status === 'Draft' && user.permissions.includes('orders.write')" }
+  - type: MoneySummary
+    source: order_detail
+    title: Tổng cộng
+    stats:
+      - { label: Tổng tiền, field: total_amount_display, color: blue }
+  - type: ApprovalTimeline
+    source: order_detail_timeline
+    title: Lịch sử đơn hàng
+    actor_field: actor_name
+    action_field: action_label
+    detail_field: detail
+    timestamp_field: created_at
+
+actions:
+  - { id: back_orders, type: navigate, navigate_to: /orders }
+  - id: add_order_line
+    type: server_form
+    title: Thêm dòng cước
+    action: orders.lines.create
+    params: { id: '{state.id}' }
+    refresh: [order_detail_lines, order_detail, order_detail_timeline]
+    fields:
+      - { field: description, label: Nội dung, type: text, required: true }
+      - { field: quantity, label: Số lượng, type: number, default: 1, required: true }
+      - { field: unit, label: Đơn vị, type: text, default: Chuyến, required: true }
+      - { field: unit_price, label: Đơn giá, type: number, default: 0, required: true }
+      - { field: tax_rate, label: Thuế suất (%), type: number, default: 0, required: true }
+  - id: edit_order_line
+    type: server_form
+    title: Cập nhật dòng cước
+    action: orders.lines.update
+    prefill: row
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [order_detail_lines, order_detail, order_detail_timeline]
+    fields:
+      - { field: description, label: Nội dung, type: text, required: true }
+      - { field: quantity, label: Số lượng, type: number, required: true }
+      - { field: unit, label: Đơn vị, type: text, required: true }
+      - { field: unit_price, label: Đơn giá, type: number, required: true }
+      - { field: tax_rate, label: Thuế suất (%), type: number, required: true }
+  - id: delete_order_line
+    type: server
+    action: orders.lines.delete
+    confirm: 'Xóa dòng cước {{row.description}}?'
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [order_detail_lines, order_detail, order_detail_timeline]

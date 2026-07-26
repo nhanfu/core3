@@ -69,7 +69,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     filterState[src.id] = {};
     try {
       const result = await client.query(
-        createQuery({ sourceId: src.id, params: {}, skip: 0, top: pageSize })
+        createQuery({ sourceId: src.id, params: pageParams, skip: 0, top: pageSize })
       );
       dataMap[src.id] = result;
     } catch (err) {
@@ -77,14 +77,22 @@ export async function renderPage(config: any, { container = document.body }: { c
       dataMap[src.id] = { data: src.single ? {} : [], meta: { total: 0, page: 1, pageSize } };
     }
   }
+  for (const [sourceId, result] of Object.entries(dataMap)) {
+    if (result?.data && !Array.isArray(result.data)) {
+      ctx.state[sourceId] = result.data;
+    }
+  }
 
   // ── Shared helpers (closures over dataMap, filterState, paginationState) ──
 
   async function refetchSource(sourceId: string, filters = {}, skip = 0, top = 25) {
     const result = await client.query(
-      createQuery({ sourceId, params: filters, skip, top })
+      createQuery({ sourceId, params: { ...pageParams, ...filters }, skip, top })
     );
     dataMap[sourceId] = result;
+    if (result?.data && !Array.isArray(result.data)) {
+      ctx.state = { ...ctx.state, [sourceId]: result.data };
+    }
     return result;
   }
 
@@ -100,6 +108,10 @@ export async function renderPage(config: any, { container = document.body }: { c
         entry.comp.redraw();
       } else if (entry.compType === 'Chart') {
         entry.comp.setState(chartState(entry.def, data), true);
+      } else if (entry.compType === 'SingleRecord') {
+        entry._origSetState({ record: data.data || {} }, true);
+      } else if (entry.compType === 'Timeline') {
+        entry._origSetState({ events: data.data || [] }, true);
       }
     }
   }
@@ -144,6 +156,10 @@ export async function renderPage(config: any, { container = document.body }: { c
         await openFormModal(actionDef, row);
         break;
 
+      case 'server_form':
+        await openFormModal(actionDef, row);
+        break;
+
       case 'delete': {
         const msg = interpolate(
           actionDef.confirm || 'Delete this record?',
@@ -182,7 +198,10 @@ export async function renderPage(config: any, { container = document.body }: { c
           if (!confirm(msg)) return;
         }
         try {
-          await client.action(actionDef.action, { id: row?.id ?? null });
+          await client.action(actionDef.action, {
+            id: row?.id ?? null,
+            ...resolveActionParams(actionDef.params, rowCtx),
+          });
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Action failed';
@@ -194,15 +213,25 @@ export async function renderPage(config: any, { container = document.body }: { c
       case 'navigate':
         navigate(
           actionDef.navigate_to,
-          actionDef.params
-            ? evalExpr(`(${JSON.stringify(actionDef.params)})`, { ...ctx, row: row || {} })
-            : {}
+          resolveActionParams(actionDef.params, rowCtx),
         );
         break;
 
       default:
         console.warn(`[page-renderer] Unknown action type: ${actionDef.type}`);
     }
+  }
+
+  function resolveActionParams(
+    params: Record<string, unknown> | undefined,
+    actionContext: any,
+  ) {
+    return Object.fromEntries(
+      Object.entries(params || {}).map(([key, value]) => [
+        key,
+        typeof value === 'string' ? interpolate(value, actionContext) : value,
+      ]),
+    );
   }
 
   // ── Form modal ────────────────────────────────────────────────────────────
@@ -377,13 +406,21 @@ export async function renderPage(config: any, { container = document.body }: { c
         saveBtn.disabled = true;
         saveBtn.textContent = 'Saving…';
         try {
-          await client.patch({
-            table: actionDef.table,
-            action: actionDef.operation,
-            id: row?.id ?? null,
-            scope: actionDef.scope,
-            changes,
-          });
+          if (actionDef.type === 'server_form') {
+            const actionContext = { ...ctx, row: row || {} };
+            await client.action(actionDef.action, {
+              ...resolveActionParams(actionDef.params, actionContext),
+              values: Object.fromEntries(changes.map(change => [change.field, change.value])),
+            });
+          } else {
+            await client.patch({
+              table: actionDef.table,
+              action: actionDef.operation,
+              id: row?.id ?? null,
+              scope: actionDef.scope,
+              changes,
+            });
+          }
           closeModal();
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (err: any) {
@@ -527,7 +564,9 @@ export async function renderPage(config: any, { container = document.body }: { c
   }
 
   async function renderDataGrid(def: any, targetContainer: HTMLElement) {
-    const { DataGrid } = await import('./components/DataGrid.ts');
+    const GridCtor = def.type === 'LineItemGrid'
+      ? (await import('./components/LineItemGrid.ts')).LineItemGrid
+      : (await import('./components/DataGrid.ts')).DataGrid;
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
     const pageSize = def.page_size || 25;
@@ -586,12 +625,20 @@ export async function renderPage(config: any, { container = document.body }: { c
         cell.textContent = value == null || value === '' ? '—' : String(value);
       } : undefined,
     }));
-    const comp = new DataGrid(
+    const componentActions = (def.actions || []).filter((action: any) => {
+      if (action.permission && !ctx.user.permissions?.includes(action.permission)) return false;
+      return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
+    });
+    const comp = new GridCtor(
       `data-grid-${sourceId || def.id || Date.now()}`,
       {
         rows: sourceResult.data || [],
-        meta: sourceResult.meta || {},
-        actions: def.actions || [],
+        meta: {
+          ...(sourceResult.meta || {}),
+          title: def.title,
+          description: def.description,
+        },
+        actions: componentActions,
         selectable: !!def.selectable,
         emptyState: def.empty_state,
       },
@@ -628,6 +675,69 @@ export async function renderPage(config: any, { container = document.body }: { c
       if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
       boundComponents[sourceId].push({ comp, def, compType: 'DataGrid', _origSetState });
     }
+  }
+
+  async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
+    const { DocumentSummary } = await import('./components/DocumentSummary.ts');
+    const sourceResult = dataMap[def.source] || { data: {} };
+    const comp = new DocumentSummary(
+      `document-summary-${def.source || def.id || Date.now()}`,
+      { record: sourceResult.data || {} },
+      def,
+    );
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+    if (!boundComponents[def.source]) boundComponents[def.source] = [];
+    boundComponents[def.source].push({
+      comp,
+      def,
+      compType: 'SingleRecord',
+      _origSetState: comp.setState.bind(comp),
+    });
+  }
+
+  async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
+    const { MoneySummary } = await import('./components/MoneySummary.ts');
+    const sourceResult = dataMap[def.source] || { data: {} };
+    const comp = new MoneySummary(
+      `money-summary-${def.source || def.id || Date.now()}`,
+      { record: sourceResult.data || {} },
+      def,
+    );
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+    if (!boundComponents[def.source]) boundComponents[def.source] = [];
+    boundComponents[def.source].push({
+      comp,
+      def,
+      compType: 'SingleRecord',
+      _origSetState: comp.setState.bind(comp),
+    });
+  }
+
+  async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
+    const { ApprovalTimeline } = await import('./components/ApprovalTimeline.ts');
+    const sourceResult = dataMap[def.source] || { data: [] };
+    const comp = new ApprovalTimeline(
+      `approval-timeline-${def.source || def.id || Date.now()}`,
+      { events: sourceResult.data || [] },
+      def,
+    );
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+    if (!boundComponents[def.source]) boundComponents[def.source] = [];
+    boundComponents[def.source].push({
+      comp,
+      def,
+      compType: 'Timeline',
+      _origSetState: comp.setState.bind(comp),
+    });
   }
 
   async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
@@ -797,6 +907,18 @@ export async function renderPage(config: any, { container = document.body }: { c
         break;
       case 'DataGrid':
         await renderDataGrid(def, targetContainer);
+        break;
+      case 'LineItemGrid':
+        await renderDataGrid(def, targetContainer);
+        break;
+      case 'DocumentSummary':
+        await renderDocumentSummary(def, targetContainer);
+        break;
+      case 'MoneySummary':
+        await renderMoneySummary(def, targetContainer);
+        break;
+      case 'ApprovalTimeline':
+        await renderApprovalTimeline(def, targetContainer);
         break;
       case 'StatusTabs':
         await renderStatusTabs(def, targetContainer);

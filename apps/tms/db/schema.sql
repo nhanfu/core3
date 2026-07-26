@@ -66,9 +66,29 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 CREATE TABLE IF NOT EXISTS quotes (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, customer_name VARCHAR NOT NULL,
-  title VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL DEFAULT 0, status VARCHAR NOT NULL DEFAULT 'Draft',
+  title VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+  cost_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+  profit_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+  status VARCHAR NOT NULL DEFAULT 'Draft',
   valid_until DATE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS quote_lines (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  quote_id VARCHAR NOT NULL REFERENCES quotes(id),
+  sequence INTEGER NOT NULL DEFAULT 10,
+  description VARCHAR NOT NULL,
+  quantity DECIMAL(18,3) NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  unit VARCHAR NOT NULL DEFAULT 'Chuyến',
+  unit_price DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  cost_price DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (cost_price >= 0),
+  tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 100),
+  line_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+  cost_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(quote_id, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_quote_lines_quote ON quote_lines(quote_id);
 
 CREATE TABLE IF NOT EXISTS partners (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -280,6 +300,21 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_order_date ON orders(order_date);
+CREATE TABLE IF NOT EXISTS order_lines (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id VARCHAR NOT NULL REFERENCES orders(id),
+  sequence INTEGER NOT NULL DEFAULT 10,
+  description VARCHAR NOT NULL,
+  quantity DECIMAL(18,3) NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  unit VARCHAR NOT NULL DEFAULT 'Chuyến',
+  unit_price DECIMAL(18,2) NOT NULL DEFAULT 0 CHECK (unit_price >= 0),
+  tax_rate DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (tax_rate >= 0 AND tax_rate <= 100),
+  line_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(order_id, sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
 
 CREATE TABLE IF NOT EXISTS master_data (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),

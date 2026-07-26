@@ -18,7 +18,11 @@ class I18n {
     const key = `${this.lang}:${page}`;
     if (this._cache.has(key)) return;
     try {
-      const res = await fetch(`/api/v1/i18n?lang=${encodeURIComponent(this.lang)}&page=${encodeURIComponent(page)}`);
+      const token = localStorage.getItem('tms_token');
+      const res = await fetch(
+        `/api/v1/i18n?lang=${encodeURIComponent(this.lang)}&page=${encodeURIComponent(page)}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+      );
       if (res.ok) {
         this._cache.set(key, await res.json());
       } else {

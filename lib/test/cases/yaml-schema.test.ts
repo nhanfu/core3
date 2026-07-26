@@ -112,11 +112,55 @@ describe('YAML page schema', () => {
 
   it('requires custom components to register their accepted keys', () => {
     const page = validPage() as any;
-    page.components = [{ type: 'ApprovalTimeline', source: 'orders', state_field: 'status' }];
+    page.components = [{ type: 'TestTimeline', source: 'orders', state_field: 'status' }];
 
     expect(() => validatePageDefinition(page)).toThrow(/has no registered schema/);
 
-    registerPageComponentSchema('ApprovalTimeline', ['state_field']);
+    registerPageComponentSchema('TestTimeline', ['state_field']);
+    expect(() => validatePageDefinition(page)).not.toThrow();
+  });
+
+  it('accepts document detail components and named server forms', () => {
+    const page = validPage() as any;
+    page.toolbar = [];
+    page.components = [
+      {
+        type: 'DocumentSummary',
+        source: 'orders',
+        title_field: 'code',
+        status_field: 'status',
+        columns: [{ field: 'customer', label: 'Customer' }],
+      },
+      {
+        type: 'LineItemGrid',
+        source: 'orders',
+        title: 'Lines',
+        actions: [{ id: 'add_line', label: 'Add line', permission: 'orders.write' }],
+        columns: [{ field: 'description', label: 'Description' }],
+      },
+      {
+        type: 'MoneySummary',
+        source: 'orders',
+        stats: [{ field: 'total', label: 'Total', color: 'blue' }],
+      },
+      {
+        type: 'ApprovalTimeline',
+        source: 'orders',
+        action_field: 'action',
+        detail_field: 'detail',
+        timestamp_field: 'created_at',
+      },
+    ];
+    page.actions = [{
+      id: 'add_line',
+      type: 'server_form',
+      title: 'Add line',
+      action: 'orders.lines.create',
+      params: { id: '{state.id}' },
+      refresh: ['orders'],
+      fields: [{ field: 'description', label: 'Description', type: 'text', required: true }],
+    }];
+
     expect(() => validatePageDefinition(page)).not.toThrow();
   });
 

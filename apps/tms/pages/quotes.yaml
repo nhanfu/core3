@@ -1,10 +1,96 @@
 title: Báo giá
 page: { id: quotes, auth: { require: [crm.read] } }
+
 datasources:
-  - { id: quotes, single: false, permission: crm.read, query: "SELECT id, code, customer_name, title, amount, status, CAST(valid_until AS VARCHAR) AS valid_until, created_at FROM quotes WHERE (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR title ILIKE '%' || :q || '%') ORDER BY created_at DESC" }
-toolbar: [{ id: add_quote, label: '+ Thêm báo giá', variant: primary, permission: crm.write, action: add_quote }]
-components: [{ type: ListToolbar, source: quotes, filter_field: q, search: { label: Tìm báo giá, placeholder: 'Tìm mã, khách hàng hoặc nội dung...' } }, { type: StatusTabs, source: quotes, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Sent, label: Đã gửi }, { id: Accepted, label: Đã chấp nhận }] }, { type: DataGrid, source: quotes, page_size: 20, row_key: id, columns: [{ field: code, label: Mã }, { field: title, label: Báo giá, type: PrimaryEntityCell, secondary: customer_name }, { field: amount, label: Giá trị, align: right }, { field: valid_until, label: Hiệu lực đến }, { field: status, label: Trạng thái, type: StatusChip, colors: { Draft: neutral, Sent: blue, Accepted: green } }, { field: actions, label: '', sortable: false, actions: [{ id: edit_quote, label: Sửa, variant: ghost }, { id: delete_quote, label: Xóa, variant: danger }] }] }]
+  - id: quotes
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, code, customer_name, title,
+        printf('%,.0f', COALESCE(amount, 0)) AS amount_display,
+        status,
+        CASE status WHEN 'Draft' THEN 'Nháp' WHEN 'Sent' THEN 'Đã gửi'
+          WHEN 'Accepted' THEN 'Đã chấp nhận' WHEN 'Cancelled' THEN 'Đã hủy'
+          ELSE status END AS status_label,
+        CAST(valid_until AS VARCHAR) AS valid_until, created_at
+      FROM quotes
+      WHERE (:status IS NULL OR status = :status)
+        AND (:q IS NULL OR code ILIKE '%' || :q || '%'
+          OR customer_name ILIKE '%' || :q || '%' OR title ILIKE '%' || :q || '%')
+      ORDER BY created_at DESC
+
+toolbar:
+  - { id: add_quote, label: '+ Thêm báo giá', variant: primary, permission: crm.write, action: add_quote }
+
+components:
+  - type: ListToolbar
+    source: quotes
+    filter_field: q
+    search: { label: Tìm báo giá, placeholder: 'Tìm mã, khách hàng hoặc nội dung...' }
+  - type: StatusTabs
+    source: quotes
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Draft, label: Nháp }
+      - { id: Sent, label: Đã gửi }
+      - { id: Accepted, label: Đã chấp nhận }
+      - { id: Cancelled, label: Đã hủy }
+  - type: DataGrid
+    source: quotes
+    page_size: 20
+    row_key: id
+    columns:
+      - { field: code, label: Mã }
+      - { field: title, label: Báo giá, type: PrimaryEntityCell, secondary: customer_name }
+      - { field: amount_display, label: Giá trị, align: right }
+      - { field: valid_until, label: Hiệu lực đến }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors: { Nháp: neutral, Đã gửi: blue, Đã chấp nhận: green, Đã hủy: red }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: view_quote, label: Chi tiết, variant: secondary }
+          - { id: edit_quote, label: Sửa, variant: ghost, show_if: "row.status === 'Draft'" }
+          - { id: send_quote, label: Gửi, variant: primary, show_if: "row.status === 'Draft'" }
+          - { id: accept_quote, label: Chấp nhận, variant: primary, show_if: "row.status === 'Sent'" }
+          - { id: revise_quote, label: Sửa lại, variant: ghost, show_if: "row.status === 'Sent'" }
+          - { id: cancel_quote, label: Hủy, variant: danger, show_if: "['Draft', 'Sent'].includes(row.status)" }
+          - { id: delete_quote, label: Xóa, variant: danger, show_if: "row.status === 'Draft'" }
+
 actions:
-  - { id: add_quote, type: form, title: Thêm báo giá, table: quotes, operation: insert, refresh: [quotes], fields: [{ field: code, label: Mã, type: text, required: true }, { field: customer_name, label: Khách hàng, type: text, required: true }, { field: title, label: Nội dung, type: text, required: true }, { field: amount, label: Giá trị, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Draft, Sent, Accepted], default: Draft }, { field: valid_until, label: Hiệu lực đến, type: date }] }
-  - { id: edit_quote, type: form, title: Cập nhật báo giá, table: quotes, operation: update, prefill: row, refresh: [quotes], fields: [{ field: code, label: Mã, type: text, required: true }, { field: customer_name, label: Khách hàng, type: text, required: true }, { field: title, label: Nội dung, type: text, required: true }, { field: amount, label: Giá trị, type: number }, { field: status, label: Trạng thái, type: select, options: [Draft, Sent, Accepted] }, { field: valid_until, label: Hiệu lực đến, type: date }] }
+  - id: add_quote
+    type: form
+    title: Thêm báo giá
+    table: quotes
+    operation: insert
+    refresh: [quotes]
+    fields:
+      - { field: code, label: Mã, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: title, label: Nội dung, type: text, required: true }
+      - { field: valid_until, label: Hiệu lực đến, type: date }
+  - id: edit_quote
+    type: form
+    title: Cập nhật báo giá
+    table: quotes
+    operation: update
+    prefill: row
+    refresh: [quotes]
+    fields:
+      - { field: code, label: Mã, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: title, label: Nội dung, type: text, required: true }
+      - { field: valid_until, label: Hiệu lực đến, type: date }
+  - id: view_quote
+    type: navigate
+    navigate_to: /quotes/detail
+    params: { id: '{row.id}' }
+  - { id: send_quote, type: server, action: quotes.send, confirm: 'Gửi báo giá {{row.code}}?', refresh: [quotes] }
+  - { id: accept_quote, type: server, action: quotes.accept, confirm: 'Xác nhận khách hàng chấp nhận {{row.code}}?', refresh: [quotes] }
+  - { id: revise_quote, type: server, action: quotes.revise, confirm: 'Đưa báo giá {{row.code}} về nháp để sửa?', refresh: [quotes] }
+  - { id: cancel_quote, type: server, action: quotes.cancel, confirm: 'Hủy báo giá {{row.code}}?', refresh: [quotes] }
   - { id: delete_quote, type: delete, table: quotes, confirm: 'Xóa báo giá {{row.code}}?', refresh: [quotes] }
