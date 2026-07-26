@@ -35,6 +35,7 @@ components:
       - { id: Inactive, label: Ngưng sử dụng }
   - type: DataGrid
     source: currencies
+    column_chooser: true
     page_size: 20
     row_key: id
     selectable: true

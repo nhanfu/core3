@@ -35,6 +35,7 @@ components:
       - { id: Inactive, label: Ngưng sử dụng }
   - type: DataGrid
     source: vehicle_types
+    column_chooser: true
     page_size: 20
     column_chooser: true
     row_key: id

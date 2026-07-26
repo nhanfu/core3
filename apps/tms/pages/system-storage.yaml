@@ -13,11 +13,12 @@ datasources:
 toolbar: [{ id: add_storage_config, label: '+ Thêm cấu hình kho', variant: primary, permission: system.write, action: add_storage_config }]
 components:
   - { type: StatRow, source: storage_usage, stats: [{ label: Số tệp, field: file_count, color: blue }, { label: Dung lượng đã dùng (bytes), field: used_bytes, color: teal }, { label: Thư mục lưu trữ, field: storage_root, color: slate }] }
-  - { type: ListToolbar, source: storage_configs, filter_field: q, search: { label: Tìm cấu hình kho, placeholder: 'Tìm mã hoặc tên...' } }
+  - { type: ListToolbar, source: storage_configs, filter_field: q, search: { label: Tìm cấu hình kho, placeholder: 'Tìm mã hoặc tên...' }, actions: [{ id: storage_configs.export, label: 'Xuất CSV', icon: '↓' }] }
   - { type: StatusTabs, source: storage_configs, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
   - type: DataGrid
     source: storage_configs
     page_size: 20
+    column_chooser: true
     row_key: id
     columns: [{ field: code, label: Mã }, { field: name, label: Cấu hình kho, type: PrimaryEntityCell, secondary: description }, { field: config_value, label: Giá trị }, { field: status, label: Trạng thái, type: StatusChip, colors: { Active: green, Inactive: red } }, { field: actions, label: '', sortable: false, actions: [{ id: edit_storage_config, label: Sửa, variant: ghost }, { id: delete_storage_config, label: Xóa, variant: danger }] }]
 actions:

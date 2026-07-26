@@ -9,11 +9,12 @@ datasources:
       WHERE kind = 'invoice_template' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY sort_order, code
 toolbar: [{ id: add_invoice_template_btn, label: '+ Thêm mẫu hóa đơn', variant: primary, permission: accounting.write, action: add_invoice_template }]
 components:
-  - { type: ListToolbar, source: invoice_templates, filter_field: q, search: { label: Tìm kiếm mẫu hóa đơn, placeholder: 'Tìm mã, tên hoặc mô tả...' } }
+  - { type: ListToolbar, source: invoice_templates, filter_field: q, search: { label: Tìm kiếm mẫu hóa đơn, placeholder: 'Tìm mã, tên hoặc mô tả...' }, actions: [{ id: invoice_templates.export, label: 'Xuất CSV', icon: '↓' }] }
   - { type: StatusTabs, source: invoice_templates, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang sử dụng }, { id: Inactive, label: Ngưng sử dụng }] }
   - type: DataGrid
     source: invoice_templates
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có mẫu hóa đơn }

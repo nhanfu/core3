@@ -14,11 +14,12 @@ datasources:
       ORDER BY sort_order, code
 toolbar: [{ id: add_code_rule, label: '+ Thêm quy tắc', variant: primary, permission: system.write, action: add_code_rule }]
 components:
-  - { type: ListToolbar, source: code_rules, filter_field: q, search: { label: Tìm quy tắc, placeholder: 'Tìm mã hoặc tên...' } }
+  - { type: ListToolbar, source: code_rules, filter_field: q, search: { label: Tìm quy tắc, placeholder: 'Tìm mã hoặc tên...' }, actions: [{ id: code_rules.export, label: 'Xuất CSV', icon: '↓' }] }
   - { type: StatusTabs, source: code_rules, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
   - type: DataGrid
     source: code_rules
     page_size: 20
+    column_chooser: true
     row_key: id
     columns:
       - { field: code, label: Mã }

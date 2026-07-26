@@ -9,11 +9,12 @@ datasources:
       WHERE kind = 'ledger_account' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY sort_order, code
 toolbar: [{ id: add_ledger_account_btn, label: '+ Thêm tài khoản', variant: primary, permission: accounting.write, action: add_ledger_account }]
 components:
-  - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Tìm kiếm tài khoản, placeholder: 'Tìm số hiệu, tên hoặc diễn giải...' } }
+  - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Tìm kiếm tài khoản, placeholder: 'Tìm số hiệu, tên hoặc diễn giải...' }, actions: [{ id: ledger_accounts.export, label: 'Xuất CSV', icon: '↓' }] }
   - { type: StatusTabs, source: ledger_accounts, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang sử dụng }, { id: Inactive, label: Ngưng sử dụng }] }
   - type: DataGrid
     source: ledger_accounts
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có tài khoản kế toán }
