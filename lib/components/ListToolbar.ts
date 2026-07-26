@@ -18,6 +18,12 @@ export type ListToolbarDefinition = {
     label?: string;
   };
   actions?: ListToolbarAction[];
+  filters?: Array<{
+    field: string;
+    label: string;
+    options: Array<string | { id: string; label: string }>;
+    placeholder?: string;
+  }>;
   date_range?: {
     from_field?: string;
     to_field?: string;
@@ -135,6 +141,30 @@ export class ListToolbar extends BaseComponent {
         range.append(input);
       }
       root.append(range);
+    }
+
+    if (this.def.filters?.length) {
+      const filterBar = document.createElement('div');
+      filterBar.className = 'flex flex-wrap items-center gap-2';
+      for (const filter of this.def.filters) {
+        const select = document.createElement('select');
+        select.className = 'h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+        select.setAttribute('aria-label', filter.label);
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = filter.placeholder || filter.label;
+        select.append(placeholder);
+        for (const optionDef of filter.options) {
+          const option = document.createElement('option');
+          option.value = typeof optionDef === 'string' ? optionDef : optionDef.id;
+          option.textContent = typeof optionDef === 'string' ? optionDef : optionDef.label;
+          select.append(option);
+        }
+        select.value = String((this.state as any)[filter.field] || '');
+        select.addEventListener('change', () => this.submit('filter', { [filter.field]: select.value }));
+        filterBar.append(select);
+      }
+      root.append(filterBar);
     }
 
     const actions = this.def.actions || [];

@@ -85,6 +85,7 @@ const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'color']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
 const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets']);
+const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
   'label',
@@ -114,7 +115,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'columns'])],
-  ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filter_sources'])],
+  ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'actions', 'date_range', 'filters', 'filter_sources'])],
   ['StatusTabs', new Set(['type', 'source', 'filter_field', 'tabs'])],
   ['TabGroup', new Set(['type', 'tabs'])],
   ['StatRow', new Set(['type', 'source', 'stats'])],
@@ -363,6 +364,7 @@ function validateComponents(
     validateStats(component.stats, `${path}.stats`, issues);
     validateSearch(component.search, `${path}.search`, issues);
     validateDateRange(component.date_range, `${path}.date_range`, issues);
+    validateToolbarFilters(component.filters, `${path}.filters`, issues);
     validateComponentActions(component.actions, `${path}.actions`, issues);
     if (component.empty_state !== undefined) {
       requireRecord(component.empty_state, `${path}.empty_state`, issues);
@@ -492,6 +494,37 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
       });
     }
   }
+}
+
+function validateToolbarFilters(value: unknown, path: string, issues: string[]) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    issues.push(`${path} must be an array`);
+    return;
+  }
+  value.forEach((filter, index) => {
+    const filterPath = `${path}[${index}]`;
+    requireRecord(filter, filterPath, issues);
+    if (!isRecord(filter)) return;
+    rejectUnknownKeys(filter, TOOLBAR_FILTER_KEYS, filterPath, issues);
+    requireString(filter.field, `${filterPath}.field`, issues);
+    requireString(filter.label, `${filterPath}.label`, issues);
+    if (!Array.isArray(filter.options)) {
+      issues.push(`${filterPath}.options must be an array`);
+    } else {
+      filter.options.forEach((option: unknown, optionIndex: number) => {
+        if (typeof option === 'string') return;
+        const optionPath = `${filterPath}.options[${optionIndex}]`;
+        requireRecord(option, optionPath, issues);
+        if (isRecord(option)) {
+          rejectUnknownKeys(option, new Set(['id', 'label']), optionPath, issues);
+          requireString(option.id, `${optionPath}.id`, issues);
+          requireString(option.label, `${optionPath}.label`, issues);
+        }
+      });
+    }
+    if (filter.placeholder !== undefined) requireString(filter.placeholder, `${filterPath}.placeholder`, issues);
+  });
 }
 
 function validateComponentActions(value: unknown, path: string, issues: string[]) {

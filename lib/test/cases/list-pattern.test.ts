@@ -116,4 +116,19 @@ describe('ListToolbar', () => {
 
     expect(submit).toHaveBeenCalledWith('date-range', { from_date: '', to_date: '' });
   });
+
+  it('emits typed filter values from declarative selects', () => {
+    const component = new ListToolbar('toolbar', {}, {
+      search: false,
+      filters: [{ field: 'transport_method', label: 'Transport method', options: ['Road', { id: 'sea', label: 'Sea' }] }],
+    });
+    const submit = vi.spyOn(component, 'submit').mockResolvedValue({});
+    const { container } = mount(component);
+    const select = container.querySelector<HTMLSelectElement>('select[aria-label="Transport method"]')!;
+
+    select.value = 'sea';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+
+    expect(submit).toHaveBeenCalledWith('filter', { transport_method: 'sea' });
+  });
 });
