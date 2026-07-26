@@ -18,6 +18,11 @@ datasources:
           WHEN 'Inactive' THEN 'Ngưng hoạt động'
           ELSE d.status
         END AS availability,
+        CASE
+          WHEN d.license_expiry < CURRENT_DATE THEN 'Đã hết hạn'
+          WHEN d.license_expiry <= CURRENT_DATE + INTERVAL 30 DAY THEN 'Sắp hết hạn'
+          ELSE 'Còn hiệu lực'
+        END AS compliance_label,
         'Admin User' AS created_by, d.created_at
       FROM drivers d
       LEFT JOIN trucks t ON t.id = d.assigned_truck_id
@@ -62,6 +67,10 @@ components:
       - { field: license_number, label: Số giấy phép }
       - { field: truck_plate, label: Phương tiện }
       - { field: license_expiry, label: Hạn giấy phép, type: DateCell }
+      - field: compliance_label
+        label: Tuân thủ
+        type: StatusChip
+        colors: { Còn hiệu lực: green, Sắp hết hạn: amber, Đã hết hạn: red }
       - field: availability
         label: Trạng thái
         type: StatusChip
