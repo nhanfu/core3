@@ -1,0 +1,135 @@
+title: Đơn hàng
+
+page:
+  id: orders
+  auth:
+    require: [orders.read]
+
+datasources:
+  - id: orders
+    single: false
+    permission: orders.read
+    query: |
+      SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        o.status,
+        CASE o.status
+          WHEN 'Draft' THEN 'Nháp'
+          WHEN 'Pending Approval' THEN 'Đang duyệt'
+          WHEN 'Approved' THEN 'Đã duyệt'
+          WHEN 'Cancelled' THEN 'Đã hủy'
+          ELSE o.status
+        END AS status_label,
+        o.shipment_type, o.route, o.transport_method, o.trip_count,
+        printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        o.created_by, CAST(o.created_at AS VARCHAR) AS created_at
+      FROM orders o
+      WHERE (:status IS NULL OR o.status = :status)
+        AND (:q IS NULL
+          OR o.order_number ILIKE '%' || :q || '%'
+          OR o.customer_name ILIKE '%' || :q || '%'
+          OR o.customer_legal_name ILIKE '%' || :q || '%'
+          OR o.route ILIKE '%' || :q || '%')
+      ORDER BY o.order_date DESC, o.created_at DESC
+
+toolbar:
+  - id: add_order_btn
+    label: '+ Thêm đơn hàng'
+    variant: primary
+    permission: orders.write
+    action: add_order
+
+components:
+  - type: ListToolbar
+    source: orders
+    filter_field: q
+    search:
+      label: Tìm kiếm đơn hàng
+      placeholder: 'Tìm mã đơn, khách hàng, tên hàng...'
+  - type: StatusTabs
+    source: orders
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả, count: 12 }
+      - { id: Draft, label: Nháp, count: 3 }
+      - { id: Pending Approval, label: Đang duyệt, count: 3 }
+      - { id: Approved, label: Đã duyệt, count: 4 }
+      - { id: Cancelled, label: Đã hủy, count: 2 }
+  - type: DataGrid
+    source: orders
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state:
+      title: Không có đơn hàng
+      description: Thử thay đổi bộ lọc hoặc tạo đơn hàng mới.
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: order_number, label: Mã đơn, type: PrimaryEntityCell, secondary: customer_name }
+      - { field: order_date, label: Ngày đơn, sortable: true }
+      - field: status_label
+        label: Trạng thái
+        type: StatusChip
+        colors:
+          Nháp: neutral
+          Đang duyệt: amber
+          Đã duyệt: green
+          Đã hủy: red
+      - { field: shipment_type, label: Loại hình }
+      - { field: route, label: Tuyến }
+      - { field: transport_method, label: Hình thức }
+      - { field: trip_count, label: Số chuyến, align: right }
+      - { field: total_amount_display, label: Tổng tiền, align: right }
+      - { field: created_by, label: Người tạo }
+      - { field: created_at, label: Ngày giờ tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_order, label: Sửa, variant: ghost }
+          - { id: delete_order, label: Xóa, variant: danger }
+
+actions:
+  - id: add_order
+    type: form
+    title: Thêm đơn hàng
+    table: orders
+    operation: insert
+    refresh: [orders]
+    fields:
+      - { field: order_number, label: Mã đơn, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: customer_legal_name, label: Tên pháp lý, type: text }
+      - { field: order_date, label: Ngày đơn, type: date, required: true }
+      - { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved, Cancelled], default: Draft }
+      - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
+      - { field: route, label: Tuyến, type: text }
+      - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không], default: Đường bộ }
+      - { field: trip_count, label: Số chuyến, type: number, default: 0 }
+      - { field: total_amount, label: Tổng tiền (₫), type: number, default: 0 }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: edit_order
+    type: form
+    title: Cập nhật đơn hàng
+    table: orders
+    operation: update
+    prefill: row
+    refresh: [orders]
+    fields:
+      - { field: order_number, label: Mã đơn, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: customer_legal_name, label: Tên pháp lý, type: text }
+      - { field: order_date, label: Ngày đơn, type: date, required: true }
+      - { field: status, label: Trạng thái, type: select, options: [Draft, Pending Approval, Approved, Cancelled] }
+      - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
+      - { field: route, label: Tuyến, type: text }
+      - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không] }
+      - { field: trip_count, label: Số chuyến, type: number }
+      - { field: total_amount, label: Tổng tiền (₫), type: number }
+      - { field: notes, label: Ghi chú, type: textarea }
+  - id: delete_order
+    type: delete
+    confirm: 'Xóa đơn hàng {{row.order_number}}?'
+    table: orders
+    refresh: [orders]

@@ -145,12 +145,30 @@ async function initDb(): Promise<void> {
     await repository.runStatements(seedSQL);
     console.log('✓ Database seeded');
   }
+
+  // Keep pre-existing local databases authorized for the additive Orders page.
+  // New databases receive these permissions through seed.sql above.
+  await repository.runStatements(`
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-15', 'role-admin', 'orders.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'orders.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-adm-16', 'role-admin', 'orders.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'orders.write');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-dp-05', 'role-dispatcher', 'orders.read'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'orders.read');
+    INSERT INTO permissions (id, role_id, permission_key)
+    SELECT 'perm-dp-06', 'role-dispatcher', 'orders.write'
+    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'orders.write');
+  `);
 }
 
 // ── YAML datasource registry ─────────────────────────────────────────────────
 // Queries are loaded from the page YAML files, never accepted from API requests.
 const SOURCE_FILES = [
   'pages/dashboard.yaml',
+  'pages/orders.yaml',
   'pages/vehicles.yaml',
   'pages/customers.yaml',
   'pages/fleet.yaml',
@@ -191,6 +209,7 @@ function publicPageConfig(page: any) {
 
 // ── TABLE_REGISTRY ────────────────────────────────────────────────────────────
 const TABLE_REGISTRY = {
+  orders:       { permission: 'orders.write',      timestamps: true  },
   trucks:       { permission: 'fleet.write',       timestamps: true  },
   drivers:      { permission: 'drivers.write',     timestamps: true  },
   trips:        { permission: 'trips.write',        timestamps: true  },

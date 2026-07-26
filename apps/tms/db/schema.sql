@@ -100,6 +100,24 @@ CREATE TABLE IF NOT EXISTS trips (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS orders (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_number VARCHAR NOT NULL UNIQUE,
+  customer_name VARCHAR NOT NULL,
+  customer_legal_name VARCHAR,
+  order_date DATE NOT NULL,
+  status VARCHAR NOT NULL DEFAULT 'Draft',
+  shipment_type VARCHAR,
+  route VARCHAR,
+  transport_method VARCHAR,
+  trip_count INTEGER NOT NULL DEFAULT 0,
+  total_amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+  created_by VARCHAR NOT NULL DEFAULT 'Admin User',
+  notes VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS maintenance (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   truck_id VARCHAR NOT NULL,

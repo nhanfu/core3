@@ -27,7 +27,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-adm-11', 'role-admin', 'settings.read'),
 ('perm-adm-12', 'role-admin', 'settings.write'),
 ('perm-adm-13', 'role-admin', 'crm.read'),
-('perm-adm-14', 'role-admin', 'crm.write');
+('perm-adm-14', 'role-admin', 'crm.write'),
+('perm-adm-15', 'role-admin', 'orders.read'),
+('perm-adm-16', 'role-admin', 'orders.write');
 
 -- fleet_manager
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -44,7 +46,9 @@ INSERT INTO permissions (id, role_id, permission_key) VALUES
 ('perm-dp-01', 'role-dispatcher', 'trips.read'),
 ('perm-dp-02', 'role-dispatcher', 'trips.write'),
 ('perm-dp-03', 'role-dispatcher', 'fleet.read'),
-('perm-dp-04', 'role-dispatcher', 'drivers.read');
+('perm-dp-04', 'role-dispatcher', 'drivers.read'),
+('perm-dp-05', 'role-dispatcher', 'orders.read'),
+('perm-dp-06', 'role-dispatcher', 'orders.write');
 
 -- mechanic
 INSERT INTO permissions (id, role_id, permission_key) VALUES
@@ -119,6 +123,21 @@ INSERT INTO trips (id, trip_number, truck_id, driver_id, origin, destination, st
 ('trip-13',  'TRP-013', 'truck-02', 'driver-02', 'Ho Chi Minh City', 'Da Nang',          'Completed',  '2026-07-05 06:00:00', '2026-07-05 22:30:00',   964.00, 'Chemicals',      11000.00, NULL),
 ('trip-14',  'TRP-014', 'truck-08', 'driver-08', 'Ha Noi',           'Hai Phong',        'Completed',  '2026-07-08 08:00:00', '2026-07-08 11:30:00',   121.00, 'Seafood',         5500.00, 'Refrigerated cargo'),
 ('trip-15',  'TRP-015', 'truck-09', 'driver-09', 'Can Tho',          'Ho Chi Minh City', 'In Transit', '2026-07-25 10:00:00', NULL,                    178.00, 'Rice',           21000.00, NULL);
+
+-- ── Orders ──────────────────────────────────────────────────────────────────
+INSERT INTO orders (id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, created_by, notes) VALUES
+('order-01', 'DH-2026-0001', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', '2026-07-25', 'Draft', 'Hàng lẻ', 'Hồ Chí Minh → Đà Nẵng', 'Đường bộ', 0, 18500000, 'Admin User', 'Chờ xác nhận khối lượng'),
+('order-02', 'DH-2026-0002', 'Công ty CP Đại Phát', 'Dai Phat JSC', '2026-07-25', 'Draft', 'Nguyên chuyến', 'Hà Nội → Hải Phòng', 'Đường bộ', 0, 12600000, 'Admin User', NULL),
+('order-03', 'DH-2026-0003', 'Công ty Thực phẩm An Bình', 'An Binh Foods', '2026-07-24', 'Draft', 'Hàng lạnh', 'Cần Thơ → Hồ Chí Minh', 'Đường bộ', 0, 21800000, 'Admin User', NULL),
+('order-04', 'DH-2026-0004', 'Công ty CP Hưng Thịnh', 'Hung Thinh Trading JSC', '2026-07-24', 'Pending Approval', 'Hàng lẻ', 'Hồ Chí Minh → Nha Trang', 'Đường bộ', 1, 14200000, 'Admin User', 'Đang chờ duyệt giá'),
+('order-05', 'DH-2026-0005', 'Công ty TNHH Sản xuất Việt', 'Viet Manufacturing Co., Ltd.', '2026-07-23', 'Pending Approval', 'Nguyên chuyến', 'Hà Nội → Đà Nẵng', 'Đường bộ', 1, 32600000, 'Admin User', NULL),
+('order-06', 'DH-2026-0006', 'Công ty CP Xuất nhập khẩu Sao', 'Sao Import Export JSC', '2026-07-23', 'Pending Approval', 'Container', 'Hải Phòng → Hà Nội', 'Đường bộ', 1, 17400000, 'Admin User', NULL),
+('order-07', 'DH-2026-0007', 'Công ty TNHH Nam Việt', 'Nam Viet Co., Ltd.', '2026-07-22', 'Approved', 'Nguyên chuyến', 'Hồ Chí Minh → Hà Nội', 'Đường bộ', 2, 48600000, 'Admin User', NULL),
+('order-08', 'DH-2026-0008', 'Công ty CP May Thành Công', 'Thanh Cong Garment JSC', '2026-07-22', 'Approved', 'Hàng lẻ', 'Đà Nẵng → Huế', 'Đường bộ', 1, 9200000, 'Admin User', NULL),
+('order-09', 'DH-2026-0009', 'Công ty TNHH Điện tử Đông Á', 'Dong A Electronics Co., Ltd.', '2026-07-21', 'Approved', 'Hàng lẻ', 'Hồ Chí Minh → Biên Hòa', 'Đường bộ', 1, 11800000, 'Admin User', NULL),
+('order-10', 'DH-2026-0010', 'Công ty CP Nông sản Miền Tây', 'Mien Tay Agriculture JSC', '2026-07-20', 'Approved', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 2, 59300000, 'Admin User', NULL),
+('order-11', 'DH-2026-0011', 'Công ty TNHH Gia Phúc', 'Gia Phuc Co., Ltd.', '2026-07-20', 'Cancelled', 'Hàng lẻ', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 0, 7600000, 'Admin User', 'Khách hàng hủy đơn'),
+('order-12', 'DH-2026-0012', 'Công ty CP Phú Mỹ', 'Phu My JSC', '2026-07-19', 'Cancelled', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 0, 16800000, 'Admin User', 'Không đủ phương tiện');
 
 -- ── Maintenance ───────────────────────────────────────────────────────────────
 INSERT INTO maintenance (id, truck_id, service_type, status, scheduled_date, completed_date, technician_id, cost, notes) VALUES
