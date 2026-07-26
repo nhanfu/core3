@@ -5,6 +5,7 @@ const baseUrl = (process.env.TMS_BASE_URL || 'http://localhost:3001').replace(/\
 const email = process.env.TMS_AUDIT_EMAIL || 'admin@tms.local';
 const password = process.env.TMS_AUDIT_PASSWORD || 'admin123';
 const pageDir = join(import.meta.dir, '..', 'pages');
+const appSource = readFileSync(join(import.meta.dir, '..', 'app.ts'), 'utf8');
 
 type Source = { id: string; query?: string };
 type Page = { page?: { id?: string }; datasources?: Source[] };
@@ -42,6 +43,7 @@ const headers = {
 const pages = readdirSync(pageDir).filter((file) => file.endsWith('.yaml')).sort();
 let pageFailures = 0;
 let sourceFailures = 0;
+let directFailures = 0;
 let sourceCount = 0;
 
 for (const file of pages) {
@@ -71,5 +73,16 @@ for (const file of pages) {
   }
 }
 
-console.log(`pages=${pages.length} sources=${sourceCount} page_failures=${pageFailures} source_failures=${sourceFailures}`);
-if (pageFailures || sourceFailures) process.exit(1);
+const routes = [...appSource.matchAll(/^\s*'([^']+)'\s*:/gm)]
+  .map((match) => match[1])
+  .filter((route) => route.startsWith('/') && route !== '/login');
+for (const route of new Set(routes)) {
+  const response = await fetch(`${baseUrl}${route}`);
+  if (!response.ok) {
+    directFailures++;
+    console.error(`DIRECT ${route}: ${response.status}`);
+  }
+}
+
+console.log(`pages=${pages.length} sources=${sourceCount} direct_routes=${new Set(routes).size} page_failures=${pageFailures} source_failures=${sourceFailures} direct_failures=${directFailures}`);
+if (pageFailures || sourceFailures || directFailures) process.exit(1);

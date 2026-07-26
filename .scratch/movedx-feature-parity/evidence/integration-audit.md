@@ -27,7 +27,7 @@ TMS_BASE_URL=http://localhost:3341 bun run audit:workflows
 - 0 page-definition failures.
 - 0 datasource SQL/runtime failures.
 - 51 registered SPA routes mounted in a real browser with 0 route or console-error failures; shared column chooser, status-tab, search, safe editor-open/dismiss, sortable-header, next-page, and export controls were exercised when present.
-- 51 registered SPA paths also return the SPA shell on direct navigation (no deep-link 404s).
+- The repeatable page audit also checks all 51 registered SPA paths for direct shell responses: 0 deep-link failures.
 - 13 representative named workflow transitions completed with zero failures across orders, quotes, financial documents, payroll, and trips.
 
 The command discovers all 68 YAML files, fetches each page through the public
