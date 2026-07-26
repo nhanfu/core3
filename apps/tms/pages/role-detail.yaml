@@ -19,6 +19,18 @@ datasources:
       ) AS catalog(permission_key)
       LEFT JOIN permissions p ON p.permission_key = catalog.permission_key AND p.role_id = :id
       ORDER BY catalog.permission_key
+  - id: role_users
+    single: false
+    permission: settings.read
+    query: |
+      SELECT u.id, u.name, u.email, COALESCE(u.enabled, true) AS enabled,
+        b.name AS branch_name, d.name AS department_name
+      FROM user_roles ur
+      JOIN users u ON u.id = ur.user_id
+      LEFT JOIN branches b ON b.id = u.branch_id
+      LEFT JOIN departments d ON d.id = u.department_id
+      WHERE ur.role_id = :id
+      ORDER BY u.name
 components:
   - { type: DocumentSummary, source: role_detail, title_field: name, subtitle_field: description, columns: [{ field: id, label: Mã vai trò }] }
   - type: DataGrid
@@ -34,6 +46,17 @@ components:
         actions:
           - { id: grant_permission, label: Cấp quyền, variant: primary, show_if: "!row.enabled && user.permissions.includes('settings.write')" }
           - { id: revoke_permission, label: Thu hồi, variant: danger, show_if: "row.enabled && user.permissions.includes('settings.write')" }
+  - type: DataGrid
+    source: role_users
+    page_size: 20
+    column_chooser: true
+    row_key: id
+    empty_state: { title: Chưa có người dùng được gán vai trò }
+    columns:
+      - { field: name, label: Người dùng, type: PrimaryEntityCell, secondary: email }
+      - { field: branch_name, label: Chi nhánh }
+      - { field: department_name, label: Phòng ban }
+      - { field: enabled, label: Kích hoạt, type: BooleanCell }
 toolbar:
   - { id: back_roles, label: '← Danh sách vai trò', variant: secondary, action: back_roles }
 actions:
