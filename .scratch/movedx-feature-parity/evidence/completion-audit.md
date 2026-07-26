@@ -52,6 +52,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Currency catalog now includes server-owned rate-to-VND/effective-date/source fields and an audited, permission-gated synchronization action; the fresh workflow audit verifies all three seeded rates persist.
 - Role management now includes server-validated `all`/`branch`/`own` view-scope configuration in list/detail YAML and the shared source-prefilled editor; workflow audit covers valid and rejected scope updates.
 - Shared list exports now render the reference `Xuất Excel` label and produce `.xlsx` downloads with escaped text and numeric cells.
+- Master-data imports accept both CSV and OOXML `.xlsx` workbooks; the fresh workflow audit verifies a generated XLSX round-trip alongside malformed-CSV rejection.
 
 ## Not Proven
 

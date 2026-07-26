@@ -24,6 +24,7 @@ import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
 import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
 import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
 import { CURRENCY_ACTION_REGISTRY } from './services/currency-actions.ts';
+import { xlsxToCsv } from './services/xlsx-import.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -664,8 +665,18 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     } else {
       requirePerm('catalog.write');
       if (typeof meta.scope !== 'string' || !meta.scope) return apiError(400, 'scope required');
-      if (file.size > 2 * 1024 * 1024) return apiError(400, 'Import CSV must be 2 MB or smaller');
-      const result = await repository.importMasterData(meta.scope, await file.text(), activityActor);
+      if (file.size > 2 * 1024 * 1024) return apiError(400, 'Import CSV or XLSX must be 2 MB or smaller');
+      let importText: string;
+      if (file.name.toLowerCase().endsWith('.xlsx') || file.type.includes('spreadsheetml')) {
+        try {
+          importText = xlsxToCsv(new Uint8Array(await file.arrayBuffer()));
+        } catch (error) {
+          return apiError(400, error instanceof Error ? error.message : 'Invalid XLSX workbook');
+        }
+      } else {
+        importText = await file.text();
+      }
+      const result = await repository.importMasterData(meta.scope, importText, activityActor);
       return json(result);
     }
     if (file.size <= 0 || file.size > 5 * 1024 * 1024) {

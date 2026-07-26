@@ -1,3 +1,5 @@
+import { toXlsx } from '../../../lib/xlsx-utils.ts';
+
 const baseUrl = (process.env.TMS_BASE_URL || 'http://localhost:3001').replace(/\/$/, '');
 const login = await fetch(`${baseUrl}/api/auth/login`, {
   method: 'POST',
@@ -173,6 +175,13 @@ const importResponse = await fetch(`${baseUrl}/api/upload`, {
   body: invalidImport,
 });
 if (importResponse.status !== 400) throw new Error(`invalid import expected 400, got ${importResponse.status}`);
+const xlsxImport = new FormData();
+xlsxImport.append('file', new File([toXlsx([{ code: 'AUDIT-XLSX', name: 'Audit XLSX', status: 'Active' }], [
+  { field: 'code', label: 'code' }, { field: 'name', label: 'name' }, { field: 'status', label: 'status' },
+])], 'audit.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+xlsxImport.append('meta', JSON.stringify({ kind: 'master_data_import', scope: 'unit' }));
+const xlsxResponse = await fetch(`${baseUrl}/api/upload`, { method: 'POST', headers: { Authorization: headers.Authorization }, body: xlsxImport });
+if (xlsxResponse.status !== 200) throw new Error(`xlsx import expected 200, got ${xlsxResponse.status}`);
 const restrictedLogin = await fetch(`${baseUrl}/api/auth/login`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
@@ -182,4 +191,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 permission_denials=1 currency_sync=1 role_scope_updates=2 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 xlsx_roundtrips=1 permission_denials=1 currency_sync=1 role_scope_updates=2 failures=0`);

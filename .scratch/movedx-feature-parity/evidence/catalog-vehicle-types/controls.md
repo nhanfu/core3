@@ -4,7 +4,7 @@
 
 - Active/inactive status tabs filter the master-data list.
 - Search covers code, name, and description.
-- CSV export and CSV import controls are visible.
+- Excel export and CSV/XLSX import controls are visible.
 - Column chooser controls the resource grid.
 - Create, edit, and delete actions are permission-gated by `catalog.write`.
 
