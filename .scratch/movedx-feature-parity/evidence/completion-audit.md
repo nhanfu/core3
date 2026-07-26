@@ -23,6 +23,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Audited resource lists default to the reference 50-row density and support server-backed 10/25/50/100 page-size changes.
 - Status-tab badges use server-owned full-dataset facets rather than the current page slice; orders, vehicles, and drivers were verified against fresh seeded counts.
 - Audited resource lists now render declarative reference-style breadcrumbs and current titles without affecting dashboard intro composition.
+- Primary actions now share the breadcrumb row; fresh 1440px orders geometry matches the reference header/search vertical alignment.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.

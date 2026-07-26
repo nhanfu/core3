@@ -1188,8 +1188,9 @@ export async function renderPage(config: any, { container = document.body }: { c
   if (config.title) document.title = config.title;
 
   // 5. Render the optional reference-style breadcrumb/page header.
+  let pageHeader: HTMLElement | null = null;
   if (config.page?.breadcrumb?.length) {
-    const pageHeader = document.createElement('div');
+    pageHeader = document.createElement('div');
     pageHeader.className = 'page-header';
     const heading = document.createElement('div');
     const breadcrumb = document.createElement('div');
@@ -1207,10 +1208,6 @@ export async function renderPage(config: any, { container = document.body }: { c
       breadcrumb.append(crumb);
     }
     heading.append(breadcrumb);
-    const title = document.createElement('h1');
-    title.className = 'page-title';
-    title.textContent = config.title || config.page.breadcrumb.at(-1) || '';
-    heading.append(title);
     pageHeader.append(heading);
     pageDiv.appendChild(pageHeader);
   }
@@ -1218,8 +1215,8 @@ export async function renderPage(config: any, { container = document.body }: { c
   // 6. Render toolbar
   if (config.toolbar?.length) {
     const toolbarDiv = document.createElement('div');
-    toolbarDiv.className = 'page-toolbar';
-    toolbarDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin-bottom:20px;flex-wrap:wrap;';
+    toolbarDiv.className = pageHeader ? 'page-header-actions' : 'page-toolbar';
+    toolbarDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;';
 
     for (const btn of config.toolbar) {
       if (btn.permission) {
@@ -1238,7 +1235,11 @@ export async function renderPage(config: any, { container = document.body }: { c
       toolbarDiv.appendChild(button);
     }
 
-    pageDiv.appendChild(toolbarDiv);
+    if (pageHeader) pageHeader.appendChild(toolbarDiv);
+    else {
+      toolbarDiv.style.marginBottom = '20px';
+      pageDiv.appendChild(toolbarDiv);
+    }
   }
 
   // 7. Render filter bar

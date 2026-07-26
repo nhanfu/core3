@@ -3,6 +3,7 @@
 ## Local interaction checklist
 
 - [x] The page header renders `Kinh doanh › Khách hàng` above the list controls.
+- [x] `+ Thêm khách hàng` shares the page-header row and is right aligned.
 
 - [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.
 

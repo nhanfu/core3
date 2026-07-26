@@ -75,7 +75,7 @@ body {
 
 .app-content {
   flex: 1;
-  padding: 28px 24px;
+  padding: 24px;
   overflow-y: auto;
 }
 
@@ -1053,6 +1053,8 @@ body {
   justify-content: space-between;
   margin-bottom: 24px;
 }
+
+.page-header-actions { flex: 0 0 auto; }
 
 .page-title {
   font-size: 1.375rem;
