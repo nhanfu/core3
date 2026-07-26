@@ -118,7 +118,8 @@ body {
 
 .sidebar-nav {
   flex: 1;
-  padding: 12px 12px;
+  padding: 10px 12px 20px;
+  overflow-y: auto;
 }
 
 .sidebar-section-title {
@@ -132,6 +133,7 @@ body {
 }
 
 .nav-item {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -142,6 +144,9 @@ body {
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
+  border: 0;
+  background: transparent;
+  text-align: left;
   transition: background var(--transition), color var(--transition);
   position: relative;
   user-select: none;
@@ -171,10 +176,80 @@ body {
 }
 
 .nav-item-icon {
-  font-size: 1rem;
+  font-size: 0.9rem;
   width: 20px;
   text-align: center;
   flex-shrink: 0;
+}
+
+.sidebar-nav-group {
+  margin-top: 8px;
+}
+
+.sidebar-group-button {
+  width: 100%;
+  padding: 9px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 14px;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  border-radius: var(--radius-md);
+  transition: background var(--transition), color var(--transition);
+}
+
+.sidebar-group-button:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+}
+
+.sidebar-group-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-group-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-light);
+  color: var(--color-text-secondary);
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-group-chevron {
+  font-size: 0.9rem;
+  line-height: 1;
+  transition: transform var(--transition);
+}
+
+.sidebar-nav-group.open .sidebar-group-chevron { transform: rotate(180deg); }
+
+.sidebar-group-items {
+  display: none;
+  gap: 1px;
+  padding: 2px 0 4px 8px;
+}
+
+.sidebar-nav-group.open .sidebar-group-items { display: grid; }
+
+.sidebar-group-items .nav-item {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  font-size: 0.8125rem;
 }
 
 .sidebar-footer {
@@ -302,6 +377,42 @@ body {
 }
 
 .avatar-btn:hover { opacity: 0.9; }
+
+/* ── Parity placeholder ── */
+.parity-placeholder {
+  max-width: 640px;
+  margin: 12vh auto 0;
+  padding: 48px;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.parity-placeholder-icon {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 16px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  font-size: 1.5rem;
+}
+
+.parity-placeholder-title {
+  color: var(--color-text);
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.parity-placeholder-copy {
+  margin-top: 8px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
 
 /* ── Notification panel ── */
 .notif-panel {

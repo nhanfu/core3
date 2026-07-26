@@ -5,25 +5,85 @@ import { i18n } from '../i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
 
-const NAV = [
-  { path: '/dashboard',   label: 'Dashboard',   icon: '▦' },
-  { path: '/fleet',       label: 'Fleet',       icon: '🚛' },
-  { path: '/drivers',     label: 'Drivers',     icon: '👤' },
-  { path: '/trips',       label: 'Trips',       icon: '🗺️'  },
-  { path: '/maintenance', label: 'Maintenance', icon: '🔧' },
-  { path: '/reports',     label: 'Reports',     icon: '📊' },
-  { path: '/settings',    label: 'Settings',    icon: '⚙️'  },
+type NavItem = { path: string; label: string; icon: string };
+type NavGroup = { id: string; label: string; count: number; items: NavItem[] };
+
+const DASHBOARD: NavItem = { path: '/dashboard', label: 'Tổng quan', icon: '▦' };
+
+const NAV_GROUPS: NavGroup[] = [
+  { id: 'operations', label: 'ĐIỀU HÀNH', count: 6, items: [
+    { path: '/orders', label: 'Đơn hàng', icon: '□' },
+    { path: '/chat', label: 'Tin nhắn', icon: '◇' },
+    { path: '/schedule', label: 'Lịch điều', icon: '◫' },
+  ] },
+  { id: 'sales', label: 'KINH DOANH', count: 6, items: [
+    { path: '/customers', label: 'Khách hàng', icon: '○' },
+    { path: '/partners', label: 'Đối tượng', icon: '◌' },
+    { path: '/quotes', label: 'Báo giá', icon: '△' },
+    { path: '/crm/dashboard', label: 'Tổng hợp CRM', icon: '▤' },
+    { path: '/crm/kpi', label: 'Chỉ tiêu KPI', icon: '◈' },
+  ] },
+  { id: 'accounting', label: 'KẾ TOÁN', count: 11, items: [
+    { path: '/accounting/debit-notes', label: 'Giấy báo nợ', icon: '▧' },
+    { path: '/accounting/debit-note-summary', label: 'Tổng hợp giấy báo nợ', icon: '▤' },
+    { path: '/accounting/payment-requests', label: 'Đề nghị thanh toán', icon: '▧' },
+    { path: '/accounting/payment-request-summary', label: 'Tổng hợp đề nghị chi', icon: '▤' },
+    { path: '/accounting/advances', label: 'Tạm ứng', icon: '◇' },
+    { path: '/accounting/settlements', label: 'Hoàn ứng', icon: '◇' },
+    { path: '/accounting/invoice-templates', label: 'Mẫu hóa đơn', icon: '□' },
+    { path: '/accounting/ledger-accounts', label: 'Hệ thống tài khoản', icon: '▥' },
+  ] },
+  { id: 'hr', label: 'NHÂN SỰ', count: 6, items: [
+    { path: '/hr/employees', label: 'Nhân viên', icon: '○' },
+    { path: '/hr/contracts', label: 'Hợp đồng', icon: '□' },
+    { path: '/hr/timesheets', label: 'Chấm công', icon: '▦' },
+    { path: '/hr/shifts', label: 'Ca làm việc', icon: '◫' },
+    { path: '/hr/payroll', label: 'Bảng lương', icon: '▧' },
+  ] },
+  { id: 'catalog', label: 'DANH MỤC', count: 11, items: [
+    { path: '/drivers', label: 'Tài xế', icon: '○' },
+    { path: '/vehicles', label: 'Phương tiện', icon: '▣' },
+    { path: '/containers', label: 'Container', icon: '□' },
+    { path: '/locations', label: 'Địa điểm', icon: '⌖' },
+    { path: '/areas', label: 'Khu vực', icon: '◇' },
+    { path: '/catalog/container-types', label: 'Loại container', icon: '□' },
+    { path: '/catalog/vehicle-types', label: 'Loại xe', icon: '▣' },
+    { path: '/catalog/units', label: 'Đơn vị tính', icon: '≡' },
+    { path: '/catalog/cargo-types', label: 'Loại hàng hóa', icon: '◇' },
+    { path: '/catalog/fee-types', label: 'Loại phí', icon: '◈' },
+    { path: '/catalog/currencies', label: 'Tiền tệ', icon: '₫' },
+  ] },
+  { id: 'organization', label: 'TỔ CHỨC & PHÂN QUYỀN', count: 6, items: [
+    { path: '/org/own-company', label: 'Công ty chủ quản', icon: '▦' },
+    { path: '/org/branches', label: 'Chi nhánh', icon: '⌂' },
+    { path: '/org/departments', label: 'Phòng ban', icon: '▤' },
+    { path: '/org/teams', label: 'Team', icon: '○' },
+    { path: '/org/users', label: 'Người dùng', icon: '○' },
+    { path: '/org/roles', label: 'Vai trò', icon: '◇' },
+  ] },
+  { id: 'system', label: 'HỆ THỐNG', count: 8, items: [
+    { path: '/system/activity', label: 'Lịch sử thao tác', icon: '◷' },
+    { path: '/system/code-rules', label: 'Cấu hình sinh mã', icon: '#' },
+    { path: '/system/print-templates', label: 'Mẫu in', icon: '▧' },
+    { path: '/system/approval-flows', label: 'Quy trình duyệt', icon: '◇' },
+    { path: '/system/shipment-types', label: 'Loại hình vận chuyển', icon: '▣' },
+    { path: '/system/trip-statuses', label: 'Trạng thái chuyến', icon: '◉' },
+    { path: '/system/fee-rules', label: 'Công thức phí chuyến', icon: '◈' },
+    { path: '/system/storage', label: 'Quản lý dung lượng', icon: '▥' },
+  ] },
 ];
 
 export class AppShell extends BaseComponent {
   _navEls: Map<string, HTMLElement>;
+  _groupEls: Map<string, HTMLElement>;
   _headerTitle: HTMLElement | null;
   _notifPanel: NotificationPanel | null;
   _profileDrawer: ProfileDrawer | null;
 
   constructor(id: string, state: any) {
-    super(id, { activePath: '/fleet', title: 'TMS', ...state });
+    super(id, { activePath: '/dashboard', title: 'TMS', openGroups: {}, ...state });
     this._navEls = new Map();  // path → div element
+    this._groupEls = new Map();
     this._headerTitle = null;
     this._notifPanel = null;
     this._profileDrawer = null;
@@ -33,6 +93,14 @@ export class AppShell extends BaseComponent {
     this._navEls.forEach((el: HTMLElement, p: string) => {
       el.classList.toggle('active', p === path);
     });
+    const containingGroup = NAV_GROUPS.find(group => group.items.some(item => item.path === path));
+    if (containingGroup) this.setGroupOpen(containingGroup.id, true);
+  }
+
+  setGroupOpen(groupId: string, open: boolean) {
+    this.state.openGroups[groupId] = open;
+    const group = this._groupEls.get(groupId);
+    if (group) group.classList.toggle('open', open);
   }
 
   setTitle(title: string) {
@@ -56,28 +124,44 @@ export class AppShell extends BaseComponent {
 
     // Logo
     const logo = html.take(sidebar).div.className('sidebar-logo').getContext();
-    html.take(logo).div.className('sidebar-logo-text').text('🚛 TMS');
-    html.take(logo).div.className('sidebar-logo-sub').text('Transport Management');
+    html.take(logo).div.className('sidebar-logo-text').text('MovedX');
+    html.take(logo).div.className('sidebar-logo-sub').text('Điều xe & Quản lý vận tải');
 
     // Nav
     const nav = html.take(sidebar).nav.className('sidebar-nav').getContext();
-    html.take(nav).div.className('sidebar-section-title').text('Navigation');
-
-    for (const item of NAV) {
-      // Permission-gate certain nav items
-      if (item.path === '/settings' && !user?.permissions?.includes('settings.read')) continue;
-      if (item.path === '/reports'  && !user?.permissions?.includes('reports.read'))  continue;
-
+    const createNavItem = (target: HTMLElement, item: NavItem) => {
       const isActive = this.state.activePath === item.path;
-      const navItem = html.take(nav).div
+      const navItem = html.take(target).button
         .className('nav-item' + (isActive ? ' active' : ''))
+        .attr('type', 'button')
         .event('click', () => navigate(item.path))
         .getContext();
-
       html.take(navItem).span.className('nav-item-icon').text(item.icon);
       html.take(navItem).span.className('nav-item-label').text(i18n.t('*', null, item.label));
-
       this._navEls.set(item.path, navItem);
+    };
+
+    createNavItem(nav, DASHBOARD);
+    for (const groupDef of NAV_GROUPS) {
+      const group = html.take(nav).div
+        .className('sidebar-nav-group' + (this.state.openGroups[groupDef.id] ? ' open' : ''))
+        .getContext();
+      this._groupEls.set(groupDef.id, group);
+      const button = html.take(group).button
+        .className('sidebar-group-button')
+        .attr('type', 'button')
+        .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
+        .getContext();
+      html.take(button).span.className('sidebar-group-label').text(groupDef.label);
+      html.take(button).span.className('sidebar-group-count').text(String(groupDef.count));
+      html.take(button).span.className('sidebar-group-chevron').text('⌄');
+      button.addEventListener('click', () => {
+        const open = !this.state.openGroups[groupDef.id];
+        button.setAttribute('aria-expanded', String(open));
+        this.setGroupOpen(groupDef.id, open);
+      });
+      const items = html.take(group).div.className('sidebar-group-items').getContext();
+      groupDef.items.forEach(item => createNavItem(items, item));
     }
 
     // Sidebar footer — user info

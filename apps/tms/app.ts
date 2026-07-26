@@ -12,22 +12,81 @@ let _shell: AppShell | null = null;
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/login':        () => import('./pages/login.ts'),
   '/dashboard':    'dashboard',
-  '/fleet':        'fleet',
+  '/vehicles':     'fleet',
   '/drivers':      'drivers',
-  '/trips':        'trips',
-  '/maintenance':  'maintenance',
-  '/reports':      'reports',
-  '/settings':     'settings',
+  '/orders':       () => import('./pages/placeholder.ts'),
+  '/chat':         () => import('./pages/placeholder.ts'),
+  '/schedule':     () => import('./pages/placeholder.ts'),
+  '/customers':    () => import('./pages/placeholder.ts'),
+  '/partners':     () => import('./pages/placeholder.ts'),
+  '/quotes':       () => import('./pages/placeholder.ts'),
+  '/crm/dashboard': () => import('./pages/placeholder.ts'),
+  '/crm/kpi':      () => import('./pages/placeholder.ts'),
+  '/accounting/debit-notes': () => import('./pages/placeholder.ts'),
+  '/accounting/debit-note-summary': () => import('./pages/placeholder.ts'),
+  '/accounting/payment-requests': () => import('./pages/placeholder.ts'),
+  '/accounting/payment-request-summary': () => import('./pages/placeholder.ts'),
+  '/accounting/advances': () => import('./pages/placeholder.ts'),
+  '/accounting/settlements': () => import('./pages/placeholder.ts'),
+  '/accounting/invoice-templates': () => import('./pages/placeholder.ts'),
+  '/accounting/ledger-accounts': () => import('./pages/placeholder.ts'),
+  '/hr/employees': () => import('./pages/placeholder.ts'),
+  '/hr/contracts': () => import('./pages/placeholder.ts'),
+  '/hr/timesheets': () => import('./pages/placeholder.ts'),
+  '/hr/shifts': () => import('./pages/placeholder.ts'),
+  '/hr/payroll': () => import('./pages/placeholder.ts'),
+  '/containers': () => import('./pages/placeholder.ts'),
+  '/locations': () => import('./pages/placeholder.ts'),
+  '/areas': () => import('./pages/placeholder.ts'),
+  '/catalog/container-types': () => import('./pages/placeholder.ts'),
+  '/catalog/vehicle-types': () => import('./pages/placeholder.ts'),
+  '/catalog/units': () => import('./pages/placeholder.ts'),
+  '/catalog/cargo-types': () => import('./pages/placeholder.ts'),
+  '/catalog/fee-types': () => import('./pages/placeholder.ts'),
+  '/catalog/currencies': () => import('./pages/placeholder.ts'),
+  '/org/own-company': () => import('./pages/placeholder.ts'),
+  '/org/branches': () => import('./pages/placeholder.ts'),
+  '/org/departments': () => import('./pages/placeholder.ts'),
+  '/org/teams': () => import('./pages/placeholder.ts'),
+  '/org/users': () => import('./pages/placeholder.ts'),
+  '/org/roles': () => import('./pages/placeholder.ts'),
+  '/system/activity': () => import('./pages/placeholder.ts'),
+  '/system/code-rules': () => import('./pages/placeholder.ts'),
+  '/system/print-templates': () => import('./pages/placeholder.ts'),
+  '/system/approval-flows': () => import('./pages/placeholder.ts'),
+  '/system/shipment-types': () => import('./pages/placeholder.ts'),
+  '/system/trip-statuses': () => import('./pages/placeholder.ts'),
+  '/system/fee-rules': () => import('./pages/placeholder.ts'),
+  '/system/storage': () => import('./pages/placeholder.ts'),
 };
 
 const ROUTE_TITLES: Record<string, string> = {
-  '/dashboard':    'Dashboard',
-  '/fleet':        'Fleet Overview',
-  '/drivers':      'Drivers',
-  '/trips':        'Trip Management',
-  '/maintenance':  'Maintenance',
-  '/reports':      'Reports',
-  '/settings':     'Settings',
+  '/dashboard': 'Tổng quan',
+  '/orders': 'Đơn hàng', '/chat': 'Tin nhắn', '/schedule': 'Lịch điều',
+  '/customers': 'Khách hàng', '/partners': 'Đối tượng', '/quotes': 'Báo giá',
+  '/crm/dashboard': 'Tổng hợp CRM', '/crm/kpi': 'Chỉ tiêu KPI',
+  '/accounting/debit-notes': 'Giấy báo nợ',
+  '/accounting/debit-note-summary': 'Tổng hợp giấy báo nợ',
+  '/accounting/payment-requests': 'Đề nghị thanh toán',
+  '/accounting/payment-request-summary': 'Tổng hợp đề nghị chi',
+  '/accounting/advances': 'Tạm ứng', '/accounting/settlements': 'Hoàn ứng',
+  '/accounting/invoice-templates': 'Mẫu hóa đơn',
+  '/accounting/ledger-accounts': 'Hệ thống tài khoản',
+  '/hr/employees': 'Nhân viên', '/hr/contracts': 'Hợp đồng',
+  '/hr/timesheets': 'Chấm công', '/hr/shifts': 'Ca làm việc', '/hr/payroll': 'Bảng lương',
+  '/drivers': 'Tài xế', '/vehicles': 'Phương tiện', '/containers': 'Container',
+  '/locations': 'Địa điểm', '/areas': 'Khu vực',
+  '/catalog/container-types': 'Loại container', '/catalog/vehicle-types': 'Loại xe',
+  '/catalog/units': 'Đơn vị tính', '/catalog/cargo-types': 'Loại hàng hóa',
+  '/catalog/fee-types': 'Loại phí', '/catalog/currencies': 'Tiền tệ',
+  '/org/own-company': 'Công ty chủ quản', '/org/branches': 'Chi nhánh',
+  '/org/departments': 'Phòng ban', '/org/teams': 'Team', '/org/users': 'Người dùng',
+  '/org/roles': 'Vai trò', '/system/activity': 'Lịch sử thao tác',
+  '/system/code-rules': 'Cấu hình sinh mã', '/system/print-templates': 'Mẫu in',
+  '/system/approval-flows': 'Quy trình duyệt',
+  '/system/shipment-types': 'Loại hình vận chuyển',
+  '/system/trip-statuses': 'Trạng thái chuyến',
+  '/system/fee-rules': 'Công thức phí chuyến', '/system/storage': 'Quản lý dung lượng',
 };
 
 export function getToken() {
@@ -63,8 +122,13 @@ export async function navigate(path: string, params: Record<string, string | num
       )
     ).toString()
     : '';
-  history.pushState({}, '', path + qs);
-  await renderRoute(path);
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const target = `#${normalizedPath}${qs}`;
+  if (window.location.hash === target) {
+    await renderRoute(normalizedPath);
+    return;
+  }
+  window.location.hash = target;
 }
 
 // apiFetch: wrapper that adds auth header
@@ -97,7 +161,7 @@ async function renderRoute(path: string) {
   </div>`;
 
   // Prefetch i18n for this page
-  const pageName = cleanPath.slice(1) || 'dashboard';
+  const pageName = cleanPath.slice(1).replace('/', '-') || 'dashboard';
   await i18n.prefetch(pageName);
   await i18n.prefetch('*');
 
@@ -169,22 +233,19 @@ async function bootstrap() {
 
   // Register navigator so page-renderer navigate() calls use SPA pushState
   registerNavigator((path: string, params: Record<string, unknown> = {}) => {
-    const qs = new URLSearchParams(
-      Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
-    ).toString();
-    const url = path + (qs ? '?' + qs : '');
-    history.pushState({}, '', url);
-    void renderRoute(path);
+    void navigate(path, params as Record<string, string | number | boolean | null | undefined>);
   });
 
-  // Navigate to current path (or default to /dashboard)
-  const path = window.location.pathname || '/dashboard';
-  await renderRoute(path === '/' ? '/dashboard' : path);
+  // Match the reference app's hash-routing model. Keeping routing client-side
+  // also avoids a server allowlist change for every new parity route.
+  const hashPath = window.location.hash.slice(1).split('?')[0] || '/dashboard';
+  await renderRoute(hashPath);
 }
 
-// Handle browser back/forward
-window.addEventListener('popstate', () => {
-  void renderRoute(window.location.pathname);
+// Handle browser back/forward and direct hash navigation.
+window.addEventListener('hashchange', () => {
+  const hashPath = window.location.hash.slice(1).split('?')[0] || '/dashboard';
+  void renderRoute(hashPath);
 });
 
 bootstrap();

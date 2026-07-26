@@ -84,7 +84,7 @@ export async function mount(container: HTMLElement) {
       await setAuth(token, user);
       // A full load mounts the authenticated application shell before the
       // dashboard route is rendered.
-      window.location.assign('/dashboard');
+      window.location.assign('/#/dashboard');
     } catch (err) {
       errorEl.textContent = err instanceof Error ? err.message : String(err);
       errorEl.style.display = 'block';
