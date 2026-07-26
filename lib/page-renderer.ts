@@ -642,6 +642,13 @@ export async function renderPage(config: any, { container = document.body }: { c
         await applySourceFilters(sourceId, { ...(filterState[sourceId] || {}), [field]: params?.query || '' });
         return;
       }
+      if (actionId.endsWith('.export')) {
+        const { downloadCsv, toCsv } = await import('./list-utils.ts');
+        const grid = (config.components || []).find(component => component.type === 'DataGrid' && component.source === sourceId);
+        const columns = (grid?.columns || []).filter(column => column.field && column.field !== 'actions');
+        downloadCsv(`${config.page?.id || sourceId}-export`, toCsv(dataMap[sourceId]?.data || [], columns));
+        return;
+      }
       const actionDef = (config.actions || []).find(action => action.id === actionId);
       if (actionDef) await handleAction(actionDef, params || {});
     };
