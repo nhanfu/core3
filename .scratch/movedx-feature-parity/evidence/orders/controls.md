@@ -34,6 +34,8 @@ be recaptured from the read-only tenant before final visual-parity signoff.
 - [x] 1440 x 1000 and 1024 x 768 have no document/outlet overflow; the dense
   grid owns horizontal scrolling.
 - [x] Browser console contains no errors after transition and refresh.
+- [x] Shared DataGrid keeps list rows dense with single-line truncation for long
+  customer, route, and metadata cells while retaining horizontal overflow.
 
 ## Local evidence
 

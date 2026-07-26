@@ -231,7 +231,11 @@ export class DataGrid extends BaseComponent {
         for (const column of visibleColumns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
-          const cell = html.take(tr).tdata.className(`px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
+          const cell = html.take(tr).tdata.className(`max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
+          cell.style.maxWidth = '240px';
+          cell.style.overflow = 'hidden';
+          cell.style.textOverflow = 'ellipsis';
+          cell.style.whiteSpace = 'nowrap';
           if (column.rowActions?.length) {
             const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
             for (const action of column.rowActions) {

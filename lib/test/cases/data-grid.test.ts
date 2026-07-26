@@ -95,6 +95,18 @@ describe('DataGrid', () => {
     expect(container.querySelector('.status-chip.ready')?.textContent).toBe('Ready');
   });
 
+  it('keeps dense rows by truncating long cell content', () => {
+    const grid = new DataGrid('orders', {
+      rows: [{ id: 'long', code: 'ORDER-WITH-A-LONG-ROUTE-NAME' }],
+    }, [{ field: 'code', label: 'Route' }]);
+    const container = mount(grid);
+    const cell = container.querySelector('tbody td') as HTMLElement;
+
+    expect(cell.className).toContain('text-ellipsis');
+    expect(cell.style.whiteSpace).toBe('nowrap');
+    expect(cell.style.maxWidth).toBe('240px');
+  });
+
   it('passes the selected rows to default actions', async () => {
     const grid = new DataGrid('orders', {
       rows,
