@@ -50,19 +50,33 @@ const evaluate = async (expression: string) => {
   const result = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });
   return result.result?.result?.value;
 };
+const evaluateWithTimeout = async (expression: string, label: string, timeoutMs = 5000) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      evaluate(expression),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
 
 await send('Runtime.enable');
-await evaluate(`location.href = ${JSON.stringify(`${baseUrl}/`)}`);
+await evaluateWithTimeout(`location.href = ${JSON.stringify(`${baseUrl}/`)}`, 'initial navigation');
 await new Promise((resolve) => setTimeout(resolve, 500));
-await evaluate(`localStorage.setItem('tms_token', ${JSON.stringify(token)}); location.reload()`);
+await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(token)}); location.reload()`, 'authentication reload');
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
 for (const route of targets) {
   consoleErrors.length = 0;
-  await evaluate(`location.hash = ${JSON.stringify(`#${route}`)}`);
-  await new Promise((resolve) => setTimeout(resolve, 650));
-  await evaluate(`(() => {
+  try {
+    await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${route}`)}`, `${route} navigation`);
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    await evaluateWithTimeout(`(() => {
     const outlet = document.querySelector('#outlet');
     const summaries = [...(outlet?.querySelectorAll('summary') || [])].filter((item) => /^(Columns|Cột)$/.test(item.textContent?.trim() || ''));
     summaries[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -84,13 +98,16 @@ for (const route of targets) {
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
     return { chooser: summaries.length, tabs: tabs.length, search: Boolean(search), editor: Boolean(editor), sortable: Boolean(sortable), pagination: Boolean(nextPage), export: Boolean(exportButton) };
-  })()`);
-  await new Promise((resolve) => setTimeout(resolve, 250));
-  const state = await evaluate(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`);
-  if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
-    failures.push(`${route}: outlet did not render`);
+    })()`, `${route} control exercise`);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    const state = await evaluateWithTimeout(`({ title: document.title, outlet: document.querySelector('#outlet')?.textContent || '', hash: location.hash })`, `${route} state read`);
+    if (!state?.outlet || /Failed to load page|Route load error/i.test(state.outlet)) {
+      failures.push(`${route}: outlet did not render`);
+    }
+    if (consoleErrors.length) failures.push(`${route}: ${consoleErrors.join(' | ')}`);
+  } catch (error) {
+    failures.push(`${route}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (consoleErrors.length) failures.push(`${route}: ${consoleErrors.join(' | ')}`);
 }
 
 socket.close();
