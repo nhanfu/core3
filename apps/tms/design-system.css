@@ -66,6 +66,27 @@ body {
   border-bottom: 0;
 }
 
+.sidebar-logo-identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sidebar-logo-mark {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 7px;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #2563eb);
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.3);
+}
+
+.sidebar-logo-mark svg { width: 18px; height: 18px; }
+
 .sidebar-logo-text {
   font-size: 1rem;
   font-weight: 700;
