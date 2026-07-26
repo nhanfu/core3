@@ -20,6 +20,17 @@ async function transition(action: string, id: string, expected: string) {
   }
 }
 
+async function expectRejected(action: string, id: string, expectedStatus = 409) {
+  const response = await fetch(`${baseUrl}/api/actions/${action}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ id }),
+  });
+  if (response.status !== expectedStatus) {
+    throw new Error(`${action}/${id}: expected rejection ${expectedStatus}, got ${response.status}`);
+  }
+}
+
 // These records are consumed only on a disposable freshly seeded database.
 const checks = [
   ['orders.submit_for_approval', 'order-01', 'Pending Approval'],
@@ -54,4 +65,13 @@ const checks = [
 ] as const;
 
 for (const [action, id, expected] of checks) await transition(action, id, expected);
-console.log(`workflow_transitions=${checks.length} failures=0`);
+const rejected = [
+  ['orders.approve', 'order-02'],
+  ['quotes.accept', 'quote-01'],
+  ['accounting.debit_notes.approve', 'acct-debit-03'],
+  ['accounting.payment_requests.mark_paid', 'acct-pay-01'],
+  ['hr.payroll.mark_paid', 'payroll-03'],
+  ['trips.cancel', 'trip-01'],
+] as const;
+for (const [action, id] of rejected) await expectRejected(action, id);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} failures=0`);
