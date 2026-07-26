@@ -1042,6 +1042,7 @@ export async function renderPage(config: any, { container = document.body }: { c
       }
       if (actionId.endsWith('.export')) {
         const { downloadCsv, toCsv } = await import('./list-utils.ts');
+        const { downloadXlsx, toXlsx } = await import('./xlsx-utils.ts');
         const grid = (config.components || []).find(component => component.type === 'DataGrid' && component.source === sourceId);
         const columns = (grid?.columns || []).filter(column => column.field && column.field !== 'actions');
         const current = dataMap[sourceId] || { data: [], meta: {} };
@@ -1062,7 +1063,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         } catch (error) {
           console.error(`[page-renderer] Export fetch failed for "${sourceId}"`, error);
         }
-        downloadCsv(`${config.page?.id || sourceId}-export`, toCsv(exportRows.length ? exportRows : (current.data || []), columns));
+        const rows = exportRows.length ? exportRows : (current.data || []);
+        if (params?.format === 'csv') downloadCsv(`${config.page?.id || sourceId}-export`, toCsv(rows, columns));
+        else downloadXlsx(`${config.page?.id || sourceId}-export`, toXlsx(rows, columns));
         return;
       }
       const actionDef = (config.actions || []).find(action => action.id === actionId);

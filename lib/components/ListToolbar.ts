@@ -276,8 +276,9 @@ export class ListToolbar extends BaseComponent {
       action.disabled ? 'cursor-not-allowed opacity-50' : '',
       !action.label ? 'w-10 px-0' : '',
     ].filter(Boolean).join(' ');
-    button.title = action.title || action.label || action.id;
-    button.setAttribute('aria-label', action.title || action.label || action.id);
+    const label = action.id.endsWith('.export') && action.label === 'Xuất CSV' ? 'Xuất Excel' : action.label;
+    button.title = action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id);
+    button.setAttribute('aria-label', button.title);
     button.disabled = Boolean(action.disabled);
 
     if (action.icon) {
@@ -287,7 +288,7 @@ export class ListToolbar extends BaseComponent {
       else icon.textContent = action.icon;
       button.append(icon);
     }
-    if (action.label) button.append(document.createTextNode(action.label));
+    if (label) button.append(document.createTextNode(label));
 
     if (!action.disabled) {
       button.addEventListener('click', () => {

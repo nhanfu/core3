@@ -11,12 +11,12 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
 - The same browser route matrix reruns at an explicit 1440 x 1000 desktop viewport with zero route, console, or document-overflow failures.
 - The browser parity audit exercises every discovered shared control on all 52 routes with zero failures at 1024 x 768, including 321 sortable headers, 142 status tabs, 44 column choosers, 401 row actions dispatched with mutation POSTs blocked, 20 exports, and all discovered search/editor controls.
-- List-toolbar CSV exports now refetch the complete active filtered dataset in bounded server pages instead of exporting only the visible page.
+- List-toolbar Excel exports now refetch the complete active filtered dataset in bounded server pages and emit a dependency-free OOXML workbook; explicit CSV fallback remains available.
 - Every page YAML has a route-specific evidence directory and controls checklist.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database action audit completes 29 named transitions, 6 invalid-transition rejection checks, 3 invalid-payload validation checks, one master-data create/update/delete round-trip, one malformed-import rejection, and a least-privilege `403` check.
-- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 150/150.
+- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 151/151.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
 - Dashboard task cards now expose validated, keyboard-accessible navigation to the owning order, trip, accounting, and HR routes, preserving status and unassigned-trip filters.
@@ -51,6 +51,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Print-template block forms now use a shared rich-text field with declarative token-picker buttons for order number, customer, route, and line tokens.
 - Currency catalog now includes server-owned rate-to-VND/effective-date/source fields and an audited, permission-gated synchronization action; the fresh workflow audit verifies all three seeded rates persist.
 - Role management now includes server-validated `all`/`branch`/`own` view-scope configuration in list/detail YAML and the shared source-prefilled editor; workflow audit covers valid and rejected scope updates.
+- Shared list exports now render the reference `Xuất Excel` label and produce `.xlsx` downloads with escaped text and numeric cells.
 
 ## Not Proven
 
