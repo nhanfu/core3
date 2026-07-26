@@ -43,6 +43,7 @@ components:
   - type: DataGrid
     source: contracts
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có hợp đồng, description: Thử thay đổi bộ lọc hoặc tạo hợp đồng mới. }

@@ -60,6 +60,7 @@ components:
   - type: DataGrid
     source: customers
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state:
