@@ -7,7 +7,7 @@ datasources:
     single: false
     permission: settings.read
     query: |
-      SELECT t.*, d.name AS department_name, CASE t.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM teams t LEFT JOIN departments d ON d.id = t.department_id
+      SELECT t.*, d.name AS department_name, e.name AS manager_name, CASE t.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM teams t LEFT JOIN departments d ON d.id = t.department_id LEFT JOIN employees e ON e.id = t.manager_id
       WHERE (NULLIF(:status, '') IS NULL OR t.status = :status) AND (:q IS NULL OR t.code ILIKE '%' || :q || '%' OR t.name ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%') ORDER BY t.created_at DESC, t.name
 toolbar:
   - { id: add_team_btn, label: '+ Thêm team', variant: primary, permission: settings.write, action: add_team }
@@ -30,6 +30,7 @@ components:
       - { field: id, label: Mã HT, sortable: true }
       - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
       - { field: department_name, label: Phòng ban }
+      - { field: manager_name, label: Người phụ trách }
       - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
       - { field: created_at, label: Ngày giờ tạo }
       - field: actions
@@ -44,7 +45,7 @@ actions:
     table: teams
     operation: insert
     refresh: [teams]
-    fields: [{ field: code, label: Mã team, type: text, required: true }, { field: name, label: Tên team, type: text, required: true }, { field: department_id, label: Mã HT phòng ban, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Mã team, type: text, required: true }, { field: name, label: Tên team, type: text, required: true }, { field: department_id, label: Mã HT phòng ban, type: text }, { field: manager_id, label: Mã HT người phụ trách, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
   - id: edit_team
     type: form
     title: Cập nhật team
@@ -52,5 +53,5 @@ actions:
     operation: update
     prefill: row
     refresh: [teams]
-    fields: [{ field: code, label: Mã team, type: text, required: true }, { field: name, label: Tên team, type: text, required: true }, { field: department_id, label: Mã HT phòng ban, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+    fields: [{ field: code, label: Mã team, type: text, required: true }, { field: name, label: Tên team, type: text, required: true }, { field: department_id, label: Mã HT phòng ban, type: text }, { field: manager_id, label: Mã HT người phụ trách, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
   - { id: delete_team, type: delete, confirm: 'Xóa team {{row.name}}?', table: teams, refresh: [teams] }

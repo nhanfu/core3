@@ -1,0 +1,33 @@
+title: Chi tiết phòng ban
+page: { id: department-detail, auth: { require: [settings.read] } }
+datasources:
+  - id: department_detail
+    single: true
+    permission: settings.read
+    query: "SELECT d.id, d.code, d.name, d.branch_id, b.name AS branch_name, d.status FROM departments d LEFT JOIN branches b ON b.id = d.branch_id WHERE d.id = :id"
+  - id: department_teams
+    single: false
+    permission: settings.read
+    query: "SELECT t.id, t.code, t.name, t.manager_id, e.name AS manager_name, t.status FROM teams t LEFT JOIN employees e ON e.id = t.manager_id WHERE t.department_id = :id ORDER BY t.name"
+  - id: department_employees
+    single: false
+    permission: settings.read
+    query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON d.id = :id WHERE e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' ORDER BY e.name"
+components:
+  - { type: DocumentSummary, source: department_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: branch_name, label: Chi nhánh }] }
+  - type: DataGrid
+    source: department_teams
+    page_size: 30
+    row_key: id
+    empty_state: { title: Chưa có team }
+    columns: [{ field: code, label: Mã team }, { field: name, label: Team }, { field: manager_name, label: Người phụ trách }, { field: status, label: Trạng thái }]
+  - type: DataGrid
+    source: department_employees
+    page_size: 30
+    row_key: id
+    empty_state: { title: Chưa có nhân viên }
+    columns: [{ field: code, label: Mã nhân viên }, { field: name, label: Họ tên }, { field: job_title, label: Chức danh }, { field: status, label: Trạng thái }]
+toolbar:
+  - { id: back_departments, label: '← Danh sách phòng ban', variant: secondary, action: back_departments }
+actions:
+  - { id: back_departments, type: navigate, navigate_to: /org/departments }

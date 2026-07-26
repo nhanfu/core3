@@ -36,8 +36,9 @@ components:
         label: ''
         sortable: false
         align: right
-        actions: [{ id: edit_department, label: Sửa, variant: ghost }, { id: delete_department, label: Xóa, variant: danger }]
+        actions: [{ id: view_department, label: Chi tiết, variant: primary }, { id: edit_department, label: Sửa, variant: ghost }, { id: delete_department, label: Xóa, variant: danger }]
 actions:
+  - { id: view_department, type: navigate, navigate_to: /org/departments/detail, params: { id: '{row.id}' } }
   - id: add_department
     type: form
     title: Thêm phòng ban

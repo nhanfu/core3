@@ -293,6 +293,7 @@ CREATE TABLE IF NOT EXISTS teams (
   code VARCHAR NOT NULL UNIQUE,
   name VARCHAR NOT NULL,
   department_id VARCHAR,
+  manager_id VARCHAR,
   status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

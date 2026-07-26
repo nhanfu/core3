@@ -156,6 +156,7 @@ async function initDb(): Promise<void> {
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS sequence_width INTEGER DEFAULT 4;
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS reset_cadence VARCHAR DEFAULT 'never';
     ALTER TABLE system_configs ADD COLUMN IF NOT EXISTS next_sequence BIGINT DEFAULT 1;
+    ALTER TABLE teams ADD COLUMN IF NOT EXISTS manager_id VARCHAR;
     CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);
     UPDATE trucks SET capacity_kg = CASE type
       WHEN 'Semi' THEN 20000 WHEN 'Flatbed' THEN 18000
@@ -328,6 +329,7 @@ const SOURCE_FILES = [
   'pages/areas.yaml',
   'pages/own-company.yaml',
   'pages/departments.yaml',
+  'pages/department-detail.yaml',
   'pages/teams.yaml',
   'pages/containers.yaml',
   'pages/locations.yaml',
@@ -455,7 +457,7 @@ const TABLE_REGISTRY = {
   teams: {
     permission: 'settings.write',
     timestamps: true,
-    fields: ['code', 'name', 'department_id', 'status'],
+    fields: ['code', 'name', 'department_id', 'manager_id', 'status'],
   },
   employees:    {
     permission: 'hr.write',
