@@ -46,7 +46,7 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/login',
+  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/login',
 ]);
 
 const MIME = {
@@ -123,6 +123,7 @@ async function initDb(): Promise<void> {
 // ── YAML datasource registry ─────────────────────────────────────────────────
 // Queries are loaded from the page YAML files, never accepted from API requests.
 const SOURCE_FILES = [
+  'pages/dashboard.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',

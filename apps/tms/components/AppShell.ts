@@ -6,6 +6,7 @@ import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
 
 const NAV = [
+  { path: '/dashboard',   label: 'Dashboard',   icon: '▦' },
   { path: '/fleet',       label: 'Fleet',       icon: '🚛' },
   { path: '/drivers',     label: 'Drivers',     icon: '👤' },
   { path: '/trips',       label: 'Trips',       icon: '🗺️'  },

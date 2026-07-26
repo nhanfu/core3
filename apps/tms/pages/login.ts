@@ -1,5 +1,5 @@
 import { html } from '@core3/framework/html.ts';
-import { setAuth, navigate } from '../app.ts';
+import { setAuth } from '../app.ts';
 import { i18n } from '../i18n.ts';
 
 export async function mount(container: HTMLElement) {
@@ -82,7 +82,9 @@ export async function mount(container: HTMLElement) {
 
       const { token, user } = await res.json();
       await setAuth(token, user);
-      await navigate('/fleet');
+      // A full load mounts the authenticated application shell before the
+      // dashboard route is rendered.
+      window.location.assign('/dashboard');
     } catch (err) {
       errorEl.textContent = err instanceof Error ? err.message : String(err);
       errorEl.style.display = 'block';

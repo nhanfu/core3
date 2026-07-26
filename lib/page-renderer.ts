@@ -56,7 +56,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   const dataMap: Record<string, any> = {};
   const filterState: Record<string, any> = {};    // sourceId -> current filter values object
   const paginationState: Record<string, any> = {}; // sourceId -> { skip, top, page }
-  // boundComponents: sourceId -> [{ comp, def, compType: 'GridView'|'StatRow' }]
+  // boundComponents: sourceId -> [{ comp, def, compType: 'GridView'|'StatRow'|'Chart' }]
   const boundComponents: Record<string, any[]> = {};
 
   const sourceDefs = collectSources(config);
@@ -95,6 +95,8 @@ export async function renderPage(config: any, { container = document.body }: { c
         const getPath = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
         entry.comp.stats = (entry.def.stats || []).map(s => ({ ...s, value: getPath(sourceData, s.field) }));
         entry.comp.redraw();
+      } else if (entry.compType === 'Chart') {
+        entry.comp.setState(chartState(entry.def, data), true);
       }
     }
   }
@@ -487,6 +489,37 @@ export async function renderPage(config: any, { container = document.body }: { c
     }
   }
 
+  function chartState(def: any, sourceResult: any) {
+    const rows = Array.isArray(sourceResult?.data) ? sourceResult.data : [];
+    const labelField = def.label_field || 'label';
+    const valueField = def.value_field || 'value';
+    return {
+      title: def.title || '',
+      labels: rows.map((row: any) => String(row[labelField] ?? '—')),
+      data: rows.map((row: any) => Number(row[valueField]) || 0),
+    };
+  }
+
+  async function renderChart(def: any, targetContainer: HTMLElement) {
+    const { Chart } = await import('./components/Chart.ts');
+    const sourceResult = def.source ? dataMap[def.source] : { data: def.rows || [] };
+    const comp = new Chart(
+      `chart-${def.source || def.id || Date.now()}`,
+      chartState(def, sourceResult),
+      def
+    );
+
+    const slot = document.createElement('div');
+    slot.style.marginBottom = '24px';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+
+    if (def.source) {
+      if (!boundComponents[def.source]) boundComponents[def.source] = [];
+      boundComponents[def.source].push({ comp, def, compType: 'Chart', _origSetState: null });
+    }
+  }
+
   async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
     const userPerms = ctx.user.permissions || [];
     const visibleTabs = (def.tabs || []).filter(tab =>
@@ -564,6 +597,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         break;
       case 'TabGroup':
         await renderTabGroupDef(def, targetContainer);
+        break;
+      case 'Chart':
+        await renderChart(def, targetContainer);
         break;
       default:
         // Fall back to component registry for any custom types

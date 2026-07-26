@@ -11,6 +11,7 @@ let _shell: AppShell | null = null;
 // Routes: string = server page id, function = JS module loader
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/login':        () => import('./pages/login.ts'),
+  '/dashboard':    'dashboard',
   '/fleet':        'fleet',
   '/drivers':      'drivers',
   '/trips':        'trips',
@@ -20,6 +21,7 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
 };
 
 const ROUTE_TITLES: Record<string, string> = {
+  '/dashboard':    'Dashboard',
   '/fleet':        'Fleet Overview',
   '/drivers':      'Drivers',
   '/trips':        'Trip Management',
@@ -83,8 +85,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 
 async function renderRoute(path: string) {
   // Normalize: strip trailing slash
-  const cleanPath = path === '/' ? '/fleet' : path.replace(/\/$/, '');
-  const loader = ROUTES[cleanPath as keyof typeof ROUTES] || ROUTES['/fleet'];
+  const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/$/, '');
+  const loader = ROUTES[cleanPath as keyof typeof ROUTES] || ROUTES['/dashboard'];
 
   const outlet = document.getElementById('outlet');
   if (!outlet) return;
@@ -95,7 +97,7 @@ async function renderRoute(path: string) {
   </div>`;
 
   // Prefetch i18n for this page
-  const pageName = cleanPath.slice(1) || 'fleet';
+  const pageName = cleanPath.slice(1) || 'dashboard';
   await i18n.prefetch(pageName);
   await i18n.prefetch('*');
 
@@ -175,9 +177,9 @@ async function bootstrap() {
     void renderRoute(path);
   });
 
-  // Navigate to current path (or default to /fleet)
-  const path = window.location.pathname || '/fleet';
-  await renderRoute(path === '/' ? '/fleet' : path);
+  // Navigate to current path (or default to /dashboard)
+  const path = window.location.pathname || '/dashboard';
+  await renderRoute(path === '/' ? '/dashboard' : path);
 }
 
 // Handle browser back/forward

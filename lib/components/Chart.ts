@@ -9,7 +9,7 @@ export class Chart extends BaseComponent {
 
   draw(container) {
     const { data = [], labels = [], title = '' } = this.state;
-    const { width = 400, height = 200, color = '#6366f1' } = this.def;
+    const { width = 560, height = 240, color = '#6366f1' } = this.def;
 
     const wrap = html.take(container).div.className('flex flex-col items-start gap-2').getContext();
 
@@ -24,10 +24,14 @@ export class Chart extends BaseComponent {
       .className('rounded border border-gray-200 bg-white')
       .getContext();
 
-    if (!data.length) return;
+    if (!data.length) {
+      html.take(wrap).p.className('text-sm text-gray-400 py-8 w-full text-center').text('No chart data');
+      return;
+    }
 
     const ctx = canvasEl.getContext('2d');
-    const max = Math.max(...data, 1);
+    const values = data.map(value => Number(value) || 0);
+    const max = Math.max(...values, 1);
     const barCount = data.length;
     const pad = { top: 16, bottom: 24, left: 8, right: 8 };
     const chartW = width - pad.left - pad.right;
@@ -37,7 +41,7 @@ export class Chart extends BaseComponent {
 
     ctx.clearRect(0, 0, width, height);
 
-    data.forEach((val, i) => {
+    values.forEach((val, i) => {
       const barH = (val / max) * chartH;
       const x = pad.left + i * (barW + barGap);
       const y = pad.top + chartH - barH;

@@ -1,0 +1,92 @@
+title: Dashboard
+
+page:
+  id: dashboard
+  auth:
+    require: [fleet.read]
+
+datasources:
+  - id: dashboard_kpis
+    single: true
+    permission: fleet.read
+    query: |
+      SELECT
+        (SELECT COUNT(*) FROM trips) AS total_trips,
+        (SELECT COUNT(*) FROM trips WHERE status = 'In Transit') AS in_transit,
+        (SELECT COUNT(*) FROM trips WHERE status = 'Scheduled') AS scheduled,
+        (SELECT COUNT(*) FROM maintenance WHERE status = 'Overdue') AS overdue_maintenance,
+        (SELECT COUNT(*) FROM trucks WHERE status = 'Active') AS active_trucks
+  - id: dashboard_trip_status
+    single: false
+    permission: fleet.read
+    query: |
+      SELECT status, COUNT(*) AS trip_count
+      FROM trips
+      GROUP BY status
+      ORDER BY trip_count DESC, status
+  - id: dashboard_dispatch_queue
+    single: false
+    permission: fleet.read
+    query: |
+      SELECT t.id, t.trip_number, t.origin, t.destination, t.status,
+        t.departure_time, tr.plate AS truck_plate, d.name AS driver_name
+      FROM trips t
+      LEFT JOIN trucks tr ON tr.id = t.truck_id
+      LEFT JOIN drivers d ON d.id = t.driver_id
+      WHERE t.status IN ('Scheduled', 'In Transit')
+      ORDER BY CASE t.status WHEN 'In Transit' THEN 0 ELSE 1 END, t.departure_time
+
+components:
+  - type: StatRow
+    source: dashboard_kpis
+    stats:
+      - label: Total Trips
+        field: total_trips
+        color: blue
+      - label: In Transit
+        field: in_transit
+        color: indigo
+      - label: Awaiting Dispatch
+        field: scheduled
+        color: amber
+      - label: Overdue Maintenance
+        field: overdue_maintenance
+        color: red
+      - label: Active Trucks
+        field: active_trucks
+        color: green
+
+  - type: Chart
+    source: dashboard_trip_status
+    title: Trip Status Overview
+    label_field: status
+    value_field: trip_count
+    width: 680
+    height: 260
+    color: '#4f46e5'
+
+  - type: GridView
+    source: dashboard_dispatch_queue
+    page_size: 8
+    columns:
+      - type: TextCell
+        field: trip_number
+        label: Trip
+      - type: TextCell
+        field: origin
+        label: Origin
+        secondary: destination
+      - type: TextCell
+        field: truck_plate
+        label: Truck
+        secondary: driver_name
+      - type: BadgeCell
+        field: status
+        label: Status
+        colors:
+          Scheduled: amber
+          In Transit: blue
+      - type: DateCell
+        field: departure_time
+        label: Departure
+        format: short

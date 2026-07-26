@@ -14,6 +14,7 @@ export class StatRow extends BaseComponent {
     const gridCls = cols === 2 ? 'grid-cols-2'
                   : cols === 3 ? 'grid-cols-3'
                   : cols === 4 ? 'grid-cols-4'
+                  : cols === 5 ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
                   : 'grid-cols-2 md:grid-cols-4';
     const grid = html.take(container).div.className(`grid ${gridCls} gap-4`).getContext();
 
