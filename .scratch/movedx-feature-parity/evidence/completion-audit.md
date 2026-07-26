@@ -66,6 +66,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Order create/edit forms now use a customer lookup sourced from active CRM customers instead of free-form names.
 - Vehicle forms now use a branch lookup, and driver forms use a vehicle lookup, replacing raw internal IDs.
 - Advances now calculate linked settlement and outstanding amounts, while settlements expose a validated linked-advance selector and reference column; workflow audit covers invalid-link rejection.
+- Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - An opt-in fresh-browser mutation audit performs normal pointer clicks for `submit_order` and `approve_order`, then verifies the order row persists `Pending Approval` and `Approved`; it passes with zero UI mutation failures.
 
 ## Not Proven

@@ -39,7 +39,7 @@ actions:
     scope: invoice_template
     operation: insert
     refresh: [invoice_templates]
-    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: description, label: Nội dung mô tả, type: textarea }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: description, label: Nội dung mẫu, type: richtext, tokens: [invoice.number, invoice.customer, invoice.total, invoice.tax] }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
   - id: edit_invoice_template
     type: form
     title: Cập nhật mẫu hóa đơn
@@ -48,5 +48,5 @@ actions:
     operation: update
     prefill: row
     refresh: [invoice_templates]
-    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: text }, { field: description, label: Nội dung mô tả, type: textarea }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+    fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên mẫu, type: text, required: true }, { field: currency, label: Tiền tệ, type: text }, { field: description, label: Nội dung mẫu, type: richtext, tokens: [invoice.number, invoice.customer, invoice.total, invoice.tax] }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
   - { id: delete_invoice_template, type: delete, table: accounting_entries, scope: invoice_template, confirm: 'Xóa mẫu hóa đơn {{row.name}}?', refresh: [invoice_templates] }
