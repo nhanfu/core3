@@ -396,6 +396,28 @@ const PAGES = new Map<string, any>(
   })
 );
 
+const REGISTERED_NAMED_ACTIONS = new Set([
+  ...Object.keys(ORDER_ACTION_REGISTRY),
+  ...Object.keys(FINANCIAL_ACTION_REGISTRY),
+  ...Object.keys(BUSINESS_ACTION_REGISTRY),
+  ...Object.keys(LINE_ITEM_ACTION_REGISTRY),
+  ...Object.keys(CHAT_ACTION_REGISTRY),
+  ...Object.keys(CONTACT_ACTION_REGISTRY),
+  ...Object.keys(APPROVAL_ACTION_REGISTRY),
+  ...Object.keys(TEMPLATE_ACTION_REGISTRY),
+  ...Object.keys(CODE_RULE_ACTION_REGISTRY),
+  ...Object.keys(ROLE_ACTION_REGISTRY),
+  ...Object.keys(USER_ROLE_ACTION_REGISTRY),
+]);
+
+for (const [pageId, page] of PAGES) {
+  for (const action of page.actions || []) {
+    if ((action.type === 'server' || action.type === 'server_form') && !REGISTERED_NAMED_ACTIONS.has(action.action)) {
+      throw new Error(`Page ${pageId} references unregistered named action: ${action.action}`);
+    }
+  }
+}
+
 function publicPageConfig(page: any) {
   const { datasources, ...config } = page;
   return config;
