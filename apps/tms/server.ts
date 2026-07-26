@@ -333,6 +333,7 @@ const SOURCE_FILES = [
   'pages/users.yaml',
   'pages/roles.yaml',
   'pages/employees.yaml',
+  'pages/employee-detail.yaml',
   'pages/contracts.yaml',
   'pages/timesheets.yaml',
   'pages/shifts.yaml',

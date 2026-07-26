@@ -99,8 +99,8 @@ const COMPONENT_ACTION_KEYS = new Set([
 const EMPTY_STATE_KEYS = new Set(['title', 'description']);
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
-  form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'refresh', 'fields', 'scope']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'refresh', 'fields', 'params']),
+  form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params']),

@@ -60,10 +60,12 @@ components:
         sortable: false
         align: right
         actions:
+          - { id: view_employee, label: Chi tiết, variant: primary }
           - { id: edit_employee, label: Sửa, variant: ghost }
           - { id: delete_employee, label: Xóa, variant: danger }
 
 actions:
+  - { id: view_employee, type: navigate, navigate_to: /hr/employees/detail, params: { id: '{row.id}' } }
   - id: add_employee
     type: form
     title: Thêm nhân viên

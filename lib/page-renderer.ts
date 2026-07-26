@@ -358,8 +358,11 @@ export async function renderPage(config: any, { container = document.body }: { c
 
         // Determine initial value
         let initialValue = fieldDef.default ?? '';
-        if (actionDef.prefill === 'row' && row) {
-          initialValue = row[fieldDef.field] ?? fieldDef.default ?? '';
+        const prefillRecord = actionDef.prefill === 'source'
+          ? dataMap[actionDef.prefill_source || '']?.data
+          : row;
+        if ((actionDef.prefill === 'row' || actionDef.prefill === 'source') && prefillRecord) {
+          initialValue = prefillRecord[fieldDef.field] ?? fieldDef.default ?? '';
         }
         // Date inputs must be YYYY-MM-DD
         if (fieldDef.type === 'date' && initialValue && typeof initialValue === 'string') {
