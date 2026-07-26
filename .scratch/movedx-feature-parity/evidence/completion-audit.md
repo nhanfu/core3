@@ -83,7 +83,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Not Proven
 
 - The PRD requires reference desktop/tablet captures for every route. The workspace contains only the eight supplied reference captures (dashboard, orders, customers, and vehicles), so additional reference-state parity cannot be verified from local evidence.
-- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, and row action per route (52 routes plus 16 populated details, 0 failures; 321 sortable headers, 142 tabs, 44 choosers, 401 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape, and the opt-in fresh-browser mutation phase verifies submit/approve persistence through normal UI clicks.
+- The PRD asks for automated interaction coverage for every control. The browser audit now exercises every discovered shared status tab, sortable header, chooser, pagination control, page-size selector, search, editor opener, export, and row action per route (52 routes plus 16 populated details, 0 failures; 330 sortable headers, 142 tabs, 45 choosers, 401 row actions, 20 exports). Named workflow coverage spans every registered workflow transition shape, and the opt-in fresh-browser mutation phase verifies four representative lifecycle/CRUD flows through normal UI clicks.
 
 ## Current commands
 
