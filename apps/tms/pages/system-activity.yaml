@@ -16,7 +16,7 @@ components:
   - type: ListToolbar
     source: system_activity
     filter_field: q
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, last_12_months, all], default_preset: last_12_months }
     search: { label: Tìm kiếm lịch sử, placeholder: 'Tìm người thao tác hoặc tài nguyên...' }
     actions: [{ id: system_activity.export, label: 'Xuất CSV', icon: '↓' }]
   - type: DataGrid
