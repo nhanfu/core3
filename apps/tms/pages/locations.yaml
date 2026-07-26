@@ -18,6 +18,10 @@ datasources:
       WHERE (NULLIF(:status, '') IS NULL OR l.status = :status)
         AND (:q IS NULL OR l.code ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%' OR l.city ILIKE '%' || :q || '%' OR l.address ILIKE '%' || :q || '%')
       ORDER BY l.created_at DESC, l.name
+  - id: area_lookup
+    single: false
+    permission: dispatch.read
+    query: "SELECT id AS value, code || ' - ' || name AS label FROM areas ORDER BY status DESC, name"
 
 toolbar:
   - id: add_location_btn
@@ -78,7 +82,7 @@ actions:
       - { field: location_type, label: Loại địa điểm, type: select, options: [Port, Warehouse, Depot, Customer, Other], default: Other }
       - { field: address, label: Địa chỉ, type: text }
       - { field: city, label: Thành phố, type: text }
-      - { field: area_id, label: Mã HT khu vực, type: text }
+      - { field: area_id, label: Khu vực, type: select, options_source: area_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }
   - id: edit_location
     type: form
@@ -93,7 +97,7 @@ actions:
       - { field: location_type, label: Loại địa điểm, type: select, options: [Port, Warehouse, Depot, Customer, Other] }
       - { field: address, label: Địa chỉ, type: text }
       - { field: city, label: Thành phố, type: text }
-      - { field: area_id, label: Mã HT khu vực, type: text }
+      - { field: area_id, label: Khu vực, type: select, options_source: area_lookup }
       - { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }
   - id: delete_location
     type: delete
