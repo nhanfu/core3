@@ -16,6 +16,8 @@ be recaptured from the read-only tenant before final visual-parity signoff.
 
 ## Local interaction checklist
 
+- [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.
+
 - [x] Draft, pending, and approved rows render only state-valid actions.
 - [x] Dispatcher approval receives `403` and cannot see approval controls.
 - [x] Admin receives `orders.approve` and sees approve/reject controls.

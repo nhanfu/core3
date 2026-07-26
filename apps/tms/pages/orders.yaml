@@ -61,7 +61,8 @@ components:
         placeholder: Tất cả hình thức
         options: [Đường bộ, Đường biển, Đường sắt, Hàng không]
     actions:
-      - { id: orders.export, label: 'Xuất CSV', icon: '↓' }
+      - { id: orders.export, label: '', title: 'Xuất CSV', icon: '↓' }
+    help: true
   - type: StatusTabs
     source: orders
     filter_field: status

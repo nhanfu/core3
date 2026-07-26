@@ -45,7 +45,8 @@ components:
     search:
       label: Tìm kiếm khách hàng
       placeholder: 'Tìm mã, tên, MST, SĐT...'
-    actions: [{ id: customers.export, label: 'Xuất CSV', icon: '↓' }]
+    actions: [{ id: customers.export, label: '', title: 'Xuất CSV', icon: '↓' }]
+    help: true
     filters:
       - { field: visibility, label: Hiển thị, placeholder: Tất cả hiển thị, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
       - { field: status, label: Trạng thái, placeholder: Tất cả trạng thái, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }

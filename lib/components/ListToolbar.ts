@@ -35,6 +35,8 @@ export type ListToolbarDefinition = {
     default_preset?: 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
   };
   filter_sources?: string[];
+  advanced_filter?: boolean;
+  help?: boolean | { title?: string; text?: string };
 };
 
 /**
@@ -97,6 +99,13 @@ export class ListToolbar extends BaseComponent {
     } else {
       root.append(document.createElement('div'));
     }
+
+    const advancedContent = document.createElement('div');
+    advancedContent.className = 'basis-full flex flex-wrap items-center gap-3';
+    const collapseAdvanced = Boolean(
+      this.def.advanced_filter || this.def.filters?.length || (this.def.date_range && this.def.date_range.preset_style !== 'segmented')
+    );
+    let advancedOpen = !collapseAdvanced;
 
     if (this.def.date_range) {
       const range = document.createElement('div');
@@ -163,7 +172,7 @@ export class ListToolbar extends BaseComponent {
         input.addEventListener('change', () => this.submit('date-range', { [field.key]: input.value }));
         range.append(input);
       }
-      root.append(range);
+      advancedContent.append(range);
     }
 
     if (this.def.filters?.length) {
@@ -187,14 +196,61 @@ export class ListToolbar extends BaseComponent {
         select.addEventListener('change', () => this.submit('filter', { [filter.field]: select.value }));
         filterBar.append(select);
       }
-      root.append(filterBar);
+      advancedContent.append(filterBar);
+    }
+
+    if (advancedContent.childElementCount) {
+      advancedContent.style.display = advancedOpen ? 'flex' : 'none';
+      root.append(advancedContent);
     }
 
     const actions = this.def.actions || [];
-    if (actions.length) {
+    if (actions.length || collapseAdvanced || this.def.help) {
       const actionBar = document.createElement('div');
       actionBar.className = 'flex flex-wrap items-center justify-end gap-2';
+      if (collapseAdvanced) {
+        const advancedButton = document.createElement('button');
+        advancedButton.type = 'button';
+        advancedButton.className = 'inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
+        advancedButton.title = 'Bộ lọc nâng cao';
+        advancedButton.setAttribute('aria-label', advancedButton.title);
+        advancedButton.setAttribute('aria-expanded', 'false');
+        const icon = document.createElement('span');
+        appendIcon(icon, 'filter');
+        advancedButton.append(icon);
+        advancedButton.addEventListener('click', () => {
+          advancedOpen = !advancedOpen;
+          advancedContent.style.display = advancedOpen ? 'flex' : 'none';
+          advancedButton.setAttribute('aria-expanded', String(advancedOpen));
+          advancedButton.classList.toggle('bg-blue-50', advancedOpen);
+          advancedButton.classList.toggle('text-blue-700', advancedOpen);
+        });
+        actionBar.append(advancedButton);
+      }
       for (const action of actions) actionBar.append(this.renderAction(action));
+      if (this.def.help) {
+        const helpButton = document.createElement('button');
+        helpButton.type = 'button';
+        helpButton.className = 'inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
+        helpButton.title = typeof this.def.help === 'object' && this.def.help.title ? this.def.help.title : 'Trợ giúp';
+        helpButton.setAttribute('aria-label', helpButton.title);
+        const icon = document.createElement('span');
+        appendIcon(icon, 'help');
+        helpButton.append(icon);
+        helpButton.addEventListener('click', () => {
+          const text = typeof this.def.help === 'object' && this.def.help.text
+            ? this.def.help.text
+            : 'Dùng tìm kiếm, bộ lọc nâng cao và các cột để thu hẹp danh sách.';
+          const existing = container.querySelector('[data-toolbar-help]');
+          if (existing) { existing.remove(); return; }
+          const panel = document.createElement('div');
+          panel.dataset.toolbarHelp = 'true';
+          panel.className = 'basis-full rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900';
+          panel.textContent = text;
+          root.append(panel);
+        });
+        actionBar.append(helpButton);
+      }
       root.append(actionBar);
     }
 

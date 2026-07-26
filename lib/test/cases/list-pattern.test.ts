@@ -165,4 +165,30 @@ describe('ListToolbar', () => {
 
     expect(submit).toHaveBeenCalledWith('filter', { transport_method: 'sea' });
   });
+
+  it('collapses advanced fields until the filter control is opened', () => {
+    const { container } = mount(new ListToolbar('toolbar', {}, {
+      search: false,
+      date_range: { presets: ['month'] },
+      filters: [{ field: 'status', label: 'Status', options: ['Active'] }],
+    }));
+    const advanced = container.querySelector<HTMLButtonElement>('[aria-label="Bộ lọc nâng cao"]')!;
+    const advancedContent = container.querySelector<HTMLElement>('.basis-full')!;
+
+    expect(advanced.getAttribute('aria-expanded')).toBe('false');
+    expect(advancedContent.style.display).toBe('none');
+    advanced.click();
+    expect(advanced.getAttribute('aria-expanded')).toBe('true');
+    expect(advancedContent.style.display).toBe('flex');
+  });
+
+  it('opens and closes contextual help without changing filter state', () => {
+    const { container } = mount(new ListToolbar('toolbar', {}, { search: false, help: true }));
+    const help = container.querySelector<HTMLButtonElement>('[aria-label="Trợ giúp"]')!;
+
+    help.click();
+    expect(container.querySelector('[data-toolbar-help]')?.textContent).toContain('Dùng tìm kiếm');
+    help.click();
+    expect(container.querySelector('[data-toolbar-help]')).toBeNull();
+  });
 });

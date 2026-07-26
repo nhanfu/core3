@@ -3,6 +3,8 @@ const ICON_PATHS: Record<string, string> = {
   download: '<path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/>',
   upload: '<path d="M12 15V3m0 0 4 4m-4-4L8 7M5 21h14"/>',
   settings: '<path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="3"/>',
+  filter: '<path d="M4 5h16M7 12h10m-7 7h4"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.4 2.4 0 1 1 4.1 1.7c-1.1 1-1.8 1.3-1.8 2.8M12 17h.01"/>',
   columns: '<rect x="4" y="4" width="6" height="16" rx="1"/><rect x="14" y="4" width="6" height="16" rx="1"/>',
   refresh: '<path d="M20 11a8 8 0 0 0-14.8-4L3 10m0 0V5m0 5h5M4 13a8 8 0 0 0 14.8 4L21 14m0 0v5m0-5h-5"/>',
 };
@@ -12,6 +14,7 @@ const ICON_ALIASES: Record<string, string> = {
   '↓': 'download',
   '↑': 'upload',
   '⚙': 'settings',
+  '?': 'help',
 };
 
 /** Render a small inline SVG without exposing DOM ownership to callers. */

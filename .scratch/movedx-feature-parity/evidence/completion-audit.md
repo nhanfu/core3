@@ -11,7 +11,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Every route has local desktop/tablet evidence, including the five provisional legacy pages.
 - Every registered SPA path has a page-loader mapping and serves the shell on direct navigation; deep-link 404s are covered by the route audit.
 - A disposable fresh-database workflow audit completes 13 representative named transitions across orders, quotes, financial documents, payroll, and trip cancellation.
-- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 141/141.
+- Named workflow actions, field allowlists, and audit writes remain server-authorized; framework tests pass 143/143.
 - Dashboard period controls match the supplied reference states with segmented `Tháng này`, `Tháng trước`, `Quý này`, `Năm nay`, and `12 tháng` presets at desktop and tablet widths.
 - Dashboard KPI information architecture now matches the supplied reference sections, including the seven-card task row, six-card operating/financial/HR rows, and VND financial formatting.
 - Operations navigation now exposes all six reference entries and maps each to a registered SPA route.
@@ -19,6 +19,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - The shared header exposes the reference theme toggle, persists the light/dim preference in browser storage, and renders the authenticated user name beside the profile avatar.
 - The shared header also exposes functional sidebar collapse, attendance, and chat controls; collapse keeps the icon rail usable without horizontal overflow.
 - Authenticated shell mount shows a dynamic, dismissible welcome toast matching the reference overlay state.
+- Shared list toolbars expose SVG advanced-filter and help controls; advanced fields start collapsed on resource lists and can be opened without losing filter state.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.

@@ -892,7 +892,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     const comp = new ListToolbar(
       `list-toolbar-${def.source || def.id || Date.now()}`,
       { ...(filterState[def.source || ''] || {}), query: filterState[def.source || '']?.[def.filter_field || 'q'] || '', preset: def.date_range?.default_preset },
-      { search: def.search, actions: def.actions, date_range: def.date_range, filters: def.filters, filter_sources: def.filter_sources }
+      { search: def.search, actions: def.actions, date_range: def.date_range, filters: def.filters, filter_sources: def.filter_sources, advanced_filter: def.advanced_filter, help: def.help }
     );
     comp._onAction = async (actionId: string, params: any) => {
       const sourceId = def.source;

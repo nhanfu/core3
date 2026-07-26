@@ -8,6 +8,8 @@
 
 ## Interaction checks
 
+- [x] Shared filter and help icon controls render beside export and remain keyboard accessible.
+
 - Filter ready, maintenance, and out-of-service vehicles and verify rows refresh.
 - Search by plate or model and confirm matching vehicles remain.
 - Open `truck-02` and verify the assigned driver, maintenance entry, and trip history.

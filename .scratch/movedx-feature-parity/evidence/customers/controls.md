@@ -2,6 +2,8 @@
 
 ## Local interaction checklist
 
+- [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.
+
 - [x] Search and lifecycle tabs filter the customer list.
 - [x] `Chi tiết` carries customer ID, kind, and back route through the SPA hash.
 - [x] Detail renders identity, lifecycle, owner, visibility, primary phone/email,
