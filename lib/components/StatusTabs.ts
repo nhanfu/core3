@@ -9,6 +9,10 @@ export type StatusTab = {
   disabled?: boolean;
 };
 
+export type StatusTabsOptions = {
+  showCounts?: boolean;
+};
+
 /**
  * A compact, count-aware status filter used above MovedX resource lists.
  * Definitions stay declarative while the component owns selection state and
@@ -16,10 +20,12 @@ export type StatusTab = {
  */
 export class StatusTabs extends BaseComponent {
   tabs: StatusTab[];
+  showCounts: boolean;
 
-  constructor(id: string, state: { active?: string } = {}, tabs: StatusTab[] = []) {
+  constructor(id: string, state: { active?: string } = {}, tabs: StatusTab[] = [], options: StatusTabsOptions = {}) {
     super(id, state);
     this.tabs = tabs;
+    this.showCounts = options.showCounts !== false;
   }
 
   draw(container: HTMLElement) {
@@ -46,7 +52,7 @@ export class StatusTabs extends BaseComponent {
       button.setAttribute('aria-selected', String(selected));
       if (tab.disabled) button.disabled = true;
 
-      if (tab.count !== undefined) {
+      if (this.showCounts && tab.count !== undefined) {
         const count = document.createElement('span');
         count.className = selected
           ? 'rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-700'

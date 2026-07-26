@@ -47,10 +47,9 @@ components:
   - type: StatusTabs
     source: vehicles
     filter_field: status
+    show_counts: false
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Sẵn sàng }
-      - { id: Maintenance, label: Bảo dưỡng }
+      - { id: Active, label: Hoạt động }
       - { id: 'Out of Service', label: Ngưng hoạt động }
   - type: DataGrid
     source: vehicles

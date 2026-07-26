@@ -30,6 +30,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Orders now map the reference `Mã HT` column to the business order code instead of the internal row ID.
 - Vehicles now map the reference `Mã HT` column to a human-facing `XE...` identifier instead of the internal row ID.
 - Customers now map the reference `Mã HT` column to a human-facing `KH...` identifier instead of the internal row ID.
+- Vehicle status controls now match the reference two-toggle, no-badge presentation.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 - Dashboard toolbar now matches the reference search and CSV-export controls, with server-backed dispatch search fields.
