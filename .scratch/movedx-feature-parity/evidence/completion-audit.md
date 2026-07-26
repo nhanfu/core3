@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 168 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 171 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Sixteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, company settings, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
@@ -85,6 +85,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Transactional accounting editors now source currencies from the catalog while preserving existing currency codes.
 - Invoice-template and ledger-account editors now source currencies from the catalog while preserving existing currency codes.
 - Order, quote, and accounting line-item editors now source units from the catalog while preserving existing unit values.
+- Trip editors now use vehicle, active-driver, and cargo-type lookups while preserving existing assignments and cargo values.
 - Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - Ledger accounts now support persisted parent relationships, parent display, datasource-backed parent selection, and server-side self-parent validation.
 - An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve, units master-data create/edit/delete, quote send/accept, payroll approve/pay, and debit-note submit/approve/pay; all five phases pass with zero UI mutation failures on a fresh seeded database.
