@@ -18,7 +18,7 @@ be recaptured from the read-only tenant before final visual-parity signoff.
 
 - [x] The page header renders `Quản lý › Đơn hàng` above the list controls.
 - [x] `+ Thêm đơn hàng` shares the page-header row and is right aligned.
-- [x] The grid renders selection, row number, then `Mã HT` in the reference order.
+- [x] The grid renders selection, row number, then business order code as `Mã HT` in the reference order.
 - [x] Order code and customer name render as separate reference columns.
 
 - [x] Advanced filters start collapsed behind the shared filter icon; help opens contextual list guidance.

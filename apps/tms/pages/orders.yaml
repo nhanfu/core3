@@ -85,8 +85,7 @@ components:
       title: Không có đơn hàng
       description: Thử thay đổi bộ lọc hoặc tạo đơn hàng mới.
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: order_number, label: Mã đơn, type: PrimaryEntityCell }
+      - { field: order_number, label: Mã HT, type: PrimaryEntityCell, sortable: true }
       - { field: customer_name, label: Khách hàng }
       - { field: order_date, label: Ngày đơn, sortable: true }
       - field: status_label
