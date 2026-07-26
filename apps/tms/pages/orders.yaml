@@ -36,6 +36,10 @@ datasources:
           OR o.customer_legal_name ILIKE '%' || :q || '%'
           OR o.route ILIKE '%' || :q || '%')
       ORDER BY o.order_date DESC, o.created_at DESC
+  - id: order_customer_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' ORDER BY label"
 
 toolbar:
   - id: add_order_btn
@@ -125,7 +129,7 @@ actions:
     refresh: [orders]
     fields:
       - { field: order_number, label: Mã đơn, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: select, options_source: order_customer_lookup, required: true }
       - { field: customer_legal_name, label: Tên pháp lý, type: text }
       - { field: order_date, label: Ngày đơn, type: date, required: true }
       - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
@@ -142,7 +146,7 @@ actions:
     refresh: [orders]
     fields:
       - { field: order_number, label: Mã đơn, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: text, required: true }
+      - { field: customer_name, label: Khách hàng, type: select, options_source: order_customer_lookup, required: true }
       - { field: customer_legal_name, label: Tên pháp lý, type: text }
       - { field: order_date, label: Ngày đơn, type: date, required: true }
       - { field: shipment_type, label: Loại hình, type: select, options: [Hàng lẻ, Nguyên chuyến, Container, Hàng lạnh] }
