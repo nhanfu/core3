@@ -61,7 +61,7 @@ components:
       - field: status_label
         label: Trạng thái
         type: StatusChip
-        colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: slate }
+        colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: blue }
       - field: actions
         label: ''
         sortable: false

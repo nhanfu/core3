@@ -15,7 +15,7 @@ datasources:
     permission: hr.read
     query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'payrolls' AND resource_id = :id ORDER BY created_at DESC"
 components:
-  - { type: DocumentSummary, source: payroll_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Nháp: slate, Đã duyệt: amber, Đã chi: green }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: department, label: Phòng ban }, { field: pay_month, label: Tháng lương }, { field: base_salary, label: Lương cơ bản }, { field: allowance, label: Phụ cấp }, { field: deduction, label: Khấu trừ }, { field: net_salary, label: Thực lãnh }] }
+  - { type: DocumentSummary, source: payroll_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Nháp: blue, Đã duyệt: amber, Đã chi: green }, columns: [{ field: employee_code, label: Mã nhân viên }, { field: department, label: Phòng ban }, { field: pay_month, label: Tháng lương }, { field: base_salary, label: Lương cơ bản }, { field: allowance, label: Phụ cấp }, { field: deduction, label: Khấu trừ }, { field: net_salary, label: Thực lãnh }] }
   - type: ApprovalTimeline
     source: payroll_activity
     title: Lịch sử bảng lương

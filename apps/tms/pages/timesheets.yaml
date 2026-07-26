@@ -50,7 +50,7 @@ components:
     actions: [{ id: timesheets.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: timesheet_totals
-    stats: [{ label: Bản ghi, field: record_count, color: blue }, { label: Tổng giờ, field: total_hours, color: teal }, { label: Có mặt, field: present_count, color: green }, { label: Nghỉ phép, field: leave_count, color: amber }, { label: Vắng mặt, field: absent_count, color: red }]
+    stats: [{ label: Bản ghi, field: record_count, color: blue }, { label: Tổng giờ, field: total_hours, color: indigo }, { label: Có mặt, field: present_count, color: green }, { label: Nghỉ phép, field: leave_count, color: amber }, { label: Vắng mặt, field: absent_count, color: red }]
   - type: StatusTabs
     source: timesheets
     filter_field: status
