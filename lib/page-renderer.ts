@@ -224,15 +224,26 @@ export async function renderPage(config: any, { container = document.body }: { c
         break;
 
       case 'upload': {
-        if (actionDef.kind !== 'chat_attachment' || !(row?.file instanceof File)) {
-          alert('Attachment file required');
-          break;
+        let uploadFile = row?.file instanceof File ? row.file : null;
+        if (!uploadFile) {
+          uploadFile = await new Promise<File | null>(resolve => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = () => resolve(input.files?.[0] || null);
+            input.click();
+          });
         }
+        if (!uploadFile) break;
         try {
-          await client.uploadFile(row.file, {
-            kind: actionDef.kind,
-            thread_id: row.id,
-            content: row.content,
+          const uploadMeta: any = { kind: actionDef.kind };
+          if (actionDef.kind === 'chat_attachment') {
+            uploadMeta.thread_id = row.id;
+            uploadMeta.content = row.content;
+          } else if (actionDef.kind === 'employee_document') {
+            uploadMeta.employee_id = resolveActionParams(actionDef.params || { employee_id: '{state.id}' }, { ...ctx, row: row || {} }).employee_id;
+          }
+          await client.uploadFile(uploadFile, {
+            ...uploadMeta,
           });
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (error) {
@@ -242,10 +253,13 @@ export async function renderPage(config: any, { container = document.body }: { c
       }
 
       case 'download': {
-        if (actionDef.kind !== 'chat_attachment' || !row?.id) break;
+        if (!row?.id) break;
         try {
+          const path = actionDef.kind === 'employee_document'
+            ? `/hr/employee-documents/${encodeURIComponent(String(row.id))}`
+            : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
-            `/chat/attachments/${encodeURIComponent(String(row.id))}`,
+            path,
             String(row.file_name || 'attachment'),
           );
         } catch (error) {

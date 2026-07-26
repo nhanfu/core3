@@ -537,7 +537,6 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
   };
 
   if (pathname === '/api/upload' && method === 'POST') {
-    requirePerm('chat.write');
     const form = await req.formData();
     const file = form.get('file');
     let meta: any = {};
@@ -547,9 +546,13 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       return apiError(400, 'Invalid upload metadata');
     }
     if (!(file instanceof File)) return apiError(400, 'file required');
-    if (meta.kind !== 'chat_attachment') return apiError(400, 'Unsupported upload kind');
-    if (typeof meta.thread_id !== 'string' || !meta.thread_id) {
-      return apiError(400, 'thread_id required');
+    if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document') return apiError(400, 'Unsupported upload kind');
+    if (meta.kind === 'chat_attachment') {
+      requirePerm('chat.write');
+      if (typeof meta.thread_id !== 'string' || !meta.thread_id) return apiError(400, 'thread_id required');
+    } else {
+      requirePerm('hr.write');
+      if (typeof meta.employee_id !== 'string' || !meta.employee_id) return apiError(400, 'employee_id required');
     }
     if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
       return apiError(400, 'Attachment must be between 1 byte and 5 MB');
@@ -561,23 +564,25 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const targetPath = join(UPLOAD_ROOT, storageKey);
     writeFileSync(targetPath, Buffer.from(await file.arrayBuffer()));
     try {
-      return json(await repository.sendChatAttachment(
-        meta.thread_id,
-        meta.content,
-        {
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          sizeBytes: file.size,
-          storageKey,
-        },
-        activityActor,
-      ));
+      const fileMeta = { fileName: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size, storageKey };
+      if (meta.kind === 'employee_document') return json(await repository.createEmployeeDocument(meta.employee_id, fileMeta, activityActor));
+      return json(await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor));
     } catch (error) {
       try {
         unlinkSync(targetPath);
       } catch {}
       throw error;
     }
+  }
+
+  const employeeDocumentMatch = pathname.match(/^\/api\/hr\/employee-documents\/([A-Za-z0-9-]+)$/);
+  if (employeeDocumentMatch && method === 'GET') {
+    requirePerm('hr.read');
+    const document = await repository.getEmployeeDocument(employeeDocumentMatch[1]);
+    if (!document) return apiError(404, 'Employee document not found');
+    const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
+    if (!(await file.exists())) return apiError(404, 'Employee document file not found');
+    return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
   }
 
   const attachmentMatch = pathname.match(/^\/api\/chat\/attachments\/([A-Za-z0-9-]+)$/);

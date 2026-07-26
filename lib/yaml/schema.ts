@@ -105,7 +105,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params']),
   server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params']),
-  upload: new Set(['id', 'type', 'kind', 'refresh']),
+  upload: new Set(['id', 'type', 'kind', 'refresh', 'params']),
   download: new Set(['id', 'type', 'kind']),
 };
 

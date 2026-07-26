@@ -89,6 +89,21 @@ export class DuckDbRepository {
     return Number(rows[0]?.n || 0);
   }
 
+  async createEmployeeDocument(employeeId: string, file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string }, actor: { id?: string | null; name: string }) {
+    const [employee] = await this.query('SELECT id FROM employees WHERE id = ?', [employeeId]);
+    if (!employee) throw { status: 404, message: 'Employee not found' };
+    const id = crypto.randomUUID();
+    await this.run('INSERT INTO employee_documents(id, employee_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)', [id, employeeId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null]);
+    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'upload', resource: 'employees', resourceId: employeeId, detail: `Uploaded ${file.fileName}` });
+    const [row] = await this.query('SELECT id, employee_id, file_name, mime_type, size_bytes, created_at FROM employee_documents WHERE id = ?', [id]);
+    return row;
+  }
+
+  async getEmployeeDocument(documentId: string) {
+    const [row] = await this.query('SELECT d.*, e.id AS employee_id FROM employee_documents d JOIN employees e ON e.id = d.employee_id WHERE d.id = ?', [documentId]);
+    return row || null;
+  }
+
   async getLoginUserByEmail(email: string): Promise<any | null> {
     const rows = await this.query(
       `SELECT u.*, string_agg(r.name, ',') as roles_csv

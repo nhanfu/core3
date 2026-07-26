@@ -198,6 +198,17 @@ CREATE TABLE IF NOT EXISTS employment_contracts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS employee_documents (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  employee_id VARCHAR NOT NULL REFERENCES employees(id),
+  file_name VARCHAR NOT NULL,
+  mime_type VARCHAR,
+  size_bytes BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes > 0),
+  storage_key VARCHAR NOT NULL,
+  uploaded_by VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_employee_documents_employee ON employee_documents(employee_id, created_at);
 
 CREATE TABLE IF NOT EXISTS work_shifts (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
