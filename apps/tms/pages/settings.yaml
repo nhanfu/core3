@@ -29,9 +29,9 @@ datasources:
     single: false
     permission: settings.read
     query: |
-      SELECT r.*, COUNT(p.id) AS permission_count
+      SELECT r.id, r.name, r.description, r.view_scope, COUNT(p.id) AS permission_count
       FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
-      GROUP BY r.id, r.name, r.description
+      GROUP BY r.id, r.name, r.description, r.view_scope
       ORDER BY r.name
   - id: translations
     single: false

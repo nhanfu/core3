@@ -7,12 +7,12 @@ datasources:
     single: false
     permission: settings.read
     query: |
-      SELECT r.id, r.name, r.description, COUNT(DISTINCT p.id) AS permission_count,
+      SELECT r.id, r.name, r.description, r.view_scope, COUNT(DISTINCT p.id) AS permission_count,
         COUNT(DISTINCT ur.user_id) AS user_count
       FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
         LEFT JOIN user_roles ur ON ur.role_id = r.id
       WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.description ILIKE '%' || :q || '%')
-      GROUP BY r.id, r.name, r.description
+      GROUP BY r.id, r.name, r.description, r.view_scope
       ORDER BY r.name
 components:
   - type: ListToolbar
@@ -30,6 +30,7 @@ components:
       - { field: id, label: Mã HT, sortable: true }
       - { field: name, label: Vai trò, type: PrimaryEntityCell, secondary: description }
       - { field: permission_count, label: Số quyền, align: right }
+      - { field: view_scope, label: Phạm vi xem, type: StatusChip, colors: { all: blue, branch: amber, own: neutral } }
       - { field: user_count, label: Số người dùng, align: right }
       - field: actions
         label: ''

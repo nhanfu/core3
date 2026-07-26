@@ -3,7 +3,9 @@
 ## Visible controls
 
 - Role summary shows the role identifier, description, permission count, and assigned-user count.
+- Role summary and list expose the server-owned view scope (`all`, `branch`, or `own`).
 - Permission matrix lists the server catalog and current grant state.
+- `Cập nhật phạm vi xem` opens a prefilled detail editor and persists only validated scope values.
 - Grant and revoke controls appear only for users with `settings.write`.
 - Assigned-user grid shows user, branch, department, and enabled state.
 - Assigned-user grid supports column visibility changes and responsive scrolling.

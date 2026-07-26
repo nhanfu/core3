@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS branches (
 CREATE TABLE IF NOT EXISTS roles (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR NOT NULL UNIQUE,
-  description VARCHAR
+  description VARCHAR,
+  view_scope VARCHAR NOT NULL DEFAULT 'all' CHECK (view_scope IN ('all', 'branch', 'own'))
 );
 
 CREATE TABLE IF NOT EXISTS users (

@@ -328,6 +328,10 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   async function openFormModal(actionDef: any, row: any) {
     return new Promise<void>(resolve => {
+      const sourceRecord = actionDef.prefill === 'source'
+        ? dataMap[actionDef.prefill_source || '']?.data
+        : undefined;
+      const formRecord = row || sourceRecord || {};
       // Overlay
       const overlay = document.createElement('div');
       overlay.style.cssText = [
@@ -411,9 +415,7 @@ export async function renderPage(config: any, { container = document.body }: { c
 
         // Determine initial value
         let initialValue = fieldDef.default ?? '';
-        const prefillRecord = actionDef.prefill === 'source'
-          ? dataMap[actionDef.prefill_source || '']?.data
-          : row;
+        const prefillRecord = actionDef.prefill === 'source' ? sourceRecord : row;
         if ((actionDef.prefill === 'row' || actionDef.prefill === 'source') && prefillRecord) {
           initialValue = prefillRecord[fieldDef.field] ?? fieldDef.default ?? '';
         }
@@ -532,7 +534,7 @@ export async function renderPage(config: any, { container = document.body }: { c
             await client.patch({
               table: actionDef.table,
               action: actionDef.operation,
-              id: row?.id ?? null,
+            id: formRecord.id ?? null,
               scope: actionDef.scope,
               changes,
             });

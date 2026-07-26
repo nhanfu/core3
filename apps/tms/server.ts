@@ -185,6 +185,8 @@ async function initDb(): Promise<void> {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS branch_id VARCHAR;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id VARCHAR;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;
+    ALTER TABLE roles ADD COLUMN IF NOT EXISTS view_scope VARCHAR DEFAULT 'all';
+    UPDATE roles SET view_scope = 'all' WHERE view_scope IS NULL;
     CREATE TABLE IF NOT EXISTS currency_rates (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       currency_code VARCHAR NOT NULL UNIQUE,
@@ -593,6 +595,11 @@ const TABLE_REGISTRY = {
     timestamps: true,
     fields: ['email', 'name', 'avatar_url', 'preferred_lang', 'enabled', 'branch_id', 'department_id', 'roles', 'password'],
   },
+  roles: {
+    permission: 'settings.write',
+    timestamps: false,
+    fields: ['name', 'description', 'view_scope'],
+  },
   translations: { permission: 'settings.write',     timestamps: false },
 };
 
@@ -955,6 +962,9 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     requirePerm(tbl.permission);
     if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
       return apiError(400, 'Invalid field for this resource');
+    }
+    if (table === 'roles' && changes.some((change: any) => change.field === 'view_scope' && !['all', 'branch', 'own'].includes(String(change.value)))) {
+      return apiError(400, 'Invalid role view scope');
     }
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
       return apiError(400, 'Invalid resource scope');
