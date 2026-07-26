@@ -1,6 +1,15 @@
 title: Chỉ tiêu KPI
 page: { id: crm-kpi, auth: { require: [crm.read] } }
 datasources:
+  - id: crm_kpi_totals
+    single: true
+    permission: crm.read
+    query: |
+      SELECT
+        (SELECT COUNT(*) FROM customers WHERE stage = 'Lead' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS lead_count,
+        (SELECT COUNT(*) FROM customers WHERE status = 'Active' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS active_customer_count,
+        (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) AS accepted_quote_count,
+        ROUND(100.0 * (SELECT COUNT(*) FROM quotes WHERE status = 'Accepted' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)) / NULLIF((SELECT COUNT(*) FROM customers WHERE stage = 'Lead' AND (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY)), 0), 1) AS conversion_rate
   - id: crm_stage_kpis
     single: false
     permission: crm.read
@@ -16,9 +25,12 @@ datasources:
 components:
   - type: ListToolbar
     source: crm_stage_kpis
-    filter_sources: [crm_stage_kpis, crm_quote_kpis]
+    filter_sources: [crm_kpi_totals, crm_stage_kpis, crm_quote_kpis]
     date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
     actions: [{ id: crm_stage_kpis.export, label: 'Xuất CSV', icon: '↓' }]
+  - type: StatRow
+    source: crm_kpi_totals
+    stats: [{ label: Khách tiềm năng, field: lead_count, color: amber }, { label: Khách đang hoạt động, field: active_customer_count, color: green }, { label: Báo giá chấp nhận, field: accepted_quote_count, color: blue }, { label: Tỷ lệ chuyển đổi, field: conversion_rate, color: indigo, format: percent }]
   - { type: Chart, source: crm_quote_kpis, title: Báo giá theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: '#0f766e' }
   - type: DataGrid
     source: crm_stage_kpis
