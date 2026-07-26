@@ -128,6 +128,7 @@ export class AppShell extends BaseComponent {
   _headerTitle: HTMLElement | null;
   _notifPanel: NotificationPanel | null;
   _profileDrawer: ProfileDrawer | null;
+  _clockTimer: ReturnType<typeof setInterval> | null;
 
   constructor(id: string, state: any) {
     super(id, { activePath: '/dashboard', title: 'TMS', openGroups: {}, ...state });
@@ -136,6 +137,7 @@ export class AppShell extends BaseComponent {
     this._headerTitle = null;
     this._notifPanel = null;
     this._profileDrawer = null;
+    this._clockTimer = null;
   }
 
   setActivePath(path: string) {
@@ -393,6 +395,12 @@ export class AppShell extends BaseComponent {
     html.take(attendanceBtn).span.className('header-time').text(
       new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()),
     );
+    const updateClock = () => {
+      const clock = attendanceBtn.querySelector('.header-time') as HTMLElement | null;
+      if (clock) clock.textContent = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+    };
+    if (this._clockTimer) clearInterval(this._clockTimer);
+    this._clockTimer = setInterval(updateClock, 60_000);
 
     const chatBtn = html.take(actions).button
       .className('header-icon-btn')
@@ -470,4 +478,5 @@ export class AppShell extends BaseComponent {
       .text('×')
       .event('click', () => toast.remove());
   }
+
 }
