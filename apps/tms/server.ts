@@ -229,6 +229,8 @@ const SOURCE_FILES = [
   'pages/accounting-invoice-templates.yaml',
   'pages/accounting-ledger-accounts.yaml',
   'pages/system-activity.yaml', 'pages/system-code-rules.yaml',
+  'pages/system-print-templates.yaml', 'pages/system-approval-flows.yaml', 'pages/system-shipment-types.yaml',
+  'pages/system-trip-statuses.yaml', 'pages/system-fee-rules.yaml', 'pages/system-storage.yaml',
   'pages/fleet.yaml',
   'pages/drivers.yaml',
   'pages/trips.yaml',
