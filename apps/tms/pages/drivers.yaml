@@ -1,4 +1,4 @@
-title: Drivers
+title: Tài xế
 
 page:
   id: drivers
@@ -6,177 +6,108 @@ page:
     require: [drivers.read]
 
 datasources:
-  - id: drivers_stats
-    single: true
-    permission: drivers.read
-    query: |
-      SELECT COUNT(*) AS total_count,
-        COUNT(*) FILTER (WHERE status = 'Active') AS active_count,
-        COUNT(*) FILTER (WHERE status = 'On Leave') AS on_leave_count,
-        COUNT(*) FILTER (WHERE license_expiry < CURRENT_DATE + INTERVAL '30 days') AS expiring_count
-      FROM drivers
   - id: drivers
     single: false
     permission: drivers.read
     query: |
-      SELECT d.*, t.plate AS truck_plate,
-        (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE) AS license_overdue,
-        (d.license_expiry IS NOT NULL AND d.license_expiry < CURRENT_DATE + INTERVAL '30 days') AS license_expiring
-      FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id
+      SELECT d.id, d.name, d.phone, d.email, d.license_number, d.license_expiry,
+        t.plate AS truck_plate,
+        CASE d.status
+          WHEN 'Active' THEN 'Đang hoạt động'
+          WHEN 'On Leave' THEN 'Nghỉ phép'
+          WHEN 'Inactive' THEN 'Ngưng hoạt động'
+          ELSE d.status
+        END AS availability,
+        'Admin User' AS created_by, d.created_at
+      FROM drivers d
+      LEFT JOIN trucks t ON t.id = d.assigned_truck_id
       WHERE (:status IS NULL OR d.status = :status)
-        AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.license_number ILIKE '%' || :q || '%' OR d.email ILIKE '%' || :q || '%')
+        AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.license_number ILIKE '%' || :q || '%' OR d.phone ILIKE '%' || :q || '%')
       ORDER BY d.name
 
 toolbar:
   - id: add_driver_btn
-    label: "+ Add Driver"
+    label: '+ Thêm tài xế'
     variant: primary
     permission: drivers.write
     action: add_driver
 
-filters:
-  source: drivers
-  fields:
-    - field: status
-      label: Status
-      type: select
-      options: [Active, On Leave, Inactive]
-    - field: q
-      label: Search
-      type: search
-      placeholder: "Name, license or email..."
-
 components:
-  - type: StatRow
-    source: drivers_stats
-    stats:
-      - label: Total Drivers
-        field: total_count
-        color: blue
-      - label: Active
-        field: active_count
-        color: green
-      - label: On Leave
-        field: on_leave_count
-        color: amber
-      - label: License Expiring
-        field: expiring_count
-        color: orange
-
-  - type: GridView
+  - type: ListToolbar
     source: drivers
-    page_size: 8
+    filter_field: q
+    search:
+      label: Tìm kiếm tài xế
+      placeholder: 'Tìm theo tên, số điện thoại, giấy phép...'
+  - type: StatusTabs
+    source: drivers
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Active, label: Đang hoạt động }
+      - { id: 'On Leave', label: Nghỉ phép }
+      - { id: Inactive, label: Ngưng hoạt động }
+  - type: DataGrid
+    source: drivers
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state:
+      title: Không có tài xế
+      description: Thử thay đổi bộ lọc hoặc tạo tài xế mới.
     columns:
-      - type: TextCell
-        field: name
-        label: Name
-      - type: TextCell
-        field: phone
-        label: Phone
-        secondary: email
-      - type: TextCell
-        field: license_number
-        label: License #
-      - type: BadgeCell
-        field: status
-        label: Status
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: name, label: Họ tên, type: PrimaryEntityCell, secondary: phone }
+      - { field: license_number, label: Số giấy phép }
+      - { field: truck_plate, label: Phương tiện }
+      - { field: license_expiry, label: Hạn giấy phép, type: DateCell }
+      - field: availability
+        label: Trạng thái
+        type: StatusChip
         colors:
-          Active: green
-          On Leave: amber
-          Inactive: red
-      - type: TextCell
-        field: truck_plate
-        label: Assigned Truck
-      - type: DateCell
-        field: license_expiry
-        label: License Expiry
-        format: short
-        overdueField: license_overdue
-      - type: ActionCell
-        label: ""
+          Đang hoạt động: green
+          Nghỉ phép: amber
+          Ngưng hoạt động: red
+      - { field: created_by, label: Người tạo }
+      - { field: created_at, label: Ngày giờ tạo, type: DateCell }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
         actions:
-          - id: edit_driver
-            label: Edit
-            variant: ghost
-            show_if: "user.permissions.includes('drivers.write')"
-          - id: delete_driver
-            label: Delete
-            variant: danger
-            show_if: "user.permissions.includes('drivers.write')"
+          - { id: edit_driver, label: Sửa, variant: ghost }
+          - { id: delete_driver, label: Xóa, variant: danger }
 
 actions:
   - id: add_driver
     type: form
-    title: Add Driver
+    title: Thêm tài xế
     table: drivers
     operation: insert
-    prefill: null
-    refresh: [drivers, drivers_stats]
+    refresh: [drivers]
     fields:
-      - field: name
-        label: Name
-        type: text
-        required: true
-      - field: phone
-        label: Phone
-        type: text
-        required: false
-      - field: email
-        label: Email
-        type: text
-        required: false
-      - field: license_number
-        label: License Number
-        type: text
-        required: true
-      - field: license_expiry
-        label: License Expiry
-        type: date
-        required: true
-      - field: status
-        label: Status
-        type: select
-        required: false
-        options: [Active, On Leave, Inactive]
-        default: Active
-
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: phone, label: Số điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: license_number, label: Số giấy phép, type: text, required: true }
+      - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
+      - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive], default: Active }
   - id: edit_driver
     type: form
-    title: Edit Driver
+    title: Cập nhật tài xế
     table: drivers
     operation: update
     prefill: row
-    refresh: [drivers, drivers_stats]
+    refresh: [drivers]
     fields:
-      - field: name
-        label: Name
-        type: text
-        required: true
-      - field: phone
-        label: Phone
-        type: text
-        required: false
-      - field: email
-        label: Email
-        type: text
-        required: false
-      - field: license_number
-        label: License Number
-        type: text
-        required: true
-      - field: license_expiry
-        label: License Expiry
-        type: date
-        required: true
-      - field: status
-        label: Status
-        type: select
-        required: false
-        options: [Active, On Leave, Inactive]
-        default: Active
-
+      - { field: name, label: Họ tên, type: text, required: true }
+      - { field: phone, label: Số điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: license_number, label: Số giấy phép, type: text, required: true }
+      - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
+      - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive] }
   - id: delete_driver
     type: delete
-    confirm: "Delete driver {{row.name}}?"
+    confirm: 'Xóa tài xế {{row.name}}?'
     table: drivers
-    refresh: [drivers, drivers_stats]
+    refresh: [drivers]

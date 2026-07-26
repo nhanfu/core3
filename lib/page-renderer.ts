@@ -545,6 +545,20 @@ export async function renderPage(config: any, { container = document.body }: { c
           cell.textContent = value == null || value === '' ? '—' : `${Number(value).toLocaleString()} ${column.unit || 'kg'}`;
           return;
         }
+        if (column.type === 'DateCell') {
+          if (value == null || value === '') {
+            cell.textContent = '—';
+            return;
+          }
+          const date = new Date(String(value));
+          cell.textContent = Number.isNaN(date.valueOf())
+            ? String(value)
+            : new Intl.DateTimeFormat(column.locale || 'vi-VN', {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              ...(String(value).includes('T') ? { hour: '2-digit', minute: '2-digit' } : {}),
+            }).format(date);
+          return;
+        }
         cell.textContent = value == null || value === '' ? '—' : String(value);
       } : undefined,
     }));
