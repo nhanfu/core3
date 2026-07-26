@@ -31,6 +31,8 @@ of the audit.
 - Audited resource lists render a declarative breadcrumb and current page title
   above the toolbar (`Quản lý › Đơn hàng`, `Kinh doanh › Khách hàng`, and
   `Quản lý › Phương tiện`).
+- The customer list renders the reference company-scope pill and building avatar
+  on its primary entity cells.
 - Primary list actions share that header row and align to the right; the 1440px
   orders geometry places the action at `y=88` and search at `y=145`.
 - The primary action and active navigation color is strong blue (`#2563eb`

@@ -690,16 +690,28 @@ export async function renderPage(config: any, { container = document.body }: { c
           return;
         }
         if (column.type === 'PrimaryEntityCell') {
+          const entity = document.createElement('div');
+          entity.className = 'data-grid-entity';
+          if (column.avatar) {
+            const avatar = document.createElement('span');
+            avatar.className = 'data-grid-entity-avatar';
+            avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V6l8-3 8 3v14"/><path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"/></svg>';
+            entity.appendChild(avatar);
+          }
+          const copy = document.createElement('span');
+          copy.className = 'data-grid-entity-copy';
           const primary = document.createElement('div');
           primary.className = 'data-grid-primary';
           primary.textContent = value == null || value === '' ? '—' : String(value);
-          cell.appendChild(primary);
+          copy.appendChild(primary);
           if (column.secondary) {
             const secondary = document.createElement('div');
             secondary.className = 'data-grid-secondary';
             secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
-            cell.appendChild(secondary);
+            copy.appendChild(secondary);
           }
+          entity.appendChild(copy);
+          cell.appendChild(entity);
           return;
         }
         if (column.type === 'WeightCell') {
@@ -1212,6 +1224,12 @@ export async function renderPage(config: any, { container = document.body }: { c
     heading.append(breadcrumb);
     pageHeader.append(heading);
     pageDiv.appendChild(pageHeader);
+    if (config.scope) {
+      const scopePill = document.createElement('span');
+      scopePill.className = 'scope-pill';
+      scopePill.textContent = `${config.scope.label}: ${config.scope.value}`;
+      pageHeader.append(scopePill);
+    }
   }
 
   // 6. Render toolbar

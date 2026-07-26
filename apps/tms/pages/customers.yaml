@@ -1,4 +1,5 @@
 title: Khách hàng
+scope: { label: 'Phạm vi xem', value: 'Toàn công ty' }
 
 page:
   id: customers
@@ -78,6 +79,7 @@ components:
         label: Mã / tên
         type: PrimaryEntityCell
         secondary: name
+        avatar: building
       - field: tax_code
         label: Mã số thuế
       - field: stage_label

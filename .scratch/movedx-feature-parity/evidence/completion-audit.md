@@ -25,6 +25,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Audited resource lists now render declarative reference-style breadcrumbs and current titles without affecting dashboard intro composition.
 - Primary actions now share the breadcrumb row; fresh 1440px orders geometry matches the reference header/search vertical alignment.
 - Audited DataGrids include a server-page-aware row-number column after selection, matching the reference table structure.
+- Customer CRM now includes the reference company-scope pill and building SVG avatar on primary entity cells.
 - Dashboard renders a declarative in-page greeting using the authenticated user runtime state.
 - Dashboard period state defaults to the selected current-month preset with synchronized date fields and datasource bounds.
 - Shared KPI cards use compact reference-density spacing; the dashboard chart heading is visible within the 1440 x 1000 viewport.

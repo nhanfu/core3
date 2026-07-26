@@ -37,6 +37,7 @@ export type ActionDefinition = {
 
 export type PageConfig = {
   title?: string;
+  scope?: { label: string; value: string };
   page: PageDefinition;
   datasources?: DatasourceDefinition[];
   toolbar?: ToolbarDefinition[];
@@ -55,6 +56,7 @@ export type PageValidationOptions = {
 
 const ROOT_KEYS = new Set([
   'title',
+  'scope',
   'page',
   'datasources',
   'toolbar',
@@ -64,6 +66,7 @@ const ROOT_KEYS = new Set([
 ]);
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
+const SCOPE_KEYS = new Set(['label', 'value']);
 const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'variant', 'permission', 'action']);
 const FILTER_KEYS = new Set(['source', 'fields']);
@@ -74,6 +77,7 @@ const COLUMN_KEYS = new Set([
   'label',
   'type',
   'secondary',
+  'avatar',
   'sortable',
   'align',
   'actions',
@@ -172,6 +176,14 @@ export function validatePageDefinition(
   if (!isRecord(input)) throw new PageSchemaError(['page config must be an object']);
 
   rejectUnknownKeys(input, ROOT_KEYS, 'page config', issues);
+  if (input.scope !== undefined) {
+    requireRecord(input.scope, 'scope', issues);
+    if (isRecord(input.scope)) {
+      rejectUnknownKeys(input.scope, SCOPE_KEYS, 'scope', issues);
+      requireString(input.scope.label, 'scope.label', issues);
+      requireString(input.scope.value, 'scope.value', issues);
+    }
+  }
   requireRecord(input.page, 'page', issues);
   if (isRecord(input.page)) {
     rejectUnknownKeys(input.page, PAGE_KEYS, 'page', issues);
