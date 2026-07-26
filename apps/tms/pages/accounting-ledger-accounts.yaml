@@ -17,6 +17,7 @@ components:
   - { type: StatusTabs, source: ledger_accounts, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang sử dụng }, { id: Inactive, label: Ngưng sử dụng }] }
   - type: DataGrid
     source: ledger_accounts
+    tree: true
     page_size: 20
     column_chooser: true
     row_key: id

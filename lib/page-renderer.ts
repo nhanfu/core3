@@ -610,6 +610,22 @@ export async function renderPage(config: any, { container = document.body }: { c
     const { GridView } = await import('./components/GridView.ts');
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+    const treeRows = sourceResult.data || [];
+    const treeById = new Map(treeRows.map((row: any) => [String(row.id), row]));
+    const treeDepth = (row: any) => {
+      if (!def.tree) return 0;
+      let depth = 0;
+      let parentId = row.parent_id ? String(row.parent_id) : '';
+      const seen = new Set<string>();
+      while (parentId && !seen.has(parentId) && depth < 20) {
+        seen.add(parentId);
+        const parent = treeById.get(parentId);
+        if (!parent) break;
+        depth += 1;
+        parentId = parent.parent_id ? String(parent.parent_id) : '';
+      }
+      return depth;
+    };
     const pageSize = def.page_size || 25;
 
     // Add an `id` to each column def for GridView's cell lookup key
@@ -740,6 +756,11 @@ export async function renderPage(config: any, { container = document.body }: { c
           : undefined,
       })),
       render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
+        if (def.tree && index === 0) {
+          const depth = treeDepth(row);
+          cell.style.paddingLeft = `${16 + depth * 20}px`;
+          cell.dataset.treeDepth = String(depth);
+        }
         if (column.type === 'StatusChip') {
           const chip = document.createElement('span');
           const tone = column.colors?.[String(value)] || column.tone || 'neutral';

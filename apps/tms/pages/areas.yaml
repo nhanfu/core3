@@ -27,6 +27,7 @@ components:
     tabs: [{ id: '', label: Tất cả }, { id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
   - type: DataGrid
     source: areas
+    tree: true
     page_size: 10
     column_chooser: true
     row_key: id
