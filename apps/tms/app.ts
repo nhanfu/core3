@@ -16,7 +16,7 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
   '/drivers':      'drivers',
   '/orders':       () => import('./pages/placeholder.ts'),
   '/chat':         () => import('./pages/placeholder.ts'),
-  '/schedule':     () => import('./pages/placeholder.ts'),
+  '/schedule':     'trips',
   '/customers':    () => import('./pages/placeholder.ts'),
   '/partners':     () => import('./pages/placeholder.ts'),
   '/quotes':       () => import('./pages/placeholder.ts'),

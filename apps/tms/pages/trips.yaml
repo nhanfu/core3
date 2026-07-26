@@ -1,4 +1,4 @@
-title: Trip Management
+title: Lịch điều
 
 page:
   id: trips
@@ -29,86 +29,61 @@ datasources:
 
 toolbar:
   - id: add_trip_btn
-    label: "+ Schedule Trip"
+    label: '+ Tạo chuyến'
     variant: primary
     permission: trips.write
     action: add_trip
 
-filters:
-  source: trips
-  fields:
-    - field: status
-      label: Status
-      type: select
-      options: [Scheduled, In Transit, Completed, Cancelled]
-    - field: q
-      label: Search
-      type: search
-      placeholder: "Trip #, origin or destination..."
-
 components:
-  - type: StatRow
-    source: trips_stats
-    stats:
-      - label: Scheduled
-        field: scheduled_count
-        color: blue
-      - label: In Transit
-        field: in_transit_count
-        color: indigo
-      - label: Completed Today
-        field: completed_today
-        color: green
-      - label: Cancelled
-        field: cancelled_count
-        color: red
-
-  - type: GridView
+  - type: ListToolbar
     source: trips
-    page_size: 8
+    filter_field: q
+    search:
+      label: Tìm kiếm chuyến
+      placeholder: 'Tìm theo mã chuyến, điểm đi hoặc điểm đến...'
+  - type: StatusTabs
+    source: trips
+    filter_field: status
+    tabs:
+      - { id: '', label: Tất cả }
+      - { id: Scheduled, label: Đã lên lịch }
+      - { id: 'In Transit', label: Đang vận chuyển }
+      - { id: Completed, label: Hoàn thành }
+      - { id: Cancelled, label: Đã hủy }
+  - type: DataGrid
+    source: trips
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state:
+      title: Không có chuyến xe
+      description: Thử thay đổi bộ lọc hoặc tạo chuyến mới.
     columns:
-      - type: TextCell
-        field: trip_number
-        label: Trip #
-      - type: TextCell
-        field: origin
-        label: Route
-        secondary: destination
-      - type: TextCell
-        field: truck_plate
-        label: Truck
-        secondary: driver_name
-      - type: BadgeCell
-        field: status
-        label: Status
+      - { field: trip_number, label: Mã chuyến, sortable: true }
+      - { field: origin, label: Tuyến đường, type: PrimaryEntityCell, secondary: destination }
+      - { field: truck_plate, label: Phương tiện, type: PrimaryEntityCell, secondary: driver_name }
+      - field: status
+        label: Trạng thái
+        type: StatusChip
         colors:
           Scheduled: blue
-          In Transit: indigo
+          In Transit: amber
           Completed: green
           Cancelled: red
-      - type: DateCell
-        field: departure_time
-        label: Departure
-        format: short
-      - type: DateCell
-        field: arrival_time
-        label: Arrival
-        format: short
-      - type: NumberCell
-        field: distance_km
-        label: Distance (km)
-        format: "#,###"
-      - type: ActionCell
-        label: ""
+      - { field: departure_time, label: Khởi hành, type: DateCell }
+      - { field: arrival_time, label: Dự kiến đến, type: DateCell }
+      - { field: distance_km, label: Quãng đường (km), align: right }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
         actions:
           - id: edit_trip
-            label: Edit
+            label: Sửa
             variant: ghost
-            show_if: "user.permissions.includes('trips.write')"
           - id: cancel_trip
-            label: Cancel
+            label: Hủy
             variant: danger
-            show_if: "user.permissions.includes('trips.write')"
 
 actions:
   - id: add_trip
