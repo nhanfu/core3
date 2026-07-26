@@ -18,12 +18,14 @@ components:
   - type: DataGrid
     source: department_teams
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có team }
     columns: [{ field: code, label: Mã team }, { field: name, label: Team }, { field: manager_name, label: Người phụ trách }, { field: status, label: Trạng thái }]
   - type: DataGrid
     source: department_employees
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có nhân viên }
     columns: [{ field: code, label: Mã nhân viên }, { field: name, label: Họ tên }, { field: job_title, label: Chức danh }, { field: status, label: Trạng thái }]

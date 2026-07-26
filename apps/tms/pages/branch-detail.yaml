@@ -22,18 +22,21 @@ components:
   - type: DataGrid
     source: branch_departments
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có phòng ban }
     columns: [{ field: code, label: Mã phòng ban }, { field: name, label: Phòng ban }, { field: team_count, label: Số team, align: right }, { field: status, label: Trạng thái }]
   - type: DataGrid
     source: branch_trucks
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có phương tiện }
     columns: [{ field: plate, label: Biển số }, { field: type, label: Loại xe }, { field: status, label: Trạng thái }]
   - type: DataGrid
     source: branch_employees
     page_size: 30
+    column_chooser: true
     row_key: id
     empty_state: { title: Chưa có nhân viên }
     columns: [{ field: code, label: Mã nhân viên }, { field: name, label: Họ tên }, { field: job_title, label: Chức danh }, { field: status, label: Trạng thái }]
