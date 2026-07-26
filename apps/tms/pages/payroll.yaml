@@ -56,7 +56,7 @@ components:
     actions: [{ id: payroll.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatRow
     source: payroll_totals
-    stats: [{ label: Bảng lương, field: payroll_count, color: blue }, { label: Tổng thực lãnh, field: net_total, color: teal }, { label: Đã chi, field: paid_total, color: green }, { label: Chờ xử lý, field: pending_total, color: amber }]
+    stats: [{ label: Bảng lương, field: payroll_count, color: blue }, { label: Tổng thực lãnh, field: net_total, color: blue }, { label: Đã chi, field: paid_total, color: green }, { label: Chờ xử lý, field: pending_total, color: amber }]
   - type: StatusTabs
     source: payroll
     filter_field: status
@@ -83,7 +83,7 @@ components:
       - field: status_label
         label: Trạng thái
         type: StatusChip
-        colors: { Nháp: slate, Đã duyệt: amber, Đã chi: green }
+        colors: { Nháp: neutral, Đã duyệt: amber, Đã chi: green }
       - field: actions
         label: ''
         sortable: false
