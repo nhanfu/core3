@@ -103,6 +103,7 @@ actions:
       - { field: email, label: Email, type: text }
       - { field: license_number, label: Số giấy phép, type: text, required: true }
       - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
+      - { field: assigned_truck_id, label: Mã HT phương tiện, type: text }
       - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive], default: Active }
   - id: edit_driver
     type: form
@@ -117,6 +118,7 @@ actions:
       - { field: email, label: Email, type: text }
       - { field: license_number, label: Số giấy phép, type: text, required: true }
       - { field: license_expiry, label: Hạn giấy phép, type: date, required: true }
+      - { field: assigned_truck_id, label: Mã HT phương tiện, type: text }
       - { field: status, label: Trạng thái, type: select, options: [Active, On Leave, Inactive] }
   - id: delete_driver
     type: delete

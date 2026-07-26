@@ -113,6 +113,7 @@ actions:
       - { field: plate, label: Biển số / số hiệu, type: text, required: true }
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
       - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
+      - { field: branch_id, label: Mã HT chi nhánh, type: text }
       - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service], default: Active }
       - { field: capacity_kg, label: Tải trọng (kg), type: number, default: 0 }
       - { field: notes, label: Ghi chú, type: textarea }
@@ -127,6 +128,7 @@ actions:
       - { field: plate, label: Biển số / số hiệu, type: text, required: true }
       - { field: model, label: Hãng / mẫu xe, type: text, required: true }
       - { field: type, label: Loại phương tiện, type: select, options: [Semi, Box Truck, Flatbed, Refrigerated, Tanker] }
+      - { field: branch_id, label: Mã HT chi nhánh, type: text }
       - { field: status, label: Trạng thái, type: select, options: [Active, Maintenance, Out of Service] }
       - { field: capacity_kg, label: Tải trọng (kg), type: number }
       - { field: notes, label: Ghi chú, type: textarea }
