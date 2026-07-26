@@ -174,6 +174,7 @@ const detailTargets = [
   { target: '/org/departments/detail?id=department-04', needle: 'HCNS' },
   { target: '/org/users/detail?id=user-admin', needle: 'admin@tms.local' },
   { target: '/org/roles/detail?id=role-admin', needle: 'Full system access' },
+  { target: '/org/own-company', needle: 'ABC Transport' },
   { target: '/areas/detail?id=area-01', needle: 'Miền Nam' },
   { target: '/system/print-templates/detail?id=sys-02', needle: 'ORDER' },
   { target: '/system/approval-flows/detail?id=sys-03', needle: 'ORDER_APPROVAL' },
