@@ -704,6 +704,7 @@ export async function renderPage(config: any, { container = document.body }: { c
       {
         rowKey: def.row_key || 'id',
         selectable: !!def.selectable,
+        columnChooser: def.column_chooser === true,
         onPageChange: async (page: number) => {
           const nextPage = Math.max(1, page);
           const newSkip = (nextPage - 1) * pageSize;

@@ -37,6 +37,7 @@ export interface DataGridAction {
 export interface DataGridOptions {
   rowKey?: string;
   selectable?: boolean;
+  columnChooser?: boolean;
   emptyState?: { title?: string; description?: string };
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
@@ -120,13 +121,19 @@ export class DataGrid extends BaseComponent {
     const meta = (this.state.meta as Record<string, unknown> | undefined) || {};
     const actions = (this.state.actions as DataGridAction[] | undefined) || [];
     const selectable = this.options.selectable || this.state.selectable === true;
+    const visibleColumnIds = new Set(
+      Array.isArray(this.state.visibleColumns)
+        ? this.state.visibleColumns.map(String)
+        : this.columns.map(column => column.id || column.field),
+    );
+    const visibleColumns = this.columns.filter(column => visibleColumnIds.has(column.id || column.field));
     const selectedIds = this.selectedIds();
     const selected = new Set(selectedIds);
 
     const root = html.take(container).div.className('rounded-lg border border-gray-200 bg-white').getContext();
     const title = meta.title || this.state.title;
     const description = meta.description || this.state.description;
-    if (title || description || actions.length) {
+    if (title || description || actions.length || this.options.columnChooser) {
       const toolbar = html.take(root).div.className('flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
       if (title || description) {
         const copy = html.take(toolbar).div.getContext();
@@ -149,6 +156,27 @@ export class DataGrid extends BaseComponent {
           });
         }
       }
+      if (this.options.columnChooser) {
+        const chooser = html.take(toolbar).details.className('relative').getContext();
+        html.take(chooser).summary.className('cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Columns');
+        const menu = html.take(chooser).div.className('absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
+        for (const column of this.columns) {
+          const label = html.take(menu).label.className('flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
+          const checkbox = html.take(label).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
+          checkbox.checked = visibleColumnIds.has(column.id || column.field);
+          checkbox.setAttribute('aria-label', `Show ${column.label}`);
+          checkbox.addEventListener('change', () => {
+            const next = new Set(visibleColumnIds);
+            checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
+            if (next.size === 0) {
+              checkbox.checked = true;
+              return;
+            }
+            this.setState({ visibleColumns: [...next] });
+          });
+          label.append(document.createTextNode(column.label));
+        }
+      }
     }
 
     const scroll = html.take(root).div.className('overflow-x-auto').getContext();
@@ -164,7 +192,7 @@ export class DataGrid extends BaseComponent {
     }
 
     const sort = this.state.sort as { field?: string; direction?: SortDirection } | undefined;
-    for (const column of this.columns) {
+    for (const column of visibleColumns) {
       const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
       const th = html.take(headerRow).th.className(`px-4 py-3 ${align} text-xs font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap`).getContext();
       const sortable = column.sortable === true;
@@ -183,7 +211,7 @@ export class DataGrid extends BaseComponent {
     const tbody = html.take(table).tbody.className('divide-y divide-gray-100 bg-white').getContext();
     if (!rows.length) {
       const empty = this.options.emptyState || (this.state.emptyState as DataGridOptions['emptyState']) || {};
-      const cell = html.take(tbody).trow.tdata.attr('colspan', String(this.columns.length + (selectable ? 1 : 0))).className('px-4 py-12 text-center').getContext();
+      const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0))).className('px-4 py-12 text-center').getContext();
       html.take(cell).p.className('text-sm font-medium text-gray-900').text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.className('mt-1 text-sm text-gray-500').text(empty.description);
     } else {
@@ -200,7 +228,7 @@ export class DataGrid extends BaseComponent {
             this.setSelectedIds([...next]);
           });
         }
-        for (const column of this.columns) {
+        for (const column of visibleColumns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
           const cell = html.take(tr).tdata.className(`px-4 py-3 text-sm text-gray-700 ${align}`).getContext();

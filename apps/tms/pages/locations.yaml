@@ -41,6 +41,7 @@ components:
   - type: DataGrid
     source: locations
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có địa điểm, description: Thử thay đổi bộ lọc hoặc tạo địa điểm mới. }

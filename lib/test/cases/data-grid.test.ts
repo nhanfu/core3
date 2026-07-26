@@ -166,4 +166,19 @@ describe('DataGrid', () => {
     expect(onPageChange).toHaveBeenCalledWith(2);
     expect(grid.state.rows).toEqual(rows);
   });
+
+  it('supports declarative column visibility without losing the remaining columns', async () => {
+    const grid = new DataGrid('orders', { rows }, columns, { columnChooser: true });
+    const container = mount(grid);
+    const amount = container.querySelector<HTMLInputElement>('input[aria-label="Show Amount"]')!;
+
+    amount.checked = false;
+    amount.dispatchEvent(new Event('change', { bubbles: true }));
+    await Promise.resolve();
+
+    expect(grid.state.visibleColumns).toEqual(['code']);
+    expect(container.querySelector('thead')?.textContent).toContain('Code');
+    expect(container.querySelector('thead')?.textContent).not.toContain('Amount');
+    expect(container.querySelector('tbody tr')?.querySelectorAll('td')).toHaveLength(1);
+  });
 });
