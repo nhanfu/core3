@@ -16,6 +16,7 @@ components:
     source: teams
     filter_field: q
     search: { label: Tìm kiếm team, placeholder: 'Tìm mã, tên hoặc phòng ban...' }
+    actions: [{ id: teams.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: teams
     filter_field: status

@@ -31,6 +31,7 @@ components:
     search:
       label: Tìm kiếm chi nhánh
       placeholder: 'Tìm theo tên, tỉnh thành, khu vực...'
+    actions: [{ id: org_branches.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: org_branches
     filter_field: status
@@ -41,6 +42,7 @@ components:
   - type: DataGrid
     source: org_branches
     page_size: 10
+    column_chooser: true
     row_key: id
     selectable: true
     empty_state: { title: Không có chi nhánh, description: Thử thay đổi bộ lọc hoặc tạo chi nhánh mới. }

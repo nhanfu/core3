@@ -16,6 +16,7 @@ components:
     source: departments
     filter_field: q
     search: { label: Tìm kiếm phòng ban, placeholder: 'Tìm mã, tên hoặc chi nhánh...' }
+    actions: [{ id: departments.export, label: 'Xuất CSV', icon: '↓' }]
   - type: StatusTabs
     source: departments
     filter_field: status

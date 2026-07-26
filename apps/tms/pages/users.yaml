@@ -19,9 +19,11 @@ components:
     source: org_users
     filter_field: q
     search: { label: Tìm kiếm người dùng, placeholder: 'Tìm tên hoặc email...' }
+    actions: [{ id: org_users.export, label: 'Xuất CSV', icon: '↓' }]
   - type: DataGrid
     source: org_users
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Không có người dùng }
     columns:

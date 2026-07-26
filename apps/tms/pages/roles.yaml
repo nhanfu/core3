@@ -17,9 +17,11 @@ components:
     source: org_roles
     filter_field: q
     search: { label: Tìm kiếm vai trò, placeholder: 'Tìm tên hoặc mô tả...' }
+    actions: [{ id: org_roles.export, label: 'Xuất CSV', icon: '↓' }]
   - type: DataGrid
     source: org_roles
     page_size: 20
+    column_chooser: true
     row_key: id
     empty_state: { title: Không có vai trò }
     columns:
