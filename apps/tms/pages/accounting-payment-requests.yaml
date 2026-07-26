@@ -14,6 +14,10 @@ datasources:
       FROM accounting_entries WHERE kind = 'payment_request' AND (:status IS NULL OR status = :status)
         AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%')
       ORDER BY document_date DESC, code
+  - id: payment_request_currency_lookup
+    single: false
+    permission: accounting.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' ORDER BY label"
 toolbar:
   - { id: add_payment_request_btn, label: '+ Thêm đề nghị chi', variant: primary, permission: accounting.write, action: add_payment_request }
 components:
@@ -60,7 +64,7 @@ actions:
     scope: payment_request
     operation: insert
     refresh: [payment_requests]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: payment_request_currency_lookup, default: VND }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - id: edit_payment_request
     type: form
     title: Cập nhật đề nghị thanh toán
@@ -69,7 +73,7 @@ actions:
     operation: update
     prefill: row
     refresh: [payment_requests]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: payment_request_currency_lookup }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - { id: view_payment_request, type: navigate, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: payment_request, back: /accounting/payment-requests } }
   - { id: submit_payment_request, type: server, action: accounting.payment_requests.submit_for_approval, confirm: 'Trình duyệt đề nghị chi {{row.code}}?', refresh: [payment_requests] }
   - { id: approve_payment_request, type: server, action: accounting.payment_requests.approve, confirm: 'Duyệt đề nghị chi {{row.code}}?', refresh: [payment_requests] }

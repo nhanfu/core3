@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 159 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 163 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Sixteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, company settings, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
@@ -81,6 +81,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Order create/edit forms now source shipment types from system configuration while preserving existing values.
 - Vehicle forms now use a branch lookup, and driver forms use a vehicle lookup, replacing raw internal IDs.
 - Advances now calculate linked settlement and outstanding amounts, while settlements expose a validated linked-advance selector and reference column; workflow audit covers invalid-link rejection.
+- Transactional accounting editors now source currencies from the catalog while preserving existing currency codes.
 - Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - Ledger accounts now support persisted parent relationships, parent display, datasource-backed parent selection, and server-side self-parent validation.
 - An opt-in fresh-browser mutation audit performs normal pointer clicks for order submit/approve, units master-data create/edit/delete, quote send/accept, payroll approve/pay, and debit-note submit/approve/pay; all five phases pass with zero UI mutation failures on a fresh seeded database.

@@ -14,6 +14,10 @@ datasources:
       FROM accounting_entries WHERE kind = 'debit_note' AND (:status IS NULL OR status = :status)
         AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%' OR counterparty ILIKE '%' || :q || '%')
       ORDER BY document_date DESC, code
+  - id: debit_note_currency_lookup
+    single: false
+    permission: accounting.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' ORDER BY label"
 toolbar:
   - { id: add_debit_note_btn, label: '+ Thêm giấy báo nợ', variant: primary, permission: accounting.write, action: add_debit_note }
 components:
@@ -60,7 +64,7 @@ actions:
     scope: debit_note
     operation: insert
     refresh: [debit_notes]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày chứng từ, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: debit_note_currency_lookup, default: VND }, { field: document_date, label: Ngày chứng từ, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - id: edit_debit_note
     type: form
     title: Cập nhật giấy báo nợ
@@ -69,7 +73,7 @@ actions:
     operation: update
     prefill: row
     refresh: [debit_notes]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày chứng từ, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: debit_note_currency_lookup }, { field: document_date, label: Ngày chứng từ, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - { id: view_debit_note, type: navigate, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: debit_note, back: /accounting/debit-notes } }
   - { id: submit_debit_note, type: server, action: accounting.debit_notes.submit_for_approval, confirm: 'Trình duyệt giấy báo nợ {{row.code}}?', refresh: [debit_notes] }
   - { id: approve_debit_note, type: server, action: accounting.debit_notes.approve, confirm: 'Duyệt giấy báo nợ {{row.code}}?', refresh: [debit_notes] }

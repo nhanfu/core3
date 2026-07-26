@@ -15,6 +15,10 @@ datasources:
           ELSE status END AS status_label,
         CAST(document_date AS VARCHAR) AS document_date, CAST(due_date AS VARCHAR) AS due_date, description, created_at
       FROM accounting_entries a WHERE a.kind = 'advance' AND (:status IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.counterparty ILIKE '%' || :q || '%') ORDER BY a.document_date DESC, a.code
+  - id: advance_currency_lookup
+    single: false
+    permission: accounting.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' ORDER BY label"
 toolbar: [{ id: add_advance_btn, label: '+ Thêm tạm ứng', variant: primary, permission: accounting.write, action: add_advance }]
 components:
   - { type: ListToolbar, source: advances, filter_field: q, search: { label: Tìm kiếm tạm ứng, placeholder: 'Tìm số chứng từ hoặc người nhận...' }, actions: [{ id: advances.export, label: 'Xuất CSV', icon: '↓' }] }
@@ -57,7 +61,7 @@ actions:
     scope: advance
     operation: insert
     refresh: [advances]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: text, default: VND }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: advance_currency_lookup, default: VND }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - id: edit_advance
     type: form
     title: Cập nhật tạm ứng
@@ -66,7 +70,7 @@ actions:
     operation: update
     prefill: row
     refresh: [advances]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: text }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: advance_currency_lookup }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
   - { id: view_advance, type: navigate, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: advance, back: /accounting/advances } }
   - { id: submit_advance, type: server, action: accounting.advances.submit_for_approval, confirm: 'Trình duyệt tạm ứng {{row.code}}?', refresh: [advances] }
   - { id: approve_advance, type: server, action: accounting.advances.approve, confirm: 'Duyệt tạm ứng {{row.code}}?', refresh: [advances] }
