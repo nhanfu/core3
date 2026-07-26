@@ -13,6 +13,10 @@ datasources:
     single: false
     permission: settings.read
     query: "SELECT id AS value, code || ' - ' || name AS label FROM departments ORDER BY name"
+  - id: department_branch_lookup
+    single: false
+    permission: settings.read
+    query: "SELECT id AS value, name AS label FROM branches ORDER BY name"
 toolbar:
   - { id: add_department_btn, label: '+ Thêm phòng ban', variant: primary, permission: settings.write, action: add_department }
 components:
@@ -52,7 +56,7 @@ actions:
     table: departments
     operation: insert
     refresh: [departments]
-    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Mã HT chi nhánh, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Chi nhánh, type: select, options_source: department_branch_lookup }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
   - id: edit_department
     type: form
     title: Cập nhật phòng ban
@@ -60,5 +64,5 @@ actions:
     operation: update
     prefill: row
     refresh: [departments]
-    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Mã HT chi nhánh, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Chi nhánh, type: select, options_source: department_branch_lookup }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
   - { id: delete_department, type: delete, confirm: 'Xóa phòng ban {{row.name}}?', table: departments, refresh: [departments] }
