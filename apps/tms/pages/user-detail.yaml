@@ -1,0 +1,52 @@
+title: Chi tiết người dùng
+page: { id: user-detail, auth: { require: [settings.read] } }
+datasources:
+  - id: user_detail
+    single: true
+    permission: settings.read
+    query: "SELECT id, email, name, preferred_lang, CAST(created_at AS VARCHAR) AS created_at FROM users WHERE id = :id"
+  - id: user_roles
+    single: false
+    permission: settings.read
+    query: |
+      SELECT r.id AS role_id, r.name AS role_name,
+        CASE WHEN ur.user_id IS NULL THEN false ELSE true END AS enabled,
+        CASE WHEN ur.user_id IS NULL THEN 'Chưa gán' ELSE 'Đã gán' END AS status_label
+      FROM roles r LEFT JOIN user_roles ur ON ur.role_id = r.id AND ur.user_id = :id
+      ORDER BY r.name
+  - id: user_permissions
+    single: false
+    permission: settings.read
+    query: |
+      SELECT DISTINCT p.permission_key
+      FROM permissions p JOIN user_roles ur ON ur.role_id = p.role_id
+      WHERE ur.user_id = :id ORDER BY p.permission_key
+  - id: user_activity
+    single: false
+    permission: settings.read
+    query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'users' AND resource_id = :id ORDER BY created_at DESC"
+components:
+  - { type: DocumentSummary, source: user_detail, title_field: name, subtitle_field: email, columns: [{ field: preferred_lang, label: Ngôn ngữ }, { field: created_at, label: Ngày tạo }] }
+  - type: DataGrid
+    source: user_roles
+    page_size: 30
+    row_key: role_id
+    columns: [{ field: role_name, label: Vai trò }, { field: status_label, label: Trạng thái, type: StatusChip, colors: { 'Đã gán': green, 'Chưa gán': neutral } }, { field: actions, label: '', sortable: false, actions: [{ id: grant_user_role, label: Gán vai trò, variant: primary, show_if: "!row.enabled && user.permissions.includes('settings.write')" }, { id: revoke_user_role, label: Thu hồi, variant: danger, show_if: "row.enabled && user.permissions.includes('settings.write')" }] }]
+  - type: DataGrid
+    source: user_permissions
+    page_size: 50
+    row_key: permission_key
+    columns: [{ field: permission_key, label: Quyền hiệu lực }]
+  - type: ApprovalTimeline
+    source: user_activity
+    title: Lịch sử người dùng
+    actor_field: actor_name
+    action_field: action
+    detail_field: detail
+    timestamp_field: created_at
+toolbar:
+  - { id: back_users, label: '← Danh sách người dùng', variant: secondary, action: back_users }
+actions:
+  - { id: back_users, type: navigate, navigate_to: /org/users }
+  - { id: grant_user_role, type: server, action: settings.users.grant_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } }
+  - { id: revoke_user_role, type: server, action: settings.users.revoke_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } }

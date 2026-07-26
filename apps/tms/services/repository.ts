@@ -157,6 +157,29 @@ export class DuckDbRepository {
     });
   }
 
+  async mutateUserRole(operation: 'grant' | 'revoke', userId: string, roleId: string, action: string, actor: { id?: string | null; name: string }) {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const [user] = await queryOnConnection(conn, 'SELECT id, name FROM users WHERE id = ?', [userId]);
+        const [role] = await queryOnConnection(conn, 'SELECT id, name FROM roles WHERE id = ?', [roleId]);
+        if (!user || !role) throw { status: 404, message: 'User or role not found' };
+        if (operation === 'grant') {
+          await runOnConnection(conn, 'INSERT INTO user_roles(user_id, role_id) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = ?)', [userId, roleId, userId, roleId]);
+        } else {
+          await runOnConnection(conn, 'DELETE FROM user_roles WHERE user_id = ? AND role_id = ?', [userId, roleId]);
+        }
+        await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'users', userId, `${operation === 'grant' ? 'Gán' : 'Thu hồi'} vai trò ${role.name}`]);
+        const rows = await queryOnConnection(conn, 'SELECT r.id, r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ? ORDER BY r.name', [userId]);
+        await runOnConnection(conn, 'COMMIT');
+        return { user_id: userId, roles: rows };
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK');
+        throw error;
+      }
+    });
+  }
+
   async querySource(source: { query: string; single?: boolean }, params: Record<string, any> = {}, skip = 0, top = 25): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
     if (source.single) {

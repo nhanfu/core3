@@ -21,7 +21,7 @@ import { CONTACT_ACTION_REGISTRY } from './services/contact-actions.ts';
 import { APPROVAL_ACTION_REGISTRY } from './services/approval-actions.ts';
 import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
 import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
-import { ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
+import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 // TMS is now the package root.
@@ -334,6 +334,7 @@ const SOURCE_FILES = [
   'pages/users.yaml',
   'pages/roles.yaml',
   'pages/role-detail.yaml',
+  'pages/user-detail.yaml',
   'pages/employees.yaml',
   'pages/employee-detail.yaml',
   'pages/contracts.yaml',
@@ -646,13 +647,14 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     const templateActionDefinition = TEMPLATE_ACTION_REGISTRY[actionName];
     const codeRuleActionDefinition = CODE_RULE_ACTION_REGISTRY[actionName];
     const roleActionDefinition = ROLE_ACTION_REGISTRY[actionName];
+    const userRoleActionDefinition = USER_ROLE_ACTION_REGISTRY[actionName];
     const actionDefinition = orderActionDefinition
       || financialActionDefinition
       || businessActionDefinition
       || lineItemActionDefinition
       || chatActionDefinition
       || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition;
+    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
     requirePerm(resolvedActionDefinition.permission);
 
@@ -737,6 +739,11 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (typeof body.permission_key !== 'string' || !body.permission_key) return apiError(400, 'permission_key required');
       return json(await repository.mutateRolePermission(roleActionDefinition.operation, body.id, body.permission_key, actionName, activityActor));
+    }
+    if (userRoleActionDefinition) {
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      if (typeof body.role_id !== 'string' || !body.role_id) return apiError(400, 'role_id required');
+      return json(await repository.mutateUserRole(userRoleActionDefinition.operation, body.id, body.role_id, actionName, activityActor));
     }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 

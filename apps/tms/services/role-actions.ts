@@ -2,3 +2,8 @@ export const ROLE_ACTION_REGISTRY: Record<string, { operation: 'grant' | 'revoke
   'settings.roles.grant_permission': { operation: 'grant', permission: 'settings.write' },
   'settings.roles.revoke_permission': { operation: 'revoke', permission: 'settings.write' },
 };
+
+export const USER_ROLE_ACTION_REGISTRY: Record<string, { operation: 'grant' | 'revoke'; permission: string }> = {
+  'settings.users.grant_role': { operation: 'grant', permission: 'settings.write' },
+  'settings.users.revoke_role': { operation: 'revoke', permission: 'settings.write' },
+};

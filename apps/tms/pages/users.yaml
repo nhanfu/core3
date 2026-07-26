@@ -30,3 +30,9 @@ components:
       - { field: roles_csv, label: Vai trò }
       - { field: preferred_lang, label: Ngôn ngữ }
       - { field: created_at, label: Ngày tạo, type: DateCell }
+      - field: actions
+        label: ''
+        sortable: false
+        actions: [{ id: view_user, label: Chi tiết, variant: primary }]
+actions:
+  - { id: view_user, type: navigate, navigate_to: /org/users/detail, params: { id: '{row.id}' } }
