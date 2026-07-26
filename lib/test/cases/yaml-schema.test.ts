@@ -63,6 +63,17 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(validPage())).not.toThrow();
   });
 
+  it('validates datasource-backed toolbar filter references', () => {
+    const page = validPage() as any;
+    page.components = [{
+      type: 'ListToolbar',
+      source: 'orders',
+      filters: [{ field: 'status', label: 'Status', options_source: 'missing_source' }],
+    }];
+
+    expect(() => validatePageDefinition(page)).toThrow(/unknown datasource "missing_source"/);
+  });
+
   it('rejects unknown root, component, and action properties', () => {
     const page = validPage() as any;
     page.script = 'alert(1)';

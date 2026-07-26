@@ -379,7 +379,7 @@ function validateComponents(
     validateStats(component.stats, `${path}.stats`, issues);
     validateSearch(component.search, `${path}.search`, issues);
     validateDateRange(component.date_range, `${path}.date_range`, issues);
-    validateToolbarFilters(component.filters, `${path}.filters`, issues);
+    validateToolbarFilters(component.filters, `${path}.filters`, datasourceIds, options, issues);
     validateComponentActions(component.actions, `${path}.actions`, issues);
     if (component.empty_state !== undefined) {
       requireRecord(component.empty_state, `${path}.empty_state`, issues);
@@ -520,7 +520,13 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
   }
 }
 
-function validateToolbarFilters(value: unknown, path: string, issues: string[]) {
+function validateToolbarFilters(
+  value: unknown,
+  path: string,
+  datasourceIds: Set<string>,
+  options: PageValidationOptions,
+  issues: string[],
+) {
   if (value === undefined) return;
   if (!Array.isArray(value)) {
     issues.push(`${path} must be an array`);
@@ -535,6 +541,7 @@ function validateToolbarFilters(value: unknown, path: string, issues: string[]) 
     requireString(filter.label, `${filterPath}.label`, issues);
     if (filter.options_source !== undefined) {
       requireString(filter.options_source, `${filterPath}.options_source`, issues);
+      requireSource(filter.options_source, `${filterPath}.options_source`, datasourceIds, options, issues);
     } else if (!Array.isArray(filter.options)) {
       issues.push(`${filterPath}.options must be an array`);
     }
