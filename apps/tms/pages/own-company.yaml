@@ -1,0 +1,46 @@
+title: Công ty chủ quản
+page:
+  id: own-company
+  auth: { require: [settings.read] }
+datasources:
+  - id: own_company
+    single: false
+    permission: settings.read
+    query: SELECT * FROM company_profiles ORDER BY created_at LIMIT 1
+components:
+  - type: DataGrid
+    source: own_company
+    page_size: 1
+    row_key: id
+    empty_state: { title: Chưa có thông tin công ty, description: Liên hệ quản trị hệ thống để khởi tạo. }
+    columns:
+      - { field: name, label: Tên công ty, type: PrimaryEntityCell, secondary: short_name }
+      - { field: tax_code, label: Mã số thuế }
+      - { field: address, label: Địa chỉ }
+      - { field: phone, label: Điện thoại, type: PrimaryEntityCell, secondary: email }
+      - { field: bank_name, label: Ngân hàng, type: PrimaryEntityCell, secondary: bank_account }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions: [{ id: edit_company, label: Cập nhật, variant: ghost }]
+actions:
+  - id: edit_company
+    type: form
+    title: Thông tin công ty chủ quản
+    table: company_profiles
+    operation: update
+    prefill: row
+    refresh: [own_company]
+    fields:
+      - { field: name, label: Tên công ty, type: text, required: true }
+      - { field: short_name, label: Tên viết tắt, type: text }
+      - { field: tax_code, label: Mã số thuế, type: text }
+      - { field: address, label: Địa chỉ, type: text }
+      - { field: invoice_address, label: Địa chỉ xuất hóa đơn, type: text }
+      - { field: phone, label: Điện thoại, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: website, label: Website, type: text }
+      - { field: bank_name, label: Ngân hàng, type: text }
+      - { field: bank_account, label: Số tài khoản, type: text }
+      - { field: notes, label: Ghi chú, type: textarea }

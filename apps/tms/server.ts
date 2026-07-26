@@ -47,7 +47,7 @@ async function requireAuth(req: Request) {
 
 // ── Static file serving ───────────────────────────────────────────────────────
 const SPA_PATHS = new Set([
-  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/containers', '/locations', '/hr/employees', '/hr/contracts', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/login',
+  '/', '/dashboard', '/fleet', '/drivers', '/trips', '/maintenance', '/reports', '/settings', '/customers', '/partners', '/containers', '/locations', '/areas', '/org/own-company', '/org/departments', '/org/teams', '/hr/employees', '/hr/contracts', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/login',
 ]);
 
 const MIME = {
@@ -206,6 +206,10 @@ const SOURCE_FILES = [
   'pages/quotes.yaml',
   'pages/branches.yaml',
   'pages/partners.yaml',
+  'pages/areas.yaml',
+  'pages/own-company.yaml',
+  'pages/departments.yaml',
+  'pages/teams.yaml',
   'pages/containers.yaml',
   'pages/locations.yaml',
   'pages/users.yaml',
@@ -295,6 +299,26 @@ const TABLE_REGISTRY = {
     permission: 'dispatch.write',
     timestamps: true,
     fields: ['code', 'name', 'location_type', 'address', 'city', 'area_id', 'status'],
+  },
+  areas: {
+    permission: 'dispatch.write',
+    timestamps: true,
+    fields: ['code', 'name', 'region', 'description', 'status'],
+  },
+  company_profiles: {
+    permission: 'settings.write',
+    timestamps: true,
+    fields: ['name', 'short_name', 'tax_code', 'address', 'invoice_address', 'phone', 'email', 'website', 'bank_name', 'bank_account', 'notes'],
+  },
+  departments: {
+    permission: 'settings.write',
+    timestamps: true,
+    fields: ['code', 'name', 'branch_id', 'status'],
+  },
+  teams: {
+    permission: 'settings.write',
+    timestamps: true,
+    fields: ['code', 'name', 'department_id', 'status'],
   },
   employees:    {
     permission: 'hr.write',

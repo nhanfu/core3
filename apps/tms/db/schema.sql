@@ -164,6 +164,43 @@ CREATE TABLE IF NOT EXISTS areas (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS company_profiles (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR NOT NULL,
+  short_name VARCHAR,
+  tax_code VARCHAR,
+  address VARCHAR,
+  invoice_address VARCHAR,
+  phone VARCHAR,
+  email VARCHAR,
+  website VARCHAR,
+  bank_name VARCHAR,
+  bank_account VARCHAR,
+  notes VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS departments (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  branch_id VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS teams (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR NOT NULL UNIQUE,
+  name VARCHAR NOT NULL,
+  department_id VARCHAR,
+  status VARCHAR NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Inactive')),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS locations (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR NOT NULL UNIQUE,

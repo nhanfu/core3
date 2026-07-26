@@ -1,0 +1,56 @@
+title: Phòng ban
+page:
+  id: departments
+  auth: { require: [settings.read] }
+datasources:
+  - id: departments
+    single: false
+    permission: settings.read
+    query: |
+      SELECT d.*, b.name AS branch_name, CASE d.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM departments d LEFT JOIN branches b ON b.id = d.branch_id
+      WHERE (NULLIF(:status, '') IS NULL OR d.status = :status) AND (:q IS NULL OR d.code ILIKE '%' || :q || '%' OR d.name ILIKE '%' || :q || '%' OR b.name ILIKE '%' || :q || '%') ORDER BY d.created_at DESC, d.name
+toolbar:
+  - { id: add_department_btn, label: '+ Thêm phòng ban', variant: primary, permission: settings.write, action: add_department }
+components:
+  - type: ListToolbar
+    source: departments
+    filter_field: q
+    search: { label: Tìm kiếm phòng ban, placeholder: 'Tìm mã, tên hoặc chi nhánh...' }
+  - type: StatusTabs
+    source: departments
+    filter_field: status
+    tabs: [{ id: '', label: Tất cả }, { id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
+  - type: DataGrid
+    source: departments
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có phòng ban, description: Thử thay đổi bộ lọc hoặc tạo phòng ban mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
+      - { field: branch_name, label: Chi nhánh }
+      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
+      - { field: created_at, label: Ngày giờ tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions: [{ id: edit_department, label: Sửa, variant: ghost }, { id: delete_department, label: Xóa, variant: danger }]
+actions:
+  - id: add_department
+    type: form
+    title: Thêm phòng ban
+    table: departments
+    operation: insert
+    refresh: [departments]
+    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: branch_id, label: Mã HT chi nhánh, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+  - id: edit_department
+    type: form
+    title: Cập nhật phòng ban
+    table: departments
+    operation: update
+    prefill: row
+    refresh: [departments]
+    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: branch_id, label: Mã HT chi nhánh, type: text }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+  - { id: delete_department, type: delete, confirm: 'Xóa phòng ban {{row.name}}?', table: departments, refresh: [departments] }

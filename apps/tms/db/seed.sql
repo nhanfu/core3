@@ -121,6 +121,24 @@ INSERT INTO areas (id, code, name, region, description, status) VALUES
 ('area-03', 'MB', 'Miền Bắc', 'Bắc Bộ', 'Khu vực vận hành phía Bắc', 'Active'),
 ('area-04', 'OLD', 'Khu vực cũ', 'Khác', 'Không còn sử dụng', 'Inactive');
 
+-- ── Organization ───────────────────────────────────────────────────────────
+INSERT INTO company_profiles (id, name, short_name, tax_code, address, invoice_address, phone, email, website, bank_name, bank_account, notes) VALUES
+('company-main', 'Công ty Vận tải ABC', 'ABC Transport', '0312345678', '12 Nguyễn Văn Quỳ, Quận 7, TP. Hồ Chí Minh', '12 Nguyễn Văn Quỳ, Quận 7, TP. Hồ Chí Minh', '028-3775-1234', 'contact@abctransport.vn', 'https://abctransport.vn', 'Vietcombank', '0011001234567', 'Công ty chủ quản của hệ thống');
+
+INSERT INTO departments (id, code, name, branch_id, status) VALUES
+('department-01', 'KD', 'Phòng Kinh doanh', 'branch-hcm', 'Active'),
+('department-02', 'DD', 'Phòng Điều độ', 'branch-hcm', 'Active'),
+('department-03', 'KT', 'Phòng Kế toán', 'branch-hcm', 'Active'),
+('department-04', 'HCNS', 'Phòng Hành chính - Nhân sự', 'branch-hcm', 'Active'),
+('department-05', 'OLD', 'Phòng cũ', 'branch-hn', 'Inactive');
+
+INSERT INTO teams (id, code, name, department_id, status) VALUES
+('team-01', 'KD-NHAP', 'Kinh doanh Hàng nhập', 'department-01', 'Active'),
+('team-02', 'KD-XUAT', 'Kinh doanh Hàng xuất', 'department-01', 'Active'),
+('team-03', 'DD-CONT', 'Điều độ Xe container', 'department-02', 'Active'),
+('team-04', 'KT-CN', 'Kế toán Công nợ', 'department-03', 'Active'),
+('team-05', 'OLD', 'Tổ cũ', 'department-05', 'Inactive');
+
 INSERT INTO locations (id, code, name, location_type, address, city, area_id, status) VALUES
 ('location-01', 'CATLAI', 'Cảng Cát Lái', 'Port', 'Đường Nguyễn Thị Định, TP. Thủ Đức', 'TP. Hồ Chí Minh', 'area-01', 'Active'),
 ('location-02', 'TCIT', 'Cảng Tân Cảng - Cái Mép', 'Port', 'Phú Mỹ', 'Bà Rịa - Vũng Tàu', 'area-01', 'Active'),

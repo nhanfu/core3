@@ -1,0 +1,58 @@
+title: Khu vực
+page:
+  id: areas
+  auth: { require: [dispatch.read] }
+datasources:
+  - id: areas
+    single: false
+    permission: dispatch.read
+    query: |
+      SELECT a.*, CASE a.status WHEN 'Inactive' THEN 'Ngưng hoạt động' ELSE 'Hoạt động' END AS status_label FROM areas a
+      WHERE (NULLIF(:status, '') IS NULL OR a.status = :status) AND (:q IS NULL OR a.code ILIKE '%' || :q || '%' OR a.name ILIKE '%' || :q || '%' OR a.region ILIKE '%' || :q || '%')
+      ORDER BY a.created_at DESC, a.name
+toolbar:
+  - { id: add_area_btn, label: '+ Thêm khu vực', variant: primary, permission: dispatch.write, action: add_area }
+components:
+  - type: ListToolbar
+    source: areas
+    filter_field: q
+    search: { label: Tìm kiếm khu vực, placeholder: 'Tìm mã, tên hoặc vùng miền...' }
+  - type: StatusTabs
+    source: areas
+    filter_field: status
+    tabs: [{ id: '', label: Tất cả }, { id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
+  - type: DataGrid
+    source: areas
+    page_size: 10
+    row_key: id
+    selectable: true
+    empty_state: { title: Không có khu vực, description: Thử thay đổi bộ lọc hoặc tạo khu vực mới. }
+    columns:
+      - { field: id, label: Mã HT, sortable: true }
+      - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
+      - { field: region, label: Vùng miền }
+      - { field: description, label: Ghi chú }
+      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
+      - { field: created_at, label: Ngày giờ tạo }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions: [{ id: edit_area, label: Sửa, variant: ghost }, { id: delete_area, label: Xóa, variant: danger }]
+actions:
+  - id: add_area
+    type: form
+    title: Thêm khu vực
+    table: areas
+    operation: insert
+    refresh: [areas]
+    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive], default: Active }]
+  - id: edit_area
+    type: form
+    title: Cập nhật khu vực
+    table: areas
+    operation: update
+    prefill: row
+    refresh: [areas]
+    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [Active, Inactive] }]
+  - { id: delete_area, type: delete, confirm: 'Xóa khu vực {{row.name}}?', table: areas, refresh: [areas] }
