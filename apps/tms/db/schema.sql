@@ -293,6 +293,17 @@ CREATE TABLE IF NOT EXISTS company_profiles (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS company_documents (
+  id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id VARCHAR NOT NULL REFERENCES company_profiles(id),
+  file_name VARCHAR NOT NULL,
+  mime_type VARCHAR,
+  size_bytes BIGINT NOT NULL DEFAULT 0 CHECK (size_bytes > 0),
+  storage_key VARCHAR NOT NULL,
+  uploaded_by VARCHAR,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_company_documents_company ON company_documents(company_id, created_at);
 
 CREATE TABLE IF NOT EXISTS departments (
   id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -280,6 +280,8 @@ export async function renderPage(config: any, { container = document.body }: { c
             uploadMeta.employee_id = resolveActionParams(actionDef.params || { employee_id: '{state.id}' }, { ...ctx, row: row || {} }).employee_id;
           } else if (actionDef.kind === 'contract_document') {
             uploadMeta.contract_id = resolveActionParams(actionDef.params || { contract_id: '{state.id}' }, { ...ctx, row: row || {} }).contract_id;
+          } else if (actionDef.kind === 'company_document') {
+            uploadMeta.company_id = resolveActionParams(actionDef.params || { company_id: '{state.id}' }, { ...ctx, row: row || {} }).company_id;
           } else if (actionDef.kind === 'master_data_import') {
             uploadMeta.scope = actionDef.scope;
           }
@@ -300,6 +302,8 @@ export async function renderPage(config: any, { container = document.body }: { c
             ? `/hr/employee-documents/${encodeURIComponent(String(row.id))}`
             : actionDef.kind === 'contract_document'
               ? `/hr/contract-documents/${encodeURIComponent(String(row.id))}`
+              : actionDef.kind === 'company_document'
+                ? `/org/company-documents/${encodeURIComponent(String(row.id))}`
             : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
             path,

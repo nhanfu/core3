@@ -191,6 +191,15 @@ const contractDocument = await contractUploadResponse.json() as { id?: string };
 if (!contractDocument.id) throw new Error(`contract document upload missing id: ${JSON.stringify(contractDocument)}`);
 const contractDownloadResponse = await fetch(`${baseUrl}/api/hr/contract-documents/${encodeURIComponent(contractDocument.id)}`, { headers: { Authorization: headers.Authorization } });
 if (contractDownloadResponse.status !== 200 || await contractDownloadResponse.text() !== 'contract-audit') throw new Error(`contract document download failed: ${contractDownloadResponse.status}`);
+const companyUpload = new FormData();
+companyUpload.append('file', new File(['company-audit'], 'company-audit.txt', { type: 'text/plain' }));
+companyUpload.append('meta', JSON.stringify({ kind: 'company_document', company_id: 'company-main' }));
+const companyUploadResponse = await fetch(`${baseUrl}/api/upload`, { method: 'POST', headers: { Authorization: headers.Authorization }, body: companyUpload });
+if (companyUploadResponse.status !== 200) throw new Error(`company document upload expected 200, got ${companyUploadResponse.status}`);
+const companyDocument = await companyUploadResponse.json() as { id?: string };
+if (!companyDocument.id) throw new Error(`company document upload missing id: ${JSON.stringify(companyDocument)}`);
+const companyDownloadResponse = await fetch(`${baseUrl}/api/org/company-documents/${encodeURIComponent(companyDocument.id)}`, { headers: { Authorization: headers.Authorization } });
+if (companyDownloadResponse.status !== 200 || await companyDownloadResponse.text() !== 'company-audit') throw new Error(`company document download failed: ${companyDownloadResponse.status}`);
 const restrictedLogin = await fetch(`${baseUrl}/api/auth/login`, {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
@@ -200,4 +209,4 @@ if (!restrictedLogin.ok) throw new Error(`restricted login failed: ${restrictedL
 const { token: restrictedToken } = await restrictedLogin.json() as { token: string };
 headers = { Authorization: `Bearer ${restrictedToken}`, 'content-type': 'application/json' };
 await expectActionRejected('orders.submit_for_approval', { id: 'order-01' }, 403);
-console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 failures=0`);
+console.log(`workflow_transitions=${checks.length} rejected_transitions=${rejected.length} validation_rejections=${validationRejections.length} crud_roundtrips=1 invalid_imports=1 xlsx_roundtrips=1 contract_documents=1 company_documents=1 permission_denials=1 currency_sync=1 role_scope_updates=2 failures=0`);

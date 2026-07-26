@@ -655,7 +655,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       return apiError(400, 'Invalid upload metadata');
     }
     if (!(file instanceof File)) return apiError(400, 'file required');
-    if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'contract_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
+    if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'contract_document' && meta.kind !== 'company_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
     if (meta.kind === 'chat_attachment') {
       requirePerm('chat.write');
       if (typeof meta.thread_id !== 'string' || !meta.thread_id) return apiError(400, 'thread_id required');
@@ -665,6 +665,9 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     } else if (meta.kind === 'contract_document') {
       requirePerm('hr.write');
       if (typeof meta.contract_id !== 'string' || !meta.contract_id) return apiError(400, 'contract_id required');
+    } else if (meta.kind === 'company_document') {
+      requirePerm('settings.write');
+      if (typeof meta.company_id !== 'string' || !meta.company_id) return apiError(400, 'company_id required');
     } else {
       requirePerm('catalog.write');
       if (typeof meta.scope !== 'string' || !meta.scope) return apiError(400, 'scope required');
@@ -695,6 +698,7 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
       const fileMeta = { fileName: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size, storageKey };
       if (meta.kind === 'employee_document') return json(await repository.createEmployeeDocument(meta.employee_id, fileMeta, activityActor));
       if (meta.kind === 'contract_document') return json(await repository.createContractDocument(meta.contract_id, fileMeta, activityActor));
+      if (meta.kind === 'company_document') return json(await repository.createCompanyDocument(meta.company_id, fileMeta, activityActor));
       return json(await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor));
     } catch (error) {
       try {
@@ -711,6 +715,16 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     if (!document) return apiError(404, 'Contract document not found');
     const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
     if (!(await file.exists())) return apiError(404, 'Contract document file not found');
+    return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
+  }
+
+  const companyDocumentMatch = pathname.match(/^\/api\/org\/company-documents\/([A-Za-z0-9-]+)$/);
+  if (companyDocumentMatch && method === 'GET') {
+    requirePerm('settings.read');
+    const document = await repository.getCompanyDocument(companyDocumentMatch[1]);
+    if (!document) return apiError(404, 'Company document not found');
+    const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
+    if (!(await file.exists())) return apiError(404, 'Company document file not found');
     return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
   }
 
