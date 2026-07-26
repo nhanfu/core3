@@ -51,9 +51,9 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Current commands
 
 ```sh
-TMS_BASE_URL=http://localhost:3339 bun run audit
-TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run audit:ui
-bun run test # from lib/
+(cd apps/tms && TMS_BASE_URL=http://localhost:3339 bun run audit)
+(cd apps/tms && TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run audit:ui)
+(cd lib && bun run test)
 ```
 
 The goal remains active until authoritative reference states and full control-level interaction coverage are available.

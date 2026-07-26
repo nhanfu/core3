@@ -5,19 +5,19 @@ Run against a fresh DuckDB instance with the seeded admin account on 2026-07-26.
 The repeatable command is:
 
 ```sh
-TMS_BASE_URL=http://localhost:3339 bun run audit
+(cd apps/tms && TMS_BASE_URL=http://localhost:3339 bun run audit)
 ```
 
 For browser route smoke coverage, with the local headless CDP page running:
 
 ```sh
-TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run audit:ui
+(cd apps/tms && TMS_BASE_URL=http://localhost:3339 TMS_CDP_URL=http://localhost:9222 bun run audit:ui)
 ```
 
 For named workflow transitions on a disposable fresh database:
 
 ```sh
-TMS_BASE_URL=http://localhost:3341 bun run audit:workflows
+(cd apps/tms && TMS_BASE_URL=http://localhost:3341 bun run audit:workflows)
 ```
 
 ## Results
