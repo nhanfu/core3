@@ -127,6 +127,14 @@ export class AppShell extends BaseComponent {
     html.take(logo).div.className('sidebar-logo-text').text('MovedX');
     html.take(logo).div.className('sidebar-logo-sub').text('Điều xe & Quản lý vận tải');
 
+    const menuSearch = html.take(sidebar).div.className('sidebar-menu-search').getContext();
+    html.take(menuSearch).span.className('sidebar-menu-search-icon').text('⌕');
+    const menuSearchInput = html.take(menuSearch).input
+      .type('search')
+      .attr('placeholder', 'Tìm menu...')
+      .attr('aria-label', 'Tìm menu')
+      .getContext();
+
     // Nav
     const nav = html.take(sidebar).nav.className('sidebar-nav').getContext();
     const createNavItem = (target: HTMLElement, item: NavItem) => {
@@ -136,6 +144,7 @@ export class AppShell extends BaseComponent {
         .attr('type', 'button')
         .event('click', () => navigate(item.path))
         .getContext();
+      navItem.dataset.search = item.label.toLocaleLowerCase('vi');
       html.take(navItem).span.className('nav-item-icon').text(item.icon);
       html.take(navItem).span.className('nav-item-label').text(i18n.t('*', null, item.label));
       this._navEls.set(item.path, navItem);
@@ -163,6 +172,20 @@ export class AppShell extends BaseComponent {
       const items = html.take(group).div.className('sidebar-group-items').getContext();
       groupDef.items.forEach(item => createNavItem(items, item));
     }
+
+    menuSearchInput.addEventListener('input', () => {
+      const query = menuSearchInput.value.trim().toLocaleLowerCase('vi');
+      this._navEls.forEach((item) => {
+        item.style.display = !query || item.dataset.search?.includes(query) ? '' : 'none';
+      });
+      NAV_GROUPS.forEach(groupDef => {
+        const group = this._groupEls.get(groupDef.id);
+        if (!group) return;
+        const hasMatch = groupDef.items.some(item => item.label.toLocaleLowerCase('vi').includes(query));
+        group.style.display = !query || hasMatch ? '' : 'none';
+        if (query && hasMatch) this.setGroupOpen(groupDef.id, true);
+      });
+    });
 
     // Sidebar footer — user info
     const footer = html.take(sidebar).div.className('sidebar-footer').getContext();

@@ -82,9 +82,11 @@ export async function mount(container: HTMLElement) {
 
       const { token, user } = await res.json();
       await setAuth(token, user);
-      // A full load mounts the authenticated application shell before the
-      // dashboard route is rendered.
-      window.location.assign('/#/dashboard');
+      // Hash-only navigation would reuse the unauthenticated document and
+      // bypass bootstrap's shell mount. Reload after setting the target hash
+      // so the authenticated application frame is created first.
+      window.location.hash = '/dashboard';
+      window.location.reload();
     } catch (err) {
       errorEl.textContent = err instanceof Error ? err.message : String(err);
       errorEl.style.display = 'block';

@@ -76,7 +76,13 @@ async function serveStatic(pathname: string) {
   // Page YAML contains server-only datasource SQL and must never be served.
   if (rel.startsWith('pages/') && /\.ya?ml$/i.test(rel)) return null;
   try {
-    const file = Bun.file(join(PROJECT_ROOT, rel));
+    // The app consumes the framework through a local file dependency. Bun
+    // materializes that package on install, so it can otherwise become stale
+    // while framework files are edited in this workspace. Serve the source of
+    // that dependency during local development instead.
+    const file = packagePath
+      ? Bun.file(join(PROJECT_ROOT, '../../lib', rel.slice('node_modules/@core3/framework/'.length)))
+      : Bun.file(join(PROJECT_ROOT, rel));
     if (await file.exists()) {
       if (rel.endsWith('.ts')) {
         const transpiler = new Bun.Transpiler({ loader: 'ts' });
