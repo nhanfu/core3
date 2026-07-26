@@ -75,14 +75,14 @@ await evaluateWithTimeout(`localStorage.setItem('tms_token', ${JSON.stringify(to
 await new Promise((resolve) => setTimeout(resolve, 900));
 
 const failures: string[] = [];
-const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, reorder: 0, export: 0 };
+const controlCounts = { chooser: 0, tabs: 0, search: 0, editor: 0, sortable: 0, pagination: 0, pageSize: 0, reorder: 0, rowAction: 0, export: 0 };
 const routeCoverage: Array<{ route: string; controls: Record<string, number> }> = [];
 for (const route of targets) {
   consoleErrors.length = 0;
   try {
     await evaluateWithTimeout(`location.hash = ${JSON.stringify(`#${route}`)}`, `${route} navigation`);
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    const exercisedJson = await evaluateWithTimeout(`JSON.stringify((() => {
+    const exercisedJson = await evaluateWithTimeout(`(async () => {
     const outlet = document.querySelector('#outlet');
     const summaries = [...(outlet?.querySelectorAll('summary') || [])].filter((item) => /^(Columns|Cột)$/.test(item.textContent?.trim() || ''));
     summaries[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -113,10 +113,31 @@ for (const route of targets) {
       reorderRows[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
       reorderRows[1].dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
     }
+    const rowActions = [...(outlet?.querySelectorAll('button[data-grid-row-action]') || [])];
+    const previousConfirm = window.confirm;
+    const previousAlert = window.alert;
+    const previousFetch = window.fetch;
+    window.confirm = () => false;
+    window.alert = () => {};
+    window.fetch = (input, init) => {
+      if (String(input).includes('/api/actions/')) {
+        return Promise.resolve(new Response(JSON.stringify({ error: 'audit mutation blocked' }), { status: 403, headers: { 'content-type': 'application/json' } }));
+      }
+      return previousFetch(input, init);
+    };
+    for (const button of rowActions) {
+      button.click();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    window.confirm = previousConfirm;
+    window.alert = previousAlert;
+    window.fetch = previousFetch;
     const exportButton = [...(outlet?.querySelectorAll('button') || [])].find((item) => /Xuất|Export|CSV|Excel/.test((item.textContent || '') + ' ' + (item.getAttribute('title') || '')));
     exportButton?.click();
-    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), export: Number(Boolean(exportButton)) };
-    })())`, `${route} control exercise`);
+    return { chooser: summaries.length, tabs: tabs.length, search: Number(Boolean(search)), editor: Number(Boolean(editor)), sortable: sortables.length, pagination: pagination.length, pageSize: Number(Boolean(pageSize)), reorder: Number(reorderRows.length > 1), rowAction: rowActions.length, export: Number(Boolean(exportButton)) };
+    })()`, `${route} control exercise`);
     const exercised = typeof exercisedJson === 'string' ? JSON.parse(exercisedJson) : exercisedJson;
     for (const key of Object.keys(controlCounts) as Array<keyof typeof controlCounts>) {
       controlCounts[key] += Number(exercised?.[key] || 0);
