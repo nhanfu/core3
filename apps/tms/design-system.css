@@ -326,6 +326,12 @@ body {
   color: #64748b;
 }
 
+.sidebar-footer-version {
+  margin-top: 14px;
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
 /* ── Header internals ── */
 .header-title {
   font-size: 1rem;
@@ -576,6 +582,7 @@ body {
 .app-layout.sidebar-collapsed .sidebar-group-button { display: none; }
 .app-layout.sidebar-collapsed .sidebar-group-items { display: grid; padding-left: 0; }
 .app-layout.sidebar-collapsed .sidebar-footer { padding-left: 20px; padding-right: 20px; }
+.app-layout.sidebar-collapsed .sidebar-footer-version { display: none; }
 
 @media (max-width: 720px) {
   .header-user-identity { display: none; }

@@ -249,6 +249,7 @@ export class AppShell extends BaseComponent {
     const userInfo = html.take(userRow).div.getContext();
     html.take(userInfo).div.className('sidebar-user-name').text(user?.name || 'User');
     html.take(userInfo).div.className('sidebar-user-role').text((user?.roles || []).join(', '));
+    html.take(footer).div.className('sidebar-footer-version').text('© 2026 MovedX · v0.1');
 
     // ── MAIN ──
     const main = html.take(layout).div.className('app-main').getContext();
