@@ -8,6 +8,7 @@
  */
 
 import { HTML } from './html.ts';
+import { ExternalWidgetAdapter } from './adapters/ExternalWidgetAdapter.ts';
 
 export { HTML };
 
@@ -21,6 +22,7 @@ export class BaseComponent {
   _container: HTMLElement | null;
   _transport?: { submit?: (action: string, params?: Record<string, unknown>) => unknown } | null;
   _onAction?: (action: string, params?: Record<string, unknown>, source?: BaseComponent) => unknown;
+  private _adapters: Map<string, ExternalWidgetAdapter<any, any>>;
 
   constructor(id: string, initialState: any = {}) {
     this.id = id;
@@ -28,6 +30,7 @@ export class BaseComponent {
     this.parent = null;
     this.children = [];
     this._container = null;
+    this._adapters = new Map();
   }
 
   /** Walk up to the root component (no parent). */
@@ -49,6 +52,7 @@ export class BaseComponent {
   /** Clear container and re-render. */
   redraw() {
     if (this._container) {
+      this.disposeAdapters();
       this._container.innerHTML = '';
       this.draw(this._container);
     }
@@ -93,8 +97,58 @@ export class BaseComponent {
 
   /** Mount into a DOM container (sets _container and calls draw). */
   mount(container: HTMLElement) {
+    this.disposeAdapters();
     this._container = container;
     this.draw(container);
+  }
+
+  /**
+   * Register and mount a named external-widget adapter owned by this
+   * component. A previous adapter registered under the same key is disposed
+   * first, so redraws cannot leak vendor listeners or detached DOM nodes.
+   */
+  mountAdapter<TOptions, TWidget>(
+    key: string,
+    adapter: ExternalWidgetAdapter<TOptions, TWidget>,
+    container: HTMLElement,
+    options: TOptions,
+  ) {
+    this.disposeAdapter(key);
+    adapter.mount(container, options);
+    this._adapters.set(key, adapter);
+    return adapter;
+  }
+
+  /** Update a mounted external widget without redrawing this component. */
+  updateAdapter<TOptions>(key: string, options: TOptions) {
+    const adapter = this._adapters.get(key);
+    if (!adapter) {
+      throw new Error(`No external widget adapter is mounted for key: ${key}`);
+    }
+    (adapter as ExternalWidgetAdapter<TOptions, unknown>).update(options);
+  }
+
+  /** Dispose one adapter while keeping the rest of the component alive. */
+  disposeAdapter(key: string) {
+    const adapter = this._adapters.get(key);
+    if (!adapter) return;
+    this._adapters.delete(key);
+    adapter.dispose();
+  }
+
+  /** Dispose every external widget owned by this component. */
+  disposeAdapters() {
+    for (const [key, adapter] of this._adapters) {
+      this._adapters.delete(key);
+      adapter.dispose();
+    }
+  }
+
+  /** Release external widgets in this component and its child tree. */
+  dispose() {
+    for (const child of this.children) child.dispose();
+    this.disposeAdapters();
+    this._container = null;
   }
 
   /**
