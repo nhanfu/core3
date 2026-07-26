@@ -23,6 +23,10 @@ datasources:
       SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity WHERE resource = 'employees' AND resource_id = :id
       ORDER BY created_at DESC
+  - id: employee_detail_department_lookup
+    single: false
+    permission: hr.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM departments WHERE status = 'Active' UNION SELECT DISTINCT department AS value, department AS label FROM employees WHERE department IS NOT NULL AND department <> '' ORDER BY label"
   - id: employee_documents
     single: false
     permission: hr.read
@@ -66,4 +70,4 @@ actions:
     prefill: source
     prefill_source: employee_detail
     refresh: [employee_detail, employee_activity]
-    fields: [{ field: code, label: Mã nhân viên, type: text, required: true }, { field: name, label: Họ tên, type: text, required: true }, { field: job_title, label: Chức danh, type: text }, { field: phone, label: Số điện thoại, type: text }, { field: email, label: Email, type: text }, { field: department, label: Phòng ban, type: text }, { field: start_date, label: Ngày vào làm, type: date }, { field: dependents, label: Người phụ thuộc, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive] }]
+    fields: [{ field: code, label: Mã nhân viên, type: text, required: true }, { field: name, label: Họ tên, type: text, required: true }, { field: job_title, label: Chức danh, type: text }, { field: phone, label: Số điện thoại, type: text }, { field: email, label: Email, type: text }, { field: department, label: Phòng ban, type: select, options_source: employee_detail_department_lookup }, { field: start_date, label: Ngày vào làm, type: date }, { field: dependents, label: Người phụ thuộc, type: number }, { field: status, label: Trạng thái, type: select, options: [Active, OnLeave, Inactive] }]

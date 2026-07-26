@@ -5,7 +5,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 ## Proven
 
 - 68 page YAML definitions load through the authenticated page API.
-- 175 server-owned datasource definitions execute successfully on a fresh seeded database.
+- 177 server-owned datasource definitions execute successfully on a fresh seeded database.
 - 52 registered SPA routes mount in a real browser with zero route-panel or console-error failures.
 - Sixteen seeded populated detail targets (orders, quotes, financial documents, HR, fleet, organization, area, company settings, print-template, and approval-flow editors) also mount with zero browser failures and assert the expected seeded business identifier in each panel.
 - The full browser route/detail matrix passes at an explicit 1024 x 768 tablet viewport with zero document-level horizontal overflow.
@@ -87,6 +87,7 @@ Audited 2026-07-26 against `.scratch/movedx-feature-parity/PRD.md`.
 - Order, quote, and accounting line-item editors now source units from the catalog while preserving existing unit values.
 - Trip editors now use vehicle, active-driver, and cargo-type lookups while preserving existing assignments and cargo values.
 - Maintenance editors now use vehicle and enabled-technician lookups instead of raw internal IDs.
+- Employee list and detail editors now use active-department lookups while preserving existing department names.
 - The legacy fleet editor now shares vehicle-type and active-driver lookups with the canonical fleet route.
 - Invoice template create/edit forms now use the shared rich-text token picker for invoice number, customer, total, and tax placeholders.
 - Ledger accounts now support persisted parent relationships, parent display, datasource-backed parent selection, and server-side self-parent validation.
