@@ -84,3 +84,5 @@ export { OdooChatter }           from './OdooChatter.ts';
 export { OdooState }             from './OdooState.ts';
 export { OdooStatusbar }         from './OdooStatusbar.ts';
 export { OdooStatButton }        from './OdooStatButton.ts';
+export { AppLauncher }            from './AppLauncher.ts';
+export { OdooDialog }              from './OdooDialog.ts';

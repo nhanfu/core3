@@ -1,7 +1,7 @@
 import { html } from '../html.ts';
 import { BaseComponent } from '../runtime.ts';
 
-export type OdooFormField = { name: string; label: string; type?: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox'; options?: Array<{ value: string; label: string }>; list?: string };
+export type OdooFormField = { name: string; label: string; type?: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'checkbox'; options?: Array<{ value: string; label: string }>; list?: string; multiple?: boolean };
 
 export class OdooFormView extends BaseComponent {
   fields: OdooFormField[];
@@ -14,7 +14,11 @@ export class OdooFormView extends BaseComponent {
 
   async save() {
     if (!this.form) return;
-    const values = Object.fromEntries(new FormData(this.form).entries());
+    const values = [...new FormData(this.form).entries()].reduce<Record<string, FormDataEntryValue | FormDataEntryValue[]>>((result, [name, value]) => {
+      const current = result[name];
+      result[name] = current === undefined ? value : Array.isArray(current) ? [...current, value] : [current, value];
+      return result;
+    }, {});
     await this.submit('save', values);
   }
 
@@ -24,6 +28,7 @@ export class OdooFormView extends BaseComponent {
       const label = html.take(this.form).label.text(field.label).getContext();
       if (field.type === 'select') {
         const select = html.take(label).select.attr('name', field.name).getContext() as HTMLSelectElement;
+        select.multiple = Boolean(field.multiple);
         for (const option of field.options || []) html.take(select).option.attr('value', option.value).text(option.label);
         select.value = String(this.state.record[field.name] || '');
       } else if (field.type === 'textarea') {

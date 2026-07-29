@@ -40,8 +40,18 @@ export class OdooChatter extends BaseComponent {
 
     const attachments = html.take(root).div.className('odoo-chatter-section').getContext();
     html.take(attachments).strong.text('Attachments');
-    html.take(attachments).p.className('odoo-muted').text((this.state.attachments || []).map((item: any) => item.name).join(', ') || 'No attachments yet.');
+    if (!(this.state.attachments || []).length) html.take(attachments).p.className('odoo-muted').text('No attachments yet.');
+    for (const attachment of this.state.attachments || []) {
+      const link = html.take(attachments).a.className('odoo-attachment-link').attr('href', `/api/crm/attachments/${encodeURIComponent(attachment.id)}`).attr('download', attachment.name).text(`${attachment.name}${attachment.file_size ? ` (${formatBytes(attachment.file_size)})` : ''}`).getContext();
+      link.target = '_blank';
+    }
     const file = html.take(attachments).input.className('odoo-chatter-input').attr('type', 'file').getContext() as HTMLInputElement;
-    file.addEventListener('change', () => void this.submit('attachment', { name: file.files?.[0]?.name || '' }));
+    file.addEventListener('change', () => void this.submit('attachment', { file: file.files?.[0], name: file.files?.[0]?.name || '' }));
   }
+}
+
+function formatBytes(value: number) {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }

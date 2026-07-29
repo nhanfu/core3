@@ -10,12 +10,15 @@ cd apps/crm
 bun install
 bun run build:css
 bunx tsc --noEmit -p tsconfig.json
+bun run test:browser
 bun server.ts
 ```
 
-Use `?role=salesperson` or `?role=manager` to verify permission differences.
-The screen routes are `/?view=list`, `/?view=form&id=opp-001`, `/?view=graph`,
-`/?view=pivot`, and `/?view=calendar`; the default route is the pipeline.
+Use `?role=salesperson`, `?role=manager`, or `?role=system` to verify
+permission differences. The screen routes include `/?view=list`,
+`/?view=form&id=opp-001`, `/?view=activities`, `/?view=customers`,
+`/?view=teams`, `/?view=reporting`, `/?view=forecast`,
+`/?view=settings`, and `/?view=import`; the default route is the pipeline.
 
 ## Acceptance evidence
 
@@ -25,7 +28,10 @@ The screen routes are `/?view=list`, `/?view=form&id=opp-001`, `/?view=graph`,
 | Fluent markup | `lib/components/Odoo*.ts`, `lib/services/*`, and the CRM app contain no direct element construction or HTML injection |
 | SCSS source/build | `apps/crm/styles.scss`, `package.json` `build:css`, generated `styles.css` |
 | DuckDB read/write workflows | `apps/crm/database.ts`, `schema.sql`, `seed.sql`, and `/api/crm/*` |
-| Desktop/narrow visual workflow | Pipeline, list, form, graph, pivot, calendar, and mobile browser captures |
-| Permission boundary | Manager-only mutation operations return `403` for salesperson requests |
-| Navigation and state | `lib/services/ActionRouter.ts`, URL-backed view/search state, and browser history listener |
+| Desktop/narrow visual workflow | `apps/crm/scripts/browser-smoke.ts` via `bun run test:browser`, plus framework calendar/dialog tests |
+| Permission boundary | `apps/crm/test/api.test.ts` plus server-side `canAccess*` checks return `403` or scoped data |
+| Navigation and state | `lib/services/ActionRouter.ts`, `ActionService`, URL-backed view/search state, and browser history listener |
 | No TMS dependency | `apps/crm` has no TMS import or data dependency |
+| Global module switching | `AppRegistry`, `AppLauncher`, YAML `apps`, `/api/modules`, and CRM/Sales/Inventory launcher workflow |
+| CRM lifecycle/config/import | `/api/crm/leads/:id/convert`, `/lost`, `/duplicates`, `/merge`, `/config`, `/stages`, and `/import/*`, including persisted validation errors |
+| Reporting dimensions | `/api/crm/report/summary`, `/api/crm/report/analysis?dimension=stage|salesperson|team|customer|closing_bucket`, activity analysis, and report drill-down endpoints |

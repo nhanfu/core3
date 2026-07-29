@@ -4,6 +4,10 @@ export type RouteState = Record<string, string | undefined>;
 export class ActionRouter {
   constructor(private readonly base = '/') {}
 
+  private clearRouteState(url: URL) {
+    for (const key of ['action', 'model', 'domain', 'context', 'view', 'id', 'search', 'filter', 'groupBy', 'sort', 'teamId', 'dimension', 'value', 'secondaryDimension', 'secondaryValue', 'selected', 'activityView', 'analysisView']) url.searchParams.delete(key);
+  }
+
   read(url: URL = new URL(window.location.href)): RouteState {
     return Object.fromEntries(url.searchParams.entries());
   }
@@ -11,7 +15,7 @@ export class ActionRouter {
   replace(state: RouteState) {
     const url = new URL(window.location.href);
     url.pathname = this.base;
-    for (const key of ['view', 'id', 'search', 'filter', 'groupBy', 'sort']) url.searchParams.delete(key);
+    this.clearRouteState(url);
     for (const [key, value] of Object.entries(state)) if (value) url.searchParams.set(key, value); else url.searchParams.delete(key);
     window.history.replaceState(state, '', url);
   }
@@ -19,7 +23,7 @@ export class ActionRouter {
   push(state: RouteState) {
     const url = new URL(window.location.href);
     url.pathname = this.base;
-    for (const key of ['view', 'id', 'search', 'filter', 'groupBy', 'sort']) url.searchParams.delete(key);
+    this.clearRouteState(url);
     for (const [key, value] of Object.entries(state)) if (value) url.searchParams.set(key, value);
     window.history.pushState(state, '', url);
   }

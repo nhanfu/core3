@@ -32,13 +32,14 @@ export class OdooControlPanel extends BaseComponent {
     });
 
     for (const label of this.def.filters || ['Filters', 'Group By', 'Favorites']) {
+      if (label === 'Filters' && !this.def.filterOptions?.length) continue;
+      if (label === 'Group By' && !this.def.groupOptions?.length) continue;
+      if (label === 'Filters' && this.def.filterOptions?.length) continue;
+      if (label === 'Group By' && this.def.groupOptions?.length) continue;
       const store = label === 'Favorites' ? new FavoritesStore(this.def.favoriteKey || `core3:favorites:${this.id}`) : null;
       const button = html.take(root).button.className('odoo-button filter').type('button').text(`${label}${store?.list().length ? ` (${store.list().length})` : ''}`).getContext();
       if (label === 'Favorites') {
-        button.addEventListener('click', () => {
-          const name = window.prompt('Save current filter as', input.value || 'My filter');
-          if (name?.trim()) void this.submit('control', { control: 'favorite_saved', favorite: store.save({ label: name.trim(), search: input.value }) });
-        });
+        button.addEventListener('click', () => this.openFavoriteEditor(root, input, store));
         for (const favorite of store.list()) {
           const saved = html.take(root).button.className('odoo-button favorite').type('button').text(favorite.label).getContext();
           saved.addEventListener('click', () => void this.submit('control', { control: 'favorite_apply', favorite }));
@@ -55,6 +56,22 @@ export class OdooControlPanel extends BaseComponent {
       const button = html.take(viewModes).button.className(`odoo-button ${view === this.def.activeView ? 'selected' : 'view'}`).type('button').text(view).getContext();
       button.addEventListener('click', () => void this.submit('view', { view, search: input.value }));
     }
+  }
+
+  private openFavoriteEditor(root: HTMLElement, input: HTMLInputElement, store: FavoritesStore) {
+    root.querySelector('[data-favorite-editor]')?.remove();
+    const editor = html.take(root).div.className('odoo-favorite-editor').dataAttr('favorite-editor', 'true').getContext();
+    const name = html.take(editor).input.className('odoo-control-input').attr('aria-label', 'Favorite name').attr('placeholder', 'Filter name').value(input.value || 'My filter').getContext() as HTMLInputElement;
+    const save = html.take(editor).button.className('odoo-button primary').type('button').text('Save').getContext();
+    const cancel = html.take(editor).button.className('odoo-button secondary').type('button').text('Cancel').getContext();
+    cancel.addEventListener('click', () => editor.remove());
+    save.addEventListener('click', () => {
+      if (!name.value.trim()) return;
+      editor.remove();
+      void this.submit('control', { control: 'favorite_saved', favorite: store.save({ label: name.value.trim(), search: input.value }) });
+    });
+    name.addEventListener('keydown', event => { if (event.key === 'Enter') save.click(); });
+    name.focus();
   }
 
   private addSelect(root: HTMLElement, label: string, options: Array<{ value: string; label: string }> | undefined, control: string) {

@@ -3,6 +3,17 @@
 body { margin: 0; min-width: 960px; background: #f5f5f5; }
 button, input { font: inherit; }
 .odoo-shell { min-height: 100vh; display: flex; }
+.odoo-app-launcher-host { position: relative; z-index: 100; }
+.odoo-app-launcher-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: start center; padding-top: 72px; background: #0005; }
+.odoo-app-launcher { width: min(560px, calc(100vw - 32px)); padding: 18px; border-radius: 6px; background: #fff; box-shadow: 0 12px 40px #0004; }
+.odoo-app-launcher-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; color: #444; }
+.odoo-app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.odoo-app-card { min-height: 108px; display: grid; justify-items: center; align-content: center; gap: 6px; border: 1px solid var(--border); border-radius: 5px; background: #fff; color: #555; cursor: pointer; padding: 12px; }
+.odoo-app-card:hover, .odoo-app-card.is-active { border-color: var(--purple); background: #faf7f9; }.odoo-app-card .svg-icon { color: var(--purple); }.odoo-app-card small { color: var(--muted); font-size: 10px; text-align: center; }
+.odoo-sidebar-button { display: none; }
+.odoo-app-placeholder { min-height: 280px; justify-items: center; text-align: center; }.odoo-app-placeholder-icon { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 8px; background: var(--purple); color: #fff; }.odoo-app-placeholder-icon svg { width: 28px; height: 28px; }
+.odoo-report-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }.odoo-report-card { display: grid; gap: 5px; padding: 16px; border: 1px solid var(--border); background: #fff; }.odoo-report-card small { color: var(--muted); font-size: 11px; }.odoo-report-card strong { color: var(--purple); font-size: 20px; font-weight: 600; }
+.odoo-settings-panel { display: grid; gap: 14px; max-width: 680px; padding: 22px; border: 1px solid var(--border); background: #fff; }.odoo-settings-panel h2 { margin: 0; color: #444; font-size: 18px; font-weight: 500; }.odoo-settings-panel p { margin: 0; }.odoo-setting-row { display: flex; align-items: center; gap: 10px; border-top: 1px solid #eee; padding-top: 12px; color: #555; text-transform: capitalize; }.odoo-setting-row input { width: 16px; height: 16px; }
 .odoo-sidebar { width: 230px; flex: 0 0 230px; background: #2f2f2f; color: #ddd; }
 .odoo-brand { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 18px; color: #fff; }
 .odoo-brand strong { display: block; font-size: 16px; font-weight: 600; }.odoo-brand small { color: #aaa; font-size: 11px; }
@@ -20,7 +31,12 @@ button, input { font: inherit; }
 .odoo-graph-view, .odoo-pivot-view, .odoo-calendar-view { padding: 18px; border: 1px solid var(--border); background: #fff; }
 .odoo-graph-view { display: grid; gap: 15px; }.odoo-graph-row { display: grid; grid-template-columns: 130px 1fr 100px; align-items: center; gap: 12px; font-size: 13px; }.odoo-graph-label { color: #555; }.odoo-graph-track { height: 22px; border-radius: 3px; background: #eee; overflow: hidden; }.odoo-graph-bar { height: 100%; border-radius: 3px; background: var(--purple); }.odoo-graph-value { text-align: right; color: #555; }
 .odoo-pivot-view { width: 100%; border-collapse: collapse; font-size: 13px; }.odoo-pivot-view th, .odoo-pivot-view td { padding: 11px 12px; border-bottom: 1px solid #eee; text-align: right; }.odoo-pivot-view th:first-child, .odoo-pivot-view td:first-child { text-align: left; }.odoo-pivot-view thead th { color: #777; font-size: 11px; font-weight: 600; }.odoo-pivot-view tbody th { color: #555; font-weight: 600; }
-.odoo-calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }.odoo-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(100px, 1fr)); gap: 1px; background: var(--border); }.odoo-calendar-day-name { padding: 8px; background: #f4f4f4; color: #777; font-size: 11px; font-weight: 600; text-align: center; }.odoo-calendar-event { min-height: 72px; grid-column: auto / span 1; padding: 8px; background: #fff; }.odoo-calendar-event strong, .odoo-calendar-event small { display: block; }.odoo-calendar-event strong { color: var(--purple); font-size: 12px; }.odoo-calendar-event small { margin-top: 5px; color: #888; font-size: 11px; }
+.odoo-calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }.odoo-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(100px, 1fr)); gap: 1px; background: var(--border); }.odoo-calendar-day-name { padding: 8px; background: #f4f4f4; color: #777; font-size: 11px; font-weight: 600; text-align: center; }.odoo-calendar-cell { min-height: 92px; padding: 6px; background: #fff; }.odoo-calendar-cell.is-empty { background: #fafafa; }.odoo-calendar-date { display: block; color: #777; font-size: 11px; text-align: right; }.odoo-calendar-event { margin-top: 5px; padding: 6px; background: #f1edff; border-left: 3px solid var(--purple); }.odoo-calendar-event.is-clickable { cursor: pointer; }.odoo-calendar-event.is-clickable:hover { background: #e5ddff; }.odoo-calendar-event strong, .odoo-calendar-event small { display: block; }.odoo-calendar-event strong { color: var(--purple); font-size: 12px; }.odoo-calendar-event small { margin-top: 5px; color: #888; font-size: 11px; }
+.odoo-dialog-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.38); }.odoo-dialog { width: min(520px, 100%); max-height: 90vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; background: #fff; box-shadow: 0 14px 40px rgba(0,0,0,.2); }.odoo-dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }.odoo-dialog-header h2 { margin: 0; color: #333; font-size: 18px; font-weight: 500; }.odoo-dialog-close { border: 0; background: transparent; color: #777; cursor: pointer; font-size: 24px; line-height: 1; }.odoo-dialog-message { margin: 18px 20px 0; color: var(--muted); }.odoo-dialog-body { display: grid; gap: 14px; padding: 20px; }.odoo-dialog-field { display: grid; gap: 6px; color: #555; font-size: 13px; }.odoo-dialog-field input, .odoo-dialog-field select, .odoo-dialog-field textarea { width: 100%; min-height: 34px; box-sizing: border-box; border: 1px solid #bbb; border-radius: 3px; padding: 7px 9px; font: inherit; }.odoo-dialog-field textarea { min-height: 100px; resize: vertical; }.odoo-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border); }
+.odoo-graph-row.is-clickable, .odoo-pivot-view .is-clickable { cursor: pointer; }.odoo-graph-row.is-clickable:hover, .odoo-pivot-view .is-clickable:hover { background: #f1edff; }
+.odoo-favorite-editor { display: inline-flex; align-items: center; gap: 5px; padding: 4px; border: 1px solid var(--border); background: #fff; }.odoo-control-input { height: 30px; border: 1px solid #bbb; border-radius: 3px; padding: 0 7px; }
+.odoo-company-switcher { max-width: 190px; height: 30px; border: 1px solid var(--border); border-radius: 3px; background: #fff; color: #555; padding: 0 6px; }.odoo-command-search { margin-left: 8px; }
+.odoo-related-records { margin-top: 18px; }.odoo-related-records h2 { margin: 0 0 10px; color: #555; font-size: 16px; font-weight: 500; }
 .odoo-notification { position: relative; }
 .odoo-notification-count { position: absolute; top: -1px; right: -2px; min-width: 13px; padding: 1px 3px; border-radius: 8px; background: #c0392b; color: #fff; font-size: 8px; line-height: 11px; }
 .odoo-control-select { height: 34px; border: 1px solid #bbb; border-radius: 3px; background: #fff; color: #333; padding: 0 6px; font-size: 12px; }
@@ -47,6 +63,7 @@ button, input { font: inherit; }
   .odoo-shell.is-sidebar-open::after { content: ''; position: fixed; inset: 0; z-index: 20; background: #0005; }
   .odoo-main { width: 100%; }
   .odoo-topbar { padding-inline: 12px; }
+  .odoo-sidebar-button { display: inline-grid; }
   .odoo-company { display: none; }
   .odoo-content { padding: 16px 12px; }
   .odoo-page-header { align-items: flex-start; flex-wrap: wrap; gap: 12px; }
@@ -61,4 +78,6 @@ button, input { font: inherit; }
   .odoo-form { grid-template-columns: 1fr; padding: 16px; }
   .odoo-list { min-width: 720px; }
   .odoo-list { display: block; overflow-x: auto; }
+  .odoo-app-grid { grid-template-columns: repeat(2, 1fr); }
+  .odoo-report-summary { grid-template-columns: repeat(2, 1fr); }
 }
