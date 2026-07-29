@@ -173,9 +173,27 @@ button, input {
   text-transform: capitalize;
 }
 
-.odoo-setting-row input {
+.odoo-setting-row input[type=checkbox] {
   width: 16px;
   height: 16px;
+  flex: 0 0 16px;
+}
+
+.odoo-setting-row input[type=text], .odoo-setting-row input[type=number] {
+  width: 180px;
+  height: 34px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 0 9px;
+}
+
+.odoo-setting-row textarea {
+  min-width: 180px;
+  min-height: 34px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 7px 9px;
+  resize: vertical;
 }
 
 .odoo-sidebar {

@@ -105,8 +105,8 @@ async function bootstrap() {
     else if (params.id === 'leads_analysis') void renderLeadAnalysis();
     else if (params.id === 'activity_analysis') void renderActivityAnalysis();
     else if (params.id === 'forecast') void renderForecast();
-    else if (params.id === 'settings') void (canManage ? renderSettings() : notify('error', 'Manager permission required.'));
-    else if (['stages', 'tags', 'lost_reasons', 'activity_types', 'activity_plans', 'recurring_plans'].includes(params.id)) void (canManage ? renderSettings() : notify('error', 'Manager permission required.'));
+    else if (params.id === 'settings') void (canManage ? renderSettings('settings') : notify('error', 'Manager permission required.'));
+    else if (['stages', 'tags', 'lost_reasons', 'activity_types', 'activity_plans', 'recurring_plans'].includes(params.id)) void (canManage ? renderSettings(params.id) : notify('error', 'Manager permission required.'));
     else if (params.id === 'import') void (canManage ? renderImport() : notify('error', 'Manager permission required.'));
     else notify('warning', `Unknown CRM menu action: ${params.id}`);
   };
@@ -166,7 +166,7 @@ async function renderFromRoute(state: Record<string, string>, fromHistory = fals
   if (view === 'lead_drilldown') { shell.setActiveNav('leads_analysis'); return renderLeadDrilldown(state.dimension || 'source', state.value || '', fromHistory); }
   if (view === 'report_drilldown') return renderReportDrilldown(state.dimension || 'stage', state.value || '', fromHistory, state.secondaryDimension || '', state.secondaryValue || '');
   if (view === 'activity_drilldown') return renderActivityDrilldown(state.dimension || 'activity_type', state.value || '', fromHistory);
-  if (view === 'settings') { if (!canManage) return renderPipeline('', {}, fromHistory); shell.setActiveNav('settings'); return renderSettings(fromHistory); }
+  if (view === 'settings') { if (!canManage) return renderPipeline('', {}, fromHistory); shell.setActiveNav(state.menu || 'settings'); return renderSettings(state.menu || 'settings', fromHistory); }
   if (view === 'import') { if (!canManage) return renderPipeline('', {}, fromHistory); shell.setActiveNav('import'); return renderImport(fromHistory); }
   if (view === 'graph' || view === 'pivot' || view === 'calendar') return renderAnalyticsView(view, state.search || '', fromHistory, state);
   shell.setActiveNav('pipeline'); return renderPipeline(state.search || '', state, fromHistory);
@@ -284,8 +284,8 @@ async function renderImport(fromHistory = false) {
   }
 }
 
-async function renderSettings(fromHistory = false) {
-  const route = { view: 'settings' };
+async function renderSettings(section = 'settings', fromHistory = false) {
+  const route = { view: 'settings', menu: section === 'settings' ? undefined : section };
   if (fromHistory) router.replace(route); else router.push(route);
   const content = shell.contentElement; if (!content) return;
   clearContent(content);
@@ -310,7 +310,7 @@ async function renderSettings(fromHistory = false) {
       else if (kind === 'tag') response = await apiFetch('/api/crm/tags', { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name, color: values.color || '' }) });
       else if (kind === 'lost_reason') response = await apiFetch('/api/crm/lost-reasons', { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name }) });
       else response = await apiFetch(`/api/crm/catalog/${kind}`, { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name, color: values.color || '', default_summary: values.default_summary || '', interval_number: values.interval_number || 1, interval_unit: values.interval_unit || 'month' }) });
-      if (response.ok) { notify('success', 'CRM configuration created.'); return renderSettings(); }
+      if (response.ok) { notify('success', 'CRM configuration created.'); return renderSettings(section); }
       return notify('error', 'Unable to create CRM configuration.');
     }
     const values = Object.fromEntries([...content.querySelectorAll<HTMLInputElement>('input[data-config]')].map(input => [input.dataset.config || '', String(input.checked)]));
@@ -342,16 +342,18 @@ async function renderSettings(fromHistory = false) {
   ]);
   if (!values || !stages || !reasons || !tags || !activityTypes || !activityPlans || !recurringPlans) return;
   const panel = html.take(content).div.className('odoo-settings-panel').getContext();
-  html.take(panel).h2.text('CRM features');
-  html.take(panel).p.className('odoo-muted').text('Manager and system settings control which CRM workflows are available.');
-  for (const item of values) {
-    const label = html.take(panel).label.className('odoo-setting-row').getContext();
-    const input = html.take(label).input.attr('type', 'checkbox').dataAttr('config', item.key).getContext() as HTMLInputElement;
-    input.checked = item.value === 'true';
-    html.take(label).span.text(item.key.replaceAll('_', ' '));
+  if (section === 'settings') {
+    html.take(panel).h2.text('CRM features');
+    html.take(panel).p.className('odoo-muted').text('Manager and system settings control which CRM workflows are available.');
+    for (const item of values) {
+      const label = html.take(panel).label.className('odoo-setting-row').getContext();
+      const input = html.take(label).input.attr('type', 'checkbox').dataAttr('config', item.key).getContext() as HTMLInputElement;
+      input.checked = item.value === 'true';
+      html.take(label).span.text(item.key.replaceAll('_', ' '));
+    }
   }
-  html.take(panel).h2.text('Pipeline stages');
-  for (const stage of stages) {
+  if (section === 'settings' || section === 'stages') html.take(panel).h2.text('Pipeline stages');
+  if (section === 'settings' || section === 'stages') for (const stage of stages) {
     const label = html.take(panel).label.className('odoo-setting-row').getContext();
     html.take(label).input.attr('type', 'text').dataAttr('stage-id', stage.id).value(stage.name);
     const folded = html.take(label).input.attr('type', 'checkbox').dataAttr('stage-folded', stage.id).getContext() as HTMLInputElement;
@@ -360,19 +362,20 @@ async function renderSettings(fromHistory = false) {
     html.take(label).textArea.dataAttr('stage-requirements', stage.id).attr('placeholder', 'Stage requirements').text(stage.requirements || '');
     html.take(label).span.text(`${stage.id} (${stage.folded ? 'folded' : 'open'})`);
   }
-  html.take(panel).h2.text('Lost reasons');
-  for (const reason of reasons) {
+  if (section === 'settings' || section === 'lost_reasons') html.take(panel).h2.text('Lost reasons');
+  if (section === 'settings' || section === 'lost_reasons') for (const reason of reasons) {
     const label = html.take(panel).label.className('odoo-setting-row').getContext();
     html.take(label).input.attr('type', 'text').dataAttr('reason-id', reason.id).value(reason.name);
     html.take(label).span.text(reason.id);
   }
-  html.take(panel).h2.text('Tags');
-  for (const tag of tags) {
+  if (section === 'settings' || section === 'tags') html.take(panel).h2.text('Tags');
+  if (section === 'settings' || section === 'tags') for (const tag of tags) {
     const label = html.take(panel).label.className('odoo-setting-row').getContext();
     html.take(label).input.attr('type', 'text').dataAttr('tag-id', tag.id).dataAttr('tag-color', tag.color || '').value(tag.name);
     html.take(label).span.text(`${tag.id} (${tag.color || 'default'})`);
   }
   for (const [kind, title, rows] of [['activity_types', 'Activity Types', activityTypes], ['activity_plans', 'Activity Plans', activityPlans], ['recurring_plans', 'Recurring Plans', recurringPlans]] as [string, string, any[]][]) {
+    if (section !== 'settings' && section !== kind) continue;
     html.take(panel).h2.text(title);
     for (const row of rows) {
       const label = html.take(panel).label.className('odoo-setting-row').getContext();
