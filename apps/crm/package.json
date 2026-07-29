@@ -1,0 +1,15 @@
+{
+  "name": "@core3/crm",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:css": "sass styles.scss styles.css --no-source-map",
+    "start": "bun run build:css && bun server.ts",
+    "dev": "bun run build:css && bun --hot server.ts"
+  },
+  "dependencies": {
+    "@core3/framework": "file:../../lib",
+    "duckdb": "^1.1.0",
+    "sass": "^1.86.0"
+  }
+}

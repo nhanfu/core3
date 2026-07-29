@@ -35,6 +35,16 @@ export class HTML {
         }
         return this;
     }
+    /** Create a detached element while preserving the fluent API. */
+    create(node) {
+        this.context = document.createElement(node);
+        return this;
+    }
+    /** Append an existing node through the fluent API. */
+    append(node) {
+        this.context.appendChild(node);
+        return this;
+    }
     get div() {
         return this.add('div');
     }
@@ -80,8 +90,14 @@ export class HTML {
     get h6() {
         return this.add('h6');
     }
+    get strong() {
+        return this.add('strong');
+    }
     get nav() {
         return this.add('nav');
+    }
+    get main() {
+        return this.add('main');
     }
     get input() {
         return this.add('input');
@@ -158,6 +174,9 @@ export class HTML {
     }
     get aside() {
         return this.add('aside');
+    }
+    get article() {
+        return this.add('article');
     }
     get a() {
         return this.add('a');

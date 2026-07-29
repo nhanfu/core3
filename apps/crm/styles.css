@@ -1,0 +1,858 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #374151;
+  background: #f5f5f5;
+  --purple: #714b67;
+  --border: #d8dadd;
+  --muted: #6b7280;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 960px;
+  background: #f5f5f5;
+}
+
+button, input {
+  font: inherit;
+}
+
+.odoo-shell {
+  min-height: 100vh;
+  display: flex;
+}
+
+.odoo-sidebar {
+  width: 230px;
+  flex: 0 0 230px;
+  background: #2f2f2f;
+  color: #ddd;
+}
+
+.odoo-brand {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  color: #fff;
+}
+
+.odoo-brand strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.odoo-brand small {
+  color: #aaa;
+  font-size: 11px;
+}
+
+.odoo-brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  background: var(--purple);
+  color: #fff;
+}
+
+.odoo-brand-mark svg, .odoo-nav-item svg, .odoo-icon-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.odoo-sidebar-label {
+  padding: 18px 18px 8px;
+  color: #888;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.odoo-nav {
+  padding: 0 8px;
+}
+
+.odoo-nav-item {
+  width: 100%;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #cfcfcf;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.odoo-nav-item:hover, .odoo-nav-item.is-active {
+  background: #454545;
+  color: #fff;
+}
+
+.odoo-nav-item.is-active {
+  box-shadow: inset 3px 0 var(--purple);
+}
+
+.odoo-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.odoo-topbar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+.odoo-topbar-spacer {
+  flex: 1;
+}
+
+.odoo-breadcrumb {
+  font-size: 14px;
+  color: #555;
+}
+
+.odoo-company, .odoo-user-menu {
+  font-size: 12px;
+  color: #666;
+}
+
+.odoo-user-menu {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.odoo-content {
+  padding: 24px 28px;
+}
+
+.odoo-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.odoo-eyebrow {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.odoo-page-header h1 {
+  color: #3d3d3d;
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.odoo-page-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.odoo-button {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  padding: 7px 13px;
+  font-size: 13px;
+}
+
+.odoo-button:hover {
+  background: #f3f3f3;
+}
+
+.odoo-button.primary {
+  border-color: var(--purple);
+  background: var(--purple);
+  color: #fff;
+}
+
+.odoo-button.filter {
+  border: 0;
+  background: transparent;
+  padding-inline: 9px;
+}
+
+.odoo-button.selected {
+  background: #eee;
+  border-color: #bbb;
+}
+
+.odoo-control-panel {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.odoo-search {
+  width: 260px;
+  height: 34px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 0 10px;
+  outline-color: var(--purple);
+}
+
+.odoo-view-modes {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.odoo-view-modes .odoo-button {
+  text-transform: capitalize;
+  padding-inline: 8px;
+}
+
+.odoo-placeholder {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 50px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.odoo-placeholder strong {
+  font-size: 22px;
+}
+
+.odoo-placeholder span {
+  color: var(--muted);
+}
+
+.odoo-kanban-board {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.odoo-kanban-column {
+  min-width: 260px;
+  width: 260px;
+  border-radius: 4px;
+  background: #e9e9e9;
+}
+
+.odoo-kanban-column-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  color: #555;
+  font-size: 13px;
+}
+
+.odoo-kanban-count {
+  min-width: 21px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #d3d3d3;
+  color: #777;
+  text-align: center;
+  font-size: 11px;
+}
+
+.odoo-kanban-add {
+  margin-left: auto;
+}
+
+.odoo-kanban-cards {
+  min-height: 70px;
+  display: grid;
+  gap: 8px;
+  padding: 0 8px 8px;
+}
+
+.odoo-kanban-card {
+  padding: 11px;
+  border: 1px solid #d7d7d7;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.0431372549);
+}
+
+.odoo-kanban-card:hover {
+  border-color: #b8a0b0;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1333333333);
+}
+
+.odoo-kanban-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+  color: #444;
+  font-size: 13px;
+}
+
+.odoo-priority {
+  color: #f0ad00;
+  white-space: nowrap;
+  letter-spacing: -2px;
+}
+
+.odoo-kanban-customer {
+  color: #555;
+  font-size: 12px;
+}
+
+.odoo-kanban-revenue {
+  margin-top: 8px;
+  color: #333;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.odoo-kanban-meta, .odoo-kanban-activity {
+  margin-top: 5px;
+  color: #888;
+  font-size: 11px;
+}
+
+.odoo-kanban-activity {
+  color: #9a5d00;
+}
+
+.odoo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 9px;
+}
+
+.odoo-tags span {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #e7d9e3;
+  color: #714b67;
+  font-size: 10px;
+}
+
+.odoo-icon-button {
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.odoo-icon-button:hover {
+  color: #333;
+}
+
+.odoo-kanban-add {
+  padding: 2px;
+}
+
+.odoo-list {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.odoo-list th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: #777;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.odoo-list td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.odoo-list tr:hover {
+  background: #fafafa;
+}
+
+.odoo-link {
+  border: 0;
+  background: transparent;
+  color: #714b67;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+}
+
+.odoo-stage {
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: #eee;
+  color: #666;
+  font-size: 11px;
+}
+
+.odoo-form-layout {
+  display: grid;
+  grid-template-columns: minmax(500px, 1fr) 280px;
+  gap: 18px;
+}
+
+.odoo-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.odoo-form label {
+  display: grid;
+  gap: 5px;
+  color: #666;
+  font-size: 12px;
+}
+
+.odoo-form input, .odoo-form select {
+  height: 35px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 0 9px;
+  color: #333;
+  outline-color: var(--purple);
+}
+
+.odoo-chatter {
+  min-height: 230px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #555;
+}
+
+.odoo-chatter p {
+  color: #999;
+  font-size: 12px;
+}
+
+.odoo-chatter-note {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  color: #999;
+  font-size: 11px;
+}
+
+.odoo-list-empty {
+  padding: 36px 12px !important;
+  color: var(--muted);
+  text-align: center;
+}
+
+.odoo-chatter-messages {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.odoo-message {
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  background: #fafafa;
+  font-size: 11px;
+}
+
+.odoo-message p {
+  margin: 4px 0 0;
+  color: #555;
+}
+
+.odoo-chatter-input {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 8px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 8px;
+  resize: vertical;
+}
+
+.odoo-activity-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  font-size: 12px;
+}
+
+.odoo-activity {
+  display: grid;
+  gap: 2px;
+  color: #555;
+}
+
+.odoo-activity span {
+  color: var(--purple);
+  font-weight: 600;
+}
+
+.odoo-activity small, .odoo-muted {
+  color: #999;
+}
+
+.odoo-graph-view, .odoo-pivot-view, .odoo-calendar-view {
+  padding: 18px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.odoo-graph-view {
+  display: grid;
+  gap: 15px;
+}
+
+.odoo-graph-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 100px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.odoo-graph-label {
+  color: #555;
+}
+
+.odoo-graph-track {
+  height: 22px;
+  border-radius: 3px;
+  background: #eee;
+  overflow: hidden;
+}
+
+.odoo-graph-bar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--purple);
+}
+
+.odoo-graph-value {
+  text-align: right;
+  color: #555;
+}
+
+.odoo-pivot-view {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.odoo-pivot-view th, .odoo-pivot-view td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: right;
+}
+
+.odoo-pivot-view th:first-child, .odoo-pivot-view td:first-child {
+  text-align: left;
+}
+
+.odoo-pivot-view thead th {
+  color: #777;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.odoo-pivot-view tbody th {
+  color: #555;
+  font-weight: 600;
+}
+
+.odoo-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.odoo-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(100px, 1fr));
+  gap: 1px;
+  background: var(--border);
+}
+
+.odoo-calendar-day-name {
+  padding: 8px;
+  background: #f4f4f4;
+  color: #777;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.odoo-calendar-event {
+  min-height: 72px;
+  grid-column: auto/span 1;
+  padding: 8px;
+  background: #fff;
+}
+
+.odoo-calendar-event strong, .odoo-calendar-event small {
+  display: block;
+}
+
+.odoo-calendar-event strong {
+  color: var(--purple);
+  font-size: 12px;
+}
+
+.odoo-calendar-event small {
+  margin-top: 5px;
+  color: #888;
+  font-size: 11px;
+}
+
+.odoo-notification {
+  position: relative;
+}
+
+.odoo-notification-count {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  min-width: 13px;
+  padding: 1px 3px;
+  border-radius: 8px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 8px;
+  line-height: 11px;
+}
+
+.odoo-control-select {
+  height: 34px;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  background: #fff;
+  color: #333;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.odoo-kanban-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.odoo-kanban-action {
+  border: 0;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 10px;
+}
+
+.odoo-kanban-action:hover {
+  color: var(--purple);
+}
+
+.odoo-state {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  padding: 24px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--muted);
+}
+
+.odoo-state strong {
+  color: #555;
+  font-size: 14px;
+}
+
+.odoo-state-error {
+  border-color: #e5b7b7;
+  color: #a33;
+}
+
+.odoo-state-empty {
+  color: #888;
+}
+
+.odoo-form-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.odoo-form-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.odoo-statusbar {
+  display: flex;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.odoo-statusbar-stage {
+  flex: 1 0 auto;
+  border: 0;
+  border-right: 1px solid var(--border);
+  background: #fff;
+  color: #777;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+
+.odoo-statusbar-stage.is-current {
+  background: var(--purple);
+  color: #fff;
+  font-weight: 600;
+}
+
+.odoo-stat-button {
+  display: inline-grid;
+  gap: 2px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.odoo-stat-button strong {
+  color: var(--purple);
+  font-size: 15px;
+}
+
+.odoo-stat-button span {
+  font-size: 10px;
+}
+
+@media (max-width: 800px) {
+  body {
+    min-width: 0;
+  }
+  .odoo-shell {
+    position: relative;
+  }
+  .odoo-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 230px;
+    z-index: 30;
+    transform: translateX(-100%);
+    transition: transform 0.18s ease;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.2666666667);
+  }
+  .odoo-shell.is-sidebar-open .odoo-sidebar {
+    transform: translateX(0);
+  }
+  .odoo-shell.is-sidebar-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.3333333333);
+  }
+  .odoo-main {
+    width: 100%;
+  }
+  .odoo-topbar {
+    padding-inline: 12px;
+  }
+  .odoo-company {
+    display: none;
+  }
+  .odoo-content {
+    padding: 16px 12px;
+  }
+  .odoo-page-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .odoo-page-header h1 {
+    font-size: 20px;
+  }
+  .odoo-page-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .odoo-control-panel {
+    flex-wrap: wrap;
+  }
+  .odoo-search {
+    width: min(100%, 280px);
+    flex: 1 1 220px;
+  }
+  .odoo-view-modes {
+    width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+  }
+  .odoo-view-modes .odoo-button {
+    flex: 0 0 auto;
+  }
+  .odoo-kanban-board {
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+  .odoo-form-layout {
+    grid-template-columns: 1fr;
+  }
+  .odoo-form {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .odoo-list {
+    min-width: 720px;
+  }
+  .odoo-list {
+    display: block;
+    overflow-x: auto;
+  }
+}
