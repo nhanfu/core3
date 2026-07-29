@@ -25,7 +25,7 @@
   <div class="statrow">
     <a class="stat" href="#pillars"><b>5</b><span>core pillars: YAML, OOP tree, SQL, scripting, multi-protocol</span></a>
     <a class="stat" href="backend.html"><b>4</b><span>database engines: Postgres, SQL Server, SQLite, DuckDB</span></a>
-    <a class="stat" href="scripting.html"><b>6</b><span>scripting runtimes: JS, TS, Python, Lua, Shell, custom</span></a>
+    <a class="stat" href="scripting.html"><b>WASM</b><span>compiled custom logic with capability-limited execution</span></a>
     <a class="stat" href="reference.html#integrations"><b>8</b><span>integration categories for real-world ERP</span></a>
   </div>
 </header>
@@ -68,6 +68,7 @@
       <div class="nav-group">
         <a href="scripting.html">Scripting engine</a>
         <div class="sub-links">
+          <a href="scripting.html#scripting-wasm">WebAssembly boundary</a>
           <a href="scripting.html#scripting-runtimes">Runtimes</a>
           <a href="scripting.html#scripting-inline">Inline scripts</a>
           <a href="scripting.html#scripting-file">External files</a>
@@ -164,7 +165,7 @@
         <div class="card">
           <span class="ctag backend">Backend</span>
           <h4>Custom Scripting</h4>
-          <p>Embed logic in any language — JavaScript, TypeScript, Python, Lua, or Shell — directly in the YAML. Declare <code class="kw">language</code>, write the script inline or reference an external file.</p>
+          <p>Declare custom logic in YAML and compile its source to WebAssembly before deployment. The server executes only capability-limited WASM artifacts, never arbitrary source code.</p>
         </div>
         <div class="card">
           <span class="ctag infra">Infra</span>
@@ -187,7 +188,7 @@
         <tr><td>Config Format</td><td>YAML</td><td>Human and agent readable, diffable</td></tr>
         <tr><td>Server Runtime</td><td>Node.js / Bun</td><td>TypeScript native, fast startup</td></tr>
         <tr><td>Database Access</td><td>Repository pattern</td><td>Swap engines without changing app code</td></tr>
-        <tr><td>Scripting</td><td>JS, TS, Python, Lua, Shell</td><td>Custom logic in any language, sandboxed</td></tr>
+        <tr><td>Scripting</td><td>WebAssembly</td><td>Compiled custom logic with explicit capabilities and resource limits</td></tr>
         <tr><td>Auth</td><td>Pluggable interface</td><td>No vendor lock-in; host app provides impl</td></tr>
       </table>
     </section>
@@ -198,6 +199,7 @@
       <ul>
         <li><strong>Convention over configuration</strong> — sensible defaults, override only when needed</li>
         <li><strong>YAML is the source of truth</strong> — if it's not in the YAML, it doesn't exist on the page</li>
+        <li><strong>Workflows are YAML-first</strong> — states, transitions, permissions, guards, persistence, and audit behavior are declarative; scripts are escape hatches</li>
         <li><strong>One line to switch</strong> — database, protocol, or auth provider</li>
         <li><strong>No black boxes</strong> — every built-in component can be extended or replaced</li>
         <li><strong>Agent-friendly</strong> — YAML definitions are structured enough for AI agents to read, generate, and modify</li>

@@ -19,7 +19,7 @@
 <header class="page-hero">
   <span class="eyebrow">Multi-language</span>
   <h1>Custom scripting engine</h1>
-  <p class="hero-sub">SQL covers most data needs, but ERP workflows often require custom logic — validation rules, complex calculations, data transformations, or calls to external APIs. Declare <code class="kw">language</code> and write code inline or reference an external file.</p>
+  <p class="hero-sub">SQL and YAML cover most ERP needs. When custom logic is required, source code is compiled to WebAssembly and executed with explicit capabilities so custom code cannot directly compromise the server.</p>
 </header>
 
 <div class="layout">
@@ -60,6 +60,8 @@
       <div class="nav-group">
         <a href="scripting.html" class="current-page">Scripting engine</a>
         <div class="sub-links">
+          <a href="#scripting-workflows">YAML workflows</a>
+          <a href="#scripting-wasm">WebAssembly boundary</a>
           <a href="#scripting-runtimes">Runtimes</a>
           <a href="#scripting-inline">Inline scripts</a>
           <a href="#scripting-file">External files</a>
@@ -84,20 +86,114 @@
     <section id="scripting">
       <span class="kicker">Multi-language</span>
       <h2>Custom scripting engine</h2>
-      <p class="lead">The framework spawns a sandboxed runtime for the declared language, passes the execution context (user, params, previous datasource results), and collects the return value as the datasource output. Role and permission gates apply exactly the same way as SQL datasources.</p>
+      <p class="lead">YAML is the first-class definition. Custom source code is a build input, not production server code: the build pipeline compiles it to WebAssembly, validates the module, and the server executes only the resulting WASM artifact through a capability-limited host interface.</p>
+
+      <h3 id="scripting-workflows">YAML workflows are the first-class model</h3>
+      <p>Business workflows are declared in YAML before custom code is considered. A workflow definition owns its states, transitions, permissions, guards, persistence, and audit behavior. The runtime validates the transition from the current persisted state and applies the resulting state change server-side.</p>
+
+      <pre><code class="language-yaml"># workflows/orders.yaml
+workflow:
+  id: orders
+  entity: orders
+  state:
+    val: status
+    text: status_text
+    initial: Draft
+
+  transitions:
+    - id: submit_for_approval
+      from: [Draft]
+      to: Pending Approval
+      permission: orders.write
+      audit: Submit order for approval
+
+    - id: approve
+      from: [Pending Approval]
+      to: Approved
+      permission: orders.approve
+      guard:
+        all:
+          - field: total_amount
+            operator: greater_than
+            value: 0
+          - field: customer_id
+            operator: present
+      audit: Approve order
+
+    - id: reject
+      from: [Pending Approval]
+      to: Draft
+      permission: orders.approve
+      audit: Return order to draft
+
+    - id: cancel
+      from: [Draft, Pending Approval, Approved]
+      to: Cancelled
+      permission: orders.write
+      audit: Cancel order
+
+  persistence:
+    update: { val: status, text: status_text }
+    audit_table: system_activity</code></pre>
+
+      <p>The page references a workflow transition by ID; it does not reproduce the transition rules:</p>
+      <pre><code class="language-yaml">actions:
+  - id: approve_order
+    type: workflow
+    workflow: orders
+    transition: approve
+    permission: orders.approve
+    refresh: [orders]</code></pre>
+
+      <h4>Workflow execution contract</h4>
+      <ul>
+        <li>The server loads the workflow YAML and treats it as the authoritative transition graph.</li>
+        <li>The server reads the current state from the persisted record; the client cannot choose the source state.</li>
+        <li>The server checks permission, row scope, guard conditions, and transition validity before writing.</li>
+        <li>The server writes the target state and its display text as one mutation, then records the audit event.</li>
+        <li>JavaScript is an extension point for guards or effects that cannot be expressed declaratively; it is not the workflow definition.</li>
+      </ul>
+
+      <h3 id="scripting-wasm">WebAssembly security boundary</h3>
+      <p>Production custom logic crosses the server boundary only as WebAssembly. A WASM module has no implicit access to the filesystem, process, network, environment, database connection, secrets, or host memory. Every operation must be exposed deliberately through a typed host capability declared by YAML.</p>
+
+      <pre><code class="language-yaml">script:
+  id: calculate-order-totals
+  source: ./scripts/calculate-order-totals.ts
+  language: typescript
+  compile:
+    target: wasm32-wasi
+    toolchain: configured-build-image
+    optimize: release
+  capabilities:
+    - datasource.read: orders
+    - datasource.read: order_lines
+  limits:
+    memory_mb: 64
+    fuel: 1000000
+    timeout_ms: 500
+  output: json</code></pre>
+
+      <h4>Execution rules</h4>
+      <ul>
+        <li>The server never evaluates arbitrary JavaScript, TypeScript, Python, Lua, or Shell source in the request path.</li>
+        <li>Compilation happens in a controlled build environment; deployment ships the compiled module, checksum, source metadata, and declared capabilities.</li>
+        <li>The WASM runtime denies undeclared imports and enforces memory, fuel, timeout, output-size, and concurrency limits.</li>
+        <li>Database, HTTP, file, clock, and secret access are host functions and must be explicitly granted by YAML.</li>
+        <li>JavaScript may remain an authoring language or a narrow development adapter, but it is never the server isolation boundary.</li>
+      </ul>
 
       <h3 id="scripting-runtimes">Supported runtimes</h3>
       <table class="dtable">
-        <tr><th>Language</th><th>Runtime</th><th>Best for</th></tr>
-        <tr><td>JavaScript</td><td>V8 isolate (vm2 / isolated-vm)</td><td>General logic, API calls, JSON transforms</td></tr>
-        <tr><td>TypeScript</td><td>V8 isolate + ts-strip</td><td>Same as JS with type safety</td></tr>
-        <tr><td>Python</td><td>Subprocess / Pyodide (WASM)</td><td>Data science, ML inference, pandas transforms</td></tr>
-        <tr><td>Lua</td><td>Fengari (WASM)</td><td>Lightweight rules, game-style scripting</td></tr>
-        <tr><td>Shell</td><td>Subprocess (sandboxed)</td><td>System automation, file processing, CLI tools</td></tr>
-        <tr><td>Custom</td><td>Pluggable adapter</td><td>Any language — register a runtime adapter</td></tr>
+        <tr><th>Source language</th><th>Production artifact</th><th>Best for</th></tr>
+        <tr><td>JavaScript / TypeScript</td><td>WASM module</td><td>General logic, API-safe transforms, validation</td></tr>
+        <tr><td>Rust / Go / C / C++</td><td>WASM module</td><td>Performance-sensitive calculations and integrations</td></tr>
+        <tr><td>Python / Lua</td><td>WASM-compatible compiled module</td><td>Data transforms and specialized rules</td></tr>
+        <tr><td>Custom</td><td>WASM adapter</td><td>Any language with a supported compiler target</td></tr>
       </table>
 
-      <h3 id="scripting-inline">Inline script in YAML</h3>
+      <h3 id="scripting-inline">Source declaration in YAML</h3>
+      <p>Inline source is convenient for authoring, but it is still compiled to WASM before deployment. The YAML definition records the source, compiler target, capabilities, and runtime limits.</p>
       <pre><code class="language-yaml"># datasource with inline JavaScript
 datasources:
   - id: enriched-orders
@@ -130,8 +226,8 @@ datasources:
       return { "monthly": monthly.to_dict(), "next_month": forecast }
     component: summary-card</code></pre>
 
-      <h3 id="scripting-file">External script file</h3>
-      <p>For larger scripts, reference an external file. The framework resolves the path relative to the YAML file:</p>
+      <h3 id="scripting-file">External source file</h3>
+      <p>For larger scripts, reference an external source file. The build pipeline resolves the path relative to the YAML file, compiles the source to WASM, and deploys the compiled artifact with its checksum and capability manifest:</p>
       <pre><code class="language-yaml">datasources:
   - id: inventory-sync
     language: python
@@ -151,7 +247,7 @@ datasources:
       po_id: { type: uuid, bind: po-detail.id }</code></pre>
 
       <h3 id="scripting-ctx">Execution context</h3>
-      <p>Every script receives a <code class="kw">ctx</code> object with access to the current user, parameters, other datasource results, and utility functions:</p>
+      <p>Every WASM module receives a typed host context with only the capabilities granted by YAML. The module cannot access the server runtime directly:</p>
       <pre><code class="language-typescript">interface ScriptContext {
   user: User;                                       // current authenticated user
   params: Record&lt;string, any&gt;;                      // resolved YAML params

@@ -55,11 +55,13 @@
           <a href="#backend-dbs">Databases</a>
           <a href="#backend-sql">Embedded SQL</a>
           <a href="#backend-crud">CRUD operations</a>
+          <a href="#backend-value-text">Value/text storage</a>
         </div>
       </div>
       <div class="nav-group">
         <a href="scripting.html">Scripting engine</a>
         <div class="sub-links">
+          <a href="scripting.html#scripting-wasm">WebAssembly boundary</a>
           <a href="scripting.html#scripting-runtimes">Runtimes</a>
           <a href="scripting.html#scripting-inline">Inline scripts</a>
           <a href="scripting.html#scripting-file">External files</a>
@@ -153,6 +155,26 @@ datasources:
     params:
       since: { type: date, default: "-30d" }
     cache: { ttl: 60s }</code></pre>
+
+      <h3 id="backend-value-text">Value/text storage contract</h3>
+      <p>Reference-like fields are stored on the main record as a pair. The value column stores the stable ID or code used by the data model. The text column stores the display snapshot used by pages, reports, exports, and sorting. The pair is returned directly by the datasource without client-side lookup.</p>
+
+      <pre><code class="language-sql">CREATE TABLE orders (
+  id                  UUID PRIMARY KEY,
+  customer_id         UUID NOT NULL,
+  customer_text       VARCHAR NOT NULL,
+  shipment_type_id    VARCHAR NOT NULL,
+  shipment_type_text  VARCHAR NOT NULL
+);
+
+SELECT
+  o.customer_id,
+  o.customer_text,
+  o.shipment_type_id,
+  o.shipment_type_text
+FROM orders o;</code></pre>
+
+      <p>Writes accept the value field as the authoritative relationship and persist the text field in the same mutation. A page may submit <code class="kw">customer_id</code>; the server resolves or validates the corresponding <code class="kw">customer_text</code> before committing the record. The client must not treat text as the relationship key.</p>
 
       <h3 id="backend-crud">CRUD operations</h3>
       <p>Datasources are not read-only. Each datasource can declare <strong>create</strong>, <strong>update</strong>, and <strong>delete</strong> operations alongside the query. Use default flags for standard table mutations, or custom functions when business logic is involved.</p>

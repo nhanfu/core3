@@ -45,6 +45,7 @@
           <a href="#frontend-react">React interop</a>
           <a href="#frontend-lego">LEGO assembly</a>
           <a href="#frontend-gridview">Server-first data</a>
+          <a href="#frontend-value-text">Value/text contract</a>
         </div>
       </div>
       <div class="nav-group">
@@ -227,6 +228,34 @@ components:
       <p>Traditional grid implementations split work awkwardly: the backend returns raw IDs, the frontend resolves them via reference lookups, and column definitions sit in a configuration limbo — neither true components nor pure data. This creates coupling, duplicated logic, and prevents columns from participating in the component tree.</p>
       <p><strong>The framework takes a different approach:</strong> the server sends a <strong>flat 1D array</strong> with all data fully resolved — every JOIN, lookup, and transformation happens server-side in a single query or function. On the frontend, what were formerly "columns" are now <strong>components</strong> — real <code class="kw">BaseComponent</code> instances that live in the virtual tree, have their own state, can traverse to parent/children/root, and can submit actions to the server. All event handling is centralized in a single class at the page level, inherited from <code class="kw">BaseComponent</code>.</p>
       <p>This pattern is not GridView-specific. It applies uniformly to <strong>ListView</strong>, <strong>TreeView</strong>, <strong>PDF reports</strong>, or any view that requires complex query and rendering.</p>
+
+      <h3 id="frontend-value-text">Underlying values and display text</h3>
+      <p>Every reference-like field has two explicit values in the underlying record: a stable <strong>value</strong> (normally an ID or code) and a persisted <strong>text</strong> snapshot for display. The page never reconstructs display text by resolving IDs in the browser.</p>
+
+      <pre><code class="language-yaml"># The datasource returns both fields from the main record
+SELECT
+  o.customer_id,
+  o.customer_text,
+  o.shipment_type_id,
+  o.shipment_type_text
+FROM orders o
+
+# YAML binds identity and presentation separately
+columns:
+  - val: customer_id
+    text: customer_text
+    label: Customer
+  - val: shipment_type_id
+    text: shipment_type_text
+    label: Shipment type</code></pre>
+
+      <ul class="principles">
+        <li><strong><code class="kw">val</code> is identity.</strong> Use it for relationships, filtering by ID, form submission, authorization, and mutations.</li>
+        <li><strong><code class="kw">text</code> is presentation and sort value.</strong> Use it for rendering, searching, and sorting. It may differ from <code class="kw">val</code>.</li>
+        <li><strong>Both fields are part of the record contract.</strong> A datasource must return the fields declared by the page; the client must not create lookup maps.</li>
+        <li><strong>Text is a persisted snapshot.</strong> When a referenced record is renamed, the owning application updates the text snapshots according to its data-maintenance policy.</li>
+        <li><strong>Simple scalar fields may use one binding.</strong> If no separate display value exists, <code class="kw">val</code> alone is sufficient and is used for both display and sorting.</li>
+      </ul>
 
       <h4>Server side: all burden here</h4>
       <p>The backend returns a flat array of fully resolved rows. No reference sets, no client-side lookups. One query (or function) does all the work:</p>

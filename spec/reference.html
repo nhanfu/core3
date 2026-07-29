@@ -60,6 +60,7 @@
       <div class="nav-group">
         <a href="scripting.html">Scripting engine</a>
         <div class="sub-links">
+          <a href="scripting.html#scripting-wasm">WebAssembly boundary</a>
           <a href="scripting.html#scripting-runtimes">Runtimes</a>
           <a href="scripting.html#scripting-inline">Inline scripts</a>
           <a href="scripting.html#scripting-file">External files</a>
@@ -314,7 +315,7 @@ framework.configure({
     <section id="full-example">
       <span class="kicker">End to end</span>
       <h2>Full YAML page example</h2>
-      <p class="lead">A complete purchase order page — layout, components, datasources, CRUD, and permissions in a single YAML file.</p>
+      <p class="lead">A complete purchase order page — layout, value/text data bindings, datasources, CRUD, and permissions in a single YAML file.</p>
       <pre><code class="language-yaml"># page: purchase-orders.yaml
 page:
   title: Purchase Orders
@@ -344,9 +345,9 @@ layout:
         width: 120
       - type: TextCell
         id: vendor
-        field: vendor_name
+        val: vendor_id
+        text: vendor_text
         label: Vendor
-        secondary: vendor_code
       - type: CurrencyCell
         id: amount
         field: total
@@ -354,9 +355,9 @@ layout:
         class: "tabular-nums text-right"
       - type: BadgeCell
         id: status
-        field: status_label
+        val: status
+        text: status_text
         label: Status
-        color: status_color
       - type: DateCell
         id: created
         field: created_at
@@ -416,8 +417,8 @@ datasources:
     permission: "po.read"
     query: |
       SELECT po.id, po.po_number,
-             v.name AS vendor_name, v.code AS vendor_code,
-             s.label AS status_label, s.color AS status_color,
+             po.vendor_id, po.vendor_text,
+             po.status, po.status_text,
              po.total, po.created_at
       FROM purchase_orders po
       JOIN vendors v ON v.id = po.vendor_id

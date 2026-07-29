@@ -111,7 +111,7 @@ datasources:
 | Config | YAML → JSON at runtime |
 | Server | Node.js / Bun |
 | Databases | PostgreSQL, SQL Server, SQLite, DuckDB |
-| Scripting | JS, TS, Python, Lua, Shell (sandboxed) |
+| Scripting | YAML-declared source compiled to WebAssembly with explicit capabilities |
 | Auth | Pluggable interface (host app provides impl) |
 | Protocols | HTTP, WebSocket, SSE, gRPC |
 
