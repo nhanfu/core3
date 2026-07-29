@@ -46,6 +46,7 @@
           <a href="#frontend-lego">LEGO assembly</a>
           <a href="#frontend-gridview">Server-first data</a>
           <a href="#frontend-value-text">Value/text contract</a>
+          <a href="#frontend-page-contracts">Page contracts</a>
         </div>
       </div>
       <div class="nav-group">
@@ -255,6 +256,70 @@ columns:
         <li><strong>Both fields are part of the record contract.</strong> A datasource must return the fields declared by the page; the client must not create lookup maps.</li>
         <li><strong>Text is a persisted snapshot.</strong> When a referenced record is renamed, the owning application updates the text snapshots according to its data-maintenance policy.</li>
         <li><strong>Simple scalar fields may use one binding.</strong> If no separate display value exists, <code class="kw">val</code> alone is sufficient and is used for both display and sorting.</li>
+      </ul>
+
+      <h3 id="frontend-page-contracts">YAML page inputs, outputs, and variants</h3>
+      <p>A YAML page can expose a typed contract instead of being usable only as a standalone route. Other YAML pages can provide inputs, consume outputs, and select a named variant. A variant may replace datasource bindings, hide components, change actions, or restrict the page to a specific interaction such as search and selection.</p>
+
+      <h4>Provider page: customers.yaml</h4>
+      <pre><code class="language-yaml">page:
+  id: customers
+  inputs:
+    - { name: mode, type: enum, values: [standalone, picker], default: standalone }
+    - { name: source, type: datasource, default: customers }
+    - { name: visible, type: component-list }
+  outputs:
+    - name: selected
+      type: record
+      fields: [id, text]
+
+variants:
+  standalone:
+    source: customers
+    visible: [intro, toolbar, status-tabs, customer-grid, create-customer]
+
+  picker:
+    source: customer_picker
+    visible: [toolbar, customer-grid]
+    hide: [intro, status-tabs, create-customer, export]
+    grid:
+      selectable: single
+      output: selected
+    close_after: selected</code></pre>
+
+      <h4>Consumer page: orders.yaml</h4>
+      <pre><code class="language-yaml">components:
+  - type: PageEmbed
+    id: customer-picker
+    page: customers
+    variant: picker
+    inputs:
+      source: order_customer_picker
+      visible: [toolbar, customer-grid]
+    outputs:
+      selected:
+        set:
+          - { field: customer_id, val: '$output.id' }
+          - { field: customer_text, text: '$output.text' }
+        close: true
+
+datasources:
+  - id: order_customer_picker
+    permission: orders.read
+    query: |
+      SELECT c.id AS id, c.name AS text
+      FROM customers c
+      WHERE c.status = 'Active'
+      ORDER BY c.name</code></pre>
+
+      <h4>Contract rules</h4>
+      <ul>
+        <li><strong>Inputs are caller-owned.</strong> A caller supplies filters, datasource bindings, mode, and context; the provider validates them against its YAML contract.</li>
+        <li><strong>Outputs are explicit.</strong> A provider emits named records or events, never mutates the caller's state implicitly.</li>
+        <li><strong>Variants are declarative.</strong> Hiding a component, replacing a datasource, changing selection mode, or disabling an action is YAML configuration.</li>
+        <li><strong>Permissions remain server-owned.</strong> A caller cannot use a variant to bypass datasource or action permissions.</li>
+        <li><strong>Provider defaults remain safe.</strong> Opening <code class="kw">customers.yaml</code> normally uses the standalone variant; picker behavior must be selected explicitly.</li>
+        <li><strong>JavaScript is an escape hatch only.</strong> Custom output mapping is allowed only when the YAML mapping language cannot express the behavior.</li>
       </ul>
 
       <h4>Server side: all burden here</h4>

@@ -176,6 +176,9 @@ FROM orders o;</code></pre>
 
       <p>Writes accept the value field as the authoritative relationship and persist the text field in the same mutation. A page may submit <code class="kw">customer_id</code>; the server resolves or validates the corresponding <code class="kw">customer_text</code> before committing the record. The client must not treat text as the relationship key.</p>
 
+      <h3 id="backend-page-contracts">Page input/output contracts</h3>
+      <p>When one YAML page is opened by another, the server validates the provider page's input contract and preserves its permission boundary. A caller can request a datasource variant, but cannot inject SQL, remove authorization, or invoke an action that the provider did not declare.</p>
+
       <h3 id="backend-crud">CRUD operations</h3>
       <p>Datasources are not read-only. Each datasource can declare <strong>create</strong>, <strong>update</strong>, and <strong>delete</strong> operations alongside the query. Use default flags for standard table mutations, or custom functions when business logic is involved.</p>
 
