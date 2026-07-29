@@ -60,9 +60,10 @@ async function bootstrap() {
   if (searchView.filters?.length) filterOptions = searchView.filters.map((value: string) => ({ value, label: labels[value] || value }));
   if (searchView.group_by?.length) groupOptions = [{ value: '', label: 'No grouping' }, ...searchView.group_by.map((value: string) => ({ value, label: labels[value] || value }))];
   const menuTree = new ModuleMenuTree(moduleDefinition.menus || []);
-  const nav = menuTree.tree(currentRole).flatMap(menu => [menu, ...menu.children])
-    .filter(menu => menu.id !== 'crm.root' && (menu.action || menu.id === 'crm.activities' || menu.id === 'crm.reporting' || menu.id === 'crm.settings'))
-    .map(menu => ({ id: menu.id.replace('crm.', ''), label: menu.label, icon: menu.icon || iconFor(menu.id) }));
+  const nav = menuTree.tree(currentRole)
+    .flatMap(menu => menu.id === 'crm.root' ? menu.children : [menu])
+    .map(menu => toNavItem(menu))
+    .filter(menu => menu.action || menu.children?.length);
   shell = new OdooShell('crm-shell', {
     appName: moduleDefinition.module.name,
     appIcon: 'users',
@@ -120,6 +121,16 @@ async function bootstrap() {
   });
   router.listen(state => void renderFromRoute(state, true));
   void renderFromRoute(router.read(), true);
+}
+
+function toNavItem(menu: any): any {
+  return {
+    id: menu.id.replace('crm.', ''),
+    label: menu.label,
+    icon: menu.icon || iconFor(menu.id),
+    action: menu.action,
+    children: menu.children?.map(toNavItem).filter((child: any) => child.action || child.children?.length),
+  };
 }
 
 function renderAppPlaceholder(manifest?: AppManifest) {

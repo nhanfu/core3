@@ -257,6 +257,22 @@ button, input {
   box-shadow: inset 3px 0 var(--purple);
 }
 
+.odoo-nav-children {
+  margin-left: 14px;
+  border-left: 1px solid #555;
+  padding-left: 5px;
+}
+
+.odoo-nav-level-1 {
+  color: #bdbdbd;
+  font-size: 12px;
+}
+
+.odoo-nav-level-2 {
+  color: #aaa;
+  font-size: 11px;
+}
+
 .odoo-main {
   min-width: 0;
   flex: 1;

@@ -4,7 +4,7 @@ import { appendIcon } from './Icon.ts';
 import { AppLauncher } from './AppLauncher.ts';
 import type { AppManifest } from '../services/AppRegistry.ts';
 
-export type OdooShellNavItem = { id: string; label: string; icon?: string };
+export type OdooShellNavItem = { id: string; label: string; icon?: string; action?: string; children?: OdooShellNavItem[] };
 
 export type OdooShellDefinition = {
   appName?: string;
@@ -50,7 +50,7 @@ export class OdooShell extends BaseComponent {
     for (const [itemId, element] of this.navElements) {
       element.classList.toggle('is-active', itemId === id);
     }
-    const item = this.def.nav?.find(nav => nav.id === id);
+    const item = findNavItem(this.def.nav || [], id);
     if (this.breadcrumbElement && item) this.breadcrumbElement.textContent = `${this.def.appName || 'CRM'} / ${item.label}`;
   }
 
@@ -71,16 +71,14 @@ export class OdooShell extends BaseComponent {
     html.take(brandText).small.text(this.def.companyName || 'My Company');
     const menuTitle = html.take(sidebar).div.className('odoo-sidebar-label').text(this.def.appName || 'CRM').getContext();
     const nav = html.take(sidebar).nav.className('odoo-nav').getContext();
-    for (const item of this.def.nav || []) {
-      const button = html.take(nav).button.className('odoo-nav-item').type('button').dataAttr('nav-id', item.id).getContext();
-      if (item.icon) appendIcon(button, item.icon);
-      html.take(button).span.text(item.label);
+    renderNavItems(nav, this.def.nav || [], 0, (item, button) => {
       button.addEventListener('click', () => {
+        if (!item.action && item.children?.length) return;
         this.setActiveNav(item.id);
         void this.submit('navigate', { id: item.id });
       });
       this.navElements.set(item.id, button);
-    }
+    });
     const main = html.take(root).main.className('odoo-main').getContext();
     const header = html.take(main).header.className('odoo-topbar').getContext();
     const appButton = html.take(header).button.className('odoo-icon-button odoo-app-button').type('button').attr('title', 'Applications').getContext();
@@ -116,5 +114,32 @@ export class OdooShell extends BaseComponent {
     user.addEventListener('click', () => void this.submit('user_menu', { user: this.def.userName }));
     this.content = html.take(main).section.className('odoo-content').getContext();
     this.setActiveNav(this.state.activeNav);
+  }
+}
+
+function findNavItem(items: OdooShellNavItem[], id: string): OdooShellNavItem | undefined {
+  for (const item of items) {
+    if (item.id === id) return item;
+    const child = findNavItem(item.children || [], id);
+    if (child) return child;
+  }
+  return undefined;
+}
+
+function renderNavItems(
+  container: HTMLElement,
+  items: OdooShellNavItem[],
+  level: number,
+  onClick: (item: OdooShellNavItem, button: HTMLButtonElement) => void,
+) {
+  for (const item of items) {
+    const button = html.take(container).button.className(`odoo-nav-item odoo-nav-level-${level}`).type('button').dataAttr('nav-id', item.id).getContext();
+    if (item.icon) appendIcon(button, item.icon);
+    html.take(button).span.text(item.label);
+    onClick(item, button);
+    if (item.children?.length) {
+      const children = html.take(container).div.className('odoo-nav-children').getContext();
+      renderNavItems(children, item.children, level + 1, onClick);
+    }
   }
 }
