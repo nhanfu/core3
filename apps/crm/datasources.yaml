@@ -1,0 +1,321 @@
+datasources:
+  - id: crm.stage_summary
+    db: duckdb
+    protocol: http
+    roles: [salesperson, manager, system]
+    permission: crm.lead.read
+    params:
+      type: { type: string, default: opportunity }
+      role: { type: string, default: salesperson }
+    query: |
+      SELECT stage_id, count(*) AS lead_count
+      FROM crm_lead
+      WHERE type = :type
+        AND active = true
+        AND (:role <> 'salesperson' OR salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+      GROUP BY stage_id
+      ORDER BY stage_id
+
+  - id: crm.lost_reasons
+    query: SELECT id, name FROM crm_lost_reason ORDER BY name
+  - id: crm.config
+    query: SELECT key, value FROM crm_config ORDER BY key
+  - id: crm.stages
+    query: SELECT id, name, sequence, folded, requirements FROM crm_stage ORDER BY sequence
+  - id: crm.tags
+    query: SELECT id, name, color FROM crm_tag ORDER BY name
+  - id: crm.catalog.activity_types
+    query: SELECT * FROM crm_activity_type ORDER BY name
+  - id: crm.catalog.activity_plans
+    query: SELECT * FROM crm_activity_plan ORDER BY name
+  - id: crm.catalog.recurring_plans
+    query: SELECT * FROM crm_recurring_plan ORDER BY name
+  - id: crm.import_history
+    query: SELECT id, imported_count, error_count, errors, created_at FROM crm_import_history ORDER BY created_at DESC LIMIT 50
+  - id: crm.lead
+    params: { id: { type: string } }
+    query: SELECT * FROM crm_lead WHERE id = :id
+  - id: crm.lead_tags
+    params: { id: { type: string } }
+    query: |
+      SELECT coalesce(string_agg(tag.id, ',' ORDER BY tag.id), '') AS tag_ids
+      FROM crm_lead l
+      LEFT JOIN crm_lead_tag lt ON lt.lead_id = l.id
+      LEFT JOIN crm_tag tag ON tag.id = lt.tag_id
+      WHERE l.id = :id
+  - id: crm.lead_access
+    params: { id: { type: string } }
+    query: |
+      SELECT id FROM crm_lead
+      WHERE id = :id AND (salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+  - id: crm.lead_identity
+    params: { id: { type: string } }
+    query: SELECT name, partner_name, email, phone FROM crm_lead WHERE id = :id
+  - id: crm.duplicate_leads
+    params:
+      id: { type: string }
+      name: { type: string }
+      partner_name: { type: string }
+      email: { type: string }
+      phone: { type: string }
+    query: |
+      SELECT id, name, type, partner_name, email, phone, expected_revenue, stage_id
+      FROM crm_lead WHERE active AND id <> :id AND (
+        lower(name) = lower(:name) OR
+        (coalesce(partner_name, '') <> '' AND lower(partner_name) = lower(:partner_name)) OR
+        (coalesce(email, '') <> '' AND lower(email) = lower(:email)) OR
+        (coalesce(phone, '') <> '' AND phone = :phone)
+      ) ORDER BY name
+  - id: crm.partners
+    params: { search: { type: string } }
+    query: SELECT id, name, email, phone FROM crm_partner WHERE lower(name) LIKE lower(:search) ORDER BY name LIMIT 20
+  - id: crm.lookup.partners
+    params: { search: { type: string } }
+    query: SELECT id, name, email, phone FROM crm_partner WHERE lower(name) LIKE lower(:search) ORDER BY name LIMIT 20
+  - id: crm.lookup.users
+    params: { search: { type: string } }
+    query: SELECT id, name, email FROM res_user WHERE active AND lower(name) LIKE lower(:search) ORDER BY name
+  - id: crm.lookup.teams
+    params: { search: { type: string } }
+    query: SELECT id, name FROM crm_team WHERE active AND lower(name) LIKE lower(:search) ORDER BY name
+  - id: crm.lookup.tags
+    query: SELECT id, name, color FROM crm_tag ORDER BY name
+  - id: crm.lookup.recurring_plans
+    query: SELECT id, name FROM crm_recurring_plan WHERE active ORDER BY name
+  - id: crm.customers
+    params: { search: { type: string } }
+    query: |
+      SELECT p.id, p.name, p.email, p.phone,
+        count(l.id) AS opportunity_count,
+        coalesce(sum(l.expected_revenue), 0) AS expected_revenue
+      FROM crm_partner p
+      LEFT JOIN crm_lead l ON l.partner_name = p.name AND l.active
+      WHERE lower(p.name) LIKE lower(:search) OR lower(coalesce(p.email, '')) LIKE lower(:search)
+      GROUP BY p.id, p.name, p.email, p.phone
+      ORDER BY p.name
+  - id: crm.teams
+    query: |
+      SELECT t.id, t.name, t.quota,
+        (SELECT count(*) FROM crm_lead l WHERE l.active AND (l.team_id = t.id OR (l.team_id IS NULL AND l.team = t.name))) AS lead_count,
+        (SELECT coalesce(sum(l.expected_revenue), 0) FROM crm_lead l WHERE l.active AND (l.team_id = t.id OR (l.team_id IS NULL AND l.team = t.name))) AS expected_revenue,
+        (SELECT count(*) FROM crm_lead l WHERE l.active AND l.stage_id NOT IN ('won', 'lost') AND (l.team_id = t.id OR (l.team_id IS NULL AND l.team = t.name))) AS open_count,
+        (SELECT count(*) FROM crm_team_member m WHERE m.team_id = t.id) AS member_count
+      FROM crm_team t WHERE t.active ORDER BY t.name
+  - id: crm.customer
+    params: { id: { type: string } }
+    query: SELECT id, name, email, phone FROM crm_partner WHERE id = :id
+  - id: crm.customer_leads
+    params: { id: { type: string }, name: { type: string } }
+    query: |
+      SELECT l.id, l.name, l.type, l.stage_id, s.name AS stage_name, l.expected_revenue
+      FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
+      WHERE l.active AND (l.partner_id = :id OR (l.partner_id IS NULL AND l.partner_name = :name))
+      ORDER BY l.created_at DESC
+  - id: crm.customer_activities
+    params: { id: { type: string }, name: { type: string } }
+    query: |
+      SELECT a.id, a.lead_id, a.summary, a.activity_type, a.due_date, a.done
+      FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
+      WHERE l.active AND (l.partner_id = :id OR (l.partner_id IS NULL AND l.partner_name = :name))
+      ORDER BY a.due_date NULLS LAST
+  - id: crm.team
+    params: { id: { type: string } }
+    query: SELECT id, name, quota, active FROM crm_team WHERE id = :id
+  - id: crm.team_members
+    params: { id: { type: string } }
+    query: SELECT user_id FROM crm_team_member WHERE team_id = :id ORDER BY user_id
+  - id: crm.attachment
+    params: { id: { type: string } }
+    query: SELECT id, lead_id, name, stored_path, mime_type, file_size FROM crm_attachment WHERE id = :id
+  - id: crm.lead_messages
+    params: { id: { type: string } }
+    query: SELECT id, author, body, created_at FROM crm_message WHERE lead_id = :id ORDER BY created_at DESC
+  - id: crm.lead_activities
+    params: { id: { type: string } }
+    query: SELECT id, activity_type, summary, due_date, done FROM crm_activity WHERE lead_id = :id ORDER BY due_date NULLS LAST
+  - id: crm.lead_followers
+    params: { id: { type: string } }
+    query: SELECT id, name FROM crm_follower WHERE lead_id = :id ORDER BY name
+  - id: crm.lead_attachments
+    params: { id: { type: string } }
+    query: SELECT id, name, stored_path, mime_type, file_size, created_at FROM crm_attachment WHERE lead_id = :id ORDER BY created_at DESC
+
+  - id: crm.move_stage
+    params: { stage_id: { type: string }, id: { type: string } }
+    statement: UPDATE crm_lead SET stage_id = :stage_id, write_version = coalesce(write_version, 1) + 1 WHERE id = :id
+  - id: crm.save_lost_reason
+    params: { id: { type: string }, name: { type: string } }
+    statement: INSERT INTO crm_lost_reason(id, name) VALUES(:id, :name) ON CONFLICT(id) DO UPDATE SET name = excluded.name
+  - id: crm.save_tag
+    params: { id: { type: string }, name: { type: string }, color: { type: string } }
+    statement: INSERT INTO crm_tag(id, name, color) VALUES(:id, :name, :color) ON CONFLICT(id) DO UPDATE SET name = excluded.name, color = excluded.color
+  - id: crm.save_config
+    params: { key: { type: string }, value: { type: string } }
+    statement: INSERT INTO crm_config(key, value) VALUES(:key, :value) ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  - id: crm.add_message
+    params: { id: { type: string }, lead_id: { type: string }, author: { type: string }, body: { type: string } }
+    statement: INSERT INTO crm_message(id, lead_id, author, body) VALUES(:id, :lead_id, :author, :body)
+  - id: crm.add_activity
+    params: { id: { type: string }, lead_id: { type: string }, activity_type: { type: string }, summary: { type: string }, due_date: { type: string } }
+    statement: INSERT INTO crm_activity(id, lead_id, activity_type, summary, due_date) VALUES(:id, :lead_id, :activity_type, :summary, :due_date)
+  - id: crm.add_follower
+    params: { id: { type: string }, lead_id: { type: string }, name: { type: string } }
+    statement: INSERT INTO crm_follower(id, lead_id, name) VALUES(:id, :lead_id, :name)
+  - id: crm.add_attachment
+    params: { id: { type: string }, lead_id: { type: string }, name: { type: string } }
+    statement: INSERT INTO crm_attachment(id, lead_id, name) VALUES(:id, :lead_id, :name)
+  - id: crm.import_error
+    params: { id: { type: string }, imported_count: { type: number }, error_count: { type: number }, errors: { type: string } }
+    statement: INSERT INTO crm_import_history(id, imported_count, error_count, errors) VALUES(:id, :imported_count, :error_count, :errors)
+  - id: crm.access.leads
+    params: { ids: { type: json } }
+    query: |
+      SELECT count(*) AS count FROM crm_lead
+      WHERE id IN (:ids) AND (salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+  - id: crm.access.activities
+    params: { ids: { type: json } }
+    query: |
+      SELECT count(*) AS count
+      FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
+      WHERE a.id IN (:ids) AND (l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+  - id: crm.mutate.archive
+    params: { ids: { type: json } }
+    statement: UPDATE crm_lead SET active = false WHERE id IN (:ids)
+  - id: crm.mutate.restore
+    params: { ids: { type: json } }
+    statement: UPDATE crm_lead SET active = true WHERE id IN (:ids)
+  - id: crm.mutate.assign
+    params: { ids: { type: json }, salesperson: { type: string } }
+    statement: UPDATE crm_lead SET salesperson = :salesperson WHERE id IN (:ids)
+  - id: crm.mutate.stage
+    params: { ids: { type: json }, stage_id: { type: string } }
+    statement: UPDATE crm_lead SET stage_id = :stage_id WHERE id IN (:ids)
+  - id: crm.activity.done
+    params: { ids: { type: json } }
+    statement: UPDATE crm_activity SET done = true WHERE id IN (:ids)
+  - id: crm.activity.reopen
+    params: { ids: { type: json } }
+    statement: UPDATE crm_activity SET done = false WHERE id IN (:ids)
+  - id: crm.activity.reschedule
+    params: { ids: { type: json }, due_date: { type: string } }
+    statement: UPDATE crm_activity SET due_date = :due_date WHERE id IN (:ids)
+  - id: crm.report.summary
+    params: { role: { type: string, default: manager } }
+    query: |
+      SELECT count(*) AS total,
+        count(*) FILTER (WHERE type = 'lead') AS leads,
+        count(*) FILTER (WHERE type = 'opportunity') AS opportunities,
+        count(*) FILTER (WHERE stage_id = 'won') AS won,
+        count(*) FILTER (WHERE stage_id = 'lost') AS lost,
+        coalesce(sum(expected_revenue) FILTER (WHERE stage_id NOT IN ('won', 'lost')), 0) AS open_revenue,
+        coalesce(sum(expected_revenue) FILTER (WHERE stage_id = 'won'), 0) AS won_revenue
+      FROM crm_lead
+      WHERE active AND (:role <> 'salesperson' OR salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+  - id: crm.report.by_stage
+    params: { role: { type: string, default: manager } }
+    query: |
+      SELECT s.name AS label, count(l.id) AS count, coalesce(sum(l.expected_revenue), 0) AS revenue
+      FROM crm_stage s LEFT JOIN crm_lead l ON l.stage_id = s.id AND l.active
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+      GROUP BY s.sequence, s.name ORDER BY s.sequence
+  - id: crm.report.analysis
+    params:
+      dimension: { type: string }
+      role: { type: string, default: manager }
+      from_date: { type: string, default: '' }
+      to_date: { type: string, default: '' }
+      search: { type: string, default: '' }
+    query: |
+      SELECT {{dimension}} AS label, count(l.id) AS count,
+        coalesce(sum(l.expected_revenue), 0) AS revenue,
+        coalesce(sum(l.recurring_revenue), 0) AS recurring_revenue,
+        coalesce(sum(l.expected_revenue * l.probability / 100), 0) AS weighted_revenue,
+        coalesce(avg(l.probability), 0) AS avg_probability
+      FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
+      WHERE l.active AND l.type = 'opportunity'
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+        AND (:from_date = '' OR cast(l.created_at AS DATE) >= :from_date)
+        AND (:to_date = '' OR cast(l.created_at AS DATE) <= :to_date)
+        AND (:search = '' OR lower(cast({{dimension}} AS VARCHAR)) LIKE lower(:search))
+      GROUP BY {{dimension}} ORDER BY revenue DESC
+  - id: crm.report.drilldown
+    params:
+      dimension: { type: string }
+      secondary_dimension: { type: string }
+      value: { type: string }
+      secondary_value: { type: string, default: '' }
+      role: { type: string, default: manager }
+    query: |
+      SELECT l.*, s.name AS stage_name
+      FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
+      WHERE l.active AND l.type = 'opportunity'
+        AND {{dimension}} = :value
+        AND (:secondary_value = '' OR {{secondary_dimension}} = :secondary_value)
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+      ORDER BY l.expected_revenue DESC, l.created_at DESC
+  - id: crm.lead.analysis
+    params:
+      dimension: { type: string }
+      role: { type: string, default: manager }
+      search: { type: string, default: '' }
+    query: |
+      SELECT {{dimension}} AS label, count(l.id) AS created_count,
+        count(l.id) FILTER (WHERE l.converted_at IS NOT NULL) AS converted_count,
+        coalesce(sum(l.expected_revenue), 0) AS revenue
+      FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
+      WHERE l.active
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+        AND (:search = '' OR lower(l.name) LIKE lower(:search) OR lower(coalesce(l.partner_name, '')) LIKE lower(:search) OR lower(coalesce(l.source, '')) LIKE lower(:search) OR lower(coalesce(l.campaign, '')) LIKE lower(:search) OR lower(coalesce(l.salesperson, '')) LIKE lower(:search))
+      GROUP BY {{dimension}} ORDER BY created_count DESC, label
+  - id: crm.lead.drilldown
+    params: { dimension: { type: string }, value: { type: string }, role: { type: string, default: manager } }
+    query: |
+      SELECT l.*, s.name AS stage_name
+      FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
+      WHERE l.active AND {{dimension}} = :value
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+      ORDER BY l.created_at DESC
+  - id: crm.activities
+    params: { status: { type: string, default: '' }, role: { type: string, default: manager }, search: { type: string, default: '' } }
+    query: |
+      SELECT a.id, a.lead_id, a.activity_type, a.summary, a.due_date, a.done,
+        l.name AS lead_name, l.type AS lead_type, l.salesperson
+      FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
+      WHERE (:status = '' OR (:status = 'open' AND NOT a.done) OR (:status = 'done' AND a.done) OR (:status = 'overdue' AND NOT a.done AND a.due_date < current_date))
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+        AND (:search = '' OR lower(a.summary) LIKE lower(:search) OR lower(l.name) LIKE lower(:search) OR lower(coalesce(l.salesperson, '')) LIKE lower(:search))
+      ORDER BY a.done, a.due_date NULLS LAST, a.id DESC
+  - id: crm.activity.analysis
+    params: { dimension: { type: string }, role: { type: string, default: manager }, search: { type: string, default: '' } }
+    query: |
+      SELECT {{dimension}} AS label, count(a.id) AS scheduled,
+        count(a.id) FILTER (WHERE a.done) AS completed,
+        count(a.id) FILTER (WHERE NOT a.done AND a.due_date < current_date) AS overdue
+      FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
+      WHERE l.active
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+        AND (:search = '' OR lower(a.summary) LIKE lower(:search) OR lower(l.name) LIKE lower(:search) OR lower(coalesce(a.activity_type, '')) LIKE lower(:search) OR lower(coalesce(l.salesperson, '')) LIKE lower(:search))
+      GROUP BY {{dimension}} ORDER BY scheduled DESC, label
+  - id: crm.activity.drilldown
+    params: { dimension: { type: string }, value: { type: string }, role: { type: string, default: manager } }
+    query: |
+      SELECT a.id, a.lead_id, a.activity_type, a.summary, a.due_date, a.done, l.name AS lead_name, l.salesperson
+      FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
+      WHERE l.active AND {{dimension}} = :value
+        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+      ORDER BY a.done, a.due_date NULLS LAST, a.id
+  - id: crm.save_customer
+    params: { id: { type: string }, name: { type: string }, email: { type: string }, phone: { type: string } }
+    statement: INSERT INTO crm_partner(id, name, email, phone) VALUES(:id, :name, :email, :phone) ON CONFLICT(id) DO UPDATE SET name=excluded.name, email=excluded.email, phone=excluded.phone
+  - id: crm.save_team
+    params: { id: { type: string }, name: { type: string }, quota: { type: number } }
+    statement: INSERT INTO crm_team(id, name, quota, active) VALUES(:id, :name, :quota, true) ON CONFLICT(id) DO UPDATE SET name=excluded.name, quota=excluded.quota, active=true
+  - id: crm.clear_team_members
+    params: { id: { type: string } }
+    statement: DELETE FROM crm_team_member WHERE team_id = :id
+  - id: crm.add_team_member
+    params: { team_id: { type: string }, user_id: { type: string } }
+    statement: INSERT INTO crm_team_member(team_id, user_id) VALUES(:team_id, :user_id) ON CONFLICT DO NOTHING
+  - id: crm.save_attachment_file
+    params: { id: { type: string }, lead_id: { type: string }, name: { type: string }, stored_path: { type: string }, mime_type: { type: string }, file_size: { type: number } }
+    statement: INSERT INTO crm_attachment(id, lead_id, name, stored_path, mime_type, file_size) VALUES(:id, :lead_id, :name, :stored_path, :mime_type, :file_size)

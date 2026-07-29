@@ -61,4 +61,20 @@ describe('CRM HTTP contract', () => {
     const assignment = await fetch(`http://127.0.0.1:${port}/api/crm/leads`, { method: 'POST', headers: { 'X-CRM-Role': 'salesperson', 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'opp-004', name: 'Annual support contract', salesperson_id: 'user-marc' }) });
     expect(assignment.status).toBe(403);
   });
+
+  test('executes a server-private YAML datasource query', async () => {
+    const salesperson = await (await request('/api/crm/stage-summary')).json();
+    const manager = await (await request('/api/crm/stage-summary', 'manager')).json();
+    expect(salesperson).toEqual([
+      { stage_id: 'new', lead_count: 1 },
+      { stage_id: 'qualified', lead_count: 1 },
+      { stage_id: 'won', lead_count: 1 },
+    ]);
+    expect(manager).toEqual([
+      { stage_id: 'new', lead_count: 2 },
+      { stage_id: 'proposition', lead_count: 1 },
+      { stage_id: 'qualified', lead_count: 2 },
+      { stage_id: 'won', lead_count: 1 },
+    ]);
+  });
 });

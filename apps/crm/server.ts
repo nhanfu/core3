@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage, attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead, crmConfig, crmLookups, crmStages, crmTags, customerRelated, findDuplicates, getCustomer, getLead, getTeam, importHistory, initDatabase, leadAnalysis, leadDrilldown, leadExtras, listActivities, listCustomers, listLeads, listTeams, loseLead, lostReasons, mergeLeads, mergePreview, moveStage, mutateActivities, mutateLeads, partners, pipeline, previewImportWithHistory, reportAnalysis, reportDrilldown, reportSummary, saveCatalogRow, saveCrmConfig, saveCrmStages, saveCrmTag, saveCustomer, saveLead, saveLostReason, saveTeam } from './database.ts';
+import { activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage, attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead, crmConfig, crmLookups, crmStages, crmTags, customerRelated, findDuplicates, getCustomer, getLead, getTeam, importHistory, initDatabase, leadAnalysis, leadDrilldown, leadExtras, listActivities, listCustomers, listLeads, listTeams, loseLead, lostReasons, mergeLeads, mergePreview, moveStage, mutateActivities, mutateLeads, partners, pipeline, previewImportWithHistory, queryDatasource, reportAnalysis, reportDrilldown, reportSummary, saveCatalogRow, saveCrmConfig, saveCrmStages, saveCrmTag, saveCustomer, saveLead, saveLostReason, saveTeam } from './database.ts';
 
 const PORT = Number(process.env.PORT || 3010);
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' };
@@ -44,6 +44,10 @@ Bun.serve({
     if (url.pathname === '/api/crm/pipeline' && request.method === 'GET') return json(await pipeline(url.searchParams.get('search') || '', {
       filter: url.searchParams.get('filter') || undefined,
       sort: url.searchParams.get('sort') || undefined,
+      role: roleOf(request),
+    }));
+    if (url.pathname === '/api/crm/stage-summary' && request.method === 'GET') return json(await queryDatasource('crm.stage_summary', {
+      type: url.searchParams.get('type') || 'opportunity',
       role: roleOf(request),
     }));
     if (url.pathname === '/api/crm/module' && request.method === 'GET') return json(moduleDefinition);
