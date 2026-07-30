@@ -27,7 +27,9 @@ const headers = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'X-Content-Type-Options': 'nosniff',
 };
-const moduleDefinition = Bun.YAML.parse(readFileSync(join(import.meta.dir, 'crm', 'module.yaml'), 'utf8'));
+const moduleDefinition = Bun.YAML.parse(readFileSync(join(import.meta.dir, 'crm', 'module.yaml'), 'utf8')) as {
+  apps?: unknown[];
+};
 const appManifests = moduleDefinition.apps || [];
 const publicFiles = new Map([
   ['app.ts', join(import.meta.dir, 'crm', 'app.ts')],

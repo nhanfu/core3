@@ -5,12 +5,16 @@
   "scripts": {
     "build:css": "sass ./styles.scss ./styles.css --no-source-map",
     "test": "bun test",
-    "test:browser": "bun scripts/browser-smoke.ts",
+    "test:browser": "bun crm/scripts/browser-smoke.ts",
     "start": "bun run build:css && bun server.ts",
     "dev": "bun run build:css && bun --hot server.ts"
   },
   "dependencies": {
     "duckdb": "^1.1.0",
     "sass": "^1.86.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "@types/node": "^24.0.0"
   }
 }
