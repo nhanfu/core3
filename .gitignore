@@ -14,6 +14,7 @@ lib/dist/
 *.tsbuildinfo
 *.log
 *.pid
+*.css
 
 # Local tooling and environment settings
 .env
