@@ -75,7 +75,7 @@ async function requireLeadAccess(context: Context, id: string) {
 }
 
 function crm(operation: string, payload: Record<string, unknown> = {}) {
-  return executeDatasource('crm.service', { operation, payload });
+  return executeDatasource(`crm.${operation}`, payload);
 }
 
 async function readJson<T>(request: Request): Promise<T> {
