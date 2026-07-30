@@ -1,8 +1,46 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { all, withDb } from '../db/database.ts';
 import { queryDatasource, runDatasource } from '../db/datasource-runtime.ts';
 
 export { initDatabase } from '../db/database.ts';
+
+type RecordValues = Record<string, unknown>;
+
+function quoteIdentifier(identifier: string) {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(identifier)) {
+    throw new Error(`Invalid database identifier: ${identifier}`);
+  }
+  return identifier.split('.').map(part => `"${part}"`).join('.');
+}
+
+function buildAssignments(values: RecordValues) {
+  const entries = Object.entries(values);
+  if (!entries.length) throw new Error('At least one value is required');
+  return {
+    sql: entries.map(([column]) => `${quoteIdentifier(column)} = ?`).join(', '),
+    params: entries.map(([, value]) => value),
+  };
+}
+
+export async function insertRecord<T extends RecordValues>(table: string, values: T): Promise<T> {
+  const entries = Object.entries(values);
+  if (!entries.length) throw new Error('At least one value is required');
+  const columns = entries.map(([column]) => quoteIdentifier(column)).join(', ');
+  const params = entries.map(([, value]) => value);
+  return withDb(async connection => (await all(connection, `INSERT INTO ${quoteIdentifier(table)} (${columns}) VALUES (${params.map(() => '?').join(', ')}) RETURNING *`, params))[0] as T);
+}
+
+export async function updateRecord<T extends RecordValues>(table: string, id: unknown, values: Partial<T>, idColumn = 'id'): Promise<T | null> {
+  const assignments = buildAssignments(values);
+  return withDb(async connection => (await all(connection, `UPDATE ${quoteIdentifier(table)} SET ${assignments.sql} WHERE ${quoteIdentifier(idColumn)} = ? RETURNING *`, [...assignments.params, id]))[0] as T || null);
+}
+
+export async function deleteRecord(table: string, id: unknown, idColumn = 'id') {
+  await withDb(async connection => {
+    await all(connection, `DELETE FROM ${quoteIdentifier(table)} WHERE ${quoteIdentifier(idColumn)} = ?`, [id]);
+  });
+}
 
 type AccessRole = 'salesperson' | 'manager' | 'system';
 export const uploadDirectory = join(import.meta.dir, 'uploads');
