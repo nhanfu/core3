@@ -43,10 +43,16 @@ function loadDatasources() {
   });
 }
 
-const datasources = loadDatasources();
+let datasources = loadDatasources();
+const liveDatasourceReload = process.env.NODE_ENV !== 'production' && process.env.CRM_LIVE_DATASOURCES !== 'false';
+
+function refreshDatasources() {
+  if (liveDatasourceReload) datasources = loadDatasources();
+  return datasources;
+}
 
 function findDatasource(id: string) {
-  return datasources.find(source => source.id === id);
+  return refreshDatasources().find(source => source.id === id);
 }
 
 function bindParams(sql: string, params: Record<string, unknown>) {
@@ -105,7 +111,7 @@ async function runScriptDatasource(source: Datasource, params: Record<string, un
 }
 
 export function getDatasources() {
-  return [...datasources];
+  return [...refreshDatasources()];
 }
 
 export async function queryDatasource(id: string, params: Record<string, unknown> = {}, fragments: Record<string, string> = {}) {
@@ -121,7 +127,28 @@ export async function queryDatasource(id: string, params: Record<string, unknown
     return fragment;
   });
   const bound = bindParams(query, resolveParams(source, params));
-  return withDb(connection => all(connection, bound.sql, bound.values));
+  try {
+    return await withDb(connection => all(connection, bound.sql, bound.values));
+  } catch (error) {
+    if (id === 'crm.list_leads') {
+      console.error('[datasource:crm.list_leads] query failed', {
+        params: resolveParams(source, params),
+        sql: bound.sql,
+        values: bound.values,
+      });
+      console.error('[datasource:crm.list_leads] error details', {
+        message: error instanceof Error ? error.message : String(error),
+        exception_message: (error as { exception_message?: unknown })?.exception_message,
+        errorType: (error as { errorType?: unknown })?.errorType,
+        stack: error instanceof Error ? error.stack : undefined,
+        properties: Object.getOwnPropertyNames(error as object).reduce<Record<string, unknown>>((result, key) => {
+          result[key] = (error as Record<string, unknown>)[key];
+          return result;
+        }, {}),
+      });
+    }
+    throw error;
+  }
 }
 
 export async function runDatasource(id: string, params: Record<string, unknown> = {}) {
@@ -163,7 +190,7 @@ function response(value: unknown, status = 200) {
 
 export async function routeDatasourceRequest(request: Request, role: string) {
   const url = new URL(request.url);
-  const source = datasources.find(candidate =>
+  const source = getDatasources().find(candidate =>
     candidate.endpoint &&
     candidate.public === true &&
     routeMethods(candidate).includes(request.method.toUpperCase()) &&
