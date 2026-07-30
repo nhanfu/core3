@@ -365,20 +365,22 @@ datasources:
     params: { id: { type: string }, customer_name: { type: string, default: '' } }
     language: javascript
     script: |
-      const id = String(ctx.params.id || '');
-      const customerName = String(ctx.params.customer_name || '').trim();
-      await ctx.db.execute("UPDATE crm_lead SET type = 'opportunity', converted_at = current_timestamp, stage_id = CASE WHEN stage_id = 'new' THEN 'qualified' ELSE stage_id END WHERE id = :id AND type = 'lead'", { id });
-      if (customerName) {
-        const existing = (await ctx.db.query('SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1', { name: customerName }))[0];
-        const partner = existing || { id: `partner-${ctx.crypto.randomUUID().slice(0, 8)}`, name: customerName };
-        if (!existing) await ctx.db.execute('INSERT INTO crm_partner(id, name) VALUES(:id, :name)', partner);
-        await ctx.db.execute('UPDATE crm_lead SET partner_id = :partner_id, partner_name = :partner_name, write_version = coalesce(write_version, 1) + 1 WHERE id = :id', { id, partner_id: partner.id, partner_name: partner.name });
+      // js
+      async function convertLead(ctx, id, customerName) {
+        await ctx.db.execute("UPDATE crm_lead SET type = 'opportunity', converted_at = current_timestamp, stage_id = CASE WHEN stage_id = 'new' THEN 'qualified' ELSE stage_id END WHERE id = :id AND type = 'lead'", { id });
+        if (customerName) {
+          const existing = (await ctx.db.query('SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1', { name: customerName }))[0];
+          const partner = existing || { id: `partner-${ctx.crypto.randomUUID().slice(0, 8)}`, name: customerName };
+          if (!existing) await ctx.db.execute('INSERT INTO crm_partner(id, name) VALUES(:id, :name)', partner);
+          await ctx.db.execute('UPDATE crm_lead SET partner_id = :partner_id, partner_name = :partner_name, write_version = coalesce(write_version, 1) + 1 WHERE id = :id', { id, partner_id: partner.id, partner_name: partner.name });
+        }
+        const rows = await ctx.db.query('SELECT * FROM crm_lead WHERE id = :id', { id });
+        if (!rows[0]) return null;
+        const relation = await ctx.db.query("SELECT coalesce(string_agg(tag.id, ',' ORDER BY tag.id), '') AS tag_ids FROM crm_lead l LEFT JOIN crm_lead_tag lt ON lt.lead_id = l.id LEFT JOIN crm_tag tag ON tag.id = lt.tag_id WHERE l.id = :id", { id });
+        rows[0].tag_ids = relation[0]?.tag_ids || '';
+        return rows[0];
       }
-      const rows = await ctx.db.query('SELECT * FROM crm_lead WHERE id = :id', { id });
-      if (!rows[0]) return null;
-      const relation = await ctx.db.query("SELECT coalesce(string_agg(tag.id, ',' ORDER BY tag.id), '') AS tag_ids FROM crm_lead l LEFT JOIN crm_lead_tag lt ON lt.lead_id = l.id LEFT JOIN crm_tag tag ON tag.id = lt.tag_id WHERE l.id = :id", { id });
-      rows[0].tag_ids = relation[0]?.tag_ids || '';
-      return rows[0];
+      return convertLead(ctx, String(ctx.params.id || ''), String(ctx.params.customer_name || '').trim());
   - id: crm.customer_by_name
     params: { name: { type: string } }
     query: SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1
@@ -388,12 +390,24 @@ datasources:
   - id: crm.link_converted_customer
     params: { id: { type: string }, partner_id: { type: string }, partner_name: { type: string } }
     statement: UPDATE crm_lead SET partner_id = :partner_id, partner_name = :partner_name, write_version = coalesce(write_version, 1) + 1 WHERE id = :id
-  - id: crm.lost_reason
-    params: { id: { type: string } }
-    query: SELECT name FROM crm_lost_reason WHERE id = :id
   - id: crm.lose_lead
-    params: { id: { type: string }, reason: { type: string } }
-    statement: UPDATE crm_lead SET stage_id = 'lost', notes = concat(coalesce(notes, ''), CASE WHEN coalesce(notes, '') = '' THEN '' ELSE '\n' END, :reason) WHERE id = :id
+    params: { id: { type: string }, reason_id: { type: string } }
+    language: javascript
+    script: |
+      //js
+      async function loseLead(ctx, id, reasonId) {
+        console.log('ahihi');
+        const reasons = await ctx.db.query('SELECT id, name FROM crm_lost_reason');
+        const reason = reasons.find(row => row.id === reasonId);
+        if (!reason) throw Object.assign(new Error('A valid lost reason is required'), { status: 400 });
+        await ctx.db.execute("UPDATE crm_lead SET stage_id = 'lost', notes = concat(coalesce(notes, ''), CASE WHEN coalesce(notes, '') = '' THEN '' ELSE '\\n' END, CAST(:reason AS VARCHAR)) WHERE id = :id", { id, reason: `Lost reason: ${reason.name}` });
+        const rows = await ctx.db.query('SELECT * FROM crm_lead WHERE id = :id', { id });
+        if (!rows[0]) return null;
+        const relation = await ctx.db.query("SELECT coalesce(string_agg(tag.id, ',' ORDER BY tag.id), '') AS tag_ids FROM crm_lead l LEFT JOIN crm_lead_tag lt ON lt.lead_id = l.id LEFT JOIN crm_tag tag ON tag.id = lt.tag_id WHERE l.id = :id", { id });
+        rows[0].tag_ids = relation[0]?.tag_ids || '';
+        return rows[0];
+      }
+      return loseLead(ctx, String(ctx.params.id || ''), String(ctx.params.reason_id || ''));
   - id: crm.stage_by_id
     params: { id: { type: string } }
     query: SELECT id FROM crm_stage WHERE id = :id

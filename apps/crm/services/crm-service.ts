@@ -41,10 +41,7 @@ export async function convertLead(id: string, customerName = '') {
 }
 
 export async function loseLead(id: string, reasonId: string) {
-  const reasons = await queryDatasource('crm.lost_reason', { id: reasonId });
-  if (!reasons[0]) throw Object.assign(new Error('A valid lost reason is required'), { status: 400 });
-  await runDatasource('crm.lose_lead', { id, reason: `Lost reason: ${reasons[0].name}` });
-  return getLead(id);
+  return runDatasource('crm.lose_lead', { id, reason_id: reasonId });
 }
 
 export async function lostReasons() {
