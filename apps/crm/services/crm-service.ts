@@ -61,24 +61,7 @@ export async function findDuplicates(id: string) {
 }
 
 export async function mergeLeads(ids: string[]) {
-  return withDb(async connection => {
-    const unique = [...new Set(ids)].filter(Boolean);
-    if (unique.length < 2) throw Object.assign(new Error('At least two records are required to merge'), { status: 400 });
-    const [primary, ...duplicates] = unique;
-    const placeholders = duplicates.map(() => '?').join(',');
-    await run(connection, 'BEGIN TRANSACTION');
-    try {
-      for (const table of ['crm_activity', 'crm_message', 'crm_follower', 'crm_attachment']) {
-        await run(connection, `UPDATE ${table} SET lead_id = ? WHERE lead_id IN (${placeholders})`, [primary, ...duplicates]);
-      }
-      await run(connection, `DELETE FROM crm_lead WHERE id IN (${placeholders})`, duplicates);
-      await run(connection, 'COMMIT');
-    } catch (error) {
-      await run(connection, 'ROLLBACK');
-      throw error;
-    }
-    return { ok: true, merged_into: primary, removed: duplicates.length };
-  });
+  return runDatasource('crm.merge_leads', { ids });
 }
 
 export async function mergePreview(ids: string[]) {
@@ -191,30 +174,7 @@ export async function commitImport(rows: unknown[]) {
     await recordImportErrors(preview);
     throw Object.assign(new Error('Import contains invalid rows'), { status: 400, details: invalid });
   }
-  return withDb(async connection => {
-    await run(connection, 'BEGIN TRANSACTION');
-    try {
-      for (const item of preview) {
-        const values = item.values;
-        await run(connection, `
-          INSERT INTO crm_lead(id, name, type, stage_id, partner_name, contact_name, email, phone, team, salesperson, source, campaign, expected_revenue, recurring_revenue, recurring_plan_id, probability, expected_closing, priority, tags, next_activity, notes)
-          VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        `, [`${String(values.type || 'opportunity') === 'lead' ? 'lead' : 'opp'}-${crypto.randomUUID().slice(0, 8)}`, String(values.name), String(values.type || 'opportunity'), String(values.stage_id || 'new'), String(values.partner_name || ''), String(values.contact_name || ''), String(values.email || ''), String(values.phone || ''), String(values.team || ''), String(values.salesperson || 'Mitchell Admin'), String(values.source || ''), String(values.campaign || ''), Number(values.expected_revenue || 0), Number(values.recurring_revenue || 0), String(values.recurring_plan_id || ''), Number(values.probability || 0), String(values.expected_closing || '') || null, Number(values.priority || 0), String(values.tags || ''), String(values.next_activity || ''), String(values.notes || '')]);
-      }
-      await run(connection, `UPDATE crm_lead l SET partner_id = p.id FROM crm_partner p WHERE l.partner_id IS NULL AND l.partner_name <> '' AND lower(l.partner_name) = lower(p.name)`);
-      await run(connection, `UPDATE crm_lead l SET team_id = t.id FROM crm_team t WHERE l.team_id IS NULL AND l.team <> '' AND lower(l.team) = lower(t.name)`);
-      await run(connection, `UPDATE crm_lead l SET salesperson_id = u.id FROM res_user u WHERE l.salesperson_id IS NULL AND l.salesperson <> '' AND lower(l.salesperson) = lower(u.name)`);
-      await run(connection, `INSERT INTO crm_lead_tag(lead_id, tag_id)
-        SELECT l.id, t.id FROM crm_lead l CROSS JOIN UNNEST(string_split(coalesce(l.tags, ''), ',')) raw(tag_name)
-        JOIN crm_tag t ON lower(trim(raw.tag_name)) = lower(t.name) ON CONFLICT DO NOTHING`);
-      await run(connection, 'INSERT INTO crm_import_history(id, imported_count, error_count, errors) VALUES(?,?,?,?)', [`import-${crypto.randomUUID().slice(0, 8)}`, preview.length, 0, '[]']);
-      await run(connection, 'COMMIT');
-    } catch (error) {
-      await run(connection, 'ROLLBACK');
-      throw error;
-    }
-    return { ok: true, imported: preview.length };
-  });
+  return runDatasource('crm.commit_import', { rows: preview.map(item => item.values) });
 }
 
 export async function importHistory() {
@@ -225,11 +185,7 @@ export async function mutateLeads(ids: string[], operation: string, value = '') 
   if (!ids.length) return { ok: true, count: 0 };
   if (operation === 'archive') await runDatasource('crm.mutate.archive', { ids });
   else if (operation === 'restore') await runDatasource('crm.mutate.restore', { ids });
-  else if (operation === 'delete') return withDb(async connection => {
-    const placeholders = ids.map(() => '?').join(',');
-    for (const table of ['crm_activity', 'crm_message', 'crm_follower', 'crm_attachment']) await run(connection, `DELETE FROM ${table} WHERE lead_id IN (${placeholders})`, ids);
-    await run(connection, `DELETE FROM crm_lead WHERE id IN (${placeholders})`, ids);
-  }).then(() => ({ ok: true, count: ids.length }));
+  else if (operation === 'delete') return runDatasource('crm.mutate.delete', { ids });
   else if (operation === 'assign') await runDatasource('crm.mutate.assign', { ids, salesperson: value || 'Mitchell Admin' });
   else if (operation === 'stage') await runDatasource('crm.mutate.stage', { ids, stage_id: value });
   else if (operation === 'merge' && ids.length > 1) return mergeLeads(ids);

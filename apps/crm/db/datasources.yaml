@@ -206,9 +206,6 @@ datasources:
   - id: crm.add_attachment
     params: { id: { type: string }, lead_id: { type: string }, name: { type: string } }
     statement: INSERT INTO crm_attachment(id, lead_id, name) VALUES(:id, :lead_id, :name)
-  - id: crm.import_error
-    params: { id: { type: string }, imported_count: { type: number }, error_count: { type: number }, errors: { type: string } }
-    statement: INSERT INTO crm_import_history(id, imported_count, error_count, errors) VALUES(:id, :imported_count, :error_count, :errors)
   - id: crm.access.leads
     params: { ids: { type: json } }
     query: |
@@ -397,7 +394,7 @@ datasources:
     language: javascript
     entrypoint: loseLead
     script: |
-      //js
+      // js
       async function loseLead(ctx, params) {
         const id = String(params.id || '');
         const reasonId = String(params.reason_id || '');
@@ -429,6 +426,107 @@ datasources:
   - id: crm.save_recurring_plan
     params: { id: { type: string }, name: { type: string }, interval_number: { type: number }, interval_unit: { type: string } }
     statement: INSERT INTO crm_recurring_plan(id, name, interval_number, interval_unit, active) VALUES(:id, :name, :interval_number, :interval_unit, true) ON CONFLICT(id) DO UPDATE SET name = excluded.name, interval_number = excluded.interval_number, interval_unit = excluded.interval_unit
+
+  - id: crm.merge_leads
+    params: { ids: { type: json } }
+    language: javascript
+    entrypoint: mergeLeads
+    script: |
+      // js
+      async function mergeLeads(ctx, params) {
+        const unique = [...new Set(params.ids || [])].filter(Boolean);
+        if (unique.length < 2) throw Object.assign(new Error('At least two records are required to merge'), { status: 400 });
+        const [primary, ...duplicates] = unique;
+        await ctx.db.execute('BEGIN TRANSACTION');
+        try {
+          for (const table of ['crm_activity', 'crm_message', 'crm_follower', 'crm_attachment']) {
+            await ctx.db.execute(`UPDATE ${table} SET lead_id = :primary WHERE lead_id IN (:duplicates)`, { primary, duplicates });
+          }
+          await ctx.db.execute('DELETE FROM crm_lead WHERE id IN (:duplicates)', { duplicates });
+          await ctx.db.execute('COMMIT');
+        } catch (error) {
+          await ctx.db.execute('ROLLBACK');
+          throw error;
+        }
+        return { ok: true, merged_into: primary, removed: duplicates.length };
+      }
+
   - id: crm.merge_preview
     params: { ids: { type: json } }
     query: SELECT id, name, partner_name, expected_revenue FROM crm_lead WHERE id IN (:ids) ORDER BY created_at, id
+
+  - id: crm.import_error
+    params: { id: { type: string }, imported_count: { type: number }, error_count: { type: number }, errors: { type: string } }
+    statement: INSERT INTO crm_import_history(id, imported_count, error_count, errors) VALUES(:id, :imported_count, :error_count, :errors)
+
+  - id: crm.commit_import
+    params: { rows: { type: json } }
+    language: javascript
+    entrypoint: commitImport
+    script: |
+      // js
+      async function commitImport(ctx, params) {
+        const rows = params.rows || [];
+        await ctx.db.execute('BEGIN TRANSACTION');
+        try {
+          for (const values of rows) {
+            await ctx.db.execute(`
+              INSERT INTO crm_lead(id, name, type, stage_id, partner_name, contact_name, email, phone, team, salesperson, source, campaign, expected_revenue, recurring_revenue, recurring_plan_id, probability, expected_closing, priority, tags, next_activity, notes)
+              VALUES(:id, :name, :type, :stage_id, :partner_name, :contact_name, :email, :phone, :team, :salesperson, :source, :campaign, :expected_revenue, :recurring_revenue, :recurring_plan_id, :probability, :expected_closing, :priority, :tags, :next_activity, :notes)
+            `, {
+              id: `${String(values.type || 'opportunity') === 'lead' ? 'lead' : 'opp'}-${ctx.crypto.randomUUID().slice(0, 8)}`,
+              name: String(values.name),
+              type: String(values.type || 'opportunity'),
+              stage_id: String(values.stage_id || 'new'),
+              partner_name: String(values.partner_name || ''),
+              contact_name: String(values.contact_name || ''),
+              email: String(values.email || ''),
+              phone: String(values.phone || ''),
+              team: String(values.team || ''),
+              salesperson: String(values.salesperson || 'Mitchell Admin'),
+              source: String(values.source || ''),
+              campaign: String(values.campaign || ''),
+              expected_revenue: Number(values.expected_revenue || 0),
+              recurring_revenue: Number(values.recurring_revenue || 0),
+              recurring_plan_id: String(values.recurring_plan_id || ''),
+              probability: Number(values.probability || 0),
+              expected_closing: String(values.expected_closing || '') || null,
+              priority: Number(values.priority || 0),
+              tags: String(values.tags || ''),
+              next_activity: String(values.next_activity || ''),
+              notes: String(values.notes || ''),
+            });
+          }
+          await ctx.db.execute(`UPDATE crm_lead l SET partner_id = p.id FROM crm_partner p WHERE l.partner_id IS NULL AND l.partner_name <> '' AND lower(l.partner_name) = lower(p.name)`);
+          await ctx.db.execute(`UPDATE crm_lead l SET team_id = t.id FROM crm_team t WHERE l.team_id IS NULL AND l.team <> '' AND lower(l.team) = lower(t.name)`);
+          await ctx.db.execute(`UPDATE crm_lead l SET salesperson_id = u.id FROM res_user u WHERE l.salesperson_id IS NULL AND l.salesperson <> '' AND lower(l.salesperson) = lower(u.name)`);
+          await ctx.db.execute(`INSERT INTO crm_lead_tag(lead_id, tag_id)
+            SELECT l.id, t.id FROM crm_lead l CROSS JOIN UNNEST(string_split(coalesce(l.tags, ''), ',')) raw(tag_name)
+            JOIN crm_tag t ON lower(trim(raw.tag_name)) = lower(t.name) ON CONFLICT DO NOTHING`);
+          await ctx.db.execute('INSERT INTO crm_import_history(id, imported_count, error_count, errors) VALUES(:id, :imported_count, 0, :errors)', {
+            id: `import-${ctx.crypto.randomUUID().slice(0, 8)}`,
+            imported_count: rows.length,
+            errors: '[]',
+          });
+          await ctx.db.execute('COMMIT');
+        } catch (error) {
+          await ctx.db.execute('ROLLBACK');
+          throw error;
+        }
+        return { ok: true, imported: rows.length };
+      }
+
+  - id: crm.mutate.delete
+    params: { ids: { type: json } }
+    language: javascript
+    entrypoint: deleteLeads
+    script: |
+      // js
+      async function deleteLeads(ctx, params) {
+        const ids = params.ids || [];
+        for (const table of ['crm_activity', 'crm_message', 'crm_follower', 'crm_attachment']) {
+          await ctx.db.execute(`DELETE FROM ${table} WHERE lead_id IN (:ids)`, { ids });
+        }
+        await ctx.db.execute('DELETE FROM crm_lead WHERE id IN (:ids)', { ids });
+        return { ok: true, count: ids.length };
+      }
