@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
+import { mkdir as mkdirRecursive } from 'node:fs/promises';
 import { join } from 'node:path';
 import vm from 'node:vm';
 import { all, run, withDb } from './database.ts';
@@ -104,6 +105,8 @@ async function runScriptDatasource(source: Datasource, params: Record<string, un
     const context = {
       db,
       crypto: { randomUUID: () => crypto.randomUUID() },
+      datasource: { execute: (id: string, datasourceParams: Record<string, unknown> = {}, fragments: Record<string, string> = {}) => executeDatasource(id, datasourceParams, fragments) },
+      files: { mkdir: (path: string) => mkdirRecursive(path, { recursive: true }), write: (path: string, data: unknown) => Bun.write(path, data as any) },
     };
     const program = `(async function(ctx, params) { "use strict"; ${source.script}\n return ${source.entrypoint}(ctx, params); })(ctx, params)`;
     return vm.runInNewContext(program, { ctx: context, params: resolvedParams });
@@ -114,49 +117,46 @@ export function getDatasources() {
   return [...refreshDatasources()];
 }
 
-export async function queryDatasource(id: string, params: Record<string, unknown> = {}, fragments: Record<string, string> = {}) {
+export async function executeDatasource(id: string, params: Record<string, unknown> = {}, fragments: Record<string, string> = {}) {
   const source = findDatasource(id);
   if (source?.script) {
-    const result = await runScriptDatasource(source, params);
-    return Array.isArray(result) ? result : result == null ? [] : [result];
+    return runScriptDatasource(source, params);
   }
-  if (!source?.query) throw new Error(`Unknown or query-less datasource: ${id}`);
-  const query = source.query.replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (_match, name: string) => {
-    const fragment = fragments[name];
-    if (!fragment) throw new Error(`Missing SQL fragment "${name}" for datasource ${id}`);
-    return fragment;
-  });
-  const bound = bindParams(query, resolveParams(source, params));
-  try {
-    return await withDb(connection => all(connection, bound.sql, bound.values));
-  } catch (error) {
-    if (id === 'crm.list_leads') {
-      console.error('[datasource:crm.list_leads] query failed', {
-        params: resolveParams(source, params),
-        sql: bound.sql,
-        values: bound.values,
-      });
-      console.error('[datasource:crm.list_leads] error details', {
-        message: error instanceof Error ? error.message : String(error),
-        exception_message: (error as { exception_message?: unknown })?.exception_message,
-        errorType: (error as { errorType?: unknown })?.errorType,
-        stack: error instanceof Error ? error.stack : undefined,
-        properties: Object.getOwnPropertyNames(error as object).reduce<Record<string, unknown>>((result, key) => {
-          result[key] = (error as Record<string, unknown>)[key];
-          return result;
-        }, {}),
-      });
+  if (source?.query) {
+    const query = source.query.replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (_match, name: string) => {
+      const fragment = fragments[name];
+      if (!fragment) throw new Error(`Missing SQL fragment "${name}" for datasource ${id}`);
+      return fragment;
+    });
+    const bound = bindParams(query, resolveParams(source, params));
+    try {
+      return await withDb(connection => all(connection, bound.sql, bound.values));
+    } catch (error) {
+      if (id === 'crm.list_leads') {
+        console.error('[datasource:crm.list_leads] query failed', {
+          params: resolveParams(source, params),
+          sql: bound.sql,
+          values: bound.values,
+        });
+        console.error('[datasource:crm.list_leads] error details', {
+          message: error instanceof Error ? error.message : String(error),
+          exception_message: (error as { exception_message?: unknown })?.exception_message,
+          errorType: (error as { errorType?: unknown })?.errorType,
+          stack: error instanceof Error ? error.stack : undefined,
+          properties: Object.getOwnPropertyNames(error as object).reduce<Record<string, unknown>>((result, key) => {
+            result[key] = (error as Record<string, unknown>)[key];
+            return result;
+          }, {}),
+        });
+      }
+      throw error;
     }
-    throw error;
   }
-}
-
-export async function runDatasource(id: string, params: Record<string, unknown> = {}) {
-  const source = findDatasource(id);
-  if (source?.script) return runScriptDatasource(source, params);
-  if (!source?.statement) throw new Error(`Unknown or statement-less datasource: ${id}`);
-  const bound = bindParams(source.statement, resolveParams(source, params));
-  return withDb(connection => run(connection, bound.sql, bound.values));
+  if (source?.statement) {
+    const bound = bindParams(source.statement, resolveParams(source, params));
+    return withDb(connection => run(connection, bound.sql, bound.values));
+  }
+  throw new Error(`Unknown or executable-less datasource: ${id}`);
 }
 
 function routeMatch(endpoint: string, pathname: string) {
@@ -207,7 +207,7 @@ export async function routeDatasourceRequest(request: Request, role: string) {
     bodyParams = await request.json().catch(() => ({}));
   }
   const params = { ...queryParams, ...routeParams, ...bodyParams, role };
-  if (source.query) return response(await queryDatasource(source.id, params));
-  await runDatasource(source.id, params);
+  const result = await executeDatasource(source.id, params);
+  if (source.query) return response(result);
   return response({ ok: true });
 }
