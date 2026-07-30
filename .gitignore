@@ -6,6 +6,7 @@ node_modules/
 *.duckdb.wal
 *.duckdb.tmp
 apps/crm/db/uploads/
+apps/crm/services/uploads
 
 # Build, test, and diagnostic output
 coverage/
