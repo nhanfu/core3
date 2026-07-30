@@ -1,5 +1,5 @@
 import { basename, extname, isAbsolute, join, resolve } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage,
   attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead,
@@ -24,6 +24,7 @@ class HttpError extends Error {
 }
 
 const PORT = Number(process.env.PORT || 3010);
+const databasePath = process.env.CRM_DB_PATH || join(import.meta.dir, 'crm.duckdb');
 const MAX_REQUEST_BYTES = 10 * 1024 * 1024;
 const configuredRole: Role = process.env.CRM_ROLE === 'manager' || process.env.CRM_ROLE === 'system' ? process.env.CRM_ROLE : 'salesperson';
 const allowRoleHeader = process.env.CRM_ALLOW_ROLE_HEADER === 'true' && ['development', 'test'].includes(process.env.NODE_ENV || '');
@@ -264,7 +265,7 @@ async function dispatch(request: Request) {
 }
 
 registerRoutes();
-await initDatabase();
+if (!existsSync(databasePath)) await initDatabase();
 const server = Bun.serve({ port: PORT, maxRequestBodySize: MAX_REQUEST_BYTES, async fetch(request) {
   try {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
