@@ -86,7 +86,7 @@ export class BaseComponent {
    * @param {string} id
    * @returns {BaseComponent|null}
    */
-  find(id: string) {
+  find(id: string): BaseComponent | null {
     if (this.id === id) return this;
     for (const child of this.children) {
       const result = child.find(id);

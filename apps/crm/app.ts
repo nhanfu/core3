@@ -52,9 +52,9 @@ async function requestDialog(options: { title: string; message?: string; fields?
 void bootstrap();
 
 async function bootstrap() {
-  const appResponse = await apiFetch('/api/modules');
+  const appResponse = await apiFetch(odata('modules', 'list'));
   appRegistry = new AppRegistry(await appResponse.json() as AppManifest[]);
-  moduleDefinition = await (await apiFetch('/api/crm/module')).json();
+  moduleDefinition = await (await apiFetch(odata('module', 'get'))).json();
   actionService = new ActionService(moduleDefinition.actions || [], moduleDefinition.menus || []);
   const searchView = moduleDefinition.views?.['crm.lead']?.search || {};
   if (searchView.filters?.length) filterOptions = searchView.filters.map((value: string) => ({ value, label: labels[value] || value }));
@@ -185,9 +185,9 @@ async function renderForecast(fromHistory = false) {
   const header = new OdooPageHeader('forecast-header', { eyebrow: 'Reporting', title: 'Forecast', actions: [{ id: 'new', label: 'New opportunity', variant: 'primary' }] });
   header._onAction = async () => renderForm();
   header.mount(content);
-  const rows = await loadJson<any[]>('/api/crm/leads?type=opportunity&filter=open&sort=closing', content);
+  const rows = await loadJson<any[]>(odata('leads', 'list', 'type=opportunity&filter=open&sort=closing'), content);
   if (!rows) return;
-  const buckets = await loadJson<any[]>('/api/crm/report/analysis?dimension=closing_bucket', content);
+  const buckets = await loadJson<any[]>(odata('report', 'analysis', 'dimension=closing_bucket'), content);
   if (!buckets) return;
   const graph = new OdooGraphView('crm-forecast-graph', { rows: buckets, labelField: 'label', valueField: 'revenue' });
   graph._onAction = async (_event: string, params: any) => renderReportDrilldown('closing_bucket', params.label);
@@ -214,9 +214,9 @@ async function renderActivityAnalysis(dimension = 'activity_type', search = '', 
     if (event === 'control' && params.control === 'group') return renderActivityAnalysis(params.value || 'activity_type', search, false);
   };
   control.mount(content);
-  const rows = await loadJson<any[]>(`/api/crm/activities?search=${encodeURIComponent(search)}`, content);
+  const rows = await loadJson<any[]>(odata('activities', 'list', `search=${encodeURIComponent(search)}`), content);
   if (!rows) return;
-  const grouped = await loadJson<any[]>(`/api/crm/report/activity-analysis?dimension=${encodeURIComponent(dimension)}&search=${encodeURIComponent(search)}`, content);
+  const grouped = await loadJson<any[]>(odata('report', 'activity-analysis', `dimension=${encodeURIComponent(dimension)}&search=${encodeURIComponent(search)}`), content);
   if (!grouped) return;
   const graph = new OdooGraphView('crm-activity-analysis', { rows: grouped, labelField: 'label', valueField: 'scheduled', format: 'number' });
   graph._onAction = async (_event: string, params: any) => renderActivityDrilldown(dimension, params.label);
@@ -245,7 +245,7 @@ async function renderLeadAnalysis(dimension = 'source', search = '', fromHistory
     if (event === 'control' && params.control === 'group') return renderLeadAnalysis(params.value || 'source', search, false, activeView);
   };
   control.mount(content);
-  const rows = await loadJson<any[]>(`/api/crm/report/lead-analysis?dimension=${encodeURIComponent(dimension)}&search=${encodeURIComponent(search)}`, content);
+  const rows = await loadJson<any[]>(odata('report', 'lead-analysis', `dimension=${encodeURIComponent(dimension)}&search=${encodeURIComponent(search)}`), content);
   if (!rows) return;
   if (activeView === 'pivot') {
     const pivotRows = rows.flatMap(row => [{ label: row.label, type: 'Created', count: row.created_count }, { label: row.label, type: 'Converted', count: row.converted_count }]);
@@ -274,7 +274,7 @@ async function renderImport(fromHistory = false) {
   html.take(panel).p.className('odoo-muted').text('Use the Import CSV action to preview, validate, and commit lead or opportunity rows.');
   html.take(panel).p.text('Required column: name. Optional columns: type, stage_id, partner_name, contact_name, email, phone, team, salesperson, source, campaign, expected_revenue, recurring_revenue, recurring_plan_id, probability, expected_closing, priority, tags, next_activity, notes.');
   if (canManage) {
-    const history = await loadJson<any[]>('/api/crm/import/history', content);
+    const history = await loadJson<any[]>(odata('import', 'history'), content);
     if (history) {
       html.take(panel).h2.text('Import history');
       const historyRows = history.map(row => ({ ...row, error_summary: (() => { try { return (JSON.parse(String(row.errors || '[]')) as any[]).map(item => `row ${item.row}: ${item.errors.join(', ')}`).join('; '); } catch { return String(row.errors || ''); } })() }));
@@ -306,10 +306,10 @@ async function renderSettings(section = 'settings', fromHistory = false) {
       const kind = String(values.kind || '');
       const headers = { 'Content-Type': 'application/json' };
       let response: Response;
-      if (kind === 'stage') response = await apiFetch('/api/crm/stages', { method: 'POST', headers, body: JSON.stringify({ rows: [{ id: values.id, name: values.name, folded: false, requirements: '' }] }) });
-      else if (kind === 'tag') response = await apiFetch('/api/crm/tags', { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name, color: values.color || '' }) });
-      else if (kind === 'lost_reason') response = await apiFetch('/api/crm/lost-reasons', { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name }) });
-      else response = await apiFetch(`/api/crm/catalog/${kind}`, { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name, color: values.color || '', default_summary: values.default_summary || '', interval_number: values.interval_number || 1, interval_unit: values.interval_unit || 'month' }) });
+      if (kind === 'stage') response = await apiFetch(odata('stages', 'save'), { method: 'POST', headers, body: JSON.stringify({ rows: [{ id: values.id, name: values.name, folded: false, requirements: '' }] }) });
+      else if (kind === 'tag') response = await apiFetch(odata('tags', 'save'), { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name, color: values.color || '' }) });
+      else if (kind === 'lost_reason') response = await apiFetch(odata('lost-reasons', 'save'), { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name }) });
+      else response = await apiFetch(odata('catalog', 'save', `kind=${encodeURIComponent(kind)}`), { method: 'POST', headers, body: JSON.stringify({ id: values.id, name: values.name, color: values.color || '', default_summary: values.default_summary || '', interval_number: values.interval_number || 1, interval_unit: values.interval_unit || 'month' }) });
       if (response.ok) { notify('success', 'CRM configuration created.'); return renderSettings(section); }
       return notify('error', 'Unable to create CRM configuration.');
     }
@@ -326,19 +326,19 @@ async function renderSettings(section = 'settings', fromHistory = false) {
     }
     const headers = { 'Content-Type': 'application/json' };
     const responses = await Promise.all([
-      apiFetch('/api/crm/config', { method: 'POST', headers, body: JSON.stringify(values) }),
-      apiFetch('/api/crm/stages', { method: 'POST', headers, body: JSON.stringify({ rows: stages }) }),
-      ...reasons.map(reason => apiFetch('/api/crm/lost-reasons', { method: 'POST', headers, body: JSON.stringify(reason) })),
-      ...tags.map(tag => apiFetch('/api/crm/tags', { method: 'POST', headers, body: JSON.stringify(tag) })),
-      ...[...catalogValues.entries()].map(([key, row]) => apiFetch(`/api/crm/catalog/${key.split(':')[0]}`, { method: 'POST', headers, body: JSON.stringify(row) })),
+      apiFetch(odata('config', 'save'), { method: 'POST', headers, body: JSON.stringify(values) }),
+      apiFetch(odata('stages', 'save'), { method: 'POST', headers, body: JSON.stringify({ rows: stages }) }),
+      ...reasons.map(reason => apiFetch(odata('lost-reasons', 'save'), { method: 'POST', headers, body: JSON.stringify(reason) })),
+      ...tags.map(tag => apiFetch(odata('tags', 'save'), { method: 'POST', headers, body: JSON.stringify(tag) })),
+      ...[...catalogValues.entries()].map(([key, row]) => apiFetch(odata('catalog', 'save', `kind=${encodeURIComponent(key.split(':')[0])}`), { method: 'POST', headers, body: JSON.stringify(row) })),
     ]);
     if (responses.every(response => response.ok)) notify('success', 'CRM settings saved.'); else notify('error', 'You do not have permission to change CRM settings.');
   };
   header.mount(content);
   const [values, stages, reasons, tags, activityTypes, activityPlans, recurringPlans] = await Promise.all([
-    loadJson<any[]>('/api/crm/config', content), loadJson<any[]>('/api/crm/stages', content), loadJson<any[]>('/api/crm/lost-reasons', content),
-    loadJson<any[]>('/api/crm/tags', content),
-    loadJson<any[]>('/api/crm/catalog/activity_types', content), loadJson<any[]>('/api/crm/catalog/activity_plans', content), loadJson<any[]>('/api/crm/catalog/recurring_plans', content),
+    loadJson<any[]>(odata('config', 'get'), content), loadJson<any[]>(odata('stages', 'list'), content), loadJson<any[]>(odata('lost-reasons', 'list'), content),
+    loadJson<any[]>(odata('tags', 'list'), content),
+    loadJson<any[]>(odata('catalog', 'list', 'kind=activity_types'), content), loadJson<any[]>(odata('catalog', 'list', 'kind=activity_plans'), content), loadJson<any[]>(odata('catalog', 'list', 'kind=recurring_plans'), content),
   ]);
   if (!values || !stages || !reasons || !tags || !activityTypes || !activityPlans || !recurringPlans) return;
   const panel = html.take(content).div.className('odoo-settings-panel').getContext();
@@ -402,13 +402,13 @@ async function runImport() {
   const [header, ...lines] = csv.trim().split(/\r?\n/);
   const columns = parseCsvLine(header).map(value => value.trim());
   const rows = lines.filter(Boolean).map(line => Object.fromEntries(parseCsvLine(line).map((value, index) => [columns[index], value.trim()])));
-  const previewResponse = await apiFetch('/api/crm/import/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows }) });
+  const previewResponse = await apiFetch(odata('import', 'preview'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows }) });
   const preview = await previewResponse.json();
   const invalid = preview.filter((item: any) => item.errors.length);
   if (invalid.length) return notify('error', `Import rejected: ${invalid.map((item: any) => `row ${item.row}: ${item.errors.join(', ')}`).join('; ')}`);
   const confirmed = await requestDialog({ title: 'Confirm import', message: `${rows.length} valid CRM records are ready to import.`, confirmLabel: 'Import records' });
   if (!confirmed) return;
-  const commit = await apiFetch('/api/crm/import/commit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows }) });
+  const commit = await apiFetch(odata('import', 'commit'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows }) });
   if (!commit.ok) return notify('error', 'Import failed. Manager permission is required.');
   notify('success', `Imported ${rows.length} records.`);
   await renderList();
@@ -455,7 +455,7 @@ async function renderReporting(fromHistory = false, dimension = 'stage', fromDat
     if (event === 'control' && params.control === 'group') return renderReporting(false, params.value || 'stage', fromDate, toDate, search);
   };
   control.mount(content);
-  const report = await loadJson<{ summary: Record<string, any>; byStage: any[] }>('/api/crm/report/summary', content);
+  const report = await loadJson<{ summary: Record<string, any>; byStage: any[] }>(odata('report', 'summary'), content);
   if (!report) return;
   const summary = html.take(content).div.className('odoo-report-summary').getContext();
   for (const [label, value, format] of [
@@ -470,7 +470,7 @@ async function renderReporting(fromHistory = false, dimension = 'stage', fromDat
   if (fromDate) params.set('from', fromDate);
   if (toDate) params.set('to', toDate);
   if (search) params.set('search', search);
-  const rows = await loadJson<any[]>(`/api/crm/report/analysis?${params}`, content);
+  const rows = await loadJson<any[]>(odata('report', 'analysis', params.toString()), content);
   if (!rows) return;
   reportRows = rows;
   const graph = new OdooGraphView('crm-report-stage-graph', { rows, labelField: 'label', valueField: 'revenue' });
@@ -492,7 +492,7 @@ async function renderCustomers(search = '', fromHistory = false) {
   const control = new OdooControlPanel('customers-controls', { search }, { placeholder: 'Search customers…', views: ['list'], activeView: 'list', filterOptions: [], groupOptions: [], sortOptions: [], favoriteKey: 'core3:crm:customers:favorites' });
   control._onAction = async (event: string, params: any) => { if (event === 'search') return renderCustomers(params.query || ''); };
   control.mount(content);
-  const rows = await loadJson<any[]>(`/api/crm/customers?search=${encodeURIComponent(search)}`, content);
+  const rows = await loadJson<any[]>(odata('customers', 'list', `search=${encodeURIComponent(search)}`), content);
   if (!rows) return;
   const list = new OdooListView('crm-customers-list', { rows }, [
     { field: 'name', label: 'Customer', link: true }, { field: 'email', label: 'Email' }, { field: 'phone', label: 'Phone' },
@@ -510,7 +510,7 @@ async function renderTeams(fromHistory = false) {
   const header = new OdooPageHeader('teams-header', { eyebrow: 'Sales', title: menuLabel('teams'), actions: [{ id: 'new', label: 'New', variant: 'primary' }] });
   header._onAction = async () => renderTeamForm();
   header.mount(content);
-  const rows = await loadJson<any[]>('/api/crm/teams', content);
+  const rows = await loadJson<any[]>(odata('teams', 'list'), content);
   if (!rows) return;
   const list = new OdooListView('crm-teams-list', { rows }, [
     { field: 'name', label: 'Sales team', link: true }, { field: 'lead_count', label: 'Total leads' },
@@ -524,16 +524,16 @@ async function renderCustomerForm(id?: string, fromHistory = false) {
   const route = { view: 'customer_form', id };
   if (fromHistory) router.replace(route); else router.push(route);
   const content = shell.contentElement; if (!content) return;
-  const record = id ? await loadJson<any>(`/api/crm/customers/${encodeURIComponent(id)}`, content) : { name: '', email: '', phone: '' };
+  const record = id ? await loadJson<any>(odata('customers', 'get', '', id), content) : { name: '', email: '', phone: '' };
   if (!record) return;
   clearContent(content);
   const form = new OdooFormView('crm-customer-form', { record }, [{ name: 'name', label: 'Customer', type: 'text' }, { name: 'email', label: 'Email', type: 'text' }, { name: 'phone', label: 'Phone', type: 'text' }]);
   const header = new OdooPageHeader('customer-form-header', { eyebrow: 'Sales', title: id ? record.name : 'New Customer', actions: [{ id: 'save', label: 'Save', variant: 'primary' }, { id: 'discard', label: 'Discard' }] });
   header._onAction = async (_event: string, params: any) => { if (params.id === 'discard') { dirtyGuard.reset(); return renderCustomers(); } if (params.id === 'save') return form.save(); };
-  form._onAction = async (event: string, values: any) => { if (event === 'save') { if (id) values.id = id; await apiFetch('/api/crm/customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); dirtyGuard.reset(); return renderCustomers(); } };
+  form._onAction = async (event: string, values: any) => { if (event === 'save') { if (id) values.id = id; await apiFetch(odata('customers', 'create'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); dirtyGuard.reset(); return renderCustomers(); } };
   header.mount(content); form.mount(content); form.form?.addEventListener('input', () => dirtyGuard.markDirty()); form.form?.addEventListener('change', () => dirtyGuard.markDirty());
   if (id) {
-    const related = await loadJson<any>(`/api/crm/customers/${encodeURIComponent(id)}/related`, content);
+    const related = await loadJson<any>(odata('customers', 'related', '', id), content);
     if (related) {
       const section = html.take(content).section.className('odoo-related-records').getContext();
       html.take(section).h2.text('Linked opportunities');
@@ -553,13 +553,13 @@ async function renderTeamForm(id?: string, fromHistory = false) {
   const route = { view: 'team_form', id };
   if (fromHistory) router.replace(route); else router.push(route);
   const content = shell.contentElement; if (!content) return;
-  const record = id ? await loadJson<any>(`/api/crm/teams/${encodeURIComponent(id)}`, content) : { name: '', quota: 0, member_ids: '' };
+  const record = id ? await loadJson<any>(odata('teams', 'get', '', id), content) : { name: '', quota: 0, member_ids: '' };
   if (!record) return;
   clearContent(content);
   const form = new OdooFormView('crm-team-form', { record }, [{ name: 'name', label: 'Sales team', type: 'text' }, { name: 'quota', label: 'Monthly quota', type: 'number' }, { name: 'member_ids', label: 'Team members', type: 'select', multiple: true }]);
   const header = new OdooPageHeader('team-form-header', { eyebrow: 'Sales', title: id ? record.name : 'New Sales Team', actions: [{ id: 'save', label: 'Save', variant: 'primary' }, ...(id ? [{ id: 'pipeline', label: 'Open team pipeline' }] : []), { id: 'discard', label: 'Discard' }] });
   header._onAction = async (_event: string, params: any) => { if (params.id === 'discard') { dirtyGuard.reset(); return renderTeams(); } if (params.id === 'pipeline' && id) { dirtyGuard.reset(); return renderList('', 'Team Pipeline', 'list', { teamId: id }); } if (params.id === 'save') return form.save(); };
-  form._onAction = async (event: string, values: any) => { if (event === 'save') { if (id) values.id = id; const response = await apiFetch('/api/crm/teams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); if (response.ok) { dirtyGuard.reset(); return renderTeams(); } notify('error', 'Manager permission is required to edit teams.'); } };
+  form._onAction = async (event: string, values: any) => { if (event === 'save') { if (id) values.id = id; const response = await apiFetch(odata('teams', 'create'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) }); if (response.ok) { dirtyGuard.reset(); return renderTeams(); } notify('error', 'Manager permission is required to edit teams.'); } };
   header.mount(content); form.mount(content); form.form?.addEventListener('input', () => dirtyGuard.markDirty()); form.form?.addEventListener('change', () => dirtyGuard.markDirty());
   if (form.form) void loadTeamMembers(form.form, String(record.member_ids || ''));
 }
@@ -574,7 +574,7 @@ async function renderActivities(search = '', query: { status?: string } = {}, ac
   const header = new OdooPageHeader('activities-header', { eyebrow: 'Sales', title: menuLabel('activities'), actions: [{ id: 'new', label: 'New activity', variant: 'primary' }, { id: 'done', label: 'Mark done' }, { id: 'reopen', label: 'Reopen' }, { id: 'reschedule', label: 'Reschedule' }] });
   header._onAction = async (_event: string, params: any) => {
     if (params.id === 'new') {
-      const leads = await (await apiFetch('/api/crm/leads?type=opportunity')).json();
+      const leads = await (await apiFetch(odata('leads', 'list', 'type=opportunity'))).json();
       const values = await requestDialog({ title: 'Schedule activity', confirmLabel: 'Schedule', fields: [
         { name: 'lead_id', label: 'Opportunity', type: 'select', required: true, options: leads.map((lead: any) => ({ value: lead.id, label: lead.name })) },
         { name: 'activity_type', label: 'Type', type: 'select', value: 'To-do', required: true, options: ['To-do', 'Call', 'Email', 'Meeting'].map(value => ({ value, label: value })) },
@@ -590,7 +590,7 @@ async function renderActivities(search = '', query: { status?: string } = {}, ac
     if (!selectedIds.length) return notify('info', 'Select one or more activities first.');
     const date = params.id === 'reschedule' ? await requestDialog({ title: 'Reschedule activities', confirmLabel: 'Reschedule', fields: [{ name: 'due_date', label: 'New due date', type: 'date', value: new Date().toISOString().slice(0, 10), required: true }] }) : {};
     if (params.id === 'reschedule' && !date) return;
-    await apiFetch('/api/crm/activities/mutate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds, operation: params.id, value: date?.due_date || '' }) });
+    await apiFetch(odata('activities', 'mutate'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds, operation: params.id, value: date?.due_date || '' }) });
     await renderActivities(search, query, activeView);
   };
   header.mount(content);
@@ -601,7 +601,7 @@ async function renderActivities(search = '', query: { status?: string } = {}, ac
     if (event === 'control' && params.control === 'filter') return renderActivities(search, { status: params.value === 'all' ? undefined : params.value }, activeView);
   };
   control.mount(content);
-  const rows = await loadJson<any[]>(`/api/crm/activities?search=${encodeURIComponent(search)}&status=${encodeURIComponent(query.status || '')}`, content);
+  const rows = await loadJson<any[]>(odata('activities', 'list', `search=${encodeURIComponent(search)}&status=${encodeURIComponent(query.status || '')}`), content);
   if (!rows) return;
   if (activeView === 'calendar') {
     const calendar = new OdooCalendarView('crm-activities-calendar', { rows, titleField: 'summary', dateField: 'due_date', detailField: 'activity_type' });
@@ -648,7 +648,7 @@ function formFields() {
   });
 }
 
-async function loadJson<T>(url: string, container: HTMLElement): Promise<T | null> {
+async function loadJson<T>(url: string | URL, container: HTMLElement): Promise<T | null> {
   const state = new OdooState(`state-${Date.now()}`);
   state.mount(container);
   try {
@@ -668,6 +668,15 @@ function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('X-CRM-Role', currentRole);
   return fetch(input, { ...init, headers });
+}
+
+function odata(entity: string, action: string, query = '', id?: string) {
+  const endpoint = new URL('/api/crm', location.origin);
+  endpoint.searchParams.set('entity', entity);
+  endpoint.searchParams.set('action', action);
+  if (id) endpoint.searchParams.set('id', id);
+  new URLSearchParams(query).forEach((value, key) => endpoint.searchParams.set(key, value));
+  return endpoint;
 }
 
 async function renderPipeline(search = '', query: ListQuery = {}, fromHistory = false) {
@@ -704,12 +713,12 @@ async function renderPipeline(search = '', query: ListQuery = {}, fromHistory = 
   control.mount(content);
 
   const pipelineParams = new URLSearchParams({ search, filter: query.filter || 'all', sort: query.sort || 'recent' });
-  const columns = await loadJson<any[]>(`/api/crm/pipeline?${pipelineParams}`, content);
+  const columns = await loadJson<any[]>(odata('pipeline', 'list', pipelineParams), content);
   if (!columns) return;
   const kanban = new OdooKanban('crm-pipeline', { columns, actions: canManage ? ['assign', 'won', 'lost', 'archive', 'delete'] : ['won', 'lost'] });
   kanban._onAction = async (action: string, params: any) => {
     if (action === 'stage_change') {
-      await apiFetch('/api/crm/stage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
+      await apiFetch(odata('leads', 'move-stage'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) });
       await renderPipeline(control.state.search || '');
     } else if (action === 'open_record') {
       void renderForm(params.id);
@@ -719,7 +728,7 @@ async function renderPipeline(search = '', query: ListQuery = {}, fromHistory = 
         { name: 'expected_revenue', label: 'Expected revenue', type: 'number', value: 0 },
       ] });
       if (values?.name) {
-        await apiFetch('/api/crm/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: String(values.name).trim(), expected_revenue: values.expected_revenue, stage_id: params.stage_id, type: 'opportunity' }) });
+        await apiFetch(odata('leads', 'create'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: String(values.name).trim(), expected_revenue: values.expected_revenue, stage_id: params.stage_id, type: 'opportunity' }) });
         await renderPipeline(control.state.search || '');
       }
     } else if (action === 'record_action') {
@@ -729,7 +738,7 @@ async function renderPipeline(search = '', query: ListQuery = {}, fromHistory = 
       const confirmation = params.action === 'delete' ? await requestDialog({ title: 'Delete opportunity', message: 'This action cannot be undone.', confirmLabel: 'Delete' }) : {};
       const value = params.action === 'won' || params.action === 'lost' ? params.action : String(assignment?.salesperson || '');
       if (params.action !== 'delete' || confirmation) {
-        await apiFetch('/api/crm/mutate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [params.id], operation, value }) });
+      await apiFetch(odata('leads', 'mutate'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [params.id], operation, value }) });
         await renderPipeline(control.state.search || '');
       }
     }
@@ -772,7 +781,7 @@ async function renderList(search = '', title = menuLabel('leads'), activeView = 
   control.mount(content);
   const type = action(actionId).context?.default_type || '';
   const params = new URLSearchParams({ search, type, filter: query.filter || 'all', sort: query.sort || 'recent', group_by: query.groupBy || '', team_id: query.teamId || '' });
-  const rows = await loadJson<any[]>(`/api/crm/leads?${params}`, content);
+  const rows = await loadJson<any[]>(odata('leads', 'list', params), content);
   if (!rows) return;
   loadedRows = rows;
   const columnNames = moduleDefinition.views?.['crm.lead']?.list?.columns || ['name', 'partner_name', 'salesperson', 'stage_id', 'expected_revenue', 'priority'];
@@ -790,12 +799,12 @@ async function renderList(search = '', title = menuLabel('leads'), activeView = 
       const selected = await requestDialog({ title: `Bulk action (${params.ids.length} records)`, confirmLabel: 'Continue', fields: [{ name: 'operation', label: 'Operation', type: 'select', required: true, value: operations[0], options: operations.map(value => ({ value, label: value[0].toUpperCase() + value.slice(1) })) }] });
       const operation = String(selected?.operation || '');
       if (operations.includes(operation)) {
-        const mergeSummary = operation === 'merge' ? await (await apiFetch('/api/crm/merge/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: params.ids }) })).json() : null;
+        const mergeSummary = operation === 'merge' ? await (await apiFetch(odata('leads', 'merge-preview'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: params.ids }) })).json() : null;
         const valueDialog = operation === 'assign' ? await requestDialog({ title: 'Assign records', confirmLabel: 'Assign', fields: [{ name: 'value', label: 'Salesperson', required: true }] }) : operation === 'stage' ? await requestDialog({ title: 'Move records', confirmLabel: 'Move', fields: [{ name: 'value', label: 'Stage', type: 'select', value: 'qualified', required: true, options: ['new', 'qualified', 'proposition', 'won', 'lost'].map(value => ({ value, label: value[0].toUpperCase() + value.slice(1) })) }] }) : operation === 'delete' ? await requestDialog({ title: 'Delete selected records', message: 'This action cannot be undone.', confirmLabel: 'Delete' }) : operation === 'merge' ? await requestDialog({ title: 'Merge records', message: `Keep “${mergeSummary.primary?.name || 'the first record'}” and merge ${mergeSummary.duplicates?.map((row: any) => row.name).join(', ') || 'the other records'} into it?`, confirmLabel: 'Merge records' }) : {};
         if ((operation === 'assign' || operation === 'stage') && !valueDialog) return;
         if (operation === 'delete' && !valueDialog) return;
         const value = String(valueDialog?.value || '');
-        await apiFetch('/api/crm/mutate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: params.ids, operation, value }) });
+        await apiFetch(odata('leads', 'mutate'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: params.ids, operation, value }) });
         void renderList(search, title, activeView, query);
       }
     }
@@ -840,7 +849,7 @@ async function renderAnalyticsView(view: 'calendar' | 'graph' | 'pivot', search 
   };
   control.mount(content);
   const params = new URLSearchParams({ search, type: 'opportunity', filter: query.filter || 'all', sort: query.sort || 'recent', group_by: query.groupBy || '' });
-  const rows = await loadJson<any[]>(`/api/crm/leads?${params}`, content);
+  const rows = await loadJson<any[]>(odata('leads', 'list', params), content);
   if (!rows) return;
   if (view === 'graph') {
     const graph = new OdooGraphView('crm-graph', { rows, labelField: 'stage_name', valueField: 'expected_revenue' });
@@ -867,7 +876,7 @@ async function renderReportDrilldown(dimension: string, value: string, fromHisto
   header.mount(content);
   const drilldownParams = new URLSearchParams({ dimension, value });
   if (secondaryDimension) { drilldownParams.set('secondary_dimension', secondaryDimension); drilldownParams.set('secondary_value', secondaryValue); }
-  const rows = await loadJson<any[]>(`/api/crm/report/drilldown?${drilldownParams}`, content);
+  const rows = await loadJson<any[]>(odata('report', 'drilldown', drilldownParams), content);
   if (!rows) return;
   const list = new OdooListView('report-drilldown-list', { rows }, [
     { field: 'name', label: 'Opportunity', link: true }, { field: 'stage_name', label: 'Stage' },
@@ -886,7 +895,7 @@ async function renderActivityDrilldown(dimension: string, value: string, fromHis
   const header = new OdooPageHeader('activity-drilldown-header', { eyebrow: 'Reporting', title: `${value} activities`, actions: [{ id: 'back', label: 'Back to analysis' }] });
   header._onAction = async () => renderActivityAnalysis(dimension);
   header.mount(content);
-  const rows = await loadJson<any[]>(`/api/crm/report/activity-drilldown?dimension=${encodeURIComponent(dimension)}&value=${encodeURIComponent(value)}`, content);
+  const rows = await loadJson<any[]>(odata('report', 'activity-drilldown', `dimension=${encodeURIComponent(dimension)}&value=${encodeURIComponent(value)}`), content);
   if (!rows) return;
   const list = new OdooListView('activity-drilldown-list', { rows }, [
     { field: 'summary', label: 'Activity' }, { field: 'lead_name', label: 'Opportunity', link: true },
@@ -908,7 +917,7 @@ async function renderLeadDrilldown(dimension: string, value: string, fromHistory
   const header = new OdooPageHeader('lead-drilldown-header', { eyebrow: 'Reporting', title: `${value} leads`, actions: [{ id: 'back', label: 'Back to leads analysis' }] });
   header._onAction = async () => renderLeadAnalysis(dimension);
   header.mount(content);
-  const rows = await loadJson<any[]>(`/api/crm/report/lead-drilldown?dimension=${encodeURIComponent(dimension)}&value=${encodeURIComponent(value)}`, content);
+  const rows = await loadJson<any[]>(odata('report', 'lead-drilldown', `dimension=${encodeURIComponent(dimension)}&value=${encodeURIComponent(value)}`), content);
   if (!rows) return;
   const list = new OdooListView('lead-drilldown-list', { rows }, [{ field: 'name', label: 'Lead / opportunity', link: true }, { field: 'type', label: 'Type' }, { field: 'stage_name', label: 'Stage' }, { field: 'source', label: 'Source' }]);
   list._onAction = async (_event: string, params: any) => renderForm(params.id);
@@ -920,9 +929,9 @@ async function renderForm(id?: string, fromHistory = false) {
   if (fromHistory) router.replace(route); else router.push(route);
   const content = shell.contentElement; if (!content) return;
   window.onbeforeunload = null;
-  const record = id ? await loadJson<any>(`/api/crm/leads/${encodeURIComponent(id)}`, content) : { type: 'opportunity', stage_id: 'new', priority: 0 };
+  const record = id ? await loadJson<any>(odata('leads', 'get', '', id), content) : { type: 'opportunity', stage_id: 'new', priority: 0 };
   if (!record) return;
-  const extras = id ? await loadJson<any>(`/api/crm/leads/${encodeURIComponent(id)}/extras`, content) : { messages: [], activities: [], followers: [], attachments: [] };
+  const extras = id ? await loadJson<any>(odata('leads', 'extras', '', id), content) : { messages: [], activities: [], followers: [], attachments: [] };
   if (!extras) return;
   const formView = new OdooFormView('crm-lead-form', { record }, formFields());
   formView._onAction = async (event: string, values: any) => { if (event === 'save') await saveForm(values, id); };
@@ -941,26 +950,26 @@ async function renderForm(id?: string, fromHistory = false) {
     if (params.id === 'convert') {
       const conversion = await requestDialog({ title: 'Convert lead to opportunity', message: 'Optionally link the opportunity to an existing or new customer by name.', confirmLabel: 'Convert', fields: [{ name: 'customer_name', label: 'Customer name', value: record.partner_name || '' }] });
       if (!conversion) return;
-      await apiFetch(`/api/crm/leads/${encodeURIComponent(id)}/convert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: String(conversion.customer_name || '') }) });
+      await apiFetch(odata('leads', 'convert', '', id), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: String(conversion.customer_name || '') }) });
       return renderForm(id);
     }
     if (params.id === 'lost') {
-      const reasons = await (await apiFetch('/api/crm/lost-reasons')).json();
+      const reasons = await (await apiFetch(odata('lost-reasons', 'list'))).json();
       const reasonValues = await requestDialog({ title: 'Mark record lost', confirmLabel: 'Mark lost', fields: [{ name: 'reason_id', label: 'Lost reason', type: 'select', required: true, value: reasons[0]?.id || '', options: reasons.map((item: any) => ({ value: item.id, label: item.name })) }] });
       if (reasonValues?.reason_id) {
-        await apiFetch(`/api/crm/leads/${encodeURIComponent(id)}/lost`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason_id: reasonValues.reason_id }) });
+        await apiFetch(odata('leads', 'lost', '', id), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason_id: reasonValues.reason_id }) });
         return renderForm(id);
       }
       return;
     }
     if (params.id === 'duplicates') {
-      const duplicates = await (await apiFetch(`/api/crm/leads/${encodeURIComponent(id)}/duplicates`)).json();
+      const duplicates = await (await apiFetch(odata('leads', 'duplicates', '', id))).json();
       return notify(duplicates.length ? 'warning' : 'info', duplicates.length ? `Possible duplicates: ${duplicates.map((item: any) => item.name).join(', ')}` : 'No possible duplicates found.');
     }
     if (params.id === 'duplicate') return renderForm();
     const confirmation = await requestDialog({ title: `${params.id[0].toUpperCase() + params.id.slice(1)} record`, message: `Are you sure you want to ${params.id} this record?`, confirmLabel: params.id[0].toUpperCase() + params.id.slice(1) });
     if (confirmation) {
-      await apiFetch('/api/crm/mutate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], operation: params.id }) });
+      await apiFetch(odata('leads', 'mutate'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], operation: params.id }) });
       return renderPipeline();
     }
   };
@@ -975,7 +984,7 @@ async function renderForm(id?: string, fromHistory = false) {
   const statusbar = new OdooStatusbar('lead-statusbar', { value: record.stage_id, stages: ['new', 'qualified', 'proposition', 'won', 'lost'].map(value => ({ value, label: value[0].toUpperCase() + value.slice(1) })) });
   statusbar._onAction = async (_action: string, params: any) => {
     if (!id) return;
-    await apiFetch('/api/crm/stage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, stage_id: params.value }) });
+    await apiFetch(odata('leads', 'move-stage'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, stage_id: params.value }) });
     await renderForm(id);
   };
   statusbar.mount(formContainer);
@@ -999,7 +1008,7 @@ async function renderForm(id?: string, fromHistory = false) {
 
 async function saveForm(values: Record<string, FormDataEntryValue>, id?: string) {
   if (id) values.id = id;
-  const response = await apiFetch('/api/crm/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
+  const response = await apiFetch(odata('leads', 'create'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     return notify('error', error.error || 'Unable to save record.');
@@ -1025,17 +1034,17 @@ function renderChatter(id: string | undefined, extras: any) {
 }
 
 async function postExtra(id: string, body: Record<string, unknown>) {
-  await apiFetch(`/api/crm/leads/${encodeURIComponent(id)}/extras`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  await apiFetch(odata('leads', 'extras', '', id), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 }
 
 async function uploadAttachment(id: string, file: File) {
   const body = new FormData();
   body.append('file', file, file.name);
-  await apiFetch(`/api/crm/leads/${encodeURIComponent(id)}/extras`, { method: 'POST', body });
+  await apiFetch(odata('leads', 'extras', '', id), { method: 'POST', body });
 }
 
 async function loadPartners(form: HTMLFormElement) {
-  const lookups = await (await apiFetch('/api/crm/lookups')).json();
+  const lookups = await (await apiFetch(odata('lookups', 'list'))).json();
   for (const [fieldName, rows] of [['partner_id', lookups.partners], ['salesperson_id', lookups.users], ['team_id', lookups.teams], ['recurring_plan_id', lookups.recurringPlans]] as [string, any[]][]) {
     const input = form.elements.namedItem(fieldName);
     if (!(input instanceof HTMLInputElement)) continue;
@@ -1065,7 +1074,7 @@ async function loadPartners(form: HTMLFormElement) {
 async function loadTeamMembers(form: HTMLFormElement, selectedIds: string) {
   const input = form.elements.namedItem('member_ids');
   if (!(input instanceof HTMLSelectElement)) return;
-  const lookups = await (await apiFetch('/api/crm/lookups')).json();
+  const lookups = await (await apiFetch(odata('lookups', 'list'))).json();
   for (const user of lookups.users || []) {
     const option = document.createElement('option');
     option.value = user.id;

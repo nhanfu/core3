@@ -1,7 +1,7 @@
 import { basename, extname, isAbsolute, join, resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { closeDatabase, initDatabase } from './crm/db/database.ts';
-import { executeDatasource, routeDatasourceRequest } from './crm/db/datasource-runtime.ts';
+import { executeDatasource } from './crm/db/datasource-runtime.ts';
 
 type Role = 'salesperson' | 'manager' | 'system';
 type Params = Record<string, string>;
@@ -41,19 +41,12 @@ const contentTypes: Record<string, string> = {
   '.js': 'application/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.ts': 'application/javascript', '.woff2': 'font/woff2',
 };
 
-const exactRoutes = new Map<string, Handler>();
-const parameterRoutes = new Map<string, Array<{ pattern: RegExp; handler: Handler }>>();
+const operations = new Map<string, Handler>();
 
-function route(method: string, path: string, handler: Handler, _metadata?: unknown) {
-  const key = `${method} ${path}`;
-  if (exactRoutes.has(key)) throw new Error(`Duplicate route: ${key}`);
-  exactRoutes.set(key, handler);
-}
-
-function parameterRoute(method: string, pattern: RegExp, handler: Handler) {
-  const routes = parameterRoutes.get(method) || [];
-  routes.push({ pattern, handler });
-  parameterRoutes.set(method, routes);
+function operation(method: string, entity: string, action: string, handler: Handler) {
+  const key = `${method} ${entity} ${action}`;
+  if (operations.has(key)) throw new Error(`Duplicate operation: ${key}`);
+  operations.set(key, handler);
 }
 
 function json(value: unknown, status = 200) {
@@ -147,113 +140,71 @@ function errorResponse(error: unknown) {
   return json({ error: status >= 500 ? 'Internal server error' : error instanceof Error ? error.message : 'Invalid request' }, status);
 }
 
-function registerRoutes() {
-  route('GET', '/api/crm/pipeline', async ({ url, role }) => json(await crm('pipeline', { search: url.searchParams.get('search') || '', filter: url.searchParams.get('filter') || '', sort: url.searchParams.get('sort') || '', role })), {});
-  route('GET', '/api/crm/module', async () => json(moduleDefinition), {});
-  route('GET', '/api/modules', async () => json(appManifests), {});
-  route('GET', '/api/crm/leads', async ({ url, role }) => json(await executeDatasource('crm.list_leads', { search: url.searchParams.get('search') || '', type: url.searchParams.get('type') || '', filter: url.searchParams.get('filter') || '', sort: url.searchParams.get('sort') || '', group_by: url.searchParams.get('group_by') || '', team_id: url.searchParams.get('team_id') || '', role })), {});
-  route('GET', '/api/crm/partners', async ({ url }) => json(await executeDatasource('crm.partners', { search: `%${(url.searchParams.get('search') || '').trim()}%` })), {});
-  route('GET', '/api/crm/lookups', async ({ url }) => json(await crm('crmLookups', { search: url.searchParams.get('search') || '' })), {});
-  route('GET', '/api/crm/customers', async ({ url }) => json(await executeDatasource('crm.customers', { search: `%${(url.searchParams.get('search') || '').trim()}%` })), {});
-  route('GET', '/api/crm/teams', async () => json(await executeDatasource('crm.teams')), {});
-  route('POST', '/api/crm/customers', async ({ request }) => json(await crm('saveCustomer', { values: objectBody(await readJson(request)) })), {});
-  route('GET', '/api/crm/report/summary', async ({ role }) => json(await crm('reportSummary', { role })), {});
-  route('GET', '/api/crm/report/analysis', async ({ url, role }) => json(await crm('reportAnalysis', { dimension: url.searchParams.get('dimension') || 'stage', role, from_date: url.searchParams.get('from') || '', to_date: url.searchParams.get('to') || '', search: url.searchParams.get('search') || '' })), {});
-  route('GET', '/api/crm/report/drilldown', async ({ url, role }) => json(await crm('reportDrilldown', { dimension: url.searchParams.get('dimension') || 'stage', value: url.searchParams.get('value') || '', secondary_dimension: url.searchParams.get('secondary_dimension') || '', secondary_value: url.searchParams.get('secondary_value') || '', role })), {});
-  route('GET', '/api/crm/report/lead-analysis', async ({ url, role }) => json(await crm('leadAnalysis', { dimension: url.searchParams.get('dimension') || 'source', role, search: url.searchParams.get('search') || '' })), {});
-  route('GET', '/api/crm/report/lead-drilldown', async ({ url, role }) => json(await crm('leadDrilldown', { dimension: url.searchParams.get('dimension') || 'source', value: url.searchParams.get('value') || '', role })), {});
-  route('GET', '/api/crm/lost-reasons', async () => json(await executeDatasource('crm.lost_reasons')), {});
-  route('GET', '/api/crm/activities', async ({ url, role }) => json(await executeDatasource('crm.activities', { search: url.searchParams.get('search')?.trim() ? `%${url.searchParams.get('search')!.trim()}%` : '', status: url.searchParams.get('status') || '', role })), {});
-  route('GET', '/api/crm/report/activity-analysis', async ({ url, role }) => json(await crm('activityAnalysis', { dimension: url.searchParams.get('dimension') || 'activity_type', role, search: url.searchParams.get('search') || '' })), {});
-  route('GET', '/api/crm/report/activity-drilldown', async ({ url, role }) => json(await crm('activityDrilldown', { dimension: url.searchParams.get('dimension') || 'activity_type', value: url.searchParams.get('value') || '', role })), {});
-  route('POST', '/api/crm/teams', async context => { requireManager(context); return json(await crm('saveTeam', { values: objectBody(await readJson(context.request)) })); }, {});
-  route('GET', '/api/crm/config', async context => { requireManager(context); return json(await executeDatasource('crm.config')); }, {});
-  route('POST', '/api/crm/config', async context => { requireManager(context); return json(await crm('saveConfig', { values: objectBody(await readJson(context.request)) })); }, {});
-  route('GET', '/api/crm/stages', async context => { requireManager(context); return json(await executeDatasource('crm.stages')); }, {});
-  route('POST', '/api/crm/stages', async context => { requireManager(context); return json(await crm('saveStages', { rows: rowsBody(await readJson(context.request)) })); }, {});
-  route('GET', '/api/crm/tags', async context => { requireManager(context); return json(await executeDatasource('crm.tags')); }, {});
-  route('POST', '/api/crm/tags', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await crm('saveTag', { id: String(body.id || ''), name: String(body.name || ''), color: String(body.color || '') })); }, {});
-  route('POST', '/api/crm/lost-reasons', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await crm('saveLostReason', { id: String(body.id || ''), name: String(body.name || '') })); }, {});
-  route('POST', '/api/crm/import/preview', async context => { requireManager(context); return json(await crm('previewImportWithHistory', { rows: rowsBody(await readJson(context.request)) })); }, {});
-  route('GET', '/api/crm/import/history', async context => { requireManager(context); return json(await executeDatasource('crm.import_history')); }, {});
-  route('POST', '/api/crm/import/commit', async context => { requireManager(context); return json(await crm('commitImport', { rows: rowsBody(await readJson(context.request)) })); }, {});
-  route('POST', '/api/crm/merge', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await executeDatasource('crm.merge_leads', { ids: stringArray(body.ids) })); }, {});
-  route('POST', '/api/crm/merge/preview', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await crm('mergePreview', { ids: stringArray(body.ids) })); }, {});
-  route('POST', '/api/crm/leads', async ({ request, role }) => {
-    const body = objectBody(await readJson(request));
-    if (role === 'salesperson' && (body.salesperson_id || body.salesperson)) throw new HttpError(403, 'Manager permission required to assign records');
-    return json(await executeDatasource('crm.save_lead', { values: body }));
-  }, {});
-  route('POST', '/api/crm/stage', async context => {
-    const body = objectBody(await readJson(context.request));
-    if (!body.id || !body.stage_id) throw new HttpError(400, 'id and stage_id are required');
-    await requireLeadAccess(context, String(body.id)); await executeDatasource('crm.move_stage', { id: String(body.id), stage_id: String(body.stage_id) }); return json({ ok: true });
-  }, {});
-  route('POST', '/api/crm/activities/mutate', async ({ request, role }) => {
-    const body = objectBody(await readJson(request)); const ids = stringArray(body.ids);
-    return json(await crm('mutateActivities', { ids, operation: String(body.operation || ''), value: String(body.value || '') }));
-  }, {});
-  route('POST', '/api/crm/mutate', async context => {
-    const body = objectBody(await readJson(context.request)); const ids = stringArray(body.ids); const operation = String(body.operation || '');
-    if (!isManager(context.role) && ['archive', 'restore', 'delete', 'assign', 'merge'].includes(operation)) throw new HttpError(403, 'Manager permission required');
-    return json(operation === 'merge' ? await executeDatasource('crm.merge_leads', { ids }) : await crm('mutateLeads', { ids, operation, value: String(body.value || '') }));
-  }, {});
-  parameterRoute('GET', /^\/api\/crm\/customers\/(?<id>[^/]+)\/related$/, async (_context, params) => json(await crm('customerRelated', { id: pathParam(params, 'id') })));
-  parameterRoute('GET', /^\/api\/crm\/customers\/(?<id>[^/]+)$/, async (_context, params) => json((await executeDatasource('crm.customer', { id: pathParam(params, 'id') }))[0] || null));
-  parameterRoute('GET', /^\/api\/crm\/teams\/(?<id>[^/]+)$/, async (_context, params) => json(await crm('getTeam', { id: pathParam(params, 'id') })));
-  parameterRoute('GET', /^\/api\/crm\/catalog\/(?<catalog>activity_types|activity_plans|recurring_plans)$/, async context => { requireManager(context); return json(await executeDatasource(`crm.catalog.${context.url.pathname.split('/').pop()}`)); });
-  parameterRoute('POST', /^\/api\/crm\/catalog\/(?<catalog>activity_types|activity_plans|recurring_plans)$/, async (context, params) => { requireManager(context); return json(await crm('saveCatalog', { kind: params.catalog, values: objectBody(await readJson(context.request)) })); });
-  parameterRoute('GET', /^\/api\/crm\/leads\/(?<id>[^/]+)$/, async (context, params) => { const id = pathParam(params, 'id'); await requireLeadAccess(context, id); return json(await crm('getLead', { id })); });
-  parameterRoute('GET', /^\/api\/crm\/leads\/(?<id>[^/]+)\/extras$/, async (context, params) => { const id = pathParam(params, 'id'); await requireLeadAccess(context, id); return json(await crm('leadExtras', { id })); });
-  parameterRoute('POST', /^\/api\/crm\/leads\/(?<id>[^/]+)\/convert$/, async (context, params) => { const id = pathParam(params, 'id'); await requireLeadAccess(context, id); const body = objectBody(await readJson(context.request)); return json(await executeDatasource('crm.convert_lead', { id, customer_name: String(body.customer_name || '') })); });
-  parameterRoute('POST', /^\/api\/crm\/leads\/(?<id>[^/]+)\/lost$/, async (context, params) => { const id = pathParam(params, 'id'); await requireLeadAccess(context, id); const body = objectBody(await readJson(context.request)); return json(await executeDatasource('crm.lose_lead', { id, reason_id: String(body.reason_id || '') })); });
-  parameterRoute('GET', /^\/api\/crm\/leads\/(?<id>[^/]+)\/duplicates$/, async (context, params) => { const id = pathParam(params, 'id'); await requireLeadAccess(context, id); return json(await crm('findDuplicates', { id })); });
-  parameterRoute('POST', /^\/api\/crm\/leads\/(?<id>[^/]+)\/extras$/, async (context, params) => {
-    const id = pathParam(params, 'id'); await requireLeadAccess(context, id);
-    if ((context.request.headers.get('content-type') || '').startsWith('multipart/form-data')) {
-      const file = (await context.request.formData()).get('file');
-      if (!(file instanceof File)) throw new HttpError(400, 'file is required');
-      return json(await crm('addAttachmentFile', { id, file, upload_directory: uploadDirectory }));
-    }
-    const body = objectBody(await readJson(context.request));
-    if (body.kind === 'message') return json(await crm('addMessage', { id, body: String(body.body || '') }));
-    if (body.kind === 'activity') return json(await crm('addActivity', { id, activity_type: String(body.activity_type || 'To-do'), summary: String(body.summary || ''), due_date: String(body.due_date || '') }));
-    if (body.kind === 'follower') return json(await crm('addFollower', { id, name: String(body.name || '') }));
-    if (body.kind === 'attachment') return json(await crm('addAttachment', { id, name: String(body.name || '') }));
-    throw new HttpError(400, 'Unknown record activity');
-  });
-  parameterRoute('GET', /^\/api\/crm\/attachments\/(?<id>[^/]+)$/, async (context, params) => {
-    const attachment = (await executeDatasource('crm.attachment', { id: pathParam(params, 'id') }))[0] || null;
-    if (!attachment?.stored_path) throw new HttpError(404, 'Attachment file not found');
-    await requireLeadAccess(context, attachment.lead_id);
-    const storedPath = String(attachment.stored_path);
-    if (storedPath !== basename(storedPath) || isAbsolute(storedPath)) throw new HttpError(500, 'Invalid attachment path');
-    const file = Bun.file(join(uploadDirectory, storedPath));
-    if (!(await file.exists())) throw new HttpError(404, 'Attachment file not found');
-    const downloadName = String(attachment.name || 'download').replace(/[\r\n"]/g, '_');
-    return new Response(file, { headers: { ...headers, 'Content-Type': attachment.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename="${downloadName}"` } });
-  });
+function registerOperations() {
+  operation('GET', 'pipeline', 'list', async ({ url, role }) => json(await crm('pipeline', { search: url.searchParams.get('search') || '', filter: url.searchParams.get('filter') || '', sort: url.searchParams.get('sort') || '', role })));
+  operation('GET', 'module', 'get', async () => json(moduleDefinition));
+  operation('GET', 'modules', 'list', async () => json(appManifests));
+  operation('GET', 'leads', 'list', async ({ url, role }) => json(await executeDatasource('crm.list_leads', { search: url.searchParams.get('search') || '', type: url.searchParams.get('type') || '', filter: url.searchParams.get('filter') || '', sort: url.searchParams.get('sort') || '', group_by: url.searchParams.get('group_by') || '', team_id: url.searchParams.get('team_id') || '', role })));
+  operation('GET', 'partners', 'list', async ({ url }) => json(await executeDatasource('crm.partners', { search: `%${(url.searchParams.get('search') || '').trim()}%` })));
+  operation('GET', 'lookups', 'list', async ({ url }) => json(await crm('crmLookups', { search: url.searchParams.get('search') || '' })));
+  operation('GET', 'customers', 'list', async ({ url }) => json(await executeDatasource('crm.customers', { search: `%${(url.searchParams.get('search') || '').trim()}%` })));
+  operation('GET', 'customers', 'get', async ({ url }) => json((await executeDatasource('crm.customer', { id: url.searchParams.get('id') || '' }))[0] || null));
+  operation('GET', 'customers', 'related', async ({ url }) => json(await crm('customerRelated', { id: url.searchParams.get('id') || '' })));
+  operation('POST', 'customers', 'create', async ({ request }) => json(await crm('saveCustomer', { values: objectBody(await readJson(request)) })));
+  operation('GET', 'teams', 'list', async () => json(await executeDatasource('crm.teams')));
+  operation('GET', 'teams', 'get', async ({ url }) => json(await crm('getTeam', { id: url.searchParams.get('id') || '' })));
+  operation('POST', 'teams', 'create', async context => { requireManager(context); return json(await crm('saveTeam', { values: objectBody(await readJson(context.request)) })); });
+  operation('GET', 'report', 'summary', async ({ role }) => json(await crm('reportSummary', { role })));
+  operation('GET', 'report', 'analysis', async ({ url, role }) => json(await crm('reportAnalysis', { dimension: url.searchParams.get('dimension') || 'stage', role, from_date: url.searchParams.get('from') || '', to_date: url.searchParams.get('to') || '', search: url.searchParams.get('search') || '' })));
+  operation('GET', 'report', 'drilldown', async ({ url, role }) => json(await crm('reportDrilldown', { dimension: url.searchParams.get('dimension') || 'stage', value: url.searchParams.get('value') || '', secondary_dimension: url.searchParams.get('secondary_dimension') || '', secondary_value: url.searchParams.get('secondary_value') || '', role })));
+  operation('GET', 'report', 'lead-analysis', async ({ url, role }) => json(await crm('leadAnalysis', { dimension: url.searchParams.get('dimension') || 'source', role, search: url.searchParams.get('search') || '' })));
+  operation('GET', 'report', 'lead-drilldown', async ({ url, role }) => json(await crm('leadDrilldown', { dimension: url.searchParams.get('dimension') || 'source', value: url.searchParams.get('value') || '', role })));
+  operation('GET', 'report', 'activity-analysis', async ({ url, role }) => json(await crm('activityAnalysis', { dimension: url.searchParams.get('dimension') || 'activity_type', role, search: url.searchParams.get('search') || '' })));
+  operation('GET', 'report', 'activity-drilldown', async ({ url, role }) => json(await crm('activityDrilldown', { dimension: url.searchParams.get('dimension') || 'activity_type', value: url.searchParams.get('value') || '', role })));
+  operation('GET', 'activities', 'list', async ({ url, role }) => json(await executeDatasource('crm.activities', { search: url.searchParams.get('search')?.trim() ? `%${url.searchParams.get('search')!.trim()}%` : '', status: url.searchParams.get('status') || '', role })));
+  operation('POST', 'activities', 'mutate', async ({ request }) => { const body = objectBody(await readJson(request)); return json(await crm('mutateActivities', { ids: stringArray(body.ids), operation: String(body.operation || ''), value: String(body.value || '') })); });
+  operation('GET', 'config', 'get', async context => { requireManager(context); return json(await executeDatasource('crm.config')); });
+  operation('POST', 'config', 'save', async context => { requireManager(context); return json(await crm('saveConfig', { values: objectBody(await readJson(context.request)) })); });
+  operation('GET', 'stages', 'list', async context => { requireManager(context); return json(await executeDatasource('crm.stages')); });
+  operation('POST', 'stages', 'save', async context => { requireManager(context); return json(await crm('saveStages', { rows: rowsBody(await readJson(context.request)) })); });
+  operation('GET', 'tags', 'list', async context => { requireManager(context); return json(await executeDatasource('crm.tags')); });
+  operation('POST', 'tags', 'save', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await crm('saveTag', { id: String(body.id || ''), name: String(body.name || ''), color: String(body.color || '') })); });
+  operation('POST', 'lost-reasons', 'save', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await crm('saveLostReason', { id: String(body.id || ''), name: String(body.name || '') })); });
+  operation('GET', 'lost-reasons', 'list', async () => json(await executeDatasource('crm.lost_reasons')));
+  operation('POST', 'import', 'preview', async context => { requireManager(context); return json(await crm('previewImportWithHistory', { rows: rowsBody(await readJson(context.request)) })); });
+  operation('GET', 'import', 'history', async context => { requireManager(context); return json(await executeDatasource('crm.import_history')); });
+  operation('POST', 'import', 'commit', async context => { requireManager(context); return json(await crm('commitImport', { rows: rowsBody(await readJson(context.request)) })); });
+  operation('POST', 'leads', 'create', async ({ request, role }) => { const body = objectBody(await readJson(request)); if (role === 'salesperson' && (body.salesperson_id || body.salesperson)) throw new HttpError(403, 'Manager permission required to assign records'); return json(await executeDatasource('crm.save_lead', { values: body })); });
+  operation('GET', 'leads', 'get', async context => { const id = context.url.searchParams.get('id') || ''; await requireLeadAccess(context, id); return json(await crm('getLead', { id })); });
+  operation('GET', 'leads', 'extras', async context => { const id = context.url.searchParams.get('id') || ''; await requireLeadAccess(context, id); return json(await crm('leadExtras', { id })); });
+  operation('POST', 'leads', 'convert', async context => { const id = context.url.searchParams.get('id') || ''; await requireLeadAccess(context, id); const body = objectBody(await readJson(context.request)); return json(await executeDatasource('crm.convert_lead', { id, customer_name: String(body.customer_name || '') })); });
+  operation('POST', 'leads', 'lost', async context => { const id = context.url.searchParams.get('id') || ''; await requireLeadAccess(context, id); const body = objectBody(await readJson(context.request)); return json(await executeDatasource('crm.lose_lead', { id, reason_id: String(body.reason_id || '') })); });
+  operation('GET', 'leads', 'duplicates', async context => { const id = context.url.searchParams.get('id') || ''; await requireLeadAccess(context, id); return json(await crm('findDuplicates', { id })); });
+  operation('POST', 'leads', 'move-stage', async context => { const body = objectBody(await readJson(context.request)); const id = String(body.id || context.url.searchParams.get('id') || ''); if (!id || !body.stage_id) throw new HttpError(400, 'id and stage_id are required'); await requireLeadAccess(context, id); await executeDatasource('crm.move_stage', { id, stage_id: String(body.stage_id) }); return json({ ok: true }); });
+  operation('POST', 'leads', 'mutate', async context => { const body = objectBody(await readJson(context.request)); const ids = stringArray(body.ids); const action = String(body.operation || ''); if (!isManager(context.role) && ['archive', 'restore', 'delete', 'assign', 'merge'].includes(action)) throw new HttpError(403, 'Manager permission required'); return json(action === 'merge' ? await executeDatasource('crm.merge_leads', { ids }) : await crm('mutateLeads', { ids, operation: action, value: String(body.value || '') })); });
+  operation('POST', 'leads', 'merge', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await executeDatasource('crm.merge_leads', { ids: stringArray(body.ids) })); });
+  operation('POST', 'leads', 'merge-preview', async context => { requireManager(context); const body = objectBody(await readJson(context.request)); return json(await crm('mergePreview', { ids: stringArray(body.ids) })); });
+  operation('GET', 'catalog', 'list', async context => { requireManager(context); const kind = context.url.searchParams.get('kind') || ''; return json(await executeDatasource(`crm.catalog.${kind}`)); });
+  operation('POST', 'catalog', 'save', async context => { requireManager(context); return json(await crm('saveCatalog', { kind: context.url.searchParams.get('kind') || '', values: objectBody(await readJson(context.request)) })); });
+  operation('GET', 'attachments', 'get', async context => { const attachment = (await executeDatasource('crm.attachment', { id: context.url.searchParams.get('id') || '' }))[0] || null; if (!attachment?.stored_path) throw new HttpError(404, 'Attachment file not found'); await requireLeadAccess(context, attachment.lead_id); const storedPath = String(attachment.stored_path); if (storedPath !== basename(storedPath) || isAbsolute(storedPath)) throw new HttpError(500, 'Invalid attachment path'); const file = Bun.file(join(uploadDirectory, storedPath)); if (!(await file.exists())) throw new HttpError(404, 'Attachment file not found'); const downloadName = String(attachment.name || 'download').replace(/[\r\n"]/g, '_'); return new Response(file, { headers: { ...headers, 'Content-Type': attachment.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename="${downloadName}"` } }); });
 }
 
 async function dispatch(request: Request) {
   const url = new URL(request.url);
-  const context = { request, url, role: roleOf(request) } satisfies Context;
-  const routeKey = `${request.method} ${url.pathname}`;
-  if (routeKey === 'GET /api/crm/pipeline') return exactRoutes.get(routeKey)!(context, {});
-  const datasourceResponse = await routeDatasourceRequest(request, context.role);
-  if (datasourceResponse) return datasourceResponse;
-  const exactHandler = exactRoutes.get(routeKey);
-  if (exactHandler) return exactHandler(context, {});
-  const routes = parameterRoutes.get(request.method) || [];
-  for (const routeDefinition of routes) {
-    const match = routeDefinition.pattern.exec(url.pathname);
-    if (match) return routeDefinition.handler(context, match.groups || {});
+  if (url.pathname === '/api/crm') {
+    const entity = url.searchParams.get('entity')?.trim();
+    const action = url.searchParams.get('action')?.trim();
+    if (!entity || !action || !/^[a-z][a-z0-9-]*$/.test(entity) || !/^[a-z][a-z0-9-]*$/.test(action)) return json({ error: 'entity and action parameters are required' }, 400);
+    const handler = operations.get(`${request.method} ${entity} ${action}`);
+    if (!handler) return json({ error: `Unsupported CRM operation: ${request.method} ${entity}/${action}` }, 404);
+    return handler({ request, url, role: roleOf(request) }, {});
   }
+
+  if (url.pathname.startsWith('/api/')) return json({ error: 'Use /api/crm with entity and action parameters' }, 404);
   if (request.method === 'GET') return await staticFile(url.pathname) || new Response('Not found', { status: 404 });
   return json({ error: 'Not found' }, 404);
 }
-
-registerRoutes();
+registerOperations();
 if (!existsSync(databasePath)) await initDatabase();
 const server = Bun.serve({ port: PORT, maxRequestBodySize: MAX_REQUEST_BYTES, async fetch(request) {
   try {
