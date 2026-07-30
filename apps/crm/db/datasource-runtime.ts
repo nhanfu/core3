@@ -13,6 +13,7 @@ export type Datasource = {
   protocol?: string;
   roles?: string[];
   permission?: string;
+  entrypoint?: string;
   query?: string;
   statement?: string;
   language?: string;
@@ -81,6 +82,7 @@ function resolveParams(source: Datasource, params: Record<string, unknown>) {
 
 async function runScriptDatasource(source: Datasource, params: Record<string, unknown>) {
   if (!source.script) throw new Error(`Datasource has no script: ${source.id}`);
+  if (!source.entrypoint) throw new Error(`Script datasource has no entrypoint: ${source.id}`);
   return withDb(async connection => {
     const db = {
       query: async (sql: string, queryParams: Record<string, unknown> = {}) => {
@@ -92,13 +94,13 @@ async function runScriptDatasource(source: Datasource, params: Record<string, un
         return run(connection, bound.sql, bound.values);
       },
     };
+    const resolvedParams = resolveParams(source, params);
     const context = {
-      params: resolveParams(source, params),
       db,
       crypto: { randomUUID: () => crypto.randomUUID() },
     };
-    const program = `(async function(ctx) { "use strict"; ${source.script}\n})(ctx)`;
-    return vm.runInNewContext(program, { ctx: context });
+    const program = `(async function(ctx, params) { "use strict"; ${source.script}\n return ${source.entrypoint}(ctx, params); })(ctx, params)`;
+    return vm.runInNewContext(program, { ctx: context, params: resolvedParams });
   });
 }
 

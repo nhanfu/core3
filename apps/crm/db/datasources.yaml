@@ -364,9 +364,12 @@ datasources:
   - id: crm.convert_lead
     params: { id: { type: string }, customer_name: { type: string, default: '' } }
     language: javascript
+    entrypoint: convertLead
     script: |
       // js
-      async function convertLead(ctx, id, customerName) {
+      async function convertLead(ctx, params) {
+        const id = String(params.id || '');
+        const customerName = String(params.customer_name || '').trim();
         await ctx.db.execute("UPDATE crm_lead SET type = 'opportunity', converted_at = current_timestamp, stage_id = CASE WHEN stage_id = 'new' THEN 'qualified' ELSE stage_id END WHERE id = :id AND type = 'lead'", { id });
         if (customerName) {
           const existing = (await ctx.db.query('SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1', { name: customerName }))[0];
@@ -380,7 +383,6 @@ datasources:
         rows[0].tag_ids = relation[0]?.tag_ids || '';
         return rows[0];
       }
-      return convertLead(ctx, String(ctx.params.id || ''), String(ctx.params.customer_name || '').trim());
   - id: crm.customer_by_name
     params: { name: { type: string } }
     query: SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1
@@ -393,9 +395,12 @@ datasources:
   - id: crm.lose_lead
     params: { id: { type: string }, reason_id: { type: string } }
     language: javascript
+    entrypoint: loseLead
     script: |
       //js
-      async function loseLead(ctx, id, reasonId) {
+      async function loseLead(ctx, params) {
+        const id = String(params.id || '');
+        const reasonId = String(params.reason_id || '');
         console.log('ahihi');
         const reasons = await ctx.db.query('SELECT id, name FROM crm_lost_reason');
         const reason = reasons.find(row => row.id === reasonId);
@@ -407,7 +412,6 @@ datasources:
         rows[0].tag_ids = relation[0]?.tag_ids || '';
         return rows[0];
       }
-      return loseLead(ctx, String(ctx.params.id || ''), String(ctx.params.reason_id || ''));
   - id: crm.stage_by_id
     params: { id: { type: string } }
     query: SELECT id FROM crm_stage WHERE id = :id
