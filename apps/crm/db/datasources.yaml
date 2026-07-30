@@ -14,7 +14,6 @@ datasources:
       FROM crm_lead
       WHERE type = :type
         AND active = true
-        AND (:role <> 'salesperson' OR salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
       GROUP BY stage_id
       ORDER BY stage_id
 
@@ -109,7 +108,7 @@ datasources:
     params: { id: { type: string } }
     query: |
       SELECT id FROM crm_lead
-      WHERE id = :id AND (salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+      WHERE id = :id
   - id: crm.lead_identity
     params: { id: { type: string } }
     query: SELECT name, partner_name, email, phone FROM crm_lead WHERE id = :id
@@ -230,13 +229,13 @@ datasources:
     params: { ids: { type: json } }
     query: |
       SELECT count(*) AS count FROM crm_lead
-      WHERE id IN (:ids) AND (salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+      WHERE id IN (:ids)
   - id: crm.access.activities
     params: { ids: { type: json } }
     query: |
       SELECT count(*) AS count
       FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
-      WHERE a.id IN (:ids) AND (l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
+      WHERE a.id IN (:ids)
   - id: crm.mutate.archive
     params: { ids: { type: json } }
     statement: UPDATE crm_lead SET active = false WHERE id IN (:ids)
@@ -269,13 +268,12 @@ datasources:
         coalesce(sum(expected_revenue) FILTER (WHERE stage_id NOT IN ('won', 'lost')), 0) AS open_revenue,
         coalesce(sum(expected_revenue) FILTER (WHERE stage_id = 'won'), 0) AS won_revenue
       FROM crm_lead
-      WHERE active AND (:role <> 'salesperson' OR salesperson = 'Mitchell Admin' OR coalesce(salesperson, '') = '')
+      WHERE active
   - id: crm.report.by_stage
     params: { role: { type: string, default: manager } }
     query: |
       SELECT s.name AS label, count(l.id) AS count, coalesce(sum(l.expected_revenue), 0) AS revenue
       FROM crm_stage s LEFT JOIN crm_lead l ON l.stage_id = s.id AND l.active
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
       GROUP BY s.sequence, s.name ORDER BY s.sequence
   - id: crm.report.analysis
     params:
@@ -292,7 +290,6 @@ datasources:
         coalesce(avg(l.probability), 0) AS avg_probability
       FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
       WHERE l.active AND l.type = 'opportunity'
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
         AND (:from_date = '' OR cast(l.created_at AS DATE) >= :from_date)
         AND (:to_date = '' OR cast(l.created_at AS DATE) <= :to_date)
         AND (:search = '' OR lower(cast({{dimension}} AS VARCHAR)) LIKE lower(:search))
@@ -310,7 +307,6 @@ datasources:
       WHERE l.active AND l.type = 'opportunity'
         AND {{dimension}} = :value
         AND (:secondary_value = '' OR {{secondary_dimension}} = :secondary_value)
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
       ORDER BY l.expected_revenue DESC, l.created_at DESC
   - id: crm.lead.analysis
     params:
@@ -323,7 +319,6 @@ datasources:
         coalesce(sum(l.expected_revenue), 0) AS revenue
       FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
       WHERE l.active
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
         AND (:search = '' OR lower(l.name) LIKE lower(:search) OR lower(coalesce(l.partner_name, '')) LIKE lower(:search) OR lower(coalesce(l.source, '')) LIKE lower(:search) OR lower(coalesce(l.campaign, '')) LIKE lower(:search) OR lower(coalesce(l.salesperson, '')) LIKE lower(:search))
       GROUP BY {{dimension}} ORDER BY created_count DESC, label
   - id: crm.lead.drilldown
@@ -332,7 +327,6 @@ datasources:
       SELECT l.*, s.name AS stage_name
       FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
       WHERE l.active AND {{dimension}} = :value
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
       ORDER BY l.created_at DESC
   - id: crm.activities
     params: { status: { type: string, default: '' }, role: { type: string, default: manager }, search: { type: string, default: '' } }
@@ -341,7 +335,6 @@ datasources:
         l.name AS lead_name, l.type AS lead_type, l.salesperson
       FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
       WHERE (:status = '' OR (:status = 'open' AND NOT a.done) OR (:status = 'done' AND a.done) OR (:status = 'overdue' AND NOT a.done AND a.due_date < current_date))
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
         AND (:search = '' OR lower(a.summary) LIKE lower(:search) OR lower(l.name) LIKE lower(:search) OR lower(coalesce(l.salesperson, '')) LIKE lower(:search))
       ORDER BY a.done, a.due_date NULLS LAST, a.id DESC
   - id: crm.activity.analysis
@@ -352,7 +345,6 @@ datasources:
         count(a.id) FILTER (WHERE NOT a.done AND a.due_date < current_date) AS overdue
       FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
       WHERE l.active
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
         AND (:search = '' OR lower(a.summary) LIKE lower(:search) OR lower(l.name) LIKE lower(:search) OR lower(coalesce(a.activity_type, '')) LIKE lower(:search) OR lower(coalesce(l.salesperson, '')) LIKE lower(:search))
       GROUP BY {{dimension}} ORDER BY scheduled DESC, label
   - id: crm.activity.drilldown
@@ -361,7 +353,6 @@ datasources:
       SELECT a.id, a.lead_id, a.activity_type, a.summary, a.due_date, a.done, l.name AS lead_name, l.salesperson
       FROM crm_activity a JOIN crm_lead l ON l.id = a.lead_id
       WHERE l.active AND {{dimension}} = :value
-        AND (:role <> 'salesperson' OR l.salesperson = 'Mitchell Admin' OR coalesce(l.salesperson, '') = '')
       ORDER BY a.done, a.due_date NULLS LAST, a.id
   - id: crm.save_customer
     params: { id: { type: string }, name: { type: string }, email: { type: string }, phone: { type: string } }
@@ -503,7 +494,7 @@ datasources:
               email: String(values.email || ''),
               phone: String(values.phone || ''),
               team: String(values.team || ''),
-              salesperson: String(values.salesperson || 'Mitchell Admin'),
+              salesperson: String(values.salesperson || ''),
               source: String(values.source || ''),
               campaign: String(values.campaign || ''),
               expected_revenue: Number(values.expected_revenue || 0),

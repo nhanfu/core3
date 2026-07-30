@@ -89,7 +89,7 @@ views:
       fields: [type, name, partner_id, contact_name, email, phone, source, campaign, team_id, salesperson_id, stage_id, priority, tag_ids, expected_revenue, recurring_revenue, recurring_plan_id, probability, expected_closing, next_activity, notes]
     search:
       source: crm.lead.search
-      filters: [assigned_to_me, unassigned, open, won, lost, archived, overdue, activity_status]
+      filters: [unassigned, open, won, lost, archived, overdue, activity_status]
       group_by: [stage_id, salesperson, team, partner_name, expected_closing]
 
 actions:

@@ -68,7 +68,7 @@ async function bootstrap() {
     appName: moduleDefinition.module.name,
     appIcon: 'users',
     companyName: 'My Company (San Francisco)',
-    userName: `Mitchell Admin (${currentRole})`,
+    userName: `CRM User (${currentRole})`,
     apps: appRegistry.list(),
     activeApp: 'crm',
     companies: [{ id: 'sf', label: 'My Company (San Francisco)' }, { id: 'ny', label: 'My Company (New York)' }],
@@ -626,7 +626,7 @@ function menuLabel(id: string) { return (moduleDefinition.menus || []).find(item
 function iconFor(id: string) { return ({ 'crm.pipeline': 'activity', 'crm.leads': 'users', 'crm.activities': 'calendar', 'crm.reporting': 'analytics', 'crm.settings': 'settings' } as Record<string, string>)[id] || 'grid'; }
 
 let filterOptions = [
-  { value: 'all', label: 'All records' }, { value: 'assigned_to_me', label: 'Assigned to me' },
+  { value: 'all', label: 'All records' },
   { value: 'unassigned', label: 'Unassigned' }, { value: 'open', label: 'Open' },
   { value: 'won', label: 'Won' }, { value: 'lost', label: 'Lost' },
   { value: 'overdue', label: 'Overdue' }, { value: 'activity_status', label: 'With activity' },
@@ -724,7 +724,7 @@ async function renderPipeline(search = '', query: ListQuery = {}, fromHistory = 
       }
     } else if (action === 'record_action') {
       const operation = params.action === 'won' || params.action === 'lost' ? 'stage' : params.action;
-      const assignment = params.action === 'assign' ? await requestDialog({ title: 'Assign opportunity', confirmLabel: 'Assign', fields: [{ name: 'salesperson', label: 'Salesperson', value: 'Mitchell Admin', required: true }] }) : null;
+      const assignment = params.action === 'assign' ? await requestDialog({ title: 'Assign opportunity', confirmLabel: 'Assign', fields: [{ name: 'salesperson', label: 'Salesperson', required: true }] }) : null;
       if (params.action === 'assign' && !assignment) return;
       const confirmation = params.action === 'delete' ? await requestDialog({ title: 'Delete opportunity', message: 'This action cannot be undone.', confirmLabel: 'Delete' }) : {};
       const value = params.action === 'won' || params.action === 'lost' ? params.action : String(assignment?.salesperson || '');
@@ -791,7 +791,7 @@ async function renderList(search = '', title = menuLabel('leads'), activeView = 
       const operation = String(selected?.operation || '');
       if (operations.includes(operation)) {
         const mergeSummary = operation === 'merge' ? await (await apiFetch('/api/crm/merge/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: params.ids }) })).json() : null;
-        const valueDialog = operation === 'assign' ? await requestDialog({ title: 'Assign records', confirmLabel: 'Assign', fields: [{ name: 'value', label: 'Salesperson', value: 'Mitchell Admin', required: true }] }) : operation === 'stage' ? await requestDialog({ title: 'Move records', confirmLabel: 'Move', fields: [{ name: 'value', label: 'Stage', type: 'select', value: 'qualified', required: true, options: ['new', 'qualified', 'proposition', 'won', 'lost'].map(value => ({ value, label: value[0].toUpperCase() + value.slice(1) })) }] }) : operation === 'delete' ? await requestDialog({ title: 'Delete selected records', message: 'This action cannot be undone.', confirmLabel: 'Delete' }) : operation === 'merge' ? await requestDialog({ title: 'Merge records', message: `Keep “${mergeSummary.primary?.name || 'the first record'}” and merge ${mergeSummary.duplicates?.map((row: any) => row.name).join(', ') || 'the other records'} into it?`, confirmLabel: 'Merge records' }) : {};
+        const valueDialog = operation === 'assign' ? await requestDialog({ title: 'Assign records', confirmLabel: 'Assign', fields: [{ name: 'value', label: 'Salesperson', required: true }] }) : operation === 'stage' ? await requestDialog({ title: 'Move records', confirmLabel: 'Move', fields: [{ name: 'value', label: 'Stage', type: 'select', value: 'qualified', required: true, options: ['new', 'qualified', 'proposition', 'won', 'lost'].map(value => ({ value, label: value[0].toUpperCase() + value.slice(1) })) }] }) : operation === 'delete' ? await requestDialog({ title: 'Delete selected records', message: 'This action cannot be undone.', confirmLabel: 'Delete' }) : operation === 'merge' ? await requestDialog({ title: 'Merge records', message: `Keep “${mergeSummary.primary?.name || 'the first record'}” and merge ${mergeSummary.duplicates?.map((row: any) => row.name).join(', ') || 'the other records'} into it?`, confirmLabel: 'Merge records' }) : {};
         if ((operation === 'assign' || operation === 'stage') && !valueDialog) return;
         if (operation === 'delete' && !valueDialog) return;
         const value = String(valueDialog?.value || '');

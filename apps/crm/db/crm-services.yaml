@@ -243,7 +243,7 @@ datasources:
       // js
       async function mutateLeads(ctx, params) {
         const ids = params.ids || []; if (!ids.length) return { ok: true, count: 0 }; const value = String(params.value || '');
-        if (params.operation === 'archive') await ctx.datasource.execute('crm.mutate.archive', { ids }); else if (params.operation === 'restore') await ctx.datasource.execute('crm.mutate.restore', { ids }); else if (params.operation === 'delete') return ctx.datasource.execute('crm.mutate.delete', { ids }); else if (params.operation === 'assign') await ctx.datasource.execute('crm.mutate.assign', { ids, salesperson: value || 'Mitchell Admin' }); else if (params.operation === 'stage') await ctx.datasource.execute('crm.mutate.stage', { ids, stage_id: value }); else if (params.operation === 'merge' && ids.length > 1) return ctx.datasource.execute('crm.merge_leads', { ids }); else return { ok: false, error: 'Unknown lead operation' };
+        if (params.operation === 'archive') await ctx.datasource.execute('crm.mutate.archive', { ids }); else if (params.operation === 'restore') await ctx.datasource.execute('crm.mutate.restore', { ids }); else if (params.operation === 'delete') return ctx.datasource.execute('crm.mutate.delete', { ids }); else if (params.operation === 'assign') await ctx.datasource.execute('crm.mutate.assign', { ids, salesperson: value }); else if (params.operation === 'stage') await ctx.datasource.execute('crm.mutate.stage', { ids, stage_id: value }); else if (params.operation === 'merge' && ids.length > 1) return ctx.datasource.execute('crm.merge_leads', { ids }); else return { ok: false, error: 'Unknown lead operation' };
         return { ok: true, count: ids.length };
       }
 
@@ -281,7 +281,7 @@ datasources:
       // js
       async function addMessage(ctx, params) {
         const body = String(params.body || '').trim(); if (!body) throw Object.assign(new Error('Message body is required'), { status: 400 });
-        await ctx.datasource.execute('crm.add_message', { id: `message-${ctx.crypto.randomUUID().slice(0, 8)}`, lead_id: params.id, author: 'Mitchell Admin', body });
+        await ctx.datasource.execute('crm.add_message', { id: `message-${ctx.crypto.randomUUID().slice(0, 8)}`, lead_id: params.id, author: 'CRM User', body });
         return ctx.datasource.execute('crm.leadExtras', { id: params.id });
       }
 
