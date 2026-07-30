@@ -1,6 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { compileDomain } from '@core3/framework/services/DomainCompiler.ts';
+import { compileDomain } from '../../../lib/services/DomainCompiler.ts';
 import { all, run, withDb } from '../db/database.ts';
 import { queryDatasource, runDatasource } from '../db/datasource-runtime.ts';
 

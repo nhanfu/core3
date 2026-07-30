@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage, attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead, crmConfig, crmLookups, crmStages, crmTags, customerRelated, findDuplicates, getCustomer, getLead, getTeam, importHistory, leadAnalysis, leadDrilldown, leadExtras, listActivities, listCustomers, listLeads, listTeams, loseLead, lostReasons, mergeLeads, mergePreview, moveStage, mutateActivities, mutateLeads, partners, pipeline, previewImportWithHistory, reportAnalysis, reportDrilldown, reportSummary, saveCatalogRow, saveCrmConfig, saveCrmStages, saveCrmTag, saveCustomer, saveLead, saveLostReason, saveTeam } from './services/crm-service.ts';
-import { initDatabase } from './db/database.ts';
+import { closeDatabase, initDatabase } from './db/database.ts';
 import { routeDatasourceRequest } from './db/datasource-runtime.ts';
 
 const PORT = Number(process.env.PORT || 3010);
@@ -38,7 +38,7 @@ async function staticFile(pathname: string) {
 }
 
 await initDatabase();
-Bun.serve({
+const server = Bun.serve({
   port: PORT,
   async fetch(request) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
@@ -225,4 +225,15 @@ Bun.serve({
     return json({ error: 'Not found' }, 404);
   },
 });
+
+let shuttingDown = false;
+async function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  server.stop(true);
+  await closeDatabase();
+}
+
+process.once('SIGINT', () => { void shutdown(); });
+process.once('SIGTERM', () => { void shutdown(); });
 console.log(`CRM app running at http://localhost:${PORT}`);

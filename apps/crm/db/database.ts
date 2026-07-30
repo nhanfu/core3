@@ -20,6 +20,10 @@ export async function withDb<T>(callback: (connection: any) => Promise<T>) {
   try { return await callback(connection); } finally { await new Promise<void>(resolve => connection.close(() => resolve())); }
 }
 
+export function closeDatabase() {
+  return new Promise<void>((resolve, reject) => db.close((error: any) => error ? reject(error) : resolve()));
+}
+
 export async function initDatabase() {
   await withDb(async connection => {
     for (const statement of readFileSync(join(import.meta.dir, 'schema.sql'), 'utf8').split(';').map(sql => sql.trim()).filter(Boolean)) await run(connection, statement);
