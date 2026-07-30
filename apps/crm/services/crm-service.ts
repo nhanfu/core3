@@ -37,25 +37,14 @@ export async function moveStage(id: string, stageId: string) {
 }
 
 export async function convertLead(id: string, customerName = '') {
-  return withDb(async connection => {
-    await run(connection, "UPDATE crm_lead SET type = 'opportunity', converted_at = current_timestamp, stage_id = CASE WHEN stage_id = 'new' THEN 'qualified' ELSE stage_id END WHERE id = ? AND type = 'lead'", [id]);
-    if (customerName.trim()) {
-      const existing = (await all(connection, 'SELECT id, name FROM crm_partner WHERE lower(name) = lower(?) LIMIT 1', [customerName.trim()]))[0];
-      const partner = existing || { id: `partner-${crypto.randomUUID().slice(0, 8)}`, name: customerName.trim() };
-      if (!existing) await run(connection, 'INSERT INTO crm_partner(id, name) VALUES(?, ?)', [partner.id, partner.name]);
-      await run(connection, 'UPDATE crm_lead SET partner_id = ?, partner_name = ?, write_version = coalesce(write_version, 1) + 1 WHERE id = ?', [partner.id, partner.name, id]);
-    }
-    return getLead(id);
-  });
+  return runDatasource('crm.convert_lead', { id, customer_name: customerName });
 }
 
 export async function loseLead(id: string, reasonId: string) {
-  return withDb(async connection => {
-    const reasons = await all(connection, 'SELECT name FROM crm_lost_reason WHERE id = ?', [reasonId]);
-    if (!reasons[0]) throw Object.assign(new Error('A valid lost reason is required'), { status: 400 });
-    await run(connection, "UPDATE crm_lead SET stage_id = 'lost', notes = concat(coalesce(notes, ''), CASE WHEN coalesce(notes, '') = '' THEN '' ELSE '\\n' END, ?) WHERE id = ?", [`Lost reason: ${reasons[0].name}`, id]);
-    return getLead(id);
-  });
+  const reasons = await queryDatasource('crm.lost_reason', { id: reasonId });
+  if (!reasons[0]) throw Object.assign(new Error('A valid lost reason is required'), { status: 400 });
+  await runDatasource('crm.lose_lead', { id, reason: `Lost reason: ${reasons[0].name}` });
+  return getLead(id);
 }
 
 export async function lostReasons() {
@@ -96,13 +85,10 @@ export async function mergeLeads(ids: string[]) {
 }
 
 export async function mergePreview(ids: string[]) {
-  return withDb(async connection => {
-    const unique = [...new Set(ids)].filter(Boolean);
-    if (unique.length < 2) return { primary: null, duplicates: [] };
-    const placeholders = unique.map(() => '?').join(',');
-    const rows = await all(connection, `SELECT id, name, partner_name, expected_revenue FROM crm_lead WHERE id IN (${placeholders}) ORDER BY created_at, id`, unique);
-    return { primary: rows[0] || null, duplicates: rows.slice(1) };
-  });
+  const unique = [...new Set(ids)].filter(Boolean);
+  if (unique.length < 2) return { primary: null, duplicates: [] };
+  const rows = await queryDatasource('crm.merge_preview', { ids: unique });
+  return { primary: rows[0] || null, duplicates: rows.slice(1) };
 }
 
 export async function crmConfig() {
@@ -114,20 +100,15 @@ export async function crmStages() {
 }
 
 export async function saveCrmStages(rows: unknown[]) {
-  return withDb(async connection => {
-    for (const input of rows) {
-      const row = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
-      if (!String(row.id || '').trim() || !String(row.name || '').trim()) continue;
-      const id = String(row.id).trim();
-      const existing = (await all(connection, 'SELECT id FROM crm_stage WHERE id = ?', [id]))[0];
-      if (existing) await run(connection, 'UPDATE crm_stage SET name = ?, folded = ?, requirements = ? WHERE id = ?', [String(row.name), String(row.folded) === 'true', String(row.requirements || ''), id]);
-      else {
-        const nextSequence = Number((await all(connection, 'SELECT coalesce(max(sequence), 0) + 1 AS sequence FROM crm_stage'))[0]?.sequence || 1);
-        await run(connection, 'INSERT INTO crm_stage(id, name, sequence, folded, requirements) VALUES(?,?,?,?,?)', [id, String(row.name), nextSequence, String(row.folded) === 'true', String(row.requirements || '')]);
-      }
-    }
-    return crmStages();
-  });
+  for (const input of rows) {
+    const row = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+    if (!String(row.id || '').trim() || !String(row.name || '').trim()) continue;
+    const id = String(row.id).trim();
+    const existing = (await queryDatasource('crm.stage_by_id', { id }))[0];
+    const sequence = existing ? 0 : Number((await queryDatasource('crm.next_stage_sequence'))[0]?.sequence || 1);
+    await runDatasource('crm.save_stage', { id, name: String(row.name), folded: String(row.folded) === 'true', requirements: String(row.requirements || ''), sequence });
+  }
+  return crmStages();
 }
 
 export async function saveLostReason(id: string, name: string) {
@@ -157,16 +138,13 @@ export async function catalogRows(kind: keyof typeof catalogTables) {
 }
 
 export async function saveCatalogRow(kind: keyof typeof catalogTables, values: Record<string, unknown>) {
-  return withDb(async connection => {
-    const table = catalogTables[kind];
-    const id = String(values.id || '').trim();
-    const name = String(values.name || '').trim();
-    if (!id || !name) throw Object.assign(new Error('Catalog id and name are required'), { status: 400 });
-    if (kind === 'activity_types') await run(connection, `INSERT INTO ${table}(id, name, default_summary, active) VALUES(?,?,?,true) ON CONFLICT(id) DO UPDATE SET name=excluded.name, default_summary=excluded.default_summary`, [id, name, String(values.default_summary || '')]);
-    else if (kind === 'activity_plans') await run(connection, `INSERT INTO ${table}(id, name, active) VALUES(?,?,true) ON CONFLICT(id) DO UPDATE SET name=excluded.name`, [id, name]);
-    else await run(connection, `INSERT INTO ${table}(id, name, interval_number, interval_unit, active) VALUES(?,?,?,?,true) ON CONFLICT(id) DO UPDATE SET name=excluded.name, interval_number=excluded.interval_number, interval_unit=excluded.interval_unit`, [id, name, Number(values.interval_number || 1), String(values.interval_unit || 'month')]);
-    return catalogRows(kind);
-  });
+  const id = String(values.id || '').trim();
+  const name = String(values.name || '').trim();
+  if (!id || !name) throw Object.assign(new Error('Catalog id and name are required'), { status: 400 });
+  if (kind === 'activity_types') await runDatasource('crm.save_activity_type', { id, name, default_summary: String(values.default_summary || '') });
+  else if (kind === 'activity_plans') await runDatasource('crm.save_activity_plan', { id, name });
+  else await runDatasource('crm.save_recurring_plan', { id, name, interval_number: Number(values.interval_number || 1), interval_unit: String(values.interval_unit || 'month') });
+  return catalogRows(kind);
 }
 
 export async function saveCrmConfig(values: Record<string, unknown>) {

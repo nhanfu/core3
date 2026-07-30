@@ -361,3 +361,56 @@ datasources:
   - id: crm.save_attachment_file
     params: { id: { type: string }, lead_id: { type: string }, name: { type: string }, stored_path: { type: string }, mime_type: { type: string }, file_size: { type: number } }
     statement: INSERT INTO crm_attachment(id, lead_id, name, stored_path, mime_type, file_size) VALUES(:id, :lead_id, :name, :stored_path, :mime_type, :file_size)
+  - id: crm.convert_lead
+    params: { id: { type: string }, customer_name: { type: string, default: '' } }
+    language: javascript
+    script: |
+      const id = String(ctx.params.id || '');
+      const customerName = String(ctx.params.customer_name || '').trim();
+      await ctx.db.execute("UPDATE crm_lead SET type = 'opportunity', converted_at = current_timestamp, stage_id = CASE WHEN stage_id = 'new' THEN 'qualified' ELSE stage_id END WHERE id = :id AND type = 'lead'", { id });
+      if (customerName) {
+        const existing = (await ctx.db.query('SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1', { name: customerName }))[0];
+        const partner = existing || { id: `partner-${ctx.crypto.randomUUID().slice(0, 8)}`, name: customerName };
+        if (!existing) await ctx.db.execute('INSERT INTO crm_partner(id, name) VALUES(:id, :name)', partner);
+        await ctx.db.execute('UPDATE crm_lead SET partner_id = :partner_id, partner_name = :partner_name, write_version = coalesce(write_version, 1) + 1 WHERE id = :id', { id, partner_id: partner.id, partner_name: partner.name });
+      }
+      const rows = await ctx.db.query('SELECT * FROM crm_lead WHERE id = :id', { id });
+      if (!rows[0]) return null;
+      const relation = await ctx.db.query("SELECT coalesce(string_agg(tag.id, ',' ORDER BY tag.id), '') AS tag_ids FROM crm_lead l LEFT JOIN crm_lead_tag lt ON lt.lead_id = l.id LEFT JOIN crm_tag tag ON tag.id = lt.tag_id WHERE l.id = :id", { id });
+      rows[0].tag_ids = relation[0]?.tag_ids || '';
+      return rows[0];
+  - id: crm.customer_by_name
+    params: { name: { type: string } }
+    query: SELECT id, name FROM crm_partner WHERE lower(name) = lower(:name) LIMIT 1
+  - id: crm.create_customer
+    params: { id: { type: string }, name: { type: string } }
+    statement: INSERT INTO crm_partner(id, name) VALUES(:id, :name)
+  - id: crm.link_converted_customer
+    params: { id: { type: string }, partner_id: { type: string }, partner_name: { type: string } }
+    statement: UPDATE crm_lead SET partner_id = :partner_id, partner_name = :partner_name, write_version = coalesce(write_version, 1) + 1 WHERE id = :id
+  - id: crm.lost_reason
+    params: { id: { type: string } }
+    query: SELECT name FROM crm_lost_reason WHERE id = :id
+  - id: crm.lose_lead
+    params: { id: { type: string }, reason: { type: string } }
+    statement: UPDATE crm_lead SET stage_id = 'lost', notes = concat(coalesce(notes, ''), CASE WHEN coalesce(notes, '') = '' THEN '' ELSE '\n' END, :reason) WHERE id = :id
+  - id: crm.stage_by_id
+    params: { id: { type: string } }
+    query: SELECT id FROM crm_stage WHERE id = :id
+  - id: crm.next_stage_sequence
+    query: SELECT coalesce(max(sequence), 0) + 1 AS sequence FROM crm_stage
+  - id: crm.save_stage
+    params: { id: { type: string }, name: { type: string }, folded: { type: boolean }, requirements: { type: string }, sequence: { type: number } }
+    statement: INSERT INTO crm_stage(id, name, sequence, folded, requirements) VALUES(:id, :name, :sequence, :folded, :requirements) ON CONFLICT(id) DO UPDATE SET name = excluded.name, folded = excluded.folded, requirements = excluded.requirements
+  - id: crm.save_activity_type
+    params: { id: { type: string }, name: { type: string }, default_summary: { type: string } }
+    statement: INSERT INTO crm_activity_type(id, name, default_summary, active) VALUES(:id, :name, :default_summary, true) ON CONFLICT(id) DO UPDATE SET name = excluded.name, default_summary = excluded.default_summary
+  - id: crm.save_activity_plan
+    params: { id: { type: string }, name: { type: string } }
+    statement: INSERT INTO crm_activity_plan(id, name, active) VALUES(:id, :name, true) ON CONFLICT(id) DO UPDATE SET name = excluded.name
+  - id: crm.save_recurring_plan
+    params: { id: { type: string }, name: { type: string }, interval_number: { type: number }, interval_unit: { type: string } }
+    statement: INSERT INTO crm_recurring_plan(id, name, interval_number, interval_unit, active) VALUES(:id, :name, :interval_number, :interval_unit, true) ON CONFLICT(id) DO UPDATE SET name = excluded.name, interval_number = excluded.interval_number, interval_unit = excluded.interval_unit
+  - id: crm.merge_preview
+    params: { ids: { type: json } }
+    query: SELECT id, name, partner_name, expected_revenue FROM crm_lead WHERE id IN (:ids) ORDER BY created_at, id

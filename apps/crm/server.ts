@@ -2,7 +2,7 @@ import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage, attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead, crmConfig, crmLookups, crmStages, crmTags, customerRelated, findDuplicates, getCustomer, getLead, getTeam, importHistory, leadAnalysis, leadDrilldown, leadExtras, listActivities, listCustomers, listLeads, listTeams, loseLead, lostReasons, mergeLeads, mergePreview, moveStage, mutateActivities, mutateLeads, partners, pipeline, previewImportWithHistory, reportAnalysis, reportDrilldown, reportSummary, saveCatalogRow, saveCrmConfig, saveCrmStages, saveCrmTag, saveCustomer, saveLead, saveLostReason, saveTeam } from './services/crm-service.ts';
 import { initDatabase } from './db/database.ts';
-import { publicDatasourceForEndpoint, queryDatasource } from './db/datasource-runtime.ts';
+import { routeDatasourceRequest } from './db/datasource-runtime.ts';
 
 const PORT = Number(process.env.PORT || 3010);
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' };
@@ -48,11 +48,8 @@ Bun.serve({
       sort: url.searchParams.get('sort') || undefined,
       role: roleOf(request),
     }));
-    const publicDatasource = request.method === 'GET' && publicDatasourceForEndpoint(url.pathname);
-    if (publicDatasource) {
-      if (!publicDatasource.roles?.includes(roleOf(request))) return json({ error: 'Datasource permission required' }, 403);
-      return json(await queryDatasource(publicDatasource.id, { ...Object.fromEntries(url.searchParams.entries()), role: roleOf(request) }));
-    }
+    const datasourceResponse = await routeDatasourceRequest(request, roleOf(request));
+    if (datasourceResponse) return datasourceResponse;
     if (url.pathname === '/api/crm/module' && request.method === 'GET') return json(moduleDefinition);
     if (url.pathname === '/api/modules' && request.method === 'GET') return json(appManifests);
     if (url.pathname === '/api/crm/leads' && request.method === 'GET') return json(await listLeads(url.searchParams.get('search') || '', {
