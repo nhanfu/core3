@@ -1,0 +1,47 @@
+resource:
+  id: crm.customers
+  entity_set: Customers
+  path: /api/odata/Customers
+  key: id
+  roles: [salesperson, manager, system]
+  fields:
+    id: { type: string, readonly: true }
+    name: { type: string }
+    email: { type: string }
+    phone: { type: string }
+    opportunity_count: { type: number, readonly: true }
+    expected_revenue: { type: number, readonly: true }
+  list:
+    datasource: crm.odata.customers.list
+    search: [name, email]
+    default_orderby: name asc
+    max_page_size: 200
+  get: crm.customer
+  crud:
+    create: crm.saveCustomer
+    update: crm.saveCustomer
+    delete: { datasource: crm.delete_customer, roles: [manager, system] }
+
+datasources:
+  - id: crm.odata.customers.list
+    params:
+      role: { type: string, default: salesperson }
+      odata_top: { type: number, default: 200 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT customer.*, count(*) OVER() AS __odata_count
+      FROM (
+        SELECT p.id, p.name, p.email, p.phone,
+          count(l.id) AS opportunity_count,
+          coalesce(sum(l.expected_revenue), 0) AS expected_revenue
+        FROM crm_partner p
+        LEFT JOIN crm_lead l ON l.partner_name = p.name AND l.active
+        GROUP BY p.id, p.name, p.email, p.phone
+      ) AS customer
+      WHERE 1 = 1 {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: crm.delete_customer
+    params: { id: { type: string } }
+    statement: DELETE FROM crm_partner WHERE id = :id

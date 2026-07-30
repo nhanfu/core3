@@ -6,6 +6,21 @@ import { all, run, withDb } from './database.ts';
 
 type ParamDefinition = { type?: string; default?: unknown };
 
+export type ResourceDefinition = {
+  id: string;
+  entity_set: string;
+  path: string;
+  key?: string;
+  table?: string;
+  roles?: string[];
+  permissions?: Record<string, string>;
+  fields: Record<string, { type?: string; readonly?: boolean; selectable?: boolean; filterable?: boolean; sortable?: boolean }>;
+  list: { datasource: string; search?: string[]; default_orderby?: string; max_page_size?: number; group_by?: string[] };
+  get?: string;
+  crud?: { create?: string | { datasource: string; roles?: string[] }; update?: string | { datasource: string; roles?: string[] }; delete?: string | { datasource: string; operation?: string; roles?: string[] } };
+  actions?: Record<string, { method?: string; datasource: string; roles?: string[] }>;
+};
+
 export type Datasource = {
   id: string;
   public?: boolean;
@@ -22,7 +37,7 @@ export type Datasource = {
   params?: Record<string, ParamDefinition>;
 };
 
-type DatasourceFile = { datasources?: Datasource[] };
+type DatasourceFile = { datasources?: Datasource[]; resource?: ResourceDefinition };
 
 function datasourceFiles(root: string): string[] {
   try {
@@ -36,12 +51,20 @@ function datasourceFiles(root: string): string[] {
   }
 }
 
-function loadDatasources() {
+function loadDocuments() {
   const roots = [import.meta.dir, join(import.meta.dir, '..', 'data')];
   return roots.flatMap(root => datasourceFiles(root)).flatMap(path => {
     const document = Bun.YAML.parse(readFileSync(path, 'utf8')) as DatasourceFile;
-    return document.datasources || [];
+    return [{ path, document }];
   });
+}
+
+function loadDatasources() {
+  return loadDocuments().flatMap(({ document }) => document.datasources || []);
+}
+
+function loadResources() {
+  return loadDocuments().flatMap(({ document }) => document.resource ? [document.resource] : []);
 }
 
 let datasources = loadDatasources();
@@ -81,10 +104,11 @@ function resolveParamValue(value: unknown, definition: ParamDefinition | undefin
 }
 
 function resolveParams(source: Datasource, params: Record<string, unknown>) {
-  return Object.fromEntries(Object.entries(source.params || {}).map(([name, definition]) => [
+  const declared = Object.fromEntries(Object.entries(source.params || {}).map(([name, definition]) => [
     name,
     resolveParamValue(params[name] ?? definition.default, definition),
   ]));
+  return { ...declared, ...Object.fromEntries(Object.entries(params).filter(([name]) => !(name in declared))) };
 }
 
 async function runScriptDatasource(source: Datasource, params: Record<string, unknown>) {
@@ -117,6 +141,175 @@ export function getDatasources() {
   return [...refreshDatasources()];
 }
 
+export function getResources() {
+  return loadResources();
+}
+
+function odataError(message: string, status = 400) {
+  return Object.assign(new Error(message), { status });
+}
+
+type ODataQuery = { filter?: string; search?: string; select?: string[]; orderby?: string; top?: number; skip?: number; count?: boolean; apply?: string; groupBy?: string };
+
+function queryOption(url: URL, name: string) {
+  return url.searchParams.get(name) ?? url.searchParams.get(name.slice(1));
+}
+
+function parseODataQuery(url: URL, resource: ResourceDefinition): ODataQuery {
+  const topValue = queryOption(url, '$top');
+  const skipValue = queryOption(url, '$skip');
+  const max = resource.list.max_page_size || 200;
+  const top = topValue === null ? max : Number(topValue);
+  const skip = skipValue === null ? 0 : Number(skipValue);
+  if (!Number.isInteger(top) || top < 0 || top > max) throw odataError(`$top must be an integer between 0 and ${max}`);
+  if (!Number.isInteger(skip) || skip < 0) throw odataError('$skip must be a non-negative integer');
+  const selectValue = queryOption(url, '$select');
+  const select = selectValue ? selectValue.split(',').map(value => value.trim()).filter(Boolean) : undefined;
+  for (const field of select || []) if (!resource.fields[field] || resource.fields[field].selectable === false) throw odataError(`Unknown or non-selectable field: ${field}`);
+  const countValue = queryOption(url, '$count');
+  if (countValue && !['true', 'false'].includes(countValue.toLowerCase())) throw odataError('$count must be true or false');
+  return {
+    filter: queryOption(url, '$filter') || undefined,
+    search: queryOption(url, '$search') || undefined,
+    select,
+    orderby: queryOption(url, '$orderby') || resource.list.default_orderby,
+    top,
+    skip,
+    count: countValue?.toLowerCase() === 'true',
+    apply: queryOption(url, '$apply') || undefined,
+    groupBy: queryOption(url, '$groupby') || undefined,
+  };
+}
+
+function fieldSql(resource: ResourceDefinition, field: string, mode: 'filter' | 'sort' | 'select' = 'filter') {
+  const definition = resource.fields[field];
+  if (!definition || (mode === 'filter' && definition.filterable === false) || (mode === 'sort' && definition.sortable === false)) throw odataError(`Unknown or unsupported field: ${field}`);
+  return `\"${field.replaceAll('"', '""')}\"`;
+}
+
+function literal(value: string, params: Record<string, unknown>, type?: string) {
+  const name = `odata_${Object.keys(params).length}`;
+  let parsed: unknown = value;
+  if (value === 'null') parsed = null;
+  else if (value === 'true' || value === 'false') parsed = value === 'true';
+  else if (/^-?\d+(\.\d+)?$/.test(value)) parsed = Number(value);
+  else if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) parsed = value.slice(1, -1).replaceAll("''", "'");
+  params[name] = parsed;
+  return parsed === null ? 'NULL' : `:${name}`;
+}
+
+function parseFilter(filter: string, resource: ResourceDefinition, params: Record<string, unknown>): string {
+  const trimmed = filter.trim();
+  const parts = trimmed.split(/\s+(and|or)\s+/i);
+  if (parts.length > 1) {
+    const expressions: string[] = [];
+    for (let index = 0; index < parts.length; index += 2) expressions.push(parseFilter(parts[index], resource, params));
+    return `(${expressions.map((expression, index) => index ? `${parts[index * 2 - 1].toUpperCase()} ${expression}` : expression).join(' ')})`;
+  }
+  const match = trimmed.match(/^([A-Za-z_][A-Za-z0-9_]*)\s+(eq|ne|gt|ge|lt|le)\s+(.+)$/i);
+  if (!match) throw odataError(`Unsupported $filter expression: ${filter}`);
+  const [, field, operator, value] = match;
+  const sqlOperator = { eq: '=', ne: '<>', gt: '>', ge: '>=', lt: '<', le: '<=' }[operator.toLowerCase() as 'eq'];
+  const valueSql = literal(value.trim(), params, resource.fields[field]?.type);
+  return valueSql === 'NULL' ? `${fieldSql(resource, field)} ${operator.toLowerCase() === 'eq' ? 'IS' : 'IS NOT'} NULL` : `${fieldSql(resource, field)} ${sqlOperator} ${valueSql}`;
+}
+
+function queryFragments(resource: ResourceDefinition, query: ODataQuery, params: Record<string, unknown>) {
+  const filters: string[] = [];
+  if (query.filter) filters.push(parseFilter(query.filter, resource, params));
+  if (query.search) {
+    const searchFields = resource.list.search || [];
+    if (!searchFields.length) throw odataError('$search is not supported for this resource');
+    const name = `odata_${Object.keys(params).length}`;
+    params[name] = `%${query.search}%`;
+    filters.push(`(${searchFields.map(field => `lower(${fieldSql(resource, field)}) LIKE lower(:${name})`).join(' OR ')})`);
+  }
+  const order = query.orderby ? query.orderby.split(',').map(item => {
+    const match = item.trim().match(/^([A-Za-z_][A-Za-z0-9_]*)(?:\s+(asc|desc))?$/i);
+    if (!match) throw odataError(`Unsupported $orderby expression: ${item}`);
+    return `${fieldSql(resource, match[1], 'sort')} ${(match[2] || 'asc').toUpperCase()}`;
+  }).join(', ') : '';
+  let group = '';
+  const applyGroup = query.apply?.match(/^groupby\s*\(\s*\(\s*([A-Za-z0-9_, ]+)\s*\)\s*\)$/i)?.[1] || query.groupBy;
+  if (applyGroup) {
+    const fields = applyGroup.split(',').map(field => field.trim()).filter(Boolean);
+    if (!fields.length || fields.some(field => !(resource.list.group_by || []).includes(field))) throw odataError('Unsupported grouping field');
+    group = fields.map(field => fieldSql(resource, field, 'sort')).join(', ');
+  }
+  return { where: filters.length ? `AND ${filters.join(' AND ')}` : '', order: order ? `ORDER BY ${order}` : '', group: group ? `GROUP BY ${group}` : '' };
+}
+
+function odataPayload(resource: ResourceDefinition, rows: any[], query: ODataQuery, baseUrl: string) {
+  const groupedFields = query.apply?.match(/^groupby\s*\(\s*\(\s*([A-Za-z0-9_, ]+)\s*\)\s*\)$/i)?.[1]?.split(',').map(field => field.trim()).filter(Boolean) || query.groupBy?.split(',').map(field => field.trim()).filter(Boolean);
+  const sourceRows = groupedFields?.length
+    ? [...new Map(rows.map(row => [groupedFields.map(field => String(row[field] ?? 'NULL')).join('\u0000'), row])).values()]
+    : rows;
+  const count = groupedFields?.length ? sourceRows.length : rows.length && rows[0].__odata_count !== undefined ? Number(rows[0].__odata_count) : rows.length;
+  const value = sourceRows.map(row => {
+    const result = { ...row };
+    delete result.__odata_count;
+    if (groupedFields?.length) return Object.fromEntries(groupedFields.map(field => [field, result[field]]));
+    if (query.select?.length) return Object.fromEntries(query.select.map(field => [field, result[field]]));
+    return result;
+  });
+  const payload: Record<string, unknown> = { '@odata.context': `${baseUrl}/$metadata#${resource.entity_set}`, value };
+  if (query.count) payload['@odata.count'] = count;
+  return payload;
+}
+
+export async function routeODataRequest(request: Request, role: string) {
+  const url = new URL(request.url);
+  const resources = getResources();
+  if (url.pathname === '/api/odata/$metadata' && request.method === 'GET') {
+    const schemas = resources.map(resource => ({ name: resource.entity_set, key: resource.key || 'id', fields: resource.fields }));
+    return response({ '@odata.context': `${url.origin}/api/odata/$metadata`, resources: schemas });
+  }
+  const resource = resources.find(candidate => candidate.path.replace(/\/$/, '') === url.pathname.replace(/\/$/, '') || url.pathname.startsWith(`${candidate.path.replace(/\/$/, '')}(`));
+  if (!resource) return null;
+  if (resource.roles?.length && !resource.roles.includes(role)) return response({ error: 'Datasource permission required' }, 403);
+  const prefix = resource.path.replace(/\/$/, '');
+  const keyMatch = url.pathname.slice(prefix.length).match(/^\((.*)\)$/);
+  const key = keyMatch ? decodeURIComponent(keyMatch[1].replace(/^['"]|['"]$/g, '')) : undefined;
+  const baseUrl = `${url.origin}/api/odata`;
+  const operation = key ? (request.method === 'GET' ? 'get' : request.method === 'PATCH' ? 'update' : request.method === 'DELETE' ? 'delete' : '') : request.method === 'GET' ? 'list' : request.method === 'POST' ? 'create' : '';
+  const actionMatch = url.pathname.slice(prefix.length).match(/^\((.*)\)\/([^/]+)$/);
+  if (actionMatch) {
+    const action = resource.actions?.[actionMatch[2]];
+    if (!action || (action.method && action.method.toUpperCase() !== request.method)) return response({ error: 'Unsupported datasource action' }, 404);
+    if (action.roles?.length && !action.roles.includes(role)) return response({ error: 'Datasource permission required' }, 403);
+    const body = request.method === 'GET' ? {} : await request.json().catch(() => ({}));
+    return response(await executeDatasource(action.datasource, { ...body, id: key, role }));
+  }
+  if (!operation) return response({ error: 'Unsupported OData operation' }, 405);
+  const configured = operation === 'list' ? resource.list.datasource : operation === 'get' ? resource.get : resource.crud?.[operation as 'create' | 'update' | 'delete'];
+  const datasource = typeof configured === 'string' ? configured : configured?.datasource;
+  if (!datasource) return response({ error: `No YAML datasource configured for ${operation}` }, 405);
+  const operationRoles = typeof configured === 'object' ? configured.roles : undefined;
+  if (operationRoles?.length && !operationRoles.includes(role)) return response({ error: 'Datasource permission required' }, 403);
+  if (operation === 'list') {
+    const query = parseODataQuery(url, resource);
+    const params: Record<string, unknown> = { role };
+    const fragments = queryFragments(resource, query, params);
+    const rows = await executeDatasource(datasource, { ...params, odata_top: query.top, odata_skip: query.skip }, {
+      where: fragments.where,
+      order: fragments.order || 'ORDER BY 1',
+      group: fragments.group,
+    });
+    return response(odataPayload(resource, rows, query, baseUrl));
+  }
+  const body = request.method === 'GET' ? {} : await request.json().catch(() => ({}));
+  const values = { ...(body && typeof body === 'object' ? body : {}), ...(key ? { id: key } : {}), role };
+  if (operation === 'delete' && configured && typeof configured === 'object' && 'operation' in configured && configured.operation) {
+    return response(await executeDatasource(datasource, { ids: key ? [key] : [], operation: configured.operation, role }));
+  }
+  if (operation === 'get') return response((await executeDatasource(datasource, values))[0] || null);
+  if (operation === 'delete') {
+    await executeDatasource(datasource, values);
+    return response({ ok: true });
+  }
+  return response(await executeDatasource(datasource, { values, id: key, role }));
+}
+
 export async function executeDatasource(id: string, params: Record<string, unknown> = {}, fragments: Record<string, string> = {}) {
   const source = findDatasource(id);
   if (source?.script) {
@@ -125,7 +318,7 @@ export async function executeDatasource(id: string, params: Record<string, unkno
   if (source?.query) {
     const query = source.query.replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (_match, name: string) => {
       const fragment = fragments[name];
-      if (!fragment) throw new Error(`Missing SQL fragment "${name}" for datasource ${id}`);
+        if (fragment === undefined) throw new Error(`Missing SQL fragment "${name}" for datasource ${id}`);
       return fragment;
     });
     const bound = bindParams(query, resolveParams(source, params));

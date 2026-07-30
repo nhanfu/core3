@@ -1,7 +1,7 @@
 import { basename, extname, isAbsolute, join, resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { closeDatabase, initDatabase } from './crm/db/database.ts';
-import { executeDatasource } from './crm/db/datasource-runtime.ts';
+import { executeDatasource, routeODataRequest } from './crm/db/datasource-runtime.ts';
 
 type Role = 'salesperson' | 'manager' | 'system';
 type Params = Record<string, string>;
@@ -135,7 +135,7 @@ async function staticFile(pathname: string) {
 }
 
 function errorResponse(error: unknown) {
-  const status = error instanceof HttpError ? error.status : error instanceof SyntaxError ? 400 : 500;
+  const status = error instanceof HttpError ? error.status : error instanceof SyntaxError ? 400 : typeof (error as { status?: unknown })?.status === 'number' ? Number((error as { status: number }).status) : 500;
   if (status >= 500) console.error(error);
   return json({ error: status >= 500 ? 'Internal server error' : error instanceof Error ? error.message : 'Invalid request' }, status);
 }
@@ -191,6 +191,10 @@ function registerOperations() {
 
 async function dispatch(request: Request) {
   const url = new URL(request.url);
+  if (url.pathname.startsWith('/api/odata')) {
+    const odataResponse = await routeODataRequest(request, roleOf(request));
+    if (odataResponse) return odataResponse;
+  }
   if (url.pathname === '/api/crm') {
     const entity = url.searchParams.get('entity')?.trim();
     const action = url.searchParams.get('action')?.trim();
