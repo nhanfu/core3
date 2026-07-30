@@ -14,9 +14,11 @@ activities, customers, teams, forecast/reporting, configuration, import, and
 lead conversion/lost-reason workflows. Declarative app, model, view, action,
 and menu metadata lives in [`module.yaml`](module.yaml).
 
-Use `?role=manager` or `?role=system` to exercise manager-only assignment,
-archive, delete, merge, import, and configuration workflows. The default
-salesperson role is denied those server mutations. View state is URL-backed, so
-browser back/forward restores the active CRM view and search context.
+The server uses `CRM_ROLE=salesperson` by default. Set `CRM_ROLE=manager` or
+`CRM_ROLE=system` to run the manager-only assignment, archive, delete, merge,
+import, and configuration workflows. For local browser smoke tests only,
+`CRM_ALLOW_ROLE_HEADER=true` enables the simulated `?role=manager` workflow;
+never enable it in production. View state is URL-backed, so browser
+back/forward restores the active CRM view and search context.
 Favorites are stored in browser local storage. Sales and Inventory are visible
 in the app launcher as explicit Coming Soon modules.

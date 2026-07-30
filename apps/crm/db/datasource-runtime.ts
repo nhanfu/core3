@@ -154,7 +154,8 @@ function response(value: unknown, status = 200) {
   return new Response(JSON.stringify(value), {
     status,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': process.env.CRM_CORS_ORIGIN || `http://localhost:${process.env.PORT || 3010}`,
+      'X-Content-Type-Options': 'nosniff',
       'Content-Type': 'application/json',
     },
   });

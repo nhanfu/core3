@@ -5,6 +5,8 @@ import { queryDatasource, runDatasource } from '../db/datasource-runtime.ts';
 export { initDatabase } from '../db/database.ts';
 
 type AccessRole = 'salesperson' | 'manager' | 'system';
+export const uploadDirectory = join(import.meta.dir, 'uploads');
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 export async function pipeline(search = '', options: { filter?: string; sort?: string; role?: AccessRole } = {}) {
   const rows = await listLeads(search, { type: 'opportunity', filter: options.filter, sort: options.sort, role: options.role });
@@ -401,12 +403,12 @@ export async function addAttachment(leadId: string, name: string) {
 
 export async function addAttachmentFile(leadId: string, file: File) {
   if (!file.name || !file.size) throw Object.assign(new Error('Attachment file is required'), { status: 400 });
+  if (file.size > MAX_ATTACHMENT_BYTES) throw Object.assign(new Error('Attachment file is too large'), { status: 413 });
   const id = `attachment-${crypto.randomUUID().slice(0, 8)}`;
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const storedPath = `${id}-${safeName}`;
-  const uploadDir = join(import.meta.dir, 'uploads');
-  await mkdir(uploadDir, { recursive: true });
-  await Bun.write(join(uploadDir, storedPath), file);
+  await mkdir(uploadDirectory, { recursive: true });
+  await Bun.write(join(uploadDirectory, storedPath), file);
   await runDatasource('crm.save_attachment_file', { id, lead_id: leadId, name: file.name, stored_path: storedPath, mime_type: file.type || 'application/octet-stream', file_size: file.size });
   return leadExtras(leadId);
 }
