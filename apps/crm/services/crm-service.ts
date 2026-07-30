@@ -1,16 +1,10 @@
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { compileDomain } from '../../../lib/services/DomainCompiler.ts';
-import { all, run, withDb } from '../db/database.ts';
 import { queryDatasource, runDatasource } from '../db/datasource-runtime.ts';
 
 export { initDatabase } from '../db/database.ts';
 
 type AccessRole = 'salesperson' | 'manager' | 'system';
-
-function applyOwnershipScope(conditions: string[], role: AccessRole | undefined, alias = 'l') {
-  if (role === 'salesperson') conditions.push(`(${alias}.salesperson = 'Mitchell Admin' OR coalesce(${alias}.salesperson, '') = '')`);
-}
 
 export async function pipeline(search = '', options: { filter?: string; sort?: string; role?: AccessRole } = {}) {
   const rows = await listLeads(search, { type: 'opportunity', filter: options.filter, sort: options.sort, role: options.role });
@@ -194,47 +188,8 @@ export async function mutateLeads(ids: string[], operation: string, value = '') 
 }
 
 export async function listLeads(search = '', options: { type?: string; filter?: string; sort?: string; groupBy?: string; teamId?: string; role?: AccessRole } = {}) {
-  return withDb(async connection => {
-    const conditions = [options.filter === 'archived' ? 'NOT l.active' : 'l.active'];
-    const params: any[] = [];
-    applyOwnershipScope(conditions, options.role);
-    if (options.type === 'lead' || options.type === 'opportunity') {
-      const compiled = compileDomain([['type', '=', options.type]], { type: 'l.type' });
-      conditions.push(compiled.sql);
-      params.push(...compiled.params);
-    }
-    if (options.teamId) {
-      conditions.push('(l.team_id = ? OR (l.team_id IS NULL AND lower(l.team) = lower((SELECT name FROM crm_team WHERE id = ?))))');
-      params.push(options.teamId, options.teamId);
-    }
-    if (options.filter === 'assigned_to_me') conditions.push("l.salesperson = 'Mitchell Admin'");
-    if (options.filter === 'unassigned') conditions.push("coalesce(l.salesperson, '') = ''");
-    if (options.filter === 'open') conditions.push("s.id NOT IN ('won', 'lost')");
-    if (options.filter === 'won') conditions.push("s.id = 'won'");
-    if (options.filter === 'lost') conditions.push("s.id = 'lost'");
-    if (options.filter === 'overdue') conditions.push('l.expected_closing < current_date');
-    if (options.filter === 'activity_status') conditions.push('EXISTS (SELECT 1 FROM crm_activity a WHERE a.lead_id = l.id AND NOT a.done)');
-    if (search.trim()) {
-      const terms = search.trim().split(/\s+/).filter(Boolean);
-      for (const term of terms) {
-        const alternatives = term.split('|').filter(Boolean);
-        const clauses: string[] = [];
-        for (const alternative of alternatives) {
-          clauses.push("(lower(l.name) LIKE lower(?) OR lower(coalesce(l.partner_name, '')) LIKE lower(?) OR lower(coalesce(l.salesperson, '')) LIKE lower(?))");
-          const value = `%${alternative}%`; params.push(value, value, value);
-        }
-        conditions.push(`(${clauses.join(' OR ')})`);
-      }
-    }
-    const sortOrder = options.sort === 'revenue' ? 'l.expected_revenue DESC' : options.sort === 'closing' ? 'l.expected_closing NULLS LAST' : 'l.created_at DESC';
-    const groupOrder = options.groupBy === 'stage_id' ? 's.sequence' : options.groupBy === 'salesperson' ? 'l.salesperson NULLS FIRST' : options.groupBy === 'team' ? 'l.team NULLS FIRST' : options.groupBy === 'partner_name' ? 'l.partner_name NULLS FIRST' : options.groupBy === 'expected_closing' ? 'date_trunc(\'month\', l.expected_closing) NULLS LAST' : '';
-    const order = groupOrder ? `${groupOrder}, ${sortOrder}` : sortOrder;
-    return all(connection, `
-    SELECT l.*, s.name AS stage_name
-    FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id
-    WHERE ${conditions.join(' AND ')}
-    ORDER BY ${order}
-  `, params);
+  return queryDatasource('crm.list_leads', {
+    search, type: options.type || '', filter: options.filter || '', sort: options.sort || '', group_by: options.groupBy || '', team_id: options.teamId || '', role: options.role || 'manager',
   });
 }
 
@@ -461,44 +416,5 @@ export async function attachmentFile(id: string) {
 }
 
 export async function saveLead(values: Record<string, unknown>) {
-  return withDb(async connection => {
-    const id = String(values.id || `opp-${crypto.randomUUID().slice(0, 8)}`);
-    const name = String(values.name || '').trim();
-    if (!name) throw Object.assign(new Error('Opportunity name is required'), { status: 400 });
-    const existing = id && values.id ? (await all(connection, 'SELECT write_version FROM crm_lead WHERE id = ?', [id]))[0] : null;
-    if (existing && values.write_version != null && Number(values.write_version) !== Number(existing.write_version || 1)) {
-      throw Object.assign(new Error('This record was changed by another user. Reload before saving.'), { status: 409 });
-    }
-    const params = [
-      id, name, String(values.type || 'opportunity'), String(values.stage_id || 'new'),
-      String(values.partner_name || ''), String(values.contact_name || ''), String(values.email || ''), String(values.phone || ''), String(values.source || ''), String(values.campaign || ''), String(values.team || 'North America'),
-      String(values.salesperson || 'Mitchell Admin'), Number(values.expected_revenue || 0), Number(values.recurring_revenue || 0), String(values.recurring_plan_id || ''), Number(values.priority || 0), String(values.tags || ''),
-      Number(values.probability || 0), String(values.expected_closing || '') || null, String(values.next_activity || ''), String(values.notes || ''),
-    ];
-    await run(connection, `
-      INSERT INTO crm_lead(id, name, type, stage_id, partner_name, contact_name, email, phone, source, campaign, team, salesperson, expected_revenue, recurring_revenue, recurring_plan_id, priority, tags, probability, expected_closing, next_activity, notes)
-      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-      ON CONFLICT(id) DO UPDATE SET
-        name=excluded.name, type=excluded.type, stage_id=excluded.stage_id,
-        partner_name=excluded.partner_name, salesperson=excluded.salesperson, source=excluded.source, campaign=excluded.campaign,
-        expected_revenue=excluded.expected_revenue, recurring_revenue=excluded.recurring_revenue, recurring_plan_id=excluded.recurring_plan_id, priority=excluded.priority,
-        tags=excluded.tags, contact_name=excluded.contact_name, email=excluded.email,
-        phone=excluded.phone, team=excluded.team, probability=excluded.probability,
-        expected_closing=excluded.expected_closing, next_activity=excluded.next_activity,
-        notes=excluded.notes, write_version=coalesce(crm_lead.write_version, 1) + 1
-    `, params);
-    const partner = (await all(connection, 'SELECT id, name FROM crm_partner WHERE id = ? OR lower(name) = lower(?) LIMIT 1', [String(values.partner_id || ''), String(values.partner_name || '')]))[0];
-    const team = (await all(connection, 'SELECT id, name FROM crm_team WHERE id = ? OR lower(name) = lower(?) LIMIT 1', [String(values.team_id || ''), String(values.team || '')]))[0];
-    const user = (await all(connection, 'SELECT id, name FROM res_user WHERE id = ? OR lower(name) = lower(?) LIMIT 1', [String(values.salesperson_id || ''), String(values.salesperson || '')]))[0];
-    await run(connection, 'UPDATE crm_lead SET partner_name = ?, team = ?, salesperson = ? WHERE id = ?', [partner?.name || String(values.partner_name || ''), team?.name || String(values.team || ''), user?.name || String(values.salesperson || ''), id]);
-    await run(connection, 'UPDATE crm_lead SET partner_id = ?, team_id = ?, salesperson_id = ? WHERE id = ?', [partner?.id || null, team?.id || null, user?.id || null, id]);
-    await run(connection, 'DELETE FROM crm_lead_tag WHERE lead_id = ?', [id]);
-    const tagValues = String(values.tags ?? values.tag_ids ?? '').split(',').map(value => value.trim()).filter(Boolean);
-    await run(connection, 'UPDATE crm_lead SET tags = ? WHERE id = ?', [tagValues.join(','), id]);
-    for (const tag of tagValues) {
-      const tagRow = (await all(connection, 'SELECT id FROM crm_tag WHERE lower(name) = lower(?) OR id = ? LIMIT 1', [tag, tag]))[0];
-      if (tagRow) await run(connection, 'INSERT INTO crm_lead_tag(lead_id, tag_id) VALUES(?, ?) ON CONFLICT DO NOTHING', [id, tagRow.id]);
-    }
-    return getLead(id);
-  });
+  return runDatasource('crm.save_lead', { values });
 }
