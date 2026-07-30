@@ -6,6 +6,7 @@
     "build:css": "sass styles.scss styles.css --no-source-map",
     "test": "bun test",
     "test:browser": "bun scripts/browser-smoke.ts",
+    "predev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/kill-crm-dev.ps1",
     "start": "bun run build:css && bun server.ts",
     "dev": "bun run build:css && bun --hot server.ts"
   },

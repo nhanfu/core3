@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage, attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead, crmConfig, crmLookups, crmStages, crmTags, customerRelated, findDuplicates, getCustomer, getLead, getTeam, importHistory, initDatabase, leadAnalysis, leadDrilldown, leadExtras, listActivities, listCustomers, listLeads, listTeams, loseLead, lostReasons, mergeLeads, mergePreview, moveStage, mutateActivities, mutateLeads, partners, pipeline, previewImportWithHistory, queryDatasource, reportAnalysis, reportDrilldown, reportSummary, saveCatalogRow, saveCrmConfig, saveCrmStages, saveCrmTag, saveCustomer, saveLead, saveLostReason, saveTeam } from './database.ts';
+import { activityAnalysis, activityDrilldown, addActivity, addAttachment, addAttachmentFile, addFollower, addMessage, attachmentFile, canAccessActivities, canAccessLead, canAccessLeads, catalogRows, commitImport, convertLead, crmConfig, crmLookups, crmStages, crmTags, customerRelated, findDuplicates, getCustomer, getLead, getTeam, importHistory, initDatabase, leadAnalysis, leadDrilldown, leadExtras, listActivities, listCustomers, listLeads, listTeams, loseLead, lostReasons, mergeLeads, mergePreview, moveStage, mutateActivities, mutateLeads, partners, pipeline, previewImportWithHistory, publicDatasourceForEndpoint, queryDatasource, reportAnalysis, reportDrilldown, reportSummary, saveCatalogRow, saveCrmConfig, saveCrmStages, saveCrmTag, saveCustomer, saveLead, saveLostReason, saveTeam } from './db/database.ts';
 
 const PORT = Number(process.env.PORT || 3010);
 const headers = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' };
@@ -46,10 +46,11 @@ Bun.serve({
       sort: url.searchParams.get('sort') || undefined,
       role: roleOf(request),
     }));
-    if (url.pathname === '/api/crm/stage-summary' && request.method === 'GET') return json(await queryDatasource('crm.stage_summary', {
-      type: url.searchParams.get('type') || 'opportunity',
-      role: roleOf(request),
-    }));
+    const publicDatasource = request.method === 'GET' && publicDatasourceForEndpoint(url.pathname);
+    if (publicDatasource) {
+      if (!publicDatasource.roles?.includes(roleOf(request))) return json({ error: 'Datasource permission required' }, 403);
+      return json(await queryDatasource(publicDatasource.id, { ...Object.fromEntries(url.searchParams.entries()), role: roleOf(request) }));
+    }
     if (url.pathname === '/api/crm/module' && request.method === 'GET') return json(moduleDefinition);
     if (url.pathname === '/api/modules' && request.method === 'GET') return json(appManifests);
     if (url.pathname === '/api/crm/leads' && request.method === 'GET') return json(await listLeads(url.searchParams.get('search') || '', {
@@ -197,7 +198,7 @@ Bun.serve({
       const attachment = await attachmentFile(attachmentMatch[1]);
       if (!attachment?.stored_path) return json({ error: 'Attachment file not found' }, 404);
       if (!await canAccessLead(attachment.lead_id, roleOf(request))) return json({ error: 'Record access denied' }, 403);
-      const file = Bun.file(join(import.meta.dir, 'uploads', attachment.stored_path));
+      const file = Bun.file(join(import.meta.dir, 'db', 'uploads', attachment.stored_path));
       if (!(await file.exists())) return json({ error: 'Attachment file not found' }, 404);
       return new Response(file, { headers: { ...headers, 'Content-Type': attachment.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename="${attachment.name.replace(/"/g, '')}"` } });
     }

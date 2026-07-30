@@ -35,6 +35,10 @@ export type CrudConfig =
 export interface DataSource {
   id: string;
 
+  // Public HTTP exposure is opt-in. Private datasources need no transport metadata.
+  public?: boolean;
+  endpoint?: string;
+
   // Database
   db?: DbEngine;
   table?: string;               // required when crud: true | CrudOp[]

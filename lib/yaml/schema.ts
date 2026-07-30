@@ -12,8 +12,13 @@ export type PageDefinition = {
 
 export type DatasourceDefinition = {
   id: string;
-  permission: string;
-  query: string;
+  permission?: string;
+  permissions?: string[];
+  roles?: string[];
+  public?: boolean;
+  endpoint?: string;
+  protocol?: string;
+  query?: string;
   single?: boolean;
 };
 
@@ -74,7 +79,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'permissions', 'roles', 'public', 'endpoint', 'protocol', 'query']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);

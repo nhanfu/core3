@@ -6,7 +6,7 @@ import { compileDomain } from '@core3/framework/services/DomainCompiler.ts';
 
 const db = new duckdb.Database(process.env.CRM_DB_PATH || join(import.meta.dir, 'crm.duckdb'));
 const datasourceConfig = Bun.YAML.parse(readFileSync(join(import.meta.dir, 'datasources.yaml'), 'utf8')) as {
-  datasources?: Array<{ id: string; query?: string; statement?: string; params?: Record<string, { default?: unknown }> }>;
+  datasources?: Array<{ id: string; public?: boolean; endpoint?: string; protocol?: string; roles?: string[]; permission?: string; query?: string; statement?: string; params?: Record<string, { default?: unknown }> }>;
 };
 
 function run(conn: any, sql: string, params: any[] = []) {
@@ -46,6 +46,12 @@ export async function queryDatasource(id: string, params: Record<string, unknown
   });
   const bound = bindDatasourceParams(query, resolvedParams);
   return withDb(connection => all(connection, bound.sql, bound.values));
+}
+
+export function publicDatasourceForEndpoint(endpoint: string) {
+  const source = datasourceConfig.datasources?.find(item => item.public && item.endpoint === endpoint);
+  if (!source?.id || !source.roles?.length || !source.permission || !source.protocol) return null;
+  return source;
 }
 
 export async function runDatasource(id: string, params: Record<string, unknown> = {}) {

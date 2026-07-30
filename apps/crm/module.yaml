@@ -33,6 +33,18 @@ security:
     manager:
       can: [read, create, write, stage_change, activity, chatter, assign, archive, delete, merge]
 
+# UI bindings refer to datasource IDs; transport and SQL stay in datasources.yaml.
+datasources:
+  stage_summary: crm.stage_summary
+  lost_reasons: crm.lost_reasons
+  config: crm.config
+  stages: crm.stages
+  tags: crm.tags
+  activity_types: crm.catalog.activity_types
+  activity_plans: crm.catalog.activity_plans
+  recurring_plans: crm.catalog.recurring_plans
+  import_history: crm.import_history
+
 models:
   crm.lead:
     table: crm_lead

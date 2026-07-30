@@ -1,6 +1,8 @@
 datasources:
   - id: crm.stage_summary
     db: duckdb
+    public: true
+    endpoint: /api/crm/stage-summary
     protocol: http
     roles: [salesperson, manager, system]
     permission: crm.lead.read
@@ -17,20 +19,60 @@ datasources:
       ORDER BY stage_id
 
   - id: crm.lost_reasons
+    public: true
+    endpoint: /api/crm/lost-reasons
+    protocol: http
+    roles: [manager, system]
+    permission: crm.lost_reason.read
     query: SELECT id, name FROM crm_lost_reason ORDER BY name
   - id: crm.config
+    public: true
+    endpoint: /api/crm/config
+    protocol: http
+    roles: [manager, system]
+    permission: crm.config.read
     query: SELECT key, value FROM crm_config ORDER BY key
   - id: crm.stages
+    public: true
+    endpoint: /api/crm/stages
+    protocol: http
+    roles: [manager, system]
+    permission: crm.stage.read
     query: SELECT id, name, sequence, folded, requirements FROM crm_stage ORDER BY sequence
   - id: crm.tags
+    public: true
+    endpoint: /api/crm/tags
+    protocol: http
+    roles: [manager, system]
+    permission: crm.tag.read
     query: SELECT id, name, color FROM crm_tag ORDER BY name
   - id: crm.catalog.activity_types
+    public: true
+    endpoint: /api/crm/catalog/activity_types
+    protocol: http
+    roles: [manager, system]
+    permission: crm.catalog.read
     query: SELECT * FROM crm_activity_type ORDER BY name
   - id: crm.catalog.activity_plans
+    public: true
+    endpoint: /api/crm/catalog/activity_plans
+    protocol: http
+    roles: [manager, system]
+    permission: crm.catalog.read
     query: SELECT * FROM crm_activity_plan ORDER BY name
   - id: crm.catalog.recurring_plans
+    public: true
+    endpoint: /api/crm/catalog/recurring_plans
+    protocol: http
+    roles: [manager, system]
+    permission: crm.catalog.read
     query: SELECT * FROM crm_recurring_plan ORDER BY name
   - id: crm.import_history
+    public: true
+    endpoint: /api/crm/import/history
+    protocol: http
+    roles: [manager, system]
+    permission: crm.import.read
     query: SELECT id, imported_count, error_count, errors, created_at FROM crm_import_history ORDER BY created_at DESC LIMIT 50
   - id: crm.lead
     params: { id: { type: string } }

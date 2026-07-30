@@ -2,8 +2,10 @@ node_modules/
 
 # Local databases and DuckDB runtime files
 *.duckdb
+*.duckdb.*
 *.duckdb.wal
 *.duckdb.tmp
+apps/crm/db/uploads/
 
 # Build, test, and diagnostic output
 coverage/

@@ -5,7 +5,7 @@ import { describe, expect, test } from 'bun:test';
 
 const databasePath = join(mkdtempSync(join(tmpdir(), 'core3-crm-test-')), 'fixture.duckdb');
 process.env.CRM_DB_PATH = databasePath;
-const database = await import('../database.ts');
+const database = await import('../db/database.ts');
 
 await database.initDatabase();
 
