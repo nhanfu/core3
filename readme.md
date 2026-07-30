@@ -1,6 +1,6 @@
 # ERP Rendering Framework
 
-A shared TypeScript framework for processing client YAML and rendering ERP pages. The framework provides YAML-driven components, embedded SQL, OOP rendering, CRUD, and controlled extension points through the `@core3/framework` package.
+A shared TypeScript framework for processing client YAML and rendering ERP pages. The framework provides reusable UI/runtime components and direct source imports from `apps/lib`.
 
 ## Vision
 
@@ -21,7 +21,7 @@ Other code remains possible when YAML cannot yet express a requirement, but it s
 ## Packages
 
 ```
-@core3/framework   — YAML processing, page rendering, components, runtime, backend primitives, and interfaces
+apps/lib           — shared UI/runtime components used directly by applications
 ```
 
 Client projects consume the shared framework and provide their YAML and app-specific integration.
@@ -121,5 +121,5 @@ Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with arc
 
 ## Local Development
 
-- Framework tests live under [`lib/test`](lib/test) and run with `bun run test` from [`lib`](lib).
+- The shared framework package lives under [`apps/lib`](apps/lib) and is consumed locally by the CRM app.
 - The sample app lives under [`apps/tms`](apps/tms) and uses the shared framework package from `lib`.

@@ -41,7 +41,7 @@ This phase is complete only when:
 Build this before expanding CRM pages so all subsequent screens use the final
 navigation contract.
 
-### Framework work in `lib/`
+### Framework work in `apps/lib/`
 
 - Add `AppManifest`, `AppRegistry`, `AppLauncher`, and `ModuleMenuTree`
   contracts. A manifest declares id, name, icon, dependencies, root menus,
@@ -112,7 +112,7 @@ Implement the reference menu tree in this order:
 
 All five areas use the shared list, kanban, form, calendar, search, relation,
 activity, chatter, and action services. No page-specific database access is
-added to `lib/`.
+added to `apps/lib/`.
 
 ## Phase 2D — CRM Reporting
 
@@ -178,4 +178,3 @@ Each slice should be a small commit with focused verification:
 - Screenshot comparison as the sole acceptance criterion.
 - Page-specific controls in the shared framework when a generic metadata or
   view primitive can express the behavior.
-

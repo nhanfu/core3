@@ -18,8 +18,8 @@ slice. It is a reference only; the CRM app does not import or execute Odoo.
 | --- | --- | --- |
 | CRM manifest and dependencies | `addons/crm/__manifest__.py` | `apps/crm/module.yaml` |
 | Lead model and fields | `addons/crm/models/crm_lead.py` | `apps/crm/module.yaml`, `schema.sql` |
-| Lead/opportunity list, form, kanban, search | `addons/crm/views/crm_lead_views.xml` | `apps/crm/module.yaml`, `lib/components/Odoo*.ts` |
-| Calendar views | `addons/crm/views/calendar_views.xml` | `lib/components/OdooAnalyticsViews.ts` |
+| Lead/opportunity list, form, kanban, search | `addons/crm/views/crm_lead_views.xml` | `apps/crm/module.yaml`, `apps/lib/components/Odoo*.ts` |
+| Calendar views | `addons/crm/views/calendar_views.xml` | `apps/lib/components/OdooAnalyticsViews.ts` |
 | CRM menus and actions | `addons/crm/views/crm_menu_views.xml` | `apps/crm/module.yaml` |
 | Stage and team data | `addons/crm/models/crm_stage.py`, `data/crm_stage_data.xml` | `apps/crm/schema.sql`, `seed.sql` |
 | Mail activities and chatter | `addons/crm/models/mail_activity.py`, `addons/mail` | `apps/crm/database.ts`, `OdooChatter.ts` |

@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:css": "sass ../styles.scss ../styles.css --no-source-map",
+    "build:css": "sass ./styles.scss ./styles.css --no-source-map",
     "test": "bun test",
     "test:browser": "bun scripts/browser-smoke.ts",
-    "start": "bun run build:css && bun ../server.ts",
-    "dev": "bun run build:css && bun --hot ../server.ts"
+    "start": "bun run build:css && bun server.ts",
+    "dev": "bun run build:css && bun --hot server.ts"
   },
   "dependencies": {
     "duckdb": "^1.1.0",

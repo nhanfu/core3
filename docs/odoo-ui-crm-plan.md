@@ -12,7 +12,7 @@ dependency.
 
 UI implementation constraints:
 
-- Framework components construct markup through `lib/html.ts`'s fluent API;
+- Framework components construct markup through `apps/lib/html.ts`'s fluent API;
   direct DOM construction is reserved for integration boundaries and browser
   APIs.
 - CRM styles are authored in SCSS and compiled to browser CSS during the app
@@ -22,7 +22,7 @@ UI implementation constraints:
 
 `apps/tms` is no longer a product milestone. It is only an example and must not
 drive framework architecture, naming, schemas, or acceptance criteria. New
-framework work belongs in `lib/`, generic documentation belongs in `docs/` and
+framework work belongs in `apps/lib/`, generic documentation belongs in `docs/` and
 `spec/`, and the CRM example belongs in a new client fixture or application
 owned by this project.
 
@@ -304,7 +304,7 @@ flows proves it is needed.
 
 ## Non-goals and guardrails
 
-- Do not add CRM logic to `lib/components`.
+- Do not add CRM logic to `apps/lib/components`.
 - Do not make `apps/tms` the example or acceptance target.
 - Do not create page-specific components when a generic view, field, action,
   or service contract can express the behavior.

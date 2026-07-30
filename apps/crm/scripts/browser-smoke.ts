@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 
 const port = 3400 + Math.floor(Math.random() * 300);
 const databasePath = join(mkdtempSync(join(tmpdir(), 'core3-crm-browser-')), 'fixture.duckdb');
-const server = Bun.spawn(['bun', 'server.ts'], {
+const server = Bun.spawn(['bun', '../server.ts'], {
   cwd: import.meta.dir.replace(/\/scripts$/, ''),
-  env: { ...process.env, PORT: String(port), CRM_DB_PATH: databasePath },
+  env: { ...process.env, PORT: String(port), CRM_DB_PATH: databasePath, NODE_ENV: 'test', CRM_ALLOW_ROLE_HEADER: 'true' },
   stdout: 'ignore',
   stderr: 'pipe',
 });
