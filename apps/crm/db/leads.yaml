@@ -149,6 +149,45 @@ resources:
     actions:
       commit: { method: POST, datasource: import.commit }
 
+  - id: crm.messages
+    entity_set: Messages
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      lead_id: { type: string, selectable: true, filterable: true, sortable: true }
+      author: { type: string, selectable: true, filterable: true, sortable: true }
+      body: { type: string, selectable: true, filterable: true, sortable: false }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list: { search: [author, body], default_orderby: created_at desc, max_page_size: 200, group_by: [author] }
+    operations: { create: message.create, read: message.read, update: message.update, delete: message.delete }
+
+  - id: crm.followers
+    entity_set: Followers
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      lead_id: { type: string, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list: { search: [name], default_orderby: name asc, max_page_size: 200, group_by: [] }
+    operations: { create: follower.create, read: follower.read, update: follower.update, delete: follower.delete }
+
+  - id: crm.attachments
+    entity_set: Attachments
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      lead_id: { type: string, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      mime_type: { type: string, selectable: true, filterable: true, sortable: true }
+      content: { type: string, selectable: false, filterable: false, sortable: false }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list: { search: [name, mime_type], default_orderby: created_at desc, max_page_size: 200, group_by: [mime_type] }
+    operations: { create: attachment.create, read: attachment.read, update: attachment.update, delete: attachment.delete }
+
 datasources:
   - id: read
     params:
@@ -533,3 +572,60 @@ datasources:
     entrypoint: unsupportedImportOperation
     script: |
       function unsupportedImportOperation() { throw Object.assign(new Error('This import operation is not supported'), { status: 405 }); }
+
+  - id: message.read
+    params: { id: { type: string, default: '' }, odata_top: { type: number, default: 200 }, odata_skip: { type: number, default: 0 } }
+    query: |
+      SELECT id, lead_id, author, body, created_at, count(*) OVER() AS __odata_count FROM crm_message
+      WHERE (:id = '' OR id = :id) {{where}} {{order}} LIMIT :odata_top OFFSET :odata_skip
+  - id: message.create
+    params: { values: { type: json } }
+    entrypoint: createMessage
+    script: |
+      async function createMessage(ctx, params) { const v = params.values || {}; const lead_id = String(v.lead_id || ''); const body = String(v.body || '').trim(); if (!lead_id || !body) throw Object.assign(new Error('Lead and message body are required'), { status: 400 }); const id = `message-${ctx.crypto.randomUUID().slice(0, 8)}`; await ctx.db.execute('INSERT INTO crm_message(id, lead_id, author, body, created_at) VALUES(:id, :lead_id, :author, :body, current_timestamp)', { id, lead_id, author: String(v.author || 'Salesperson'), body }); return (await ctx.db.query('SELECT id, lead_id, author, body, created_at FROM crm_message WHERE id = :id', { id }))[0]; }
+  - id: message.update
+    params: { values: { type: json } }
+    entrypoint: updateMessage
+    script: |
+      async function updateMessage(ctx, params) { const v = params.values || {}; const id = String(v.id || ''); const body = String(v.body || '').trim(); if (!body) throw Object.assign(new Error('Message body is required'), { status: 400 }); await ctx.db.execute('UPDATE crm_message SET author = :author, body = :body WHERE id = :id', { id, author: String(v.author || 'Salesperson'), body }); return (await ctx.db.query('SELECT id, lead_id, author, body, created_at FROM crm_message WHERE id = :id', { id }))[0] || null; }
+  - id: message.delete
+    params: { id: { type: string } }
+    statement: DELETE FROM crm_message WHERE id = :id
+
+  - id: follower.read
+    params: { id: { type: string, default: '' }, odata_top: { type: number, default: 200 }, odata_skip: { type: number, default: 0 } }
+    query: |
+      SELECT id, lead_id, name, created_at, count(*) OVER() AS __odata_count FROM crm_follower
+      WHERE (:id = '' OR id = :id) {{where}} {{order}} LIMIT :odata_top OFFSET :odata_skip
+  - id: follower.create
+    params: { values: { type: json } }
+    entrypoint: createFollower
+    script: |
+      async function createFollower(ctx, params) { const v = params.values || {}; const lead_id = String(v.lead_id || ''); const name = String(v.name || '').trim(); if (!lead_id || !name) throw Object.assign(new Error('Lead and follower name are required'), { status: 400 }); const id = `follower-${ctx.crypto.randomUUID().slice(0, 8)}`; await ctx.db.execute('INSERT INTO crm_follower(id, lead_id, name, created_at) VALUES(:id, :lead_id, :name, current_timestamp)', { id, lead_id, name }); return (await ctx.db.query('SELECT id, lead_id, name, created_at FROM crm_follower WHERE id = :id', { id }))[0]; }
+  - id: follower.update
+    params: { values: { type: json } }
+    entrypoint: updateFollower
+    script: |
+      async function updateFollower(ctx, params) { const v = params.values || {}; const id = String(v.id || ''); const name = String(v.name || '').trim(); if (!name) throw Object.assign(new Error('Follower name is required'), { status: 400 }); await ctx.db.execute('UPDATE crm_follower SET name = :name WHERE id = :id', { id, name }); return (await ctx.db.query('SELECT id, lead_id, name, created_at FROM crm_follower WHERE id = :id', { id }))[0] || null; }
+  - id: follower.delete
+    params: { id: { type: string } }
+    statement: DELETE FROM crm_follower WHERE id = :id
+
+  - id: attachment.read
+    params: { id: { type: string, default: '' }, odata_top: { type: number, default: 200 }, odata_skip: { type: number, default: 0 } }
+    query: |
+      SELECT id, lead_id, name, mime_type, content, created_at, count(*) OVER() AS __odata_count FROM crm_attachment
+      WHERE (:id = '' OR id = :id) {{where}} {{order}} LIMIT :odata_top OFFSET :odata_skip
+  - id: attachment.create
+    params: { values: { type: json } }
+    entrypoint: createAttachment
+    script: |
+      async function createAttachment(ctx, params) { const v = params.values || {}; const lead_id = String(v.lead_id || ''); const name = String(v.name || '').trim(); if (!lead_id || !name) throw Object.assign(new Error('Lead and attachment name are required'), { status: 400 }); const id = `attachment-${ctx.crypto.randomUUID().slice(0, 8)}`; await ctx.db.execute('INSERT INTO crm_attachment(id, lead_id, name, mime_type, content, created_at) VALUES(:id, :lead_id, :name, :mime_type, :content, current_timestamp)', { id, lead_id, name, mime_type: String(v.mime_type || 'text/plain'), content: String(v.content || '') }); return (await ctx.db.query('SELECT id, lead_id, name, mime_type, content, created_at FROM crm_attachment WHERE id = :id', { id }))[0]; }
+  - id: attachment.update
+    params: { values: { type: json } }
+    entrypoint: updateAttachment
+    script: |
+      async function updateAttachment(ctx, params) { const v = params.values || {}; const id = String(v.id || ''); const name = String(v.name || '').trim(); if (!name) throw Object.assign(new Error('Attachment name is required'), { status: 400 }); await ctx.db.execute('UPDATE crm_attachment SET name = :name, mime_type = :mime_type, content = :content WHERE id = :id', { id, name, mime_type: String(v.mime_type || 'text/plain'), content: String(v.content || '') }); return (await ctx.db.query('SELECT id, lead_id, name, mime_type, content, created_at FROM crm_attachment WHERE id = :id', { id }))[0] || null; }
+  - id: attachment.delete
+    params: { id: { type: string } }
+    statement: DELETE FROM crm_attachment WHERE id = :id

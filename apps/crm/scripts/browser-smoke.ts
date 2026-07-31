@@ -37,7 +37,7 @@ try {
 
   const metadata = await response('/api/odata/$metadata');
   const resourceNames = metadata.resources?.map((resource: any) => resource.name).sort().join(',');
-  if (resourceNames !== 'Activities,Customers,Imports,Leads,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
+  if (resourceNames !== 'Activities,Attachments,Customers,Followers,Imports,Leads,Messages,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
   if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
   const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
   if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
@@ -98,6 +98,15 @@ try {
   if (committed.state !== 'committed' || committed.imported_count !== 1) throw new Error('Import commit failed');
   const imported = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "name eq 'Imported E2E'" })}`);
   if (imported.value?.length !== 1) throw new Error('Imported lead is unavailable');
+
+  const message = await response('/api/odata/Messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: 'lead-001', author: 'E2E', body: 'E2E chatter message' }) });
+  const follower = await response('/api/odata/Followers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: 'lead-001', name: 'E2E follower' }) });
+  const attachment = await response('/api/odata/Attachments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: 'lead-001', name: 'e2e.txt', mime_type: 'text/plain', content: 'attached content' }) });
+  const chatter = await response(`/api/odata/Messages?${new URLSearchParams({ '$filter': "lead_id eq 'lead-001'" })}`);
+  if (!chatter.value?.some((row: any) => row.id === message.id) || !follower.id || attachment.content !== 'attached content') throw new Error('Lead collaboration resources failed');
+  await response(`/api/odata/Messages('${encodeURIComponent(message.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  await response(`/api/odata/Followers('${encodeURIComponent(follower.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  await response(`/api/odata/Attachments('${encodeURIComponent(attachment.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);

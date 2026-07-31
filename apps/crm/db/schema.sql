@@ -56,3 +56,16 @@ CREATE TABLE IF NOT EXISTS crm_import_history (
   errors VARCHAR NOT NULL DEFAULT '[]',
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS crm_message (
+  id VARCHAR PRIMARY KEY, lead_id VARCHAR NOT NULL, author VARCHAR NOT NULL, body VARCHAR NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+CREATE TABLE IF NOT EXISTS crm_follower (
+  id VARCHAR PRIMARY KEY, lead_id VARCHAR NOT NULL, name VARCHAR NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+CREATE TABLE IF NOT EXISTS crm_attachment (
+  id VARCHAR PRIMARY KEY, lead_id VARCHAR NOT NULL, name VARCHAR NOT NULL, mime_type VARCHAR NOT NULL DEFAULT 'text/plain', content VARCHAR NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
