@@ -18,6 +18,11 @@ datasources:
   team.create: { resource: Teams, method: POST }
   team.update: { resource: Teams, method: PUT }
   team.delete: { resource: Teams, method: DELETE }
+  activity.read: { resource: Activities, method: GET, collection: true }
+  activity.create: { resource: Activities, method: POST }
+  activity.update: { resource: Activities, method: PUT }
+  activity.delete: { resource: Activities, method: DELETE }
+  activity.complete: { resource: Activities, method: POST, action: complete }
 
 screens:
   - id: customers
@@ -127,5 +132,77 @@ screens:
           - { name: quota, label: Quarterly quota, type: number }
         actions:
           - { label: Cancel, event: cancel }
+          - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Save, submit: true }
+
+  - id: activities
+    route: /activities
+    title: Activities
+    state: { search: '' }
+    on_load: |
+      await ctx.load('activity.read', 'activities', { '$search': ctx.state.search, '$orderby': 'due_date asc' });
+    events:
+      search: |
+        await ctx.load('activity.read', 'activities', { '$search': ctx.state.search, '$orderby': 'due_date asc' });
+      create: |
+        ctx.navigate('/activities/new');
+      open: |
+        ctx.navigate('/activities/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Activities }
+      - type: section
+        class: yaml-toolbar
+        children:
+          - { type: input, binding: $state.search, placeholder: Search activities, on_change: search }
+          - { type: button, label: New activity, event: create }
+      - type: table
+        rows: $data.activities.value
+        row_event: open
+        columns:
+          - { field: summary, label: Activity }
+          - { field: lead_id, label: Lead }
+          - { field: activity_type, label: Type }
+          - { field: due_date, label: Due }
+          - { field: done, label: Done }
+
+  - id: activity-form
+    route: /activities/:id
+    title: Activity
+    on_load: |
+      if (ctx.route.id === 'new') ctx.data.record = { lead_id: '', summary: '', activity_type: 'todo', due_date: '', done: false };
+      else await ctx.load('activity.read', 'record', {}, ctx.route.id);
+    events:
+      save: |
+        const values = ctx.formValues();
+        if (ctx.route.id === 'new') await ctx.request('activity.create', values);
+        else await ctx.request('activity.update', values, ctx.route.id);
+        ctx.navigate('/activities');
+      complete: |
+        await ctx.request('activity.complete', {}, ctx.route.id);
+        ctx.navigate('/activities');
+      remove: |
+        if (ctx.route.id !== 'new') { await ctx.request('activity.delete', {}, ctx.route.id); ctx.navigate('/activities'); }
+      cancel: |
+        ctx.navigate('/activities');
+    components:
+      - { type: heading, text: Activity }
+      - type: form
+        record: $data.record
+        submit: save
+        fields:
+          - { name: lead_id, label: Lead ID, required: true }
+          - { name: summary, label: Summary, required: true }
+          - name: activity_type
+            label: Type
+            type: select
+            options:
+              - { value: todo, label: To do }
+              - { value: call, label: Call }
+              - { value: email, label: Email }
+              - { value: meeting, label: Meeting }
+          - { name: due_date, label: Due date, type: date }
+        actions:
+          - { label: Cancel, event: cancel }
+          - { label: Complete, event: complete, visible_when: "ctx.route.id !== 'new'" }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
           - { label: Save, submit: true }

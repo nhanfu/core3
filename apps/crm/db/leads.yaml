@@ -79,6 +79,31 @@ resources:
       update: team.update
       delete: team.delete
 
+  - id: crm.activities
+    entity_set: Activities
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      lead_id: { type: string, selectable: true, filterable: true, sortable: true }
+      summary: { type: string, selectable: true, filterable: true, sortable: true }
+      activity_type: { type: string, selectable: true, filterable: true, sortable: true }
+      due_date: { type: date, selectable: true, filterable: true, sortable: true }
+      done: { type: boolean, selectable: true, filterable: true, sortable: true }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list:
+      search: [summary, activity_type, lead_id]
+      default_orderby: due_date asc
+      max_page_size: 200
+      group_by: [activity_type, done, due_date]
+    operations:
+      create: activity.create
+      read: activity.read
+      update: activity.update
+      delete: activity.delete
+    actions:
+      complete: { method: POST, datasource: activity.complete }
+
 datasources:
   - id: read
     params:
@@ -299,3 +324,56 @@ datasources:
   - id: team.delete
     params: { id: { type: string } }
     statement: UPDATE crm_team SET active = false WHERE id = :id AND active = true
+
+  - id: activity.read
+    params:
+      id: { type: string, default: '' }
+      odata_top: { type: number, default: 200 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT id, lead_id, summary, activity_type, due_date, done, created_at, count(*) OVER() AS __odata_count
+      FROM crm_activity
+      WHERE (:id = '' OR id = :id)
+      {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: activity.create
+    params: { values: { type: json } }
+    entrypoint: createActivity
+    script: |
+      async function createActivity(ctx, params) {
+        const values = params.values || {}; const summary = String(values.summary || '').trim(); const leadId = String(values.lead_id || '').trim();
+        if (!summary || !leadId) throw Object.assign(new Error('Lead and activity summary are required'), { status: 400 });
+        const lead = (await ctx.db.query('SELECT id FROM crm_lead WHERE id = :id AND active = true', { id: leadId }))[0];
+        if (!lead) throw Object.assign(new Error('Lead not found'), { status: 404 });
+        const id = `activity-${ctx.crypto.randomUUID().slice(0, 8)}`;
+        await ctx.db.execute('INSERT INTO crm_activity(id, lead_id, summary, activity_type, due_date, done, created_at) VALUES(:id, :lead_id, :summary, :activity_type, :due_date, false, current_timestamp)', { id, lead_id: leadId, summary, activity_type: String(values.activity_type || 'todo'), due_date: String(values.due_date || '') || null });
+        return (await ctx.db.query('SELECT id, lead_id, summary, activity_type, due_date, done, created_at FROM crm_activity WHERE id = :id', { id }))[0];
+      }
+
+  - id: activity.update
+    params: { values: { type: json } }
+    entrypoint: updateActivity
+    script: |
+      async function updateActivity(ctx, params) {
+        const values = params.values || {}; const id = String(values.id || ''); const summary = String(values.summary || '').trim(); const leadId = String(values.lead_id || '').trim();
+        if (!summary || !leadId) throw Object.assign(new Error('Lead and activity summary are required'), { status: 400 });
+        const exists = (await ctx.db.query('SELECT id FROM crm_activity WHERE id = :id', { id }))[0];
+        if (!exists) throw Object.assign(new Error('Activity not found'), { status: 404 });
+        await ctx.db.execute('UPDATE crm_activity SET lead_id = :lead_id, summary = :summary, activity_type = :activity_type, due_date = :due_date, done = :done WHERE id = :id', { id, lead_id: leadId, summary, activity_type: String(values.activity_type || 'todo'), due_date: String(values.due_date || '') || null, done: values.done === true || values.done === 'true' });
+        return (await ctx.db.query('SELECT id, lead_id, summary, activity_type, due_date, done, created_at FROM crm_activity WHERE id = :id', { id }))[0];
+      }
+
+  - id: activity.delete
+    params: { id: { type: string } }
+    statement: DELETE FROM crm_activity WHERE id = :id
+
+  - id: activity.complete
+    params: { id: { type: string } }
+    entrypoint: completeActivity
+    script: |
+      async function completeActivity(ctx, params) {
+        await ctx.db.execute('UPDATE crm_activity SET done = true WHERE id = :id', { id: params.id });
+        return (await ctx.db.query('SELECT id, done FROM crm_activity WHERE id = :id', { id: params.id }))[0] || null;
+      }

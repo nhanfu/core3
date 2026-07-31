@@ -5,6 +5,12 @@ VALUES
   ('lead-003', 'Conference follow-up', 'Initech', 'pat@initech.test', '+1 555 0103', 'Event', 'contacted', 'Met at the industry conference.')
 ON CONFLICT(id) DO NOTHING;
 
+INSERT INTO crm_activity(id, lead_id, summary, activity_type, due_date, done)
+VALUES
+  ('activity-001', 'lead-001', 'Call about product requirements', 'call', current_date + 1, false),
+  ('activity-002', 'lead-002', 'Prepare follow-up email', 'email', current_date + 2, false)
+ON CONFLICT(id) DO NOTHING;
+
 INSERT INTO crm_customer(id, name, email, phone)
 VALUES
   ('customer-001', 'Acme Corporation', 'hello@acme.test', '+1 555 1001'),

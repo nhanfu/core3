@@ -28,3 +28,13 @@ CREATE TABLE IF NOT EXISTS crm_team (
   active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS crm_activity (
+  id VARCHAR PRIMARY KEY,
+  lead_id VARCHAR NOT NULL,
+  summary VARCHAR NOT NULL,
+  activity_type VARCHAR NOT NULL DEFAULT 'todo',
+  due_date DATE,
+  done BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);

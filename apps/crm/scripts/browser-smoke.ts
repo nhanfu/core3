@@ -37,7 +37,7 @@ try {
 
   const metadata = await response('/api/odata/$metadata');
   const resourceNames = metadata.resources?.map((resource: any) => resource.name).sort().join(',');
-  if (resourceNames !== 'Customers,Leads,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
+  if (resourceNames !== 'Activities,Customers,Leads,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
   if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
   const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
   if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
@@ -84,12 +84,19 @@ try {
   await response(`/api/odata/Teams('${encodeURIComponent(team.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   if (await response(`/api/odata/Teams('${encodeURIComponent(team.id)}')`)) throw new Error('Team delete failed');
 
+  const activity = await response('/api/odata/Activities', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: 'lead-001', summary: 'E2E activity', activity_type: 'call' }) });
+  const completed = await response(`/api/odata/Activities('${encodeURIComponent(activity.id)}')/complete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  if (completed.done !== true) throw new Error('Activity completion failed');
+  await response(`/api/odata/Activities('${encodeURIComponent(activity.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  if (await response(`/api/odata/Activities('${encodeURIComponent(activity.id)}')`)) throw new Error('Activity delete failed');
+
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
   browser('/pipeline', ['Sales pipeline', 'New', 'Qualified']);
   browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);
   browser('/teams', ['Sales teams', 'North America', 'New team']);
-  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/pipeline screens');
+  browser('/activities', ['Activities', 'Call about product requirements', 'New activity']);
+  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/activity/pipeline screens');
 } finally {
   server.kill();
 }
