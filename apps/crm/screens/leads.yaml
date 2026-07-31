@@ -22,7 +22,7 @@ screens:
   - id: leads
     route: /
     title: Leads
-    state: { search: '', orderby: 'created_at desc', filter_status: '', group_by: '', view: list, page: 0, page_size: 20, count: 0, page_count: 1 }
+    state: { search: '', orderby: 'created_at desc', filter_status: '', domain_draft: { field: name, operator: eq, value: '' }, domain_filters: [], group_by: '', view: list, page: 0, page_size: 20, count: 0, page_count: 1, favorite_name: '' }
     on_load: |
       await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
       await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': ctx.state.page * ctx.state.page_size, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
@@ -64,6 +64,30 @@ screens:
         ctx.state.view = 'kanban';
       group: |
         ctx.state.group_by = ctx.state.group_by || '';
+      reload: |
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': 0, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
+        ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
+      domain_add: |
+        const draft = ctx.state.domain_draft || {};
+        if (!draft.value) throw new Error('Enter a value for the filter.');
+        ctx.state.domain_filters = [...(ctx.state.domain_filters || []), { field: draft.field, operator: draft.operator, value: draft.value }];
+        ctx.state.domain_draft = { ...draft, value: '' };
+        const domain = ctx.state.domain_filters.map(item => `${item.field} ${item.operator} '${String(item.value).replaceAll("'", "''")}'`).join(' and ');
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$filter': domain, '$count': true, '$top': ctx.state.page_size, '$skip': 0 });
+        ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
+      domain_apply: |
+        const domain = (ctx.state.domain_filters || []).map(item => `${item.field} ${item.operator} '${String(item.value).replaceAll("'", "''")}'`).join(' and ');
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, ...(domain ? { '$filter': domain } : {}), '$count': true, '$top': ctx.state.page_size, '$skip': 0 });
+        ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
       create: |
         ctx.navigate('/leads/new');
       open: |
@@ -99,6 +123,31 @@ screens:
               - { value: 'name asc', label: Name A-Z }
               - { value: 'company asc', label: Company A-Z }
               - { value: 'status asc', label: Status }
+          - type: domain_builder
+            class: odoo-domain-control
+            field_binding: $state.domain_draft.field
+            operator_binding: $state.domain_draft.operator
+            value_binding: $state.domain_draft.value
+            filters_binding: $state.domain_filters
+            add_event: domain_add
+            apply_event: domain_apply
+            add_label: Add filter
+            clear_label: Clear filters
+            value_placeholder: Filter value
+            fields:
+              - { value: name, label: Lead }
+              - { value: company, label: Customer }
+              - { value: email, label: Email }
+              - { value: phone, label: Phone }
+              - { value: source, label: Source }
+              - { value: status, label: Stage }
+            operators:
+              - { value: eq, label: is }
+              - { value: ne, label: is not }
+              - { value: gt, label: greater than }
+              - { value: ge, label: at least }
+              - { value: lt, label: less than }
+              - { value: le, label: at most }
           - type: select
             class: odoo-control-select
             binding: $state.group_by
@@ -124,6 +173,16 @@ screens:
             class: odoo-button
             label: Kanban
             event: view_kanban
+          - type: favorites
+            class: odoo-favorite-editor
+            storage_key: crm.leads
+            label: Favorites
+            placeholder: Save current search
+            name_binding: $state.favorite_name
+            state_fields: [search, orderby, filter_status, group_by, view, page_size]
+            apply_event: reload
+            save_label: Save favorite
+            remove_label: Remove
           - type: button
             class: odoo-button primary
             label: New lead
@@ -163,7 +222,12 @@ screens:
         rows: $data.leads.value
         group_field: status
         title_field: name
-        detail_fields: [company, email, expected_revenue]
+        card_fields:
+          - { field: company, label: Customer }
+          - { field: expected_revenue, label: Revenue }
+          - { field: salesperson, label: Owner }
+          - { field: team_id, label: Team }
+          - { field: next_activity, label: Activity }
         groups: $data.stages.value
         group_value: id
         group_label: name
@@ -175,7 +239,8 @@ screens:
     title: Lead
     on_load: |
       await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
-      if (ctx.route.id === 'new') ctx.data.record = { name: '', company: '', email: '', phone: '', source: '', status: 'new', expected_revenue: 0, notes: '' };
+      await ctx.load('team.read', 'teams', { '$orderby': 'name asc' });
+      if (ctx.route.id === 'new') ctx.data.record = { name: '', company: '', email: '', phone: '', source: '', status: 'new', priority: '0', salesperson: '', team_id: '', expected_revenue: 0, notes: '' };
       else {
         await ctx.load('read', 'record', {}, ctx.route.id);
         await ctx.load('message.read', 'messages', { '$filter': "lead_id eq '" + ctx.route.id + "'", '$orderby': 'created_at desc' });
@@ -273,6 +338,21 @@ screens:
           - { name: phone, label: Phone }
           - { name: source, label: Source }
           - { name: expected_revenue, label: Expected revenue, type: number }
+          - name: priority
+            label: Priority
+            type: select
+            options:
+              - { value: '0', label: No priority }
+              - { value: '1', label: Low }
+              - { value: '2', label: Medium }
+              - { value: '3', label: High }
+          - { name: salesperson, label: Salesperson, placeholder: 'e.g. sales@example.com' }
+          - name: team_id
+            label: Sales Team
+            type: select
+            options: $data.teams.value
+            option_value: id
+            option_label: name
           - name: status
             label: Status
             type: select
@@ -364,16 +444,35 @@ screens:
     on_load: |
       await ctx.load('read', 'leads', { '$orderby': 'created_at desc' });
       await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
+      await ctx.load('activity.read', 'activities', { '$orderby': 'due_date asc' });
+      for (const lead of ctx.data.leads.value || []) {
+        const activity = (ctx.data.activities.value || []).find(item => item.lead_id === lead.id && !item.done);
+        if (activity) lead.next_activity = activity.summary;
+      }
     events:
       open: |
         ctx.navigate('/leads/' + encodeURIComponent(ctx.event.row.id));
+      card_convert: |
+        ctx.navigate('/leads/' + encodeURIComponent(ctx.event.row.id));
+      card_lose: |
+        ctx.navigate('/leads/' + encodeURIComponent(ctx.event.row.id));
+      card_schedule: |
+        ctx.navigate('/activities/new?lead_id=' + encodeURIComponent(ctx.event.row.id));
     components:
       - { type: heading, text: Sales pipeline }
       - type: kanban
         rows: $data.leads.value
         group_field: status
         title_field: name
-        detail_fields: [company, source]
+        card_fields:
+          - { field: company, label: Customer }
+          - { field: expected_revenue, label: Revenue }
+          - { field: next_activity, label: Activity }
+        card_actions:
+          - { label: Open, event: open }
+          - { label: Convert, event: card_convert }
+          - { label: Mark lost, event: card_lose }
+          - { label: Schedule activity, event: card_schedule }
         row_event: open
         groups: $data.stages.value
         group_value: id

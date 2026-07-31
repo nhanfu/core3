@@ -13,6 +13,9 @@ resources:
       phone: { type: string, selectable: true, filterable: true, sortable: true }
       source: { type: string, selectable: true, filterable: true, sortable: true }
       status: { type: string, selectable: true, filterable: true, sortable: true }
+      priority: { type: string, selectable: true, filterable: true, sortable: true }
+      salesperson: { type: string, selectable: true, filterable: true, sortable: true }
+      team_id: { type: string, selectable: true, filterable: true, sortable: true }
       lost_reason: { type: string, selectable: true, filterable: true, sortable: true }
       lost_feedback: { type: string, selectable: true, filterable: false, sortable: false }
       expected_revenue: { type: number, selectable: true, filterable: true, sortable: true }
@@ -210,7 +213,7 @@ datasources:
       odata_top: { type: number, default: 200 }
       odata_skip: { type: number, default: 0 }
     query: |
-      SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at,
+      SELECT id, name, company, email, phone, source, status, priority, salesperson, team_id, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at,
         count(*) OVER() AS __odata_count
       FROM crm_lead
       WHERE active = true AND (:id = '' OR id = :id)
@@ -226,16 +229,20 @@ datasources:
         const values = params.values || {};
         const name = String(values.name || '').trim();
         if (!name) throw Object.assign(new Error('Lead name is required'), { status: 400 });
+        const salesperson = String(values.salesperson || '').trim();
+        const team_id = String(values.team_id || '').trim();
+        if ((salesperson || team_id) && !['manager', 'system'].includes(String(params.role || ''))) throw Object.assign(new Error('Manager permission required to assign a lead'), { status: 403 });
+        if (team_id && !(await ctx.db.query('SELECT id FROM crm_team WHERE id = :id AND active = true', { id: team_id })).length) throw Object.assign(new Error('Unknown sales team'), { status: 400 });
         const id = `lead-${ctx.crypto.randomUUID().slice(0, 8)}`;
         await ctx.db.execute(`
-          INSERT INTO crm_lead(id, name, company, email, phone, source, status, expected_revenue, notes, active, created_at, updated_at)
-          VALUES(:id, :name, :company, :email, :phone, :source, :status, :expected_revenue, :notes, true, current_timestamp, current_timestamp)
+          INSERT INTO crm_lead(id, name, company, email, phone, source, status, priority, salesperson, team_id, expected_revenue, notes, active, created_at, updated_at)
+          VALUES(:id, :name, :company, :email, :phone, :source, :status, :priority, :salesperson, :team_id, :expected_revenue, :notes, true, current_timestamp, current_timestamp)
         `, {
           id, name, company: String(values.company || '').trim(), email: String(values.email || '').trim(),
           phone: String(values.phone || '').trim(), source: String(values.source || '').trim(), expected_revenue: Number(values.expected_revenue || 0),
-          status: String(values.status || 'new').trim(), notes: String(values.notes || '').trim(),
+          status: String(values.status || 'new').trim(), priority: String(values.priority || '0').trim(), salesperson, team_id, notes: String(values.notes || '').trim(),
         });
-        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
+        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, priority, salesperson, team_id, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
       }
 
   - id: update
@@ -245,20 +252,24 @@ datasources:
       async function updateLead(ctx, params) {
         const values = params.values || {};
         const id = String(values.id || '');
-        const existing = (await ctx.db.query('SELECT id FROM crm_lead WHERE id = :id AND active = true', { id }))[0];
+        const existing = (await ctx.db.query('SELECT id, salesperson, team_id FROM crm_lead WHERE id = :id AND active = true', { id }))[0];
         if (!existing) throw Object.assign(new Error('Lead not found'), { status: 404 });
         const name = String(values.name || '').trim();
         if (!name) throw Object.assign(new Error('Lead name is required'), { status: 400 });
+        const salesperson = String(values.salesperson || '').trim();
+        const team_id = String(values.team_id || '').trim();
+        if ((salesperson !== String(existing.salesperson || '') || team_id !== String(existing.team_id || '')) && String(params.role || '') !== 'manager' && String(params.role || '') !== 'system') throw Object.assign(new Error('Manager permission required to assign a lead'), { status: 403 });
+        if (team_id && !(await ctx.db.query('SELECT id FROM crm_team WHERE id = :id AND active = true', { id: team_id })).length) throw Object.assign(new Error('Unknown sales team'), { status: 400 });
         await ctx.db.execute(`
           UPDATE crm_lead SET name = :name, company = :company, email = :email, phone = :phone,
-            source = :source, status = :status, expected_revenue = :expected_revenue, notes = :notes, updated_at = current_timestamp
+            source = :source, status = :status, priority = :priority, salesperson = :salesperson, team_id = :team_id, expected_revenue = :expected_revenue, notes = :notes, updated_at = current_timestamp
           WHERE id = :id
         `, {
           id, name, company: String(values.company || '').trim(), email: String(values.email || '').trim(),
           phone: String(values.phone || '').trim(), source: String(values.source || '').trim(), expected_revenue: Number(values.expected_revenue || 0),
-          status: String(values.status || 'new').trim(), notes: String(values.notes || '').trim(),
+          status: String(values.status || 'new').trim(), priority: String(values.priority || '0').trim(), salesperson, team_id, notes: String(values.notes || '').trim(),
         });
-        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
+        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, priority, salesperson, team_id, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
       }
 
   - id: delete
@@ -282,7 +293,7 @@ datasources:
         const stage = (await ctx.db.query('SELECT id FROM crm_stage WHERE id = :id AND active = true', { id: status }))[0];
         if (!stage) throw Object.assign(new Error('Unknown lead stage'), { status: 400 });
         await ctx.db.execute('UPDATE crm_lead SET status = :status, updated_at = current_timestamp WHERE id = :id AND active = true', { id: params.id, status });
-        const row = (await ctx.db.query('SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id: params.id }))[0];
+        const row = (await ctx.db.query('SELECT id, name, company, email, phone, source, status, priority, salesperson, team_id, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id: params.id }))[0];
         if (!row) throw Object.assign(new Error('Lead not found'), { status: 404 });
         return row;
       }

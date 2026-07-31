@@ -1,4 +1,5 @@
 import { HTML } from './html.ts';
+import { FavoritesStore } from './services/FavoritesStore.ts';
 
 export type Screen = {
   id: string;
@@ -121,6 +122,7 @@ export class YamlScreenEngine {
   private context(event: Record<string, any> = {}) {
     return {
       route: this.route,
+      query: Object.fromEntries(new URLSearchParams(location.search)),
       state: this.state,
       data: this.data,
       event,
@@ -253,6 +255,8 @@ export class YamlScreenEngine {
     if (component.type === 'chart') this.renderChart(element, component);
     if (component.type === 'pivot') this.renderPivot(element, component);
     if (component.type === 'calendar') this.renderCalendar(element, component);
+    if (component.type === 'favorites') this.renderFavorites(element, component);
+    if (component.type === 'domain_builder') this.renderDomainBuilder(element, component);
     for (const child of component.children || []) element.append(this.renderComponent(child));
     return element;
   }
@@ -318,6 +322,7 @@ export class YamlScreenEngine {
       const input = this.element<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(field.type === 'textarea' ? 'textarea' : field.type === 'select' ? 'select' : 'input');
       input.name = field.name;
       input.required = Boolean(field.required);
+      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) input.placeholder = field.placeholder || '';
       if (input instanceof HTMLInputElement) input.type = ['email', 'number', 'date'].includes(field.type) ? field.type : 'text';
       if (input instanceof HTMLSelectElement) for (const definition of this.resolve(field.options) || []) {
         const option = this.element<HTMLOptionElement>('option');
@@ -468,6 +473,73 @@ export class YamlScreenEngine {
     dialog.append(footer); container.append(dialog);
   }
 
+  private renderFavorites(container: HTMLElement, component: Component) {
+    container.classList.add('odoo-favorites');
+    const store = new FavoritesStore(`core3:favorites:${component.storage_key || this.screen.id}`);
+    const favorites = store.list();
+    const select = this.element<HTMLSelectElement>('select', 'odoo-control-select');
+    const empty = this.element<HTMLOptionElement>('option'); empty.value = ''; empty.textContent = component.label || 'Favorites'; select.append(empty);
+    for (const favorite of favorites) {
+      const option = this.element<HTMLOptionElement>('option'); option.value = favorite.id; option.textContent = favorite.label; select.append(option);
+    }
+    select.addEventListener('change', () => {
+      const favorite = favorites.find(item => item.id === select.value);
+      if (!favorite?.state) return;
+      Object.assign(this.state, favorite.state); void this.trigger(component.apply_event);
+    });
+    const name = this.element<HTMLInputElement>('input', 'odoo-control-input');
+    name.placeholder = component.placeholder || 'Save current search';
+    name.value = String(this.resolve(component.name_binding) ?? '');
+    name.addEventListener('input', () => this.setBinding(component.name_binding, name.value));
+    const save = this.element<HTMLButtonElement>('button', 'odoo-button'); save.type = 'button'; save.textContent = component.save_label || 'Save';
+    save.addEventListener('click', () => {
+      const label = String(this.resolve(component.name_binding) || '').trim();
+      if (!label) return;
+      const state = Object.fromEntries((component.state_fields || []).map((field: string) => [field, this.state[field]]));
+      store.save({ label, state }); this.setBinding(component.name_binding, ''); this.render();
+    });
+    const remove = this.element<HTMLButtonElement>('button', 'odoo-button'); remove.type = 'button'; remove.textContent = component.remove_label || 'Remove';
+    remove.disabled = !favorites.length;
+    remove.addEventListener('click', () => { if (select.value) { store.remove(select.value); this.render(); } });
+    container.append(select, name, save, remove);
+  }
+
+  private renderDomainBuilder(container: HTMLElement, component: Component) {
+    container.classList.add('odoo-domain-builder');
+    const field = this.element<HTMLSelectElement>('select', 'odoo-control-select');
+    for (const optionDefinition of component.fields || []) {
+      const option = this.element<HTMLOptionElement>('option'); option.value = optionDefinition.value; option.textContent = optionDefinition.label; field.append(option);
+    }
+    field.value = String(this.resolve(component.field_binding) || component.fields?.[0]?.value || '');
+    field.addEventListener('change', () => this.setBinding(component.field_binding, field.value));
+    const operator = this.element<HTMLSelectElement>('select', 'odoo-control-select');
+    for (const optionDefinition of component.operators || []) {
+      const option = this.element<HTMLOptionElement>('option'); option.value = optionDefinition.value; option.textContent = optionDefinition.label; operator.append(option);
+    }
+    operator.value = String(this.resolve(component.operator_binding) || component.operators?.[0]?.value || 'eq');
+    operator.addEventListener('change', () => this.setBinding(component.operator_binding, operator.value));
+    const value = this.element<HTMLInputElement>('input', 'odoo-control-input'); value.placeholder = component.value_placeholder || 'Value';
+    value.value = String(this.resolve(component.value_binding) || '');
+    value.addEventListener('input', () => this.setBinding(component.value_binding, value.value));
+    const add = this.element<HTMLButtonElement>('button', 'odoo-button'); add.type = 'button'; add.textContent = component.add_label || 'Add filter';
+    add.addEventListener('click', () => void this.trigger(component.add_event));
+    container.append(field, operator, value, add);
+    const chips = this.element('div', 'odoo-domain-chips');
+    for (const [index, filter] of (this.resolve(component.filters_binding) || []).entries()) {
+      const chip = this.element('span', 'odoo-domain-chip'); chip.textContent = `${filter.field} ${filter.operator} ${filter.value}`;
+      const remove = this.element<HTMLButtonElement>('button'); remove.type = 'button'; remove.textContent = '×'; remove.title = 'Remove filter';
+      remove.addEventListener('click', () => {
+        const filters = [...(this.resolve(component.filters_binding) || [])]; filters.splice(index, 1); this.setBinding(component.filters_binding, filters); void this.trigger(component.apply_event);
+      });
+      chip.append(remove); chips.append(chip);
+    }
+    if ((this.resolve(component.filters_binding) || []).length) {
+      const clear = this.element<HTMLButtonElement>('button', 'odoo-button filter'); clear.type = 'button'; clear.textContent = component.clear_label || 'Clear filters';
+      clear.addEventListener('click', () => { this.setBinding(component.filters_binding, []); void this.trigger(component.apply_event); }); chips.append(clear);
+    }
+    container.append(chips);
+  }
+
   private renderNavigation(nav: HTMLElement, component: Component) {
     for (const item of component.items || []) {
       const link = this.element<HTMLAnchorElement>('a');
@@ -490,10 +562,34 @@ export class YamlScreenEngine {
       title.textContent = typeof configuredGroup === 'object' ? configuredGroup[component.group_label || 'name'] : component.group_labels?.[group] || String(group);
       column.append(title);
       for (const row of rows.filter((item: any) => item[component.group_field] === group)) {
-        const card = this.element<HTMLButtonElement>('button', 'yaml-kanban-card');
-        card.type = 'button';
-        card.textContent = [row[component.title_field], ...(component.detail_fields || []).map((field: string) => row[field]).filter(Boolean)].join('\n');
-        card.addEventListener('click', () => void this.trigger(component.row_event, { row }));
+        const card = this.element('article', 'yaml-kanban-card odoo-kanban-card');
+        card.tabIndex = 0;
+        const top = this.element('div', 'odoo-kanban-card-top');
+        const titleText = this.element('strong'); titleText.textContent = String(row[component.title_field] ?? ''); top.append(titleText);
+        if (row.priority !== undefined) {
+          const priority = this.element('span', 'odoo-priority');
+          const level = Math.max(0, Math.min(3, Number(row.priority) || 0)); priority.textContent = level ? '★'.repeat(level) : '☆'; top.append(priority);
+        }
+        card.append(top);
+        const fields = component.card_fields || (component.detail_fields || []).map((field: string) => ({ field }));
+        for (const definition of fields) {
+          const value = row[definition.field]; if (value === undefined || value === null || value === '') continue;
+          const line = this.element('div', 'odoo-kanban-field');
+          if (definition.label) { const label = this.element('span'); label.textContent = `${definition.label}: `; line.append(label); }
+          const text = this.element('strong'); text.textContent = String(value); line.append(text); card.append(line);
+        }
+        if (row.next_activity) { const activity = this.element('div', 'odoo-kanban-activity'); activity.textContent = `Next activity: ${row.next_activity}`; card.append(activity); }
+        const actions = component.card_actions || [];
+        if (actions.length) {
+          const actionBar = this.element('div', 'odoo-kanban-actions');
+          for (const action of actions) {
+            const button = this.element<HTMLButtonElement>('button', 'odoo-kanban-action'); button.type = 'button'; button.textContent = action.label;
+            button.addEventListener('click', event => { event.stopPropagation(); void this.trigger(action.event, { row }); }); actionBar.append(button);
+          }
+          card.append(actionBar);
+        }
+        const open = () => void this.trigger(component.row_event, { row });
+        card.addEventListener('click', open); card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } });
         column.append(card);
       }
       board.append(column);

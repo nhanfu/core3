@@ -198,7 +198,7 @@ screens:
     route: /activities/:id
     title: Activity
     on_load: |
-      if (ctx.route.id === 'new') ctx.data.record = { lead_id: '', summary: '', activity_type: 'todo', due_date: '', done: false };
+      if (ctx.route.id === 'new') ctx.data.record = { lead_id: ctx.query.lead_id || '', summary: '', activity_type: 'todo', due_date: '', done: false };
       else await ctx.load('activity.read', 'record', {}, ctx.route.id);
     events:
       save: |

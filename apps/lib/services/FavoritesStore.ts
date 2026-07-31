@@ -1,4 +1,4 @@
-export type FavoriteFilter = { id: string; label: string; search?: string; filter?: string; groupBy?: string; sort?: string };
+export type FavoriteFilter = { id: string; label: string; search?: string; filter?: string; groupBy?: string; sort?: string; state?: Record<string, unknown> };
 
 /** Small browser-backed store used by any action control panel. */
 export class FavoritesStore {

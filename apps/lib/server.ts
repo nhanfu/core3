@@ -30,6 +30,7 @@ const publicFiles = new Map([
   ['styles.css', join(import.meta.dir, '..', 'styles.css')],
   ['lib/render.ts', join(import.meta.dir, 'render.ts')],
   ['lib/html.ts', join(import.meta.dir, 'html.ts')],
+  ['lib/services/FavoritesStore.ts', join(import.meta.dir, 'services/FavoritesStore.ts')],
 ]);
 
 function json(value: unknown, status = 200) {

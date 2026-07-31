@@ -28,7 +28,7 @@ export async function initDatabase() {
   await withDb(async connection => {
     for (const statement of readFileSync(join(import.meta.dir, 'schema.sql'), 'utf8').split(';').map(sql => sql.trim()).filter(Boolean)) await run(connection, statement);
     for (const column of [
-      "company VARCHAR DEFAULT ''", "status VARCHAR DEFAULT 'new'", "updated_at TIMESTAMP DEFAULT current_timestamp",
+      "company VARCHAR DEFAULT ''", "status VARCHAR DEFAULT 'new'", "priority VARCHAR DEFAULT '0'", "salesperson VARCHAR DEFAULT ''", "team_id VARCHAR DEFAULT ''", "updated_at TIMESTAMP DEFAULT current_timestamp",
       'expected_revenue DOUBLE DEFAULT 0', "lost_reason VARCHAR DEFAULT ''", "lost_feedback VARCHAR DEFAULT ''",
     ]) await run(connection, `ALTER TABLE crm_lead ADD COLUMN IF NOT EXISTS ${column}`);
     for (const statement of readFileSync(join(import.meta.dir, 'seed.sql'), 'utf8').split(';').map(sql => sql.trim()).filter(Boolean)) await run(connection, statement);

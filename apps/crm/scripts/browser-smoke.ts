@@ -49,13 +49,19 @@ try {
   if (!created.id) throw new Error('Lead creation failed');
   const read = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
   if (read.name !== 'Browser workflow lead') throw new Error('Lead read failed');
-  const updated = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...read, name: 'Updated workflow lead', status: 'qualified' }) });
-  if (updated.name !== 'Updated workflow lead' || updated.status !== 'qualified' || Number(updated.expected_revenue) !== 1234) throw new Error('Lead update failed');
+  const updated = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...read, name: 'Updated workflow lead', status: 'qualified', priority: '3' }) });
+  if (updated.name !== 'Updated workflow lead' || updated.status !== 'qualified' || updated.priority !== '3' || Number(updated.expected_revenue) !== 1234) throw new Error('Lead update failed');
   await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   const deleted = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
   if (deleted !== null) throw new Error('Lead delete failed');
 
   const workflowLead = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Workflow lead', company: 'Workflow Co', email: 'workflow@core3.test', status: 'new' }) });
+  const deniedAssignment = await fetch(`${origin}/api/odata/Leads`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Denied assignment', team_id: 'team-001' }) });
+  if (deniedAssignment.status !== 403) throw new Error('Salesperson assignment must require manager permission');
+  const assignedLead = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CRM-Role': 'manager' }, body: JSON.stringify({ name: 'Assigned workflow lead', salesperson: 'alice@example.test', team_id: 'team-001' }) });
+  if (assignedLead.salesperson !== 'alice@example.test' || assignedLead.team_id !== 'team-001') throw new Error('Manager lead assignment failed');
+  const deniedReassignment = await fetch(`${origin}/api/odata/Leads('${encodeURIComponent(assignedLead.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...assignedLead, salesperson: 'bob@example.test' }) });
+  if (deniedReassignment.status !== 403) throw new Error('Salesperson reassignment must require manager permission');
   const stage = await response('/api/odata/Stages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'e2e-stage', name: 'E2E Stage', sequence: 35 }) });
   if (stage.id !== 'e2e-stage') throw new Error('Stage creation failed');
   const moved = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/moveStage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'e2e-stage' }) });
@@ -123,12 +129,16 @@ try {
     || !leadScreen.components.some((component: any) => component.type === 'dialog' && component.title === 'Similar Leads' && component.records === '$data.duplicates')) throw new Error('YAML CRM action dialogs are unavailable');
   const leadsList = ui.screens?.find((screen: any) => screen.id === 'leads');
   if (!leadsList?.components?.some((component: any) => component.type === 'table' && component.group_by === '$state.group_by')
-    || !leadsList.components.some((component: any) => component.type === 'kanban' && component.visible_when?.includes("ctx.state.view === 'kanban'"))) throw new Error('YAML CRM list controls are unavailable');
-  browser('/', ['odoo-shell', 'CRM', 'Sales', 'My Pipeline', 'Lead management', 'Website enquiry', 'New lead', 'Search leads', 'List', 'Kanban', 'Group by stage', 'Next']);
-  browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
-  browser('/leads/lead-001', ['Lead', 'Qualified', 'Possible duplicates', 'Move stage', 'Similar leads', 'Chatter', 'E2E chatter message', 'E2E follower', 'e2e.txt']);
+    || !leadsList.components.some((component: any) => component.type === 'kanban' && component.visible_when?.includes("ctx.state.view === 'kanban'") )
+    || !leadsList.components.some((component: any) => component.type === 'section' && component.children?.some((child: any) => child.type === 'favorites'))
+    || !leadsList.components.some((component: any) => component.type === 'section' && component.children?.some((child: any) => child.type === 'domain_builder'))) throw new Error('YAML CRM list controls are unavailable');
+  const pipelineScreen = ui.screens?.find((screen: any) => screen.id === 'pipeline');
+  if (!pipelineScreen?.components?.some((component: any) => component.type === 'kanban' && component.card_fields?.some((field: any) => field.field === 'next_activity') && component.card_actions?.some((action: any) => action.label === 'Convert'))) throw new Error('YAML CRM Kanban card contract is unavailable');
+  browser('/', ['odoo-shell', 'CRM', 'Sales', 'My Pipeline', 'Lead management', 'Website enquiry', 'New lead', 'Search leads', 'List', 'Kanban', 'Favorites', 'Save favorite', 'Add filter', 'Group by stage', 'Next']);
+  browser('/leads/new', ['Lead name', 'Salesperson', 'Sales Team', 'Save', 'Cancel']);
+  browser('/leads/lead-001', ['Lead', 'Qualified', 'Salesperson', 'Sales Team', 'Possible duplicates', 'Move stage', 'Similar leads', 'Chatter', 'E2E chatter message', 'E2E follower', 'e2e.txt']);
   browser('/leads/lead-001/collaboration', ['Lead collaboration', 'Messages', 'Followers', 'Attachments']);
-  browser('/pipeline', ['Sales pipeline', 'New', 'Qualified']);
+  browser('/pipeline', ['Sales pipeline', 'New', 'Qualified', 'Open', 'Convert', 'Mark lost', 'Schedule activity', 'Next activity']);
   browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);
   browser('/teams', ['Sales teams', 'North America', 'New team']);
   browser('/activities', ['Activities', 'Call about product requirements', 'New activity']);
