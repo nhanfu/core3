@@ -37,7 +37,7 @@ try {
 
   const metadata = await response('/api/odata/$metadata');
   const resourceNames = metadata.resources?.map((resource: any) => resource.name).sort().join(',');
-  if (resourceNames !== 'Activities,Customers,Leads,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
+  if (resourceNames !== 'Activities,Customers,Leads,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
   if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
   const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
   if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
@@ -56,8 +56,10 @@ try {
   if (deleted !== null) throw new Error('Lead delete failed');
 
   const workflowLead = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Workflow lead', company: 'Workflow Co', email: 'workflow@core3.test', status: 'new' }) });
-  const moved = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/moveStage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'qualified' }) });
-  if (moved.status !== 'qualified') throw new Error('Lead stage move failed');
+  const stage = await response('/api/odata/Stages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: 'e2e-stage', name: 'E2E Stage', sequence: 35 }) });
+  if (stage.id !== 'e2e-stage') throw new Error('Stage creation failed');
+  const moved = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/moveStage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'e2e-stage' }) });
+  if (moved.status !== 'e2e-stage') throw new Error('Lead stage move failed');
   const duplicates = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/duplicates`);
   if (!Array.isArray(duplicates)) throw new Error('Lead duplicate action failed');
   const conversion = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/convert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: 'Workflow Customer' }) });
@@ -96,7 +98,8 @@ try {
   browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);
   browser('/teams', ['Sales teams', 'North America', 'New team']);
   browser('/activities', ['Activities', 'Call about product requirements', 'New activity']);
-  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/activity/pipeline screens');
+  browser('/configuration', ['Pipeline stages', 'New stage', 'Qualified']);
+  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/activity/pipeline/configuration screens');
 } finally {
   server.kill();
 }

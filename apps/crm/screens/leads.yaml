@@ -69,6 +69,7 @@ screens:
     route: /leads/:id
     title: Lead
     on_load: |
+      await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
       if (ctx.route.id === 'new') ctx.data.record = { name: '', company: '', email: '', phone: '', source: '', status: 'new', notes: '' };
       else await ctx.load('read', 'record', {}, ctx.route.id);
     events:
@@ -112,12 +113,9 @@ screens:
           - name: status
             label: Status
             type: select
-            options:
-              - { value: new, label: New }
-              - { value: contacted, label: Contacted }
-              - { value: qualified, label: Qualified }
-              - { value: lost, label: Lost }
-              - { value: won, label: Won }
+            options: $data.stages.value
+            option_value: id
+            option_label: name
           - { name: notes, label: Notes, type: textarea }
         actions:
           - { label: Cancel, event: cancel }
@@ -140,6 +138,7 @@ screens:
     title: Pipeline
     on_load: |
       await ctx.load('read', 'leads', { '$orderby': 'created_at desc' });
+      await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
     events:
       open: |
         ctx.navigate('/leads/' + encodeURIComponent(ctx.event.row.id));
@@ -151,5 +150,6 @@ screens:
         title_field: name
         detail_fields: [company, source]
         row_event: open
-        groups: [new, contacted, qualified, won, lost]
-        group_labels: { new: New, contacted: Contacted, qualified: Qualified, won: Won, lost: Lost }
+        groups: $data.stages.value
+        group_value: id
+        group_label: name

@@ -157,8 +157,8 @@ class YamlScreenEngine {
     if (component.type === 'select') {
       const select = element as HTMLSelectElement;
       select.name = component.name || '';
-      for (const optionDefinition of component.options || []) {
-        const option = document.createElement('option'); option.value = optionDefinition.value; option.textContent = optionDefinition.label; select.append(option);
+      for (const optionDefinition of this.resolve(component.options) || []) {
+        const option = document.createElement('option'); option.value = optionDefinition[component.option_value || 'value']; option.textContent = optionDefinition[component.option_label || 'label']; select.append(option);
       }
       select.value = String(this.resolve(component.binding) ?? '');
       select.addEventListener('change', () => { this.setBinding(component.binding, select.value); if (component.on_change) void this.trigger(component.on_change); });
@@ -192,7 +192,7 @@ class YamlScreenEngine {
       const input = field.type === 'textarea' ? document.createElement('textarea') : document.createElement(field.type === 'select' ? 'select' : 'input');
       input.name = field.name; input.required = Boolean(field.required);
       if (input instanceof HTMLInputElement) input.type = ['email', 'number', 'date'].includes(field.type) ? field.type : 'text';
-      if (input instanceof HTMLSelectElement) for (const optionDefinition of field.options || []) { const option = document.createElement('option'); option.value = optionDefinition.value; option.textContent = optionDefinition.label; input.append(option); }
+      if (input instanceof HTMLSelectElement) for (const optionDefinition of this.resolve(field.options) || []) { const option = document.createElement('option'); option.value = optionDefinition[field.option_value || 'value']; option.textContent = optionDefinition[field.option_label || 'label']; input.append(option); }
       input.value = String(this.form[field.name] ?? '');
       input.addEventListener('input', () => { this.form[field.name] = input.value; });
       input.addEventListener('change', () => { this.form[field.name] = input.value; });
@@ -215,11 +215,13 @@ class YamlScreenEngine {
 
   private renderKanban(board: HTMLElement, component: Component) {
     const rows = this.resolve(component.rows) || [];
-    const groups = component.groups || [...new Set(rows.map((row: any) => row[component.group_field]))];
+    const configuredGroups = this.resolve(component.groups);
+    const groups = configuredGroups || [...new Set(rows.map((row: any) => row[component.group_field]))];
     board.classList.add('yaml-kanban');
-    for (const group of groups) {
+    for (const configuredGroup of groups) {
+      const group = typeof configuredGroup === 'object' ? configuredGroup[component.group_value || 'id'] : configuredGroup;
       const column = document.createElement('section'); column.className = 'yaml-kanban-column';
-      const title = document.createElement('h2'); title.textContent = component.group_labels?.[group] || String(group); column.append(title);
+      const title = document.createElement('h2'); title.textContent = typeof configuredGroup === 'object' ? configuredGroup[component.group_label || 'name'] : component.group_labels?.[group] || String(group); column.append(title);
       for (const row of rows.filter((item: any) => item[component.group_field] === group)) {
         const card = document.createElement('button'); card.type = 'button'; card.className = 'yaml-kanban-card';
         card.textContent = [row[component.title_field], ...(component.detail_fields || []).map((field: string) => row[field]).filter(Boolean)].join('\n');

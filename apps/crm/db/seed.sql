@@ -5,6 +5,15 @@ VALUES
   ('lead-003', 'Conference follow-up', 'Initech', 'pat@initech.test', '+1 555 0103', 'Event', 'contacted', 'Met at the industry conference.')
 ON CONFLICT(id) DO NOTHING;
 
+INSERT INTO crm_stage(id, name, sequence)
+VALUES
+  ('new', 'New', 10),
+  ('contacted', 'Contacted', 20),
+  ('qualified', 'Qualified', 30),
+  ('won', 'Won', 40),
+  ('lost', 'Lost', 50)
+ON CONFLICT(id) DO NOTHING;
+
 INSERT INTO crm_activity(id, lead_id, summary, activity_type, due_date, done)
 VALUES
   ('activity-001', 'lead-001', 'Call about product requirements', 'call', current_date + 1, false),

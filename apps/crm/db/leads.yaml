@@ -104,6 +104,26 @@ resources:
     actions:
       complete: { method: POST, datasource: activity.complete }
 
+  - id: crm.stages
+    entity_set: Stages
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      sequence: { type: number, selectable: true, filterable: true, sortable: true }
+      active: { type: boolean, selectable: true, filterable: true, sortable: true }
+    list:
+      search: [id, name]
+      default_orderby: sequence asc
+      max_page_size: 200
+      group_by: []
+    operations:
+      create: stage.create
+      read: stage.read
+      update: stage.update
+      delete: stage.delete
+
 datasources:
   - id: read
     params:
@@ -180,7 +200,8 @@ datasources:
     script: |
       async function moveLeadStage(ctx, params) {
         const status = String((params.values || {}).status || '').trim();
-        if (!['new', 'contacted', 'qualified', 'lost', 'won'].includes(status)) throw Object.assign(new Error('Unknown lead stage'), { status: 400 });
+        const stage = (await ctx.db.query('SELECT id FROM crm_stage WHERE id = :id AND active = true', { id: status }))[0];
+        if (!stage) throw Object.assign(new Error('Unknown lead stage'), { status: 400 });
         await ctx.db.execute('UPDATE crm_lead SET status = :status, updated_at = current_timestamp WHERE id = :id AND active = true', { id: params.id, status });
         const row = (await ctx.db.query('SELECT id, name, company, email, phone, source, status, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id: params.id }))[0];
         if (!row) throw Object.assign(new Error('Lead not found'), { status: 404 });
@@ -377,3 +398,44 @@ datasources:
         await ctx.db.execute('UPDATE crm_activity SET done = true WHERE id = :id', { id: params.id });
         return (await ctx.db.query('SELECT id, done FROM crm_activity WHERE id = :id', { id: params.id }))[0] || null;
       }
+
+  - id: stage.read
+    params:
+      id: { type: string, default: '' }
+      odata_top: { type: number, default: 200 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT id, name, sequence, active, count(*) OVER() AS __odata_count
+      FROM crm_stage
+      WHERE active = true AND (:id = '' OR id = :id)
+      {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: stage.create
+    params: { values: { type: json } }
+    entrypoint: createStage
+    script: |
+      async function createStage(ctx, params) {
+        const values = params.values || {}; const id = String(values.id || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); const name = String(values.name || '').trim();
+        if (!id || !name) throw Object.assign(new Error('Stage ID and name are required'), { status: 400 });
+        const exists = (await ctx.db.query('SELECT id FROM crm_stage WHERE id = :id', { id }))[0]; if (exists) throw Object.assign(new Error('Stage ID already exists'), { status: 409 });
+        await ctx.db.execute('INSERT INTO crm_stage(id, name, sequence, active) VALUES(:id, :name, :sequence, true)', { id, name, sequence: Number(values.sequence || 0) });
+        return (await ctx.db.query('SELECT id, name, sequence, active FROM crm_stage WHERE id = :id', { id }))[0];
+      }
+
+  - id: stage.update
+    params: { values: { type: json } }
+    entrypoint: updateStage
+    script: |
+      async function updateStage(ctx, params) {
+        const values = params.values || {}; const id = String(values.id || ''); const name = String(values.name || '').trim();
+        if (!name) throw Object.assign(new Error('Stage name is required'), { status: 400 });
+        const exists = (await ctx.db.query('SELECT id FROM crm_stage WHERE id = :id AND active = true', { id }))[0]; if (!exists) throw Object.assign(new Error('Stage not found'), { status: 404 });
+        await ctx.db.execute('UPDATE crm_stage SET name = :name, sequence = :sequence WHERE id = :id', { id, name, sequence: Number(values.sequence || 0) });
+        return (await ctx.db.query('SELECT id, name, sequence, active FROM crm_stage WHERE id = :id', { id }))[0];
+      }
+
+  - id: stage.delete
+    params: { id: { type: string } }
+    statement: UPDATE crm_stage SET active = false WHERE id = :id AND active = true

@@ -38,3 +38,10 @@ CREATE TABLE IF NOT EXISTS crm_activity (
   done BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS crm_stage (
+  id VARCHAR PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  sequence INTEGER NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT true
+);

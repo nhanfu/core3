@@ -23,6 +23,10 @@ datasources:
   activity.update: { resource: Activities, method: PUT }
   activity.delete: { resource: Activities, method: DELETE }
   activity.complete: { resource: Activities, method: POST, action: complete }
+  stage.read: { resource: Stages, method: GET, collection: true }
+  stage.create: { resource: Stages, method: POST }
+  stage.update: { resource: Stages, method: PUT }
+  stage.delete: { resource: Stages, method: DELETE }
 
 screens:
   - id: customers
@@ -204,5 +208,58 @@ screens:
         actions:
           - { label: Cancel, event: cancel }
           - { label: Complete, event: complete, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Save, submit: true }
+
+  - id: configuration
+    route: /configuration
+    title: Configuration
+    on_load: |
+      await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
+    events:
+      create: |
+        ctx.navigate('/configuration/stages/new');
+      open: |
+        ctx.navigate('/configuration/stages/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Pipeline stages }
+      - type: section
+        class: yaml-toolbar
+        children:
+          - { type: button, label: New stage, event: create }
+      - type: table
+        rows: $data.stages.value
+        row_event: open
+        columns:
+          - { field: name, label: Stage }
+          - { field: sequence, label: Sequence }
+
+  - id: stage-form
+    route: /configuration/stages/:id
+    title: Stage
+    on_load: |
+      if (ctx.route.id === 'new') ctx.data.record = { id: '', name: '', sequence: 0 };
+      else await ctx.load('stage.read', 'record', {}, ctx.route.id);
+    events:
+      save: |
+        const values = ctx.formValues();
+        if (ctx.route.id === 'new') await ctx.request('stage.create', values);
+        else await ctx.request('stage.update', values, ctx.route.id);
+        ctx.navigate('/configuration');
+      remove: |
+        if (ctx.route.id !== 'new') { await ctx.request('stage.delete', {}, ctx.route.id); ctx.navigate('/configuration'); }
+      cancel: |
+        ctx.navigate('/configuration');
+    components:
+      - { type: heading, text: Pipeline stage }
+      - type: form
+        record: $data.record
+        submit: save
+        fields:
+          - { name: id, label: Stage ID, required: true }
+          - { name: name, label: Stage name, required: true }
+          - { name: sequence, label: Sequence, type: number }
+        actions:
+          - { label: Cancel, event: cancel }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
           - { label: Save, submit: true }
