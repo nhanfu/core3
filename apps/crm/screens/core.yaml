@@ -5,6 +5,8 @@ navigation:
   - { label: Teams, to: /teams }
   - { label: Activities, to: /activities }
   - { label: Reporting, to: /reporting }
+  - { label: Pivot, to: /analysis/pivot }
+  - { label: Calendar, to: /calendar }
   - { label: Forecast, to: /forecast }
   - { label: Configuration, to: /configuration }
   - { label: Import, to: /import }
@@ -379,6 +381,36 @@ screens:
           - { field: label, label: Forecast }
           - { field: lead_count, label: Open leads }
           - { field: expected_revenue, label: Expected revenue }
+
+  - id: lead-pivot
+    route: /analysis/pivot
+    title: Lead pivot
+    on_load: |
+      await ctx.load('read', 'leads', { '$orderby': 'company asc' });
+    components:
+      - { type: heading, text: Lead revenue pivot }
+      - type: pivot
+        rows: $data.leads.value
+        row_field: company
+        row_label: Company
+        column_field: status
+        value_field: expected_revenue
+
+  - id: activity-calendar
+    route: /calendar
+    title: Activity calendar
+    on_load: |
+      await ctx.load('activity.read', 'activities', { '$orderby': 'due_date asc' });
+    events:
+      open: |
+        ctx.navigate('/activities/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Activity calendar }
+      - type: calendar
+        rows: $data.activities.value
+        date_field: due_date
+        title_field: summary
+        row_event: open
 
   - id: import
     route: /import

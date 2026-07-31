@@ -168,6 +168,8 @@ class YamlScreenEngine {
     if (component.type === 'nav') this.renderNavigation(element, component);
     if (component.type === 'kanban') this.renderKanban(element, component);
     if (component.type === 'chart') this.renderChart(element, component);
+    if (component.type === 'pivot') this.renderPivot(element, component);
+    if (component.type === 'calendar') this.renderCalendar(element, component);
     for (const child of component.children || []) element.append(this.renderComponent(child));
     return element;
   }
@@ -245,6 +247,30 @@ class YamlScreenEngine {
       const value = document.createElement('strong'); value.textContent = String(row[component.value_field] ?? 0);
       item.append(label, bar, value); chart.append(item);
     }
+  }
+
+  private renderPivot(container: HTMLElement, component: Component) {
+    const rows = this.resolve(component.rows) || [];
+    const rowField = component.row_field; const columnField = component.column_field; const valueField = component.value_field;
+    const columns = [...new Set(rows.map((row: any) => String(row[columnField] ?? '')))];
+    const groups = new Map<string, Record<string, number>>();
+    for (const row of rows) {
+      const label = String(row[rowField] ?? ''); const values = groups.get(label) || {};
+      values[String(row[columnField] ?? '')] = (values[String(row[columnField] ?? '')] || 0) + Number(row[valueField] || 0);
+      groups.set(label, values);
+    }
+    const table = document.createElement('table'); table.className = 'yaml-table';
+    const header = table.createTHead().insertRow(); header.insertCell().textContent = component.row_label || rowField;
+    for (const column of columns) header.insertCell().textContent = column;
+    const body = table.createTBody();
+    for (const [label, values] of groups) { const line = body.insertRow(); line.insertCell().textContent = label; for (const column of columns) line.insertCell().textContent = String(values[column] || 0); }
+    container.append(table);
+  }
+
+  private renderCalendar(container: HTMLElement, component: Component) {
+    const rows = [...(this.resolve(component.rows) || [])].sort((left: any, right: any) => String(left[component.date_field] || '').localeCompare(String(right[component.date_field] || '')));
+    container.classList.add('yaml-calendar');
+    for (const row of rows) { const item = document.createElement('article'); item.className = 'yaml-calendar-item'; item.textContent = String(row[component.date_field] || 'No date') + ' — ' + String(row[component.title_field] || ''); if (component.row_event) item.addEventListener('click', () => void this.trigger(component.row_event, { row })); container.append(item); }
   }
 
   private setBinding(binding: string, value: unknown) {

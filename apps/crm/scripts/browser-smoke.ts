@@ -124,6 +124,8 @@ try {
   browser('/configuration/catalogs', ['Configuration catalogs', 'Hot', 'Monthly']);
   browser('/reporting', ['Pipeline reporting', 'Expected revenue', 'qualified']);
   browser('/forecast', ['Forecast', 'Open pipeline', 'Expected revenue']);
+  browser('/analysis/pivot', ['Lead revenue pivot', 'Company', 'Acme Corporation']);
+  browser('/calendar', ['Activity calendar', 'Call about product requirements']);
   browser('/import', ['Import leads', 'Preview import', 'Import history']);
   console.log('pass: OData CRUD/actions/query options and YAML CRM screens including import');
 } finally {
