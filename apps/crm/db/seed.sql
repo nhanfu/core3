@@ -5,6 +5,13 @@ VALUES
   ('lead-003', 'Conference follow-up', 'Initech', 'pat@initech.test', '+1 555 0103', 'Event', 'contacted', 21000, 'Met at the industry conference.')
 ON CONFLICT(id) DO NOTHING;
 
+INSERT INTO crm_catalog(id, kind, name, value)
+VALUES
+  ('tag-hot', 'tag', 'Hot', '#dc2626'), ('lost-price', 'lost_reason', 'Budget', ''),
+  ('activity-call', 'activity_type', 'Call', ''), ('plan-followup', 'activity_plan', 'Follow up', ''),
+  ('recurring-monthly', 'recurring_plan', 'Monthly', '1 month')
+ON CONFLICT(id) DO NOTHING;
+
 INSERT INTO crm_stage(id, name, sequence)
 VALUES
   ('new', 'New', 10),

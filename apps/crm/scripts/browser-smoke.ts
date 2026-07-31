@@ -37,7 +37,7 @@ try {
 
   const metadata = await response('/api/odata/$metadata');
   const resourceNames = metadata.resources?.map((resource: any) => resource.name).sort().join(',');
-  if (resourceNames !== 'Activities,Attachments,Customers,Followers,Imports,Leads,Messages,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
+  if (resourceNames !== 'Activities,Attachments,Catalogs,Customers,Followers,Imports,Leads,Messages,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
   if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
   const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
   if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
@@ -108,6 +108,11 @@ try {
   await response(`/api/odata/Followers('${encodeURIComponent(follower.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   await response(`/api/odata/Attachments('${encodeURIComponent(attachment.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 
+  const catalog = await response('/api/odata/Catalogs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'tag', name: 'E2E tag', value: '#111111' }) });
+  const changedCatalog = await response(`/api/odata/Catalogs('${encodeURIComponent(catalog.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...catalog, value: '#222222' }) });
+  if (changedCatalog.value !== '#222222') throw new Error('Catalog update failed');
+  await response(`/api/odata/Catalogs('${encodeURIComponent(catalog.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
   browser('/leads/lead-001/collaboration', ['Lead collaboration', 'Messages', 'Followers', 'Attachments']);
@@ -116,6 +121,7 @@ try {
   browser('/teams', ['Sales teams', 'North America', 'New team']);
   browser('/activities', ['Activities', 'Call about product requirements', 'New activity']);
   browser('/configuration', ['Pipeline stages', 'New stage', 'Qualified']);
+  browser('/configuration/catalogs', ['Configuration catalogs', 'Hot', 'Monthly']);
   browser('/reporting', ['Pipeline reporting', 'Expected revenue', 'qualified']);
   browser('/forecast', ['Forecast', 'Open pipeline', 'Expected revenue']);
   browser('/import', ['Import leads', 'Preview import', 'Import history']);

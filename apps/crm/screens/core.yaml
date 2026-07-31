@@ -30,6 +30,10 @@ datasources:
   import.read: { resource: Imports, method: GET, collection: true }
   import.preview: { resource: Imports, method: POST }
   import.commit: { resource: Imports, method: POST, action: commit }
+  catalog.read: { resource: Catalogs, method: GET, collection: true }
+  catalog.create: { resource: Catalogs, method: POST }
+  catalog.update: { resource: Catalogs, method: PUT }
+  catalog.delete: { resource: Catalogs, method: DELETE }
 
 screens:
   - id: customers
@@ -224,12 +228,15 @@ screens:
         ctx.navigate('/configuration/stages/new');
       open: |
         ctx.navigate('/configuration/stages/' + encodeURIComponent(ctx.event.row.id));
+      catalogs: |
+        ctx.navigate('/configuration/catalogs');
     components:
       - { type: heading, text: Pipeline stages }
       - type: section
         class: yaml-toolbar
         children:
           - { type: button, label: New stage, event: create }
+          - { type: button, label: Manage catalogs, event: catalogs }
       - type: table
         rows: $data.stages.value
         row_event: open
@@ -262,6 +269,68 @@ screens:
           - { name: id, label: Stage ID, required: true }
           - { name: name, label: Stage name, required: true }
           - { name: sequence, label: Sequence, type: number }
+        actions:
+          - { label: Cancel, event: cancel }
+          - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Save, submit: true }
+
+  - id: catalogs
+    route: /configuration/catalogs
+    title: Catalogs
+    on_load: |
+      await ctx.load('catalog.read', 'catalogs', { '$orderby': 'kind asc,name asc' });
+    events:
+      create: |
+        ctx.navigate('/configuration/catalogs/new');
+      open: |
+        ctx.navigate('/configuration/catalogs/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Configuration catalogs }
+      - type: section
+        class: yaml-toolbar
+        children:
+          - { type: button, label: New catalog item, event: create }
+      - type: table
+        rows: $data.catalogs.value
+        row_event: open
+        columns:
+          - { field: kind, label: Kind }
+          - { field: name, label: Name }
+          - { field: value, label: Value }
+
+  - id: catalog-form
+    route: /configuration/catalogs/:id
+    title: Catalog
+    on_load: |
+      if (ctx.route.id === 'new') ctx.data.record = { kind: 'tag', name: '', value: '' };
+      else await ctx.load('catalog.read', 'record', {}, ctx.route.id);
+    events:
+      save: |
+        const values = ctx.formValues();
+        if (ctx.route.id === 'new') await ctx.request('catalog.create', values);
+        else await ctx.request('catalog.update', values, ctx.route.id);
+        ctx.navigate('/configuration/catalogs');
+      remove: |
+        if (ctx.route.id !== 'new') { await ctx.request('catalog.delete', {}, ctx.route.id); ctx.navigate('/configuration/catalogs'); }
+      cancel: |
+        ctx.navigate('/configuration/catalogs');
+    components:
+      - { type: heading, text: Catalog item }
+      - type: form
+        record: $data.record
+        submit: save
+        fields:
+          - name: kind
+            label: Kind
+            type: select
+            options:
+              - { value: tag, label: Tag }
+              - { value: lost_reason, label: Lost reason }
+              - { value: activity_type, label: Activity type }
+              - { value: activity_plan, label: Activity plan }
+              - { value: recurring_plan, label: Recurring plan }
+          - { name: name, label: Name, required: true }
+          - { name: value, label: Value }
         actions:
           - { label: Cancel, event: cancel }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }

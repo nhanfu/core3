@@ -188,6 +188,19 @@ resources:
     list: { search: [name, mime_type], default_orderby: created_at desc, max_page_size: 200, group_by: [mime_type] }
     operations: { create: attachment.create, read: attachment.read, update: attachment.update, delete: attachment.delete }
 
+  - id: crm.catalogs
+    entity_set: Catalogs
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      kind: { type: string, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      value: { type: string, selectable: true, filterable: true, sortable: false }
+      active: { type: boolean, selectable: true, filterable: true, sortable: true }
+    list: { search: [kind, name, value], default_orderby: kind asc, max_page_size: 200, group_by: [kind] }
+    operations: { create: catalog.create, read: catalog.read, update: catalog.update, delete: catalog.delete }
+
 datasources:
   - id: read
     params:
@@ -629,3 +642,22 @@ datasources:
   - id: attachment.delete
     params: { id: { type: string } }
     statement: DELETE FROM crm_attachment WHERE id = :id
+
+  - id: catalog.read
+    params: { id: { type: string, default: '' }, odata_top: { type: number, default: 200 }, odata_skip: { type: number, default: 0 } }
+    query: |
+      SELECT id, kind, name, value, active, count(*) OVER() AS __odata_count FROM crm_catalog
+      WHERE active = true AND (:id = '' OR id = :id) {{where}} {{order}} LIMIT :odata_top OFFSET :odata_skip
+  - id: catalog.create
+    params: { values: { type: json } }
+    entrypoint: createCatalog
+    script: |
+      async function createCatalog(ctx, params) { const v = params.values || {}; const kind = String(v.kind || '').trim(); const name = String(v.name || '').trim(); if (!kind || !name) throw Object.assign(new Error('Catalog kind and name are required'), { status: 400 }); const id = `catalog-${ctx.crypto.randomUUID().slice(0, 8)}`; await ctx.db.execute('INSERT INTO crm_catalog(id, kind, name, value, active) VALUES(:id, :kind, :name, :value, true)', { id, kind, name, value: String(v.value || '') }); return (await ctx.db.query('SELECT id, kind, name, value, active FROM crm_catalog WHERE id = :id', { id }))[0]; }
+  - id: catalog.update
+    params: { values: { type: json } }
+    entrypoint: updateCatalog
+    script: |
+      async function updateCatalog(ctx, params) { const v = params.values || {}; const id = String(v.id || ''); const name = String(v.name || '').trim(); if (!name) throw Object.assign(new Error('Catalog name is required'), { status: 400 }); await ctx.db.execute('UPDATE crm_catalog SET kind = :kind, name = :name, value = :value WHERE id = :id', { id, kind: String(v.kind || '').trim(), name, value: String(v.value || '') }); return (await ctx.db.query('SELECT id, kind, name, value, active FROM crm_catalog WHERE id = :id', { id }))[0] || null; }
+  - id: catalog.delete
+    params: { id: { type: string } }
+    statement: UPDATE crm_catalog SET active = false WHERE id = :id
