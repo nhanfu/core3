@@ -64,3 +64,25 @@ Restore the former CRM surface in these independently verifiable YAML slices:
 6. Import: CSV preview, validation, commit, relation resolution, and import history.
 
 Each restored feature must add its backend resource/datasources to the server-private `apps/crm/db/leads.yaml` and client composition/events to `apps/crm/screens/*.yaml`. Changes to generic engines require an explicit capability reason and shared validation; no feature-specific route or renderer code is permitted.
+
+## Completion evidence
+
+The restored CRM inventory is now represented by OData entity sets in the one
+backend definition: Leads, Customers, Teams, Activities, Stages, Imports,
+Messages, Followers, Attachments, and Catalogs. Client YAML defines the lead,
+pipeline, collaboration, customer, team, activity, configuration, reporting,
+forecast, pivot, calendar, and import routes.
+
+The fresh-database smoke suite verifies OData metadata, safe query options,
+legacy gateway removal, CRUD for each core entity, protected lead actions,
+stage movement, conversion, archive/restore, merge, import preview/commit,
+collaboration resources, catalog CRUD, and every rendered screen route.
+
+Validated commands:
+
+```text
+cd apps && bun run build:css
+bunx --bun tsc -p apps/tsconfig.json --noEmit
+cd apps && bun run test:browser
+git diff --check
+```
