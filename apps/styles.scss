@@ -118,6 +118,10 @@ button, input { font: inherit; }
 .yaml-kanban-column { min-width: 15rem; flex: 1; padding: .75rem; border-radius: .5rem; background: #f1f5f9; }
 .yaml-kanban-column h2 { margin: 0 0 .75rem; font-size: 1rem; text-transform: capitalize; }
 .yaml-kanban-card { display: block; width: 100%; margin: .5rem 0; padding: .75rem; border: 1px solid #e2e8f0; border-radius: .4rem; background: #fff; color: #1f2937; cursor: pointer; text-align: left; white-space: pre-line; font: inherit; }
+.yaml-chart { display: grid; gap: .6rem; max-width: 780px; padding: 1rem; background: #fff; box-shadow: 0 1px 3px rgb(15 23 42 / 10%); }
+.yaml-chart-row { display: grid; grid-template-columns: 9rem 1fr 4rem; gap: .6rem; align-items: center; }
+.yaml-chart-bar { height: .8rem; overflow: hidden; border-radius: 99px; background: #e2e8f0; }
+.yaml-chart-bar i { display: block; height: 100%; border-radius: inherit; background: #155eef; }
 .yaml-form { display: grid; gap: 1rem; max-width: 680px; padding: 1.25rem; background: #fff; box-shadow: 0 1px 3px rgb(15 23 42 / 10%); }
 .yaml-form label { display: grid; gap: .35rem; font-weight: 600; }
 .yaml-form textarea { min-height: 7rem; resize: vertical; }

@@ -64,13 +64,14 @@ screens:
           - { field: phone, label: Phone }
           - { field: source, label: Source }
           - { field: status, label: Status }
+          - { field: expected_revenue, label: Expected revenue }
 
   - id: lead-form
     route: /leads/:id
     title: Lead
     on_load: |
       await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
-      if (ctx.route.id === 'new') ctx.data.record = { name: '', company: '', email: '', phone: '', source: '', status: 'new', notes: '' };
+      if (ctx.route.id === 'new') ctx.data.record = { name: '', company: '', email: '', phone: '', source: '', status: 'new', expected_revenue: 0, notes: '' };
       else await ctx.load('read', 'record', {}, ctx.route.id);
     events:
       save: |
@@ -110,6 +111,7 @@ screens:
           - { name: email, label: Email, type: email }
           - { name: phone, label: Phone }
           - { name: source, label: Source }
+          - { name: expected_revenue, label: Expected revenue, type: number }
           - name: status
             label: Status
             type: select

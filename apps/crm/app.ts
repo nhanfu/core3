@@ -167,6 +167,7 @@ class YamlScreenEngine {
     if (component.type === 'form') this.renderForm(element as HTMLFormElement, component);
     if (component.type === 'nav') this.renderNavigation(element, component);
     if (component.type === 'kanban') this.renderKanban(element, component);
+    if (component.type === 'chart') this.renderChart(element, component);
     for (const child of component.children || []) element.append(this.renderComponent(child));
     return element;
   }
@@ -228,6 +229,21 @@ class YamlScreenEngine {
         card.addEventListener('click', () => void this.trigger(component.row_event, { row })); column.append(card);
       }
       board.append(column);
+    }
+  }
+
+  private renderChart(chart: HTMLElement, component: Component) {
+    const rows = this.resolve(component.rows) || [];
+    const values = rows.map((row: any) => Number(row[component.value_field] || 0));
+    const max = Math.max(...values, 1);
+    chart.classList.add('yaml-chart');
+    for (const row of rows) {
+      const item = document.createElement('div'); item.className = 'yaml-chart-row';
+      const label = document.createElement('span'); label.textContent = String(row[component.label_field] ?? '');
+      const bar = document.createElement('div'); bar.className = 'yaml-chart-bar';
+      const fill = document.createElement('i'); fill.style.width = `${Math.max(0, Number(row[component.value_field] || 0)) / max * 100}%`; bar.append(fill);
+      const value = document.createElement('strong'); value.textContent = String(row[component.value_field] ?? 0);
+      item.append(label, bar, value); chart.append(item);
     }
   }
 

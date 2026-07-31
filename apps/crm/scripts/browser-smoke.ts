@@ -45,12 +45,12 @@ try {
   if (!Array.isArray(grouped.value) || !grouped.value.every((row: any) => Object.keys(row).length === 1 && 'status' in row)) throw new Error('OData grouping failed');
   if ((await fetch(`${origin}/api/odata/Leads?$orderby=not_a_field%20asc`)).ok) throw new Error('Invalid OData fields must be rejected');
 
-  const created = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Browser workflow lead', company: 'Core3', email: 'lead@core3.test', status: 'new' }) });
+  const created = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Browser workflow lead', company: 'Core3', email: 'lead@core3.test', status: 'new', expected_revenue: 1234 }) });
   if (!created.id) throw new Error('Lead creation failed');
   const read = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
   if (read.name !== 'Browser workflow lead') throw new Error('Lead read failed');
   const updated = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...read, name: 'Updated workflow lead', status: 'qualified' }) });
-  if (updated.name !== 'Updated workflow lead' || updated.status !== 'qualified') throw new Error('Lead update failed');
+  if (updated.name !== 'Updated workflow lead' || updated.status !== 'qualified' || Number(updated.expected_revenue) !== 1234) throw new Error('Lead update failed');
   await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   const deleted = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
   if (deleted !== null) throw new Error('Lead delete failed');
@@ -99,7 +99,9 @@ try {
   browser('/teams', ['Sales teams', 'North America', 'New team']);
   browser('/activities', ['Activities', 'Call about product requirements', 'New activity']);
   browser('/configuration', ['Pipeline stages', 'New stage', 'Qualified']);
-  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/activity/pipeline/configuration screens');
+  browser('/reporting', ['Pipeline reporting', 'Expected revenue', 'qualified']);
+  browser('/forecast', ['Forecast', 'Open pipeline', 'Expected revenue']);
+  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/activity/pipeline/configuration/reporting screens');
 } finally {
   server.kill();
 }

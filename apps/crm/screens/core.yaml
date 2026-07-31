@@ -263,3 +263,47 @@ screens:
           - { label: Cancel, event: cancel }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
           - { label: Save, submit: true }
+
+  - id: reporting
+    route: /reporting
+    title: Reporting
+    on_load: |
+      await ctx.load('read', 'leads', { '$orderby': 'status asc' });
+      const groups = {};
+      for (const lead of ctx.data.leads.value) {
+        const row = groups[lead.status] ||= { status: lead.status, lead_count: 0, expected_revenue: 0 };
+        row.lead_count += 1; row.expected_revenue += Number(lead.expected_revenue || 0);
+      }
+      ctx.data.status_summary = Object.values(groups);
+    components:
+      - { type: heading, text: Pipeline reporting }
+      - type: chart
+        rows: $data.status_summary
+        label_field: status
+        value_field: expected_revenue
+      - type: table
+        rows: $data.status_summary
+        columns:
+          - { field: status, label: Stage }
+          - { field: lead_count, label: Leads }
+          - { field: expected_revenue, label: Expected revenue }
+
+  - id: forecast
+    route: /forecast
+    title: Forecast
+    on_load: |
+      await ctx.load('read', 'leads', { '$filter': "status ne 'lost'", '$orderby': 'expected_revenue desc' });
+      const total = ctx.data.leads.value.reduce((sum, lead) => sum + Number(lead.expected_revenue || 0), 0);
+      ctx.data.forecast = [{ label: 'Open pipeline', expected_revenue: total, lead_count: ctx.data.leads.value.length }];
+    components:
+      - { type: heading, text: Forecast }
+      - type: chart
+        rows: $data.forecast
+        label_field: label
+        value_field: expected_revenue
+      - type: table
+        rows: $data.forecast
+        columns:
+          - { field: label, label: Forecast }
+          - { field: lead_count, label: Open leads }
+          - { field: expected_revenue, label: Expected revenue }

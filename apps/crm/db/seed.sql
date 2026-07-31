@@ -1,8 +1,8 @@
-INSERT INTO crm_lead(id, name, company, email, phone, source, status, notes)
+INSERT INTO crm_lead(id, name, company, email, phone, source, status, expected_revenue, notes)
 VALUES
-  ('lead-001', 'Website enquiry', 'Acme Corporation', 'sam@acme.test', '+1 555 0101', 'Website', 'new', 'Asked for a product demonstration.'),
-  ('lead-002', 'Partner introduction', 'Globex', 'lee@globex.test', '+1 555 0102', 'Partner', 'qualified', 'Referred by an existing customer.'),
-  ('lead-003', 'Conference follow-up', 'Initech', 'pat@initech.test', '+1 555 0103', 'Event', 'contacted', 'Met at the industry conference.')
+  ('lead-001', 'Website enquiry', 'Acme Corporation', 'sam@acme.test', '+1 555 0101', 'Website', 'new', 12000, 'Asked for a product demonstration.'),
+  ('lead-002', 'Partner introduction', 'Globex', 'lee@globex.test', '+1 555 0102', 'Partner', 'qualified', 45000, 'Referred by an existing customer.'),
+  ('lead-003', 'Conference follow-up', 'Initech', 'pat@initech.test', '+1 555 0103', 'Event', 'contacted', 21000, 'Met at the industry conference.')
 ON CONFLICT(id) DO NOTHING;
 
 INSERT INTO crm_stage(id, name, sequence)

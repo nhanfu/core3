@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS crm_lead (
   phone VARCHAR NOT NULL DEFAULT '',
   source VARCHAR NOT NULL DEFAULT '',
   status VARCHAR NOT NULL DEFAULT 'new',
+  expected_revenue DOUBLE NOT NULL DEFAULT 0,
   notes VARCHAR NOT NULL DEFAULT '',
   active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
