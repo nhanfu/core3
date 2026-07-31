@@ -27,6 +27,9 @@ datasources:
   stage.create: { resource: Stages, method: POST }
   stage.update: { resource: Stages, method: PUT }
   stage.delete: { resource: Stages, method: DELETE }
+  import.read: { resource: Imports, method: GET, collection: true }
+  import.preview: { resource: Imports, method: POST }
+  import.commit: { resource: Imports, method: POST, action: commit }
 
 screens:
   - id: customers
@@ -307,3 +310,42 @@ screens:
           - { field: label, label: Forecast }
           - { field: lead_count, label: Open leads }
           - { field: expected_revenue, label: Expected revenue }
+
+  - id: import
+    route: /import
+    title: Import
+    on_load: |
+      await ctx.load('import.read', 'history', { '$orderby': 'created_at desc' });
+      ctx.data.preview = null;
+    events:
+      preview: |
+        ctx.data.preview = await ctx.request('import.preview', ctx.formValues());
+      commit: |
+        await ctx.request('import.commit', {}, ctx.data.preview.id);
+        await ctx.load('import.read', 'history', { '$orderby': 'created_at desc' });
+        ctx.data.preview = null;
+    components:
+      - { type: heading, text: Import leads }
+      - type: text
+        text: Paste CSV with name, company, email, phone, source, status, expected_revenue, and notes columns.
+      - type: form
+        record: { csv: "name,company,status,expected_revenue\nImported lead,Core3,new,5000" }
+        fields:
+          - { name: csv, label: CSV content, type: textarea, required: true }
+        actions:
+          - { label: Preview import, event: preview }
+          - { label: Commit import, event: commit, visible_when: "Boolean(ctx.data.preview?.id) && !ctx.data.preview.error_count" }
+      - { type: heading, text: Preview rows }
+      - type: table
+        rows: $data.preview.rows
+        columns:
+          - { field: row, label: Row }
+          - { field: errors, label: Errors }
+      - { type: heading, text: Import history }
+      - type: table
+        rows: $data.history.value
+        columns:
+          - { field: id, label: Import }
+          - { field: state, label: State }
+          - { field: imported_count, label: Imported }
+          - { field: error_count, label: Errors }

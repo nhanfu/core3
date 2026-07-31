@@ -46,3 +46,13 @@ CREATE TABLE IF NOT EXISTS crm_stage (
   sequence INTEGER NOT NULL DEFAULT 0,
   active BOOLEAN NOT NULL DEFAULT true
 );
+
+CREATE TABLE IF NOT EXISTS crm_import_history (
+  id VARCHAR PRIMARY KEY,
+  state VARCHAR NOT NULL,
+  rows VARCHAR NOT NULL DEFAULT '[]',
+  imported_count INTEGER NOT NULL DEFAULT 0,
+  error_count INTEGER NOT NULL DEFAULT 0,
+  errors VARCHAR NOT NULL DEFAULT '[]',
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);

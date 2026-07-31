@@ -37,7 +37,7 @@ try {
 
   const metadata = await response('/api/odata/$metadata');
   const resourceNames = metadata.resources?.map((resource: any) => resource.name).sort().join(',');
-  if (resourceNames !== 'Activities,Customers,Leads,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
+  if (resourceNames !== 'Activities,Customers,Imports,Leads,Stages,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
   if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
   const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
   if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
@@ -92,6 +92,13 @@ try {
   await response(`/api/odata/Activities('${encodeURIComponent(activity.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   if (await response(`/api/odata/Activities('${encodeURIComponent(activity.id)}')`)) throw new Error('Activity delete failed');
 
+  const preview = await response('/api/odata/Imports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ csv: 'name,company,status,expected_revenue\nImported E2E,Core3,new,5000' }) });
+  if (preview.error_count !== 0 || !preview.id) throw new Error('Import preview failed');
+  const committed = await response(`/api/odata/Imports('${encodeURIComponent(preview.id)}')/commit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  if (committed.state !== 'committed' || committed.imported_count !== 1) throw new Error('Import commit failed');
+  const imported = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "name eq 'Imported E2E'" })}`);
+  if (imported.value?.length !== 1) throw new Error('Imported lead is unavailable');
+
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
   browser('/pipeline', ['Sales pipeline', 'New', 'Qualified']);
@@ -101,7 +108,8 @@ try {
   browser('/configuration', ['Pipeline stages', 'New stage', 'Qualified']);
   browser('/reporting', ['Pipeline reporting', 'Expected revenue', 'qualified']);
   browser('/forecast', ['Forecast', 'Open pipeline', 'Expected revenue']);
-  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/activity/pipeline/configuration/reporting screens');
+  browser('/import', ['Import leads', 'Preview import', 'Import history']);
+  console.log('pass: OData CRUD/actions/query options and YAML CRM screens including import');
 } finally {
   server.kill();
 }

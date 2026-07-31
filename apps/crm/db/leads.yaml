@@ -125,6 +125,30 @@ resources:
       update: stage.update
       delete: stage.delete
 
+  - id: crm.imports
+    entity_set: Imports
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      state: { type: string, selectable: true, filterable: true, sortable: true }
+      imported_count: { type: number, readonly: true, selectable: true, filterable: true, sortable: true }
+      error_count: { type: number, readonly: true, selectable: true, filterable: true, sortable: true }
+      errors: { type: string, readonly: true, selectable: true, filterable: false, sortable: false }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list:
+      search: [state]
+      default_orderby: created_at desc
+      max_page_size: 50
+      group_by: [state]
+    operations:
+      create: import.preview
+      read: import.read
+      update: import.unsupported
+      delete: import.unsupported
+    actions:
+      commit: { method: POST, datasource: import.commit }
+
 datasources:
   - id: read
     params:
@@ -440,3 +464,72 @@ datasources:
   - id: stage.delete
     params: { id: { type: string } }
     statement: UPDATE crm_stage SET active = false WHERE id = :id AND active = true
+
+  - id: import.read
+    params:
+      id: { type: string, default: '' }
+      odata_top: { type: number, default: 50 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT id, state, imported_count, error_count, errors, created_at, count(*) OVER() AS __odata_count
+      FROM crm_import_history
+      WHERE (:id = '' OR id = :id)
+      {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: import.preview
+    params: { values: { type: json } }
+    entrypoint: previewImport
+    script: |
+      async function previewImport(ctx, params) {
+        const csv = String((params.values || {}).csv || '').replace(/^\uFEFF/, '').trim();
+        if (!csv) throw Object.assign(new Error('CSV content is required'), { status: 400 });
+        const parse = source => {
+          const rows = []; let row = []; let cell = ''; let quoted = false;
+          for (let index = 0; index < source.length; index += 1) {
+            const char = source[index];
+            if (quoted && char === '"' && source[index + 1] === '"') { cell += '"'; index += 1; }
+            else if (char === '"') quoted = !quoted;
+            else if (!quoted && char === ',') { row.push(cell.trim()); cell = ''; }
+            else if (!quoted && (char === '\n' || char === '\r')) { if (char === '\r' && source[index + 1] === '\n') index += 1; row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); row = []; cell = ''; }
+            else cell += char;
+          }
+          row.push(cell.trim()); if (row.some(Boolean)) rows.push(row); return rows;
+        };
+        const parsed = parse(csv); const headers = (parsed.shift() || []).map(value => value.toLowerCase().trim());
+        if (!headers.includes('name')) throw Object.assign(new Error('CSV requires a name column'), { status: 400 });
+        const rows = parsed.map((cells, index) => {
+          const values = Object.fromEntries(headers.map((header, column) => [header, cells[column] || '']));
+          const errors = []; if (!String(values.name || '').trim()) errors.push('name is required');
+          if (values.expected_revenue && !Number.isFinite(Number(values.expected_revenue))) errors.push('expected_revenue must be numeric');
+          return { row: index + 2, values, errors };
+        });
+        const id = `import-${ctx.crypto.randomUUID().slice(0, 8)}`; const errors = rows.filter(row => row.errors.length);
+        await ctx.db.execute('INSERT INTO crm_import_history(id, state, rows, imported_count, error_count, errors, created_at) VALUES(:id, :state, :rows, 0, :error_count, :errors, current_timestamp)', { id, state: 'preview', rows: JSON.stringify(rows), error_count: errors.length, errors: JSON.stringify(errors) });
+        return { id, state: 'preview', rows, error_count: errors.length };
+      }
+
+  - id: import.commit
+    params: { id: { type: string } }
+    entrypoint: commitImport
+    script: |
+      async function commitImport(ctx, params) {
+        const job = (await ctx.db.query('SELECT id, state, rows, error_count FROM crm_import_history WHERE id = :id', { id: params.id }))[0];
+        if (!job) throw Object.assign(new Error('Import job not found'), { status: 404 });
+        if (job.state !== 'preview') throw Object.assign(new Error('Import job has already been committed'), { status: 409 });
+        const rows = JSON.parse(job.rows || '[]'); if (Number(job.error_count || 0)) throw Object.assign(new Error('Fix preview errors before committing'), { status: 400 });
+        for (const row of rows) {
+          const values = row.values || {}; const id = `lead-${ctx.crypto.randomUUID().slice(0, 8)}`; const status = String(values.status || 'new').trim();
+          const stage = (await ctx.db.query('SELECT id FROM crm_stage WHERE id = :id AND active = true', { id: status }))[0];
+          if (!stage) throw Object.assign(new Error(`Unknown stage: ${status}`), { status: 400 });
+          await ctx.db.execute('INSERT INTO crm_lead(id, name, company, email, phone, source, status, expected_revenue, notes, active, created_at, updated_at) VALUES(:id, :name, :company, :email, :phone, :source, :status, :expected_revenue, :notes, true, current_timestamp, current_timestamp)', { id, name: String(values.name).trim(), company: String(values.company || '').trim(), email: String(values.email || '').trim(), phone: String(values.phone || '').trim(), source: String(values.source || '').trim(), status, expected_revenue: Number(values.expected_revenue || 0), notes: String(values.notes || '').trim() });
+        }
+        await ctx.db.execute("UPDATE crm_import_history SET state = 'committed', imported_count = :imported_count WHERE id = :id", { id: params.id, imported_count: rows.length });
+        return (await ctx.db.query('SELECT id, state, imported_count, error_count, errors, created_at FROM crm_import_history WHERE id = :id', { id: params.id }))[0];
+      }
+
+  - id: import.unsupported
+    entrypoint: unsupportedImportOperation
+    script: |
+      function unsupportedImportOperation() { throw Object.assign(new Error('This import operation is not supported'), { status: 405 }); }
