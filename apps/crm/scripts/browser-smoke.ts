@@ -110,6 +110,7 @@ try {
 
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
+  browser('/leads/lead-001/collaboration', ['Lead collaboration', 'Messages', 'Followers', 'Attachments']);
   browser('/pipeline', ['Sales pipeline', 'New', 'Qualified']);
   browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);
   browser('/teams', ['Sales teams', 'North America', 'New team']);

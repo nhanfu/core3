@@ -10,6 +10,12 @@ datasources:
   lead.convert: { resource: Leads, method: POST, action: convert }
   lead.duplicates: { resource: Leads, method: GET, action: duplicates }
   lead.merge: { resource: Leads, method: POST, action: merge }
+  message.read: { resource: Messages, method: GET, collection: true }
+  message.create: { resource: Messages, method: POST }
+  follower.read: { resource: Followers, method: GET, collection: true }
+  follower.create: { resource: Followers, method: POST }
+  attachment.read: { resource: Attachments, method: GET, collection: true }
+  attachment.create: { resource: Attachments, method: POST }
 
 screens:
   - id: leads
@@ -95,6 +101,8 @@ screens:
         ctx.navigate('/');
       duplicates: |
         await ctx.load('lead.duplicates', 'duplicates', {}, ctx.route.id);
+      collaboration: |
+        ctx.navigate('/leads/' + encodeURIComponent(ctx.route.id) + '/collaboration');
       remove: |
         if (ctx.route.id !== 'new') { await ctx.request('delete', {}, ctx.route.id); ctx.navigate('/'); }
       cancel: |
@@ -124,6 +132,7 @@ screens:
           - { label: Move stage, event: move_stage, visible_when: "ctx.route.id !== 'new'" }
           - { label: Mark lost, event: lose, visible_when: "ctx.route.id !== 'new'" }
           - { label: Convert, event: convert, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Collaboration, event: collaboration, visible_when: "ctx.route.id !== 'new'" }
           - { label: Archive, event: archive, visible_when: "ctx.route.id !== 'new'" }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
           - { label: Save, submit: true }
@@ -155,3 +164,53 @@ screens:
         groups: $data.stages.value
         group_value: id
         group_label: name
+
+  - id: lead-collaboration
+    route: /leads/:leadId/collaboration
+    title: Collaboration
+    on_load: |
+      await ctx.load('message.read', 'messages', { '$filter': "lead_id eq '" + ctx.route.leadId + "'" });
+      await ctx.load('follower.read', 'followers', { '$filter': "lead_id eq '" + ctx.route.leadId + "'" });
+      await ctx.load('attachment.read', 'attachments', { '$filter': "lead_id eq '" + ctx.route.leadId + "'" });
+    events:
+      add: |
+        const values = ctx.formValues();
+        if (values.kind === 'message') await ctx.request('message.create', { lead_id: ctx.route.leadId, author: values.author, body: values.value });
+        else if (values.kind === 'follower') await ctx.request('follower.create', { lead_id: ctx.route.leadId, name: values.value });
+        else await ctx.request('attachment.create', { lead_id: ctx.route.leadId, name: values.value, mime_type: values.mime_type, content: values.content });
+        await ctx.load('message.read', 'messages', { '$filter': "lead_id eq '" + ctx.route.leadId + "'" });
+        await ctx.load('follower.read', 'followers', { '$filter': "lead_id eq '" + ctx.route.leadId + "'" });
+        await ctx.load('attachment.read', 'attachments', { '$filter': "lead_id eq '" + ctx.route.leadId + "'" });
+      back: |
+        ctx.navigate('/leads/' + encodeURIComponent(ctx.route.leadId));
+    components:
+      - { type: heading, text: Lead collaboration }
+      - type: form
+        record: { kind: message, author: Salesperson, value: '', mime_type: text/plain, content: '' }
+        fields:
+          - name: kind
+            label: Add
+            type: select
+            options:
+              - { value: message, label: Message }
+              - { value: follower, label: Follower }
+              - { value: attachment, label: Attachment }
+          - { name: author, label: Author }
+          - { name: value, label: Message, type: textarea, required: true }
+          - { name: mime_type, label: Attachment mime type }
+          - { name: content, label: Attachment content, type: textarea }
+        actions:
+          - { label: Add, event: add }
+          - { label: Back to lead, event: back }
+      - { type: heading, text: Messages }
+      - type: table
+        rows: $data.messages.value
+        columns: [{ field: author, label: Author }, { field: body, label: Message }, { field: created_at, label: Created }]
+      - { type: heading, text: Followers }
+      - type: table
+        rows: $data.followers.value
+        columns: [{ field: name, label: Follower }, { field: created_at, label: Added }]
+      - { type: heading, text: Attachments }
+      - type: table
+        rows: $data.attachments.value
+        columns: [{ field: name, label: Attachment }, { field: mime_type, label: Type }, { field: created_at, label: Added }]
