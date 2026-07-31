@@ -93,6 +93,9 @@ button, input { font: inherit; }
 }
 
 .yaml-heading { margin: 0 0 .25rem; font-size: 1.7rem; }
+.yaml-nav { display: flex; gap: .3rem; flex-wrap: wrap; margin: 0 0 1.5rem; }
+.yaml-nav a { padding: .45rem .65rem; border-radius: .35rem; color: #475569; text-decoration: none; }
+.yaml-nav a:hover, .yaml-nav a.active { background: #e8efff; color: #155eef; }
 .yaml-text, .yaml-count { margin: .25rem 0 1rem; color: #64748b; }
 .yaml-toolbar, .yaml-actions { display: flex; gap: .75rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
 .yaml-input, .yaml-select, .yaml-form input, .yaml-form select, .yaml-form textarea {

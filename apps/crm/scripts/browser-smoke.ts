@@ -36,7 +36,8 @@ try {
   }
 
   const metadata = await response('/api/odata/$metadata');
-  if (metadata.resources?.length !== 1 || metadata.resources[0]?.name !== 'Leads') throw new Error('Only the Leads OData resource should be exposed');
+  const resourceNames = metadata.resources?.map((resource: any) => resource.name).sort().join(',');
+  if (resourceNames !== 'Customers,Leads,Teams') throw new Error(`Unexpected OData resources: ${resourceNames}`);
   if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
   const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
   if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
@@ -54,9 +55,23 @@ try {
   const deleted = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
   if (deleted !== null) throw new Error('Lead delete failed');
 
+  const customer = await response('/api/odata/Customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'E2E Customer', email: 'customer@core3.test' }) });
+  const changedCustomer = await response(`/api/odata/Customers('${encodeURIComponent(customer.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...customer, phone: '+1 555 1212' }) });
+  if (changedCustomer.phone !== '+1 555 1212') throw new Error('Customer update failed');
+  await response(`/api/odata/Customers('${encodeURIComponent(customer.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  if (await response(`/api/odata/Customers('${encodeURIComponent(customer.id)}')`)) throw new Error('Customer delete failed');
+
+  const team = await response('/api/odata/Teams', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'E2E Team', quota: 42 }) });
+  const changedTeam = await response(`/api/odata/Teams('${encodeURIComponent(team.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...team, quota: 99 }) });
+  if (Number(changedTeam.quota) !== 99) throw new Error('Team update failed');
+  await response(`/api/odata/Teams('${encodeURIComponent(team.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  if (await response(`/api/odata/Teams('${encodeURIComponent(team.id)}')`)) throw new Error('Team delete failed');
+
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
-  console.log('pass: OData CRUD, query options, lead list, and lead form');
+  browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);
+  browser('/teams', ['Sales teams', 'North America', 'New team']);
+  console.log('pass: OData CRUD/query options and YAML lead/customer/team screens');
 } finally {
   server.kill();
 }

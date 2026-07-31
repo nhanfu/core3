@@ -11,3 +11,20 @@ CREATE TABLE IF NOT EXISTS crm_lead (
   created_at TIMESTAMP NOT NULL DEFAULT current_timestamp,
   updated_at TIMESTAMP NOT NULL DEFAULT current_timestamp
 );
+
+CREATE TABLE IF NOT EXISTS crm_customer (
+  id VARCHAR PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  email VARCHAR NOT NULL DEFAULT '',
+  phone VARCHAR NOT NULL DEFAULT '',
+  active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);
+
+CREATE TABLE IF NOT EXISTS crm_team (
+  id VARCHAR PRIMARY KEY,
+  name VARCHAR NOT NULL,
+  quota DOUBLE NOT NULL DEFAULT 0,
+  active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+);

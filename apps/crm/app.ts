@@ -9,7 +9,7 @@ type Screen = {
 };
 type Component = Record<string, any> & { type: string; children?: Component[]; event?: string; on_change?: string; visible_when?: string };
 type Datasource = { resource: string; method: 'GET' | 'POST' | 'PUT' | 'DELETE'; collection?: boolean };
-type Definition = { datasources: Record<string, Datasource>; screens: Screen[] };
+type Definition = { datasources: Record<string, Datasource>; screens: Screen[]; navigation?: { label: string; to: string }[] };
 
 class YamlScreenEngine {
   private definition!: Definition;
@@ -23,7 +23,7 @@ class YamlScreenEngine {
   constructor(private readonly root: HTMLElement) {}
 
   async start() {
-    this.definition = await this.fetchJson('/api/ui/leads');
+    this.definition = await this.fetchJson('/api/ui');
     window.addEventListener('popstate', () => void this.loadLocation());
     await this.loadLocation();
   }
@@ -131,13 +131,14 @@ class YamlScreenEngine {
       message.textContent = this.error;
       page.append(message);
     }
+    if (this.definition.navigation?.length) page.append(this.renderComponent({ type: 'nav', class: 'yaml-nav', items: this.definition.navigation }));
     for (const component of this.screen.components) page.append(this.renderComponent(component));
     this.root.append(page);
   }
 
   private renderComponent(component: Component): HTMLElement {
     if (!this.visible(component)) return document.createElement('span');
-    const element = document.createElement(component.type === 'heading' ? 'h1' : component.type === 'text' ? 'p' : component.type === 'button' ? 'button' : component.type === 'input' ? 'input' : component.type === 'select' ? 'select' : component.type === 'table' ? 'table' : component.type === 'form' ? 'form' : 'section');
+    const element = document.createElement(component.type === 'heading' ? 'h1' : component.type === 'text' ? 'p' : component.type === 'button' ? 'button' : component.type === 'input' ? 'input' : component.type === 'select' ? 'select' : component.type === 'table' ? 'table' : component.type === 'form' ? 'form' : component.type === 'nav' ? 'nav' : 'section');
     element.className = `yaml-${component.type}${component.class ? ` ${component.class}` : ''}`;
     if (component.type === 'heading' || component.type === 'text') element.textContent = String(this.resolve(component.text) || '');
     if (component.type === 'button') {
@@ -164,6 +165,7 @@ class YamlScreenEngine {
     }
     if (component.type === 'table') this.renderTable(element as HTMLTableElement, component);
     if (component.type === 'form') this.renderForm(element as HTMLFormElement, component);
+    if (component.type === 'nav') this.renderNavigation(element, component);
     for (const child of component.children || []) element.append(this.renderComponent(child));
     return element;
   }
@@ -188,7 +190,7 @@ class YamlScreenEngine {
       const label = document.createElement('label'); label.textContent = field.label;
       const input = field.type === 'textarea' ? document.createElement('textarea') : document.createElement(field.type === 'select' ? 'select' : 'input');
       input.name = field.name; input.required = Boolean(field.required); input.value = String(this.form[field.name] ?? '');
-      if (input instanceof HTMLInputElement) input.type = field.type === 'email' ? 'email' : 'text';
+      if (input instanceof HTMLInputElement) input.type = ['email', 'number', 'date'].includes(field.type) ? field.type : 'text';
       if (input instanceof HTMLSelectElement) for (const optionDefinition of field.options || []) { const option = document.createElement('option'); option.value = optionDefinition.value; option.textContent = optionDefinition.label; input.append(option); }
       input.addEventListener('input', () => { this.form[field.name] = input.value; });
       input.addEventListener('change', () => { this.form[field.name] = input.value; });
@@ -197,6 +199,16 @@ class YamlScreenEngine {
     const actions = document.createElement('div'); actions.className = 'yaml-actions';
     for (const action of component.actions || []) actions.append(this.renderComponent({ type: 'button', ...action }));
     form.append(actions);
+  }
+
+  private renderNavigation(nav: HTMLElement, component: Component) {
+    for (const item of component.items || []) {
+      const link = document.createElement('a');
+      link.href = item.to; link.textContent = item.label;
+      if (location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(`${item.to}/`))) link.className = 'active';
+      link.addEventListener('click', event => { event.preventDefault(); this.navigate(item.to); });
+      nav.append(link);
+    }
   }
 
   private setBinding(binding: string, value: unknown) {

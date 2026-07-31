@@ -26,7 +26,7 @@ export type Datasource = {
   params?: Record<string, ParamDefinition>;
 };
 
-type Document = { resource?: ResourceDefinition; datasources?: Datasource[] };
+type Document = { resource?: ResourceDefinition; resources?: ResourceDefinition[]; datasources?: Datasource[] };
 type ODataQuery = { filter?: string; search?: string; select?: string[]; orderby?: string; top: number; skip: number; count: boolean; groupBy?: string[] };
 
 function yamlFiles(root: string): string[] {
@@ -43,7 +43,7 @@ function documents() {
 }
 
 function datasources() { return documents().flatMap(document => document.datasources || []); }
-function resources() { return documents().flatMap(document => document.resource ? [document.resource] : []); }
+function resources() { return documents().flatMap(document => [...(document.resource ? [document.resource] : []), ...(document.resources || [])]); }
 function findDatasource(id: string) { return datasources().find(source => source.id === id); }
 
 function error(message: string, status = 400) { return Object.assign(new Error(message), { status }); }

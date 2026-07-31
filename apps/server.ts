@@ -1,5 +1,6 @@
 import { closeDatabase, initDatabase } from './crm/db/database.ts';
 import { routeODataRequest } from './crm/db/datasource-runtime.ts';
+import { readdirSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
 
 type Role = 'salesperson' | 'manager' | 'system';
@@ -40,13 +41,17 @@ function errorResponse(error: unknown) {
   return json({ error: status >= 500 ? 'Internal server error' : error instanceof Error ? error.message : 'Invalid request' }, status);
 }
 
-async function screenDefinition(pathname: string) {
-  const name = pathname.slice('/api/ui/'.length);
-  if (!/^[a-z][a-z0-9-]*$/.test(name)) return null;
-  const path = join(import.meta.dir, 'crm', 'screens', `${name}.yaml`);
-  const file = Bun.file(path);
-  if (!(await file.exists())) return null;
-  return json(Bun.YAML.parse(await file.text()));
+async function screenDefinition() {
+  const directory = join(import.meta.dir, 'crm', 'screens');
+  const files = readdirSync(directory, { withFileTypes: true })
+    .filter(entry => entry.isFile() && /\.ya?ml$/i.test(entry.name))
+    .map(entry => join(directory, entry.name));
+  const documents = await Promise.all(files.map(async path => Bun.YAML.parse(await Bun.file(path).text()) as Record<string, unknown>));
+  return {
+    datasources: Object.assign({}, ...documents.map(document => document.datasources || {})),
+    screens: documents.flatMap(document => Array.isArray(document.screens) ? document.screens : []),
+    navigation: documents.flatMap(document => Array.isArray(document.navigation) ? document.navigation : []),
+  };
 }
 
 async function staticFile(pathname: string) {
@@ -70,7 +75,7 @@ async function dispatch(request: Request) {
     const response = await routeODataRequest(request, roleOf(request));
     if (response) return response;
   }
-  if (url.pathname.startsWith('/api/ui/')) return await screenDefinition(url.pathname) || json({ error: 'Screen not found' }, 404);
+  if (url.pathname === '/api/ui' && request.method === 'GET') return json(await screenDefinition());
   if (url.pathname.startsWith('/api/')) return json({ error: 'Not found' }, 404);
   if (request.method === 'GET') {
     const asset = await staticFile(url.pathname);

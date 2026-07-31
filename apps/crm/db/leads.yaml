@@ -1,32 +1,75 @@
 # This is the complete server-side definition of the lead-management slice.
 # The HTTP router only matches OData resource metadata to these datasource IDs.
-resource:
-  id: crm.leads
-  entity_set: Leads
-  key: id
-  roles: [salesperson, manager, system]
-  fields:
-    id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
-    name: { type: string, selectable: true, filterable: true, sortable: true }
-    company: { type: string, selectable: true, filterable: true, sortable: true }
-    email: { type: string, selectable: true, filterable: true, sortable: true }
-    phone: { type: string, selectable: true, filterable: true, sortable: true }
-    source: { type: string, selectable: true, filterable: true, sortable: true }
-    status: { type: string, selectable: true, filterable: true, sortable: true }
-    notes: { type: string, selectable: true, filterable: true, sortable: false }
-    active: { type: boolean, selectable: true, filterable: true, sortable: true }
-    created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
-    updated_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
-  list:
-    search: [name, company, email, phone, source, status]
-    default_orderby: created_at desc
-    max_page_size: 200
-    group_by: [company, source, status]
-  operations:
-    create: create
-    read: read
-    update: update
-    delete: delete
+resources:
+  - id: crm.leads
+    entity_set: Leads
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      company: { type: string, selectable: true, filterable: true, sortable: true }
+      email: { type: string, selectable: true, filterable: true, sortable: true }
+      phone: { type: string, selectable: true, filterable: true, sortable: true }
+      source: { type: string, selectable: true, filterable: true, sortable: true }
+      status: { type: string, selectable: true, filterable: true, sortable: true }
+      notes: { type: string, selectable: true, filterable: true, sortable: false }
+      active: { type: boolean, selectable: true, filterable: true, sortable: true }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+      updated_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list:
+      search: [name, company, email, phone, source, status]
+      default_orderby: created_at desc
+      max_page_size: 200
+      group_by: [company, source, status]
+    operations:
+      create: create
+      read: read
+      update: update
+      delete: delete
+
+  - id: crm.customers
+    entity_set: Customers
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      email: { type: string, selectable: true, filterable: true, sortable: true }
+      phone: { type: string, selectable: true, filterable: true, sortable: true }
+      active: { type: boolean, selectable: true, filterable: true, sortable: true }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list:
+      search: [name, email, phone]
+      default_orderby: name asc
+      max_page_size: 200
+      group_by: []
+    operations:
+      create: customer.create
+      read: customer.read
+      update: customer.update
+      delete: customer.delete
+
+  - id: crm.teams
+    entity_set: Teams
+    key: id
+    roles: [salesperson, manager, system]
+    fields:
+      id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+      name: { type: string, selectable: true, filterable: true, sortable: true }
+      quota: { type: number, selectable: true, filterable: true, sortable: true }
+      active: { type: boolean, selectable: true, filterable: true, sortable: true }
+      created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    list:
+      search: [name]
+      default_orderby: name asc
+      max_page_size: 200
+      group_by: []
+    operations:
+      create: team.create
+      read: team.read
+      update: team.update
+      delete: team.delete
 
 datasources:
   - id: read
@@ -89,3 +132,87 @@ datasources:
   - id: delete
     params: { id: { type: string } }
     statement: UPDATE crm_lead SET active = false, updated_at = current_timestamp WHERE id = :id AND active = true
+
+  - id: customer.read
+    params:
+      id: { type: string, default: '' }
+      odata_top: { type: number, default: 200 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT id, name, email, phone, active, created_at, count(*) OVER() AS __odata_count
+      FROM crm_customer
+      WHERE active = true AND (:id = '' OR id = :id)
+      {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: customer.create
+    params: { values: { type: json } }
+    entrypoint: createCustomer
+    script: |
+      async function createCustomer(ctx, params) {
+        const values = params.values || {}; const name = String(values.name || '').trim();
+        if (!name) throw Object.assign(new Error('Customer name is required'), { status: 400 });
+        const id = `customer-${ctx.crypto.randomUUID().slice(0, 8)}`;
+        await ctx.db.execute('INSERT INTO crm_customer(id, name, email, phone, active, created_at) VALUES(:id, :name, :email, :phone, true, current_timestamp)', { id, name, email: String(values.email || '').trim(), phone: String(values.phone || '').trim() });
+        return (await ctx.db.query('SELECT id, name, email, phone, active, created_at FROM crm_customer WHERE id = :id', { id }))[0];
+      }
+
+  - id: customer.update
+    params: { values: { type: json } }
+    entrypoint: updateCustomer
+    script: |
+      async function updateCustomer(ctx, params) {
+        const values = params.values || {}; const id = String(values.id || ''); const name = String(values.name || '').trim();
+        if (!name) throw Object.assign(new Error('Customer name is required'), { status: 400 });
+        const exists = (await ctx.db.query('SELECT id FROM crm_customer WHERE id = :id AND active = true', { id }))[0];
+        if (!exists) throw Object.assign(new Error('Customer not found'), { status: 404 });
+        await ctx.db.execute('UPDATE crm_customer SET name = :name, email = :email, phone = :phone WHERE id = :id', { id, name, email: String(values.email || '').trim(), phone: String(values.phone || '').trim() });
+        return (await ctx.db.query('SELECT id, name, email, phone, active, created_at FROM crm_customer WHERE id = :id', { id }))[0];
+      }
+
+  - id: customer.delete
+    params: { id: { type: string } }
+    statement: UPDATE crm_customer SET active = false WHERE id = :id AND active = true
+
+  - id: team.read
+    params:
+      id: { type: string, default: '' }
+      odata_top: { type: number, default: 200 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT id, name, quota, active, created_at, count(*) OVER() AS __odata_count
+      FROM crm_team
+      WHERE active = true AND (:id = '' OR id = :id)
+      {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: team.create
+    params: { values: { type: json } }
+    entrypoint: createTeam
+    script: |
+      async function createTeam(ctx, params) {
+        const values = params.values || {}; const name = String(values.name || '').trim();
+        if (!name) throw Object.assign(new Error('Team name is required'), { status: 400 });
+        const id = `team-${ctx.crypto.randomUUID().slice(0, 8)}`;
+        await ctx.db.execute('INSERT INTO crm_team(id, name, quota, active, created_at) VALUES(:id, :name, :quota, true, current_timestamp)', { id, name, quota: Number(values.quota || 0) });
+        return (await ctx.db.query('SELECT id, name, quota, active, created_at FROM crm_team WHERE id = :id', { id }))[0];
+      }
+
+  - id: team.update
+    params: { values: { type: json } }
+    entrypoint: updateTeam
+    script: |
+      async function updateTeam(ctx, params) {
+        const values = params.values || {}; const id = String(values.id || ''); const name = String(values.name || '').trim();
+        if (!name) throw Object.assign(new Error('Team name is required'), { status: 400 });
+        const exists = (await ctx.db.query('SELECT id FROM crm_team WHERE id = :id AND active = true', { id }))[0];
+        if (!exists) throw Object.assign(new Error('Team not found'), { status: 404 });
+        await ctx.db.execute('UPDATE crm_team SET name = :name, quota = :quota WHERE id = :id', { id, name, quota: Number(values.quota || 0) });
+        return (await ctx.db.query('SELECT id, name, quota, active, created_at FROM crm_team WHERE id = :id', { id }))[0];
+      }
+
+  - id: team.delete
+    params: { id: { type: string } }
+    statement: UPDATE crm_team SET active = false WHERE id = :id AND active = true

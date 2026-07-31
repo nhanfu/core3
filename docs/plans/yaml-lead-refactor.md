@@ -54,4 +54,13 @@ Replace the current multi-feature CRM with a single lead-management slice whose 
 
 ## Phase 5: restore capabilities
 
-Add one feature at a time only after Phase 4 passes. Each feature must add its server datasources and client screens through the same YAML contracts; changes to generic engines require an explicit capability reason and shared validation.
+Restore the former CRM surface in these independently verifiable YAML slices:
+
+1. Customers and sales teams: CRUD, lead relations, and customer/team drill-downs.
+2. Lead pipeline: stages, kanban, conversion/loss, archive/restore, assignment, duplicates, merge, and lead activities.
+3. Collaboration: messages, followers, and attachments, including file validation and download authorization.
+4. Configuration: stages, tags, lost reasons, activity types/plans, recurring plans, and access rules.
+5. Reporting: lead, pipeline, activity, forecast, graph, pivot, calendar, grouping, and drill-down screens.
+6. Import: CSV preview, validation, commit, relation resolution, and import history.
+
+Each restored feature must add its backend resource/datasources to the server-private `apps/crm/db/leads.yaml` and client composition/events to `apps/crm/screens/*.yaml`. Changes to generic engines require an explicit capability reason and shared validation; no feature-specific route or renderer code is permitted.

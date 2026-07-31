@@ -1,0 +1,130 @@
+navigation:
+  - { label: Leads, to: / }
+  - { label: Customers, to: /customers }
+  - { label: Teams, to: /teams }
+  - { label: Activities, to: /activities }
+  - { label: Reporting, to: /reporting }
+  - { label: Forecast, to: /forecast }
+  - { label: Configuration, to: /configuration }
+  - { label: Import, to: /import }
+
+datasources:
+  customer.read: { resource: Customers, method: GET, collection: true }
+  customer.create: { resource: Customers, method: POST }
+  customer.update: { resource: Customers, method: PUT }
+  customer.delete: { resource: Customers, method: DELETE }
+  team.read: { resource: Teams, method: GET, collection: true }
+  team.create: { resource: Teams, method: POST }
+  team.update: { resource: Teams, method: PUT }
+  team.delete: { resource: Teams, method: DELETE }
+
+screens:
+  - id: customers
+    route: /customers
+    title: Customers
+    state: { search: '' }
+    on_load: |
+      await ctx.load('customer.read', 'customers', { '$search': ctx.state.search, '$orderby': 'name asc' });
+    events:
+      search: |
+        await ctx.load('customer.read', 'customers', { '$search': ctx.state.search, '$orderby': 'name asc' });
+      create: |
+        ctx.navigate('/customers/new');
+      open: |
+        ctx.navigate('/customers/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Customers }
+      - type: section
+        class: yaml-toolbar
+        children:
+          - { type: input, binding: $state.search, placeholder: Search customers, on_change: search }
+          - { type: button, label: New customer, event: create }
+      - type: table
+        rows: $data.customers.value
+        row_event: open
+        columns:
+          - { field: name, label: Customer }
+          - { field: email, label: Email }
+          - { field: phone, label: Phone }
+
+  - id: customer-form
+    route: /customers/:id
+    title: Customer
+    on_load: |
+      if (ctx.route.id === 'new') ctx.data.record = { name: '', email: '', phone: '' };
+      else await ctx.load('customer.read', 'record', {}, ctx.route.id);
+    events:
+      save: |
+        const values = ctx.formValues();
+        if (ctx.route.id === 'new') await ctx.request('customer.create', values);
+        else await ctx.request('customer.update', values, ctx.route.id);
+        ctx.navigate('/customers');
+      remove: |
+        if (ctx.route.id !== 'new') { await ctx.request('customer.delete', {}, ctx.route.id); ctx.navigate('/customers'); }
+      cancel: |
+        ctx.navigate('/customers');
+    components:
+      - { type: heading, text: Customer }
+      - type: form
+        record: $data.record
+        submit: save
+        fields:
+          - { name: name, label: Customer name, required: true }
+          - { name: email, label: Email, type: email }
+          - { name: phone, label: Phone }
+        actions:
+          - { label: Cancel, event: cancel }
+          - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Save, submit: true }
+
+  - id: teams
+    route: /teams
+    title: Teams
+    on_load: |
+      await ctx.load('team.read', 'teams', { '$orderby': 'name asc' });
+    events:
+      create: |
+        ctx.navigate('/teams/new');
+      open: |
+        ctx.navigate('/teams/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Sales teams }
+      - type: section
+        class: yaml-toolbar
+        children:
+          - { type: button, label: New team, event: create }
+      - type: table
+        rows: $data.teams.value
+        row_event: open
+        columns:
+          - { field: name, label: Team }
+          - { field: quota, label: Quota }
+
+  - id: team-form
+    route: /teams/:id
+    title: Team
+    on_load: |
+      if (ctx.route.id === 'new') ctx.data.record = { name: '', quota: 0 };
+      else await ctx.load('team.read', 'record', {}, ctx.route.id);
+    events:
+      save: |
+        const values = ctx.formValues();
+        if (ctx.route.id === 'new') await ctx.request('team.create', values);
+        else await ctx.request('team.update', values, ctx.route.id);
+        ctx.navigate('/teams');
+      remove: |
+        if (ctx.route.id !== 'new') { await ctx.request('team.delete', {}, ctx.route.id); ctx.navigate('/teams'); }
+      cancel: |
+        ctx.navigate('/teams');
+    components:
+      - { type: heading, text: Sales team }
+      - type: form
+        record: $data.record
+        submit: save
+        fields:
+          - { name: name, label: Team name, required: true }
+          - { name: quota, label: Quarterly quota, type: number }
+        actions:
+          - { label: Cancel, event: cancel }
+          - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Save, submit: true }
