@@ -4,41 +4,59 @@ import { tmpdir } from 'node:os';
 
 const port = 3400 + Math.floor(Math.random() * 300);
 const databasePath = join(mkdtempSync(join(tmpdir(), 'core3-crm-browser-')), 'fixture.duckdb');
+const origin = `http://127.0.0.1:${port}`;
 const server = Bun.spawn(['bun', '../server.ts'], {
   cwd: import.meta.dir.replace(/\/scripts$/, ''),
   env: { ...process.env, PORT: String(port), CRM_DB_PATH: databasePath, NODE_ENV: 'test', CRM_ALLOW_ROLE_HEADER: 'true' },
-  stdout: 'ignore',
-  stderr: 'pipe',
+  stdout: 'ignore', stderr: 'pipe',
 });
+
+async function response(path: string, options?: RequestInit) {
+  const result = await fetch(`${origin}${path}`, options);
+  const body = await result.json().catch(() => ({}));
+  if (!result.ok) throw new Error(`${options?.method || 'GET'} ${path}: ${result.status} ${body.error || ''}`);
+  return body;
+}
+
+function browser(path: string, required: string[]) {
+  const result = Bun.spawnSync([
+    'google-chrome', '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
+    '--window-size=1440,900', '--virtual-time-budget=3000', '--dump-dom', `${origin}${path}`,
+  ], { stdout: 'pipe', stderr: 'ignore' });
+  const document = new TextDecoder().decode(result.stdout);
+  const missing = required.filter(marker => !document.includes(marker));
+  if (missing.length) throw new Error(`${path}: missing ${missing.join(', ')}`);
+}
 
 try {
   for (let attempt = 0; attempt < 60; attempt += 1) {
-    try {
-      if ((await fetch(`http://127.0.0.1:${port}/api/modules`)).ok) break;
-    } catch {}
+    try { if ((await fetch(`${origin}/api/odata/$metadata`)).ok) break; } catch {}
     await Bun.sleep(50);
     if (attempt === 59) throw new Error('CRM server did not start');
   }
 
-  const cases = [
-    { name: 'desktop analytics', query: 'view=graph&filter=open&groupBy=team&sort=revenue', size: '1440,900', required: ['<title>CRM — Core3', 'Graph', 'Search opportunities'] },
-    { name: 'narrow pipeline', query: 'view=pipeline', size: '390,844', required: ['<title>CRM — Core3', 'My Pipeline', 'CRM'] },
-    { name: 'manager team workflow', query: 'view=team_form&id=team-na&role=manager', size: '1440,900', required: ['North America', 'Open team pipeline'] },
-    { name: 'manager settings workflow', query: 'view=settings&role=manager', size: '1440,900', required: ['Pipeline stages', 'Stage requirements', 'Add configuration'] },
-    { name: 'manager import workflow', query: 'view=import&role=manager', size: '1440,900', required: ['Import CRM records', 'Import CSV'] },
-  ];
+  const metadata = await response('/api/odata/$metadata');
+  if (metadata.resources?.length !== 1 || metadata.resources[0]?.name !== 'Leads') throw new Error('Only the Leads OData resource should be exposed');
+  if ((await fetch(`${origin}/api/crm?entity=leads&action=list`)).status !== 404) throw new Error('Legacy CRM action gateway must be removed');
+  const filtered = await response(`/api/odata/Leads?${new URLSearchParams({ '$filter': "status eq 'new'", '$search': 'website', '$orderby': 'name asc', '$select': 'id,name,status', '$count': 'true', '$top': '1', '$skip': '0' })}`);
+  if (!Array.isArray(filtered.value) || !filtered.value.length || filtered.value.some((lead: any) => lead.status !== 'new')) throw new Error('OData filter/select/order query failed');
+  const grouped = await response(`/api/odata/Leads?${new URLSearchParams({ '$apply': 'groupby((status))' })}`);
+  if (!Array.isArray(grouped.value) || !grouped.value.every((row: any) => Object.keys(row).length === 1 && 'status' in row)) throw new Error('OData grouping failed');
+  if ((await fetch(`${origin}/api/odata/Leads?$orderby=not_a_field%20asc`)).ok) throw new Error('Invalid OData fields must be rejected');
 
-  for (const item of cases) {
-    const result = Bun.spawnSync([
-      'google-chrome', '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
-      `--window-size=${item.size}`, '--virtual-time-budget=2500', '--dump-dom',
-      `http://127.0.0.1:${port}/?${item.query}`,
-    ], { stdout: 'pipe', stderr: 'ignore' });
-    const document = new TextDecoder().decode(result.stdout);
-    const missing = item.required.filter(marker => !document.includes(marker));
-    if (missing.length) throw new Error(`${item.name}: missing ${missing.join(', ')}`);
-    console.log(`pass: ${item.name}`);
-  }
+  const created = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Browser workflow lead', company: 'Core3', email: 'lead@core3.test', status: 'new' }) });
+  if (!created.id) throw new Error('Lead creation failed');
+  const read = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
+  if (read.name !== 'Browser workflow lead') throw new Error('Lead read failed');
+  const updated = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...read, name: 'Updated workflow lead', status: 'qualified' }) });
+  if (updated.name !== 'Updated workflow lead' || updated.status !== 'qualified') throw new Error('Lead update failed');
+  await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const deleted = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
+  if (deleted !== null) throw new Error('Lead delete failed');
+
+  browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
+  browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
+  console.log('pass: OData CRUD, query options, lead list, and lead form');
 } finally {
   server.kill();
 }

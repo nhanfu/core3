@@ -81,3 +81,42 @@ button, input { font: inherit; }
   .odoo-app-grid { grid-template-columns: repeat(2, 1fr); }
   .odoo-report-summary { grid-template-columns: repeat(2, 1fr); }
 }
+// YAML screen engine baseline. Screen-specific structure and behavior remain in
+// apps/crm/screens/*.yaml; these styles are intentionally generic primitives.
+.yaml-crm {
+  box-sizing: border-box;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #1f2937;
+  font: 15px/1.45 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.yaml-heading { margin: 0 0 .25rem; font-size: 1.7rem; }
+.yaml-text, .yaml-count { margin: .25rem 0 1rem; color: #64748b; }
+.yaml-toolbar, .yaml-actions { display: flex; gap: .75rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+.yaml-input, .yaml-select, .yaml-form input, .yaml-form select, .yaml-form textarea {
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: .4rem;
+  padding: .55rem .65rem;
+  background: #fff;
+  font: inherit;
+}
+.yaml-input { min-width: 15rem; flex: 1; }
+.yaml-button { border: 0; border-radius: .4rem; padding: .58rem .9rem; background: #155eef; color: #fff; cursor: pointer; font: inherit; }
+.yaml-button:hover { background: #004eeb; }
+.yaml-table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgb(15 23 42 / 10%); }
+.yaml-table th, .yaml-table td { padding: .7rem; border-bottom: 1px solid #e2e8f0; text-align: left; }
+.yaml-table th { color: #475569; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
+.yaml-table tbody tr { cursor: pointer; }
+.yaml-table tbody tr:hover { background: #f8fafc; }
+.yaml-form { display: grid; gap: 1rem; max-width: 680px; padding: 1.25rem; background: #fff; box-shadow: 0 1px 3px rgb(15 23 42 / 10%); }
+.yaml-form label { display: grid; gap: .35rem; font-weight: 600; }
+.yaml-form textarea { min-height: 7rem; resize: vertical; }
+.yaml-error { padding: .75rem; border-radius: .4rem; background: #fef2f2; color: #b42318; }
+
+@media (max-width: 640px) {
+  .yaml-crm { padding: 1rem; }
+  .yaml-table { display: block; overflow-x: auto; }
+}

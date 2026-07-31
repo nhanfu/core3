@@ -1,110 +1,91 @@
-datasources:
-  - id: crm.list_leads
-    params:
-      search: { type: string, default: '' }
-      type: { type: string, default: '' }
-      filter: { type: string, default: '' }
-      sort: { type: string, default: '' }
-      group_by: { type: string, default: '' }
-      team_id: { type: string, default: '' }
-      role: { type: string, default: manager }
-    query: |
-      WITH p AS (
-        SELECT
-          CAST(:search AS VARCHAR) AS search,
-          CAST(:type AS VARCHAR) AS type,
-          CAST(:filter AS VARCHAR) AS filter,
-          CAST(:sort AS VARCHAR) AS sort,
-          CAST(:group_by AS VARCHAR) AS group_by,
-          CAST(:team_id AS VARCHAR) AS team_id,
-          CAST(:role AS VARCHAR) AS role
-      )
-      SELECT l.*, s.name AS stage_name
-      FROM crm_lead l
-      JOIN crm_stage s ON s.id = l.stage_id
-      CROSS JOIN p
-      WHERE (p.filter <> 'archived' AND l.active OR p.filter = 'archived' AND NOT l.active)
-        AND (p.type NOT IN ('lead', 'opportunity') OR l.type = p.type)
-        AND (p.team_id = '' OR l.team_id = p.team_id OR (l.team_id IS NULL AND lower(l.team) = lower((SELECT name FROM crm_team WHERE id = p.team_id))))
-        AND (p.filter <> 'unassigned' OR coalesce(l.salesperson, '') = '')
-        AND (p.filter <> 'open' OR s.id NOT IN ('won', 'lost'))
-        AND (p.filter <> 'won' OR s.id = 'won')
-        AND (p.filter <> 'lost' OR s.id = 'lost')
-        AND (p.filter <> 'overdue' OR l.expected_closing < current_date)
-        AND (p.filter <> 'activity_status' OR EXISTS (SELECT 1 FROM crm_activity a WHERE a.lead_id = l.id AND NOT a.done))
-        AND (
-          p.search = '' OR NOT EXISTS (
-            SELECT 1
-            FROM unnest(regexp_split_to_array(trim(p.search), '\\s+')) AS terms(term)
-            WHERE NOT EXISTS (
-              SELECT 1
-              FROM unnest(string_split(terms.term, '|')) AS alternatives(alternative)
-              WHERE alternatives.alternative <> ''
-                AND (
-                  lower(l.name) LIKE lower('%' || alternatives.alternative || '%')
-                  OR lower(coalesce(l.partner_name, '')) LIKE lower('%' || alternatives.alternative || '%')
-                  OR lower(coalesce(l.salesperson, '')) LIKE lower('%' || alternatives.alternative || '%')
-                )
-            )
-          )
-        )
-      ORDER BY
-        CASE WHEN p.group_by = 'stage_id' THEN s.sequence END,
-        CASE WHEN p.group_by = 'salesperson' THEN l.salesperson END NULLS FIRST,
-        CASE WHEN p.group_by = 'team' THEN l.team END NULLS FIRST,
-        CASE WHEN p.group_by = 'partner_name' THEN l.partner_name END NULLS FIRST,
-        CASE WHEN p.group_by = 'expected_closing' THEN date_trunc('month', l.expected_closing) END NULLS LAST,
-        CASE WHEN p.sort = 'revenue' THEN l.expected_revenue END DESC,
-        CASE WHEN p.sort = 'closing' THEN l.expected_closing END NULLS LAST,
-        CASE WHEN p.sort NOT IN ('revenue', 'closing') THEN l.created_at END DESC
+# This is the complete server-side definition of the lead-management slice.
+# The HTTP router only matches OData resource metadata to these datasource IDs.
+resource:
+  id: crm.leads
+  entity_set: Leads
+  key: id
+  roles: [salesperson, manager, system]
+  fields:
+    id: { type: string, readonly: true, selectable: true, filterable: true, sortable: true }
+    name: { type: string, selectable: true, filterable: true, sortable: true }
+    company: { type: string, selectable: true, filterable: true, sortable: true }
+    email: { type: string, selectable: true, filterable: true, sortable: true }
+    phone: { type: string, selectable: true, filterable: true, sortable: true }
+    source: { type: string, selectable: true, filterable: true, sortable: true }
+    status: { type: string, selectable: true, filterable: true, sortable: true }
+    notes: { type: string, selectable: true, filterable: true, sortable: false }
+    active: { type: boolean, selectable: true, filterable: true, sortable: true }
+    created_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+    updated_at: { type: datetime, readonly: true, selectable: true, filterable: true, sortable: true }
+  list:
+    search: [name, company, email, phone, source, status]
+    default_orderby: created_at desc
+    max_page_size: 200
+    group_by: [company, source, status]
+  operations:
+    create: create
+    read: read
+    update: update
+    delete: delete
 
-  - id: crm.save_lead
+datasources:
+  - id: read
+    params:
+      id: { type: string, default: '' }
+      odata_top: { type: number, default: 200 }
+      odata_skip: { type: number, default: 0 }
+    query: |
+      SELECT id, name, company, email, phone, source, status, notes, active, created_at, updated_at,
+        count(*) OVER() AS __odata_count
+      FROM crm_lead
+      WHERE active = true AND (:id = '' OR id = :id)
+      {{where}}
+      {{order}}
+      LIMIT :odata_top OFFSET :odata_skip
+
+  - id: create
     params: { values: { type: json } }
-    language: javascript
-    entrypoint: saveLead
+    entrypoint: createLead
     script: |
-      // js
-      async function saveLead(ctx, params) {
+      async function createLead(ctx, params) {
         const values = params.values || {};
-        const id = String(values.id || `opp-${ctx.crypto.randomUUID().slice(0, 8)}`);
         const name = String(values.name || '').trim();
-        if (!name) throw Object.assign(new Error('Opportunity name is required'), { status: 400 });
-        const existing = values.id ? (await ctx.db.query('SELECT write_version FROM crm_lead WHERE id = :id', { id }))[0] : null;
-        if (existing && values.write_version != null && Number(values.write_version) !== Number(existing.write_version || 1)) {
-          throw Object.assign(new Error('This record was changed by another user. Reload before saving.'), { status: 409 });
-        }
+        if (!name) throw Object.assign(new Error('Lead name is required'), { status: 400 });
+        const id = `lead-${ctx.crypto.randomUUID().slice(0, 8)}`;
         await ctx.db.execute(`
-          INSERT INTO crm_lead(id, name, type, stage_id, partner_name, contact_name, email, phone, source, campaign, team, salesperson, expected_revenue, recurring_revenue, recurring_plan_id, priority, tags, probability, expected_closing, next_activity, notes)
-          VALUES(:id, :name, :type, :stage_id, :partner_name, :contact_name, :email, :phone, :source, :campaign, :team, :salesperson, :expected_revenue, :recurring_revenue, :recurring_plan_id, :priority, :tags, :probability, :expected_closing, :next_activity, :notes)
-          ON CONFLICT(id) DO UPDATE SET
-            name=excluded.name, type=excluded.type, stage_id=excluded.stage_id,
-            partner_name=excluded.partner_name, salesperson=excluded.salesperson, source=excluded.source, campaign=excluded.campaign,
-            expected_revenue=excluded.expected_revenue, recurring_revenue=excluded.recurring_revenue, recurring_plan_id=excluded.recurring_plan_id, priority=excluded.priority,
-            tags=excluded.tags, contact_name=excluded.contact_name, email=excluded.email,
-            phone=excluded.phone, team=excluded.team, probability=excluded.probability,
-            expected_closing=excluded.expected_closing, next_activity=excluded.next_activity,
-            notes=excluded.notes, write_version=coalesce(crm_lead.write_version, 1) + 1
+          INSERT INTO crm_lead(id, name, company, email, phone, source, status, notes, active, created_at, updated_at)
+          VALUES(:id, :name, :company, :email, :phone, :source, :status, :notes, true, current_timestamp, current_timestamp)
         `, {
-          id, name, type: String(values.type || 'opportunity'), stage_id: String(values.stage_id || 'new'),
-          partner_name: String(values.partner_name || ''), contact_name: String(values.contact_name || ''), email: String(values.email || ''), phone: String(values.phone || ''),
-          source: String(values.source || ''), campaign: String(values.campaign || ''), team: String(values.team || 'North America'), salesperson: String(values.salesperson || ''),
-          expected_revenue: Number(values.expected_revenue || 0), recurring_revenue: Number(values.recurring_revenue || 0), recurring_plan_id: String(values.recurring_plan_id || ''), priority: Number(values.priority || 0), tags: String(values.tags || ''),
-          probability: Number(values.probability || 0), expected_closing: String(values.expected_closing || '') || null, next_activity: String(values.next_activity || ''), notes: String(values.notes || ''),
+          id, name, company: String(values.company || '').trim(), email: String(values.email || '').trim(),
+          phone: String(values.phone || '').trim(), source: String(values.source || '').trim(),
+          status: String(values.status || 'new').trim(), notes: String(values.notes || '').trim(),
         });
-        const partner = (await ctx.db.query('SELECT id, name FROM crm_partner WHERE id = :partner_id OR lower(name) = lower(:partner_name) LIMIT 1', { partner_id: String(values.partner_id || ''), partner_name: String(values.partner_name || '') }))[0];
-        const team = (await ctx.db.query('SELECT id, name FROM crm_team WHERE id = :team_id OR lower(name) = lower(:team_name) LIMIT 1', { team_id: String(values.team_id || ''), team_name: String(values.team || '') }))[0];
-        const user = (await ctx.db.query('SELECT id, name FROM res_user WHERE id = :user_id OR lower(name) = lower(:user_name) LIMIT 1', { user_id: String(values.salesperson_id || ''), user_name: String(values.salesperson || '') }))[0];
-        await ctx.db.execute('UPDATE crm_lead SET partner_name = :partner_name, team = :team, salesperson = :salesperson WHERE id = :id', { id, partner_name: partner?.name || String(values.partner_name || ''), team: team?.name || String(values.team || ''), salesperson: user?.name || String(values.salesperson || '') });
-        await ctx.db.execute('UPDATE crm_lead SET partner_id = :partner_id, team_id = :team_id, salesperson_id = :salesperson_id WHERE id = :id', { id, partner_id: partner?.id || null, team_id: team?.id || null, salesperson_id: user?.id || null });
-        await ctx.db.execute('DELETE FROM crm_lead_tag WHERE lead_id = :id', { id });
-        const tagValues = String(values.tags ?? values.tag_ids ?? '').split(',').map(value => value.trim()).filter(Boolean);
-        await ctx.db.execute('UPDATE crm_lead SET tags = :tags WHERE id = :id', { id, tags: tagValues.join(',') });
-        for (const tag of tagValues) {
-          const tagRow = (await ctx.db.query('SELECT id FROM crm_tag WHERE lower(name) = lower(:tag) OR id = :tag LIMIT 1', { tag }))[0];
-          if (tagRow) await ctx.db.execute('INSERT INTO crm_lead_tag(lead_id, tag_id) VALUES(:lead_id, :tag_id) ON CONFLICT DO NOTHING', { lead_id: id, tag_id: tagRow.id });
-        }
-        const row = (await ctx.db.query('SELECT l.*, s.name AS stage_name FROM crm_lead l JOIN crm_stage s ON s.id = l.stage_id WHERE l.id = :id', { id }))[0];
-        if (!row) return null;
-        row.tag_ids = (await ctx.db.query("SELECT coalesce(string_agg(tag.id, ',' ORDER BY tag.id), '') AS tag_ids FROM crm_lead l LEFT JOIN crm_lead_tag lt ON lt.lead_id = l.id LEFT JOIN crm_tag tag ON tag.id = lt.tag_id WHERE l.id = :id", { id }))[0]?.tag_ids || '';
-        return row;
+        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
       }
+
+  - id: update
+    params: { values: { type: json } }
+    entrypoint: updateLead
+    script: |
+      async function updateLead(ctx, params) {
+        const values = params.values || {};
+        const id = String(values.id || '');
+        const existing = (await ctx.db.query('SELECT id FROM crm_lead WHERE id = :id AND active = true', { id }))[0];
+        if (!existing) throw Object.assign(new Error('Lead not found'), { status: 404 });
+        const name = String(values.name || '').trim();
+        if (!name) throw Object.assign(new Error('Lead name is required'), { status: 400 });
+        await ctx.db.execute(`
+          UPDATE crm_lead SET name = :name, company = :company, email = :email, phone = :phone,
+            source = :source, status = :status, notes = :notes, updated_at = current_timestamp
+          WHERE id = :id
+        `, {
+          id, name, company: String(values.company || '').trim(), email: String(values.email || '').trim(),
+          phone: String(values.phone || '').trim(), source: String(values.source || '').trim(),
+          status: String(values.status || 'new').trim(), notes: String(values.notes || '').trim(),
+        });
+        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
+      }
+
+  - id: delete
+    params: { id: { type: string } }
+    statement: UPDATE crm_lead SET active = false, updated_at = current_timestamp WHERE id = :id AND active = true
