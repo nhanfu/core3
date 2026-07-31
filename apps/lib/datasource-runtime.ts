@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import vm from 'node:vm';
-import { all, run, withDb } from './database.ts';
 
 type ParamDefinition = { type?: 'string' | 'number' | 'boolean' | 'json'; default?: unknown };
 type Field = { type?: string; readonly?: boolean; selectable?: boolean; filterable?: boolean; sortable?: boolean };
@@ -31,6 +30,20 @@ export type Datasource = {
 type Document = { resource?: ResourceDefinition; resources?: ResourceDefinition[]; datasources?: Datasource[] };
 type ODataQuery = { filter?: string; search?: string; select?: string[]; orderby?: string; top: number; skip: number; count: boolean; groupBy?: string[] };
 
+export type DatasourceDatabase = {
+  all(connection: any, sql: string, params?: unknown[]): Promise<Record<string, unknown>[]>;
+  run(connection: any, sql: string, params?: unknown[]): Promise<unknown>;
+  withDb<T>(callback: (connection: any) => Promise<T>): Promise<T>;
+};
+
+export type DatasourceRuntimeOptions = {
+  datasourceDirectory: string;
+  database: DatasourceDatabase;
+};
+
+export function createDatasourceRuntime({ datasourceDirectory, database }: DatasourceRuntimeOptions) {
+  const { all, run, withDb } = database;
+
 function yamlFiles(root: string): string[] {
   try {
     return readdirSync(root, { withFileTypes: true }).flatMap(entry => {
@@ -41,7 +54,7 @@ function yamlFiles(root: string): string[] {
 }
 
 function documents() {
-  return yamlFiles(import.meta.dir).map(path => Bun.YAML.parse(readFileSync(path, 'utf8')) as Document);
+  return yamlFiles(datasourceDirectory).map(path => Bun.YAML.parse(readFileSync(path, 'utf8')) as Document);
 }
 
 function datasources() { return documents().flatMap(document => document.datasources || []); }
@@ -89,7 +102,7 @@ async function scriptDatasource(source: Datasource, supplied: Record<string, unk
   });
 }
 
-export async function executeDatasource(id: string, params: Record<string, unknown> = {}, fragments: Record<string, string> = {}) {
+async function executeDatasource(id: string, params: Record<string, unknown> = {}, fragments: Record<string, string> = {}) {
   const source = findDatasource(id);
   if (!source) throw error(`Unknown datasource: ${id}`, 500);
   if (source.script) return scriptDatasource(source, params);
@@ -196,7 +209,7 @@ function configuredDatasource(operation: Operation, role: string) {
   return definition.datasource;
 }
 
-export async function routeODataRequest(request: Request, role: string) {
+async function routeODataRequest(request: Request, role: string) {
   const url = new URL(request.url);
   const definitions = resources();
   if (url.pathname === '/api/odata/$metadata' && request.method === 'GET') return json({ '@odata.context': `${url.origin}/api/odata/$metadata`, resources: definitions.map(resource => ({ name: resource.entity_set, key: resource.key || 'id', fields: resource.fields })) });
@@ -244,4 +257,7 @@ export async function routeODataRequest(request: Request, role: string) {
   const values = { ...(body as Record<string, unknown>), ...(key ? { id: key } : {}) };
   const result = await executeDatasource(datasource, { values, id: key || '', role });
   return json(result, operationName === 'create' ? 201 : 200);
+}
+
+  return { executeDatasource, routeODataRequest };
 }

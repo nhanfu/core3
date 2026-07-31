@@ -1,4 +1,6 @@
-type Screen = {
+import { HTML } from './html.ts';
+
+export type Screen = {
   id: string;
   route: string;
   title: string;
@@ -7,11 +9,28 @@ type Screen = {
   events?: Record<string, string>;
   components: Component[];
 };
-type Component = Record<string, any> & { type: string; children?: Component[]; event?: string; on_change?: string; visible_when?: string };
-type Datasource = { resource: string; method: 'GET' | 'POST' | 'PUT' | 'DELETE'; collection?: boolean; action?: string };
-type Definition = { datasources: Record<string, Datasource>; screens: Screen[]; navigation?: { label: string; to: string }[] };
+export type Component = Record<string, any> & {
+  type: string;
+  children?: Component[];
+  event?: string;
+  on_change?: string;
+  visible_when?: string;
+};
+export type Datasource = {
+  resource: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  collection?: boolean;
+  action?: string;
+};
+export type Definition = {
+  application?: { id: string; name: string };
+  datasources: Record<string, Datasource>;
+  screens: Screen[];
+  navigation?: { label: string; to: string }[];
+};
 
-class YamlScreenEngine {
+/** Renders the declarative YAML screens supplied by any Core3 application. */
+export class YamlScreenEngine {
   private definition!: Definition;
   private screen!: Screen;
   private route: Record<string, string> = {};
@@ -29,8 +48,9 @@ class YamlScreenEngine {
   }
 
   private async loadLocation() {
-    const pathname = location.pathname;
-    const match = this.definition.screens.map(screen => ({ screen, params: this.matchRoute(screen.route, pathname) })).find(item => item.params);
+    const match = this.definition.screens
+      .map(screen => ({ screen, params: this.matchRoute(screen.route, location.pathname) }))
+      .find(item => item.params);
     if (!match) return this.showFatal('Screen route not found.');
     this.screen = match.screen;
     this.route = match.params!;
@@ -38,7 +58,7 @@ class YamlScreenEngine {
     this.state = { ...(this.screen.state || {}) };
     this.form = {};
     this.error = '';
-    document.title = `${this.screen.title} — CRM`;
+    document.title = `${this.screen.title} — ${this.definition.application?.name || 'Core3'}`;
     try {
       if (this.screen.on_load) await this.run(this.screen.on_load);
       this.render();
@@ -65,9 +85,10 @@ class YamlScreenEngine {
     const path = `/api/odata/${source.resource}${key ? `('${encodeURIComponent(key)}')` : ''}${source.action ? `/${source.action}` : ''}`;
     const options: RequestInit = { method: source.method, headers: { Accept: 'application/json' } };
     if (source.method === 'GET') {
-      const query = new URLSearchParams(Object.entries(values).filter(([, value]) => value !== undefined && value !== '').map(([name, value]) => [name, String(value)]));
-      const response = await fetch(query.size ? `${path}?${query}` : path, options);
-      return this.readResponse(response);
+      const query = new URLSearchParams(Object.entries(values)
+        .filter(([, value]) => value !== undefined && value !== '')
+        .map(([name, value]) => [name, String(value)]));
+      return this.readResponse(await fetch(query.size ? `${path}?${query}` : path, options));
     }
     options.headers = { ...options.headers, 'Content-Type': 'application/json' };
     options.body = JSON.stringify(values);
@@ -108,8 +129,7 @@ class YamlScreenEngine {
   }
 
   private resolve(value: any): any {
-    if (typeof value !== 'string') return value;
-    if (!value.startsWith('$')) return value;
+    if (typeof value !== 'string' || !value.startsWith('$')) return value;
     const [root, ...parts] = value.slice(1).split('.');
     let current: any = root === 'data' ? this.data : root === 'state' ? this.state : root === 'route' ? this.route : root === 'form' ? this.form : undefined;
     for (const part of parts) current = current?.[part];
@@ -117,17 +137,20 @@ class YamlScreenEngine {
   }
 
   private visible(component: Component) {
-    if (!component.visible_when) return true;
-    return Boolean(new Function('ctx', `return (${component.visible_when});`)(this.context()));
+    return !component.visible_when || Boolean(new Function('ctx', `return (${component.visible_when});`)(this.context()));
+  }
+
+  private element<T extends HTMLElement = HTMLElement>(tag: string, className?: string) {
+    const builder = new HTML().create(tag);
+    if (className) builder.className(className);
+    return builder.getContext() as T;
   }
 
   private render() {
-    this.root.replaceChildren();
-    const page = document.createElement('main');
-    page.className = 'yaml-crm';
+    new HTML().take(this.root).clear();
+    const page = this.element('main', 'yaml-crm');
     if (this.error) {
-      const message = document.createElement('p');
-      message.className = 'yaml-error';
+      const message = this.element('p', 'yaml-error');
       message.textContent = this.error;
       page.append(message);
     }
@@ -137,32 +160,18 @@ class YamlScreenEngine {
   }
 
   private renderComponent(component: Component): HTMLElement {
-    if (!this.visible(component)) return document.createElement('span');
-    const element = document.createElement(component.type === 'heading' ? 'h1' : component.type === 'text' ? 'p' : component.type === 'button' ? 'button' : component.type === 'input' ? 'input' : component.type === 'select' ? 'select' : component.type === 'table' ? 'table' : component.type === 'form' ? 'form' : component.type === 'nav' ? 'nav' : 'section');
-    element.className = `yaml-${component.type}${component.class ? ` ${component.class}` : ''}`;
+    if (!this.visible(component)) return this.element('span');
+    const tags: Record<string, string> = { heading: 'h1', text: 'p', button: 'button', input: 'input', select: 'select', table: 'table', form: 'form', nav: 'nav' };
+    const element = this.element(tags[component.type] || 'section', `yaml-${component.type}${component.class ? ` ${component.class}` : ''}`);
     if (component.type === 'heading' || component.type === 'text') element.textContent = String(this.resolve(component.text) || '');
     if (component.type === 'button') {
-      element.setAttribute('type', component.submit ? 'submit' : 'button');
-      element.textContent = component.label;
-      if (!component.submit) element.addEventListener('click', () => void this.trigger(component.event));
+      const button = element as HTMLButtonElement;
+      button.type = component.submit ? 'submit' : 'button';
+      button.textContent = component.label;
+      if (!component.submit) button.addEventListener('click', () => void this.trigger(component.event));
     }
-    if (component.type === 'input') {
-      const input = element as HTMLInputElement;
-      input.type = component.input_type || 'text'; input.placeholder = component.placeholder || ''; input.name = component.name || '';
-      input.value = String(this.resolve(component.binding) ?? '');
-      input.required = Boolean(component.required);
-      input.addEventListener('input', () => this.setBinding(component.binding, input.value));
-      if (component.on_change) input.addEventListener('change', () => void this.trigger(component.on_change));
-    }
-    if (component.type === 'select') {
-      const select = element as HTMLSelectElement;
-      select.name = component.name || '';
-      for (const optionDefinition of this.resolve(component.options) || []) {
-        const option = document.createElement('option'); option.value = optionDefinition[component.option_value || 'value']; option.textContent = optionDefinition[component.option_label || 'label']; select.append(option);
-      }
-      select.value = String(this.resolve(component.binding) ?? '');
-      select.addEventListener('change', () => { this.setBinding(component.binding, select.value); if (component.on_change) void this.trigger(component.on_change); });
-    }
+    if (component.type === 'input') this.renderInput(element as HTMLInputElement, component);
+    if (component.type === 'select') this.renderSelect(element as HTMLSelectElement, component);
     if (component.type === 'table') this.renderTable(element as HTMLTableElement, component);
     if (component.type === 'form') this.renderForm(element as HTMLFormElement, component);
     if (component.type === 'nav') this.renderNavigation(element, component);
@@ -174,11 +183,36 @@ class YamlScreenEngine {
     return element;
   }
 
+  private renderInput(input: HTMLInputElement, component: Component) {
+    input.type = component.input_type || 'text';
+    input.placeholder = component.placeholder || '';
+    input.name = component.name || '';
+    input.value = String(this.resolve(component.binding) ?? '');
+    input.required = Boolean(component.required);
+    input.addEventListener('input', () => this.setBinding(component.binding, input.value));
+    if (component.on_change) input.addEventListener('change', () => void this.trigger(component.on_change));
+  }
+
+  private renderSelect(select: HTMLSelectElement, component: Component) {
+    select.name = component.name || '';
+    for (const definition of this.resolve(component.options) || []) {
+      const option = this.element<HTMLOptionElement>('option');
+      option.value = String(definition[component.option_value || 'value']);
+      option.textContent = String(definition[component.option_label || 'label']);
+      select.append(option);
+    }
+    select.value = String(this.resolve(component.binding) ?? '');
+    select.addEventListener('change', () => {
+      this.setBinding(component.binding, select.value);
+      if (component.on_change) void this.trigger(component.on_change);
+    });
+  }
+
   private renderTable(table: HTMLTableElement, component: Component) {
     const rows = this.resolve(component.rows) || [];
     const columns = component.columns || [];
     const head = table.createTHead().insertRow();
-    for (const column of columns) { const cell = document.createElement('th'); cell.textContent = column.label; head.append(cell); }
+    for (const column of columns) { const cell = this.element('th'); cell.textContent = column.label; head.append(cell); }
     const body = table.createTBody();
     for (const row of rows) {
       const line = body.insertRow();
@@ -191,25 +225,34 @@ class YamlScreenEngine {
     this.form = Object.keys(this.form).length ? this.form : { ...(this.resolve(component.record) || {}) };
     form.addEventListener('submit', event => { event.preventDefault(); void this.trigger(component.submit); });
     for (const field of component.fields || []) {
-      const label = document.createElement('label'); label.textContent = field.label;
-      const input = field.type === 'textarea' ? document.createElement('textarea') : document.createElement(field.type === 'select' ? 'select' : 'input');
-      input.name = field.name; input.required = Boolean(field.required);
+      const label = this.element('label');
+      label.textContent = field.label;
+      const input = this.element<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(field.type === 'textarea' ? 'textarea' : field.type === 'select' ? 'select' : 'input');
+      input.name = field.name;
+      input.required = Boolean(field.required);
       if (input instanceof HTMLInputElement) input.type = ['email', 'number', 'date'].includes(field.type) ? field.type : 'text';
-      if (input instanceof HTMLSelectElement) for (const optionDefinition of this.resolve(field.options) || []) { const option = document.createElement('option'); option.value = optionDefinition[field.option_value || 'value']; option.textContent = optionDefinition[field.option_label || 'label']; input.append(option); }
+      if (input instanceof HTMLSelectElement) for (const definition of this.resolve(field.options) || []) {
+        const option = this.element<HTMLOptionElement>('option');
+        option.value = String(definition[field.option_value || 'value']);
+        option.textContent = String(definition[field.option_label || 'label']);
+        input.append(option);
+      }
       input.value = String(this.form[field.name] ?? '');
       input.addEventListener('input', () => { this.form[field.name] = input.value; });
       input.addEventListener('change', () => { this.form[field.name] = input.value; });
-      label.append(input); form.append(label);
+      label.append(input);
+      form.append(label);
     }
-    const actions = document.createElement('div'); actions.className = 'yaml-actions';
+    const actions = this.element('div', 'yaml-actions');
     for (const action of component.actions || []) actions.append(this.renderComponent({ type: 'button', ...action }));
     form.append(actions);
   }
 
   private renderNavigation(nav: HTMLElement, component: Component) {
     for (const item of component.items || []) {
-      const link = document.createElement('a');
-      link.href = item.to; link.textContent = item.label;
+      const link = this.element<HTMLAnchorElement>('a');
+      link.href = item.to;
+      link.textContent = item.label;
       if (location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(`${item.to}/`))) link.className = 'active';
       link.addEventListener('click', event => { event.preventDefault(); this.navigate(item.to); });
       nav.append(link);
@@ -218,17 +261,20 @@ class YamlScreenEngine {
 
   private renderKanban(board: HTMLElement, component: Component) {
     const rows = this.resolve(component.rows) || [];
-    const configuredGroups = this.resolve(component.groups);
-    const groups = configuredGroups || [...new Set(rows.map((row: any) => row[component.group_field]))];
+    const groups = this.resolve(component.groups) || [...new Set(rows.map((row: any) => row[component.group_field]))];
     board.classList.add('yaml-kanban');
     for (const configuredGroup of groups) {
       const group = typeof configuredGroup === 'object' ? configuredGroup[component.group_value || 'id'] : configuredGroup;
-      const column = document.createElement('section'); column.className = 'yaml-kanban-column';
-      const title = document.createElement('h2'); title.textContent = typeof configuredGroup === 'object' ? configuredGroup[component.group_label || 'name'] : component.group_labels?.[group] || String(group); column.append(title);
+      const column = this.element('section', 'yaml-kanban-column');
+      const title = this.element('h2');
+      title.textContent = typeof configuredGroup === 'object' ? configuredGroup[component.group_label || 'name'] : component.group_labels?.[group] || String(group);
+      column.append(title);
       for (const row of rows.filter((item: any) => item[component.group_field] === group)) {
-        const card = document.createElement('button'); card.type = 'button'; card.className = 'yaml-kanban-card';
+        const card = this.element<HTMLButtonElement>('button', 'yaml-kanban-card');
+        card.type = 'button';
         card.textContent = [row[component.title_field], ...(component.detail_fields || []).map((field: string) => row[field]).filter(Boolean)].join('\n');
-        card.addEventListener('click', () => void this.trigger(component.row_event, { row })); column.append(card);
+        card.addEventListener('click', () => void this.trigger(component.row_event, { row }));
+        column.append(card);
       }
       board.append(column);
     }
@@ -236,41 +282,51 @@ class YamlScreenEngine {
 
   private renderChart(chart: HTMLElement, component: Component) {
     const rows = this.resolve(component.rows) || [];
-    const values = rows.map((row: any) => Number(row[component.value_field] || 0));
-    const max = Math.max(...values, 1);
+    const max = Math.max(...rows.map((row: any) => Number(row[component.value_field] || 0)), 1);
     chart.classList.add('yaml-chart');
     for (const row of rows) {
-      const item = document.createElement('div'); item.className = 'yaml-chart-row';
-      const label = document.createElement('span'); label.textContent = String(row[component.label_field] ?? '');
-      const bar = document.createElement('div'); bar.className = 'yaml-chart-bar';
-      const fill = document.createElement('i'); fill.style.width = `${Math.max(0, Number(row[component.value_field] || 0)) / max * 100}%`; bar.append(fill);
-      const value = document.createElement('strong'); value.textContent = String(row[component.value_field] ?? 0);
-      item.append(label, bar, value); chart.append(item);
+      const item = this.element('div', 'yaml-chart-row');
+      const label = this.element('span'); label.textContent = String(row[component.label_field] ?? '');
+      const bar = this.element('div', 'yaml-chart-bar');
+      const fill = this.element('i'); fill.style.width = `${Math.max(0, Number(row[component.value_field] || 0)) / max * 100}%`;
+      const value = this.element('strong'); value.textContent = String(row[component.value_field] ?? 0);
+      bar.append(fill); item.append(label, bar, value); chart.append(item);
     }
   }
 
   private renderPivot(container: HTMLElement, component: Component) {
     const rows = this.resolve(component.rows) || [];
-    const rowField = component.row_field; const columnField = component.column_field; const valueField = component.value_field;
-    const columns = [...new Set(rows.map((row: any) => String(row[columnField] ?? '')))];
+    const columns = [...new Set(rows.map((row: any) => String(row[component.column_field] ?? ''))) ] as string[];
     const groups = new Map<string, Record<string, number>>();
     for (const row of rows) {
-      const label = String(row[rowField] ?? ''); const values = groups.get(label) || {};
-      values[String(row[columnField] ?? '')] = (values[String(row[columnField] ?? '')] || 0) + Number(row[valueField] || 0);
+      const label = String(row[component.row_field] ?? '');
+      const values = groups.get(label) || {};
+      const column = String(row[component.column_field] ?? '');
+      values[column] = (values[column] || 0) + Number(row[component.value_field] || 0);
       groups.set(label, values);
     }
-    const table = document.createElement('table'); table.className = 'yaml-table';
-    const header = table.createTHead().insertRow(); header.insertCell().textContent = component.row_label || rowField;
+    const table = this.element<HTMLTableElement>('table', 'yaml-table');
+    const header = table.createTHead().insertRow();
+    header.insertCell().textContent = component.row_label || component.row_field;
     for (const column of columns) header.insertCell().textContent = column;
     const body = table.createTBody();
-    for (const [label, values] of groups) { const line = body.insertRow(); line.insertCell().textContent = label; for (const column of columns) line.insertCell().textContent = String(values[column] || 0); }
+    for (const [label, values] of groups) {
+      const line = body.insertRow();
+      line.insertCell().textContent = label;
+      for (const column of columns) line.insertCell().textContent = String(values[column] || 0);
+    }
     container.append(table);
   }
 
   private renderCalendar(container: HTMLElement, component: Component) {
     const rows = [...(this.resolve(component.rows) || [])].sort((left: any, right: any) => String(left[component.date_field] || '').localeCompare(String(right[component.date_field] || '')));
     container.classList.add('yaml-calendar');
-    for (const row of rows) { const item = document.createElement('article'); item.className = 'yaml-calendar-item'; item.textContent = String(row[component.date_field] || 'No date') + ' — ' + String(row[component.title_field] || ''); if (component.row_event) item.addEventListener('click', () => void this.trigger(component.row_event, { row })); container.append(item); }
+    for (const row of rows) {
+      const item = this.element('article', 'yaml-calendar-item');
+      item.textContent = `${String(row[component.date_field] || 'No date')} — ${String(row[component.title_field] || '')}`;
+      if (component.row_event) item.addEventListener('click', () => void this.trigger(component.row_event, { row }));
+      container.append(item);
+    }
   }
 
   private setBinding(binding: string, value: unknown) {
@@ -287,13 +343,18 @@ class YamlScreenEngine {
     const source = name ? this.screen.events?.[name] : undefined;
     if (!source) return;
     this.error = '';
-    try { await this.run(source, event); this.render(); } catch (error) { this.error = error instanceof Error ? error.message : 'Action failed.'; this.render(); }
+    try { await this.run(source, event); this.render(); }
+    catch (error) { this.error = error instanceof Error ? error.message : 'Action failed.'; this.render(); }
   }
 
   private showFatal(message: string) { this.root.textContent = message; }
-  private async fetchJson(path: string) { const response = await fetch(path); if (!response.ok) throw new Error(`Unable to load ${path}`); return response.json(); }
+  private async fetchJson(path: string) {
+    const response = await fetch(path);
+    if (!response.ok) throw new Error(`Unable to load ${path}`);
+    return response.json();
+  }
 }
 
-const app = document.querySelector('#app');
-if (!app) throw new Error('Missing application root');
-void new YamlScreenEngine(app as HTMLElement).start();
+const root = document.querySelector('#app');
+if (!root) throw new Error('Missing application root');
+void new YamlScreenEngine(root as HTMLElement).start();
