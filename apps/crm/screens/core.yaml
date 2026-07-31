@@ -1,5 +1,6 @@
 navigation:
   - { label: Leads, to: / }
+  - { label: Pipeline, to: /pipeline }
   - { label: Customers, to: /customers }
   - { label: Teams, to: /teams }
   - { label: Activities, to: /activities }

@@ -27,6 +27,14 @@ resources:
       read: read
       update: update
       delete: delete
+    actions:
+      archive: { method: POST, datasource: lead.archive, roles: [manager, system] }
+      restore: { method: POST, datasource: lead.restore, roles: [manager, system] }
+      moveStage: { method: POST, datasource: lead.move_stage }
+      lose: { method: POST, datasource: lead.lose }
+      convert: { method: POST, datasource: lead.convert }
+      duplicates: { method: GET, datasource: lead.duplicates }
+      merge: { method: POST, datasource: lead.merge, roles: [manager, system] }
 
   - id: crm.customers
     entity_set: Customers
@@ -132,6 +140,81 @@ datasources:
   - id: delete
     params: { id: { type: string } }
     statement: UPDATE crm_lead SET active = false, updated_at = current_timestamp WHERE id = :id AND active = true
+
+  - id: lead.archive
+    params: { id: { type: string } }
+    statement: UPDATE crm_lead SET active = false, updated_at = current_timestamp WHERE id = :id AND active = true
+
+  - id: lead.restore
+    params: { id: { type: string } }
+    statement: UPDATE crm_lead SET active = true, updated_at = current_timestamp WHERE id = :id AND active = false
+
+  - id: lead.move_stage
+    params: { id: { type: string }, values: { type: json } }
+    entrypoint: moveLeadStage
+    script: |
+      async function moveLeadStage(ctx, params) {
+        const status = String((params.values || {}).status || '').trim();
+        if (!['new', 'contacted', 'qualified', 'lost', 'won'].includes(status)) throw Object.assign(new Error('Unknown lead stage'), { status: 400 });
+        await ctx.db.execute('UPDATE crm_lead SET status = :status, updated_at = current_timestamp WHERE id = :id AND active = true', { id: params.id, status });
+        const row = (await ctx.db.query('SELECT id, name, company, email, phone, source, status, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id: params.id }))[0];
+        if (!row) throw Object.assign(new Error('Lead not found'), { status: 404 });
+        return row;
+      }
+
+  - id: lead.lose
+    params: { id: { type: string } }
+    entrypoint: loseLead
+    script: |
+      async function loseLead(ctx, params) {
+        await ctx.db.execute("UPDATE crm_lead SET status = 'lost', updated_at = current_timestamp WHERE id = :id AND active = true", { id: params.id });
+        return (await ctx.db.query('SELECT id, status FROM crm_lead WHERE id = :id', { id: params.id }))[0] || null;
+      }
+
+  - id: lead.convert
+    params: { id: { type: string }, values: { type: json } }
+    entrypoint: convertLead
+    script: |
+      async function convertLead(ctx, params) {
+        const lead = (await ctx.db.query('SELECT id, company, email, phone FROM crm_lead WHERE id = :id AND active = true', { id: params.id }))[0];
+        if (!lead) throw Object.assign(new Error('Lead not found'), { status: 404 });
+        const requested = String((params.values || {}).customer_name || lead.company || '').trim();
+        if (!requested) throw Object.assign(new Error('A customer name is required to convert this lead'), { status: 400 });
+        let customer = (await ctx.db.query('SELECT id, name FROM crm_customer WHERE lower(name) = lower(:name) AND active = true', { name: requested }))[0];
+        if (!customer) {
+          const id = `customer-${ctx.crypto.randomUUID().slice(0, 8)}`;
+          await ctx.db.execute('INSERT INTO crm_customer(id, name, email, phone, active, created_at) VALUES(:id, :name, :email, :phone, true, current_timestamp)', { id, name: requested, email: lead.email || '', phone: lead.phone || '' });
+          customer = { id, name: requested };
+        }
+        await ctx.db.execute("UPDATE crm_lead SET company = :company, status = 'won', updated_at = current_timestamp WHERE id = :id", { id: params.id, company: customer.name });
+        return { lead_id: params.id, customer };
+      }
+
+  - id: lead.duplicates
+    params: { id: { type: string } }
+    entrypoint: findLeadDuplicates
+    script: |
+      async function findLeadDuplicates(ctx, params) {
+        const lead = (await ctx.db.query('SELECT id, name, company, email, phone FROM crm_lead WHERE id = :id', { id: params.id }))[0];
+        if (!lead) return [];
+        return ctx.db.query(`SELECT id, name, company, email, phone FROM crm_lead
+          WHERE active = true AND id <> :id AND ((:email <> '' AND lower(email) = lower(:email)) OR (:phone <> '' AND phone = :phone) OR (lower(name) = lower(:name) AND lower(company) = lower(:company)))
+          ORDER BY name`, lead);
+      }
+
+  - id: lead.merge
+    params: { id: { type: string }, values: { type: json } }
+    entrypoint: mergeLeads
+    script: |
+      async function mergeLeads(ctx, params) {
+        const ids = [...new Set([params.id, ...((params.values || {}).ids || [])].map(String).filter(Boolean))];
+        if (ids.length < 2) throw Object.assign(new Error('Select at least two leads to merge'), { status: 400 });
+        const primary = ids[0];
+        const rows = await ctx.db.query('SELECT id FROM crm_lead WHERE id IN (:ids) AND active = true', { ids });
+        if (rows.length !== ids.length) throw Object.assign(new Error('One or more leads were not found'), { status: 404 });
+        await ctx.db.execute('UPDATE crm_lead SET active = false, updated_at = current_timestamp WHERE id IN (:ids) AND id <> :primary', { ids, primary });
+        return { primary, merged_ids: ids.slice(1) };
+      }
 
   - id: customer.read
     params:

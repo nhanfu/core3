@@ -55,6 +55,23 @@ try {
   const deleted = await response(`/api/odata/Leads('${encodeURIComponent(created.id)}')`);
   if (deleted !== null) throw new Error('Lead delete failed');
 
+  const workflowLead = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Workflow lead', company: 'Workflow Co', email: 'workflow@core3.test', status: 'new' }) });
+  const moved = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/moveStage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'qualified' }) });
+  if (moved.status !== 'qualified') throw new Error('Lead stage move failed');
+  const duplicates = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/duplicates`);
+  if (!Array.isArray(duplicates)) throw new Error('Lead duplicate action failed');
+  const conversion = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/convert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: 'Workflow Customer' }) });
+  if (!conversion.customer?.id) throw new Error('Lead conversion failed');
+  const managerHeaders = { 'Content-Type': 'application/json', 'X-CRM-Role': 'manager' };
+  await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/archive`, { method: 'POST', headers: managerHeaders, body: '{}' });
+  if (await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')`)) throw new Error('Lead archive failed');
+  await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/restore`, { method: 'POST', headers: managerHeaders, body: '{}' });
+  if (!(await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')`))) throw new Error('Lead restore failed');
+  const mergePrimary = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Merge primary' }) });
+  const mergeDuplicate = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Merge duplicate' }) });
+  const merged = await response(`/api/odata/Leads('${encodeURIComponent(mergePrimary.id)}')/merge`, { method: 'POST', headers: managerHeaders, body: JSON.stringify({ ids: [mergeDuplicate.id] }) });
+  if (merged.primary !== mergePrimary.id || (await response(`/api/odata/Leads('${encodeURIComponent(mergeDuplicate.id)}')`))) throw new Error('Lead merge failed');
+
   const customer = await response('/api/odata/Customers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'E2E Customer', email: 'customer@core3.test' }) });
   const changedCustomer = await response(`/api/odata/Customers('${encodeURIComponent(customer.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...customer, phone: '+1 555 1212' }) });
   if (changedCustomer.phone !== '+1 555 1212') throw new Error('Customer update failed');
@@ -69,9 +86,10 @@ try {
 
   browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
+  browser('/pipeline', ['Sales pipeline', 'New', 'Qualified']);
   browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);
   browser('/teams', ['Sales teams', 'North America', 'New team']);
-  console.log('pass: OData CRUD/query options and YAML lead/customer/team screens');
+  console.log('pass: OData CRUD/actions/query options and YAML lead/customer/team/pipeline screens');
 } finally {
   server.kill();
 }

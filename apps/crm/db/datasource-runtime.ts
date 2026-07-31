@@ -6,6 +6,7 @@ import { all, run, withDb } from './database.ts';
 type ParamDefinition = { type?: 'string' | 'number' | 'boolean' | 'json'; default?: unknown };
 type Field = { type?: string; readonly?: boolean; selectable?: boolean; filterable?: boolean; sortable?: boolean };
 type Operation = string | { datasource: string; roles?: string[] };
+type Action = { method?: string; datasource: string; roles?: string[] };
 
 export type ResourceDefinition = {
   id: string;
@@ -15,6 +16,7 @@ export type ResourceDefinition = {
   fields: Record<string, Field>;
   list: { search?: string[]; default_orderby?: string; max_page_size?: number; group_by?: string[] };
   operations: { create: Operation; read: Operation; update: Operation; delete: Operation };
+  actions?: Record<string, Action>;
 };
 
 export type Datasource = {
@@ -206,6 +208,17 @@ export async function routeODataRequest(request: Request, role: string) {
   if (resource.roles?.length && !resource.roles.includes(role)) return json({ error: 'Datasource permission required' }, 403);
   const prefix = `/api/odata/${resource.entity_set}`;
   const remainder = url.pathname.slice(prefix.length);
+  const actionMatch = remainder.match(/^\((.*)\)\/([A-Za-z_][A-Za-z0-9_]*)$/);
+  if (actionMatch) {
+    const [, rawKey, name] = actionMatch;
+    const action = resource.actions?.[name];
+    if (!action || (action.method || 'POST').toUpperCase() !== request.method.toUpperCase()) return json({ error: 'Unsupported OData action' }, 404);
+    if (action.roles?.length && !action.roles.includes(role)) return json({ error: 'Datasource permission required' }, 403);
+    const key = decodeURIComponent(rawKey.replace(/^['"]|['"]$/g, ''));
+    const body = request.method === 'GET' ? Object.fromEntries(url.searchParams.entries()) : await request.json().catch(() => ({}));
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'JSON body must be an object' }, 400);
+    return json(await executeDatasource(action.datasource, { values: body, id: key, role }));
+  }
   const keyMatch = remainder.match(/^\((.*)\)$/);
   if (remainder && !keyMatch) return json({ error: 'Not found' }, 404);
   const key = keyMatch ? decodeURIComponent(keyMatch[1].replace(/^['"]|['"]$/g, '')) : undefined;

@@ -3,6 +3,13 @@ datasources:
   create: { resource: Leads, method: POST }
   update: { resource: Leads, method: PUT }
   delete: { resource: Leads, method: DELETE }
+  lead.archive: { resource: Leads, method: POST, action: archive }
+  lead.restore: { resource: Leads, method: POST, action: restore }
+  lead.move_stage: { resource: Leads, method: POST, action: moveStage }
+  lead.lose: { resource: Leads, method: POST, action: lose }
+  lead.convert: { resource: Leads, method: POST, action: convert }
+  lead.duplicates: { resource: Leads, method: GET, action: duplicates }
+  lead.merge: { resource: Leads, method: POST, action: merge }
 
 screens:
   - id: leads
@@ -70,6 +77,22 @@ screens:
         if (ctx.route.id === 'new') await ctx.request('create', values);
         else await ctx.request('update', values, ctx.route.id);
         ctx.navigate('/');
+      move_stage: |
+        const values = ctx.formValues();
+        await ctx.request('lead.move_stage', { status: values.status }, ctx.route.id);
+        ctx.navigate('/pipeline');
+      lose: |
+        await ctx.request('lead.lose', {}, ctx.route.id);
+        ctx.navigate('/pipeline');
+      convert: |
+        const values = ctx.formValues();
+        await ctx.request('lead.convert', { customer_name: values.company }, ctx.route.id);
+        ctx.navigate('/customers');
+      archive: |
+        await ctx.request('lead.archive', {}, ctx.route.id);
+        ctx.navigate('/');
+      duplicates: |
+        await ctx.load('lead.duplicates', 'duplicates', {}, ctx.route.id);
       remove: |
         if (ctx.route.id !== 'new') { await ctx.request('delete', {}, ctx.route.id); ctx.navigate('/'); }
       cancel: |
@@ -94,8 +117,39 @@ screens:
               - { value: contacted, label: Contacted }
               - { value: qualified, label: Qualified }
               - { value: lost, label: Lost }
+              - { value: won, label: Won }
           - { name: notes, label: Notes, type: textarea }
         actions:
           - { label: Cancel, event: cancel }
+          - { label: Move stage, event: move_stage, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Mark lost, event: lose, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Convert, event: convert, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Archive, event: archive, visible_when: "ctx.route.id !== 'new'" }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
           - { label: Save, submit: true }
+      - { type: heading, text: Possible duplicates }
+      - type: table
+        rows: $data.duplicates
+        columns:
+          - { field: name, label: Lead }
+          - { field: company, label: Company }
+          - { field: email, label: Email }
+
+  - id: pipeline
+    route: /pipeline
+    title: Pipeline
+    on_load: |
+      await ctx.load('read', 'leads', { '$orderby': 'created_at desc' });
+    events:
+      open: |
+        ctx.navigate('/leads/' + encodeURIComponent(ctx.event.row.id));
+    components:
+      - { type: heading, text: Sales pipeline }
+      - type: kanban
+        rows: $data.leads.value
+        group_field: status
+        title_field: name
+        detail_fields: [company, source]
+        row_event: open
+        groups: [new, contacted, qualified, won, lost]
+        group_labels: { new: New, contacted: Contacted, qualified: Qualified, won: Won, lost: Lost }

@@ -8,7 +8,7 @@ type Screen = {
   components: Component[];
 };
 type Component = Record<string, any> & { type: string; children?: Component[]; event?: string; on_change?: string; visible_when?: string };
-type Datasource = { resource: string; method: 'GET' | 'POST' | 'PUT' | 'DELETE'; collection?: boolean };
+type Datasource = { resource: string; method: 'GET' | 'POST' | 'PUT' | 'DELETE'; collection?: boolean; action?: string };
 type Definition = { datasources: Record<string, Datasource>; screens: Screen[]; navigation?: { label: string; to: string }[] };
 
 class YamlScreenEngine {
@@ -62,7 +62,7 @@ class YamlScreenEngine {
   private async request(id: string, values: Record<string, unknown> = {}, key?: string) {
     const source = this.definition.datasources[id];
     if (!source) throw new Error(`Unknown datasource: ${id}`);
-    const path = `/api/odata/${source.resource}${key ? `('${encodeURIComponent(key)}')` : ''}`;
+    const path = `/api/odata/${source.resource}${key ? `('${encodeURIComponent(key)}')` : ''}${source.action ? `/${source.action}` : ''}`;
     const options: RequestInit = { method: source.method, headers: { Accept: 'application/json' } };
     if (source.method === 'GET') {
       const query = new URLSearchParams(Object.entries(values).filter(([, value]) => value !== undefined && value !== '').map(([name, value]) => [name, String(value)]));
@@ -166,6 +166,7 @@ class YamlScreenEngine {
     if (component.type === 'table') this.renderTable(element as HTMLTableElement, component);
     if (component.type === 'form') this.renderForm(element as HTMLFormElement, component);
     if (component.type === 'nav') this.renderNavigation(element, component);
+    if (component.type === 'kanban') this.renderKanban(element, component);
     for (const child of component.children || []) element.append(this.renderComponent(child));
     return element;
   }
@@ -189,9 +190,10 @@ class YamlScreenEngine {
     for (const field of component.fields || []) {
       const label = document.createElement('label'); label.textContent = field.label;
       const input = field.type === 'textarea' ? document.createElement('textarea') : document.createElement(field.type === 'select' ? 'select' : 'input');
-      input.name = field.name; input.required = Boolean(field.required); input.value = String(this.form[field.name] ?? '');
+      input.name = field.name; input.required = Boolean(field.required);
       if (input instanceof HTMLInputElement) input.type = ['email', 'number', 'date'].includes(field.type) ? field.type : 'text';
       if (input instanceof HTMLSelectElement) for (const optionDefinition of field.options || []) { const option = document.createElement('option'); option.value = optionDefinition.value; option.textContent = optionDefinition.label; input.append(option); }
+      input.value = String(this.form[field.name] ?? '');
       input.addEventListener('input', () => { this.form[field.name] = input.value; });
       input.addEventListener('change', () => { this.form[field.name] = input.value; });
       label.append(input); form.append(label);
@@ -208,6 +210,22 @@ class YamlScreenEngine {
       if (location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(`${item.to}/`))) link.className = 'active';
       link.addEventListener('click', event => { event.preventDefault(); this.navigate(item.to); });
       nav.append(link);
+    }
+  }
+
+  private renderKanban(board: HTMLElement, component: Component) {
+    const rows = this.resolve(component.rows) || [];
+    const groups = component.groups || [...new Set(rows.map((row: any) => row[component.group_field]))];
+    board.classList.add('yaml-kanban');
+    for (const group of groups) {
+      const column = document.createElement('section'); column.className = 'yaml-kanban-column';
+      const title = document.createElement('h2'); title.textContent = component.group_labels?.[group] || String(group); column.append(title);
+      for (const row of rows.filter((item: any) => item[component.group_field] === group)) {
+        const card = document.createElement('button'); card.type = 'button'; card.className = 'yaml-kanban-card';
+        card.textContent = [row[component.title_field], ...(component.detail_fields || []).map((field: string) => row[field]).filter(Boolean)].join('\n');
+        card.addEventListener('click', () => void this.trigger(component.row_event, { row })); column.append(card);
+      }
+      board.append(column);
     }
   }
 
