@@ -1,15 +1,31 @@
-navigation:
-  - { label: Leads, to: / }
-  - { label: Pipeline, to: /pipeline }
-  - { label: Customers, to: /customers }
-  - { label: Teams, to: /teams }
-  - { label: Activities, to: /activities }
-  - { label: Reporting, to: /reporting }
-  - { label: Pivot, to: /analysis/pivot }
-  - { label: Calendar, to: /calendar }
-  - { label: Forecast, to: /forecast }
-  - { label: Configuration, to: /configuration }
-  - { label: Import, to: /import }
+shell:
+  app_name: CRM
+  app_icon: CRM
+  company_name: My Company
+  user_name: Administrator
+  nav:
+    - id: sales
+      label: Sales
+      icon: ▾
+      children:
+        - { id: pipeline, label: My Pipeline, to: /pipeline, icon: ◆ }
+        - { id: activities, label: My Activities, to: /activities, icon: ✓ }
+        - { id: teams, label: Teams, to: /teams, icon: ◈ }
+        - { id: customers, label: Customers, to: /customers, icon: ◎ }
+    - { id: leads, label: Leads, to: /, icon: ◇ }
+    - id: reporting
+      label: Reporting
+      icon: ▾
+      children:
+        - { id: forecast, label: Forecast, to: /forecast }
+        - { id: pipeline-report, label: Pipeline, to: /reporting }
+        - { id: activity-report, label: Activities, to: /calendar }
+    - id: configuration
+      label: Configuration
+      icon: ▾
+      children:
+        - { id: pipeline-config, label: Pipeline, to: /configuration }
+        - { id: import, label: Import & Synchronize, to: /import }
 
 datasources:
   customer.read: { resource: Customers, method: GET, collection: true }

@@ -27,6 +27,23 @@ export type Definition = {
   datasources: Record<string, Datasource>;
   screens: Screen[];
   navigation?: { label: string; to: string }[];
+  shell?: ShellDefinition;
+};
+
+export type ShellNavItem = {
+  id: string;
+  label: string;
+  icon?: string;
+  to?: string;
+  children?: ShellNavItem[];
+};
+
+export type ShellDefinition = {
+  app_name?: string;
+  app_icon?: string;
+  company_name?: string;
+  user_name?: string;
+  nav?: ShellNavItem[];
 };
 
 /** Renders the declarative YAML screens supplied by any Core3 application. */
@@ -156,7 +173,60 @@ export class YamlScreenEngine {
     }
     if (this.definition.navigation?.length) page.append(this.renderComponent({ type: 'nav', class: 'yaml-nav', items: this.definition.navigation }));
     for (const component of this.screen.components) page.append(this.renderComponent(component));
-    this.root.append(page);
+    if (this.definition.shell) this.root.append(this.renderShell(page));
+    else this.root.append(page);
+  }
+
+  private renderShell(content: HTMLElement) {
+    const shell = this.element('div', 'odoo-shell');
+    const sidebar = this.element('aside', 'odoo-sidebar');
+    const definition = this.definition.shell!;
+    const brand = this.element('div', 'odoo-brand');
+    const mark = this.element('span', 'odoo-brand-mark');
+    mark.textContent = definition.app_icon || 'CRM';
+    const brandText = this.element('div');
+    const appName = this.element('strong'); appName.textContent = definition.app_name || this.definition.application?.name || 'CRM';
+    const company = this.element('small'); company.textContent = definition.company_name || 'My Company';
+    brandText.append(appName, company); brand.append(mark, brandText);
+    sidebar.append(brand);
+    const menuTitle = this.element('div', 'odoo-sidebar-label'); menuTitle.textContent = definition.app_name || 'CRM'; sidebar.append(menuTitle);
+    const nav = this.element('nav', 'odoo-nav');
+    this.renderShellNav(nav, definition.nav || []);
+    sidebar.append(nav);
+
+    const main = this.element('main', 'odoo-main');
+    const header = this.element('header', 'odoo-topbar');
+    const menuButton = this.element<HTMLButtonElement>('button', 'odoo-icon-button odoo-sidebar-button');
+    menuButton.type = 'button'; menuButton.textContent = '☰'; menuButton.title = 'Menu';
+    menuButton.addEventListener('click', () => shell.classList.toggle('is-sidebar-open'));
+    const breadcrumb = this.element('div', 'odoo-breadcrumb'); breadcrumb.textContent = `${definition.app_name || 'CRM'} / ${this.screen.title}`;
+    const spacer = this.element('div', 'odoo-topbar-spacer');
+    const notifications = this.element<HTMLButtonElement>('button', 'odoo-icon-button odoo-notification');
+    notifications.type = 'button'; notifications.textContent = '♢'; notifications.title = 'Notifications';
+    const user = this.element<HTMLButtonElement>('button', 'odoo-user-menu');
+    user.type = 'button'; user.textContent = definition.user_name || 'Administrator';
+    header.append(menuButton, breadcrumb, spacer, notifications, user);
+    const contentHost = this.element('section', 'odoo-content'); contentHost.append(content);
+    main.append(header, contentHost); shell.append(sidebar, main);
+    return shell;
+  }
+
+  private renderShellNav(container: HTMLElement, items: ShellNavItem[], level = 0) {
+    for (const item of items) {
+      const button = this.element<HTMLButtonElement>('button', `odoo-nav-item odoo-nav-level-${level}`);
+      button.type = 'button';
+      if (item.icon) { const icon = this.element('span'); icon.textContent = item.icon; button.append(icon); }
+      const label = this.element('span'); label.textContent = item.label; button.append(label);
+      const active = item.to && (location.pathname === item.to || (item.to !== '/' && location.pathname.startsWith(`${item.to}/`)));
+      if (active) button.classList.add('is-active');
+      if (item.to) button.addEventListener('click', () => this.navigate(item.to!));
+      else if (item.children?.length) button.classList.add('is-group');
+      container.append(button);
+      if (item.children?.length) {
+        const children = this.element('div', 'odoo-nav-children');
+        this.renderShellNav(children, item.children, level + 1); container.append(children);
+      }
+    }
   }
 
   private renderComponent(component: Component): HTMLElement {
@@ -168,12 +238,16 @@ export class YamlScreenEngine {
       const button = element as HTMLButtonElement;
       button.type = component.submit ? 'submit' : 'button';
       button.textContent = component.label;
+      button.disabled = Boolean(component.disabled_when && new Function('ctx', `return (${component.disabled_when});`)(this.context()));
       if (!component.submit) button.addEventListener('click', () => void this.trigger(component.event));
     }
     if (component.type === 'input') this.renderInput(element as HTMLInputElement, component);
     if (component.type === 'select') this.renderSelect(element as HTMLSelectElement, component);
     if (component.type === 'table') this.renderTable(element as HTMLTableElement, component);
     if (component.type === 'form') this.renderForm(element as HTMLFormElement, component);
+    if (component.type === 'statusbar') this.renderStatusbar(element, component);
+    if (component.type === 'chatter') this.renderChatter(element, component);
+    if (component.type === 'dialog') this.renderDialog(element, component);
     if (component.type === 'nav') this.renderNavigation(element, component);
     if (component.type === 'kanban') this.renderKanban(element, component);
     if (component.type === 'chart') this.renderChart(element, component);
@@ -211,13 +285,27 @@ export class YamlScreenEngine {
   private renderTable(table: HTMLTableElement, component: Component) {
     const rows = this.resolve(component.rows) || [];
     const columns = component.columns || [];
+    const groupField = this.resolve(component.group_by);
     const head = table.createTHead().insertRow();
     for (const column of columns) { const cell = this.element('th'); cell.textContent = column.label; head.append(cell); }
     const body = table.createTBody();
-    for (const row of rows) {
+    const grouped = groupField
+      ? [...rows.reduce((groups: Map<string, any[]>, row: any) => {
+        const key = String(row[groupField] ?? 'Unspecified');
+        groups.set(key, [...(groups.get(key) || []), row]);
+        return groups;
+      }, new Map<string, any[]>()).entries()]
+      : [['', rows] as [string, any[]]];
+    for (const [group, groupRows] of grouped) {
+      if (groupField) {
+        const groupLine = body.insertRow(); groupLine.className = 'odoo-list-group';
+        const groupCell = groupLine.insertCell(); groupCell.colSpan = columns.length; groupCell.textContent = `${group} (${groupRows.length})`;
+      }
+      for (const row of groupRows) {
       const line = body.insertRow();
       if (component.row_event) { line.tabIndex = 0; line.addEventListener('click', () => void this.trigger(component.row_event, { row })); }
       for (const column of columns) { const cell = line.insertCell(); cell.textContent = String(row[column.field] ?? ''); }
+      }
     }
   }
 
@@ -246,6 +334,138 @@ export class YamlScreenEngine {
     const actions = this.element('div', 'yaml-actions');
     for (const action of component.actions || []) actions.append(this.renderComponent({ type: 'button', ...action }));
     form.append(actions);
+  }
+
+  private renderStatusbar(container: HTMLElement, component: Component) {
+    container.classList.add('odoo-statusbar');
+    const current = this.resolve(component.binding);
+    for (const option of this.resolve(component.options) || []) {
+      const value = String(typeof option === 'object' ? option[component.option_value || 'id'] : option);
+      const label = String(typeof option === 'object' ? option[component.option_label || 'name'] : option);
+      const stage = this.element<HTMLButtonElement>('button', 'odoo-statusbar-stage');
+      stage.type = 'button'; stage.textContent = label; stage.dataset.value = value;
+      stage.classList.toggle('is-current', value === String(current ?? ''));
+      stage.addEventListener('click', () => {
+        this.setBinding(component.binding, value);
+        void this.trigger(component.event, { value });
+      });
+      container.append(stage);
+    }
+  }
+
+  private renderChatter(container: HTMLElement, component: Component) {
+    container.classList.add('odoo-chatter');
+    const title = this.element('h2'); title.textContent = component.title || 'Chatter'; container.append(title);
+    const messages = this.resolve(component.messages) || [];
+    const messageList = this.element('div', 'odoo-chatter-messages');
+    if (!messages.length) {
+      const empty = this.element('p'); empty.textContent = 'No messages yet.'; messageList.append(empty);
+    }
+    for (const message of messages) {
+      const item = this.element('article', 'odoo-message');
+      const author = this.element('strong'); author.textContent = String(message.author || '');
+      const body = this.element('p'); body.textContent = String(message.body || '');
+      const created = this.element('small', 'odoo-muted'); created.textContent = String(message.created_at || '');
+      item.append(author, body, created); messageList.append(item);
+    }
+    container.append(messageList);
+    const composer = this.element('div', 'odoo-chatter-compose');
+    const messageInput = this.element<HTMLTextAreaElement>('textarea', 'odoo-chatter-input');
+    messageInput.placeholder = component.placeholder || 'Log a note… Use @mentions';
+    messageInput.value = String(this.resolve(component.message_binding) ?? '');
+    messageInput.addEventListener('input', () => this.setBinding(component.message_binding, messageInput.value));
+    const send = this.element<HTMLButtonElement>('button', 'odoo-button primary');
+    send.type = 'button'; send.textContent = component.send_label || 'Send';
+    send.addEventListener('click', () => void this.trigger(component.send_event));
+    composer.append(messageInput, send); container.append(composer);
+
+    const followers = this.element('div', 'odoo-chatter-section');
+    const followerTitle = this.element('strong'); followerTitle.textContent = 'Followers'; followers.append(followerTitle);
+    const followerList = this.element('div', 'odoo-tags');
+    for (const follower of this.resolve(component.followers) || []) {
+      const tag = this.element('span'); tag.textContent = String(follower.name || ''); followerList.append(tag);
+    }
+    const followerInput = this.element<HTMLInputElement>('input', 'odoo-chatter-input');
+    followerInput.placeholder = 'Add follower…';
+    followerInput.value = String(this.resolve(component.follower_binding) ?? '');
+    followerInput.addEventListener('input', () => this.setBinding(component.follower_binding, followerInput.value));
+    const follow = this.element<HTMLButtonElement>('button', 'odoo-button');
+    follow.type = 'button'; follow.textContent = component.follow_label || 'Follow';
+    follow.addEventListener('click', () => void this.trigger(component.follow_event));
+    followers.append(followerList, followerInput, follow); container.append(followers);
+
+    if (component.attachments) {
+      const attachments = this.element('div', 'odoo-chatter-section');
+      const attachmentTitle = this.element('strong'); attachmentTitle.textContent = 'Attachments'; attachments.append(attachmentTitle);
+      for (const attachment of this.resolve(component.attachments) || []) {
+        const item = this.element('p'); item.textContent = `${attachment.name} (${attachment.mime_type})`; attachments.append(item);
+      }
+      container.append(attachments);
+    }
+  }
+
+  private renderDialog(container: HTMLElement, component: Component) {
+    container.className = 'odoo-dialog-backdrop';
+    const dialog = this.element('section', 'odoo-dialog');
+    const header = this.element('header', 'odoo-dialog-header');
+    const title = this.element('h2'); title.textContent = component.title || 'Action';
+    const close = this.element<HTMLButtonElement>('button', 'odoo-dialog-close');
+    close.type = 'button'; close.textContent = '×'; close.title = 'Close';
+    close.addEventListener('click', () => void this.trigger(component.close_event));
+    header.append(title, close); dialog.append(header);
+    if (component.message) { const message = this.element('p', 'odoo-dialog-message'); message.textContent = component.message; dialog.append(message); }
+    const body = this.element('div', 'odoo-dialog-body');
+    for (const field of component.fields || []) {
+      const label = this.element('label', 'odoo-dialog-field'); label.textContent = field.label;
+      const control = this.element<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(field.type === 'textarea' ? 'textarea' : field.type === 'select' ? 'select' : 'input');
+      control.name = field.name || '';
+      if (control instanceof HTMLInputElement) control.type = ['email', 'number', 'date'].includes(field.type) ? field.type : 'text';
+      if (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement) control.placeholder = field.placeholder || '';
+      control.required = Boolean(field.required);
+      if (control instanceof HTMLSelectElement) {
+        for (const optionDefinition of this.resolve(field.options) || []) {
+          const option = this.element<HTMLOptionElement>('option');
+          option.value = String(typeof optionDefinition === 'object' ? optionDefinition[field.option_value || 'value'] : optionDefinition);
+          option.textContent = String(typeof optionDefinition === 'object' ? optionDefinition[field.option_label || 'label'] : optionDefinition);
+          control.append(option);
+        }
+      }
+      control.value = String(this.resolve(field.binding) ?? field.default ?? '');
+      const update = () => this.setBinding(field.binding, control.value);
+      control.addEventListener('input', update); control.addEventListener('change', update);
+      label.append(control); body.append(label);
+    }
+    if (component.records) {
+      const records = this.resolve(component.records) || [];
+      const selected = new Set((this.resolve(component.select_binding) || []).map((value: unknown) => String(value)));
+      const table = this.element<HTMLTableElement>('table', 'odoo-list');
+      const head = table.createTHead().insertRow();
+      const selectHead = this.element('th'); selectHead.textContent = 'Select'; head.append(selectHead);
+      for (const column of component.columns || []) { const cell = this.element('th'); cell.textContent = column.label; head.append(cell); }
+      const tableBody = table.createTBody();
+      for (const record of records) {
+        const row = tableBody.insertRow();
+        const selectCell = row.insertCell();
+        const checkbox = this.element<HTMLInputElement>('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(String(record[component.key_field || 'id']));
+        checkbox.addEventListener('change', () => {
+          const key = String(record[component.key_field || 'id']);
+          if (checkbox.checked) selected.add(key); else selected.delete(key);
+          this.setBinding(component.select_binding, [...selected]);
+        });
+        selectCell.append(checkbox);
+        for (const column of component.columns || []) { const cell = row.insertCell(); cell.textContent = String(record[column.field] ?? ''); }
+      }
+      if (!records.length) { const row = tableBody.insertRow(); const cell = row.insertCell(); cell.colSpan = (component.columns || []).length + 1; cell.textContent = 'No similar leads found.'; }
+      body.append(table);
+    }
+    dialog.append(body);
+    const footer = this.element('footer', 'odoo-dialog-footer');
+    for (const action of component.actions || []) {
+      const button = this.element<HTMLButtonElement>('button', `odoo-button${action.primary ? ' primary' : ''}`);
+      button.type = 'button'; button.textContent = action.label;
+      button.addEventListener('click', () => void this.trigger(action.event)); footer.append(button);
+    }
+    dialog.append(footer); container.append(dialog);
   }
 
   private renderNavigation(nav: HTMLElement, component: Component) {

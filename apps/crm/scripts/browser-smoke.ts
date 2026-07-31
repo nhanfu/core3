@@ -64,6 +64,11 @@ try {
   if (!Array.isArray(duplicates)) throw new Error('Lead duplicate action failed');
   const conversion = await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/convert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customer_name: 'Workflow Customer' }) });
   if (!conversion.customer?.id) throw new Error('Lead conversion failed');
+  const lostLead = await response('/api/odata/Leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Lost workflow lead' }) });
+  const lost = await response(`/api/odata/Leads('${encodeURIComponent(lostLead.id)}')/lose`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lost_reason: 'Budget', lost_feedback: 'Budget was not approved.' }) });
+  if (lost.status !== 'lost' || lost.lost_reason !== 'Budget' || lost.lost_feedback !== 'Budget was not approved.') throw new Error('Lost lead reason workflow failed');
+  const invalidLost = await fetch(`${origin}/api/odata/Leads('${encodeURIComponent(lostLead.id)}')/lose`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lost_reason: 'Unknown reason' }) });
+  if (invalidLost.status !== 400) throw new Error('Invalid lost reason must be rejected');
   const managerHeaders = { 'Content-Type': 'application/json', 'X-CRM-Role': 'manager' };
   await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')/archive`, { method: 'POST', headers: managerHeaders, body: '{}' });
   if (await response(`/api/odata/Leads('${encodeURIComponent(workflowLead.id)}')`)) throw new Error('Lead archive failed');
@@ -104,17 +109,24 @@ try {
   const attachment = await response('/api/odata/Attachments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: 'lead-001', name: 'e2e.txt', mime_type: 'text/plain', content: 'attached content' }) });
   const chatter = await response(`/api/odata/Messages?${new URLSearchParams({ '$filter': "lead_id eq 'lead-001'" })}`);
   if (!chatter.value?.some((row: any) => row.id === message.id) || !follower.id || attachment.content !== 'attached content') throw new Error('Lead collaboration resources failed');
-  await response(`/api/odata/Messages('${encodeURIComponent(message.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-  await response(`/api/odata/Followers('${encodeURIComponent(follower.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-  await response(`/api/odata/Attachments('${encodeURIComponent(attachment.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 
   const catalog = await response('/api/odata/Catalogs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'tag', name: 'E2E tag', value: '#111111' }) });
   const changedCatalog = await response(`/api/odata/Catalogs('${encodeURIComponent(catalog.id)}')`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...catalog, value: '#222222' }) });
   if (changedCatalog.value !== '#222222') throw new Error('Catalog update failed');
   await response(`/api/odata/Catalogs('${encodeURIComponent(catalog.id)}')`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 
-  browser('/', ['Lead management', 'Website enquiry', 'New lead', 'Search leads']);
+  const ui = await response('/api/ui');
+  if (ui.shell?.app_name !== 'CRM' || ui.shell?.nav?.[0]?.label !== 'Sales') throw new Error('YAML Odoo shell definition is unavailable');
+  const leadScreen = ui.screens?.find((screen: any) => screen.id === 'lead-form');
+  if (!leadScreen?.components?.some((component: any) => component.type === 'dialog' && component.title === 'Lost Lead')
+    || !leadScreen.components.some((component: any) => component.type === 'dialog' && component.title === 'Convert to Opportunity')
+    || !leadScreen.components.some((component: any) => component.type === 'dialog' && component.title === 'Similar Leads' && component.records === '$data.duplicates')) throw new Error('YAML CRM action dialogs are unavailable');
+  const leadsList = ui.screens?.find((screen: any) => screen.id === 'leads');
+  if (!leadsList?.components?.some((component: any) => component.type === 'table' && component.group_by === '$state.group_by')
+    || !leadsList.components.some((component: any) => component.type === 'kanban' && component.visible_when?.includes("ctx.state.view === 'kanban'"))) throw new Error('YAML CRM list controls are unavailable');
+  browser('/', ['odoo-shell', 'CRM', 'Sales', 'My Pipeline', 'Lead management', 'Website enquiry', 'New lead', 'Search leads', 'List', 'Kanban', 'Group by stage', 'Next']);
   browser('/leads/new', ['Lead name', 'Save', 'Cancel']);
+  browser('/leads/lead-001', ['Lead', 'Qualified', 'Possible duplicates', 'Move stage', 'Similar leads', 'Chatter', 'E2E chatter message', 'E2E follower', 'e2e.txt']);
   browser('/leads/lead-001/collaboration', ['Lead collaboration', 'Messages', 'Followers', 'Attachments']);
   browser('/pipeline', ['Sales pipeline', 'New', 'Qualified']);
   browser('/customers', ['Customers', 'Acme Corporation', 'New customer']);

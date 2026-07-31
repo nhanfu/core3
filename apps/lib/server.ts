@@ -55,6 +55,7 @@ async function screenDefinition() {
   const documents = await Promise.all(files.map(async path => Bun.YAML.parse(await Bun.file(path).text()) as Record<string, unknown>));
   return {
     application: { id: backend.id, name: backend.name },
+    shell: documents.find(document => document.shell)?.shell,
     datasources: Object.assign({}, ...documents.map(document => document.datasources || {})),
     screens: documents.flatMap(document => Array.isArray(document.screens) ? document.screens : []),
     navigation: documents.flatMap(document => Array.isArray(document.navigation) ? document.navigation : []),

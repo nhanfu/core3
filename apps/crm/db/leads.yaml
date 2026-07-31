@@ -13,6 +13,8 @@ resources:
       phone: { type: string, selectable: true, filterable: true, sortable: true }
       source: { type: string, selectable: true, filterable: true, sortable: true }
       status: { type: string, selectable: true, filterable: true, sortable: true }
+      lost_reason: { type: string, selectable: true, filterable: true, sortable: true }
+      lost_feedback: { type: string, selectable: true, filterable: false, sortable: false }
       expected_revenue: { type: number, selectable: true, filterable: true, sortable: true }
       notes: { type: string, selectable: true, filterable: true, sortable: false }
       active: { type: boolean, selectable: true, filterable: true, sortable: true }
@@ -208,7 +210,7 @@ datasources:
       odata_top: { type: number, default: 200 }
       odata_skip: { type: number, default: 0 }
     query: |
-      SELECT id, name, company, email, phone, source, status, expected_revenue, notes, active, created_at, updated_at,
+      SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at,
         count(*) OVER() AS __odata_count
       FROM crm_lead
       WHERE active = true AND (:id = '' OR id = :id)
@@ -233,7 +235,7 @@ datasources:
           phone: String(values.phone || '').trim(), source: String(values.source || '').trim(), expected_revenue: Number(values.expected_revenue || 0),
           status: String(values.status || 'new').trim(), notes: String(values.notes || '').trim(),
         });
-        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
+        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
       }
 
   - id: update
@@ -256,7 +258,7 @@ datasources:
           phone: String(values.phone || '').trim(), source: String(values.source || '').trim(), expected_revenue: Number(values.expected_revenue || 0),
           status: String(values.status || 'new').trim(), notes: String(values.notes || '').trim(),
         });
-        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
+        return (await ctx.db.query('SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id }))[0];
       }
 
   - id: delete
@@ -280,18 +282,24 @@ datasources:
         const stage = (await ctx.db.query('SELECT id FROM crm_stage WHERE id = :id AND active = true', { id: status }))[0];
         if (!stage) throw Object.assign(new Error('Unknown lead stage'), { status: 400 });
         await ctx.db.execute('UPDATE crm_lead SET status = :status, updated_at = current_timestamp WHERE id = :id AND active = true', { id: params.id, status });
-        const row = (await ctx.db.query('SELECT id, name, company, email, phone, source, status, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id: params.id }))[0];
+        const row = (await ctx.db.query('SELECT id, name, company, email, phone, source, status, lost_reason, lost_feedback, expected_revenue, notes, active, created_at, updated_at FROM crm_lead WHERE id = :id', { id: params.id }))[0];
         if (!row) throw Object.assign(new Error('Lead not found'), { status: 404 });
         return row;
       }
 
   - id: lead.lose
-    params: { id: { type: string } }
+    params: { id: { type: string }, values: { type: json } }
     entrypoint: loseLead
     script: |
       async function loseLead(ctx, params) {
-        await ctx.db.execute("UPDATE crm_lead SET status = 'lost', updated_at = current_timestamp WHERE id = :id AND active = true", { id: params.id });
-        return (await ctx.db.query('SELECT id, status FROM crm_lead WHERE id = :id', { id: params.id }))[0] || null;
+        const values = params.values || {};
+        const reason = String(values.lost_reason || '').trim();
+        const feedback = String(values.lost_feedback || '').trim();
+        if (reason && !(await ctx.db.query("SELECT id FROM crm_catalog WHERE kind = 'lost_reason' AND name = :name AND active = true", { name: reason })).length) throw Object.assign(new Error('Unknown lost reason'), { status: 400 });
+        await ctx.db.execute("UPDATE crm_lead SET status = 'lost', lost_reason = :reason, lost_feedback = :feedback, updated_at = current_timestamp WHERE id = :id AND active = true", { id: params.id, reason, feedback });
+        const updated = (await ctx.db.query('SELECT id, status, lost_reason, lost_feedback FROM crm_lead WHERE id = :id AND active = true', { id: params.id }))[0];
+        if (!updated) throw Object.assign(new Error('Lead not found'), { status: 404 });
+        return updated;
       }
 
   - id: lead.convert

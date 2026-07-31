@@ -16,22 +16,54 @@ datasources:
   follower.create: { resource: Followers, method: POST }
   attachment.read: { resource: Attachments, method: GET, collection: true }
   attachment.create: { resource: Attachments, method: POST }
+  catalog.read: { resource: Catalogs, method: GET, collection: true }
 
 screens:
   - id: leads
     route: /
     title: Leads
-    state: { search: '', orderby: 'created_at desc' }
+    state: { search: '', orderby: 'created_at desc', filter_status: '', group_by: '', view: list, page: 0, page_size: 20, count: 0, page_count: 1 }
     on_load: |
-      await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true });
+      await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
+      await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': ctx.state.page * ctx.state.page_size, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
       ctx.state.count = ctx.data.leads['@odata.count'];
+      ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+      ctx.state.page_display = ctx.state.page + 1;
     events:
       search: |
-        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true });
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': 0, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
         ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
       order: |
-        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true });
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': 0, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
         ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
+      filter: |
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': 0, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
+        ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
+      page_size: |
+        ctx.state.page = 0;
+        await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': 0, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) });
+        ctx.state.count = ctx.data.leads['@odata.count'];
+        ctx.state.page_count = Math.max(1, Math.ceil(Number(ctx.state.count || 0) / ctx.state.page_size));
+        ctx.state.page_display = 1;
+      previous_page: |
+        if (ctx.state.page > 0) { ctx.state.page -= 1; await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': ctx.state.page * ctx.state.page_size, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) }); ctx.state.page_display = ctx.state.page + 1; }
+      next_page: |
+        if (ctx.state.page + 1 < ctx.state.page_count) { ctx.state.page += 1; await ctx.load('read', 'leads', { '$search': ctx.state.search, '$orderby': ctx.state.orderby, '$count': true, '$top': ctx.state.page_size, '$skip': ctx.state.page * ctx.state.page_size, ...(ctx.state.filter_status ? { '$filter': "status eq '" + ctx.state.filter_status + "'" } : {}) }); ctx.state.page_display = ctx.state.page + 1; }
+      view_list: |
+        ctx.state.view = 'list';
+      view_kanban: |
+        ctx.state.view = 'kanban';
+      group: |
+        ctx.state.group_by = ctx.state.group_by || '';
       create: |
         ctx.navigate('/leads/new');
       open: |
@@ -39,17 +71,27 @@ screens:
     components:
       - type: heading
         text: Lead management
-      - type: text
-        class: yaml-count
-        text: $state.count
       - type: section
-        class: yaml-toolbar
+        class: odoo-control-panel
         children:
           - type: input
+            class: odoo-search
             binding: $state.search
             placeholder: Search leads
             on_change: search
           - type: select
+            class: odoo-control-select
+            binding: $state.filter_status
+            on_change: filter
+            options:
+              - { value: '', label: All stages }
+              - { value: new, label: New }
+              - { value: contacted, label: Contacted }
+              - { value: qualified, label: Qualified }
+              - { value: won, label: Won }
+              - { value: lost, label: Lost }
+          - type: select
+            class: odoo-control-select
             binding: $state.orderby
             on_change: order
             options:
@@ -57,12 +99,57 @@ screens:
               - { value: 'name asc', label: Name A-Z }
               - { value: 'company asc', label: Company A-Z }
               - { value: 'status asc', label: Status }
+          - type: select
+            class: odoo-control-select
+            binding: $state.group_by
+            on_change: group
+            options:
+              - { value: '', label: No grouping }
+              - { value: status, label: Group by stage }
+              - { value: company, label: Group by customer }
+              - { value: source, label: Group by source }
+          - type: select
+            class: odoo-control-select
+            binding: $state.page_size
+            on_change: page_size
+            options:
+              - { value: 10, label: '10 / page' }
+              - { value: 20, label: '20 / page' }
+              - { value: 50, label: '50 / page' }
           - type: button
+            class: odoo-button
+            label: List
+            event: view_list
+          - type: button
+            class: odoo-button
+            label: Kanban
+            event: view_kanban
+          - type: button
+            class: odoo-button primary
             label: New lead
             event: create
+          - type: button
+            class: odoo-button
+            label: Previous
+            event: previous_page
+            disabled_when: "ctx.state.page === 0"
+          - type: text
+            class: odoo-muted
+            text: $state.page_display
+          - type: text
+            class: odoo-muted
+            text: $state.page_count
+          - type: button
+            class: odoo-button
+            label: Next
+            event: next_page
+            disabled_when: "ctx.state.page + 1 >= ctx.state.page_count"
       - type: table
+        class: odoo-list
         rows: $data.leads.value
+        group_by: $state.group_by
         row_event: open
+        visible_when: "ctx.state.view === 'list'"
         columns:
           - { field: name, label: Lead }
           - { field: company, label: Company }
@@ -71,6 +158,17 @@ screens:
           - { field: source, label: Source }
           - { field: status, label: Status }
           - { field: expected_revenue, label: Expected revenue }
+      - type: kanban
+        class: odoo-kanban-board
+        rows: $data.leads.value
+        group_field: status
+        title_field: name
+        detail_fields: [company, email, expected_revenue]
+        groups: $data.stages.value
+        group_value: id
+        group_label: name
+        row_event: open
+        visible_when: "ctx.state.view === 'kanban'"
 
   - id: lead-form
     route: /leads/:id
@@ -78,7 +176,12 @@ screens:
     on_load: |
       await ctx.load('stage.read', 'stages', { '$orderby': 'sequence asc' });
       if (ctx.route.id === 'new') ctx.data.record = { name: '', company: '', email: '', phone: '', source: '', status: 'new', expected_revenue: 0, notes: '' };
-      else await ctx.load('read', 'record', {}, ctx.route.id);
+      else {
+        await ctx.load('read', 'record', {}, ctx.route.id);
+        await ctx.load('message.read', 'messages', { '$filter': "lead_id eq '" + ctx.route.id + "'", '$orderby': 'created_at desc' });
+        await ctx.load('follower.read', 'followers', { '$filter': "lead_id eq '" + ctx.route.id + "'", '$orderby': 'created_at desc' });
+        await ctx.load('attachment.read', 'attachments', { '$filter': "lead_id eq '" + ctx.route.id + "'", '$orderby': 'created_at desc' });
+      }
     events:
       save: |
         const values = ctx.formValues();
@@ -88,7 +191,56 @@ screens:
       move_stage: |
         const values = ctx.formValues();
         await ctx.request('lead.move_stage', { status: values.status }, ctx.route.id);
+        ctx.data.record = { ...ctx.data.record, status: values.status };
+        ctx.render();
+      set_stage: |
+        await ctx.request('lead.move_stage', { status: ctx.event.value }, ctx.route.id);
+        ctx.data.record = { ...ctx.data.record, status: ctx.event.value };
+        ctx.render();
+      send_message: |
+        const body = String(ctx.state.message_body || '').trim();
+        if (!body) throw new Error('Message cannot be empty.');
+        await ctx.request('message.create', { lead_id: ctx.route.id, author: 'Administrator', body });
+        ctx.state.message_body = '';
+        await ctx.load('message.read', 'messages', { '$filter': "lead_id eq '" + ctx.route.id + "'", '$orderby': 'created_at desc' });
+      follow: |
+        const name = String(ctx.state.follower_name || '').trim();
+        if (!name) throw new Error('Follower name cannot be empty.');
+        await ctx.request('follower.create', { lead_id: ctx.route.id, name });
+        ctx.state.follower_name = '';
+        await ctx.load('follower.read', 'followers', { '$filter': "lead_id eq '" + ctx.route.id + "'", '$orderby': 'created_at desc' });
+      open_lose: |
+        ctx.state.dialog = 'lose';
+        ctx.state.lost_reason = '';
+        ctx.state.lost_feedback = '';
+        await ctx.load('catalog.read', 'lost_reasons', { '$filter': "kind eq 'lost_reason'", '$orderby': 'name asc' });
+        ctx.render();
+      apply_lose: |
+        await ctx.request('lead.lose', { lost_reason: ctx.state.lost_reason, lost_feedback: ctx.state.lost_feedback }, ctx.route.id);
+        ctx.state.dialog = '';
         ctx.navigate('/pipeline');
+      open_convert: |
+        ctx.state.dialog = 'convert';
+        ctx.state.customer_name = ctx.formValues().company || '';
+        ctx.render();
+      open_duplicates: |
+        ctx.state.dialog = 'duplicates';
+        ctx.state.merge_ids = [];
+        await ctx.load('lead.duplicates', 'duplicates', {}, ctx.route.id);
+        ctx.render();
+      merge_duplicates: |
+        const ids = ctx.state.merge_ids || [];
+        if (!ids.length) throw new Error('Select at least one similar lead.');
+        await ctx.request('lead.merge', { ids }, ctx.route.id);
+        ctx.state.dialog = '';
+        ctx.navigate('/pipeline');
+      apply_convert: |
+        await ctx.request('lead.convert', { customer_name: ctx.state.customer_name }, ctx.route.id);
+        ctx.state.dialog = '';
+        ctx.navigate('/customers');
+      close_dialog: |
+        ctx.state.dialog = '';
+        ctx.render();
       lose: |
         await ctx.request('lead.lose', {}, ctx.route.id);
         ctx.navigate('/pipeline');
@@ -111,6 +263,7 @@ screens:
       - type: heading
         text: Lead
       - type: form
+        class: odoo-form
         record: $data.record
         submit: save
         fields:
@@ -130,12 +283,73 @@ screens:
         actions:
           - { label: Cancel, event: cancel }
           - { label: Move stage, event: move_stage, visible_when: "ctx.route.id !== 'new'" }
-          - { label: Mark lost, event: lose, visible_when: "ctx.route.id !== 'new'" }
-          - { label: Convert, event: convert, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Mark lost, event: open_lose, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Convert, event: open_convert, visible_when: "ctx.route.id !== 'new'" }
+          - { label: Similar leads, event: open_duplicates, visible_when: "ctx.route.id !== 'new'" }
           - { label: Collaboration, event: collaboration, visible_when: "ctx.route.id !== 'new'" }
           - { label: Archive, event: archive, visible_when: "ctx.route.id !== 'new'" }
           - { label: Delete, event: remove, visible_when: "ctx.route.id !== 'new'" }
           - { label: Save, submit: true }
+      - type: statusbar
+        binding: $form.status
+        options: $data.stages.value
+        option_value: id
+        option_label: name
+        event: set_stage
+        visible_when: "ctx.route.id !== 'new'"
+      - type: chatter
+        title: Chatter
+        messages: $data.messages.value
+        followers: $data.followers.value
+        attachments: $data.attachments.value
+        message_binding: $state.message_body
+        follower_binding: $state.follower_name
+        send_event: send_message
+        follow_event: follow
+        visible_when: "ctx.route.id !== 'new'"
+      - type: dialog
+        title: Lost Lead
+        message: Select a reason and record a closing note.
+        close_event: close_dialog
+        visible_when: "ctx.state.dialog === 'lose'"
+        fields:
+          - name: lost_reason
+            label: Lost Reason
+            type: select
+            binding: $state.lost_reason
+            options: $data.lost_reasons.value
+            option_value: name
+            option_label: name
+            default: ''
+          - { name: lost_feedback, label: Closing Note, type: textarea, binding: $state.lost_feedback, placeholder: What went wrong? }
+        actions:
+          - { label: Discard, event: close_dialog }
+          - { label: Mark as Lost, event: apply_lose, primary: true }
+      - type: dialog
+        title: Convert to Opportunity
+        message: Choose the customer to associate with this opportunity.
+        close_event: close_dialog
+        visible_when: "ctx.state.dialog === 'convert'"
+        fields:
+          - { name: customer_name, label: Customer, binding: $state.customer_name, required: true, placeholder: Company name }
+        actions:
+          - { label: Cancel, event: close_dialog }
+          - { label: Create Opportunity, event: apply_convert, primary: true }
+      - type: dialog
+        title: Similar Leads
+        message: Select duplicate leads to merge into this lead.
+        close_event: close_dialog
+        visible_when: "ctx.state.dialog === 'duplicates'"
+        records: $data.duplicates
+        select_binding: $state.merge_ids
+        key_field: id
+        columns:
+          - { field: name, label: Lead }
+          - { field: company, label: Company }
+          - { field: email, label: Email }
+        actions:
+          - { label: Cancel, event: close_dialog }
+          - { label: Merge selected, event: merge_duplicates, primary: true }
       - { type: heading, text: Possible duplicates }
       - type: table
         rows: $data.duplicates
