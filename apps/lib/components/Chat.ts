@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 
 function relativeTime(ts) {
   const diff = Date.now() - new Date(ts).getTime();

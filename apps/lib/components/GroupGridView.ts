@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { TextCell } from './TextCell.ts';
 import { BadgeCell } from './BadgeCell.ts';
 import { CurrencyCell } from './CurrencyCell.ts';

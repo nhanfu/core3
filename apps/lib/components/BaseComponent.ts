@@ -7,8 +7,8 @@
  * Import: import { BaseComponent } from '/lib/runtime.ts';
  */
 
-import { HTML } from './html.ts';
-import { ExternalWidgetAdapter } from './adapters/ExternalWidgetAdapter.ts';
+import { HTML } from '../html.ts';
+import { ExternalWidgetAdapter } from '../adapters/ExternalWidgetAdapter.ts';
 
 export { HTML };
 

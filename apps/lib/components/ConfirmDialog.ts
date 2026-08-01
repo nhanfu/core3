@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 
 export class ConfirmDialog extends BaseComponent {
   draw(container) {

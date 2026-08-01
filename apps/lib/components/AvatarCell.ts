@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 
 const AVATAR_COLORS = [
   'bg-indigo-500', 'bg-blue-500', 'bg-green-500', 'bg-amber-500', 'bg-red-500', 'bg-purple-500',

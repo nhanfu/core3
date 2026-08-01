@@ -1,4 +1,4 @@
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 
 function createElement<K extends keyof HTMLElementTagNameMap>(
   tag: K,

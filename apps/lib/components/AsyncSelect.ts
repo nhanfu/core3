@@ -1,4 +1,4 @@
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 
 export type AsyncSelectOption = { value: string; label: string };
 

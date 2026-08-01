@@ -1,4 +1,4 @@
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { appendBadge } from './helpers.ts';
 
 export class BadgeCell extends BaseComponent {

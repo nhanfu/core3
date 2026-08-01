@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { appendBadge, formatDate } from './helpers.ts';
 
 export class TimelinePanel extends BaseComponent {

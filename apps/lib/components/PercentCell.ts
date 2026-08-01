@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { fmtNumber } from './helpers.ts';
 
 export class PercentCell extends BaseComponent {

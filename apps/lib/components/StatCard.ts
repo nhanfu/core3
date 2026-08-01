@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { fmtCurrency, fmtNumber } from './helpers.ts';
 import { appendIcon } from './Icon.ts';
 

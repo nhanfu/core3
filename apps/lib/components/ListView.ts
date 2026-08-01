@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { appendBadge } from './helpers.ts';
 
 export class ListView extends BaseComponent {

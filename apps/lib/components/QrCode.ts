@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 
 function drawPlaceholder(canvasEl, size) {
   const ctx = canvasEl.getContext('2d');

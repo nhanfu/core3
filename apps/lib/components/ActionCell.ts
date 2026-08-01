@@ -1,5 +1,5 @@
 import { html } from '../html.ts';
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { appendIcon, hasIcon } from './Icon.ts';
 
 export class ActionCell extends BaseComponent {

@@ -1,4 +1,4 @@
-import { BaseComponent } from '../runtime.ts';
+import { BaseComponent } from './BaseComponent.ts';
 import { appendIcon, hasIcon } from './Icon.ts';
 
 export type ListToolbarAction = {
