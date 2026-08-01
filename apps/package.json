@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "css:build": "sass --no-source-map public/styles/index.scss public/styles/index.css",
+    "prestart": "bun run css:build",
     "start": "PORT=3001 bun server.ts",
+    "predev": "bun run css:build",
     "dev": "PORT=3001 bun --hot server.ts",
     "test": "cd tms && vitest run --environment jsdom",
     "audit": "bun tms/scripts/audit-pages.ts",
@@ -19,6 +22,7 @@
     "jest-extended": "^4.0.0",
     "jsdom": "^25.0.0",
     "typescript": "^7.0.2",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "sass": "^1.102.0"
   }
 }

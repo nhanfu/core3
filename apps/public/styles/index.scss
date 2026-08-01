@@ -1,6 +1,6 @@
+@use 'tokens';
+@use 'components';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('/movedx-tokens.css');
-@import url('/movedx-components.css');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
