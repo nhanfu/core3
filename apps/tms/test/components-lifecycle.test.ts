@@ -10,7 +10,7 @@ vi.mock('../public/app.ts', () => ({
 import { AppShell } from '../components/AppShell.ts';
 import { NotificationPanel } from '../components/NotificationPanel.ts';
 import { ProfileDrawer } from '../components/ProfileDrawer.ts';
-import { i18n } from '../i18n.ts';
+import { i18n } from '../../lib/i18n.ts';
 import { mount as mountLogin } from '../pages/login.ts';
 
 describe('TMS shell lifecycle', () => {

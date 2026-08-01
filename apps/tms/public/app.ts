@@ -1,5 +1,5 @@
 import { AppShell } from '../components/AppShell.ts';
-import { i18n } from '../i18n.ts';
+import { i18n } from '../../lib/i18n.ts';
 import { renderPage } from '../../lib/page-renderer.ts';
 import { registerNavigator } from '../../lib/navigate.ts';
 import { client } from '../../lib/client.ts';
