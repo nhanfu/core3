@@ -25,6 +25,17 @@ function parseYaml(file: string): any {
   return Bun.YAML.parse(readFileSync(file, 'utf8'));
 }
 
+function scopedCatalog(catalog: TranslationCatalog, pageId: string): TranslationCatalog {
+  if (pageId === 'common') return catalog;
+  return Object.fromEntries(Object.entries(catalog).map(([lang, values]) => [
+    lang,
+    Object.fromEntries(Object.entries(values).map(([key, value]) => [
+      key.includes('::') ? key : `${pageId}::${key}`,
+      value,
+    ])),
+  ]));
+}
+
 function assertUnique(map: Map<string, unknown>, key: string, file: string, kind: string) {
   if (map.has(key)) throw new Error(`Duplicate ${kind} "${key}" in ${file}`);
   map.set(key, file);
@@ -48,6 +59,12 @@ export function discoverPages(appsRoot: string) {
     const moduleName = relative(appsRoot, pagesRoot).split(sep)[0] || 'root';
     for (const file of walk(pagesRoot).filter((name) => /\.ya?ml$/i.test(name)).sort()) {
       const value = parseYaml(file);
+      const relativeFile = relative(pagesRoot, file).split(sep);
+      if (relativeFile[0] === 'i18n') {
+        const catalogId = relativeFile[1]?.replace(/\.ya?ml$/i, '');
+        if (catalogId) catalogs.set(`${moduleName}:${catalogId}`, scopedCatalog(value || {}, catalogId));
+        continue;
+      }
       if (file.endsWith('i18n.yaml') || file.endsWith('i18n.yml')) {
         catalogs.set(moduleName, value || {});
         continue;

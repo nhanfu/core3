@@ -134,7 +134,16 @@ export function createTmsApi(ctx: TmsApiContext) {
       const { query, ...publicSource } = source;
       return { ...publicSource, data: result.data, meta: result.meta };
     }));
-    return { ...publicPageConfig(page), datasources };
+    const lang = String(url.searchParams.get('lang') || user.preferred_lang || 'en');
+    return {
+      ...publicPageConfig(page),
+      datasources,
+      i18n: {
+        lang,
+        page: translationMap(CATALOGS, lang, String(page.page?.id || '')),
+        global: translationMap(CATALOGS, lang, '*'),
+      },
+    };
   }
 
   const TABLE_REGISTRY = {

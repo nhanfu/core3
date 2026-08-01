@@ -181,10 +181,8 @@ async function renderRoute(path: string) {
     <div class="spinner" style="border-color:rgba(79,70,229,0.2);border-top-color:var(--color-primary);width:24px;height:24px;"></div>
   </div>`;
 
-  // Prefetch i18n for this page
+  // The page response includes its datasource data and i18n payload.
   const pageName = cleanPath.slice(1).replace('/', '-') || 'dashboard';
-  await i18n.prefetch(pageName);
-  await i18n.prefetch('*');
 
   // Update shell active nav + header title
   if (_shell) {
@@ -195,12 +193,17 @@ async function renderRoute(path: string) {
   try {
     outlet.innerHTML = '';
     if (typeof loader === 'string') {
-      // The server strips datasource definitions before returning the page config.
-      const res = await apiFetch(`/api/pages/${loader}`);
+      const res = await apiFetch(`/api/pages/${loader}?lang=${encodeURIComponent(i18n.lang)}`);
       if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
       const config = await res.json();
-      config.locale = 'vi';
-      await renderPage(config, { container: outlet });
+      i18n.hydrate(loader, config.i18n);
+      delete config.i18n;
+      const translatedConfig = i18n.translatePageConfig(loader, config);
+      translatedConfig.locale = i18n.lang;
+      if (_shell) {
+        _shell.setTitle(i18n.t(loader, null, ROUTE_TITLES[cleanPath as keyof typeof ROUTE_TITLES] || 'TMS'));
+      }
+      await renderPage(translatedConfig, { container: outlet });
     } else {
       // JS module route (e.g. login)
       const mod = await loader();

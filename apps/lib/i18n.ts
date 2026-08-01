@@ -33,6 +33,46 @@ class I18n {
     }
   }
 
+  hydrate(page: string, payload: { lang?: string; page?: Record<string, string>; global?: Record<string, string> } = {}) {
+    const lang = payload.lang || this.lang;
+    if (lang !== this.lang) {
+      this.lang = lang;
+      document.documentElement.setAttribute('lang', lang);
+      document.documentElement.setAttribute('data-lang', lang);
+    }
+    if (payload.page) this._cache.set(`${lang}:${page}`, payload.page);
+    if (payload.global) this._cache.set(`${lang}:*`, payload.global);
+  }
+
+  translatePageConfig(page: string, config: any) {
+    const displayKeys = new Set([
+      'title', 'label', 'description', 'placeholder', 'search_placeholder',
+      'greeting', 'eyebrow', 'action_label', 'from_label', 'to_label',
+      'all_label', 'clear_label', 'confirm', 'message', 'options',
+    ]);
+    const walk = (value: any, key = '', component: string | null = null, display = false): any => {
+      if (typeof value === 'string') return display ? this.t(page, component, value) : value;
+      if (Array.isArray(value)) return value.map((item) => walk(item, key, component, display || key === 'breadcrumb'));
+      if (!value || typeof value !== 'object') return value;
+      const nextComponent = typeof value.type === 'string' ? value.type : component;
+      const result: Record<string, any> = {};
+      for (const [childKey, childValue] of Object.entries(value)) {
+        if (childKey === 'datasources' || childKey === 'data' || childKey === 'meta') {
+          result[childKey] = childValue;
+          continue;
+        }
+        result[childKey] = walk(
+          childValue,
+          childKey,
+          nextComponent,
+          displayKeys.has(childKey) || childKey === 'breadcrumb',
+        );
+      }
+      return result;
+    };
+    return walk(config);
+  }
+
   // Translate: looks up page-specific then global
   t(page: string, component: string | null, text: string) {
     const pageBucket   = this._cache.get(`${this.lang}:${page}`) || {};
