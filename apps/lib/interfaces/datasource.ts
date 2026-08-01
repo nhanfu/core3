@@ -1,4 +1,4 @@
-// @core3/backend — datasource contracts
+// Datasource contracts.
 
 export type DbEngine = 'postgres' | 'sqlserver' | 'sqlite' | 'duckdb';
 export type Protocol = 'http' | 'websocket' | 'sse' | 'grpc';

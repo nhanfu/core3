@@ -1,4 +1,4 @@
-// @core3/backend — authentication & authorization contracts
+// Authentication and authorization contracts.
 // The framework defines these interfaces; the host application provides the implementation.
 
 // ─── Domain types ────────────────────────────────────────────────────────────

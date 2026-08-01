@@ -13,7 +13,6 @@ export default defineConfig({
     alias: [
       { find: '@core3/frontend/components', replacement: path.resolve(__dirname, 'components/index.ts') },
       { find: '@core3/frontend', replacement: path.resolve(__dirname, 'index.ts') },
-      { find: '@core3/backend', replacement: path.resolve(__dirname, 'backend.ts') },
     ],
   },
 });
