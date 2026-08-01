@@ -4,7 +4,7 @@ export type ModuleApplicationConfig = Record<string, unknown>;
 
 export type ApplicationConfig = {
   environment: string;
-  modules: Record<string, ModuleApplicationConfig>;
+  services: Record<string, ModuleApplicationConfig>;
   apps: Array<Record<string, unknown>>;
 };
 
@@ -24,7 +24,7 @@ export function loadApplicationConfig(path: string, env: NodeJS.ProcessEnv): App
   const resolved = interpolate(parsed, env) as Partial<ApplicationConfig>;
   return {
     environment: env.CORE3_ENV || 'development',
-    modules: resolved.modules || {},
+    services: resolved.services || {},
     apps: resolved.apps || [],
   };
 }

@@ -13,7 +13,7 @@
     "./server.ts",
     "./public/app.ts",
     "./*.d.ts",
-    "./tms/globals.d.ts",
-    "./tms/types/*.d.ts"
+    "./services/tms/globals.d.ts",
+    "./services/tms/types/*.d.ts"
   ]
 }

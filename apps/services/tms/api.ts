@@ -1,5 +1,5 @@
-import { translationMap } from '../lib/server/discovery.ts';
-import { requestLanguage } from '../lib/server/locale.ts';
+import { translationMap } from '../../lib/server/discovery.ts';
+import { requestLanguage } from '../../lib/server/locale.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { xlsxToCsv } from './services/xlsx-import.ts';

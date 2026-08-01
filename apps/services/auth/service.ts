@@ -7,7 +7,7 @@ import type {
   AuthenticationResult,
   SecurityContext,
   User,
-} from '../lib/interfaces/auth.ts';
+} from '../../lib/interfaces/auth.ts';
 import { AuthRepository } from './repository.ts';
 
 export class AuthService implements AuthServiceProtocol {

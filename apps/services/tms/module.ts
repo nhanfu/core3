@@ -3,8 +3,8 @@
 import duckdb from 'duckdb';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { discoverPages } from '../lib/server/discovery.ts';
-import { migrateDatabase } from '../lib/server/migrations.ts';
+import { discoverPages } from '../../lib/server/discovery.ts';
+import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { createTmsApi } from './api.ts';
 import { initTmsDatabase } from './db/init.ts';
 import { DuckDbRepository as TmsRepository } from './services/repository.ts';

@@ -1,6 +1,7 @@
 import { join, relative, sep } from 'node:path';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { validatePageDefinition } from '../yaml/schema.ts';
+import { discoverModuleRoots } from './module.ts';
 
 export type DiscoveredPage = {
   id: string;
@@ -106,9 +107,8 @@ export function discoverPages(appsRoot: string) {
   const pageRoots = new Set<string>();
   const topPages = join(appsRoot, 'pages');
   try { if (statSync(topPages).isDirectory()) pageRoots.add(topPages); } catch {}
-  for (const entry of readdirSync(appsRoot, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name === 'lib' || entry.name === 'node_modules') continue;
-    const pages = join(appsRoot, entry.name, 'pages');
+  for (const moduleRoot of discoverModuleRoots(appsRoot)) {
+    const pages = join(moduleRoot, 'pages');
     try { if (statSync(pages).isDirectory()) pageRoots.add(pages); } catch {}
   }
 
@@ -118,12 +118,12 @@ export function discoverPages(appsRoot: string) {
   const menus = new Map<string, ModuleMenu>();
   const permissions = new Map<string, PermissionDefinition>();
 
-  for (const entry of readdirSync(appsRoot, { withFileTypes: true })) {
-    if (!entry.isDirectory() || entry.name === 'lib' || entry.name === 'node_modules') continue;
-    const file = join(appsRoot, entry.name, 'permission.yaml');
+  for (const moduleRoot of discoverModuleRoots(appsRoot)) {
+    const moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
+    const file = join(moduleRoot, 'permission.yaml');
     try {
-      if (statSync(file).isFile()) permissions.set(entry.name, {
-        module: entry.name,
+      if (statSync(file).isFile()) permissions.set(moduleName, {
+        module: moduleName,
         file,
         config: parseYaml(file) || {},
       });
@@ -131,7 +131,7 @@ export function discoverPages(appsRoot: string) {
   }
 
   for (const pagesRoot of pageRoots) {
-    const moduleName = relative(appsRoot, pagesRoot).split(sep)[0] || 'root';
+    const moduleName = relative(appsRoot, pagesRoot).split(sep).slice(-2, -1)[0] || 'root';
     for (const file of walk(pagesRoot).filter((name) => /\.ya?ml$/i.test(name)).sort()) {
       const value = parseYaml(file);
       const relativeFile = relative(pagesRoot, file).split(sep);

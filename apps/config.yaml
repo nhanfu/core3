@@ -1,6 +1,6 @@
 # Application and module configuration consumed by the host.
 # CORE3_ENV selects the database environment; paths can be overridden by env.
-modules:
+services:
   auth:
     database:
       driver: duckdb

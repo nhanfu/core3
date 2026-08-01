@@ -1,5 +1,5 @@
 {
-  "name": "@core3/tms",
+  "name": "@core3/services",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,10 +8,10 @@
     "start": "PORT=3001 bun server.ts",
     "predev": "bun run css:build",
     "dev": "PORT=3001 bun --hot server.ts",
-    "test": "cd tms && vitest run --environment jsdom",
-    "audit": "bun tms/scripts/audit-pages.ts",
-    "audit:ui": "bun tms/scripts/audit-ui.ts",
-    "audit:workflows": "bun tms/scripts/audit-workflows.ts"
+    "test": "cd services/tms && vitest run --environment jsdom",
+    "audit": "bun services/tms/scripts/audit-pages.ts",
+    "audit:ui": "bun services/tms/scripts/audit-ui.ts",
+    "audit:workflows": "bun services/tms/scripts/audit-workflows.ts"
   },
   "dependencies": {
     "duckdb": "^1.1.0",

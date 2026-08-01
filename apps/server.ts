@@ -6,10 +6,10 @@ import { loadApplicationConfig, resolveEnvironmentValues } from './lib/server/ap
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
 const PUBLIC_ROOT = join(APPS_ROOT, 'public');
-const applicationConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
-const moduleConfigs = Object.fromEntries(Object.entries(applicationConfig.modules).map(([id, config]) => [
+const appConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
+const moduleConfigs = Object.fromEntries(Object.entries(appConfig.services).map(([id, config]) => [
   id,
-  resolveEnvironmentValues(config, applicationConfig.environment) as Record<string, unknown>,
+  resolveEnvironmentValues(config, appConfig.environment) as Record<string, unknown>,
 ]));
 
 const CORS_HEADERS = {
@@ -99,7 +99,7 @@ await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfi
 async function applicationCatalog() {
   try {
     const moduleIds = new Set(modules.map((module) => module.id));
-    return applicationConfig.apps.map((app) => ({
+    return appConfig.apps.map((app) => ({
       ...app,
       route: (() => {
         const moduleId = String(app.module || app.id);

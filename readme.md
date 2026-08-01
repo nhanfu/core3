@@ -14,7 +14,7 @@ The intended scope of YAML includes:
 - database management, including partitioning and sharding
 - deployment and operational configuration
 
-The repository’s [`apps/lib`](apps/lib) directory is a shared, client-agnostic library. It should process client YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/tms`](apps/tms) is the sample client project where those declarations and any remaining app-specific code live.
+The repository’s [`apps/lib`](apps/lib) directory is a shared, service-agnostic library. It should process service YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/services/tms`](apps/services/tms) is the sample service where those declarations and any remaining service-specific code live. Authentication is provided by [`apps/services/auth`](apps/services/auth).
 
 Other code remains possible when YAML cannot yet express a requirement, but it should be minimal transitional glue with a path toward a YAML-based solution.
 

@@ -1,12 +1,12 @@
 import duckdb from 'duckdb';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { discoverPages, translationMap } from '../lib/server/discovery.ts';
-import { requestLanguage } from '../lib/server/locale.ts';
-import { migrateDatabase } from '../lib/server/migrations.ts';
+import { discoverPages, translationMap } from '../../lib/server/discovery.ts';
+import { requestLanguage } from '../../lib/server/locale.ts';
+import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { AuthRepository } from './repository.ts';
 import { AuthService } from './service.ts';
-import { AUTH_SERVICE_KEY } from '../lib/interfaces/auth.ts';
+import { AUTH_SERVICE_KEY } from '../../lib/interfaces/auth.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
