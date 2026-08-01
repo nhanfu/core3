@@ -1,115 +1,19 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '../../lib/html.ts';
-import { navigate, logout, getUser } from '../app.ts';
 import { i18n } from '../../lib/i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
 
-type NavItem = { path: string; label: string; icon: string };
+export type NavItem = { path: string; label: string; icon: string; permission?: string };
 type NavGroup = { id: string; label: string; items: NavItem[] };
-
-const DASHBOARD: NavItem = { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' };
-
-const NAV_PERMISSIONS: Record<string, string> = {
-  '/dashboard': 'fleet.read',
-  '/orders': 'orders.read', '/chat': 'chat.read', '/schedule': 'dispatch.read',
-  '/customers': 'crm.read', '/partners': 'crm.read', '/quotes': 'crm.read',
-  '/crm/dashboard': 'crm.read', '/crm/kpi': 'crm.read',
-  '/accounting/debit-notes': 'accounting.read', '/accounting/debit-note-summary': 'accounting.read',
-  '/accounting/payment-requests': 'accounting.read', '/accounting/payment-request-summary': 'accounting.read',
-  '/accounting/advances': 'accounting.read', '/accounting/settlements': 'accounting.read',
-  '/accounting/invoice-templates': 'accounting.read', '/accounting/ledger-accounts': 'accounting.read',
-  '/hr/employees': 'hr.read', '/hr/contracts': 'hr.read', '/hr/timesheets': 'hr.read',
-  '/hr/shifts': 'hr.read', '/hr/payroll': 'hr.read',
-  '/drivers': 'drivers.read', '/vehicles': 'fleet.read', '/containers': 'dispatch.read',
-  '/locations': 'dispatch.read', '/areas': 'dispatch.read',
-  '/catalog/container-types': 'catalog.read', '/catalog/vehicle-types': 'catalog.read',
-  '/catalog/units': 'catalog.read', '/catalog/cargo-types': 'catalog.read',
-  '/catalog/fee-types': 'catalog.read', '/catalog/currencies': 'catalog.read',
-  '/org/own-company': 'settings.read', '/org/branches': 'settings.read',
-  '/org/departments': 'settings.read', '/org/teams': 'settings.read',
-  '/org/users': 'settings.read', '/org/roles': 'settings.read',
-  '/system/activity': 'system.read', '/system/code-rules': 'system.read',
-  '/system/print-templates': 'system.read', '/system/approval-flows': 'system.read',
-  '/system/shipment-types': 'system.read', '/system/trip-statuses': 'system.read',
-  '/system/fee-rules': 'system.read', '/system/storage': 'system.read',
-};
+export type ShellMenu = { dashboard?: NavItem; groups?: NavGroup[] };
 
 function canSeeNavItem(item: NavItem, user: any) {
-  const permission = NAV_PERMISSIONS[item.path];
-  return !permission || user?.permissions?.includes(permission);
+  return !item.permission || user?.permissions?.includes(item.permission);
 }
 
-const NAV_GROUPS: NavGroup[] = [
-  { id: 'operations', label: 'OPERATIONS', items: [
-    { path: '/orders', label: 'Orders', icon: 'document' },
-    { path: '/chat', label: 'Messages', icon: 'message' },
-    { path: '/schedule', label: 'Dispatch schedule', icon: 'calendar' },
-  ] },
-  { id: 'sales', label: 'SALES', items: [
-    { path: '/customers', label: 'Customers', icon: 'users' },
-    { path: '/partners', label: 'Partners', icon: 'users' },
-    { path: '/quotes', label: 'Quotes', icon: 'warning' },
-    { path: '/crm/dashboard', label: 'CRM overview', icon: 'report' },
-    { path: '/crm/kpi', label: 'KPI targets', icon: 'analytics' },
-  ] },
-  { id: 'accounting', label: 'ACCOUNTING', items: [
-    { path: '/accounting/debit-notes', label: 'Debit notes', icon: 'file' },
-    { path: '/accounting/debit-note-summary', label: 'Debit note summary', icon: 'report' },
-    { path: '/accounting/payment-requests', label: 'Payment requests', icon: 'file' },
-    { path: '/accounting/payment-request-summary', label: 'Payment request summary', icon: 'report' },
-    { path: '/accounting/advances', label: 'Advances', icon: 'money' },
-    { path: '/accounting/settlements', label: 'Settlements', icon: 'money' },
-    { path: '/accounting/invoice-templates', label: 'Invoice templates', icon: 'document' },
-    { path: '/accounting/ledger-accounts', label: 'Chart of accounts', icon: 'table' },
-  ] },
-  { id: 'hr', label: 'HUMAN RESOURCES', items: [
-    { path: '/hr/employees', label: 'Employees', icon: 'users' },
-    { path: '/hr/contracts', label: 'Contracts', icon: 'document' },
-    { path: '/hr/timesheets', label: 'Timesheets', icon: 'dashboard' },
-    { path: '/hr/shifts', label: 'Shifts', icon: 'calendar' },
-    { path: '/hr/payroll', label: 'Payroll', icon: 'file' },
-  ] },
-  { id: 'catalog', label: 'CATALOG', items: [
-    { path: '/drivers', label: 'Drivers', icon: 'users' },
-    { path: '/vehicles', label: 'Vehicles', icon: 'grid' },
-    { path: '/containers', label: 'Containers', icon: 'document' },
-    { path: '/locations', label: 'Locations', icon: 'pin' },
-    { path: '/areas', label: 'Areas', icon: 'quote' },
-    { path: '/catalog/container-types', label: 'Containers types', icon: 'document' },
-    { path: '/catalog/vehicle-types', label: 'Vehicle types', icon: 'grid' },
-    { path: '/catalog/units', label: 'Units', icon: 'menu' },
-    { path: '/catalog/cargo-types', label: 'Cargo types', icon: 'quote' },
-    { path: '/catalog/fee-types', label: 'Fee types', icon: 'analytics' },
-    { path: '/catalog/currencies', label: 'Currencies', icon: 'money' },
-  ] },
-  { id: 'organization', label: 'ORGANIZATION & ACCESS', items: [
-    { path: '/org/own-company', label: 'Company', icon: 'dashboard' },
-    { path: '/org/branches', label: 'Branches', icon: 'home' },
-    { path: '/org/departments', label: 'Departments', icon: 'report' },
-    { path: '/org/teams', label: 'Teams', icon: 'users' },
-    { path: '/org/users', label: 'Users', icon: 'users' },
-    { path: '/org/roles', label: 'Roles', icon: 'quote' },
-  ] },
-  { id: 'system', label: 'SYSTEM', items: [
-    { path: '/system/activity', label: 'Activity log', icon: 'activity' },
-    { path: '/system/code-rules', label: 'Code rules', icon: 'number' },
-    { path: '/system/print-templates', label: 'Print templates', icon: 'file' },
-    { path: '/system/approval-flows', label: 'Approval workflows', icon: 'quote' },
-    { path: '/system/shipment-types', label: 'Shipment types', icon: 'grid' },
-    { path: '/system/trip-statuses', label: 'Trip statuses', icon: 'status' },
-    { path: '/system/fee-rules', label: 'Trip fee rules', icon: 'analytics' },
-    { path: '/system/storage', label: 'Storage', icon: 'table' },
-  ] },
-];
-
-const GLOBAL_SEARCH_ITEMS = [
-  DASHBOARD,
-  ...NAV_GROUPS.flatMap(group => group.items),
-];
-
-const THEME_STORAGE_KEY = 'tms_theme';
+const THEME_STORAGE_KEY = 'core3_theme';
 
 export class AppShell extends BaseComponent {
   _navEls: Map<string, HTMLElement>;
@@ -119,10 +23,19 @@ export class AppShell extends BaseComponent {
   _profileDrawer: ProfileDrawer | null;
   _clockTimer: ReturnType<typeof setInterval> | null;
   _shellToast: HTMLElement | null;
+  _shellToastTimer: ReturnType<typeof setTimeout> | null;
   _languageUnsubscribe: (() => void) | null;
 
+  get menu(): ShellMenu {
+    return this.state.menu || {};
+  }
+
+  go(path: string) {
+    if (typeof this.state.navigate === 'function') this.state.navigate(path);
+  }
+
   constructor(id: string, state: any) {
-    super(id, { activePath: '/dashboard', title: 'TMS', openGroups: {}, ...state });
+    super(id, { activePath: '/dashboard', title: 'Application', openGroups: {}, menu: {}, showWelcomeToast: false, ...state });
     this._navEls = new Map();  // path → div element
     this._groupEls = new Map();
     this._headerTitle = null;
@@ -130,6 +43,7 @@ export class AppShell extends BaseComponent {
     this._profileDrawer = null;
     this._clockTimer = null;
     this._shellToast = null;
+    this._shellToastTimer = null;
     this._languageUnsubscribe = i18n.onChange(() => {
       this.refreshLanguage();
       const refreshPage = this.state.onLanguageChange;
@@ -141,12 +55,13 @@ export class AppShell extends BaseComponent {
     this._notifPanel?.refreshLanguage();
     this._profileDrawer?.refreshLanguage();
     this._groupEls.forEach((group, groupId) => {
-      const groupDef = NAV_GROUPS.find(candidate => candidate.id === groupId);
+      const groupDef = (this.menu.groups || []).find(candidate => candidate.id === groupId);
       const label = group.querySelector('.sidebar-group-label');
       if (groupDef && label) label.textContent = i18n.t('*', null, groupDef.label);
     });
     this._navEls.forEach((element, path) => {
-      const item = GLOBAL_SEARCH_ITEMS.find(candidate => candidate.path === path);
+      const items = [this.menu.dashboard, ...(this.menu.groups || []).flatMap(group => group.items)].filter(Boolean) as NavItem[];
+      const item = items.find(candidate => candidate.path === path);
       const label = element.querySelector('.nav-item-label');
       if (item && label) {
         const translated = i18n.t('*', null, item.label);
@@ -160,7 +75,7 @@ export class AppShell extends BaseComponent {
     this._navEls.forEach((el: HTMLElement, p: string) => {
       el.classList.toggle('active', p === path);
     });
-    const containingGroup = NAV_GROUPS.find(group => group.items.some(item => item.path === path));
+    const containingGroup = (this.menu.groups || []).find(group => group.items.some(item => item.path === path));
     if (containingGroup) this.setGroupOpen(containingGroup.id, true);
   }
 
@@ -195,8 +110,8 @@ export class AppShell extends BaseComponent {
     const logoMark = html.take(logoIdentity).span.className('sidebar-logo-mark').getContext();
     logoMark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 17 10-10M7 7h4v4M17 17h-4v-4"/><path d="m5 12 3-3M19 12l-3 3"/></svg>';
     const logoCopy = html.take(logoIdentity).div.getContext();
-    html.take(logoCopy).div.className('sidebar-logo-text').text('MovedX');
-    html.take(logoCopy).div.className('sidebar-logo-sub').text('Điều xe & Drivers');
+    html.take(logoCopy).div.className('sidebar-logo-text').text(this.state.brand?.name || this.state.company?.short_name || 'Core3');
+    html.take(logoCopy).div.className('sidebar-logo-sub').text(this.state.brand?.subtitle || 'Application');
 
     const menuSearch = html.take(sidebar).div.className('sidebar-menu-search').getContext();
     const menuSearchIcon = html.take(menuSearch).span.className('sidebar-menu-search-icon').getContext();
@@ -214,7 +129,7 @@ export class AppShell extends BaseComponent {
       const navItem = html.take(target).button
         .className('nav-item' + (isActive ? ' active' : ''))
         .attr('type', 'button')
-        .event('click', () => navigate(item.path))
+        .event('click', () => this.go(item.path))
         .getContext();
       const translated = i18n.t('*', null, item.label);
       navItem.dataset.search = translated.toLocaleLowerCase(i18n.lang);
@@ -224,8 +139,9 @@ export class AppShell extends BaseComponent {
       this._navEls.set(item.path, navItem);
     };
 
-    if (canSeeNavItem(DASHBOARD, user)) createNavItem(nav, DASHBOARD);
-    for (const groupDef of NAV_GROUPS) {
+    const dashboard = this.menu.dashboard;
+    if (dashboard && canSeeNavItem(dashboard, user)) createNavItem(nav, dashboard);
+    for (const groupDef of this.menu.groups || []) {
       const visibleItems = groupDef.items.filter(item => canSeeNavItem(item, user));
       if (!visibleItems.length) continue;
       const group = html.take(nav).div
@@ -255,7 +171,7 @@ export class AppShell extends BaseComponent {
       this._navEls.forEach((item) => {
         item.style.display = !query || item.dataset.search?.includes(query) ? '' : 'none';
       });
-      NAV_GROUPS.forEach(groupDef => {
+      (this.menu.groups || []).forEach(groupDef => {
         const group = this._groupEls.get(groupDef.id);
         if (!group) return;
         const hasMatch = groupDef.items.some(item => canSeeNavItem(item, user)
@@ -272,7 +188,7 @@ export class AppShell extends BaseComponent {
     const userInfo = html.take(userRow).div.getContext();
     html.take(userInfo).div.className('sidebar-user-name').text(user?.name || 'User');
     html.take(userInfo).div.className('sidebar-user-role').text((user?.roles || []).join(', '));
-    html.take(footer).div.className('sidebar-footer-version').text('© 2026 MovedX · v0.1');
+    html.take(footer).div.className('sidebar-footer-version').text(this.state.brand?.footer || '© 2026 Core3');
 
     // ── MAIN ──
     const main = html.take(layout).div.className('app-main').getContext();
@@ -295,7 +211,7 @@ export class AppShell extends BaseComponent {
       sidebarToggle.setAttribute('aria-label', sidebarToggle.title);
     });
     html.take(tenantContext).span.className('tenant-context-name').text(
-      this.state.company?.short_name || this.state.company?.name || 'TMS',
+      this.state.company?.short_name || this.state.company?.name || this.state.brand?.name || 'Core3',
     );
 
     // Header right — actions
@@ -362,7 +278,7 @@ export class AppShell extends BaseComponent {
       .attr('type', 'button')
       .attr('title', 'Timesheets')
       .attr('aria-label', 'Timesheets')
-      .event('click', () => navigate('/hr/timesheets'))
+      .event('click', () => this.go('/hr/timesheets'))
       .getContext();
     const attendanceIcon = html.take(attendanceBtn).span.getContext();
     appendIcon(attendanceIcon, 'clock');
@@ -381,7 +297,7 @@ export class AppShell extends BaseComponent {
       .attr('type', 'button')
       .attr('title', 'Messages')
       .attr('aria-label', 'Messages')
-      .event('click', () => navigate('/chat'))
+      .event('click', () => this.go('/chat'))
       .getContext();
     const chatIcon = html.take(chatBtn).span.getContext();
     appendIcon(chatIcon, 'message');
@@ -437,7 +353,9 @@ export class AppShell extends BaseComponent {
     this._profileDrawer = new ProfileDrawer('profile-drawer', { user, open: false });
     this._profileDrawer.mount(document.body);
 
-    // The reference tenant shows a dismissible welcome toast after login.
+    // The welcome toast is only requested for the first shell mount after login.
+    if (!this.state.showWelcomeToast) return;
+
     const toast = html.take(document.body).div
       .className('shell-toast')
       .attr('role', 'status')
@@ -452,13 +370,22 @@ export class AppShell extends BaseComponent {
       .attr('aria-label', 'Close thông báo')
       .getContext();
     appendIcon(toastClose, 'x');
-    toastClose.addEventListener('click', () => toast.remove());
+    const dismissToast = () => {
+      if (this._shellToastTimer) clearTimeout(this._shellToastTimer);
+      this._shellToastTimer = null;
+      toast.remove();
+      if (this._shellToast === toast) this._shellToast = null;
+    };
+    toastClose.addEventListener('click', dismissToast);
     this._shellToast = toast;
+    this._shellToastTimer = setTimeout(dismissToast, 5000);
   }
 
   dispose() {
     if (this._clockTimer) clearInterval(this._clockTimer);
     this._clockTimer = null;
+    if (this._shellToastTimer) clearTimeout(this._shellToastTimer);
+    this._shellToastTimer = null;
     this._notifPanel?.dispose();
     this._profileDrawer?.dispose();
     this._notifPanel = null;

@@ -8,7 +8,7 @@ components:
     id: login-form
     action: login
     logo_title: MovedX
-    logo_subtitle: Điều xe & Quản lý vận tải
+    logo_subtitle: Fleet & Transport Management
     title: Sign in to your account
     email:
       label: Email

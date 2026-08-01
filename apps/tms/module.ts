@@ -64,6 +64,7 @@ export class TmsModule {
       sources: discovered.datasources,
       pages: new Map([...discovered.pages].map(([id, page]) => [id, page.config])),
       catalogs: discovered.catalogs,
+      menus: discovered.menus,
       uploadRoot,
     }));
   }

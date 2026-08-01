@@ -33,6 +33,7 @@ describe('TMS shell lifecycle', () => {
     const shell = new AppShell('shell', {
       user: { name: 'Admin User', roles: ['Administrator'], permissions: ['fleet.read'] },
       company: { short_name: 'MovedX' },
+      showWelcomeToast: true,
     });
 
     shell.mount(host);
@@ -49,6 +50,35 @@ describe('TMS shell lifecycle', () => {
     expect(document.querySelector('.shell-toast')).toBeNull();
     expect(intervalSpy).toHaveBeenCalledTimes(2);
     expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('automatically dismisses the welcome toast', () => {
+    const host = document.createElement('div');
+    const shell = new AppShell('shell-toast-timeout', {
+      user: { name: 'Admin User', permissions: ['fleet.read'] },
+      showWelcomeToast: true,
+    });
+
+    shell.mount(host);
+    expect(document.querySelector('.shell-toast')).not.toBeNull();
+
+    vi.advanceTimersByTime(4999);
+    expect(document.querySelector('.shell-toast')).not.toBeNull();
+    vi.advanceTimersByTime(1);
+    expect(document.querySelector('.shell-toast')).toBeNull();
+
+    shell.dispose();
+  });
+
+  it('does not render the welcome toast for a normal shell mount', () => {
+    const host = document.createElement('div');
+    const shell = new AppShell('shell-without-toast', {
+      user: { name: 'Admin User', permissions: ['fleet.read'] },
+    });
+
+    shell.mount(host);
+    expect(document.querySelector('.shell-toast')).toBeNull();
+    shell.dispose();
   });
 
   it('keeps shared shell branding and organization labels localized', () => {

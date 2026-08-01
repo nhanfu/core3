@@ -10,6 +10,7 @@ export type DiscoveredPage = {
 };
 
 export type TranslationCatalog = Record<string, Record<string, string>>;
+export type ModuleMenu = { module: string; config: any };
 
 function walk(dir: string): string[] {
   const files: string[] = [];
@@ -26,7 +27,9 @@ function parseYaml(file: string): any {
 }
 
 function scopedCatalog(catalog: TranslationCatalog, pageId: string): TranslationCatalog {
-  if (pageId === 'common') return catalog;
+  // Menu strings are global to the shell, just like the historical common
+  // catalog. Page catalogs remain scoped to their page.
+  if (pageId === 'common' || pageId === 'menu') return catalog;
   return Object.fromEntries(Object.entries(catalog).map(([lang, values]) => [
     lang,
     Object.fromEntries(Object.entries(values).map(([key, value]) => [
@@ -54,12 +57,17 @@ export function discoverPages(appsRoot: string) {
   const pages = new Map<string, DiscoveredPage>();
   const datasources = new Map<string, any>();
   const catalogs = new Map<string, TranslationCatalog>();
+  const menus = new Map<string, ModuleMenu>();
 
   for (const pagesRoot of pageRoots) {
     const moduleName = relative(appsRoot, pagesRoot).split(sep)[0] || 'root';
     for (const file of walk(pagesRoot).filter((name) => /\.ya?ml$/i.test(name)).sort()) {
       const value = parseYaml(file);
       const relativeFile = relative(pagesRoot, file).split(sep);
+      if (relativeFile.length === 1 && /^menu\.ya?ml$/i.test(relativeFile[0])) {
+        menus.set(moduleName, { module: moduleName, config: parseYaml(file) || {} });
+        continue;
+      }
       if (relativeFile[0] === 'i18n') {
         const catalogId = relativeFile[1]?.replace(/\.ya?ml$/i, '');
         if (catalogId) catalogs.set(`${moduleName}:${catalogId}`, scopedCatalog(value || {}, catalogId));
@@ -79,7 +87,7 @@ export function discoverPages(appsRoot: string) {
       }
     }
   }
-  return { pages, datasources, catalogs };
+  return { pages, datasources, catalogs, menus };
 }
 
 export function translationMap(catalogs: Map<string, TranslationCatalog>, lang: string, page = '*') {

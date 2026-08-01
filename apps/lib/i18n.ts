@@ -2,6 +2,11 @@ class I18n {
   lang: string = 'en';
   _cache: Map<string, Record<string, string>> = new Map(); // 'en:fleet' → { text: translated, ... }
   _listeners: Set<(lang: string) => void> = new Set();
+  _menuModules: any[] = [];
+
+  get menuModules() {
+    return this._menuModules;
+  }
 
   async setLang(lang: string) {
     if (lang === this.lang && this._cache.has(`${lang}:*`)) return;
@@ -17,18 +22,30 @@ class I18n {
   async prefetch(page: string) {
     const key = `${this.lang}:${page}`;
     if (this._cache.has(key)) return;
+    // Page responses carry their own catalog. The menu endpoint is the sole
+    // source for global shell translations.
+    if (page !== '*') {
+      this._cache.set(key, {});
+      return;
+    }
     try {
       const token = localStorage.getItem('tms_token');
+      const endpoint = `/api/menu?lang=${encodeURIComponent(this.lang)}`;
       const res = await fetch(
-        `/api/i18n?lang=${encodeURIComponent(this.lang)}&page=${encodeURIComponent(page)}`,
+        endpoint,
         { headers: token ? { Authorization: `Bearer ${token}` } : {} },
       );
       if (res.ok) {
-        this._cache.set(key, await res.json());
+        const payload = await res.json();
+        const modules = Array.isArray(payload) ? payload : [];
+        this._menuModules = modules;
+        const global = modules.reduce((merged, module) => ({ ...merged, ...(module.i18n || {}) }), {});
+        this._cache.set(key, global);
       } else {
         this._cache.set(key, {}); // cache empty to avoid re-fetching
       }
     } catch {
+      if (page === '*') this._menuModules = [];
       this._cache.set(key, {});
     }
   }

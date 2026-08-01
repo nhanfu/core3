@@ -1,10 +1,11 @@
 import { AppShell } from './components/AppShell.ts';
 import { i18n } from '../lib/i18n.ts';
 import { renderPage } from '../lib/page-renderer.ts';
-import { registerNavigator } from '../lib/navigate.ts';
+import { getPageParams, registerNavigator } from '../lib/navigate.ts';
 import { client } from '../lib/client.ts';
 
 const TOKEN_KEY = 'tms_token';
+const WELCOME_TOAST_KEY = 'core3_show_welcome_toast';
 let _user: any = null;
 let _shell: AppShell | null = null;
 
@@ -117,6 +118,7 @@ export function getDefaultRoute(user: any = _user) {
 
 export async function setAuth(token: string, user: any) {
   localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(WELCOME_TOAST_KEY, '1');
   _user = user;
   window.__CORE3_USER__ = user;
   client.setToken(token);
@@ -124,6 +126,7 @@ export async function setAuth(token: string, user: any) {
 
 export function logout() {
   localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(WELCOME_TOAST_KEY);
   _user = null;
   _shell?.dispose();
   _shell = null;
@@ -193,7 +196,14 @@ async function renderRoute(path: string) {
   try {
     outlet.innerHTML = '';
     if (typeof loader === 'string') {
-      const res = await apiFetch(`/api/pages/${loader}?lang=${encodeURIComponent(i18n.lang)}`);
+      // Hash routes carry page state (for example the order id on a detail
+      // page). Forward it when the server prefetches the page datasources;
+      // otherwise detail pages render their labels against an empty record.
+      const pageParams = new URLSearchParams({ lang: i18n.lang });
+      for (const [key, value] of Object.entries(getPageParams() as Record<string, string>)) {
+        pageParams.set(key, value);
+      }
+      const res = await apiFetch(`/api/pages/${loader}?${pageParams.toString()}`);
       if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
       const config = await res.json();
       i18n.hydrate(loader, config.i18n);
@@ -243,6 +253,7 @@ async function bootstrap() {
     client.setToken(token);
   } catch {
     localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(WELCOME_TOAST_KEY);
     app.innerHTML = '<div id="outlet"></div>';
     await renderRoute('/login');
     return;
@@ -252,7 +263,18 @@ async function bootstrap() {
   const lang = _user?.preferred_lang || 'en';
   await i18n.setLang(lang);
 
+  // Menus belong to modules and are discovered from pages/menu.yaml on the
+  // server. The shell only receives the public, parsed declaration.
+  let menu: any = {};
+  const modules = i18n.menuModules;
+  menu = modules.reduce((merged, entry) => ({
+    dashboard: merged.dashboard || entry.menu?.dashboard,
+    groups: [...(merged.groups || []), ...(entry.menu?.groups || [])],
+  }), {});
+
   // Mount app shell
+  const showWelcomeToast = sessionStorage.getItem(WELCOME_TOAST_KEY) === '1';
+  sessionStorage.removeItem(WELCOME_TOAST_KEY);
   let company: any = null;
   try {
     const companyRes = await fetch('/api/v1/company', { headers: { Authorization: `Bearer ${token}` } });
@@ -263,6 +285,9 @@ async function bootstrap() {
   _shell = new AppShell('app-shell', {
     user: _user,
     company,
+    menu,
+    showWelcomeToast,
+    navigate,
     onLanguageChange: async () => {
       const currentPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
       await renderRoute(currentPath);

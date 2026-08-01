@@ -34,6 +34,7 @@ type TmsApiContext = {
   sources: Map<string, any>;
   pages: Map<string, any>;
   catalogs: Map<string, any>;
+  menus: Map<string, any>;
   uploadRoot: string;
 };
 
@@ -44,6 +45,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     sources: SOURCES,
     pages: PAGES,
     catalogs: CATALOGS,
+    menus: MENUS,
     uploadRoot: UPLOAD_ROOT,
   } = ctx;
 
@@ -344,11 +346,14 @@ export function createTmsApi(ctx: TmsApiContext) {
     });
   }
 
-  // Translation reads are needed by the unauthenticated login shell.
-  if (pathname === '/api/i18n' && method === 'GET') {
-    const lang = url.searchParams.get('lang') || 'en';
-    const page = url.searchParams.get('page') || '*';
-    return json(translationMap(CATALOGS, lang, page));
+  // The shell needs module menus and global labels before authentication.
+  if (pathname === '/api/menu' && method === 'GET') {
+    const lang = String(url.searchParams.get('lang') || 'en');
+    return json([...MENUS.values()].map((entry: any) => ({
+      module: entry.module,
+      ...entry.config,
+      i18n: translationMap(CATALOGS, lang, '*'),
+    })));
   }
 
   // ── All routes below require auth ──────────────────────────────────────────
