@@ -70,7 +70,7 @@ components:
           - { id: delete_currency, label: Erase, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: sync_currency_rates, type: server, permission: catalog.write, action: catalog.currencies.sync_rates, refresh: [currencies] }
+  - { id: sync_currency_rates, type: server, permission: catalog.write, action: catalog.currencies.sync_rates, refresh: [currencies] , handler: currency_sync}
   - { id: import_currencies, type: upload, permission: catalog.write, kind: master_data_import, scope: currency, refresh: [currencies] }
   - id: add_currency
     type: form

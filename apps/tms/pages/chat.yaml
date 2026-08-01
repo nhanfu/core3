@@ -86,6 +86,8 @@ actions:
     permission: chat.write
     title: Create a conversation
     action: chat.threads.create
+    handler: chat
+    operation: create_thread
     refresh: [chat_threads, chat_messages]
     fields:
       - { field: title, label: Name of the conversation, type: text, required: true }
@@ -94,12 +96,16 @@ actions:
     type: server
     permission: chat.write
     action: chat.messages.send
+    handler: chat
+    operation: send_message
     params: { content: '{row.content}' }
     refresh: [chat_threads, chat_messages]
   - id: mark_thread_read
     type: server
     permission: chat.read
     action: chat.threads.mark_read
+    handler: chat
+    operation: mark_read
     refresh: [chat_threads]
   - id: upload_attachment
     type: upload

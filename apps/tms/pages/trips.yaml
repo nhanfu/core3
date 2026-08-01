@@ -250,6 +250,8 @@ actions:
     type: server
     permission: trips.write
     action: trips.cancel
+    handler: trip_transition
+    operation: cancel
     confirm: "Cancel trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
@@ -257,6 +259,8 @@ actions:
     type: server
     permission: trips.write
     action: trips.start
+    handler: trip_transition
+    operation: start
     confirm: "Departure confirmation for trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
@@ -264,6 +268,8 @@ actions:
     type: server
     permission: trips.write
     action: trips.complete
+    handler: trip_transition
+    operation: complete
     confirm: "Confirmed completion of trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]

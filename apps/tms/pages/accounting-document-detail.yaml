@@ -135,6 +135,8 @@ actions:
     permission: accounting.write
     title: Update documents
     action: accounting.documents.update
+    handler: accounting_document
+    operation: update
     prefill: source
     prefill_source: accounting_document_detail
     params: { id: '{state.id}', kind: '{state.kind}' }
@@ -152,6 +154,9 @@ actions:
     permission: accounting.write
     title: Add detail lines
     action: accounting.documents.lines.create
+    handler: line_item
+    operation: create
+    domain: accounting
     params: { id: '{state.id}' }
     refresh: [accounting_document_lines, accounting_document_detail, accounting_document_timeline]
     fields:
@@ -165,6 +170,9 @@ actions:
     permission: accounting.write
     title: Update detail line
     action: accounting.documents.lines.update
+    handler: line_item
+    operation: update
+    domain: accounting
     prefill: row
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [accounting_document_lines, accounting_document_detail, accounting_document_timeline]
@@ -178,6 +186,9 @@ actions:
     type: server
     permission: accounting.write
     action: accounting.documents.lines.delete
+    handler: line_item
+    operation: delete
+    domain: accounting
     confirm: 'Remove detail line {{row.description}}?'
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [accounting_document_lines, accounting_document_detail, accounting_document_timeline]

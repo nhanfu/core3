@@ -39,6 +39,10 @@ export type ActionDefinition = {
   id: string;
   type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'event';
   permission?: string;
+  handler?: string;
+  operation?: string;
+  domain?: string;
+  kind?: string;
   [key: string]: unknown;
 };
 
@@ -117,11 +121,11 @@ const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
-  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field']),
+  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'permission']),

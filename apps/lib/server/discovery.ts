@@ -11,6 +11,7 @@ export type DiscoveredPage = {
 
 export type TranslationCatalog = Record<string, Record<string, string>>;
 export type ModuleMenu = { module: string; config: any };
+export type PermissionDefinition = { module: string; file: string; config: any };
 
 function walk(dir: string): string[] {
   const files: string[] = [];
@@ -58,6 +59,19 @@ export function discoverPages(appsRoot: string) {
   const datasources = new Map<string, any>();
   const catalogs = new Map<string, TranslationCatalog>();
   const menus = new Map<string, ModuleMenu>();
+  const permissions = new Map<string, PermissionDefinition>();
+
+  for (const entry of readdirSync(appsRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name === 'lib' || entry.name === 'node_modules') continue;
+    const file = join(appsRoot, entry.name, 'permission.yaml');
+    try {
+      if (statSync(file).isFile()) permissions.set(entry.name, {
+        module: entry.name,
+        file,
+        config: parseYaml(file) || {},
+      });
+    } catch {}
+  }
 
   for (const pagesRoot of pageRoots) {
     const moduleName = relative(appsRoot, pagesRoot).split(sep)[0] || 'root';
@@ -87,7 +101,7 @@ export function discoverPages(appsRoot: string) {
       }
     }
   }
-  return { pages, datasources, catalogs, menus };
+  return { pages, datasources, catalogs, menus, permissions };
 }
 
 export function translationMap(catalogs: Map<string, TranslationCatalog>, lang: string, page = '*') {

@@ -171,24 +171,32 @@ actions:
     type: server
     permission: orders.write
     action: orders.submit_for_approval
+    handler: order_transition
+    operation: submit_for_approval
     confirm: 'Submit order {{row.order_number}}?'
     refresh: [orders]
   - id: approve_order
     type: server
     permission: orders.approve
     action: orders.approve
+    handler: order_transition
+    operation: approve
     confirm: 'Approve order {{row.order_number}}?'
     refresh: [orders]
   - id: reject_order
     type: server
     permission: orders.approve
     action: orders.reject
+    handler: order_transition
+    operation: reject
     confirm: 'Reject and return order {{row.order_number}} to draft?'
     refresh: [orders]
   - id: cancel_order
     type: server
     permission: orders.write
     action: orders.cancel
+    handler: order_transition
+    operation: cancel
     confirm: 'Cancel order {{row.order_number}}?'
     refresh: [orders]
   - id: delete_order

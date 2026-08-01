@@ -137,6 +137,8 @@ actions:
     permission: crm.write
     title: Update CRM objects
     action: crm.entities.update
+    handler: crm_entity
+    operation: update
     prefill: source
     prefill_source: crm_entity_detail
     params: { id: '{state.id}', kind: '{state.kind}' }
@@ -157,6 +159,9 @@ actions:
     permission: crm.write
     title: Add a contact
     action: crm.contacts.create
+    handler: contact
+    operation: create
+    domain: crm
     params: { id: '{state.id}', kind: '{state.kind}' }
     refresh: [crm_entity_contacts, crm_entity_detail, crm_entity_activity]
     fields:
@@ -171,6 +176,9 @@ actions:
     permission: crm.write
     title: Update contact person
     action: crm.contacts.update
+    handler: contact
+    operation: update
+    domain: crm
     prefill: row
     params: { id: '{state.id}', kind: '{state.kind}', contact_id: '{row.id}' }
     refresh: [crm_entity_contacts, crm_entity_detail, crm_entity_activity]
@@ -185,6 +193,9 @@ actions:
     type: server
     permission: crm.write
     action: crm.contacts.delete
+    handler: contact
+    operation: delete
+    domain: crm
     confirm: 'Delete contact {{row.name}}?'
     params: { id: '{state.id}', kind: '{state.kind}', contact_id: '{row.id}' }
     refresh: [crm_entity_contacts, crm_entity_detail, crm_entity_activity]

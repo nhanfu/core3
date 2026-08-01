@@ -146,6 +146,9 @@ actions:
     permission: crm.write
     title: Add a quote line
     action: quotes.lines.create
+    handler: line_item
+    operation: create
+    domain: quote
     params: { id: '{state.id}' }
     refresh: [quote_detail_lines, quote_detail, quote_detail_timeline]
     fields:
@@ -160,6 +163,9 @@ actions:
     permission: crm.write
     title: Update quote line
     action: quotes.lines.update
+    handler: line_item
+    operation: update
+    domain: quote
     prefill: row
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [quote_detail_lines, quote_detail, quote_detail_timeline]
@@ -174,6 +180,9 @@ actions:
     type: server
     permission: crm.write
     action: quotes.lines.delete
+    handler: line_item
+    operation: delete
+    domain: quote
     confirm: 'Remove quote line {{row.description}}?'
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [quote_detail_lines, quote_detail, quote_detail_timeline]

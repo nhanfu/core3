@@ -154,6 +154,9 @@ actions:
     permission: orders.write
     title: Add a charge line
     action: orders.lines.create
+    handler: line_item
+    operation: create
+    domain: order
     params: { id: '{state.id}' }
     refresh: [order_detail_lines, order_detail, order_detail_timeline]
     fields:
@@ -167,6 +170,9 @@ actions:
     permission: orders.write
     title: Update freight lines
     action: orders.lines.update
+    handler: line_item
+    operation: update
+    domain: order
     prefill: row
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [order_detail_lines, order_detail, order_detail_timeline]
@@ -180,6 +186,9 @@ actions:
     type: server
     permission: orders.write
     action: orders.lines.delete
+    handler: line_item
+    operation: delete
+    domain: order
     confirm: 'Delete charge line {{row.description}}?'
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [order_detail_lines, order_detail, order_detail_timeline]

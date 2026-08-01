@@ -108,8 +108,8 @@ actions:
     permission: crm.read
     navigate_to: /quotes/detail
     params: { id: '{row.id}' }
-  - { id: send_quote, type: server, permission: crm.write, action: quotes.send, confirm: 'Send quote {{row.code}}?', refresh: [quotes] }
-  - { id: accept_quote, type: server, permission: crm.write, action: quotes.accept, confirm: 'Confirm customer accepts {{row.code}}?', refresh: [quotes] }
-  - { id: revise_quote, type: server, permission: crm.write, action: quotes.revise, confirm: 'Send quote {{row.code}} to draft to edit?', refresh: [quotes] }
-  - { id: cancel_quote, type: server, permission: crm.write, action: quotes.cancel, confirm: 'Cancel quote {{row.code}}?', refresh: [quotes] }
+  - { id: send_quote, type: server, permission: crm.write, action: quotes.send, confirm: 'Send quote {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: send, domain: quote}
+  - { id: accept_quote, type: server, permission: crm.write, action: quotes.accept, confirm: 'Confirm customer accepts {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: accept, domain: quote}
+  - { id: revise_quote, type: server, permission: crm.write, action: quotes.revise, confirm: 'Send quote {{row.code}} to draft to edit?', refresh: [quotes] , handler: business_transition, operation: revise, domain: quote}
+  - { id: cancel_quote, type: server, permission: crm.write, action: quotes.cancel, confirm: 'Cancel quote {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: cancel, domain: quote}
   - { id: delete_quote, type: delete, permission: crm.write, table: quotes, confirm: 'Delete quote {{row.code}}?', refresh: [quotes] }

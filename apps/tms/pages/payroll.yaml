@@ -138,9 +138,9 @@ actions:
       - { field: allowance, label: Allowances, type: money, currency: VND }
       - { field: deduction, label: Deduction, type: money, currency: VND }
       - { field: net_salary, label: Truly cool, type: money, currency: VND }
-  - { id: approve_payroll, type: server, permission: hr.approve, action: hr.payroll.approve, confirm: 'Browse payroll {{row.code}}?', refresh: [payroll] }
-  - { id: reopen_payroll, type: server, permission: hr.approve, action: hr.payroll.reopen, confirm: 'Reopen payroll {{row.code}} for editing?', refresh: [payroll] }
-  - { id: pay_payroll, type: server, permission: hr.pay, action: hr.payroll.mark_paid, confirm: 'Confirm payment of payroll {{row.code}}?', refresh: [payroll] }
+  - { id: approve_payroll, type: server, permission: hr.approve, action: hr.payroll.approve, confirm: 'Browse payroll {{row.code}}?', refresh: [payroll] , handler: business_transition, operation: approve, domain: payroll}
+  - { id: reopen_payroll, type: server, permission: hr.approve, action: hr.payroll.reopen, confirm: 'Reopen payroll {{row.code}} for editing?', refresh: [payroll] , handler: business_transition, operation: reopen, domain: payroll}
+  - { id: pay_payroll, type: server, permission: hr.pay, action: hr.payroll.mark_paid, confirm: 'Confirm payment of payroll {{row.code}}?', refresh: [payroll] , handler: business_transition, operation: mark_paid, domain: payroll}
   - id: delete_payroll
     type: delete
     permission: hr.write

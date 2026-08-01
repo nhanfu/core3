@@ -2,26 +2,10 @@ import { translationMap } from '../lib/server/discovery.ts';
 import { requestLanguage } from '../lib/server/locale.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import { xlsxToCsv } from './module.ts';
-import {
-  ORDER_ACTION_REGISTRY,
-  orderWorkflow,
-  FINANCIAL_ACTION_REGISTRY,
-  financialWorkflow,
-  BUSINESS_ACTION_REGISTRY,
-  payrollWorkflow,
-  quoteWorkflow,
-  LINE_ITEM_ACTION_REGISTRY,
-  CHAT_ACTION_REGISTRY,
-  CONTACT_ACTION_REGISTRY,
-  APPROVAL_ACTION_REGISTRY,
-  TRIP_ACTION_REGISTRY,
-  TEMPLATE_ACTION_REGISTRY,
-  CODE_RULE_ACTION_REGISTRY,
-  ROLE_ACTION_REGISTRY,
-  USER_ROLE_ACTION_REGISTRY,
-  CURRENCY_ACTION_REGISTRY,
-} from './module.ts';
+import { xlsxToCsv } from './services/xlsx-import.ts';
+import { orderWorkflow } from './services/order-workflow.ts';
+import { financialWorkflow } from './services/financial-workflow.ts';
+import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -54,12 +38,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     reloadPages,
   } = ctx;
 
-  const CRM_ENTITY_ACTION_REGISTRY: Record<string, object> = {
-    'crm.entities.update': {},
-  } as const;
-  const ACCOUNTING_DOCUMENT_ACTION_REGISTRY: Record<string, object> = {
-    'accounting.documents.update': {},
-  } as const;
   const FINANCIAL_WORKFLOW_SCOPES = new Set([
     'debit_note',
     'payment_request',
@@ -164,45 +142,39 @@ export function createTmsApi(ctx: TmsApiContext) {
   }
 
   const TABLES = PERMISSIONS.tables || {};
-  const ACTION_PERMISSIONS: Record<string, string> = PERMISSIONS.actions || {};
   const ENDPOINT_PERMISSIONS: Record<string, string> = PERMISSIONS.endpoints || {};
   const DECLARED_PERMISSIONS = new Set<string>(PERMISSIONS.permissions || []);
   for (const [name, table] of Object.entries(TABLES) as [string, any][]) {
     if (!DECLARED_PERMISSIONS.has(table.permission)) throw new Error(`Table ${name} uses undeclared permission: ${table.permission}`);
   }
-  for (const [name, permission] of Object.entries(ACTION_PERMISSIONS)) {
-    if (!DECLARED_PERMISSIONS.has(permission)) throw new Error(`Action ${name} uses undeclared permission: ${permission}`);
-  }
   for (const [name, permission] of Object.entries(ENDPOINT_PERMISSIONS)) {
     if (!DECLARED_PERMISSIONS.has(permission)) throw new Error(`Endpoint ${name} uses undeclared permission: ${permission}`);
   }
-  const permissionForAction = (action: string) => {
-    const permission = ACTION_PERMISSIONS[action];
-    if (!permission) throw new Error(`Missing YAML permission for named action: ${action}`);
-    return permission;
-  };
   const permissionForEndpoint = (endpoint: string) => {
     const permission = ENDPOINT_PERMISSIONS[endpoint];
     if (!permission) throw new Error(`Missing YAML permission for endpoint: ${endpoint}`);
     return permission;
   };
-  const REGISTERED_NAMED_ACTIONS = new Set([
-    ...Object.keys(ORDER_ACTION_REGISTRY),
-    ...Object.keys(FINANCIAL_ACTION_REGISTRY),
-    ...Object.keys(BUSINESS_ACTION_REGISTRY),
-    ...Object.keys(LINE_ITEM_ACTION_REGISTRY),
-    ...Object.keys(CHAT_ACTION_REGISTRY),
-    ...Object.keys(CONTACT_ACTION_REGISTRY),
-    ...Object.keys(APPROVAL_ACTION_REGISTRY),
-    ...Object.keys(TRIP_ACTION_REGISTRY),
-    ...Object.keys(TEMPLATE_ACTION_REGISTRY),
-    ...Object.keys(CODE_RULE_ACTION_REGISTRY),
-    ...Object.keys(ROLE_ACTION_REGISTRY),
-    ...Object.keys(USER_ROLE_ACTION_REGISTRY),
-    ...Object.keys(CURRENCY_ACTION_REGISTRY),
-    ...Object.keys(CRM_ENTITY_ACTION_REGISTRY),
-    ...Object.keys(ACCOUNTING_DOCUMENT_ACTION_REGISTRY),
-  ]);
+  const NAMED_ACTIONS: Record<string, any> = {};
+  for (const [pageId, page] of PAGES) {
+    for (const action of page.actions || []) {
+      if (action.type !== 'server' && action.type !== 'server_form') continue;
+      if (!action.action) continue;
+      if (!action.handler) throw new Error(`Page ${pageId} named action ${action.action} is missing handler metadata`);
+      if (!action.permission || !DECLARED_PERMISSIONS.has(action.permission)) throw new Error(`Page ${pageId} action ${action.action} uses undeclared permission: ${action.permission}`);
+      const existing = NAMED_ACTIONS[action.action];
+      if (existing && JSON.stringify({ handler: existing.handler, operation: existing.operation, domain: existing.domain, kind: existing.kind }) !== JSON.stringify({ handler: action.handler, operation: action.operation, domain: action.domain, kind: action.kind })) {
+        throw new Error(`Conflicting declarations for named action: ${action.action}`);
+      }
+      NAMED_ACTIONS[action.action] = action;
+    }
+  }
+  const REGISTERED_NAMED_ACTIONS = new Set(Object.keys(NAMED_ACTIONS));
+  const permissionForAction = (action: string) => {
+    const permission = NAMED_ACTIONS[action]?.permission;
+    if (!permission) throw new Error(`Missing YAML permission for named action: ${action}`);
+    return permission;
+  };
 
   for (const [pageId, page] of PAGES) {
     for (const action of page.actions || []) {
@@ -484,37 +456,17 @@ export function createTmsApi(ctx: TmsApiContext) {
   const namedActionMatch = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
   if (namedActionMatch && method === 'POST') {
     const actionName = namedActionMatch[1];
-    const orderActionDefinition = ORDER_ACTION_REGISTRY[actionName];
-    const financialActionDefinition = FINANCIAL_ACTION_REGISTRY[actionName];
-    const businessActionDefinition = BUSINESS_ACTION_REGISTRY[actionName];
-    const lineItemActionDefinition = LINE_ITEM_ACTION_REGISTRY[actionName];
-    const chatActionDefinition = CHAT_ACTION_REGISTRY[actionName];
-    const contactActionDefinition = CONTACT_ACTION_REGISTRY[actionName];
-    const approvalActionDefinition = APPROVAL_ACTION_REGISTRY[actionName];
-    const tripActionDefinition = TRIP_ACTION_REGISTRY[actionName];
-    const templateActionDefinition = TEMPLATE_ACTION_REGISTRY[actionName];
-    const codeRuleActionDefinition = CODE_RULE_ACTION_REGISTRY[actionName];
-    const roleActionDefinition = ROLE_ACTION_REGISTRY[actionName];
-    const userRoleActionDefinition = USER_ROLE_ACTION_REGISTRY[actionName];
-    const currencyActionDefinition = CURRENCY_ACTION_REGISTRY[actionName];
-    const crmEntityActionDefinition = CRM_ENTITY_ACTION_REGISTRY[actionName];
-    const accountingDocumentActionDefinition = ACCOUNTING_DOCUMENT_ACTION_REGISTRY[actionName];
-    const actionDefinition = orderActionDefinition
-      || financialActionDefinition
-      || businessActionDefinition
-      || lineItemActionDefinition
-      || chatActionDefinition
-      || contactActionDefinition;
-    const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition || currencyActionDefinition || crmEntityActionDefinition || accountingDocumentActionDefinition;
-    if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
+    const actionDefinition = NAMED_ACTIONS[actionName];
+    if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
+    const handler = actionDefinition.handler;
     requirePerm(permissionForAction(actionName));
 
     const body = await req.json() as any;
-    if (currencyActionDefinition) {
+    if (handler === 'currency_sync') {
       const configured = configuredCurrencyRates();
       return json(await repository.syncCurrencyRates(configured.rates, configured.source, activityActor));
     }
-    if (crmEntityActionDefinition) {
+    if (handler === 'crm_entity') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (body.kind !== 'customer' && body.kind !== 'partner') return apiError(400, 'Invalid CRM entity kind');
       if (!(await crmEntityInScope(body.kind, body.id))) return apiError(403, 'Record is outside the current view scope');
@@ -544,7 +496,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       });
       return json(updated);
     }
-    if (accountingDocumentActionDefinition) {
+    if (handler === 'accounting_document') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (!FINANCIAL_WORKFLOW_SCOPES.has(String(body.kind))) return apiError(400, 'Invalid financial document kind');
       if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
@@ -571,24 +523,24 @@ export function createTmsApi(ctx: TmsApiContext) {
       });
       return json(updated);
     }
-    if (chatActionDefinition) {
-      if (chatActionDefinition.operation === 'create_thread') {
+    if (handler === 'chat') {
+      if (actionDefinition.operation === 'create_thread') {
         return json(await repository.createChatThread(
           body.values && typeof body.values === 'object' ? body.values : {},
           activityActor,
         ));
       }
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      if (chatActionDefinition.operation === 'send_message') {
+      if (actionDefinition.operation === 'send_message') {
         return json(await repository.sendChatMessage(body.id, body.content, activityActor));
       }
       return json(await repository.markChatThreadRead(body.id, String(authUser.sub)));
     }
-    if (contactActionDefinition) {
+    if (handler === 'contact') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      const domain = contactActionDefinition.domain === 'crm'
+      const domain = actionDefinition.domain === 'crm'
         ? body.kind
-        : contactActionDefinition.domain;
+        : actionDefinition.domain;
       if (domain !== 'customer' && domain !== 'partner') {
         return apiError(400, 'Invalid CRM contact kind');
       }
@@ -608,7 +560,7 @@ export function createTmsApi(ctx: TmsApiContext) {
               parentKey: 'partner_id',
               label: 'Partner',
             },
-        contactActionDefinition.operation,
+        actionDefinition.operation,
         body.id,
         typeof body.contact_id === 'string' ? body.contact_id : null,
         body.values && typeof body.values === 'object' ? body.values : {},
@@ -616,10 +568,10 @@ export function createTmsApi(ctx: TmsApiContext) {
         activityActor,
       ));
     }
-    if (approvalActionDefinition) {
+    if (handler === 'approval_step') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       return json(await repository.mutateApprovalFlowStep(
-        approvalActionDefinition.operation,
+        actionDefinition.operation,
         body.id,
         typeof body.step_id === 'string' ? body.step_id : null,
         body.values && typeof body.values === 'object' ? body.values : {},
@@ -627,14 +579,14 @@ export function createTmsApi(ctx: TmsApiContext) {
         activityActor,
       ));
     }
-    if (tripActionDefinition) {
+    if (handler === 'trip_transition') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      return json(await repository.transitionTrip(body.id, tripActionDefinition.operation, actionName, activityActor));
+      return json(await repository.transitionTrip(body.id, actionDefinition.operation, actionName, activityActor));
     }
-    if (templateActionDefinition) {
+    if (handler === 'print_template') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       return json(await repository.mutatePrintTemplateBlock(
-        templateActionDefinition.operation,
+        actionDefinition.operation,
         body.id,
         typeof body.block_id === 'string' ? body.block_id : null,
         body.values && typeof body.values === 'object' ? body.values : {},
@@ -642,7 +594,7 @@ export function createTmsApi(ctx: TmsApiContext) {
         activityActor,
       ));
     }
-    if (codeRuleActionDefinition) {
+    if (handler === 'code_rule_preview') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       const [rule] = await repository.query("SELECT code, prefix, config_value, sequence_width, reset_cadence, next_sequence FROM system_configs WHERE id = ? AND kind = 'code_rule'", [body.id]);
       if (!rule) return apiError(404, 'Code rule not found');
@@ -652,22 +604,22 @@ export function createTmsApi(ctx: TmsApiContext) {
       const year = new Date().getUTCFullYear();
       return json({ preview: prefix.replace('{YYYY}', String(year)).replace(/\{SEQ(?::\d+)?\}/g, sequence), reset_cadence: rule.reset_cadence || 'never' });
     }
-    if (roleActionDefinition) {
+    if (handler === 'role_permission') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (typeof body.permission_key !== 'string' || !body.permission_key) return apiError(400, 'permission_key required');
-      return json(await repository.mutateRolePermission(roleActionDefinition.operation, body.id, body.permission_key, actionName, activityActor));
+      return json(await repository.mutateRolePermission(actionDefinition.operation, body.id, body.permission_key, actionName, activityActor));
     }
-    if (userRoleActionDefinition) {
+    if (handler === 'user_role') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (typeof body.role_id !== 'string' || !body.role_id) return apiError(400, 'role_id required');
       if (!(await recordInCurrentBranch('users', body.id))) return apiError(403, 'User is outside the current view scope');
-      return json(await repository.mutateUserRole(userRoleActionDefinition.operation, body.id, body.role_id, actionName, activityActor));
+      return json(await repository.mutateUserRole(actionDefinition.operation, body.id, body.role_id, actionName, activityActor));
     }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 
-    if (lineItemActionDefinition) {
-      const isOrder = lineItemActionDefinition.domain === 'order';
-      const isQuote = lineItemActionDefinition.domain === 'quote';
+    if (handler === 'line_item') {
+      const isOrder = actionDefinition.domain === 'order';
+      const isQuote = actionDefinition.domain === 'quote';
       if (!isOrder && !isQuote && !(await recordInCurrentBranch('accounting_entries', body.id))) {
         return apiError(403, 'Record is outside the current view scope');
       }
@@ -698,7 +650,7 @@ export function createTmsApi(ctx: TmsApiContext) {
               hasCost: false,
               totalField: 'amount',
             },
-        lineItemActionDefinition.operation,
+        actionDefinition.operation,
         body.id,
         typeof body.line_id === 'string' ? body.line_id : null,
         body.values && typeof body.values === 'object' ? body.values : {},
@@ -707,9 +659,9 @@ export function createTmsApi(ctx: TmsApiContext) {
       ));
     }
 
-    if (orderActionDefinition) {
+    if (handler === 'order_transition') {
       if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = orderWorkflow.get(orderActionDefinition.action);
+      const transition = orderWorkflow.get(actionDefinition.operation);
       const order = await repository.transitionOrder(
         body.id,
         transition.from,
@@ -720,12 +672,12 @@ export function createTmsApi(ctx: TmsApiContext) {
       return json(order);
     }
 
-    if (financialActionDefinition) {
+    if (handler === 'financial_transition') {
       if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = financialWorkflow.get(financialActionDefinition.action);
+      const transition = financialWorkflow.get(actionDefinition.operation);
       const document = await repository.transitionAccountingEntry(
         body.id,
-        financialActionDefinition.kind,
+        actionDefinition.kind,
         transition.from,
         transition.to,
         actionName,
@@ -734,9 +686,9 @@ export function createTmsApi(ctx: TmsApiContext) {
       return json(document);
     }
 
-    if (businessActionDefinition.domain === 'quote') {
+    if (handler === 'business_transition' && actionDefinition.domain === 'quote') {
       if (!(await recordInCurrentBranch('quotes', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = quoteWorkflow.get(businessActionDefinition.action);
+      const transition = quoteWorkflow.get(actionDefinition.operation);
       return json(await repository.transitionBusinessRecord(
         { table: 'quotes', label: 'Quote' },
         body.id,
@@ -748,7 +700,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
 
     if (!(await recordInCurrentBranch('payrolls', body.id))) return apiError(403, 'Record is outside the current view scope');
-    const transition = payrollWorkflow.get(businessActionDefinition.action);
+    const transition = payrollWorkflow.get(actionDefinition.operation);
     return json(await repository.transitionBusinessRecord(
       { table: 'payrolls', label: 'Payroll' },
       body.id,

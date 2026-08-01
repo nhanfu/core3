@@ -44,6 +44,8 @@ actions:
     permission: system.write
     title: Add a print block
     action: system.print_blocks.create
+    handler: print_template
+    operation: create
     params: { id: '{state.id}' }
     refresh: [template_blocks]
     fields: [{ field: block_type, label: Block type, type: select, options: [{ id: text, label: Document }, { id: token, label: Tokens }, { id: table, label: Board }, { id: spacer, label: Distance }], default: text, required: true }, { field: label, label: Label, type: text, required: true }, { field: token_key, label: Data tokens, type: select, options: [{ id: order.order_number, label: Order number }, { id: order.customer_name, label: Client }, { id: order.route, label: Route }, { id: order.lines, label: Line of goods }] }, { field: content, label: Text content, type: richtext, tokens: [order.order_number, order.customer_name, order.route, order.lines] }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }]
@@ -52,9 +54,11 @@ actions:
     permission: system.write
     title: Update the print template block
     action: system.print_blocks.update
+    handler: print_template
+    operation: update
     params: { id: '{state.id}', block_id: '{row.id}' }
     refresh: [template_blocks]
     fields: [{ field: block_type, label: Block type, type: select, options: [{ id: text, label: Document }, { id: token, label: Tokens }, { id: table, label: Board }, { id: spacer, label: Distance }], required: true }, { field: label, label: Label, type: text, required: true }, { field: token_key, label: Data tokens, type: select, options: [{ id: order.order_number, label: Order number }, { id: order.customer_name, label: Client }, { id: order.route, label: Route }, { id: order.lines, label: Line of goods }] }, { field: content, label: Text content, type: richtext, tokens: [order.order_number, order.customer_name, order.route, order.lines] }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }]
-  - { id: delete_block, type: server, permission: system.write, action: system.print_blocks.delete, confirm: 'Delete this block?', refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
-  - { id: move_block_up, type: server, permission: system.write, action: system.print_blocks.move_up, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
-  - { id: move_block_down, type: server, permission: system.write, action: system.print_blocks.move_down, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
+  - { id: delete_block, type: server, permission: system.write, action: system.print_blocks.delete, confirm: 'Delete this block?', refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' }, handler: print_template, operation: delete }
+  - { id: move_block_up, type: server, permission: system.write, action: system.print_blocks.move_up, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' }, handler: print_template, operation: move_up }
+  - { id: move_block_down, type: server, permission: system.write, action: system.print_blocks.move_down, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' }, handler: print_template, operation: move_down }
