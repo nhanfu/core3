@@ -70,6 +70,9 @@ export class TmsModule {
       pages: pageMaps.pages,
       catalogs: pageMaps.catalogs,
       menus: pageMaps.menus,
+      // TMS owns the permission contract for its transport and business
+      // resources. Organization/access metadata is declared separately by
+      // auth and is not merged into this service definition.
       permissions: discovered.permissions.get('tms')?.config || {},
       uploadRoot,
       reloadPages,

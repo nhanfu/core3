@@ -25,7 +25,18 @@ function routeItems(value: any, result: any[] = []) {
 function routeId(path: string, pages: Map<string, DiscoveredPage>) {
   const singular = (part: string) => part.endsWith('ies') ? `${part.slice(0, -3)}y` : part.endsWith('s') ? part.slice(0, -1) : part;
   const parts = path.split('/').filter(Boolean).map(singular);
-  const candidates = [parts.join('-'), parts.slice(-2).join('-'), parts.slice(-1)[0]];
+  const rawParts = path.split('/').filter(Boolean);
+  // Prefer the declared plural page id before singularized fallbacks. This
+  // keeps menu routes such as /org/users and /org/roles on their list pages
+  // instead of accidentally selecting user-detail/role-detail.
+  const candidates = [
+    rawParts.join('-'),
+    rawParts.slice(-2).join('-'),
+    rawParts.slice(-1)[0],
+    parts.join('-'),
+    parts.slice(-2).join('-'),
+    parts.slice(-1)[0],
+  ];
   for (const candidate of candidates) if (pages.has(candidate)) return candidate;
   const matches = [...pages.keys()].map((id) => {
     const tokens = id.split('-');
@@ -120,14 +131,16 @@ export function discoverPages(appsRoot: string) {
 
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
     const moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
-    const file = join(moduleRoot, 'permission.yaml');
-    try {
-      if (statSync(file).isFile()) permissions.set(moduleName, {
-        module: moduleName,
-        file,
-        config: parseYaml(file) || {},
+    const file = ['permission.yaml', 'permissions.yaml']
+      .map((name) => join(moduleRoot, name))
+      .find((candidate) => {
+        try { return statSync(candidate).isFile(); } catch { return false; }
       });
-    } catch {}
+    if (file) permissions.set(moduleName, {
+      module: moduleName,
+      file,
+      config: parseYaml(file) || {},
+    });
   }
 
   for (const pagesRoot of pageRoots) {
