@@ -1,0 +1,10 @@
+version: 10
+name: notification-targets
+up: |
+  ALTER TABLE notifications ADD COLUMN target_path VARCHAR;
+  UPDATE notifications SET target_path = '/maintenance' WHERE id = 'notif-01';
+  UPDATE notifications SET target_path = '/drivers' WHERE id = 'notif-02';
+  UPDATE notifications SET target_path = '/trips' WHERE id IN ('notif-03', 'notif-04');
+  UPDATE notifications SET target_path = '/maintenance' WHERE id = 'notif-05';
+down: |
+  ALTER TABLE notifications DROP COLUMN target_path;

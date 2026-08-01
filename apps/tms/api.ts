@@ -1354,6 +1354,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       type: body.type,
       title: body.title,
       body: body.body || null,
+      target_path: body.target_path || null,
     });
     return json(created, 201);
   }

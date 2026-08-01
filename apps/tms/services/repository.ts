@@ -1689,8 +1689,8 @@ export class DuckDbRepository {
   async createNotification(notification: any): Promise<any> {
     const id = notification.id || crypto.randomUUID();
     await this.run(
-      'INSERT INTO notifications(id, user_id, type, title, body) VALUES(?,?,?,?,?)',
-      [id, notification.user_id, notification.type, notification.title, notification.body || null]
+      'INSERT INTO notifications(id, user_id, type, title, body, target_path) VALUES(?,?,?,?,?,?)',
+      [id, notification.user_id, notification.type, notification.title, notification.body || null, notification.target_path || null]
     );
     const rows = await this.query('SELECT * FROM notifications WHERE id = ?', [id]);
     return rows[0] || null;

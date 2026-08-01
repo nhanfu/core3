@@ -1,7 +1,7 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '../../lib/html.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
-import { getToken } from '../app.ts';
+import { getToken, navigate } from '../app.ts';
 import { i18n } from '../../lib/i18n.ts';
 
 const TYPE_ICONS: Record<string, string> = {
@@ -16,6 +16,22 @@ const TYPE_ICONS: Record<string, string> = {
   user_invited:           'users',
   default:                'bell',
 };
+
+const TYPE_TARGETS: Record<string, string> = {
+  alert: '/maintenance',
+  warning: '/drivers',
+  info: '/trips',
+  success: '/trips',
+  service_overdue: '/maintenance',
+  license_expiring: '/drivers',
+  maintenance_scheduled: '/maintenance',
+};
+
+function notificationTarget(notification: any): string | null {
+  const target = typeof notification.target_path === 'string' ? notification.target_path.trim() : '';
+  if (target.startsWith('/')) return target;
+  return TYPE_TARGETS[notification.type] || null;
+}
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -179,6 +195,11 @@ export class NotificationPanel extends BaseComponent {
         .getContext();
       item.addEventListener('click', () => {
         if (!n.read) void this.markRead(String(n.id));
+        const target = notificationTarget(n);
+        if (target) {
+          this.close();
+          void navigate(target);
+        }
       });
       const iconTarget = html.take(item).span.className('notif-item-icon').getContext();
       appendIcon(iconTarget, icon, n.title || '');
