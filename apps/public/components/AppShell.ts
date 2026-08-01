@@ -140,10 +140,19 @@ export class AppShell extends BaseComponent {
   refreshLanguage() {
     this._notifPanel?.refreshLanguage();
     this._profileDrawer?.refreshLanguage();
+    this._groupEls.forEach((group, groupId) => {
+      const groupDef = NAV_GROUPS.find(candidate => candidate.id === groupId);
+      const label = group.querySelector('.sidebar-group-label');
+      if (groupDef && label) label.textContent = i18n.t('*', null, groupDef.label);
+    });
     this._navEls.forEach((element, path) => {
       const item = GLOBAL_SEARCH_ITEMS.find(candidate => candidate.path === path);
       const label = element.querySelector('.nav-item-label');
-      if (item && label) label.textContent = i18n.t('*', null, item.label);
+      if (item && label) {
+        const translated = i18n.t('*', null, item.label);
+        label.textContent = translated;
+        element.dataset.search = translated.toLocaleLowerCase(i18n.lang);
+      }
     });
   }
 
@@ -194,8 +203,8 @@ export class AppShell extends BaseComponent {
     appendIcon(menuSearchIcon, 'search');
     const menuSearchInput = html.take(menuSearch).input
       .type('search')
-      .attr('placeholder', 'Tìm menu...')
-      .attr('aria-label', 'Tìm menu')
+      .attr('placeholder', i18n.t('*', null, 'Tìm menu...'))
+      .attr('aria-label', i18n.t('*', null, 'Tìm menu'))
       .getContext();
 
     // Nav
@@ -207,10 +216,11 @@ export class AppShell extends BaseComponent {
         .attr('type', 'button')
         .event('click', () => navigate(item.path))
         .getContext();
-      navItem.dataset.search = item.label.toLocaleLowerCase('vi');
+      const translated = i18n.t('*', null, item.label);
+      navItem.dataset.search = translated.toLocaleLowerCase(i18n.lang);
       const navIcon = html.take(navItem).span.className('nav-item-icon').getContext();
       appendIcon(navIcon, item.icon);
-      html.take(navItem).span.className('nav-item-label').text(i18n.t('*', null, item.label));
+      html.take(navItem).span.className('nav-item-label').text(translated);
       this._navEls.set(item.path, navItem);
     };
 
@@ -227,7 +237,7 @@ export class AppShell extends BaseComponent {
         .attr('type', 'button')
         .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
         .getContext();
-      html.take(button).span.className('sidebar-group-label').text(groupDef.label);
+      html.take(button).span.className('sidebar-group-label').text(i18n.t('*', null, groupDef.label));
       html.take(button).span.className('sidebar-group-count').text(String(visibleItems.length));
       const chevron = html.take(button).span.className('sidebar-group-chevron').getContext();
       appendIcon(chevron, 'chevron-down');
@@ -241,14 +251,15 @@ export class AppShell extends BaseComponent {
     }
 
     menuSearchInput.addEventListener('input', () => {
-      const query = menuSearchInput.value.trim().toLocaleLowerCase('vi');
+      const query = menuSearchInput.value.trim().toLocaleLowerCase(i18n.lang);
       this._navEls.forEach((item) => {
         item.style.display = !query || item.dataset.search?.includes(query) ? '' : 'none';
       });
       NAV_GROUPS.forEach(groupDef => {
         const group = this._groupEls.get(groupDef.id);
         if (!group) return;
-        const hasMatch = groupDef.items.some(item => canSeeNavItem(item, user) && item.label.toLocaleLowerCase('vi').includes(query));
+        const hasMatch = groupDef.items.some(item => canSeeNavItem(item, user)
+          && i18n.t('*', null, item.label).toLocaleLowerCase(i18n.lang).includes(query));
         group.style.display = !query || hasMatch ? '' : 'none';
         if (query && hasMatch) this.setGroupOpen(groupDef.id, true);
       });

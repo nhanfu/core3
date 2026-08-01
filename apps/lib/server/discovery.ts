@@ -87,7 +87,12 @@ export function translationMap(catalogs: Map<string, TranslationCatalog>, lang: 
   for (const catalog of catalogs.values()) {
     const language = catalog[lang] || catalog.en || {};
     for (const [key, value] of Object.entries(language)) {
-      if (page === '*' || !key.includes('::') || key.startsWith(`${page}::`)) result[key.replace(`${page}::`, '')] = value;
+      // The global catalog is for the app shell only. Page-scoped catalogs can
+      // be large, so they must be requested through their page endpoint.
+      const include = page === '*'
+        ? !key.includes('::')
+        : !key.includes('::') || key.startsWith(`${page}::`);
+      if (include) result[key.replace(`${page}::`, '')] = value;
     }
   }
   return result;
