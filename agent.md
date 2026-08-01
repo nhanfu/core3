@@ -54,7 +54,7 @@ When adding a capability, first consider whether it should be represented in YAM
 - Treat `apps/` as the package/runtime root for the app.
 - Keep server-side static file serving aligned with `apps/server.ts`.
 - `apps/tms/pages/*.yaml` files are server-only datasource definitions and should not be served directly.
-- The app serves `apps/index.html`, `apps/app.ts`, and `apps/styles.css` from the app root; TMS domain files remain under `apps/tms/`.
+- The app serves frontend entrypoints from `apps/lib/public/`; app-level CSS remains under `apps/`; TMS domain files remain under `apps/tms/`.
 
 ## Editing Rules
 

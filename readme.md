@@ -122,4 +122,4 @@ Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with arc
 ## Local Development
 
 - Framework tests live under [`apps/lib/test`](apps/lib/test) and run with `bun run test` from [`apps/lib`](apps/lib).
-- The app package and entrypoints live under [`apps`](apps), while TMS domain code lives under [`apps/tms`](apps/tms) and uses the shared framework package from [`apps/lib`](apps/lib).
+- The app runtime lives under [`apps`](apps), frontend entrypoints under [`apps/lib/public`](apps/lib/public), while TMS domain code lives under [`apps/tms`](apps/tms) and imports the shared framework source from [`apps/lib`](apps/lib).

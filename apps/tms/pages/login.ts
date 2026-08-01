@@ -1,6 +1,6 @@
 import { html } from '../../lib/html.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
-import { getDefaultRoute, setAuth } from '../../app.ts';
+import { getDefaultRoute, setAuth } from '../../lib/public/app.ts';
 import { i18n } from '../i18n.ts';
 
 export async function mount(container: HTMLElement) {

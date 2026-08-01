@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../app.ts', () => ({
+vi.mock('../../lib/public/app.ts', () => ({
   getToken: () => null,
   getUser: () => null,
   logout: vi.fn(),
