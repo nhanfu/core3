@@ -3,16 +3,25 @@ import { html } from '../../lib/html.ts';
 import { i18n } from '../../lib/i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
+import { AppLauncher, type LauncherApp } from './AppLauncher.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
 import { hasPermission } from '../../lib/meta.ts';
 
-export type NavItem = { path: string; label: string; icon: string; permission?: string };
+export type NavItem = { path: string; label: string; icon: string; permission?: string; children?: NavItem[] };
 type NavGroup = { id: string; label: string; items: NavItem[] };
 export type ShellMenu = { dashboard?: NavItem; groups?: NavGroup[] };
-type ShellApp = { id: string; label: string; description?: string; icon?: string; route: string; available?: boolean };
 
 function canSeeNavItem(item: NavItem, user: any) {
   return hasPermission(user, item.permission || '');
+}
+
+function flattenNavItems(items: NavItem[]): NavItem[] {
+  return items.flatMap(item => [item, ...flattenNavItems(item.children || [])]);
+}
+
+function formatNavLabel(label: string): string {
+  if (label !== label.toLocaleUpperCase()) return label;
+  return label.toLocaleLowerCase().replace(/(^|[\s&/-])(\p{L})/gu, (_match, prefix: string, character: string) => `${prefix}${character.toLocaleUpperCase()}`);
 }
 
 const THEME_STORAGE_KEY = 'core3_theme';
@@ -23,19 +32,32 @@ export class AppShell extends BaseComponent {
   _headerTitle: HTMLElement | null;
   _notifPanel: NotificationPanel | null;
   _profileDrawer: ProfileDrawer | null;
-  _clockTimer: ReturnType<typeof setInterval> | null;
   _shellToast: HTMLElement | null;
   _shellToastTimer: ReturnType<typeof setTimeout> | null;
   _languageUnsubscribe: (() => void) | null;
-  _appPicker: HTMLElement | null;
-  _appSwitcherLabel: HTMLElement | null;
-  _appSwitcherIcon: HTMLElement | null;
+  _appLauncher: AppLauncher | null;
+  _appLayout: HTMLElement | null;
 
   get menu(): ShellMenu {
     return this.state.menu || {};
   }
 
+  closeMenus() {
+    this._groupEls.forEach((group: HTMLElement) => {
+      group.classList.remove('open');
+      group.querySelector(':scope > button')?.setAttribute('aria-expanded', 'false');
+    });
+    this._groupEls.values().next().value?.parentElement
+      ?.querySelectorAll('.header-nav-submenu.open')
+      .forEach((submenu: Element) => {
+        submenu.classList.remove('open');
+        submenu.querySelector(':scope > button')?.setAttribute('aria-expanded', 'false');
+      });
+    (this.menu.groups || []).forEach(group => { this.state.openGroups[group.id] = false; });
+  }
+
   go(path: string) {
+    this.closeMenus();
     if (typeof this.state.navigate === 'function') this.state.navigate(path);
   }
 
@@ -46,7 +68,6 @@ export class AppShell extends BaseComponent {
     this._headerTitle = null;
     this._notifPanel = null;
     this._profileDrawer = null;
-    this._clockTimer = null;
     this._shellToast = null;
     this._shellToastTimer = null;
     this._languageUnsubscribe = i18n.onChange((lang: string) => {
@@ -54,9 +75,8 @@ export class AppShell extends BaseComponent {
       const refreshPage = this.state.onLanguageChange;
       if (typeof refreshPage === 'function') void refreshPage(lang);
     });
-    this._appPicker = null;
-    this._appSwitcherLabel = null;
-    this._appSwitcherIcon = null;
+    this._appLauncher = null;
+    this._appLayout = null;
   }
 
   refreshLanguage() {
@@ -64,13 +84,13 @@ export class AppShell extends BaseComponent {
     this._profileDrawer?.refreshLanguage();
     this._groupEls.forEach((group, groupId) => {
       const groupDef = (this.menu.groups || []).find(candidate => candidate.id === groupId);
-      const label = group.querySelector('.sidebar-group-label');
-      if (groupDef && label) label.textContent = i18n.t('*', null, groupDef.label);
+      const label = group.querySelector('.sidebar-group-label, .header-nav-label');
+      if (groupDef && label) label.textContent = formatNavLabel(i18n.t('*', null, groupDef.label));
     });
     this._navEls.forEach((element, path) => {
-      const items = [this.menu.dashboard, ...(this.menu.groups || []).flatMap(group => group.items)].filter(Boolean) as NavItem[];
+      const items = flattenNavItems([this.menu.dashboard, ...(this.menu.groups || []).flatMap(group => group.items)].filter(Boolean) as NavItem[]);
       const item = items.find(candidate => candidate.path === path);
-      const label = element.querySelector('.nav-item-label');
+      const label = element.querySelector('.nav-item-label, .header-nav-item-label');
       if (item && label) {
         const translated = i18n.t('*', null, item.label);
         label.textContent = translated;
@@ -83,14 +103,6 @@ export class AppShell extends BaseComponent {
     this._navEls.forEach((el: HTMLElement, p: string) => {
       el.classList.toggle('active', p === path);
     });
-    const containingGroup = (this.menu.groups || []).find(group => group.items.some(item => item.path === path));
-    if (containingGroup) this.setGroupOpen(containingGroup.id, true);
-  }
-
-  setGroupOpen(groupId: string, open: boolean) {
-    this.state.openGroups[groupId] = open;
-    const group = this._groupEls.get(groupId);
-    if (group) group.classList.toggle('open', open);
   }
 
   setTitle(title: string) {
@@ -98,16 +110,16 @@ export class AppShell extends BaseComponent {
   }
 
   openAppPicker() {
-    this._appPicker?.classList.toggle('open');
+    this._appLauncher?.toggle();
   }
 
-  setCurrentApp(app: ShellApp | null) {
+  closeAppPicker() {
+    this._appLauncher?.close();
+  }
+
+  setCurrentApp(app: LauncherApp | null) {
     this.state.currentApp = app;
-    if (this._appSwitcherLabel) this._appSwitcherLabel.textContent = app?.label || 'Applications';
-    if (this._appSwitcherIcon) {
-      this._appSwitcherIcon.innerHTML = '';
-      appendIcon(this._appSwitcherIcon, app?.icon || 'grid');
-    }
+    this._appLauncher?.setCurrentApp(app);
   }
 
   draw(container: HTMLElement) {
@@ -121,95 +133,7 @@ export class AppShell extends BaseComponent {
 
     // Root layout
     const layout = html.take(container).div.className('app-layout').getContext();
-
-    // ── SIDEBAR ──
-    const sidebar = html.take(layout).div.className('app-sidebar').getContext();
-
-    // Logo
-    const logo = html.take(sidebar).div.className('sidebar-logo').getContext();
-    const logoIdentity = html.take(logo).div.className('sidebar-logo-identity').getContext();
-    const logoMark = html.take(logoIdentity).span.className('sidebar-logo-mark').getContext();
-    logoMark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 17 10-10M7 7h4v4M17 17h-4v-4"/><path d="m5 12 3-3M19 12l-3 3"/></svg>';
-    const logoCopy = html.take(logoIdentity).div.getContext();
-    html.take(logoCopy).div.className('sidebar-logo-text').text(this.state.brand?.name || this.state.company?.short_name || 'Core3');
-    html.take(logoCopy).div.className('sidebar-logo-sub').text(this.state.brand?.subtitle || 'Application');
-
-    const menuSearch = html.take(sidebar).div.className('sidebar-menu-search').getContext();
-    const menuSearchIcon = html.take(menuSearch).span.className('sidebar-menu-search-icon').getContext();
-    appendIcon(menuSearchIcon, 'search');
-    const menuSearchInput = html.take(menuSearch).input
-      .type('search')
-      .attr('placeholder', i18n.t('*', null, 'Search menu...'))
-      .attr('aria-label', i18n.t('*', null, 'Search menu'))
-      .getContext();
-
-    // Nav
-    const nav = html.take(sidebar).nav.className('sidebar-nav').getContext();
-    const createNavItem = (target: HTMLElement, item: NavItem) => {
-      const isActive = this.state.activePath === item.path;
-      const navItem = html.take(target).button
-        .className('nav-item' + (isActive ? ' active' : ''))
-        .attr('type', 'button')
-        .event('click', () => this.go(item.path))
-        .getContext();
-      const translated = i18n.t('*', null, item.label);
-      navItem.dataset.search = translated.toLocaleLowerCase(i18n.lang);
-      const navIcon = html.take(navItem).span.className('nav-item-icon').getContext();
-      appendIcon(navIcon, item.icon);
-      html.take(navItem).span.className('nav-item-label').text(translated);
-      this._navEls.set(item.path, navItem);
-    };
-
-    const dashboard = this.menu.dashboard;
-    if (dashboard && canSeeNavItem(dashboard, user)) createNavItem(nav, dashboard);
-    for (const groupDef of this.menu.groups || []) {
-      const visibleItems = groupDef.items.filter(item => canSeeNavItem(item, user));
-      if (!visibleItems.length) continue;
-      const group = html.take(nav).div
-        .className('sidebar-nav-group' + (this.state.openGroups[groupDef.id] ? ' open' : ''))
-        .getContext();
-      this._groupEls.set(groupDef.id, group);
-      const button = html.take(group).button
-        .className('sidebar-group-button')
-        .attr('type', 'button')
-        .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
-        .getContext();
-      html.take(button).span.className('sidebar-group-label').text(i18n.t('*', null, groupDef.label));
-      html.take(button).span.className('sidebar-group-count').text(String(visibleItems.length));
-      const chevron = html.take(button).span.className('sidebar-group-chevron').getContext();
-      appendIcon(chevron, 'chevron-down');
-      button.addEventListener('click', () => {
-        const open = !this.state.openGroups[groupDef.id];
-        button.setAttribute('aria-expanded', String(open));
-        this.setGroupOpen(groupDef.id, open);
-      });
-      const items = html.take(group).div.className('sidebar-group-items').getContext();
-      visibleItems.forEach(item => createNavItem(items, item));
-    }
-
-    menuSearchInput.addEventListener('input', () => {
-      const query = menuSearchInput.value.trim().toLocaleLowerCase(i18n.lang);
-      this._navEls.forEach((item) => {
-        item.style.display = !query || item.dataset.search?.includes(query) ? '' : 'none';
-      });
-      (this.menu.groups || []).forEach(groupDef => {
-        const group = this._groupEls.get(groupDef.id);
-        if (!group) return;
-        const hasMatch = groupDef.items.some(item => canSeeNavItem(item, user)
-          && i18n.t('*', null, item.label).toLocaleLowerCase(i18n.lang).includes(query));
-        group.style.display = !query || hasMatch ? '' : 'none';
-        if (query && hasMatch) this.setGroupOpen(groupDef.id, true);
-      });
-    });
-
-    // Sidebar footer — user info
-    const footer = html.take(sidebar).div.className('sidebar-footer').getContext();
-    const userRow = html.take(footer).div.className('sidebar-user').getContext();
-    html.take(userRow).div.className('sidebar-avatar').text(initials);
-    const userInfo = html.take(userRow).div.getContext();
-    html.take(userInfo).div.className('sidebar-user-name').text(user?.name || 'User');
-    html.take(userInfo).div.className('sidebar-user-role').text((user?.roles || []).join(', '));
-    html.take(footer).div.className('sidebar-footer-version').text(this.state.brand?.footer || '© 2026 Core3');
+    this._appLayout = layout;
 
     // ── MAIN ──
     const main = html.take(layout).div.className('app-main').getContext();
@@ -217,56 +141,116 @@ export class AppShell extends BaseComponent {
     // Header
     const header = html.take(main).header.className('app-header').getContext();
 
-    const tenantContext = html.take(header).div.className('tenant-context').getContext();
-    const sidebarToggle = html.take(tenantContext).button
-      .className('header-icon-btn sidebar-toggle')
-      .attr('type', 'button')
-      .attr('title', 'Thu gọn menu')
-      .attr('aria-label', 'Thu gọn menu')
-      .getContext();
-    const sidebarToggleIcon = html.take(sidebarToggle).span.getContext();
-    appendIcon(sidebarToggleIcon, 'panel');
-    sidebarToggle.addEventListener('click', () => {
-      const collapsed = layout.classList.toggle('sidebar-collapsed');
-      sidebarToggle.title = collapsed ? 'Mở rộng menu' : 'Thu gọn menu';
-      sidebarToggle.setAttribute('aria-label', sidebarToggle.title);
-    });
-    html.take(tenantContext).span.className('tenant-context-name').text(
-      this.state.company?.short_name || this.state.company?.name || this.state.brand?.name || 'Core3',
-    );
+    const headerLeft = html.take(header).div.className('app-header-left').getContext();
 
-    const apps = (this.state.apps || []) as ShellApp[];
-    const currentApp = this.state.currentApp || apps.find((app) => app.available);
-    const appSwitcher = html.take(tenantContext).div.className('app-switcher').getContext();
-    const appButton = html.take(appSwitcher).button.className('app-switcher-button').attr('type', 'button')
-      .attr('aria-label', 'Switch application').getContext();
-    const appButtonIcon = html.take(appButton).span.className('app-switcher-icon').getContext();
-    appendIcon(appButtonIcon, currentApp?.icon || 'grid');
-    this._appSwitcherIcon = appButtonIcon;
-    const appButtonLabel = html.take(appButton).span.className('app-switcher-label').text(currentApp?.label || 'Applications').getContext();
-    this._appSwitcherLabel = appButtonLabel;
-    const appChevron = html.take(appButton).span.className('app-switcher-chevron').getContext();
-    appendIcon(appChevron, 'chevron-down');
-    const appMenu = html.take(appSwitcher).div.className('app-switcher-menu').getContext();
-    this._appPicker = appMenu;
-    for (const app of apps) {
-      const item = html.take(appMenu).button.className(`app-switcher-item${app.available ? '' : ' disabled'}`)
-        .attr('type', 'button').getContext();
-      const itemIcon = html.take(item).span.className('app-switcher-item-icon').getContext();
-      appendIcon(itemIcon, app.icon || 'grid');
-      const itemCopy = html.take(item).span.className('app-switcher-item-copy').getContext();
-      html.take(itemCopy).span.className('app-switcher-item-label').text(app.label || app.id);
-      if (!app.available) html.take(itemCopy).span.className('app-switcher-item-status').text('Soon');
-      if (app.available) item.addEventListener('click', () => {
-        this._appPicker?.classList.remove('open');
-        this.state.onAppChange?.(app, false);
+    // The launcher owns its full-screen UI and interaction lifecycle.
+    const apps = (this.state.apps || []) as LauncherApp[];
+    this._appLauncher = new AppLauncher('app-launcher', {
+      apps,
+      currentApp: this.state.currentApp || apps.find((app) => app.available),
+      onAppChange: (app: LauncherApp, makeDefault = false) => this.state.onAppChange?.(app, makeDefault),
+      onOpenChange: (open: boolean) => layout.classList.toggle('launcher-open', open),
+    });
+    this._appLauncher.mount(headerLeft);
+
+    // Primary navigation is horizontal in the header, with each group opening
+    // an Odoo-style menu. Nested declarations remain nested as flyout menus.
+    const headerNav = html.take(headerLeft).nav.className('header-nav').attr('aria-label', 'Main navigation').getContext();
+    const closeMenuElement = (element: Element) => {
+      element.classList.remove('open');
+      const trigger = element.querySelector(':scope > button') as HTMLButtonElement | null;
+      trigger?.setAttribute('aria-expanded', 'false');
+    };
+    const closeOtherTopMenus = (current: Element) => {
+      headerNav.querySelectorAll('.header-nav-group.open').forEach((group: Element) => {
+        if (group !== current) closeMenuElement(group);
+      });
+      headerNav.querySelectorAll('.header-nav-submenu.open').forEach((submenu: Element) => closeMenuElement(submenu));
+    };
+    const closeAllMenus = () => {
+      this.closeMenus();
+    };
+    const createHeaderItem = (target: HTMLElement, item: NavItem, nested = false) => {
+      if (!canSeeNavItem(item, user)) return;
+      const children = (item.children || []).filter(child => canSeeNavItem(child, user));
+      if (children.length) {
+        const submenu = html.take(target).div.className(`header-nav-submenu${nested ? ' nested' : ''}`).getContext();
+        const trigger = html.take(submenu).button
+          .className('header-nav-submenu-trigger')
+          .attr('type', 'button')
+          .getContext();
+        html.take(trigger).span.className('header-nav-item-label').text(formatNavLabel(i18n.t('*', null, item.label)));
+        const triggerChevron = html.take(trigger).span.className('header-nav-chevron').getContext();
+        appendIcon(triggerChevron, nested ? 'arrow-right' : 'chevron-down');
+        const childMenu = html.take(submenu).div.className('header-nav-submenu-menu').getContext();
+        children.forEach(child => createHeaderItem(childMenu, child, true));
+        trigger.setAttribute('aria-expanded', 'false');
+        trigger.addEventListener('click', (event: MouseEvent) => {
+          event.stopPropagation();
+          target.querySelectorAll(':scope > .header-nav-submenu.open').forEach((sibling: Element) => {
+            if (sibling !== submenu) closeMenuElement(sibling);
+          });
+          const open = !submenu.classList.contains('open');
+          submenu.classList.toggle('open', open);
+          trigger.setAttribute('aria-expanded', String(open));
+        });
+        return;
+      }
+      const link = html.take(target).button
+        .className(`header-nav-link${this.state.activePath === item.path ? ' active' : ''}`)
+        .attr('type', 'button')
+        .event('click', () => {
+          closeAllMenus();
+          this.go(item.path);
+        })
+        .getContext();
+      if (nested) link.classList.add('header-nav-menu-item');
+      const translated = i18n.t('*', null, item.label);
+      link.dataset.search = translated.toLocaleLowerCase(i18n.lang);
+      if (item.icon) {
+        const icon = html.take(link).span.className('header-nav-item-icon').getContext();
+        appendIcon(icon, item.icon);
+      }
+      html.take(link).span.className('header-nav-item-label').text(translated);
+      this._navEls.set(item.path, link);
+    };
+
+    if (this.menu.dashboard && canSeeNavItem(this.menu.dashboard, user)) {
+      createHeaderItem(headerNav, this.menu.dashboard);
+    }
+    for (const groupDef of this.menu.groups || []) {
+      const visibleItems = groupDef.items.filter(item => canSeeNavItem(item, user));
+      if (!visibleItems.length) continue;
+      const group = html.take(headerNav).div
+        .className(`header-nav-group${this.state.openGroups[groupDef.id] ? ' open' : ''}`)
+        .getContext();
+      this._groupEls.set(groupDef.id, group);
+      const trigger = html.take(group).button
+        .className('header-nav-trigger')
+        .attr('type', 'button')
+        .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
+        .getContext();
+      html.take(trigger).span.className('header-nav-label').text(formatNavLabel(i18n.t('*', null, groupDef.label)));
+      const chevron = html.take(trigger).span.className('header-nav-chevron').getContext();
+      appendIcon(chevron, 'chevron-down');
+      const menu = html.take(group).div.className('header-nav-menu').getContext();
+      visibleItems.forEach(item => createHeaderItem(menu, item));
+      group.addEventListener('mouseenter', () => closeOtherTopMenus(group));
+      trigger.addEventListener('click', (event: MouseEvent) => {
+        event.stopPropagation();
+        closeOtherTopMenus(group);
+        (this.menu.groups || []).forEach(other => {
+          if (other.id !== groupDef.id) this.state.openGroups[other.id] = false;
+        });
+        const open = !group.classList.contains('open');
+        this.state.openGroups[groupDef.id] = open;
+        group.classList.toggle('open', open);
+        trigger.setAttribute('aria-expanded', String(open));
       });
     }
-    appButton.addEventListener('click', (event) => {
-      event.stopPropagation();
-      this.openAppPicker();
+    document.addEventListener('click', () => {
+      closeAllMenus();
     });
-    document.addEventListener('click', () => this._appPicker?.classList.remove('open'));
 
     // Header right — actions
     const actions = html.take(header).div.className('header-actions').getContext();
@@ -290,61 +274,6 @@ export class AppShell extends BaseComponent {
     themeButton.addEventListener('click', () => {
       applyTheme(document.documentElement.dataset.theme === 'dim' ? 'light' : 'dim');
     });
-
-    // Language toggle
-    const langToggle = html.take(actions).div.className('lang-toggle').getContext();
-    const langEN = html.take(langToggle).button
-      .className('lang-btn' + (i18n.lang === 'en' ? ' active' : ''))
-      .text('EN')
-      .event('click', async () => {
-        await i18n.setLang('en');
-        langEN.classList.add('active');
-        langVI.classList.remove('active');
-        try {
-          await fetch('/api/v1/profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('tms_token')}` },
-            body: JSON.stringify({ preferred_lang: 'en' })
-          });
-        } catch {}
-      })
-      .getContext();
-
-    const langVI = html.take(langToggle).button
-      .className('lang-btn' + (i18n.lang === 'vi' ? ' active' : ''))
-      .text('VI')
-      .event('click', async () => {
-        await i18n.setLang('vi');
-        langVI.classList.add('active');
-        langEN.classList.remove('active');
-        try {
-          await fetch('/api/v1/profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('tms_token')}` },
-            body: JSON.stringify({ preferred_lang: 'vi' })
-          });
-        } catch {}
-      })
-      .getContext();
-
-    const attendanceBtn = html.take(actions).button
-      .className('header-icon-btn attendance-btn')
-      .attr('type', 'button')
-      .attr('title', 'Timesheets')
-      .attr('aria-label', 'Timesheets')
-      .event('click', () => this.go('/hr/timesheets'))
-      .getContext();
-    const attendanceIcon = html.take(attendanceBtn).span.getContext();
-    appendIcon(attendanceIcon, 'clock');
-    html.take(attendanceBtn).span.className('header-time').text(
-      new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()),
-    );
-    const updateClock = () => {
-      const clock = attendanceBtn.querySelector('.header-time') as HTMLElement | null;
-      if (clock) clock.textContent = new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
-    };
-    if (this._clockTimer) clearInterval(this._clockTimer);
-    this._clockTimer = setInterval(updateClock, 60_000);
 
     const chatBtn = html.take(actions).button
       .className('header-icon-btn')
@@ -404,7 +333,7 @@ export class AppShell extends BaseComponent {
     this._notifPanel.mount(document.body);
 
     // Mount ProfileDrawer
-    this._profileDrawer = new ProfileDrawer('profile-drawer', { user, open: false });
+    this._profileDrawer = new ProfileDrawer('profile-drawer', { user, company: this.state.company, open: false });
     this._profileDrawer.mount(document.body);
 
     // The welcome toast is only requested for the first shell mount after login.
@@ -436,14 +365,14 @@ export class AppShell extends BaseComponent {
   }
 
   dispose() {
-    if (this._clockTimer) clearInterval(this._clockTimer);
-    this._clockTimer = null;
     if (this._shellToastTimer) clearTimeout(this._shellToastTimer);
     this._shellToastTimer = null;
     this._notifPanel?.dispose();
     this._profileDrawer?.dispose();
+    this._appLauncher?.dispose();
     this._notifPanel = null;
     this._profileDrawer = null;
+    this._appLauncher = null;
     this._shellToast?.remove();
     this._shellToast = null;
     this._languageUnsubscribe?.();

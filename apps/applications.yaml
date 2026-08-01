@@ -15,6 +15,34 @@ apps:
     route: /inventory
     module: inventory
     enabled: false
+  - id: purchase
+    label: Purchase
+    description: Vendors, purchase orders, and approvals
+    icon: money
+    route: /purchase
+    module: purchase
+    enabled: false
+  - id: accounting
+    label: Accounting
+    description: Invoices, payments, and financial reporting
+    icon: document
+    route: /accounting
+    module: accounting
+    enabled: false
+  - id: projects
+    label: Projects
+    description: Plans, tasks, milestones, and delivery
+    icon: calendar
+    route: /projects
+    module: projects
+    enabled: false
+  - id: employees
+    label: Employees
+    description: People, time off, and workforce information
+    icon: users
+    route: /employees
+    module: employees
+    enabled: false
   - id: crm
     label: CRM
     description: Customer relationships and pipeline management

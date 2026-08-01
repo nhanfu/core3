@@ -50,9 +50,10 @@ export class ProfileDrawer extends BaseComponent {
   refreshLanguage() {
     if (!this._el) return;
     const t = (text: string) => i18n.t('*', null, text);
-    const sectionTitles = this._el.querySelectorAll('.drawer-section-title');
-    if (sectionTitles[0]) sectionTitles[0].textContent = t('Language');
-    if (sectionTitles[1]) sectionTitles[1].textContent = t('Change Password');
+    const languageTitle = this._el.querySelector('.drawer-language-section .drawer-section-title');
+    if (languageTitle) languageTitle.textContent = t('Language');
+    const passwordTitle = this._el.querySelector('.drawer-password-section .drawer-section-title');
+    if (passwordTitle) passwordTitle.textContent = t('Change Password');
     const labels = this._el.querySelectorAll('.form-label');
     ['Current password', 'New password', 'Confirm new password'].forEach((key, index) => {
       if (labels[index]) labels[index].textContent = t(key);
@@ -110,8 +111,20 @@ export class ProfileDrawer extends BaseComponent {
     html.take(body).div.className('drawer-user-name').text(user?.name || 'User');
     html.take(body).div.className('drawer-user-email').text(user?.email || '');
 
+    const company = this.state.company;
+    if (company) {
+      const companySection = html.take(body).div.className('drawer-section drawer-company').getContext();
+      html.take(companySection).div.className('drawer-section-title').text(t('Company'));
+      const companyCard = html.take(companySection).div.className('drawer-company-card').getContext();
+      html.take(companyCard).div.className('drawer-company-name').text(company.short_name || company.name || 'Core3');
+      if (company.name && company.short_name && company.name !== company.short_name) {
+        html.take(companyCard).div.className('drawer-company-legal-name').text(company.name);
+      }
+      if (company.address) html.take(companyCard).div.className('drawer-company-detail').text(company.address);
+    }
+
     // ── Language preference section ──
-    const langSection = html.take(body).div.className('drawer-section').getContext();
+    const langSection = html.take(body).div.className('drawer-section drawer-language-section').getContext();
     html.take(langSection).div.className('drawer-section-title').text(t('Language'));
     const langGroup = html.take(langSection).div.className('lang-radio-group').getContext();
 
@@ -140,7 +153,7 @@ export class ProfileDrawer extends BaseComponent {
     });
 
     // ── Change password section ──
-    const pwSection = html.take(body).div.className('drawer-section').getContext();
+    const pwSection = html.take(body).div.className('drawer-section drawer-password-section').getContext();
     html.take(pwSection).div.className('drawer-section-title').text(t('Change Password'));
 
     const pwForm = html.take(pwSection).div.getContext();
