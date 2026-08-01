@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 export type MigrationRepository = {
   run(sql: string, params?: any[]): Promise<void>;
@@ -10,7 +10,7 @@ export type MigrationRepository = {
 export type Migration = {
   version: number;
   name: string;
-  root: string;
+  file: string;
   up: string;
   down: string;
 };
@@ -22,17 +22,37 @@ function loadMigrations(root: string): Migration[] {
   } catch {
     return [];
   }
-  return entries
-    .map((name) => ({ name, root: join(root, name) }))
-    .filter(({ name, root: migrationRoot }) => /^\d+$/.test(name) && statSync(migrationRoot).isDirectory())
-    .map(({ name, root: migrationRoot }) => ({
-      version: Number(name),
-      name,
-      root: migrationRoot,
-      up: readFileSync(join(migrationRoot, 'up.sql'), 'utf8'),
-      down: readFileSync(join(migrationRoot, 'down.sql'), 'utf8'),
-    }))
+  const migrations = entries
+    .filter((name) => /^\d{14}-\d{3,}-[a-z0-9]+(?:-[a-z0-9]+)*\.ya?ml$/.test(name))
+    .map((name) => {
+      const match = /^(\d{14})-(\d{3,})-([a-z0-9]+(?:-[a-z0-9]+)*)\.ya?ml$/.exec(name);
+      if (!match) throw new Error(`Invalid migration filename: ${name}`);
+      const [, timestamp, order, description] = match;
+      const parsed = Bun.YAML.parse(readFileSync(join(root, name), 'utf8')) as {
+        up?: unknown;
+        down?: unknown;
+      };
+      if (typeof parsed?.up !== 'string' || typeof parsed.down !== 'string') {
+        throw new Error(`Migration ${name} must define string up and down properties`);
+      }
+      return {
+        version: Number(order),
+        name: order,
+        file: name,
+        up: parsed.up,
+        down: parsed.down,
+        timestamp,
+        description,
+      };
+    })
     .sort((a, b) => a.version - b.version);
+
+  for (let index = 1; index < migrations.length; index += 1) {
+    if (migrations[index - 1].version === migrations[index].version) {
+      throw new Error(`Duplicate migration order: ${migrations[index].name}`);
+    }
+  }
+  return migrations;
 }
 
 export async function migrateDatabase(

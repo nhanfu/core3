@@ -4,7 +4,7 @@
  * Minimal BaseComponent implementation for demo pages.
  * NOT the production @core3/frontend package — demo-only.
  *
- * Import: import { BaseComponent } from '/lib/runtime.ts';
+ * Import: import { BaseComponent } from '/lib/components/BaseComponent.ts';
  */
 
 import { HTML } from '../html.ts';

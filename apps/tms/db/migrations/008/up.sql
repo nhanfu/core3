@@ -1,8 +1,0 @@
--- Relationship and drill-down queries repeatedly resolve these links before
--- applying branch, date, hierarchy, or audit-resource predicates.
-CREATE INDEX IF NOT EXISTS idx_drivers_assigned_truck ON drivers(assigned_truck_id);
-CREATE INDEX IF NOT EXISTS idx_maintenance_truck_date ON maintenance(truck_id, scheduled_date);
-CREATE INDEX IF NOT EXISTS idx_maintenance_technician ON maintenance(technician_id);
-CREATE INDEX IF NOT EXISTS idx_accounting_entries_linked_advance ON accounting_entries(linked_advance_id);
-CREATE INDEX IF NOT EXISTS idx_accounting_entries_parent ON accounting_entries(parent_id);
-CREATE INDEX IF NOT EXISTS idx_system_activity_resource ON system_activity(resource, resource_id);

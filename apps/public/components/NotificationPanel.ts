@@ -1,4 +1,4 @@
-import { BaseComponent } from '../../lib/runtime.ts';
+import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '../../lib/html.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
 import { getToken } from '../app.ts';

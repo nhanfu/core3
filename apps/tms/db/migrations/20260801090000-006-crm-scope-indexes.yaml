@@ -1,0 +1,12 @@
+up: |
+  -- CRM lists and analytics repeatedly filter by visibility, owner, lifecycle,
+  -- and status while enforcing the current user's scope.
+  CREATE INDEX IF NOT EXISTS idx_customers_visibility_owner ON customers(visibility, owner_name);
+  CREATE INDEX IF NOT EXISTS idx_customers_stage_status ON customers(stage, status);
+  CREATE INDEX IF NOT EXISTS idx_partners_visibility_owner ON partners(visibility, owner_name);
+  CREATE INDEX IF NOT EXISTS idx_partners_type_status ON partners(partner_type, status);
+down: |
+  DROP INDEX IF EXISTS idx_customers_visibility_owner;
+  DROP INDEX IF EXISTS idx_customers_stage_status;
+  DROP INDEX IF EXISTS idx_partners_visibility_owner;
+  DROP INDEX IF EXISTS idx_partners_type_status;

@@ -2,20 +2,29 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const schema = readFileSync(resolve(process.cwd(), 'db', 'schema.sql'), 'utf8');
-const migration = readFileSync(resolve(process.cwd(), 'db', 'migrations/001/up.sql'), 'utf8');
-const alignmentMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/002/up.sql'), 'utf8');
-const crmMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/003/up.sql'), 'utf8');
-const financialMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/004/up.sql'), 'utf8');
-const scopeMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/005/up.sql'), 'utf8');
-const crmScopeMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/006/up.sql'), 'utf8');
-const notificationMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/007/up.sql'), 'utf8');
-const relationshipQueryMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/008/up.sql'), 'utf8');
-const tripScopeMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations/009/up.sql'), 'utf8');
 const server = readFileSync(resolve(process.cwd(), '..', 'server.ts'), 'utf8');
 const dbInit = readFileSync(resolve(process.cwd(), 'db', 'init.ts'), 'utf8');
 const migrationRunner = readFileSync(resolve(process.cwd(), '../../apps/lib/server/migrations.ts'), 'utf8');
-const migrationFiles = readdirSync(resolve(process.cwd(), 'db', 'migrations')).filter(file => /^\d+$/.test(file)).sort();
+const migrationRoot = resolve(process.cwd(), 'db', 'migrations');
+const migrationFiles = readdirSync(migrationRoot)
+  .filter(file => /^\d{14}-\d{3,}-[a-z0-9]+(?:-[a-z0-9]+)*\.ya?ml$/.test(file))
+  .sort();
+const migration = (order: string) => {
+  const file = migrationFiles.find(name => name.includes(`-${order}-`));
+  if (!file) throw new Error(`Missing migration ${order}`);
+  return (Bun.YAML.parse(readFileSync(resolve(migrationRoot, file), 'utf8')) as { up: string }).up;
+};
+const migrationDown = (file: string) =>
+  (Bun.YAML.parse(readFileSync(resolve(migrationRoot, file), 'utf8')) as { down: string }).down;
+const schema = migration('001');
+const alignmentMigration = migration('002');
+const crmMigration = migration('003');
+const financialMigration = migration('004');
+const scopeMigration = migration('005');
+const crmScopeMigration = migration('006');
+const notificationMigration = migration('007');
+const relationshipQueryMigration = migration('008');
+const tripScopeMigration = migration('009');
 
 describe('database relationship contract', () => {
   it('declares organization and fleet foreign keys', () => {
@@ -56,16 +65,25 @@ describe('database relationship contract', () => {
   });
 
   it('keeps the relational hardening upgrade versioned and idempotent', () => {
-    expect(migration).toContain('CREATE INDEX IF NOT EXISTS idx_users_branch');
-    expect(migration).toContain('CREATE INDEX IF NOT EXISTS idx_orders_branch');
+    expect(migration('001')).toContain('CREATE INDEX IF NOT EXISTS idx_users_branch');
+    expect(migration('001')).toContain('CREATE INDEX IF NOT EXISTS idx_orders_branch');
     expect(migrationRunner).toContain('CREATE TABLE IF NOT EXISTS schema_migrations');
     expect(migrationRunner).toContain("INSERT INTO schema_migrations(version) VALUES(?)");
     expect(migrationFiles).toEqual([
-      '001', '002', '003', '004', '005', '006', '007', '008', '009',
+      '20260801090000-001-foundation-indexes.yaml',
+      '20260801090000-002-schema-alignment-and-currency.yaml',
+      '20260801090000-003-customer-contact-links.yaml',
+      '20260801090000-004-accounting-line-links.yaml',
+      '20260801090000-005-branch-scope-indexes.yaml',
+      '20260801090000-006-crm-scope-indexes.yaml',
+      '20260801090000-007-notification-index.yaml',
+      '20260801090000-008-relationship-query-indexes.yaml',
+      '20260801090000-009-trip-branch-scope.yaml',
     ]);
+    expect(readdirSync(migrationRoot).sort()).toEqual(migrationFiles);
     for (const file of migrationFiles) {
-      expect(readFileSync(resolve(process.cwd(), 'db', 'migrations', file, 'up.sql'), 'utf8')).toContain('CREATE');
-      expect(readFileSync(resolve(process.cwd(), 'db', 'migrations', file, 'down.sql'), 'utf8')).toBeTruthy();
+      expect(migration(file.slice(15, 18))).toContain('CREATE');
+      expect(migrationDown(file)).toBeTruthy();
     }
   });
 
@@ -73,6 +91,8 @@ describe('database relationship contract', () => {
     expect(alignmentMigration).toContain('ALTER TABLE trucks ADD COLUMN IF NOT EXISTS capacity_kg');
     expect(alignmentMigration).toContain('INSERT INTO order_workflow_states');
     expect(server).not.toContain('ALTER TABLE trucks ADD COLUMN IF NOT EXISTS capacity_kg');
+    expect(dbInit).not.toContain('schema.sql');
+    expect(dbInit).not.toContain('seed.sql');
   });
 
   it('keeps mutable CRM parent links repository-owned', () => {
