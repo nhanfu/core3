@@ -328,6 +328,22 @@ export function createTmsApi(ctx: TmsApiContext) {
     return json(user);
   }
 
+  // The login page is a public YAML page; all other page configs remain behind auth.
+  const publicPageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
+  if (publicPageMatch && method === 'GET' && publicPageMatch[1] === 'login') {
+    const page = PAGES.get('login');
+    if (!page) return apiError(404, 'Unknown page: login');
+    const lang = String(url.searchParams.get('lang') || 'en');
+    return json({
+      ...publicPageConfig(page),
+      i18n: {
+        lang,
+        page: translationMap(CATALOGS, lang, 'login'),
+        global: translationMap(CATALOGS, lang, '*'),
+      },
+    });
+  }
+
   // Translation reads are needed by the unauthenticated login shell.
   if (pathname === '/api/i18n' && method === 'GET') {
     const lang = url.searchParams.get('lang') || 'en';

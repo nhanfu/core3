@@ -37,7 +37,7 @@ export type ComponentDefinition = {
 
 export type ActionDefinition = {
   id: string;
-  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download';
+  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login';
   permission?: string;
   [key: string]: unknown;
 };
@@ -124,6 +124,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
+  login: new Set(['id', 'type', 'endpoint', 'permission']),
 };
 const PERMISSION_REQUIRED_ACTION_TYPES = new Set<ActionDefinition['type']>([
   'form',
@@ -169,6 +170,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'empty_threads',
     'empty_messages',
   ])],
+  ['LoginForm', new Set(['type', 'id', 'action', 'logo_title', 'logo_subtitle', 'title', 'email', 'password', 'submit_label', 'loading_label', 'required_message', 'credentials_label', 'credentials'])],
 ]);
 
 export class PageSchemaError extends Error {

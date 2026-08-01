@@ -218,6 +218,20 @@ export async function renderPage(config: any, { container = document.body }: { c
     if (!resolved.visible) return;
 
     switch (actionDef.type) {
+      case 'login': {
+        const response = await fetch(actionDef.endpoint || '/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: row?.email, password: row?.password }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'Invalid credentials');
+        const { setAuth, getDefaultRoute } = await import('../public/app.ts');
+        await setAuth(result.token, result.user);
+        window.history.replaceState(null, '', `#${getDefaultRoute(result.user)}`);
+        window.location.reload();
+        break;
+      }
       case 'form':
         await openFormModal(actionDef, row);
         break;
@@ -1387,6 +1401,18 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     switch (def.type) {
+      case 'LoginForm': {
+        const { LoginForm } = await import('./components/LoginForm.ts');
+        const component = new LoginForm(def.id || `${config.page.id}-login`, {}, def);
+        component._onAction = async (actionId: string, params: any) => {
+          const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+          if (actionDef) await handleAction(actionDef, params);
+        };
+        const slot = document.createElement('div');
+        targetContainer.appendChild(slot);
+        component.mount(slot);
+        break;
+      }
       case 'PageIntro': {
         const { PageIntro } = await import('./components/PageIntro.ts');
         const component = new PageIntro(def.id || `${config.page.id}-intro`, def);

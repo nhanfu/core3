@@ -11,7 +11,7 @@ import { AppShell } from '../../public/components/AppShell.ts';
 import { NotificationPanel } from '../../public/components/NotificationPanel.ts';
 import { ProfileDrawer } from '../../public/components/ProfileDrawer.ts';
 import { i18n } from '../../lib/i18n.ts';
-import { mount as mountLogin } from '../pages/login.ts';
+import { LoginForm } from '../../lib/components/LoginForm.ts';
 
 describe('TMS shell lifecycle', () => {
   beforeEach(() => {
@@ -69,20 +69,16 @@ describe('TMS shell lifecycle', () => {
   });
 
   it('renders the MovedX login entry point from the active language catalog', async () => {
-    const cache = (i18n as any)._cache as Map<string, Record<string, string>>;
-    const previousLanguage = i18n.lang;
-    const previousTranslations = cache.get('vi:login');
-    i18n.lang = 'vi';
-    cache.set('vi:login', {
-      'Sign in to your account': 'Đăng nhập vào tài khoản của bạn',
-      Email: 'Email',
-      Password: 'Mật khẩu',
-      'Sign in': 'Đăng nhập',
-      'Demo credentials:': 'Thông tin đăng nhập mẫu:',
-    });
-
     const host = document.createElement('div');
-    await mountLogin(host);
+    new LoginForm('login-form', {}, {
+      logo_title: 'MovedX',
+      logo_subtitle: 'Điều xe & Quản lý vận tải',
+      title: 'Đăng nhập vào tài khoản của bạn',
+      email: { label: 'Email' },
+      password: { label: 'Mật khẩu' },
+      submit_label: 'Đăng nhập',
+      credentials_label: 'Thông tin đăng nhập mẫu:',
+    }).mount(host);
 
     expect(host.querySelector('.login-logo-title')?.textContent).toBe('MovedX');
     expect(host.querySelector('.login-logo-icon svg')).not.toBeNull();
@@ -90,9 +86,6 @@ describe('TMS shell lifecycle', () => {
     expect(host.querySelector('.login-footer')?.textContent).toContain('Thông tin đăng nhập mẫu:');
     expect(host.querySelectorAll('label')[1]?.textContent).toBe('Mật khẩu');
 
-    i18n.lang = previousLanguage;
-    if (previousTranslations) cache.set('vi:login', previousTranslations);
-    else cache.delete('vi:login');
   });
 
   it('marks an individual unread notification read and updates the badge', async () => {

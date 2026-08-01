@@ -49,6 +49,8 @@ class I18n {
       'title', 'label', 'description', 'placeholder', 'search_placeholder',
       'greeting', 'eyebrow', 'action_label', 'from_label', 'to_label',
       'all_label', 'clear_label', 'confirm', 'message', 'options',
+      'logo_title', 'logo_subtitle', 'submit_label', 'loading_label',
+      'required_message', 'credentials_label', 'credentials',
     ]);
     const walk = (value: any, key = '', component: string | null = null, display = false): any => {
       if (typeof value === 'string') return display ? this.t(page, component, value) : value;

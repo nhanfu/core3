@@ -73,3 +73,4 @@ export { ComingSoon }           from './ComingSoon.ts';
 export { ScheduleGrid }         from './ScheduleGrid.ts';
 export { AsyncSelect }          from './AsyncSelect.ts';
 export { MoneyInput }           from './MoneyInput.ts';
+export { LoginForm }            from './LoginForm.ts';

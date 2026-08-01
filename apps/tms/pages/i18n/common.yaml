@@ -60,6 +60,9 @@ vi:
   Password: Mật khẩu
   Sign in: Đăng nhập
   Invalid credentials: Thông tin đăng nhập không hợp lệ
+  Signing in...: Đang đăng nhập...
+  Email and password are required.: Vui lòng nhập email và mật khẩu.
+  "Demo credentials:": "Thông tin đăng nhập mẫu:"
   Notifications: Thông báo
   Profile: Hồ sơ
   Close: Đóng

@@ -10,7 +10,7 @@ let _shell: AppShell | null = null;
 
 // Routes: string = server page id, function = JS module loader
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
-  '/login':        () => import('../tms/pages/login.ts'),
+  '/login':        'login',
   '/dashboard':    'dashboard',
   '/fleet':        'fleet', '/trips': 'trips', '/maintenance': 'maintenance', '/reports': 'reports', '/settings': 'settings',
   '/vehicles':     'vehicles', '/vehicles/detail': 'vehicle-detail',

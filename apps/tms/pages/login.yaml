@@ -1,0 +1,34 @@
+title: Sign in to your account
+
+page:
+  id: login
+
+components:
+  - type: LoginForm
+    id: login-form
+    action: login
+    logo_title: MovedX
+    logo_subtitle: Điều xe & Quản lý vận tải
+    title: Sign in to your account
+    email:
+      label: Email
+      placeholder: you@company.com
+      autocomplete: email
+      default: admin@tms.local
+    password:
+      label: Password
+      placeholder: ••••••••
+      autocomplete: current-password
+      default: admin123
+    submit_label: Sign in
+    loading_label: Signing in...
+    required_message: Email and password are required.
+    credentials_label: 'Demo credentials:'
+    credentials:
+      - admin@tms.local / admin123
+      - manager@tms.local / fleet123
+
+actions:
+  - id: login
+    type: login
+    endpoint: /api/auth/login
