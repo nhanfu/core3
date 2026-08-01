@@ -37,7 +37,7 @@ export type ComponentDefinition = {
 
 export type ActionDefinition = {
   id: string;
-  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login';
+  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'event';
   permission?: string;
   [key: string]: unknown;
 };
@@ -125,6 +125,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'permission']),
+  event: new Set(['id', 'type', 'event', 'params', 'title', 'message', 'close_label', 'icon', 'permission']),
 };
 const PERMISSION_REQUIRED_ACTION_TYPES = new Set<ActionDefinition['type']>([
   'form',
@@ -170,7 +171,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'empty_threads',
     'empty_messages',
   ])],
-  ['LoginForm', new Set(['type', 'id', 'action', 'logo_title', 'logo_subtitle', 'title', 'email', 'password', 'submit_label', 'loading_label', 'required_message', 'credentials_label', 'credentials'])],
+  ['LoginForm', new Set(['type', 'id', 'action', 'logo_title', 'logo_subtitle', 'title', 'email', 'password', 'submit_label', 'loading_label', 'required_message', 'provider_divider', 'credentials_label', 'credentials', 'providers'])],
 ]);
 
 export class PageSchemaError extends Error {
@@ -309,6 +310,11 @@ function validateActions(
       if (type === 'patch' && !isRecord(action.body)) issues.push(`${path}.body must be an object`);
     } else if (type === 'navigate') {
       requireString(action.navigate_to, `${path}.navigate_to`, issues);
+    } else if (type === 'event') {
+      requireString(action.event, `${path}.event`, issues);
+      if (action.params !== undefined && !isRecord(action.params)) {
+        issues.push(`${path}.params must be an object`);
+      }
     } else if (type === 'server') {
       requireString(action.action, `${path}.action`, issues);
       if (action.params !== undefined && !isRecord(action.params)) {

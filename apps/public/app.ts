@@ -225,7 +225,10 @@ async function renderRoute(path: string, langCode?: string) {
       for (const [key, value] of Object.entries(getPageParams() as Record<string, string>)) {
         pageParams.set(key, value);
       }
-      const res = await apiFetch(`/api/pages/${loader}?${pageParams.toString()}`);
+      const fetchOptions: RequestInit = pageParams.get('cache') === 'false'
+        ? { cache: 'no-store' }
+        : {};
+      const res = await apiFetch(`/api/pages/${loader}?${pageParams.toString()}`, fetchOptions);
       if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
       const config = await res.json();
       i18n.hydrate(loader, config.i18n);

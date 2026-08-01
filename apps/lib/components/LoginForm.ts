@@ -56,6 +56,32 @@ export class LoginForm extends BaseComponent {
         if (event.key === 'Enter') void submit();
       });
     }
+
+    const providers = Array.isArray(d.providers) ? d.providers : [];
+    if (providers.length) {
+      const divider = html.take(card).div.className('login-provider-divider').getContext();
+      html.take(divider).span.text(d.provider_divider || 'Or continue with');
+      const providerList = html.take(card).div.className('login-providers').getContext();
+      for (const provider of providers) {
+        if (!provider?.action || !provider?.label) continue;
+        const tone = ['indigo', 'blue', 'slate'].includes(provider.tone) ? provider.tone : 'slate';
+        const providerButton = html.take(providerList).button
+          .className(`btn btn-outline btn-full login-provider-button login-provider-${tone}`)
+          .attr('type', 'button')
+          .getContext() as HTMLButtonElement;
+        appendIcon(providerButton, provider.icon || 'shield');
+        const providerLabel = document.createElement('span');
+        providerLabel.textContent = provider.label;
+        providerButton.append(providerLabel);
+        providerButton.addEventListener('click', () => {
+          providerButton.disabled = true;
+          void this.submit(provider.action).catch((error) => {
+            errorEl.textContent = error instanceof Error ? error.message : String(error);
+            errorEl.style.display = 'block';
+          }).finally(() => { providerButton.disabled = false; });
+        });
+      }
+    }
     emailInput.focus();
   }
 

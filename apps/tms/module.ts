@@ -58,14 +58,36 @@ export class TmsModule {
     await initTmsDatabase(this.repository, this.root);
 
     const discovered = discoverPages(context.appsRoot);
+    const pageMaps = {
+      pages: new Map([...discovered.pages].map(([id, page]) => [id, page.config])),
+      datasources: new Map(discovered.datasources),
+      catalogs: new Map(discovered.catalogs),
+      menus: new Map(discovered.menus),
+    };
+    const reloadPages = () => {
+      const next = discoverPages(context.appsRoot);
+      const replacements = {
+        pages: new Map([...next.pages].map(([id, page]) => [id, page.config])),
+        datasources: next.datasources,
+        catalogs: next.catalogs,
+        menus: next.menus,
+      };
+      for (const key of Object.keys(pageMaps) as Array<keyof typeof pageMaps>) {
+        const target = pageMaps[key];
+        target.clear();
+        for (const [entryKey, entryValue] of replacements[key]) target.set(entryKey, entryValue);
+      }
+    };
     context.registerApi(createTmsApi({
       repository: this.repository,
       authProvider,
-      sources: discovered.datasources,
-      pages: new Map([...discovered.pages].map(([id, page]) => [id, page.config])),
-      catalogs: discovered.catalogs,
-      menus: discovered.menus,
+      sources: pageMaps.datasources,
+      pages: pageMaps.pages,
+      catalogs: pageMaps.catalogs,
+      menus: pageMaps.menus,
+      permissions: discovered.permissions.get('tms')?.config || {},
       uploadRoot,
+      reloadPages,
     }));
   }
 

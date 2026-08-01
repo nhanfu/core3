@@ -211,6 +211,54 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   // ── Action handler ────────────────────────────────────────────────────────
 
+  function showEventPopup(actionDef: any) {
+    const overlay = document.createElement('div');
+    overlay.className = 'core3-event-overlay';
+    overlay.setAttribute('aria-hidden', 'false');
+
+    const dialog = document.createElement('div');
+    dialog.className = 'core3-event-dialog';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    const titleId = `event-dialog-title-${Date.now()}`;
+    dialog.setAttribute('aria-labelledby', titleId);
+
+    const icon = document.createElement('div');
+    icon.className = 'core3-event-icon';
+    appendIcon(icon, actionDef.icon || 'lightbulb');
+    dialog.appendChild(icon);
+
+    const title = document.createElement('h2');
+    title.className = 'core3-event-title';
+    title.id = titleId;
+    title.textContent = actionDef.title || 'Coming soon';
+    dialog.appendChild(title);
+
+    const message = document.createElement('p');
+    message.className = 'core3-event-message';
+    message.textContent = actionDef.message || 'This feature is under construction.';
+    dialog.appendChild(message);
+
+    const close = () => {
+      document.removeEventListener('keydown', onKeyDown);
+      overlay.remove();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close();
+    };
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn btn-primary core3-event-close';
+    closeButton.textContent = actionDef.close_label || 'Close';
+    closeButton.addEventListener('click', close);
+    dialog.appendChild(closeButton);
+    overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+    document.addEventListener('keydown', onKeyDown);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    closeButton.focus();
+  }
+
   async function handleAction(actionDef: any, row: any) {
     if (!actionDef) return;
     const rowCtx = { ...ctx, row: row || {} };
@@ -230,6 +278,15 @@ export async function renderPage(config: any, { container = document.body }: { c
         await setAuth(result.token, result.user);
         window.history.replaceState(null, '', `#${getDefaultRoute(result.user)}`);
         window.location.reload();
+        break;
+      }
+      case 'event': {
+        const eventName = String(actionDef.event || '').trim();
+        if (!eventName) throw new Error('Event action requires an event name');
+        window.dispatchEvent(new CustomEvent(eventName, {
+          detail: resolveActionParams(actionDef.params, rowCtx),
+        }));
+        if (actionDef.message) showEventPopup(actionDef);
         break;
       }
       case 'form':

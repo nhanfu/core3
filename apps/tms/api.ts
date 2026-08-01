@@ -36,7 +36,9 @@ type TmsApiContext = {
   pages: Map<string, any>;
   catalogs: Map<string, any>;
   menus: Map<string, any>;
+  permissions: any;
   uploadRoot: string;
+  reloadPages?: () => void;
 };
 
 export function createTmsApi(ctx: TmsApiContext) {
@@ -47,14 +49,16 @@ export function createTmsApi(ctx: TmsApiContext) {
     pages: PAGES,
     catalogs: CATALOGS,
     menus: MENUS,
+    permissions: PERMISSIONS,
     uploadRoot: UPLOAD_ROOT,
+    reloadPages,
   } = ctx;
 
-  const CRM_ENTITY_ACTION_REGISTRY: Record<string, { permission: string }> = {
-    'crm.entities.update': { permission: 'crm.write' },
+  const CRM_ENTITY_ACTION_REGISTRY: Record<string, object> = {
+    'crm.entities.update': {},
   } as const;
-  const ACCOUNTING_DOCUMENT_ACTION_REGISTRY: Record<string, { permission: string }> = {
-    'accounting.documents.update': { permission: 'accounting.write' },
+  const ACCOUNTING_DOCUMENT_ACTION_REGISTRY: Record<string, object> = {
+    'accounting.documents.update': {},
   } as const;
   const FINANCIAL_WORKFLOW_SCOPES = new Set([
     'debit_note',
@@ -76,11 +80,20 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
   }
 
-  function json(data: any, status = 200): Response {
+  function json(data: any, status = 200, extraHeaders: Record<string, string> = {}): Response {
     return new Response(JSON.stringify(data), {
       status,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      headers: { 'Content-Type': 'application/json', ...extraHeaders, ...CORS_HEADERS },
     });
+  }
+
+  function pageCacheHeaders(url: URL): Record<string, string> {
+    if (url.searchParams.get('cache') !== 'true') {
+      return { 'Cache-Control': 'no-store, no-cache, must-revalidate', Pragma: 'no-cache' };
+    }
+    const requestedTtl = Number.parseInt(url.searchParams.get('ttl') || '300', 10);
+    const ttl = Number.isFinite(requestedTtl) ? Math.min(Math.max(requestedTtl, 0), 86400) : 300;
+    return { 'Cache-Control': `private, max-age=${ttl}` };
   }
 
   function apiError(status: number, message: string): Response {
@@ -113,6 +126,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   async function prefetchedPageConfig(page: any, url: URL, user: any) {
     const params: Record<string, unknown> = {};
     for (const [key, value] of url.searchParams.entries()) {
+      if (key === 'cache' || key === 'ttl') continue;
       const previous = params[key];
       params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
     }
@@ -149,141 +163,29 @@ export function createTmsApi(ctx: TmsApiContext) {
     };
   }
 
-  const TABLE_REGISTRY = {
-  orders: {
-    permission: 'orders.write',
-    timestamps: true,
-    fields: [
-      'order_number',
-      'customer_name',
-      'customer_legal_name',
-      'order_date',
-      'shipment_type',
-      'route',
-      'transport_method',
-      'trip_count',
-      'notes',
-      'branch_id',
-    ],
-  },
-  trucks: {
-    permission: 'fleet.write',
-    timestamps: true,
-    fields: ['plate', 'model', 'type', 'status', 'capacity_kg', 'mileage', 'driver_id', 'last_service', 'next_service', 'branch_id', 'notes'],
-  },
-  drivers: {
-    permission: 'drivers.write',
-    timestamps: true,
-    fields: ['name', 'phone', 'email', 'license_number', 'license_expiry', 'status', 'assigned_truck_id'],
-  },
-  trips: {
-    permission: 'trips.write',
-    timestamps: true,
-    fields: ['trip_number', 'truck_id', 'driver_id', 'branch_id', 'origin', 'destination', 'status', 'departure_time', 'arrival_time', 'distance_km', 'cargo_type', 'cargo_weight', 'notes'],
-  },
-  maintenance: {
-    permission: 'maintenance.write',
-    timestamps: true,
-    fields: ['truck_id', 'service_type', 'status', 'scheduled_date', 'completed_date', 'technician_id', 'cost', 'notes'],
-  },
-  customers:    {
-    permission: 'crm.write',
-    timestamps: true,
-    fields: ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status'],
-  },
-  quotes: { permission: 'crm.write', timestamps: true, fields: ['code', 'customer_name', 'title', 'status', 'valid_until', 'branch_id'] },
-  partners:     {
-    permission: 'crm.write',
-    timestamps: true,
-    fields: ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'],
-  },
-  containers: {
-    permission: 'dispatch.write',
-    timestamps: true,
-    fields: ['container_number', 'container_type', 'owner_name', 'location_id', 'branch_id', 'status', 'notes'],
-  },
-  locations: {
-    permission: 'dispatch.write',
-    timestamps: true,
-    fields: ['code', 'name', 'location_type', 'address', 'city', 'area_id', 'branch_id', 'status'],
-  },
-  areas: {
-    permission: 'dispatch.write',
-    timestamps: true,
-    fields: ['code', 'name', 'parent_id', 'region', 'description', 'status'],
-  },
-  company_profiles: {
-    permission: 'settings.write',
-    timestamps: true,
-    fields: ['name', 'short_name', 'tax_code', 'address', 'invoice_address', 'phone', 'email', 'website', 'bank_name', 'bank_account', 'notes'],
-  },
-  departments: {
-    permission: 'settings.write',
-    timestamps: true,
-    fields: ['code', 'name', 'parent_id', 'branch_id', 'status'],
-  },
-  teams: {
-    permission: 'settings.write',
-    timestamps: true,
-    fields: ['code', 'name', 'department_id', 'manager_id', 'status'],
-  },
-  employees:    {
-    permission: 'hr.write',
-    timestamps: true,
-    fields: ['code', 'name', 'job_title', 'phone', 'email', 'department', 'start_date', 'dependents', 'status'],
-  },
-  employment_contracts: {
-    permission: 'hr.write',
-    timestamps: true,
-    fields: ['code', 'employee_id', 'contract_type', 'start_date', 'end_date', 'base_salary', 'status'],
-  },
-  work_shifts: {
-    permission: 'hr.write',
-    timestamps: true,
-    fields: ['code', 'name', 'start_time', 'end_time', 'break_minutes', 'status'],
-  },
-  timesheets: {
-    permission: 'hr.write',
-    timestamps: true,
-    fields: ['employee_id', 'work_date', 'shift_id', 'hours', 'status', 'notes'],
-  },
-  payrolls: {
-    permission: 'hr.write',
-    timestamps: true,
-    fields: ['code', 'employee_id', 'pay_month', 'base_salary', 'allowance', 'deduction', 'net_salary', 'status'],
-  },
-  master_data: {
-    permission: 'catalog.write',
-    timestamps: true,
-    fields: ['code', 'name', 'description', 'symbol', 'decimals', 'status', 'sort_order'],
-    scopes: ['container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency'],
-  },
-  accounting_entries: {
-    permission: 'accounting.write',
-    timestamps: true,
-    fields: ['code', 'name', 'counterparty', 'amount', 'currency', 'status', 'document_date', 'due_date', 'description', 'branch_id', 'linked_advance_id', 'parent_id', 'sort_order'],
-    scopes: ['debit_note', 'payment_request', 'advance', 'settlement', 'invoice_template', 'ledger_account'],
-  },
-  system_configs: { permission: 'system.write', timestamps: true, fields: ['code', 'name', 'config_value', 'description', 'prefix', 'sequence_width', 'reset_cadence', 'next_sequence', 'status', 'sort_order'], scopes: ['code_rule', 'print_template', 'approval_flow', 'shipment_type', 'trip_status', 'fee_rule', 'storage'] },
-  branches: {
-    permission: 'settings.write',
-    timestamps: true,
-    fields: ['name', 'city', 'region', 'status'],
-  },
-  users: {
-    permission: 'settings.write',
-    timestamps: true,
-    fields: ['email', 'name', 'avatar_url', 'preferred_lang', 'enabled', 'branch_id', 'department_id', 'roles', 'password'],
-  },
-  roles: {
-    permission: 'settings.write',
-    timestamps: false,
-    fields: ['name', 'description', 'view_scope'],
-  },
-};
-
-
-
+  const TABLES = PERMISSIONS.tables || {};
+  const ACTION_PERMISSIONS: Record<string, string> = PERMISSIONS.actions || {};
+  const ENDPOINT_PERMISSIONS: Record<string, string> = PERMISSIONS.endpoints || {};
+  const DECLARED_PERMISSIONS = new Set<string>(PERMISSIONS.permissions || []);
+  for (const [name, table] of Object.entries(TABLES) as [string, any][]) {
+    if (!DECLARED_PERMISSIONS.has(table.permission)) throw new Error(`Table ${name} uses undeclared permission: ${table.permission}`);
+  }
+  for (const [name, permission] of Object.entries(ACTION_PERMISSIONS)) {
+    if (!DECLARED_PERMISSIONS.has(permission)) throw new Error(`Action ${name} uses undeclared permission: ${permission}`);
+  }
+  for (const [name, permission] of Object.entries(ENDPOINT_PERMISSIONS)) {
+    if (!DECLARED_PERMISSIONS.has(permission)) throw new Error(`Endpoint ${name} uses undeclared permission: ${permission}`);
+  }
+  const permissionForAction = (action: string) => {
+    const permission = ACTION_PERMISSIONS[action];
+    if (!permission) throw new Error(`Missing YAML permission for named action: ${action}`);
+    return permission;
+  };
+  const permissionForEndpoint = (endpoint: string) => {
+    const permission = ENDPOINT_PERMISSIONS[endpoint];
+    if (!permission) throw new Error(`Missing YAML permission for endpoint: ${endpoint}`);
+    return permission;
+  };
   const REGISTERED_NAMED_ACTIONS = new Set([
     ...Object.keys(ORDER_ACTION_REGISTRY),
     ...Object.keys(FINANCIAL_ACTION_REGISTRY),
@@ -334,6 +236,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   // The login page is a public YAML page; all other page configs remain behind auth.
   const publicPageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
   if (publicPageMatch && method === 'GET' && publicPageMatch[1] === 'login') {
+    if (url.searchParams.get('cache') !== 'true') reloadPages?.();
     const page = PAGES.get('login');
     if (!page) return apiError(404, 'Unknown page: login');
     const lang = requestLanguage(url);
@@ -344,7 +247,7 @@ export function createTmsApi(ctx: TmsApiContext) {
         page: translationMap(CATALOGS, lang, 'login'),
         global: translationMap(CATALOGS, lang, '*'),
       },
-    });
+    }, 200, pageCacheHeaders(url));
   }
 
   // The shell needs module menus and global labels before authentication.
@@ -434,21 +337,21 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (!(file instanceof File)) return apiError(400, 'file required');
     if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'contract_document' && meta.kind !== 'company_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
     if (meta.kind === 'chat_attachment') {
-      requirePerm('chat.write');
+      requirePerm(permissionForEndpoint('upload.chat_attachment'));
       if (typeof meta.thread_id !== 'string' || !meta.thread_id) return apiError(400, 'thread_id required');
     } else if (meta.kind === 'employee_document') {
-      requirePerm('hr.write');
+      requirePerm(permissionForEndpoint('upload.employee_document'));
       if (typeof meta.employee_id !== 'string' || !meta.employee_id) return apiError(400, 'employee_id required');
       if (!(await recordInCurrentBranch('employees', meta.employee_id))) return apiError(403, 'Record is outside the current view scope');
     } else if (meta.kind === 'contract_document') {
-      requirePerm('hr.write');
+      requirePerm(permissionForEndpoint('upload.contract_document'));
       if (typeof meta.contract_id !== 'string' || !meta.contract_id) return apiError(400, 'contract_id required');
       if (!(await recordInCurrentBranch('employment_contracts', meta.contract_id))) return apiError(403, 'Record is outside the current view scope');
     } else if (meta.kind === 'company_document') {
-      requirePerm('settings.write');
+      requirePerm(permissionForEndpoint('upload.company_document'));
       if (typeof meta.company_id !== 'string' || !meta.company_id) return apiError(400, 'company_id required');
     } else {
-      requirePerm('catalog.write');
+      requirePerm(permissionForEndpoint('upload.master_data_import'));
       if (typeof meta.scope !== 'string' || !meta.scope) return apiError(400, 'scope required');
       if (file.size > 2 * 1024 * 1024) return apiError(400, 'Import CSV or XLSX must be 2 MB or smaller');
       let importText: string;
@@ -489,7 +392,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const contractDocumentMatch = pathname.match(/^\/api\/hr\/contract-documents\/([A-Za-z0-9-]+)$/);
   if (contractDocumentMatch && method === 'GET') {
-    requirePerm('hr.read');
+    requirePerm(permissionForEndpoint('hr.contract_document.download'));
     const document = await repository.getContractDocument(contractDocumentMatch[1]);
     if (!document) return apiError(404, 'Contract document not found');
     if (!(await recordInCurrentBranch('employment_contracts', String(document.contract_id)))) return apiError(403, 'Record is outside the current view scope');
@@ -500,7 +403,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const companyDocumentMatch = pathname.match(/^\/api\/org\/company-documents\/([A-Za-z0-9-]+)$/);
   if (companyDocumentMatch && method === 'GET') {
-    requirePerm('settings.read');
+    requirePerm(permissionForEndpoint('org.company_document.download'));
     const document = await repository.getCompanyDocument(companyDocumentMatch[1]);
     if (!document) return apiError(404, 'Company document not found');
     const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
@@ -510,7 +413,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const employeeDocumentMatch = pathname.match(/^\/api\/hr\/employee-documents\/([A-Za-z0-9-]+)$/);
   if (employeeDocumentMatch && method === 'GET') {
-    requirePerm('hr.read');
+    requirePerm(permissionForEndpoint('hr.employee_document.download'));
     const document = await repository.getEmployeeDocument(employeeDocumentMatch[1]);
     if (!document) return apiError(404, 'Employee document not found');
     if (!(await recordInCurrentBranch('employees', String(document.employee_id)))) return apiError(403, 'Record is outside the current view scope');
@@ -521,7 +424,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const attachmentMatch = pathname.match(/^\/api\/chat\/attachments\/([A-Za-z0-9-]+)$/);
   if (attachmentMatch && method === 'GET') {
-    requirePerm('chat.read');
+    requirePerm(permissionForEndpoint('chat.attachment.download'));
     const attachment = await repository.getChatAttachment(
       attachmentMatch[1],
       String(authUser.sub),
@@ -545,10 +448,11 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
   if (pageMatch && method === 'GET') {
+    if (url.searchParams.get('cache') !== 'true') reloadPages?.();
     const page = PAGES.get(pageMatch[1]);
     if (!page) return apiError(404, `Unknown page: ${pageMatch[1]}`);
     for (const permission of page.page?.auth?.require || []) requirePerm(permission);
-    return json(await prefetchedPageConfig(page, url, authUser));
+    return json(await prefetchedPageConfig(page, url, authUser), 200, pageCacheHeaders(url));
   }
 
   // ── POST /api/query ───────────────────────────────────────────────────────
@@ -603,7 +507,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       || contactActionDefinition;
     const resolvedActionDefinition = actionDefinition || approvalActionDefinition || tripActionDefinition || templateActionDefinition || codeRuleActionDefinition || roleActionDefinition || userRoleActionDefinition || currencyActionDefinition || crmEntityActionDefinition || accountingDocumentActionDefinition;
     if (!resolvedActionDefinition) return apiError(404, `Unknown action: ${actionName}`);
-    requirePerm(resolvedActionDefinition.permission);
+    requirePerm(permissionForAction(actionName));
 
     const body = await req.json() as any;
     if (currencyActionDefinition) {
@@ -860,7 +764,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     const body = await req.json() as any;
     let { table, action, id, changes = [], scope } = body;
 
-    const tbl = TABLE_REGISTRY[table as keyof typeof TABLE_REGISTRY];
+    const tbl = TABLES[table as keyof typeof TABLES];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);
 
