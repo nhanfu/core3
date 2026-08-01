@@ -1,5 +1,19 @@
-# Application catalog consumed by the host shell. Module menus remain owned by
-# each application; this file only describes app-level entry points.
+# Application and module configuration consumed by the host.
+# CORE3_ENV selects the database environment; paths can be overridden by env.
+modules:
+  auth:
+    database:
+      driver: duckdb
+      path:
+        development: ${AUTH_DB_PATH:-:memory:}
+        production: ${AUTH_DB_PATH:-./auth.duckdb}
+  tms:
+    database:
+      driver: duckdb
+      path:
+        development: ${TMS_DB_PATH:-:memory:}
+        production: ${TMS_DB_PATH:-./tms.duckdb}
+
 apps:
   - id: sales
     label: Sales

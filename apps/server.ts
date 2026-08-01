@@ -1,10 +1,16 @@
 import { join } from 'node:path';
 import { discoverModules, ModuleManager } from './lib/server/module.ts';
 import { discoverPageRoutes, discoverPages } from './lib/server/discovery.ts';
+import { loadApplicationConfig, resolveEnvironmentValues } from './lib/server/application-config.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
 const PUBLIC_ROOT = join(APPS_ROOT, 'public');
+const applicationConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
+const moduleConfigs = Object.fromEntries(Object.entries(applicationConfig.modules).map(([id, config]) => [
+  id,
+  resolveEnvironmentValues(config, applicationConfig.environment) as Record<string, unknown>,
+]));
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -88,14 +94,12 @@ const moduleManifest = modules.map((module) => ({
   routes: pageRoutes.filter((route) => route.module === module.id)
     .map((route) => ({ ...route, path: `/${module.id}${route.path}` })),
 }));
-await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env });
+await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs });
 
 async function applicationCatalog() {
   try {
-    const source = await Bun.file(join(APPS_ROOT, 'applications.yaml')).text();
-    const config = Bun.YAML.parse(source) as { apps?: Array<Record<string, unknown>> };
     const moduleIds = new Set(modules.map((module) => module.id));
-    return (config.apps || []).map((app) => ({
+    return applicationConfig.apps.map((app) => ({
       ...app,
       route: (() => {
         const moduleId = String(app.module || app.id);
@@ -114,7 +118,7 @@ async function applicationCatalog() {
 }
 
 const shutdown = async () => {
-  await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env });
+  await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs });
   process.exit(0);
 };
 process.once('SIGINT', shutdown);

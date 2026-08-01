@@ -32,7 +32,8 @@ export default class AuthModule {
   }
 
   async load(context: any): Promise<void> {
-    const dbPath = context.env.AUTH_DB_PATH || join(context.moduleRoot, 'auth.duckdb');
+    const database = context.config?.database as { path?: string } | undefined;
+    const dbPath = database?.path || context.env.AUTH_DB_PATH || join(context.moduleRoot, 'auth.duckdb');
     this.db = new duckdb.Database(dbPath);
     const repository = new AuthRepository(this.db);
     await migrateDatabase(repository, join(context.moduleRoot, 'db', 'migrations'));

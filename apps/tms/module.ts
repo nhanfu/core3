@@ -34,7 +34,8 @@ export class TmsModule {
     resolveService<T>(name: string): T;
   }): Promise<void> {
     this.root = context.moduleRoot;
-    const dbPath = context.env.TMS_DB_PATH || join(this.root, 'tms.duckdb');
+    const database = context.config?.database as { path?: string } | undefined;
+    const dbPath = database?.path || context.env.TMS_DB_PATH || join(this.root, 'tms.duckdb');
     const uploadRoot = context.env.TMS_UPLOAD_ROOT || join(this.root, '.data', 'uploads');
     this.db = new duckdb.Database(dbPath);
     this.repository = new TmsRepository(this.db);
