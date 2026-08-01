@@ -1,6 +1,6 @@
 import { BaseComponent } from '../../lib/runtime.ts';
 import { html } from '../../lib/html.ts';
-import { logout, getToken } from '../public/app.ts';
+import { logout, getToken } from '../app.ts';
 import { i18n } from '../../lib/i18n.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
 

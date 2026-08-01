@@ -3,7 +3,7 @@ import { discoverModules, ModuleManager } from './lib/server/module.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
-const PUBLIC_ROOT = join(APPS_ROOT, 'tms', 'public');
+const PUBLIC_ROOT = join(APPS_ROOT, 'public');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -44,9 +44,8 @@ async function serveStatic(pathname: string) {
   // Page YAML may contain server-only datasource SQL.
   if (/(^|\/)pages\/.+\.ya?ml$/i.test(rel)) return null;
   try {
-    const file = Bun.file(rel === 'index.html' || rel === 'app.ts'
-      ? join(PUBLIC_ROOT, rel)
-      : join(APPS_ROOT, rel));
+    const publicFile = Bun.file(join(PUBLIC_ROOT, rel));
+    const file = await publicFile.exists() ? publicFile : Bun.file(join(APPS_ROOT, rel));
     if (!(await file.exists())) return null;
     if (rel.endsWith('.ts')) {
       const transpiler = new Bun.Transpiler({ loader: 'ts' });

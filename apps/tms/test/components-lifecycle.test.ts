@@ -1,15 +1,15 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../public/app.ts', () => ({
+vi.mock('../../public/app.ts', () => ({
   getToken: () => null,
   getUser: () => null,
   logout: vi.fn(),
   navigate: vi.fn(),
 }));
 
-import { AppShell } from '../components/AppShell.ts';
-import { NotificationPanel } from '../components/NotificationPanel.ts';
-import { ProfileDrawer } from '../components/ProfileDrawer.ts';
+import { AppShell } from '../../public/components/AppShell.ts';
+import { NotificationPanel } from '../../public/components/NotificationPanel.ts';
+import { ProfileDrawer } from '../../public/components/ProfileDrawer.ts';
 import { i18n } from '../../lib/i18n.ts';
 import { mount as mountLogin } from '../pages/login.ts';
 

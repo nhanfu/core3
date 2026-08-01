@@ -1,7 +1,7 @@
 import { BaseComponent } from '../../lib/runtime.ts';
 import { html } from '../../lib/html.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
-import { getToken } from '../public/app.ts';
+import { getToken } from '../app.ts';
 import { i18n } from '../../lib/i18n.ts';
 
 const TYPE_ICONS: Record<string, string> = {
