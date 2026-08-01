@@ -44,10 +44,10 @@ export class AppShell extends BaseComponent {
     this._clockTimer = null;
     this._shellToast = null;
     this._shellToastTimer = null;
-    this._languageUnsubscribe = i18n.onChange(() => {
+    this._languageUnsubscribe = i18n.onChange((lang: string) => {
       this.refreshLanguage();
       const refreshPage = this.state.onLanguageChange;
-      if (typeof refreshPage === 'function') void refreshPage();
+      if (typeof refreshPage === 'function') void refreshPage(lang);
     });
   }
 

@@ -1,4 +1,5 @@
 import { translationMap } from '../lib/server/discovery.ts';
+import { requestLanguage } from '../lib/server/locale.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { xlsxToCsv } from './module.ts';
@@ -136,7 +137,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       const { query, ...publicSource } = source;
       return { ...publicSource, data: result.data, meta: result.meta };
     }));
-    const lang = String(url.searchParams.get('lang') || user.preferred_lang || 'en');
+    const lang = requestLanguage(url, user.preferred_lang || 'en');
     return {
       ...publicPageConfig(page),
       datasources,
@@ -335,7 +336,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   if (publicPageMatch && method === 'GET' && publicPageMatch[1] === 'login') {
     const page = PAGES.get('login');
     if (!page) return apiError(404, 'Unknown page: login');
-    const lang = String(url.searchParams.get('lang') || 'en');
+    const lang = requestLanguage(url);
     return json({
       ...publicPageConfig(page),
       i18n: {
@@ -348,7 +349,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   // The shell needs module menus and global labels before authentication.
   if (pathname === '/api/menu' && method === 'GET') {
-    const lang = String(url.searchParams.get('lang') || 'en');
+    const lang = requestLanguage(url);
     return json([...MENUS.values()].map((entry: any) => ({
       module: entry.module,
       ...entry.config,

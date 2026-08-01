@@ -8,6 +8,11 @@ const TOKEN_KEY = 'tms_token';
 const WELCOME_TOAST_KEY = 'core3_show_welcome_toast';
 let _user: any = null;
 let _shell: AppShell | null = null;
+let _moduleId = '';
+
+function modulePrefix() {
+  return _moduleId ? `/${_moduleId}` : '';
+}
 
 // Routes: string = server page id, function = JS module loader
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
@@ -137,6 +142,12 @@ export function logout() {
 }
 
 export async function navigate(path: string, params: Record<string, string | number | boolean | null | undefined> = {}) {
+  const prefix = modulePrefix();
+  const routePath = prefix && (path.startsWith(`${prefix}/`) || path === prefix)
+    ? path
+    : `${prefix}${path.startsWith('/') ? path : `/${path}`}`;
+  const currentParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+  if (params.lc == null && currentParams.get('lc')) params = { ...params, lc: currentParams.get('lc') };
   const qs = Object.keys(params).length
     ? '?' + new URLSearchParams(
       Object.fromEntries(
@@ -146,10 +157,10 @@ export async function navigate(path: string, params: Record<string, string | num
       )
     ).toString()
     : '';
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  const target = `#${normalizedPath}${qs}`;
+  const target = `#${routePath}${qs}`;
   if (window.location.hash === target) {
-    await renderRoute(normalizedPath);
+    const location = hashLocation();
+    await renderRoute(location.path, location.langCode);
     return;
   }
   window.location.hash = target;
@@ -171,7 +182,18 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   return res;
 }
 
-async function renderRoute(path: string) {
+function hashLocation() {
+  const prefix = modulePrefix();
+  const raw = window.location.hash.slice(1) || `${prefix}${getDefaultRoute(_user)}`;
+  const parsed = new URL(raw, window.location.origin);
+  const path = prefix && parsed.pathname.startsWith(`${prefix}/`)
+    ? parsed.pathname.slice(prefix.length) || '/'
+    : parsed.pathname;
+  return { path, langCode: parsed.searchParams.get('lc') || undefined };
+}
+
+async function renderRoute(path: string, langCode?: string) {
+  if (langCode && langCode !== i18n.lang) await i18n.setLang(langCode);
   // Normalize: strip trailing slash
   const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/$/, '');
   const loader = ROUTES[cleanPath as keyof typeof ROUTES] || ROUTES['/dashboard'];
@@ -199,7 +221,7 @@ async function renderRoute(path: string) {
       // Hash routes carry page state (for example the order id on a detail
       // page). Forward it when the server prefetches the page datasources;
       // otherwise detail pages render their labels against an empty record.
-      const pageParams = new URLSearchParams({ lang: i18n.lang });
+      const pageParams = new URLSearchParams({ lc: i18n.lang });
       for (const [key, value] of Object.entries(getPageParams() as Record<string, string>)) {
         pageParams.set(key, value);
       }
@@ -232,13 +254,21 @@ async function renderRoute(path: string) {
 
 async function bootstrap() {
   const app = document.getElementById('app');
+  try {
+    const response = await fetch('/api/modules');
+    const modules = response.ok ? await response.json() as Array<{ id: string }> : [];
+    _moduleId = modules[0]?.id || '';
+  } catch {
+    _moduleId = '';
+  }
   const token = getToken();
   if (!app) return;
 
   // No token → login
   if (!token) {
     app.innerHTML = '<div id="outlet"></div>';
-    await renderRoute('/login');
+    const location = hashLocation();
+    await renderRoute('/login', location.langCode);
     return;
   }
 
@@ -255,12 +285,14 @@ async function bootstrap() {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(WELCOME_TOAST_KEY);
     app.innerHTML = '<div id="outlet"></div>';
-    await renderRoute('/login');
+    const location = hashLocation();
+    await renderRoute('/login', location.langCode);
     return;
   }
 
   // Prefetch global i18n
-  const lang = _user?.preferred_lang || 'en';
+  const requestedLocation = hashLocation();
+  const lang = requestedLocation.langCode || _user?.preferred_lang || 'en';
   await i18n.setLang(lang);
 
   // Menus belong to modules and are discovered from pages/menu.yaml on the
@@ -288,9 +320,9 @@ async function bootstrap() {
     menu,
     showWelcomeToast,
     navigate,
-    onLanguageChange: async () => {
-      const currentPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
-      await renderRoute(currentPath);
+    onLanguageChange: async (langCode: string) => {
+      const location = hashLocation();
+      await navigate(location.path, { lc: langCode });
     },
   });
   _shell.mount(app);
@@ -302,14 +334,20 @@ async function bootstrap() {
 
   // Match the reference app's hash-routing model. Keeping routing client-side
   // also avoids a server allowlist change for every new parity route.
-  const hashPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
-  await renderRoute(hashPath);
+  const location = hashLocation();
+  const hashPath = window.location.hash.slice(1);
+  const prefix = modulePrefix();
+  if (prefix && !hashPath.startsWith(`${prefix}/`) && hashPath !== prefix) {
+    await navigate(location.path, { lc: location.langCode || lang });
+    return;
+  }
+  await renderRoute(location.path, location.langCode);
 }
 
 // Handle browser back/forward and direct hash navigation.
 window.addEventListener('hashchange', () => {
-  const hashPath = window.location.hash.slice(1).split('?')[0] || getDefaultRoute(_user);
-  void renderRoute(hashPath);
+  const location = hashLocation();
+  void renderRoute(location.path, location.langCode);
 });
 
 bootstrap();

@@ -88,6 +88,11 @@ Bun.serve({
 
     if (url.pathname.startsWith('/api/')) {
       try {
+        if (url.pathname === '/api/modules' && req.method === 'GET') {
+          return new Response(JSON.stringify(moduleManager.metadata), {
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          });
+        }
         return (await moduleManager.handle(req, url)) || apiError(404, 'API route not found');
       } catch (error) {
         const failure = error as any;

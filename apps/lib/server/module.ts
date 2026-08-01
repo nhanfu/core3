@@ -53,6 +53,10 @@ export class ModuleManager {
   readonly modules: ModuleLifecycle[];
   readonly apiHandlers: ModuleApiHandler[] = [];
 
+  get metadata() {
+    return this.modules.map((module) => ({ id: module.id }));
+  }
+
   constructor(modules: ModuleLifecycle[]) {
     this.modules = modules;
   }

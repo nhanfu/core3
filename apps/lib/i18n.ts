@@ -30,7 +30,7 @@ class I18n {
     }
     try {
       const token = localStorage.getItem('tms_token');
-      const endpoint = `/api/menu?lang=${encodeURIComponent(this.lang)}`;
+      const endpoint = `/api/menu?lc=${encodeURIComponent(this.lang)}`;
       const res = await fetch(
         endpoint,
         { headers: token ? { Authorization: `Bearer ${token}` } : {} },
