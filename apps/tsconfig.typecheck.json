@@ -11,7 +11,7 @@
   },
   "include": [
     "./server.ts",
-    "./lib/public/app.ts",
+    "./tms/public/app.ts",
     "./*.d.ts",
     "./tms/globals.d.ts",
     "./tms/types/*.d.ts"

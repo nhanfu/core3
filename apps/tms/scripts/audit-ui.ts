@@ -13,7 +13,7 @@ const login = await fetch(`${baseUrl}/api/auth/login`, {
 if (!login.ok) throw new Error(`login failed: ${login.status}`);
 const { token } = await login.json() as { token: string };
 
-const appSource = readFileSync(new URL('../../lib/public/app.ts', import.meta.url), 'utf8');
+const appSource = readFileSync(new URL('../public/app.ts', import.meta.url), 'utf8');
 const mutationOnly = process.env.TMS_AUDIT_MUTATIONS_ONLY === '1';
 const treeOnly = process.env.TMS_AUDIT_TREE_ONLY === '1';
 const routes = [...appSource.matchAll(/^\s*'([^']+)'\s*:/gm)]

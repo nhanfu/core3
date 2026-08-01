@@ -3,7 +3,7 @@ import { discoverModules, ModuleManager } from './lib/server/module.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
-const PUBLIC_ROOT = join(APPS_ROOT, 'lib', 'public');
+const PUBLIC_ROOT = join(APPS_ROOT, 'tms', 'public');
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
