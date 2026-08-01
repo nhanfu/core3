@@ -81,6 +81,13 @@ export async function renderPage(config: any, { container = document.body }: { c
     const pageSize = src.page_size || 25;
     paginationState[src.id] = { skip: 0, top: pageSize, page: 1 };
     filterState[src.id] = { ...initialDateFilters };
+    if (src.data !== undefined) {
+      dataMap[src.id] = {
+        data: src.data,
+        meta: src.meta || { total: Array.isArray(src.data) ? src.data.length : 1, page: 1, pageSize },
+      };
+      continue;
+    }
     try {
       const result = await client.query(
         createQuery({ sourceId: src.id, params: pageParams, skip: 0, top: pageSize })
@@ -1629,8 +1636,15 @@ function collectSources(config: any) {
       if (def.page_size) existing.page_size = def.page_size;
       return;
     }
-    sources.set(id, { id, single: def.type === 'StatRow', page_size: def.page_size });
+    sources.set(id, {
+      id,
+      single: def.single ?? def.type === 'StatRow',
+      page_size: def.page_size,
+      data: def.data,
+      meta: def.meta,
+    });
   };
+  for (const source of config.datasources || []) add(source.id, source);
   const visit = (components: any[] = []) => {
     for (const component of components) {
       add(component.source, component);

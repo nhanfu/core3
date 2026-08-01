@@ -13,8 +13,10 @@ export type PageDefinition = {
 export type DatasourceDefinition = {
   id: string;
   permission: string;
-  query: string;
+  query?: string;
   single?: boolean;
+  data?: unknown;
+  meta?: Record<string, unknown>;
 };
 
 export type ToolbarDefinition = {
@@ -74,7 +76,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -244,7 +246,10 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     rejectUnknownKeys(source, DATASOURCE_KEYS, path, issues);
     requireString(source.id, `${path}.id`, issues);
     requireString(source.permission, `${path}.permission`, issues);
-    requireString(source.query, `${path}.query`, issues);
+    if (source.query === undefined && source.data === undefined) {
+      issues.push(`${path} must define query or data`);
+    }
+    if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);
     }

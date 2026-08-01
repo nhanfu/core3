@@ -93,6 +93,50 @@ export function createTmsApi(ctx: TmsApiContext) {
     return config;
   }
 
+  function sourcePageSizes(page: any): Map<string, number> {
+    const sizes = new Map<string, number>();
+    const visit = (components: any[] = []) => {
+      for (const component of components) {
+        if (component.source && component.page_size) sizes.set(component.source, Number(component.page_size));
+        if (component.message_source && component.message_page_size) sizes.set(component.message_source, Number(component.message_page_size));
+        if (component.attachment_source && component.attachment_page_size) sizes.set(component.attachment_source, Number(component.attachment_page_size));
+        for (const tab of component.tabs || []) visit(tab.components);
+      }
+    };
+    visit(page.components);
+    return sizes;
+  }
+
+  async function prefetchedPageConfig(page: any, url: URL, user: any) {
+    const params: Record<string, unknown> = {};
+    for (const [key, value] of url.searchParams.entries()) {
+      const previous = params[key];
+      params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
+    }
+    const pageSizes = sourcePageSizes(page);
+    const serverParams = {
+      ...params,
+      current_user_id: String(user.sub || ''),
+      current_user_name: String(user.name || ''),
+      current_branch_id: String(user.branch_id || ''),
+      view_scope: String(user.view_scope || 'all'),
+    };
+    const datasources = await Promise.all((page.datasources || []).map(async (source: any) => {
+      if (source.permission && !authProvider.hasPermission(user, source.permission)) {
+        throw { status: 403, message: `Requires permission: ${source.permission}` };
+      }
+      const result = await repository.querySource(
+        source,
+        serverParams,
+        0,
+        pageSizes.get(source.id) || 25,
+      );
+      const { query, ...publicSource } = source;
+      return { ...publicSource, data: result.data, meta: result.meta };
+    }));
+    return { ...publicPageConfig(page), datasources };
+  }
+
   const TABLE_REGISTRY = {
   orders: {
     permission: 'orders.write',
@@ -473,7 +517,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     const page = PAGES.get(pageMatch[1]);
     if (!page) return apiError(404, `Unknown page: ${pageMatch[1]}`);
     for (const permission of page.page?.auth?.require || []) requirePerm(permission);
-    return json(publicPageConfig(page));
+    return json(await prefetchedPageConfig(page, url, authUser));
   }
 
   // ── POST /api/query ───────────────────────────────────────────────────────
