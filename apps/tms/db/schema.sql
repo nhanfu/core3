@@ -618,16 +618,3 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created ON notifications(user_id, read, created_at);
-
-CREATE SEQUENCE IF NOT EXISTS translations_id_seq START 1;
-
-CREATE TABLE IF NOT EXISTS translations (
-  id INTEGER PRIMARY KEY DEFAULT nextval('translations_id_seq'),
-  lang VARCHAR NOT NULL,
-  page VARCHAR NOT NULL,
-  component VARCHAR,
-  text VARCHAR NOT NULL,
-  translated VARCHAR NOT NULL
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_translations ON translations(lang, page, coalesce(component, ''), text);

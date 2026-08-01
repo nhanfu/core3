@@ -13,6 +13,7 @@ const notificationMigration = readFileSync(resolve(process.cwd(), 'db', 'migrati
 const relationshipQueryMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations', '008-relationship-query-indexes.sql'), 'utf8');
 const tripScopeMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations', '009-trip-branch-scope.sql'), 'utf8');
 const server = readFileSync(resolve(process.cwd(), '..', 'server.ts'), 'utf8');
+const dbInit = readFileSync(resolve(process.cwd(), 'db', 'init.ts'), 'utf8');
 const migrationFiles = readdirSync(resolve(process.cwd(), 'db', 'migrations')).filter(file => file.endsWith('.sql')).sort();
 
 describe('database relationship contract', () => {
@@ -56,8 +57,8 @@ describe('database relationship contract', () => {
   it('keeps the relational hardening upgrade versioned and idempotent', () => {
     expect(migration).toContain('CREATE INDEX IF NOT EXISTS idx_users_branch');
     expect(migration).toContain('CREATE INDEX IF NOT EXISTS idx_orders_branch');
-    expect(server).toContain('CREATE TABLE IF NOT EXISTS schema_migrations');
-    expect(server).toContain("INSERT INTO schema_migrations(version) VALUES(?)");
+    expect(dbInit).toContain('CREATE TABLE IF NOT EXISTS schema_migrations');
+    expect(dbInit).toContain("INSERT INTO schema_migrations(version) VALUES(?)");
     expect(migrationFiles).toEqual([
       '001-relational-indexes.sql',
       '002-legacy-schema-alignment.sql',

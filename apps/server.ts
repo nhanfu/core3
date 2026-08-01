@@ -1,30 +1,31 @@
 import duckdb from 'duckdb';
 import { createFramework, SERVICE_KEYS } from '@core3/framework';
-import { validatePageDefinition } from '@core3/framework/yaml/schema.ts';
 import { join } from 'node:path';
-import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import { DuckDbRepository } from './tms/services/repository.ts';
-import { JwtAuthProvider } from './tms/services/auth.ts';
-import { ORDER_ACTION_REGISTRY, orderWorkflow } from './tms/services/order-workflow.ts';
+import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { discoverPages, translationMap } from './lib/server/discovery.ts';
 import {
+  DuckDbRepository,
+  JwtAuthProvider,
+  ORDER_ACTION_REGISTRY,
+  orderWorkflow,
   FINANCIAL_ACTION_REGISTRY,
   financialWorkflow,
-} from './tms/services/financial-workflow.ts';
-import {
   BUSINESS_ACTION_REGISTRY,
   payrollWorkflow,
   quoteWorkflow,
-} from './tms/services/business-workflow.ts';
-import { LINE_ITEM_ACTION_REGISTRY } from './tms/services/line-item-actions.ts';
-import { CHAT_ACTION_REGISTRY } from './tms/services/chat-actions.ts';
-import { CONTACT_ACTION_REGISTRY } from './tms/services/contact-actions.ts';
-import { APPROVAL_ACTION_REGISTRY } from './tms/services/approval-actions.ts';
-import { TRIP_ACTION_REGISTRY } from './tms/services/trip-actions.ts';
-import { TEMPLATE_ACTION_REGISTRY } from './tms/services/template-actions.ts';
-import { CODE_RULE_ACTION_REGISTRY } from './tms/services/code-rule-actions.ts';
-import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './tms/services/role-actions.ts';
-import { CURRENCY_ACTION_REGISTRY } from './tms/services/currency-actions.ts';
-import { xlsxToCsv } from './tms/services/xlsx-import.ts';
+  LINE_ITEM_ACTION_REGISTRY,
+  CHAT_ACTION_REGISTRY,
+  CONTACT_ACTION_REGISTRY,
+  APPROVAL_ACTION_REGISTRY,
+  TRIP_ACTION_REGISTRY,
+  TEMPLATE_ACTION_REGISTRY,
+  CODE_RULE_ACTION_REGISTRY,
+  ROLE_ACTION_REGISTRY,
+  USER_ROLE_ACTION_REGISTRY,
+  CURRENCY_ACTION_REGISTRY,
+  xlsxToCsv,
+  initTmsDatabase,
+} from './tms/module.ts';
 
 const CRM_ENTITY_ACTION_REGISTRY: Record<string, { permission: string }> = {
   'crm.entities.update': { permission: 'crm.write' },
@@ -93,20 +94,6 @@ async function requireAuth(req: Request) {
 }
 
 // ── Static file serving ───────────────────────────────────────────────────────
-const SPA_PATHS = new Set([
-  '/', '/login', '/dashboard', '/fleet', '/drivers', '/drivers/detail', '/trips', '/maintenance', '/reports', '/settings',
-  '/orders', '/orders/detail', '/chat', '/schedule',
-  '/customers', '/partners', '/crm/entities/detail', '/quotes', '/quotes/detail', '/crm/dashboard', '/crm/kpi',
-  '/accounting/debit-notes', '/accounting/debit-note-summary', '/accounting/payment-requests', '/accounting/payment-request-summary',
-  '/accounting/advances', '/accounting/settlements', '/accounting/documents/detail', '/accounting/invoice-templates', '/accounting/ledger-accounts',
-  '/hr/employees', '/hr/employees/detail', '/hr/contracts', '/hr/contracts/detail', '/hr/timesheets', '/hr/shifts', '/hr/payroll', '/hr/payroll/detail',
-  '/vehicles', '/vehicles/detail', '/containers', '/locations', '/areas', '/areas/detail',
-  '/catalog/container-types', '/catalog/vehicle-types', '/catalog/units', '/catalog/cargo-types', '/catalog/fee-types', '/catalog/currencies',
-  '/org/own-company', '/org/branches', '/org/branches/detail', '/org/departments', '/org/departments/detail', '/org/teams', '/org/users', '/org/users/detail', '/org/roles', '/org/roles/detail',
-  '/system/activity', '/system/code-rules', '/system/print-templates', '/system/print-templates/detail', '/system/approval-flows', '/system/approval-flows/detail',
-  '/system/shipment-types', '/system/trip-statuses', '/system/fee-rules', '/system/storage',
-]);
-
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.ts':   'application/javascript',
@@ -132,7 +119,7 @@ async function serveStatic(pathname: string) {
   const packagePath = rel.startsWith('node_modules/@core3/framework/');
   if (rel.includes('..')) return null;
   // Page YAML contains server-only datasource SQL and must never be served.
-  if (rel.startsWith('tms/pages/') && /\.ya?ml$/i.test(rel)) return null;
+  if (/(^|\/)pages\/.+\.ya?ml$/i.test(rel)) return null;
   try {
     // The app consumes the framework through a local file dependency. Bun
     // materializes that package on install, so it can otherwise become stale
@@ -170,246 +157,12 @@ async function serveSPA() {
 }
 
 // ── DB initialisation ─────────────────────────────────────────────────────────
-async function initDb(): Promise<void> {
-  const schemaSQL = readFileSync(join(TMS_ROOT, 'db/schema.sql'), 'utf8');
-  const seedSQL   = readFileSync(join(TMS_ROOT, 'db/seed.sql'),   'utf8');
-
-  // Run schema (idempotent — IF NOT EXISTS)
-  await repository.runStatements(schemaSQL);
-  await repository.runStatements(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
-      version VARCHAR PRIMARY KEY,
-      applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-  const migrationDir = join(TMS_ROOT, 'db/migrations');
-  for (const migrationFile of readdirSync(migrationDir).filter(file => file.endsWith('.sql')).sort()) {
-    const version = migrationFile.split('-', 1)[0];
-    const applied = await repository.query('SELECT 1 FROM schema_migrations WHERE version = ?', [version]);
-    if (applied.length) continue;
-    await repository.runStatements(readFileSync(join(migrationDir, migrationFile), 'utf8'));
-    await repository.run('INSERT INTO schema_migrations(version) VALUES(?)', [version]);
-  }
-  // Seed only if roles table is empty
-  if (await repository.countRows('roles') === 0) {
-    await repository.runStatements(seedSQL);
-    console.log('✓ Database seeded');
-  }
-
-  // Keep pre-existing local databases authorized for the additive Orders page.
-  // New databases receive these permissions through seed.sql above.
-  await repository.runStatements(`
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-15', 'role-admin', 'orders.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'orders.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-16', 'role-admin', 'orders.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'orders.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-dp-05', 'role-dispatcher', 'orders.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'orders.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-dp-06', 'role-dispatcher', 'orders.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'orders.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-17', 'role-admin', 'catalog.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'catalog.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-18', 'role-admin', 'catalog.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'catalog.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-19', 'role-admin', 'accounting.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-20', 'role-admin', 'accounting.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-21', 'role-admin', 'hr.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-22', 'role-admin', 'hr.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.write');
-    INSERT INTO permissions (id, role_id, permission_key) SELECT 'perm-adm-23', 'role-admin', 'system.read' WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'system.read');
-    INSERT INTO permissions (id, role_id, permission_key) SELECT 'perm-adm-24', 'role-admin', 'system.write' WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'system.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-25', 'role-admin', 'dispatch.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'dispatch.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-26', 'role-admin', 'dispatch.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'dispatch.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-27', 'role-admin', 'orders.approve'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'orders.approve');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-28', 'role-admin', 'accounting.approve'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.approve');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-29', 'role-admin', 'accounting.pay'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'accounting.pay');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-30', 'role-admin', 'hr.approve'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.approve');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-adm-31', 'role-admin', 'hr.pay'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'hr.pay');
-    INSERT INTO roles (id, name, description)
-    SELECT 'role-accountant', 'accountant', 'Accounting document preparation'
-    WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 'role-accountant');
-    INSERT INTO users (id, email, name, password_hash, preferred_lang)
-    SELECT 'user-accountant', 'accountant@tms.local', 'Accountant One', 'accountant123', 'vi'
-    WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 'user-accountant');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-ac-01', 'role-accountant', 'accounting.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'accounting.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-ac-02', 'role-accountant', 'accounting.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'accounting.write');
-    INSERT INTO user_roles (user_id, role_id)
-    SELECT 'user-accountant', 'role-accountant'
-    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 'user-accountant' AND role_id = 'role-accountant');
-    INSERT INTO roles (id, name, description)
-    SELECT 'role-hr-officer', 'hr_officer', 'HR and payroll preparation'
-    WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 'role-hr-officer');
-    INSERT INTO users (id, email, name, password_hash, preferred_lang)
-    SELECT 'user-hr', 'hr@tms.local', 'HR Officer', 'hr123', 'vi'
-    WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 'user-hr');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-hr-01', 'role-hr-officer', 'hr.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'hr.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-hr-02', 'role-hr-officer', 'hr.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'hr.write');
-    INSERT INTO user_roles (user_id, role_id)
-    SELECT 'user-hr', 'role-hr-officer'
-    WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = 'user-hr' AND role_id = 'role-hr-officer');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-dp-07', 'role-dispatcher', 'dispatch.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-dp-08', 'role-dispatcher', 'dispatch.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'dispatch.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-adm-r', 'role-admin', 'chat.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'chat.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-adm-w', 'role-admin', 'chat.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-admin' AND permission_key = 'chat.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-fm-r', 'role-fleet-manager', 'chat.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-fleet-manager' AND permission_key = 'chat.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-fm-w', 'role-fleet-manager', 'chat.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-fleet-manager' AND permission_key = 'chat.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-dp-r', 'role-dispatcher', 'chat.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'chat.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-dp-w', 'role-dispatcher', 'chat.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-dispatcher' AND permission_key = 'chat.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-ac-r', 'role-accountant', 'chat.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'chat.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-ac-w', 'role-accountant', 'chat.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-accountant' AND permission_key = 'chat.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-hr-r', 'role-hr-officer', 'chat.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'chat.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-hr-w', 'role-hr-officer', 'chat.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-hr-officer' AND permission_key = 'chat.write');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-mc-r', 'role-mechanic', 'chat.read'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-mechanic' AND permission_key = 'chat.read');
-    INSERT INTO permissions (id, role_id, permission_key)
-    SELECT 'perm-chat-mc-w', 'role-mechanic', 'chat.write'
-    WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = 'role-mechanic' AND permission_key = 'chat.write');
-  `);
-}
-
-// ── YAML datasource registry ─────────────────────────────────────────────────
-// Queries are loaded from the page YAML files, never accepted from API requests.
-const SOURCE_FILES = [
-  'pages/dashboard.yaml',
-  'pages/chat.yaml',
-  'pages/schedule.yaml',
-  'pages/orders.yaml',
-  'pages/order-detail.yaml',
-  'pages/vehicles.yaml',
-  'pages/vehicle-detail.yaml',
-  'pages/customers.yaml',
-  'pages/crm-entity-detail.yaml',
-  'pages/quotes.yaml', 'pages/quote-detail.yaml', 'pages/crm-dashboard.yaml', 'pages/crm-kpi.yaml',
-  'pages/branches.yaml',
-  'pages/branch-detail.yaml',
-  'pages/partners.yaml',
-  'pages/areas.yaml',
-  'pages/area-detail.yaml',
-  'pages/own-company.yaml',
-  'pages/departments.yaml',
-  'pages/department-detail.yaml',
-  'pages/teams.yaml',
-  'pages/containers.yaml',
-  'pages/locations.yaml',
-  'pages/users.yaml',
-  'pages/roles.yaml',
-  'pages/role-detail.yaml',
-  'pages/user-detail.yaml',
-  'pages/employees.yaml',
-  'pages/employee-detail.yaml',
-  'pages/contracts.yaml',
-  'pages/contract-detail.yaml',
-  'pages/timesheets.yaml',
-  'pages/shifts.yaml',
-  'pages/payroll.yaml',
-  'pages/payroll-detail.yaml',
-  'pages/catalog-container-types.yaml',
-  'pages/catalog-vehicle-types.yaml',
-  'pages/catalog-units.yaml',
-  'pages/catalog-cargo-types.yaml',
-  'pages/catalog-fee-types.yaml',
-  'pages/catalog-currencies.yaml',
-  'pages/accounting-debit-notes.yaml',
-  'pages/accounting-debit-note-summary.yaml',
-  'pages/accounting-payment-requests.yaml',
-  'pages/accounting-payment-request-summary.yaml',
-  'pages/accounting-advances.yaml',
-  'pages/accounting-settlements.yaml',
-  'pages/accounting-document-detail.yaml',
-  'pages/accounting-invoice-templates.yaml',
-  'pages/accounting-ledger-accounts.yaml',
-  'pages/system-activity.yaml', 'pages/system-code-rules.yaml',
-  'pages/system-print-templates.yaml', 'pages/system-print-template-detail.yaml', 'pages/system-approval-flows.yaml', 'pages/system-approval-flow-detail.yaml', 'pages/system-shipment-types.yaml',
-  'pages/system-trip-statuses.yaml', 'pages/system-fee-rules.yaml', 'pages/system-storage.yaml',
-  'pages/fleet.yaml',
-  'pages/drivers.yaml',
-  'pages/driver-detail.yaml',
-  'pages/trips.yaml',
-  'pages/maintenance.yaml',
-  'pages/reports.yaml',
-  'pages/settings.yaml',
-];
-
-function loadSources() {
-  const sources = new Map();
-  for (const file of SOURCE_FILES) {
-    const page: any = Bun.YAML.parse(readFileSync(join(TMS_ROOT, file), 'utf8'));
-    validatePageDefinition(page);
-    for (const source of page.datasources || []) {
-      if (sources.has(source.id)) throw new Error(`Duplicate datasource id: ${source.id}`);
-      sources.set(source.id, source);
-    }
-  }
-  return sources;
-}
-
-const SOURCES = loadSources();
-const PAGES = new Map<string, any>(
-  SOURCE_FILES.map((file) => {
-    const page = Bun.YAML.parse(readFileSync(join(TMS_ROOT, file), 'utf8'));
-    return [page.page?.id, page];
-  })
-);
+// ── Convention-based page and datasource registry ───────────────────────────
+// Every apps/*/pages and apps/pages YAML file is discovered automatically.
+const discovered = discoverPages(PROJECT_ROOT);
+const SOURCES = discovered.datasources;
+const PAGES = new Map([...discovered.pages].map(([id, page]) => [id, page.config]));
+const CATALOGS = discovered.catalogs;
 
 const REGISTERED_NAMED_ACTIONS = new Set([
   ...Object.keys(ORDER_ACTION_REGISTRY),
@@ -574,7 +327,6 @@ const TABLE_REGISTRY = {
     timestamps: false,
     fields: ['name', 'description', 'view_scope'],
   },
-  translations: { permission: 'settings.write',     timestamps: false },
 };
 
 // ── API handler ───────────────────────────────────────────────────────────────
@@ -600,10 +352,10 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
   }
 
   // Translation reads are needed by the unauthenticated login shell.
-  if (pathname === '/api/v1/i18n' && method === 'GET') {
+  if (pathname === '/api/i18n' && method === 'GET') {
     const lang = url.searchParams.get('lang') || 'en';
     const page = url.searchParams.get('page') || '*';
-    return json(await repository.getTranslationMap(lang, page));
+    return json(translationMap(CATALOGS, lang, page));
   }
 
   // ── All routes below require auth ──────────────────────────────────────────
@@ -788,6 +540,10 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
   }
 
   // ── GET /api/pages/:id ────────────────────────────────────────────────────
+  if (pathname === '/api/pages' && method === 'GET') {
+    return json([...PAGES.values()].map((page) => publicPageConfig(page)));
+  }
+
   const pageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
   if (pageMatch && method === 'GET') {
     const page = PAGES.get(pageMatch[1]);
@@ -1614,43 +1370,11 @@ async function handleAPI(req: Request, url: URL): Promise<Response> {
     return json({ ok: true });
   }
 
-  // ── i18n ─────────────────────────────────────────────────────────────────
-  if (pathname === '/api/v1/i18n/list' && method === 'GET') {
-    requirePerm('settings.read');
-    const lang = url.searchParams.get('lang') || 'en';
-    const page = url.searchParams.get('page') || '';
-    const q    = url.searchParams.get('q') || '';
-    return json(await repository.listTranslations({ lang, page, q }));
-  }
-
-  if (pathname === '/api/v1/i18n' && method === 'POST') {
-    requirePerm('settings.write');
-    const body = await req.json() as any;
-    await repository.saveTranslation(body);
-    return json({ ok: true });
-  }
-
-  const i18nMatch = pathname.match(/^\/api\/v1\/i18n\/(\d+)$/);
-  if (i18nMatch) {
-    const id = parseInt(i18nMatch[1]);
-    if (method === 'PATCH') {
-      requirePerm('settings.write');
-      const { translated } = await req.json() as any;
-      await repository.updateTranslation(id, translated);
-      return json({ ok: true });
-    }
-    if (method === 'DELETE') {
-      requirePerm('settings.write');
-      await repository.deleteTranslation(id);
-      return json({ ok: true });
-    }
-  }
-
   return apiError(404, 'API route not found');
 }
 
 // ── Main server ───────────────────────────────────────────────────────────────
-await initDb();
+await initTmsDatabase(repository, TMS_ROOT);
 
 Bun.serve({
   port: PORT,
@@ -1679,7 +1403,8 @@ Bun.serve({
     if (req.method === 'GET') {
       const staticResp = await serveStatic(pathname);
       if (staticResp) return staticResp;
-      if (SPA_PATHS.has(pathname)) return serveSPA();
+      // Convention over configuration: every non-asset GET is an SPA route.
+      return serveSPA();
     }
 
     return new Response('Not Found', { status: 404, headers: CORS_HEADERS });

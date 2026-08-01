@@ -756,7 +756,6 @@ describe('MovedX page contracts', () => {
       settings: [
         'id: edit_branch\n    type: form\n    permission: settings.write',
         'id: delete_branch\n    type: delete\n    permission: settings.write',
-        'id: edit_translation\n    type: form\n    permission: settings.write',
       ],
       'system-approval-flow-detail': [
         'id: edit_step, label: Sửa, variant: ghost, permission: system.write',
@@ -788,7 +787,7 @@ describe('MovedX page contracts', () => {
   });
 
   it('keeps legacy filter-bar labels declarative and localized', () => {
-    for (const page of ['fleet', 'maintenance', 'settings']) {
+    for (const page of ['fleet', 'maintenance']) {
       const source = readFileSync(resolve(process.cwd(), 'pages', `${page}.yaml`), 'utf8');
       expect(source).toContain('all_label: Tất cả');
       expect(source).toContain('clear_label: Xóa bộ lọc');

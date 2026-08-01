@@ -1,12 +1,4 @@
 type Change = { field: string; value: any };
-type TranslationEntry = {
-  lang: string;
-  page: string;
-  component?: string | null;
-  text: string;
-  translated: string;
-};
-
 function normalizeLineValues(values: Record<string, unknown>, hasCost: boolean) {
   const description = String(values.description || '').trim();
   const unit = String(values.unit || '').trim() || 'Chuyến';
@@ -1694,7 +1686,7 @@ export class DuckDbRepository {
     );
   }
 
-  async createNotification(notification: TranslationEntry | any): Promise<any> {
+  async createNotification(notification: any): Promise<any> {
     const id = notification.id || crypto.randomUUID();
     await this.run(
       'INSERT INTO notifications(id, user_id, type, title, body) VALUES(?,?,?,?,?)',
@@ -1715,48 +1707,6 @@ export class DuckDbRepository {
     );
   }
 
-  async listTranslations({ lang = 'en', page = '', q = '' }: { lang?: string; page?: string; q?: string } = {}): Promise<any[]> {
-    let where = 'WHERE lang = ?';
-    const params = [lang];
-    if (page) { where += ' AND page = ?'; params.push(page); }
-    if (q) {
-      where += ' AND (text ILIKE ? OR translated ILIKE ?)';
-      params.push(`%${q}%`, `%${q}%`);
-    }
-    return this.query(`SELECT * FROM translations ${where} ORDER BY page, component, text`, params);
-  }
-
-  async getTranslationMap(lang: string, page: string): Promise<Record<string, string>> {
-    const rows = await this.query(
-      `SELECT text, component, translated FROM translations
-       WHERE lang = ? AND (page = ? OR page = '*')
-       ORDER BY page`,
-      [lang, page]
-    );
-    const result: Record<string, string> = {};
-    for (const row of rows) {
-      const key = row.component ? `${row.component}::${row.text}` : row.text;
-      result[key] = row.translated;
-    }
-    return result;
-  }
-
-  async saveTranslation(entry: TranslationEntry): Promise<void> {
-    await this.run(
-      `INSERT INTO translations(lang, page, component, text, translated)
-       VALUES(?,?,?,?,?)
-       ON CONFLICT ON CONSTRAINT idx_translations DO UPDATE SET translated = EXCLUDED.translated`,
-      [entry.lang, entry.page, entry.component || null, entry.text, entry.translated]
-    );
-  }
-
-  async updateTranslation(id: any, translated: any): Promise<void> {
-    await this.run('UPDATE translations SET translated = ? WHERE id = ?', [translated, id]);
-  }
-
-  async deleteTranslation(id: any): Promise<void> {
-    await this.run('DELETE FROM translations WHERE id = ?', [id]);
-  }
 }
 
 function convertRow(row: Record<string, any>): Record<string, any> {
