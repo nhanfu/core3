@@ -1,8 +1,8 @@
-import { BaseComponent } from '@core3/framework/runtime.ts';
-import { html } from '@core3/framework/html.ts';
+import { BaseComponent } from '../../lib/runtime.ts';
+import { html } from '../../lib/html.ts';
 import { logout, getToken } from '../../app.ts';
 import { i18n } from '../i18n.ts';
-import { appendIcon } from '@core3/framework/components/Icon.ts';
+import { appendIcon } from '../../lib/components/Icon.ts';
 
 export class ProfileDrawer extends BaseComponent {
   _el: HTMLElement | null;

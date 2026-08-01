@@ -1,5 +1,5 @@
-import { html } from '@core3/framework/html.ts';
-import { appendIcon } from '@core3/framework/components/Icon.ts';
+import { html } from '../../lib/html.ts';
+import { appendIcon } from '../../lib/components/Icon.ts';
 
 const COPY: Record<string, string> = {
   '/schedule': 'Lịch điều đang được hoàn thiện, giống trạng thái hiện tại của hệ thống tham chiếu.',

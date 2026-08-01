@@ -1,4 +1,4 @@
-import { StateWorkflow } from '@core3/framework/workflow.ts';
+import { StateWorkflow } from '../../lib/workflow.ts';
 
 export type OrderStatus = 'Draft' | 'Pending Approval' | 'Approved' | 'Cancelled';
 export type OrderWorkflowAction = 'submit_for_approval' | 'approve' | 'reject' | 'cancel';

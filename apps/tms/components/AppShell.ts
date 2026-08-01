@@ -1,10 +1,10 @@
-import { BaseComponent } from '@core3/framework/runtime.ts';
-import { html } from '@core3/framework/html.ts';
+import { BaseComponent } from '../../lib/runtime.ts';
+import { html } from '../../lib/html.ts';
 import { navigate, logout, getUser } from '../../app.ts';
 import { i18n } from '../i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
-import { appendIcon } from '@core3/framework/components/Icon.ts';
+import { appendIcon } from '../../lib/components/Icon.ts';
 
 type NavItem = { path: string; label: string; icon: string };
 type NavGroup = { id: string; label: string; items: NavItem[] };

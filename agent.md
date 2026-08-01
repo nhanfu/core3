@@ -2,8 +2,8 @@
 
 This repository contains two main pieces:
 
-- `apps/lib/`: the shared `@core3/framework` library
-- `apps/`: the package and runtime root
+- `apps/lib/`: the shared framework source
+- `apps/`: the runtime root
 - `apps/tms/`: the sample client project and domain code
 - `apps/lib/test/`: the shared framework test cases
 
@@ -28,9 +28,8 @@ Keep other code types open where they are useful, but make them minimal and trea
 - `apps/package.json` is the active app manifest.
 - `apps/bun.lock` is the active lockfile.
 - `apps/server.ts` is the Bun entry point for the app.
-- `apps/lib/package.json` is the active framework manifest and owns the test command.
 - `apps/lib/vitest.config.ts` is the Vitest config for the framework test suite.
-- `apps/package.json` defines the local framework package that the app consumes through `file:./lib`.
+- Applications import framework modules directly from `apps/lib/`.
 
 ## Common Commands
 

@@ -6,10 +6,6 @@
     "noEmit": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
-    "paths": {
-      "@core3/framework": ["./tms/types/framework.d.ts"],
-      "@core3/framework/*": ["./tms/types/framework.d.ts"]
-    },
     "target": "ES2022",
     "types": ["node"]
   },

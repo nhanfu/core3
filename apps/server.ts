@@ -39,14 +39,11 @@ function mimeFor(path: string) {
 
 async function serveStatic(pathname: string) {
   const rel = pathname.startsWith('/') ? pathname.slice(1) : pathname;
-  const packagePath = rel.startsWith('node_modules/@core3/framework/');
   if (rel.includes('..')) return null;
   // Page YAML may contain server-only datasource SQL.
   if (/(^|\/)pages\/.+\.ya?ml$/i.test(rel)) return null;
   try {
-    const file = packagePath
-      ? Bun.file(join(APPS_ROOT, 'lib', rel.slice('node_modules/@core3/framework/'.length)))
-      : Bun.file(join(APPS_ROOT, rel));
+    const file = Bun.file(join(APPS_ROOT, rel));
     if (!(await file.exists())) return null;
     if (rel.endsWith('.ts')) {
       const transpiler = new Bun.Transpiler({ loader: 'ts' });

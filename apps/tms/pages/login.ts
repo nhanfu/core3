@@ -1,5 +1,5 @@
-import { html } from '@core3/framework/html.ts';
-import { appendIcon } from '@core3/framework/components/Icon.ts';
+import { html } from '../../lib/html.ts';
+import { appendIcon } from '../../lib/components/Icon.ts';
 import { getDefaultRoute, setAuth } from '../../app.ts';
 import { i18n } from '../i18n.ts';
 

@@ -1,6 +1,6 @@
-import { BaseComponent } from '@core3/framework/runtime.ts';
-import { html } from '@core3/framework/html.ts';
-import { appendIcon } from '@core3/framework/components/Icon.ts';
+import { BaseComponent } from '../../lib/runtime.ts';
+import { html } from '../../lib/html.ts';
+import { appendIcon } from '../../lib/components/Icon.ts';
 import { getToken } from '../../app.ts';
 import { i18n } from '../i18n.ts';
 

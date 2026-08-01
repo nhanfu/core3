@@ -1,4 +1,4 @@
-import { StateWorkflow } from '@core3/framework/workflow.ts';
+import { StateWorkflow } from '../../lib/workflow.ts';
 
 export type FinancialDocumentStatus =
   | 'Draft'

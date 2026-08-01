@@ -1,7 +1,7 @@
 // TMS application wiring. The host imports this module contract instead of
 // reaching into individual business services.
 import duckdb from 'duckdb';
-import { createFramework, SERVICE_KEYS } from '@core3/framework';
+import { createFramework, SERVICE_KEYS } from '../lib/index.ts';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { discoverPages } from '../lib/server/discovery.ts';

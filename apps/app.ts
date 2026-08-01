@@ -1,8 +1,8 @@
 import { AppShell } from './tms/components/AppShell.ts';
 import { i18n } from './tms/i18n.ts';
-import { renderPage } from '@core3/framework/page-renderer.ts';
-import { registerNavigator } from '@core3/framework/navigate.ts';
-import { client } from '@core3/framework/client.ts';
+import { renderPage } from './lib/page-renderer.ts';
+import { registerNavigator } from './lib/navigate.ts';
+import { client } from './lib/client.ts';
 
 const TOKEN_KEY = 'tms_token';
 let _user: any = null;
