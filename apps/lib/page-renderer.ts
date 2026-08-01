@@ -50,7 +50,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   const requiredPerms = config.page?.auth?.require || [];
   if (requiredPerms.length) {
     if (!requiredPerms.every(p => hasPermission(user, p))) {
-      window.location.href = '/login';
+        window.location.href = '/auth/login';
       return;
     }
   }
@@ -233,7 +233,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         if (!response.ok) throw new Error(result.error || 'Invalid credentials');
         const { setAuth, getDefaultRoute } = await import('../public/app.ts');
         await setAuth(result.token, result.user);
-        window.history.replaceState(null, '', `#${getDefaultRoute(result.user)}`);
+        window.history.replaceState(null, '', getDefaultRoute(result.user));
         window.location.reload();
         break;
       }

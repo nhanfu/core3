@@ -12,6 +12,63 @@ export type DiscoveredPage = {
 export type TranslationCatalog = Record<string, Record<string, string>>;
 export type ModuleMenu = { module: string; config: any };
 export type PermissionDefinition = { module: string; file: string; config: any };
+export type PageRoute = { path: string; page: string; module: string };
+
+function routeItems(value: any, result: any[] = []) {
+  if (!value || typeof value !== 'object') return result;
+  if (typeof value.path === 'string') result.push(value);
+  for (const child of Array.isArray(value) ? value : Object.values(value)) routeItems(child, result);
+  return result;
+}
+
+function routeId(path: string, pages: Map<string, DiscoveredPage>) {
+  const singular = (part: string) => part.endsWith('ies') ? `${part.slice(0, -3)}y` : part.endsWith('s') ? part.slice(0, -1) : part;
+  const parts = path.split('/').filter(Boolean).map(singular);
+  const candidates = [parts.join('-'), parts.slice(-2).join('-'), parts.slice(-1)[0]];
+  for (const candidate of candidates) if (pages.has(candidate)) return candidate;
+  const matches = [...pages.keys()].map((id) => {
+    const tokens = id.split('-');
+    const score = tokens.filter((token) => parts.includes(singular(token))).length;
+    const suffix = id.endsWith(`-${parts.slice(-2).join('-')}`) || id === parts.slice(-2).join('-') ? 2 : 0;
+    return { id, score: score + suffix };
+  }).filter((entry) => entry.score > 0).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  return matches[0]?.id;
+}
+
+export function discoverPageRoutes(discovered: ReturnType<typeof discoverPages>): PageRoute[] {
+  const routes = new Map<string, PageRoute>();
+  const add = (path: unknown, page: string, module: string) => {
+    if (typeof path !== 'string' || !path.startsWith('/') || !discovered.pages.has(page)) return;
+    routes.set(path.replace(/\/$/, '') || '/', { path: path.replace(/\/$/, '') || '/', page, module });
+  };
+  for (const entry of discovered.pages.values()) {
+    const declared = entry.config?.page?.route;
+    if (declared) add(declared, entry.id, entry.module);
+  }
+  for (const menu of discovered.menus.values()) {
+    for (const item of routeItems(menu.config?.menu)) {
+      const page = routeId(item.path, discovered.pages);
+      if (page) add(item.path, page, discovered.pages.get(page)!.module);
+    }
+  }
+  for (const entry of discovered.pages.values()) {
+    const visit = (value: any) => {
+      if (!value || typeof value !== 'object') return;
+      if (typeof value.navigate_to === 'string') {
+        const page = routeId(value.navigate_to, discovered.pages);
+        if (page) add(value.navigate_to, page, discovered.pages.get(page)!.module);
+      }
+      for (const child of Array.isArray(value) ? value : Object.values(value)) visit(child);
+    };
+    visit(entry.config);
+  }
+  for (const entry of discovered.pages.values()) {
+    if (![...routes.values()].some((route) => route.page === entry.id)) {
+      add(`/${entry.id.replace(/-/g, '/')}`, entry.id, entry.module);
+    }
+  }
+  return [...routes.values()].sort((a, b) => a.path.localeCompare(b.path));
+}
 
 function walk(dir: string): string[] {
   const files: string[] = [];

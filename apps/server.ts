@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { discoverModules, ModuleManager } from './lib/server/module.ts';
+import { discoverPageRoutes, discoverPages } from './lib/server/discovery.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
@@ -71,6 +72,22 @@ async function serveSPA() {
 
 const modules = await discoverModules(APPS_ROOT);
 const moduleManager = new ModuleManager(modules);
+const pageDiscovery = discoverPages(APPS_ROOT);
+const pageRoutes = discoverPageRoutes(pageDiscovery);
+const moduleManifest = modules.map((module) => ({
+  id: module.id,
+  pages: [...pageDiscovery.pages.values()]
+    .filter((page) => page.module === module.id)
+    .map((page) => ({
+      id: page.id,
+      route: pageRoutes.find((route) => route.page === page.id)?.path
+        ? `/${module.id}${pageRoutes.find((route) => route.page === page.id)!.path}`
+        : null,
+      title: page.config?.title || page.id,
+    })),
+  routes: pageRoutes.filter((route) => route.module === module.id)
+    .map((route) => ({ ...route, path: `/${module.id}${route.path}` })),
+}));
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env });
 
 async function applicationCatalog() {
@@ -80,11 +97,18 @@ async function applicationCatalog() {
     const moduleIds = new Set(modules.map((module) => module.id));
     return (config.apps || []).map((app) => ({
       ...app,
+      route: (() => {
+        const moduleId = String(app.module || app.id);
+        const route = String(app.route || '/dashboard');
+        return route === `/${moduleId}` || route.startsWith(`/${moduleId}/`)
+          ? route
+          : `/${moduleId}${route.startsWith('/') ? route : `/${route}`}`;
+      })(),
       available: app.enabled !== false && moduleIds.has(String(app.module || app.id)),
     }));
   } catch {
     return moduleManager.metadata.map((module) => ({
-      id: module.id, label: module.id, route: '/dashboard', module: module.id, available: true,
+      id: module.id, label: module.id, route: `/${module.id}/dashboard`, module: module.id, available: true,
     }));
   }
 }
@@ -105,8 +129,8 @@ Bun.serve({
     if (url.pathname.startsWith('/api/')) {
       try {
         if (url.pathname === '/api/modules' && req.method === 'GET') {
-          return new Response(JSON.stringify(moduleManager.metadata), {
-            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          return new Response(JSON.stringify(moduleManifest), {
+            headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300', ...CORS_HEADERS },
           });
         }
         if (url.pathname === '/api/apps' && req.method === 'GET') {

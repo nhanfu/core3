@@ -9,102 +9,11 @@ const DEFAULT_APP_KEY = 'core3_default_app';
 const WELCOME_TOAST_KEY = 'core3_show_welcome_toast';
 let _user: any = null;
 let _shell: AppShell | null = null;
-let _moduleId = '';
 let _apps: any[] = [];
-
-function modulePrefix() {
-  return _moduleId ? `/${_moduleId}` : '';
-}
-
-// Routes: string = server page id, function = JS module loader
-const ROUTES: Record<string, string | (() => Promise<any>)> = {
-  '/apps': () => import('./components/AppPicker.ts'),
-  '/login':        'login',
-  '/dashboard':    'dashboard',
-  '/fleet':        'fleet', '/trips': 'trips', '/maintenance': 'maintenance', '/reports': 'reports', '/settings': 'settings',
-  '/vehicles':     'vehicles', '/vehicles/detail': 'vehicle-detail',
-  '/drivers':      'drivers', '/drivers/detail': 'driver-detail',
-  '/orders':       'orders',
-  '/orders/detail': 'order-detail',
-  '/chat':         'chat',
-  '/schedule':     'schedule',
-  '/customers':    'customers',
-  '/partners':     'partners',
-  '/crm/entities/detail': 'crm-entity-detail',
-  '/quotes':       'quotes', '/quotes/detail': 'quote-detail',
-  '/crm/dashboard': 'crm-dashboard', '/crm/kpi': 'crm-kpi',
-  '/accounting/debit-notes': 'accounting-debit-notes',
-  '/accounting/debit-note-summary': 'accounting-debit-note-summary',
-  '/accounting/payment-requests': 'accounting-payment-requests',
-  '/accounting/payment-request-summary': 'accounting-payment-request-summary',
-  '/accounting/advances': 'accounting-advances',
-  '/accounting/settlements': 'accounting-settlements',
-  '/accounting/documents/detail': 'accounting-document-detail',
-  '/accounting/invoice-templates': 'accounting-invoice-templates',
-  '/accounting/ledger-accounts': 'accounting-ledger-accounts',
-  '/hr/employees': 'employees', '/hr/employees/detail': 'employee-detail', '/hr/payroll/detail': 'payroll-detail',
-  '/hr/contracts': 'contracts', '/hr/contracts/detail': 'contract-detail',
-  '/hr/timesheets': 'timesheets',
-  '/hr/shifts': 'shifts',
-  '/hr/payroll': 'payroll',
-  '/containers': 'containers',
-  '/locations': 'locations', '/areas/detail': 'area-detail',
-  '/areas': 'areas',
-  '/catalog/container-types': 'catalog-container-types',
-  '/catalog/vehicle-types': 'catalog-vehicle-types',
-  '/catalog/units': 'catalog-units',
-  '/catalog/cargo-types': 'catalog-cargo-types',
-  '/catalog/fee-types': 'catalog-fee-types',
-  '/catalog/currencies': 'catalog-currencies',
-  '/org/own-company': 'own-company',
-  '/org/branches': 'branches', '/org/branches/detail': 'branch-detail',
-  '/org/departments': 'departments', '/org/departments/detail': 'department-detail',
-  '/org/teams': 'teams',
-  '/org/users': 'users', '/org/users/detail': 'user-detail',
-  '/org/roles': 'roles', '/org/roles/detail': 'role-detail',
-  '/system/activity': 'system-activity', '/system/code-rules': 'system-code-rules',
-  '/system/print-templates': 'system-print-templates', '/system/approval-flows': 'system-approval-flows',
-  '/system/print-templates/detail': 'system-print-template-detail',
-  '/system/approval-flows/detail': 'system-approval-flow-detail',
-  '/system/shipment-types': 'system-shipment-types', '/system/trip-statuses': 'system-trip-statuses',
-  '/system/fee-rules': 'system-fee-rules', '/system/storage': 'system-storage',
-};
-
-const ROUTE_TITLES: Record<string, string> = {
-  '/apps': 'Applications',
-  '/dashboard': 'Dashboard',
-  '/orders': 'Orders', '/orders/detail': 'Chi tiết đơn hàng',
-  '/chat': 'Messages', '/schedule': 'Dispatch schedule',
-  '/customers': 'Customers', '/partners': 'Partners', '/quotes': 'Quotes',
-  '/crm/entities/detail': 'Chi tiết đối tượng CRM',
-  '/quotes/detail': 'Chi tiết báo giá',
-  '/crm/dashboard': 'CRM overview', '/crm/kpi': 'KPI targets',
-  '/accounting/debit-notes': 'Debit notes',
-  '/accounting/debit-note-summary': 'Debit note summary',
-  '/accounting/payment-requests': 'Payment requests',
-  '/accounting/payment-request-summary': 'Payment request summary',
-  '/accounting/advances': 'Advances', '/accounting/settlements': 'Settlements',
-  '/accounting/documents/detail': 'Chi tiết chứng từ',
-  '/accounting/invoice-templates': 'Invoice templates',
-  '/accounting/ledger-accounts': 'Chart of accounts',
-  '/hr/employees': 'Employees', '/hr/employees/detail': 'Chi tiết nhân viên', '/hr/contracts': 'Contracts', '/hr/contracts/detail': 'Chi tiết hợp đồng', '/hr/payroll/detail': 'Chi tiết bảng lương',
-  '/hr/timesheets': 'Timesheets', '/hr/shifts': 'Shifts', '/hr/payroll': 'Payroll',
-  '/drivers': 'Drivers', '/drivers/detail': 'Chi tiết tài xế', '/vehicles': 'Vehicles', '/vehicles/detail': 'Chi tiết phương tiện', '/containers': 'Containers',
-  '/locations': 'Locations', '/areas': 'Areas', '/areas/detail': 'Chi tiết khu vực',
-  '/catalog/container-types': 'Containers types', '/catalog/vehicle-types': 'Vehicle types',
-  '/catalog/units': 'Units', '/catalog/cargo-types': 'Cargo types',
-  '/catalog/fee-types': 'Fee types', '/catalog/currencies': 'Currencies',
-  '/org/own-company': 'Company', '/org/branches': 'Branches', '/org/branches/detail': 'Chi tiết chi nhánh', '/org/departments/detail': 'Chi tiết phòng ban', '/org/roles/detail': 'Chi tiết vai trò', '/org/users/detail': 'Chi tiết người dùng',
-  '/org/departments': 'Departments', '/org/teams': 'Teams', '/org/users': 'Users',
-  '/org/roles': 'Roles', '/system/activity': 'Activity log',
-  '/system/code-rules': 'Code rules', '/system/print-templates': 'Print templates',
-  '/system/approval-flows': 'Approval workflows',
-  '/system/print-templates/detail': 'Chi tiết mẫu in',
-  '/system/approval-flows/detail': 'Chi tiết quy trình duyệt',
-  '/system/shipment-types': 'Shipment types',
-  '/system/trip-statuses': 'Trip statuses',
-  '/system/fee-rules': 'Trip fee rules', '/system/storage': 'Storage',
-};
+let _activeModuleId = '';
+type ManifestPage = { id: string; route: string | null; title: string };
+type ManifestModule = { id: string; pages: ManifestPage[]; routes?: Array<{ path: string; page: string }> };
+let _manifest: ManifestModule[] = [];
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -136,6 +45,7 @@ export function getApps() {
 export function selectApp(app: any, makeDefault = false) {
   if (!app?.available) return;
   if (makeDefault) setDefaultApp(String(app.id));
+  _activeModuleId = String(app.module || app.id || '');
   _shell?.setCurrentApp(app);
   navigate(String(app.route || '/dashboard'));
 }
@@ -163,15 +73,21 @@ export function logout() {
   client.setToken(null);
   const app = document.getElementById('app');
   if (app) app.innerHTML = '<div id="outlet"></div>';
-  navigate('/login');
+  navigate('/auth/login');
+}
+
+function routeWithModule(path: string) {
+  const routePath = path.startsWith('/') ? path : `/${path}`;
+  if (routePath === '/apps') return routePath;
+  if (_manifest.some((module) => routePath === `/${module.id}` || routePath.startsWith(`/${module.id}/`))) return routePath;
+  if (routePath === '/login' || routePath.startsWith('/login/')) return `/auth${routePath}`;
+  const moduleId = _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'tms');
+  return `/${moduleId}${routePath}`;
 }
 
 export async function navigate(path: string, params: Record<string, string | number | boolean | null | undefined> = {}) {
-  const prefix = modulePrefix();
-  const routePath = prefix && (path.startsWith(`${prefix}/`) || path === prefix)
-    ? path
-    : `${prefix}${path.startsWith('/') ? path : `/${path}`}`;
-  const currentParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+  const routePath = routeWithModule(path);
+  const currentParams = new URLSearchParams(window.location.search);
   if (params.lc == null && currentParams.get('lc')) params = { ...params, lc: currentParams.get('lc') };
   const qs = Object.keys(params).length
     ? '?' + new URLSearchParams(
@@ -182,13 +98,15 @@ export async function navigate(path: string, params: Record<string, string | num
       )
     ).toString()
     : '';
-  const target = `#${routePath}${qs}`;
-  if (window.location.hash === target) {
-    const location = hashLocation();
+  const target = `${routePath}${qs}`;
+  if (`${window.location.pathname}${window.location.search}` === target) {
+    const location = currentLocation();
     await renderRoute(location.path, location.langCode);
     return;
   }
-  window.location.hash = target;
+  window.history.pushState({}, '', target);
+  const location = currentLocation();
+  await renderRoute(location.path, location.langCode);
 }
 
 // apiFetch: wrapper that adds auth header
@@ -207,21 +125,20 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
   return res;
 }
 
-function hashLocation() {
-  const prefix = modulePrefix();
-  const raw = window.location.hash.slice(1) || `${prefix}${getDefaultRoute(_user)}`;
-  const parsed = new URL(raw, window.location.origin);
-  const path = prefix && parsed.pathname.startsWith(`${prefix}/`)
-    ? parsed.pathname.slice(prefix.length) || '/'
-    : parsed.pathname;
-  return { path, langCode: parsed.searchParams.get('lc') || undefined };
+function currentLocation() {
+  const path = window.location.pathname === '/' ? getDefaultRoute(_user) : window.location.pathname;
+  const module = _manifest.find((entry) => path === `/${entry.id}` || path.startsWith(`/${entry.id}/`));
+  if (module) _activeModuleId = module.id;
+  return { path: path.replace(/\/$/, '') || '/', langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
 }
 
 async function renderRoute(path: string, langCode?: string) {
   if (langCode && langCode !== i18n.lang) await i18n.setLang(langCode);
   // Normalize: strip trailing slash
   const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/$/, '');
-  const loader = ROUTES[cleanPath as keyof typeof ROUTES] || ROUTES['/dashboard'];
+  const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path === cleanPath);
+  const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route === cleanPath);
+  const pageId = page?.id || 'dashboard';
 
   const outlet = document.getElementById('outlet');
   if (!outlet) return;
@@ -232,20 +149,21 @@ async function renderRoute(path: string, langCode?: string) {
   </div>`;
 
   // The page response includes its datasource data and i18n payload.
-  const pageName = cleanPath.slice(1).replace('/', '-') || 'dashboard';
+  const pageName = pageId;
 
   // Update shell active nav + header title
   if (_shell) {
-    _shell.setActivePath(cleanPath);
-    _shell.setTitle(i18n.t(pageName, null, ROUTE_TITLES[cleanPath as keyof typeof ROUTE_TITLES] || 'TMS'));
+    const activePath = route ? cleanPath.slice(`/${_activeModuleId}`.length) || '/' : cleanPath;
+    _shell.setActivePath(activePath);
+    _shell.setTitle(i18n.t(pageName, null, page?.title || 'TMS'));
   }
 
   try {
     outlet.innerHTML = '';
-    if (typeof loader === 'string') {
-      // Hash routes carry page state (for example the order id on a detail
-      // page). Forward it when the server prefetches the page datasources;
-      // otherwise detail pages render their labels against an empty record.
+    if (cleanPath === '/apps') {
+      const mod = await import('./components/AppPicker.ts');
+      await mod.mount(outlet);
+    } else {
       const pageParams = new URLSearchParams({ lc: i18n.lang });
       for (const [key, value] of Object.entries(getPageParams() as Record<string, string>)) {
         pageParams.set(key, value);
@@ -253,21 +171,17 @@ async function renderRoute(path: string, langCode?: string) {
       const fetchOptions: RequestInit = pageParams.get('cache') === 'false'
         ? { cache: 'no-store' }
         : {};
-      const res = await apiFetch(`/api/pages/${loader}?${pageParams.toString()}`, fetchOptions);
+      const res = await apiFetch(`/api/pages/${pageId}?${pageParams.toString()}`, fetchOptions);
       if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
       const config = await res.json();
-      i18n.hydrate(loader, config.i18n);
+      i18n.hydrate(pageId, config.i18n);
       delete config.i18n;
-      const translatedConfig = i18n.translatePageConfig(loader, config);
+      const translatedConfig = i18n.translatePageConfig(pageId, config);
       translatedConfig.locale = i18n.lang;
       if (_shell) {
-        _shell.setTitle(i18n.t(loader, null, ROUTE_TITLES[cleanPath as keyof typeof ROUTE_TITLES] || 'TMS'));
+        _shell.setTitle(i18n.t(pageId, null, page?.title || 'TMS'));
       }
       await renderPage(translatedConfig, { container: outlet });
-    } else {
-      // JS module route (e.g. login)
-      const mod = await loader();
-      await mod.mount(outlet);
     }
   } catch (err) {
     console.error('Route load error:', err);
@@ -283,11 +197,15 @@ async function renderRoute(path: string, langCode?: string) {
 async function bootstrap() {
   const app = document.getElementById('app');
   try {
-    const response = await fetch('/api/modules');
-    const modules = response.ok ? await response.json() as Array<{ id: string }> : [];
-    _moduleId = modules.find((module) => module.id !== 'auth')?.id || '';
+    const cached = sessionStorage.getItem('core3_module_manifest');
+    _manifest = cached ? JSON.parse(cached) : [];
+    const response = await fetch('/api/modules', { cache: 'force-cache' });
+    if (response.ok) {
+      _manifest = await response.json() as ManifestModule[];
+      sessionStorage.setItem('core3_module_manifest', JSON.stringify(_manifest));
+    }
   } catch {
-    _moduleId = '';
+    _manifest = [];
   }
   try {
     const appsResponse = await fetch('/api/apps');
@@ -295,14 +213,15 @@ async function bootstrap() {
   } catch {
     _apps = [];
   }
+  _activeModuleId = String(getDefaultApp()?.module || getDefaultApp()?.id || '');
   const token = getToken();
   if (!app) return;
 
   // No token → login
   if (!token) {
     app.innerHTML = '<div id="outlet"></div>';
-    const location = hashLocation();
-    await renderRoute('/login', location.langCode);
+    const location = currentLocation();
+    await renderRoute('/auth/login', location.langCode);
     return;
   }
 
@@ -319,13 +238,13 @@ async function bootstrap() {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(WELCOME_TOAST_KEY);
     app.innerHTML = '<div id="outlet"></div>';
-    const location = hashLocation();
-    await renderRoute('/login', location.langCode);
+    const location = currentLocation();
+    await renderRoute('/auth/login', location.langCode);
     return;
   }
 
   // Prefetch global i18n
-  const requestedLocation = hashLocation();
+  const requestedLocation = currentLocation();
   const lang = requestedLocation.langCode || _user?.preferred_lang || 'en';
   await i18n.setLang(lang);
 
@@ -357,7 +276,7 @@ async function bootstrap() {
     showWelcomeToast,
     navigate,
     onLanguageChange: async (langCode: string) => {
-      const location = hashLocation();
+      const location = currentLocation();
       await navigate(location.path, { lc: langCode });
     },
     onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
@@ -369,21 +288,18 @@ async function bootstrap() {
     void navigate(path, params as Record<string, string | number | boolean | null | undefined>);
   });
 
-  // Match the reference app's hash-routing model. Keeping routing client-side
-  // also avoids a server allowlist change for every new parity route.
-  const location = hashLocation();
-  const hashPath = window.location.hash.slice(1);
-  const prefix = modulePrefix();
-  if (prefix && !hashPath.startsWith(`${prefix}/`) && hashPath !== prefix) {
-    await navigate(location.path, { lc: location.langCode || lang });
-    return;
+  const location = currentLocation();
+  const canonicalPath = routeWithModule(location.path);
+  if (canonicalPath !== location.path) {
+    window.history.replaceState({}, '', `${canonicalPath}${window.location.search}`);
+    location.path = canonicalPath;
   }
   await renderRoute(location.path, location.langCode);
 }
 
-// Handle browser back/forward and direct hash navigation.
-window.addEventListener('hashchange', () => {
-  const location = hashLocation();
+// Handle browser back/forward and direct slash navigation.
+window.addEventListener('popstate', () => {
+  const location = currentLocation();
   void renderRoute(location.path, location.langCode);
 });
 

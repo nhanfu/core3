@@ -31,10 +31,10 @@ export function navigate(pageId, params = {}) {
  * @returns {Record<string,string>}
  */
 export function getPageParams() {
-  const hashQuery = window.location.hash.includes('?')
+  const legacyHash = window.location.hash.includes('?')
     ? window.location.hash.slice(window.location.hash.indexOf('?') + 1)
     : '';
-  const sp = new URLSearchParams(hashQuery || window.location.search);
+  const sp = new URLSearchParams(legacyHash || window.location.search);
   const out = {};
   for (const [k, v] of sp.entries()) out[k] = v;
   return out;
