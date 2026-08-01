@@ -1,5 +1,5 @@
-title: Chi tiết phương tiện
-page: { id: vehicle-detail, breadcrumb: [Quản lý, Phương tiện, Chi tiết], auth: { require: [fleet.read] } }
+title: Vehicle details
+page: { id: vehicle-detail, breadcrumb: [Manage, Vehicle, Detail], auth: { require: [fleet.read] } }
 datasources:
   - id: vehicle_detail
     single: true
@@ -31,44 +31,44 @@ datasources:
     permission: fleet.read
     query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' ORDER BY name"
 components:
-  - { type: DocumentSummary, source: vehicle_detail, title_field: plate, subtitle_field: model, status_field: status_label, status_colors: { 'Sẵn sàng': green, 'Bảo dưỡng': amber, 'Ngưng hoạt động': red }, columns: [{ field: type, label: Loại xe }, { field: branch_name, label: Chi nhánh }, { field: capacity_kg, label: Tải trọng }, { field: mileage, label: Số km }, { field: last_service, label: Bảo dưỡng gần nhất }, { field: next_service, label: Bảo dưỡng kế tiếp }, { field: driver_name, label: Tài xế phụ trách }, { field: license_number, label: Giấy phép }] }
+  - { type: DocumentSummary, source: vehicle_detail, title_field: plate, subtitle_field: model, status_field: status_label, status_colors: { 'Ready': green, 'Maintenance': amber, 'Shut down': red }, columns: [{ field: type, label: Vehicle type }, { field: branch_name, label: Branch }, { field: capacity_kg, label: Load }, { field: mileage, label: Number of kilometers }, { field: last_service, label: Nearest maintenance }, { field: next_service, label: Next maintenance }, { field: driver_name, label: Driver in charge }, { field: license_number, label: License }] }
   - type: DataGrid
     source: vehicle_maintenance
     page_size: 20
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có lịch bảo dưỡng }
-    columns: [{ field: service_type, label: Hạng mục }, { field: status, label: Trạng thái }, { field: scheduled_date, label: Dự kiến }, { field: completed_date, label: Hoàn thành }, { field: cost, label: Chi phí, align: right }, { field: notes, label: Ghi chú }]
+    empty_state: { title: There is no maintenance schedule yet }
+    columns: [{ field: service_type, label: Category }, { field: status, label: Status }, { field: scheduled_date, label: Expected }, { field: completed_date, label: Complete }, { field: cost, label: Expense, align: right }, { field: notes, label: Note }]
   - type: DataGrid
     source: vehicle_trips
     page_size: 20
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có chuyến xe }
-    columns: [{ field: trip_number, label: Chuyến }, { field: origin, label: Điểm đi }, { field: destination, label: Điểm đến }, { field: departure_time, label: Khởi hành }, { field: status, label: Trạng thái }]
+    empty_state: { title: There is no bus yet }
+    columns: [{ field: trip_number, label: Trip }, { field: origin, label: Point go }, { field: destination, label: Destination }, { field: departure_time, label: Depart }, { field: status, label: Status }]
 toolbar:
-  - { id: back_vehicles, label: 'Danh sách phương tiện', icon: arrow-left, variant: secondary, action: back_vehicles }
-  - { id: edit_vehicle_detail, label: Sửa phương tiện, variant: primary, permission: fleet.write, action: edit_vehicle_detail }
+  - { id: back_vehicles, label: 'Media list', icon: arrow-left, variant: secondary, action: back_vehicles }
+  - { id: edit_vehicle_detail, label: Vehicle repair, variant: primary, permission: fleet.write, action: edit_vehicle_detail }
 actions:
   - { id: back_vehicles, type: navigate, navigate_to: /vehicles }
   - id: edit_vehicle_detail
     type: form
     permission: fleet.write
-    title: Cập nhật phương tiện
+    title: Media updates
     table: trucks
     operation: update
     prefill: source
     prefill_source: vehicle_detail
     refresh: [vehicle_detail, vehicle_maintenance, vehicle_trips]
     fields:
-      - { field: plate, label: Biển số / số hiệu, type: text, required: true }
-      - { field: model, label: Hãng / mẫu xe, type: text, required: true }
-      - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_detail_type_lookup }
-      - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_detail_branch_lookup }
-      - { field: driver_id, label: Tài xế phụ trách, type: select, options_source: vehicle_detail_driver_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }] }
-      - { field: capacity_kg, label: Tải trọng (kg), type: number }
-      - { field: mileage, label: Số km, type: number }
-      - { field: last_service, label: Bảo dưỡng gần nhất, type: date }
-      - { field: next_service, label: Bảo dưỡng kế tiếp, type: date }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: plate, label: License plate / number, type: text, required: true }
+      - { field: model, label: Vehicle make/model, type: text, required: true }
+      - { field: type, label: Vehicle type, type: select, options_source: vehicle_detail_type_lookup }
+      - { field: branch_id, label: Branch, type: select, options_source: vehicle_detail_branch_lookup }
+      - { field: driver_id, label: Driver in charge, type: select, options_source: vehicle_detail_driver_lookup }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }] }
+      - { field: capacity_kg, label: Load (kg), type: number }
+      - { field: mileage, label: Number of kilometers, type: number }
+      - { field: last_service, label: Nearest maintenance, type: date }
+      - { field: next_service, label: Next maintenance, type: date }
+      - { field: notes, label: Note, type: textarea }

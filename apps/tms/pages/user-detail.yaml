@@ -1,5 +1,5 @@
-title: Chi tiết người dùng
-page: { id: user-detail, breadcrumb: [Tổ chức & phân quyền, Người dùng, Chi tiết], auth: { require: [settings.read] } }
+title: User details
+page: { id: user-detail, breadcrumb: [Organization & decentralization, User, Detail], auth: { require: [settings.read] } }
 datasources:
   - id: user_detail
     single: true
@@ -50,51 +50,51 @@ datasources:
     permission: settings.read
     query: "SELECT actor_name, action, detail, CAST(created_at AS VARCHAR) AS created_at FROM system_activity WHERE resource = 'users' AND resource_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM users u WHERE u.id = :id AND u.branch_id = :current_branch_id)) ORDER BY created_at DESC"
 components:
-  - { type: DocumentSummary, source: user_detail, title_field: name, subtitle_field: email, columns: [{ field: status, label: Trạng thái, type: StatusChip }, { field: branch_name, label: Chi nhánh }, { field: department_name, label: Phòng ban }, { field: preferred_lang, label: Ngôn ngữ }, { field: last_login, label: Đăng nhập gần nhất }, { field: created_at, label: Ngày tạo }] }
+  - { type: DocumentSummary, source: user_detail, title_field: name, subtitle_field: email, columns: [{ field: status, label: Status, type: StatusChip }, { field: branch_name, label: Branch }, { field: department_name, label: Departments }, { field: preferred_lang, label: Language }, { field: last_login, label: Most recent login }, { field: created_at, label: Creation date }] }
   - type: DataGrid
     source: user_roles
     page_size: 30
     column_chooser: true
     row_key: role_id
-    empty_state: { title: Chưa có vai trò được gán }
-    columns: [{ field: role_name, label: Vai trò }, { field: status_label, label: Trạng thái, type: StatusChip, colors: { 'Đã gán': green, 'Chưa gán': neutral } }, { field: actions, label: '', sortable: false, actions: [{ id: grant_user_role, label: Gán vai trò, variant: primary, permission: settings.write, show_if: "!row.enabled" }, { id: revoke_user_role, label: Thu hồi, variant: danger, permission: settings.write, show_if: "row.enabled" }] }]
+    empty_state: { title: There are no roles assigned yet }
+    columns: [{ field: role_name, label: Role }, { field: status_label, label: Status, type: StatusChip, colors: { 'Đã gán': green, 'Chưa gán': neutral } }, { field: actions, label: '', sortable: false, actions: [{ id: grant_user_role, label: Assign roles, variant: primary, permission: settings.write, show_if: "!row.enabled" }, { id: revoke_user_role, label: Recall, variant: danger, permission: settings.write, show_if: "row.enabled" }] }]
   - type: DataGrid
     source: user_permissions
     page_size: 50
     column_chooser: true
     row_key: permission_key
-    empty_state: { title: Chưa có quyền hiệu lực }
-    columns: [{ field: permission_key, label: Quyền hiệu lực }]
+    empty_state: { title: No effective rights yet }
+    columns: [{ field: permission_key, label: Effective rights }]
   - type: ApprovalTimeline
     source: user_activity
-    title: Lịch sử người dùng
-    empty_state: { title: Chưa có hoạt động người dùng }
-    action_labels: { create: Đã tạo, update: Cập nhật, grant: Gán vai trò, revoke: Thu hồi vai trò, password: Đổi mật khẩu, delete: Xóa }
+    title: User history
+    empty_state: { title: No user activity yet }
+    action_labels: { create: Đã tạo, update: Cập nhật, grant: Assign roles, revoke: Recall vai trò, password: Đổi mật khẩu, delete: Xóa }
     actor_field: actor_name
     action_field: action
     detail_field: detail
     timestamp_field: created_at
 toolbar:
-  - { id: back_users, label: 'Danh sách người dùng', icon: arrow-left, variant: secondary, action: back_users }
-  - { id: edit_user_detail, label: Sửa người dùng, variant: primary, permission: settings.write, action: edit_user_detail }
+  - { id: back_users, label: 'List of users', icon: arrow-left, variant: secondary, action: back_users }
+  - { id: edit_user_detail, label: Edit users, variant: primary, permission: settings.write, action: edit_user_detail }
 actions:
   - { id: back_users, type: navigate, navigate_to: /org/users }
   - id: edit_user_detail
     type: form
     permission: settings.write
-    title: Cập nhật người dùng
+    title: Update users
     table: users
     operation: update
     prefill: source
     prefill_source: user_detail
     refresh: [user_detail, user_roles, user_permissions, user_activity]
     fields:
-      - { field: name, label: Họ tên, type: text, required: true }
-      - { field: email, label: Email, type: text, required: true }
-      - { field: preferred_lang, label: Ngôn ngữ, type: select, options: [{ id: vi, label: Tiếng Việt }, { id: en, label: English }] }
-      - { field: branch_id, label: Chi nhánh, type: select, options_source: user_detail_branch_lookup }
-      - { field: department_id, label: Phòng ban, type: select, options_source: user_detail_department_lookup }
-      - { field: enabled, label: Kích hoạt, type: select, options: [{ id: true, label: Đang kích hoạt }, { id: false, label: Đã khóa }] }
-      - { field: roles, label: Vai trò, type: multi-select, options_source: user_detail_role_lookup, search_placeholder: 'Tìm vai trò...', multiple: true }
+      - { field: name, label: Full name, type: text, required: true }
+      - { field: email, label: E-mail, type: text, required: true }
+      - { field: preferred_lang, label: Language, type: select, options: [{ id: vi, label: Vietnamese }, { id: en, label: English }] }
+      - { field: branch_id, label: Branch, type: select, options_source: user_detail_branch_lookup }
+      - { field: department_id, label: Departments, type: select, options_source: user_detail_department_lookup }
+      - { field: enabled, label: Activate, type: select, options: [{ id: true, label: Activating }, { id: false, label: Locked }] }
+      - { field: roles, label: Role, type: multi-select, options_source: user_detail_role_lookup, search_placeholder: 'Find roles...', multiple: true }
   - { id: grant_user_role, type: server, permission: settings.write, action: settings.users.grant_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } }
   - { id: revoke_user_role, type: server, permission: settings.write, action: settings.users.revoke_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } }

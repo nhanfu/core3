@@ -1,30 +1,15 @@
-en:
-  "Chỉ tiêu KPI": "KPI targets"
-  "Kinh doanh": "Business"
-  "Từ ngày": "From date"
-  "Đến ngày": "Come day"
-  "Xuất CSV": "Export CSV"
-  "Khách tiềm năng": "Potential guests"
-  "Khách đang hoạt động": "Guest is active"
-  "Báo giá chấp nhận": "Quote accepted"
-  "Tỷ lệ chuyển đổi": "Conversion rate"
-  "Báo giá theo trạng thái": "Quote by status"
-  "Chưa có chỉ tiêu theo giai đoạn": "There are no targets by stage"
-  "Giai đoạn": "Stage"
-  "Tổng khách hàng": "Total customers"
-  "Đang hoạt động": "Active"
 vi:
-  "Chỉ tiêu KPI": "Chỉ tiêu KPI"
-  "Kinh doanh": "Kinh doanh"
-  "Từ ngày": "Từ ngày"
-  "Đến ngày": "Đến ngày"
-  "Xuất CSV": "Xuất CSV"
-  "Khách tiềm năng": "Khách tiềm năng"
-  "Khách đang hoạt động": "Khách đang hoạt động"
-  "Báo giá chấp nhận": "Báo giá chấp nhận"
-  "Tỷ lệ chuyển đổi": "Tỷ lệ chuyển đổi"
-  "Báo giá theo trạng thái": "Báo giá theo trạng thái"
-  "Chưa có chỉ tiêu theo giai đoạn": "Chưa có chỉ tiêu theo giai đoạn"
-  "Giai đoạn": "Giai đoạn"
-  "Tổng khách hàng": "Tổng khách hàng"
-  "Đang hoạt động": "Đang hoạt động"
+  KPI targets: Chỉ tiêu KPI
+  Business: Kinh doanh
+  From date: Từ ngày
+  Come day: Đến ngày
+  Export CSV: Xuất CSV
+  Potential guests: Khách tiềm năng
+  Guest is active: Khách đang hoạt động
+  Quote accepted: Báo giá chấp nhận
+  Conversion rate: Tỷ lệ chuyển đổi
+  Quote by status: Báo giá theo trạng thái
+  There are no targets by stage: Chưa có chỉ tiêu theo giai đoạn
+  Stage: Giai đoạn
+  Total customers: Tổng khách hàng
+  Active: Đang hoạt động

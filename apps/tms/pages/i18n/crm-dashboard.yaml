@@ -1,54 +1,27 @@
-en:
-  "Tổng hợp CRM": "Summary of CRM"
-  "Kinh doanh": "Business"
-  "Từ ngày": "From date"
-  "Đến ngày": "Come day"
-  "Xuất CSV": "Export CSV"
-  "Khách hàng": "Client"
-  "Nhân viên": "Staff"
-  "Đội nhóm": "Team"
-  "Công ty": "Company"
-  "Khách tiềm năng": "Potential guests"
-  "Báo giá chấp nhận": "Quote accepted"
-  "Giá trị báo giá": "Quoted value"
-  "Đơn đã duyệt": "Application approved"
-  "Phễu báo giá": "Quote funnel"
-  "Chưa có báo giá gần đây": "There are no recent quotes yet"
-  "Mã": "Code"
-  "Báo giá": "Quote"
-  "Giá trị": "Value"
-  "Hiệu lực đến": "Effect arrives"
-  "Trạng thái": "Status"
-  "Chưa có xếp hạng khách hàng": "There are no customer ratings yet"
-  "Số báo giá": "Quotation number"
-  "Chưa có phân bổ nhân sự": "There is no personnel allocation yet"
-  "Bộ phận": "Part"
-  "Nhân sự": "Human resources"
-  "Đang hoạt động": "Active"
 vi:
-  "Tổng hợp CRM": "Tổng hợp CRM"
-  "Kinh doanh": "Kinh doanh"
-  "Từ ngày": "Từ ngày"
-  "Đến ngày": "Đến ngày"
-  "Xuất CSV": "Xuất CSV"
-  "Khách hàng": "Khách hàng"
-  "Nhân viên": "Nhân viên"
-  "Đội nhóm": "Đội nhóm"
-  "Công ty": "Công ty"
-  "Khách tiềm năng": "Khách tiềm năng"
-  "Báo giá chấp nhận": "Báo giá chấp nhận"
-  "Giá trị báo giá": "Giá trị báo giá"
-  "Đơn đã duyệt": "Đơn đã duyệt"
-  "Phễu báo giá": "Phễu báo giá"
-  "Chưa có báo giá gần đây": "Chưa có báo giá gần đây"
-  "Mã": "Mã"
-  "Báo giá": "Báo giá"
-  "Giá trị": "Giá trị"
-  "Hiệu lực đến": "Hiệu lực đến"
-  "Trạng thái": "Trạng thái"
-  "Chưa có xếp hạng khách hàng": "Chưa có xếp hạng khách hàng"
-  "Số báo giá": "Số báo giá"
-  "Chưa có phân bổ nhân sự": "Chưa có phân bổ nhân sự"
-  "Bộ phận": "Bộ phận"
-  "Nhân sự": "Nhân sự"
-  "Đang hoạt động": "Đang hoạt động"
+  Summary of CRM: Tổng hợp CRM
+  Business: Kinh doanh
+  From date: Từ ngày
+  Come day: Đến ngày
+  Export CSV: Xuất CSV
+  Client: Khách hàng
+  Staff: Nhân viên
+  Team: Đội nhóm
+  Company: Công ty
+  Potential guests: Khách tiềm năng
+  Quote accepted: Báo giá chấp nhận
+  Quoted value: Giá trị báo giá
+  Application approved: Đơn đã duyệt
+  Quote funnel: Phễu báo giá
+  There are no recent quotes yet: Chưa có báo giá gần đây
+  Code: Mã
+  Quote: Báo giá
+  Value: Giá trị
+  Effect arrives: Hiệu lực đến
+  Status: Trạng thái
+  There are no customer ratings yet: Chưa có xếp hạng khách hàng
+  Quotation number: Số báo giá
+  There is no personnel allocation yet: Chưa có phân bổ nhân sự
+  Part: Bộ phận
+  Human resources: Nhân sự
+  Active: Đang hoạt động

@@ -1,8 +1,8 @@
-title: Chấm công
+title: Timekeeping
 
 page:
   id: timesheets
-  breadcrumb: [Nhân sự, Chấm công]
+  breadcrumb: [Human resources, Timekeeping]
   auth:
     require: [hr.read]
 
@@ -47,7 +47,7 @@ datasources:
 
 toolbar:
   - id: add_timesheet_btn
-    label: '+ Chấm công'
+    label: '+ Timekeeping'
     variant: primary
     permission: hr.write
     action: add_timesheet
@@ -56,81 +56,81 @@ components:
   - type: ListToolbar
     source: timesheets
     filter_sources: [timesheets, timesheet_totals]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
     filter_field: q
-    search: { label: Tìm kiếm chấm công, placeholder: 'Tìm mã, tên nhân viên hoặc ngày công...' }
-    actions: [{ id: timesheets.export, label: 'Xuất CSV', icon: download }]
+    search: { label: Search timekeeping, placeholder: 'Find code, employee name or work date...' }
+    actions: [{ id: timesheets.export, label: 'Export CSV', icon: download }]
   - type: StatRow
     source: timesheet_totals
-    stats: [{ label: Bản ghi, field: record_count, color: blue }, { label: Tổng giờ, field: total_hours, color: indigo }, { label: Có mặt, field: present_count, color: green }, { label: Nghỉ phép, field: leave_count, color: amber }, { label: Vắng mặt, field: absent_count, color: red }]
+    stats: [{ label: Record, field: record_count, color: blue }, { label: Total hours, field: total_hours, color: indigo }, { label: Present, field: present_count, color: green }, { label: On leave, field: leave_count, color: amber }, { label: Absent, field: absent_count, color: red }]
   - type: StatusTabs
     source: timesheets
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Present, label: Có mặt }
-      - { id: Leave, label: Nghỉ phép }
-      - { id: Absent, label: Vắng mặt }
+      - { id: '', label: All }
+      - { id: Present, label: Present }
+      - { id: Leave, label: On leave }
+      - { id: Absent, label: Absent }
   - type: DataGrid
     source: timesheets
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có dữ liệu chấm công, description: Thử thay đổi bộ lọc hoặc tạo chấm công mới. }
+    empty_state: { title: No timekeeping data available, description: Try changing the filter or creating a new timekeeping. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }
-      - { field: work_date, label: Ngày công }
-      - { field: shift_code, label: Ca làm, type: PrimaryEntityCell, secondary: shift_name }
-      - { field: hours, label: Số giờ, align: right }
+      - { field: id, label: HT code, sortable: true }
+      - { field: employee_code, label: Staff, type: PrimaryEntityCell, secondary: employee_name }
+      - { field: work_date, label: Work day }
+      - { field: shift_code, label: Shift, type: PrimaryEntityCell, secondary: shift_name }
+      - { field: hours, label: Number of hours, align: right }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Có mặt: green, Nghỉ phép: amber, Vắng mặt: red }
-      - { field: notes, label: Ghi chú }
+        colors: { Present: green, On leave: amber, Absent: red }
+      - { field: notes, label: Note }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_timesheet, label: Sửa, variant: ghost, permission: hr.write }
-          - { id: delete_timesheet, label: Xóa, variant: danger, permission: hr.write }
+          - { id: edit_timesheet, label: Fix, variant: ghost, permission: hr.write }
+          - { id: delete_timesheet, label: Erase, variant: danger, permission: hr.write }
 
 actions:
   - id: add_timesheet
     type: form
     permission: hr.write
-    title: Chấm công
+    title: Timekeeping
     table: timesheets
     operation: insert
     refresh: [timesheets]
     fields:
-      - { field: employee_id, label: Nhân viên, type: select, options_source: timesheet_employee_lookup, required: true }
-      - { field: work_date, label: Ngày công, type: date, required: true }
-      - { field: shift_id, label: Ca làm việc, type: select, options_source: timesheet_shift_lookup }
-      - { field: hours, label: Số giờ, type: number, default: 8 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Present, label: Có mặt }, { id: Leave, label: Nghỉ phép }, { id: Absent, label: Vắng mặt }], default: Present }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: employee_id, label: Staff, type: select, options_source: timesheet_employee_lookup, required: true }
+      - { field: work_date, label: Work day, type: date, required: true }
+      - { field: shift_id, label: Shift, type: select, options_source: timesheet_shift_lookup }
+      - { field: hours, label: Number of hours, type: number, default: 8 }
+      - { field: status, label: Status, type: select, options: [{ id: Present, label: Present }, { id: Leave, label: On leave }, { id: Absent, label: Absent }], default: Present }
+      - { field: notes, label: Note, type: textarea }
   - id: edit_timesheet
     type: form
     permission: hr.write
-    title: Cập nhật chấm công
+    title: Timekeeping update
     table: timesheets
     operation: update
     prefill: row
     refresh: [timesheets]
     fields:
-      - { field: employee_id, label: Nhân viên, type: select, options_source: timesheet_employee_lookup, required: true }
-      - { field: work_date, label: Ngày công, type: date, required: true }
-      - { field: shift_id, label: Ca làm việc, type: select, options_source: timesheet_shift_lookup }
-      - { field: hours, label: Số giờ, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Present, label: Có mặt }, { id: Leave, label: Nghỉ phép }, { id: Absent, label: Vắng mặt }] }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: employee_id, label: Staff, type: select, options_source: timesheet_employee_lookup, required: true }
+      - { field: work_date, label: Work day, type: date, required: true }
+      - { field: shift_id, label: Shift, type: select, options_source: timesheet_shift_lookup }
+      - { field: hours, label: Number of hours, type: number }
+      - { field: status, label: Status, type: select, options: [{ id: Present, label: Present }, { id: Leave, label: On leave }, { id: Absent, label: Absent }] }
+      - { field: notes, label: Note, type: textarea }
   - id: delete_timesheet
     type: delete
     permission: hr.write
-    confirm: 'Xóa chấm công {{row.employee_name}}?'
+    confirm: 'Delete attendance {{row.employee_name}}?'
     table: timesheets
     refresh: [timesheets]

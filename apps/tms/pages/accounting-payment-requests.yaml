@@ -1,5 +1,5 @@
-title: Đề nghị thanh toán
-page: { id: accounting-payment-requests, breadcrumb: [Kế toán, Đề nghị thanh toán], auth: { require: [accounting.read] } }
+title: Offer to pay
+page: { id: accounting-payment-requests, breadcrumb: [Accountant, Offer to pay], auth: { require: [accounting.read] } }
 datasources:
   - id: payment_requests
     single: false
@@ -19,68 +19,68 @@ datasources:
     permission: accounting.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 toolbar:
-  - { id: add_payment_request_btn, label: '+ Thêm đề nghị chi', variant: primary, permission: accounting.write, action: add_payment_request }
+  - { id: add_payment_request_btn, label: '+ Add more suggestions', variant: primary, permission: accounting.write, action: add_payment_request }
 components:
-  - { type: ListToolbar, source: payment_requests, filter_field: q, search: { label: Tìm kiếm đề nghị chi, placeholder: 'Tìm số chứng từ hoặc đối tác...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày đề nghị', to_label: 'Đến ngày đề nghị', presets: [today, week, month, quarter, year, all] }, actions: [{ id: payment_requests.export, label: 'Xuất CSV', icon: download }] }
+  - { type: ListToolbar, source: payment_requests, filter_field: q, search: { label: Search for suggestions, placeholder: 'Find voucher number or partner...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'From the date of proposal', to_label: 'Arrive at the proposed date', presets: [today, week, month, quarter, year, all] }, actions: [{ id: payment_requests.export, label: 'Export CSV', icon: download }] }
   - type: StatusTabs
     source: payment_requests
     filter_field: status
     variant: contained
-    tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }]
+    tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Paid, label: Paid }, { id: Cancelled, label: Canceled }]
   - type: DataGrid
     source: payment_requests
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có đề nghị thanh toán }
+    empty_state: { title: There is no payment offer }
     columns:
-      - { field: code, label: Số chứng từ, sortable: true }
-      - { field: name, label: Nội dung, type: PrimaryEntityCell, secondary: counterparty }
-      - { field: document_date, label: Ngày đề nghị }
-      - { field: due_date, label: Hạn thanh toán }
-      - { field: amount_display, label: Giá trị, align: right }
-      - { field: currency, label: Tiền tệ }
+      - { field: code, label: Document number, sortable: true }
+      - { field: name, label: Content, type: PrimaryEntityCell, secondary: counterparty }
+      - { field: document_date, label: Recommended date }
+      - { field: due_date, label: Payment deadline }
+      - { field: amount_display, label: Value, align: right }
+      - { field: currency, label: Money }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red }
+        colors: { Draft: neutral, Browsing: amber, Approved: green, Paid: blue, Canceled: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_payment_request, label: Chi tiết, variant: secondary, permission: accounting.read }
-          - { id: edit_payment_request, label: Sửa, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_payment_request, label: Trình duyệt, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_payment_request, label: Duyệt, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_payment_request, label: Từ chối, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: pay_payment_request, label: Đã thanh toán, variant: primary, permission: accounting.pay, show_if: "row.status === 'Approved'" }
-          - { id: cancel_payment_request, label: Hủy, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
-          - { id: delete_payment_request, label: Xóa, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: view_payment_request, label: Detail, variant: secondary, permission: accounting.read }
+          - { id: edit_payment_request, label: Fix, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_payment_request, label: Browser, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_payment_request, label: Browse, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_payment_request, label: Refuse, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: pay_payment_request, label: Paid, variant: primary, permission: accounting.pay, show_if: "row.status === 'Approved'" }
+          - { id: cancel_payment_request, label: Cancel, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
+          - { id: delete_payment_request, label: Erase, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_payment_request
     type: form
     permission: accounting.write
-    title: Thêm đề nghị thanh toán
+    title: Add payment request
     table: accounting_entries
     scope: payment_request
     operation: insert
     refresh: [payment_requests]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: payment_request_currency_lookup, default: VND }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Partner, type: text }, { field: currency, label: Money, type: select, options_source: payment_request_currency_lookup, default: VND }, { field: document_date, label: Recommended date, type: date }, { field: due_date, label: Payment deadline, type: date }, { field: description, label: Note, type: textarea }]
   - id: edit_payment_request
     type: form
     permission: accounting.write
-    title: Cập nhật đề nghị thanh toán
+    title: Update payment request
     table: accounting_entries
     scope: payment_request
     operation: update
     prefill: row
     refresh: [payment_requests]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Đối tác, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: payment_request_currency_lookup }, { field: document_date, label: Ngày đề nghị, type: date }, { field: due_date, label: Hạn thanh toán, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Partner, type: text }, { field: currency, label: Money, type: select, options_source: payment_request_currency_lookup }, { field: document_date, label: Recommended date, type: date }, { field: due_date, label: Payment deadline, type: date }, { field: description, label: Note, type: textarea }]
   - { id: view_payment_request, type: navigate, permission: accounting.read, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: payment_request, back: /accounting/payment-requests } }
-  - { id: submit_payment_request, type: server, permission: accounting.write, action: accounting.payment_requests.submit_for_approval, confirm: 'Trình duyệt đề nghị chi {{row.code}}?', refresh: [payment_requests] }
-  - { id: approve_payment_request, type: server, permission: accounting.approve, action: accounting.payment_requests.approve, confirm: 'Duyệt đề nghị chi {{row.code}}?', refresh: [payment_requests] }
-  - { id: reject_payment_request, type: server, permission: accounting.approve, action: accounting.payment_requests.reject, confirm: 'Từ chối đề nghị chi {{row.code}}?', refresh: [payment_requests] }
-  - { id: pay_payment_request, type: server, permission: accounting.pay, action: accounting.payment_requests.mark_paid, confirm: 'Xác nhận đã thanh toán đề nghị chi {{row.code}}?', refresh: [payment_requests] }
-  - { id: cancel_payment_request, type: server, permission: accounting.write, action: accounting.payment_requests.cancel, confirm: 'Hủy đề nghị chi {{row.code}}?', refresh: [payment_requests] }
-  - { id: delete_payment_request, type: delete, permission: accounting.write, table: accounting_entries, scope: payment_request, confirm: 'Xóa đề nghị chi {{row.code}}?', refresh: [payment_requests] }
+  - { id: submit_payment_request, type: server, permission: accounting.write, action: accounting.payment_requests.submit_for_approval, confirm: 'Browser requests include {{row.code}}?', refresh: [payment_requests] }
+  - { id: approve_payment_request, type: server, permission: accounting.approve, action: accounting.payment_requests.approve, confirm: 'Browse suggestions for {{row.code}}?', refresh: [payment_requests] }
+  - { id: reject_payment_request, type: server, permission: accounting.approve, action: accounting.payment_requests.reject, confirm: 'Reject offer to spend {{row.code}}?', refresh: [payment_requests] }
+  - { id: pay_payment_request, type: server, permission: accounting.pay, action: accounting.payment_requests.mark_paid, confirm: 'Confirmation of payment request for {{row.code}}?', refresh: [payment_requests] }
+  - { id: cancel_payment_request, type: server, permission: accounting.write, action: accounting.payment_requests.cancel, confirm: 'Cancel payment offer {{row.code}}?', refresh: [payment_requests] }
+  - { id: delete_payment_request, type: delete, permission: accounting.write, table: accounting_entries, scope: payment_request, confirm: 'Delete request for {{row.code}}?', refresh: [payment_requests] }

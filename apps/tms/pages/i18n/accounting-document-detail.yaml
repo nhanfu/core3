@@ -1,66 +1,33 @@
-en:
-  "Chi tiết chứng từ": "Document details"
-  "Kế toán": "Accountant"
-  "Danh sách chứng từ": "List of documents"
-  "Sửa chứng từ": "Edit documents"
-  "Loại chứng từ": "Document type"
-  "Đối tác / người nhận": "Partner/recipient"
-  "Ngày chứng từ": "Document date"
-  "Hạn thanh toán / hoàn ứng": "Payment/refund deadline"
-  "Tiền tệ": "Money"
-  "Ghi chú": "Note"
-  "Giá trị chứng từ được tính trực tiếp từ các dòng chi tiết.": "Document value is calculated directly from the detail lines."
-  "+ Thêm dòng": "+ Add lines"
-  "Chưa có dòng chi tiết": "No details yet"
-  "STT": "No"
-  "Nội dung": "Content"
-  "Số lượng": "Quantity"
-  "Đơn vị": "Unit"
-  "Đơn giá": "Unit price"
-  "Thuế": "Tax"
-  "Thành tiền": "Make money"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Tổng cộng": "Total"
-  "Giá trị chứng từ": "Document value"
-  "Lịch sử chứng từ": "Document history"
-  "Chưa có hoạt động chứng từ": "There is no document activity yet"
-  "Cập nhật chứng từ": "Update documents"
-  "Số chứng từ": "Document number"
-  "Thêm dòng chi tiết": "Add detail lines"
-  "Thuế suất (%)": "Tax rate (%)"
-  "Cập nhật dòng chi tiết": "Update detail line"
-  "Xóa dòng chi tiết {{row.description}}?": "Remove detail line {{row.description}}?"
 vi:
-  "Chi tiết chứng từ": "Chi tiết chứng từ"
-  "Kế toán": "Kế toán"
-  "Danh sách chứng từ": "Danh sách chứng từ"
-  "Sửa chứng từ": "Sửa chứng từ"
-  "Loại chứng từ": "Loại chứng từ"
-  "Đối tác / người nhận": "Đối tác / người nhận"
-  "Ngày chứng từ": "Ngày chứng từ"
-  "Hạn thanh toán / hoàn ứng": "Hạn thanh toán / hoàn ứng"
-  "Tiền tệ": "Tiền tệ"
-  "Ghi chú": "Ghi chú"
-  "Giá trị chứng từ được tính trực tiếp từ các dòng chi tiết.": "Giá trị chứng từ được tính trực tiếp từ các dòng chi tiết."
-  "+ Thêm dòng": "+ Thêm dòng"
-  "Chưa có dòng chi tiết": "Chưa có dòng chi tiết"
-  "STT": "STT"
-  "Nội dung": "Nội dung"
-  "Số lượng": "Số lượng"
-  "Đơn vị": "Đơn vị"
-  "Đơn giá": "Đơn giá"
-  "Thuế": "Thuế"
-  "Thành tiền": "Thành tiền"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Tổng cộng": "Tổng cộng"
-  "Giá trị chứng từ": "Giá trị chứng từ"
-  "Lịch sử chứng từ": "Lịch sử chứng từ"
-  "Chưa có hoạt động chứng từ": "Chưa có hoạt động chứng từ"
-  "Cập nhật chứng từ": "Cập nhật chứng từ"
-  "Số chứng từ": "Số chứng từ"
-  "Thêm dòng chi tiết": "Thêm dòng chi tiết"
-  "Thuế suất (%)": "Thuế suất (%)"
-  "Cập nhật dòng chi tiết": "Cập nhật dòng chi tiết"
-  "Xóa dòng chi tiết {{row.description}}?": "Xóa dòng chi tiết {{row.description}}?"
+  Document details: Chi tiết chứng từ
+  Accountant: Kế toán
+  List of documents: Danh sách chứng từ
+  Edit documents: Sửa chứng từ
+  Document type: Loại chứng từ
+  Partner/recipient: Đối tác / người nhận
+  Document date: Ngày chứng từ
+  Payment/refund deadline: Hạn thanh toán / hoàn ứng
+  Money: Tiền tệ
+  Note: Ghi chú
+  Document value is calculated directly from the detail lines.: Giá trị chứng từ được tính trực tiếp từ các dòng chi tiết.
+  + Add lines: + Thêm dòng
+  No details yet: Chưa có dòng chi tiết
+  "No": STT
+  Content: Nội dung
+  Quantity: Số lượng
+  Unit: Đơn vị
+  Unit price: Đơn giá
+  Tax: Thuế
+  Make money: Thành tiền
+  Fix: Sửa
+  Erase: Xóa
+  Total: Tổng cộng
+  Document value: Giá trị chứng từ
+  Document history: Lịch sử chứng từ
+  There is no document activity yet: Chưa có hoạt động chứng từ
+  Update documents: Cập nhật chứng từ
+  Document number: Số chứng từ
+  Add detail lines: Thêm dòng chi tiết
+  Tax rate (%): Thuế suất (%)
+  Update detail line: Cập nhật dòng chi tiết
+  "Remove detail line {{row.description}}?": "Xóa dòng chi tiết {{row.description}}?"

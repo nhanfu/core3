@@ -1,7 +1,7 @@
-title: Đội nhóm
+title: Team
 page:
   id: teams
-  breadcrumb: [Tổ chức & phân quyền, Đội nhóm]
+  breadcrumb: [Organization & decentralization, Team]
   auth: { require: [settings.read] }
 datasources:
   - id: teams
@@ -22,53 +22,53 @@ datasources:
     permission: settings.read
     query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM employees WHERE status = 'Active' ORDER BY name"
 toolbar:
-  - { id: add_team_btn, label: '+ Thêm đội nhóm', variant: primary, permission: settings.write, action: add_team }
+  - { id: add_team_btn, label: '+ Add teams', variant: primary, permission: settings.write, action: add_team }
 components:
   - type: ListToolbar
     source: teams
     filter_field: q
-    search: { label: Tìm kiếm đội nhóm, placeholder: 'Tìm mã, tên hoặc phòng ban...' }
-    actions: [{ id: teams.export, label: 'Xuất CSV', icon: download }]
+    search: { label: Search for teams, placeholder: 'Find code, name or department...' }
+    actions: [{ id: teams.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: teams
     filter_field: status
     variant: contained
-    tabs: [{ id: '', label: Tất cả }, { id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
+    tabs: [{ id: '', label: All }, { id: Active, label: Work }, { id: Inactive, label: Shut down }]
   - type: DataGrid
     source: teams
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có đội nhóm, description: Thử thay đổi bộ lọc hoặc tạo đội nhóm mới. }
+    empty_state: { title: There is no team, description: Try changing filters or creating new teams. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
-      - { field: department_name, label: Phòng ban }
-      - { field: manager_name, label: Người phụ trách }
-      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
-      - { field: created_at, label: Ngày giờ tạo }
+      - { field: id, label: HT code, sortable: true }
+      - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
+      - { field: department_name, label: Departments }
+      - { field: manager_name, label: Person in charge }
+      - { field: status_label, label: Status, type: StatusChip, colors: { Work: green, Shut down: red } }
+      - { field: created_at, label: Creation date and time }
       - field: actions
         label: ''
         sortable: false
         align: right
-        actions: [{ id: edit_team, label: Sửa, variant: ghost, permission: settings.write }, { id: delete_team, label: Xóa, variant: danger, permission: settings.write }]
+        actions: [{ id: edit_team, label: Fix, variant: ghost, permission: settings.write }, { id: delete_team, label: Erase, variant: danger, permission: settings.write }]
 actions:
   - id: add_team
     type: form
     permission: settings.write
-    title: Thêm đội nhóm
+    title: Add teams
     table: teams
     operation: insert
     refresh: [teams]
-    fields: [{ field: code, label: Mã đội nhóm, type: text, required: true }, { field: name, label: Tên đội nhóm, type: text, required: true }, { field: department_id, label: Phòng ban, type: select, options_source: team_department_lookup }, { field: manager_id, label: Người phụ trách, type: select, options_source: team_manager_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }]
+    fields: [{ field: code, label: Team code, type: text, required: true }, { field: name, label: Team name, type: text, required: true }, { field: department_id, label: Departments, type: select, options_source: team_department_lookup }, { field: manager_id, label: Person in charge, type: select, options_source: team_manager_lookup }, { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }], default: Active }]
   - id: edit_team
     type: form
     permission: settings.write
-    title: Cập nhật đội nhóm
+    title: Update the team
     table: teams
     operation: update
     prefill: row
     refresh: [teams]
-    fields: [{ field: code, label: Mã đội nhóm, type: text, required: true }, { field: name, label: Tên đội nhóm, type: text, required: true }, { field: department_id, label: Phòng ban, type: select, options_source: team_department_lookup }, { field: manager_id, label: Người phụ trách, type: select, options_source: team_manager_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }]
-  - { id: delete_team, type: delete, permission: settings.write, confirm: 'Xóa đội nhóm {{row.name}}?', table: teams, refresh: [teams] }
+    fields: [{ field: code, label: Team code, type: text, required: true }, { field: name, label: Team name, type: text, required: true }, { field: department_id, label: Departments, type: select, options_source: team_department_lookup }, { field: manager_id, label: Person in charge, type: select, options_source: team_manager_lookup }, { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }] }]
+  - { id: delete_team, type: delete, permission: settings.write, confirm: 'Delete team {{row.name}}?', table: teams, refresh: [teams] }

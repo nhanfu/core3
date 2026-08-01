@@ -1,66 +1,33 @@
-en:
-  "Địa điểm": "Location"
-  "Danh mục": "Category"
-  "+ Thêm địa điểm": "+ Add locations"
-  "Tìm kiếm địa điểm": "Search for locations"
-  "Tìm mã, tên, thành phố hoặc địa chỉ...": "Find code, name, city or address..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Hoạt động": "Work"
-  "Ngưng hoạt động": "Shut down"
-  "Không có địa điểm": "No location available"
-  "Thử thay đổi bộ lọc hoặc tạo địa điểm mới.": "Try changing your filters or creating a new location."
-  "Mã HT": "HT code"
-  "Mã / tên": "Code/name"
-  "Loại": "Type"
-  "Địa chỉ": "Address"
-  "Khu vực": "Area"
-  "Trạng thái": "Status"
-  "Ngày giờ tạo": "Creation date and time"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm địa điểm": "Add location"
-  "Mã địa điểm": "Location code"
-  "Tên địa điểm": "Location name"
-  "Loại địa điểm": "Location type"
-  "Cảng": "Port"
-  "Kho": "Warehouse"
-  "Depot": "Depot"
-  "Khách hàng": "Client"
-  "Khác": "Other"
-  "Thành phố": "City"
-  "Cập nhật địa điểm": "Update location"
-  "Xóa địa điểm {{row.name}}?": "Delete place {{row.name}}?"
 vi:
-  "Địa điểm": "Địa điểm"
-  "Danh mục": "Danh mục"
-  "+ Thêm địa điểm": "+ Thêm địa điểm"
-  "Tìm kiếm địa điểm": "Tìm kiếm địa điểm"
-  "Tìm mã, tên, thành phố hoặc địa chỉ...": "Tìm mã, tên, thành phố hoặc địa chỉ..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Hoạt động": "Hoạt động"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Không có địa điểm": "Không có địa điểm"
-  "Thử thay đổi bộ lọc hoặc tạo địa điểm mới.": "Thử thay đổi bộ lọc hoặc tạo địa điểm mới."
-  "Mã HT": "Mã HT"
-  "Mã / tên": "Mã / tên"
-  "Loại": "Loại"
-  "Địa chỉ": "Địa chỉ"
-  "Khu vực": "Khu vực"
-  "Trạng thái": "Trạng thái"
-  "Ngày giờ tạo": "Ngày giờ tạo"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm địa điểm": "Thêm địa điểm"
-  "Mã địa điểm": "Mã địa điểm"
-  "Tên địa điểm": "Tên địa điểm"
-  "Loại địa điểm": "Loại địa điểm"
-  "Cảng": "Cảng"
-  "Kho": "Kho"
-  "Depot": "Depot"
-  "Khách hàng": "Khách hàng"
-  "Khác": "Khác"
-  "Thành phố": "Thành phố"
-  "Cập nhật địa điểm": "Cập nhật địa điểm"
-  "Xóa địa điểm {{row.name}}?": "Xóa địa điểm {{row.name}}?"
+  Location: Địa điểm
+  Category: Danh mục
+  + Add locations: + Thêm địa điểm
+  Search for locations: Tìm kiếm địa điểm
+  "Find code, name, city or address...": "Tìm mã, tên, thành phố hoặc địa chỉ..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Work: Hoạt động
+  Shut down: Ngưng hoạt động
+  No location available: Không có địa điểm
+  Try changing your filters or creating a new location.: Thử thay đổi bộ lọc hoặc tạo địa điểm mới.
+  HT code: Mã HT
+  Code/name: Mã / tên
+  Type: Loại
+  Address: Địa chỉ
+  Area: Khu vực
+  Status: Trạng thái
+  Creation date and time: Ngày giờ tạo
+  Fix: Sửa
+  Erase: Xóa
+  Add location: Thêm địa điểm
+  Location code: Mã địa điểm
+  Location name: Tên địa điểm
+  Location type: Loại địa điểm
+  Port: Cảng
+  Warehouse: Kho
+  Depot: Depot
+  Client: Khách hàng
+  Other: Khác
+  City: Thành phố
+  Update location: Cập nhật địa điểm
+  "Delete place {{row.name}}?": "Xóa địa điểm {{row.name}}?"

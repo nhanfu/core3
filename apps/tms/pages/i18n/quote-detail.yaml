@@ -1,70 +1,35 @@
-en:
-  "Chi tiết báo giá": "Quote details"
-  "Kinh doanh": "Business"
-  "Báo giá": "Quote"
-  "Chi tiết": "Detail"
-  "Danh sách báo giá": "List of quotes"
-  "Sửa báo giá": "Edit quote"
-  "Khách hàng": "Client"
-  "Hiệu lực đến": "Effect arrives"
-  "Biên lợi nhuận": "Profit margin"
-  "Chi tiết mua / bán": "Buy/sell details"
-  "Doanh thu, giá vốn và lợi nhuận được tính từ từng dòng.": "Revenue, cost price and profit are calculated from each line."
-  "+ Thêm dòng": "+ Add lines"
-  "Chưa có dòng báo giá": "There are no quotes yet"
-  "STT": "No"
-  "Nội dung": "Content"
-  "Số lượng": "Quantity"
-  "Đơn vị": "Unit"
-  "Giá bán": "Selling price"
-  "Giá vốn": "Capital price"
-  "Thuế": "Tax"
-  "Thành tiền": "Make money"
-  "Lợi nhuận": "Profit"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Hiệu quả báo giá": "Quote efficiency"
-  "Doanh thu": "Revenue"
-  "Lịch sử báo giá": "Quote history"
-  "Chưa có hoạt động báo giá": "There is no quote activity yet"
-  "Cập nhật báo giá": "Update quote"
-  "Mã": "Code"
-  "Thêm dòng báo giá": "Add a quote line"
-  "Thuế suất (%)": "Tax rate (%)"
-  "Cập nhật dòng báo giá": "Update quote line"
-  "Xóa dòng báo giá {{row.description}}?": "Remove quote line {{row.description}}?"
 vi:
-  "Chi tiết báo giá": "Chi tiết báo giá"
-  "Kinh doanh": "Kinh doanh"
-  "Báo giá": "Báo giá"
-  "Chi tiết": "Chi tiết"
-  "Danh sách báo giá": "Danh sách báo giá"
-  "Sửa báo giá": "Sửa báo giá"
-  "Khách hàng": "Khách hàng"
-  "Hiệu lực đến": "Hiệu lực đến"
-  "Biên lợi nhuận": "Biên lợi nhuận"
-  "Chi tiết mua / bán": "Chi tiết mua / bán"
-  "Doanh thu, giá vốn và lợi nhuận được tính từ từng dòng.": "Doanh thu, giá vốn và lợi nhuận được tính từ từng dòng."
-  "+ Thêm dòng": "+ Thêm dòng"
-  "Chưa có dòng báo giá": "Chưa có dòng báo giá"
-  "STT": "STT"
-  "Nội dung": "Nội dung"
-  "Số lượng": "Số lượng"
-  "Đơn vị": "Đơn vị"
-  "Giá bán": "Giá bán"
-  "Giá vốn": "Giá vốn"
-  "Thuế": "Thuế"
-  "Thành tiền": "Thành tiền"
-  "Lợi nhuận": "Lợi nhuận"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Hiệu quả báo giá": "Hiệu quả báo giá"
-  "Doanh thu": "Doanh thu"
-  "Lịch sử báo giá": "Lịch sử báo giá"
-  "Chưa có hoạt động báo giá": "Chưa có hoạt động báo giá"
-  "Cập nhật báo giá": "Cập nhật báo giá"
-  "Mã": "Mã"
-  "Thêm dòng báo giá": "Thêm dòng báo giá"
-  "Thuế suất (%)": "Thuế suất (%)"
-  "Cập nhật dòng báo giá": "Cập nhật dòng báo giá"
-  "Xóa dòng báo giá {{row.description}}?": "Xóa dòng báo giá {{row.description}}?"
+  Quote details: Chi tiết báo giá
+  Business: Kinh doanh
+  Quote: Báo giá
+  Detail: Chi tiết
+  List of quotes: Danh sách báo giá
+  Edit quote: Sửa báo giá
+  Client: Khách hàng
+  Effect arrives: Hiệu lực đến
+  Profit margin: Biên lợi nhuận
+  Buy/sell details: Chi tiết mua / bán
+  "Revenue, cost price and profit are calculated from each line.": "Doanh thu, giá vốn và lợi nhuận được tính từ từng dòng."
+  + Add lines: + Thêm dòng
+  There are no quotes yet: Chưa có dòng báo giá
+  "No": STT
+  Content: Nội dung
+  Quantity: Số lượng
+  Unit: Đơn vị
+  Selling price: Giá bán
+  Capital price: Giá vốn
+  Tax: Thuế
+  Make money: Thành tiền
+  Profit: Lợi nhuận
+  Fix: Sửa
+  Erase: Xóa
+  Quote efficiency: Hiệu quả báo giá
+  Revenue: Doanh thu
+  Quote history: Lịch sử báo giá
+  There is no quote activity yet: Chưa có hoạt động báo giá
+  Update quote: Cập nhật báo giá
+  Code: Mã
+  Add a quote line: Thêm dòng báo giá
+  Tax rate (%): Thuế suất (%)
+  Update quote line: Cập nhật dòng báo giá
+  "Remove quote line {{row.description}}?": "Xóa dòng báo giá {{row.description}}?"

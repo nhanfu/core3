@@ -1,48 +1,24 @@
-en:
-  "Quy trình duyệt": "Browsing process"
-  "Hệ thống": "System"
-  "+ Thêm quy trình": "+ Add process"
-  "Tìm quy trình": "Find the process"
-  "Tìm mã hoặc tên...": "Find code or name..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Chưa có quy trình duyệt": "There is no approval process yet"
-  "Mã": "Code"
-  "Quy trình": "Procedure"
-  "Cấu hình cũ": "Old configuration"
-  "Trạng thái": "Status"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm quy trình duyệt": "Add browsing process"
-  "Tên": "Name"
-  "Các bước cũ": "Old steps"
-  "Mô tả": "Describe"
-  "Cập nhật quy trình duyệt": "Update approval process"
-  "Xóa quy trình {{row.name}}?": "Delete process {{row.name}}?"
 vi:
-  "Quy trình duyệt": "Quy trình duyệt"
-  "Hệ thống": "Hệ thống"
-  "+ Thêm quy trình": "+ Thêm quy trình"
-  "Tìm quy trình": "Tìm quy trình"
-  "Tìm mã hoặc tên...": "Tìm mã hoặc tên..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Chưa có quy trình duyệt": "Chưa có quy trình duyệt"
-  "Mã": "Mã"
-  "Quy trình": "Quy trình"
-  "Cấu hình cũ": "Cấu hình cũ"
-  "Trạng thái": "Trạng thái"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm quy trình duyệt": "Thêm quy trình duyệt"
-  "Tên": "Tên"
-  "Các bước cũ": "Các bước cũ"
-  "Mô tả": "Mô tả"
-  "Cập nhật quy trình duyệt": "Cập nhật quy trình duyệt"
-  "Xóa quy trình {{row.name}}?": "Xóa quy trình {{row.name}}?"
+  Browsing process: Quy trình duyệt
+  System: Hệ thống
+  + Add process: + Thêm quy trình
+  Find the process: Tìm quy trình
+  "Find code or name...": "Tìm mã hoặc tên..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  There is no approval process yet: Chưa có quy trình duyệt
+  Code: Mã
+  Procedure: Quy trình
+  Old configuration: Cấu hình cũ
+  Status: Trạng thái
+  Detail: Chi tiết
+  Fix: Sửa
+  Erase: Xóa
+  Add browsing process: Thêm quy trình duyệt
+  Name: Tên
+  Old steps: Các bước cũ
+  Describe: Mô tả
+  Update approval process: Cập nhật quy trình duyệt
+  "Delete process {{row.name}}?": "Xóa quy trình {{row.name}}?"

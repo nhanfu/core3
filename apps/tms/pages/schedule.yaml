@@ -1,15 +1,15 @@
-title: Lịch điều
+title: Calendar thing
 
 page:
   id: schedule
-  breadcrumb: [Điều hành, Lịch điều]
+  breadcrumb: [Executive, Calendar thing]
   auth:
     require: [dispatch.read]
 
 components:
   - type: ComingSoon
     id: schedule-development-state
-    eyebrow: Điều hành vận tải
-    title: Tính năng đang được phát triển
-    description: Lịch điều xe sẽ sớm được cập nhật trên hệ thống.
+    eyebrow: Transport management
+    title: Feature under development
+    description: The vehicle dispatch schedule will soon be updated on the system.
     icon: calendar

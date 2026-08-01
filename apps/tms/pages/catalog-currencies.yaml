@@ -1,8 +1,8 @@
-title: Tiền tệ
+title: Money
 
 page:
   id: catalog-currencies
-  breadcrumb: [Danh mục, Tiền tệ]
+  breadcrumb: [Category, Money]
   auth:
     require: [catalog.read]
 
@@ -23,51 +23,51 @@ datasources:
       ORDER BY m.sort_order, m.code
 
 toolbar:
-  - { id: add_currency_btn, label: '+ Thêm tiền tệ', variant: primary, permission: catalog.write, action: add_currency }
-  - { id: sync_currency_rates_btn, label: 'Đồng bộ tỷ giá', variant: secondary, permission: catalog.write, action: sync_currency_rates }
+  - { id: add_currency_btn, label: '+ Add currency', variant: primary, permission: catalog.write, action: add_currency }
+  - { id: sync_currency_rates_btn, label: 'Synchronize exchange rates', variant: secondary, permission: catalog.write, action: sync_currency_rates }
 
 components:
   - type: ListToolbar
     source: currencies
     filter_field: q
-    search: { label: Tìm kiếm tiền tệ, placeholder: 'Tìm mã, tên hoặc ký hiệu...' }
-    actions: [{ id: currencies.export, label: 'Xuất CSV', icon: download }, { id: import_currencies, label: 'Nhập CSV', icon: upload }]
+    search: { label: Currency search, placeholder: 'Find code, name or symbol...' }
+    actions: [{ id: currencies.export, label: 'Export CSV', icon: download }, { id: import_currencies, label: 'Import CSV', icon: upload }]
   - type: StatusTabs
     source: currencies
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Đang sử dụng }
-      - { id: Inactive, label: Ngưng sử dụng }
+      - { id: '', label: All }
+      - { id: Active, label: In use }
+      - { id: Inactive, label: Discontinue use }
   - type: DataGrid
     source: currencies
     column_chooser: true
     page_size: 20
     row_key: id
     selectable: true
-    empty_state: { title: Không có tiền tệ, description: Tạo tiền tệ đầu tiên để sử dụng trong báo giá. }
+    empty_state: { title: No currency, description: Create your first currency to use in quotes. }
     columns:
-      - { field: code, label: Mã, sortable: true }
-      - { field: name, label: Tiền tệ, type: PrimaryEntityCell, secondary: description }
-      - { field: symbol, label: Ký hiệu, align: center }
-      - { field: decimals, label: Số lẻ, align: right }
-      - { field: rate_to_vnd, label: Tỷ giá / VND, align: right }
-      - { field: rate_effective_date, label: Ngày hiệu lực }
-      - { field: rate_source, label: Nguồn }
-      - { field: sort_order, label: Thứ tự, align: right }
+      - { field: code, label: Code, sortable: true }
+      - { field: name, label: Money, type: PrimaryEntityCell, secondary: description }
+      - { field: symbol, label: Symbol, align: center }
+      - { field: decimals, label: Odd, align: right }
+      - { field: rate_to_vnd, label: Exchange rate / VND, align: right }
+      - { field: rate_effective_date, label: Effective date }
+      - { field: rate_source, label: Source }
+      - { field: sort_order, label: Order, align: right }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors: { Active: green, Inactive: red }
-      - { field: created_at, label: Ngày tạo }
+      - { field: created_at, label: Creation date }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_currency, label: Sửa, variant: ghost, permission: catalog.write }
-          - { id: delete_currency, label: Xóa, variant: danger, permission: catalog.write }
+          - { id: edit_currency, label: Fix, variant: ghost, permission: catalog.write }
+          - { id: delete_currency, label: Erase, variant: danger, permission: catalog.write }
 
 actions:
   - { id: sync_currency_rates, type: server, permission: catalog.write, action: catalog.currencies.sync_rates, refresh: [currencies] }
@@ -75,34 +75,34 @@ actions:
   - id: add_currency
     type: form
     permission: catalog.write
-    title: Thêm tiền tệ
+    title: Add currency
     table: master_data
     scope: currency
     operation: insert
     refresh: [currencies]
     fields:
-      - { field: code, label: Mã ISO, type: text, required: true }
-      - { field: name, label: Tên tiền tệ, type: text, required: true }
-      - { field: symbol, label: Ký hiệu, type: text }
-      - { field: decimals, label: Số chữ số lẻ, type: number, default: 2 }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
+      - { field: code, label: ISO code, type: text, required: true }
+      - { field: name, label: Currency name, type: text, required: true }
+      - { field: symbol, label: Symbol, type: text }
+      - { field: decimals, label: Odd number of digits, type: number, default: 2 }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number, default: 0 }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }
   - id: edit_currency
     type: form
     permission: catalog.write
-    title: Cập nhật tiền tệ
+    title: Currency update
     table: master_data
     scope: currency
     operation: update
     prefill: row
     refresh: [currencies]
     fields:
-      - { field: code, label: Mã ISO, type: text, required: true }
-      - { field: name, label: Tên tiền tệ, type: text, required: true }
-      - { field: symbol, label: Ký hiệu, type: text }
-      - { field: decimals, label: Số chữ số lẻ, type: number }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
-  - { id: delete_currency, type: delete, permission: catalog.write, table: master_data, scope: currency, confirm: 'Xóa tiền tệ {{row.name}}?', refresh: [currencies] }
+      - { field: code, label: ISO code, type: text, required: true }
+      - { field: name, label: Currency name, type: text, required: true }
+      - { field: symbol, label: Symbol, type: text }
+      - { field: decimals, label: Odd number of digits, type: number }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
+  - { id: delete_currency, type: delete, permission: catalog.write, table: master_data, scope: currency, confirm: 'Delete currency {{row.name}}?', refresh: [currencies] }

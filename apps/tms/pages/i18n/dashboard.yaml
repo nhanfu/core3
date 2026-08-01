@@ -1,110 +1,54 @@
-en:
-  "Tổng quan": "Overview"
-  "Xin chào": "Hello"
-  "Mẹo": "Tips"
-  "Từ ngày": "From date"
-  "Đến ngày": "Come day"
-  "Xuất CSV": "Export CSV"
-  "Việc cần làm": "Things to do"
-  "Đơn nháp": "Draft application"
-  "Đơn chờ duyệt": "Application awaiting approval"
-  "Chuyến chưa điều xe": "The trip has not yet been dispatched"
-  "Chuyến đang chạy": "The trip is running"
-  "Giấy báo nợ quá hạn": "Overdue debt notice"
-  "Đề nghị chi chờ duyệt": "Please wait for approval"
-  "HĐ sắp hết hạn": "The contract is about to expire"
-  "Vận hành": "Operate"
-  "Tổng chuyến": "Total trip"
-  "Hoàn thành": "Complete"
-  "Tỷ lệ hoàn thành": "Completion rate"
-  "TB thời gian chạy (giờ)": "Average running time (hours)"
-  "Tỷ lệ chưa điều xe": "Percentage of vehicles not yet dispatched"
-  "Hủy": "Cancel"
-  "Doanh thu · Chi phí": "Revenue · Expenses"
-  "Doanh thu": "Revenue"
-  "Chi phí": "Expense"
-  "Lợi nhuận": "Profit"
-  "Biên lãi": "Profit margin"
-  "Số đơn hàng": "Order number"
-  "Khách hàng mới": "New customer"
-  "Công nợ · Dòng tiền": "Debt · Cash flow"
-  "Công nợ phải thu": "Debt receivable"
-  "Công nợ phải trả": "Debts payable"
-  "Tạm ứng còn lại": "Remaining advance"
-  "Chi phí chờ duyệt": "Expenses awaiting approval"
-  "Tổng km": "Total km"
-  "Nhân sự": "Human resources"
-  "Nhân sự hoạt động": "Operational personnel"
-  "Hợp đồng sắp hết hạn": "The contract is about to expire"
-  "Tài xế hoạt động": "Driver works"
-  "Container sẵn sàng": "Containers ready"
-  "Tổng bảng lương": "Total payroll"
-  "Chuyến hoàn thành": "Trip completed"
-  "Doanh thu · Chi phí · Lợi nhuận theo tháng": "Revenue · Cost · Profit by month"
-  "Tổng quan trạng thái chuyến": "Overview of trip status"
-  "Mã chuyến": "Trip code"
-  "Tuyến đường": "Route"
-  "Phương tiện": "Vehicle"
-  "Trạng thái": "Status"
-  "Khởi hành": "Depart"
-  "Chưa có dữ liệu tuyến đường": "No route data yet"
-  "Số chuyến": "Number of trips"
-  "Chưa có dữ liệu khách hàng": "No customer data yet"
-  "Khách hàng": "Client"
-  "Số đơn": "Application number"
-  "Giá trị đơn": "Single value"
 vi:
-  "Tổng quan": "Tổng quan"
-  "Xin chào": "Xin chào"
-  "Mẹo": "Mẹo"
-  "Từ ngày": "Từ ngày"
-  "Đến ngày": "Đến ngày"
-  "Xuất CSV": "Xuất CSV"
-  "Việc cần làm": "Việc cần làm"
-  "Đơn nháp": "Đơn nháp"
-  "Đơn chờ duyệt": "Đơn chờ duyệt"
-  "Chuyến chưa điều xe": "Chuyến chưa điều xe"
-  "Chuyến đang chạy": "Chuyến đang chạy"
-  "Giấy báo nợ quá hạn": "Giấy báo nợ quá hạn"
-  "Đề nghị chi chờ duyệt": "Đề nghị chi chờ duyệt"
-  "HĐ sắp hết hạn": "HĐ sắp hết hạn"
-  "Vận hành": "Vận hành"
-  "Tổng chuyến": "Tổng chuyến"
-  "Hoàn thành": "Hoàn thành"
-  "Tỷ lệ hoàn thành": "Tỷ lệ hoàn thành"
-  "TB thời gian chạy (giờ)": "TB thời gian chạy (giờ)"
-  "Tỷ lệ chưa điều xe": "Tỷ lệ chưa điều xe"
-  "Hủy": "Hủy"
-  "Doanh thu · Chi phí": "Doanh thu · Chi phí"
-  "Doanh thu": "Doanh thu"
-  "Chi phí": "Chi phí"
-  "Lợi nhuận": "Lợi nhuận"
-  "Biên lãi": "Biên lãi"
-  "Số đơn hàng": "Số đơn hàng"
-  "Khách hàng mới": "Khách hàng mới"
-  "Công nợ · Dòng tiền": "Công nợ · Dòng tiền"
-  "Công nợ phải thu": "Công nợ phải thu"
-  "Công nợ phải trả": "Công nợ phải trả"
-  "Tạm ứng còn lại": "Tạm ứng còn lại"
-  "Chi phí chờ duyệt": "Chi phí chờ duyệt"
-  "Tổng km": "Tổng km"
-  "Nhân sự": "Nhân sự"
-  "Nhân sự hoạt động": "Nhân sự hoạt động"
-  "Hợp đồng sắp hết hạn": "Hợp đồng sắp hết hạn"
-  "Tài xế hoạt động": "Tài xế hoạt động"
-  "Container sẵn sàng": "Container sẵn sàng"
-  "Tổng bảng lương": "Tổng bảng lương"
-  "Chuyến hoàn thành": "Chuyến hoàn thành"
-  "Doanh thu · Chi phí · Lợi nhuận theo tháng": "Doanh thu · Chi phí · Lợi nhuận theo tháng"
-  "Tổng quan trạng thái chuyến": "Tổng quan trạng thái chuyến"
-  "Mã chuyến": "Mã chuyến"
-  "Tuyến đường": "Tuyến đường"
-  "Phương tiện": "Phương tiện"
-  "Trạng thái": "Trạng thái"
-  "Khởi hành": "Khởi hành"
-  "Chưa có dữ liệu tuyến đường": "Chưa có dữ liệu tuyến đường"
-  "Số chuyến": "Số chuyến"
-  "Chưa có dữ liệu khách hàng": "Chưa có dữ liệu khách hàng"
-  "Khách hàng": "Khách hàng"
-  "Số đơn": "Số đơn"
-  "Giá trị đơn": "Giá trị đơn"
+  Overview: Tổng quan
+  Hello: Xin chào
+  Tips: Mẹo
+  From date: Từ ngày
+  Come day: Đến ngày
+  Export CSV: Xuất CSV
+  Things to do: Việc cần làm
+  Draft application: Đơn nháp
+  Application awaiting approval: Đơn chờ duyệt
+  The trip has not yet been dispatched: Chuyến chưa điều xe
+  The trip is running: Chuyến đang chạy
+  Overdue debt notice: Giấy báo nợ quá hạn
+  Please wait for approval: Đề nghị chi chờ duyệt
+  The contract is about to expire: Hợp đồng sắp hết hạn
+  Operate: Vận hành
+  Total trip: Tổng chuyến
+  Complete: Hoàn thành
+  Completion rate: Tỷ lệ hoàn thành
+  Average running time (hours): TB thời gian chạy (giờ)
+  Percentage of vehicles not yet dispatched: Tỷ lệ chưa điều xe
+  Cancel: Hủy
+  Revenue · Expenses: Doanh thu · Chi phí
+  Revenue: Doanh thu
+  Expense: Chi phí
+  Profit: Lợi nhuận
+  Profit margin: Biên lãi
+  Order number: Số đơn hàng
+  New customer: Khách hàng mới
+  Debt · Cash flow: Công nợ · Dòng tiền
+  Debt receivable: Công nợ phải thu
+  Debts payable: Công nợ phải trả
+  Remaining advance: Tạm ứng còn lại
+  Expenses awaiting approval: Chi phí chờ duyệt
+  Total km: Tổng km
+  Human resources: Nhân sự
+  Operational personnel: Nhân sự hoạt động
+  Driver works: Tài xế hoạt động
+  Containers ready: Container sẵn sàng
+  Total payroll: Tổng bảng lương
+  Trip completed: Chuyến hoàn thành
+  Revenue · Cost · Profit by month: Doanh thu · Chi phí · Lợi nhuận theo tháng
+  Overview of trip status: Tổng quan trạng thái chuyến
+  Trip code: Mã chuyến
+  Route: Tuyến đường
+  Vehicle: Phương tiện
+  Status: Trạng thái
+  Depart: Khởi hành
+  No route data yet: Chưa có dữ liệu tuyến đường
+  Number of trips: Số chuyến
+  No customer data yet: Chưa có dữ liệu khách hàng
+  Client: Khách hàng
+  Application number: Số đơn
+  Single value: Giá trị đơn

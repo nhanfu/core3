@@ -1,5 +1,5 @@
-title: Tổng hợp giấy báo nợ
-page: { id: accounting-debit-note-summary, breadcrumb: [Kế toán, Tổng hợp giấy báo nợ], auth: { require: [accounting.read] } }
+title: Summary of debt notices
+page: { id: accounting-debit-note-summary, breadcrumb: [Accountant, Summary of debt notices], auth: { require: [accounting.read] } }
 datasources:
   - id: debit_note_totals
     single: true
@@ -47,25 +47,25 @@ components:
   - type: ListToolbar
     source: debit_note_summary
     filter_sources: [debit_note_summary, debit_note_totals, debit_note_status_breakdown]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
-    search: { label: Tìm kiếm tổng hợp, placeholder: 'Tìm đối tác hoặc trạng thái...' }
-    actions: [{ id: debit_note_summary.export, label: 'Xuất CSV', icon: download }]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
+    search: { label: General search, placeholder: 'Find a partner or status...' }
+    actions: [{ id: debit_note_summary.export, label: 'Export CSV', icon: download }]
   - type: StatRow
     source: debit_note_totals
-    stats: [{ label: Số chứng từ, field: document_count, color: blue }, { label: Tổng giá trị, field: total_amount, color: blue }, { label: Còn phải thu, field: outstanding_amount, color: amber }, { label: Đã thanh toán, field: paid_amount, color: green }]
-  - { type: Chart, source: debit_note_status_breakdown, title: Chứng từ theo trạng thái, label_field: label, value_field: value, width: 560, height: 240, color: blue }
-  - { type: StatusTabs, source: debit_note_summary, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Paid, label: Đã thanh toán }, { id: Cancelled, label: Đã hủy }] }
+    stats: [{ label: Document number, field: document_count, color: blue }, { label: Total value, field: total_amount, color: blue }, { label: Still have to collect, field: outstanding_amount, color: amber }, { label: Paid, field: paid_amount, color: green }]
+  - { type: Chart, source: debit_note_status_breakdown, title: Documents by status, label_field: label, value_field: value, width: 560, height: 240, color: blue }
+  - { type: StatusTabs, source: debit_note_summary, filter_field: status, tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Paid, label: Paid }, { id: Cancelled, label: Canceled }] }
   - type: DataGrid
     source: debit_note_summary
     page_size: 20
     column_chooser: true
     row_key: counterparty
-    empty_state: { title: Không có dữ liệu tổng hợp }
+    empty_state: { title: No aggregate data available }
     columns:
-      - { field: counterparty, label: Đối tác, sortable: true }
-      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red } }
-      - { field: document_count, label: Số chứng từ, align: right }
-      - { field: total_amount_display, label: Tổng giá trị, align: right }
-      - { field: currency, label: Tiền tệ }
-      - { field: latest_document_date, label: Chứng từ gần nhất }
+      - { field: counterparty, label: Partner, sortable: true }
+      - { field: status_label, label: Status, type: StatusChip, colors: { Draft: neutral, Browsing: amber, Approved: green, Paid: blue, Canceled: red } }
+      - { field: document_count, label: Document number, align: right }
+      - { field: total_amount_display, label: Total value, align: right }
+      - { field: currency, label: Money }
+      - { field: latest_document_date, label: Latest documents }
 actions: []

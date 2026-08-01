@@ -1,8 +1,8 @@
-title: Nhân viên
+title: Staff
 
 page:
   id: employees
-  breadcrumb: [Nhân sự, Nhân viên]
+  breadcrumb: [Human resources, Staff]
   auth:
     require: [hr.read]
 
@@ -26,7 +26,7 @@ datasources:
 
 toolbar:
   - id: add_employee_btn
-    label: '+ Thêm nhân viên'
+    label: '+ Add employees'
     variant: primary
     permission: hr.write
     action: add_employee
@@ -35,85 +35,85 @@ components:
   - type: ListToolbar
     source: employees
     filter_field: q
-    search: { label: Tìm kiếm nhân viên, placeholder: 'Tìm mã, tên, SĐT, email...' }
-    actions: [{ id: employees.export, label: 'Xuất CSV', icon: download }]
+    search: { label: Search for employees, placeholder: 'Find code, name, phone number, email...' }
+    actions: [{ id: employees.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: employees
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Đang làm việc }
-      - { id: OnLeave, label: Nghỉ phép }
-      - { id: Inactive, label: Ngưng làm việc }
+      - { id: '', label: All }
+      - { id: Active, label: Working }
+      - { id: OnLeave, label: On leave }
+      - { id: Inactive, label: Stop working }
   - type: DataGrid
     source: employees
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có nhân viên, description: Thử thay đổi bộ lọc hoặc tạo nhân viên mới. }
+    empty_state: { title: No staff, description: Try changing the filter or creating a new employee. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: name, label: Họ tên, type: PrimaryEntityCell, secondary: job_title }
-      - { field: code, label: Mã nhân viên }
-      - { field: phone, label: Điện thoại, type: PrimaryEntityCell, secondary: email }
-      - { field: start_date, label: Ngày vào làm }
-      - { field: dependents, label: Người phụ thuộc, align: right }
+      - { field: id, label: HT code, sortable: true }
+      - { field: name, label: Full name, type: PrimaryEntityCell, secondary: job_title }
+      - { field: code, label: Employee code }
+      - { field: phone, label: Phone, type: PrimaryEntityCell, secondary: email }
+      - { field: start_date, label: Day of work }
+      - { field: dependents, label: Dependents, align: right }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Đang làm việc: green, Nghỉ phép: amber, Ngưng làm việc: red }
-      - { field: created_at, label: Ngày giờ tạo }
+        colors: { Working: green, On leave: amber, Stop working: red }
+      - { field: created_at, label: Creation date and time }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_employee, label: Chi tiết, variant: primary, permission: hr.read }
-          - { id: edit_employee, label: Sửa, variant: ghost, permission: hr.write }
-          - { id: delete_employee, label: Xóa, variant: danger, permission: hr.write }
+          - { id: view_employee, label: Detail, variant: primary, permission: hr.read }
+          - { id: edit_employee, label: Fix, variant: ghost, permission: hr.write }
+          - { id: delete_employee, label: Erase, variant: danger, permission: hr.write }
 
 actions:
   - { id: view_employee, type: navigate, permission: hr.read, navigate_to: /hr/employees/detail, params: { id: '{row.id}' } }
   - id: add_employee
     type: form
     permission: hr.write
-    title: Thêm nhân viên
+    title: More staff
     table: employees
     operation: insert
     refresh: [employees]
     fields:
-      - { field: code, label: Mã nhân viên, type: text, required: true }
-      - { field: name, label: Họ tên, type: text, required: true }
-      - { field: job_title, label: Chức danh, type: text }
-      - { field: phone, label: Số điện thoại, type: text }
-      - { field: email, label: Email, type: text }
-      - { field: department, label: Phòng ban, type: select, options_source: employee_department_lookup }
-      - { field: start_date, label: Ngày vào làm, type: date }
-      - { field: dependents, label: Người phụ thuộc, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang làm việc }, { id: OnLeave, label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
+      - { field: code, label: Employee code, type: text, required: true }
+      - { field: name, label: Full name, type: text, required: true }
+      - { field: job_title, label: Title, type: text }
+      - { field: phone, label: Phone number, type: text }
+      - { field: email, label: E-mail, type: text }
+      - { field: department, label: Departments, type: select, options_source: employee_department_lookup }
+      - { field: start_date, label: Day of work, type: date }
+      - { field: dependents, label: Dependents, type: number, default: 0 }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Working }, { id: OnLeave, label: On leave }, { id: Inactive, label: Shut down }], default: Active }
   - id: edit_employee
     type: form
     permission: hr.write
-    title: Cập nhật nhân viên
+    title: Update staff
     table: employees
     operation: update
     prefill: row
     refresh: [employees]
     fields:
-      - { field: code, label: Mã nhân viên, type: text, required: true }
-      - { field: name, label: Họ tên, type: text, required: true }
-      - { field: job_title, label: Chức danh, type: text }
-      - { field: phone, label: Số điện thoại, type: text }
-      - { field: email, label: Email, type: text }
-      - { field: department, label: Phòng ban, type: select, options_source: employee_department_lookup }
-      - { field: start_date, label: Ngày vào làm, type: date }
-      - { field: dependents, label: Người phụ thuộc, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang làm việc }, { id: OnLeave, label: Nghỉ phép }, { id: Inactive, label: Ngưng hoạt động }] }
+      - { field: code, label: Employee code, type: text, required: true }
+      - { field: name, label: Full name, type: text, required: true }
+      - { field: job_title, label: Title, type: text }
+      - { field: phone, label: Phone number, type: text }
+      - { field: email, label: E-mail, type: text }
+      - { field: department, label: Departments, type: select, options_source: employee_department_lookup }
+      - { field: start_date, label: Day of work, type: date }
+      - { field: dependents, label: Dependents, type: number }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Working }, { id: OnLeave, label: On leave }, { id: Inactive, label: Shut down }] }
   - id: delete_employee
     type: delete
     permission: hr.write
-    confirm: 'Xóa nhân viên {{row.name}}?'
+    confirm: 'Delete employee {{row.name}}?'
     table: employees
     refresh: [employees]

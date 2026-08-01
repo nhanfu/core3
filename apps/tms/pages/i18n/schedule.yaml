@@ -1,12 +1,6 @@
-en:
-  "Lịch điều": "Calendar thing"
-  "Điều hành": "Executive"
-  "Điều hành vận tải": "Transport management"
-  "Tính năng đang được phát triển": "Feature under development"
-  "Lịch điều xe sẽ sớm được cập nhật trên hệ thống.": "The vehicle dispatch schedule will soon be updated on the system."
 vi:
-  "Lịch điều": "Lịch điều"
-  "Điều hành": "Điều hành"
-  "Điều hành vận tải": "Điều hành vận tải"
-  "Tính năng đang được phát triển": "Tính năng đang được phát triển"
-  "Lịch điều xe sẽ sớm được cập nhật trên hệ thống.": "Lịch điều xe sẽ sớm được cập nhật trên hệ thống."
+  Calendar thing: Lịch điều
+  Executive: Điều hành
+  Transport management: Điều hành vận tải
+  Feature under development: Tính năng đang được phát triển
+  The vehicle dispatch schedule will soon be updated on the system.: Lịch điều xe sẽ sớm được cập nhật trên hệ thống.

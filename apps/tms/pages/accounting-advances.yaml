@@ -1,5 +1,5 @@
-title: Tạm ứng
-page: { id: accounting-advances, breadcrumb: [Kế toán, Tạm ứng], auth: { require: [accounting.read] } }
+title: Advance
+page: { id: accounting-advances, breadcrumb: [Accountant, Advance], auth: { require: [accounting.read] } }
 datasources:
   - id: advances
     single: false
@@ -19,63 +19,63 @@ datasources:
     single: false
     permission: accounting.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
-toolbar: [{ id: add_advance_btn, label: '+ Thêm tạm ứng', variant: primary, permission: accounting.write, action: add_advance }]
+toolbar: [{ id: add_advance_btn, label: '+ Add advance', variant: primary, permission: accounting.write, action: add_advance }]
 components:
-  - { type: ListToolbar, source: advances, filter_field: q, search: { label: Tìm kiếm tạm ứng, placeholder: 'Tìm số chứng từ hoặc người nhận...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày tạm ứng', to_label: 'Đến ngày tạm ứng', presets: [today, week, month, quarter, year, all] }, actions: [{ id: advances.export, label: 'Xuất CSV', icon: download }] }
-  - { type: StatusTabs, source: advances, filter_field: status, variant: contained, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Cancelled, label: Đã hủy }] }
+  - { type: ListToolbar, source: advances, filter_field: q, search: { label: Looking for advance, placeholder: 'Find document number or recipient...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'From the date of advance payment', to_label: 'Until the advance date', presets: [today, week, month, quarter, year, all] }, actions: [{ id: advances.export, label: 'Export CSV', icon: download }] }
+  - { type: StatusTabs, source: advances, filter_field: status, variant: contained, tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Cancelled, label: Canceled }] }
   - type: DataGrid
     source: advances
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có tạm ứng }
+    empty_state: { title: There is no advance }
     columns:
-      - { field: code, label: Số chứng từ, sortable: true }
-      - { field: name, label: Nội dung, type: PrimaryEntityCell, secondary: counterparty }
-      - { field: document_date, label: Ngày tạm ứng }
-      - { field: due_date, label: Hạn hoàn ứng }
-      - { field: amount_display, label: Giá trị, align: right }
-      - { field: outstanding_amount, label: Còn phải hoàn, align: right }
-      - { field: currency, label: Tiền tệ }
+      - { field: code, label: Document number, sortable: true }
+      - { field: name, label: Content, type: PrimaryEntityCell, secondary: counterparty }
+      - { field: document_date, label: Advance date }
+      - { field: due_date, label: Refund deadline }
+      - { field: amount_display, label: Value, align: right }
+      - { field: outstanding_amount, label: Still to complete, align: right }
+      - { field: currency, label: Money }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã hủy: red }
+        colors: { Draft: neutral, Browsing: amber, Approved: green, Canceled: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_advance, label: Chi tiết, variant: secondary, permission: accounting.read }
-          - { id: edit_advance, label: Sửa, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_advance, label: Trình duyệt, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_advance, label: Duyệt, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_advance, label: Từ chối, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: cancel_advance, label: Hủy, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
-          - { id: delete_advance, label: Xóa, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: view_advance, label: Detail, variant: secondary, permission: accounting.read }
+          - { id: edit_advance, label: Fix, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_advance, label: Browser, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_advance, label: Browse, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_advance, label: Refuse, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: cancel_advance, label: Cancel, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
+          - { id: delete_advance, label: Erase, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_advance
     type: form
     permission: accounting.write
-    title: Thêm tạm ứng
+    title: Add advance
     table: accounting_entries
     scope: advance
     operation: insert
     refresh: [advances]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: advance_currency_lookup, default: VND }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Receiver, type: text }, { field: currency, label: Money, type: select, options_source: advance_currency_lookup, default: VND }, { field: document_date, label: Advance date, type: date }, { field: due_date, label: Refund deadline, type: date }, { field: description, label: Note, type: textarea }]
   - id: edit_advance
     type: form
     permission: accounting.write
-    title: Cập nhật tạm ứng
+    title: Advance update
     table: accounting_entries
     scope: advance
     operation: update
     prefill: row
     refresh: [advances]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người nhận, type: text }, { field: currency, label: Tiền tệ, type: select, options_source: advance_currency_lookup }, { field: document_date, label: Ngày tạm ứng, type: date }, { field: due_date, label: Hạn hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Receiver, type: text }, { field: currency, label: Money, type: select, options_source: advance_currency_lookup }, { field: document_date, label: Advance date, type: date }, { field: due_date, label: Refund deadline, type: date }, { field: description, label: Note, type: textarea }]
   - { id: view_advance, type: navigate, permission: accounting.read, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: advance, back: /accounting/advances } }
-  - { id: submit_advance, type: server, permission: accounting.write, action: accounting.advances.submit_for_approval, confirm: 'Trình duyệt tạm ứng {{row.code}}?', refresh: [advances] }
-  - { id: approve_advance, type: server, permission: accounting.approve, action: accounting.advances.approve, confirm: 'Duyệt tạm ứng {{row.code}}?', refresh: [advances] }
-  - { id: reject_advance, type: server, permission: accounting.approve, action: accounting.advances.reject, confirm: 'Từ chối tạm ứng {{row.code}}?', refresh: [advances] }
-  - { id: cancel_advance, type: server, permission: accounting.write, action: accounting.advances.cancel, confirm: 'Hủy tạm ứng {{row.code}}?', refresh: [advances] }
-  - { id: delete_advance, type: delete, permission: accounting.write, table: accounting_entries, scope: advance, confirm: 'Xóa tạm ứng {{row.code}}?', refresh: [advances] }
+  - { id: submit_advance, type: server, permission: accounting.write, action: accounting.advances.submit_for_approval, confirm: 'Browser advance {{row.code}}?', refresh: [advances] }
+  - { id: approve_advance, type: server, permission: accounting.approve, action: accounting.advances.approve, confirm: 'Browse advance {{row.code}}?', refresh: [advances] }
+  - { id: reject_advance, type: server, permission: accounting.approve, action: accounting.advances.reject, confirm: 'Deny advance {{row.code}}?', refresh: [advances] }
+  - { id: cancel_advance, type: server, permission: accounting.write, action: accounting.advances.cancel, confirm: 'Cancel advance {{row.code}}?', refresh: [advances] }
+  - { id: delete_advance, type: delete, permission: accounting.write, table: accounting_entries, scope: advance, confirm: 'Delete advance {{row.code}}?', refresh: [advances] }

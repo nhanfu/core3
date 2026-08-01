@@ -1,8 +1,8 @@
-title: Loại xe
+title: Vehicle type
 
 page:
   id: catalog-vehicle-types
-  breadcrumb: [Danh mục, Loại xe]
+  breadcrumb: [Category, Vehicle type]
   auth:
     require: [catalog.read]
 
@@ -19,75 +19,75 @@ datasources:
       ORDER BY sort_order, code
 
 toolbar:
-  - { id: add_vehicle_type_btn, label: '+ Thêm loại xe', variant: primary, permission: catalog.write, action: add_vehicle_type }
+  - { id: add_vehicle_type_btn, label: '+ Add vehicle type', variant: primary, permission: catalog.write, action: add_vehicle_type }
 
 components:
   - type: ListToolbar
     source: vehicle_types
     filter_field: q
-    search: { label: Tìm kiếm loại xe, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: vehicle_types.export, label: 'Xuất CSV', icon: download }, { id: import_vehicle_types, label: 'Nhập CSV', icon: upload }]
+    search: { label: Search for vehicle type, placeholder: 'Find code, name or description...' }
+    actions: [{ id: vehicle_types.export, label: 'Export CSV', icon: download }, { id: import_vehicle_types, label: 'Import CSV', icon: upload }]
   - type: StatusTabs
     source: vehicle_types
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Đang sử dụng }
-      - { id: Inactive, label: Ngưng sử dụng }
+      - { id: '', label: All }
+      - { id: Active, label: In use }
+      - { id: Inactive, label: Discontinue use }
   - type: DataGrid
     source: vehicle_types
     column_chooser: true
     page_size: 20
     row_key: id
     selectable: true
-    empty_state: { title: Không có loại xe, description: Tạo loại xe đầu tiên để sử dụng trong danh mục. }
+    empty_state: { title: No vehicle type, description: Create the first vehicle type to use in the catalog. }
     columns:
-      - { field: code, label: Mã, sortable: true }
-      - { field: name, label: Tên loại xe, type: PrimaryEntityCell, secondary: description }
-      - { field: sort_order, label: Thứ tự, align: right }
+      - { field: code, label: Code, sortable: true }
+      - { field: name, label: Vehicle type name, type: PrimaryEntityCell, secondary: description }
+      - { field: sort_order, label: Order, align: right }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors: { Active: green, Inactive: red }
-      - { field: created_at, label: Ngày tạo }
+      - { field: created_at, label: Creation date }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_vehicle_type, label: Sửa, variant: ghost, permission: catalog.write }
-          - { id: delete_vehicle_type, label: Xóa, variant: danger, permission: catalog.write }
+          - { id: edit_vehicle_type, label: Fix, variant: ghost, permission: catalog.write }
+          - { id: delete_vehicle_type, label: Erase, variant: danger, permission: catalog.write }
 
 actions:
   - { id: import_vehicle_types, type: upload, permission: catalog.write, kind: master_data_import, scope: vehicle_type, refresh: [vehicle_types] }
   - id: add_vehicle_type
     type: form
     permission: catalog.write
-    title: Thêm loại xe
+    title: Add vehicle type
     table: master_data
     scope: vehicle_type
     operation: insert
     refresh: [vehicle_types]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: name, label: Tên loại xe, type: text, required: true }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: name, label: Vehicle type name, type: text, required: true }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number, default: 0 }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }
   - id: edit_vehicle_type
     type: form
     permission: catalog.write
-    title: Cập nhật loại xe
+    title: Update vehicle type
     table: master_data
     scope: vehicle_type
     operation: update
     prefill: row
     refresh: [vehicle_types]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: name, label: Tên loại xe, type: text, required: true }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
-  - { id: delete_vehicle_type, type: delete, permission: catalog.write, table: master_data, scope: vehicle_type, confirm: 'Xóa loại xe {{row.name}}?', refresh: [vehicle_types] }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: name, label: Vehicle type name, type: text, required: true }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
+  - { id: delete_vehicle_type, type: delete, permission: catalog.write, table: master_data, scope: vehicle_type, confirm: 'Delete vehicle type {{row.name}}?', refresh: [vehicle_types] }

@@ -1,4 +1,4 @@
-title: Báo cáo
+title: Report
 
 page:
   id: reports
@@ -46,79 +46,79 @@ components:
   - type: TabGroup
     tabs:
       - id: fleet-tab
-        label: Hiệu suất phương tiện
+        label: Vehicle performance
         components:
           - type: StatRow
             source: reports_fleet
             stats:
-              - label: Tổng phương tiện
+              - label: Total means
                 field: total_trucks
                 color: blue
-              - label: Phương tiện sẵn sàng
+              - label: Vehicles are ready
                 field: active_trucks
                 color: green
-              - label: Đang bảo dưỡng
+              - label: Under maintenance
                 field: maintenance_trucks
                 color: amber
-              - label: Tỷ lệ sử dụng (%)
+              - label: Usage rate (%)
                 field: utilization_pct
                 color: indigo
-              - label: Số km trung bình
+              - label: Average kilometers
                 field: avg_mileage
                 color: indigo
 
       - id: cost-tab
-        label: Phân tích chi phí
+        label: Cost analysis
         permission: reports.financials
         components:
           - type: StatRow
             source: reports_costs
             stats:
-              - label: Tổng cộng
+              - label: Total
                 field: grand_total
                 color: red
-              - label: Chi phí bảo dưỡng trung bình
+              - label: Average maintenance costs
                 field: avg_cost
                 color: amber
-              - label: Tổng lượt bảo dưỡng
+              - label: Total maintenance
                 field: total_services
                 color: blue
 
       - id: driver-tab
-        label: Hiệu suất tài xế
+        label: Driver performance
         components:
           - type: GridView
             source: reports_drivers
             page_size: 20
-            empty_state: { title: Không có dữ liệu tài xế }
+            empty_state: { title: No driver data available }
             columns:
               - type: TextCell
                 field: driver_name
-                label: Tài xế
+                label: Driver
               - type: BadgeCell
                 field: driver_status
-                label: Trạng thái
+                label: Status
                 colors:
                   Active: green
                   On Leave: amber
                   Inactive: red
               - type: NumberCell
                 field: total_trips
-                label: Tổng chuyến
+                label: Total trip
                 format: "#,###"
               - type: NumberCell
                 field: completed_trips
-                label: Hoàn thành
+                label: Complete
                 format: "#,###"
               - type: NumberCell
                 field: cancelled_trips
-                label: Đã hủy
+                label: Canceled
                 format: "#,###"
               - type: NumberCell
                 field: total_km
-                label: Tổng km
+                label: Total km
                 format: "#,###"
               - type: NumberCell
                 field: completion_rate
-                label: Tỷ lệ hoàn thành (%)
+                label: Completion rate (%)
                 format: "#,###"

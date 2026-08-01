@@ -1,48 +1,24 @@
-en:
-  "Mẫu hóa đơn": "Invoice template"
-  "Kế toán": "Accountant"
-  "+ Thêm mẫu hóa đơn": "+ Add invoice template"
-  "Tìm kiếm mẫu hóa đơn": "Search for invoice templates"
-  "Tìm mã, tên hoặc mô tả...": "Find code, name or description..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đang sử dụng": "In use"
-  "Ngưng sử dụng": "Discontinue use"
-  "Không có mẫu hóa đơn": "There is no invoice template"
-  "Mã": "Code"
-  "Tiền tệ": "Money"
-  "Thứ tự": "Order"
-  "Trạng thái": "Status"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm mẫu hóa đơn": "Add invoice template"
-  "Tên mẫu": "Model name"
-  "Nội dung mẫu": "Sample content"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Cập nhật mẫu hóa đơn": "Update invoice template"
-  "Xóa mẫu hóa đơn {{row.name}}?": "Delete invoice template {{row.name}}?"
 vi:
-  "Mẫu hóa đơn": "Mẫu hóa đơn"
-  "Kế toán": "Kế toán"
-  "+ Thêm mẫu hóa đơn": "+ Thêm mẫu hóa đơn"
-  "Tìm kiếm mẫu hóa đơn": "Tìm kiếm mẫu hóa đơn"
-  "Tìm mã, tên hoặc mô tả...": "Tìm mã, tên hoặc mô tả..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đang sử dụng": "Đang sử dụng"
-  "Ngưng sử dụng": "Ngưng sử dụng"
-  "Không có mẫu hóa đơn": "Không có mẫu hóa đơn"
-  "Mã": "Mã"
-  "Tiền tệ": "Tiền tệ"
-  "Thứ tự": "Thứ tự"
-  "Trạng thái": "Trạng thái"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm mẫu hóa đơn": "Thêm mẫu hóa đơn"
-  "Tên mẫu": "Tên mẫu"
-  "Nội dung mẫu": "Nội dung mẫu"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Cập nhật mẫu hóa đơn": "Cập nhật mẫu hóa đơn"
-  "Xóa mẫu hóa đơn {{row.name}}?": "Xóa mẫu hóa đơn {{row.name}}?"
+  Invoice template: Mẫu hóa đơn
+  Accountant: Kế toán
+  + Add invoice template: + Thêm mẫu hóa đơn
+  Search for invoice templates: Tìm kiếm mẫu hóa đơn
+  "Find code, name or description...": "Tìm mã, tên hoặc mô tả..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  In use: Đang sử dụng
+  Discontinue use: Ngưng sử dụng
+  There is no invoice template: Không có mẫu hóa đơn
+  Code: Mã
+  Money: Tiền tệ
+  Order: Thứ tự
+  Status: Trạng thái
+  Fix: Sửa
+  Erase: Xóa
+  Add invoice template: Thêm mẫu hóa đơn
+  Model name: Tên mẫu
+  Sample content: Nội dung mẫu
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  Update invoice template: Cập nhật mẫu hóa đơn
+  "Delete invoice template {{row.name}}?": "Xóa mẫu hóa đơn {{row.name}}?"

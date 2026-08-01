@@ -1,8 +1,8 @@
-title: Loại hàng hóa
+title: Type of goods
 
 page:
   id: catalog-cargo-types
-  breadcrumb: [Danh mục, Loại hàng hóa]
+  breadcrumb: [Category, Type of goods]
   auth:
     require: [catalog.read]
 
@@ -19,75 +19,75 @@ datasources:
       ORDER BY sort_order, code
 
 toolbar:
-  - { id: add_cargo_type_btn, label: '+ Thêm loại hàng hóa', variant: primary, permission: catalog.write, action: add_cargo_type }
+  - { id: add_cargo_type_btn, label: '+ Add type of goods', variant: primary, permission: catalog.write, action: add_cargo_type }
 
 components:
   - type: ListToolbar
     source: cargo_types
     filter_field: q
-    search: { label: Tìm kiếm loại hàng hóa, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: cargo_types.export, label: 'Xuất CSV', icon: download }, { id: import_cargo_types, label: 'Nhập CSV', icon: upload }]
+    search: { label: Search for product type, placeholder: 'Find code, name or description...' }
+    actions: [{ id: cargo_types.export, label: 'Export CSV', icon: download }, { id: import_cargo_types, label: 'Import CSV', icon: upload }]
   - type: StatusTabs
     source: cargo_types
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Đang sử dụng }
-      - { id: Inactive, label: Ngưng sử dụng }
+      - { id: '', label: All }
+      - { id: Active, label: In use }
+      - { id: Inactive, label: Discontinue use }
   - type: DataGrid
     source: cargo_types
     column_chooser: true
     page_size: 20
     row_key: id
     selectable: true
-    empty_state: { title: Không có loại hàng hóa, description: Tạo loại hàng hóa đầu tiên để sử dụng trong đơn hàng. }
+    empty_state: { title: There is no commodity type, description: Create the first commodity type to use in the order. }
     columns:
-      - { field: code, label: Mã, sortable: true }
-      - { field: name, label: Loại hàng hóa, type: PrimaryEntityCell, secondary: description }
-      - { field: sort_order, label: Thứ tự, align: right }
+      - { field: code, label: Code, sortable: true }
+      - { field: name, label: Type of goods, type: PrimaryEntityCell, secondary: description }
+      - { field: sort_order, label: Order, align: right }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors: { Active: green, Inactive: red }
-      - { field: created_at, label: Ngày tạo }
+      - { field: created_at, label: Creation date }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_cargo_type, label: Sửa, variant: ghost, permission: catalog.write }
-          - { id: delete_cargo_type, label: Xóa, variant: danger, permission: catalog.write }
+          - { id: edit_cargo_type, label: Fix, variant: ghost, permission: catalog.write }
+          - { id: delete_cargo_type, label: Erase, variant: danger, permission: catalog.write }
 
 actions:
   - { id: import_cargo_types, type: upload, permission: catalog.write, kind: master_data_import, scope: cargo_type, refresh: [cargo_types] }
   - id: add_cargo_type
     type: form
     permission: catalog.write
-    title: Thêm loại hàng hóa
+    title: Add product type
     table: master_data
     scope: cargo_type
     operation: insert
     refresh: [cargo_types]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: name, label: Loại hàng hóa, type: text, required: true }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: name, label: Type of goods, type: text, required: true }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number, default: 0 }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }
   - id: edit_cargo_type
     type: form
     permission: catalog.write
-    title: Cập nhật loại hàng hóa
+    title: Update product type
     table: master_data
     scope: cargo_type
     operation: update
     prefill: row
     refresh: [cargo_types]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: name, label: Loại hàng hóa, type: text, required: true }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
-  - { id: delete_cargo_type, type: delete, permission: catalog.write, table: master_data, scope: cargo_type, confirm: 'Xóa loại hàng hóa {{row.name}}?', refresh: [cargo_types] }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: name, label: Type of goods, type: text, required: true }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
+  - { id: delete_cargo_type, type: delete, permission: catalog.write, table: master_data, scope: cargo_type, confirm: 'Delete commodity type {{row.name}}?', refresh: [cargo_types] }

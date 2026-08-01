@@ -1,8 +1,8 @@
-title: Phương tiện
+title: Vehicle
 
 page:
   id: vehicles
-  breadcrumb: [Quản lý, Phương tiện]
+  breadcrumb: [Manage, Vehicle]
   auth:
     require: [fleet.read]
 
@@ -38,7 +38,7 @@ datasources:
 
 toolbar:
   - id: add_vehicle_btn
-    label: '+ Thêm phương tiện'
+    label: '+ Add vehicles'
     variant: primary
     permission: fleet.write
     action: add_vehicle
@@ -48,9 +48,9 @@ components:
     source: vehicles
     filter_field: q
     search:
-      label: Tìm kiếm phương tiện
-      placeholder: 'Tìm theo biển số / số hiệu, tên, hãng...'
-    actions: [{ id: vehicles.export, label: '', title: 'Xuất CSV', icon: download }]
+      label: Search for media
+      placeholder: 'Search by license plate / model number, name, brand...'
+    actions: [{ id: vehicles.export, label: '', title: 'Export CSV', icon: download }]
     advanced_filter: true
     help: true
   - type: StatusTabs
@@ -59,10 +59,10 @@ components:
     show_counts: false
     variant: toggle
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Sẵn sàng }
-      - { id: Maintenance, label: Bảo dưỡng }
-      - { id: 'Out of Service', label: Ngưng hoạt động }
+      - { id: '', label: All }
+      - { id: Active, label: Ready }
+      - { id: Maintenance, label: Maintenance }
+      - { id: 'Out of Service', label: Shut down }
   - type: DataGrid
     source: vehicles
     page_size: 50
@@ -72,52 +72,52 @@ components:
     row_key: id
     selectable: true
     empty_state:
-      title: Không có phương tiện
-      description: Thử thay đổi bộ lọc hoặc tạo phương tiện mới.
+      title: No means
+      description: Try changing the filter or creating new media.
     columns:
       - field: system_code
-        label: Mã HT
+        label: HT code
         sortable: true
       - field: plate
-        label: Biển số / số hiệu
+        label: License plate / number
         type: PrimaryEntityCell
         secondary: model
       - field: vehicle_type
-        label: Loại phương tiện
+        label: Vehicle type
       - field: model
-        label: Hãng
+        label: Firm
       - field: owner_name
-        label: Nhà xe
+        label: Garage
       - field: capacity_kg
-        label: Tải trọng
+        label: Load
         type: WeightCell
         align: right
       - field: availability
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors:
-          Sẵn sàng: green
-          Bảo dưỡng: amber
-          Ngưng hoạt động: red
+          Ready: green
+          Maintenance: amber
+          Shut down: red
       - field: created_by
-        label: Người tạo
+        label: Creator
       - field: created_at
-        label: Ngày giờ tạo
+        label: Creation date and time
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
           - id: view_vehicle
-            label: Chi tiết
+            label: Detail
             variant: primary
             permission: fleet.read
           - id: edit_vehicle
-            label: Sửa
+            label: Fix
             variant: ghost
             permission: fleet.write
           - id: delete_vehicle
-            label: Xóa
+            label: Erase
             variant: danger
             permission: fleet.write
 
@@ -126,37 +126,37 @@ actions:
   - id: add_vehicle
     type: form
     permission: fleet.write
-    title: Thêm phương tiện
+    title: Add media
     table: trucks
     operation: insert
     refresh: [vehicles]
     fields:
-      - { field: plate, label: Biển số / số hiệu, type: text, required: true }
-      - { field: model, label: Hãng / mẫu xe, type: text, required: true }
-      - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_type_lookup }
-      - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }], default: Active }
-      - { field: capacity_kg, label: Tải trọng (kg), type: number, default: 0 }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: plate, label: License plate / number, type: text, required: true }
+      - { field: model, label: Vehicle make/model, type: text, required: true }
+      - { field: type, label: Vehicle type, type: select, options_source: vehicle_type_lookup }
+      - { field: branch_id, label: Branch, type: select, options_source: vehicle_branch_lookup }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }], default: Active }
+      - { field: capacity_kg, label: Load (kg), type: number, default: 0 }
+      - { field: notes, label: Note, type: textarea }
   - id: edit_vehicle
     type: form
     permission: fleet.write
-    title: Cập nhật phương tiện
+    title: Media updates
     table: trucks
     operation: update
     prefill: row
     refresh: [vehicles]
     fields:
-      - { field: plate, label: Biển số / số hiệu, type: text, required: true }
-      - { field: model, label: Hãng / mẫu xe, type: text, required: true }
-      - { field: type, label: Loại phương tiện, type: select, options_source: vehicle_type_lookup }
-      - { field: branch_id, label: Chi nhánh, type: select, options_source: vehicle_branch_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }] }
-      - { field: capacity_kg, label: Tải trọng (kg), type: number }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: plate, label: License plate / number, type: text, required: true }
+      - { field: model, label: Vehicle make/model, type: text, required: true }
+      - { field: type, label: Vehicle type, type: select, options_source: vehicle_type_lookup }
+      - { field: branch_id, label: Branch, type: select, options_source: vehicle_branch_lookup }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }] }
+      - { field: capacity_kg, label: Load (kg), type: number }
+      - { field: notes, label: Note, type: textarea }
   - id: delete_vehicle
     type: delete
     permission: fleet.write
-    confirm: 'Xóa phương tiện {{row.plate}}?'
+    confirm: 'Remove media {{row.plate}}?'
     table: trucks
     refresh: [vehicles]

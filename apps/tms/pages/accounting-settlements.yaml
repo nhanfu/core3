@@ -1,5 +1,5 @@
-title: Hoàn ứng
-page: { id: accounting-settlements, breadcrumb: [Kế toán, Hoàn ứng], auth: { require: [accounting.read] } }
+title: Completion
+page: { id: accounting-settlements, breadcrumb: [Accountant, Completion], auth: { require: [accounting.read] } }
 datasources:
   - id: settlements
     single: false
@@ -20,62 +20,62 @@ datasources:
     single: false
     permission: accounting.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
-toolbar: [{ id: add_settlement_btn, label: '+ Thêm hoàn ứng', variant: primary, permission: accounting.write, action: add_settlement }]
+toolbar: [{ id: add_settlement_btn, label: '+ Added completion', variant: primary, permission: accounting.write, action: add_settlement }]
 components:
-  - { type: ListToolbar, source: settlements, filter_field: q, search: { label: Tìm kiếm hoàn ứng, placeholder: 'Tìm số chứng từ hoặc người hoàn...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày hoàn ứng', to_label: 'Đến ngày hoàn ứng', presets: [today, week, month, quarter, year, all] }, actions: [{ id: settlements.export, label: 'Xuất CSV', icon: download }] }
-  - { type: StatusTabs, source: settlements, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Draft, label: Nháp }, { id: Pending Approval, label: Đang duyệt }, { id: Approved, label: Đã duyệt }, { id: Cancelled, label: Đã hủy }] }
+  - { type: ListToolbar, source: settlements, filter_field: q, search: { label: Complete search, placeholder: 'Find document number or person completing...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'From the date of completion', to_label: 'Until the date of completion', presets: [today, week, month, quarter, year, all] }, actions: [{ id: settlements.export, label: 'Export CSV', icon: download }] }
+  - { type: StatusTabs, source: settlements, filter_field: status, tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Cancelled, label: Canceled }] }
   - type: DataGrid
     source: settlements
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có hoàn ứng }
+    empty_state: { title: There is no refund }
     columns:
-      - { field: code, label: Số chứng từ, sortable: true }
-      - { field: name, label: Nội dung, type: PrimaryEntityCell, secondary: counterparty }
-      - { field: document_date, label: Ngày hoàn ứng }
-      - { field: amount_display, label: Giá trị, align: right }
-      - { field: advance_code, label: Tạm ứng liên kết }
-      - { field: currency, label: Tiền tệ }
+      - { field: code, label: Document number, sortable: true }
+      - { field: name, label: Content, type: PrimaryEntityCell, secondary: counterparty }
+      - { field: document_date, label: Completion date }
+      - { field: amount_display, label: Value, align: right }
+      - { field: advance_code, label: Link advance }
+      - { field: currency, label: Money }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã hủy: red }
+        colors: { Draft: neutral, Browsing: amber, Approved: green, Canceled: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_settlement, label: Chi tiết, variant: secondary, permission: accounting.read }
-          - { id: edit_settlement, label: Sửa, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_settlement, label: Trình duyệt, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_settlement, label: Duyệt, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_settlement, label: Từ chối, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: cancel_settlement, label: Hủy, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
-          - { id: delete_settlement, label: Xóa, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: view_settlement, label: Detail, variant: secondary, permission: accounting.read }
+          - { id: edit_settlement, label: Fix, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_settlement, label: Browser, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_settlement, label: Browse, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_settlement, label: Refuse, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: cancel_settlement, label: Cancel, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
+          - { id: delete_settlement, label: Erase, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_settlement
     type: form
     permission: accounting.write
-    title: Thêm hoàn ứng
+    title: Add a refund
     table: accounting_entries
     scope: settlement
     operation: insert
     refresh: [settlements]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: linked_advance_id, label: Tạm ứng liên kết, type: select, options_source: settlement_advance_lookup }, { field: currency, label: Tiền tệ, type: select, options_source: settlement_currency_lookup, default: VND }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Complete person, type: text }, { field: linked_advance_id, label: Link advance, type: select, options_source: settlement_advance_lookup }, { field: currency, label: Money, type: select, options_source: settlement_currency_lookup, default: VND }, { field: document_date, label: Completion date, type: date }, { field: description, label: Note, type: textarea }]
   - id: edit_settlement
     type: form
     permission: accounting.write
-    title: Cập nhật hoàn ứng
+    title: Complete update
     table: accounting_entries
     scope: settlement
     operation: update
     prefill: row
     refresh: [settlements]
-    fields: [{ field: code, label: Số chứng từ, type: text, required: true }, { field: name, label: Nội dung, type: text, required: true }, { field: counterparty, label: Người hoàn, type: text }, { field: linked_advance_id, label: Tạm ứng liên kết, type: select, options_source: settlement_advance_lookup }, { field: currency, label: Tiền tệ, type: select, options_source: settlement_currency_lookup }, { field: document_date, label: Ngày hoàn ứng, type: date }, { field: description, label: Ghi chú, type: textarea }]
+    fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Complete person, type: text }, { field: linked_advance_id, label: Link advance, type: select, options_source: settlement_advance_lookup }, { field: currency, label: Money, type: select, options_source: settlement_currency_lookup }, { field: document_date, label: Completion date, type: date }, { field: description, label: Note, type: textarea }]
   - { id: view_settlement, type: navigate, permission: accounting.read, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: settlement, back: /accounting/settlements } }
-  - { id: submit_settlement, type: server, permission: accounting.write, action: accounting.settlements.submit_for_approval, confirm: 'Trình duyệt hoàn ứng {{row.code}}?', refresh: [settlements] }
-  - { id: approve_settlement, type: server, permission: accounting.approve, action: accounting.settlements.approve, confirm: 'Duyệt hoàn ứng {{row.code}}?', refresh: [settlements] }
-  - { id: reject_settlement, type: server, permission: accounting.approve, action: accounting.settlements.reject, confirm: 'Từ chối hoàn ứng {{row.code}}?', refresh: [settlements] }
-  - { id: cancel_settlement, type: server, permission: accounting.write, action: accounting.settlements.cancel, confirm: 'Hủy hoàn ứng {{row.code}}?', refresh: [settlements] }
-  - { id: delete_settlement, type: delete, permission: accounting.write, table: accounting_entries, scope: settlement, confirm: 'Xóa hoàn ứng {{row.code}}?', refresh: [settlements] }
+  - { id: submit_settlement, type: server, permission: accounting.write, action: accounting.settlements.submit_for_approval, confirm: 'Browser complete {{row.code}}?', refresh: [settlements] }
+  - { id: approve_settlement, type: server, permission: accounting.approve, action: accounting.settlements.approve, confirm: 'Completely browse {{row.code}}?', refresh: [settlements] }
+  - { id: reject_settlement, type: server, permission: accounting.approve, action: accounting.settlements.reject, confirm: 'Refuse to complete {{row.code}}?', refresh: [settlements] }
+  - { id: cancel_settlement, type: server, permission: accounting.write, action: accounting.settlements.cancel, confirm: 'Undo {{row.code}}?', refresh: [settlements] }
+  - { id: delete_settlement, type: delete, permission: accounting.write, table: accounting_entries, scope: settlement, confirm: 'Completely delete {{row.code}}?', refresh: [settlements] }

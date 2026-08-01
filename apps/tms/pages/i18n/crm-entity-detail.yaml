@@ -1,104 +1,52 @@
-en:
-  "Chi tiết đối tượng CRM": "CRM object details"
-  "Kinh doanh": "Business"
-  "Đối tượng": "Object"
-  "Chi tiết": "Detail"
-  "Danh sách": "List"
-  "Sửa đối tượng": "Edit object"
-  "Phân loại": "Classify"
-  "Mã số thuế": "Tax code"
-  "Sale phụ trách": "Sales is in charge"
-  "Phạm vi hiển thị": "Display range"
-  "Điện thoại chính": "Main phone"
-  "Email chính": "Primary email"
-  "Người liên hệ": "Contact person"
-  "Liên hệ chính được đồng bộ lên thông tin đối tượng.": "The primary contact is synchronized to the object information."
-  "+ Thêm người liên hệ": "+ Add contact person"
-  "Chưa có người liên hệ": "No contact yet"
-  "Họ tên": "Full name"
-  "Điện thoại": "Phone"
-  "Email": "E-mail"
-  "Vai trò": "Role"
-  "Ghi chú": "Note"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Lịch sử liên hệ": "Contact history"
-  "Chưa có hoạt động liên hệ": "No contact activity yet"
-  "Cập nhật đối tượng CRM": "Update CRM objects"
-  "Mã đối tượng": "Object code"
-  "Tên đối tượng": "Object name"
-  "Giai đoạn CRM": "CRM phase"
-  "Khách tiềm năng": "Potential guests"
-  "Đang tiếp cận": "Approaching"
-  "Khách hàng": "Client"
-  "Loại đối tác": "Partner type"
-  "Nhà xe": "Garage"
-  "Nhà cung cấp": "Supplier"
-  "Hãng tàu": "Shipping company"
-  "Kho / bãi": "Warehouse/yard"
-  "Depot": "Depot"
-  "Khác": "Other"
-  "Công khai": "Public"
-  "Riêng": "Private"
-  "Trạng thái": "Status"
-  "Hoạt động": "Work"
-  "Ngưng hoạt động": "Shut down"
-  "Thêm người liên hệ": "Add a contact"
-  "Chức vụ": "Position"
-  "Liên hệ chính": "Main contact"
-  "Không": "Are not"
-  "Có": "Have"
-  "Cập nhật người liên hệ": "Update contact person"
-  "Xóa người liên hệ {{row.name}}?": "Delete contact {{row.name}}?"
 vi:
-  "Chi tiết đối tượng CRM": "Chi tiết đối tượng CRM"
-  "Kinh doanh": "Kinh doanh"
-  "Đối tượng": "Đối tượng"
-  "Chi tiết": "Chi tiết"
-  "Danh sách": "Danh sách"
-  "Sửa đối tượng": "Sửa đối tượng"
-  "Phân loại": "Phân loại"
-  "Mã số thuế": "Mã số thuế"
-  "Sale phụ trách": "Sale phụ trách"
-  "Phạm vi hiển thị": "Phạm vi hiển thị"
-  "Điện thoại chính": "Điện thoại chính"
-  "Email chính": "Email chính"
-  "Người liên hệ": "Người liên hệ"
-  "Liên hệ chính được đồng bộ lên thông tin đối tượng.": "Liên hệ chính được đồng bộ lên thông tin đối tượng."
-  "+ Thêm người liên hệ": "+ Thêm người liên hệ"
-  "Chưa có người liên hệ": "Chưa có người liên hệ"
-  "Họ tên": "Họ tên"
-  "Điện thoại": "Điện thoại"
-  "Email": "Email"
-  "Vai trò": "Vai trò"
-  "Ghi chú": "Ghi chú"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Lịch sử liên hệ": "Lịch sử liên hệ"
-  "Chưa có hoạt động liên hệ": "Chưa có hoạt động liên hệ"
-  "Cập nhật đối tượng CRM": "Cập nhật đối tượng CRM"
-  "Mã đối tượng": "Mã đối tượng"
-  "Tên đối tượng": "Tên đối tượng"
-  "Giai đoạn CRM": "Giai đoạn CRM"
-  "Khách tiềm năng": "Khách tiềm năng"
-  "Đang tiếp cận": "Đang tiếp cận"
-  "Khách hàng": "Khách hàng"
-  "Loại đối tác": "Loại đối tác"
-  "Nhà xe": "Nhà xe"
-  "Nhà cung cấp": "Nhà cung cấp"
-  "Hãng tàu": "Hãng tàu"
-  "Kho / bãi": "Kho / bãi"
-  "Depot": "Depot"
-  "Khác": "Khác"
-  "Công khai": "Công khai"
-  "Riêng": "Riêng"
-  "Trạng thái": "Trạng thái"
-  "Hoạt động": "Hoạt động"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Thêm người liên hệ": "Thêm người liên hệ"
-  "Chức vụ": "Chức vụ"
-  "Liên hệ chính": "Liên hệ chính"
-  "Không": "Không"
-  "Có": "Có"
-  "Cập nhật người liên hệ": "Cập nhật người liên hệ"
-  "Xóa người liên hệ {{row.name}}?": "Xóa người liên hệ {{row.name}}?"
+  CRM object details: Chi tiết đối tượng CRM
+  Business: Kinh doanh
+  Object: Đối tượng
+  Detail: Chi tiết
+  List: Danh sách
+  Edit object: Sửa đối tượng
+  Classify: Phân loại
+  Tax code: Mã số thuế
+  Sales is in charge: Sale phụ trách
+  Display range: Phạm vi hiển thị
+  Main phone: Điện thoại chính
+  Primary email: Email chính
+  Contact person: Người liên hệ
+  The primary contact is synchronized to the object information.: Liên hệ chính được đồng bộ lên thông tin đối tượng.
+  + Add contact person: + Thêm người liên hệ
+  No contact yet: Chưa có người liên hệ
+  Full name: Họ tên
+  Phone: Điện thoại
+  E-mail: Email
+  Role: Vai trò
+  Note: Ghi chú
+  Fix: Sửa
+  Erase: Xóa
+  Contact history: Lịch sử liên hệ
+  No contact activity yet: Chưa có hoạt động liên hệ
+  Update CRM objects: Cập nhật đối tượng CRM
+  Object code: Mã đối tượng
+  Object name: Tên đối tượng
+  CRM phase: Giai đoạn CRM
+  Potential guests: Khách tiềm năng
+  Approaching: Đang tiếp cận
+  Client: Khách hàng
+  Partner type: Loại đối tác
+  Garage: Nhà xe
+  Supplier: Nhà cung cấp
+  Shipping company: Hãng tàu
+  Warehouse/yard: Kho / bãi
+  Depot: Depot
+  Other: Khác
+  Public: Công khai
+  Private: Riêng
+  Status: Trạng thái
+  Work: Hoạt động
+  Shut down: Ngưng hoạt động
+  Add a contact: Thêm người liên hệ
+  Position: Chức vụ
+  Main contact: Liên hệ chính
+  Are not: Không
+  Have: Có
+  Update contact person: Cập nhật người liên hệ
+  "Delete contact {{row.name}}?": "Xóa người liên hệ {{row.name}}?"

@@ -1,134 +1,67 @@
-en:
-  "Tổng quan": "Dashboard"
-  "ĐIỀU HÀNH": "OPERATIONS"
-  "KINH DOANH": "SALES"
-  "KẾ TOÁN": "ACCOUNTING"
-  "NHÂN SỰ": "HUMAN RESOURCES"
-  "DANH MỤC": "CATALOG"
-  "TỔ CHỨC & PHÂN QUYỀN": "ORGANIZATION & ACCESS"
-  "HỆ THỐNG": "SYSTEM"
-  "Đơn hàng": "Orders"
-  "Tin nhắn": "Messages"
-  "Lịch điều": "Dispatch schedule"
-  "Khách hàng": "Customers"
-  "Đối tượng": "Partners"
-  "Báo giá": "Quotes"
-  "Tổng hợp CRM": "CRM overview"
-  "Chỉ tiêu KPI": "KPI targets"
-  "Giấy báo nợ": "Debit notes"
-  "Tổng hợp giấy báo nợ": "Debit note summary"
-  "Đề nghị thanh toán": "Payment requests"
-  "Tổng hợp đề nghị chi": "Payment request summary"
-  "Tạm ứng": "Advances"
-  "Hoàn ứng": "Settlements"
-  "Mẫu hóa đơn": "Invoice templates"
-  "Hệ thống tài khoản": "Chart of accounts"
-  "Nhân viên": "Employees"
-  "Hợp đồng": "Contracts"
-  "Chấm công": "Timesheets"
-  "Ca làm việc": "Shifts"
-  "Bảng lương": "Payroll"
-  "Tài xế": "Drivers"
-  "Phương tiện": "Vehicles"
-  "Container": "Containers"
-  "Địa điểm": "Locations"
-  "Khu vực": "Areas"
-  "Loại container": "Container types"
-  "Loại xe": "Vehicle types"
-  "Đơn vị tính": "Units"
-  "Loại hàng hóa": "Cargo types"
-  "Loại phí": "Fee types"
-  "Tiền tệ": "Currencies"
-  "Công ty chủ quản": "Company"
-  "Chi nhánh": "Branches"
-  "Phòng ban": "Departments"
-  "Đội nhóm": "Teams"
-  "Người dùng": "Users"
-  "Vai trò": "Roles"
-  "Lịch sử thao tác": "Activity log"
-  "Cấu hình sinh mã": "Code rules"
-  "Mẫu in": "Print templates"
-  "Quy trình duyệt": "Approval workflows"
-  "Loại hình vận chuyển": "Shipment types"
-  "Trạng thái chuyến": "Trip statuses"
-  "Công thức phí chuyến": "Trip fee rules"
-  "Quản lý dung lượng": "Storage"
-  "Tìm menu...": "Search menu..."
-  "Tìm menu": "Search menu"
-  "Sign in to your account": "Sign in to your account"
-  "Email": "Email"
-  "Password": "Password"
-  "Sign in": "Sign in"
-  "Invalid credentials": "Invalid credentials"
-  "Notifications": "Notifications"
-  "Profile": "Profile"
-  "Close": "Close"
-  "Language": "Language"
-  "Sign out": "Sign out"
 vi:
-  "Tổng quan": "Tổng quan"
-  "ĐIỀU HÀNH": "ĐIỀU HÀNH"
-  "KINH DOANH": "KINH DOANH"
-  "KẾ TOÁN": "KẾ TOÁN"
-  "NHÂN SỰ": "NHÂN SỰ"
-  "DANH MỤC": "DANH MỤC"
-  "TỔ CHỨC & PHÂN QUYỀN": "TỔ CHỨC & PHÂN QUYỀN"
-  "HỆ THỐNG": "HỆ THỐNG"
-  "Đơn hàng": "Đơn hàng"
-  "Tin nhắn": "Tin nhắn"
-  "Lịch điều": "Lịch điều"
-  "Khách hàng": "Khách hàng"
-  "Đối tượng": "Đối tượng"
-  "Báo giá": "Báo giá"
-  "Tổng hợp CRM": "Tổng hợp CRM"
-  "Chỉ tiêu KPI": "Chỉ tiêu KPI"
-  "Giấy báo nợ": "Giấy báo nợ"
-  "Tổng hợp giấy báo nợ": "Tổng hợp giấy báo nợ"
-  "Đề nghị thanh toán": "Đề nghị thanh toán"
-  "Tổng hợp đề nghị chi": "Tổng hợp đề nghị chi"
-  "Tạm ứng": "Tạm ứng"
-  "Hoàn ứng": "Hoàn ứng"
-  "Mẫu hóa đơn": "Mẫu hóa đơn"
-  "Hệ thống tài khoản": "Hệ thống tài khoản"
-  "Nhân viên": "Nhân viên"
-  "Hợp đồng": "Hợp đồng"
-  "Chấm công": "Chấm công"
-  "Ca làm việc": "Ca làm việc"
-  "Bảng lương": "Bảng lương"
-  "Tài xế": "Tài xế"
-  "Phương tiện": "Phương tiện"
-  "Container": "Container"
-  "Địa điểm": "Địa điểm"
-  "Khu vực": "Khu vực"
-  "Loại container": "Loại container"
-  "Loại xe": "Loại xe"
-  "Đơn vị tính": "Đơn vị tính"
-  "Loại hàng hóa": "Loại hàng hóa"
-  "Loại phí": "Loại phí"
-  "Tiền tệ": "Tiền tệ"
-  "Công ty chủ quản": "Công ty chủ quản"
-  "Chi nhánh": "Chi nhánh"
-  "Phòng ban": "Phòng ban"
-  "Đội nhóm": "Đội nhóm"
-  "Người dùng": "Người dùng"
-  "Vai trò": "Vai trò"
-  "Lịch sử thao tác": "Lịch sử thao tác"
-  "Cấu hình sinh mã": "Cấu hình sinh mã"
-  "Mẫu in": "Mẫu in"
-  "Quy trình duyệt": "Quy trình duyệt"
-  "Loại hình vận chuyển": "Loại hình vận chuyển"
-  "Trạng thái chuyến": "Trạng thái chuyến"
-  "Công thức phí chuyến": "Công thức phí chuyến"
-  "Quản lý dung lượng": "Quản lý dung lượng"
-  "Tìm menu...": "Tìm menu..."
-  "Tìm menu": "Tìm menu"
-  "Sign in to your account": "Đăng nhập vào tài khoản của bạn"
-  "Email": "Email"
-  "Password": "Mật khẩu"
-  "Sign in": "Đăng nhập"
-  "Invalid credentials": "Thông tin đăng nhập không hợp lệ"
-  "Notifications": "Thông báo"
-  "Profile": "Hồ sơ"
-  "Close": "Đóng"
-  "Language": "Ngôn ngữ"
-  "Sign out": "Đăng xuất"
+  Dashboard: Tổng quan
+  OPERATIONS: ĐIỀU HÀNH
+  SALES: KINH DOANH
+  ACCOUNTING: KẾ TOÁN
+  HUMAN RESOURCES: NHÂN SỰ
+  CATALOG: DANH MỤC
+  ORGANIZATION & ACCESS: TỔ CHỨC & PHÂN QUYỀN
+  SYSTEM: HỆ THỐNG
+  Orders: Đơn hàng
+  Messages: Tin nhắn
+  Dispatch schedule: Lịch điều
+  Customers: Khách hàng
+  Partners: Đối tượng
+  Quotes: Báo giá
+  CRM overview: Tổng hợp CRM
+  KPI targets: Chỉ tiêu KPI
+  Debit notes: Giấy báo nợ
+  Debit note summary: Tổng hợp giấy báo nợ
+  Payment requests: Đề nghị thanh toán
+  Payment request summary: Tổng hợp đề nghị chi
+  Advances: Tạm ứng
+  Settlements: Hoàn ứng
+  Invoice templates: Mẫu hóa đơn
+  Chart of accounts: Hệ thống tài khoản
+  Employees: Nhân viên
+  Contracts: Hợp đồng
+  Timesheets: Chấm công
+  Shifts: Ca làm việc
+  Payroll: Bảng lương
+  Drivers: Tài xế
+  Vehicles: Phương tiện
+  Containers: Container
+  Locations: Địa điểm
+  Areas: Khu vực
+  Container types: Loại container
+  Vehicle types: Loại xe
+  Units: Đơn vị tính
+  Cargo types: Loại hàng hóa
+  Fee types: Loại phí
+  Currencies: Tiền tệ
+  Company: Công ty chủ quản
+  Branches: Chi nhánh
+  Departments: Phòng ban
+  Teams: Đội nhóm
+  Users: Người dùng
+  Roles: Vai trò
+  Activity log: Lịch sử thao tác
+  Code rules: Cấu hình sinh mã
+  Print templates: Mẫu in
+  Approval workflows: Quy trình duyệt
+  Shipment types: Loại hình vận chuyển
+  Trip statuses: Trạng thái chuyến
+  Trip fee rules: Công thức phí chuyến
+  Storage: Quản lý dung lượng
+  "Search menu...": "Tìm menu..."
+  Search menu: Tìm menu
+  Sign in to your account: Đăng nhập vào tài khoản của bạn
+  Email: Email
+  Password: Mật khẩu
+  Sign in: Đăng nhập
+  Invalid credentials: Thông tin đăng nhập không hợp lệ
+  Notifications: Thông báo
+  Profile: Hồ sơ
+  Close: Đóng
+  Language: Ngôn ngữ
+  Sign out: Đăng xuất

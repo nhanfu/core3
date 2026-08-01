@@ -1,66 +1,33 @@
-en:
-  "Tài xế": "Driver"
-  "Danh mục": "Category"
-  "+ Thêm tài xế": "+ Add driver"
-  "Tìm kiếm tài xế": "Search for driver"
-  "Tìm theo tên, số điện thoại, giấy phép...": "Search by name, phone number, license..."
-  "Hạn giấy phép từ": "License term from"
-  "Hạn giấy phép đến": "License deadline arrives"
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đang hoạt động": "Active"
-  "Nghỉ phép": "On leave"
-  "Ngưng hoạt động": "Shut down"
-  "Không có tài xế": "There is no driver"
-  "Thử thay đổi bộ lọc hoặc tạo tài xế mới.": "Try changing the filter or creating a new driver."
-  "Mã HT": "HT code"
-  "Họ tên": "Full name"
-  "Số giấy phép": "License number"
-  "Phương tiện": "Vehicle"
-  "Hạn giấy phép": "License term"
-  "Tuân thủ": "Follow"
-  "Trạng thái": "Status"
-  "Người tạo": "Creator"
-  "Ngày giờ tạo": "Creation date and time"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm tài xế": "Add driver"
-  "Số điện thoại": "Phone number"
-  "Email": "E-mail"
-  "Phương tiện phụ trách": "Vehicle in charge"
-  "Cập nhật tài xế": "Update driver"
-  "Xóa tài xế {{row.name}}?": "Delete driver {{row.name}}?"
 vi:
-  "Tài xế": "Tài xế"
-  "Danh mục": "Danh mục"
-  "+ Thêm tài xế": "+ Thêm tài xế"
-  "Tìm kiếm tài xế": "Tìm kiếm tài xế"
-  "Tìm theo tên, số điện thoại, giấy phép...": "Tìm theo tên, số điện thoại, giấy phép..."
-  "Hạn giấy phép từ": "Hạn giấy phép từ"
-  "Hạn giấy phép đến": "Hạn giấy phép đến"
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đang hoạt động": "Đang hoạt động"
-  "Nghỉ phép": "Nghỉ phép"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Không có tài xế": "Không có tài xế"
-  "Thử thay đổi bộ lọc hoặc tạo tài xế mới.": "Thử thay đổi bộ lọc hoặc tạo tài xế mới."
-  "Mã HT": "Mã HT"
-  "Họ tên": "Họ tên"
-  "Số giấy phép": "Số giấy phép"
-  "Phương tiện": "Phương tiện"
-  "Hạn giấy phép": "Hạn giấy phép"
-  "Tuân thủ": "Tuân thủ"
-  "Trạng thái": "Trạng thái"
-  "Người tạo": "Người tạo"
-  "Ngày giờ tạo": "Ngày giờ tạo"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm tài xế": "Thêm tài xế"
-  "Số điện thoại": "Số điện thoại"
-  "Email": "Email"
-  "Phương tiện phụ trách": "Phương tiện phụ trách"
-  "Cập nhật tài xế": "Cập nhật tài xế"
-  "Xóa tài xế {{row.name}}?": "Xóa tài xế {{row.name}}?"
+  Driver: Tài xế
+  Category: Danh mục
+  + Add driver: + Thêm tài xế
+  Search for driver: Tìm kiếm tài xế
+  "Search by name, phone number, license...": "Tìm theo tên, số điện thoại, giấy phép..."
+  License term from: Hạn giấy phép từ
+  License deadline arrives: Hạn giấy phép đến
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Active: Đang hoạt động
+  On leave: Nghỉ phép
+  Shut down: Ngưng hoạt động
+  There is no driver: Không có tài xế
+  Try changing the filter or creating a new driver.: Thử thay đổi bộ lọc hoặc tạo tài xế mới.
+  HT code: Mã HT
+  Full name: Họ tên
+  License number: Số giấy phép
+  Vehicle: Phương tiện
+  License term: Hạn giấy phép
+  Follow: Tuân thủ
+  Status: Trạng thái
+  Creator: Người tạo
+  Creation date and time: Ngày giờ tạo
+  Detail: Chi tiết
+  Fix: Sửa
+  Erase: Xóa
+  Add driver: Thêm tài xế
+  Phone number: Số điện thoại
+  E-mail: Email
+  Vehicle in charge: Phương tiện phụ trách
+  Update driver: Cập nhật tài xế
+  "Delete driver {{row.name}}?": "Xóa tài xế {{row.name}}?"

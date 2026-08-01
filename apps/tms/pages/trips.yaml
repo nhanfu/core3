@@ -1,8 +1,8 @@
-title: Lịch điều
+title: Calendar thing
 
 page:
   id: trips
-  breadcrumb: [Điều hành, Lịch điều]
+  breadcrumb: [Executive, Calendar thing]
   auth:
     require: [trips.read]
 
@@ -49,7 +49,7 @@ datasources:
 
 toolbar:
   - id: add_trip_btn
-    label: '+ Tạo chuyến'
+    label: '+ Create trip'
     variant: primary
     permission: trips.write
     action: add_trip
@@ -59,19 +59,19 @@ components:
     source: trips
     filter_field: q
     search:
-      label: Tìm kiếm chuyến
-      placeholder: 'Tìm theo mã chuyến, điểm đi hoặc điểm đến...'
-    actions: [{ id: trips.export, label: 'Xuất CSV', icon: download }]
+      label: Search for a trip
+      placeholder: 'Search by flight code, origin or destination...'
+    actions: [{ id: trips.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: trips
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Scheduled, label: Đã lên lịch }
-      - { id: 'In Transit', label: Đang vận chuyển }
-      - { id: Completed, label: Hoàn thành }
-      - { id: Cancelled, label: Đã hủy }
+      - { id: '', label: All }
+      - { id: Scheduled, label: Scheduled }
+      - { id: 'In Transit', label: Shipping }
+      - { id: Completed, label: Complete }
+      - { id: Cancelled, label: Canceled }
   - type: DataGrid
     source: trips
     page_size: 10
@@ -79,44 +79,44 @@ components:
     row_key: id
     selectable: true
     empty_state:
-      title: Không có chuyến xe
-      description: Thử thay đổi bộ lọc hoặc tạo chuyến mới.
+      title: There are no buses
+      description: Try changing the filter or creating a new trip.
     columns:
-      - { field: trip_number, label: Mã chuyến, sortable: true }
-      - { field: origin, label: Tuyến đường, type: PrimaryEntityCell, secondary: destination }
-      - { field: truck_plate, label: Phương tiện, type: PrimaryEntityCell, secondary: driver_name }
+      - { field: trip_number, label: Trip code, sortable: true }
+      - { field: origin, label: Route, type: PrimaryEntityCell, secondary: destination }
+      - { field: truck_plate, label: Vehicle, type: PrimaryEntityCell, secondary: driver_name }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors:
           Scheduled: blue
           In Transit: amber
           Completed: green
           Cancelled: red
-      - { field: departure_time, label: Khởi hành, type: DateCell }
-      - { field: arrival_time, label: Dự kiến đến, type: DateCell }
-      - { field: distance_km, label: Quãng đường (km), align: right }
+      - { field: departure_time, label: Depart, type: DateCell }
+      - { field: arrival_time, label: Expected arrival, type: DateCell }
+      - { field: distance_km, label: Distance (km), align: right }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
           - id: edit_trip
-            label: Sửa
+            label: Fix
             variant: ghost
             permission: trips.write
           - id: start_trip
-            label: Khởi hành
+            label: Depart
             variant: primary
             permission: trips.write
             show_if: "row.status === 'Scheduled'"
           - id: complete_trip
-            label: Hoàn thành
+            label: Complete
             variant: primary
             permission: trips.write
             show_if: "row.status === 'In Transit'"
           - id: cancel_trip
-            label: Hủy
+            label: Cancel
             variant: danger
             permission: trips.write
             show_if: "['Scheduled', 'In Transit'].includes(row.status)"
@@ -125,124 +125,124 @@ actions:
   - id: add_trip
     type: form
     permission: trips.write
-    title: Tạo chuyến
+    title: Create trip
     table: trips
     operation: insert
     prefill: null
     refresh: [trips, trips_stats]
     fields:
       - field: trip_number
-        label: Mã chuyến
+        label: Trip code
         type: text
         required: false
       - field: origin
-        label: Điểm đi
+        label: Point go
         type: text
         required: true
       - field: destination
-        label: Điểm đến
+        label: Destination
         type: text
         required: true
       - field: branch_id
-        label: Chi nhánh
+        label: Branch
         type: select
         options_source: trip_branch_lookup
         required: false
       - field: truck_id
-        label: Phương tiện
+        label: Vehicle
         type: select
         options_source: trip_truck_lookup
         required: false
       - field: driver_id
-        label: Tài xế
+        label: Driver
         type: select
         options_source: trip_driver_lookup
         required: false
       - field: departure_time
-        label: Thời gian khởi hành
+        label: Departure time
         type: datetime
         required: false
       - field: arrival_time
-        label: Thời gian dự kiến đến
+        label: Estimated arrival time
         type: datetime
         required: false
       - field: distance_km
-        label: Quãng đường (km)
+        label: Distance (km)
         type: number
         required: false
       - field: cargo_type
-        label: Loại hàng
+        label: Product type
         type: select
         options_source: trip_cargo_type_lookup
         required: false
       - field: cargo_weight
-        label: Khối lượng hàng (kg)
+        label: Cargo weight (kg)
         type: number
         required: false
       - field: notes
-        label: Ghi chú
+        label: Note
         type: textarea
         required: false
 
   - id: edit_trip
     type: form
     permission: trips.write
-    title: Cập nhật chuyến
+    title: Trip update
     table: trips
     operation: update
     prefill: row
     refresh: [trips, trips_stats]
     fields:
       - field: trip_number
-        label: Mã chuyến
+        label: Trip code
         type: text
         required: false
       - field: origin
-        label: Điểm đi
+        label: Point go
         type: text
         required: true
       - field: destination
-        label: Điểm đến
+        label: Destination
         type: text
         required: true
       - field: branch_id
-        label: Chi nhánh
+        label: Branch
         type: select
         options_source: trip_branch_lookup
         required: false
       - field: truck_id
-        label: Phương tiện
+        label: Vehicle
         type: select
         options_source: trip_truck_lookup
         required: false
       - field: driver_id
-        label: Tài xế
+        label: Driver
         type: select
         options_source: trip_driver_lookup
         required: false
       - field: departure_time
-        label: Thời gian khởi hành
+        label: Departure time
         type: datetime
         required: false
       - field: arrival_time
-        label: Thời gian dự kiến đến
+        label: Estimated arrival time
         type: datetime
         required: false
       - field: distance_km
-        label: Quãng đường (km)
+        label: Distance (km)
         type: number
         required: false
       - field: cargo_type
-        label: Loại hàng
+        label: Product type
         type: select
         options_source: trip_cargo_type_lookup
         required: false
       - field: cargo_weight
-        label: Khối lượng hàng (kg)
+        label: Cargo weight (kg)
         type: number
         required: false
       - field: notes
-        label: Ghi chú
+        label: Note
         type: textarea
         required: false
 
@@ -250,20 +250,20 @@ actions:
     type: server
     permission: trips.write
     action: trips.cancel
-    confirm: "Hủy chuyến {{row.trip_number}}?"
+    confirm: "Cancel trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
   - id: start_trip
     type: server
     permission: trips.write
     action: trips.start
-    confirm: "Xác nhận khởi hành chuyến {{row.trip_number}}?"
+    confirm: "Departure confirmation for trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
   - id: complete_trip
     type: server
     permission: trips.write
     action: trips.complete
-    confirm: "Xác nhận hoàn thành chuyến {{row.trip_number}}?"
+    confirm: "Confirmed completion of trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]

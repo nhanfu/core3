@@ -1,5 +1,5 @@
-title: Chi tiết báo giá
-page: { id: quote-detail, breadcrumb: [Kinh doanh, Báo giá, Chi tiết], auth: { require: [crm.read] } }
+title: Quote details
+page: { id: quote-detail, breadcrumb: [Business, Quote, Detail], auth: { require: [crm.read] } }
 
 datasources:
   - id: quote_detail
@@ -69,8 +69,8 @@ datasources:
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM quote_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
 
 toolbar:
-  - { id: back_quotes_btn, label: 'Danh sách báo giá', icon: arrow-left, variant: secondary, action: back_quotes }
-  - { id: edit_quote_detail, label: Sửa báo giá, variant: primary, permission: crm.write, show_if: "state.quote_detail.status === 'Draft'", action: edit_quote_detail }
+  - { id: back_quotes_btn, label: 'List of quotes', icon: arrow-left, variant: secondary, action: back_quotes }
+  - { id: edit_quote_detail, label: Edit quote, variant: primary, permission: crm.write, show_if: "state.quote_detail.status === 'Draft'", action: edit_quote_detail }
 
 components:
   - type: DocumentSummary
@@ -80,46 +80,46 @@ components:
     status_field: status_label
     status_colors: { Nháp: neutral, Đã gửi: blue, Đã chấp nhận: green, Đã hủy: red }
     columns:
-      - { field: customer_name, label: Khách hàng }
-      - { field: valid_until, label: Hiệu lực đến }
-      - { field: margin_display, label: Biên lợi nhuận }
+      - { field: customer_name, label: Client }
+      - { field: valid_until, label: Effect arrives }
+      - { field: margin_display, label: Profit margin }
   - type: LineItemGrid
     source: quote_detail_lines
-    title: Chi tiết mua / bán
-    description: Doanh thu, giá vốn và lợi nhuận được tính từ từng dòng.
+    title: Buy/sell details
+    description: Revenue, cost price and profit are calculated from each line.
     page_size: 50
     row_key: id
     actions:
-      - { id: add_quote_line, label: '+ Thêm dòng', variant: primary, permission: crm.write, show_if: "state.quote_detail.status === 'Draft'" }
-    empty_state: { title: Chưa có dòng báo giá }
+      - { id: add_quote_line, label: '+ Add lines', variant: primary, permission: crm.write, show_if: "state.quote_detail.status === 'Draft'" }
+    empty_state: { title: There are no quotes yet }
     columns:
-      - { field: sequence, label: STT, align: right }
-      - { field: description, label: Nội dung }
-      - { field: quantity_display, label: Số lượng, align: right }
-      - { field: unit, label: Đơn vị }
-      - { field: unit_price_display, label: Giá bán, align: right }
-      - { field: cost_price_display, label: Giá vốn, align: right }
-      - { field: tax_rate_display, label: Thuế, align: right }
-      - { field: line_total_display, label: Thành tiền, align: right }
-      - { field: profit_display, label: Lợi nhuận, align: right }
+      - { field: sequence, label: No, align: right }
+      - { field: description, label: Content }
+      - { field: quantity_display, label: Quantity, align: right }
+      - { field: unit, label: Unit }
+      - { field: unit_price_display, label: Selling price, align: right }
+      - { field: cost_price_display, label: Capital price, align: right }
+      - { field: tax_rate_display, label: Tax, align: right }
+      - { field: line_total_display, label: Make money, align: right }
+      - { field: profit_display, label: Profit, align: right }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: edit_quote_line, label: Sửa, variant: ghost, permission: crm.write, show_if: "row.parent_status === 'Draft'" }
-          - { id: delete_quote_line, label: Xóa, variant: danger, permission: crm.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: edit_quote_line, label: Fix, variant: ghost, permission: crm.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: delete_quote_line, label: Erase, variant: danger, permission: crm.write, show_if: "row.parent_status === 'Draft'" }
   - type: MoneySummary
     source: quote_detail
-    title: Hiệu quả báo giá
+    title: Quote efficiency
     stats:
-      - { label: Doanh thu, field: amount_display, color: blue }
-      - { label: Giá vốn, field: cost_amount_display, color: amber }
-      - { label: Lợi nhuận, field: profit_amount_display, color: green }
-      - { label: Biên lợi nhuận, field: margin_display, color: indigo }
+      - { label: Revenue, field: amount_display, color: blue }
+      - { label: Capital price, field: cost_amount_display, color: amber }
+      - { label: Profit, field: profit_amount_display, color: green }
+      - { label: Profit margin, field: margin_display, color: indigo }
   - type: ApprovalTimeline
     source: quote_detail_timeline
-    title: Lịch sử báo giá
-    empty_state: { title: Chưa có hoạt động báo giá }
+    title: Quote history
+    empty_state: { title: There is no quote activity yet }
     actor_field: actor_name
     action_field: action_label
     detail_field: detail
@@ -130,50 +130,50 @@ actions:
   - id: edit_quote_detail
     type: form
     permission: crm.write
-    title: Cập nhật báo giá
+    title: Update quote
     table: quotes
     operation: update
     prefill: source
     prefill_source: quote_detail
     refresh: [quote_detail, quote_detail_lines, quote_detail_timeline]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: select, options_source: quote_customer_lookup, required: true }
-      - { field: title, label: Nội dung, type: text, required: true }
-      - { field: valid_until, label: Hiệu lực đến, type: date }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: customer_name, label: Client, type: select, options_source: quote_customer_lookup, required: true }
+      - { field: title, label: Content, type: text, required: true }
+      - { field: valid_until, label: Effect arrives, type: date }
   - id: add_quote_line
     type: server_form
     permission: crm.write
-    title: Thêm dòng báo giá
+    title: Add a quote line
     action: quotes.lines.create
     params: { id: '{state.id}' }
     refresh: [quote_detail_lines, quote_detail, quote_detail_timeline]
     fields:
-      - { field: description, label: Nội dung, type: text, required: true }
-      - { field: quantity, label: Số lượng, type: number, default: 1, required: true }
-      - { field: unit, label: Đơn vị, type: select, options_source: quote_unit_lookup, default: Chuyến, required: true }
-      - { field: unit_price, label: Giá bán, type: money, currency: VND, default: 0, required: true }
-      - { field: cost_price, label: Giá vốn, type: money, currency: VND, default: 0, required: true }
-      - { field: tax_rate, label: Thuế suất (%), type: number, default: 0, required: true }
+      - { field: description, label: Content, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, default: 1, required: true }
+      - { field: unit, label: Unit, type: select, options_source: quote_unit_lookup, default: Chuyến, required: true }
+      - { field: unit_price, label: Selling price, type: money, currency: VND, default: 0, required: true }
+      - { field: cost_price, label: Capital price, type: money, currency: VND, default: 0, required: true }
+      - { field: tax_rate, label: Tax rate (%), type: number, default: 0, required: true }
   - id: edit_quote_line
     type: server_form
     permission: crm.write
-    title: Cập nhật dòng báo giá
+    title: Update quote line
     action: quotes.lines.update
     prefill: row
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [quote_detail_lines, quote_detail, quote_detail_timeline]
     fields:
-      - { field: description, label: Nội dung, type: text, required: true }
-      - { field: quantity, label: Số lượng, type: number, required: true }
-      - { field: unit, label: Đơn vị, type: select, options_source: quote_unit_lookup, required: true }
-      - { field: unit_price, label: Giá bán, type: money, currency: VND, required: true }
-      - { field: cost_price, label: Giá vốn, type: money, currency: VND, required: true }
-      - { field: tax_rate, label: Thuế suất (%), type: number, required: true }
+      - { field: description, label: Content, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: unit, label: Unit, type: select, options_source: quote_unit_lookup, required: true }
+      - { field: unit_price, label: Selling price, type: money, currency: VND, required: true }
+      - { field: cost_price, label: Capital price, type: money, currency: VND, required: true }
+      - { field: tax_rate, label: Tax rate (%), type: number, required: true }
   - id: delete_quote_line
     type: server
     permission: crm.write
     action: quotes.lines.delete
-    confirm: 'Xóa dòng báo giá {{row.description}}?'
+    confirm: 'Remove quote line {{row.description}}?'
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [quote_detail_lines, quote_detail, quote_detail_timeline]

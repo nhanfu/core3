@@ -1,104 +1,51 @@
-en:
-  "Bảo dưỡng": "Maintenance"
-  "+ Lên lịch bảo dưỡng": "+ Schedule maintenance"
-  "Tất cả": "All"
-  "Xóa bộ lọc": "Clear filter"
-  "Trạng thái": "Status"
-  "Đã lên lịch": "Scheduled"
-  "Đang thực hiện": "Ongoing"
-  "Hoàn thành": "Complete"
-  "Quá hạn": "Overdue"
-  "Loại bảo dưỡng": "Maintenance type"
-  "Thay dầu": "Change the oil"
-  "Đảo lốp": "Rotate tires"
-  "Bảo dưỡng phanh": "Brake maintenance"
-  "Đại tu động cơ": "Engine overhaul"
-  "Bảo dưỡng hộp số": "Gearbox maintenance"
-  "Sửa điều hòa": "Repair air conditioner"
-  "Điện": "Electricity"
-  "Sửa thân vỏ": "Repair the body shell"
-  "Kiểm định định kỳ": "Periodic inspection"
-  "Khác": "Other"
-  "Tìm kiếm": "Search"
-  "Biển số hoặc loại bảo dưỡng...": "License plate or maintenance type..."
-  "Đến hạn tuần này": "Due this week"
-  "Hoàn thành tháng này": "Completed this month"
-  "Không có lịch bảo dưỡng": "There is no maintenance schedule"
-  "Thử thay đổi bộ lọc hoặc lên lịch bảo dưỡng mới.": "Try changing the filter or schedule a new maintenance schedule."
-  "Phương tiện": "Vehicle"
-  "Ngày dự kiến": "Expected date"
-  "Ngày hoàn thành": "Completion date"
-  "Chi phí (VNĐ)": "Cost (VND)"
-  "Kỹ thuật viên": "Technician"
-  "Sửa": "Fix"
-  "Đánh dấu hoàn thành": "Mark complete"
-  "Xóa": "Erase"
-  "Lên lịch bảo dưỡng": "Schedule maintenance"
-  "Mã phương tiện": "Media code"
-  "Oil Change": "Oil Change"
-  "Tire Rotation": "Tire Rotation"
-  "Brake Service": "Brake Service"
-  "Engine Overhaul": "Engine Overhaul"
-  "Transmission Service": "Transmission Service"
-  "AC Repair": "AC Repair"
-  "Electrical": "Electrical"
-  "Body Repair": "Body Repair"
-  "Annual Inspection": "Annual Inspection"
-  "Other": "Other"
-  "Mã kỹ thuật viên": "Technician code"
-  "Ghi chú": "Note"
-  "Cập nhật bảo dưỡng": "Maintenance update"
-  "Đánh dấu công việc này đã hoàn thành?": "Mark this task completed?"
-  "Xóa bản ghi bảo dưỡng này?": "Delete this maintenance record?"
 vi:
-  "Bảo dưỡng": "Bảo dưỡng"
-  "+ Lên lịch bảo dưỡng": "+ Lên lịch bảo dưỡng"
-  "Tất cả": "Tất cả"
-  "Xóa bộ lọc": "Xóa bộ lọc"
-  "Trạng thái": "Trạng thái"
-  "Đã lên lịch": "Đã lên lịch"
-  "Đang thực hiện": "Đang thực hiện"
-  "Hoàn thành": "Hoàn thành"
-  "Quá hạn": "Quá hạn"
-  "Loại bảo dưỡng": "Loại bảo dưỡng"
-  "Thay dầu": "Thay dầu"
-  "Đảo lốp": "Đảo lốp"
-  "Bảo dưỡng phanh": "Bảo dưỡng phanh"
-  "Đại tu động cơ": "Đại tu động cơ"
-  "Bảo dưỡng hộp số": "Bảo dưỡng hộp số"
-  "Sửa điều hòa": "Sửa điều hòa"
-  "Điện": "Điện"
-  "Sửa thân vỏ": "Sửa thân vỏ"
-  "Kiểm định định kỳ": "Kiểm định định kỳ"
-  "Khác": "Khác"
-  "Tìm kiếm": "Tìm kiếm"
-  "Biển số hoặc loại bảo dưỡng...": "Biển số hoặc loại bảo dưỡng..."
-  "Đến hạn tuần này": "Đến hạn tuần này"
-  "Hoàn thành tháng này": "Hoàn thành tháng này"
-  "Không có lịch bảo dưỡng": "Không có lịch bảo dưỡng"
-  "Thử thay đổi bộ lọc hoặc lên lịch bảo dưỡng mới.": "Thử thay đổi bộ lọc hoặc lên lịch bảo dưỡng mới."
-  "Phương tiện": "Phương tiện"
-  "Ngày dự kiến": "Ngày dự kiến"
-  "Ngày hoàn thành": "Ngày hoàn thành"
-  "Chi phí (VNĐ)": "Chi phí (VNĐ)"
-  "Kỹ thuật viên": "Kỹ thuật viên"
-  "Sửa": "Sửa"
-  "Đánh dấu hoàn thành": "Đánh dấu hoàn thành"
-  "Xóa": "Xóa"
-  "Lên lịch bảo dưỡng": "Lên lịch bảo dưỡng"
-  "Mã phương tiện": "Mã phương tiện"
-  "Oil Change": "Oil Change"
-  "Tire Rotation": "Tire Rotation"
-  "Brake Service": "Brake Service"
-  "Engine Overhaul": "Engine Overhaul"
-  "Transmission Service": "Transmission Service"
-  "AC Repair": "AC Repair"
-  "Electrical": "Electrical"
-  "Body Repair": "Body Repair"
-  "Annual Inspection": "Annual Inspection"
-  "Other": "Other"
-  "Mã kỹ thuật viên": "Mã kỹ thuật viên"
-  "Ghi chú": "Ghi chú"
-  "Cập nhật bảo dưỡng": "Cập nhật bảo dưỡng"
-  "Đánh dấu công việc này đã hoàn thành?": "Đánh dấu công việc này đã hoàn thành?"
-  "Xóa bản ghi bảo dưỡng này?": "Xóa bản ghi bảo dưỡng này?"
+  Maintenance: Bảo dưỡng
+  + Schedule maintenance: + Lên lịch bảo dưỡng
+  All: Tất cả
+  Clear filter: Xóa bộ lọc
+  Status: Trạng thái
+  Scheduled: Đã lên lịch
+  Ongoing: Đang thực hiện
+  Complete: Hoàn thành
+  Overdue: Quá hạn
+  Maintenance type: Loại bảo dưỡng
+  Change the oil: Thay dầu
+  Rotate tires: Đảo lốp
+  Brake maintenance: Bảo dưỡng phanh
+  Engine overhaul: Đại tu động cơ
+  Gearbox maintenance: Bảo dưỡng hộp số
+  Repair air conditioner: Sửa điều hòa
+  Electricity: Điện
+  Repair the body shell: Sửa thân vỏ
+  Periodic inspection: Kiểm định định kỳ
+  Other: Other
+  Search: Tìm kiếm
+  "License plate or maintenance type...": "Biển số hoặc loại bảo dưỡng..."
+  Due this week: Đến hạn tuần này
+  Completed this month: Hoàn thành tháng này
+  There is no maintenance schedule: Không có lịch bảo dưỡng
+  Try changing the filter or schedule a new maintenance schedule.: Thử thay đổi bộ lọc hoặc lên lịch bảo dưỡng mới.
+  Vehicle: Phương tiện
+  Expected date: Ngày dự kiến
+  Completion date: Ngày hoàn thành
+  Cost (VND): Chi phí (VNĐ)
+  Technician: Kỹ thuật viên
+  Fix: Sửa
+  Mark complete: Đánh dấu hoàn thành
+  Erase: Xóa
+  Schedule maintenance: Lên lịch bảo dưỡng
+  Media code: Mã phương tiện
+  Oil Change: Oil Change
+  Tire Rotation: Tire Rotation
+  Brake Service: Brake Service
+  Engine Overhaul: Engine Overhaul
+  Transmission Service: Transmission Service
+  AC Repair: AC Repair
+  Electrical: Electrical
+  Body Repair: Body Repair
+  Annual Inspection: Annual Inspection
+  Technician code: Mã kỹ thuật viên
+  Note: Ghi chú
+  Maintenance update: Cập nhật bảo dưỡng
+  Mark this task completed?: Đánh dấu công việc này đã hoàn thành?
+  Delete this maintenance record?: Xóa bản ghi bảo dưỡng này?

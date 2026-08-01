@@ -1,5 +1,5 @@
-title: Chi tiết khu vực
-page: { id: area-detail, breadcrumb: [Danh mục, Khu vực, Chi tiết], auth: { require: [dispatch.read] } }
+title: Area details
+page: { id: area-detail, breadcrumb: [Category, Area, Detail], auth: { require: [dispatch.read] } }
 datasources:
   - id: area_detail
     single: true
@@ -17,26 +17,26 @@ datasources:
     permission: dispatch.read
     query: "SELECT id AS value, code || ' - ' || name AS label FROM areas ORDER BY name"
 components:
-  - { type: DocumentSummary, source: area_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: region, label: Vùng miền }, { field: description, label: Ghi chú }] }
+  - { type: DocumentSummary, source: area_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: region, label: Region }, { field: description, label: Note }] }
   - type: DataGrid
     source: area_locations
     page_size: 50
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có địa điểm trong khu vực }
-    columns: [{ field: code, label: Mã địa điểm }, { field: name, label: Địa điểm }, { field: location_type_label, label: Loại }, { field: city, label: Thành phố }, { field: address, label: Địa chỉ }, { field: status, label: Trạng thái }]
+    empty_state: { title: There are no locations in the area yet }
+    columns: [{ field: code, label: Location code }, { field: name, label: Location }, { field: location_type_label, label: Type }, { field: city, label: City }, { field: address, label: Address }, { field: status, label: Status }]
 toolbar:
-  - { id: back_areas, label: 'Danh sách khu vực', icon: arrow-left, variant: secondary, action: back_areas }
-  - { id: edit_area_detail, label: Sửa khu vực, variant: primary, permission: dispatch.write, action: edit_area_detail }
+  - { id: back_areas, label: 'Area list', icon: arrow-left, variant: secondary, action: back_areas }
+  - { id: edit_area_detail, label: Edit area, variant: primary, permission: dispatch.write, action: edit_area_detail }
 actions:
   - { id: back_areas, type: navigate, navigate_to: /areas }
   - id: edit_area_detail
     type: form
     permission: dispatch.write
-    title: Cập nhật khu vực
+    title: Update area
     table: areas
     operation: update
     prefill: source
     prefill_source: area_detail
     refresh: [area_detail, area_locations]
-    fields: [{ field: code, label: Mã khu vực, type: text, required: true }, { field: name, label: Tên khu vực, type: text, required: true }, { field: parent_id, label: Khu vực cha, type: select, options_source: area_detail_parent_lookup }, { field: region, label: Vùng miền, type: text }, { field: description, label: Ghi chú, type: textarea }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }]
+    fields: [{ field: code, label: Area code, type: text, required: true }, { field: name, label: Area name, type: text, required: true }, { field: parent_id, label: Father area, type: select, options_source: area_detail_parent_lookup }, { field: region, label: Region, type: text }, { field: description, label: Note, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }] }]

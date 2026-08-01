@@ -1,76 +1,38 @@
-en:
-  "Hoàn ứng": "Completion"
-  "Kế toán": "Accountant"
-  "+ Thêm hoàn ứng": "+ Added completion"
-  "Tìm kiếm hoàn ứng": "Complete search"
-  "Tìm số chứng từ hoặc người hoàn...": "Find document number or person completing..."
-  "Từ ngày hoàn ứng": "From the date of completion"
-  "Đến ngày hoàn ứng": "Until the date of completion"
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Nháp": "Draft"
-  "Đang duyệt": "Browsing"
-  "Đã duyệt": "Approved"
-  "Đã hủy": "Canceled"
-  "Không có hoàn ứng": "There is no refund"
-  "Số chứng từ": "Document number"
-  "Nội dung": "Content"
-  "Ngày hoàn ứng": "Completion date"
-  "Giá trị": "Value"
-  "Tạm ứng liên kết": "Link advance"
-  "Tiền tệ": "Money"
-  "Trạng thái": "Status"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Trình duyệt": "Browser"
-  "Duyệt": "Browse"
-  "Từ chối": "Refuse"
-  "Hủy": "Cancel"
-  "Xóa": "Erase"
-  "Thêm hoàn ứng": "Add a refund"
-  "Người hoàn": "Complete person"
-  "Ghi chú": "Note"
-  "Cập nhật hoàn ứng": "Complete update"
-  "Trình duyệt hoàn ứng {{row.code}}?": "Browser complete {{row.code}}?"
-  "Duyệt hoàn ứng {{row.code}}?": "Completely browse {{row.code}}?"
-  "Từ chối hoàn ứng {{row.code}}?": "Refuse to complete {{row.code}}?"
-  "Hủy hoàn ứng {{row.code}}?": "Undo {{row.code}}?"
-  "Xóa hoàn ứng {{row.code}}?": "Completely delete {{row.code}}?"
 vi:
-  "Hoàn ứng": "Hoàn ứng"
-  "Kế toán": "Kế toán"
-  "+ Thêm hoàn ứng": "+ Thêm hoàn ứng"
-  "Tìm kiếm hoàn ứng": "Tìm kiếm hoàn ứng"
-  "Tìm số chứng từ hoặc người hoàn...": "Tìm số chứng từ hoặc người hoàn..."
-  "Từ ngày hoàn ứng": "Từ ngày hoàn ứng"
-  "Đến ngày hoàn ứng": "Đến ngày hoàn ứng"
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Nháp": "Nháp"
-  "Đang duyệt": "Đang duyệt"
-  "Đã duyệt": "Đã duyệt"
-  "Đã hủy": "Đã hủy"
-  "Không có hoàn ứng": "Không có hoàn ứng"
-  "Số chứng từ": "Số chứng từ"
-  "Nội dung": "Nội dung"
-  "Ngày hoàn ứng": "Ngày hoàn ứng"
-  "Giá trị": "Giá trị"
-  "Tạm ứng liên kết": "Tạm ứng liên kết"
-  "Tiền tệ": "Tiền tệ"
-  "Trạng thái": "Trạng thái"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Trình duyệt": "Trình duyệt"
-  "Duyệt": "Duyệt"
-  "Từ chối": "Từ chối"
-  "Hủy": "Hủy"
-  "Xóa": "Xóa"
-  "Thêm hoàn ứng": "Thêm hoàn ứng"
-  "Người hoàn": "Người hoàn"
-  "Ghi chú": "Ghi chú"
-  "Cập nhật hoàn ứng": "Cập nhật hoàn ứng"
-  "Trình duyệt hoàn ứng {{row.code}}?": "Trình duyệt hoàn ứng {{row.code}}?"
-  "Duyệt hoàn ứng {{row.code}}?": "Duyệt hoàn ứng {{row.code}}?"
-  "Từ chối hoàn ứng {{row.code}}?": "Từ chối hoàn ứng {{row.code}}?"
-  "Hủy hoàn ứng {{row.code}}?": "Hủy hoàn ứng {{row.code}}?"
-  "Xóa hoàn ứng {{row.code}}?": "Xóa hoàn ứng {{row.code}}?"
+  Completion: Hoàn ứng
+  Accountant: Kế toán
+  + Added completion: + Thêm hoàn ứng
+  Complete search: Tìm kiếm hoàn ứng
+  "Find document number or person completing...": "Tìm số chứng từ hoặc người hoàn..."
+  From the date of completion: Từ ngày hoàn ứng
+  Until the date of completion: Đến ngày hoàn ứng
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Draft: Nháp
+  Browsing: Đang duyệt
+  Approved: Đã duyệt
+  Canceled: Đã hủy
+  There is no refund: Không có hoàn ứng
+  Document number: Số chứng từ
+  Content: Nội dung
+  Completion date: Ngày hoàn ứng
+  Value: Giá trị
+  Link advance: Tạm ứng liên kết
+  Money: Tiền tệ
+  Status: Trạng thái
+  Detail: Chi tiết
+  Fix: Sửa
+  Browser: Trình duyệt
+  Browse: Duyệt
+  Refuse: Từ chối
+  Cancel: Hủy
+  Erase: Xóa
+  Add a refund: Thêm hoàn ứng
+  Complete person: Người hoàn
+  Note: Ghi chú
+  Complete update: Cập nhật hoàn ứng
+  "Browser complete {{row.code}}?": "Trình duyệt hoàn ứng {{row.code}}?"
+  "Completely browse {{row.code}}?": "Duyệt hoàn ứng {{row.code}}?"
+  "Refuse to complete {{row.code}}?": "Từ chối hoàn ứng {{row.code}}?"
+  "Undo {{row.code}}?": "Hủy hoàn ứng {{row.code}}?"
+  "Completely delete {{row.code}}?": "Xóa hoàn ứng {{row.code}}?"

@@ -9,7 +9,7 @@ import { appendIcon } from '../../lib/components/Icon.ts';
 type NavItem = { path: string; label: string; icon: string };
 type NavGroup = { id: string; label: string; items: NavItem[] };
 
-const DASHBOARD: NavItem = { path: '/dashboard', label: 'Tổng quan', icon: 'dashboard' };
+const DASHBOARD: NavItem = { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' };
 
 const NAV_PERMISSIONS: Record<string, string> = {
   '/dashboard': 'fleet.read',
@@ -42,65 +42,65 @@ function canSeeNavItem(item: NavItem, user: any) {
 }
 
 const NAV_GROUPS: NavGroup[] = [
-  { id: 'operations', label: 'ĐIỀU HÀNH', items: [
-    { path: '/orders', label: 'Đơn hàng', icon: 'document' },
-    { path: '/chat', label: 'Tin nhắn', icon: 'message' },
-    { path: '/schedule', label: 'Lịch điều', icon: 'calendar' },
+  { id: 'operations', label: 'OPERATIONS', items: [
+    { path: '/orders', label: 'Orders', icon: 'document' },
+    { path: '/chat', label: 'Messages', icon: 'message' },
+    { path: '/schedule', label: 'Dispatch schedule', icon: 'calendar' },
   ] },
-  { id: 'sales', label: 'KINH DOANH', items: [
-    { path: '/customers', label: 'Khách hàng', icon: 'users' },
-    { path: '/partners', label: 'Đối tượng', icon: 'users' },
-    { path: '/quotes', label: 'Báo giá', icon: 'warning' },
-    { path: '/crm/dashboard', label: 'Tổng hợp CRM', icon: 'report' },
-    { path: '/crm/kpi', label: 'Chỉ tiêu KPI', icon: 'analytics' },
+  { id: 'sales', label: 'SALES', items: [
+    { path: '/customers', label: 'Customers', icon: 'users' },
+    { path: '/partners', label: 'Partners', icon: 'users' },
+    { path: '/quotes', label: 'Quotes', icon: 'warning' },
+    { path: '/crm/dashboard', label: 'CRM overview', icon: 'report' },
+    { path: '/crm/kpi', label: 'KPI targets', icon: 'analytics' },
   ] },
-  { id: 'accounting', label: 'KẾ TOÁN', items: [
-    { path: '/accounting/debit-notes', label: 'Giấy báo nợ', icon: 'file' },
-    { path: '/accounting/debit-note-summary', label: 'Tổng hợp giấy báo nợ', icon: 'report' },
-    { path: '/accounting/payment-requests', label: 'Đề nghị thanh toán', icon: 'file' },
-    { path: '/accounting/payment-request-summary', label: 'Tổng hợp đề nghị chi', icon: 'report' },
-    { path: '/accounting/advances', label: 'Tạm ứng', icon: 'money' },
-    { path: '/accounting/settlements', label: 'Hoàn ứng', icon: 'money' },
-    { path: '/accounting/invoice-templates', label: 'Mẫu hóa đơn', icon: 'document' },
-    { path: '/accounting/ledger-accounts', label: 'Hệ thống tài khoản', icon: 'table' },
+  { id: 'accounting', label: 'ACCOUNTING', items: [
+    { path: '/accounting/debit-notes', label: 'Debit notes', icon: 'file' },
+    { path: '/accounting/debit-note-summary', label: 'Debit note summary', icon: 'report' },
+    { path: '/accounting/payment-requests', label: 'Payment requests', icon: 'file' },
+    { path: '/accounting/payment-request-summary', label: 'Payment request summary', icon: 'report' },
+    { path: '/accounting/advances', label: 'Advances', icon: 'money' },
+    { path: '/accounting/settlements', label: 'Settlements', icon: 'money' },
+    { path: '/accounting/invoice-templates', label: 'Invoice templates', icon: 'document' },
+    { path: '/accounting/ledger-accounts', label: 'Chart of accounts', icon: 'table' },
   ] },
-  { id: 'hr', label: 'NHÂN SỰ', items: [
-    { path: '/hr/employees', label: 'Nhân viên', icon: 'users' },
-    { path: '/hr/contracts', label: 'Hợp đồng', icon: 'document' },
-    { path: '/hr/timesheets', label: 'Chấm công', icon: 'dashboard' },
-    { path: '/hr/shifts', label: 'Ca làm việc', icon: 'calendar' },
-    { path: '/hr/payroll', label: 'Bảng lương', icon: 'file' },
+  { id: 'hr', label: 'HUMAN RESOURCES', items: [
+    { path: '/hr/employees', label: 'Employees', icon: 'users' },
+    { path: '/hr/contracts', label: 'Contracts', icon: 'document' },
+    { path: '/hr/timesheets', label: 'Timesheets', icon: 'dashboard' },
+    { path: '/hr/shifts', label: 'Shifts', icon: 'calendar' },
+    { path: '/hr/payroll', label: 'Payroll', icon: 'file' },
   ] },
-  { id: 'catalog', label: 'DANH MỤC', items: [
-    { path: '/drivers', label: 'Tài xế', icon: 'users' },
-    { path: '/vehicles', label: 'Phương tiện', icon: 'grid' },
-    { path: '/containers', label: 'Container', icon: 'document' },
-    { path: '/locations', label: 'Địa điểm', icon: 'pin' },
-    { path: '/areas', label: 'Khu vực', icon: 'quote' },
-    { path: '/catalog/container-types', label: 'Loại container', icon: 'document' },
-    { path: '/catalog/vehicle-types', label: 'Loại xe', icon: 'grid' },
-    { path: '/catalog/units', label: 'Đơn vị tính', icon: 'menu' },
-    { path: '/catalog/cargo-types', label: 'Loại hàng hóa', icon: 'quote' },
-    { path: '/catalog/fee-types', label: 'Loại phí', icon: 'analytics' },
-    { path: '/catalog/currencies', label: 'Tiền tệ', icon: 'money' },
+  { id: 'catalog', label: 'CATALOG', items: [
+    { path: '/drivers', label: 'Drivers', icon: 'users' },
+    { path: '/vehicles', label: 'Vehicles', icon: 'grid' },
+    { path: '/containers', label: 'Containers', icon: 'document' },
+    { path: '/locations', label: 'Locations', icon: 'pin' },
+    { path: '/areas', label: 'Areas', icon: 'quote' },
+    { path: '/catalog/container-types', label: 'Containers types', icon: 'document' },
+    { path: '/catalog/vehicle-types', label: 'Vehicle types', icon: 'grid' },
+    { path: '/catalog/units', label: 'Units', icon: 'menu' },
+    { path: '/catalog/cargo-types', label: 'Cargo types', icon: 'quote' },
+    { path: '/catalog/fee-types', label: 'Fee types', icon: 'analytics' },
+    { path: '/catalog/currencies', label: 'Currencies', icon: 'money' },
   ] },
-  { id: 'organization', label: 'TỔ CHỨC & PHÂN QUYỀN', items: [
-    { path: '/org/own-company', label: 'Công ty chủ quản', icon: 'dashboard' },
-    { path: '/org/branches', label: 'Chi nhánh', icon: 'home' },
-    { path: '/org/departments', label: 'Phòng ban', icon: 'report' },
-    { path: '/org/teams', label: 'Đội nhóm', icon: 'users' },
-    { path: '/org/users', label: 'Người dùng', icon: 'users' },
-    { path: '/org/roles', label: 'Vai trò', icon: 'quote' },
+  { id: 'organization', label: 'ORGANIZATION & ACCESS', items: [
+    { path: '/org/own-company', label: 'Company', icon: 'dashboard' },
+    { path: '/org/branches', label: 'Branches', icon: 'home' },
+    { path: '/org/departments', label: 'Departments', icon: 'report' },
+    { path: '/org/teams', label: 'Teams', icon: 'users' },
+    { path: '/org/users', label: 'Users', icon: 'users' },
+    { path: '/org/roles', label: 'Roles', icon: 'quote' },
   ] },
-  { id: 'system', label: 'HỆ THỐNG', items: [
-    { path: '/system/activity', label: 'Lịch sử thao tác', icon: 'activity' },
-    { path: '/system/code-rules', label: 'Cấu hình sinh mã', icon: 'number' },
-    { path: '/system/print-templates', label: 'Mẫu in', icon: 'file' },
-    { path: '/system/approval-flows', label: 'Quy trình duyệt', icon: 'quote' },
-    { path: '/system/shipment-types', label: 'Loại hình vận chuyển', icon: 'grid' },
-    { path: '/system/trip-statuses', label: 'Trạng thái chuyến', icon: 'status' },
-    { path: '/system/fee-rules', label: 'Công thức phí chuyến', icon: 'analytics' },
-    { path: '/system/storage', label: 'Quản lý dung lượng', icon: 'table' },
+  { id: 'system', label: 'SYSTEM', items: [
+    { path: '/system/activity', label: 'Activity log', icon: 'activity' },
+    { path: '/system/code-rules', label: 'Code rules', icon: 'number' },
+    { path: '/system/print-templates', label: 'Print templates', icon: 'file' },
+    { path: '/system/approval-flows', label: 'Approval workflows', icon: 'quote' },
+    { path: '/system/shipment-types', label: 'Shipment types', icon: 'grid' },
+    { path: '/system/trip-statuses', label: 'Trip statuses', icon: 'status' },
+    { path: '/system/fee-rules', label: 'Trip fee rules', icon: 'analytics' },
+    { path: '/system/storage', label: 'Storage', icon: 'table' },
   ] },
 ];
 
@@ -196,15 +196,15 @@ export class AppShell extends BaseComponent {
     logoMark.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 17 10-10M7 7h4v4M17 17h-4v-4"/><path d="m5 12 3-3M19 12l-3 3"/></svg>';
     const logoCopy = html.take(logoIdentity).div.getContext();
     html.take(logoCopy).div.className('sidebar-logo-text').text('MovedX');
-    html.take(logoCopy).div.className('sidebar-logo-sub').text('Điều xe & Tài xế');
+    html.take(logoCopy).div.className('sidebar-logo-sub').text('Điều xe & Drivers');
 
     const menuSearch = html.take(sidebar).div.className('sidebar-menu-search').getContext();
     const menuSearchIcon = html.take(menuSearch).span.className('sidebar-menu-search-icon').getContext();
     appendIcon(menuSearchIcon, 'search');
     const menuSearchInput = html.take(menuSearch).input
       .type('search')
-      .attr('placeholder', i18n.t('*', null, 'Tìm menu...'))
-      .attr('aria-label', i18n.t('*', null, 'Tìm menu'))
+      .attr('placeholder', i18n.t('*', null, 'Search menu...'))
+      .attr('aria-label', i18n.t('*', null, 'Search menu'))
       .getContext();
 
     // Nav
@@ -360,8 +360,8 @@ export class AppShell extends BaseComponent {
     const attendanceBtn = html.take(actions).button
       .className('header-icon-btn attendance-btn')
       .attr('type', 'button')
-      .attr('title', 'Chấm công')
-      .attr('aria-label', 'Chấm công')
+      .attr('title', 'Timesheets')
+      .attr('aria-label', 'Timesheets')
       .event('click', () => navigate('/hr/timesheets'))
       .getContext();
     const attendanceIcon = html.take(attendanceBtn).span.getContext();
@@ -379,8 +379,8 @@ export class AppShell extends BaseComponent {
     const chatBtn = html.take(actions).button
       .className('header-icon-btn')
       .attr('type', 'button')
-      .attr('title', 'Tin nhắn')
-      .attr('aria-label', 'Tin nhắn')
+      .attr('title', 'Messages')
+      .attr('aria-label', 'Messages')
       .event('click', () => navigate('/chat'))
       .getContext();
     const chatIcon = html.take(chatBtn).span.getContext();
@@ -449,7 +449,7 @@ export class AppShell extends BaseComponent {
     const toastClose = html.take(toast).button
       .className('shell-toast-close')
       .attr('type', 'button')
-      .attr('aria-label', 'Đóng thông báo')
+      .attr('aria-label', 'Close thông báo')
       .getContext();
     appendIcon(toastClose, 'x');
     toastClose.addEventListener('click', () => toast.remove());

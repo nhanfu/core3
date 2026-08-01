@@ -1,80 +1,39 @@
-en:
-  "Giấy báo nợ": "Debt notice"
-  "Kế toán": "Accountant"
-  "+ Thêm giấy báo nợ": "+ Add debt notice"
-  "Tìm kiếm giấy báo nợ": "Search for debt notices"
-  "Tìm số chứng từ hoặc đối tác...": "Find voucher number or partner..."
-  "Từ ngày chứng từ": "From the date of the document"
-  "Đến ngày chứng từ": "Arrival date of documents"
-  "Xuất Excel": "Export Excel"
-  "Tất cả": "All"
-  "Nháp": "Draft"
-  "Đang duyệt": "Browsing"
-  "Đã duyệt": "Approved"
-  "Đã thanh toán": "Paid"
-  "Đã hủy": "Canceled"
-  "Không có giấy báo nợ": "There is no debt notice"
-  "Số chứng từ": "Document number"
-  "Nội dung": "Content"
-  "Ngày chứng từ": "Document date"
-  "Hạn thanh toán": "Payment deadline"
-  "Giá trị": "Value"
-  "Tiền tệ": "Money"
-  "Trạng thái": "Status"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Trình duyệt": "Browser"
-  "Duyệt": "Browse"
-  "Từ chối": "Refuse"
-  "Hủy": "Cancel"
-  "Xóa": "Erase"
-  "Thêm giấy báo nợ": "Add debt notice"
-  "Đối tác": "Partner"
-  "Ghi chú": "Note"
-  "Cập nhật giấy báo nợ": "Update debt notice"
-  "Trình duyệt giấy báo nợ {{row.code}}?": "Browse debit note {{row.code}}?"
-  "Duyệt giấy báo nợ {{row.code}}?": "Browse debit note {{row.code}}?"
-  "Từ chối giấy báo nợ {{row.code}}?": "Reject debit note {{row.code}}?"
-  "Xác nhận đã thanh toán giấy báo nợ {{row.code}}?": "Confirm payment of debit note {{row.code}}?"
-  "Hủy giấy báo nợ {{row.code}}?": "Cancel debit note {{row.code}}?"
-  "Xóa giấy báo nợ {{row.code}}?": "Delete debit note {{row.code}}?"
 vi:
-  "Giấy báo nợ": "Giấy báo nợ"
-  "Kế toán": "Kế toán"
-  "+ Thêm giấy báo nợ": "+ Thêm giấy báo nợ"
-  "Tìm kiếm giấy báo nợ": "Tìm kiếm giấy báo nợ"
-  "Tìm số chứng từ hoặc đối tác...": "Tìm số chứng từ hoặc đối tác..."
-  "Từ ngày chứng từ": "Từ ngày chứng từ"
-  "Đến ngày chứng từ": "Đến ngày chứng từ"
-  "Xuất Excel": "Xuất Excel"
-  "Tất cả": "Tất cả"
-  "Nháp": "Nháp"
-  "Đang duyệt": "Đang duyệt"
-  "Đã duyệt": "Đã duyệt"
-  "Đã thanh toán": "Đã thanh toán"
-  "Đã hủy": "Đã hủy"
-  "Không có giấy báo nợ": "Không có giấy báo nợ"
-  "Số chứng từ": "Số chứng từ"
-  "Nội dung": "Nội dung"
-  "Ngày chứng từ": "Ngày chứng từ"
-  "Hạn thanh toán": "Hạn thanh toán"
-  "Giá trị": "Giá trị"
-  "Tiền tệ": "Tiền tệ"
-  "Trạng thái": "Trạng thái"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Trình duyệt": "Trình duyệt"
-  "Duyệt": "Duyệt"
-  "Từ chối": "Từ chối"
-  "Hủy": "Hủy"
-  "Xóa": "Xóa"
-  "Thêm giấy báo nợ": "Thêm giấy báo nợ"
-  "Đối tác": "Đối tác"
-  "Ghi chú": "Ghi chú"
-  "Cập nhật giấy báo nợ": "Cập nhật giấy báo nợ"
-  "Trình duyệt giấy báo nợ {{row.code}}?": "Trình duyệt giấy báo nợ {{row.code}}?"
-  "Duyệt giấy báo nợ {{row.code}}?": "Duyệt giấy báo nợ {{row.code}}?"
-  "Từ chối giấy báo nợ {{row.code}}?": "Từ chối giấy báo nợ {{row.code}}?"
-  "Xác nhận đã thanh toán giấy báo nợ {{row.code}}?": "Xác nhận đã thanh toán giấy báo nợ {{row.code}}?"
-  "Hủy giấy báo nợ {{row.code}}?": "Hủy giấy báo nợ {{row.code}}?"
-  "Xóa giấy báo nợ {{row.code}}?": "Xóa giấy báo nợ {{row.code}}?"
+  Debt notice: Giấy báo nợ
+  Accountant: Kế toán
+  + Add debt notice: + Thêm giấy báo nợ
+  Search for debt notices: Tìm kiếm giấy báo nợ
+  "Find voucher number or partner...": "Tìm số chứng từ hoặc đối tác..."
+  From the date of the document: Từ ngày chứng từ
+  Arrival date of documents: Đến ngày chứng từ
+  Export Excel: Xuất Excel
+  All: Tất cả
+  Draft: Nháp
+  Browsing: Đang duyệt
+  Approved: Đã duyệt
+  Paid: Đã thanh toán
+  Canceled: Đã hủy
+  There is no debt notice: Không có giấy báo nợ
+  Document number: Số chứng từ
+  Content: Nội dung
+  Document date: Ngày chứng từ
+  Payment deadline: Hạn thanh toán
+  Value: Giá trị
+  Money: Tiền tệ
+  Status: Trạng thái
+  Detail: Chi tiết
+  Fix: Sửa
+  Browser: Trình duyệt
+  Browse: Duyệt
+  Refuse: Từ chối
+  Cancel: Hủy
+  Erase: Xóa
+  Add debt notice: Thêm giấy báo nợ
+  Partner: Đối tác
+  Note: Ghi chú
+  Update debt notice: Cập nhật giấy báo nợ
+  "Browse debit note {{row.code}}?": "Duyệt giấy báo nợ {{row.code}}?"
+  "Reject debit note {{row.code}}?": "Từ chối giấy báo nợ {{row.code}}?"
+  "Confirm payment of debit note {{row.code}}?": "Xác nhận đã thanh toán giấy báo nợ {{row.code}}?"
+  "Cancel debit note {{row.code}}?": "Hủy giấy báo nợ {{row.code}}?"
+  "Delete debit note {{row.code}}?": "Xóa giấy báo nợ {{row.code}}?"

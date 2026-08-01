@@ -1,64 +1,32 @@
-en:
-  "Nhân viên": "Staff"
-  "Nhân sự": "Human resources"
-  "+ Thêm nhân viên": "+ Add employees"
-  "Tìm kiếm nhân viên": "Search for employees"
-  "Tìm mã, tên, SĐT, email...": "Find code, name, phone number, email..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đang làm việc": "Working"
-  "Nghỉ phép": "On leave"
-  "Ngưng làm việc": "Stop working"
-  "Không có nhân viên": "No staff"
-  "Thử thay đổi bộ lọc hoặc tạo nhân viên mới.": "Try changing the filter or creating a new employee."
-  "Mã HT": "HT code"
-  "Họ tên": "Full name"
-  "Mã nhân viên": "Employee code"
-  "Điện thoại": "Phone"
-  "Ngày vào làm": "Day of work"
-  "Người phụ thuộc": "Dependents"
-  "Trạng thái": "Status"
-  "Ngày giờ tạo": "Creation date and time"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm nhân viên": "More staff"
-  "Chức danh": "Title"
-  "Số điện thoại": "Phone number"
-  "Email": "E-mail"
-  "Phòng ban": "Departments"
-  "Ngưng hoạt động": "Shut down"
-  "Cập nhật nhân viên": "Update staff"
-  "Xóa nhân viên {{row.name}}?": "Delete employee {{row.name}}?"
 vi:
-  "Nhân viên": "Nhân viên"
-  "Nhân sự": "Nhân sự"
-  "+ Thêm nhân viên": "+ Thêm nhân viên"
-  "Tìm kiếm nhân viên": "Tìm kiếm nhân viên"
-  "Tìm mã, tên, SĐT, email...": "Tìm mã, tên, SĐT, email..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đang làm việc": "Đang làm việc"
-  "Nghỉ phép": "Nghỉ phép"
-  "Ngưng làm việc": "Ngưng làm việc"
-  "Không có nhân viên": "Không có nhân viên"
-  "Thử thay đổi bộ lọc hoặc tạo nhân viên mới.": "Thử thay đổi bộ lọc hoặc tạo nhân viên mới."
-  "Mã HT": "Mã HT"
-  "Họ tên": "Họ tên"
-  "Mã nhân viên": "Mã nhân viên"
-  "Điện thoại": "Điện thoại"
-  "Ngày vào làm": "Ngày vào làm"
-  "Người phụ thuộc": "Người phụ thuộc"
-  "Trạng thái": "Trạng thái"
-  "Ngày giờ tạo": "Ngày giờ tạo"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm nhân viên": "Thêm nhân viên"
-  "Chức danh": "Chức danh"
-  "Số điện thoại": "Số điện thoại"
-  "Email": "Email"
-  "Phòng ban": "Phòng ban"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Cập nhật nhân viên": "Cập nhật nhân viên"
-  "Xóa nhân viên {{row.name}}?": "Xóa nhân viên {{row.name}}?"
+  Staff: Nhân viên
+  Human resources: Nhân sự
+  + Add employees: + Thêm nhân viên
+  Search for employees: Tìm kiếm nhân viên
+  "Find code, name, phone number, email...": "Tìm mã, tên, SĐT, email..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Working: Đang làm việc
+  On leave: Nghỉ phép
+  Stop working: Ngưng làm việc
+  No staff: Không có nhân viên
+  Try changing the filter or creating a new employee.: Thử thay đổi bộ lọc hoặc tạo nhân viên mới.
+  HT code: Mã HT
+  Full name: Họ tên
+  Employee code: Mã nhân viên
+  Phone: Điện thoại
+  Day of work: Ngày vào làm
+  Dependents: Người phụ thuộc
+  Status: Trạng thái
+  Creation date and time: Ngày giờ tạo
+  Detail: Chi tiết
+  Fix: Sửa
+  Erase: Xóa
+  More staff: Thêm nhân viên
+  Title: Chức danh
+  Phone number: Số điện thoại
+  E-mail: Email
+  Departments: Phòng ban
+  Shut down: Ngưng hoạt động
+  Update staff: Cập nhật nhân viên
+  "Delete employee {{row.name}}?": "Xóa nhân viên {{row.name}}?"

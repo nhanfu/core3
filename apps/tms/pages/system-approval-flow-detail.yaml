@@ -1,5 +1,5 @@
-title: Chi tiết quy trình duyệt
-page: { id: system-approval-flow-detail, breadcrumb: [Hệ thống, Quy trình duyệt, Chi tiết], auth: { require: [system.read] } }
+title: Details of the approval process
+page: { id: system-approval-flow-detail, breadcrumb: [System, Browsing process, Detail], auth: { require: [system.read] } }
 datasources:
   - id: approval_flow
     single: true
@@ -10,49 +10,49 @@ datasources:
     permission: system.read
     query: "SELECT id, flow_id, sequence, name, approver_role, printf('%,.0f ₫', min_amount) AS min_amount_display, min_amount, status FROM approval_flow_steps WHERE flow_id = :id ORDER BY sequence, id"
 components:
-  - { type: DocumentSummary, source: approval_flow, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Mô tả }] }
+  - { type: DocumentSummary, source: approval_flow, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Describe }] }
   - type: DataGrid
     source: approval_steps
     page_size: 50
     reorder: { up_action: move_step_up, down_action: move_step_down }
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có bước duyệt, description: Thêm bước đầu tiên cho quy trình. }
+    empty_state: { title: There is no approval step yet, description: Add a first step to the process. }
     columns:
-      - { field: sequence, label: Thứ tự, align: right }
-      - { field: name, label: Bước duyệt }
-      - { field: approver_role, label: Vai trò duyệt }
-      - { field: min_amount_display, label: Từ mức tiền, align: right }
-      - { field: status, label: Trạng thái }
+      - { field: sequence, label: Order, align: right }
+      - { field: name, label: Browsing step }
+      - { field: approver_role, label: Browsing role }
+      - { field: min_amount_display, label: From the money level, align: right }
+      - { field: status, label: Status }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: move_step_up, label: Lên, variant: ghost, permission: system.write }
-          - { id: move_step_down, label: Xuống, variant: ghost, permission: system.write }
-          - { id: edit_step, label: Sửa, variant: ghost, permission: system.write }
-          - { id: delete_step, label: Xóa, variant: danger, permission: system.write }
+          - { id: move_step_up, label: Go up, variant: ghost, permission: system.write }
+          - { id: move_step_down, label: Down, variant: ghost, permission: system.write }
+          - { id: edit_step, label: Fix, variant: ghost, permission: system.write }
+          - { id: delete_step, label: Erase, variant: danger, permission: system.write }
 toolbar:
-  - { id: back_approval_flows, label: 'Danh sách quy trình', icon: arrow-left, variant: secondary, action: back_approval_flows }
-  - { id: add_step, label: '+ Thêm bước', variant: primary, permission: system.write, action: add_step }
+  - { id: back_approval_flows, label: 'Process list', icon: arrow-left, variant: secondary, action: back_approval_flows }
+  - { id: add_step, label: '+ Add steps', variant: primary, permission: system.write, action: add_step }
 actions:
   - { id: back_approval_flows, type: navigate, navigate_to: /system/approval-flows }
   - id: add_step
     type: server_form
     permission: system.write
-    title: Thêm bước duyệt
+    title: Add a review step
     action: system.approval_steps.create
     params: { id: '{state.id}' }
     refresh: [approval_steps]
-    fields: [{ field: name, label: Tên bước, type: text, required: true }, { field: approver_role, label: Vai trò duyệt, type: text, required: true }, { field: min_amount, label: Từ mức tiền, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }]
+    fields: [{ field: name, label: Step name, type: text, required: true }, { field: approver_role, label: Browsing role, type: text, required: true }, { field: min_amount, label: From the money level, type: number, default: 0 }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }]
   - id: edit_step
     type: server_form
     permission: system.write
-    title: Cập nhật bước duyệt
+    title: Update approval step
     action: system.approval_steps.update
     params: { id: '{state.id}', step_id: '{row.id}' }
     refresh: [approval_steps]
-    fields: [{ field: name, label: Tên bước, type: text, required: true }, { field: approver_role, label: Vai trò duyệt, type: text, required: true }, { field: min_amount, label: Từ mức tiền, type: number, required: true }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }]
-  - { id: delete_step, type: server, permission: system.write, action: system.approval_steps.delete, confirm: 'Xóa bước duyệt này?', refresh: [approval_steps], params: { id: '{state.id}', step_id: '{row.id}' } }
+    fields: [{ field: name, label: Step name, type: text, required: true }, { field: approver_role, label: Browsing role, type: text, required: true }, { field: min_amount, label: From the money level, type: number, required: true }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }]
+  - { id: delete_step, type: server, permission: system.write, action: system.approval_steps.delete, confirm: 'Delete this browsing step?', refresh: [approval_steps], params: { id: '{state.id}', step_id: '{row.id}' } }
   - { id: move_step_up, type: server, permission: system.write, action: system.approval_steps.move_up, refresh: [approval_steps], params: { id: '{state.id}', step_id: '{row.id}' } }
   - { id: move_step_down, type: server, permission: system.write, action: system.approval_steps.move_down, refresh: [approval_steps], params: { id: '{state.id}', step_id: '{row.id}' } }

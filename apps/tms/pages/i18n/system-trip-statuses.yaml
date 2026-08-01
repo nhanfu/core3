@@ -1,42 +1,21 @@
-en:
-  "Trạng thái chuyến": "Trip status"
-  "Hệ thống": "System"
-  "+ Thêm trạng thái": "+ Add status"
-  "Tìm trạng thái": "Find status"
-  "Tìm mã hoặc tên...": "Find code or name..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Chưa có trạng thái chuyến": "No trip status yet"
-  "Mã": "Code"
-  "Giá trị": "Value"
-  "Trạng thái": "Status"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm trạng thái chuyến": "Add trip status"
-  "Tên": "Name"
-  "Mô tả": "Describe"
-  "Cập nhật trạng thái chuyến": "Update trip status"
-  "Xóa trạng thái {{row.name}}?": "Delete state {{row.name}}?"
 vi:
-  "Trạng thái chuyến": "Trạng thái chuyến"
-  "Hệ thống": "Hệ thống"
-  "+ Thêm trạng thái": "+ Thêm trạng thái"
-  "Tìm trạng thái": "Tìm trạng thái"
-  "Tìm mã hoặc tên...": "Tìm mã hoặc tên..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Chưa có trạng thái chuyến": "Chưa có trạng thái chuyến"
-  "Mã": "Mã"
-  "Giá trị": "Giá trị"
-  "Trạng thái": "Trạng thái"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm trạng thái chuyến": "Thêm trạng thái chuyến"
-  "Tên": "Tên"
-  "Mô tả": "Mô tả"
-  "Cập nhật trạng thái chuyến": "Cập nhật trạng thái chuyến"
-  "Xóa trạng thái {{row.name}}?": "Xóa trạng thái {{row.name}}?"
+  Trip status: Trạng thái chuyến
+  System: Hệ thống
+  + Add status: + Thêm trạng thái
+  Find status: Tìm trạng thái
+  "Find code or name...": "Tìm mã hoặc tên..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  No trip status yet: Chưa có trạng thái chuyến
+  Code: Mã
+  Value: Giá trị
+  Status: Trạng thái
+  Fix: Sửa
+  Erase: Xóa
+  Add trip status: Thêm trạng thái chuyến
+  Name: Tên
+  Describe: Mô tả
+  Update trip status: Cập nhật trạng thái chuyến
+  "Delete state {{row.name}}?": "Xóa trạng thái {{row.name}}?"

@@ -1,68 +1,34 @@
-en:
-  "Tiền tệ": "Money"
-  "Danh mục": "Category"
-  "+ Thêm tiền tệ": "+ Add currency"
-  "Đồng bộ tỷ giá": "Synchronize exchange rates"
-  "Tìm kiếm tiền tệ": "Currency search"
-  "Tìm mã, tên hoặc ký hiệu...": "Find code, name or symbol..."
-  "Xuất CSV": "Export CSV"
-  "Nhập CSV": "Import CSV"
-  "Tất cả": "All"
-  "Đang sử dụng": "In use"
-  "Ngưng sử dụng": "Discontinue use"
-  "Không có tiền tệ": "No currency"
-  "Tạo tiền tệ đầu tiên để sử dụng trong báo giá.": "Create your first currency to use in quotes."
-  "Mã": "Code"
-  "Ký hiệu": "Symbol"
-  "Số lẻ": "Odd"
-  "Tỷ giá / VND": "Exchange rate / VND"
-  "Ngày hiệu lực": "Effective date"
-  "Nguồn": "Source"
-  "Thứ tự": "Order"
-  "Trạng thái": "Status"
-  "Ngày tạo": "Creation date"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm tiền tệ": "Add currency"
-  "Mã ISO": "ISO code"
-  "Tên tiền tệ": "Currency name"
-  "Số chữ số lẻ": "Odd number of digits"
-  "Mô tả": "Describe"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Cập nhật tiền tệ": "Currency update"
-  "Xóa tiền tệ {{row.name}}?": "Delete currency {{row.name}}?"
 vi:
-  "Tiền tệ": "Tiền tệ"
-  "Danh mục": "Danh mục"
-  "+ Thêm tiền tệ": "+ Thêm tiền tệ"
-  "Đồng bộ tỷ giá": "Đồng bộ tỷ giá"
-  "Tìm kiếm tiền tệ": "Tìm kiếm tiền tệ"
-  "Tìm mã, tên hoặc ký hiệu...": "Tìm mã, tên hoặc ký hiệu..."
-  "Xuất CSV": "Xuất CSV"
-  "Nhập CSV": "Nhập CSV"
-  "Tất cả": "Tất cả"
-  "Đang sử dụng": "Đang sử dụng"
-  "Ngưng sử dụng": "Ngưng sử dụng"
-  "Không có tiền tệ": "Không có tiền tệ"
-  "Tạo tiền tệ đầu tiên để sử dụng trong báo giá.": "Tạo tiền tệ đầu tiên để sử dụng trong báo giá."
-  "Mã": "Mã"
-  "Ký hiệu": "Ký hiệu"
-  "Số lẻ": "Số lẻ"
-  "Tỷ giá / VND": "Tỷ giá / VND"
-  "Ngày hiệu lực": "Ngày hiệu lực"
-  "Nguồn": "Nguồn"
-  "Thứ tự": "Thứ tự"
-  "Trạng thái": "Trạng thái"
-  "Ngày tạo": "Ngày tạo"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm tiền tệ": "Thêm tiền tệ"
-  "Mã ISO": "Mã ISO"
-  "Tên tiền tệ": "Tên tiền tệ"
-  "Số chữ số lẻ": "Số chữ số lẻ"
-  "Mô tả": "Mô tả"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Cập nhật tiền tệ": "Cập nhật tiền tệ"
-  "Xóa tiền tệ {{row.name}}?": "Xóa tiền tệ {{row.name}}?"
+  Money: Tiền tệ
+  Category: Danh mục
+  + Add currency: + Thêm tiền tệ
+  Synchronize exchange rates: Đồng bộ tỷ giá
+  Currency search: Tìm kiếm tiền tệ
+  "Find code, name or symbol...": "Tìm mã, tên hoặc ký hiệu..."
+  Export CSV: Xuất CSV
+  Import CSV: Nhập CSV
+  All: Tất cả
+  In use: Đang sử dụng
+  Discontinue use: Ngưng sử dụng
+  No currency: Không có tiền tệ
+  Create your first currency to use in quotes.: Tạo tiền tệ đầu tiên để sử dụng trong báo giá.
+  Code: Mã
+  Symbol: Ký hiệu
+  Odd: Số lẻ
+  Exchange rate / VND: Tỷ giá / VND
+  Effective date: Ngày hiệu lực
+  Source: Nguồn
+  Order: Thứ tự
+  Status: Trạng thái
+  Creation date: Ngày tạo
+  Fix: Sửa
+  Erase: Xóa
+  Add currency: Thêm tiền tệ
+  ISO code: Mã ISO
+  Currency name: Tên tiền tệ
+  Odd number of digits: Số chữ số lẻ
+  Describe: Mô tả
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  Currency update: Cập nhật tiền tệ
+  "Delete currency {{row.name}}?": "Xóa tiền tệ {{row.name}}?"

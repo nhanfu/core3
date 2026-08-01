@@ -1,5 +1,5 @@
-title: Chi tiết phòng ban
-page: { id: department-detail, breadcrumb: [Tổ chức & phân quyền, Phòng ban, Chi tiết], auth: { require: [settings.read] } }
+title: Department details
+page: { id: department-detail, breadcrumb: [Organization & decentralization, Departments, Detail], auth: { require: [settings.read] } }
 datasources:
   - id: department_detail
     single: true
@@ -22,33 +22,33 @@ datasources:
     permission: settings.read
     query: "SELECT id AS value, name AS label FROM branches WHERE (:view_scope = 'all' OR id = :current_branch_id) ORDER BY name"
 components:
-  - { type: DocumentSummary, source: department_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: branch_name, label: Chi nhánh }] }
+  - { type: DocumentSummary, source: department_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: branch_name, label: Branch }] }
   - type: DataGrid
     source: department_teams
     page_size: 30
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có team }
-    columns: [{ field: code, label: Mã đội nhóm }, { field: name, label: Đội nhóm }, { field: manager_name, label: Người phụ trách }, { field: status, label: Trạng thái }]
+    empty_state: { title: No team yet }
+    columns: [{ field: code, label: Team code }, { field: name, label: Team }, { field: manager_name, label: Person in charge }, { field: status, label: Status }]
   - type: DataGrid
     source: department_employees
     page_size: 30
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có nhân viên }
-    columns: [{ field: code, label: Mã nhân viên }, { field: name, label: Họ tên }, { field: job_title, label: Chức danh }, { field: status, label: Trạng thái }]
+    empty_state: { title: No staff yet }
+    columns: [{ field: code, label: Employee code }, { field: name, label: Full name }, { field: job_title, label: Title }, { field: status, label: Status }]
 toolbar:
-  - { id: back_departments, label: 'Danh sách phòng ban', icon: arrow-left, variant: secondary, action: back_departments }
-  - { id: edit_department_detail, label: Sửa phòng ban, variant: primary, permission: settings.write, action: edit_department_detail }
+  - { id: back_departments, label: 'List of departments', icon: arrow-left, variant: secondary, action: back_departments }
+  - { id: edit_department_detail, label: Repair departments, variant: primary, permission: settings.write, action: edit_department_detail }
 actions:
   - { id: back_departments, type: navigate, navigate_to: /org/departments }
   - id: edit_department_detail
     type: form
     permission: settings.write
-    title: Cập nhật phòng ban
+    title: Update departments
     table: departments
     operation: update
     prefill: source
     prefill_source: department_detail
     refresh: [department_detail, department_teams, department_employees]
-    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_detail_parent_lookup }, { field: branch_id, label: Chi nhánh, type: select, options_source: department_detail_branch_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }]
+    fields: [{ field: code, label: Department code, type: text, required: true }, { field: name, label: Department name, type: text, required: true }, { field: parent_id, label: Father's department, type: select, options_source: department_detail_parent_lookup }, { field: branch_id, label: Branch, type: select, options_source: department_detail_branch_lookup }, { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }] }]

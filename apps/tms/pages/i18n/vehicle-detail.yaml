@@ -1,70 +1,34 @@
-en:
-  "Chi tiết phương tiện": "Vehicle details"
-  "Quản lý": "Manage"
-  "Phương tiện": "Vehicle"
-  "Chi tiết": "Detail"
-  "Loại xe": "Vehicle type"
-  "Chi nhánh": "Branch"
-  "Tải trọng": "Load"
-  "Số km": "Number of kilometers"
-  "Bảo dưỡng gần nhất": "Nearest maintenance"
-  "Bảo dưỡng kế tiếp": "Next maintenance"
-  "Tài xế phụ trách": "Driver in charge"
-  "Giấy phép": "License"
-  "Chưa có lịch bảo dưỡng": "There is no maintenance schedule yet"
-  "Hạng mục": "Category"
-  "Trạng thái": "Status"
-  "Dự kiến": "Expected"
-  "Hoàn thành": "Complete"
-  "Chi phí": "Expense"
-  "Ghi chú": "Note"
-  "Chưa có chuyến xe": "There is no bus yet"
-  "Chuyến": "Trip"
-  "Điểm đi": "Point go"
-  "Điểm đến": "Destination"
-  "Khởi hành": "Depart"
-  "Danh sách phương tiện": "Media list"
-  "Sửa phương tiện": "Vehicle repair"
-  "Cập nhật phương tiện": "Media updates"
-  "Biển số / số hiệu": "License plate / number"
-  "Hãng / mẫu xe": "Vehicle make/model"
-  "Loại phương tiện": "Vehicle type"
-  "Sẵn sàng": "Ready"
-  "Bảo dưỡng": "Maintenance"
-  "Ngưng hoạt động": "Shut down"
-  "Tải trọng (kg)": "Load (kg)"
 vi:
-  "Chi tiết phương tiện": "Chi tiết phương tiện"
-  "Quản lý": "Quản lý"
-  "Phương tiện": "Phương tiện"
-  "Chi tiết": "Chi tiết"
-  "Loại xe": "Loại xe"
-  "Chi nhánh": "Chi nhánh"
-  "Tải trọng": "Tải trọng"
-  "Số km": "Số km"
-  "Bảo dưỡng gần nhất": "Bảo dưỡng gần nhất"
-  "Bảo dưỡng kế tiếp": "Bảo dưỡng kế tiếp"
-  "Tài xế phụ trách": "Tài xế phụ trách"
-  "Giấy phép": "Giấy phép"
-  "Chưa có lịch bảo dưỡng": "Chưa có lịch bảo dưỡng"
-  "Hạng mục": "Hạng mục"
-  "Trạng thái": "Trạng thái"
-  "Dự kiến": "Dự kiến"
-  "Hoàn thành": "Hoàn thành"
-  "Chi phí": "Chi phí"
-  "Ghi chú": "Ghi chú"
-  "Chưa có chuyến xe": "Chưa có chuyến xe"
-  "Chuyến": "Chuyến"
-  "Điểm đi": "Điểm đi"
-  "Điểm đến": "Điểm đến"
-  "Khởi hành": "Khởi hành"
-  "Danh sách phương tiện": "Danh sách phương tiện"
-  "Sửa phương tiện": "Sửa phương tiện"
-  "Cập nhật phương tiện": "Cập nhật phương tiện"
-  "Biển số / số hiệu": "Biển số / số hiệu"
-  "Hãng / mẫu xe": "Hãng / mẫu xe"
-  "Loại phương tiện": "Loại phương tiện"
-  "Sẵn sàng": "Sẵn sàng"
-  "Bảo dưỡng": "Bảo dưỡng"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Tải trọng (kg)": "Tải trọng (kg)"
+  Vehicle details: Chi tiết phương tiện
+  Manage: Quản lý
+  Vehicle: Phương tiện
+  Detail: Chi tiết
+  Vehicle type: Loại phương tiện
+  Branch: Chi nhánh
+  Load: Tải trọng
+  Number of kilometers: Số km
+  Nearest maintenance: Bảo dưỡng gần nhất
+  Next maintenance: Bảo dưỡng kế tiếp
+  Driver in charge: Tài xế phụ trách
+  License: Giấy phép
+  There is no maintenance schedule yet: Chưa có lịch bảo dưỡng
+  Category: Hạng mục
+  Status: Trạng thái
+  Expected: Dự kiến
+  Complete: Hoàn thành
+  Expense: Chi phí
+  Note: Ghi chú
+  There is no bus yet: Chưa có chuyến xe
+  Trip: Chuyến
+  Point go: Điểm đi
+  Destination: Điểm đến
+  Depart: Khởi hành
+  Media list: Danh sách phương tiện
+  Vehicle repair: Sửa phương tiện
+  Media updates: Cập nhật phương tiện
+  License plate / number: Biển số / số hiệu
+  Vehicle make/model: Hãng / mẫu xe
+  Ready: Sẵn sàng
+  Maintenance: Bảo dưỡng
+  Shut down: Ngưng hoạt động
+  Load (kg): Tải trọng (kg)

@@ -1,8 +1,8 @@
-title: Chi nhánh
+title: Branch
 
 page:
   id: branches
-  breadcrumb: [Tổ chức & phân quyền, Chi nhánh]
+  breadcrumb: [Organization & decentralization, Branch]
   auth:
     require: [settings.read]
 
@@ -21,7 +21,7 @@ datasources:
 
 toolbar:
   - id: add_branch_btn
-    label: '+ Thêm chi nhánh'
+    label: '+ Add branch'
     variant: primary
     permission: settings.write
     action: add_branch
@@ -31,73 +31,73 @@ components:
     source: org_branches
     filter_field: q
     search:
-      label: Tìm kiếm chi nhánh
-      placeholder: 'Tìm theo tên, tỉnh thành, khu vực...'
-    actions: [{ id: org_branches.export, label: 'Xuất CSV', icon: download }]
+      label: Search for branches
+      placeholder: 'Search by name, province, area...'
+    actions: [{ id: org_branches.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: org_branches
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Hoạt động }
-      - { id: Inactive, label: Ngưng hoạt động }
+      - { id: '', label: All }
+      - { id: Active, label: Work }
+      - { id: Inactive, label: Shut down }
   - type: DataGrid
     source: org_branches
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có chi nhánh, description: Thử thay đổi bộ lọc hoặc tạo chi nhánh mới. }
+    empty_state: { title: No branches, description: Try changing the filter or creating a new branch. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: name, label: Tên chi nhánh, type: PrimaryEntityCell, secondary: city }
-      - { field: region, label: Khu vực }
-      - { field: truck_count, label: Số phương tiện, align: right }
+      - { field: id, label: HT code, sortable: true }
+      - { field: name, label: Branch name, type: PrimaryEntityCell, secondary: city }
+      - { field: region, label: Area }
+      - { field: truck_count, label: Number of vehicles, align: right }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors: { Active: green, Inactive: red }
-      - { field: created_at, label: Ngày tạo, type: DateCell }
+      - { field: created_at, label: Creation date, type: DateCell }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_branch, label: Chi tiết, variant: primary, permission: settings.read }
-          - { id: edit_branch, label: Sửa, variant: ghost, permission: settings.write }
-          - { id: delete_branch, label: Xóa, variant: danger, permission: settings.write }
+          - { id: view_branch, label: Detail, variant: primary, permission: settings.read }
+          - { id: edit_branch, label: Fix, variant: ghost, permission: settings.write }
+          - { id: delete_branch, label: Erase, variant: danger, permission: settings.write }
 
 actions:
   - { id: view_branch, type: navigate, permission: settings.read, navigate_to: /org/branches/detail, params: { id: '{row.id}' } }
   - id: add_branch
     type: form
     permission: settings.write
-    title: Thêm chi nhánh
+    title: Add branch
     table: branches
     operation: insert
     refresh: [org_branches]
     fields:
-      - { field: name, label: Tên chi nhánh, type: text, required: true }
-      - { field: city, label: Tỉnh / thành phố, type: text, required: true }
-      - { field: region, label: Khu vực, type: text }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
+      - { field: name, label: Branch name, type: text, required: true }
+      - { field: city, label: Province/city, type: text, required: true }
+      - { field: region, label: Area, type: text }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }], default: Active }
   - id: edit_branch
     type: form
     permission: settings.write
-    title: Cập nhật chi nhánh
+    title: Update branch
     table: branches
     operation: update
     prefill: row
     refresh: [org_branches]
     fields:
-      - { field: name, label: Tên chi nhánh, type: text, required: true }
-      - { field: city, label: Tỉnh / thành phố, type: text, required: true }
-      - { field: region, label: Khu vực, type: text }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
+      - { field: name, label: Branch name, type: text, required: true }
+      - { field: city, label: Province/city, type: text, required: true }
+      - { field: region, label: Area, type: text }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }] }
   - id: delete_branch
     type: delete
     permission: settings.write
-    confirm: 'Xóa chi nhánh {{row.name}}?'
+    confirm: 'Delete branch {{row.name}}?'
     table: branches
     refresh: [org_branches]

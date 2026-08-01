@@ -1,66 +1,33 @@
-en:
-  "Hợp đồng": "Contract"
-  "Nhân sự": "Human resources"
-  "+ Thêm hợp đồng": "+ Add contract"
-  "Tìm kiếm hợp đồng": "Search for contracts"
-  "Tìm mã hợp đồng, mã hoặc tên nhân viên...": "Find contract code, employee code or name..."
-  "Từ ngày hiệu lực": "From effective date"
-  "Đến ngày hiệu lực": "Until effective date"
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Hiệu lực": "Effect"
-  "Sắp hết hạn": "About to expire"
-  "Hết hạn": "Expired"
-  "Không có hợp đồng": "No contract"
-  "Thử thay đổi bộ lọc hoặc tạo hợp đồng mới.": "Try changing the filter or creating a new contract."
-  "Mã HT": "HT code"
-  "Nhân viên": "Staff"
-  "Loại hợp đồng": "Contract type"
-  "Hiệu lực từ": "Magnetic effect"
-  "Hiệu lực đến": "Effect arrives"
-  "Lương cơ bản": "Basic salary"
-  "Trạng thái": "Status"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm hợp đồng": "Add contract"
-  "Mã hợp đồng": "Contract code"
-  "Thử việc": "Try job"
-  "Xác định thời hạn": "Determine the deadline"
-  "Không xác định thời hạn": "No deadline specified"
-  "Đã chấm dứt": "Terminated"
-  "Cập nhật hợp đồng": "Update contract"
-  "Xóa hợp đồng {{row.code}}?": "Delete contract {{row.code}}?"
 vi:
-  "Hợp đồng": "Hợp đồng"
-  "Nhân sự": "Nhân sự"
-  "+ Thêm hợp đồng": "+ Thêm hợp đồng"
-  "Tìm kiếm hợp đồng": "Tìm kiếm hợp đồng"
-  "Tìm mã hợp đồng, mã hoặc tên nhân viên...": "Tìm mã hợp đồng, mã hoặc tên nhân viên..."
-  "Từ ngày hiệu lực": "Từ ngày hiệu lực"
-  "Đến ngày hiệu lực": "Đến ngày hiệu lực"
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Hiệu lực": "Hiệu lực"
-  "Sắp hết hạn": "Sắp hết hạn"
-  "Hết hạn": "Hết hạn"
-  "Không có hợp đồng": "Không có hợp đồng"
-  "Thử thay đổi bộ lọc hoặc tạo hợp đồng mới.": "Thử thay đổi bộ lọc hoặc tạo hợp đồng mới."
-  "Mã HT": "Mã HT"
-  "Nhân viên": "Nhân viên"
-  "Loại hợp đồng": "Loại hợp đồng"
-  "Hiệu lực từ": "Hiệu lực từ"
-  "Hiệu lực đến": "Hiệu lực đến"
-  "Lương cơ bản": "Lương cơ bản"
-  "Trạng thái": "Trạng thái"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm hợp đồng": "Thêm hợp đồng"
-  "Mã hợp đồng": "Mã hợp đồng"
-  "Thử việc": "Thử việc"
-  "Xác định thời hạn": "Xác định thời hạn"
-  "Không xác định thời hạn": "Không xác định thời hạn"
-  "Đã chấm dứt": "Đã chấm dứt"
-  "Cập nhật hợp đồng": "Cập nhật hợp đồng"
-  "Xóa hợp đồng {{row.code}}?": "Xóa hợp đồng {{row.code}}?"
+  Contract: Hợp đồng
+  Human resources: Nhân sự
+  + Add contract: + Thêm hợp đồng
+  Search for contracts: Tìm kiếm hợp đồng
+  "Find contract code, employee code or name...": "Tìm mã hợp đồng, mã hoặc tên nhân viên..."
+  From effective date: Từ ngày hiệu lực
+  Until effective date: Đến ngày hiệu lực
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Effect: Hiệu lực
+  About to expire: Sắp hết hạn
+  Expired: Hết hạn
+  No contract: Không có hợp đồng
+  Try changing the filter or creating a new contract.: Thử thay đổi bộ lọc hoặc tạo hợp đồng mới.
+  HT code: Mã HT
+  Staff: Nhân viên
+  Contract type: Loại hợp đồng
+  Magnetic effect: Hiệu lực từ
+  Effect arrives: Hiệu lực đến
+  Basic salary: Lương cơ bản
+  Status: Trạng thái
+  Detail: Chi tiết
+  Fix: Sửa
+  Erase: Xóa
+  Add contract: Thêm hợp đồng
+  Contract code: Mã hợp đồng
+  Try job: Thử việc
+  Determine the deadline: Xác định thời hạn
+  No deadline specified: Không xác định thời hạn
+  Terminated: Đã chấm dứt
+  Update contract: Cập nhật hợp đồng
+  "Delete contract {{row.code}}?": "Xóa hợp đồng {{row.code}}?"

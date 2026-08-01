@@ -1,52 +1,26 @@
-en:
-  "Chi tiết tài xế": "Driver details"
-  "Danh mục": "Category"
-  "Tài xế": "Driver"
-  "Chi tiết": "Detail"
-  "Điện thoại": "Phone"
-  "Email": "E-mail"
-  "Hạn giấy phép": "License term"
-  "Phương tiện": "Vehicle"
-  "Trạng thái": "Status"
-  "Chưa có chuyến xe": "There is no bus yet"
-  "Chuyến": "Trip"
-  "Điểm đi": "Point go"
-  "Điểm đến": "Destination"
-  "Khởi hành": "Depart"
-  "Hoàn thành": "Complete"
-  "Danh sách tài xế": "Driver list"
-  "Sửa tài xế": "Fix driver"
-  "Cập nhật tài xế": "Update driver"
-  "Họ tên": "Full name"
-  "Số điện thoại": "Phone number"
-  "Số giấy phép": "License number"
-  "Phương tiện phụ trách": "Vehicle in charge"
-  "Đang hoạt động": "Active"
-  "Nghỉ phép": "On leave"
-  "Ngưng hoạt động": "Shut down"
 vi:
-  "Chi tiết tài xế": "Chi tiết tài xế"
-  "Danh mục": "Danh mục"
-  "Tài xế": "Tài xế"
-  "Chi tiết": "Chi tiết"
-  "Điện thoại": "Điện thoại"
-  "Email": "Email"
-  "Hạn giấy phép": "Hạn giấy phép"
-  "Phương tiện": "Phương tiện"
-  "Trạng thái": "Trạng thái"
-  "Chưa có chuyến xe": "Chưa có chuyến xe"
-  "Chuyến": "Chuyến"
-  "Điểm đi": "Điểm đi"
-  "Điểm đến": "Điểm đến"
-  "Khởi hành": "Khởi hành"
-  "Hoàn thành": "Hoàn thành"
-  "Danh sách tài xế": "Danh sách tài xế"
-  "Sửa tài xế": "Sửa tài xế"
-  "Cập nhật tài xế": "Cập nhật tài xế"
-  "Họ tên": "Họ tên"
-  "Số điện thoại": "Số điện thoại"
-  "Số giấy phép": "Số giấy phép"
-  "Phương tiện phụ trách": "Phương tiện phụ trách"
-  "Đang hoạt động": "Đang hoạt động"
-  "Nghỉ phép": "Nghỉ phép"
-  "Ngưng hoạt động": "Ngưng hoạt động"
+  Driver details: Chi tiết tài xế
+  Category: Danh mục
+  Driver: Tài xế
+  Detail: Chi tiết
+  Phone: Điện thoại
+  E-mail: Email
+  License term: Hạn giấy phép
+  Vehicle: Phương tiện
+  Status: Trạng thái
+  There is no bus yet: Chưa có chuyến xe
+  Trip: Chuyến
+  Point go: Điểm đi
+  Destination: Điểm đến
+  Depart: Khởi hành
+  Complete: Hoàn thành
+  Driver list: Danh sách tài xế
+  Fix driver: Sửa tài xế
+  Update driver: Cập nhật tài xế
+  Full name: Họ tên
+  Phone number: Số điện thoại
+  License number: Số giấy phép
+  Vehicle in charge: Phương tiện phụ trách
+  Active: Đang hoạt động
+  On leave: Nghỉ phép
+  Shut down: Ngưng hoạt động

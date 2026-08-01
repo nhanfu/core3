@@ -1,7 +1,7 @@
-title: Phòng ban
+title: Departments
 page:
   id: departments
-  breadcrumb: [Tổ chức & phân quyền, Phòng ban]
+  breadcrumb: [Organization & decentralization, Departments]
   auth: { require: [settings.read] }
 datasources:
   - id: departments
@@ -22,17 +22,17 @@ datasources:
     permission: settings.read
     query: "SELECT id AS value, name AS label FROM branches WHERE (:view_scope = 'all' OR id = :current_branch_id) ORDER BY name"
 toolbar:
-  - { id: add_department_btn, label: '+ Thêm phòng ban', variant: primary, permission: settings.write, action: add_department }
+  - { id: add_department_btn, label: '+ Add departments', variant: primary, permission: settings.write, action: add_department }
 components:
   - type: ListToolbar
     source: departments
     filter_field: q
-    search: { label: Tìm kiếm phòng ban, placeholder: 'Tìm mã, tên hoặc chi nhánh...' }
-    actions: [{ id: departments.export, label: 'Xuất CSV', icon: download }]
+    search: { label: Search for departments, placeholder: 'Find code, name or branch...' }
+    actions: [{ id: departments.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: departments
     filter_field: status
-    tabs: [{ id: '', label: Tất cả }, { id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
+    tabs: [{ id: '', label: All }, { id: Active, label: Work }, { id: Inactive, label: Shut down }]
   - type: DataGrid
     source: departments
     tree: true
@@ -40,36 +40,36 @@ components:
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có phòng ban, description: Thử thay đổi bộ lọc hoặc tạo phòng ban mới. }
+    empty_state: { title: There are no departments, description: Try changing filters or creating new departments. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: code, label: Mã / tên, type: PrimaryEntityCell, secondary: name }
-      - { field: branch_name, label: Chi nhánh }
-      - { field: parent_name, label: Phòng ban cha }
-      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
-      - { field: created_at, label: Ngày giờ tạo }
+      - { field: id, label: HT code, sortable: true }
+      - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
+      - { field: branch_name, label: Branch }
+      - { field: parent_name, label: Father's department }
+      - { field: status_label, label: Status, type: StatusChip, colors: { Work: green, Shut down: red } }
+      - { field: created_at, label: Creation date and time }
       - field: actions
         label: ''
         sortable: false
         align: right
-        actions: [{ id: view_department, label: Chi tiết, variant: primary, permission: settings.read }, { id: edit_department, label: Sửa, variant: ghost, permission: settings.write }, { id: delete_department, label: Xóa, variant: danger, permission: settings.write }]
+        actions: [{ id: view_department, label: Detail, variant: primary, permission: settings.read }, { id: edit_department, label: Fix, variant: ghost, permission: settings.write }, { id: delete_department, label: Erase, variant: danger, permission: settings.write }]
 actions:
   - { id: view_department, type: navigate, permission: settings.read, navigate_to: /org/departments/detail, params: { id: '{row.id}' } }
   - id: add_department
     type: form
     permission: settings.write
-    title: Thêm phòng ban
+    title: Add departments
     table: departments
     operation: insert
     refresh: [departments]
-    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Chi nhánh, type: select, options_source: department_branch_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }]
+    fields: [{ field: code, label: Department code, type: text, required: true }, { field: name, label: Department name, type: text, required: true }, { field: parent_id, label: Father's department, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Branch, type: select, options_source: department_branch_lookup }, { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }], default: Active }]
   - id: edit_department
     type: form
     permission: settings.write
-    title: Cập nhật phòng ban
+    title: Update departments
     table: departments
     operation: update
     prefill: row
     refresh: [departments]
-    fields: [{ field: code, label: Mã phòng ban, type: text, required: true }, { field: name, label: Tên phòng ban, type: text, required: true }, { field: parent_id, label: Phòng ban cha, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Chi nhánh, type: select, options_source: department_branch_lookup }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }]
-  - { id: delete_department, type: delete, permission: settings.write, confirm: 'Xóa phòng ban {{row.name}}?', table: departments, refresh: [departments] }
+    fields: [{ field: code, label: Department code, type: text, required: true }, { field: name, label: Department name, type: text, required: true }, { field: parent_id, label: Father's department, type: select, options_source: department_parent_lookup }, { field: branch_id, label: Branch, type: select, options_source: department_branch_lookup }, { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }] }]
+  - { id: delete_department, type: delete, permission: settings.write, confirm: 'Delete department {{row.name}}?', table: departments, refresh: [departments] }

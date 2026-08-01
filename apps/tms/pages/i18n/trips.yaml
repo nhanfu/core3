@@ -1,74 +1,37 @@
-en:
-  "Lịch điều": "Calendar thing"
-  "Điều hành": "Executive"
-  "+ Tạo chuyến": "+ Create trip"
-  "Tìm kiếm chuyến": "Search for a trip"
-  "Tìm theo mã chuyến, điểm đi hoặc điểm đến...": "Search by flight code, origin or destination..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đã lên lịch": "Scheduled"
-  "Đang vận chuyển": "Shipping"
-  "Hoàn thành": "Complete"
-  "Đã hủy": "Canceled"
-  "Không có chuyến xe": "There are no buses"
-  "Thử thay đổi bộ lọc hoặc tạo chuyến mới.": "Try changing the filter or creating a new trip."
-  "Mã chuyến": "Trip code"
-  "Tuyến đường": "Route"
-  "Phương tiện": "Vehicle"
-  "Trạng thái": "Status"
-  "Khởi hành": "Depart"
-  "Dự kiến đến": "Expected arrival"
-  "Quãng đường (km)": "Distance (km)"
-  "Sửa": "Fix"
-  "Hủy": "Cancel"
-  "Tạo chuyến": "Create trip"
-  "Điểm đi": "Point go"
-  "Điểm đến": "Destination"
-  "Chi nhánh": "Branch"
-  "Tài xế": "Driver"
-  "Thời gian khởi hành": "Departure time"
-  "Thời gian dự kiến đến": "Estimated arrival time"
-  "Loại hàng": "Product type"
-  "Khối lượng hàng (kg)": "Cargo weight (kg)"
-  "Ghi chú": "Note"
-  "Cập nhật chuyến": "Trip update"
-  "Hủy chuyến {{row.trip_number}}?": "Cancel trip {{row.trip_number}}?"
-  "Xác nhận khởi hành chuyến {{row.trip_number}}?": "Departure confirmation for trip {{row.trip_number}}?"
-  "Xác nhận hoàn thành chuyến {{row.trip_number}}?": "Confirmed completion of trip {{row.trip_number}}?"
 vi:
-  "Lịch điều": "Lịch điều"
-  "Điều hành": "Điều hành"
-  "+ Tạo chuyến": "+ Tạo chuyến"
-  "Tìm kiếm chuyến": "Tìm kiếm chuyến"
-  "Tìm theo mã chuyến, điểm đi hoặc điểm đến...": "Tìm theo mã chuyến, điểm đi hoặc điểm đến..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đã lên lịch": "Đã lên lịch"
-  "Đang vận chuyển": "Đang vận chuyển"
-  "Hoàn thành": "Hoàn thành"
-  "Đã hủy": "Đã hủy"
-  "Không có chuyến xe": "Không có chuyến xe"
-  "Thử thay đổi bộ lọc hoặc tạo chuyến mới.": "Thử thay đổi bộ lọc hoặc tạo chuyến mới."
-  "Mã chuyến": "Mã chuyến"
-  "Tuyến đường": "Tuyến đường"
-  "Phương tiện": "Phương tiện"
-  "Trạng thái": "Trạng thái"
-  "Khởi hành": "Khởi hành"
-  "Dự kiến đến": "Dự kiến đến"
-  "Quãng đường (km)": "Quãng đường (km)"
-  "Sửa": "Sửa"
-  "Hủy": "Hủy"
-  "Tạo chuyến": "Tạo chuyến"
-  "Điểm đi": "Điểm đi"
-  "Điểm đến": "Điểm đến"
-  "Chi nhánh": "Chi nhánh"
-  "Tài xế": "Tài xế"
-  "Thời gian khởi hành": "Thời gian khởi hành"
-  "Thời gian dự kiến đến": "Thời gian dự kiến đến"
-  "Loại hàng": "Loại hàng"
-  "Khối lượng hàng (kg)": "Khối lượng hàng (kg)"
-  "Ghi chú": "Ghi chú"
-  "Cập nhật chuyến": "Cập nhật chuyến"
-  "Hủy chuyến {{row.trip_number}}?": "Hủy chuyến {{row.trip_number}}?"
-  "Xác nhận khởi hành chuyến {{row.trip_number}}?": "Xác nhận khởi hành chuyến {{row.trip_number}}?"
-  "Xác nhận hoàn thành chuyến {{row.trip_number}}?": "Xác nhận hoàn thành chuyến {{row.trip_number}}?"
+  Calendar thing: Lịch điều
+  Executive: Điều hành
+  + Create trip: + Tạo chuyến
+  Search for a trip: Tìm kiếm chuyến
+  "Search by flight code, origin or destination...": "Tìm theo mã chuyến, điểm đi hoặc điểm đến..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Scheduled: Đã lên lịch
+  Shipping: Đang vận chuyển
+  Complete: Hoàn thành
+  Canceled: Đã hủy
+  There are no buses: Không có chuyến xe
+  Try changing the filter or creating a new trip.: Thử thay đổi bộ lọc hoặc tạo chuyến mới.
+  Trip code: Mã chuyến
+  Route: Tuyến đường
+  Vehicle: Phương tiện
+  Status: Trạng thái
+  Depart: Khởi hành
+  Expected arrival: Dự kiến đến
+  Distance (km): Quãng đường (km)
+  Fix: Sửa
+  Cancel: Hủy
+  Create trip: Tạo chuyến
+  Point go: Điểm đi
+  Destination: Điểm đến
+  Branch: Chi nhánh
+  Driver: Tài xế
+  Departure time: Thời gian khởi hành
+  Estimated arrival time: Thời gian dự kiến đến
+  Product type: Loại hàng
+  Cargo weight (kg): Khối lượng hàng (kg)
+  Note: Ghi chú
+  Trip update: Cập nhật chuyến
+  "Cancel trip {{row.trip_number}}?": "Hủy chuyến {{row.trip_number}}?"
+  "Departure confirmation for trip {{row.trip_number}}?": "Xác nhận khởi hành chuyến {{row.trip_number}}?"
+  "Confirmed completion of trip {{row.trip_number}}?": "Xác nhận hoàn thành chuyến {{row.trip_number}}?"

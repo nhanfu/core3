@@ -1,8 +1,8 @@
-title: Hợp đồng
+title: Contract
 
 page:
   id: contracts
-  breadcrumb: [Nhân sự, Hợp đồng]
+  breadcrumb: [Human resources, Contract]
   auth:
     require: [hr.read]
 
@@ -30,7 +30,7 @@ datasources:
 
 toolbar:
   - id: add_contract_btn
-    label: '+ Thêm hợp đồng'
+    label: '+ Add contract'
     variant: primary
     permission: hr.write
     action: add_contract
@@ -39,82 +39,82 @@ components:
   - type: ListToolbar
     source: contracts
     filter_field: q
-    search: { label: Tìm kiếm hợp đồng, placeholder: 'Tìm mã hợp đồng, mã hoặc tên nhân viên...' }
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày hiệu lực', to_label: 'Đến ngày hiệu lực', presets: [today, week, month, quarter, year, all] }
-    actions: [{ id: contracts.export, label: 'Xuất CSV', icon: download }]
+    search: { label: Search for contracts, placeholder: 'Find contract code, employee code or name...' }
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'From effective date', to_label: 'Until effective date', presets: [today, week, month, quarter, year, all] }
+    actions: [{ id: contracts.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: contracts
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Hiệu lực }
-      - { id: Expiring, label: Sắp hết hạn }
-      - { id: Expired, label: Hết hạn }
+      - { id: '', label: All }
+      - { id: Active, label: Effect }
+      - { id: Expiring, label: About to expire }
+      - { id: Expired, label: Expired }
   - type: DataGrid
     source: contracts
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có hợp đồng, description: Thử thay đổi bộ lọc hoặc tạo hợp đồng mới. }
+    empty_state: { title: No contract, description: Try changing the filter or creating a new contract. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: code, label: Hợp đồng }
-      - { field: employee_code, label: Nhân viên, type: PrimaryEntityCell, secondary: employee_name }
-      - { field: contract_type_label, label: Loại hợp đồng }
-      - { field: start_date, label: Hiệu lực từ }
-      - { field: end_date, label: Hiệu lực đến }
-      - { field: base_salary, label: Lương cơ bản, align: right }
+      - { field: id, label: HT code, sortable: true }
+      - { field: code, label: Contract }
+      - { field: employee_code, label: Staff, type: PrimaryEntityCell, secondary: employee_name }
+      - { field: contract_type_label, label: Contract type }
+      - { field: start_date, label: Magnetic effect }
+      - { field: end_date, label: Effect arrives }
+      - { field: base_salary, label: Basic salary, align: right }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: blue }
+        colors: { Effect: green, About to expire: amber, Expired: red, Terminated: blue }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_contract, label: Chi tiết, variant: primary, permission: hr.read }
-          - { id: edit_contract, label: Sửa, variant: ghost, permission: hr.write }
-          - { id: delete_contract, label: Xóa, variant: danger, permission: hr.write }
+          - { id: view_contract, label: Detail, variant: primary, permission: hr.read }
+          - { id: edit_contract, label: Fix, variant: ghost, permission: hr.write }
+          - { id: delete_contract, label: Erase, variant: danger, permission: hr.write }
 
 actions:
   - { id: view_contract, type: navigate, permission: hr.read, navigate_to: /hr/contracts/detail, params: { id: '{row.id}' } }
   - id: add_contract
     type: form
     permission: hr.write
-    title: Thêm hợp đồng
+    title: Add contract
     table: employment_contracts
     operation: insert
     refresh: [contracts]
     fields:
-      - { field: code, label: Mã hợp đồng, type: text, required: true }
-      - { field: employee_id, label: Nhân viên, type: select, options_source: contract_employee_lookup, required: true }
-      - { field: contract_type, label: Loại hợp đồng, type: select, options: [{ id: Probation, label: Thử việc }, { id: FixedTerm, label: Xác định thời hạn }, { id: Indefinite, label: Không xác định thời hạn }], default: FixedTerm }
-      - { field: start_date, label: Hiệu lực từ, type: date, required: true }
-      - { field: end_date, label: Hiệu lực đến, type: date }
-      - { field: base_salary, label: Lương cơ bản, type: money, currency: VND, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hiệu lực }, { id: Expiring, label: Sắp hết hạn }, { id: Expired, label: Hết hạn }, { id: Terminated, label: Đã chấm dứt }], default: Active }
+      - { field: code, label: Contract code, type: text, required: true }
+      - { field: employee_id, label: Staff, type: select, options_source: contract_employee_lookup, required: true }
+      - { field: contract_type, label: Contract type, type: select, options: [{ id: Probation, label: Try job }, { id: FixedTerm, label: Determine the deadline }, { id: Indefinite, label: No deadline specified }], default: FixedTerm }
+      - { field: start_date, label: Magnetic effect, type: date, required: true }
+      - { field: end_date, label: Effect arrives, type: date }
+      - { field: base_salary, label: Basic salary, type: money, currency: VND, default: 0 }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Effect }, { id: Expiring, label: About to expire }, { id: Expired, label: Expired }, { id: Terminated, label: Terminated }], default: Active }
   - id: edit_contract
     type: form
     permission: hr.write
-    title: Cập nhật hợp đồng
+    title: Update contract
     table: employment_contracts
     operation: update
     prefill: row
     refresh: [contracts]
     fields:
-      - { field: code, label: Mã hợp đồng, type: text, required: true }
-      - { field: employee_id, label: Nhân viên, type: select, options_source: contract_employee_lookup, required: true }
-      - { field: contract_type, label: Loại hợp đồng, type: select, options: [{ id: Probation, label: Thử việc }, { id: FixedTerm, label: Xác định thời hạn }, { id: Indefinite, label: Không xác định thời hạn }] }
-      - { field: start_date, label: Hiệu lực từ, type: date, required: true }
-      - { field: end_date, label: Hiệu lực đến, type: date }
-      - { field: base_salary, label: Lương cơ bản, type: money, currency: VND }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hiệu lực }, { id: Expiring, label: Sắp hết hạn }, { id: Expired, label: Hết hạn }, { id: Terminated, label: Đã chấm dứt }] }
+      - { field: code, label: Contract code, type: text, required: true }
+      - { field: employee_id, label: Staff, type: select, options_source: contract_employee_lookup, required: true }
+      - { field: contract_type, label: Contract type, type: select, options: [{ id: Probation, label: Try job }, { id: FixedTerm, label: Determine the deadline }, { id: Indefinite, label: No deadline specified }] }
+      - { field: start_date, label: Magnetic effect, type: date, required: true }
+      - { field: end_date, label: Effect arrives, type: date }
+      - { field: base_salary, label: Basic salary, type: money, currency: VND }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Effect }, { id: Expiring, label: About to expire }, { id: Expired, label: Expired }, { id: Terminated, label: Terminated }] }
   - id: delete_contract
     type: delete
     permission: hr.write
-    confirm: 'Xóa hợp đồng {{row.code}}?'
+    confirm: 'Delete contract {{row.code}}?'
     table: employment_contracts
     refresh: [contracts]

@@ -1,60 +1,30 @@
-en:
-  "Cài đặt": "Setting"
-  "+ Thêm chi nhánh": "+ Add branch"
-  "+ Mời người dùng": "+ Invite users"
-  "Chi nhánh": "Branch"
-  "Không có chi nhánh": "No branches"
-  "Tên": "Name"
-  "Thành phố": "City"
-  "Trạng thái": "Status"
-  "Phương tiện": "Vehicle"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Người dùng": "User"
-  "Không có người dùng": "No users"
-  "Email": "E-mail"
-  "Vai trò": "Role"
-  "Ngôn ngữ": "Language"
-  "Không có vai trò": "No role"
-  "Mô tả": "Describe"
-  "Quyền": "Rights"
-  "Thêm chi nhánh": "Add branch"
-  "Khu vực": "Area"
-  "Hoạt động": "Work"
-  "Ngưng hoạt động": "Shut down"
-  "Cập nhật chi nhánh": "Branch update"
-  "Xóa chi nhánh {{row.name}}?": "Delete branch {{row.name}}?"
-  "Mời người dùng": "Invite users"
-  "Mật khẩu ban đầu": "Initial password"
-  "Tìm vai trò...": "Find roles..."
-  "Cập nhật người dùng": "Update users"
 vi:
-  "Cài đặt": "Cài đặt"
-  "+ Thêm chi nhánh": "+ Thêm chi nhánh"
-  "+ Mời người dùng": "+ Mời người dùng"
-  "Chi nhánh": "Chi nhánh"
-  "Không có chi nhánh": "Không có chi nhánh"
-  "Tên": "Tên"
-  "Thành phố": "Thành phố"
-  "Trạng thái": "Trạng thái"
-  "Phương tiện": "Phương tiện"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Người dùng": "Người dùng"
-  "Không có người dùng": "Không có người dùng"
-  "Email": "Email"
-  "Vai trò": "Vai trò"
-  "Ngôn ngữ": "Ngôn ngữ"
-  "Không có vai trò": "Không có vai trò"
-  "Mô tả": "Mô tả"
-  "Quyền": "Quyền"
-  "Thêm chi nhánh": "Thêm chi nhánh"
-  "Khu vực": "Khu vực"
-  "Hoạt động": "Hoạt động"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Cập nhật chi nhánh": "Cập nhật chi nhánh"
-  "Xóa chi nhánh {{row.name}}?": "Xóa chi nhánh {{row.name}}?"
-  "Mời người dùng": "Mời người dùng"
-  "Mật khẩu ban đầu": "Mật khẩu ban đầu"
-  "Tìm vai trò...": "Tìm vai trò..."
-  "Cập nhật người dùng": "Cập nhật người dùng"
+  Setting: Cài đặt
+  + Add branch: + Thêm chi nhánh
+  + Invite users: + Mời người dùng
+  Branch: Chi nhánh
+  No branches: Không có chi nhánh
+  Name: Tên
+  City: Thành phố
+  Status: Trạng thái
+  Vehicle: Phương tiện
+  Fix: Sửa
+  Erase: Xóa
+  User: Người dùng
+  No users: Không có người dùng
+  E-mail: Email
+  Role: Vai trò
+  Language: Ngôn ngữ
+  No role: Không có vai trò
+  Describe: Mô tả
+  Rights: Quyền
+  Add branch: Thêm chi nhánh
+  Area: Khu vực
+  Work: Hoạt động
+  Shut down: Ngưng hoạt động
+  Branch update: Cập nhật chi nhánh
+  "Delete branch {{row.name}}?": "Xóa chi nhánh {{row.name}}?"
+  Invite users: Mời người dùng
+  Initial password: Mật khẩu ban đầu
+  "Find roles...": "Tìm vai trò..."
+  Update users: Cập nhật người dùng

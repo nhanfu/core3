@@ -1,4 +1,4 @@
-title: Cài đặt
+title: Setting
 
 page:
   id: settings
@@ -39,12 +39,12 @@ datasources:
     query: "SELECT name AS value, name AS label FROM roles ORDER BY name"
 toolbar:
   - id: add_branch_btn
-    label: "+ Thêm chi nhánh"
+    label: "+ Add branch"
     variant: secondary
     permission: settings.write
     action: add_branch
   - id: add_user_btn
-    label: "+ Mời người dùng"
+    label: "+ Invite users"
     variant: primary
     permission: settings.write
     action: add_user
@@ -53,206 +53,206 @@ components:
   - type: TabGroup
     tabs:
       - id: branches-tab
-        label: Chi nhánh
+        label: Branch
         permission: settings.read
         components:
           - type: GridView
             source: branches
             page_size: 20
-            empty_state: { title: Không có chi nhánh }
+            empty_state: { title: No branches }
             columns:
               - type: TextCell
                 field: name
-                label: Tên
+                label: Name
               - type: TextCell
                 field: city
-                label: Thành phố
+                label: City
                 secondary: region
               - type: BadgeCell
                 field: status
-                label: Trạng thái
+                label: Status
                 colors:
                   Active: green
                   Inactive: red
               - type: NumberCell
                 field: truck_count
-                label: Phương tiện
+                label: Vehicle
                 format: "#,###"
               - type: ActionCell
                 label: ""
                 actions:
                   - id: edit_branch
-                    label: Sửa
+                    label: Fix
                     variant: ghost
                     permission: settings.write
                   - id: delete_branch
-                    label: Xóa
+                    label: Erase
                     variant: danger
                     permission: settings.write
 
       - id: users-tab
-        label: Người dùng
+        label: User
         permission: settings.read
         components:
           - type: GridView
             source: users
             page_size: 20
-            empty_state: { title: Không có người dùng }
+            empty_state: { title: No users }
             columns:
               - type: TextCell
                 field: name
-                label: Tên
+                label: Name
               - type: TextCell
                 field: email
-                label: Email
+                label: E-mail
               - type: TextCell
                 field: roles_csv
-                label: Vai trò
+                label: Role
               - type: TextCell
                 field: preferred_lang
-                label: Ngôn ngữ
+                label: Language
               - type: ActionCell
                 label: ""
                 actions:
                   - id: edit_user
-                    label: Sửa
+                    label: Fix
                     variant: ghost
                     permission: settings.write
 
       - id: roles-tab
-        label: Vai trò
+        label: Role
         permission: settings.read
         components:
           - type: GridView
             source: roles
             page_size: 20
-            empty_state: { title: Không có vai trò }
+            empty_state: { title: No role }
             columns:
               - type: TextCell
                 field: name
-                label: Vai trò
+                label: Role
               - type: TextCell
                 field: description
-                label: Mô tả
+                label: Describe
               - type: NumberCell
                 field: permission_count
-                label: Quyền
+                label: Rights
                 format: "#,###"
 
 actions:
   - id: add_branch
     type: form
     permission: settings.write
-    title: Thêm chi nhánh
+    title: Add branch
     table: branches
     operation: insert
     prefill: null
     refresh: [branches]
     fields:
       - field: name
-        label: Tên
+        label: Name
         type: text
         required: true
       - field: city
-        label: Thành phố
+        label: City
         type: text
         required: true
       - field: region
-        label: Khu vực
+        label: Area
         type: text
         required: false
       - field: status
-        label: Trạng thái
+        label: Status
         type: select
         required: false
-        options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
+        options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }]
         default: Active
 
   - id: edit_branch
     type: form
     permission: settings.write
-    title: Cập nhật chi nhánh
+    title: Branch update
     table: branches
     operation: update
     prefill: row
     refresh: [branches]
     fields:
       - field: name
-        label: Tên
+        label: Name
         type: text
         required: true
       - field: city
-        label: Thành phố
+        label: City
         type: text
         required: true
       - field: region
-        label: Khu vực
+        label: Area
         type: text
         required: false
       - field: status
-        label: Trạng thái
+        label: Status
         type: select
         required: false
-        options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }]
+        options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }]
         default: Active
 
   - id: delete_branch
     type: delete
     permission: settings.write
-    confirm: "Xóa chi nhánh {{row.name}}?"
+    confirm: "Delete branch {{row.name}}?"
     table: branches
     refresh: [branches]
 
   - id: add_user
     type: form
     permission: settings.write
-    title: Mời người dùng
+    title: Invite users
     table: users
     operation: insert
     prefill: null
     refresh: [users]
     fields:
       - field: name
-        label: Tên
+        label: Name
         type: text
         required: true
       - field: email
-        label: Email
+        label: E-mail
         type: text
         required: true
       - field: password
-        label: Mật khẩu ban đầu
+        label: Initial password
         type: text
         required: true
       - field: roles
-        label: Vai trò
+        label: Role
         type: multi-select
         options_source: settings_role_lookup
-        search_placeholder: 'Tìm vai trò...'
+        search_placeholder: 'Find roles...'
         multiple: true
         required: false
 
   - id: edit_user
     type: form
     permission: settings.write
-    title: Cập nhật người dùng
+    title: Update users
     table: users
     operation: update
     prefill: row
     refresh: [users]
     fields:
       - field: name
-        label: Tên
+        label: Name
         type: text
         required: false
       - field: email
-        label: Email
+        label: E-mail
         type: text
         required: false
       - field: roles
-        label: Vai trò
+        label: Role
         type: multi-select
         options_source: settings_role_lookup
-        search_placeholder: 'Tìm vai trò...'
+        search_placeholder: 'Find roles...'
         multiple: true
         required: false

@@ -1,5 +1,5 @@
-title: Hệ thống tài khoản
-page: { id: accounting-ledger-accounts, breadcrumb: [Kế toán, Hệ thống tài khoản], auth: { require: [accounting.read] } }
+title: Account system
+page: { id: accounting-ledger-accounts, breadcrumb: [Accountant, Account system], auth: { require: [accounting.read] } }
 datasources:
   - id: ledger_accounts
     single: false
@@ -15,10 +15,10 @@ datasources:
     single: false
     permission: accounting.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
-toolbar: [{ id: add_ledger_account_btn, label: '+ Thêm tài khoản', variant: primary, permission: accounting.write, action: add_ledger_account }]
+toolbar: [{ id: add_ledger_account_btn, label: '+ Add account', variant: primary, permission: accounting.write, action: add_ledger_account }]
 components:
-  - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Tìm kiếm tài khoản, placeholder: 'Tìm số hiệu, tên hoặc diễn giải...' }, actions: [{ id: ledger_accounts.export, label: 'Xuất CSV', icon: download }] }
-  - { type: StatusTabs, source: ledger_accounts, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang sử dụng }, { id: Inactive, label: Ngưng sử dụng }] }
+  - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Search accounts, placeholder: 'Find number, name or description...' }, actions: [{ id: ledger_accounts.export, label: 'Export CSV', icon: download }] }
+  - { type: StatusTabs, source: ledger_accounts, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: In use }, { id: Inactive, label: Discontinue use }] }
   - type: DataGrid
     source: ledger_accounts
     tree: true
@@ -26,39 +26,39 @@ components:
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có tài khoản kế toán }
+    empty_state: { title: There are no accounting accounts }
     columns:
-      - { field: code, label: Số hiệu, sortable: true }
-      - { field: name, label: Tên tài khoản, type: PrimaryEntityCell, secondary: description }
-      - { field: parent_name, label: Tài khoản cha }
-      - { field: currency, label: Tiền tệ }
-      - { field: sort_order, label: Thứ tự, align: right }
+      - { field: code, label: Number, sortable: true }
+      - { field: name, label: Account name, type: PrimaryEntityCell, secondary: description }
+      - { field: parent_name, label: Parent account }
+      - { field: currency, label: Money }
+      - { field: sort_order, label: Order, align: right }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors: { Active: green, Inactive: red }
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: edit_ledger_account, label: Sửa, variant: ghost, permission: accounting.write }, { id: delete_ledger_account, label: Xóa, variant: danger, permission: accounting.write }]
+        actions: [{ id: edit_ledger_account, label: Fix, variant: ghost, permission: accounting.write }, { id: delete_ledger_account, label: Erase, variant: danger, permission: accounting.write }]
 actions:
   - id: add_ledger_account
     type: form
     permission: accounting.write
-    title: Thêm tài khoản kế toán
+    title: Add accounting accounts
     table: accounting_entries
     scope: ledger_account
     operation: insert
     refresh: [ledger_accounts]
-    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: parent_id, label: Tài khoản cha, type: select, options_source: ledger_account_parent_lookup }, { field: currency, label: Tiền tệ, type: select, options_source: ledger_currency_lookup, default: VND }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number, default: 0 }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }]
+    fields: [{ field: code, label: Number, type: text, required: true }, { field: name, label: Account name, type: text, required: true }, { field: parent_id, label: Parent account, type: select, options_source: ledger_account_parent_lookup }, { field: currency, label: Money, type: select, options_source: ledger_currency_lookup, default: VND }, { field: description, label: Interpretation, type: textarea }, { field: sort_order, label: Order, type: number, default: 0 }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }]
   - id: edit_ledger_account
     type: form
     permission: accounting.write
-    title: Cập nhật tài khoản kế toán
+    title: Update accounting accounts
     table: accounting_entries
     scope: ledger_account
     operation: update
     prefill: row
     refresh: [ledger_accounts]
-    fields: [{ field: code, label: Số hiệu, type: text, required: true }, { field: name, label: Tên tài khoản, type: text, required: true }, { field: parent_id, label: Tài khoản cha, type: select, options_source: ledger_account_parent_lookup }, { field: currency, label: Tiền tệ, type: select, options_source: ledger_currency_lookup }, { field: description, label: Diễn giải, type: textarea }, { field: sort_order, label: Thứ tự, type: number }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }]
-  - { id: delete_ledger_account, type: delete, permission: accounting.write, table: accounting_entries, scope: ledger_account, confirm: 'Xóa tài khoản {{row.code}}?', refresh: [ledger_accounts] }
+    fields: [{ field: code, label: Number, type: text, required: true }, { field: name, label: Account name, type: text, required: true }, { field: parent_id, label: Parent account, type: select, options_source: ledger_account_parent_lookup }, { field: currency, label: Money, type: select, options_source: ledger_currency_lookup }, { field: description, label: Interpretation, type: textarea }, { field: sort_order, label: Order, type: number }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }]
+  - { id: delete_ledger_account, type: delete, permission: accounting.write, table: accounting_entries, scope: ledger_account, confirm: 'Delete account {{row.code}}?', refresh: [ledger_accounts] }

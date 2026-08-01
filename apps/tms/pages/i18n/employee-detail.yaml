@@ -1,70 +1,35 @@
-en:
-  "Chi tiết nhân viên": "Employee details"
-  "Nhân sự": "Human resources"
-  "Nhân viên": "Staff"
-  "Chi tiết": "Detail"
-  "Chức danh": "Title"
-  "Phòng ban": "Departments"
-  "Điện thoại": "Phone"
-  "Email": "E-mail"
-  "Ngày vào làm": "Day of work"
-  "Người phụ thuộc": "Dependents"
-  "Chưa có hợp đồng": "No contract yet"
-  "Hợp đồng": "Contract"
-  "Loại": "Type"
-  "Từ ngày": "From date"
-  "Đến ngày": "Come day"
-  "Lương cơ bản": "Basic salary"
-  "Trạng thái": "Status"
-  "Lịch sử nhân viên": "Employee history"
-  "Chưa có hoạt động nhân viên": "There are no staff activities yet"
-  "Chưa có tài liệu nhân sự": "No personnel documents yet"
-  "Tên tệp": "File name"
-  "Dung lượng": "Capacity"
-  "Ngày tải lên": "Upload date"
-  "Tải xuống": "Download"
-  "Danh sách nhân viên": "List of employees"
-  "Sửa thông tin": "Edit information"
-  "+ Tải tài liệu": "+ Download documents"
-  "Cập nhật nhân viên": "Update staff"
-  "Mã nhân viên": "Employee code"
-  "Họ tên": "Full name"
-  "Số điện thoại": "Phone number"
-  "Đang làm việc": "Working"
-  "Nghỉ phép": "On leave"
-  "Ngưng hoạt động": "Shut down"
 vi:
-  "Chi tiết nhân viên": "Chi tiết nhân viên"
-  "Nhân sự": "Nhân sự"
-  "Nhân viên": "Nhân viên"
-  "Chi tiết": "Chi tiết"
-  "Chức danh": "Chức danh"
-  "Phòng ban": "Phòng ban"
-  "Điện thoại": "Điện thoại"
-  "Email": "Email"
-  "Ngày vào làm": "Ngày vào làm"
-  "Người phụ thuộc": "Người phụ thuộc"
-  "Chưa có hợp đồng": "Chưa có hợp đồng"
-  "Hợp đồng": "Hợp đồng"
-  "Loại": "Loại"
-  "Từ ngày": "Từ ngày"
-  "Đến ngày": "Đến ngày"
-  "Lương cơ bản": "Lương cơ bản"
-  "Trạng thái": "Trạng thái"
-  "Lịch sử nhân viên": "Lịch sử nhân viên"
-  "Chưa có hoạt động nhân viên": "Chưa có hoạt động nhân viên"
-  "Chưa có tài liệu nhân sự": "Chưa có tài liệu nhân sự"
-  "Tên tệp": "Tên tệp"
-  "Dung lượng": "Dung lượng"
-  "Ngày tải lên": "Ngày tải lên"
-  "Tải xuống": "Tải xuống"
-  "Danh sách nhân viên": "Danh sách nhân viên"
-  "Sửa thông tin": "Sửa thông tin"
-  "+ Tải tài liệu": "+ Tải tài liệu"
-  "Cập nhật nhân viên": "Cập nhật nhân viên"
-  "Mã nhân viên": "Mã nhân viên"
-  "Họ tên": "Họ tên"
-  "Số điện thoại": "Số điện thoại"
-  "Đang làm việc": "Đang làm việc"
-  "Nghỉ phép": "Nghỉ phép"
-  "Ngưng hoạt động": "Ngưng hoạt động"
+  Employee details: Chi tiết nhân viên
+  Human resources: Nhân sự
+  Staff: Nhân viên
+  Detail: Chi tiết
+  Title: Chức danh
+  Departments: Phòng ban
+  Phone: Điện thoại
+  E-mail: Email
+  Day of work: Ngày vào làm
+  Dependents: Người phụ thuộc
+  No contract yet: Chưa có hợp đồng
+  Contract: Hợp đồng
+  Type: Loại
+  From date: Từ ngày
+  Come day: Đến ngày
+  Basic salary: Lương cơ bản
+  Status: Trạng thái
+  Employee history: Lịch sử nhân viên
+  There are no staff activities yet: Chưa có hoạt động nhân viên
+  No personnel documents yet: Chưa có tài liệu nhân sự
+  File name: Tên tệp
+  Capacity: Dung lượng
+  Upload date: Ngày tải lên
+  Download: Tải xuống
+  List of employees: Danh sách nhân viên
+  Edit information: Sửa thông tin
+  + Download documents: + Tải tài liệu
+  Update staff: Cập nhật nhân viên
+  Employee code: Mã nhân viên
+  Full name: Họ tên
+  Phone number: Số điện thoại
+  Working: Đang làm việc
+  On leave: Nghỉ phép
+  Shut down: Ngưng hoạt động

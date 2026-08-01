@@ -1,70 +1,35 @@
-en:
-  "Chi tiết mẫu in": "Print sample details"
-  "Hệ thống": "System"
-  "Mẫu in": "Print template"
-  "Chi tiết": "Detail"
-  "Mô tả": "Describe"
-  "Mã mẫu": "Sample code"
-  "Mẫu in chưa có khối nội dung": "The printed template does not have a content block"
-  "Thêm văn bản, token hoặc bảng vào mẫu.": "Add text, tokens, or tables to the template."
-  "Thứ tự": "Order"
-  "Loại khối": "Block type"
-  "Nhãn": "Label"
-  "Token": "Tokens"
-  "Nội dung": "Content"
-  "Trạng thái": "Status"
-  "Lên": "Go up"
-  "Xuống": "Down"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Danh sách mẫu in": "List of printing samples"
-  "+ Thêm khối": "+ Add blocks"
-  "Thêm khối mẫu in": "Add a print block"
-  "Văn bản": "Document"
-  "Bảng": "Board"
-  "Khoảng cách": "Distance"
-  "Token dữ liệu": "Data tokens"
-  "Số đơn hàng": "Order number"
-  "Khách hàng": "Client"
-  "Tuyến đường": "Route"
-  "Dòng hàng": "Line of goods"
-  "Nội dung văn bản": "Text content"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Cập nhật khối mẫu in": "Update the print template block"
-  "Xóa khối này?": "Delete this block?"
 vi:
-  "Chi tiết mẫu in": "Chi tiết mẫu in"
-  "Hệ thống": "Hệ thống"
-  "Mẫu in": "Mẫu in"
-  "Chi tiết": "Chi tiết"
-  "Mô tả": "Mô tả"
-  "Mã mẫu": "Mã mẫu"
-  "Mẫu in chưa có khối nội dung": "Mẫu in chưa có khối nội dung"
-  "Thêm văn bản, token hoặc bảng vào mẫu.": "Thêm văn bản, token hoặc bảng vào mẫu."
-  "Thứ tự": "Thứ tự"
-  "Loại khối": "Loại khối"
-  "Nhãn": "Nhãn"
-  "Token": "Token"
-  "Nội dung": "Nội dung"
-  "Trạng thái": "Trạng thái"
-  "Lên": "Lên"
-  "Xuống": "Xuống"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Danh sách mẫu in": "Danh sách mẫu in"
-  "+ Thêm khối": "+ Thêm khối"
-  "Thêm khối mẫu in": "Thêm khối mẫu in"
-  "Văn bản": "Văn bản"
-  "Bảng": "Bảng"
-  "Khoảng cách": "Khoảng cách"
-  "Token dữ liệu": "Token dữ liệu"
-  "Số đơn hàng": "Số đơn hàng"
-  "Khách hàng": "Khách hàng"
-  "Tuyến đường": "Tuyến đường"
-  "Dòng hàng": "Dòng hàng"
-  "Nội dung văn bản": "Nội dung văn bản"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Cập nhật khối mẫu in": "Cập nhật khối mẫu in"
-  "Xóa khối này?": "Xóa khối này?"
+  Print sample details: Chi tiết mẫu in
+  System: Hệ thống
+  Print template: Mẫu in
+  Detail: Chi tiết
+  Describe: Mô tả
+  Sample code: Mã mẫu
+  The printed template does not have a content block: Mẫu in chưa có khối nội dung
+  "Add text, tokens, or tables to the template.": "Thêm văn bản, token hoặc bảng vào mẫu."
+  Order: Thứ tự
+  Block type: Loại khối
+  Label: Nhãn
+  Tokens: Token
+  Content: Nội dung
+  Status: Trạng thái
+  Go up: Lên
+  Down: Xuống
+  Fix: Sửa
+  Erase: Xóa
+  List of printing samples: Danh sách mẫu in
+  + Add blocks: + Thêm khối
+  Add a print block: Thêm khối mẫu in
+  Document: Văn bản
+  Board: Bảng
+  Distance: Khoảng cách
+  Data tokens: Token dữ liệu
+  Order number: Số đơn hàng
+  Client: Khách hàng
+  Route: Tuyến đường
+  Line of goods: Dòng hàng
+  Text content: Nội dung văn bản
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  Update the print template block: Cập nhật khối mẫu in
+  Delete this block?: Xóa khối này?

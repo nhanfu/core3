@@ -1,9 +1,9 @@
-title: Khách hàng
-scope: { label: 'Phạm vi xem', value: 'Toàn công ty' }
+title: Client
+scope: { label: 'View range', value: 'Toàn công ty' }
 
 page:
   id: customers
-  breadcrumb: [Kinh doanh, Khách hàng]
+  breadcrumb: [Business, Client]
   auth:
     require: [crm.read]
 
@@ -45,7 +45,7 @@ datasources:
 
 toolbar:
   - id: add_customer_btn
-    label: '+ Thêm khách hàng'
+    label: '+ Add customers'
     variant: primary
     permission: crm.write
     action: add_customer
@@ -55,10 +55,10 @@ components:
     source: customers
     filter_field: q
     search:
-      label: Tìm kiếm khách hàng
-      placeholder: 'Tìm mã, tên, MST, SĐT...'
+      label: Search for customers
+      placeholder: 'Find code, name, code, phone number...'
     search_button: true
-    actions: [{ id: customers.export, label: '', title: 'Xuất Excel', icon: download }]
+    actions: [{ id: customers.export, label: '', title: 'Export Excel', icon: download }]
     help: true
   - type: StatusTabs
     source: customers
@@ -66,10 +66,10 @@ components:
     show_counts: true
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Lead, label: Khách tiềm năng }
-      - { id: Contacting, label: Đang tiếp cận }
-      - { id: Customer, label: Khách hàng }
+      - { id: '', label: All }
+      - { id: Lead, label: Potential guests }
+      - { id: Contacting, label: Approaching }
+      - { id: Customer, label: Client }
   - type: DataGrid
     source: customers
     page_size: 50
@@ -79,35 +79,35 @@ components:
     row_key: id
     selectable: true
     empty_state:
-      title: Không có khách hàng
-      description: Thử thay đổi bộ lọc hoặc tạo khách hàng mới.
+      title: There are no customers
+      description: Try changing filters or creating new customers.
     columns:
       - field: system_code
-        label: Mã HT
+        label: HT code
         sortable: true
       - field: code
-        label: Mã / tên
+        label: Code/name
         type: PrimaryEntityCell
         secondary: name
         avatar: building
       - field: entity_type
-        label: Loại
+        label: Type
         type: StatusChip
         colors:
-          Khách hàng: neutral
+          Client: neutral
       - field: tax_code
-        label: Mã số thuế
+        label: Tax code
       - field: stage_label
-        label: Giai đoạn
+        label: Stage
         type: StatusChip
         colors:
-          Khách tiềm năng: blue
-          Đang tiếp cận: amber
-          Khách hàng: green
+          Potential guests: blue
+          Approaching: amber
+          Client: green
       - field: owner_name
-        label: Sale phụ trách
+        label: Sales is in charge
       - field: phone
-        label: Liên hệ chính
+        label: Main contact
         type: PrimaryEntityCell
         secondary: email
       - field: actions
@@ -116,15 +116,15 @@ components:
         align: right
         actions:
           - id: view_customer
-            label: Chi tiết
+            label: Detail
             variant: ghost
             permission: crm.read
           - id: edit_customer
-            label: Sửa
+            label: Fix
             variant: ghost
             permission: crm.write
           - id: delete_customer
-            label: Xóa
+            label: Erase
             variant: danger
             permission: crm.write
 
@@ -133,41 +133,41 @@ actions:
   - id: add_customer
     type: form
     permission: crm.write
-    title: Thêm khách hàng
+    title: Add customers
     table: customers
     operation: insert
     refresh: [customers]
     fields:
-      - { field: code, label: Mã khách hàng, type: text, required: true }
-      - { field: name, label: Tên khách hàng, type: text, required: true }
-      - { field: tax_code, label: Mã số thuế, type: text }
-      - { field: phone, label: Số điện thoại, type: text }
-      - { field: email, label: Email, type: text }
-      - { field: stage, label: Giai đoạn, type: select, options: [{ id: Lead, label: Khách tiềm năng }, { id: Contacting, label: Đang tiếp cận }, { id: Customer, label: Khách hàng }], default: Lead }
-      - { field: owner_name, label: Sale phụ trách, type: select, options_source: customer_owner_lookup }
-      - { field: visibility, label: Hiển thị, type: select, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }], default: Public }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }], default: Active }
+      - { field: code, label: Customer code, type: text, required: true }
+      - { field: name, label: Customer name, type: text, required: true }
+      - { field: tax_code, label: Tax code, type: text }
+      - { field: phone, label: Phone number, type: text }
+      - { field: email, label: E-mail, type: text }
+      - { field: stage, label: Stage, type: select, options: [{ id: Lead, label: Potential guests }, { id: Contacting, label: Approaching }, { id: Customer, label: Client }], default: Lead }
+      - { field: owner_name, label: Sales is in charge, type: select, options_source: customer_owner_lookup }
+      - { field: visibility, label: Show, type: select, options: [{ id: Public, label: Public }, { id: Private, label: Private }], default: Public }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }], default: Active }
   - id: edit_customer
     type: form
     permission: crm.write
-    title: Cập nhật khách hàng
+    title: Update customers
     table: customers
     operation: update
     prefill: row
     refresh: [customers]
     fields:
-      - { field: code, label: Mã khách hàng, type: text, required: true }
-      - { field: name, label: Tên khách hàng, type: text, required: true }
-      - { field: tax_code, label: Mã số thuế, type: text }
-      - { field: phone, label: Số điện thoại, type: text }
-      - { field: email, label: Email, type: text }
-      - { field: stage, label: Giai đoạn, type: select, options: [{ id: Lead, label: Khách tiềm năng }, { id: Contacting, label: Đang tiếp cận }, { id: Customer, label: Khách hàng }] }
-      - { field: owner_name, label: Sale phụ trách, type: select, options_source: customer_owner_lookup }
-      - { field: visibility, label: Hiển thị, type: select, options: [{ id: Public, label: Công khai }, { id: Private, label: Riêng }] }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Hoạt động }, { id: Inactive, label: Ngưng hoạt động }] }
+      - { field: code, label: Customer code, type: text, required: true }
+      - { field: name, label: Customer name, type: text, required: true }
+      - { field: tax_code, label: Tax code, type: text }
+      - { field: phone, label: Phone number, type: text }
+      - { field: email, label: E-mail, type: text }
+      - { field: stage, label: Stage, type: select, options: [{ id: Lead, label: Potential guests }, { id: Contacting, label: Approaching }, { id: Customer, label: Client }] }
+      - { field: owner_name, label: Sales is in charge, type: select, options_source: customer_owner_lookup }
+      - { field: visibility, label: Show, type: select, options: [{ id: Public, label: Public }, { id: Private, label: Private }] }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Work }, { id: Inactive, label: Shut down }] }
   - id: delete_customer
     type: delete
     permission: crm.write
-    confirm: 'Xóa khách hàng {{row.name}}?'
+    confirm: 'Delete customer {{row.name}}?'
     table: customers
     refresh: [customers]

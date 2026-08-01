@@ -1,34 +1,34 @@
-title: Mẫu in
-page: { id: system-print-templates, breadcrumb: [Hệ thống, Mẫu in], auth: { require: [system.read] } }
+title: Print template
+page: { id: system-print-templates, breadcrumb: [System, Print template], auth: { require: [system.read] } }
 datasources:
   - id: print_templates
     single: false
     permission: system.read
     query: "SELECT id, code, name, config_value, description, status, sort_order, created_at FROM system_configs WHERE kind = 'print_template' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY sort_order, code"
-toolbar: [{ id: add_print_template, label: '+ Thêm mẫu in', variant: primary, permission: system.write, action: add_print_template }]
+toolbar: [{ id: add_print_template, label: '+ Add printing templates', variant: primary, permission: system.write, action: add_print_template }]
 components:
-  - { type: ListToolbar, source: print_templates, filter_field: q, search: { label: Tìm mẫu in, placeholder: 'Tìm mã hoặc tên...' }, actions: [{ id: print_templates.export, label: 'Xuất CSV', icon: download }] }
-  - { type: StatusTabs, source: print_templates, filter_field: status, tabs: [{ id: '', label: Tất cả }, { id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
+  - { type: ListToolbar, source: print_templates, filter_field: q, search: { label: Find printable templates, placeholder: 'Find code or name...' }, actions: [{ id: print_templates.export, label: 'Export CSV', icon: download }] }
+  - { type: StatusTabs, source: print_templates, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: Using }, { id: Inactive, label: Stop using }] }
   - type: DataGrid
     source: print_templates
     page_size: 20
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có mẫu in }
+    empty_state: { title: There are no printed samples yet }
     columns:
-      - { field: code, label: Mã }
-      - { field: name, label: Mẫu in, type: PrimaryEntityCell, secondary: description }
-      - { field: config_value, label: Mã mẫu }
-      - { field: status, label: Trạng thái, type: StatusChip, colors: { Active: green, Inactive: red } }
+      - { field: code, label: Code }
+      - { field: name, label: Print template, type: PrimaryEntityCell, secondary: description }
+      - { field: config_value, label: Sample code }
+      - { field: status, label: Status, type: StatusChip, colors: { Active: green, Inactive: red } }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_print_template, label: Chi tiết, variant: primary, permission: system.read }
-          - { id: edit_print_template, label: Sửa, variant: ghost, permission: system.write }
-          - { id: delete_print_template, label: Xóa, variant: danger, permission: system.write }
+          - { id: view_print_template, label: Detail, variant: primary, permission: system.read }
+          - { id: edit_print_template, label: Fix, variant: ghost, permission: system.write }
+          - { id: delete_print_template, label: Erase, variant: danger, permission: system.write }
 actions:
   - { id: view_print_template, type: navigate, permission: system.read, navigate_to: /system/print-templates/detail, params: { id: '{row.id}' } }
-  - { id: add_print_template, type: form, permission: system.write, title: Thêm mẫu in, table: system_configs, scope: print_template, operation: insert, refresh: [print_templates], fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên, type: text, required: true }, { field: config_value, label: Mã mẫu, type: text }, { field: description, label: Mô tả, type: textarea }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }] }
-  - { id: edit_print_template, type: form, permission: system.write, title: Cập nhật mẫu in, table: system_configs, scope: print_template, operation: update, prefill: row, refresh: [print_templates], fields: [{ field: code, label: Mã, type: text, required: true }, { field: name, label: Tên, type: text, required: true }, { field: config_value, label: Mã mẫu, type: text }, { field: description, label: Mô tả, type: textarea }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }] }
-  - { id: delete_print_template, type: delete, permission: system.write, table: system_configs, scope: print_template, confirm: 'Xóa mẫu {{row.name}}?', refresh: [print_templates] }
+  - { id: add_print_template, type: form, permission: system.write, title: Add a print template, table: system_configs, scope: print_template, operation: insert, refresh: [print_templates], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Sample code, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }
+  - { id: edit_print_template, type: form, permission: system.write, title: Update print template, table: system_configs, scope: print_template, operation: update, prefill: row, refresh: [print_templates], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Sample code, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }] }
+  - { id: delete_print_template, type: delete, permission: system.write, table: system_configs, scope: print_template, confirm: 'Delete pattern {{row.name}}?', refresh: [print_templates] }

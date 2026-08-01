@@ -1,8 +1,8 @@
-title: Container
+title: Containers
 
 page:
   id: containers
-  breadcrumb: [Danh mục, Container]
+  breadcrumb: [Category, Containers]
   auth:
     require: [dispatch.read]
 
@@ -34,7 +34,7 @@ datasources:
 
 toolbar:
   - id: add_container_btn
-    label: '+ Thêm container'
+    label: '+ Add containers'
     variant: primary
     permission: dispatch.write
     action: add_container
@@ -43,76 +43,76 @@ components:
   - type: ListToolbar
     source: containers
     filter_field: q
-    search: { label: Tìm kiếm container, placeholder: 'Tìm số container, loại hoặc chủ sở hữu...' }
-    actions: [{ id: containers.export, label: 'Xuất CSV', icon: download }]
+    search: { label: Search for containers, placeholder: 'Find container number, type or owner...' }
+    actions: [{ id: containers.export, label: 'Export CSV', icon: download }]
   - type: StatusTabs
     source: containers
     filter_field: status
     show_counts: false
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Available, label: Sẵn sàng }
-      - { id: InUse, label: Đang sử dụng }
-      - { id: Maintenance, label: Bảo dưỡng }
-      - { id: Inactive, label: Ngưng hoạt động }
+      - { id: '', label: All }
+      - { id: Available, label: Ready }
+      - { id: InUse, label: In use }
+      - { id: Maintenance, label: Maintenance }
+      - { id: Inactive, label: Shut down }
   - type: DataGrid
     source: containers
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: Không có container, description: Thử thay đổi bộ lọc hoặc tạo container mới. }
+    empty_state: { title: No containers, description: Try changing the filter or creating a new container. }
     columns:
-      - { field: id, label: Mã HT, sortable: true }
-      - { field: container_number, label: Số container, type: PrimaryEntityCell, secondary: container_type }
-      - { field: owner_name, label: Chủ sở hữu }
-      - { field: location_code, label: Vị trí, type: PrimaryEntityCell, secondary: location_name }
+      - { field: id, label: HT code, sortable: true }
+      - { field: container_number, label: Number of containers, type: PrimaryEntityCell, secondary: container_type }
+      - { field: owner_name, label: Owner }
+      - { field: location_code, label: Location, type: PrimaryEntityCell, secondary: location_name }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
-        colors: { Sẵn sàng: green, Đang sử dụng: blue, Bảo dưỡng: amber, Ngưng hoạt động: red }
-      - { field: created_at, label: Ngày giờ tạo }
+        colors: { Ready: green, In use: blue, Maintenance: amber, Shut down: red }
+      - { field: created_at, label: Creation date and time }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_container, label: Sửa, variant: ghost, permission: dispatch.write }
-          - { id: delete_container, label: Xóa, variant: danger, permission: dispatch.write }
+          - { id: edit_container, label: Fix, variant: ghost, permission: dispatch.write }
+          - { id: delete_container, label: Erase, variant: danger, permission: dispatch.write }
 
 actions:
   - id: add_container
     type: form
     permission: dispatch.write
-    title: Thêm container
+    title: Add containers
     table: containers
     operation: insert
     refresh: [containers]
     fields:
-      - { field: container_number, label: Số container, type: text, required: true }
-      - { field: container_type, label: Loại container, type: select, options_source: container_type_lookup, default: 20DC }
-      - { field: owner_name, label: Chủ sở hữu, type: select, options_source: container_owner_lookup }
-      - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Available, label: Sẵn sàng }, { id: InUse, label: Đang sử dụng }, { id: Maintenance, label: Bảo dưỡng }, { id: Inactive, label: Ngưng hoạt động }], default: Available }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: container_number, label: Number of containers, type: text, required: true }
+      - { field: container_type, label: Containers type, type: select, options_source: container_type_lookup, default: 20DC }
+      - { field: owner_name, label: Owner, type: select, options_source: container_owner_lookup }
+      - { field: location_id, label: Location, type: select, options_source: container_location_lookup }
+      - { field: status, label: Status, type: select, options: [{ id: Available, label: Ready }, { id: InUse, label: In use }, { id: Maintenance, label: Maintenance }, { id: Inactive, label: Shut down }], default: Available }
+      - { field: notes, label: Note, type: textarea }
   - id: edit_container
     type: form
     permission: dispatch.write
-    title: Cập nhật container
+    title: Update containers
     table: containers
     operation: update
     prefill: row
     refresh: [containers]
     fields:
-      - { field: container_number, label: Số container, type: text, required: true }
-      - { field: container_type, label: Loại container, type: select, options_source: container_type_lookup }
-      - { field: owner_name, label: Chủ sở hữu, type: select, options_source: container_owner_lookup }
-      - { field: location_id, label: Vị trí, type: select, options_source: container_location_lookup }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Available, label: Sẵn sàng }, { id: InUse, label: Đang sử dụng }, { id: Maintenance, label: Bảo dưỡng }, { id: Inactive, label: Ngưng hoạt động }] }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: container_number, label: Number of containers, type: text, required: true }
+      - { field: container_type, label: Containers type, type: select, options_source: container_type_lookup }
+      - { field: owner_name, label: Owner, type: select, options_source: container_owner_lookup }
+      - { field: location_id, label: Location, type: select, options_source: container_location_lookup }
+      - { field: status, label: Status, type: select, options: [{ id: Available, label: Ready }, { id: InUse, label: In use }, { id: Maintenance, label: Maintenance }, { id: Inactive, label: Shut down }] }
+      - { field: notes, label: Note, type: textarea }
   - id: delete_container
     type: delete
     permission: dispatch.write
-    confirm: 'Xóa container {{row.container_number}}?'
+    confirm: 'Delete container {{row.container_number}}?'
     table: containers
     refresh: [containers]

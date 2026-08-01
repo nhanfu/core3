@@ -1,44 +1,22 @@
-en:
-  "Loại hình vận chuyển": "Type of transportation"
-  "Hệ thống": "System"
-  "+ Thêm loại hình": "+ Add type"
-  "Tìm loại hình": "Find the type"
-  "Tìm mã hoặc tên...": "Find code or name..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Chưa có loại hình vận chuyển": "There is no shipping type yet"
-  "Mã": "Code"
-  "Loại hình": "Type"
-  "Giá trị": "Value"
-  "Trạng thái": "Status"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm loại hình vận chuyển": "Add shipping type"
-  "Tên": "Name"
-  "Mô tả": "Describe"
-  "Cập nhật loại hình": "Update type"
-  "Xóa loại hình {{row.name}}?": "Delete type {{row.name}}?"
 vi:
-  "Loại hình vận chuyển": "Loại hình vận chuyển"
-  "Hệ thống": "Hệ thống"
-  "+ Thêm loại hình": "+ Thêm loại hình"
-  "Tìm loại hình": "Tìm loại hình"
-  "Tìm mã hoặc tên...": "Tìm mã hoặc tên..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Chưa có loại hình vận chuyển": "Chưa có loại hình vận chuyển"
-  "Mã": "Mã"
-  "Loại hình": "Loại hình"
-  "Giá trị": "Giá trị"
-  "Trạng thái": "Trạng thái"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm loại hình vận chuyển": "Thêm loại hình vận chuyển"
-  "Tên": "Tên"
-  "Mô tả": "Mô tả"
-  "Cập nhật loại hình": "Cập nhật loại hình"
-  "Xóa loại hình {{row.name}}?": "Xóa loại hình {{row.name}}?"
+  Type of transportation: Loại hình vận chuyển
+  System: Hệ thống
+  + Add type: + Thêm loại hình
+  Find the type: Tìm loại hình
+  "Find code or name...": "Tìm mã hoặc tên..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  There is no shipping type yet: Chưa có loại hình vận chuyển
+  Code: Mã
+  Type: Loại hình
+  Value: Giá trị
+  Status: Trạng thái
+  Fix: Sửa
+  Erase: Xóa
+  Add shipping type: Thêm loại hình vận chuyển
+  Name: Tên
+  Describe: Mô tả
+  Update type: Cập nhật loại hình
+  "Delete type {{row.name}}?": "Xóa loại hình {{row.name}}?"

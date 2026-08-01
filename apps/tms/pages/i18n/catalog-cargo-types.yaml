@@ -1,50 +1,25 @@
-en:
-  "Loại hàng hóa": "Type of goods"
-  "Danh mục": "Category"
-  "+ Thêm loại hàng hóa": "+ Add type of goods"
-  "Tìm kiếm loại hàng hóa": "Search for product type"
-  "Tìm mã, tên hoặc mô tả...": "Find code, name or description..."
-  "Xuất CSV": "Export CSV"
-  "Nhập CSV": "Import CSV"
-  "Tất cả": "All"
-  "Đang sử dụng": "In use"
-  "Ngưng sử dụng": "Discontinue use"
-  "Không có loại hàng hóa": "There is no commodity type"
-  "Tạo loại hàng hóa đầu tiên để sử dụng trong đơn hàng.": "Create the first commodity type to use in the order."
-  "Mã": "Code"
-  "Thứ tự": "Order"
-  "Trạng thái": "Status"
-  "Ngày tạo": "Creation date"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm loại hàng hóa": "Add product type"
-  "Mô tả": "Describe"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Cập nhật loại hàng hóa": "Update product type"
-  "Xóa loại hàng hóa {{row.name}}?": "Delete commodity type {{row.name}}?"
 vi:
-  "Loại hàng hóa": "Loại hàng hóa"
-  "Danh mục": "Danh mục"
-  "+ Thêm loại hàng hóa": "+ Thêm loại hàng hóa"
-  "Tìm kiếm loại hàng hóa": "Tìm kiếm loại hàng hóa"
-  "Tìm mã, tên hoặc mô tả...": "Tìm mã, tên hoặc mô tả..."
-  "Xuất CSV": "Xuất CSV"
-  "Nhập CSV": "Nhập CSV"
-  "Tất cả": "Tất cả"
-  "Đang sử dụng": "Đang sử dụng"
-  "Ngưng sử dụng": "Ngưng sử dụng"
-  "Không có loại hàng hóa": "Không có loại hàng hóa"
-  "Tạo loại hàng hóa đầu tiên để sử dụng trong đơn hàng.": "Tạo loại hàng hóa đầu tiên để sử dụng trong đơn hàng."
-  "Mã": "Mã"
-  "Thứ tự": "Thứ tự"
-  "Trạng thái": "Trạng thái"
-  "Ngày tạo": "Ngày tạo"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm loại hàng hóa": "Thêm loại hàng hóa"
-  "Mô tả": "Mô tả"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Cập nhật loại hàng hóa": "Cập nhật loại hàng hóa"
-  "Xóa loại hàng hóa {{row.name}}?": "Xóa loại hàng hóa {{row.name}}?"
+  Type of goods: Loại hàng hóa
+  Category: Danh mục
+  + Add type of goods: + Thêm loại hàng hóa
+  Search for product type: Tìm kiếm loại hàng hóa
+  "Find code, name or description...": "Tìm mã, tên hoặc mô tả..."
+  Export CSV: Xuất CSV
+  Import CSV: Nhập CSV
+  All: Tất cả
+  In use: Đang sử dụng
+  Discontinue use: Ngưng sử dụng
+  There is no commodity type: Không có loại hàng hóa
+  Create the first commodity type to use in the order.: Tạo loại hàng hóa đầu tiên để sử dụng trong đơn hàng.
+  Code: Mã
+  Order: Thứ tự
+  Status: Trạng thái
+  Creation date: Ngày tạo
+  Fix: Sửa
+  Erase: Xóa
+  Add product type: Thêm loại hàng hóa
+  Describe: Mô tả
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  Update product type: Cập nhật loại hàng hóa
+  "Delete commodity type {{row.name}}?": "Xóa loại hàng hóa {{row.name}}?"

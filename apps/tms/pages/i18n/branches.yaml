@@ -1,50 +1,25 @@
-en:
-  "Chi nhánh": "Branch"
-  "Tổ chức & phân quyền": "Organization & decentralization"
-  "+ Thêm chi nhánh": "+ Add branch"
-  "Tìm kiếm chi nhánh": "Search for branches"
-  "Tìm theo tên, tỉnh thành, khu vực...": "Search by name, province, area..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Hoạt động": "Work"
-  "Ngưng hoạt động": "Shut down"
-  "Không có chi nhánh": "No branches"
-  "Thử thay đổi bộ lọc hoặc tạo chi nhánh mới.": "Try changing the filter or creating a new branch."
-  "Mã HT": "HT code"
-  "Tên chi nhánh": "Branch name"
-  "Khu vực": "Area"
-  "Số phương tiện": "Number of vehicles"
-  "Trạng thái": "Status"
-  "Ngày tạo": "Creation date"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm chi nhánh": "Add branch"
-  "Tỉnh / thành phố": "Province/city"
-  "Cập nhật chi nhánh": "Update branch"
-  "Xóa chi nhánh {{row.name}}?": "Delete branch {{row.name}}?"
 vi:
-  "Chi nhánh": "Chi nhánh"
-  "Tổ chức & phân quyền": "Tổ chức & phân quyền"
-  "+ Thêm chi nhánh": "+ Thêm chi nhánh"
-  "Tìm kiếm chi nhánh": "Tìm kiếm chi nhánh"
-  "Tìm theo tên, tỉnh thành, khu vực...": "Tìm theo tên, tỉnh thành, khu vực..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Hoạt động": "Hoạt động"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Không có chi nhánh": "Không có chi nhánh"
-  "Thử thay đổi bộ lọc hoặc tạo chi nhánh mới.": "Thử thay đổi bộ lọc hoặc tạo chi nhánh mới."
-  "Mã HT": "Mã HT"
-  "Tên chi nhánh": "Tên chi nhánh"
-  "Khu vực": "Khu vực"
-  "Số phương tiện": "Số phương tiện"
-  "Trạng thái": "Trạng thái"
-  "Ngày tạo": "Ngày tạo"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm chi nhánh": "Thêm chi nhánh"
-  "Tỉnh / thành phố": "Tỉnh / thành phố"
-  "Cập nhật chi nhánh": "Cập nhật chi nhánh"
-  "Xóa chi nhánh {{row.name}}?": "Xóa chi nhánh {{row.name}}?"
+  Branch: Chi nhánh
+  Organization & decentralization: Tổ chức & phân quyền
+  + Add branch: + Thêm chi nhánh
+  Search for branches: Tìm kiếm chi nhánh
+  "Search by name, province, area...": "Tìm theo tên, tỉnh thành, khu vực..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Work: Hoạt động
+  Shut down: Ngưng hoạt động
+  No branches: Không có chi nhánh
+  Try changing the filter or creating a new branch.: Thử thay đổi bộ lọc hoặc tạo chi nhánh mới.
+  HT code: Mã HT
+  Branch name: Tên chi nhánh
+  Area: Khu vực
+  Number of vehicles: Số phương tiện
+  Status: Trạng thái
+  Creation date: Ngày tạo
+  Detail: Chi tiết
+  Fix: Sửa
+  Erase: Xóa
+  Add branch: Thêm chi nhánh
+  Province/city: Tỉnh / thành phố
+  Update branch: Cập nhật chi nhánh
+  "Delete branch {{row.name}}?": "Xóa chi nhánh {{row.name}}?"

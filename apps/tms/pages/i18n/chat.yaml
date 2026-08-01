@@ -1,16 +1,8 @@
-en:
-  "Tin nhắn": "Message"
-  "Điều hành": "Executive"
-  "+ Cuộc trò chuyện": "+ Conversations"
-  "Tìm cuộc trò chuyện...": "Find conversations..."
-  "Tạo cuộc trò chuyện": "Create a conversation"
-  "Tên cuộc trò chuyện": "Name of the conversation"
-  "Email người tham gia (phân cách bằng dấu phẩy)": "Participant email (separated by commas)"
 vi:
-  "Tin nhắn": "Tin nhắn"
-  "Điều hành": "Điều hành"
-  "+ Cuộc trò chuyện": "+ Cuộc trò chuyện"
-  "Tìm cuộc trò chuyện...": "Tìm cuộc trò chuyện..."
-  "Tạo cuộc trò chuyện": "Tạo cuộc trò chuyện"
-  "Tên cuộc trò chuyện": "Tên cuộc trò chuyện"
-  "Email người tham gia (phân cách bằng dấu phẩy)": "Email người tham gia (phân cách bằng dấu phẩy)"
+  Message: Tin nhắn
+  Executive: Điều hành
+  + Conversations: + Cuộc trò chuyện
+  "Find conversations...": "Tìm cuộc trò chuyện..."
+  Create a conversation: Tạo cuộc trò chuyện
+  Name of the conversation: Tên cuộc trò chuyện
+  Participant email (separated by commas): Email người tham gia (phân cách bằng dấu phẩy)

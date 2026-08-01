@@ -1,4 +1,4 @@
-title: Tổng quan phương tiện
+title: Vehicle overview
 
 page:
   id: fleet
@@ -40,72 +40,72 @@ datasources:
 
 toolbar:
   - id: add_truck_btn
-    label: "+ Thêm phương tiện"
+    label: "+ Add vehicles"
     variant: primary
     permission: fleet.write
     action: add_truck
 
 filters:
   source: trucks
-  all_label: Tất cả
-  clear_label: Xóa bộ lọc
+  all_label: All
+  clear_label: Clear filter
   fields:
     - field: status
-      label: Trạng thái
+      label: Status
       type: select
-      options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }]
+      options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }]
     - field: type
-      label: Loại phương tiện
+      label: Vehicle type
       type: select
       options_source: fleet_type_lookup
     - field: q
-      label: Tìm kiếm
+      label: Search
       type: search
-      placeholder: "Biển số, mẫu xe hoặc tài xế..."
+      placeholder: "License plate, car model or driver..."
 
 components:
   - type: StatRow
     source: trucks_kpis
     stats:
-      - label: Tổng phương tiện
+      - label: Total means
         field: total
         color: blue
-      - label: Sẵn sàng
+      - label: Ready
         field: active
         color: green
-      - label: Đang bảo dưỡng
+      - label: Under maintenance
         field: maintenance
         color: amber
-      - label: Ngưng hoạt động
+      - label: Shut down
         field: out_of_service
         color: red
-      - label: Quá hạn bảo dưỡng
+      - label: Overdue maintenance
         field: overdue_service
         color: amber
 
   - type: GridView
     source: trucks
     page_size: 8
-    empty_state: { title: Không có phương tiện, description: Thử thay đổi bộ lọc hoặc thêm phương tiện mới. }
+    empty_state: { title: No means, description: Try changing filters or adding new media. }
     columns:
       - type: TextCell
         field: plate
-        label: Biển số
+        label: Number plate
         secondary: model
       - type: TextCell
         field: driver_name
-        label: Tài xế
+        label: Driver
         secondary: driver_phone
       - type: BadgeCell
         field: status
-        label: Trạng thái
+        label: Status
         colors:
           Active: green
           Maintenance: amber
           Out of Service: red
       - type: BadgeCell
         field: type
-        label: Loại phương tiện
+        label: Vehicle type
         colors:
           Semi: indigo
           Box Truck: blue
@@ -114,26 +114,26 @@ components:
           Tanker: teal
       - type: NumberCell
         field: mileage
-        label: Số km
+        label: Number of kilometers
         format: "#,###"
       - type: DateCell
         field: last_service
-        label: Bảo dưỡng gần nhất
+        label: Nearest maintenance
         format: relative
       - type: DateCell
         field: next_service
-        label: Bảo dưỡng tiếp theo
+        label: Subsequent maintenance
         format: relative
         overdueField: overdue_next
       - type: ActionCell
         label: ""
         actions:
           - id: edit_truck
-            label: Sửa
+            label: Fix
             variant: ghost
             permission: fleet.write
           - id: delete_truck
-            label: Xóa
+            label: Erase
             variant: danger
             permission: fleet.write
 
@@ -141,108 +141,108 @@ actions:
   - id: add_truck
     type: form
     permission: fleet.write
-    title: Thêm phương tiện
+    title: Add media
     table: trucks
     operation: insert
     prefill: null
     refresh: [trucks, trucks_kpis]
     fields:
       - field: plate
-        label: Biển số
+        label: Number plate
         type: text
         required: true
       - field: model
-        label: Mẫu xe
+        label: Car model
         type: text
         required: false
       - field: type
-        label: Loại phương tiện
+        label: Vehicle type
         type: select
         required: false
         options_source: fleet_type_lookup
       - field: status
-        label: Trạng thái
+        label: Status
         type: select
         required: false
-        options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }]
+        options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }]
         default: Active
       - field: mileage
-        label: Số km
+        label: Number of kilometers
         type: number
         required: false
         default: 0
       - field: driver_id
-        label: Mã tài xế
+        label: Driver code
         type: select
         options_source: fleet_driver_lookup
         required: false
       - field: last_service
-        label: Bảo dưỡng gần nhất
+        label: Nearest maintenance
         type: date
         required: false
       - field: next_service
-        label: Bảo dưỡng tiếp theo
+        label: Subsequent maintenance
         type: date
         required: false
       - field: notes
-        label: Ghi chú
+        label: Note
         type: textarea
         required: false
 
   - id: edit_truck
     type: form
     permission: fleet.write
-    title: Cập nhật phương tiện
+    title: Media updates
     table: trucks
     operation: update
     prefill: row
     refresh: [trucks, trucks_kpis]
     fields:
       - field: plate
-        label: Biển số
+        label: Number plate
         type: text
         required: true
       - field: model
-        label: Mẫu xe
+        label: Car model
         type: text
         required: false
       - field: type
-        label: Loại phương tiện
+        label: Vehicle type
         type: select
         required: false
         options_source: fleet_type_lookup
       - field: status
-        label: Trạng thái
+        label: Status
         type: select
         required: false
-        options: [{ id: Active, label: Sẵn sàng }, { id: Maintenance, label: Bảo dưỡng }, { id: 'Out of Service', label: Ngưng hoạt động }]
+        options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }]
         default: Active
       - field: mileage
-        label: Số km
+        label: Number of kilometers
         type: number
         required: false
         default: 0
       - field: driver_id
-        label: Mã tài xế
+        label: Driver code
         type: select
         options_source: fleet_driver_lookup
         required: false
       - field: last_service
-        label: Bảo dưỡng gần nhất
+        label: Nearest maintenance
         type: date
         required: false
       - field: next_service
-        label: Bảo dưỡng tiếp theo
+        label: Subsequent maintenance
         type: date
         required: false
       - field: notes
-        label: Ghi chú
+        label: Note
         type: textarea
         required: false
 
   - id: delete_truck
     type: delete
     permission: fleet.write
-    confirm: "Xóa phương tiện {{row.plate}}?"
+    confirm: "Remove media {{row.plate}}?"
     table: trucks
     refresh: [trucks, trucks_kpis]

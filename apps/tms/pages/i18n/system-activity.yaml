@@ -1,30 +1,15 @@
-en:
-  "Lịch sử thao tác": "Operation history"
-  "Hệ thống": "System"
-  "Từ ngày": "From date"
-  "Đến ngày": "Come day"
-  "Tìm kiếm lịch sử": "Search history"
-  "Tìm người thao tác hoặc tài nguyên...": "Find operators or resources..."
-  "Xuất CSV": "Export CSV"
-  "Không có lịch sử thao tác": "There is no operation history"
-  "Người thao tác": "Operator"
-  "Hành động": "Act"
-  "Tài nguyên": "Resources"
-  "Mã bản ghi": "Record code"
-  "Chi tiết": "Detail"
-  "Thời gian": "Time"
 vi:
-  "Lịch sử thao tác": "Lịch sử thao tác"
-  "Hệ thống": "Hệ thống"
-  "Từ ngày": "Từ ngày"
-  "Đến ngày": "Đến ngày"
-  "Tìm kiếm lịch sử": "Tìm kiếm lịch sử"
-  "Tìm người thao tác hoặc tài nguyên...": "Tìm người thao tác hoặc tài nguyên..."
-  "Xuất CSV": "Xuất CSV"
-  "Không có lịch sử thao tác": "Không có lịch sử thao tác"
-  "Người thao tác": "Người thao tác"
-  "Hành động": "Hành động"
-  "Tài nguyên": "Tài nguyên"
-  "Mã bản ghi": "Mã bản ghi"
-  "Chi tiết": "Chi tiết"
-  "Thời gian": "Thời gian"
+  Operation history: Lịch sử thao tác
+  System: Hệ thống
+  From date: Từ ngày
+  Come day: Đến ngày
+  Search history: Tìm kiếm lịch sử
+  "Find operators or resources...": "Tìm người thao tác hoặc tài nguyên..."
+  Export CSV: Xuất CSV
+  There is no operation history: Không có lịch sử thao tác
+  Operator: Người thao tác
+  Act: Hành động
+  Resources: Tài nguyên
+  Record code: Mã bản ghi
+  Detail: Chi tiết
+  Time: Thời gian

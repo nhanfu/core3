@@ -1,5 +1,5 @@
-title: Chi tiết mẫu in
-page: { id: system-print-template-detail, breadcrumb: [Hệ thống, Mẫu in, Chi tiết], auth: { require: [system.read] } }
+title: Print sample details
+page: { id: system-print-template-detail, breadcrumb: [System, Print template, Detail], auth: { require: [system.read] } }
 datasources:
   - id: print_template
     single: true
@@ -10,7 +10,7 @@ datasources:
     permission: system.read
     query: "SELECT id, template_id, sequence, block_type, label, token_key, content, status FROM print_template_blocks WHERE template_id = :id ORDER BY sequence, id"
 components:
-  - { type: DocumentSummary, source: print_template, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Mô tả }, { field: config_value, label: Mã mẫu }] }
+  - { type: DocumentSummary, source: print_template, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Describe }, { field: config_value, label: Sample code }] }
   - { type: TemplatePreview, source: template_blocks, template_source: print_template }
   - type: DataGrid
     source: template_blocks
@@ -18,43 +18,43 @@ components:
     reorder: { up_action: move_block_up, down_action: move_block_down }
     column_chooser: true
     row_key: id
-    empty_state: { title: Mẫu in chưa có khối nội dung, description: 'Thêm văn bản, token hoặc bảng vào mẫu.' }
+    empty_state: { title: The printed template does not have a content block, description: 'Add text, tokens, or tables to the template.' }
     columns:
-      - { field: sequence, label: Thứ tự, align: right }
-      - { field: block_type, label: Loại khối }
-      - { field: label, label: Nhãn }
-      - { field: token_key, label: Token }
-      - { field: content, label: Nội dung }
-      - { field: status, label: Trạng thái }
+      - { field: sequence, label: Order, align: right }
+      - { field: block_type, label: Block type }
+      - { field: label, label: Label }
+      - { field: token_key, label: Tokens }
+      - { field: content, label: Content }
+      - { field: status, label: Status }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: move_block_up, label: Lên, variant: ghost, permission: system.write }
-          - { id: move_block_down, label: Xuống, variant: ghost, permission: system.write }
-          - { id: edit_block, label: Sửa, variant: ghost, permission: system.write }
-          - { id: delete_block, label: Xóa, variant: danger, permission: system.write }
+          - { id: move_block_up, label: Go up, variant: ghost, permission: system.write }
+          - { id: move_block_down, label: Down, variant: ghost, permission: system.write }
+          - { id: edit_block, label: Fix, variant: ghost, permission: system.write }
+          - { id: delete_block, label: Erase, variant: danger, permission: system.write }
 toolbar:
-  - { id: back_print_templates, label: 'Danh sách mẫu in', icon: arrow-left, variant: secondary, action: back_print_templates }
-  - { id: add_block, label: '+ Thêm khối', variant: primary, permission: system.write, action: add_block }
+  - { id: back_print_templates, label: 'List of printing samples', icon: arrow-left, variant: secondary, action: back_print_templates }
+  - { id: add_block, label: '+ Add blocks', variant: primary, permission: system.write, action: add_block }
 actions:
   - { id: back_print_templates, type: navigate, navigate_to: /system/print-templates }
   - id: add_block
     type: server_form
     permission: system.write
-    title: Thêm khối mẫu in
+    title: Add a print block
     action: system.print_blocks.create
     params: { id: '{state.id}' }
     refresh: [template_blocks]
-    fields: [{ field: block_type, label: Loại khối, type: select, options: [{ id: text, label: Văn bản }, { id: token, label: Token }, { id: table, label: Bảng }, { id: spacer, label: Khoảng cách }], default: text, required: true }, { field: label, label: Nhãn, type: text, required: true }, { field: token_key, label: Token dữ liệu, type: select, options: [{ id: order.order_number, label: Số đơn hàng }, { id: order.customer_name, label: Khách hàng }, { id: order.route, label: Tuyến đường }, { id: order.lines, label: Dòng hàng }] }, { field: content, label: Nội dung văn bản, type: richtext, tokens: [order.order_number, order.customer_name, order.route, order.lines] }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }]
+    fields: [{ field: block_type, label: Block type, type: select, options: [{ id: text, label: Document }, { id: token, label: Tokens }, { id: table, label: Board }, { id: spacer, label: Distance }], default: text, required: true }, { field: label, label: Label, type: text, required: true }, { field: token_key, label: Data tokens, type: select, options: [{ id: order.order_number, label: Order number }, { id: order.customer_name, label: Client }, { id: order.route, label: Route }, { id: order.lines, label: Line of goods }] }, { field: content, label: Text content, type: richtext, tokens: [order.order_number, order.customer_name, order.route, order.lines] }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }]
   - id: edit_block
     type: server_form
     permission: system.write
-    title: Cập nhật khối mẫu in
+    title: Update the print template block
     action: system.print_blocks.update
     params: { id: '{state.id}', block_id: '{row.id}' }
     refresh: [template_blocks]
-    fields: [{ field: block_type, label: Loại khối, type: select, options: [{ id: text, label: Văn bản }, { id: token, label: Token }, { id: table, label: Bảng }, { id: spacer, label: Khoảng cách }], required: true }, { field: label, label: Nhãn, type: text, required: true }, { field: token_key, label: Token dữ liệu, type: select, options: [{ id: order.order_number, label: Số đơn hàng }, { id: order.customer_name, label: Khách hàng }, { id: order.route, label: Tuyến đường }, { id: order.lines, label: Dòng hàng }] }, { field: content, label: Nội dung văn bản, type: richtext, tokens: [order.order_number, order.customer_name, order.route, order.lines] }, { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }]
-  - { id: delete_block, type: server, permission: system.write, action: system.print_blocks.delete, confirm: 'Xóa khối này?', refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
+    fields: [{ field: block_type, label: Block type, type: select, options: [{ id: text, label: Document }, { id: token, label: Tokens }, { id: table, label: Board }, { id: spacer, label: Distance }], required: true }, { field: label, label: Label, type: text, required: true }, { field: token_key, label: Data tokens, type: select, options: [{ id: order.order_number, label: Order number }, { id: order.customer_name, label: Client }, { id: order.route, label: Route }, { id: order.lines, label: Line of goods }] }, { field: content, label: Text content, type: richtext, tokens: [order.order_number, order.customer_name, order.route, order.lines] }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }]
+  - { id: delete_block, type: server, permission: system.write, action: system.print_blocks.delete, confirm: 'Delete this block?', refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
   - { id: move_block_up, type: server, permission: system.write, action: system.print_blocks.move_up, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }
   - { id: move_block_down, type: server, permission: system.write, action: system.print_blocks.move_down, refresh: [template_blocks], params: { id: '{state.id}', block_id: '{row.id}' } }

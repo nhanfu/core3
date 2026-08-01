@@ -1,5 +1,5 @@
-title: Lịch sử thao tác
-page: { id: system-activity, breadcrumb: [Hệ thống, Lịch sử thao tác], auth: { require: [system.read] } }
+title: Operation history
+page: { id: system-activity, breadcrumb: [System, Operation history], auth: { require: [system.read] } }
 datasources:
   - id: system_activity
     single: false
@@ -40,14 +40,14 @@ components:
   - type: ListToolbar
     source: system_activity
     filter_field: q
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, last_12_months, all], default_preset: last_12_months }
-    search: { label: Tìm kiếm lịch sử, placeholder: 'Tìm người thao tác hoặc tài nguyên...' }
-    actions: [{ id: system_activity.export, label: 'Xuất CSV', icon: download }]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, last_12_months, all], default_preset: last_12_months }
+    search: { label: Search history, placeholder: 'Find operators or resources...' }
+    actions: [{ id: system_activity.export, label: 'Export CSV', icon: download }]
   - type: DataGrid
     source: system_activity
     page_size: 30
     column_chooser: true
     row_key: id
-    empty_state: { title: Không có lịch sử thao tác }
-    columns: [{ field: actor_name, label: Người thao tác }, { field: action, label: Hành động }, { field: resource, label: Tài nguyên }, { field: resource_id, label: Mã bản ghi }, { field: detail, label: Chi tiết }, { field: created_at, label: Thời gian }]
+    empty_state: { title: There is no operation history }
+    columns: [{ field: actor_name, label: Operator }, { field: action, label: Act }, { field: resource, label: Resources }, { field: resource_id, label: Record code }, { field: detail, label: Detail }, { field: created_at, label: Time }]
 actions: []

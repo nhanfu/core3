@@ -1,38 +1,19 @@
-en:
-  "Chi tiết bảng lương": "Salary details"
-  "Nhân sự": "Human resources"
-  "Bảng lương": "Payroll"
-  "Chi tiết": "Detail"
-  "Mã nhân viên": "Employee code"
-  "Phòng ban": "Departments"
-  "Tháng lương": "Monthly salary"
-  "Lương cơ bản": "Basic salary"
-  "Phụ cấp": "Allowances"
-  "Khấu trừ": "Deduction"
-  "Thực lãnh": "Truly cool"
-  "Lịch sử bảng lương": "Payroll history"
-  "Chưa có hoạt động bảng lương": "There is no payroll activity yet"
-  "Danh sách bảng lương": "List of payroll"
-  "Sửa bảng lương": "Edit payroll"
-  "Cập nhật bảng lương": "Update payroll"
-  "Số bảng lương": "Payroll number"
-  "Nhân viên": "Staff"
 vi:
-  "Chi tiết bảng lương": "Chi tiết bảng lương"
-  "Nhân sự": "Nhân sự"
-  "Bảng lương": "Bảng lương"
-  "Chi tiết": "Chi tiết"
-  "Mã nhân viên": "Mã nhân viên"
-  "Phòng ban": "Phòng ban"
-  "Tháng lương": "Tháng lương"
-  "Lương cơ bản": "Lương cơ bản"
-  "Phụ cấp": "Phụ cấp"
-  "Khấu trừ": "Khấu trừ"
-  "Thực lãnh": "Thực lãnh"
-  "Lịch sử bảng lương": "Lịch sử bảng lương"
-  "Chưa có hoạt động bảng lương": "Chưa có hoạt động bảng lương"
-  "Danh sách bảng lương": "Danh sách bảng lương"
-  "Sửa bảng lương": "Sửa bảng lương"
-  "Cập nhật bảng lương": "Cập nhật bảng lương"
-  "Số bảng lương": "Số bảng lương"
-  "Nhân viên": "Nhân viên"
+  Salary details: Chi tiết bảng lương
+  Human resources: Nhân sự
+  Payroll: Bảng lương
+  Detail: Chi tiết
+  Employee code: Mã nhân viên
+  Departments: Phòng ban
+  Monthly salary: Tháng lương
+  Basic salary: Lương cơ bản
+  Allowances: Phụ cấp
+  Deduction: Khấu trừ
+  Truly cool: Thực lãnh
+  Payroll history: Lịch sử bảng lương
+  There is no payroll activity yet: Chưa có hoạt động bảng lương
+  List of payroll: Danh sách bảng lương
+  Edit payroll: Sửa bảng lương
+  Update payroll: Cập nhật bảng lương
+  Payroll number: Số bảng lương
+  Staff: Nhân viên

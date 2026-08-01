@@ -1,8 +1,8 @@
-title: Đơn hàng
+title: Orders
 
 page:
   id: orders
-  breadcrumb: [Quản lý, Đơn hàng]
+  breadcrumb: [Management, Orders]
   auth:
     require: [orders.read]
 
@@ -48,7 +48,7 @@ datasources:
 
 toolbar:
   - id: add_order_btn
-    label: '+ Thêm đơn hàng'
+    label: '+ Add order'
     variant: primary
     permission: orders.write
     action: add_order
@@ -58,31 +58,31 @@ components:
     source: orders
     filter_field: q
     search:
-      label: Tìm kiếm đơn hàng
-      placeholder: 'Tìm mã đơn, khách hàng, tên hàng...'
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [today, week, month, quarter, year, all] }
+      label: Search orders
+      placeholder: 'Search order number, customer, item name...'
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'To date', presets: [today, week, month, quarter, year, all] }
     filters:
       - field: shipment_type
-        label: Loại hình
-        placeholder: Tất cả loại hình
+        label: Shipment type
+        placeholder: All shipment types
         options_source: order_shipment_type_lookup
       - field: transport_method
-        label: Hình thức
-        placeholder: Tất cả hình thức
-        options: [Đường bộ, Đường biển, Đường sắt, Hàng không]
+        label: Transport method
+        placeholder: All transport methods
+        options: [Road, Sea, Rail, Air]
     actions:
-      - { id: orders.export, label: '', title: 'Xuất CSV', icon: download }
+      - { id: orders.export, label: '', title: 'Export CSV', icon: download }
     help: true
   - type: StatusTabs
     source: orders
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Draft, label: Nháp }
-      - { id: Pending Approval, label: Đang duyệt }
-      - { id: Approved, label: Đã duyệt }
-      - { id: Cancelled, label: Đã hủy }
+      - { id: '', label: All }
+      - { id: Draft, label: Draft }
+      - { id: Pending Approval, label: Pending approval }
+      - { id: Approved, label: Approved }
+      - { id: Cancelled, label: Cancelled }
   - type: DataGrid
     source: orders
     page_size: 50
@@ -92,76 +92,76 @@ components:
     row_key: id
     selectable: true
     empty_state:
-      title: Không có đơn hàng
-      description: Thử thay đổi bộ lọc hoặc tạo đơn hàng mới.
+      title: No orders
+      description: Try changing the filters or create a new order.
     columns:
-      - { field: order_number, label: Mã HT, type: PrimaryEntityCell, sortable: true }
-      - { field: customer_name, label: Khách hàng }
-      - { field: order_date, label: Ngày đơn, sortable: true }
+      - { field: order_number, label: Order number, type: PrimaryEntityCell, sortable: true }
+      - { field: customer_name, label: Customer }
+      - { field: order_date, label: Order date, sortable: true }
       - field: status_label
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors:
           Nháp: neutral
           Đang duyệt: amber
           Đã duyệt: green
           Đã hủy: red
-      - { field: shipment_type, label: Loại hình }
-      - { field: route, label: Tuyến }
-      - { field: transport_method, label: Hình thức }
-      - { field: trip_count, label: Số chuyến, align: right }
-      - { field: total_amount_display, label: Tổng tiền, align: right }
-      - { field: created_by, label: Người tạo }
-      - { field: created_at, label: Ngày giờ tạo }
+      - { field: shipment_type, label: Shipment type }
+      - { field: route, label: Route }
+      - { field: transport_method, label: Transport method }
+      - { field: trip_count, label: Trip count, align: right }
+      - { field: total_amount_display, label: Total amount, align: right }
+      - { field: created_by, label: Created by }
+      - { field: created_at, label: Created at }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_order, label: Chi tiết, variant: secondary, permission: orders.read }
-          - { id: edit_order, label: Sửa, variant: ghost, permission: orders.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_order, label: Trình duyệt, variant: primary, permission: orders.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_order, label: Duyệt, variant: primary, permission: orders.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_order, label: Từ chối, variant: ghost, permission: orders.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: cancel_order, label: Hủy, variant: danger, permission: orders.write, show_if: "row.status !== 'Cancelled'" }
-          - { id: delete_order, label: Xóa, variant: danger, permission: orders.write, show_if: "row.status === 'Draft'" }
+          - { id: view_order, label: Details, variant: secondary, permission: orders.read }
+          - { id: edit_order, label: Edit, variant: ghost, permission: orders.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_order, label: Submit for approval, variant: primary, permission: orders.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_order, label: Approve, variant: primary, permission: orders.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_order, label: Reject, variant: ghost, permission: orders.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: cancel_order, label: Cancel, variant: danger, permission: orders.write, show_if: "row.status !== 'Cancelled'" }
+          - { id: delete_order, label: Delete, variant: danger, permission: orders.write, show_if: "row.status === 'Draft'" }
 
 actions:
   - id: add_order
     type: form
     permission: orders.write
-    title: Thêm đơn hàng
+    title: Add order
     table: orders
     operation: insert
     refresh: [orders]
     fields:
-      - { field: order_number, label: Mã đơn, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Tìm khách hàng...', required: true }
-      - { field: customer_legal_name, label: Tên pháp lý, type: text }
-      - { field: order_date, label: Ngày đơn, type: date, required: true }
-      - { field: shipment_type, label: Loại hình, type: select, options_source: order_shipment_type_lookup }
-      - { field: route, label: Tuyến, type: text }
-      - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không], default: Đường bộ }
-      - { field: trip_count, label: Số chuyến, type: number, default: 0 }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air], default: Road }
+      - { field: trip_count, label: Trip count, type: number, default: 0 }
+      - { field: notes, label: Notes, type: textarea }
   - id: edit_order
     type: form
     permission: orders.write
-    title: Cập nhật đơn hàng
+    title: Update order
     table: orders
     operation: update
     prefill: row
     refresh: [orders]
     fields:
-      - { field: order_number, label: Mã đơn, type: text, required: true }
-      - { field: customer_name, label: Khách hàng, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Tìm khách hàng...', required: true }
-      - { field: customer_legal_name, label: Tên pháp lý, type: text }
-      - { field: order_date, label: Ngày đơn, type: date, required: true }
-      - { field: shipment_type, label: Loại hình, type: select, options_source: order_shipment_type_lookup }
-      - { field: route, label: Tuyến, type: text }
-      - { field: transport_method, label: Hình thức, type: select, options: [Đường bộ, Đường biển, Đường sắt, Hàng không] }
-      - { field: trip_count, label: Số chuyến, type: number }
-      - { field: notes, label: Ghi chú, type: textarea }
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air] }
+      - { field: trip_count, label: Trip count, type: number }
+      - { field: notes, label: Notes, type: textarea }
   - id: view_order
     type: navigate
     permission: orders.read
@@ -171,29 +171,29 @@ actions:
     type: server
     permission: orders.write
     action: orders.submit_for_approval
-    confirm: 'Trình duyệt đơn hàng {{row.order_number}}?'
+    confirm: 'Submit order {{row.order_number}}?'
     refresh: [orders]
   - id: approve_order
     type: server
     permission: orders.approve
     action: orders.approve
-    confirm: 'Duyệt đơn hàng {{row.order_number}}?'
+    confirm: 'Approve order {{row.order_number}}?'
     refresh: [orders]
   - id: reject_order
     type: server
     permission: orders.approve
     action: orders.reject
-    confirm: 'Từ chối và trả đơn hàng {{row.order_number}} về trạng thái nháp?'
+    confirm: 'Reject and return order {{row.order_number}} to draft?'
     refresh: [orders]
   - id: cancel_order
     type: server
     permission: orders.write
     action: orders.cancel
-    confirm: 'Hủy đơn hàng {{row.order_number}}?'
+    confirm: 'Cancel order {{row.order_number}}?'
     refresh: [orders]
   - id: delete_order
     type: delete
     permission: orders.write
-    confirm: 'Xóa đơn hàng {{row.order_number}}?'
+    confirm: 'Delete order {{row.order_number}}?'
     table: orders
     refresh: [orders]

@@ -1,4 +1,4 @@
-title: Tổng quan
+title: Overview
 
 page:
   id: dashboard
@@ -116,78 +116,78 @@ datasources:
 
 components:
   - type: PageIntro
-    greeting: Xin chào
-    title: Tổng quan
+    greeting: Hello
+    title: Overview
     greeting_side: right
     compact: true
-    action_label: Mẹo
+    action_label: Tips
   - type: ListToolbar
     source: dashboard_dispatch_queue
     filter_field: q
     search: false
     filter_sources: [dashboard_kpis, dashboard_trip_status, dashboard_dispatch_queue, dashboard_routes, dashboard_customers]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'Từ ngày', to_label: 'Đến ngày', presets: [month, previous_month, quarter, year, last_12_months], preset_style: segmented, default_preset: month }
-    actions: [{ id: dashboard_dispatch_queue.export, label: 'Xuất CSV', icon: download }]
+    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [month, previous_month, quarter, year, last_12_months], preset_style: segmented, default_preset: month }
+    actions: [{ id: dashboard_dispatch_queue.export, label: 'Export CSV', icon: download }]
     actions_inline: true
   - type: StatRow
     source: dashboard_kpis
-    title: Việc cần làm
+    title: Things to do
     stats:
-      - { label: Đơn nháp, field: draft_orders, color: indigo, navigate_to: '/orders?status=Draft' }
-      - { label: Đơn chờ duyệt, field: pending_orders, color: amber, navigate_to: '/orders?status=Pending%20Approval' }
-      - { label: Chuyến chưa điều xe, field: unassigned_trips, color: red, navigate_to: /orders }
-      - { label: Chuyến đang chạy, field: in_transit, color: blue, navigate_to: /orders }
-      - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red, navigate_to: /accounting/debit-notes }
-      - { label: Đề nghị chi chờ duyệt, field: expense_approvals, color: amber, navigate_to: '/accounting/payment-requests?status=Pending%20Approval' }
-      - { label: HĐ sắp hết hạn, field: expiring_contracts, color: amber, navigate_to: '/hr/contracts?status=Expiring' }
+      - { label: Draft application, field: draft_orders, color: indigo, navigate_to: '/orders?status=Draft' }
+      - { label: Application awaiting approval, field: pending_orders, color: amber, navigate_to: '/orders?status=Pending%20Approval' }
+      - { label: The trip has not yet been dispatched, field: unassigned_trips, color: red, navigate_to: /orders }
+      - { label: The trip is running, field: in_transit, color: blue, navigate_to: /orders }
+      - { label: Overdue debt notice, field: overdue_debit_notes, color: red, navigate_to: /accounting/debit-notes }
+      - { label: Please wait for approval, field: expense_approvals, color: amber, navigate_to: '/accounting/payment-requests?status=Pending%20Approval' }
+      - { label: The contract is about to expire, field: expiring_contracts, color: amber, navigate_to: '/hr/contracts?status=Expiring' }
 
   - type: StatRow
     source: dashboard_kpis
-    title: Vận hành
+    title: Operate
     stats:
-      - { label: Tổng chuyến, field: total_trips, color: blue }
-      - { label: Hoàn thành, field: completed_trips, color: green }
-      - { label: Tỷ lệ hoàn thành, field: completion_rate, format: percent, color: green }
-      - { label: TB thời gian chạy (giờ), field: average_trip_hours, format: number, color: indigo }
-      - { label: Tỷ lệ chưa điều xe, field: unassigned_rate, format: percent, color: amber }
-      - { label: Hủy, field: cancelled_trips, color: red }
+      - { label: Total trip, field: total_trips, color: blue }
+      - { label: Complete, field: completed_trips, color: green }
+      - { label: Completion rate, field: completion_rate, format: percent, color: green }
+      - { label: Average running time (hours), field: average_trip_hours, format: number, color: indigo }
+      - { label: Percentage of vehicles not yet dispatched, field: unassigned_rate, format: percent, color: amber }
+      - { label: Cancel, field: cancelled_trips, color: red }
 
   - type: StatRow
     source: dashboard_kpis
-    title: Doanh thu · Chi phí
+    title: Revenue · Expenses
     stats:
-      - { label: Doanh thu, field: revenue_total, format: currency, currency: VND, color: blue }
-      - { label: Chi phí, field: cost_total, format: currency, currency: VND, color: amber }
-      - { label: Lợi nhuận, field: profit_total, format: currency, currency: VND, color: green }
-      - { label: Biên lãi, field: profit_margin, format: percent, color: green }
-      - { label: Số đơn hàng, field: order_count, color: indigo }
-      - { label: Khách hàng mới, field: new_customer_count, color: blue }
+      - { label: Revenue, field: revenue_total, format: currency, currency: VND, color: blue }
+      - { label: Expense, field: cost_total, format: currency, currency: VND, color: amber }
+      - { label: Profit, field: profit_total, format: currency, currency: VND, color: green }
+      - { label: Profit margin, field: profit_margin, format: percent, color: green }
+      - { label: Order number, field: order_count, color: indigo }
+      - { label: New customer, field: new_customer_count, color: blue }
 
   - type: StatRow
     source: dashboard_kpis
-    title: Công nợ · Dòng tiền
+    title: Debt · Cash flow
     stats:
-      - { label: Công nợ phải thu, field: receivables_outstanding, format: currency, currency: VND, color: blue }
-      - { label: Công nợ phải trả, field: payables_outstanding, format: currency, currency: VND, color: red }
-      - { label: Tạm ứng còn lại, field: advances_outstanding, format: currency, currency: VND, color: amber }
-      - { label: Giấy báo nợ quá hạn, field: overdue_debit_notes, color: red }
-      - { label: Chi phí chờ duyệt, field: expense_approvals, color: amber }
-      - { label: Tổng km, field: total_distance_km, format: number, color: indigo }
+      - { label: Debt receivable, field: receivables_outstanding, format: currency, currency: VND, color: blue }
+      - { label: Debts payable, field: payables_outstanding, format: currency, currency: VND, color: red }
+      - { label: Remaining advance, field: advances_outstanding, format: currency, currency: VND, color: amber }
+      - { label: Overdue debt notice, field: overdue_debit_notes, color: red }
+      - { label: Expenses awaiting approval, field: expense_approvals, color: amber }
+      - { label: Total km, field: total_distance_km, format: number, color: indigo }
 
   - type: StatRow
     source: dashboard_kpis
-    title: Nhân sự
+    title: Human resources
     stats:
-      - { label: Nhân sự hoạt động, field: active_employees, color: blue }
-      - { label: Hợp đồng sắp hết hạn, field: expiring_contracts, color: amber }
-      - { label: Tài xế hoạt động, field: active_drivers, color: blue }
-      - { label: Container sẵn sàng, field: available_containers, color: blue }
-      - { label: Tổng bảng lương, field: payroll_total, format: currency, currency: VND, color: blue }
-      - { label: Chuyến hoàn thành, field: completed_trips, color: green }
+      - { label: Operational personnel, field: active_employees, color: blue }
+      - { label: The contract is about to expire, field: expiring_contracts, color: amber }
+      - { label: Driver works, field: active_drivers, color: blue }
+      - { label: Containers ready, field: available_containers, color: blue }
+      - { label: Total payroll, field: payroll_total, format: currency, currency: VND, color: blue }
+      - { label: Trip completed, field: completed_trips, color: green }
 
   - type: Chart
     source: dashboard_financial_monthly
-    title: Doanh thu · Chi phí · Lợi nhuận theo tháng
+    title: Revenue · Cost · Profit by month
     label_field: month
     value_field: revenue
     variant: line
@@ -195,12 +195,12 @@ components:
     width: 640
     height: 260
     series:
-      - { field: revenue, label: Doanh thu, color: blue }
-      - { field: cost, label: Chi phí, color: amber }
-      - { field: profit, label: Lợi nhuận, color: green }
+      - { field: revenue, label: Revenue, color: blue }
+      - { field: cost, label: Expense, color: amber }
+      - { field: profit, label: Profit, color: green }
   - type: Chart
     source: dashboard_trip_status
-    title: Tổng quan trạng thái chuyến
+    title: Overview of trip status
     label_field: status
     value_field: trip_count
     variant: pie
@@ -215,34 +215,34 @@ components:
     columns:
       - type: TextCell
         field: trip_number
-        label: Mã chuyến
+        label: Trip code
       - type: TextCell
         field: origin
-        label: Tuyến đường
+        label: Route
         secondary: destination
       - type: TextCell
         field: truck_plate
-        label: Phương tiện
+        label: Vehicle
         secondary: driver_name
       - type: BadgeCell
         field: status
-        label: Trạng thái
+        label: Status
         colors:
           Đã lên lịch: amber
           Đang vận chuyển: blue
       - type: DateCell
         field: departure_time
-        label: Khởi hành
+        label: Depart
         format: short
   - type: DataGrid
     source: dashboard_routes
     page_size: 10
     row_key: route
-    empty_state: { title: Chưa có dữ liệu tuyến đường }
-    columns: [{ field: route, label: Tuyến đường, sortable: true }, { field: trip_count, label: Số chuyến, align: right, sortable: true }, { field: total_distance_km, label: Tổng km, align: right, sortable: true }]
+    empty_state: { title: No route data yet }
+    columns: [{ field: route, label: Route, sortable: true }, { field: trip_count, label: Number of trips, align: right, sortable: true }, { field: total_distance_km, label: Total km, align: right, sortable: true }]
   - type: DataGrid
     source: dashboard_customers
     page_size: 10
     row_key: customer_name
-    empty_state: { title: Chưa có dữ liệu khách hàng }
-    columns: [{ field: customer_name, label: Khách hàng, sortable: true }, { field: order_count, label: Số đơn, align: right, sortable: true }, { field: total_amount, label: Giá trị đơn, align: right, sortable: true }]
+    empty_state: { title: No customer data yet }
+    columns: [{ field: customer_name, label: Client, sortable: true }, { field: order_count, label: Application number, align: right, sortable: true }, { field: total_amount, label: Single value, align: right, sortable: true }]

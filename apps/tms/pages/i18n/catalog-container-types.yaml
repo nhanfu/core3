@@ -1,52 +1,26 @@
-en:
-  "Loại container": "Container type"
-  "Danh mục": "Category"
-  "+ Thêm loại container": "+ Add container type"
-  "Tìm kiếm loại container": "Search for container type"
-  "Tìm mã, tên hoặc mô tả...": "Find code, name or description..."
-  "Xuất Excel": "Export Excel"
-  "Nhập Excel": "Enter Excel"
-  "Tất cả": "All"
-  "Đang sử dụng": "In use"
-  "Ngưng sử dụng": "Discontinue use"
-  "Không có loại container": "There is no container type"
-  "Tạo loại container đầu tiên để sử dụng trong điều hành.": "Create your first container type for operational use."
-  "Mã": "Code"
-  "Tên loại container": "Container type name"
-  "Thứ tự": "Order"
-  "Trạng thái": "Status"
-  "Ngày tạo": "Creation date"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm loại container": "Add container type"
-  "Mô tả": "Describe"
-  "Đang dùng": "Using"
-  "Ngưng dùng": "Stop using"
-  "Cập nhật loại container": "Update container type"
-  "Xóa loại container {{row.name}}?": "Delete container type {{row.name}}?"
 vi:
-  "Loại container": "Loại container"
-  "Danh mục": "Danh mục"
-  "+ Thêm loại container": "+ Thêm loại container"
-  "Tìm kiếm loại container": "Tìm kiếm loại container"
-  "Tìm mã, tên hoặc mô tả...": "Tìm mã, tên hoặc mô tả..."
-  "Xuất Excel": "Xuất Excel"
-  "Nhập Excel": "Nhập Excel"
-  "Tất cả": "Tất cả"
-  "Đang sử dụng": "Đang sử dụng"
-  "Ngưng sử dụng": "Ngưng sử dụng"
-  "Không có loại container": "Không có loại container"
-  "Tạo loại container đầu tiên để sử dụng trong điều hành.": "Tạo loại container đầu tiên để sử dụng trong điều hành."
-  "Mã": "Mã"
-  "Tên loại container": "Tên loại container"
-  "Thứ tự": "Thứ tự"
-  "Trạng thái": "Trạng thái"
-  "Ngày tạo": "Ngày tạo"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm loại container": "Thêm loại container"
-  "Mô tả": "Mô tả"
-  "Đang dùng": "Đang dùng"
-  "Ngưng dùng": "Ngưng dùng"
-  "Cập nhật loại container": "Cập nhật loại container"
-  "Xóa loại container {{row.name}}?": "Xóa loại container {{row.name}}?"
+  Container type: Loại container
+  Category: Danh mục
+  + Add container type: + Thêm loại container
+  Search for container type: Tìm kiếm loại container
+  "Find code, name or description...": "Tìm mã, tên hoặc mô tả..."
+  Export Excel: Xuất Excel
+  Enter Excel: Nhập Excel
+  All: Tất cả
+  In use: Đang sử dụng
+  Discontinue use: Ngưng sử dụng
+  There is no container type: Không có loại container
+  Create your first container type for operational use.: Tạo loại container đầu tiên để sử dụng trong điều hành.
+  Code: Mã
+  Container type name: Tên loại container
+  Order: Thứ tự
+  Status: Trạng thái
+  Creation date: Ngày tạo
+  Fix: Sửa
+  Erase: Xóa
+  Add container type: Thêm loại container
+  Describe: Mô tả
+  Using: Đang dùng
+  Stop using: Ngưng dùng
+  Update container type: Cập nhật loại container
+  "Delete container type {{row.name}}?": "Xóa loại container {{row.name}}?"

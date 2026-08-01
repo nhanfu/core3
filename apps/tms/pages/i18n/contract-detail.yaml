@@ -1,68 +1,34 @@
-en:
-  "Chi tiết hợp đồng": "Contract details"
-  "Nhân sự": "Human resources"
-  "Hợp đồng": "Contract"
-  "Chi tiết": "Detail"
-  "Mã nhân viên": "Employee code"
-  "Chức danh": "Title"
-  "Phòng ban": "Departments"
-  "Loại hợp đồng": "Contract type"
-  "Hiệu lực từ": "Magnetic effect"
-  "Hiệu lực đến": "Effect arrives"
-  "Lương cơ bản": "Basic salary"
-  "Lịch sử hợp đồng": "Contract history"
-  "Chưa có hoạt động hợp đồng": "No contract activities yet"
-  "Chưa có tài liệu hợp đồng": "No contract documents yet"
-  "Tên tệp": "File name"
-  "Loại": "Type"
-  "Dung lượng": "Capacity"
-  "Ngày tải lên": "Upload date"
-  "Tải xuống": "Download"
-  "Danh sách hợp đồng": "List of contracts"
-  "Sửa hợp đồng": "Modify the contract"
-  "+ Tải tài liệu": "+ Download documents"
-  "Cập nhật hợp đồng": "Update contract"
-  "Mã hợp đồng": "Contract code"
-  "Nhân viên": "Staff"
-  "Thử việc": "Try job"
-  "Xác định thời hạn": "Determine the deadline"
-  "Không xác định thời hạn": "No deadline specified"
-  "Trạng thái": "Status"
-  "Hiệu lực": "Effect"
-  "Sắp hết hạn": "About to expire"
-  "Hết hạn": "Expired"
-  "Đã chấm dứt": "Terminated"
 vi:
-  "Chi tiết hợp đồng": "Chi tiết hợp đồng"
-  "Nhân sự": "Nhân sự"
-  "Hợp đồng": "Hợp đồng"
-  "Chi tiết": "Chi tiết"
-  "Mã nhân viên": "Mã nhân viên"
-  "Chức danh": "Chức danh"
-  "Phòng ban": "Phòng ban"
-  "Loại hợp đồng": "Loại hợp đồng"
-  "Hiệu lực từ": "Hiệu lực từ"
-  "Hiệu lực đến": "Hiệu lực đến"
-  "Lương cơ bản": "Lương cơ bản"
-  "Lịch sử hợp đồng": "Lịch sử hợp đồng"
-  "Chưa có hoạt động hợp đồng": "Chưa có hoạt động hợp đồng"
-  "Chưa có tài liệu hợp đồng": "Chưa có tài liệu hợp đồng"
-  "Tên tệp": "Tên tệp"
-  "Loại": "Loại"
-  "Dung lượng": "Dung lượng"
-  "Ngày tải lên": "Ngày tải lên"
-  "Tải xuống": "Tải xuống"
-  "Danh sách hợp đồng": "Danh sách hợp đồng"
-  "Sửa hợp đồng": "Sửa hợp đồng"
-  "+ Tải tài liệu": "+ Tải tài liệu"
-  "Cập nhật hợp đồng": "Cập nhật hợp đồng"
-  "Mã hợp đồng": "Mã hợp đồng"
-  "Nhân viên": "Nhân viên"
-  "Thử việc": "Thử việc"
-  "Xác định thời hạn": "Xác định thời hạn"
-  "Không xác định thời hạn": "Không xác định thời hạn"
-  "Trạng thái": "Trạng thái"
-  "Hiệu lực": "Hiệu lực"
-  "Sắp hết hạn": "Sắp hết hạn"
-  "Hết hạn": "Hết hạn"
-  "Đã chấm dứt": "Đã chấm dứt"
+  Contract details: Chi tiết hợp đồng
+  Human resources: Nhân sự
+  Contract: Hợp đồng
+  Detail: Chi tiết
+  Employee code: Mã nhân viên
+  Title: Chức danh
+  Departments: Phòng ban
+  Contract type: Loại hợp đồng
+  Magnetic effect: Hiệu lực từ
+  Effect arrives: Hiệu lực đến
+  Basic salary: Lương cơ bản
+  Contract history: Lịch sử hợp đồng
+  No contract activities yet: Chưa có hoạt động hợp đồng
+  No contract documents yet: Chưa có tài liệu hợp đồng
+  File name: Tên tệp
+  Type: Loại
+  Capacity: Dung lượng
+  Upload date: Ngày tải lên
+  Download: Tải xuống
+  List of contracts: Danh sách hợp đồng
+  Modify the contract: Sửa hợp đồng
+  + Download documents: + Tải tài liệu
+  Update contract: Cập nhật hợp đồng
+  Contract code: Mã hợp đồng
+  Staff: Nhân viên
+  Try job: Thử việc
+  Determine the deadline: Xác định thời hạn
+  No deadline specified: Không xác định thời hạn
+  Status: Trạng thái
+  Effect: Hiệu lực
+  About to expire: Sắp hết hạn
+  Expired: Hết hạn
+  Terminated: Đã chấm dứt

@@ -1,50 +1,25 @@
-en:
-  "Công ty chủ quản": "Managing company"
-  "Tổ chức & phân quyền": "Organization & decentralization"
-  "Chưa có thông tin công ty": "No company information yet"
-  "Liên hệ quản trị hệ thống để khởi tạo.": "Contact system administrator for initialization."
-  "Tên công ty": "Company name"
-  "Mã số thuế": "Tax code"
-  "Địa chỉ": "Address"
-  "Điện thoại": "Phone"
-  "Ngân hàng": "Bank"
-  "Cập nhật": "Update"
-  "Chưa có tài liệu công ty": "No company documents yet"
-  "Tên tệp": "File name"
-  "Loại": "Type"
-  "Dung lượng": "Capacity"
-  "Ngày tải lên": "Upload date"
-  "Tải xuống": "Download"
-  "+ Tải tài liệu": "+ Download documents"
-  "Thông tin công ty chủ quản": "Information of the managing company"
-  "Tên viết tắt": "Abbreviated name"
-  "Địa chỉ xuất hóa đơn": "Invoice address"
-  "Email": "E-mail"
-  "Website": "Website"
-  "Số tài khoản": "Account number"
-  "Ghi chú": "Note"
 vi:
-  "Công ty chủ quản": "Công ty chủ quản"
-  "Tổ chức & phân quyền": "Tổ chức & phân quyền"
-  "Chưa có thông tin công ty": "Chưa có thông tin công ty"
-  "Liên hệ quản trị hệ thống để khởi tạo.": "Liên hệ quản trị hệ thống để khởi tạo."
-  "Tên công ty": "Tên công ty"
-  "Mã số thuế": "Mã số thuế"
-  "Địa chỉ": "Địa chỉ"
-  "Điện thoại": "Điện thoại"
-  "Ngân hàng": "Ngân hàng"
-  "Cập nhật": "Cập nhật"
-  "Chưa có tài liệu công ty": "Chưa có tài liệu công ty"
-  "Tên tệp": "Tên tệp"
-  "Loại": "Loại"
-  "Dung lượng": "Dung lượng"
-  "Ngày tải lên": "Ngày tải lên"
-  "Tải xuống": "Tải xuống"
-  "+ Tải tài liệu": "+ Tải tài liệu"
-  "Thông tin công ty chủ quản": "Thông tin công ty chủ quản"
-  "Tên viết tắt": "Tên viết tắt"
-  "Địa chỉ xuất hóa đơn": "Địa chỉ xuất hóa đơn"
-  "Email": "Email"
-  "Website": "Website"
-  "Số tài khoản": "Số tài khoản"
-  "Ghi chú": "Ghi chú"
+  Managing company: Công ty chủ quản
+  Organization & decentralization: Tổ chức & phân quyền
+  No company information yet: Chưa có thông tin công ty
+  Contact system administrator for initialization.: Liên hệ quản trị hệ thống để khởi tạo.
+  Company name: Tên công ty
+  Tax code: Mã số thuế
+  Address: Địa chỉ
+  Phone: Điện thoại
+  Bank: Ngân hàng
+  Update: Cập nhật
+  No company documents yet: Chưa có tài liệu công ty
+  File name: Tên tệp
+  Type: Loại
+  Capacity: Dung lượng
+  Upload date: Ngày tải lên
+  Download: Tải xuống
+  + Download documents: + Tải tài liệu
+  Information of the managing company: Thông tin công ty chủ quản
+  Abbreviated name: Tên viết tắt
+  Invoice address: Địa chỉ xuất hóa đơn
+  E-mail: Email
+  Website: Website
+  Account number: Số tài khoản
+  Note: Ghi chú

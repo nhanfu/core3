@@ -1,5 +1,5 @@
-title: Tin nhắn
-page: { id: chat, breadcrumb: [Điều hành, Tin nhắn], auth: { require: [chat.read] } }
+title: Message
+page: { id: chat, breadcrumb: [Executive, Message], auth: { require: [chat.read] } }
 
 datasources:
   - id: chat_threads
@@ -62,7 +62,7 @@ datasources:
       ORDER BY a.created_at
 
 toolbar:
-  - { id: new_thread_btn, label: '+ Cuộc trò chuyện', variant: primary, permission: chat.write, action: create_thread }
+  - { id: new_thread_btn, label: '+ Conversations', variant: primary, permission: chat.write, action: create_thread }
 
 components:
   - type: ChatWorkspace
@@ -76,7 +76,7 @@ components:
     download_action: download_attachment
     mark_read_action: mark_thread_read
     refresh_interval_ms: 5000
-    search_placeholder: Tìm cuộc trò chuyện...
+    search_placeholder: Find conversations...
     empty_threads: Chưa có cuộc trò chuyện
     empty_messages: Chọn một cuộc trò chuyện để bắt đầu
 
@@ -84,12 +84,12 @@ actions:
   - id: create_thread
     type: server_form
     permission: chat.write
-    title: Tạo cuộc trò chuyện
+    title: Create a conversation
     action: chat.threads.create
     refresh: [chat_threads, chat_messages]
     fields:
-      - { field: title, label: Tên cuộc trò chuyện, type: text, required: true }
-      - { field: participant_emails, label: Email người tham gia (phân cách bằng dấu phẩy), type: text, required: true }
+      - { field: title, label: Name of the conversation, type: text, required: true }
+      - { field: participant_emails, label: Participant email (separated by commas), type: text, required: true }
   - id: send_message
     type: server
     permission: chat.write

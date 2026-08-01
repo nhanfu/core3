@@ -1,82 +1,41 @@
-en:
-  "Đối tượng": "Object"
-  "Phạm vi xem": "View range"
-  "Kinh doanh": "Business"
-  "+ Thêm đối tượng": "+ Add objects"
-  "Tìm kiếm đối tượng": "Search for objects"
-  "Tìm mã, tên, MST, SĐT...": "Find code, name, code, phone number..."
-  "Xuất CSV": "Export CSV"
-  "Tất cả": "All"
-  "Nhà xe": "Garage"
-  "Nhà cung cấp": "Supplier"
-  "Hãng tàu": "Shipping company"
-  "Không có đối tượng": "No object"
-  "Thử thay đổi bộ lọc hoặc tạo đối tượng mới.": "Try changing your filters or creating a new audience."
-  "Mã HT": "HT code"
-  "Mã / tên": "Code/name"
-  "Mã số thuế": "Tax code"
-  "Loại": "Type"
-  "Sale phụ trách": "Sales is in charge"
-  "Liên hệ chính": "Main contact"
-  "Chi tiết": "Detail"
-  "Sửa": "Fix"
-  "Xóa": "Erase"
-  "Thêm đối tượng": "Add objects"
-  "Mã đối tượng": "Object code"
-  "Tên đối tượng": "Object name"
-  "Số điện thoại": "Phone number"
-  "Email": "E-mail"
-  "Loại đối tượng": "Object type"
-  "Nhà vận chuyển": "Carrier"
-  "Kho": "Warehouse"
-  "Depot": "Depot"
-  "Khác": "Other"
-  "Hiển thị": "Show"
-  "Công khai": "Public"
-  "Riêng": "Private"
-  "Trạng thái": "Status"
-  "Hoạt động": "Work"
-  "Ngưng hoạt động": "Shut down"
-  "Cập nhật đối tượng": "Update object"
-  "Xóa đối tượng {{row.name}}?": "Delete object {{row.name}}?"
 vi:
-  "Đối tượng": "Đối tượng"
-  "Phạm vi xem": "Phạm vi xem"
-  "Kinh doanh": "Kinh doanh"
-  "+ Thêm đối tượng": "+ Thêm đối tượng"
-  "Tìm kiếm đối tượng": "Tìm kiếm đối tượng"
-  "Tìm mã, tên, MST, SĐT...": "Tìm mã, tên, MST, SĐT..."
-  "Xuất CSV": "Xuất CSV"
-  "Tất cả": "Tất cả"
-  "Nhà xe": "Nhà xe"
-  "Nhà cung cấp": "Nhà cung cấp"
-  "Hãng tàu": "Hãng tàu"
-  "Không có đối tượng": "Không có đối tượng"
-  "Thử thay đổi bộ lọc hoặc tạo đối tượng mới.": "Thử thay đổi bộ lọc hoặc tạo đối tượng mới."
-  "Mã HT": "Mã HT"
-  "Mã / tên": "Mã / tên"
-  "Mã số thuế": "Mã số thuế"
-  "Loại": "Loại"
-  "Sale phụ trách": "Sale phụ trách"
-  "Liên hệ chính": "Liên hệ chính"
-  "Chi tiết": "Chi tiết"
-  "Sửa": "Sửa"
-  "Xóa": "Xóa"
-  "Thêm đối tượng": "Thêm đối tượng"
-  "Mã đối tượng": "Mã đối tượng"
-  "Tên đối tượng": "Tên đối tượng"
-  "Số điện thoại": "Số điện thoại"
-  "Email": "Email"
-  "Loại đối tượng": "Loại đối tượng"
-  "Nhà vận chuyển": "Nhà vận chuyển"
-  "Kho": "Kho"
-  "Depot": "Depot"
-  "Khác": "Khác"
-  "Hiển thị": "Hiển thị"
-  "Công khai": "Công khai"
-  "Riêng": "Riêng"
-  "Trạng thái": "Trạng thái"
-  "Hoạt động": "Hoạt động"
-  "Ngưng hoạt động": "Ngưng hoạt động"
-  "Cập nhật đối tượng": "Cập nhật đối tượng"
-  "Xóa đối tượng {{row.name}}?": "Xóa đối tượng {{row.name}}?"
+  Object: Đối tượng
+  View range: Phạm vi xem
+  Business: Kinh doanh
+  + Add objects: + Thêm đối tượng
+  Search for objects: Tìm kiếm đối tượng
+  "Find code, name, code, phone number...": "Tìm mã, tên, MST, SĐT..."
+  Export CSV: Xuất CSV
+  All: Tất cả
+  Garage: Nhà xe
+  Supplier: Nhà cung cấp
+  Shipping company: Hãng tàu
+  No object: Không có đối tượng
+  Try changing your filters or creating a new audience.: Thử thay đổi bộ lọc hoặc tạo đối tượng mới.
+  HT code: Mã HT
+  Code/name: Mã / tên
+  Tax code: Mã số thuế
+  Type: Loại
+  Sales is in charge: Sale phụ trách
+  Main contact: Liên hệ chính
+  Detail: Chi tiết
+  Fix: Sửa
+  Erase: Xóa
+  Add objects: Thêm đối tượng
+  Object code: Mã đối tượng
+  Object name: Tên đối tượng
+  Phone number: Số điện thoại
+  E-mail: Email
+  Object type: Loại đối tượng
+  Carrier: Nhà vận chuyển
+  Warehouse: Kho
+  Depot: Depot
+  Other: Khác
+  Show: Hiển thị
+  Public: Công khai
+  Private: Riêng
+  Status: Trạng thái
+  Work: Hoạt động
+  Shut down: Ngưng hoạt động
+  Update object: Cập nhật đối tượng
+  "Delete object {{row.name}}?": "Xóa đối tượng {{row.name}}?"

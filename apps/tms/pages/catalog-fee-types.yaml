@@ -1,8 +1,8 @@
-title: Loại phí
+title: Fee type
 
 page:
   id: catalog-fee-types
-  breadcrumb: [Danh mục, Loại phí]
+  breadcrumb: [Category, Fee type]
   auth:
     require: [catalog.read]
 
@@ -19,75 +19,75 @@ datasources:
       ORDER BY sort_order, code
 
 toolbar:
-  - { id: add_fee_type_btn, label: '+ Thêm loại phí', variant: primary, permission: catalog.write, action: add_fee_type }
+  - { id: add_fee_type_btn, label: '+ Add fees', variant: primary, permission: catalog.write, action: add_fee_type }
 
 components:
   - type: ListToolbar
     source: fee_types
     filter_field: q
-    search: { label: Tìm kiếm loại phí, placeholder: 'Tìm mã, tên hoặc mô tả...' }
-    actions: [{ id: fee_types.export, label: 'Xuất CSV', icon: download }, { id: import_fee_types, label: 'Nhập CSV', icon: upload }]
+    search: { label: Search fee type, placeholder: 'Find code, name or description...' }
+    actions: [{ id: fee_types.export, label: 'Export CSV', icon: download }, { id: import_fee_types, label: 'Import CSV', icon: upload }]
   - type: StatusTabs
     source: fee_types
     filter_field: status
     variant: contained
     tabs:
-      - { id: '', label: Tất cả }
-      - { id: Active, label: Đang sử dụng }
-      - { id: Inactive, label: Ngưng sử dụng }
+      - { id: '', label: All }
+      - { id: Active, label: In use }
+      - { id: Inactive, label: Discontinue use }
   - type: DataGrid
     source: fee_types
     column_chooser: true
     page_size: 20
     row_key: id
     selectable: true
-    empty_state: { title: Không có loại phí, description: Tạo loại phí đầu tiên để sử dụng trong báo giá và thanh toán. }
+    empty_state: { title: There are no fees, description: Create your first fee type to use in quotes and payments. }
     columns:
-      - { field: code, label: Mã, sortable: true }
-      - { field: name, label: Loại phí, type: PrimaryEntityCell, secondary: description }
-      - { field: sort_order, label: Thứ tự, align: right }
+      - { field: code, label: Code, sortable: true }
+      - { field: name, label: Fee type, type: PrimaryEntityCell, secondary: description }
+      - { field: sort_order, label: Order, align: right }
       - field: status
-        label: Trạng thái
+        label: Status
         type: StatusChip
         colors: { Active: green, Inactive: red }
-      - { field: created_at, label: Ngày tạo }
+      - { field: created_at, label: Creation date }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_fee_type, label: Sửa, variant: ghost, permission: catalog.write }
-          - { id: delete_fee_type, label: Xóa, variant: danger, permission: catalog.write }
+          - { id: edit_fee_type, label: Fix, variant: ghost, permission: catalog.write }
+          - { id: delete_fee_type, label: Erase, variant: danger, permission: catalog.write }
 
 actions:
   - { id: import_fee_types, type: upload, permission: catalog.write, kind: master_data_import, scope: fee_type, refresh: [fee_types] }
   - id: add_fee_type
     type: form
     permission: catalog.write
-    title: Thêm loại phí
+    title: Add fees
     table: master_data
     scope: fee_type
     operation: insert
     refresh: [fee_types]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: name, label: Loại phí, type: text, required: true }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number, default: 0 }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }], default: Active }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: name, label: Fee type, type: text, required: true }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number, default: 0 }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }
   - id: edit_fee_type
     type: form
     permission: catalog.write
-    title: Cập nhật loại phí
+    title: Update fee types
     table: master_data
     scope: fee_type
     operation: update
     prefill: row
     refresh: [fee_types]
     fields:
-      - { field: code, label: Mã, type: text, required: true }
-      - { field: name, label: Loại phí, type: text, required: true }
-      - { field: description, label: Mô tả, type: textarea }
-      - { field: sort_order, label: Thứ tự, type: number }
-      - { field: status, label: Trạng thái, type: select, options: [{ id: Active, label: Đang dùng }, { id: Inactive, label: Ngưng dùng }] }
-  - { id: delete_fee_type, type: delete, permission: catalog.write, table: master_data, scope: fee_type, confirm: 'Xóa loại phí {{row.name}}?', refresh: [fee_types] }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: name, label: Fee type, type: text, required: true }
+      - { field: description, label: Describe, type: textarea }
+      - { field: sort_order, label: Order, type: number }
+      - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
+  - { id: delete_fee_type, type: delete, permission: catalog.write, table: master_data, scope: fee_type, confirm: 'Delete fee type {{row.name}}?', refresh: [fee_types] }

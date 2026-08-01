@@ -1,5 +1,5 @@
-title: Chi tiết vai trò
-page: { id: role-detail, breadcrumb: [Tổ chức & phân quyền, Vai trò, Chi tiết], auth: { require: [settings.read] } }
+title: Role details
+page: { id: role-detail, breadcrumb: [Organization & decentralization, Role, Detail], auth: { require: [settings.read] } }
 datasources:
   - id: role_detail
     single: true
@@ -32,38 +32,38 @@ datasources:
       WHERE ur.role_id = :id AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
       ORDER BY u.name
 components:
-  - { type: DocumentSummary, source: role_detail, title_field: name, subtitle_field: description, columns: [{ field: id, label: Mã vai trò }, { field: view_scope, label: Phạm vi xem }] }
+  - { type: DocumentSummary, source: role_detail, title_field: name, subtitle_field: description, columns: [{ field: id, label: Role code }, { field: view_scope, label: View range }] }
   - type: DataGrid
     source: role_permissions
     page_size: 50
     column_chooser: true
     row_key: permission_key
-    empty_state: { title: Chưa có quyền trong vai trò }
+    empty_state: { title: No permissions in the role yet }
     columns:
-      - { field: permission_key, label: Quyền }
-      - { field: status_label, label: Trạng thái, type: StatusChip, colors: { 'Đã cấp': green, 'Chưa cấp': neutral } }
+      - { field: permission_key, label: Rights }
+      - { field: status_label, label: Status, type: StatusChip, colors: { 'Đã cấp': green, 'Chưa cấp': neutral } }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: grant_permission, label: Cấp quyền, variant: primary, permission: settings.write, show_if: "!row.enabled" }
-          - { id: revoke_permission, label: Thu hồi, variant: danger, permission: settings.write, show_if: "row.enabled" }
+          - { id: grant_permission, label: Grant permissions, variant: primary, permission: settings.write, show_if: "!row.enabled" }
+          - { id: revoke_permission, label: Recall, variant: danger, permission: settings.write, show_if: "row.enabled" }
   - type: DataGrid
     source: role_users
     page_size: 20
     column_chooser: true
     row_key: id
-    empty_state: { title: Chưa có người dùng được gán vai trò }
+    empty_state: { title: No users have been assigned roles yet }
     columns:
-      - { field: name, label: Người dùng, type: PrimaryEntityCell, secondary: email }
-      - { field: branch_name, label: Chi nhánh }
-      - { field: department_name, label: Phòng ban }
-      - { field: enabled, label: Kích hoạt, type: BooleanCell }
+      - { field: name, label: User, type: PrimaryEntityCell, secondary: email }
+      - { field: branch_name, label: Branch }
+      - { field: department_name, label: Departments }
+      - { field: enabled, label: Activate, type: BooleanCell }
 toolbar:
-  - { id: back_roles, label: 'Danh sách vai trò', icon: arrow-left, variant: secondary, action: back_roles }
-  - { id: edit_role_scope, label: 'Cập nhật phạm vi xem', variant: secondary, permission: settings.write, action: edit_role_scope }
+  - { id: back_roles, label: 'List of roles', icon: arrow-left, variant: secondary, action: back_roles }
+  - { id: edit_role_scope, label: 'Update view scope', variant: secondary, permission: settings.write, action: edit_role_scope }
 actions:
   - { id: back_roles, type: navigate, navigate_to: /org/roles }
-  - { id: edit_role_scope, type: form, permission: settings.write, title: Cập nhật phạm vi xem vai trò, table: roles, operation: update, prefill: source, prefill_source: role_detail, refresh: [role_detail, role_permissions, role_users], fields: [{ field: view_scope, label: Phạm vi xem, type: select, options: [{ id: all, label: Toàn công ty }, { id: branch, label: Theo chi nhánh }, { id: own, label: Cá nhân phụ trách }], required: true }] }
+  - { id: edit_role_scope, type: form, permission: settings.write, title: Update role view scope, table: roles, operation: update, prefill: source, prefill_source: role_detail, refresh: [role_detail, role_permissions, role_users], fields: [{ field: view_scope, label: View range, type: select, options: [{ id: all, label: Whole company }, { id: branch, label: According to branch }, { id: own, label: Individual in charge }], required: true }] }
   - { id: grant_permission, type: server, permission: settings.write, action: settings.roles.grant_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }
   - { id: revoke_permission, type: server, permission: settings.write, action: settings.roles.revoke_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } }
