@@ -15,7 +15,7 @@
  */
 
 import { evalExpr, interpolate } from './expr.ts';
-import { resolveAction } from './meta.ts';
+import { hasPermission, resolveAction } from './meta.ts';
 import { navigate, getPageParams } from './navigate.ts';
 import { validatePageDefinition } from './yaml/schema.ts';
 import { appendIcon, hasIcon } from './components/Icon.ts';
@@ -49,8 +49,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   const user: any = window.__CORE3_USER__ || {};
   const requiredPerms = config.page?.auth?.require || [];
   if (requiredPerms.length) {
-    const userPerms = user.permissions || [];
-    if (!requiredPerms.every(p => userPerms.includes(p))) {
+    if (!requiredPerms.every(p => hasPermission(user, p))) {
       window.location.href = '/login';
       return;
     }
@@ -792,7 +791,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         case 'ActionCell': {
           const rowCtx = { ...ctx, row };
           const visibleActions = (colDef.actions || []).filter((a: any) =>
-            (!a.permission || ctx.user.permissions?.includes(a.permission))
+            hasPermission(ctx.user, a.permission)
             && (!a.show_if || evalExpr(a.show_if, rowCtx))
           );
           return { actions: visibleActions, row };
@@ -881,7 +880,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         visible: (row: any) => {
           const actionDef = (config.actions || []).find((candidate: any) => candidate.id === action.id);
           const permission = action.permission || actionDef?.permission;
-          return Boolean(!permission || ctx.user.permissions?.includes(permission))
+          return hasPermission(ctx.user, permission)
             && (!action.show_if || Boolean(evalExpr(action.show_if, { ...ctx, row })));
         },
       })),
@@ -946,7 +945,7 @@ export async function renderPage(config: any, { container = document.body }: { c
       } : undefined,
     }));
     const componentActions = (def.actions || []).filter((action: any) => {
-      if (action.permission && !ctx.user.permissions?.includes(action.permission)) return false;
+      if (!hasPermission(ctx.user, action.permission)) return false;
       return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
     });
     const reorder = def.reorder && typeof def.reorder === 'object' ? def.reorder : null;
@@ -1352,9 +1351,8 @@ export async function renderPage(config: any, { container = document.body }: { c
   }
 
   async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
-    const userPerms = ctx.user.permissions || [];
     const visibleTabs = (def.tabs || []).filter(tab =>
-      !tab.permission || userPerms.includes(tab.permission)
+      hasPermission(ctx.user, tab.permission)
     );
     if (!visibleTabs.length) return;
 
@@ -1584,8 +1582,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     for (const btn of config.toolbar) {
       if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
       if (btn.permission) {
-        const userPerms = ctx.user.permissions || [];
-        if (!userPerms.includes(btn.permission)) continue;
+        if (!hasPermission(ctx.user, btn.permission)) continue;
       }
       const button = document.createElement('button');
       button.type = 'button';

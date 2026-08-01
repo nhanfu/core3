@@ -4,13 +4,15 @@ import { i18n } from '../../lib/i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
+import { hasPermission } from '../../lib/meta.ts';
 
 export type NavItem = { path: string; label: string; icon: string; permission?: string };
 type NavGroup = { id: string; label: string; items: NavItem[] };
 export type ShellMenu = { dashboard?: NavItem; groups?: NavGroup[] };
+type ShellApp = { id: string; label: string; description?: string; icon?: string; route: string; available?: boolean };
 
 function canSeeNavItem(item: NavItem, user: any) {
-  return !item.permission || user?.permissions?.includes(item.permission);
+  return hasPermission(user, item.permission || '');
 }
 
 const THEME_STORAGE_KEY = 'core3_theme';
@@ -25,6 +27,9 @@ export class AppShell extends BaseComponent {
   _shellToast: HTMLElement | null;
   _shellToastTimer: ReturnType<typeof setTimeout> | null;
   _languageUnsubscribe: (() => void) | null;
+  _appPicker: HTMLElement | null;
+  _appSwitcherLabel: HTMLElement | null;
+  _appSwitcherIcon: HTMLElement | null;
 
   get menu(): ShellMenu {
     return this.state.menu || {};
@@ -49,6 +54,9 @@ export class AppShell extends BaseComponent {
       const refreshPage = this.state.onLanguageChange;
       if (typeof refreshPage === 'function') void refreshPage(lang);
     });
+    this._appPicker = null;
+    this._appSwitcherLabel = null;
+    this._appSwitcherIcon = null;
   }
 
   refreshLanguage() {
@@ -87,6 +95,19 @@ export class AppShell extends BaseComponent {
 
   setTitle(title: string) {
     if (this._headerTitle) this._headerTitle.textContent = title;
+  }
+
+  openAppPicker() {
+    this._appPicker?.classList.toggle('open');
+  }
+
+  setCurrentApp(app: ShellApp | null) {
+    this.state.currentApp = app;
+    if (this._appSwitcherLabel) this._appSwitcherLabel.textContent = app?.label || 'Applications';
+    if (this._appSwitcherIcon) {
+      this._appSwitcherIcon.innerHTML = '';
+      appendIcon(this._appSwitcherIcon, app?.icon || 'grid');
+    }
   }
 
   draw(container: HTMLElement) {
@@ -213,6 +234,39 @@ export class AppShell extends BaseComponent {
     html.take(tenantContext).span.className('tenant-context-name').text(
       this.state.company?.short_name || this.state.company?.name || this.state.brand?.name || 'Core3',
     );
+
+    const apps = (this.state.apps || []) as ShellApp[];
+    const currentApp = this.state.currentApp || apps.find((app) => app.available);
+    const appSwitcher = html.take(tenantContext).div.className('app-switcher').getContext();
+    const appButton = html.take(appSwitcher).button.className('app-switcher-button').attr('type', 'button')
+      .attr('aria-label', 'Switch application').getContext();
+    const appButtonIcon = html.take(appButton).span.className('app-switcher-icon').getContext();
+    appendIcon(appButtonIcon, currentApp?.icon || 'grid');
+    this._appSwitcherIcon = appButtonIcon;
+    const appButtonLabel = html.take(appButton).span.className('app-switcher-label').text(currentApp?.label || 'Applications').getContext();
+    this._appSwitcherLabel = appButtonLabel;
+    const appChevron = html.take(appButton).span.className('app-switcher-chevron').getContext();
+    appendIcon(appChevron, 'chevron-down');
+    const appMenu = html.take(appSwitcher).div.className('app-switcher-menu').getContext();
+    this._appPicker = appMenu;
+    for (const app of apps) {
+      const item = html.take(appMenu).button.className(`app-switcher-item${app.available ? '' : ' disabled'}`)
+        .attr('type', 'button').getContext();
+      const itemIcon = html.take(item).span.className('app-switcher-item-icon').getContext();
+      appendIcon(itemIcon, app.icon || 'grid');
+      const itemCopy = html.take(item).span.className('app-switcher-item-copy').getContext();
+      html.take(itemCopy).span.className('app-switcher-item-label').text(app.label || app.id);
+      if (!app.available) html.take(itemCopy).span.className('app-switcher-item-status').text('Soon');
+      if (app.available) item.addEventListener('click', () => {
+        this._appPicker?.classList.remove('open');
+        this.state.onAppChange?.(app, false);
+      });
+    }
+    appButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.openAppPicker();
+    });
+    document.addEventListener('click', () => this._appPicker?.classList.remove('open'));
 
     // Header right — actions
     const actions = html.take(header).div.className('header-actions').getContext();

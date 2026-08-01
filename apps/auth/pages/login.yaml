@@ -40,7 +40,7 @@ components:
     credentials_label: 'Demo credentials:'
     credentials:
       - admin@tms.local / admin123
-      - manager@tms.local / fleet123
+      - fleet@tms.local / fleet123
 
 actions:
   - id: login

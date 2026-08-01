@@ -1,0 +1,31 @@
+# Application catalog consumed by the host shell. Module menus remain owned by
+# each application; this file only describes app-level entry points.
+apps:
+  - id: sales
+    label: Sales
+    description: Customers, leads, opportunities, and quotations
+    icon: users
+    route: /customers
+    module: sales
+    enabled: false
+  - id: inventory
+    label: Inventory
+    description: Products, stock, warehouses, and movements
+    icon: grid
+    route: /inventory
+    module: inventory
+    enabled: false
+  - id: crm
+    label: CRM
+    description: Customer relationships and pipeline management
+    icon: users
+    route: /crm/dashboard
+    module: crm
+    enabled: false
+  - id: tms
+    label: TMS
+    description: Fleet and transport management
+    icon: truck
+    route: /dashboard
+    module: tms
+    enabled: true

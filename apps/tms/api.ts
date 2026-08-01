@@ -188,40 +188,6 @@ export function createTmsApi(ctx: TmsApiContext) {
   const pathname = url.pathname;
   const method   = req.method;
 
-  // ── Auth (no JWT required) ────────────────────────────────────────────────
-  if (pathname === '/api/auth/login' && method === 'POST') {
-    const { email, password } = await req.json() as any;
-    if (!email || !password) return apiError(400, 'email and password required');
-    try {
-      return json(await authProvider.login(email, password, repository));
-    } catch (err) {
-      const error = err as any;
-      return apiError(error.status || 401, error.message || 'Invalid credentials');
-    }
-  }
-
-  if (pathname === '/api/auth/me' && method === 'GET') {
-    const user = await requireAuth(req);
-    return json(user);
-  }
-
-  // The login page is a public YAML page; all other page configs remain behind auth.
-  const publicPageMatch = pathname.match(/^\/api\/pages\/([A-Za-z0-9_-]+)$/);
-  if (publicPageMatch && method === 'GET' && publicPageMatch[1] === 'login') {
-    if (url.searchParams.get('cache') !== 'true') reloadPages?.();
-    const page = PAGES.get('login');
-    if (!page) return apiError(404, 'Unknown page: login');
-    const lang = requestLanguage(url);
-    return json({
-      ...publicPageConfig(page),
-      i18n: {
-        lang,
-        page: translationMap(CATALOGS, lang, 'login'),
-        global: translationMap(CATALOGS, lang, '*'),
-      },
-    }, 200, pageCacheHeaders(url));
-  }
-
   // The shell needs module menus and global labels before authentication.
   if (pathname === '/api/menu' && method === 'GET') {
     const lang = requestLanguage(url);
@@ -1185,7 +1151,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (body.new_password) {
       if (!body.current_password) return apiError(400, 'current_password required');
       try {
-        await authProvider.changePassword(authUser.sub, body.current_password, body.new_password, repository);
+        await authProvider.changePassword(String(authUser.sub), body.current_password, body.new_password);
     } catch (err) {
       const error = err as any;
       return apiError(error.status || 400, error.message || 'Password change failed');

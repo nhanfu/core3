@@ -1,0 +1,10 @@
+# Auth permissions are declarative and can be consumed by any application
+# module without importing the Auth implementation.
+permissions:
+  - auth.login
+  - auth.logout
+  - auth.profile.read
+  - auth.profile.write
+  - auth.users.manage
+  - auth.roles.manage
+  - auth.providers.manage

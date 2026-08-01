@@ -73,6 +73,22 @@ const modules = await discoverModules(APPS_ROOT);
 const moduleManager = new ModuleManager(modules);
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env });
 
+async function applicationCatalog() {
+  try {
+    const source = await Bun.file(join(APPS_ROOT, 'applications.yaml')).text();
+    const config = Bun.YAML.parse(source) as { apps?: Array<Record<string, unknown>> };
+    const moduleIds = new Set(modules.map((module) => module.id));
+    return (config.apps || []).map((app) => ({
+      ...app,
+      available: app.enabled !== false && moduleIds.has(String(app.module || app.id)),
+    }));
+  } catch {
+    return moduleManager.metadata.map((module) => ({
+      id: module.id, label: module.id, route: '/dashboard', module: module.id, available: true,
+    }));
+  }
+}
+
 const shutdown = async () => {
   await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env });
   process.exit(0);
@@ -90,6 +106,11 @@ Bun.serve({
       try {
         if (url.pathname === '/api/modules' && req.method === 'GET') {
           return new Response(JSON.stringify(moduleManager.metadata), {
+            headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          });
+        }
+        if (url.pathname === '/api/apps' && req.method === 'GET') {
+          return new Response(JSON.stringify(await applicationCatalog()), {
             headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
           });
         }

@@ -1,0 +1,17 @@
+# Auth provider configuration is declarative. Provider adapters implement the
+# protocols; this file controls which adapters are enabled for this deployment.
+providers:
+  - id: password
+    type: password
+    enabled: true
+    endpoint: /api/auth/login
+  - id: bearer
+    type: jwt
+    enabled: true
+    endpoint: /api/auth/me
+  - id: oauth2
+    type: oidc
+    enabled: false
+  - id: saml
+    type: saml
+    enabled: false

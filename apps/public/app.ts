@@ -5,10 +5,12 @@ import { getPageParams, registerNavigator } from '../lib/navigate.ts';
 import { client } from '../lib/client.ts';
 
 const TOKEN_KEY = 'tms_token';
+const DEFAULT_APP_KEY = 'core3_default_app';
 const WELCOME_TOAST_KEY = 'core3_show_welcome_toast';
 let _user: any = null;
 let _shell: AppShell | null = null;
 let _moduleId = '';
+let _apps: any[] = [];
 
 function modulePrefix() {
   return _moduleId ? `/${_moduleId}` : '';
@@ -16,6 +18,7 @@ function modulePrefix() {
 
 // Routes: string = server page id, function = JS module loader
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
+  '/apps': () => import('./components/AppPicker.ts'),
   '/login':        'login',
   '/dashboard':    'dashboard',
   '/fleet':        'fleet', '/trips': 'trips', '/maintenance': 'maintenance', '/reports': 'reports', '/settings': 'settings',
@@ -68,6 +71,7 @@ const ROUTES: Record<string, string | (() => Promise<any>)> = {
 };
 
 const ROUTE_TITLES: Record<string, string> = {
+  '/apps': 'Applications',
   '/dashboard': 'Dashboard',
   '/orders': 'Orders', '/orders/detail': 'Chi tiết đơn hàng',
   '/chat': 'Messages', '/schedule': 'Dispatch schedule',
@@ -110,15 +114,36 @@ export function getUser() {
   return _user;
 }
 
+function defaultAppStorageKey(user: any = _user) {
+  return `${DEFAULT_APP_KEY}:${String(user?.sub || user?.id || 'anonymous')}`;
+}
+
+export function getDefaultApp(user: any = _user) {
+  const selected = localStorage.getItem(defaultAppStorageKey(user));
+  return _apps.find((app) => app.id === selected && app.available) || null;
+}
+
+export function setDefaultApp(appId: string, user: any = _user) {
+  if (_apps.some((app) => app.id === appId && app.available)) {
+    localStorage.setItem(defaultAppStorageKey(user), appId);
+  }
+}
+
+export function getApps() {
+  return _apps;
+}
+
+export function selectApp(app: any, makeDefault = false) {
+  if (!app?.available) return;
+  if (makeDefault) setDefaultApp(String(app.id));
+  _shell?.setCurrentApp(app);
+  navigate(String(app.route || '/dashboard'));
+}
+
 export function getDefaultRoute(user: any = _user) {
-  const permissions = new Set<string>(user?.permissions || []);
-  if (permissions.has('fleet.read')) return '/dashboard';
-  if (permissions.has('orders.read')) return '/orders';
-  if (permissions.has('crm.read')) return '/customers';
-  if (permissions.has('accounting.read')) return '/accounting/debit-notes';
-  if (permissions.has('hr.read')) return '/hr/employees';
-  if (permissions.has('system.read')) return '/system/activity';
-  return '/login';
+  const selected = getDefaultApp(user);
+  if (selected?.route) return selected.route;
+  return '/apps';
 }
 
 export async function setAuth(token: string, user: any) {
@@ -260,9 +285,15 @@ async function bootstrap() {
   try {
     const response = await fetch('/api/modules');
     const modules = response.ok ? await response.json() as Array<{ id: string }> : [];
-    _moduleId = modules[0]?.id || '';
+    _moduleId = modules.find((module) => module.id !== 'auth')?.id || '';
   } catch {
     _moduleId = '';
+  }
+  try {
+    const appsResponse = await fetch('/api/apps');
+    _apps = appsResponse.ok ? await appsResponse.json() as any[] : [];
+  } catch {
+    _apps = [];
   }
   const token = getToken();
   if (!app) return;
@@ -321,12 +352,15 @@ async function bootstrap() {
     user: _user,
     company,
     menu,
+    apps: _apps,
+    currentApp: getDefaultApp(_user),
     showWelcomeToast,
     navigate,
     onLanguageChange: async (langCode: string) => {
       const location = hashLocation();
       await navigate(location.path, { lc: langCode });
     },
+    onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
   });
   _shell.mount(app);
 

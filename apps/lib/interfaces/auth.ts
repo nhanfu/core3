@@ -22,6 +22,88 @@ export interface SecurityContext {
   permissions: string[];
 }
 
+/** Stable identity exchanged between the host, modules, and external clients. */
+export interface AuthIdentity extends User {
+  sub: string;
+  enabled?: boolean;
+  preferred_lang?: string;
+  branch_id?: string | null;
+  view_scope?: 'all' | 'branch' | 'own' | string;
+  permissions: string[];
+}
+
+export interface AuthClaims extends AuthIdentity {
+  iss?: string;
+  aud?: string | string[];
+  iat?: number;
+  exp?: number;
+  token_type?: 'user' | 'service';
+}
+
+export interface AuthenticationRequest {
+  email: string;
+  password: string;
+  client_id?: string;
+  ip?: string;
+  user_agent?: string;
+}
+
+export interface AuthenticationResult {
+  token: string;
+  user: AuthClaims;
+  token_type?: 'Bearer';
+  expires_in?: number;
+}
+
+export interface AuthServiceProtocol {
+  login(request: AuthenticationRequest): Promise<AuthenticationResult>;
+  logout(userId: string): Promise<void>;
+  getCurrentUser(request: Request | unknown): Promise<AuthClaims>;
+  hasPermission(user: AuthClaims | User, permission: string): boolean;
+  getSecurityContext(user: AuthClaims | User): SecurityContext;
+  changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
+  introspect(token: string): Promise<AuthClaims | null>;
+}
+
+/** Host/module protocol for authentication events and service-to-service calls. */
+export interface AuthModuleProtocol {
+  readonly service: AuthServiceProtocol;
+  authenticate(request: Request): Promise<AuthClaims>;
+  authorize(user: AuthClaims, permission: string): void;
+  subscribe(listener: (event: AuthEvent) => void | Promise<void>): () => void;
+}
+
+/** Adapter contract for external OAuth/OIDC, SAML, LDAP, or gateway providers. */
+export interface ExternalAuthProvider {
+  readonly id: string;
+  authenticate(request: Request): Promise<AuthenticationResult | null>;
+  callback?(request: Request): Promise<AuthenticationResult | null>;
+  validateConfiguration(): void;
+}
+
+/** Protocol used by API gateways and third-party applications to validate tokens. */
+export interface TokenIntrospectionProtocol {
+  introspect(token: string, clientId?: string, clientSecret?: string): Promise<{
+    active: boolean;
+    subject?: string;
+    claims?: AuthClaims;
+    expires_at?: number;
+  }>;
+}
+
+/** Protocol for module-to-module and service-to-service authentication. */
+export interface ServiceIdentityProtocol {
+  issue(serviceId: string, audience: string[], expiresInSeconds?: number): Promise<string>;
+  verify(token: string, audience: string): Promise<AuthClaims>;
+}
+
+export type AuthEvent =
+  | { type: 'auth.login'; user: AuthClaims; at: string }
+  | { type: 'auth.logout'; subject: string; at: string }
+  | { type: 'auth.password_changed'; subject: string; at: string };
+
+export const AUTH_SERVICE_KEY = 'auth';
+
 // ─── Auth provider interface ─────────────────────────────────────────────────
 
 /**

@@ -5,6 +5,12 @@
 
 import { evalExpr } from './expr.ts';
 
+export function hasPermission(user: any, permission: string): boolean {
+  if (!permission) return true;
+  const permissions = user?.permissions || [];
+  return permissions.includes('*') || permissions.includes(permission);
+}
+
 /**
  * Resolve a ComponentDef's expression fields against the current context.
  * Returns a resolved meta object indicating visibility, disabled state, and computed value.
@@ -34,7 +40,7 @@ export function resolveMeta(def: any, ctx: any = {}) {
  * @returns {{ visible: boolean, disabled: boolean }}
  */
 export function resolveAction(action: any, ctx: any = {}) {
-  const visible  = Boolean(!action.permission || ctx.user?.permissions?.includes(action.permission))
+  const visible  = hasPermission(ctx.user, action.permission)
     && (action.show_if ? !!evalExpr(action.show_if, ctx) : true);
   const disabled = action.disabled_if ? !!evalExpr(action.disabled_if, ctx) : false;
   return { visible, disabled };

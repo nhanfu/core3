@@ -9,9 +9,11 @@ export type ModuleContext = {
   moduleRoot: string;
   env: NodeJS.ProcessEnv;
   registerApi(handler: ModuleApiHandler): void;
+  registerService<T>(name: string, service: T): void;
+  resolveService<T>(name: string): T;
 };
 
-export type ModuleHostContext = Omit<ModuleContext, 'moduleRoot' | 'registerApi'>;
+export type ModuleHostContext = Omit<ModuleContext, 'moduleRoot' | 'registerApi' | 'registerService' | 'resolveService'>;
 
 export interface ModuleLifecycle {
   readonly id: string;
@@ -52,6 +54,7 @@ export async function discoverModules(appsRoot: string): Promise<ModuleLifecycle
 export class ModuleManager {
   readonly modules: ModuleLifecycle[];
   readonly apiHandlers: ModuleApiHandler[] = [];
+  readonly services = new Map<string, unknown>();
 
   get metadata() {
     return this.modules.map((module) => ({ id: module.id }));
@@ -65,21 +68,31 @@ export class ModuleManager {
     const moduleContext = {
       ...context,
       registerApi: (handler: ModuleApiHandler) => this.apiHandlers.push(handler),
+      registerService: <T>(name: string, service: T) => {
+        if (this.services.has(name)) throw new Error(`Duplicate module service: ${name}`);
+        this.services.set(name, service);
+      },
+      resolveService: <T>(name: string) => {
+        const service = this.services.get(name);
+        if (!service) throw new Error(`Module service is not registered: ${name}`);
+        return service as T;
+      },
     };
     for (const module of this.modules) await module.load({ ...moduleContext, moduleRoot: join(context.appsRoot, module.id) });
   }
 
   async installAll(context: ModuleHostContext): Promise<void> {
-    for (const module of this.modules) await module.install({ ...context, moduleRoot: join(context.appsRoot, module.id), registerApi: () => {} });
+    for (const module of this.modules) await module.install({ ...context, moduleRoot: join(context.appsRoot, module.id), registerApi: () => {}, registerService: () => {}, resolveService: <T>(name: string) => { throw new Error(`Module service is unavailable during install: ${name}`); } });
   }
 
   async unloadAll(context: ModuleHostContext): Promise<void> {
-    for (const module of [...this.modules].reverse()) await module.unload({ ...context, moduleRoot: join(context.appsRoot, module.id), registerApi: () => {} });
+    for (const module of [...this.modules].reverse()) await module.unload({ ...context, moduleRoot: join(context.appsRoot, module.id), registerApi: () => {}, registerService: () => {}, resolveService: <T>(name: string) => this.services.get(name) as T });
     this.apiHandlers.length = 0;
+    this.services.clear();
   }
 
   async uninstallAll(context: ModuleHostContext): Promise<void> {
-    for (const module of [...this.modules].reverse()) await module.uninstall({ ...context, moduleRoot: join(context.appsRoot, module.id), registerApi: () => {} });
+    for (const module of [...this.modules].reverse()) await module.uninstall({ ...context, moduleRoot: join(context.appsRoot, module.id), registerApi: () => {}, registerService: () => {}, resolveService: <T>(name: string) => { throw new Error(`Module service is unavailable during uninstall: ${name}`); } });
   }
 
   async handle(request: Request, url: URL): Promise<Response | null> {
