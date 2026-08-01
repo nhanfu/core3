@@ -1,7 +1,7 @@
 /**
  * Test cases for form components
  *
- * NOT YET RUNNABLE — requires @core3/frontend + vitest/jest setup.
+ * NOT YET RUNNABLE — requires the component implementation + vitest/jest setup.
  * Run: npx vitest run cases/form.test.ts
  */
 
@@ -14,7 +14,7 @@ import {
   DateInput,
   TextareaInput,
   CheckboxInput,
-} from '@core3/frontend/components';
+} from '../../components/index.ts';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 /**
  * Test cases for GridView and cell components
  *
- * NOT YET RUNNABLE — requires @core3/frontend + vitest/jest setup.
+ * NOT YET RUNNABLE — requires the component implementation + vitest/jest setup.
  * Run: npx vitest run cases/grid-view.test.ts
  */
 
@@ -15,7 +15,7 @@ import {
   DateCell,
   BooleanCell,
   ActionCell,
-} from '@core3/frontend/components';
+} from '../../components/index.ts';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

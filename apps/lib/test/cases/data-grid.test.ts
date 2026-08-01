@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DataGrid } from '@core3/frontend/components';
+import { DataGrid } from '../../components/DataGrid.ts';
 
 const columns = [
   { field: 'code', label: 'Code', sortable: true },

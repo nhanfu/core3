@@ -1,14 +1,14 @@
 /**
  * Test cases for BaseComponent
  *
- * NOT YET RUNNABLE — requires @core3/frontend implementation + vitest/jest setup.
+ * NOT YET RUNNABLE — requires the component implementation + vitest/jest setup.
  * These cases document the expected behavior contract.
  *
  * Run after setup: npx vitest run cases/base-component.test.ts
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BaseComponent } from '@core3/frontend';
+import { BaseComponent } from '../../components/BaseComponent.ts';
 
 // ─── Minimal concrete component for testing ──────────────────────────────────
 
