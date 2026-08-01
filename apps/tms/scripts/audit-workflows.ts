@@ -1,4 +1,4 @@
-import { toXlsx } from '../../../lib/xlsx-utils.ts';
+import { toXlsx } from '../../lib/xlsx-utils.ts';
 
 const baseUrl = (process.env.TMS_BASE_URL || 'http://localhost:3001').replace(/\/$/, '');
 const login = await fetch(`${baseUrl}/api/auth/login`, {

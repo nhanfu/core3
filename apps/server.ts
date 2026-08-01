@@ -3,28 +3,28 @@ import { createFramework, SERVICE_KEYS } from '@core3/framework';
 import { validatePageDefinition } from '@core3/framework/yaml/schema.ts';
 import { join } from 'node:path';
 import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import { DuckDbRepository } from './services/repository.ts';
-import { JwtAuthProvider } from './services/auth.ts';
-import { ORDER_ACTION_REGISTRY, orderWorkflow } from './services/order-workflow.ts';
+import { DuckDbRepository } from './tms/services/repository.ts';
+import { JwtAuthProvider } from './tms/services/auth.ts';
+import { ORDER_ACTION_REGISTRY, orderWorkflow } from './tms/services/order-workflow.ts';
 import {
   FINANCIAL_ACTION_REGISTRY,
   financialWorkflow,
-} from './services/financial-workflow.ts';
+} from './tms/services/financial-workflow.ts';
 import {
   BUSINESS_ACTION_REGISTRY,
   payrollWorkflow,
   quoteWorkflow,
-} from './services/business-workflow.ts';
-import { LINE_ITEM_ACTION_REGISTRY } from './services/line-item-actions.ts';
-import { CHAT_ACTION_REGISTRY } from './services/chat-actions.ts';
-import { CONTACT_ACTION_REGISTRY } from './services/contact-actions.ts';
-import { APPROVAL_ACTION_REGISTRY } from './services/approval-actions.ts';
-import { TRIP_ACTION_REGISTRY } from './services/trip-actions.ts';
-import { TEMPLATE_ACTION_REGISTRY } from './services/template-actions.ts';
-import { CODE_RULE_ACTION_REGISTRY } from './services/code-rule-actions.ts';
-import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './services/role-actions.ts';
-import { CURRENCY_ACTION_REGISTRY } from './services/currency-actions.ts';
-import { xlsxToCsv } from './services/xlsx-import.ts';
+} from './tms/services/business-workflow.ts';
+import { LINE_ITEM_ACTION_REGISTRY } from './tms/services/line-item-actions.ts';
+import { CHAT_ACTION_REGISTRY } from './tms/services/chat-actions.ts';
+import { CONTACT_ACTION_REGISTRY } from './tms/services/contact-actions.ts';
+import { APPROVAL_ACTION_REGISTRY } from './tms/services/approval-actions.ts';
+import { TRIP_ACTION_REGISTRY } from './tms/services/trip-actions.ts';
+import { TEMPLATE_ACTION_REGISTRY } from './tms/services/template-actions.ts';
+import { CODE_RULE_ACTION_REGISTRY } from './tms/services/code-rule-actions.ts';
+import { ROLE_ACTION_REGISTRY, USER_ROLE_ACTION_REGISTRY } from './tms/services/role-actions.ts';
+import { CURRENCY_ACTION_REGISTRY } from './tms/services/currency-actions.ts';
+import { xlsxToCsv } from './tms/services/xlsx-import.ts';
 
 const CRM_ENTITY_ACTION_REGISTRY: Record<string, { permission: string }> = {
   'crm.entities.update': { permission: 'crm.write' },
@@ -34,10 +34,10 @@ const ACCOUNTING_DOCUMENT_ACTION_REGISTRY: Record<string, { permission: string }
 } as const;
 
 const PORT = parseInt(process.env.PORT || '3001');
-// TMS is now the package root.
 const PROJECT_ROOT = import.meta.dir;
-const DB_PATH = process.env.TMS_DB_PATH || join(PROJECT_ROOT, 'tms.duckdb');
-const UPLOAD_ROOT = process.env.TMS_UPLOAD_ROOT || join(PROJECT_ROOT, '.data', 'uploads');
+const TMS_ROOT = join(PROJECT_ROOT, 'tms');
+const DB_PATH = process.env.TMS_DB_PATH || join(TMS_ROOT, 'tms.duckdb');
+const UPLOAD_ROOT = process.env.TMS_UPLOAD_ROOT || join(TMS_ROOT, '.data', 'uploads');
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'tms-dev-secret-32chars!!!!'
 );
@@ -132,14 +132,14 @@ async function serveStatic(pathname: string) {
   const packagePath = rel.startsWith('node_modules/@core3/framework/');
   if (rel.includes('..')) return null;
   // Page YAML contains server-only datasource SQL and must never be served.
-  if (rel.startsWith('pages/') && /\.ya?ml$/i.test(rel)) return null;
+  if (rel.startsWith('tms/pages/') && /\.ya?ml$/i.test(rel)) return null;
   try {
     // The app consumes the framework through a local file dependency. Bun
     // materializes that package on install, so it can otherwise become stale
     // while framework files are edited in this workspace. Serve the source of
     // that dependency during local development instead.
     const file = packagePath
-      ? Bun.file(join(PROJECT_ROOT, '../../lib', rel.slice('node_modules/@core3/framework/'.length)))
+      ? Bun.file(join(PROJECT_ROOT, 'lib', rel.slice('node_modules/@core3/framework/'.length)))
       : Bun.file(join(PROJECT_ROOT, rel));
     if (await file.exists()) {
       if (rel.endsWith('.ts')) {
@@ -171,8 +171,8 @@ async function serveSPA() {
 
 // ── DB initialisation ─────────────────────────────────────────────────────────
 async function initDb(): Promise<void> {
-  const schemaSQL = readFileSync(join(import.meta.dir, 'db/schema.sql'), 'utf8');
-  const seedSQL   = readFileSync(join(import.meta.dir, 'db/seed.sql'),   'utf8');
+  const schemaSQL = readFileSync(join(TMS_ROOT, 'db/schema.sql'), 'utf8');
+  const seedSQL   = readFileSync(join(TMS_ROOT, 'db/seed.sql'),   'utf8');
 
   // Run schema (idempotent — IF NOT EXISTS)
   await repository.runStatements(schemaSQL);
@@ -182,7 +182,7 @@ async function initDb(): Promise<void> {
       applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  const migrationDir = join(import.meta.dir, 'db/migrations');
+  const migrationDir = join(TMS_ROOT, 'db/migrations');
   for (const migrationFile of readdirSync(migrationDir).filter(file => file.endsWith('.sql')).sort()) {
     const version = migrationFile.split('-', 1)[0];
     const applied = await repository.query('SELECT 1 FROM schema_migrations WHERE version = ?', [version]);
@@ -393,7 +393,7 @@ const SOURCE_FILES = [
 function loadSources() {
   const sources = new Map();
   for (const file of SOURCE_FILES) {
-    const page: any = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
+    const page: any = Bun.YAML.parse(readFileSync(join(TMS_ROOT, file), 'utf8'));
     validatePageDefinition(page);
     for (const source of page.datasources || []) {
       if (sources.has(source.id)) throw new Error(`Duplicate datasource id: ${source.id}`);
@@ -406,7 +406,7 @@ function loadSources() {
 const SOURCES = loadSources();
 const PAGES = new Map<string, any>(
   SOURCE_FILES.map((file) => {
-    const page = Bun.YAML.parse(readFileSync(join(import.meta.dir, file), 'utf8'));
+    const page = Bun.YAML.parse(readFileSync(join(TMS_ROOT, file), 'utf8'));
     return [page.page?.id, page];
   })
 );

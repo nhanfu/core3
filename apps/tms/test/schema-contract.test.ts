@@ -12,7 +12,7 @@ const crmScopeMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations'
 const notificationMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations', '007-notification-scope-index.sql'), 'utf8');
 const relationshipQueryMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations', '008-relationship-query-indexes.sql'), 'utf8');
 const tripScopeMigration = readFileSync(resolve(process.cwd(), 'db', 'migrations', '009-trip-branch-scope.sql'), 'utf8');
-const server = readFileSync(resolve(process.cwd(), 'server.ts'), 'utf8');
+const server = readFileSync(resolve(process.cwd(), '..', 'server.ts'), 'utf8');
 const migrationFiles = readdirSync(resolve(process.cwd(), 'db', 'migrations')).filter(file => file.endsWith('.sql')).sort();
 
 describe('database relationship contract', () => {

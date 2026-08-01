@@ -5,16 +5,15 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "noImplicitAny": true,
+    "skipLibCheck": true,
     "target": "ES2022",
     "types": ["node"]
   },
   "include": [
-    "./*.ts",
+    "./server.ts",
+    "./app.ts",
     "./*.d.ts",
-    "./components/*.ts",
-    "./components/*.d.ts",
-    "./pages/*.ts",
-    "./pages/*.d.ts",
-    "./types/*.d.ts"
+    "./tms/globals.d.ts",
+    "./tms/types/*.d.ts"
   ]
 }

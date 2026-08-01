@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toXlsx } from '../../../lib/xlsx-utils.ts';
+import { toXlsx } from '../../lib/xlsx-utils.ts';
 import { xlsxToCsv } from '../services/xlsx-import.ts';
 
 describe('XLSX master-data import contract', () => {

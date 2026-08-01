@@ -1,6 +1,6 @@
 import { BaseComponent } from '@core3/framework/runtime.ts';
 import { html } from '@core3/framework/html.ts';
-import { navigate, logout, getUser } from '../app.ts';
+import { navigate, logout, getUser } from '../../app.ts';
 import { i18n } from '../i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { ProfileDrawer } from './ProfileDrawer.ts';

@@ -1,5 +1,5 @@
-import { AppShell } from './components/AppShell.ts';
-import { i18n } from './i18n.ts';
+import { AppShell } from './tms/components/AppShell.ts';
+import { i18n } from './tms/i18n.ts';
 import { renderPage } from '@core3/framework/page-renderer.ts';
 import { registerNavigator } from '@core3/framework/navigate.ts';
 import { client } from '@core3/framework/client.ts';
@@ -10,7 +10,7 @@ let _shell: AppShell | null = null;
 
 // Routes: string = server page id, function = JS module loader
 const ROUTES: Record<string, string | (() => Promise<any>)> = {
-  '/login':        () => import('./pages/login.ts'),
+  '/login':        () => import('./tms/pages/login.ts'),
   '/dashboard':    'dashboard',
   '/fleet':        'fleet', '/trips': 'trips', '/maintenance': 'maintenance', '/reports': 'reports', '/settings': 'settings',
   '/vehicles':     'vehicles', '/vehicles/detail': 'vehicle-detail',

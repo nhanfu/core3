@@ -5,7 +5,7 @@ const baseUrl = (process.env.TMS_BASE_URL || 'http://localhost:3001').replace(/\
 const email = process.env.TMS_AUDIT_EMAIL || 'admin@tms.local';
 const password = process.env.TMS_AUDIT_PASSWORD || 'admin123';
 const pageDir = join(import.meta.dir, '..', 'pages');
-const appSource = readFileSync(join(import.meta.dir, '..', 'app.ts'), 'utf8');
+const appSource = readFileSync(join(import.meta.dir, '..', '..', 'app.ts'), 'utf8');
 
 type Source = { id: string; query?: string };
 type Page = { page?: { id?: string }; datasources?: Source[] };

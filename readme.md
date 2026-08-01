@@ -14,7 +14,7 @@ The intended scope of YAML includes:
 - database management, including partitioning and sharding
 - deployment and operational configuration
 
-The repository’s [`lib`](lib) directory is a shared, client-agnostic library. It should process client YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/tms`](apps/tms) is the sample client project where those declarations and any remaining app-specific code live.
+The repository’s [`apps/lib`](apps/lib) directory is a shared, client-agnostic library. It should process client YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/tms`](apps/tms) is the sample client project where those declarations and any remaining app-specific code live.
 
 Other code remains possible when YAML cannot yet express a requirement, but it should be minimal transitional glue with a path toward a YAML-based solution.
 
@@ -121,5 +121,5 @@ Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with arc
 
 ## Local Development
 
-- Framework tests live under [`lib/test`](lib/test) and run with `bun run test` from [`lib`](lib).
-- The sample app lives under [`apps/tms`](apps/tms) and uses the shared framework package from `lib`.
+- Framework tests live under [`apps/lib/test`](apps/lib/test) and run with `bun run test` from [`apps/lib`](apps/lib).
+- The app package and entrypoints live under [`apps`](apps), while TMS domain code lives under [`apps/tms`](apps/tms) and uses the shared framework package from [`apps/lib`](apps/lib).
