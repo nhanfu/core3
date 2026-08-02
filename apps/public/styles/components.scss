@@ -604,6 +604,8 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.o-list-group-header td { padding: 8px 12px; border-bottom: 1px solid var(--o-list-border); background: var(--o-list-panel-bg); color: var(--o-list-text); font-size: 12px; }
+.o-list-group-header strong { color: var(--o-list-action); font-weight: 600; }.o-list-group-count { color: var(--o-list-muted); }
 .o-list-table td:has(.o-list-row-menu) { position: relative; overflow: visible; }
 .o-list-data-row:has(.o-list-row-menu[open]) { position: relative; z-index: 7; }
 .o-list-table [data-column='actions'] {

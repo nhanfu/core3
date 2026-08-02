@@ -35,6 +35,8 @@ export type ListViewFilter = {
   options?: Array<string | { id: string; label: string }>;
 };
 
+export type ListViewGroupBy = { field: string; label: string };
+
 export type ListViewAction = {
   id: string;
   label?: string;
@@ -52,6 +54,7 @@ export type ListViewOptions = {
   createAction?: { id: string; label: string };
   search?: false | { label?: string; placeholder?: string };
   filters?: ListViewFilter[];
+  groupBy?: ListViewGroupBy[];
   dateRange?: {
     fromField?: string;
     toField?: string;
@@ -91,6 +94,7 @@ export type ListViewOptions = {
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
   onViewChange?: (view: 'list' | 'kanban' | 'calendar') => void;
+  onGroupByChange?: (field: string | null) => void;
 };
 
 /**
@@ -203,6 +207,7 @@ export class ListView extends BaseComponent {
         },
       );
       kanban.parent = this;
+      kanban._transport = this._transport;
       this.children.push(kanban);
       kanban.mount(root);
       return;
@@ -214,6 +219,7 @@ export class ListView extends BaseComponent {
         { view: activeView, rowKey: this.options.rowKey, openAction: this.options.openAction },
       );
       calendar.parent = this;
+      calendar._transport = this._transport;
       this.children.push(calendar);
       calendar.mount(root);
       return;
@@ -254,6 +260,7 @@ export class ListView extends BaseComponent {
     }
 
     const body = html.take(table).tbody.getContext();
+    const groupBy = typeof this.state.groupBy === 'string' ? this.state.groupBy : '';
     if (!rows.length) {
       const empty = this.options.emptyState || {};
       const cell = html.take(body).trow.tdata
@@ -262,6 +269,25 @@ export class ListView extends BaseComponent {
         .getContext();
       html.take(cell).h3.text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.text(empty.description);
+    } else if (groupBy) {
+      const groups = new Map<string, ListRow[]>();
+      for (const row of rows) {
+        const value = String(row[groupBy] ?? '—');
+        const group = groups.get(value) || [];
+        group.push(row);
+        groups.set(value, group);
+      }
+      const groupLabel = this.options.groupBy?.find(group => group.field === groupBy)?.label || groupBy;
+      for (const [value, groupRows] of groups) {
+        const groupRow = html.take(body).trow.className('o-list-group-header').getContext();
+        const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
+        groupCell.dataset.groupBy = groupBy;
+        const heading = document.createElement('strong');
+        heading.textContent = `${groupLabel}: ${value}`;
+        groupCell.append(heading);
+        html.take(groupCell).span.className('o-list-group-count').text(` (${groupRows.length})`);
+        groupRows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
+      }
     } else {
       rows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
     }
@@ -313,7 +339,7 @@ export class ListView extends BaseComponent {
   }
 
   private drawFilterMenu(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
-    if (!this.options.filters?.length && !this.options.dateRange) return;
+    if (!this.options.filters?.length && !this.options.dateRange && !this.options.groupBy?.length) return;
     const details = html.take(container).details.className('o-list-dropdown o-list-filter-menu').getContext() as HTMLDetailsElement;
     const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', labels.filters).getContext();
     appendIcon(summary, 'chevron-down');
@@ -356,6 +382,18 @@ export class ListView extends BaseComponent {
       to.value = String(filters[toField] || '');
       const apply = html.take(custom).button.className('o-list-date-apply').text(labels.apply).getContext();
       apply.addEventListener('click', () => this.setFilters({ ...filters, [fromField]: from.value || null, [toField]: to.value || null }));
+    }
+    if (this.options.groupBy?.length) {
+      const group = html.take(menu).section.className('o-list-filter-group').getContext();
+      html.take(group).h4.text('Group By');
+      const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text('No grouping').getContext();
+      clear.dataset.groupBy = '';
+      clear.addEventListener('click', () => this.setGroupBy(null));
+      for (const option of this.options.groupBy) {
+        const button = html.take(group).button.className(this.state.groupBy === option.field ? 'is-active' : '').text(option.label).getContext();
+        button.dataset.groupBy = option.field;
+        button.addEventListener('click', () => this.setGroupBy(option.field));
+      }
     }
     this.dismissDetails(details);
   }
@@ -451,6 +489,10 @@ export class ListView extends BaseComponent {
       const option = filter.options?.find(candidate => String(typeof candidate === 'string' ? candidate : candidate.id) === String(value));
       const optionLabel = typeof option === 'string' ? option : option?.label || String(value);
       facets.push({ key: filter.field, label: `${filter.label}: ${optionLabel}`, clear: () => this.setFilters({ ...filters, [filter.field]: null }) });
+    }
+    if (this.state.groupBy) {
+      const group = this.options.groupBy?.find(option => option.field === this.state.groupBy);
+      if (group) facets.push({ key: 'groupBy', label: `Group By: ${group.label}`, clear: () => this.setGroupBy(null) });
     }
     if (this.options.dateRange) {
       const fromField = this.options.dateRange.fromField || 'from_date';
@@ -588,6 +630,11 @@ export class ListView extends BaseComponent {
   private setFilters(filters: Record<string, unknown>) {
     this.setState({ filters });
     this.options.onFilterChange?.(filters);
+  }
+
+  private setGroupBy(field: string | null) {
+    this.setState({ groupBy: field || undefined });
+    this.options.onGroupByChange?.(field);
   }
 
   private setSort(field: string) {

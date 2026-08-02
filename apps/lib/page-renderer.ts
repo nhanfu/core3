@@ -1079,6 +1079,7 @@ export async function renderPage(config: any, { container = document.body }: { c
           : [],
       };
     });
+    const groupBy = (def.group_by || []).map((group: any) => ({ field: group.field, label: group.label || group.field }));
     const columns = (def.columns || []).map((column: any, index: number) => ({
       id: column.id || column.field || `column-${index}`,
       field: column.field,
@@ -1172,6 +1173,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         filters: { ...(filterState[sourceId] || {}) },
         selectedIds: [],
         ...(activeView ? { activeView } : {}),
+        ...(groupBy.some((group: any) => group.field === pageParams.group_by) ? { groupBy: pageParams.group_by } : {}),
       },
       columns,
       {
@@ -1180,6 +1182,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         createAction,
         search: def.search,
         filters,
+        groupBy,
         dateRange: def.date_range ? {
           fromField: def.date_range.from_field,
           toField: def.date_range.to_field,
@@ -1198,6 +1201,9 @@ export async function renderPage(config: any, { container = document.body }: { c
         views,
         onViewChange: (view: 'list' | 'kanban' | 'calendar') => {
           replaceParams({ ...getPageParams(), view });
+        },
+        onGroupByChange: (field: string | null) => {
+          replaceParams({ ...getPageParams(), ...(field ? { group_by: field } : { group_by: undefined }) });
         },
         emptyState: def.empty_state,
         labels: {

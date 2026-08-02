@@ -32,6 +32,7 @@ function create(options: Record<string, unknown> = {}) {
     createAction: { id: 'create', label: 'New' },
     search: { placeholder: 'Search orders...' },
     filters: [{ field: 'status', label: 'Status', placeholder: 'All statuses', options: ['Draft', 'Approved'] }],
+    groupBy: [{ field: 'status', label: 'Status' }, { field: 'customer', label: 'Customer' }],
     dateRange: { fromField: 'from_date', toField: 'to_date', label: 'Order date', presets: ['today'] },
     actions: [{ id: 'orders.export', label: 'Export', icon: 'download' }],
     selectable: true,
@@ -114,6 +115,20 @@ describe('Odoo ListView', () => {
     statusColumn.checked = true;
     statusColumn.dispatchEvent(new Event('change', { bubbles: true }));
     expect(container.querySelector('thead')?.textContent).toContain('Status');
+  });
+
+  it('groups list rows from the search bar and exposes a removable group facet', () => {
+    const onGroupByChange = vi.fn();
+    const container = mount(create({ onGroupByChange }));
+
+    container.querySelector<HTMLButtonElement>('[data-group-by="status"]')!.click();
+    expect(onGroupByChange).toHaveBeenCalledWith('status');
+    expect(container.querySelectorAll('.o-list-group-header')).toHaveLength(2);
+    expect(container.querySelector('[data-filter-facet="groupBy"]')?.textContent).toContain('Group By: Status');
+
+    container.querySelector<HTMLButtonElement>('[data-filter-facet="groupBy"] button')!.click();
+    expect(onGroupByChange).toHaveBeenLastCalledWith(null);
+    expect(container.querySelectorAll('.o-list-group-header')).toHaveLength(0);
   });
 
   it('notifies when the active view changes', () => {

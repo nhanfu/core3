@@ -80,6 +80,7 @@ describe('YAML page schema', () => {
         { id: 'calendar', label: 'Calendar', date_field: 'order_date', card: { title: 'code' } },
       ],
       filters: [{ field: 'status', label: 'Status', options: ['Draft'] }],
+      group_by: [{ field: 'status', label: 'Status' }],
       columns: [{ field: 'code', label: 'Code', optional: 'show' }],
     }];
     expect(() => validatePageDefinition(page)).not.toThrow();

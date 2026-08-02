@@ -147,7 +147,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
-  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filters', 'actions', 'labels', 'views', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_actions'])],
+  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filters', 'group_by', 'actions', 'labels', 'views', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_actions'])],
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
@@ -490,6 +490,20 @@ function validateComponents(
       }
       if (component.row_actions !== undefined && !['buttons', 'menu'].includes(String(component.row_actions))) {
         issues.push(`${path}.row_actions must be buttons or menu`);
+      }
+      if (component.group_by !== undefined) {
+        if (!Array.isArray(component.group_by)) {
+          issues.push(`${path}.group_by must be an array`);
+        } else {
+          component.group_by.forEach((group, groupIndex) => {
+            const groupPath = `${path}.group_by[${groupIndex}]`;
+            requireRecord(group, groupPath, issues);
+            if (!isRecord(group)) return;
+            rejectUnknownKeys(group, new Set(['field', 'label']), groupPath, issues);
+            requireString(group.field, `${groupPath}.field`, issues);
+            requireString(group.label, `${groupPath}.label`, issues);
+          });
+        }
       }
       if (component.labels !== undefined) {
         requireRecord(component.labels, `${path}.labels`, issues);
