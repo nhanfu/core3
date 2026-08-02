@@ -178,4 +178,21 @@ describe('Odoo ListView', () => {
     expect(container.textContent).toContain('Legacy item');
     expect(container.querySelector('.o-list-view')).toBeNull();
   });
+
+  it('uses the shared dialog to add a Kanban status', () => {
+    const onKanbanAddStatus = vi.fn();
+    const component = create({ onKanbanAddStatus });
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="kanban"]')!.click();
+    container.querySelector<HTMLButtonElement>('.o-kanban-add-status')!.click();
+
+    const dialog = document.querySelector('[role="dialog"]') as HTMLElement;
+    expect(dialog).not.toBeNull();
+    expect(dialog.querySelector('input')?.getAttribute('placeholder')).toBe('Enter a status name');
+    const input = dialog.querySelector('input') as HTMLInputElement;
+    input.value = 'In transit';
+    dialog.querySelector<HTMLButtonElement>('.core3-dialog-confirm')!.click();
+    expect(onKanbanAddStatus).toHaveBeenCalledWith('In transit');
+  });
 });

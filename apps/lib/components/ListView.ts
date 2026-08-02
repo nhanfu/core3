@@ -2,6 +2,7 @@ import { html } from '../html.ts';
 import { BaseComponent } from './BaseComponent.ts';
 import { appendBadge } from './helpers.ts';
 import { appendIcon } from './Icon.ts';
+import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
 import { resolveDatePreset, type DateRangePreset } from './ListToolbar.ts';
 
 type ListRow = Record<string, unknown>;
@@ -42,15 +43,7 @@ export type ListViewAction = {
   params?: Record<string, unknown>;
 };
 
-export type ListViewMode = {
-  id: 'list' | 'kanban';
-  label: string;
-  icon?: string;
-  groupBy?: string;
-  groups?: Array<{ value: string; label: string; color?: string }>;
-  card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
-  groupsSource?: string;
-};
+export type ListViewMode = KanbanViewDefinition;
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
@@ -115,6 +108,7 @@ export class ListView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    for (const child of this.children) child.dispose();
     this.children = [];
     if (this.options.variant !== 'odoo') {
       this.drawCards(container);
@@ -195,7 +189,20 @@ export class ListView extends BaseComponent {
     this.drawFacets(controlPanel, filters, labels);
 
     if (this.activeView().id === 'kanban') {
-      this.drawKanban(root, rows);
+      const kanban = new KanbanView(
+        `kanban-view-${this.id}`,
+        { rows },
+        {
+          view: this.activeView(),
+          rowKey: this.options.rowKey,
+          openAction: this.options.openAction,
+          onMove: this.options.onKanbanMove,
+          onAddStatus: this.options.onKanbanAddStatus,
+        },
+      );
+      kanban.parent = this;
+      this.children.push(kanban);
+      kanban.mount(root);
       return;
     }
 
@@ -455,93 +462,6 @@ export class ListView extends BaseComponent {
     }
   }
 
-  private drawKanban(container: HTMLElement, rows: ListRow[]) {
-    const view = this.activeView();
-    const groupBy = view.groupBy || 'status';
-    const configuredGroups = view.groups || [];
-    const groups = configuredGroups.map(group => ({ ...group, rows: [] as ListRow[] }));
-    const byValue = new Map(groups.map(group => [String(group.value), group]));
-    for (const row of rows) {
-      const value = String(row[groupBy] ?? '');
-      let group = byValue.get(value);
-      if (!group) {
-        group = { value, label: value || 'Undefined', rows: [] };
-        groups.push(group);
-        byValue.set(value, group);
-      }
-      group.rows.push(row);
-    }
-
-    const board = html.take(container).div.className('o-kanban-board').getContext();
-    for (const group of groups) {
-      const column = html.take(board).section.className('o-kanban-column').dataAttr('kanban-group', group.value).getContext();
-      const header = html.take(column).header.className('o-kanban-column-header').getContext();
-      const heading = html.take(header).div.className('o-kanban-column-title').getContext();
-      if (group.color) heading.classList.add(`is-${group.color}`);
-      html.take(heading).span.text(group.label);
-      html.take(header).span.className('o-kanban-count').text(String(group.rows.length));
-      if (this.options.onKanbanAddStatus && group === groups[groups.length - 1]) {
-        const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', 'Add status').attr('title', 'Add status').getContext();
-        appendIcon(add, 'plus');
-        add.addEventListener('click', () => {
-          const label = window.prompt('Status name');
-          if (label?.trim()) void this.options.onKanbanAddStatus?.(label.trim());
-        });
-      }
-      const cards = html.take(column).div.className('o-kanban-cards').getContext();
-      if (this.options.onKanbanMove) {
-        cards.addEventListener('dragover', event => { event.preventDefault(); cards.classList.add('is-drop-target'); });
-        cards.addEventListener('dragleave', () => cards.classList.remove('is-drop-target'));
-        cards.addEventListener('drop', event => {
-          event.preventDefault();
-          cards.classList.remove('is-drop-target');
-          const id = event.dataTransfer?.getData('application/x-core3-row-id');
-          const row = rows.find(candidate => this.rowId(candidate, rows.indexOf(candidate)) === id);
-          if (row && String(row[groupBy] ?? '') !== group.value) void this.options.onKanbanMove(row, group.value);
-        });
-      }
-      for (const [index, row] of group.rows.entries()) this.drawKanbanCard(cards, row, index, view);
-    }
-  }
-
-  private drawKanbanCard(container: HTMLElement, row: ListRow, index: number, view: ListViewMode) {
-    const card = html.take(container).div.className('o-kanban-card').dataAttr('row-id', this.rowId(row, index)).getContext();
-    if (this.options.openAction) {
-      card.tabIndex = 0;
-      card.setAttribute('role', 'link');
-      card.addEventListener('click', () => void this.submit(this.options.openAction!, { row }));
-      card.addEventListener('keydown', (event: KeyboardEvent) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          void this.submit(this.options.openAction!, { row });
-        }
-      });
-    }
-    if (this.options.onKanbanMove) {
-      card.draggable = true;
-      card.addEventListener('dragstart', event => {
-        event.dataTransfer?.setData('application/x-core3-row-id', this.rowId(row, index));
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-      });
-    }
-    const title = row[view.card?.title || 'name'];
-    html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
-    if (view.card?.subtitle) {
-      const subtitle = row[view.card.subtitle];
-      if (subtitle != null && subtitle !== '') html.take(card).p.className('o-kanban-card-subtitle').text(String(subtitle));
-    }
-    const fields = view.card?.fields || [];
-    if (!fields.length) return;
-    const details = html.take(card).div.className('o-kanban-card-fields').getContext();
-    for (const field of fields) {
-      const value = row[field.field];
-      if (value == null || value === '') continue;
-      const line = html.take(details).div.getContext();
-      if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
-      html.take(line).span.className('o-kanban-card-field-value').text(String(value));
-    }
-  }
-
   private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     const id = this.rowId(row, index);
     const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).getContext();
@@ -641,6 +561,7 @@ export class ListView extends BaseComponent {
     const views = this.options.views || [];
     return views.find(view => view.id === this.state.activeView) || views[0] || { id: 'list', label: 'List' };
   }
+
 
   private selectedIds(): string[] {
     return Array.isArray(this.state.selectedIds) ? this.state.selectedIds.map(String) : [];
