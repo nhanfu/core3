@@ -74,6 +74,10 @@ describe('YAML page schema', () => {
       create_action: 'add_order',
       row_open_action: 'edit_order',
       row_actions: 'menu',
+      views: [
+        { id: 'list', label: 'List' },
+        { id: 'kanban', label: 'Kanban', group_by: 'status', card: { title: 'code' } },
+      ],
       filters: [{ field: 'status', label: 'Status', options: ['Draft'] }],
       columns: [{ field: 'code', label: 'Code', optional: 'show' }],
     }];

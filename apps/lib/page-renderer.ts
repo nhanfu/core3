@@ -1165,6 +1165,14 @@ export async function renderPage(config: any, { container = document.body }: { c
         columnChooser: def.column_chooser === true,
         openAction: def.row_open_action,
         rowActions: def.row_actions || 'buttons',
+        views: (def.views || []).map((view: any) => ({
+          id: view.id,
+          label: view.label || view.id,
+          icon: view.icon,
+          groupBy: view.group_by,
+          groups: view.groups,
+          card: view.card,
+        })),
         emptyState: def.empty_state,
         labels: {
           new: translatedLabels.new,

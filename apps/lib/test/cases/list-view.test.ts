@@ -38,6 +38,14 @@ function create(options: Record<string, unknown> = {}) {
     columnChooser: true,
     openAction: 'view',
     rowActions: 'menu',
+    views: [
+      { id: 'list', label: 'List', icon: 'table' },
+      {
+        id: 'kanban', label: 'Kanban', icon: 'dashboard', groupBy: 'status',
+        groups: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }],
+        card: { title: 'number', subtitle: 'customer', fields: [{ field: 'status', label: 'Status' }] },
+      },
+    ],
     ...options,
   });
 }
@@ -127,6 +135,25 @@ describe('Odoo ListView', () => {
     await Promise.resolve();
     expect(submit).toHaveBeenCalledWith('delete', { row: rows[0] });
     expect(firstRow.querySelector('.o-list-row-menu')?.hasAttribute('open')).toBe(false);
+  });
+
+  it('switches to a YAML-declared Kanban board and opens its cards', async () => {
+    const component = create();
+    const submit = vi.fn().mockResolvedValue(undefined);
+    component._transport = { submit };
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="kanban"]')!.click();
+    expect(container.querySelector('.o-list-table')).toBeNull();
+    expect(container.querySelector('[data-kanban-group="Draft"]')?.textContent).toContain('ORD-001');
+    expect(container.querySelector('[data-kanban-group="Approved"]')?.textContent).toContain('ORD-002');
+
+    container.querySelector<HTMLElement>('[data-kanban-group="Draft"] [data-row-id="o1"]')!.click();
+    await Promise.resolve();
+    expect(submit).toHaveBeenCalledWith('view', { row: rows[0] });
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="list"]')!.click();
+    expect(container.querySelector('.o-list-table')).not.toBeNull();
   });
 
   it('keeps the legacy card list as the default variant', () => {

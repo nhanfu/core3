@@ -102,6 +102,25 @@ components:
       search_facet: Search
       apply: Apply
       more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        groups:
+          - { value: Draft, label: Draft, color: neutral }
+          - { value: Pending Approval, label: Pending approval, color: amber }
+          - { value: Approved, label: Approved, color: green }
+          - { value: Cancelled, label: Cancelled, color: red }
+        card:
+          title: order_number
+          subtitle: customer_name
+          fields:
+            - { field: order_date, label: Order date }
+            - { field: shipment_type, label: Shipment type }
+            - { field: route, label: Route }
+            - { field: total_amount_display, label: Total }
     page_size: 50
     column_chooser: true
     row_key: id

@@ -42,6 +42,15 @@ export type ListViewAction = {
   params?: Record<string, unknown>;
 };
 
+export type ListViewMode = {
+  id: 'list' | 'kanban';
+  label: string;
+  icon?: string;
+  groupBy?: string;
+  groups?: Array<{ value: string; label: string; color?: string }>;
+  card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
+};
+
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
   breadcrumbs?: string[];
@@ -63,6 +72,7 @@ export type ListViewOptions = {
   columnChooser?: boolean;
   openAction?: string;
   rowActions?: 'buttons' | 'menu';
+  views?: ListViewMode[];
   emptyState?: { title?: string; description?: string };
   labels?: {
     new?: string;
@@ -179,6 +189,11 @@ export class ListView extends BaseComponent {
     this.drawSearch(main, filters, selectedIds, labels);
     this.drawNavigation(main, meta, visibleColumnIds, labels);
     this.drawFacets(controlPanel, filters, labels);
+
+    if (this.activeView().id === 'kanban') {
+      this.drawKanban(root, rows);
+      return;
+    }
 
     const viewport = html.take(root).div.className('o-list-table-viewport').getContext();
     const table = html.take(viewport).table.className('o-list-table').getContext();
@@ -339,6 +354,23 @@ export class ListView extends BaseComponent {
     next.disabled = end >= total;
     if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
 
+    const views = this.options.views || [];
+    if (views.length > 1) {
+      const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').getContext();
+      const activeView = this.activeView();
+      for (const view of views) {
+        const button = html.take(switcher).button
+          .className(view.id === activeView.id ? 'is-active' : '')
+          .dataAttr('list-view', view.id)
+          .attr('aria-label', view.label)
+          .attr('title', view.label)
+          .getContext();
+        appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : 'table'));
+        button.setAttribute('aria-pressed', String(view.id === activeView.id));
+        button.addEventListener('click', () => this.setState({ activeView: view.id }));
+      }
+    }
+
     if (!this.options.columnChooser && !this.options.actions?.length) return;
     const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').getContext() as HTMLDetailsElement;
     const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).getContext();
@@ -413,6 +445,67 @@ export class ListView extends BaseComponent {
       const remove = html.take(item).button.attr('aria-label', `${labels.removeFilter}: ${facet.label}`).getContext();
       appendIcon(remove, 'x');
       remove.addEventListener('click', facet.clear);
+    }
+  }
+
+  private drawKanban(container: HTMLElement, rows: ListRow[]) {
+    const view = this.activeView();
+    const groupBy = view.groupBy || 'status';
+    const configuredGroups = view.groups || [];
+    const groups = configuredGroups.map(group => ({ ...group, rows: [] as ListRow[] }));
+    const byValue = new Map(groups.map(group => [String(group.value), group]));
+    for (const row of rows) {
+      const value = String(row[groupBy] ?? '');
+      let group = byValue.get(value);
+      if (!group) {
+        group = { value, label: value || 'Undefined', rows: [] };
+        groups.push(group);
+        byValue.set(value, group);
+      }
+      group.rows.push(row);
+    }
+
+    const board = html.take(container).div.className('o-kanban-board').getContext();
+    for (const group of groups) {
+      const column = html.take(board).section.className('o-kanban-column').dataAttr('kanban-group', group.value).getContext();
+      const header = html.take(column).header.className('o-kanban-column-header').getContext();
+      const heading = html.take(header).div.className('o-kanban-column-title').getContext();
+      if (group.color) heading.classList.add(`is-${group.color}`);
+      html.take(heading).span.text(group.label);
+      html.take(header).span.className('o-kanban-count').text(String(group.rows.length));
+      const cards = html.take(column).div.className('o-kanban-cards').getContext();
+      for (const [index, row] of group.rows.entries()) this.drawKanbanCard(cards, row, index, view);
+    }
+  }
+
+  private drawKanbanCard(container: HTMLElement, row: ListRow, index: number, view: ListViewMode) {
+    const card = html.take(container).div.className('o-kanban-card').dataAttr('row-id', this.rowId(row, index)).getContext();
+    if (this.options.openAction) {
+      card.tabIndex = 0;
+      card.setAttribute('role', 'link');
+      card.addEventListener('click', () => void this.submit(this.options.openAction!, { row }));
+      card.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          void this.submit(this.options.openAction!, { row });
+        }
+      });
+    }
+    const title = row[view.card?.title || 'name'];
+    html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
+    if (view.card?.subtitle) {
+      const subtitle = row[view.card.subtitle];
+      if (subtitle != null && subtitle !== '') html.take(card).p.className('o-kanban-card-subtitle').text(String(subtitle));
+    }
+    const fields = view.card?.fields || [];
+    if (!fields.length) return;
+    const details = html.take(card).div.className('o-kanban-card-fields').getContext();
+    for (const field of fields) {
+      const value = row[field.field];
+      if (value == null || value === '') continue;
+      const line = html.take(details).div.getContext();
+      if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
+      html.take(line).span.className('o-kanban-card-field-value').text(String(value));
     }
   }
 
@@ -509,6 +602,11 @@ export class ListView extends BaseComponent {
 
   private rowId(row: ListRow, index: number) {
     return String(row[this.options.rowKey || 'id'] ?? index);
+  }
+
+  private activeView(): ListViewMode {
+    const views = this.options.views || [];
+    return views.find(view => view.id === this.state.activeView) || views[0] || { id: 'list', label: 'List' };
   }
 
   private selectedIds(): string[] {
