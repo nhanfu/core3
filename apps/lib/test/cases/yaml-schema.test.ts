@@ -65,6 +65,24 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(validPage())).not.toThrow();
   });
 
+  it('accepts the opt-in Odoo ListView contract and validates action references', () => {
+    const page = validPage() as any;
+    page.components = [{
+      type: 'ListView',
+      variant: 'odoo',
+      source: 'orders',
+      create_action: 'add_order',
+      row_open_action: 'edit_order',
+      row_actions: 'menu',
+      filters: [{ field: 'status', label: 'Status', options: ['Draft'] }],
+      columns: [{ field: 'code', label: 'Code', optional: 'show' }],
+    }];
+    expect(() => validatePageDefinition(page)).not.toThrow();
+
+    page.components[0].row_open_action = 'missing_action';
+    expect(() => validatePageDefinition(page)).toThrow(/references unknown action "missing_action"/);
+  });
+
   it('validates datasource-backed toolbar filter references', () => {
     const page = validPage() as any;
     page.components = [{

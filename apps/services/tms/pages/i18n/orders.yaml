@@ -2,6 +2,7 @@ vi:
   Orders: Đơn hàng
   Management: Quản lý
   + Add order: + Thêm đơn hàng
+  New: Mới
   Search orders: Tìm kiếm đơn hàng
   "Search order number, customer, item name...": "Tìm mã đơn, khách hàng, tên hàng..."
   From date: Từ ngày
@@ -15,6 +16,26 @@ vi:
   Rail: Đường sắt
   Air: Hàng không
   Export CSV: Xuất CSV
+  Export: Xuất Excel
+  Filters: Bộ lọc
+  Columns: Cột
+  selected: đã chọn
+  Clear selection: Bỏ chọn
+  Remove filter: Xóa bộ lọc
+  Previous page: Trang trước
+  Next page: Trang sau
+  Select all rows: Chọn tất cả dòng
+  Select row: Chọn dòng
+  Search: Tìm kiếm
+  Apply: Áp dụng
+  More actions: Thao tác khác
+  All statuses: Tất cả trạng thái
+  Today: Hôm nay
+  This week: Tuần này
+  This month: Tháng này
+  This quarter: Quý này
+  This year: Năm nay
+  All dates: Tất cả thời gian
   All: Tất cả
   Draft: Nháp
   Pending approval: Đang duyệt

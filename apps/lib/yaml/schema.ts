@@ -97,12 +97,13 @@ const COLUMN_KEYS = new Set([
   'colors',
   'format',
   'overdueField',
+  'optional',
 ]);
 const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'show_if']);
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
-const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'presets', 'preset_style', 'default_preset']);
+const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'label', 'presets', 'preset_labels', 'preset_style', 'default_preset']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'options_source', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
@@ -117,6 +118,7 @@ const COMPONENT_ACTION_KEYS = new Set([
   'show_if',
 ]);
 const EMPTY_STATE_KEYS = new Set(['title', 'description']);
+const LIST_VIEW_LABEL_KEYS = new Set(['new', 'filters', 'columns', 'selected', 'clear_selection', 'remove_filter', 'previous_page', 'next_page', 'select_all', 'select_row', 'search_facet', 'apply', 'more_actions']);
 const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']);
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
@@ -145,6 +147,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
+  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filters', 'actions', 'labels', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_actions'])],
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
@@ -431,6 +434,28 @@ function validateComponents(
         }
       }
     }
+    if (component.type === 'ListView') {
+      if (component.variant !== 'odoo') issues.push(`${path}.variant must be odoo`);
+      for (const key of ['create_action', 'row_open_action']) {
+        if (component[key] === undefined) continue;
+        requireString(component[key], `${path}.${key}`, issues);
+        if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
+          issues.push(`${path}.${key} references unknown action "${component[key]}"`);
+        }
+      }
+      if (component.row_actions !== undefined && !['buttons', 'menu'].includes(String(component.row_actions))) {
+        issues.push(`${path}.row_actions must be buttons or menu`);
+      }
+      if (component.labels !== undefined) {
+        requireRecord(component.labels, `${path}.labels`, issues);
+        if (isRecord(component.labels)) {
+          rejectUnknownKeys(component.labels, LIST_VIEW_LABEL_KEYS, `${path}.labels`, issues);
+          for (const [key, value] of Object.entries(component.labels)) {
+            requireString(value, `${path}.labels.${key}`, issues);
+          }
+        }
+      }
+    }
     if (component.type === 'ApprovalTimeline' && component.action_labels !== undefined) {
       if (!isRecord(component.action_labels)) {
         issues.push(`${path}.action_labels must be an object`);
@@ -603,7 +628,7 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
   requireRecord(value, path, issues);
   if (!isRecord(value)) return;
   rejectUnknownKeys(value, DATE_RANGE_KEYS, path, issues);
-  for (const key of ['from_field', 'to_field', 'from_label', 'to_label']) {
+  for (const key of ['from_field', 'to_field', 'from_label', 'to_label', 'label']) {
     if (value[key] !== undefined) requireString(value[key], `${path}.${key}`, issues);
   }
   if (value.presets !== undefined) {
@@ -616,6 +641,16 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
           issues.push(`${path}.presets[${index}] must be one of today, previous_month, week, month, quarter, year, last_12_months, all`);
         }
       });
+    }
+  }
+  if (value.preset_labels !== undefined) {
+    requireRecord(value.preset_labels, `${path}.preset_labels`, issues);
+    if (isRecord(value.preset_labels)) {
+      const allowed = new Set(['today', 'previous_month', 'week', 'month', 'quarter', 'year', 'last_12_months', 'all']);
+      for (const [key, label] of Object.entries(value.preset_labels)) {
+        if (!allowed.has(key)) issues.push(`${path}.preset_labels.${key} is not a supported preset`);
+        requireString(label, `${path}.preset_labels.${key}`, issues);
+      }
     }
   }
   if (value.preset_style !== undefined && value.preset_style !== 'select' && value.preset_style !== 'segmented') {

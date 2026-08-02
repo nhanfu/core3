@@ -125,7 +125,7 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   function updateBoundComponents(sourceId: string, data: any) {
     for (const entry of (boundComponents[sourceId] || [])) {
-      if (entry.compType === 'GridView' || entry.compType === 'DataGrid' || entry.compType === 'ScheduleGrid') {
+      if (entry.compType === 'GridView' || entry.compType === 'DataGrid' || entry.compType === 'ListView' || entry.compType === 'ScheduleGrid') {
         // Use the internal setState via our stored reference (bypasses the override)
         entry._origSetState({ rows: data.data || [], meta: data.meta }, true);
       } else if (entry.compType === 'StatRow') {
@@ -1050,6 +1050,202 @@ export async function renderPage(config: any, { container = document.body }: { c
     }
   }
 
+  async function renderListView(def: any, targetContainer: HTMLElement) {
+    const { ListView } = await import('./components/ListView.ts');
+    const sourceId = def.source;
+    const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+    const pageSize = def.page_size || 25;
+    const filters = (def.filters || []).map((filter: any) => {
+      if (!filter.options_source) return filter;
+      const rows = dataMap[filter.options_source]?.data;
+      return {
+        ...filter,
+        options: Array.isArray(rows)
+          ? rows.map((row: any) => ({ id: String(row.value ?? row.id ?? ''), label: String(row.label ?? row.name ?? row.value ?? row.id ?? '') }))
+          : [],
+      };
+    });
+    const columns = (def.columns || []).map((column: any, index: number) => ({
+      id: column.id || column.field || `column-${index}`,
+      field: column.field,
+      label: column.label || '',
+      align: column.align,
+      sortable: column.sortable !== false,
+      optional: column.optional,
+      rowActions: column.actions?.map((action: any) => ({
+        ...action,
+        visible: (row: any) => {
+          const actionDef = (config.actions || []).find((candidate: any) => candidate.id === action.id);
+          const permission = action.permission || actionDef?.permission;
+          return hasPermission(ctx.user, permission)
+            && (!action.show_if || Boolean(evalExpr(action.show_if, { ...ctx, row })));
+        },
+      })),
+      render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
+        if (column.type === 'StatusChip') {
+          const chip = document.createElement('span');
+          const tone = column.colors?.[String(value)] || column.tone || 'neutral';
+          chip.className = `data-grid-status data-grid-status-${tone}`;
+          chip.textContent = value == null || value === '' ? '—' : String(value);
+          cell.appendChild(chip);
+          return;
+        }
+        if (column.type === 'PrimaryEntityCell') {
+          const entity = document.createElement('div');
+          entity.className = 'data-grid-entity';
+          const copy = document.createElement('span');
+          copy.className = 'data-grid-entity-copy';
+          const primary = document.createElement('div');
+          primary.className = 'data-grid-primary';
+          primary.textContent = value == null || value === '' ? '—' : String(value);
+          copy.appendChild(primary);
+          if (column.secondary) {
+            const secondary = document.createElement('div');
+            secondary.className = 'data-grid-secondary';
+            secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
+            copy.appendChild(secondary);
+          }
+          entity.appendChild(copy);
+          cell.appendChild(entity);
+          return;
+        }
+        if (column.type === 'DateCell') {
+          if (value == null || value === '') {
+            cell.textContent = '—';
+            return;
+          }
+          const date = new Date(String(value));
+          cell.textContent = Number.isNaN(date.valueOf())
+            ? String(value)
+            : new Intl.DateTimeFormat(column.locale || 'vi-VN', {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              ...(String(value).includes('T') ? { hour: '2-digit', minute: '2-digit' } : {}),
+            }).format(date);
+          return;
+        }
+        cell.textContent = value == null || value === '' ? '—' : String(value);
+      } : undefined,
+    }));
+    const utilityActions = (def.actions || []).filter((action: any) => {
+      if (!hasPermission(ctx.user, action.permission)) return false;
+      return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
+    });
+    const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
+    const createAction = def.create_action && hasPermission(ctx.user, createDefinition?.permission)
+      ? { id: def.create_action, label: def.create_label || 'New' }
+      : undefined;
+    const translatedLabels = def.labels || {};
+    const comp = new ListView(
+      `list-view-${sourceId || def.id || Date.now()}`,
+      {
+        rows: sourceResult.data || [],
+        meta: sourceResult.meta || {},
+        filters: { ...(filterState[sourceId] || {}) },
+        selectedIds: [],
+      },
+      columns,
+      {
+        variant: 'odoo',
+        breadcrumbs: config.page?.breadcrumb || [config.title].filter(Boolean),
+        createAction,
+        search: def.search,
+        filters,
+        dateRange: def.date_range ? {
+          fromField: def.date_range.from_field,
+          toField: def.date_range.to_field,
+          fromLabel: def.date_range.from_label,
+          toLabel: def.date_range.to_label,
+          label: def.date_range.label,
+          presets: def.date_range.presets,
+          presetLabels: def.date_range.preset_labels,
+        } : undefined,
+        actions: utilityActions,
+        rowKey: def.row_key || 'id',
+        selectable: def.selectable === true,
+        columnChooser: def.column_chooser === true,
+        openAction: def.row_open_action,
+        rowActions: def.row_actions || 'buttons',
+        emptyState: def.empty_state,
+        labels: {
+          new: translatedLabels.new,
+          filters: translatedLabels.filters,
+          columns: translatedLabels.columns,
+          selected: translatedLabels.selected,
+          clearSelection: translatedLabels.clear_selection,
+          removeFilter: translatedLabels.remove_filter,
+          previousPage: translatedLabels.previous_page,
+          nextPage: translatedLabels.next_page,
+          selectAll: translatedLabels.select_all,
+          selectRow: (id: string) => `${translatedLabels.select_row || 'Select row'} ${id}`,
+          searchFacet: translatedLabels.search_facet,
+          apply: translatedLabels.apply,
+          moreActions: translatedLabels.more_actions,
+        },
+        onFilterChange: async (values: Record<string, unknown>) => {
+          await applySourceFilters(sourceId, values);
+        },
+        onPageChange: async (page: number) => {
+          const nextPage = Math.max(1, page);
+          const currentPageSize = paginationState[sourceId]?.top || pageSize;
+          const newSkip = (nextPage - 1) * currentPageSize;
+          paginationState[sourceId] = { skip: newSkip, top: currentPageSize, page: nextPage };
+          try {
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, currentPageSize, sortState[sourceId]);
+            updateBoundComponents(sourceId, data);
+          } catch (error) {
+            console.error('[page-renderer] list pagination fetch error:', error);
+          }
+        },
+        onSort: async (sort: { field: string; direction: 'asc' | 'desc' }) => {
+          sortState[sourceId] = sort;
+          paginationState[sourceId] = { skip: 0, top: paginationState[sourceId]?.top || pageSize, page: 1 };
+          try {
+            const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId].top, sort);
+            updateBoundComponents(sourceId, data);
+          } catch (error) {
+            console.error('[page-renderer] list sort fetch error:', error);
+          }
+        },
+      },
+    );
+    const _origSetState = comp.setState.bind(comp);
+    comp._onAction = async (actionId: string, params: any) => {
+      if (actionId.endsWith('.export')) {
+        const { downloadXlsx, toXlsx } = await import('./xlsx-utils.ts');
+        const exportColumns = (def.columns || []).filter((column: any) => column.field && column.field !== 'actions');
+        const current = dataMap[sourceId] || { data: [], meta: {} };
+        const total = Math.max(Number(current.meta?.total) || 0, Array.isArray(current.data) ? current.data.length : 0);
+        const exportRows: any[] = [];
+        try {
+          for (let skip = 0; skip < total; skip += 100) {
+            const result = await client.query(createQuery({
+              sourceId,
+              params: { ...pageParams, ...(filterState[sourceId] || {}) },
+              skip,
+              top: 100,
+            }));
+            exportRows.push(...(Array.isArray(result?.data) ? result.data : []));
+            if (!result?.data?.length) break;
+          }
+        } catch (error) {
+          console.error(`[page-renderer] Export fetch failed for "${sourceId}"`, error);
+        }
+        downloadXlsx(`${config.page?.id || sourceId}-export`, toXlsx(exportRows.length ? exportRows : (current.data || []), exportColumns));
+        return;
+      }
+      const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+      if (actionDef) await handleAction(actionDef, params?.row || params || {});
+    };
+    const slot = document.createElement('div');
+    slot.className = 'o-list-view-slot';
+    targetContainer.appendChild(slot);
+    comp.mount(slot);
+    if (sourceId) {
+      if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
+      boundComponents[sourceId].push({ comp, def, compType: 'ListView', _origSetState });
+    }
+  }
+
   async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
     const { ScheduleGrid } = await import('./components/ScheduleGrid.ts');
     const sourceResult = dataMap[def.source] || { data: [] };
@@ -1451,6 +1647,9 @@ export async function renderPage(config: any, { container = document.body }: { c
       case 'DataGrid':
         await renderDataGrid(def, targetContainer);
         break;
+      case 'ListView':
+        await renderListView(def, targetContainer);
+        break;
       case 'ScheduleGrid':
         await renderScheduleGrid(def, targetContainer);
         break;
@@ -1544,7 +1743,8 @@ export async function renderPage(config: any, { container = document.body }: { c
 
   // 5. Render the optional reference-style breadcrumb/page header.
   let pageHeader: HTMLElement | null = null;
-  if (config.page?.breadcrumb?.length) {
+  const ownsControlPanel = (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
+  if (config.page?.breadcrumb?.length && !ownsControlPanel) {
     pageHeader = document.createElement('div');
     pageHeader.className = 'page-header';
     const heading = document.createElement('div');
@@ -1574,7 +1774,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   }
 
   // 6. Render toolbar
-  if (config.toolbar?.length) {
+  if (config.toolbar?.length && !ownsControlPanel) {
     const toolbarDiv = document.createElement('div');
     toolbarDiv.className = pageHeader ? 'page-header-actions' : 'page-toolbar';
     toolbarDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;';
