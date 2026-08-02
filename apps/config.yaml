@@ -7,8 +7,6 @@ services:
       path:
         development: ${AUTH_DB_PATH:-:memory:}
         production: ${AUTH_DB_PATH:-./auth.duckdb}
-    organization:
-      enabled: true
   tms:
     database:
       driver: duckdb
@@ -17,13 +15,6 @@ services:
         production: ${TMS_DB_PATH:-./tms.duckdb}
 
 apps:
-  - id: organization
-    label: Organization & Access
-    description: Companies, branches, users, roles, and permissions
-    icon: users
-    route: /org/own-company
-    module: auth
-    enabled: true
   - id: sales
     label: Sales
     description: Customers, leads, opportunities, and quotations
