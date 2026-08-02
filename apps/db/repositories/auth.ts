@@ -19,7 +19,8 @@ export class AuthRepository {
   }
 
   async runStatements(sql: string): Promise<void> {
-    for (const statement of sql.split(';').map((value) => value.trim()).filter(Boolean)) await this.run(statement);
+    const noComments = sql.replace(/--[^\n]*/g, '');
+    for (const statement of noComments.split(';').map((value) => value.trim()).filter(Boolean)) await this.run(statement);
   }
 
   async findUserByEmail(email: string): Promise<any | null> {

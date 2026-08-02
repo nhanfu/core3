@@ -4,7 +4,7 @@ import { mkdirSync } from 'node:fs';
 import { discoverPages, translationMap } from '../../lib/server/discovery.ts';
 import { requestLanguage } from '../../lib/server/locale.ts';
 import { migrateDatabase } from '../../lib/server/migrations.ts';
-import { AuthRepository } from './repository.ts';
+import { AuthRepository } from '../../db/repositories/auth.ts';
 import { AuthService } from './service.ts';
 import { AUTH_SERVICE_KEY } from '../../lib/interfaces/auth.ts';
 
@@ -36,7 +36,8 @@ export default class AuthModule {
     const dbPath = database?.path || context.env.AUTH_DB_PATH || join(context.moduleRoot, 'auth.duckdb');
     this.db = new duckdb.Database(dbPath);
     const repository = new AuthRepository(this.db);
-    await migrateDatabase(repository, join(context.moduleRoot, 'db', 'migrations'));
+    context.registerService('database', this.db);
+    await migrateDatabase(repository, join(context.appsRoot, 'db', 'migrations'));
     this.service = new AuthService(repository, new TextEncoder().encode(context.env.AUTH_JWT_SECRET || context.env.JWT_SECRET || 'core3-auth-dev-secret-32chars!!!!'));
     context.registerService(AUTH_SERVICE_KEY, this.service);
 

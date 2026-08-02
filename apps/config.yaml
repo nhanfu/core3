@@ -5,14 +5,8 @@ services:
     database:
       driver: duckdb
       path:
-        development: ${AUTH_DB_PATH:-:memory:}
-        production: ${AUTH_DB_PATH:-./auth.duckdb}
-  tms:
-    database:
-      driver: duckdb
-      path:
-        development: ${TMS_DB_PATH:-:memory:}
-        production: ${TMS_DB_PATH:-./tms.duckdb}
+        development: ${CORE3_DB_PATH:-:memory:}
+        production: ${CORE3_DB_PATH:-./core3.duckdb}
 
 apps:
   - id: sales

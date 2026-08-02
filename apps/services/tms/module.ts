@@ -1,26 +1,20 @@
 // TMS application wiring. The host imports this module contract instead of
 // reaching into individual business services.
-import duckdb from 'duckdb';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { discoverPages } from '../../lib/server/discovery.ts';
-import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { createTmsApi } from './api.ts';
-import { initTmsDatabase } from './db/init.ts';
-import { DuckDbRepository as TmsRepository } from './services/repository.ts';
+import { DuckDbRepository as TmsRepository } from '../../db/repositories/tms.ts';
 
-export { DuckDbRepository } from './services/repository.ts';
+export { DuckDbRepository } from '../../db/repositories/tms.ts';
 export { xlsxToCsv } from './services/xlsx-import.ts';
 export { orderWorkflow } from './services/order-workflow.ts';
 export { financialWorkflow } from './services/financial-workflow.ts';
 export { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
-export { initTmsDatabase } from './db/init.ts';
-
 export class TmsModule {
   readonly id = 'tms';
   private db: any = null;
   private repository: any = null;
-  private root = '';
 
   install(context: { moduleRoot: string }): void {
     mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
@@ -33,14 +27,10 @@ export class TmsModule {
     registerApi(handler: (request: Request, url: URL) => Response | null | Promise<Response | null>): void;
     resolveService<T>(name: string): T;
   }): Promise<void> {
-    this.root = context.moduleRoot;
-    const database = context.config?.database as { path?: string } | undefined;
-    const dbPath = database?.path || context.env.TMS_DB_PATH || join(this.root, 'tms.duckdb');
-    const uploadRoot = context.env.TMS_UPLOAD_ROOT || join(this.root, '.data', 'uploads');
-    this.db = new duckdb.Database(dbPath);
+    const uploadRoot = context.env.TMS_UPLOAD_ROOT || join(context.moduleRoot, '.data', 'uploads');
+    this.db = context.resolveService<any>('database');
     this.repository = new TmsRepository(this.db);
     const authProvider: any = context.resolveService('auth');
-    await initTmsDatabase(this.repository, this.root);
 
     const discovered = discoverPages(context.appsRoot);
     const pageMaps = {
@@ -77,15 +67,11 @@ export class TmsModule {
   }
 
   async unload(): Promise<void> {
-    if (!this.db) return;
-    await new Promise<void>((resolve) => this.db.close(() => resolve()));
     this.db = null;
     this.repository = null;
   }
 
-  async uninstall(): Promise<void> {
-    if (this.repository) await migrateDatabase(this.repository, join(this.root, 'db', 'migrations'), 0);
-  }
+  async uninstall(): Promise<void> {}
 }
 
 export default TmsModule;

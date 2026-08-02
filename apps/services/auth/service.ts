@@ -8,7 +8,7 @@ import type {
   SecurityContext,
   User,
 } from '../../lib/interfaces/auth.ts';
-import { AuthRepository } from './repository.ts';
+import { AuthRepository } from '../../db/repositories/auth.ts';
 
 export class AuthService implements AuthServiceProtocol {
   private readonly listeners = new Set<(event: AuthEvent) => void | Promise<void>>();
