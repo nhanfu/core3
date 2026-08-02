@@ -178,6 +178,17 @@ describe('YAML page schema', () => {
         columns: [{ field: 'customer', label: 'Customer' }],
       },
       {
+        type: 'OdooFormView',
+        source: 'orders',
+        title_field: 'code',
+        status_field: 'status',
+        message_source: 'orders',
+        follower_source: 'orders',
+        message_action: 'add_line',
+        note_action: 'add_line',
+        fields: [{ field: 'customer', label: 'Customer' }],
+      },
+      {
         type: 'LineItemGrid',
         source: 'orders',
         title: 'Lines',

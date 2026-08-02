@@ -660,6 +660,17 @@ export function createTmsApi(ctx: TmsApiContext) {
       return json(order);
     }
 
+    if (handler === 'order_chatter') {
+      if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
+      if (actionDefinition.operation !== 'message' && actionDefinition.operation !== 'note') return apiError(400, 'Invalid order chatter operation');
+      return json(await repository.addOrderChatterEntry(
+        body.id,
+        actionDefinition.operation,
+        body.values && typeof body.values === 'object' ? body.values : {},
+        activityActor,
+      ));
+    }
+
     if (handler === 'financial_transition') {
       if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
       const transition = financialWorkflow.get(actionDefinition.operation);

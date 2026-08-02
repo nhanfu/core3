@@ -421,5 +421,19 @@ export class DataGrid extends BaseComponent {
         addButton('›', page + 1, page >= pages, labels.nextPage);
       }
     }
+
+    const footerStats = Array.isArray(this.state.footerStats) ? this.state.footerStats : [];
+    const footerRecord = this.state.footerRecord || {};
+    if (footerStats.length) {
+      const footer = html.take(root).section.className('o-document-totals').getContext();
+      const list = html.take(footer).div.className('o-document-totals-list').getContext();
+      for (const stat of footerStats) {
+        const item = html.take(list).div.className('o-document-total').getContext();
+        html.take(item).div.className('o-document-total-label').text(String(stat.label || 'Total'));
+        html.take(item).div.className('o-document-total-value').text(footerRecord[stat.field] == null || footerRecord[stat.field] === ''
+          ? '0'
+          : String(footerRecord[stat.field]));
+      }
+    }
   }
 }

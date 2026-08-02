@@ -43,3 +43,46 @@ vi:
   Tax rate (%): Thuế suất (%)
   Update freight lines: Cập nhật dòng cước
   "Delete charge line {{row.description}}?": "Xóa dòng cước {{row.description}}?"
+  Orders: Đơn hàng
+  Edit: Sửa
+  Order date: Ngày đơn
+  Shipment type: Loại hình
+  Transport method: Hình thức vận chuyển
+  Trip count: Số chuyến
+  Created by: Người tạo
+  Notes: Ghi chú
+  Order Lines: Dòng đơn hàng
+  The total amount is calculated from the order lines.: Tổng tiền được tính từ các dòng đơn hàng.
+  Add a line: Thêm dòng
+  No order lines: Chưa có dòng đơn hàng
+  Add a line to start calculating the order total.: Thêm dòng để bắt đầu tính tổng tiền đơn hàng.
+  "#": STT
+  Description: Nội dung
+  Amount: Thành tiền
+  Totals: Tổng cộng
+  Messages and activities: Tin nhắn và hoạt động
+  Send message: Gửi tin nhắn
+  Log note: Ghi chú
+  Message: Tin nhắn
+  Followers: Người theo dõi
+  Attachments: Tệp đính kèm
+  Edit Order: Sửa đơn hàng
+  Order number: Mã đơn hàng
+  Customer: Khách hàng
+  "Search customers...": "Tìm khách hàng..."
+  Sea: Đường biển
+  Rail: Đường sắt
+  Shipping details: Thông tin vận chuyển
+  Customer and notes: Khách hàng và ghi chú
+  Draft: Nháp
+  Pending approval: Chờ duyệt
+  Approved: Đã duyệt
+  Cancelled: Đã hủy
+  Submit for approval: Trình duyệt
+  Approve: Duyệt
+  Reject: Từ chối
+  Cancel: Hủy
+  "Submit order {{row.order_number}}?": "Trình duyệt đơn hàng {{row.order_number}}?"
+  "Approve order {{row.order_number}}?": "Duyệt đơn hàng {{row.order_number}}?"
+  "Reject and return order {{row.order_number}} to draft?": "Từ chối và chuyển đơn hàng {{row.order_number}} về nháp?"
+  "Cancel order {{row.order_number}}?": "Hủy đơn hàng {{row.order_number}}?"

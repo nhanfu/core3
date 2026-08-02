@@ -554,6 +554,29 @@ export class DuckDbRepository {
     );
   }
 
+  async addOrderChatterEntry(
+    orderId: string,
+    operation: 'message' | 'note',
+    values: Record<string, unknown>,
+    actor: { id?: string | null; name: string },
+  ) {
+    const content = String(values.content || '').trim();
+    if (!content) throw { status: 400, message: 'content required' };
+    if (content.length > 4000) throw { status: 400, message: 'content must not exceed 4000 characters' };
+    const [order] = await this.query('SELECT id, order_number FROM orders WHERE id = ?', [orderId]);
+    if (!order) throw { status: 404, message: 'Order not found' };
+    const action = operation === 'message' ? 'orders.message' : 'orders.note';
+    await this.recordActivity({
+      actorId: actor.id,
+      actorName: actor.name,
+      action,
+      resource: 'orders',
+      resourceId: orderId,
+      detail: content,
+    });
+    return { id: orderId, action, detail: content };
+  }
+
   async createChatThread(
     values: Record<string, unknown>,
     actor: { id?: string | null; name: string },

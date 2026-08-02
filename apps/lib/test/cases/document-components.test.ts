@@ -7,6 +7,7 @@ import { DocumentSummary } from '../../components/DocumentSummary.ts';
 import { LineItemGrid } from '../../components/LineItemGrid.ts';
 import { MoneySummary } from '../../components/MoneySummary.ts';
 import { MoneyInput } from '../../components/MoneyInput.ts';
+import { OdooFormView } from '../../components/OdooFormView.ts';
 import { ScheduleGrid } from '../../components/ScheduleGrid.ts';
 
 function mount(component: { mount(container: HTMLElement): void }) {
@@ -78,6 +79,52 @@ describe('document detail components', () => {
     expect(container.textContent).toContain('HCM - Ha Noi');
   });
 
+  it('renders an Odoo-style form sheet from declarative fields', () => {
+    const container = mount(new OdooFormView('order', {
+      record: { number: 'SO-001', customer: 'Acme Logistics', status: 'Draft', route: 'HCM - Hanoi' },
+      messages: [{ actor_name: 'Admin', action_label: 'Created', detail: 'Order created', created_at: '2026-08-02' }],
+      followers: [{ name: 'Admin' }],
+    }, {
+      title_field: 'number',
+      subtitle_field: 'customer',
+      status_field: 'status',
+      status_colors: { Draft: 'neutral' },
+      statusbar: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }],
+      header_actions: [{ id: 'submit', label: 'Submit for approval', variant: 'primary' }],
+      message_source: 'messages',
+      follower_source: 'followers',
+      fields: [{ field: 'route', label: 'Route' }],
+    }));
+
+    expect(container.querySelector('.o-form-sheet')).not.toBeNull();
+    expect(container.querySelector('.o-form-statusbar-step.is-current')?.textContent).toBe('Draft');
+    expect(container.querySelector('.o-form-actionbar')?.textContent).toContain('Submit for approval');
+    expect(container.textContent).toContain('SO-001');
+    expect(container.textContent).toContain('Route');
+    expect(container.textContent).toContain('HCM - Hanoi');
+    expect(container.textContent).toContain('Messages and activities');
+    expect(container.textContent).toContain('Followers');
+    expect(container.textContent).not.toContain('Attachments');
+  });
+
+  it('submits configured chatter actions with the current record id', async () => {
+    const component = new OdooFormView('order', { record: { id: 'order-1', number: 'SO-001' } }, {
+      title_field: 'number',
+      message_source: 'messages',
+      message_action: 'send_order_message',
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._transport = { submit: async (action: string, params: any) => { submitted.push({ action, params }); } };
+    const container = mount(component);
+    container.querySelector<HTMLButtonElement>('.o-form-chatter-primary')!.click();
+    const composer = container.querySelector<HTMLFormElement>('.o-form-composer')!;
+    const input = composer.querySelector<HTMLTextAreaElement>('textarea')!;
+    input.value = 'Please review this order';
+    composer.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await Promise.resolve();
+    expect(submitted).toEqual([{ action: 'send_order_message', params: { id: 'order-1', content: 'Please review this order' } }]);
+  });
+
   it('renders derived money values and activity events', () => {
     const money = mount(new MoneySummary('money', {
       record: { revenue: '12,000,000', profit: '3,000,000' },
@@ -128,9 +175,14 @@ describe('document detail components', () => {
   });
 
   it('keeps line-item grids on the shared DataGrid behavior', () => {
-    const grid = new LineItemGrid('lines', { rows: [] }, []);
+    const grid = new LineItemGrid('lines', {
+      rows: [],
+      footerStats: [{ label: 'Total amount', field: 'total' }],
+      footerRecord: { total: '18,500,000 ₫' },
+    }, []);
     expect(grid).toBeInstanceOf(DataGrid);
     expect(new ContactGrid('contacts', { rows: [] }, [])).toBeInstanceOf(DataGrid);
+    expect(mount(grid).querySelector('.o-document-totals')?.textContent).toContain('18,500,000 ₫');
   });
 
   it('renders resource rows across assignment dates', () => {

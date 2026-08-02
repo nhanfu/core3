@@ -137,6 +137,10 @@ export async function renderPage(config: any, { container = document.body }: { c
         entry.comp.setState(chartState(entry.def, data), true);
       } else if (entry.compType === 'SingleRecord') {
         entry._origSetState({ record: data.data || {} }, true);
+      } else if (entry.compType === 'OdooFormView') {
+        entry._origSetState({ [entry.stateKey]: data.data || (entry.stateKey === 'record' ? {} : []) }, true);
+      } else if (entry.compType === 'LineItemFooter') {
+        entry._origSetState({ footerRecord: data.data || {} }, true);
       } else if (entry.compType === 'TemplatePreview') {
         entry._origSetState({
           blocks: Array.isArray(data.data) ? data.data : [],
@@ -847,7 +851,8 @@ export async function renderPage(config: any, { container = document.body }: { c
     };
 
     const slot = document.createElement('div');
-    slot.style.marginBottom = '24px';
+    if (def.type === 'LineItemGrid') slot.className = 'o-form-section o-form-lines-slot';
+    else slot.style.marginBottom = '24px';
     targetContainer.appendChild(slot);
     comp.mount(slot);
 
@@ -865,6 +870,8 @@ export async function renderPage(config: any, { container = document.body }: { c
         : (await import('./components/DataGrid.ts')).DataGrid;
     const sourceId = def.source;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+    const footerSourceId = def.type === 'LineItemGrid' ? def.footer?.source : undefined;
+    const footerRecord = footerSourceId ? (dataMap[footerSourceId]?.data || {}) : {};
     const pageSize = def.page_size || 25;
     const pageSizeOptions = (def.page_size_options || [])
       .map(Number)
@@ -968,6 +975,8 @@ export async function renderPage(config: any, { container = document.body }: { c
         selectable: !!def.selectable,
         rowNumbers: def.row_numbers === true,
         emptyState: def.empty_state,
+        footerStats: def.footer?.stats || [],
+        footerRecord,
       },
       columns,
       {
@@ -1047,6 +1056,10 @@ export async function renderPage(config: any, { container = document.body }: { c
     if (sourceId) {
       if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
       boundComponents[sourceId].push({ comp, def, compType: 'DataGrid', _origSetState });
+    }
+    if (footerSourceId) {
+      if (!boundComponents[footerSourceId]) boundComponents[footerSourceId] = [];
+      boundComponents[footerSourceId].push({ comp, def, compType: 'LineItemFooter', _origSetState });
     }
   }
 
@@ -1322,6 +1335,60 @@ export async function renderPage(config: any, { container = document.body }: { c
     });
   }
 
+  async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
+    const { OdooFormView } = await import('./components/OdooFormView.ts');
+    const sourceResult = dataMap[def.source] || { data: {} };
+    const formDef = { ...def };
+    for (const key of ['message_action', 'note_action']) {
+      const action = (config.actions || []).find((candidate: any) => candidate.id === def[key]);
+      if (!action || !hasPermission(ctx.user, action.permission)) delete formDef[key];
+    }
+    formDef.header_actions = (def.header_actions || []).filter((button: any) => {
+      const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
+      return action
+        && hasPermission(ctx.user, action.permission)
+        && (!button.show_if || Boolean(evalExpr(button.show_if, ctx)));
+    });
+    const comp = new OdooFormView(
+      `odoo-form-view-${def.source || def.id || Date.now()}`,
+      {
+        record: sourceResult.data || {},
+        messages: dataMap[def.message_source]?.data || [],
+        followers: dataMap[def.follower_source]?.data || [],
+        attachments: dataMap[def.attachment_source]?.data || [],
+      },
+      formDef,
+    );
+    const slot = document.createElement('div');
+    slot.className = 'o-form-view-slot';
+    targetContainer.appendChild(slot);
+    comp._onAction = async (actionId: string, params: any) => {
+      const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+      if (!actionDef) return;
+      // A form chatter composes in place, but retains the normal YAML
+      // server_form contract for every other invocation of the same action.
+      if (actionDef.type === 'server_form' && typeof params?.content === 'string') {
+        await client.action(actionDef.action, {
+          ...resolveActionParams(actionDef.params, { ...ctx, row: params }),
+          values: { content: params.content },
+        });
+        if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+        return;
+      }
+      await handleAction(actionDef, params || {});
+    };
+    comp.mount(slot);
+    const bind = (sourceId: string | undefined, stateKey: string) => {
+      if (!sourceId) return;
+      if (!boundComponents[sourceId]) boundComponents[sourceId] = [];
+      boundComponents[sourceId].push({ comp, def: formDef, stateKey, compType: 'OdooFormView', _origSetState: comp.setState.bind(comp) });
+    };
+    bind(def.source, 'record');
+    bind(def.message_source, 'messages');
+    bind(def.follower_source, 'followers');
+    bind(def.attachment_source, 'attachments');
+  }
+
   async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
     const { MoneySummary } = await import('./components/MoneySummary.ts');
     const sourceResult = dataMap[def.source] || { data: {} };
@@ -1331,7 +1398,7 @@ export async function renderPage(config: any, { container = document.body }: { c
       def,
     );
     const slot = document.createElement('div');
-    slot.style.marginBottom = '24px';
+    slot.className = 'o-form-section o-form-totals-slot';
     targetContainer.appendChild(slot);
     comp.mount(slot);
     if (!boundComponents[def.source]) boundComponents[def.source] = [];
@@ -1699,6 +1766,9 @@ export async function renderPage(config: any, { container = document.body }: { c
       case 'DocumentSummary':
         await renderDocumentSummary(def, targetContainer);
         break;
+      case 'OdooFormView':
+        await renderOdooFormView(def, targetContainer);
+        break;
       case 'MoneySummary':
         await renderMoneySummary(def, targetContainer);
         break;
@@ -1773,6 +1843,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   container.innerHTML = '';
   const pageDiv = document.createElement('div');
   pageDiv.className = 'tms-page';
+  if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) pageDiv.classList.add('o-form-page');
   container.appendChild(pageDiv);
 
   // Set document title

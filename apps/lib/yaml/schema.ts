@@ -156,7 +156,8 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
-  ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
+  ['OdooFormView', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_label_field', 'status_colors', 'statusbar', 'fields', 'groups', 'header_actions', 'message_source', 'follower_source', 'attachment_source', 'chatter_label', 'message_label', 'note_label', 'message_action', 'note_action', 'message_placeholder', 'note_placeholder', 'send_label', 'log_label', 'follower_label', 'attachment_label', 'message_actor_field', 'message_action_field', 'message_detail_field', 'message_timestamp_field'])],
+  ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions', 'footer'])],
   ['ContactGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
   ['ApprovalTimeline', new Set(['type', 'source', 'title', 'empty_state', 'action_labels', 'actor_field', 'action_field', 'detail_field', 'timestamp_field'])],
@@ -434,6 +435,39 @@ function validateComponents(
     if (component.template_source !== undefined) {
       requireString(component.template_source, `${path}.template_source`, issues);
       requireSource(component.template_source, `${path}.template_source`, datasourceIds, options, issues);
+    }
+    if (component.type === 'OdooFormView') {
+      for (const key of ['message_source', 'follower_source', 'attachment_source']) {
+        if (component[key] !== undefined) requireSource(component[key], `${path}.${key}`, datasourceIds, options, issues);
+      }
+      for (const key of ['message_action', 'note_action']) {
+        if (component[key] === undefined) continue;
+        requireString(component[key], `${path}.${key}`, issues);
+        if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
+          issues.push(`${path}.${key} references unknown action "${component[key]}"`);
+        }
+      }
+      if (component.header_actions !== undefined) {
+        if (!Array.isArray(component.header_actions)) issues.push(`${path}.header_actions must be an array`);
+        const headerActions = Array.isArray(component.header_actions) ? component.header_actions : [];
+        for (const [index, button] of headerActions.entries()) {
+          requireRecord(button, `${path}.header_actions[${index}]`, issues);
+          requireString(button.id, `${path}.header_actions[${index}].id`, issues);
+          if (typeof button.id === 'string' && !actionIds.has(button.id)) {
+            issues.push(`${path}.header_actions[${index}].id references unknown action "${button.id}"`);
+          }
+        }
+      }
+    }
+    if (component.type === 'LineItemGrid' && component.footer !== undefined) {
+      requireRecord(component.footer, `${path}.footer`, issues);
+      if (isRecord(component.footer)) {
+        requireString(component.footer.source, `${path}.footer.source`, issues);
+        requireSource(component.footer.source, `${path}.footer.source`, datasourceIds, options, issues);
+        if (!Array.isArray(component.footer.stats) || !component.footer.stats.length) {
+          issues.push(`${path}.footer.stats must be a non-empty array`);
+        }
+      }
     }
     if (component.type === 'ChatWorkspace') {
       requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
