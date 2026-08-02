@@ -116,6 +116,15 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('thead')?.textContent).toContain('Status');
   });
 
+  it('notifies when the active view changes', () => {
+    const onViewChange = vi.fn();
+    const container = mount(create({ onViewChange }));
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="kanban"]')!.click();
+    expect(onViewChange).toHaveBeenCalledWith('kanban');
+    expect(container.querySelector('[data-kanban-group="Draft"]')).not.toBeNull();
+  });
+
   it('opens rows and keeps conditional commands in an overflow menu', async () => {
     const component = create();
     const submit = vi.fn().mockResolvedValue(undefined);

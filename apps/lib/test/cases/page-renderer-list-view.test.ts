@@ -6,6 +6,7 @@ describe('YAML Odoo ListView renderer', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     document.body.innerHTML = '';
+    window.history.replaceState({}, '', '/');
     delete window.__CORE3_USER__;
   });
 
@@ -45,5 +46,34 @@ describe('YAML Odoo ListView renderer', () => {
     expect(container.querySelector('[data-list-create="add"]')).not.toBeNull();
     expect(container.querySelector('[data-list-row-action="edit:o1"]')).not.toBeNull();
     expect(container.querySelector('[data-list-row-action="approve:o1"]')).toBeNull();
+  });
+
+  it('renders the view selected by the URL', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['orders.read'] };
+    window.history.replaceState({}, '', '/tms/orders?view=kanban');
+    const container = document.createElement('div');
+    await renderPage({
+      title: 'Orders',
+      page: { id: 'orders', breadcrumb: ['Management', 'Orders'] },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'orders',
+        views: [
+          { id: 'list', label: 'List' },
+          { id: 'kanban', label: 'Kanban', group_by: 'status', groups: [{ value: 'Draft', label: 'Draft' }], card: { title: 'number' } },
+        ],
+        columns: [{ field: 'number', label: 'Order' }],
+      }],
+    }, { container });
+
+    expect(container.querySelector('.o-kanban-board')).not.toBeNull();
+    expect(container.querySelector('.o-list-table')).toBeNull();
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="list"]')!.click();
+    expect(new URLSearchParams(window.location.search).get('view')).toBe('list');
   });
 });

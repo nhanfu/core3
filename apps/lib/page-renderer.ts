@@ -16,7 +16,7 @@
 
 import { evalExpr, interpolate } from './expr.ts';
 import { hasPermission, resolveAction } from './meta.ts';
-import { navigate, getPageParams } from './navigate.ts';
+import { navigate, getPageParams, replaceParams } from './navigate.ts';
 import { validatePageDefinition } from './yaml/schema.ts';
 import { appendIcon, hasIcon } from './components/Icon.ts';
 import { EventPopup } from './components/EventPopup.ts';
@@ -56,7 +56,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   }
 
   // 2. Build context
-  const pageParams = { ...getPageParams() };
+  const pageParams: Record<string, string> = { ...getPageParams() };
   const initialDateFilters: Record<string, string> = {};
   for (const component of config.components || []) {
     const range = component.type === 'ListToolbar' ? component.date_range : undefined;
@@ -1127,6 +1127,19 @@ export async function renderPage(config: any, { container = document.body }: { c
         cell.textContent = value == null || value === '' ? '—' : String(value);
       } : undefined,
     }));
+    const views = (def.views || []).map((view: any) => ({
+      id: view.id,
+      label: view.label || view.id,
+      icon: view.icon,
+      groupBy: view.group_by,
+      groups: view.groups_source
+        ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))
+        : view.groups,
+      card: view.card,
+      groupsSource: view.groups_source,
+    }));
+    const requestedView = String(pageParams.view || '');
+    const activeView = views.some((view: any) => view.id === requestedView) ? requestedView : undefined;
     const utilityActions = (def.actions || []).filter((action: any) => {
       if (!hasPermission(ctx.user, action.permission)) return false;
       return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
@@ -1143,6 +1156,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         meta: sourceResult.meta || {},
         filters: { ...(filterState[sourceId] || {}) },
         selectedIds: [],
+        ...(activeView ? { activeView } : {}),
       },
       columns,
       {
@@ -1166,17 +1180,10 @@ export async function renderPage(config: any, { container = document.body }: { c
         columnChooser: def.column_chooser === true,
         openAction: def.row_open_action,
         rowActions: def.row_actions || 'buttons',
-        views: (def.views || []).map((view: any) => ({
-          id: view.id,
-          label: view.label || view.id,
-          icon: view.icon,
-          groupBy: view.group_by,
-          groups: view.groups_source
-            ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))
-            : view.groups,
-          card: view.card,
-          groupsSource: view.groups_source,
-        })),
+        views,
+        onViewChange: (view: 'list' | 'kanban') => {
+          replaceParams({ ...getPageParams(), view });
+        },
         emptyState: def.empty_state,
         labels: {
           new: translatedLabels.new,

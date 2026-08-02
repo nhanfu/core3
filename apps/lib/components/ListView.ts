@@ -96,6 +96,7 @@ export type ListViewOptions = {
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
+  onViewChange?: (view: 'list' | 'kanban') => void;
 };
 
 /**
@@ -370,7 +371,10 @@ export class ListView extends BaseComponent {
           .getContext();
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : 'table'));
         button.setAttribute('aria-pressed', String(view.id === activeView.id));
-        button.addEventListener('click', () => this.setState({ activeView: view.id }));
+        button.addEventListener('click', () => {
+          this.setState({ activeView: view.id });
+          this.options.onViewChange?.(view.id);
+        });
       }
     }
 
