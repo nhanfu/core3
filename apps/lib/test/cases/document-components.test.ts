@@ -107,6 +107,20 @@ describe('document detail components', () => {
     expect(container.textContent).not.toContain('Attachments');
   });
 
+  it('preserves embedded panel content when the form redraws', () => {
+    const component = new OdooFormView('order', { record: { number: 'SO-001' } }, {
+      title_field: 'number',
+      content_slot: true,
+    });
+    const container = mount(component);
+    const embedded = component.getEmbeddedContent();
+    embedded.append(document.createTextNode('Order Lines'));
+
+    component.setState({ record: { number: 'SO-002' } });
+
+    expect(container.querySelector('.o-form-embedded-content')?.textContent).toBe('Order Lines');
+  });
+
   it('submits configured chatter actions with the current record id', async () => {
     const component = new OdooFormView('order', { record: { id: 'order-1', number: 'SO-001' } }, {
       title_field: 'number',

@@ -1387,6 +1387,7 @@ export async function renderPage(config: any, { container = document.body }: { c
     bind(def.message_source, 'messages');
     bind(def.follower_source, 'followers');
     bind(def.attachment_source, 'attachments');
+    return def.content_slot ? comp.getEmbeddedContent() : undefined;
   }
 
   async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
@@ -1767,8 +1768,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         await renderDocumentSummary(def, targetContainer);
         break;
       case 'OdooFormView':
-        await renderOdooFormView(def, targetContainer);
-        break;
+        return renderOdooFormView(def, targetContainer);
       case 'MoneySummary':
         await renderMoneySummary(def, targetContainer);
         break;
@@ -1964,8 +1964,13 @@ export async function renderPage(config: any, { container = document.body }: { c
   }
 
   // 8. Render components
+  let previousPanelContent: HTMLElement | undefined;
   for (const def of (config.components || [])) {
-    await renderComponentDef(def, pageDiv);
+    const target = def.mount_in === 'previous-panel' && previousPanelContent
+      ? previousPanelContent
+      : pageDiv;
+    const contentSlot = await renderComponentDef(def, target);
+    previousPanelContent = contentSlot instanceof HTMLElement ? contentSlot : undefined;
   }
 
   return { dataMap, ctx };

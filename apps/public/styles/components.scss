@@ -671,6 +671,7 @@
 .o-form-statusbar-step { position: relative; min-width: 110px; padding: 7px 16px; color: var(--o-form-muted); background: var(--o-form-bg); font-size: 12px; font-weight: 600; text-align: center; }.o-form-statusbar-step + .o-form-statusbar-step { border-left: 1px solid var(--o-form-border); }.o-form-statusbar-step.is-current { color: #fff; background: var(--o-form-action); }
 .o-form-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 48px; padding-top: 28px; }
 .o-form-field-group + .o-form-field-group { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--o-form-border); }.o-form-group-title { margin: 0; color: var(--o-form-text); font-size: 15px; font-weight: 600; }
+.o-form-embedded-content { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--o-form-border); }.o-form-embedded-content > .o-form-section { padding: 0; }
 .o-form-field-wide { grid-column: 1 / -1; }
 .o-form-field-label { color: var(--o-form-muted); font-size: 12px; font-weight: 500; }
 .o-form-field-value { min-height: 22px; margin-top: 3px; color: var(--o-form-text); font-size: 14px; }

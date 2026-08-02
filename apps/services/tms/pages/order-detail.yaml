@@ -118,6 +118,7 @@ components:
     message_action_field: action_label
     message_detail_field: detail
     message_timestamp_field: created_at
+    content_slot: true
     groups:
       - title: Shipping details
         fields:
@@ -132,6 +133,7 @@ components:
           - { field: created_by, label: Created by }
           - { field: notes, label: Notes, type: textarea, wide: true }
   - type: LineItemGrid
+    mount_in: previous-panel
     source: order_detail_lines
     title: Order Lines
     description: The total amount is calculated from the order lines.

@@ -9,6 +9,7 @@ import { appendIcon } from './Icon.ts';
  */
 export class OdooFormView extends BaseComponent {
   def: any;
+  private embeddedContent: HTMLElement | null = null;
 
   constructor(id: string, state: any = {}, def: any = {}) {
     super(id, state);
@@ -76,6 +77,8 @@ export class OdooFormView extends BaseComponent {
     } else {
       renderFields(this.def.fields || []);
     }
+
+    if (this.def.content_slot) sheet.appendChild(this.getEmbeddedContent());
 
     if (!this.def.message_source && !this.def.follower_source && !this.def.attachment_source) return;
     const chatter = document.createElement('aside');
@@ -193,5 +196,13 @@ export class OdooFormView extends BaseComponent {
       stream.appendChild(entry);
     }
     chatter.appendChild(stream);
+  }
+
+  getEmbeddedContent() {
+    if (!this.embeddedContent) {
+      this.embeddedContent = document.createElement('div');
+      this.embeddedContent.className = 'o-form-embedded-content';
+    }
+    return this.embeddedContent;
   }
 }
