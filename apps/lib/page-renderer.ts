@@ -1145,6 +1145,8 @@ export async function renderPage(config: any, { container = document.body }: { c
       label: view.label || view.id,
       icon: view.icon,
       groupBy: view.group_by,
+      dateField: view.date_field,
+      endDateField: view.end_date_field,
       groups: view.groups_source
         ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))
         : view.groups,
@@ -1194,7 +1196,7 @@ export async function renderPage(config: any, { container = document.body }: { c
         openAction: def.row_open_action,
         rowActions: def.row_actions || 'buttons',
         views,
-        onViewChange: (view: 'list' | 'kanban') => {
+        onViewChange: (view: 'list' | 'kanban' | 'calendar') => {
           replaceParams({ ...getPageParams(), view });
         },
         emptyState: def.empty_state,
@@ -1248,7 +1250,7 @@ export async function renderPage(config: any, { container = document.body }: { c
           await refreshSources([sourceId, ...(statusSource ? [statusSource] : [])]);
           if (statusSource) {
             for (const view of comp.options.views || []) {
-              if (view.groupsSource !== statusSource) continue;
+              if (!('groupsSource' in view) || view.groupsSource !== statusSource) continue;
               view.groups = (dataMap[statusSource]?.data || []).map((group: any) => ({
                 value: String(group.value), label: String(group.label || group.value), color: group.color,
               }));

@@ -77,6 +77,7 @@ describe('YAML page schema', () => {
       views: [
         { id: 'list', label: 'List' },
         { id: 'kanban', label: 'Kanban', group_by: 'status', card: { title: 'code' } },
+        { id: 'calendar', label: 'Calendar', date_field: 'order_date', card: { title: 'code' } },
       ],
       filters: [{ field: 'status', label: 'Status', options: ['Draft'] }],
       columns: [{ field: 'code', label: 'Code', optional: 'show' }],

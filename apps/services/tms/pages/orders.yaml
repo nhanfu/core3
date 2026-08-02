@@ -128,6 +128,13 @@ components:
             - { field: shipment_type, label: Shipment type }
             - { field: route, label: Route }
             - { field: total_amount_display, label: Total }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: order_date
+        card:
+          title: order_number
+          subtitle: customer_name
     page_size: 50
     column_chooser: true
     row_key: id

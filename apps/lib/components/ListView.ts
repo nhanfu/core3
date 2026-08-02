@@ -3,6 +3,7 @@ import { BaseComponent } from './BaseComponent.ts';
 import { appendBadge } from './helpers.ts';
 import { appendIcon } from './Icon.ts';
 import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
+import { CalendarView, type CalendarViewDefinition } from './CalendarView.ts';
 import { resolveDatePreset, type DateRangePreset } from './ListToolbar.ts';
 
 type ListRow = Record<string, unknown>;
@@ -43,7 +44,7 @@ export type ListViewAction = {
   params?: Record<string, unknown>;
 };
 
-export type ListViewMode = KanbanViewDefinition;
+export type ListViewMode = KanbanViewDefinition | CalendarViewDefinition;
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
@@ -89,7 +90,7 @@ export type ListViewOptions = {
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
-  onViewChange?: (view: 'list' | 'kanban') => void;
+  onViewChange?: (view: 'list' | 'kanban' | 'calendar') => void;
 };
 
 /**
@@ -188,12 +189,13 @@ export class ListView extends BaseComponent {
     this.drawNavigation(main, meta, visibleColumnIds, labels);
     this.drawFacets(controlPanel, filters, labels);
 
-    if (this.activeView().id === 'kanban') {
+    const activeView = this.activeView();
+    if (activeView.id === 'kanban') {
       const kanban = new KanbanView(
         `kanban-view-${this.id}`,
         { rows },
         {
-          view: this.activeView(),
+          view: activeView,
           rowKey: this.options.rowKey,
           openAction: this.options.openAction,
           onMove: this.options.onKanbanMove,
@@ -203,6 +205,17 @@ export class ListView extends BaseComponent {
       kanban.parent = this;
       this.children.push(kanban);
       kanban.mount(root);
+      return;
+    }
+    if (activeView.id === 'calendar') {
+      const calendar = new CalendarView(
+        `calendar-view-${this.id}`,
+        { rows },
+        { view: activeView, rowKey: this.options.rowKey, openAction: this.options.openAction },
+      );
+      calendar.parent = this;
+      this.children.push(calendar);
+      calendar.mount(root);
       return;
     }
 
@@ -376,7 +389,7 @@ export class ListView extends BaseComponent {
           .attr('aria-label', view.label)
           .attr('title', view.label)
           .getContext();
-        appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : 'table'));
+        appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
         button.setAttribute('aria-pressed', String(view.id === activeView.id));
         button.addEventListener('click', () => {
           this.setState({ activeView: view.id });

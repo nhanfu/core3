@@ -509,13 +509,14 @@ function validateComponents(
             const viewPath = `${path}.views[${viewIndex}]`;
             requireRecord(view, viewPath, issues);
             if (!isRecord(view)) return;
-            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'groups', 'groups_source', 'card']), viewPath, issues);
+            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
-            if (!['list', 'kanban'].includes(String(view.id))) issues.push(`${viewPath}.id must be list or kanban`);
+            if (!['list', 'kanban', 'calendar'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, or calendar`);
             if (typeof view.id === 'string' && viewIds.has(view.id)) issues.push(`${viewPath}.id must be unique`);
             if (typeof view.id === 'string') viewIds.add(view.id);
             if (view.id === 'kanban' && typeof view.group_by !== 'string') issues.push(`${viewPath}.group_by is required for kanban`);
+            if (view.id === 'calendar' && typeof view.date_field !== 'string') issues.push(`${viewPath}.date_field is required for calendar`);
           });
         }
       }
