@@ -1053,6 +1053,7 @@ export async function renderPage(config: any, { container = document.body }: { c
   async function renderListView(def: any, targetContainer: HTMLElement) {
     const { ListView } = await import('./components/ListView.ts');
     const sourceId = def.source;
+    const sourceWorkflow = (config.datasources || []).find((source: any) => source.id === sourceId)?.workflow;
     const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
     const pageSize = def.page_size || 25;
     const filters = (def.filters || []).map((filter: any) => {
@@ -1170,8 +1171,11 @@ export async function renderPage(config: any, { container = document.body }: { c
           label: view.label || view.id,
           icon: view.icon,
           groupBy: view.group_by,
-          groups: view.groups,
+          groups: view.groups_source
+            ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))
+            : view.groups,
           card: view.card,
+          groupsSource: view.groups_source,
         })),
         emptyState: def.empty_state,
         labels: {
@@ -1214,6 +1218,24 @@ export async function renderPage(config: any, { container = document.body }: { c
             console.error('[page-renderer] list sort fetch error:', error);
           }
         },
+        onKanbanMove: sourceWorkflow ? async (row: any, status: string) => {
+          await client.workflow(sourceId, 'move', { id: String(row[def.row_key || 'id']), status });
+          await refreshSources([sourceId]);
+        } : undefined,
+        onKanbanAddStatus: sourceWorkflow?.allow_add ? async (label: string) => {
+          await client.workflow(sourceId, 'add_status', { label });
+          const statusSource = sourceWorkflow.status_source;
+          await refreshSources([sourceId, ...(statusSource ? [statusSource] : [])]);
+          if (statusSource) {
+            for (const view of comp.options.views || []) {
+              if (view.groupsSource !== statusSource) continue;
+              view.groups = (dataMap[statusSource]?.data || []).map((group: any) => ({
+                value: String(group.value), label: String(group.label || group.value), color: group.color,
+              }));
+            }
+            comp.redraw();
+          }
+        } : undefined,
       },
     );
     const _origSetState = comp.setState.bind(comp);

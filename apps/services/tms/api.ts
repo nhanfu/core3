@@ -418,6 +418,28 @@ export function createTmsApi(ctx: TmsApiContext) {
     return json(result);
   }
 
+  const workflowMatch = pathname.match(/^\/api\/datasources\/([A-Za-z0-9_-]+)\/workflow$/);
+  if (workflowMatch && method === 'POST') {
+    const source = SOURCES.get(workflowMatch[1]);
+    const workflow = source?.workflow;
+    if (!workflow || workflow.handler !== 'order_status') return apiError(404, 'Unknown datasource workflow');
+    requirePerm(String(workflow.permission));
+    const body = await req.json() as any;
+    if (body.operation === 'add_status') {
+      if (!workflow.allow_add) return apiError(403, 'Adding statuses is not allowed');
+      return json(await repository.addOrderWorkflowStatus(String(body.label || ''), activityActor));
+    }
+    if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
+    if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
+    const [status] = await repository.query("SELECT code FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' AND code = ?", [body.status]);
+    if (!status) return apiError(400, 'Unknown order status');
+    const [current] = await repository.query('SELECT status FROM order_workflow_states WHERE order_id = ?', [body.id]);
+    const transition = (workflow.transitions || []).find((rule: any) => (rule.from === '*' || rule.from === current?.status) && (rule.to === '*' || rule.to === body.status));
+    if (!transition) return apiError(409, 'This status transition is not allowed');
+    requirePerm(String(transition.permission || workflow.permission));
+    return json(await repository.setOrderWorkflowStatus(body.id, body.status, activityActor));
+  }
+
   // ── POST /api/actions/:name ───────────────────────────────────────────────
   const namedActionMatch = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
   if (namedActionMatch && method === 'POST') {

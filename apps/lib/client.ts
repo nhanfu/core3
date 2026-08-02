@@ -66,6 +66,13 @@ class Client {
     });
   }
 
+  async workflow(sourceId: string, operation: string, params = {}) {
+    return this._fetch(`${this._resolveBase()}/datasources/${encodeURIComponent(sourceId)}/workflow`, {
+      method: 'POST',
+      body: JSON.stringify({ operation, ...params }),
+    });
+  }
+
   async patchMany(vms) {
     return this._fetch(`${this._resolveBase()}/patch-many`, {
       method: 'POST',

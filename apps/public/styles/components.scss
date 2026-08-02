@@ -498,7 +498,8 @@
 .o-kanban-column-title::before { width: 8px; height: 8px; border-radius: 50%; background: var(--o-list-muted); content: ''; }
 .o-kanban-column-title.is-amber::before { background: #d69621; }.o-kanban-column-title.is-green::before { background: #2b9a6d; }.o-kanban-column-title.is-red::before { background: #d9534f; }
 .o-kanban-count { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: var(--o-list-bg); color: var(--o-list-muted); font-size: 12px; text-align: center; }
-.o-kanban-cards { display: flex; min-height: 30px; flex-direction: column; gap: 8px; overflow-y: auto; padding: 0 8px 8px; }
+.o-kanban-add-status { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; border: 0; border-radius: 3px; background: transparent; color: var(--o-list-muted); cursor: pointer; }.o-kanban-add-status:hover { background: var(--o-list-bg); color: var(--o-list-action); }.o-kanban-add-status svg { width: 15px; height: 15px; }
+.o-kanban-cards { display: flex; min-height: 30px; flex-direction: column; gap: 8px; overflow-y: auto; padding: 0 8px 8px; }.o-kanban-cards.is-drop-target { background: color-mix(in srgb, var(--o-list-action) 12%, transparent); outline: 1px dashed var(--o-list-action); outline-offset: -4px; }
 .o-kanban-card { padding: 12px; border: 1px solid var(--o-list-border); border-radius: 4px; background: var(--o-list-bg); box-shadow: 0 1px 2px rgb(0 0 0 / 8%); cursor: pointer; }
 .o-kanban-card:hover { border-color: var(--o-list-action); box-shadow: 0 2px 6px rgb(0 0 0 / 13%); }.o-kanban-card:focus-visible { outline: 2px solid var(--o-list-action); outline-offset: 2px; }
 .o-kanban-card-title { margin: 0; color: var(--o-list-action); font-size: 14px; font-weight: 600; }.o-kanban-card-subtitle { margin: 4px 0 0; color: var(--o-list-text); font-size: 13px; }

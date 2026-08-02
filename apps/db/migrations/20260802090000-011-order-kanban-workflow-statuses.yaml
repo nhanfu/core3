@@ -1,0 +1,19 @@
+up: |
+  CREATE TABLE IF NOT EXISTS order_workflow_states_next (
+    order_id VARCHAR PRIMARY KEY REFERENCES orders(id),
+    status VARCHAR NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  INSERT INTO order_workflow_states_next(order_id, status, updated_at)
+  SELECT order_id, status, updated_at FROM order_workflow_states
+  WHERE NOT EXISTS (SELECT 1 FROM order_workflow_states_next next WHERE next.order_id = order_workflow_states.order_id);
+  DROP TABLE order_workflow_states;
+  ALTER TABLE order_workflow_states_next RENAME TO order_workflow_states;
+  INSERT INTO system_configs(id, kind, code, name, config_value, description, status, sort_order) VALUES
+    ('sys-order-status-draft', 'trip_status', 'Draft', 'Draft', 'order_status:neutral', 'Initial order state', 'Active', 10),
+    ('sys-order-status-pending', 'trip_status', 'Pending Approval', 'Pending approval', 'order_status:amber', 'Awaiting approval', 'Active', 20),
+    ('sys-order-status-approved', 'trip_status', 'Approved', 'Approved', 'order_status:green', 'Approved order', 'Active', 30),
+    ('sys-order-status-cancelled', 'trip_status', 'Cancelled', 'Cancelled', 'order_status:red', 'Cancelled order', 'Active', 40)
+  ON CONFLICT(id) DO NOTHING;
+down: |
+  DELETE FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%';

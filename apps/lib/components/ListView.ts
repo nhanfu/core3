@@ -49,6 +49,7 @@ export type ListViewMode = {
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
   card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
+  groupsSource?: string;
 };
 
 export type ListViewOptions = {
@@ -73,6 +74,8 @@ export type ListViewOptions = {
   openAction?: string;
   rowActions?: 'buttons' | 'menu';
   views?: ListViewMode[];
+  onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
+  onKanbanAddStatus?: (label: string) => Promise<void> | void;
   emptyState?: { title?: string; description?: string };
   labels?: {
     new?: string;
@@ -473,7 +476,26 @@ export class ListView extends BaseComponent {
       if (group.color) heading.classList.add(`is-${group.color}`);
       html.take(heading).span.text(group.label);
       html.take(header).span.className('o-kanban-count').text(String(group.rows.length));
+      if (this.options.onKanbanAddStatus && group === groups[groups.length - 1]) {
+        const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', 'Add status').attr('title', 'Add status').getContext();
+        appendIcon(add, 'plus');
+        add.addEventListener('click', () => {
+          const label = window.prompt('Status name');
+          if (label?.trim()) void this.options.onKanbanAddStatus?.(label.trim());
+        });
+      }
       const cards = html.take(column).div.className('o-kanban-cards').getContext();
+      if (this.options.onKanbanMove) {
+        cards.addEventListener('dragover', event => { event.preventDefault(); cards.classList.add('is-drop-target'); });
+        cards.addEventListener('dragleave', () => cards.classList.remove('is-drop-target'));
+        cards.addEventListener('drop', event => {
+          event.preventDefault();
+          cards.classList.remove('is-drop-target');
+          const id = event.dataTransfer?.getData('application/x-core3-row-id');
+          const row = rows.find(candidate => this.rowId(candidate, rows.indexOf(candidate)) === id);
+          if (row && String(row[groupBy] ?? '') !== group.value) void this.options.onKanbanMove(row, group.value);
+        });
+      }
       for (const [index, row] of group.rows.entries()) this.drawKanbanCard(cards, row, index, view);
     }
   }
@@ -489,6 +511,13 @@ export class ListView extends BaseComponent {
           event.preventDefault();
           void this.submit(this.options.openAction!, { row });
         }
+      });
+    }
+    if (this.options.onKanbanMove) {
+      card.draggable = true;
+      card.addEventListener('dragstart', event => {
+        event.dataTransfer?.setData('application/x-core3-row-id', this.rowId(row, index));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
       });
     }
     const title = row[view.card?.title || 'name'];

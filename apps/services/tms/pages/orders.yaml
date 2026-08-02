@@ -19,7 +19,7 @@ datasources:
           WHEN 'Pending Approval' THEN 'Đang duyệt'
           WHEN 'Approved' THEN 'Đã duyệt'
           WHEN 'Cancelled' THEN 'Đã hủy'
-          ELSE o.status
+          ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
         END AS status_label,
         o.shipment_type, o.route, o.transport_method, o.trip_count,
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
@@ -37,6 +37,17 @@ datasources:
           OR o.customer_legal_name ILIKE '%' || :q || '%'
           OR o.route ILIKE '%' || :q || '%')
       ORDER BY o.order_date DESC, o.created_at DESC
+    workflow:
+      handler: order_status
+      permission: orders.write
+      status_source: order_statuses
+      allow_add: true
+      transitions:
+        - { from: '*', to: '*', permission: orders.write }
+  - id: order_statuses
+    single: false
+    permission: orders.read
+    query: "SELECT code AS value, name AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' ORDER BY sort_order, code"
   - id: order_customer_lookup
     single: false
     permission: orders.read
@@ -108,11 +119,7 @@ components:
         label: Kanban
         icon: dashboard
         group_by: status
-        groups:
-          - { value: Draft, label: Draft, color: neutral }
-          - { value: Pending Approval, label: Pending approval, color: amber }
-          - { value: Approved, label: Approved, color: green }
-          - { value: Cancelled, label: Cancelled, color: red }
+        groups_source: order_statuses
         card:
           title: order_number
           subtitle: customer_name

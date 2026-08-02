@@ -12,6 +12,7 @@ const ICON_PATHS: Record<string, string> = {
   message: '<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.3 8.3 0 0 1-3.4-.7L4 20l1.3-3.3A7.2 7.2 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/>',
   panel: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
   x: '<path d="m6 6 12 12M18 6 6 18"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
   'more-vertical': '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',

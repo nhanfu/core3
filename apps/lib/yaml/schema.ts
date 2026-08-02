@@ -80,7 +80,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -262,6 +262,17 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);
+    }
+    if (source.workflow !== undefined) {
+      requireRecord(source.workflow, `${path}.workflow`, issues);
+      if (isRecord(source.workflow)) {
+        rejectUnknownKeys(source.workflow, new Set(['handler', 'permission', 'status_source', 'allow_add', 'transitions']), `${path}.workflow`, issues);
+        requireString(source.workflow.handler, `${path}.workflow.handler`, issues);
+        requireString(source.workflow.permission, `${path}.workflow.permission`, issues);
+        if (source.workflow.status_source !== undefined) requireString(source.workflow.status_source, `${path}.workflow.status_source`, issues);
+        if (source.workflow.allow_add !== undefined && typeof source.workflow.allow_add !== 'boolean') issues.push(`${path}.workflow.allow_add must be a boolean`);
+        if (!Array.isArray(source.workflow.transitions) || !source.workflow.transitions.length) issues.push(`${path}.workflow.transitions must be a non-empty array`);
+      }
     }
     if (typeof source.id === 'string') addUnique(ids, source.id, `${path}.id`, 'datasource', issues);
   });
@@ -464,7 +475,7 @@ function validateComponents(
             const viewPath = `${path}.views[${viewIndex}]`;
             requireRecord(view, viewPath, issues);
             if (!isRecord(view)) return;
-            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'groups', 'card']), viewPath, issues);
+            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'groups', 'groups_source', 'card']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
             if (!['list', 'kanban'].includes(String(view.id))) issues.push(`${viewPath}.id must be list or kanban`);

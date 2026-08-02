@@ -138,7 +138,8 @@ describe('Odoo ListView', () => {
   });
 
   it('switches to a YAML-declared Kanban board and opens its cards', async () => {
-    const component = create();
+    const onKanbanMove = vi.fn();
+    const component = create({ onKanbanMove });
     const submit = vi.fn().mockResolvedValue(undefined);
     component._transport = { submit };
     const container = mount(component);
@@ -151,6 +152,13 @@ describe('Odoo ListView', () => {
     container.querySelector<HTMLElement>('[data-kanban-group="Draft"] [data-row-id="o1"]')!.click();
     await Promise.resolve();
     expect(submit).toHaveBeenCalledWith('view', { row: rows[0] });
+
+    const approvedCards = container.querySelector<HTMLElement>('[data-kanban-group="Approved"] .o-kanban-cards')!;
+    approvedCards.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+    const drop = new Event('drop', { bubbles: true, cancelable: true }) as DragEvent;
+    Object.defineProperty(drop, 'dataTransfer', { value: { getData: () => 'o1' } });
+    approvedCards.dispatchEvent(drop);
+    expect(onKanbanMove).toHaveBeenCalledWith(rows[0], 'Approved');
 
     container.querySelector<HTMLButtonElement>('[data-list-view="list"]')!.click();
     expect(container.querySelector('.o-list-table')).not.toBeNull();
