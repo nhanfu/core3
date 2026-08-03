@@ -3,7 +3,6 @@ import { requestLanguage } from '../../lib/server/locale.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { xlsxToCsv } from './services/xlsx-import.ts';
-import { orderWorkflow } from './services/order-workflow.ts';
 import { financialWorkflow } from './services/financial-workflow.ts';
 import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 
@@ -717,7 +716,9 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if (handler === 'order_transition') {
       if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = orderWorkflow.get(actionDefinition.operation);
+      const transitionSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : SOURCES.get('orders');
+      const transition = transitionSource?.workflow?.actions?.[actionDefinition.operation];
+      if (!transition) return apiError(409, 'This order transition is not configured');
       const order = await repository.transitionOrder(
         body.id,
         transition.from,

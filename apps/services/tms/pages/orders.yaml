@@ -44,6 +44,11 @@ datasources:
       allow_add: true
       transitions:
         - { from: '*', to: '*', permission: orders.write }
+      actions:
+        submit_for_approval: { from: [Draft], to: Pending Approval }
+        approve: { from: [Pending Approval], to: Approved }
+        reject: { from: [Pending Approval], to: Draft }
+        cancel: { from: [Draft, Pending Approval, Approved], to: Cancelled }
   - id: order_statuses
     single: false
     permission: orders.read
@@ -242,6 +247,7 @@ actions:
   - id: submit_order
     type: server
     permission: orders.write
+    datasource: orders
     action: orders.submit_for_approval
     handler: order_transition
     operation: submit_for_approval
@@ -250,6 +256,7 @@ actions:
   - id: approve_order
     type: server
     permission: orders.approve
+    datasource: orders
     action: orders.approve
     handler: order_transition
     operation: approve
@@ -258,6 +265,7 @@ actions:
   - id: reject_order
     type: server
     permission: orders.approve
+    datasource: orders
     action: orders.reject
     handler: order_transition
     operation: reject
@@ -266,6 +274,7 @@ actions:
   - id: cancel_order
     type: server
     permission: orders.write
+    datasource: orders
     action: orders.cancel
     handler: order_transition
     operation: cancel

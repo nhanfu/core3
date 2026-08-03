@@ -295,12 +295,24 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     if (source.workflow !== undefined) {
       requireRecord(source.workflow, `${path}.workflow`, issues);
       if (isRecord(source.workflow)) {
-        rejectUnknownKeys(source.workflow, new Set(['handler', 'permission', 'status_source', 'allow_add', 'transitions']), `${path}.workflow`, issues);
+        rejectUnknownKeys(source.workflow, new Set(['handler', 'permission', 'status_source', 'allow_add', 'transitions', 'actions']), `${path}.workflow`, issues);
         requireString(source.workflow.handler, `${path}.workflow.handler`, issues);
         requireString(source.workflow.permission, `${path}.workflow.permission`, issues);
         if (source.workflow.status_source !== undefined) requireString(source.workflow.status_source, `${path}.workflow.status_source`, issues);
         if (source.workflow.allow_add !== undefined && typeof source.workflow.allow_add !== 'boolean') issues.push(`${path}.workflow.allow_add must be a boolean`);
         if (!Array.isArray(source.workflow.transitions) || !source.workflow.transitions.length) issues.push(`${path}.workflow.transitions must be a non-empty array`);
+        if (source.workflow.actions !== undefined) {
+          requireRecord(source.workflow.actions, `${path}.workflow.actions`, issues);
+          if (isRecord(source.workflow.actions)) {
+            for (const [actionName, transition] of Object.entries(source.workflow.actions)) {
+              requireRecord(transition, `${path}.workflow.actions.${actionName}`, issues);
+              if (isRecord(transition)) {
+                if (!Array.isArray(transition.from) || transition.from.some((status) => !isString(status))) issues.push(`${path}.workflow.actions.${actionName}.from must be an array of strings`);
+                requireString(transition.to, `${path}.workflow.actions.${actionName}.to`, issues);
+              }
+            }
+          }
+        }
       }
     }
     if (typeof source.id === 'string') addUnique(ids, source.id, `${path}.id`, 'datasource', issues);
