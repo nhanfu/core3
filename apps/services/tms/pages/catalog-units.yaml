@@ -10,6 +10,11 @@ datasources:
   - id: units
     single: false
     permission: catalog.read
+    table: master_data
+    mutations:
+      create: { permission: catalog.write, scope: unit, fields: [code, name, description, sort_order, status], timestamps: true }
+      update: { permission: catalog.write, scope: unit, fields: [code, name, description, sort_order, status], timestamps: true }
+      delete: { permission: catalog.write, scope: unit }
     query: |
       SELECT id, code, name, description, status, sort_order, created_at
       FROM master_data
@@ -95,6 +100,7 @@ actions:
   - id: add_unit
     type: form
     permission: catalog.write
+    datasource: units
     title: Add units of measure
     table: master_data
     scope: unit
@@ -109,6 +115,7 @@ actions:
   - id: edit_unit
     type: form
     permission: catalog.write
+    datasource: units
     title: Update units of measure
     table: master_data
     scope: unit
@@ -121,4 +128,4 @@ actions:
       - { field: description, label: Describe, type: textarea }
       - { field: sort_order, label: Order, type: number }
       - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - { id: delete_unit, type: delete, permission: catalog.write, table: master_data, scope: unit, confirm: 'Delete unit {{row.name}}?', refresh: [units] }
+  - { id: delete_unit, type: delete, permission: catalog.write, datasource: units, table: master_data, scope: unit, confirm: 'Delete unit {{row.name}}?', refresh: [units] }

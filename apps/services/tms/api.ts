@@ -746,6 +746,29 @@ export function createTmsApi(ctx: TmsApiContext) {
     const body = await req.json() as any;
     let { table, action, id, changes = [], scope } = body;
 
+    const source = typeof body.datasource === 'string' ? SOURCES.get(body.datasource) : null;
+    const mutationOperation = body.action === 'insert' ? 'create' : body.action;
+    if (source?.mutations?.[mutationOperation] && source.table) {
+      const mutation = source?.mutations?.[mutationOperation];
+      requirePerm(String(mutation.permission || source.permission));
+      const values = Object.fromEntries(
+        (Array.isArray(changes) ? changes : []).map((change: any) => [String(change.field), change.value]),
+      );
+      try {
+        const result = await repository.executeDatasourceMutation(
+          source,
+          mutationOperation,
+          body.id ? String(body.id) : null,
+          values,
+          activityActor,
+        );
+        return json(result, mutationOperation === 'create' ? 201 : 200);
+      } catch (error: any) {
+        if (error?.status) return apiError(error.status, error.message || 'Datasource mutation failed');
+        throw error;
+      }
+    }
+
     const tbl = TABLES[table as keyof typeof TABLES];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);

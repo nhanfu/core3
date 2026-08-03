@@ -290,6 +290,7 @@ export class PageFormModal extends BaseComponent {
               });
             } else {
               await client.patch({
+                datasource: actionDef.datasource,
                 table: actionDef.table,
                 action: actionDef.operation,
                 id: formRecord.id ?? null,

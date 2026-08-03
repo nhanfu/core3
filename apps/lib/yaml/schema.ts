@@ -17,6 +17,8 @@ export type DatasourceDefinition = {
   single?: boolean;
   data?: unknown;
   meta?: Record<string, unknown>;
+  table?: string;
+  mutations?: Record<string, Record<string, unknown>>;
 };
 
 export type ToolbarDefinition = {
@@ -80,7 +82,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'table', 'mutations', 'workflow']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -122,10 +124,10 @@ const LIST_VIEW_LABEL_KEYS = new Set(['new', 'filters', 'columns', 'selected', '
 const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']);
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
-  form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission']),
+  form: new Set(['id', 'type', 'title', 'table', 'datasource', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission']),
   server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind']),
-  delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission']),
-  patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
+  delete: new Set(['id', 'type', 'confirm', 'table', 'datasource', 'refresh', 'scope', 'permission']),
+  patch: new Set(['id', 'type', 'confirm', 'table', 'datasource', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
   server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
@@ -263,6 +265,30 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);
+    }
+    if (source.table !== undefined) requireString(source.table, `${path}.table`, issues);
+    if (source.mutations !== undefined) {
+      requireRecord(source.mutations, `${path}.mutations`, issues);
+      if (isRecord(source.mutations)) {
+        for (const [operation, mutation] of Object.entries(source.mutations)) {
+          if (!['create', 'update', 'delete'].includes(operation)) {
+            issues.push(`${path}.mutations.${operation} must be create, update, or delete`);
+          }
+          requireRecord(mutation, `${path}.mutations.${operation}`, issues);
+          if (isRecord(mutation)) {
+            if (mutation.permission !== undefined) requireString(mutation.permission, `${path}.mutations.${operation}.permission`, issues);
+            if (mutation.scope !== undefined) requireString(mutation.scope, `${path}.mutations.${operation}.scope`, issues);
+            if (mutation.fields !== undefined) {
+              if (!Array.isArray(mutation.fields) || mutation.fields.some((field) => !isString(field))) {
+                issues.push(`${path}.mutations.${operation}.fields must be an array of strings`);
+              }
+            }
+            if (mutation.timestamps !== undefined && typeof mutation.timestamps !== 'boolean') {
+              issues.push(`${path}.mutations.${operation}.timestamps must be a boolean`);
+            }
+          }
+        }
+      }
     }
     if (source.workflow !== undefined) {
       requireRecord(source.workflow, `${path}.workflow`, issues);

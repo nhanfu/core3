@@ -382,6 +382,7 @@ export class PageRuntime extends BaseComponent {
         );
         if (!confirm(msg)) return;
         await client.patch({
+          datasource: actionDef.datasource,
           table: actionDef.table,
           action: 'delete',
           id: row?.id ?? null,
@@ -399,6 +400,7 @@ export class PageRuntime extends BaseComponent {
         }
         const changes = Object.entries(actionDef.body || {}).map(([field, value]) => ({ field, value }));
         await client.patch({
+          datasource: actionDef.datasource,
           table: actionDef.table,
           action: 'update',
           id: row?.id ?? null,
@@ -533,7 +535,7 @@ export class PageRuntime extends BaseComponent {
       const changes = (actionDef.fields || [])
         .filter((field: any) => field.field !== 'id' && values[field.field] !== undefined)
         .map((field: any) => ({ field: field.field, value: values[field.field] }));
-      await client.patch({ table: actionDef.table, action: actionDef.operation, id: actionDef.operation === 'insert' ? null : id, scope: actionDef.scope, changes });
+      await client.patch({ datasource: actionDef.datasource, table: actionDef.table, action: actionDef.operation, id: actionDef.operation === 'insert' ? null : id, scope: actionDef.scope, changes });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;
     }

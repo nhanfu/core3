@@ -392,6 +392,64 @@ export class DuckDbRepository {
     };
   }
 
+  async executeDatasourceMutation(
+    source: { table?: string; mutations?: Record<string, any> },
+    operation: 'create' | 'update' | 'delete',
+    id: string | null,
+    values: Record<string, unknown>,
+    actor: { id?: string | null; name: string },
+  ): Promise<any> {
+    const table = String(source.table || '');
+    const definition = source.mutations?.[operation];
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table) || !definition) {
+      throw { status: 404, message: 'Datasource mutation is not configured' };
+    }
+
+    const allowedFields = Array.isArray(definition.fields)
+      ? new Set(definition.fields.map((field: unknown) => String(field)))
+      : null;
+    const changes = Object.entries(values)
+      .filter(([field]) => !['id', 'kind', 'created_at', 'updated_at'].includes(field))
+      .filter(([field]) => !allowedFields || allowedFields.has(field))
+      .map(([field, value]) => ({ field, value }));
+    const scope = definition.scope === undefined ? null : String(definition.scope);
+    if (scope) changes.unshift({ field: 'kind', value: scope });
+
+    let result: any;
+    if (operation === 'create') {
+      if (!changes.length) throw { status: 400, message: 'No fields to insert' };
+      result = await this.createRecord(table, changes);
+    } else {
+      if (!id) throw { status: 400, message: 'id required' };
+      if (operation === 'update' && !changes.length) throw { status: 400, message: 'No fields to update' };
+      const where = scope ? ' AND kind = ?' : '';
+      const params = operation === 'update'
+        ? [...changes.map((change) => change.value), ...(definition.timestamps ? [new Date()] : []), id, ...(scope ? [scope] : [])]
+        : [id, ...(scope ? [scope] : [])];
+      if (operation === 'update') {
+        const sets = changes.map((change) => `${change.field} = ?`).join(', ');
+        await this.run(`UPDATE ${table} SET ${sets}${definition.timestamps ? ', updated_at = ?' : ''} WHERE id = ?${where}`, params);
+        [result] = await this.query(`SELECT * FROM ${table} WHERE id = ?${where}`, [id, ...(scope ? [scope] : [])]);
+        if (!result) throw { status: 404, message: 'Resource not found' };
+      } else {
+        const [existing] = await this.query(`SELECT id FROM ${table} WHERE id = ?${where}`, params);
+        if (!existing) throw { status: 404, message: 'Resource not found' };
+        await this.deleteRecord(table, id);
+        result = { ok: true };
+      }
+    }
+
+    await this.recordActivity({
+      actorId: actor.id,
+      actorName: actor.name,
+      action: operation === 'create' ? 'create' : operation,
+      resource: table,
+      resourceId: result?.id || id,
+      detail: `${operation} ${scope || table} record`,
+    });
+    return result;
+  }
+
   async createRecord(table: string, changes: Change[]): Promise<any> {
     const newId = crypto.randomUUID();
     const cols = ['id', ...changes.map((c) => c.field)].join(', ');
