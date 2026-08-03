@@ -337,7 +337,9 @@ export class DataGrid extends BaseComponent {
             for (const action of column.rowActions) {
               if (action.visible && !action.visible(row)) continue;
               const button = html.take(actionBar).button
-                .className(`rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
+                .className(x2many
+                  ? `o-x2many-row-action${action.variant === 'danger' ? ' is-danger' : ''}`
+                  : `rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
                 .dataAttr('grid-row-action', `${action.id}:${id}`)
                 .getContext();
               if (action.icon) {

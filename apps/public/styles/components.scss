@@ -835,6 +835,7 @@
 .o-form-page .o-form-lines-slot .core3-token-row:hover > .core3-token-cell { background: var(--o-form-hover) !important; }
 .o-form-page .o-form-lines-slot .core3-token-summary { border-color: var(--o-form-border) !important; background: var(--o-form-surface) !important; color: var(--o-form-muted) !important; }
 .o-form-page .o-x2many-grid { border: 0 !important; border-radius: 0; }.o-form-page .o-x2many-grid .core3-token-toolbar { padding: 10px 16px; background: var(--o-form-surface) !important; }.o-form-page .o-x2many-grid .core3-token-header { background: var(--o-form-bg) !important; }.o-form-page .o-x2many-grid .core3-token-header th { padding-top: 8px; padding-bottom: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; }.o-form-page .o-x2many-grid .core3-token-cell { padding-top: 8px; padding-bottom: 8px; }.o-x2many-controls { display: flex; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--o-form-border); }.o-x2many-create { padding: 2px 0; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }.o-x2many-create:hover { text-decoration: underline; }.o-x2many-create:disabled { cursor: default; opacity: .6; text-decoration: none; }
+.o-x2many-row-action { padding: 2px 4px; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }.o-x2many-row-action:hover { text-decoration: underline; }.o-x2many-row-action.is-danger { color: #a3332b; }
 
 .o-form-action:focus-visible, .o-form-notebook-tab:focus-visible, .o-form-chatter-primary:focus-visible, .o-form-chatter-secondary:focus-visible, .o-form-chatter-tool:focus-visible, .o-form-composer-submit:focus-visible, .o-form-composer-cancel:focus-visible, .o-x2many-create:focus-visible { outline: 2px solid var(--o-form-action); outline-offset: 2px; }
 
@@ -844,7 +845,7 @@
   .o-form-chatter-top { position: static; }
 }
 
-@container odoo-form (max-width: 600px) {
+@container odoo-form (max-width: 800px) {
   .o-form-groups { grid-template-columns: minmax(0, 1fr); }
   .o-form-groups .o-form-field-group-wide { grid-column: auto; }
   .o-x2many-grid [data-column='sequence'],

@@ -75,7 +75,7 @@ body {
   flex-shrink: 0;
 }
 
-.app-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; overflow: visible; }
+.app-header-left { display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1; overflow: hidden; }
 .app-switcher { position: relative; flex: 0 0 auto; }
 .app-switcher-button { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; padding: 0; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--color-text); cursor: pointer; font: inherit; }
 .app-switcher-button:hover { border-color: var(--color-primary); background: var(--color-surface-muted); }
@@ -492,6 +492,7 @@ body {
 
 .header-actions {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 8px;
 }
@@ -683,8 +684,14 @@ body {
 .app-layout.sidebar-collapsed .sidebar-footer { padding-left: 20px; padding-right: 20px; }
 .app-layout.sidebar-collapsed .sidebar-footer-version { display: none; }
 
+@media (max-width: 1100px) {
+  .header-nav { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .header-nav::-webkit-scrollbar { display: none; }
+}
+
 @media (max-width: 720px) {
   .app-layout.launcher-open .app-sidebar { visibility: hidden; pointer-events: none; }
+  .app-header { padding-right: 12px; padding-left: 12px; }
   .app-header-left { gap: 8px; }
   .tenant-context-name { display: none; }
   .app-switcher-label, .app-switcher-chevron { display: none; }
@@ -698,6 +705,12 @@ body {
   .header-nav-menu { position: fixed; top: var(--header-height); left: 8px; right: 8px; width: auto; max-height: calc(100vh - var(--header-height) - 16px); }
   .header-nav-submenu-menu { position: static; margin: 0 0 2px 8px; box-shadow: none; border: 0; border-left: 1px solid var(--color-border); border-radius: 0; }
   .header-user-identity { display: none; }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle { display: none; }
+  .header-actions { gap: 3px; }
+  .header-icon-btn, .avatar-btn { width: 32px; height: 32px; }
 }
 
 /* ── Parity placeholder ── */

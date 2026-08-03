@@ -313,6 +313,19 @@ describe('document detail components', () => {
     expect(container.querySelector('.core3-token-toolbar')).toBeNull();
   });
 
+  it('keeps Odoo x2many row actions visually quiet', () => {
+    const grid = new LineItemGrid('action-lines', {
+      rows: [{ id: 'line-1', description: 'Freight' }],
+      variant: 'odoo_x2many',
+    }, [
+      { field: 'description', label: 'Description' },
+      { field: 'actions', label: '', rowActions: [{ id: 'delete_line', label: 'Delete', variant: 'danger' }] },
+    ]);
+    const container = mount(grid);
+
+    expect(container.querySelector('.o-x2many-row-action.is-danger')?.textContent).toBe('Delete');
+  });
+
   it('marks grid cells by column so responsive variants can retain essential data', () => {
     const grid = new LineItemGrid('responsive-lines', {
       rows: [{ id: 'line-1', description: 'Freight', line_total_display: '1,000 ₫' }],
