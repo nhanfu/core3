@@ -528,7 +528,13 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         moreActions: translatedLabels.more_actions,
       },
       onFilterChange: async (values: Record<string, unknown>) => {
-        await applySourceFilters(sourceId, values);
+        const dateFields = [def.date_range?.from_field, def.date_range?.to_field].filter(Boolean);
+        const targets = def.filter_sources && dateFields.some((field: string) => Object.prototype.hasOwnProperty.call(values, field))
+          ? def.filter_sources
+          : [sourceId];
+        for (const target of targets) {
+          await applySourceFilters(target, { ...(filterState[target] || {}), ...values });
+        }
       },
       onPageChange: async (page: number) => {
         const nextPage = Math.max(1, page);

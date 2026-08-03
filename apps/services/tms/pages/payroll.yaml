@@ -55,31 +55,74 @@ toolbar:
     action: add_payroll
 
 components:
-  - type: ListToolbar
-    source: payroll
-    filter_sources: [payroll, payroll_totals]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From May', to_label: 'Come month', presets: [today, week, month, quarter, year, all] }
-    filter_field: q
-    search: { label: Search payroll, placeholder: 'Find payroll code, employee code or name...' }
-    actions: [{ id: payroll.export, label: 'Export CSV', icon: download }]
   - type: StatRow
     source: payroll_totals
     stats: [{ label: Payroll, field: payroll_count, color: blue }, { label: General Consul, field: net_total, color: blue }, { label: Spent, field: paid_total, color: green }, { label: Waiting for processing, field: pending_total, color: amber }]
-  - type: StatusTabs
+  - type: ListView
+    variant: odoo
     source: payroll
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Draft, label: Draft }
-      - { id: Approved, label: Approved }
-      - { id: Paid, label: Spent }
-  - type: DataGrid
-    source: payroll
+    create_action: add_payroll
+    create_label: Prepare payroll
+    search:
+      label: Search payroll
+      placeholder: 'Find payroll code, employee code, or name...'
+    date_range:
+      label: Payroll month
+      from_field: from_date
+      to_field: to_date
+      from_label: From month
+      to_label: To month
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filter_sources: [payroll, payroll_totals]
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Approved, label: Approved }
+          - { id: Paid, label: Paid }
+    actions:
+      - { id: payroll.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Prepare payroll
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all payroll records
+      select_row: Select payroll record
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: code
+          subtitle: employee_name
+          fields:
+            - { field: pay_month, label: Payroll month }
+            - { field: net_salary_display, label: Net salary }
+            - { field: status_label, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: No payroll, description: Try changing your filters or creating a new payroll. }
     columns:
       - { field: code, label: Payroll number }
@@ -92,18 +135,18 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Draft: neutral, Approved: amber, Spent: green }
+        colors: { Nháp: neutral, Đã duyệt: amber, Đã chi: green }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_payroll, label: Detail, variant: primary, permission: hr.read }
-          - { id: edit_payroll, label: Fix, variant: ghost, permission: hr.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_payroll, label: Browse, variant: primary, permission: hr.approve, show_if: "row.status === 'Draft'" }
-          - { id: reopen_payroll, label: Open again, variant: ghost, permission: hr.approve, show_if: "row.status === 'Approved'" }
-          - { id: pay_payroll, label: Confirmation, variant: primary, permission: hr.pay, show_if: "row.status === 'Approved'" }
-          - { id: delete_payroll, label: Erase, variant: danger, permission: hr.write, show_if: "row.status === 'Draft'" }
+          - { id: view_payroll, label: View, variant: primary, permission: hr.read }
+          - { id: edit_payroll, label: Edit, variant: ghost, permission: hr.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_payroll, label: Approve, variant: primary, permission: hr.approve, show_if: "row.status === 'Draft'" }
+          - { id: reopen_payroll, label: Reopen, variant: ghost, permission: hr.approve, show_if: "row.status === 'Approved'" }
+          - { id: pay_payroll, label: Mark paid, variant: primary, permission: hr.pay, show_if: "row.status === 'Approved'" }
+          - { id: delete_payroll, label: Delete, variant: danger, permission: hr.write, show_if: "row.status === 'Draft'" }
 
 actions:
   - { id: view_payroll, type: navigate, permission: hr.read, navigate_to: /hr/payroll/detail, params: { id: '{row.id}' } }
