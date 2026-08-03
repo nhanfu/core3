@@ -22,25 +22,56 @@ toolbar:
   - { id: add_unit_btn, label: '+ Add units of measurement', variant: primary, permission: catalog.write, action: add_unit }
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: units
-    filter_field: q
-    search: { label: Search for units of measure, placeholder: 'Find code, name or description...' }
-    actions: [{ id: units.export, label: 'Export CSV', icon: download }, { id: import_units, label: 'Import CSV', icon: upload }]
-  - type: StatusTabs
-    source: units
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: In use }
-      - { id: Inactive, label: Discontinue use }
-  - type: DataGrid
-    source: units
-    column_chooser: true
+    create_action: add_unit
+    create_label: Add unit of calculation
+    search:
+      label: Search units of measure
+      placeholder: 'Find code, name, or description...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: In use }
+          - { id: Inactive, label: Discontinued }
+    actions:
+      - { id: units.export, label: Export CSV, title: Export CSV, icon: download }
+      - { id: import_units, label: Import CSV, title: Import CSV, icon: upload }
+    labels:
+      new: Add unit of calculation
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all units
+      select_row: Select unit
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: description, label: Description }
+            - { field: sort_order, label: Order }
+            - { field: status, label: Status }
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: There are no units, description: Create the first unit of measure to use in the form. }
     columns:
       - { field: code, label: Code, sortable: true }
@@ -56,8 +87,8 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_unit, label: Fix, variant: ghost, permission: catalog.write }
-          - { id: delete_unit, label: Erase, variant: danger, permission: catalog.write }
+          - { id: edit_unit, label: Edit, variant: ghost, permission: catalog.write }
+          - { id: delete_unit, label: Delete, variant: danger, permission: catalog.write }
 
 actions:
   - { id: import_units, type: upload, permission: catalog.write, kind: master_data_import, scope: unit, refresh: [units] }
