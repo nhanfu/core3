@@ -23,10 +23,10 @@ components:
         fields:
           - { field: description, label: Description, wide: true }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: approval_steps
     page_size: 50
-    reorder: { up_action: move_step_up, down_action: move_step_down }
     column_chooser: true
     row_key: id
     empty_state: { title: There is no approval step yet, description: Add a first step to the process. }

@@ -47,7 +47,8 @@ class PageRoot extends BaseComponent {
     if (config.title) document.title = config.title;
 
     let pageHeader: HTMLElement | null = null;
-    const ownsControlPanel = (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
+    const ownsControlPanel = !(config.components || []).some((component: any) => component.type === 'OdooFormView')
+      && (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
     if (config.page?.breadcrumb?.length && !ownsControlPanel) {
       pageHeader = document.createElement('div');
       pageHeader.className = 'page-header';

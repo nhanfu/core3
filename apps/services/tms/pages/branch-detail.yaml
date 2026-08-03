@@ -33,21 +33,24 @@ components:
         fields:
           - { field: region, label: Area }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: branch_departments
     page_size: 30
     column_chooser: true
     row_key: id
     empty_state: { title: There are no departments }
     columns: [{ field: code, label: Department code }, { field: name, label: Departments }, { field: team_count, label: Number of teams, align: right }, { field: status, label: Status }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: branch_trucks
     page_size: 30
     column_chooser: true
     row_key: id
     empty_state: { title: No vehicle yet }
     columns: [{ field: plate, label: Number plate }, { field: type, label: Vehicle type }, { field: status, label: Status }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: branch_employees
     page_size: 30
     column_chooser: true

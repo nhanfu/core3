@@ -44,7 +44,8 @@ components:
           - { field: id, label: Role code }
           - { field: view_scope, label: View range }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: role_permissions
     page_size: 50
     column_chooser: true
@@ -59,7 +60,8 @@ components:
         actions:
           - { id: grant_permission, label: Grant permissions, variant: primary, permission: settings.write, show_if: "!row.enabled" }
           - { id: revoke_permission, label: Recall, variant: danger, permission: settings.write, show_if: "row.enabled" }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: role_users
     page_size: 20
     column_chooser: true

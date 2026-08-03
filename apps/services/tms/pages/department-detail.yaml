@@ -37,14 +37,16 @@ components:
         fields:
           - { field: branch_name, label: Branch }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: department_teams
     page_size: 30
     column_chooser: true
     row_key: id
     empty_state: { title: No team yet }
     columns: [{ field: code, label: Team code }, { field: name, label: Team }, { field: manager_name, label: Person in charge }, { field: status, label: Status }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: department_employees
     page_size: 30
     column_chooser: true

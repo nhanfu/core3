@@ -38,7 +38,8 @@ components:
           - { field: truck_plate, label: Vehicle }
           - { field: status, label: Status }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: driver_trips
     page_size: 30
     column_chooser: true

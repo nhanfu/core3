@@ -25,10 +25,10 @@ components:
           - { field: config_value, label: Sample code, wide: true }
     content_slot: true
   - { type: TemplatePreview, source: template_blocks, template_source: print_template }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: template_blocks
     page_size: 50
-    reorder: { up_action: move_block_up, down_action: move_block_down }
     column_chooser: true
     row_key: id
     empty_state: { title: The printed template does not have a content block, description: 'Add text, tokens, or tables to the template.' }

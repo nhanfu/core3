@@ -62,7 +62,8 @@ components:
           - { field: start_date, label: Effective from }
           - { field: end_date, label: Effective until }
           - { field: base_salary, label: Basic salary, type: money }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: contract_documents
     page_size: 20
     column_chooser: true

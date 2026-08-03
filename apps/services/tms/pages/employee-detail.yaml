@@ -66,14 +66,16 @@ components:
           - { field: email, label: Email }
           - { field: start_date, label: Start date }
           - { field: dependents, label: Dependents }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: employee_contracts
     page_size: 20
     column_chooser: true
     row_key: id
     empty_state: { title: No contract yet }
     columns: [{ field: code, label: Contract }, { field: contract_type, label: Type }, { field: start_date, label: From date }, { field: end_date, label: Come day }, { field: base_salary, label: Basic salary, align: right }, { field: status, label: Status }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: employee_documents
     page_size: 20
     column_chooser: true

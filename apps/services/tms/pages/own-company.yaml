@@ -38,7 +38,8 @@ components:
           - { field: bank_account, label: Account number }
           - { field: notes, label: Notes }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: company_documents
     page_size: 20
     column_chooser: true

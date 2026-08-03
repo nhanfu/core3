@@ -56,14 +56,16 @@ components:
           - { field: driver_name, label: Driver in charge }
           - { field: license_number, label: License }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: vehicle_maintenance
     page_size: 20
     column_chooser: true
     row_key: id
     empty_state: { title: There is no maintenance schedule yet }
     columns: [{ field: service_type, label: Category }, { field: status, label: Status }, { field: scheduled_date, label: Expected }, { field: completed_date, label: Complete }, { field: cost, label: Expense, align: right }, { field: notes, label: Note }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: vehicle_trips
     page_size: 20
     column_chooser: true

@@ -76,14 +76,16 @@ components:
           - { field: preferred_lang, label: Language }
           - { field: last_login, label: Most recent login }
           - { field: created_at, label: Created at }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: user_roles
     page_size: 30
     column_chooser: true
     row_key: role_id
     empty_state: { title: There are no roles assigned yet }
     columns: [{ field: role_name, label: Role }, { field: status_label, label: Status, type: StatusChip, colors: { 'Đã gán': green, 'Chưa gán': neutral } }, { field: actions, label: '', sortable: false, actions: [{ id: grant_user_role, label: Assign roles, variant: primary, permission: settings.write, show_if: "!row.enabled" }, { id: revoke_user_role, label: Recall, variant: danger, permission: settings.write, show_if: "row.enabled" }] }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: user_permissions
     page_size: 50
     column_chooser: true

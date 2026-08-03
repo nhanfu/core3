@@ -33,7 +33,8 @@ components:
           - { field: region, label: Region }
           - { field: description, label: Note, type: textarea, wide: true }
     content_slot: true
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: area_locations
     page_size: 50
     column_chooser: true
