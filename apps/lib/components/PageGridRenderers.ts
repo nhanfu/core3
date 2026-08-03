@@ -481,7 +481,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     groupBy: favorite.group_by || favorite.groupBy || '',
   }));
   const bulkActions = (def.bulk_actions || []).filter((action: any) => {
-    if (!hasPermission(ctx.user, action.permission)) return false;
+    const actionDef = (config.actions || []).find((candidate: any) => candidate.id === action.id);
+    if (!hasPermission(ctx.user, action.permission || actionDef?.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
   });
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);

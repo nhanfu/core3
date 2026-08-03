@@ -549,6 +549,7 @@
 .o-list-selection { justify-content: center; gap: 5px; color: var(--o-list-muted); }
 .o-list-selection-count { color: var(--o-list-action); font-weight: 700; }
 .o-list-selection button { margin-left: 5px; border: 0; background: transparent; color: var(--o-list-action); cursor: pointer; font: inherit; }
+.o-list-selection .o-list-bulk-action { margin-left: 0; border: 1px solid var(--o-list-action); background: var(--o-list-action); color: #fff; }
 
 .o-list-facets { min-width: 0; flex-wrap: wrap; gap: 5px; }
 .o-list-facet {

@@ -163,6 +163,9 @@ export class BaseComponent {
       return this._transport.submit(action, params);
     }
     const root = this.root;
+    if (typeof root._transport?.submit === 'function') {
+      return root._transport.submit(action, params);
+    }
     if (typeof root._onAction === 'function') {
       return root._onAction(action, params, this);
     }
