@@ -89,15 +89,18 @@ describe('document detail components', () => {
       subtitle_field: 'customer',
       status_field: 'status',
       status_colors: { Draft: 'neutral' },
+      status_badges: [{ value: 'Cancelled', label: 'Cancelled', tone: 'red' }],
       statusbar: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }],
       header_actions: [{ id: 'submit', label: 'Submit for approval', variant: 'primary' }],
       message_source: 'messages',
       follower_source: 'followers',
-      fields: [{ field: 'route', label: 'Route' }],
+      group_columns: 2,
+      groups: [{ title: 'Shipping', fields: [{ field: 'route', label: 'Route' }] }],
     }));
 
     expect(container.querySelector('.o-form-sheet')).not.toBeNull();
     expect(container.querySelector('.o-form-sheet-bg > .o-form-statusbar')).not.toBeNull();
+    expect(container.querySelector('.o-form-groups-2')).not.toBeNull();
     expect(container.querySelector('.o-form-statusbar-step.is-current')?.textContent).toBe('Draft');
     expect(container.querySelector('.o-form-statusbar-step.is-current')?.getAttribute('aria-current')).toBe('step');
     expect(container.querySelector('.o-form-actionbar')?.textContent).toContain('Submit for approval');
@@ -107,6 +110,20 @@ describe('document detail components', () => {
     expect(container.textContent).toContain('Messages and activities');
     expect(container.textContent).toContain('Followers');
     expect(container.textContent).not.toContain('Attachments');
+  });
+
+  it('shows exceptional workflow states outside the normal status progression', () => {
+    const container = mount(new OdooFormView('cancelled-order', {
+      record: { number: 'SO-002', status: 'Cancelled' },
+    }, {
+      title_field: 'number',
+      status_field: 'status',
+      statusbar: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }],
+      status_badges: [{ value: 'Cancelled', label: 'Cancelled', tone: 'red' }],
+    }));
+
+    expect(container.querySelector('.o-form-status-exception')?.textContent).toBe('Cancelled');
+    expect(container.querySelector('.o-form-statusbar-step.is-current')).toBeNull();
   });
 
   it('supports inline edit, save, and discard lifecycle', async () => {

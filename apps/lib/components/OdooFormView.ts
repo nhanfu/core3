@@ -31,6 +31,7 @@ export class OdooFormView extends BaseComponent {
       ? String(record[this.def.status_label_field || this.def.status_field] || status)
       : '';
     const statusStages = Array.isArray(this.def.statusbar) ? this.def.statusbar : [];
+    const statusBadge = (this.def.status_badges || []).find((badge: any) => String(badge.value) === status);
     const layout = html.take(root).div.className('o-form-layout').getContext();
     const sheetBackground = html.take(layout).div.className('o-form-sheet-bg').getContext();
 
@@ -83,13 +84,19 @@ export class OdooFormView extends BaseComponent {
     }
     if (this.def.status_field) {
       const tone = this.def.status_colors?.[statusLabel] || this.def.status_colors?.[status] || 'neutral';
-      if (!statusStages.length) {
+      if (statusBadge) {
+        html.take(header).span
+          .className(`o-form-status o-form-status-exception data-grid-status data-grid-status-${statusBadge.tone || tone}`)
+          .text(String(statusBadge.label || statusLabel));
+      } else if (!statusStages.length) {
         html.take(header).span.className(`o-form-status data-grid-status data-grid-status-${tone}`).text(statusLabel);
       }
     }
 
-    const renderFields = (fieldsDef: any[], title?: string) => {
-      const group = title ? html.take(sheet).section.className('o-form-field-group').getContext() : sheet;
+    const renderFields = (fieldsDef: any[], title?: string, target: HTMLElement = sheet, wide = false) => {
+      const group = title
+        ? html.take(target).section.className(`o-form-field-group${wide ? ' o-form-field-group-wide' : ''}`).getContext()
+        : target;
       if (title) html.take(group).h2.className('o-form-group-title').text(title);
       const fields = html.take(group).div.className('o-form-fields').getContext();
       for (const field of fieldsDef || []) {
@@ -128,7 +135,12 @@ export class OdooFormView extends BaseComponent {
     if (editing && Array.isArray(this.def.edit_fields)) {
       renderFields(this.def.edit_fields, 'Edit details');
     } else if (Array.isArray(this.def.groups) && this.def.groups.length) {
-      for (const group of this.def.groups) renderFields(group.fields || [], group.title);
+      if (this.def.group_columns) {
+        const groups = html.take(sheet).div.className(`o-form-groups o-form-groups-${this.def.group_columns}`).getContext();
+        for (const group of this.def.groups) renderFields(group.fields || [], group.title, groups, group.wide === true);
+      } else {
+        for (const group of this.def.groups) renderFields(group.fields || [], group.title);
+      }
     } else {
       renderFields(this.def.fields || []);
     }
