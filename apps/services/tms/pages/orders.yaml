@@ -97,6 +97,12 @@ components:
         label: Transport method
         placeholder: All transport methods
         options: [Road, Sea, Rail, Air]
+    group_by:
+      - { field: status_label, label: Status }
+      - { field: shipment_type, label: Shipment type }
+    favorites:
+      - { id: draft_orders, label: Draft orders, filters: { status: Draft }, group_by: status_label }
+      - { id: approved_orders, label: Approved orders, filters: { status: Approved }, group_by: status_label }
     actions:
       - { id: orders.export, label: Export, title: Export, icon: download }
     labels:

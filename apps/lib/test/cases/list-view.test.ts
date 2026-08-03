@@ -116,6 +116,29 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('thead')?.textContent).toContain('Status');
   });
 
+  it('supports grouping, favorite filters, and bulk actions', async () => {
+    const component = create({
+      groupBy: [{ field: 'status', label: 'Status' }],
+      favorites: [{ id: 'approved', label: 'Approved orders', filters: { status: 'Approved' }, groupBy: 'status' }],
+      bulkActions: [{ id: 'archive', label: 'Archive' }],
+    });
+    const submit = vi.fn().mockResolvedValue(undefined);
+    component._transport = { submit };
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('[data-group-field="status"]')!.click();
+    expect(container.querySelector('[data-list-group="Draft"]')).not.toBeNull();
+    container.querySelector<HTMLButtonElement>('[data-list-favorite="approved"]')!.click();
+    expect(container.querySelector('[data-filter-facet="status"]')?.textContent).toContain('Approved');
+
+    const rowCheckbox = container.querySelector<HTMLInputElement>('[aria-label="Select row o1"]')!;
+    rowCheckbox.checked = true;
+    rowCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    container.querySelector<HTMLButtonElement>('[data-list-bulk-action="archive"]')!.click();
+    await Promise.resolve();
+    expect(submit).toHaveBeenCalledWith('archive', { selectedIds: ['o1'] });
+  });
+
   it('renders hierarchical rows and collapses descendants', () => {
     const component = new ListView('accounts', {
       rows: [

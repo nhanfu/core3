@@ -42,6 +42,8 @@ export type ListViewAction = {
   disabled?: boolean;
   params?: Record<string, unknown>;
 };
+export type ListViewGroup = { field: string; label: string };
+export type ListViewFavorite = { id: string; label: string; filters?: Record<string, unknown>; groupBy?: string };
 
 export type ListViewMode = KanbanViewDefinition;
 
@@ -61,6 +63,9 @@ export type ListViewOptions = {
     presetLabels?: Partial<Record<DateRangePreset, string>>;
   };
   actions?: ListViewAction[];
+  groupBy?: ListViewGroup[];
+  favorites?: ListViewFavorite[];
+  bulkActions?: ListViewAction[];
   rowKey?: string;
   tree?: { parentField?: string };
   selectable?: boolean;
@@ -91,6 +96,8 @@ export type ListViewOptions = {
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
   onViewChange?: (view: 'list' | 'kanban') => void;
+  onGroupByChange?: (field: string) => void;
+  onFavoriteChange?: (favorite: ListViewFavorite) => void;
 };
 
 /**
@@ -251,8 +258,23 @@ export class ListView extends BaseComponent {
       html.take(cell).h3.text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.text(empty.description);
     } else {
-      for (const item of this.treeRows(rows)) {
-        this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
+      const rowItems = this.treeRows(rows);
+      const groupBy = String(this.state.groupBy || '');
+      if (!groupBy) {
+        for (const item of rowItems) this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
+      } else {
+        const groups = new Map<string, typeof rowItems>();
+        for (const item of rowItems) {
+          const value = String(item.row[groupBy] ?? '—');
+          if (!groups.has(value)) groups.set(value, []);
+          groups.get(value)!.push(item);
+        }
+        for (const [value, items] of groups) {
+          const groupRow = html.take(body).trow.className('o-list-group-row').dataAttr('list-group', value).getContext();
+          const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
+          groupCell.textContent = `${value} (${items.length})`;
+          for (const item of items) this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
+        }
       }
     }
   }
@@ -280,6 +302,10 @@ export class ListView extends BaseComponent {
       html.take(selection).span.text(labels.selected);
       const clear = html.take(selection).button.text(labels.clearSelection).getContext();
       clear.addEventListener('click', () => this.setSelectedIds([]));
+      for (const action of this.options.bulkActions || []) {
+        const button = html.take(selection).button.className('o-list-bulk-action').dataAttr('list-bulk-action', action.id).text(action.label || action.id).getContext();
+        button.addEventListener('click', () => void this.submit(action.id, { ...(action.params || {}), selectedIds }));
+      }
       return;
     }
 
@@ -303,7 +329,7 @@ export class ListView extends BaseComponent {
   }
 
   private drawFilterMenu(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
-    if (!this.options.filters?.length && !this.options.dateRange) return;
+    if (!this.options.filters?.length && !this.options.dateRange && !this.options.groupBy?.length) return;
     const details = html.take(container).details.className('o-list-dropdown o-list-filter-menu').getContext() as HTMLDetailsElement;
     const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', labels.filters).getContext();
     appendIcon(summary, 'chevron-down');
@@ -347,6 +373,17 @@ export class ListView extends BaseComponent {
       const apply = html.take(custom).button.className('o-list-date-apply').text(labels.apply).getContext();
       apply.addEventListener('click', () => this.setFilters({ ...filters, [fromField]: from.value || null, [toField]: to.value || null }));
     }
+    if (this.options.groupBy?.length) {
+      const group = html.take(menu).section.className('o-list-filter-group').getContext();
+      html.take(group).h4.text('Group by');
+      const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text('No grouping').getContext();
+      clear.addEventListener('click', () => this.setGroupBy(''));
+      for (const option of this.options.groupBy) {
+        const button = html.take(group).button.className(String(this.state.groupBy || '') === option.field ? 'is-active' : '').text(option.label).getContext();
+        button.dataset.groupField = option.field;
+        button.addEventListener('click', () => this.setGroupBy(option.field));
+      }
+    }
     this.dismissDetails(details);
   }
 
@@ -388,7 +425,7 @@ export class ListView extends BaseComponent {
       }
     }
 
-    if (!this.options.columnChooser && !this.options.actions?.length) return;
+    if (!this.options.columnChooser && !this.options.actions?.length && !this.options.favorites?.length) return;
     const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').getContext() as HTMLDetailsElement;
     const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).getContext();
     appendIcon(summary, 'settings');
@@ -425,6 +462,18 @@ export class ListView extends BaseComponent {
         button.append(document.createTextNode(action.label || action.title || action.id));
         button.disabled = Boolean(action.disabled);
         if (!button.disabled) button.addEventListener('click', () => void this.submit(action.id, action.params || {}));
+      }
+    }
+    if (this.options.favorites?.length) {
+      const group = html.take(menu).section.className('o-list-favorites-menu').getContext();
+      html.take(group).h4.text('Favorites');
+      for (const favorite of this.options.favorites) {
+        const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).getContext();
+        button.addEventListener('click', () => {
+          this.setState({ filters: { ...(favorite.filters || {}) }, groupBy: favorite.groupBy || '' });
+          this.options.onFilterChange?.({ ...(favorite.filters || {}) });
+          this.options.onFavoriteChange?.(favorite);
+        });
       }
     }
     this.dismissDetails(details);
@@ -630,6 +679,11 @@ export class ListView extends BaseComponent {
   private setFilters(filters: Record<string, unknown>) {
     this.setState({ filters });
     this.options.onFilterChange?.(filters);
+  }
+
+  private setGroupBy(groupBy: string) {
+    this.setState({ groupBy });
+    this.options.onGroupByChange?.(groupBy);
   }
 
   private setSort(field: string) {

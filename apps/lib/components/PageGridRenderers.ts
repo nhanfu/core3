@@ -471,6 +471,19 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     if (!hasPermission(ctx.user, action.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
   });
+  const groupBy = (Array.isArray(def.group_by) ? def.group_by : def.group_by ? [def.group_by] : [])
+    .map((group: any) => typeof group === 'string' ? { field: group, label: group } : { field: group.field, label: group.label || group.field })
+    .filter((group: any) => group.field);
+  const favorites = (Array.isArray(def.favorites) ? def.favorites : []).map((favorite: any) => ({
+    id: String(favorite.id),
+    label: String(favorite.label || favorite.id),
+    filters: favorite.filters || {},
+    groupBy: favorite.group_by || favorite.groupBy || '',
+  }));
+  const bulkActions = (def.bulk_actions || []).filter((action: any) => {
+    if (!hasPermission(ctx.user, action.permission)) return false;
+    return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
+  });
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
   const createAction = def.create_action && hasPermission(ctx.user, createDefinition?.permission)
     ? { id: def.create_action, label: def.create_label || 'New' }
@@ -502,6 +515,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         presetLabels: def.date_range.preset_labels,
       } : undefined,
       actions: utilityActions,
+      groupBy,
+      favorites,
+      bulkActions,
       rowKey: def.row_key || 'id',
       tree: def.tree ? { parentField: def.parent_field || 'parent_id' } : undefined,
       selectable: def.selectable === true,
