@@ -188,6 +188,8 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('.o-list-control-panel')).not.toBeNull();
     expect(container.querySelector('[data-list-search]')).not.toBeNull();
     expect(container.querySelector('[data-list-view="calendar"] svg')).not.toBeNull();
+    expect(container.querySelector('[data-list-view="list"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(container.querySelector('[data-list-view="calendar"]')?.getAttribute('aria-pressed')).toBe('true');
 
     container.querySelector<HTMLButtonElement>('[aria-label="Previous month"]')!.click();
 

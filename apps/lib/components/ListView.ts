@@ -214,8 +214,9 @@ export class ListView extends BaseComponent {
 
     const activeView = this.activeView();
     const listEnabled = this.isViewEnabled('list');
-    const formEnabled = Boolean(this.options.formView) && this.isViewEnabled('form');
-    if (!listEnabled && formEnabled) {
+    const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
+    const formEnabled = Boolean(this.options.formView) && (!hasFormMode || this.isViewEnabled('form'));
+    if (hasFormMode && !listEnabled && formEnabled) {
       const content = html.take(root).div.className('o-list-content is-form-only').getContext();
       await this.drawFormPanel(content, rows, true);
       return;
@@ -806,8 +807,12 @@ export class ListView extends BaseComponent {
   }
 
   private isViewEnabled(viewId: string) {
-    if (viewId === 'form') return Boolean(this.options.formView) && this.state.formViewEnabled !== false;
-    if (viewId === 'list') return this.state.listViewEnabled !== false;
+    const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
+    if (viewId === 'form') return hasFormMode && Boolean(this.options.formView) && this.state.formViewEnabled !== false;
+    if (viewId === 'list') {
+      if (hasFormMode && this.options.formView) return this.state.listViewEnabled !== false;
+      return this.activeView().id === viewId;
+    }
     return this.activeView().id === viewId;
   }
 

@@ -142,7 +142,6 @@ components:
         card:
           title: order_number
           subtitle: customer_name
-      - { id: form, label: Form, icon: form }
     page_size: 50
     column_chooser: true
     row_key: id
