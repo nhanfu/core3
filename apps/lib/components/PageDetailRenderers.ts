@@ -35,7 +35,8 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   const formDef = { ...def };
   const editButton = (def.header_actions || []).find((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
-    return action && ['form', 'server_form'].includes(action.type) && action.operation === 'update';
+    return action && ['form', 'server_form'].includes(action.type)
+      && (action.operation === 'update' || (def.initial_editing === true && action.operation === 'insert'));
   });
   const editAction = editButton ? (config.actions || []).find((candidate: any) => candidate.id === editButton.id) : undefined;
   if (editAction) {
@@ -65,7 +66,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       messages: dataMap[def.message_source]?.data || [],
       followers: dataMap[def.follower_source]?.data || [],
       attachments: dataMap[def.attachment_source]?.data || [],
-      editing: false,
+      editing: def.initial_editing === true,
     },
     formDef,
   );
@@ -514,5 +515,4 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
 }
 
 }
-
 

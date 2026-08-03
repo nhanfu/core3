@@ -501,12 +501,12 @@ export class PageRuntime extends BaseComponent {
 
   async function handleInlineForm(actionDef: any, values: Record<string, unknown>) {
     if (!actionDef) return;
-    if (actionDef.type === 'form' && actionDef.operation === 'update') {
+    if (actionDef.type === 'form' && (actionDef.operation === 'update' || actionDef.operation === 'insert')) {
       const id = values.id ?? pageParams.id ?? ctx.state.id;
       const changes = (actionDef.fields || [])
         .filter((field: any) => field.field !== 'id' && values[field.field] !== undefined)
         .map((field: any) => ({ field: field.field, value: values[field.field] }));
-      await client.patch({ table: actionDef.table, action: 'update', id, scope: actionDef.scope, changes });
+      await client.patch({ table: actionDef.table, action: actionDef.operation, id: actionDef.operation === 'insert' ? null : id, scope: actionDef.scope, changes });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;
     }

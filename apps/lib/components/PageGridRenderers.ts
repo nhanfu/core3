@@ -495,6 +495,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     sidePanel: def.form_view.side_panel !== false,
   } : undefined;
   const renderForm = formView ? async (row: any, target: HTMLElement) => {
+    const newRecord = row?.__new_record === true;
     target.innerHTML = '<div class="o-list-form-loading">Loading form...</div>';
     const pageId = String(formView.page).split('/').pop()!.replace(/\.ya?ml$/, '');
     try {
@@ -502,6 +503,21 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         `${client._resolveBase()}/pages/${encodeURIComponent(pageId)}?id=${encodeURIComponent(String(row.id))}`,
         { method: 'GET' },
       );
+      if (newRecord && createDefinition) {
+        const inlineCreateId = `inline_create_${sourceId}`;
+        detailConfig.actions = [
+          ...(detailConfig.actions || []),
+          { ...createDefinition, id: inlineCreateId, refresh: [...(createDefinition.refresh || []), sourceId] },
+        ];
+        detailConfig.components = (detailConfig.components || []).map((component: any) => component.type === 'OdooFormView'
+          ? {
+            ...component,
+            initial_editing: true,
+            editable: true,
+            header_actions: [{ id: inlineCreateId, label: 'Create', variant: 'primary' }, ...(component.header_actions || [])],
+          }
+          : component);
+      }
       const detailData = Object.fromEntries((detailConfig.datasources || []).map((source: any) => [source.id, source]));
       const detailParams = { ...pageParams, id: String(row.id) };
       const detailCtx = { ...ctx, row, state: { ...ctx.state, ...detailParams } };
@@ -536,6 +552,10 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       const detailHandleInlineForm = async (actionDef: any, values: Record<string, unknown>) => {
         await handleInlineForm({ ...actionDef, refresh: [] }, values);
         await detailRefreshSources(actionDef.refresh || []);
+        if (newRecord) {
+          await refreshSources([sourceId]);
+          comp.setState({ formPanelClosed: true });
+        }
       };
       const detailFormModal = new PageFormModal({
         dataMap: detailData,

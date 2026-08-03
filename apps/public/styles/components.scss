@@ -601,6 +601,7 @@
   box-shadow: -8px 0 20px rgb(15 23 42 / 12%);
   transition: width 180ms ease;
 }
+.o-list-form-side-panel.is-resizing { transition: none; }
 :root[data-theme='dim'] .o-list-form-side-panel {
   --o-form-action: #a99bd3;
   --o-form-bg: #111827;
@@ -611,8 +612,8 @@
 }
 .o-list-form-side-panel.is-loading { animation: o-list-form-panel-in 220ms ease-out both; }
 .o-list-form-resize-handle { position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; width: 14px; cursor: col-resize; }
-.o-list-form-resize-handle::after { position: absolute; top: 0; bottom: 0; left: 0; width: 4px; background: var(--o-form-border); content: ''; }
-.o-list-form-resize-handle:hover::after { width: 6px; background: var(--o-form-action); }
+.o-list-form-resize-handle::after { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--o-form-border); content: ''; }
+.o-list-form-resize-handle:hover::after { width: 4px; background: var(--o-form-action); }
 .o-list-form-collapse { position: absolute; z-index: 3; top: 8px; right: 8px !important; left: auto !important; inset-inline-end: 8px; display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; padding: 0; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); color: var(--o-form-muted); cursor: pointer; box-shadow: 0 1px 3px rgb(15 23 42 / 12%); }
 .o-list-form-collapse:hover { border-color: var(--o-form-action); color: var(--o-form-action); }
 .o-list-form-collapse svg { width: 14px; height: 14px; }
