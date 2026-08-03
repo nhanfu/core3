@@ -23,6 +23,7 @@ datasources:
   - id: contract_documents
     single: false
     permission: hr.read
+    meta: { upload: { kind: contract_document, parentTable: employment_contracts, childTable: contract_documents, parentKey: contract_id, resource: employment_contracts, permission: hr.write } }
     query: "SELECT id, contract_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM contract_documents WHERE contract_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employment_contracts c JOIN employees e ON e.id = c.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE c.id = :id AND d.branch_id = :current_branch_id)) ORDER BY created_at DESC"
   - id: contract_detail_employee_lookup
     single: false
@@ -75,7 +76,7 @@ toolbar:
   - { id: upload_contract_document, label: '+ Download documents', variant: secondary, permission: hr.write, action: upload_contract_document }
 actions:
   - { id: back_contracts, type: navigate, navigate_to: /hr/contracts }
-  - { id: upload_contract_document, type: upload, permission: hr.write, kind: contract_document, params: { contract_id: '{state.id}' }, refresh: [contract_documents, contract_activity] }
+  - { id: upload_contract_document, type: upload, permission: hr.write, kind: contract_document, datasource: contract_documents, params: { contract_id: '{state.id}' }, refresh: [contract_documents, contract_activity] }
   - { id: download_contract_document, type: download, permission: hr.read, kind: contract_document }
   - id: edit_contract_detail
     type: form

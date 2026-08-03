@@ -15,6 +15,7 @@ datasources:
   - id: company_documents
     single: false
     permission: settings.read
+    meta: { upload: { kind: company_document, parentTable: company_profiles, childTable: company_documents, parentKey: company_id, resource: company_profiles, permission: settings.write } }
     query: "SELECT id, company_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM company_documents WHERE company_id = (SELECT id FROM company_profiles ORDER BY created_at LIMIT 1) ORDER BY created_at DESC"
 components:
   - type: OdooFormView
@@ -49,7 +50,7 @@ components:
 toolbar:
   - { id: upload_company_document, label: '+ Download documents', variant: secondary, permission: settings.write, action: upload_company_document }
 actions:
-  - { id: upload_company_document, type: upload, permission: settings.write, kind: company_document, params: { company_id: '{state.company_profile.id}' }, refresh: [company_documents] }
+  - { id: upload_company_document, type: upload, permission: settings.write, kind: company_document, datasource: company_documents, params: { company_id: '{state.company_profile.id}' }, refresh: [company_documents] }
   - { id: download_company_document, type: download, permission: settings.read, kind: company_document }
   - id: edit_company
     type: form

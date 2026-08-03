@@ -300,24 +300,16 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (!(file instanceof File)) return apiError(400, 'file required');
     if (meta.kind !== 'chat_attachment' && meta.kind !== 'order_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'contract_document' && meta.kind !== 'company_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
-    if (meta.kind === 'chat_attachment') {
+    const configuredUpload = [...SOURCES.values()].find((source: any) => source.meta?.upload?.kind === meta.kind)?.meta?.upload;
+    if (configuredUpload) {
+      requirePerm(String(configuredUpload.permission));
+      const parentKey = String(configuredUpload.parentKey);
+      const parentId = meta[parentKey];
+      if (typeof parentId !== 'string' || !parentId) return apiError(400, `${parentKey} required`);
+      if (!(await recordInCurrentBranch(String(configuredUpload.resource), parentId))) return apiError(403, 'Record is outside the current view scope');
+    } else if (meta.kind === 'chat_attachment') {
       requirePerm(permissionForEndpoint('upload.chat_attachment'));
       if (typeof meta.thread_id !== 'string' || !meta.thread_id) return apiError(400, 'thread_id required');
-    } else if (meta.kind === 'order_attachment') {
-      requirePerm(permissionForEndpoint('upload.order_attachment'));
-      if (typeof meta.order_id !== 'string' || !meta.order_id) return apiError(400, 'order_id required');
-      if (!(await recordInCurrentBranch('orders', meta.order_id))) return apiError(403, 'Order is outside the current view scope');
-    } else if (meta.kind === 'employee_document') {
-      requirePerm(permissionForEndpoint('upload.employee_document'));
-      if (typeof meta.employee_id !== 'string' || !meta.employee_id) return apiError(400, 'employee_id required');
-      if (!(await recordInCurrentBranch('employees', meta.employee_id))) return apiError(403, 'Record is outside the current view scope');
-    } else if (meta.kind === 'contract_document') {
-      requirePerm(permissionForEndpoint('upload.contract_document'));
-      if (typeof meta.contract_id !== 'string' || !meta.contract_id) return apiError(400, 'contract_id required');
-      if (!(await recordInCurrentBranch('employment_contracts', meta.contract_id))) return apiError(403, 'Record is outside the current view scope');
-    } else if (meta.kind === 'company_document') {
-      requirePerm(permissionForEndpoint('upload.company_document'));
-      if (typeof meta.company_id !== 'string' || !meta.company_id) return apiError(400, 'company_id required');
     } else {
       requirePerm(permissionForEndpoint('upload.master_data_import'));
       if (typeof meta.scope !== 'string' || !meta.scope) return apiError(400, 'scope required');
@@ -353,10 +345,14 @@ export function createTmsApi(ctx: TmsApiContext) {
     writeFileSync(targetPath, Buffer.from(await file.arrayBuffer()));
     try {
       const fileMeta = { fileName: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size, storageKey };
-      if (meta.kind === 'order_attachment') return json(await repository.createOrderAttachment(meta.order_id, fileMeta, activityActor));
-      if (meta.kind === 'employee_document') return json(await repository.createEmployeeDocument(meta.employee_id, fileMeta, activityActor));
-      if (meta.kind === 'contract_document') return json(await repository.createContractDocument(meta.contract_id, fileMeta, activityActor));
-      if (meta.kind === 'company_document') return json(await repository.createCompanyDocument(meta.company_id, fileMeta, activityActor));
+      const uploadSource = [...SOURCES.values()].find((source: any) => source.meta?.upload?.kind === meta.kind);
+      const uploadConfig = uploadSource?.meta?.upload;
+      if (uploadConfig) {
+        const parentKey = String(uploadConfig.parentKey);
+        const parentId = meta[parentKey];
+        if (typeof parentId !== 'string' || !parentId) return apiError(400, `${parentKey} required`);
+        return json(await repository.createUploadedFile(uploadConfig, parentId, fileMeta, activityActor));
+      }
       return json(await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor));
     } catch (error) {
       try {

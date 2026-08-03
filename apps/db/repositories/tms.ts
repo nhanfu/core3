@@ -724,6 +724,21 @@ export class DuckDbRepository {
     return row;
   }
 
+  async createUploadedFile(
+    config: { kind: string; parentTable: string; childTable: string; parentKey: string; resource: string },
+    parentId: string,
+    file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string },
+    actor: { id?: string | null; name: string },
+  ) {
+    if ([config.parentTable, config.childTable, config.parentKey, config.resource].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid upload configuration' };
+    const [parent] = await this.query(`SELECT id FROM ${config.parentTable} WHERE id = ?`, [parentId]);
+    if (!parent) throw { status: 404, message: 'Upload parent not found' };
+    const id = crypto.randomUUID();
+    await this.run(`INSERT INTO ${config.childTable}(id, ${config.parentKey}, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)`, [id, parentId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null]);
+    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: `upload.${config.kind}`, resource: config.resource, resourceId: parentId, detail: file.fileName });
+    return this.query(`SELECT * FROM ${config.childTable} WHERE id = ?`, [id]).then((rows) => rows[0]);
+  }
+
   async getOrderAttachment(attachmentId: string) {
     const [row] = await this.query('SELECT * FROM order_attachments WHERE id = ?', [attachmentId]);
     return row || null;

@@ -94,6 +94,7 @@ datasources:
   - id: order_detail_attachments
     single: false
     permission: orders.read
+    meta: { upload: { kind: order_attachment, parentTable: orders, childTable: order_attachments, parentKey: order_id, resource: orders, permission: orders.write } }
     query: |
       SELECT a.id, a.order_id, a.file_name, a.mime_type, a.size_bytes,
         u.name AS uploaded_by_name, CAST(a.created_at AS VARCHAR) AS created_at
@@ -280,6 +281,7 @@ actions:
     type: upload
     permission: orders.write
     kind: order_attachment
+    datasource: order_detail_attachments
     params: { order_id: '{row.id}' }
     refresh: [order_detail_attachments, order_detail_timeline]
   - id: download_order_attachment

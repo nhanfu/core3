@@ -33,6 +33,7 @@ datasources:
   - id: employee_documents
     single: false
     permission: hr.read
+    meta: { upload: { kind: employee_document, parentTable: employees, childTable: employee_documents, parentKey: employee_id, resource: employees, permission: hr.write } }
     query: "SELECT id, employee_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM employee_documents WHERE employee_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = :id AND d.branch_id = :current_branch_id)) ORDER BY created_at DESC"
 components:
   - type: OdooFormView
@@ -87,7 +88,7 @@ toolbar:
   - { id: upload_employee_document, label: '+ Download documents', variant: secondary, permission: hr.write, action: upload_employee_document }
 actions:
   - { id: back_employees, type: navigate, navigate_to: /hr/employees }
-  - { id: upload_employee_document, type: upload, permission: hr.write, kind: employee_document, params: { employee_id: '{state.id}' }, refresh: [employee_documents, employee_activity] }
+  - { id: upload_employee_document, type: upload, permission: hr.write, kind: employee_document, datasource: employee_documents, params: { employee_id: '{state.id}' }, refresh: [employee_documents, employee_activity] }
   - { id: download_employee_document, type: download, permission: hr.read, kind: employee_document }
   - id: edit_employee_detail
     type: form
