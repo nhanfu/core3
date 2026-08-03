@@ -62,9 +62,29 @@ class PageRoot extends BaseComponent {
           separator.textContent = '›';
           breadcrumb.append(separator);
         }
-        const crumb = document.createElement('span');
-        crumb.className = index === config.page.breadcrumb.length - 1 ? 'page-breadcrumb-current' : 'page-breadcrumb-link';
+        const isCurrent = index === config.page.breadcrumb.length - 1;
+        const crumb = document.createElement(isCurrent ? 'span' : 'a');
+        crumb.className = isCurrent ? 'page-breadcrumb-current' : 'page-breadcrumb-link';
         crumb.textContent = item;
+        if (!isCurrent) {
+          const pathSegments = window.location.pathname.split('/').filter(Boolean);
+          const routeLength = pathSegments.length - config.page.breadcrumb.length + index + 1;
+          const targetPath = routeLength > 0 ? `/${pathSegments.slice(0, routeLength).join('/')}` : '';
+          if (targetPath) {
+            const link = crumb as HTMLAnchorElement;
+            link.href = targetPath;
+            link.addEventListener('click', event => {
+              event.preventDefault();
+              navigate(targetPath);
+            });
+          } else {
+            const textCrumb = document.createElement('span');
+            textCrumb.className = 'page-breadcrumb-link';
+            textCrumb.textContent = item;
+            breadcrumb.append(textCrumb);
+            continue;
+          }
+        }
         breadcrumb.append(crumb);
       }
       heading.append(breadcrumb);
