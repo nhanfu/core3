@@ -482,9 +482,27 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
     if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
-    const [status] = await repository.query("SELECT code FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' AND code = ?", [body.status]);
+    const statusSource = workflow.status_source ? SOURCES.get(workflow.status_source) : null;
+    if (!statusSource) return apiError(409, 'Order status datasource is not configured');
+    const statusResult = await repository.querySource(statusSource, {
+      code: body.status,
+      current_user_id: String(authUser.sub || ''),
+      current_user_name: String(authUser.name || ''),
+      current_branch_id: String(authUser.branch_id || ''),
+      view_scope: String(authUser.view_scope || 'all'),
+    }, 0, 1);
+    const status = statusResult.data?.[0];
     if (!status) return apiError(400, 'Unknown order status');
-    const [current] = await repository.query('SELECT status FROM order_workflow_states WHERE order_id = ?', [body.id]);
+    const stateSource = workflow.state_source ? SOURCES.get(workflow.state_source) : null;
+    if (!stateSource) return apiError(409, 'Order workflow state datasource is not configured');
+    const stateResult = await repository.querySource(stateSource, {
+      id: body.id,
+      current_user_id: String(authUser.sub || ''),
+      current_user_name: String(authUser.name || ''),
+      current_branch_id: String(authUser.branch_id || ''),
+      view_scope: String(authUser.view_scope || 'all'),
+    }, 0, 1);
+    const current = stateResult.data?.[0];
     const transition = (workflow.transitions || []).find((rule: any) => (rule.from === '*' || rule.from === current?.status) && (rule.to === '*' || rule.to === body.status));
     if (!transition) return apiError(409, 'This status transition is not allowed');
     requirePerm(String(transition.permission || workflow.permission));

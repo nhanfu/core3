@@ -41,6 +41,7 @@ datasources:
       handler: order_status
       permission: orders.write
       status_source: order_statuses
+      state_source: order_workflow_state
       allow_add: true
       transitions:
         - { from: '*', to: '*', permission: orders.write }
@@ -52,7 +53,11 @@ datasources:
   - id: order_statuses
     single: false
     permission: orders.read
-    query: "SELECT code AS value, name AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' ORDER BY sort_order, code"
+      query: "SELECT code AS value, name AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' AND (:code IS NULL OR code = :code) ORDER BY sort_order, code"
+  - id: order_workflow_state
+    single: true
+    permission: orders.read
+    query: "SELECT COALESCE(s.status, o.status) AS status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"
   - id: order_customer_lookup
     single: false
     permission: orders.read

@@ -304,10 +304,11 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     if (source.workflow !== undefined) {
       requireRecord(source.workflow, `${path}.workflow`, issues);
       if (isRecord(source.workflow)) {
-        rejectUnknownKeys(source.workflow, new Set(['handler', 'permission', 'status_source', 'allow_add', 'transitions', 'actions']), `${path}.workflow`, issues);
+        rejectUnknownKeys(source.workflow, new Set(['handler', 'permission', 'status_source', 'state_source', 'allow_add', 'transitions', 'actions']), `${path}.workflow`, issues);
         requireString(source.workflow.handler, `${path}.workflow.handler`, issues);
         requireString(source.workflow.permission, `${path}.workflow.permission`, issues);
         if (source.workflow.status_source !== undefined) requireString(source.workflow.status_source, `${path}.workflow.status_source`, issues);
+        if (source.workflow.state_source !== undefined) requireString(source.workflow.state_source, `${path}.workflow.state_source`, issues);
         if (source.workflow.allow_add !== undefined && typeof source.workflow.allow_add !== 'boolean') issues.push(`${path}.workflow.allow_add must be a boolean`);
         if (!Array.isArray(source.workflow.transitions) || !source.workflow.transitions.length) issues.push(`${path}.workflow.transitions must be a non-empty array`);
         if (source.workflow.actions !== undefined) {
