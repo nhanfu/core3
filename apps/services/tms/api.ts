@@ -509,28 +509,18 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (body.kind !== 'customer' && body.kind !== 'partner') return apiError(400, 'Invalid CRM entity kind');
       if (!(await crmEntityInScope(body.kind, body.id))) return apiError(403, 'Record is outside the current view scope');
+      const entitySource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const entity = entitySource?.meta?.entities?.[body.kind];
+      if (!entity || typeof entity.table !== 'string' || !Array.isArray(entity.fields)) return apiError(409, 'CRM entity mutation is not configured');
       const values = body.values && typeof body.values === 'object' ? body.values : {};
-      const table = body.kind === 'customer' ? 'customers' : 'partners';
-      const fields = body.kind === 'customer'
-        ? ['code', 'name', 'tax_code', 'phone', 'email', 'stage', 'owner_name', 'visibility', 'status']
-        : ['code', 'name', 'tax_code', 'phone', 'email', 'partner_type', 'owner_name', 'visibility', 'status'];
-      const changes = fields
-        .filter((field) => Object.prototype.hasOwnProperty.call(values, field))
-        .map((field) => ({ field, value: values[field] }));
-      if (!changes.some((change) => change.field === 'code' && String(change.value || '').trim())) return apiError(400, 'code required');
-      if (!changes.some((change) => change.field === 'name' && String(change.value || '').trim())) return apiError(400, 'name required');
-      if (body.kind === 'customer' && !['Lead', 'Contacting', 'Customer'].includes(String(values.stage || ''))) return apiError(400, 'Invalid customer stage');
-      if (body.kind === 'partner' && !['Carrier', 'Supplier', 'ShippingLine', 'Warehouse', 'Depot', 'Other'].includes(String(values.partner_type || ''))) return apiError(400, 'Invalid partner type');
-      if (!['Public', 'Private'].includes(String(values.visibility || ''))) return apiError(400, 'Invalid visibility');
-      if (!['Active', 'Inactive'].includes(String(values.status || ''))) return apiError(400, 'Invalid status');
       const updated = await repository.executeDatasourceMutation(
         {
-          table,
-          mutations: { update: { fields, timestamps: true } },
+          table: entity.table,
+          mutations: { update: { fields: entity.fields, timestamps: true, validate: entity.validate } },
         },
         'update',
         body.id,
-        Object.fromEntries(changes.map((change) => [change.field, change.value])),
+        values,
         activityActor,
       );
       if (!updated) return apiError(404, 'CRM entity not found');

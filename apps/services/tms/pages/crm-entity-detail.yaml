@@ -5,6 +5,16 @@ datasources:
   - id: crm_entity_detail
     single: true
     permission: crm.read
+    meta:
+      entities:
+        customer:
+          table: customers
+          fields: [code, name, tax_code, phone, email, stage, owner_name, visibility, status]
+          validate: { required: [code, name], fields: { stage: { enum: [Lead, Contacting, Customer] }, visibility: { enum: [Public, Private] }, status: { enum: [Active, Inactive] } } }
+        partner:
+          table: partners
+          fields: [code, name, tax_code, phone, email, partner_type, owner_name, visibility, status]
+          validate: { required: [code, name], fields: { partner_type: { enum: [Carrier, Supplier, ShippingLine, Warehouse, Depot, Other] }, visibility: { enum: [Public, Private] }, status: { enum: [Active, Inactive] } } }
     query: |
       SELECT c.id, 'customer' AS kind, c.code, c.name, c.tax_code, c.phone, c.email,
         c.owner_name, c.visibility, c.status AS status, c.stage AS stage, NULL AS partner_type,
@@ -158,6 +168,7 @@ actions:
     permission: crm.write
     title: Update CRM objects
     action: crm.entities.update
+    datasource: crm_entity_detail
     handler: crm_entity
     operation: update
     prefill: source
