@@ -21,18 +21,73 @@ datasources:
 toolbar:
   - { id: add_payment_request_btn, label: '+ Add more suggestions', variant: primary, permission: accounting.write, action: add_payment_request }
 components:
-  - { type: ListToolbar, source: payment_requests, filter_field: q, search: { label: Search for suggestions, placeholder: 'Find voucher number or partner...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'From the date of proposal', to_label: 'Arrive at the proposed date', presets: [today, week, month, quarter, year, all] }, actions: [{ id: payment_requests.export, label: 'Export CSV', icon: download }] }
-  - type: StatusTabs
+  - type: ListView
+    variant: odoo
     source: payment_requests
-    filter_field: status
-    variant: contained
-    tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Paid, label: Paid }, { id: Cancelled, label: Canceled }]
-  - type: DataGrid
-    source: payment_requests
+    create_action: add_payment_request
+    create_label: Add payment request
+    search:
+      label: Search payment requests
+      placeholder: 'Find document number, content, or partner...'
+    date_range:
+      label: Request date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Pending Approval, label: Pending approval }
+          - { id: Approved, label: Approved }
+          - { id: Paid, label: Paid }
+          - { id: Cancelled, label: Cancelled }
+    actions:
+      - { id: payment_requests.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add payment request
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all payment requests
+      select_row: Select payment request
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: code
+          subtitle: name
+          fields:
+            - { field: counterparty, label: Partner }
+            - { field: amount_display, label: Amount }
+            - { field: due_date, label: Due date }
+            - { field: status_label, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: There is no payment offer }
     columns:
       - { field: code, label: Document number, sortable: true }
@@ -44,19 +99,19 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Draft: neutral, Browsing: amber, Approved: green, Paid: blue, Canceled: red }
+        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_payment_request, label: Detail, variant: secondary, permission: accounting.read }
-          - { id: edit_payment_request, label: Fix, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_payment_request, label: Browser, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_payment_request, label: Browse, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_payment_request, label: Refuse, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: pay_payment_request, label: Paid, variant: primary, permission: accounting.pay, show_if: "row.status === 'Approved'" }
+          - { id: view_payment_request, label: View, variant: secondary, permission: accounting.read }
+          - { id: edit_payment_request, label: Edit, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_payment_request, label: Submit, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_payment_request, label: Approve, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_payment_request, label: Reject, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: pay_payment_request, label: Mark paid, variant: primary, permission: accounting.pay, show_if: "row.status === 'Approved'" }
           - { id: cancel_payment_request, label: Cancel, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
-          - { id: delete_payment_request, label: Erase, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: delete_payment_request, label: Delete, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_payment_request
     type: form
