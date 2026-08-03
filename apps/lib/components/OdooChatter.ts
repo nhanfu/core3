@@ -196,9 +196,14 @@ export class OdooChatter extends BaseComponent {
     if (timestampValue) timestamp.dateTime = String(timestampValue);
     meta.append(author, timestamp);
     const body = document.createElement('p');
-    body.textContent = String(message[this.def.message_action_field || 'action_label'] || message.action || 'Activity');
+    const actionLabel = this.def.message_action_labels?.[action]
+      || message[this.def.message_action_field || 'action_label']
+      || message.action
+      || 'Activity';
+    body.textContent = String(actionLabel);
     const detail = document.createElement('span');
-    detail.textContent = String(message[this.def.message_detail_field || 'detail'] || '');
+    const detailValue = message[this.def.message_detail_field || 'detail'] || '';
+    detail.textContent = String(this.def.message_detail_labels?.[detailValue] || detailValue);
     content.append(meta, body, detail);
     entry.append(avatar, content);
     return entry;

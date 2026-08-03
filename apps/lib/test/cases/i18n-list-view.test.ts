@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { i18n } from '../../i18n.ts';
 
-describe('ListView i18n maps', () => {
+describe('declarative i18n maps', () => {
   it('translates declarative control labels and date preset labels', () => {
     i18n.hydrate('orders', {
       lang: 'vi',
@@ -18,5 +18,22 @@ describe('ListView i18n maps', () => {
 
     expect(translated.components[0].labels.filters).toBe('Bộ lọc');
     expect(translated.components[0].date_range.preset_labels.today).toBe('Hôm nay');
+  });
+
+  it('translates chatter action and detail label maps', () => {
+    i18n.hydrate('order-detail', {
+      lang: 'vi',
+      page: { Created: 'Đã tạo', 'Order created': 'Khởi tạo đơn hàng' },
+    });
+    const translated = i18n.translatePageConfig('order-detail', {
+      components: [{
+        type: 'OdooFormView',
+        message_action_labels: { created: 'Created' },
+        message_detail_labels: { 'Order created': 'Order created' },
+      }],
+    });
+
+    expect(translated.components[0].message_action_labels.created).toBe('Đã tạo');
+    expect(translated.components[0].message_detail_labels['Order created']).toBe('Khởi tạo đơn hàng');
   });
 });

@@ -228,12 +228,16 @@ describe('document detail components', () => {
       message_source: 'messages',
       follower_source: 'followers',
       message_action: 'send_message',
+      message_action_labels: { 'orders.note': 'Internal note' },
+      message_detail_labels: { 'Review rates': 'Review freight rates' },
     });
     const container = mount(chatter);
 
     expect(container.querySelector('.o-form-chatter-tool-menu')).not.toBeNull();
     expect(container.textContent).toContain('Admin User');
     expect(container.querySelector('.o-form-chatter-message.is-note time')?.textContent).not.toContain('2026-08-04 09:15:00');
+    expect(container.textContent).toContain('Internal note');
+    expect(container.textContent).toContain('Review freight rates');
     container.querySelector<HTMLButtonElement>('.o-form-chatter-primary')!.click();
     expect(container.querySelector('.o-form-composer')).not.toBeNull();
     container.querySelector<HTMLButtonElement>('.o-form-composer-cancel')!.click();

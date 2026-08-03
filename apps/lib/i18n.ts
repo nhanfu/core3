@@ -85,7 +85,12 @@ class I18n {
           childValue,
           childKey,
           nextComponent,
-          displayKeys.has(childKey) || childKey === 'breadcrumb' || key === 'labels' || key === 'preset_labels',
+          displayKeys.has(childKey)
+            || childKey === 'breadcrumb'
+            || key === 'labels'
+            || key === 'preset_labels'
+            || key === 'message_action_labels'
+            || key === 'message_detail_labels',
         );
       }
       return result;

@@ -9,10 +9,10 @@ datasources:
       SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
-        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Nháp'
-          WHEN 'Pending Approval' THEN 'Đang duyệt'
-          WHEN 'Approved' THEN 'Đã duyệt'
-          WHEN 'Cancelled' THEN 'Đã hủy' ELSE o.status END AS status_label,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Draft'
+          WHEN 'Pending Approval' THEN 'Pending approval'
+          WHEN 'Approved' THEN 'Approved'
+          WHEN 'Cancelled' THEN 'Cancelled' ELSE o.status END AS status_label,
         o.shipment_type, o.route, o.transport_method, o.trip_count,
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, o.notes
@@ -42,22 +42,22 @@ datasources:
     query: |
       SELECT actor_name, action,
         CASE action
-          WHEN 'orders.submit_for_approval' THEN 'Trình duyệt'
-          WHEN 'orders.approve' THEN 'Đã duyệt'
-          WHEN 'orders.reject' THEN 'Từ chối'
-          WHEN 'orders.cancel' THEN 'Đã hủy'
-          WHEN 'orders.lines.create' THEN 'Thêm dòng chi phí'
-          WHEN 'orders.lines.update' THEN 'Cập nhật dòng chi phí'
-          WHEN 'orders.lines.delete' THEN 'Xóa dòng chi phí'
-          WHEN 'orders.message' THEN 'Tin nhắn'
-          WHEN 'orders.note' THEN 'Ghi chú'
+          WHEN 'orders.submit_for_approval' THEN 'Submitted for approval'
+          WHEN 'orders.approve' THEN 'Approved'
+          WHEN 'orders.reject' THEN 'Rejected'
+          WHEN 'orders.cancel' THEN 'Cancelled'
+          WHEN 'orders.lines.create' THEN 'Added order line'
+          WHEN 'orders.lines.update' THEN 'Updated order line'
+          WHEN 'orders.lines.delete' THEN 'Deleted order line'
+          WHEN 'orders.message' THEN 'Message'
+          WHEN 'orders.note' THEN 'Note'
           ELSE action END AS action_label,
         detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity
       WHERE resource = 'orders' AND resource_id = :id
         AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM orders o WHERE o.id = :id AND o.branch_id = :current_branch_id))
       UNION ALL
-      SELECT created_by, 'created', 'Đã tạo', 'Khởi tạo đơn hàng',
+      SELECT created_by, 'created', 'Created', 'Order created',
         CAST(created_at AS VARCHAR)
       FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)
       ORDER BY created_at DESC
@@ -88,7 +88,7 @@ components:
     title_field: order_number
     status_field: status
     status_label_field: status_label
-    status_colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã hủy: red }
+    status_colors: { Draft: neutral, Pending approval: amber, Approved: green, Cancelled: red }
     status_badges:
       - { value: Cancelled, label: Cancelled, tone: red }
     statusbar:
@@ -114,6 +114,18 @@ components:
     message_action_field: action_label
     message_detail_field: detail
     message_timestamp_field: created_at
+    message_action_labels:
+      orders.submit_for_approval: Submitted for approval
+      orders.approve: Approved
+      orders.reject: Rejected
+      orders.cancel: Cancelled
+      orders.lines.create: Added order line
+      orders.lines.update: Updated order line
+      orders.lines.delete: Deleted order line
+      orders.message: Message
+      orders.note: Note
+      created: Created
+    message_detail_labels: { Order created: Order created }
     content_slot: true
     group_columns: 2
     groups:
