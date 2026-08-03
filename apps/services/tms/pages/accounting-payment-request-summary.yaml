@@ -44,28 +44,83 @@ datasources:
         AND (:to_date IS NULL OR document_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
       GROUP BY status ORDER BY value DESC
 components:
-  - type: ListToolbar
-    source: payment_request_summary
-    filter_sources: [payment_request_summary, payment_request_totals, payment_request_status_breakdown]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
-    search: { label: General search, placeholder: 'Find a partner or status...' }
-    actions: [{ id: payment_request_summary.export, label: 'Export CSV', icon: download }]
   - type: StatRow
     source: payment_request_totals
-    stats: [{ label: Document number, field: document_count, color: blue }, { label: Total value, field: total_amount, color: blue }, { label: What if?, field: outstanding_amount, color: amber }, { label: Paid, field: paid_amount, color: green }]
-  - { type: Chart, source: payment_request_status_breakdown, title: Suggest spending according to status, label_field: label, value_field: value, width: 560, height: 240, color: teal }
-  - { type: StatusTabs, source: payment_request_summary, filter_field: status, tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Paid, label: Paid }, { id: Cancelled, label: Canceled }] }
-  - type: DataGrid
+    stats: [{ label: Document number, field: document_count, color: blue }, { label: Total value, field: total_amount, color: blue }, { label: Outstanding, field: outstanding_amount, color: amber }, { label: Paid, field: paid_amount, color: green }]
+  - { type: Chart, source: payment_request_status_breakdown, title: Payment requests by status, label_field: label, value_field: value, width: 560, height: 240, color: teal }
+  - type: ListView
+    variant: odoo
     source: payment_request_summary
+    search:
+      label: Search payment request summary
+      placeholder: 'Find a partner or status...'
+    date_range:
+      label: Request date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filter_sources: [payment_request_summary, payment_request_totals, payment_request_status_breakdown]
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Pending Approval, label: Pending approval }
+          - { id: Approved, label: Approved }
+          - { id: Paid, label: Paid }
+          - { id: Cancelled, label: Cancelled }
+    actions:
+      - { id: payment_request_summary.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all summary rows
+      select_row: Select summary row
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: counterparty
+          subtitle: status_label
+          fields:
+            - { field: document_count, label: Documents }
+            - { field: total_amount_display, label: Total value }
+            - { field: latest_document_date, label: Latest document }
     page_size: 20
     column_chooser: true
     row_key: counterparty
+    selectable: true
+    row_actions: menu
     empty_state: { title: No aggregate data available }
     columns:
       - { field: counterparty, label: Partner, sortable: true }
-      - { field: status_label, label: Status, type: StatusChip, colors: { Draft: neutral, Browsing: amber, Approved: green, Paid: blue, Canceled: red } }
+      - field: status_label
+        label: Status
+        type: StatusChip
+        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red }
       - { field: document_count, label: Document number, align: right }
       - { field: total_amount_display, label: Total value, align: right }
       - { field: currency, label: Money }
-      - { field: latest_document_date, label: Latest documents }
+      - { field: latest_document_date, label: Latest document }
 actions: []

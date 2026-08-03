@@ -45,6 +45,8 @@ export type ListViewAction = {
   disabled?: boolean;
   params?: Record<string, unknown>;
 };
+export type ListViewGroup = ListViewGroupBy;
+export type ListViewFavorite = { id: string; label: string; filters?: Record<string, unknown>; groupBy?: string };
 
 export type ListViewMode = KanbanViewDefinition | CalendarViewDefinition;
 
@@ -65,7 +67,10 @@ export type ListViewOptions = {
     presetLabels?: Partial<Record<DateRangePreset, string>>;
   };
   actions?: ListViewAction[];
+  favorites?: ListViewFavorite[];
+  bulkActions?: ListViewAction[];
   rowKey?: string;
+  tree?: { parentField?: string };
   selectable?: boolean;
   columnChooser?: boolean;
   openAction?: string;
@@ -95,6 +100,7 @@ export type ListViewOptions = {
   onSelectionChange?: (selectedIds: string[]) => void;
   onViewChange?: (view: 'list' | 'kanban' | 'calendar') => void;
   onGroupByChange?: (field: string | null) => void;
+  onFavoriteChange?: (favorite: ListViewFavorite) => void;
 };
 
 /**
@@ -279,7 +285,7 @@ export class ListView extends BaseComponent {
       }
       const groupLabel = this.options.groupBy?.find(group => group.field === groupBy)?.label || groupBy;
       for (const [value, groupRows] of groups) {
-        const groupRow = html.take(body).trow.className('o-list-group-header').getContext();
+        const groupRow = html.take(body).trow.className('o-list-group-header o-list-group-row').dataAttr('list-group', value).getContext();
         const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
         groupCell.dataset.groupBy = groupBy;
         const heading = document.createElement('strong');
@@ -289,7 +295,24 @@ export class ListView extends BaseComponent {
         groupRows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
       }
     } else {
-      rows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
+      const rowItems = this.treeRows(rows);
+      const groupBy = String(this.state.groupBy || '');
+      if (!groupBy) {
+        for (const item of rowItems) this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
+      } else {
+        const groups = new Map<string, typeof rowItems>();
+        for (const item of rowItems) {
+          const value = String(item.row[groupBy] ?? '—');
+          if (!groups.has(value)) groups.set(value, []);
+          groups.get(value)!.push(item);
+        }
+        for (const [value, items] of groups) {
+          const groupRow = html.take(body).trow.className('o-list-group-row').dataAttr('list-group', value).getContext();
+          const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
+          groupCell.textContent = `${value} (${items.length})`;
+          for (const item of items) this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
+        }
+      }
     }
   }
 
@@ -316,6 +339,10 @@ export class ListView extends BaseComponent {
       html.take(selection).span.text(labels.selected);
       const clear = html.take(selection).button.text(labels.clearSelection).getContext();
       clear.addEventListener('click', () => this.setSelectedIds([]));
+      for (const action of this.options.bulkActions || []) {
+        const button = html.take(selection).button.className('o-list-bulk-action').dataAttr('list-bulk-action', action.id).text(action.label || action.id).getContext();
+        button.addEventListener('click', () => void this.submit(action.id, { ...(action.params || {}), selectedIds }));
+      }
       return;
     }
 
@@ -392,6 +419,7 @@ export class ListView extends BaseComponent {
       for (const option of this.options.groupBy) {
         const button = html.take(group).button.className(this.state.groupBy === option.field ? 'is-active' : '').text(option.label).getContext();
         button.dataset.groupBy = option.field;
+        button.dataset.groupField = option.field;
         button.addEventListener('click', () => this.setGroupBy(option.field));
       }
     }
@@ -436,7 +464,7 @@ export class ListView extends BaseComponent {
       }
     }
 
-    if (!this.options.columnChooser && !this.options.actions?.length) return;
+    if (!this.options.columnChooser && !this.options.actions?.length && !this.options.favorites?.length) return;
     const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').getContext() as HTMLDetailsElement;
     const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).getContext();
     appendIcon(summary, 'settings');
@@ -473,6 +501,18 @@ export class ListView extends BaseComponent {
         button.append(document.createTextNode(action.label || action.title || action.id));
         button.disabled = Boolean(action.disabled);
         if (!button.disabled) button.addEventListener('click', () => void this.submit(action.id, action.params || {}));
+      }
+    }
+    if (this.options.favorites?.length) {
+      const group = html.take(menu).section.className('o-list-favorites-menu').getContext();
+      html.take(group).h4.text('Favorites');
+      for (const favorite of this.options.favorites) {
+        const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).getContext();
+        button.addEventListener('click', () => {
+          this.setState({ filters: { ...(favorite.filters || {}) }, groupBy: favorite.groupBy || '' });
+          this.options.onFilterChange?.({ ...(favorite.filters || {}) });
+          this.options.onFavoriteChange?.(favorite);
+        });
       }
     }
     this.dismissDetails(details);
@@ -517,7 +557,7 @@ export class ListView extends BaseComponent {
     }
   }
 
-  private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
+  private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, depth = 0, hasChildren = false) {
     const id = this.rowId(row, index);
     const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).getContext();
     tr.addEventListener('click', (event: MouseEvent) => {
@@ -558,7 +598,59 @@ export class ListView extends BaseComponent {
         const value = row[column.field];
         cell.textContent = value == null || value === '' ? '—' : String(value);
       }
+      if (this.options.tree && columnIndex === 0) {
+        cell.style.paddingLeft = `${16 + depth * 20}px`;
+        cell.dataset.treeDepth = String(depth);
+        if (hasChildren) {
+          const collapsed = this.collapsedTreeIds().has(id);
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'o-list-tree-toggle';
+          toggle.textContent = collapsed ? '▸' : '▾';
+          toggle.setAttribute('aria-label', collapsed ? 'Expand row' : 'Collapse row');
+          toggle.addEventListener('click', event => {
+            event.stopPropagation();
+            const next = this.collapsedTreeIds();
+            collapsed ? next.delete(id) : next.add(id);
+            this.setState({ collapsedTreeIds: [...next] });
+          });
+          cell.prepend(toggle);
+        }
+      }
     });
+  }
+
+  private treeRows(rows: ListRow[]) {
+    if (!this.options.tree) return rows.map((row, index) => ({ row, index, depth: 0, hasChildren: false }));
+    const parentField = this.options.tree.parentField || 'parent_id';
+    const ids = new Set(rows.map((row, index) => this.rowId(row, index)));
+    const children = new Map<string, string[]>();
+    rows.forEach((row, index) => {
+      const parent = String(row[parentField] ?? '');
+      if (!children.has(parent)) children.set(parent, []);
+      children.get(parent)!.push(this.rowId(row, index));
+    });
+    const collapsed = this.collapsedTreeIds();
+    const result: Array<{ row: ListRow; index: number; depth: number; hasChildren: boolean }> = [];
+    const visit = (row: ListRow, index: number, depth: number) => {
+      const id = this.rowId(row, index);
+      const childIds = (children.get(id) || []).filter(childId => ids.has(childId));
+      result.push({ row, index, depth, hasChildren: childIds.length > 0 });
+      if (collapsed.has(id)) return;
+      for (const childId of childIds) {
+        const childIndex = rows.findIndex((candidate, candidateIndex) => this.rowId(candidate, candidateIndex) === childId);
+        if (childIndex >= 0) visit(rows[childIndex], childIndex, depth + 1);
+      }
+    };
+    rows.forEach((row, index) => {
+      const parent = String(row[parentField] ?? '');
+      if (!parent || !ids.has(parent)) visit(row, index, 0);
+    });
+    return result;
+  }
+
+  private collapsedTreeIds() {
+    return new Set<string>(Array.isArray(this.state.collapsedTreeIds) ? this.state.collapsedTreeIds.map(String) : []);
   }
 
   private drawRowActions(container: HTMLElement, row: ListRow, rowId: string, actions: ListViewRowAction[], labels: Required<NonNullable<ListViewOptions['labels']>>) {

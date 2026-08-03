@@ -10,11 +10,23 @@ datasources:
     permission: system.read
     query: "SELECT id, flow_id, sequence, name, approver_role, printf('%,.0f ₫', min_amount) AS min_amount_display, min_amount, status FROM approval_flow_steps WHERE flow_id = :id ORDER BY sequence, id"
 components:
-  - { type: DocumentSummary, source: approval_flow, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Describe }] }
-  - type: DataGrid
+  - type: OdooFormView
+    source: approval_flow
+    title_field: name
+    subtitle_field: code
+    status_field: status
+    statusbar:
+      - { value: Active, label: Active }
+      - { value: Inactive, label: Inactive }
+    groups:
+      - title: Approval flow information
+        fields:
+          - { field: description, label: Description, wide: true }
+    content_slot: true
+  - type: ListView
+    variant: odoo
     source: approval_steps
     page_size: 50
-    reorder: { up_action: move_step_up, down_action: move_step_down }
     column_chooser: true
     row_key: id
     empty_state: { title: There is no approval step yet, description: Add a first step to the process. }

@@ -22,15 +22,31 @@ datasources:
     permission: settings.read
     query: "SELECT id AS value, name AS label FROM branches WHERE (:view_scope = 'all' OR id = :current_branch_id) ORDER BY name"
 components:
-  - { type: DocumentSummary, source: department_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: branch_name, label: Branch }] }
-  - type: DataGrid
+  - type: OdooFormView
+    source: department_detail
+    title_field: name
+    subtitle_field: code
+    status_field: status
+    statusbar:
+      - { value: Active, label: Working }
+      - { value: Inactive, label: Shut down }
+    header_actions:
+      - { id: edit_department_detail, label: Edit department, variant: secondary }
+    groups:
+      - title: Department details
+        fields:
+          - { field: branch_name, label: Branch }
+    content_slot: true
+  - type: ListView
+    variant: odoo
     source: department_teams
     page_size: 30
     column_chooser: true
     row_key: id
     empty_state: { title: No team yet }
     columns: [{ field: code, label: Team code }, { field: name, label: Team }, { field: manager_name, label: Person in charge }, { field: status, label: Status }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: department_employees
     page_size: 30
     column_chooser: true
@@ -39,7 +55,6 @@ components:
     columns: [{ field: code, label: Employee code }, { field: name, label: Full name }, { field: job_title, label: Title }, { field: status, label: Status }]
 toolbar:
   - { id: back_departments, label: 'List of departments', icon: arrow-left, variant: secondary, action: back_departments }
-  - { id: edit_department_detail, label: Repair departments, variant: primary, permission: settings.write, action: edit_department_detail }
 actions:
   - { id: back_departments, type: navigate, navigate_to: /org/departments }
   - id: edit_department_detail

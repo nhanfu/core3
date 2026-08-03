@@ -21,8 +21,25 @@ datasources:
     permission: drivers.read
     query: "SELECT id AS value, plate || ' - ' || model AS label FROM trucks WHERE (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY plate"
 components:
-  - { type: DocumentSummary, source: driver_detail, title_field: name, subtitle_field: license_number, status_field: compliance_label, status_colors: { 'Còn hiệu lực': green, 'Sắp hết hạn': amber, 'Đã hết hạn': red }, columns: [{ field: phone, label: Phone }, { field: email, label: E-mail }, { field: license_expiry, label: License term }, { field: truck_plate, label: Vehicle }, { field: status, label: Status }] }
-  - type: DataGrid
+  - type: OdooFormView
+    source: driver_detail
+    title_field: name
+    subtitle_field: license_number
+    status_field: compliance_label
+    status_colors: { Còn hiệu lực: green, Sắp hết hạn: amber, Đã hết hạn: red }
+    header_actions:
+      - { id: edit_driver_detail, label: Edit driver, variant: secondary }
+    groups:
+      - title: Driver details
+        fields:
+          - { field: phone, label: Phone }
+          - { field: email, label: Email }
+          - { field: license_expiry, label: License expiry }
+          - { field: truck_plate, label: Vehicle }
+          - { field: status, label: Status }
+    content_slot: true
+  - type: ListView
+    variant: odoo
     source: driver_trips
     page_size: 30
     column_chooser: true
@@ -31,7 +48,6 @@ components:
     columns: [{ field: trip_number, label: Trip }, { field: origin, label: Point go }, { field: destination, label: Destination }, { field: departure_time, label: Depart }, { field: arrival_time, label: Complete }, { field: status, label: Status }]
 toolbar:
   - { id: back_drivers, label: 'Driver list', icon: arrow-left, variant: secondary, action: back_drivers }
-  - { id: edit_driver_detail, label: Fix driver, variant: primary, permission: drivers.write, action: edit_driver_detail }
 actions:
   - { id: back_drivers, type: navigate, navigate_to: /drivers }
   - id: edit_driver_detail

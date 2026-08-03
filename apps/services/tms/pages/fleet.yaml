@@ -38,31 +38,6 @@ datasources:
     permission: fleet.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'vehicle_type' AND status = 'Active' UNION SELECT DISTINCT type AS value, type AS label FROM trucks WHERE type IS NOT NULL AND type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 
-toolbar:
-  - id: add_truck_btn
-    label: "+ Add vehicles"
-    variant: primary
-    permission: fleet.write
-    action: add_truck
-
-filters:
-  source: trucks
-  all_label: All
-  clear_label: Clear filter
-  fields:
-    - field: status
-      label: Status
-      type: select
-      options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }]
-    - field: type
-      label: Vehicle type
-      type: select
-      options_source: fleet_type_lookup
-    - field: q
-      label: Search
-      type: search
-      placeholder: "License plate, car model or driver..."
-
 components:
   - type: StatRow
     source: trucks_kpis
@@ -83,50 +58,32 @@ components:
         field: overdue_service
         color: amber
 
-  - type: GridView
+  - type: ListView
+    variant: odoo
     source: trucks
+    create_action: add_truck
+    create_label: '+ Add vehicle'
+    search: { label: Search vehicles, placeholder: 'License plate, car model or driver...' }
+    filters:
+      - { field: status, label: Status, options: [{ id: Active, label: Ready }, { id: Maintenance, label: Maintenance }, { id: 'Out of Service', label: Shut down }] }
+      - { field: type, label: Vehicle type, options_source: fleet_type_lookup }
     page_size: 8
+    column_chooser: true
+    row_key: id
+    selectable: true
+    row_actions: menu
     empty_state: { title: No means, description: Try changing filters or adding new media. }
     columns:
-      - type: TextCell
-        field: plate
-        label: Number plate
-        secondary: model
-      - type: TextCell
-        field: driver_name
-        label: Driver
-        secondary: driver_phone
-      - type: BadgeCell
-        field: status
-        label: Status
-        colors:
-          Active: green
-          Maintenance: amber
-          Out of Service: red
-      - type: BadgeCell
-        field: type
-        label: Vehicle type
-        colors:
-          Semi: indigo
-          Box Truck: blue
-          Flatbed: purple
-          Refrigerated: cyan
-          Tanker: teal
-      - type: NumberCell
-        field: mileage
-        label: Number of kilometers
-        format: "#,###"
-      - type: DateCell
-        field: last_service
-        label: Nearest maintenance
-        format: relative
-      - type: DateCell
-        field: next_service
-        label: Subsequent maintenance
-        format: relative
-        overdueField: overdue_next
-      - type: ActionCell
-        label: ""
+      - { field: plate, label: Number plate, type: PrimaryEntityCell, secondary: model }
+      - { field: driver_name, label: Driver, type: PrimaryEntityCell, secondary: driver_phone }
+      - { field: status, label: Status, type: StatusChip, colors: { Active: green, Maintenance: amber, 'Out of Service': red } }
+      - { field: type, label: Vehicle type }
+      - { field: mileage, label: Number of kilometers, align: right }
+      - { field: last_service, label: Nearest maintenance, type: DateCell }
+      - { field: next_service, label: Subsequent maintenance, type: DateCell }
+      - field: actions
+        label: ''
+        sortable: false
         actions:
           - id: edit_truck
             label: Fix

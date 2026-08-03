@@ -32,50 +32,89 @@ toolbar:
   - { id: add_quote, label: '+ Add quote', variant: primary, permission: crm.write, action: add_quote }
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: quotes
-    filter_field: q
-    search: { label: Find quotes, placeholder: 'Find codes, customers or content...' }
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
-    actions: [{ id: quotes.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: quotes
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Draft, label: Draft }
-      - { id: Sent, label: Sent }
-      - { id: Accepted, label: Accepted }
-      - { id: Cancelled, label: Canceled }
-  - type: DataGrid
-    source: quotes
+    create_action: add_quote
+    create_label: Add quote
+    search:
+      label: Find quotes
+      placeholder: 'Find codes, customers or content...'
+    date_range:
+      label: Created date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Sent, label: Sent }
+          - { id: Accepted, label: Accepted }
+          - { id: Cancelled, label: Canceled }
+    actions: [{ id: quotes.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add quote
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all quotes
+      select_row: Select quote
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: code
+          subtitle: customer_name
+          fields:
+            - { field: title, label: Quote }
+            - { field: amount_display, label: Value }
+            - { field: valid_until, label: Valid until }
     page_size: 20
     column_chooser: true
     row_key: id
-    empty_state: { title: No price quote yet }
+    selectable: true
+    row_open_action: view_quote
+    row_actions: menu
+    empty_state:
+      title: No price quote yet
+      description: Try changing the filters or create a new quote.
     columns:
-      - { field: code, label: Code }
-      - { field: title, label: Quote, type: PrimaryEntityCell, secondary: customer_name }
+      - { field: code, label: Code, type: PrimaryEntityCell, sortable: true }
+      - { field: title, label: Quote, secondary: customer_name }
       - { field: amount_display, label: Value, align: right }
       - { field: cost_amount_display, label: Capital price, align: right }
       - { field: profit_amount_display, label: Profit, align: right }
-      - { field: valid_until, label: Effect arrives }
+      - { field: valid_until, label: Valid until, sortable: true }
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Draft: neutral, Sent: blue, Accepted: green, Canceled: red }
+        colors: { Nháp: neutral, 'Đã gửi': blue, 'Đã chấp nhận': green, 'Đã hủy': red }
       - field: actions
         label: ''
         sortable: false
         actions:
           - { id: view_quote, label: Detail, variant: secondary, permission: crm.read }
-          - { id: edit_quote, label: Fix, variant: ghost, permission: crm.write, show_if: "row.status === 'Draft'" }
+          - { id: edit_quote, label: Edit, variant: ghost, permission: crm.write, show_if: "row.status === 'Draft'" }
           - { id: send_quote, label: Send, variant: primary, permission: crm.write, show_if: "row.status === 'Draft'" }
           - { id: accept_quote, label: Accept, variant: primary, permission: crm.write, show_if: "row.status === 'Sent'" }
           - { id: revise_quote, label: Revise, variant: ghost, permission: crm.write, show_if: "row.status === 'Sent'" }
           - { id: cancel_quote, label: Cancel, variant: danger, permission: crm.write, show_if: "['Draft', 'Sent'].includes(row.status)" }
-          - { id: delete_quote, label: Erase, variant: danger, permission: crm.write, show_if: "row.status === 'Draft'" }
+          - { id: delete_quote, label: Delete, variant: danger, permission: crm.write, show_if: "row.status === 'Draft'" }
 
 actions:
   - id: add_quote

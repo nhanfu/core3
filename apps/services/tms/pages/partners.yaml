@@ -50,60 +50,87 @@ toolbar:
     action: add_partner
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: partners
-    filter_field: q
+    create_action: add_partner
+    create_label: Add partner
     search:
-      label: Search for objects
-      placeholder: 'Find code, name, code, phone number...'
-    search_button: true
-    actions: [{ id: partners.export, label: 'Export CSV', icon: download }]
-    help: true
-  - type: StatusTabs
-    source: partners
-    filter_field: partner_type
-    show_counts: true
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Carrier, label: Garage }
-      - { id: Supplier, label: Supplier }
-      - { id: ShippingLine, label: Shipping company }
-  - type: DataGrid
-    source: partners
+      label: Search partners
+      placeholder: 'Find code, name, tax code, or phone number...'
+    filters:
+      - field: partner_type
+        label: Type
+        placeholder: All types
+        options:
+          - { id: Carrier, label: Garage }
+          - { id: Supplier, label: Supplier }
+          - { id: ShippingLine, label: Shipping company }
+          - { id: Warehouse, label: Warehouse }
+          - { id: Depot, label: Depot }
+          - { id: Other, label: Other }
+      - field: visibility
+        label: Visibility
+        placeholder: All visibility
+        options:
+          - { id: Public, label: Public }
+          - { id: Private, label: Private }
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Working }
+          - { id: Inactive, label: Shut down }
+    actions: [{ id: partners.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add partner
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all partners
+      select_row: Select partner
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: partner_type
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: partner_type_label, label: Type }
+            - { field: owner_name, label: Sales owner }
+            - { field: phone, label: Phone }
+            - { field: visibility_label, label: Visibility }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_open_action: view_partner
+    row_actions: menu
     empty_state:
       title: No object
       description: Try changing your filters or creating a new audience.
     columns:
-      - field: system_code
-        label: HT code
-        sortable: true
-      - field: code
-        label: Code/name
-        type: PrimaryEntityCell
-        secondary: name
-      - field: tax_code
-        label: Tax code
+      - { field: system_code, label: HT code, sortable: true }
+      - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
+      - { field: tax_code, label: Tax code }
       - field: partner_type_label
         label: Type
         type: StatusChip
-        colors:
-          Garage: blue
-          Supplier: amber
-          Shipping company: teal
-          Warehouse / bãi: violet
-          Depot: indigo
-          Other: slate
-      - field: owner_name
-        label: Sales is in charge
-      - field: phone
-        label: Main contact
-        type: PrimaryEntityCell
-        secondary: email
+        colors: { Nhà xe: blue, Nhà cung cấp: amber, Hãng tàu: teal, 'Kho / bãi': violet, Depot: indigo, Khác: slate }
+      - { field: owner_name, label: Sales is in charge }
+      - { field: phone, label: Main contact, type: PrimaryEntityCell, secondary: email }
+      - { field: visibility_label, label: Visibility, optional: hide }
+      - { field: status_label, label: Status, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red }, optional: hide }
       - field: actions
         label: ''
         sortable: false
@@ -111,14 +138,14 @@ components:
         actions:
           - id: view_partner
             label: Detail
-            variant: ghost
+            variant: secondary
             permission: crm.read
           - id: edit_partner
-            label: Fix
+            label: Edit
             variant: ghost
             permission: crm.write
           - id: delete_partner
-            label: Erase
+            label: Delete
             variant: danger
             permission: crm.write
 

@@ -38,41 +38,6 @@ datasources:
     permission: maintenance.read
     query: "SELECT id AS value, name AS label FROM users WHERE enabled = true AND (:view_scope = 'all' OR branch_id = :current_branch_id) UNION SELECT DISTINCT u.id AS value, u.name AS label FROM maintenance m JOIN trucks t ON t.id = m.truck_id JOIN users u ON u.id = m.technician_id WHERE m.technician_id IS NOT NULL AND (:view_scope = 'all' OR t.branch_id = :current_branch_id) ORDER BY label"
 
-toolbar:
-  - id: add_maintenance_btn
-    label: "+ Schedule maintenance"
-    variant: primary
-    permission: maintenance.write
-    action: add_maintenance
-
-filters:
-  source: maintenance
-  all_label: All
-  clear_label: Clear filter
-  fields:
-    - field: status
-      label: Status
-      type: select
-      options: [{ id: Scheduled, label: Scheduled }, { id: 'In Progress', label: Ongoing }, { id: Completed, label: Complete }, { id: Overdue, label: Overdue }]
-    - field: service_type
-      label: Maintenance type
-      type: select
-      options:
-        - { id: 'Oil Change', label: Change the oil }
-        - { id: 'Tire Rotation', label: Rotate tires }
-        - { id: 'Brake Service', label: Brake maintenance }
-        - { id: 'Engine Overhaul', label: Engine overhaul }
-        - { id: 'Transmission Service', label: Gearbox maintenance }
-        - { id: 'AC Repair', label: Repair air conditioner }
-        - { id: Electrical, label: Electricity }
-        - { id: 'Body Repair', label: Repair the body shell }
-        - { id: 'Annual Inspection', label: Periodic inspection }
-        - { id: Other, label: Other }
-    - field: q
-      label: Search
-      type: search
-      placeholder: "License plate or maintenance type..."
-
 components:
   - type: StatRow
     source: maintenance_kpis
@@ -90,43 +55,34 @@ components:
         field: completed_month
         color: green
 
-  - type: GridView
+  - type: ListView
+    variant: odoo
     source: maintenance
+    create_action: add_maintenance
+    create_label: '+ Schedule maintenance'
+    search: { label: Search maintenance, placeholder: 'License plate or maintenance type...' }
+    filters:
+      - { field: status, label: Status, options: [{ id: Scheduled, label: Scheduled }, { id: 'In Progress', label: Ongoing }, { id: Completed, label: Complete }, { id: Overdue, label: Overdue }] }
+      - field: service_type
+        label: Maintenance type
+        options: [{ id: 'Oil Change', label: Change the oil }, { id: 'Tire Rotation', label: Rotate tires }, { id: 'Brake Service', label: Brake maintenance }, { id: 'Engine Overhaul', label: Engine overhaul }, { id: 'Transmission Service', label: Gearbox maintenance }, { id: 'AC Repair', label: Repair air conditioner }, { id: Electrical, label: Electricity }, { id: 'Body Repair', label: Repair the body shell }, { id: 'Annual Inspection', label: Periodic inspection }, { id: Other, label: Other }]
     page_size: 8
+    column_chooser: true
+    row_key: id
+    selectable: true
+    row_actions: menu
     empty_state: { title: There is no maintenance schedule, description: Try changing the filter or schedule a new maintenance schedule. }
     columns:
-      - type: TextCell
-        field: truck_plate
-        label: Vehicle
-        secondary: truck_model
-      - type: TextCell
-        field: service_type
-        label: Maintenance type
-      - type: BadgeCell
-        field: status
-        label: Status
-        colors:
-          Scheduled: blue
-          In Progress: indigo
-          Completed: green
-          Overdue: red
-      - type: DateCell
-        field: scheduled_date
-        label: Expected date
-        format: short
-      - type: DateCell
-        field: completed_date
-        label: Completion date
-        format: short
-      - type: NumberCell
-        field: cost
-        label: Cost (VND)
-        format: "#,###"
-      - type: TextCell
-        field: technician_name
-        label: Technician
-      - type: ActionCell
-        label: ""
+      - { field: truck_plate, label: Vehicle, type: PrimaryEntityCell, secondary: truck_model }
+      - { field: service_type, label: Maintenance type }
+      - { field: status, label: Status, type: StatusChip, colors: { Scheduled: blue, 'In Progress': indigo, Completed: green, Overdue: red } }
+      - { field: scheduled_date, label: Expected date, type: DateCell }
+      - { field: completed_date, label: Completion date, type: DateCell }
+      - { field: cost, label: Cost (VND), align: right }
+      - { field: technician_name, label: Technician }
+      - field: actions
+        label: ''
+        sortable: false
         actions:
           - id: edit_maintenance
             label: Fix

@@ -14,13 +14,56 @@ datasources:
       ORDER BY sort_order, code
 toolbar: [{ id: add_code_rule, label: '+ Add rules', variant: primary, permission: system.write, action: add_code_rule }]
 components:
-  - { type: ListToolbar, source: code_rules, filter_field: q, search: { label: Find the rules, placeholder: 'Find code or name...' }, actions: [{ id: code_rules.export, label: 'Export CSV', icon: download }] }
-  - { type: StatusTabs, source: code_rules, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: code_rules
+    create_action: add_code_rule
+    create_label: Add code rule
+    search:
+      label: Search code rules
+      placeholder: 'Find code or name...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Active }
+          - { id: Inactive, label: Inactive }
+    actions:
+      - { id: code_rules.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add code rule
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all code rules
+      select_row: Select code rule
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: prefix, label: Prefix }
+            - { field: preview, label: Preview }
+            - { field: reset_cadence, label: Reset cycle }
+            - { field: status, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
+    selectable: true
+    row_actions: menu
     empty_state: { title: There are no code generation rules yet }
     columns:
       - { field: code, label: Code }
@@ -34,9 +77,9 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: preview_code_rule, label: See sample, variant: ghost, permission: system.read }
-          - { id: edit_code_rule, label: Fix, variant: ghost, permission: system.write }
-          - { id: delete_code_rule, label: Erase, variant: danger, permission: system.write }
+          - { id: preview_code_rule, label: Preview, variant: ghost, permission: system.read }
+          - { id: edit_code_rule, label: Edit, variant: ghost, permission: system.write }
+          - { id: delete_code_rule, label: Delete, variant: danger, permission: system.write }
 actions:
   - { id: preview_code_rule, type: server, permission: system.read, action: system.code_rules.preview, result: alert, result_field: preview, refresh: [code_rules], params: { id: '{row.id}' } , handler: code_rule_preview}
   - { id: add_code_rule, type: form, permission: system.write, title: Add code rule, table: system_configs, scope: code_rule, operation: insert, refresh: [code_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: prefix, label: Prefix/pattern, type: text, required: true }, { field: sequence_width, label: Sequence number length, type: number, default: 4, required: true }, { field: reset_cadence, label: Reset cycle, type: select, options: [{ id: never, label: No reset }, { id: monthly, label: Monthly }, { id: yearly, label: Annual }], default: never }, { field: next_sequence, label: Next serial number, type: number, default: 1 }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }

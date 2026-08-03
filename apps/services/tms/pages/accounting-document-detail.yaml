@@ -75,22 +75,32 @@ datasources:
 
 toolbar:
   - { id: back_accounting_btn, label: 'List of documents', icon: arrow-left, variant: secondary, action: back_accounting }
-  - { id: edit_accounting_document, label: Edit documents, variant: primary, permission: accounting.write, show_if: "state.accounting_document_detail.status === 'Draft'", action: edit_accounting_document }
 
 components:
-  - type: DocumentSummary
+  - type: OdooFormView
     source: accounting_document_detail
     title_field: code
     subtitle_field: name
     status_field: status_label
     status_colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red }
-    columns:
-      - { field: kind_label, label: Document type }
-      - { field: counterparty, label: Partner/recipient }
-      - { field: document_date, label: Document date }
-      - { field: due_date, label: Payment/refund deadline }
-      - { field: currency, label: Money }
-      - { field: description, label: Note }
+    statusbar:
+      - { value: Nháp, label: Draft }
+      - { value: Đang duyệt, label: Pending approval }
+      - { value: Đã duyệt, label: Approved }
+      - { value: Đã thanh toán, label: Paid }
+      - { value: Đã hủy, label: Cancelled }
+    header_actions:
+      - { id: edit_accounting_document, label: Edit document, variant: secondary }
+    groups:
+      - title: Document information
+        fields:
+          - { field: kind_label, label: Document type }
+          - { field: counterparty, label: Partner/recipient }
+          - { field: document_date, label: Document date }
+          - { field: due_date, label: Payment/refund deadline }
+          - { field: currency, label: Currency }
+          - { field: description, label: Note, wide: true }
+    content_slot: true
   - type: LineItemGrid
     source: accounting_document_lines
     title: Document details
@@ -101,7 +111,7 @@ components:
       - { id: add_accounting_line, label: '+ Add lines', variant: primary, permission: accounting.write, show_if: "state.accounting_document_detail.status === 'Draft'" }
     empty_state: { title: No details yet }
     columns:
-      - { field: sequence, label: No, align: right }
+      - { field: sequence, label: 'No', align: right }
       - { field: description, label: Content }
       - { field: quantity_display, label: Quantity, align: right }
       - { field: unit, label: Unit }

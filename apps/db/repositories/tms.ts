@@ -1791,7 +1791,16 @@ function queryOnConnection(conn: any, sql: string, params: any[] = []): Promise<
 function bindNamedParams(sql: string, params: Record<string, any> = {}) {
   const values: any[] = [];
   const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_: string, name: string) => {
-    values.push(params[name] ?? null);
+    const value = params[name];
+    if (value === undefined || value === null) {
+      // DuckDB cannot infer the type of an untyped NULL placeholder in
+      // predicates such as `:status IS NULL`. Keep the value parameterized,
+      // but give the placeholder a type; callers that need another type can
+      // still apply an explicit CAST around the named parameter.
+      values.push(null);
+      return 'CAST(? AS VARCHAR)';
+    }
+    values.push(value);
     return '?';
   });
   return { statement, values };

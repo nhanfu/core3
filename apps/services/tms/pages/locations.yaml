@@ -33,25 +33,55 @@ toolbar:
     action: add_location
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: locations
-    filter_field: q
-    search: { label: Search for locations, placeholder: 'Find code, name, city or address...' }
-    actions: [{ id: locations.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: locations
-    filter_field: status
-    show_counts: false
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Work }
-      - { id: Inactive, label: Shut down }
-  - type: DataGrid
-    source: locations
+    create_action: add_location
+    create_label: Add location
+    search:
+      label: Search locations
+      placeholder: 'Find code, name, city, or address...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Working }
+          - { id: Inactive, label: Shut down }
+    actions: [{ id: locations.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add location
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all locations
+      select_row: Select location
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: location_type
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: location_type_label, label: Type }
+            - { field: area_name, label: Area }
+            - { field: city, label: City }
+            - { field: status_label, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: No location available, description: Try changing your filters or creating a new location. }
     columns:
       - { field: id, label: HT code, sortable: true }
@@ -62,15 +92,15 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Work: green, Shut down: red }
-      - { field: created_at, label: Creation date and time }
+        colors: { Hoạt động: green, Ngưng hoạt động: red }
+      - { field: created_at, label: Creation date and time, optional: hide }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_location, label: Fix, variant: ghost, permission: dispatch.write }
-          - { id: delete_location, label: Erase, variant: danger, permission: dispatch.write }
+          - { id: edit_location, label: Edit, variant: ghost, permission: dispatch.write }
+          - { id: delete_location, label: Delete, variant: danger, permission: dispatch.write }
 
 actions:
   - id: add_location

@@ -40,27 +40,57 @@ toolbar:
     action: add_container
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: containers
-    filter_field: q
-    search: { label: Search for containers, placeholder: 'Find container number, type or owner...' }
-    actions: [{ id: containers.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: containers
-    filter_field: status
-    show_counts: false
-    tabs:
-      - { id: '', label: All }
-      - { id: Available, label: Ready }
-      - { id: InUse, label: In use }
-      - { id: Maintenance, label: Maintenance }
-      - { id: Inactive, label: Shut down }
-  - type: DataGrid
-    source: containers
+    create_action: add_container
+    create_label: Add container
+    search:
+      label: Search containers
+      placeholder: 'Find container number, type, or owner...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Available, label: Ready }
+          - { id: InUse, label: In use }
+          - { id: Maintenance, label: Maintenance }
+          - { id: Inactive, label: Shut down }
+    actions:
+      - { id: containers.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add container
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all containers
+      select_row: Select container
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: container_number
+          subtitle: container_type
+          fields:
+            - { field: owner_name, label: Owner }
+            - { field: location_name, label: Location }
+            - { field: status_label, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: No containers, description: Try changing the filter or creating a new container. }
     columns:
       - { field: id, label: HT code, sortable: true }
@@ -70,15 +100,15 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Ready: green, In use: blue, Maintenance: amber, Shut down: red }
+        colors: { Sẵn sàng: green, Đang sử dụng: blue, Bảo dưỡng: amber, Ngưng hoạt động: red }
       - { field: created_at, label: Creation date and time }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_container, label: Fix, variant: ghost, permission: dispatch.write }
-          - { id: delete_container, label: Erase, variant: danger, permission: dispatch.write }
+          - { id: edit_container, label: Edit, variant: ghost, permission: dispatch.write }
+          - { id: delete_container, label: Delete, variant: danger, permission: dispatch.write }
 
 actions:
   - id: add_container

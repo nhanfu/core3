@@ -121,14 +121,66 @@ components:
     greeting_side: right
     compact: true
     action_label: Tips
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: dashboard_dispatch_queue
-    filter_field: q
-    search: false
     filter_sources: [dashboard_kpis, dashboard_trip_status, dashboard_dispatch_queue, dashboard_routes, dashboard_customers]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [month, previous_month, quarter, year, last_12_months], preset_style: segmented, default_preset: month }
-    actions: [{ id: dashboard_dispatch_queue.export, label: 'Export CSV', icon: download }]
-    actions_inline: true
+    search: false
+    date_range:
+      label: Dashboard period
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [month, previous_month, quarter, last_12_months]
+      preset_labels:
+        month: This month
+        previous_month: Previous month
+        quarter: This quarter
+        last_12_months: Last 12 months
+    actions:
+      - { id: dashboard_dispatch_queue.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all dispatch queue records
+      select_row: Select dispatch queue record
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: trip_number
+          subtitle: origin
+          fields:
+            - { field: destination, label: Destination }
+            - { field: truck_plate, label: Vehicle }
+            - { field: driver_name, label: Driver }
+            - { field: status, label: Status }
+    page_size: 8
+    row_key: id
+    selectable: true
+    row_actions: menu
+    empty_state: { title: No active trips in the queue }
+    columns:
+      - { field: trip_number, label: Trip code, sortable: true }
+      - { field: origin, label: Origin, type: PrimaryEntityCell, secondary: destination }
+      - { field: truck_plate, label: Vehicle, type: PrimaryEntityCell, secondary: driver_name }
+      - field: status
+        label: Status
+        type: StatusChip
+        colors: { 'Đã lên lịch': amber, 'Đang vận chuyển': blue }
+      - { field: departure_time, label: Depart, type: DateCell }
   - type: StatRow
     source: dashboard_kpis
     title: Things to do
@@ -209,40 +261,25 @@ components:
     height: 260
     color: indigo
 
-  - type: GridView
-    source: dashboard_dispatch_queue
-    page_size: 8
-    columns:
-      - type: TextCell
-        field: trip_number
-        label: Trip code
-      - type: TextCell
-        field: origin
-        label: Route
-        secondary: destination
-      - type: TextCell
-        field: truck_plate
-        label: Vehicle
-        secondary: driver_name
-      - type: BadgeCell
-        field: status
-        label: Status
-        colors:
-          Đã lên lịch: amber
-          Đang vận chuyển: blue
-      - type: DateCell
-        field: departure_time
-        label: Depart
-        format: short
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: dashboard_routes
+    search: false
     page_size: 10
     row_key: route
+    column_chooser: true
+    selectable: true
+    row_actions: menu
     empty_state: { title: No route data yet }
     columns: [{ field: route, label: Route, sortable: true }, { field: trip_count, label: Number of trips, align: right, sortable: true }, { field: total_distance_km, label: Total km, align: right, sortable: true }]
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: dashboard_customers
+    search: false
     page_size: 10
     row_key: customer_name
+    column_chooser: true
+    selectable: true
+    row_actions: menu
     empty_state: { title: No customer data yet }
     columns: [{ field: customer_name, label: Client, sortable: true }, { field: order_count, label: Application number, align: right, sortable: true }, { field: total_amount, label: Single value, align: right, sortable: true }]

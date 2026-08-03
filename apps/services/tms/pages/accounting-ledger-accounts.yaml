@@ -15,12 +15,16 @@ datasources:
     single: false
     permission: accounting.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
-toolbar: [{ id: add_ledger_account_btn, label: '+ Add account', variant: primary, permission: accounting.write, action: add_ledger_account }]
 components:
-  - { type: ListToolbar, source: ledger_accounts, filter_field: q, search: { label: Search accounts, placeholder: 'Find number, name or description...' }, actions: [{ id: ledger_accounts.export, label: 'Export CSV', icon: download }] }
-  - { type: StatusTabs, source: ledger_accounts, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: In use }, { id: Inactive, label: Discontinue use }] }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: ledger_accounts
+    create_action: add_ledger_account
+    create_label: '+ Add account'
+    search: { label: Search accounts, placeholder: 'Find number, name or description...' }
+    filters:
+      - { field: status, label: Status, options: [{ id: Active, label: In use }, { id: Inactive, label: Discontinue use }] }
+    actions: [{ id: ledger_accounts.export, label: 'Export CSV', icon: download }]
     tree: true
     page_size: 20
     column_chooser: true

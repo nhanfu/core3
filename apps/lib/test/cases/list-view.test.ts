@@ -131,6 +131,45 @@ describe('Odoo ListView', () => {
     expect(container.querySelectorAll('.o-list-group-header')).toHaveLength(0);
   });
 
+  it('supports grouping, favorite filters, and bulk actions', async () => {
+    const component = create({
+      groupBy: [{ field: 'status', label: 'Status' }],
+      favorites: [{ id: 'approved', label: 'Approved orders', filters: { status: 'Approved' }, groupBy: 'status' }],
+      bulkActions: [{ id: 'archive', label: 'Archive' }],
+    });
+    const submit = vi.fn().mockResolvedValue(undefined);
+    component._transport = { submit };
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('[data-group-field="status"]')!.click();
+    expect(container.querySelector('[data-list-group="Draft"]')).not.toBeNull();
+    container.querySelector<HTMLButtonElement>('[data-list-favorite="approved"]')!.click();
+    expect(container.querySelector('[data-filter-facet="status"]')?.textContent).toContain('Approved');
+
+    const rowCheckbox = container.querySelector<HTMLInputElement>('[aria-label="Select row o1"]')!;
+    rowCheckbox.checked = true;
+    rowCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    container.querySelector<HTMLButtonElement>('[data-list-bulk-action="archive"]')!.click();
+    await Promise.resolve();
+    expect(submit).toHaveBeenCalledWith('archive', { selectedIds: ['o1'] });
+  });
+
+  it('renders hierarchical rows and collapses descendants', () => {
+    const component = new ListView('accounts', {
+      rows: [
+        { id: 'root', name: 'Root' },
+        { id: 'child', parent_id: 'root', name: 'Child' },
+      ],
+      meta: { total: 2, page: 1, pageSize: 20 },
+    }, [{ field: 'name', label: 'Name' }], { variant: 'odoo', tree: { parentField: 'parent_id' } });
+    const container = mount(component);
+
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2);
+    expect(container.querySelector('[data-row-id="child"] [data-tree-depth="1"]')).not.toBeNull();
+    container.querySelector<HTMLButtonElement>('[data-row-id="root"] .o-list-tree-toggle')!.click();
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
+  });
+
   it('notifies when the active view changes', () => {
     const onViewChange = vi.fn();
     const container = mount(create({ onViewChange }));

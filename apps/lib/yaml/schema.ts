@@ -147,7 +147,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
-  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filters', 'group_by', 'actions', 'labels', 'views', 'page_size', 'row_key', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_actions'])],
+  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'group_by', 'favorites', 'bulk_actions', 'labels', 'views', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_actions'])],
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
@@ -156,7 +156,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
-  ['OdooFormView', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_label_field', 'status_colors', 'statusbar', 'fields', 'groups', 'header_actions', 'message_source', 'follower_source', 'attachment_source', 'chatter_label', 'message_label', 'note_label', 'message_action', 'note_action', 'message_placeholder', 'note_placeholder', 'send_label', 'log_label', 'follower_label', 'attachment_label', 'message_actor_field', 'message_action_field', 'message_detail_field', 'message_timestamp_field', 'content_slot'])],
+  ['OdooFormView', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_label_field', 'status_colors', 'statusbar', 'form_mode', 'editable', 'fields', 'relations', 'groups', 'header_actions', 'message_source', 'follower_source', 'attachment_source', 'chatter_label', 'message_label', 'note_label', 'message_action', 'note_action', 'message_placeholder', 'note_placeholder', 'send_label', 'log_label', 'follower_label', 'attachment_label', 'message_actor_field', 'message_action_field', 'message_detail_field', 'message_timestamp_field', 'content_slot'])],
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions', 'footer', 'mount_in'])],
   ['ContactGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
@@ -492,18 +492,40 @@ function validateComponents(
         issues.push(`${path}.row_actions must be buttons or menu`);
       }
       if (component.group_by !== undefined) {
-        if (!Array.isArray(component.group_by)) {
-          issues.push(`${path}.group_by must be an array`);
-        } else {
-          component.group_by.forEach((group, groupIndex) => {
-            const groupPath = `${path}.group_by[${groupIndex}]`;
-            requireRecord(group, groupPath, issues);
-            if (!isRecord(group)) return;
+        const groups = Array.isArray(component.group_by) ? component.group_by : [component.group_by];
+        groups.forEach((group: unknown, index: number) => {
+          const groupPath = `${path}.group_by[${index}]`;
+          if (typeof group === 'string') return;
+          requireRecord(group, groupPath, issues);
+          if (isRecord(group)) {
             rejectUnknownKeys(group, new Set(['field', 'label']), groupPath, issues);
             requireString(group.field, `${groupPath}.field`, issues);
             requireString(group.label, `${groupPath}.label`, issues);
-          });
-        }
+          }
+        });
+      }
+      if (component.favorites !== undefined) {
+        if (!Array.isArray(component.favorites)) issues.push(`${path}.favorites must be an array`);
+        else component.favorites.forEach((favorite: unknown, index: number) => {
+          const favoritePath = `${path}.favorites[${index}]`;
+          requireRecord(favorite, favoritePath, issues);
+          if (!isRecord(favorite)) return;
+          requireString(favorite.id, `${favoritePath}.id`, issues);
+          requireString(favorite.label, `${favoritePath}.label`, issues);
+          if (favorite.filters !== undefined) requireRecord(favorite.filters, `${favoritePath}.filters`, issues);
+          if (favorite.group_by !== undefined) requireString(favorite.group_by, `${favoritePath}.group_by`, issues);
+        });
+      }
+      if (component.bulk_actions !== undefined) {
+        if (!Array.isArray(component.bulk_actions)) issues.push(`${path}.bulk_actions must be an array`);
+        else component.bulk_actions.forEach((action: unknown, index: number) => {
+          const actionPath = `${path}.bulk_actions[${index}]`;
+          requireRecord(action, actionPath, issues);
+          if (!isRecord(action)) return;
+          requireString(action.id, `${actionPath}.id`, issues);
+          requireString(action.label, `${actionPath}.label`, issues);
+          if (typeof action.id === 'string' && !actionIds.has(action.id)) issues.push(`${actionPath}.id references unknown action "${action.id}"`);
+        });
       }
       if (component.labels !== undefined) {
         requireRecord(component.labels, `${path}.labels`, issues);

@@ -37,17 +37,66 @@ datasources:
         )
       ORDER BY created_at DESC
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: system_activity
-    filter_field: q
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, last_12_months, all], default_preset: last_12_months }
-    search: { label: Search history, placeholder: 'Find operators or resources...' }
-    actions: [{ id: system_activity.export, label: 'Export CSV', icon: download }]
-  - type: DataGrid
-    source: system_activity
+    search:
+      label: Search operation history
+      placeholder: 'Find operators, actions, or resources...'
+    date_range:
+      label: Activity date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, last_12_months, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        last_12_months: Last 12 months
+        all: All dates
+    actions:
+      - { id: system_activity.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all activity records
+      select_row: Select activity record
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: resource
+        card:
+          title: action
+          subtitle: resource
+          fields:
+            - { field: actor_name, label: Operator }
+            - { field: resource_id, label: Record }
+            - { field: created_at, label: Time }
     page_size: 30
     column_chooser: true
     row_key: id
+    selectable: true
+    row_actions: menu
     empty_state: { title: There is no operation history }
-    columns: [{ field: actor_name, label: Operator }, { field: action, label: Act }, { field: resource, label: Resources }, { field: resource_id, label: Record code }, { field: detail, label: Detail }, { field: created_at, label: Time }]
+    columns:
+      - { field: actor_name, label: Operator }
+      - { field: action, label: Action }
+      - { field: resource, label: Resource }
+      - { field: resource_id, label: Record code }
+      - { field: detail, label: Detail }
+      - { field: created_at, label: Time }
 actions: []

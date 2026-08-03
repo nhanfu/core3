@@ -22,25 +22,56 @@ toolbar:
   - { id: add_fee_type_btn, label: '+ Add fees', variant: primary, permission: catalog.write, action: add_fee_type }
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: fee_types
-    filter_field: q
-    search: { label: Search fee type, placeholder: 'Find code, name or description...' }
-    actions: [{ id: fee_types.export, label: 'Export CSV', icon: download }, { id: import_fee_types, label: 'Import CSV', icon: upload }]
-  - type: StatusTabs
-    source: fee_types
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: In use }
-      - { id: Inactive, label: Discontinue use }
-  - type: DataGrid
-    source: fee_types
-    column_chooser: true
+    create_action: add_fee_type
+    create_label: Add fee type
+    search:
+      label: Search fee types
+      placeholder: 'Find code, name, or description...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: In use }
+          - { id: Inactive, label: Discontinued }
+    actions:
+      - { id: fee_types.export, label: Export CSV, title: Export CSV, icon: download }
+      - { id: import_fee_types, label: Import CSV, title: Import CSV, icon: upload }
+    labels:
+      new: Add fee type
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all fee types
+      select_row: Select fee type
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: description, label: Description }
+            - { field: sort_order, label: Order }
+            - { field: status, label: Status }
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: There are no fees, description: Create your first fee type to use in quotes and payments. }
     columns:
       - { field: code, label: Code, sortable: true }
@@ -56,8 +87,8 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_fee_type, label: Fix, variant: ghost, permission: catalog.write }
-          - { id: delete_fee_type, label: Erase, variant: danger, permission: catalog.write }
+          - { id: edit_fee_type, label: Edit, variant: ghost, permission: catalog.write }
+          - { id: delete_fee_type, label: Delete, variant: danger, permission: catalog.write }
 
 actions:
   - { id: import_fee_types, type: upload, permission: catalog.write, kind: master_data_import, scope: fee_type, refresh: [fee_types] }

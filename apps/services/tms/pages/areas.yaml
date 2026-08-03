@@ -18,38 +18,69 @@ datasources:
 toolbar:
   - { id: add_area_btn, label: '+ Add area', variant: primary, permission: dispatch.write, action: add_area }
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: areas
-    filter_field: q
-    search: { label: Search area, placeholder: 'Find code, name or region...' }
-    actions: [{ id: areas.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: areas
-    filter_field: status
-    show_counts: false
-    variant: contained
-    tabs: [{ id: '', label: All }, { id: Active, label: Work }, { id: Inactive, label: Shut down }]
-  - type: DataGrid
-    source: areas
-    tree: true
+    create_action: add_area
+    create_label: Add area
+    search:
+      label: Search areas
+      placeholder: 'Find code, name, or region...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Working }
+          - { id: Inactive, label: Shut down }
+    actions: [{ id: areas.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add area
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all areas
+      select_row: Select area
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: region, label: Region }
+            - { field: parent_name, label: Parent area }
+            - { field: status_label, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_open_action: view_area
+    row_actions: menu
     empty_state: { title: There is no area, description: Try changing the filter or creating a new area. }
     columns:
       - { field: id, label: HT code, sortable: true }
       - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
       - { field: region, label: Region }
-      - { field: parent_name, label: Father area }
+      - { field: parent_name, label: Parent area }
       - { field: description, label: Note }
-      - { field: status_label, label: Status, type: StatusChip, colors: { Work: green, Shut down: red } }
-      - { field: created_at, label: Creation date and time }
+      - { field: status_label, label: Status, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red } }
+      - { field: created_at, label: Creation date and time, optional: hide }
       - field: actions
         label: ''
         sortable: false
         align: right
-        actions: [{ id: view_area, label: Detail, variant: primary, permission: dispatch.read }, { id: edit_area, label: Fix, variant: ghost, permission: dispatch.write }, { id: delete_area, label: Erase, variant: danger, permission: dispatch.write }]
+        actions: [{ id: view_area, label: Detail, variant: secondary, permission: dispatch.read }, { id: edit_area, label: Edit, variant: ghost, permission: dispatch.write }, { id: delete_area, label: Delete, variant: danger, permission: dispatch.write }]
 actions:
   - { id: view_area, type: navigate, permission: dispatch.read, navigate_to: /areas/detail, params: { id: '{row.id}' } }
   - id: add_area

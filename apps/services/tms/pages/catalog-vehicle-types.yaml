@@ -22,25 +22,56 @@ toolbar:
   - { id: add_vehicle_type_btn, label: '+ Add vehicle type', variant: primary, permission: catalog.write, action: add_vehicle_type }
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: vehicle_types
-    filter_field: q
-    search: { label: Search for vehicle type, placeholder: 'Find code, name or description...' }
-    actions: [{ id: vehicle_types.export, label: 'Export CSV', icon: download }, { id: import_vehicle_types, label: 'Import CSV', icon: upload }]
-  - type: StatusTabs
-    source: vehicle_types
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: In use }
-      - { id: Inactive, label: Discontinue use }
-  - type: DataGrid
-    source: vehicle_types
-    column_chooser: true
+    create_action: add_vehicle_type
+    create_label: Add vehicle type
+    search:
+      label: Search vehicle types
+      placeholder: 'Find code, name, or description...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: In use }
+          - { id: Inactive, label: Discontinued }
+    actions:
+      - { id: vehicle_types.export, label: Export CSV, title: Export CSV, icon: download }
+      - { id: import_vehicle_types, label: Import CSV, title: Import CSV, icon: upload }
+    labels:
+      new: Add vehicle type
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all vehicle types
+      select_row: Select vehicle type
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: description, label: Description }
+            - { field: sort_order, label: Order }
+            - { field: status, label: Status }
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: No vehicle type, description: Create the first vehicle type to use in the catalog. }
     columns:
       - { field: code, label: Code, sortable: true }
@@ -56,8 +87,8 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_vehicle_type, label: Fix, variant: ghost, permission: catalog.write }
-          - { id: delete_vehicle_type, label: Erase, variant: danger, permission: catalog.write }
+          - { id: edit_vehicle_type, label: Edit, variant: ghost, permission: catalog.write }
+          - { id: delete_vehicle_type, label: Delete, variant: danger, permission: catalog.write }
 
 actions:
   - { id: import_vehicle_types, type: upload, permission: catalog.write, kind: master_data_import, scope: vehicle_type, refresh: [vehicle_types] }

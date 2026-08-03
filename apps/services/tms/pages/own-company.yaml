@@ -17,23 +17,29 @@ datasources:
     permission: settings.read
     query: "SELECT id, company_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM company_documents WHERE company_id = (SELECT id FROM company_profiles ORDER BY created_at LIMIT 1) ORDER BY created_at DESC"
 components:
-  - type: DataGrid
-    source: own_company
-    page_size: 1
-    row_key: id
-    empty_state: { title: No company information yet, description: Contact system administrator for initialization. }
-    columns:
-      - { field: name, label: Company name, type: PrimaryEntityCell, secondary: short_name }
-      - { field: tax_code, label: Tax code }
-      - { field: address, label: Address }
-      - { field: phone, label: Phone, type: PrimaryEntityCell, secondary: email }
-      - { field: bank_name, label: Bank, type: PrimaryEntityCell, secondary: bank_account }
-      - field: actions
-        label: ''
-        sortable: false
-        align: right
-        actions: [{ id: edit_company, label: Update, variant: ghost, permission: settings.write }]
-  - type: DataGrid
+  - type: OdooFormView
+    source: company_profile
+    title_field: name
+    subtitle_field: short_name
+    header_actions:
+      - { id: edit_company, label: Edit company, variant: secondary }
+    groups:
+      - title: Company information
+        fields:
+          - { field: tax_code, label: Tax code }
+          - { field: address, label: Address }
+          - { field: invoice_address, label: Invoice address }
+          - { field: phone, label: Phone }
+          - { field: email, label: Email }
+          - { field: website, label: Website }
+      - title: Banking information
+        fields:
+          - { field: bank_name, label: Bank }
+          - { field: bank_account, label: Account number }
+          - { field: notes, label: Notes }
+    content_slot: true
+  - type: ListView
+    variant: odoo
     source: company_documents
     page_size: 20
     column_chooser: true
@@ -51,8 +57,9 @@ actions:
     title: Information of the managing company
     table: company_profiles
     operation: update
-    prefill: row
-    refresh: [own_company]
+    prefill: source
+    prefill_source: company_profile
+    refresh: [company_profile, own_company]
     fields:
       - { field: name, label: Company name, type: text, required: true }
       - { field: short_name, label: Abbreviated name, type: text }

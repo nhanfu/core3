@@ -32,8 +32,20 @@ datasources:
       WHERE ur.role_id = :id AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
       ORDER BY u.name
 components:
-  - { type: DocumentSummary, source: role_detail, title_field: name, subtitle_field: description, columns: [{ field: id, label: Role code }, { field: view_scope, label: View range }] }
-  - type: DataGrid
+  - type: OdooFormView
+    source: role_detail
+    title_field: name
+    subtitle_field: description
+    header_actions:
+      - { id: edit_role_scope, label: Update view scope, variant: secondary }
+    groups:
+      - title: Role details
+        fields:
+          - { field: id, label: Role code }
+          - { field: view_scope, label: View range }
+    content_slot: true
+  - type: ListView
+    variant: odoo
     source: role_permissions
     page_size: 50
     column_chooser: true
@@ -48,7 +60,8 @@ components:
         actions:
           - { id: grant_permission, label: Grant permissions, variant: primary, permission: settings.write, show_if: "!row.enabled" }
           - { id: revoke_permission, label: Recall, variant: danger, permission: settings.write, show_if: "row.enabled" }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: role_users
     page_size: 20
     column_chooser: true
@@ -61,7 +74,6 @@ components:
       - { field: enabled, label: Activate, type: BooleanCell }
 toolbar:
   - { id: back_roles, label: 'List of roles', icon: arrow-left, variant: secondary, action: back_roles }
-  - { id: edit_role_scope, label: 'Update view scope', variant: secondary, permission: settings.write, action: edit_role_scope }
 actions:
   - { id: back_roles, type: navigate, navigate_to: /org/roles }
   - { id: edit_role_scope, type: form, permission: settings.write, title: Update role view scope, table: roles, operation: update, prefill: source, prefill_source: role_detail, refresh: [role_detail, role_permissions, role_users], fields: [{ field: view_scope, label: View range, type: select, options: [{ id: all, label: Whole company }, { id: branch, label: According to branch }, { id: own, label: Individual in charge }], required: true }] }

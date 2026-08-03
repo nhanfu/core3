@@ -20,7 +20,31 @@ datasources:
     permission: hr.read
     query: "SELECT e.id AS value, e.code || ' - ' || e.name AS label FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 components:
-  - { type: DocumentSummary, source: payroll_detail, title_field: code, subtitle_field: employee_name, status_field: status_label, status_colors: { Nháp: blue, Đã duyệt: amber, Đã chi: green }, columns: [{ field: employee_code, label: Employee code }, { field: department, label: Departments }, { field: pay_month, label: Monthly salary }, { field: base_salary, label: Basic salary }, { field: allowance, label: Allowances }, { field: deduction, label: Deduction }, { field: net_salary, label: Truly cool }] }
+  - type: OdooFormView
+    source: payroll_detail
+    title_field: code
+    subtitle_field: employee_name
+    status_field: status_label
+    status_colors: { Nháp: blue, Đã duyệt: amber, Đã chi: green }
+    statusbar:
+      - { value: Nháp, label: Draft }
+      - { value: Đã duyệt, label: Approved }
+      - { value: Đã chi, label: Paid }
+    header_actions:
+      - { id: edit_payroll_detail, label: Edit payroll, variant: secondary }
+    groups:
+      - title: Payroll information
+        fields:
+          - { field: employee_code, label: Employee code }
+          - { field: department, label: Department }
+          - { field: pay_month, label: Payroll month }
+      - title: Salary breakdown
+        fields:
+          - { field: base_salary, label: Basic salary }
+          - { field: allowance, label: Allowances }
+          - { field: deduction, label: Deduction }
+          - { field: net_salary, label: Net salary }
+    content_slot: true
   - type: ApprovalTimeline
     source: payroll_activity
     title: Payroll history
@@ -32,7 +56,6 @@ components:
     timestamp_field: created_at
 toolbar:
   - { id: back_payroll, label: 'List of payroll', icon: arrow-left, variant: secondary, action: back_payroll }
-  - { id: edit_payroll_detail, label: Edit payroll, variant: primary, permission: hr.write, show_if: "state.payroll_detail.status === 'Draft'", action: edit_payroll_detail }
 actions:
   - { id: back_payroll, type: navigate, navigate_to: /hr/payroll }
   - id: edit_payroll_detail

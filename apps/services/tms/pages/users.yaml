@@ -71,21 +71,54 @@ components:
       - { label: Used space, field: used_seats, color: indigo }
       - { label: Remaining space, field: available_seats, color: green }
       - { label: Total number of seats, field: seat_limit, color: blue }
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: org_users
-    filter_field: q
-    search: { label: Search for users, placeholder: 'Find name, email, branch or department...' }
-    actions: [{ id: org_users.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: org_users
-    filter_field: status
-    variant: contained
-    tabs: [{ id: '', label: All }, { id: Active, label: Active }, { id: Inactive, label: Locked }]
-  - type: DataGrid
-    source: org_users
+    create_action: add_user
+    create_label: Invite user
+    search:
+      label: Search users
+      placeholder: 'Find name, email, branch, or department...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Active }
+          - { id: Inactive, label: Locked }
+    actions: [{ id: org_users.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Invite user
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all users
+      select_row: Select user
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: email
+          fields:
+            - { field: branch_name, label: Branch }
+            - { field: department_name, label: Department }
+            - { field: roles_csv, label: Roles }
     page_size: 20
     column_chooser: true
     row_key: id
+    row_open_action: view_user
+    row_actions: menu
     empty_state: { title: No users }
     columns:
       - { field: id, label: HT code, sortable: true }
@@ -96,11 +129,11 @@ components:
       - { field: roles_csv, label: Role }
       - { field: last_login, label: Most recent login, type: DateCell }
       - { field: preferred_lang, label: Language }
-      - { field: created_at, label: Creation date, type: DateCell }
+      - { field: created_at, label: Creation date, type: DateCell, optional: hide }
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: view_user, label: Detail, variant: primary, permission: settings.read }, { id: edit_user, label: Fix, variant: ghost, permission: settings.write }]
+        actions: [{ id: view_user, label: Detail, variant: secondary, permission: settings.read }, { id: edit_user, label: Edit, variant: ghost, permission: settings.write }]
 toolbar:
   - { id: add_user_btn, label: '+ Invite users', variant: primary, permission: settings.write, action: add_user }
 actions:

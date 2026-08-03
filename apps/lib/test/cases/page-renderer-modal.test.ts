@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { client } from '../../client.ts';
-import { renderPage } from '../../page-renderer.ts';
+import { PageRuntime } from '../../components/PageRoot.ts';
+
+const renderPage = (config: any, { container = document.body }: { container?: HTMLElement } = {}) =>
+  new PageRuntime(config, new Map()).render(container);
 
 describe('YAML form modal', () => {
   afterEach(() => {

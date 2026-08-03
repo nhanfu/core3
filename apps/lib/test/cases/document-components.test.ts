@@ -107,6 +107,30 @@ describe('document detail components', () => {
     expect(container.textContent).not.toContain('Attachments');
   });
 
+  it('supports inline edit, save, and discard lifecycle', async () => {
+    const saved: any[] = [];
+    const component = new OdooFormView('customer', { record: { id: 'c1', name: 'Acme', status: 'Active' } }, {
+      title_field: 'name',
+      editable: true,
+      edit_action_id: 'edit_customer',
+      edit_fields: [
+        { field: 'name', label: 'Name', type: 'text' },
+        { field: 'status', label: 'Status', type: 'select', options: [{ id: 'Active', label: 'Active' }, { id: 'Inactive', label: 'Inactive' }] },
+      ],
+      header_actions: [{ id: 'edit_customer', label: 'Edit', variant: 'secondary' }],
+    });
+    component.state.onInlineSave = async (values: any) => { saved.push(values); };
+    const container = mount(component);
+    container.querySelector<HTMLButtonElement>('.o-form-action')!.click();
+    const name = container.querySelector<HTMLInputElement>('[data-form-field="name"]')!;
+    name.value = 'Acme Updated';
+    name.dispatchEvent(new Event('input', { bubbles: true }));
+    container.querySelector<HTMLButtonElement>('.o-form-action-primary')!.click();
+    await Promise.resolve();
+    expect(saved[0]).toMatchObject({ id: 'c1', name: 'Acme Updated' });
+    expect(container.querySelector('[data-form-field="name"]')).toBeNull();
+  });
+
   it('preserves embedded panel content when the form redraws', () => {
     const component = new OdooFormView('order', { record: { number: 'SO-001' } }, {
       title_field: 'number',

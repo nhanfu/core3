@@ -53,31 +53,75 @@ toolbar:
     action: add_timesheet
 
 components:
-  - type: ListToolbar
-    source: timesheets
-    filter_sources: [timesheets, timesheet_totals]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
-    filter_field: q
-    search: { label: Search timekeeping, placeholder: 'Find code, employee name or work date...' }
-    actions: [{ id: timesheets.export, label: 'Export CSV', icon: download }]
   - type: StatRow
     source: timesheet_totals
     stats: [{ label: Record, field: record_count, color: blue }, { label: Total hours, field: total_hours, color: indigo }, { label: Present, field: present_count, color: green }, { label: On leave, field: leave_count, color: amber }, { label: Absent, field: absent_count, color: red }]
-  - type: StatusTabs
+  - type: ListView
+    variant: odoo
     source: timesheets
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Present, label: Present }
-      - { id: Leave, label: On leave }
-      - { id: Absent, label: Absent }
-  - type: DataGrid
-    source: timesheets
+    create_action: add_timesheet
+    create_label: Add timekeeping
+    search:
+      label: Search timekeeping
+      placeholder: 'Find employee code, name, or work date...'
+    date_range:
+      label: Work date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filter_sources: [timesheets, timesheet_totals]
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Present, label: Present }
+          - { id: Leave, label: On leave }
+          - { id: Absent, label: Absent }
+    actions:
+      - { id: timesheets.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add timekeeping
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all timekeeping records
+      select_row: Select timekeeping record
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: employee_name
+          subtitle: work_date
+          fields:
+            - { field: employee_code, label: Employee code }
+            - { field: shift_name, label: Shift }
+            - { field: hours, label: Hours }
+            - { field: status_label, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: No timekeeping data available, description: Try changing the filter or creating a new timekeeping. }
     columns:
       - { field: id, label: HT code, sortable: true }
@@ -88,15 +132,15 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Present: green, On leave: amber, Absent: red }
+        colors: { Có mặt: green, Nghỉ phép: amber, Vắng mặt: red }
       - { field: notes, label: Note }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: edit_timesheet, label: Fix, variant: ghost, permission: hr.write }
-          - { id: delete_timesheet, label: Erase, variant: danger, permission: hr.write }
+          - { id: edit_timesheet, label: Edit, variant: ghost, permission: hr.write }
+          - { id: delete_timesheet, label: Delete, variant: danger, permission: hr.write }
 
 actions:
   - id: add_timesheet

@@ -13,14 +13,55 @@ datasources:
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 toolbar: [{ id: add_invoice_template_btn, label: '+ Add invoice template', variant: primary, permission: accounting.write, action: add_invoice_template }]
 components:
-  - { type: ListToolbar, source: invoice_templates, filter_field: q, search: { label: Search for invoice templates, placeholder: 'Find code, name or description...' }, actions: [{ id: invoice_templates.export, label: 'Export CSV', icon: download }] }
-  - { type: StatusTabs, source: invoice_templates, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: In use }, { id: Inactive, label: Discontinue use }] }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: invoice_templates
+    create_action: add_invoice_template
+    create_label: Add invoice template
+    search:
+      label: Search invoice templates
+      placeholder: 'Find code, name, or description...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: In use }
+          - { id: Inactive, label: Inactive }
+    actions:
+      - { id: invoice_templates.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add invoice template
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all invoice templates
+      select_row: Select invoice template
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: currency, label: Currency }
+            - { field: sort_order, label: Order }
+            - { field: status, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: There is no invoice template }
     columns:
       - { field: code, label: Code, sortable: true }
@@ -34,7 +75,7 @@ components:
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: edit_invoice_template, label: Fix, variant: ghost, permission: accounting.write }, { id: delete_invoice_template, label: Erase, variant: danger, permission: accounting.write }]
+        actions: [{ id: edit_invoice_template, label: Edit, variant: ghost, permission: accounting.write }, { id: delete_invoice_template, label: Delete, variant: danger, permission: accounting.write }]
 actions:
   - id: add_invoice_template
     type: form
