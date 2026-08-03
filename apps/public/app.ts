@@ -1,8 +1,9 @@
 import { AppShell } from './components/AppShell.ts';
 import { i18n } from '../lib/i18n.ts';
-import { renderPage } from '../lib/page-renderer.ts';
 import { getPageParams, registerNavigator } from '../lib/navigate.ts';
 import { client } from '../lib/client.ts';
+import { validatePageDefinition } from '../lib/yaml/schema.ts';
+import { PageRuntime } from '../lib/components/PageRoot.ts';
 
 const TOKEN_KEY = 'tms_token';
 const DEFAULT_APP_KEY = 'core3_default_app';
@@ -14,6 +15,12 @@ let _activeModuleId = '';
 type ManifestPage = { id: string; route: string | null; title: string };
 type ManifestModule = { id: string; pages: ManifestPage[]; routes?: Array<{ path: string; page: string }> };
 let _manifest: ManifestModule[] = [];
+const registry = new Map<string, any>();
+
+export async function renderPage(config: any, { container = document.body }: { container?: HTMLElement } = {}) {
+  validatePageDefinition(config, { allowExternalSources: true });
+  return new PageRuntime(config, registry).render(container);
+}
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
