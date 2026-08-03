@@ -201,6 +201,23 @@ describe('Odoo ListView', () => {
     expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) });
   });
 
+  it('keeps the active navigation icon aligned with CardView', () => {
+    const component = create({
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      renderForm: () => undefined,
+      views: [
+        { id: 'list', label: 'List' },
+        { id: 'card', label: 'Cards', card: { title: 'number' } },
+        { id: 'form', label: 'Form' },
+      ],
+    }, { activeView: 'card' });
+    const container = mount(component);
+
+    expect(container.querySelector('[data-list-view="card"]')?.className).toContain('is-active');
+    expect(container.querySelector('[data-list-view="list"]')?.className).not.toContain('is-active');
+    expect(container.querySelector('[data-list-view="form"]')?.className).not.toContain('is-active');
+  });
+
   it('defaults to CardView on small screens when no view is selected', () => {
     const originalMatchMedia = window.matchMedia;
       Object.defineProperty(window, 'matchMedia', {
@@ -294,6 +311,21 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('[data-list-search]')).not.toBeNull();
     expect(container.querySelector('[data-list-view="calendar"] svg')).not.toBeNull();
     expect(container.querySelector('.o-calendar-title')?.textContent).toContain('July');
+  });
+
+  it('does not open FormView automatically for Kanban or Calendar', () => {
+    for (const activeView of ['kanban', 'calendar'] as const) {
+      const component = create({
+        formView: { page: 'order-detail.yaml', sidePanel: true },
+        renderForm: () => undefined,
+      }, {
+        activeView,
+        listViewEnabled: false,
+        ...(activeView === 'calendar' ? { rows: [{ ...rows[0], order_date: '2026-08-12' }] } : {}),
+      });
+      const container = mount(component);
+      expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    }
   });
 
   it('opens Calendar cards in the FormView and navigates on double click', async () => {

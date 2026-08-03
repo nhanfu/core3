@@ -219,7 +219,7 @@ export class ListView extends BaseComponent {
     const formEnabled = !this.isSmallScreen()
       && Boolean(this.options.formView)
       && (!hasFormMode || this.isViewEnabled('form'));
-    if (activeView.id !== 'card' && hasFormMode && !listEnabled && formEnabled) {
+    if (['list', 'form'].includes(activeView.id) && hasFormMode && !listEnabled && formEnabled) {
       const content = html.take(root).div.className('o-list-content is-form-only').getContext();
       await this.drawFormPanel(content, rows, true);
       return;
@@ -263,7 +263,7 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const kanbanHost = html.take(content).div.className('o-list-kanban-host').getContext();
       kanban.mount(kanbanHost);
-      if (formEnabled && this.options.formView?.sidePanel && (rows.length || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+      if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
         await this.drawFormPanel(content, rows, false);
       }
       return;
@@ -287,7 +287,7 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const calendarHost = html.take(content).div.className('o-list-calendar-host').getContext();
       calendar.mount(calendarHost);
-      if (formEnabled && this.options.formView?.sidePanel && (rows.length || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+      if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
         await this.drawFormPanel(content, rows, false);
       }
       return;
@@ -899,9 +899,15 @@ export class ListView extends BaseComponent {
 
   private isViewEnabled(viewId: string) {
     const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
-    if (viewId === 'form') return hasFormMode && Boolean(this.options.formView) && this.state.formViewEnabled !== false && this.state.formPanelClosed !== true;
+    if (viewId === 'form') return hasFormMode
+      && Boolean(this.options.formView)
+      && this.activeView().id !== 'card'
+      && this.state.formViewEnabled !== false
+      && this.state.formPanelClosed !== true;
     if (viewId === 'list') {
-      if (hasFormMode && this.options.formView) return this.state.listViewEnabled !== false;
+      if (hasFormMode && this.options.formView && ['list', 'form'].includes(this.activeView().id)) {
+        return this.state.listViewEnabled !== false;
+      }
       return this.activeView().id === viewId;
     }
     return this.activeView().id === viewId;
