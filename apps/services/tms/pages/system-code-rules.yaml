@@ -17,6 +17,10 @@ datasources:
       WHERE kind = 'code_rule' AND (:status IS NULL OR status = :status)
         AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%')
       ORDER BY sort_order, code
+  - id: code_rule_preview
+    single: true
+    permission: system.read
+    query: "SELECT code, prefix, config_value, sequence_width, reset_cadence, next_sequence FROM system_configs WHERE id = :id AND kind = 'code_rule'"
 toolbar: [{ id: add_code_rule, label: '+ Add rules', variant: primary, permission: system.write, action: add_code_rule }]
 components:
   - type: ListView
@@ -86,7 +90,7 @@ components:
           - { id: edit_code_rule, label: Edit, variant: ghost, permission: system.write }
           - { id: delete_code_rule, label: Delete, variant: danger, permission: system.write }
 actions:
-  - { id: preview_code_rule, type: server, permission: system.read, action: system.code_rules.preview, result: alert, result_field: preview, refresh: [code_rules], params: { id: '{row.id}' } , handler: code_rule_preview}
+  - { id: preview_code_rule, type: server, permission: system.read, datasource: code_rule_preview, action: system.code_rules.preview, result: alert, result_field: preview, refresh: [code_rules], params: { id: '{row.id}' } , handler: code_rule_preview}
   - { id: add_code_rule, type: form, permission: system.write, datasource: code_rules, title: Add code rule, table: system_configs, scope: code_rule, operation: insert, refresh: [code_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: prefix, label: Prefix/pattern, type: text, required: true }, { field: sequence_width, label: Sequence number length, type: number, default: 4, required: true }, { field: reset_cadence, label: Reset cycle, type: select, options: [{ id: never, label: No reset }, { id: monthly, label: Monthly }, { id: yearly, label: Annual }], default: never }, { field: next_sequence, label: Next serial number, type: number, default: 1 }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }
   - { id: edit_code_rule, type: form, permission: system.write, datasource: code_rules, title: Update code rules, table: system_configs, scope: code_rule, operation: update, prefill: row, refresh: [code_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: prefix, label: Prefix/pattern, type: text, required: true }, { field: sequence_width, label: Sequence number length, type: number, required: true }, { field: reset_cadence, label: Reset cycle, type: select, options: [{ id: never, label: No reset }, { id: monthly, label: Monthly }, { id: yearly, label: Annual }] }, { field: next_sequence, label: Next serial number, type: number, required: true }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }] }
   - { id: delete_code_rule, type: delete, permission: system.write, datasource: code_rules, table: system_configs, scope: code_rule, confirm: 'Remove rule {{row.name}}?', refresh: [code_rules] }

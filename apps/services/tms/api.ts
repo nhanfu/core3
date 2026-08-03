@@ -637,7 +637,16 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (handler === 'code_rule_preview') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      const [rule] = await repository.query("SELECT code, prefix, config_value, sequence_width, reset_cadence, next_sequence FROM system_configs WHERE id = ? AND kind = 'code_rule'", [body.id]);
+      const source = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      if (!source) return apiError(409, 'Code-rule preview datasource is not configured');
+      const result = await repository.querySource(source, {
+        id: body.id,
+        current_user_id: String(authUser.sub || ''),
+        current_user_name: String(authUser.name || ''),
+        current_branch_id: String(authUser.branch_id || ''),
+        view_scope: String(authUser.view_scope || 'all'),
+      }, 0, 1);
+      const rule = result.data?.[0];
       if (!rule) return apiError(404, 'Code rule not found');
       const prefix = String(rule.prefix || rule.config_value || rule.code || 'CODE');
       const width = Math.max(1, Math.min(12, Number(rule.sequence_width) || 4));
