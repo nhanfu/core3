@@ -666,21 +666,23 @@ export class DuckDbRepository {
   }
 
   async mutateOrderFollower(
+    relation: { parentTable: string; relationTable: string; parentKey: string; relatedKey: string },
     orderId: string,
     operation: 'follower_add' | 'follower_remove',
     userId: string,
     actor: { id?: string | null; name: string },
   ) {
-    const [order] = await this.query('SELECT id FROM orders WHERE id = ?', [orderId]);
+    if ([relation.parentTable, relation.relationTable, relation.parentKey, relation.relatedKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid relation configuration' };
+    const [order] = await this.query(`SELECT id FROM ${relation.parentTable} WHERE id = ?`, [orderId]);
     if (!order) throw { status: 404, message: 'Order not found' };
     const [user] = await this.query('SELECT id, name, email, avatar_url FROM users WHERE id = ? AND enabled = true', [userId]);
     if (!user) throw { status: 404, message: 'Follower not found' };
-    const [existing] = await this.query('SELECT order_id FROM order_followers WHERE order_id = ? AND user_id = ?', [orderId, userId]);
+    const [existing] = await this.query(`SELECT ${relation.parentKey} FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?`, [orderId, userId]);
     const adding = operation === 'follower_add';
     if (adding && !existing) {
-      await this.run('INSERT INTO order_followers(order_id, user_id, added_by) VALUES(?,?,?)', [orderId, userId, actor.id || null]);
+      await this.run(`INSERT INTO ${relation.relationTable}(${relation.parentKey}, ${relation.relatedKey}, added_by) VALUES(?,?,?)`, [orderId, userId, actor.id || null]);
     } else if (!adding && existing) {
-      await this.run('DELETE FROM order_followers WHERE order_id = ? AND user_id = ?', [orderId, userId]);
+      await this.run(`DELETE FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?`, [orderId, userId]);
     }
     if ((adding && !existing) || (!adding && existing)) {
       await this.recordActivity({

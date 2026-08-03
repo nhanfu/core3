@@ -748,7 +748,9 @@ export function createTmsApi(ctx: TmsApiContext) {
           const [candidate] = await repository.query('SELECT id FROM users WHERE id = ? AND enabled = true AND branch_id = ?', [body.user_id, String(authUser.branch_id || '')]);
           if (!candidate) return apiError(403, 'Follower is outside the current view scope');
         }
-        return json(await repository.mutateOrderFollower(body.id, actionDefinition.operation, body.user_id, activityActor));
+        const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
+        if (!relation) return apiError(409, 'Order-follower relation is not configured');
+        return json(await repository.mutateOrderFollower(relation, body.id, actionDefinition.operation, body.user_id, activityActor));
       }
       if (actionDefinition.operation !== 'message' && actionDefinition.operation !== 'note') return apiError(400, 'Invalid order chatter operation');
       return json(await repository.addOrderChatterEntry(

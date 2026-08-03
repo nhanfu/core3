@@ -72,6 +72,7 @@ datasources:
   - id: order_detail_followers
     single: false
     permission: orders.read
+    meta: { relation: { parentTable: orders, relationTable: order_followers, parentKey: order_id, relatedKey: user_id } }
     query: |
       SELECT u.id AS user_id, u.name, u.email, u.avatar_url,
         CAST(f.created_at AS VARCHAR) AS followed_at
@@ -261,6 +262,7 @@ actions:
     type: server
     permission: orders.write
     action: orders.followers.add
+    datasource: order_detail_followers
     handler: order_chatter
     operation: follower_add
     params: { user_id: '{row.user_id}' }
@@ -269,6 +271,7 @@ actions:
     type: server
     permission: orders.write
     action: orders.followers.remove
+    datasource: order_detail_followers
     handler: order_chatter
     operation: follower_remove
     params: { user_id: '{row.user_id}' }
