@@ -249,6 +249,40 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('.o-calendar-view')).toBeNull();
   });
 
+  it('opens Kanban cards in the FormView and navigates on double click', async () => {
+    vi.useFakeTimers();
+    try {
+      const renderForm = vi.fn((row: Record<string, unknown>, target: HTMLElement) => {
+        target.textContent = String(row.number);
+      });
+      const component = create({
+        formView: { page: 'order-detail.yaml', sidePanel: true },
+        renderForm,
+        doubleClickAction: 'view',
+      }, { activeView: 'kanban' });
+      const submit = vi.fn().mockResolvedValue(undefined);
+      component._transport = { submit };
+      const container = mount(component);
+      const card = container.querySelector<HTMLElement>('[data-kanban-group="Draft"] [data-row-id="o1"]')!;
+
+      card.click();
+      await vi.advanceTimersByTimeAsync(250);
+      expect(renderForm).toHaveBeenCalledWith(rows[0], expect.any(HTMLElement));
+      expect(submit).not.toHaveBeenCalled();
+      expect(container.querySelector('.o-list-form-side-panel')?.textContent).toBe('ORD-001');
+
+      submit.mockClear();
+      const secondCard = container.querySelector<HTMLElement>('[data-kanban-group="Draft"] [data-row-id="o1"]')!;
+      secondCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      secondCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      secondCard.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await vi.runAllTimersAsync();
+      expect(submit).toHaveBeenCalledWith('view', { row: rows[0] });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('opens rows and keeps conditional commands in an overflow menu', async () => {
     const component = create();
     const submit = vi.fn().mockResolvedValue(undefined);
@@ -316,7 +350,19 @@ describe('Odoo ListView', () => {
       await vi.advanceTimersByTimeAsync(250);
       expect(submit).not.toHaveBeenCalled();
       expect(renderForm).toHaveBeenCalledWith(rows[0], expect.any(HTMLElement));
-      expect(container.querySelector('.o-list-form-side-panel')?.textContent).toBe('ORD-001');
+      const panel = container.querySelector<HTMLElement>('.o-list-form-side-panel')!;
+      expect(panel.textContent).toContain('ORD-001');
+      const content = container.querySelector<HTMLElement>('.o-list-content')!;
+      vi.spyOn(content, 'getBoundingClientRect').mockReturnValue({ right: 1000, width: 1000 } as DOMRect);
+      const handle = panel.querySelector<HTMLElement>('.o-list-form-resize-handle')!;
+      handle.dispatchEvent(Object.assign(new Event('pointerdown', { bubbles: true }), { pointerId: 1, clientX: 500 }));
+      handle.dispatchEvent(Object.assign(new Event('pointermove', { bubbles: true }), { pointerId: 1, clientX: 400 }));
+      handle.dispatchEvent(Object.assign(new Event('pointerup', { bubbles: true }), { pointerId: 1, clientX: 400 }));
+      expect(panel.style.width).toBe('60%');
+      const collapse = panel.querySelector<HTMLButtonElement>('.o-list-form-collapse')!;
+      collapse.click();
+      await Promise.resolve();
+      expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
     } finally {
       vi.useRealTimers();
     }
@@ -336,9 +382,16 @@ describe('Odoo ListView', () => {
     });
     const container = mount(component);
 
-    expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    expect(container.querySelector('.o-list-form-side-panel')).not.toBeNull();
     expect(container.querySelector<HTMLButtonElement>('[data-list-view="list"]')?.getAttribute('aria-pressed')).toBe('true');
     expect(container.querySelector<HTMLButtonElement>('[data-list-view="form"]')?.getAttribute('aria-pressed')).toBe('true');
+
+    container.querySelector<HTMLButtonElement>('.o-list-form-collapse')!.click();
+    await Promise.resolve();
+    expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    container.querySelector<HTMLButtonElement>('[data-list-view="form"]')!.click();
+    await Promise.resolve();
+    expect(container.querySelector('.o-list-form-side-panel')).not.toBeNull();
 
     container.querySelector<HTMLButtonElement>('[data-list-view="list"]')!.click();
     await Promise.resolve();

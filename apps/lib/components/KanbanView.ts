@@ -19,6 +19,8 @@ export type KanbanViewOptions = {
   view: KanbanViewDefinition;
   rowKey?: string;
   openAction?: string;
+  doubleClickAction?: string;
+  onSelect?: (row: ListRow) => void;
   onMove?: (row: ListRow, status: string) => Promise<void> | void;
   onAddStatus?: (label: string) => Promise<void> | void;
 };
@@ -81,14 +83,34 @@ export class KanbanView extends BaseComponent {
 
   private drawCard(container: HTMLElement, row: ListRow, index: number) {
     const card = html.take(container).div.className('o-kanban-card').dataAttr('row-id', this.rowId(row, index)).getContext();
-    if (this.options.openAction) {
+    if (this.options.openAction || this.options.doubleClickAction || this.options.onSelect) {
       card.tabIndex = 0;
-      card.setAttribute('role', 'link');
-      card.addEventListener('click', () => void this.submit(this.options.openAction!, { row }));
+      card.setAttribute('role', this.options.onSelect ? 'button' : 'link');
+      let clickTimer: ReturnType<typeof setTimeout> | undefined;
+      const selectOrOpen = () => {
+        if (this.options.onSelect) this.options.onSelect(row);
+        else if (this.options.openAction) void this.submit(this.options.openAction, { row });
+      };
+      card.addEventListener('click', () => {
+        if (!this.options.doubleClickAction) {
+          selectOrOpen();
+          return;
+        }
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          clickTimer = undefined;
+          selectOrOpen();
+        }, 250);
+      });
+      card.addEventListener('dblclick', () => {
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = undefined;
+        if (this.options.doubleClickAction) void this.submit(this.options.doubleClickAction, { row });
+      });
       card.addEventListener('keydown', (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          void this.submit(this.options.openAction!, { row });
+          selectOrOpen();
         }
       });
     }

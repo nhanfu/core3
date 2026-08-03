@@ -229,6 +229,8 @@ export class ListView extends BaseComponent {
           view: activeView,
           rowKey: this.options.rowKey,
           openAction: this.options.openAction,
+          doubleClickAction: this.options.doubleClickAction,
+          onSelect: this.options.formView ? row => this.selectFormRow(row) : undefined,
           onMove: this.options.onKanbanMove,
           onAddStatus: this.options.onKanbanAddStatus,
         },
@@ -237,7 +239,11 @@ export class ListView extends BaseComponent {
       kanban._transport = this._transport;
       this.children.push(kanban);
       const content = html.take(root).div.className('o-list-content').getContext();
-      kanban.mount(content);
+      const kanbanHost = html.take(content).div.className('o-list-kanban-host').getContext();
+      kanban.mount(kanbanHost);
+      if (formEnabled && this.options.formView?.sidePanel && rows.length && this.state.formPanelClosed !== true) {
+        await this.drawFormPanel(content, rows, false);
+      }
       return;
     }
     if (activeView.id === 'calendar') {
@@ -258,7 +264,7 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const calendarHost = html.take(content).div.className('o-list-calendar-host').getContext();
       calendar.mount(calendarHost);
-      if (formEnabled && this.options.formView?.sidePanel && this.formRow(rows)) {
+      if (formEnabled && this.options.formView?.sidePanel && rows.length && this.state.formPanelClosed !== true) {
         await this.drawFormPanel(content, rows, false);
       }
       return;
@@ -348,16 +354,46 @@ export class ListView extends BaseComponent {
         }
       }
     }
-    if (formEnabled && this.options.formView?.sidePanel && this.formRow(rows)) {
+    if (formEnabled && this.options.formView?.sidePanel && rows.length && this.state.formPanelClosed !== true) {
       await this.drawFormPanel(content, rows, false);
     }
   }
 
   private async drawFormPanel(content: HTMLElement, rows: ListRow[], formOnly: boolean) {
-    const selectedRow = this.formRow(rows) || (formOnly ? rows[0] : undefined);
+    const selectedRow = this.formRow(rows) || (rows.length ? rows[0] : undefined);
     if (!selectedRow || !this.options.renderForm) return;
     const panel = html.take(content).aside.className('o-list-form-side-panel is-loading').getContext();
-    await this.options.renderForm(selectedRow, panel);
+    const width = Number(this.state.formPanelWidth);
+    if (Number.isFinite(width) && width > 0) panel.style.width = `${Math.min(75, Math.max(25, width))}%`;
+    const handle = html.take(panel).div.className('o-list-form-resize-handle').attr('role', 'separator').attr('aria-label', 'Resize form panel').getContext();
+    const collapseButton = html.take(panel).button.className('o-list-form-collapse').attr('type', 'button').getContext();
+    collapseButton.setAttribute('aria-label', 'Close form');
+    collapseButton.setAttribute('title', 'Close form');
+    appendIcon(collapseButton, 'x');
+    let dragging = false;
+    const updateWidth = (event: PointerEvent) => {
+      if (!dragging) return;
+      const bounds = content.getBoundingClientRect();
+      if (!bounds.width) return;
+      const next = Math.min(75, Math.max(25, ((bounds.right - event.clientX) / bounds.width) * 100));
+      panel.style.width = `${next}%`;
+      this.setState({ formPanelWidth: next }, false);
+    };
+    handle.addEventListener('pointerdown', (event: PointerEvent) => {
+      dragging = true;
+      handle.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    });
+    handle.addEventListener('pointermove', updateWidth);
+    handle.addEventListener('pointerup', (event: PointerEvent) => {
+      dragging = false;
+      handle.releasePointerCapture?.(event.pointerId);
+    });
+    const body = html.take(panel).div.className('o-list-form-panel-body').getContext();
+    collapseButton.addEventListener('click', () => {
+      this.setState({ formPanelClosed: true });
+    });
+    await this.options.renderForm(selectedRow, body);
     if (panel.isConnected) panel.classList.remove('is-loading');
   }
 
@@ -503,6 +539,10 @@ export class ListView extends BaseComponent {
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
         button.setAttribute('aria-pressed', String(this.isViewEnabled(view.id)));
         button.addEventListener('click', () => {
+          if (view.id === 'form' && this.options.formView) {
+            this.setState({ formPanelClosed: this.state.formPanelClosed !== true });
+            return;
+          }
           const activeView = this.activeView();
           if (view.id === 'form' || (view.id === 'list' && this.options.formView && (activeView.id === 'list' || activeView.id === 'form'))) {
             const key = view.id === 'list' ? 'listViewEnabled' : 'formViewEnabled';
@@ -808,7 +848,7 @@ export class ListView extends BaseComponent {
 
   private isViewEnabled(viewId: string) {
     const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
-    if (viewId === 'form') return hasFormMode && Boolean(this.options.formView) && this.state.formViewEnabled !== false;
+    if (viewId === 'form') return hasFormMode && Boolean(this.options.formView) && this.state.formViewEnabled !== false && this.state.formPanelClosed !== true;
     if (viewId === 'list') {
       if (hasFormMode && this.options.formView) return this.state.listViewEnabled !== false;
       return this.activeView().id === viewId;
@@ -828,7 +868,7 @@ export class ListView extends BaseComponent {
 
   private selectFormRow(row: ListRow) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
-    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))) }, false);
+    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))), formPanelClosed: false }, false);
     if (this.options.formView?.sidePanel) this.redraw();
   }
 
