@@ -65,6 +65,18 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(validPage())).not.toThrow();
   });
 
+  it('accepts datasource mutation declarations', () => {
+    const page = validPage() as any;
+    page.datasources[0].table = 'orders';
+    page.datasources[0].mutations = {
+      create: { permission: 'orders.write', fields: ['code'], timestamps: true },
+      update: { permission: 'orders.write', fields: ['code'], timestamps: true },
+      delete: { permission: 'orders.write' },
+    };
+    page.actions[0].datasource = 'orders';
+    expect(() => validatePageDefinition(page)).not.toThrow();
+  });
+
   it('accepts the opt-in Odoo ListView contract and validates action references', () => {
     const page = validPage() as any;
     page.components = [{

@@ -41,6 +41,7 @@ export type ActionDefinition = {
   id: string;
   type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'event';
   permission?: string;
+  datasource?: string;
   handler?: string;
   operation?: string;
   domain?: string;
