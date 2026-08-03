@@ -32,27 +32,59 @@ toolbar:
     action: add_employee
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: employees
-    filter_field: q
-    search: { label: Search for employees, placeholder: 'Find code, name, phone number, email...' }
-    actions: [{ id: employees.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: employees
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Working }
-      - { id: OnLeave, label: On leave }
-      - { id: Inactive, label: Stop working }
-  - type: DataGrid
-    source: employees
+    create_action: add_employee
+    create_label: Add employee
+    search:
+      label: Search employees
+      placeholder: 'Find code, name, phone number, or email...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Working }
+          - { id: OnLeave, label: On leave }
+          - { id: Inactive, label: Stop working }
+    actions: [{ id: employees.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add employee
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all employees
+      select_row: Select employee
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: job_title
+          fields:
+            - { field: code, label: Employee code }
+            - { field: department, label: Department }
+            - { field: phone, label: Phone }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: No staff, description: Try changing the filter or creating a new employee. }
+    row_open_action: view_employee
+    row_actions: menu
+    empty_state:
+      title: No staff
+      description: Try changing the filter or create a new employee.
     columns:
       - { field: id, label: HT code, sortable: true }
       - { field: name, label: Full name, type: PrimaryEntityCell, secondary: job_title }
@@ -63,16 +95,16 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Working: green, On leave: amber, Stop working: red }
-      - { field: created_at, label: Creation date and time }
+        colors: { Đang làm việc: green, Nghỉ phép: amber, Ngưng làm việc: red }
+      - { field: created_at, label: Creation date and time, optional: hide }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_employee, label: Detail, variant: primary, permission: hr.read }
-          - { id: edit_employee, label: Fix, variant: ghost, permission: hr.write }
-          - { id: delete_employee, label: Erase, variant: danger, permission: hr.write }
+          - { id: view_employee, label: Detail, variant: secondary, permission: hr.read }
+          - { id: edit_employee, label: Edit, variant: ghost, permission: hr.write }
+          - { id: delete_employee, label: Delete, variant: danger, permission: hr.write }
 
 actions:
   - { id: view_employee, type: navigate, permission: hr.read, navigate_to: /hr/employees/detail, params: { id: '{row.id}' } }

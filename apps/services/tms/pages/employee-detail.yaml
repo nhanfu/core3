@@ -35,7 +35,37 @@ datasources:
     permission: hr.read
     query: "SELECT id, employee_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM employee_documents WHERE employee_id = :id AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = :id AND d.branch_id = :current_branch_id)) ORDER BY created_at DESC"
 components:
-  - { type: DocumentSummary, source: employee_detail, title_field: name, subtitle_field: code, status_field: status_label, status_colors: { Working: green, On leave: amber, Ngưng làm việc: red }, columns: [{ field: job_title, label: Title }, { field: department, label: Departments }, { field: phone, label: Phone }, { field: email, label: E-mail }, { field: start_date, label: Day of work }, { field: dependents, label: Dependents }] }
+  - type: OdooFormView
+    source: employee_detail
+    title_field: name
+    subtitle_field: code
+    status_field: status
+    status_label_field: status_label
+    status_colors: { Đang làm việc: green, Nghỉ phép: amber, Ngưng làm việc: red }
+    statusbar:
+      - { value: Active, label: Working }
+      - { value: OnLeave, label: On leave }
+      - { value: Inactive, label: Stop working }
+    header_actions:
+      - { id: edit_employee_detail, label: Edit information, variant: secondary }
+    message_source: employee_activity
+    attachment_source: employee_documents
+    chatter_label: Employee history
+    attachment_label: Documents
+    message_actor_field: actor_name
+    message_action_field: action
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    content_slot: true
+    groups:
+      - title: Employee details
+        fields:
+          - { field: job_title, label: Title }
+          - { field: department, label: Department }
+          - { field: phone, label: Phone }
+          - { field: email, label: Email }
+          - { field: start_date, label: Start date }
+          - { field: dependents, label: Dependents }
   - type: DataGrid
     source: employee_contracts
     page_size: 20
@@ -43,15 +73,6 @@ components:
     row_key: id
     empty_state: { title: No contract yet }
     columns: [{ field: code, label: Contract }, { field: contract_type, label: Type }, { field: start_date, label: From date }, { field: end_date, label: Come day }, { field: base_salary, label: Basic salary, align: right }, { field: status, label: Status }]
-  - type: ApprovalTimeline
-    source: employee_activity
-    title: Employee history
-    empty_state: { title: There are no staff activities yet }
-    action_labels: { create: Đã tạo, update: Cập nhật, upload: Tải tài liệu lên, delete: Xóa }
-    actor_field: actor_name
-    action_field: action
-    detail_field: detail
-    timestamp_field: created_at
   - type: DataGrid
     source: employee_documents
     page_size: 20
@@ -61,7 +82,6 @@ components:
     columns: [{ field: file_name, label: File name }, { field: mime_type, label: Type }, { field: size_bytes, label: Capacity, align: right }, { field: created_at, label: Upload date }, { field: actions, label: '', sortable: false, actions: [{ id: download_employee_document, label: Download, variant: ghost, permission: hr.read }] }]
 toolbar:
   - { id: back_employees, label: 'List of employees', icon: arrow-left, variant: secondary, action: back_employees }
-  - { id: edit_employee_detail, label: Edit information, variant: primary, permission: hr.write, action: edit_employee_detail }
   - { id: upload_employee_document, label: '+ Download documents', variant: secondary, permission: hr.write, action: upload_employee_document }
 actions:
   - { id: back_employees, type: navigate, navigate_to: /hr/employees }
