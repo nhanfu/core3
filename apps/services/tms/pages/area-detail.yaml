@@ -17,7 +17,22 @@ datasources:
     permission: dispatch.read
     query: "SELECT id AS value, code || ' - ' || name AS label FROM areas ORDER BY name"
 components:
-  - { type: DocumentSummary, source: area_detail, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: region, label: Region }, { field: description, label: Note }] }
+  - type: OdooFormView
+    source: area_detail
+    title_field: name
+    subtitle_field: code
+    status_field: status
+    statusbar:
+      - { value: Active, label: Working }
+      - { value: Inactive, label: Shut down }
+    header_actions:
+      - { id: edit_area_detail, label: Edit area, variant: secondary }
+    groups:
+      - title: Area details
+        fields:
+          - { field: region, label: Region }
+          - { field: description, label: Note, type: textarea, wide: true }
+    content_slot: true
   - type: DataGrid
     source: area_locations
     page_size: 50
@@ -27,7 +42,6 @@ components:
     columns: [{ field: code, label: Location code }, { field: name, label: Location }, { field: location_type_label, label: Type }, { field: city, label: City }, { field: address, label: Address }, { field: status, label: Status }]
 toolbar:
   - { id: back_areas, label: 'Area list', icon: arrow-left, variant: secondary, action: back_areas }
-  - { id: edit_area_detail, label: Edit area, variant: primary, permission: dispatch.write, action: edit_area_detail }
 actions:
   - { id: back_areas, type: navigate, navigate_to: /areas }
   - id: edit_area_detail
