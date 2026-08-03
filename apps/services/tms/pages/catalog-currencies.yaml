@@ -27,25 +27,57 @@ toolbar:
   - { id: sync_currency_rates_btn, label: 'Synchronize exchange rates', variant: secondary, permission: catalog.write, action: sync_currency_rates }
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: currencies
-    filter_field: q
-    search: { label: Currency search, placeholder: 'Find code, name or symbol...' }
-    actions: [{ id: currencies.export, label: 'Export CSV', icon: download }, { id: import_currencies, label: 'Import CSV', icon: upload }]
-  - type: StatusTabs
-    source: currencies
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: In use }
-      - { id: Inactive, label: Discontinue use }
-  - type: DataGrid
-    source: currencies
-    column_chooser: true
+    create_action: add_currency
+    create_label: Add currency
+    search:
+      label: Currency search
+      placeholder: 'Find code, name, or symbol...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: In use }
+          - { id: Inactive, label: Discontinued }
+    actions:
+      - { id: sync_currency_rates, label: Synchronize exchange rates, title: Synchronize exchange rates, icon: refresh }
+      - { id: currencies.export, label: Export CSV, title: Export CSV, icon: download }
+      - { id: import_currencies, label: Import CSV, title: Import CSV, icon: upload }
+    labels:
+      new: Add currency
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all currencies
+      select_row: Select currency
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: symbol, label: Symbol }
+            - { field: rate_to_vnd, label: Exchange rate / VND }
+            - { field: status, label: Status }
     page_size: 20
+    column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: No currency, description: Create your first currency to use in quotes. }
     columns:
       - { field: code, label: Code, sortable: true }
@@ -66,8 +98,8 @@ components:
         sortable: false
         align: right
         actions:
-          - { id: edit_currency, label: Fix, variant: ghost, permission: catalog.write }
-          - { id: delete_currency, label: Erase, variant: danger, permission: catalog.write }
+          - { id: edit_currency, label: Edit, variant: ghost, permission: catalog.write }
+          - { id: delete_currency, label: Delete, variant: danger, permission: catalog.write }
 
 actions:
   - { id: sync_currency_rates, type: server, permission: catalog.write, action: catalog.currencies.sync_rates, refresh: [currencies] , handler: currency_sync}
