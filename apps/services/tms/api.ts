@@ -520,16 +520,17 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (body.kind === 'partner' && !['Carrier', 'Supplier', 'ShippingLine', 'Warehouse', 'Depot', 'Other'].includes(String(values.partner_type || ''))) return apiError(400, 'Invalid partner type');
       if (!['Public', 'Private'].includes(String(values.visibility || ''))) return apiError(400, 'Invalid visibility');
       if (!['Active', 'Inactive'].includes(String(values.status || ''))) return apiError(400, 'Invalid status');
-      const updated = await repository.updateRecord(table, body.id, changes, true);
+      const updated = await repository.executeDatasourceMutation(
+        {
+          table,
+          mutations: { update: { fields, timestamps: true } },
+        },
+        'update',
+        body.id,
+        Object.fromEntries(changes.map((change) => [change.field, change.value])),
+        activityActor,
+      );
       if (!updated) return apiError(404, 'CRM entity not found');
-      await repository.recordActivity({
-        actorId: activityActor.id,
-        actorName: activityActor.name,
-        action: 'update',
-        resource: table,
-        resourceId: body.id,
-        detail: `Updated fields: ${changes.map((change) => change.field).join(', ')}`,
-      });
       return json(updated);
     }
     if (handler === 'accounting_document') {
@@ -547,16 +548,17 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (!changes.some((change) => change.field === 'code' && String(change.value || '').trim())) return apiError(400, 'code required');
       if (!changes.some((change) => change.field === 'name' && String(change.value || '').trim())) return apiError(400, 'name required');
       if (!changes.some((change) => change.field === 'currency' && String(change.value || '').trim())) return apiError(400, 'currency required');
-      const updated = await repository.updateRecord('accounting_entries', body.id, changes, true);
+      const updated = await repository.executeDatasourceMutation(
+        {
+          table: 'accounting_entries',
+          mutations: { update: { fields, timestamps: true } },
+        },
+        'update',
+        body.id,
+        Object.fromEntries(changes.map((change) => [change.field, change.value])),
+        activityActor,
+      );
       if (!updated) return apiError(404, 'Financial document not found');
-      await repository.recordActivity({
-        actorId: activityActor.id,
-        actorName: activityActor.name,
-        action: 'update',
-        resource: 'accounting_entries',
-        resourceId: body.id,
-        detail: `Updated fields: ${changes.map((change) => change.field).join(', ')}`,
-      });
       return json(updated);
     }
     if (handler === 'chat') {
