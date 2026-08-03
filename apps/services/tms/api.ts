@@ -606,7 +606,12 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (handler === 'approval_step') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      const relation = actionDefinition.datasource
+        ? SOURCES.get(actionDefinition.datasource)?.meta?.relation
+        : null;
+      if (!relation) return apiError(409, 'Approval-step relation is not configured');
       return json(await repository.mutateApprovalFlowStep(
+        relation,
         actionDefinition.operation,
         body.id,
         typeof body.step_id === 'string' ? body.step_id : null,

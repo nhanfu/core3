@@ -1191,6 +1191,7 @@ export class DuckDbRepository {
   }
 
   async mutateApprovalFlowStep(
+    relation: { parentTable: string; parentKind: string; childTable: string; parentKey: string },
     operation: 'create' | 'update' | 'delete' | 'move_up' | 'move_down',
     flowId: string,
     stepId: string | null,
@@ -1198,10 +1199,14 @@ export class DuckDbRepository {
     action: string,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    const identifiers = [relation.parentTable, relation.childTable, relation.parentKey];
+    if (identifiers.some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !relation.parentKind) {
+      throw { status: 400, message: 'Invalid relation configuration' };
+    }
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        const [flow] = await queryOnConnection(conn, "SELECT id, code, name FROM system_configs WHERE id = ? AND kind = 'approval_flow'", [flowId]);
+        const [flow] = await queryOnConnection(conn, `SELECT id, code, name FROM ${relation.parentTable} WHERE id = ? AND kind = ?`, [flowId, relation.parentKind]);
         if (!flow) throw { status: 404, message: 'Approval flow not found' };
         if (operation === 'create' || operation === 'update') {
           const name = String(values.name || '').trim();
@@ -1212,41 +1217,41 @@ export class DuckDbRepository {
           if (!Number.isFinite(minAmount) || minAmount < 0) throw { status: 400, message: 'min_amount must be zero or greater' };
           if (!['Active', 'Inactive'].includes(status)) throw { status: 400, message: 'invalid step status' };
           if (operation === 'create') {
-            const [last] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) AS sequence FROM approval_flow_steps WHERE flow_id = ?', [flowId]);
+            const [last] = await queryOnConnection(conn, `SELECT COALESCE(MAX(sequence), 0) AS sequence FROM ${relation.childTable} WHERE ${relation.parentKey} = ?`, [flowId]);
             const id = crypto.randomUUID();
-            await runOnConnection(conn, 'INSERT INTO approval_flow_steps(id, flow_id, sequence, name, approver_role, min_amount, status) VALUES(?,?,?,?,?,?,?)', [id, flowId, Number(last?.sequence || 0) + 10, name, approverRole, minAmount, status]);
+            await runOnConnection(conn, `INSERT INTO ${relation.childTable}(id, ${relation.parentKey}, sequence, name, approver_role, min_amount, status) VALUES(?,?,?,?,?,?,?)`, [id, flowId, Number(last?.sequence || 0) + 10, name, approverRole, minAmount, status]);
             await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', id, `Thêm bước ${name}`]);
-            const [row] = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE id = ?', [id]);
+            const [row] = await queryOnConnection(conn, `SELECT * FROM ${relation.childTable} WHERE id = ?`, [id]);
             await runOnConnection(conn, 'COMMIT');
             return row;
           }
           if (!stepId) throw { status: 400, message: 'step_id required' };
-          const [existing] = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          const [existing] = await queryOnConnection(conn, `SELECT * FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [stepId, flowId]);
           if (!existing) throw { status: 404, message: 'Approval step not found' };
-          await runOnConnection(conn, 'UPDATE approval_flow_steps SET name = ?, approver_role = ?, min_amount = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND flow_id = ?', [name, approverRole, minAmount, status, stepId, flowId]);
+          await runOnConnection(conn, `UPDATE ${relation.childTable} SET name = ?, approver_role = ?, min_amount = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND ${relation.parentKey} = ?`, [name, approverRole, minAmount, status, stepId, flowId]);
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, `Cập nhật bước ${name}`]);
         } else if (operation === 'delete') {
           if (!stepId) throw { status: 400, message: 'step_id required' };
-          const [existing] = await queryOnConnection(conn, 'SELECT name FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          const [existing] = await queryOnConnection(conn, `SELECT name FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [stepId, flowId]);
           if (!existing) throw { status: 404, message: 'Approval step not found' };
-          await runOnConnection(conn, 'DELETE FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          await runOnConnection(conn, `DELETE FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [stepId, flowId]);
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, `Xóa bước ${existing.name}`]);
         } else {
           if (!stepId) throw { status: 400, message: 'step_id required' };
-          const [current] = await queryOnConnection(conn, 'SELECT id, sequence FROM approval_flow_steps WHERE id = ? AND flow_id = ?', [stepId, flowId]);
+          const [current] = await queryOnConnection(conn, `SELECT id, sequence FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [stepId, flowId]);
           if (!current) throw { status: 404, message: 'Approval step not found' };
           const direction = operation === 'move_up' ? '<' : '>';
           const order = operation === 'move_up' ? 'DESC' : 'ASC';
-          const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM approval_flow_steps WHERE flow_id = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [flowId, current.sequence]);
+          const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM ${relation.childTable} WHERE ${relation.parentKey} = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [flowId, current.sequence]);
           if (neighbor) {
-            const [temporary] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM approval_flow_steps WHERE flow_id = ?', [flowId]);
-            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [temporary.sequence, current.id]);
-            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [current.sequence, neighbor.id]);
-            await runOnConnection(conn, 'UPDATE approval_flow_steps SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
+            const [temporary] = await queryOnConnection(conn, `SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM ${relation.childTable} WHERE ${relation.parentKey} = ?`, [flowId]);
+            await runOnConnection(conn, `UPDATE ${relation.childTable} SET sequence = ? WHERE id = ?`, [temporary.sequence, current.id]);
+            await runOnConnection(conn, `UPDATE ${relation.childTable} SET sequence = ? WHERE id = ?`, [current.sequence, neighbor.id]);
+            await runOnConnection(conn, `UPDATE ${relation.childTable} SET sequence = ? WHERE id = ?`, [neighbor.sequence, current.id]);
           }
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'approval_flow_steps', stepId, operation === 'move_up' ? 'Đưa bước lên' : 'Đưa bước xuống']);
         }
-        const rows = await queryOnConnection(conn, 'SELECT * FROM approval_flow_steps WHERE flow_id = ? ORDER BY sequence, id', [flowId]);
+        const rows = await queryOnConnection(conn, `SELECT * FROM ${relation.childTable} WHERE ${relation.parentKey} = ? ORDER BY sequence, id`, [flowId]);
         await runOnConnection(conn, 'COMMIT');
         return { data: rows };
       } catch (error) {
