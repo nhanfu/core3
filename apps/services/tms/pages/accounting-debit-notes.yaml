@@ -21,18 +21,73 @@ datasources:
 toolbar:
   - { id: add_debit_note_btn, label: '+ Add debt notice', variant: primary, permission: accounting.write, action: add_debit_note }
 components:
-  - { type: ListToolbar, source: debit_notes, filter_field: q, search: { label: Search for debt notices, placeholder: 'Find voucher number or partner...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'From the date of the document', to_label: 'Arrival date of documents', presets: [today, week, month, quarter, year, all] }, actions: [{ id: debit_notes.export, label: 'Export Excel', icon: download, params: { format: xlsx } }] }
-  - type: StatusTabs
+  - type: ListView
+    variant: odoo
     source: debit_notes
-    filter_field: status
-    variant: contained
-    tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Paid, label: Paid }, { id: Cancelled, label: Canceled }]
-  - type: DataGrid
-    source: debit_notes
+    create_action: add_debit_note
+    create_label: Add debit note
+    search:
+      label: Search debit notes
+      placeholder: 'Find document number, content, or partner...'
+    date_range:
+      label: Document date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Pending Approval, label: Pending approval }
+          - { id: Approved, label: Approved }
+          - { id: Paid, label: Paid }
+          - { id: Cancelled, label: Cancelled }
+    actions:
+      - { id: debit_notes.export, label: Export Excel, title: Export Excel, icon: download, params: { format: xlsx } }
+    labels:
+      new: Add debit note
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all debit notes
+      select_row: Select debit note
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: code
+          subtitle: name
+          fields:
+            - { field: counterparty, label: Partner }
+            - { field: amount_display, label: Amount }
+            - { field: due_date, label: Due date }
+            - { field: status_label, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: There is no debt notice }
     columns:
       - { field: code, label: Document number, sortable: true }
@@ -44,19 +99,19 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Draft: neutral, Browsing: amber, Approved: green, Paid: blue, Canceled: red }
+        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã thanh toán: blue, Đã hủy: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_debit_note, label: Detail, variant: secondary, permission: accounting.read }
-          - { id: edit_debit_note, label: Fix, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_debit_note, label: Browser, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_debit_note, label: Browse, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_debit_note, label: Refuse, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: pay_debit_note, label: Paid, variant: primary, permission: accounting.pay, show_if: "row.status === 'Approved'" }
+          - { id: view_debit_note, label: View, variant: secondary, permission: accounting.read }
+          - { id: edit_debit_note, label: Edit, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_debit_note, label: Submit, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_debit_note, label: Approve, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_debit_note, label: Reject, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: pay_debit_note, label: Mark paid, variant: primary, permission: accounting.pay, show_if: "row.status === 'Approved'" }
           - { id: cancel_debit_note, label: Cancel, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
-          - { id: delete_debit_note, label: Erase, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: delete_debit_note, label: Delete, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_debit_note
     type: form
