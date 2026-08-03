@@ -503,6 +503,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       } : undefined,
       actions: utilityActions,
       rowKey: def.row_key || 'id',
+      tree: def.tree ? { parentField: def.parent_field || 'parent_id' } : undefined,
       selectable: def.selectable === true,
       columnChooser: def.column_chooser === true,
       openAction: def.row_open_action,

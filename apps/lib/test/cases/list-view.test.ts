@@ -116,6 +116,22 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('thead')?.textContent).toContain('Status');
   });
 
+  it('renders hierarchical rows and collapses descendants', () => {
+    const component = new ListView('accounts', {
+      rows: [
+        { id: 'root', name: 'Root' },
+        { id: 'child', parent_id: 'root', name: 'Child' },
+      ],
+      meta: { total: 2, page: 1, pageSize: 20 },
+    }, [{ field: 'name', label: 'Name' }], { variant: 'odoo', tree: { parentField: 'parent_id' } });
+    const container = mount(component);
+
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(2);
+    expect(container.querySelector('[data-row-id="child"] [data-tree-depth="1"]')).not.toBeNull();
+    container.querySelector<HTMLButtonElement>('[data-row-id="root"] .o-list-tree-toggle')!.click();
+    expect(container.querySelectorAll('tbody tr')).toHaveLength(1);
+  });
+
   it('notifies when the active view changes', () => {
     const onViewChange = vi.fn();
     const container = mount(create({ onViewChange }));

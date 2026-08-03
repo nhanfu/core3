@@ -62,6 +62,7 @@ export type ListViewOptions = {
   };
   actions?: ListViewAction[];
   rowKey?: string;
+  tree?: { parentField?: string };
   selectable?: boolean;
   columnChooser?: boolean;
   openAction?: string;
@@ -250,7 +251,9 @@ export class ListView extends BaseComponent {
       html.take(cell).h3.text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.text(empty.description);
     } else {
-      rows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
+      for (const item of this.treeRows(rows)) {
+        this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
+      }
     }
   }
 
@@ -462,7 +465,7 @@ export class ListView extends BaseComponent {
     }
   }
 
-  private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
+  private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, depth = 0, hasChildren = false) {
     const id = this.rowId(row, index);
     const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).getContext();
     tr.addEventListener('click', (event: MouseEvent) => {
@@ -503,7 +506,59 @@ export class ListView extends BaseComponent {
         const value = row[column.field];
         cell.textContent = value == null || value === '' ? '—' : String(value);
       }
+      if (this.options.tree && columnIndex === 0) {
+        cell.style.paddingLeft = `${16 + depth * 20}px`;
+        cell.dataset.treeDepth = String(depth);
+        if (hasChildren) {
+          const collapsed = this.collapsedTreeIds().has(id);
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'o-list-tree-toggle';
+          toggle.textContent = collapsed ? '▸' : '▾';
+          toggle.setAttribute('aria-label', collapsed ? 'Expand row' : 'Collapse row');
+          toggle.addEventListener('click', event => {
+            event.stopPropagation();
+            const next = this.collapsedTreeIds();
+            collapsed ? next.delete(id) : next.add(id);
+            this.setState({ collapsedTreeIds: [...next] });
+          });
+          cell.prepend(toggle);
+        }
+      }
     });
+  }
+
+  private treeRows(rows: ListRow[]) {
+    if (!this.options.tree) return rows.map((row, index) => ({ row, index, depth: 0, hasChildren: false }));
+    const parentField = this.options.tree.parentField || 'parent_id';
+    const ids = new Set(rows.map((row, index) => this.rowId(row, index)));
+    const children = new Map<string, string[]>();
+    rows.forEach((row, index) => {
+      const parent = String(row[parentField] ?? '');
+      if (!children.has(parent)) children.set(parent, []);
+      children.get(parent)!.push(this.rowId(row, index));
+    });
+    const collapsed = this.collapsedTreeIds();
+    const result: Array<{ row: ListRow; index: number; depth: number; hasChildren: boolean }> = [];
+    const visit = (row: ListRow, index: number, depth: number) => {
+      const id = this.rowId(row, index);
+      const childIds = (children.get(id) || []).filter(childId => ids.has(childId));
+      result.push({ row, index, depth, hasChildren: childIds.length > 0 });
+      if (collapsed.has(id)) return;
+      for (const childId of childIds) {
+        const childIndex = rows.findIndex((candidate, candidateIndex) => this.rowId(candidate, candidateIndex) === childId);
+        if (childIndex >= 0) visit(rows[childIndex], childIndex, depth + 1);
+      }
+    };
+    rows.forEach((row, index) => {
+      const parent = String(row[parentField] ?? '');
+      if (!parent || !ids.has(parent)) visit(row, index, 0);
+    });
+    return result;
+  }
+
+  private collapsedTreeIds() {
+    return new Set<string>(Array.isArray(this.state.collapsedTreeIds) ? this.state.collapsedTreeIds.map(String) : []);
   }
 
   private drawRowActions(container: HTMLElement, row: ListRow, rowId: string, actions: ListViewRowAction[], labels: Required<NonNullable<ListViewOptions['labels']>>) {
