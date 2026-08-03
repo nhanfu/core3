@@ -18,7 +18,21 @@ datasources:
     permission: settings.read
     query: "SELECT e.id, e.code, e.name, e.job_title, e.status FROM employees e JOIN departments d ON e.department ILIKE '%' || replace(d.name, 'Phòng ', '') || '%' WHERE d.branch_id = :id AND (:view_scope = 'all' OR d.branch_id = :current_branch_id) ORDER BY e.name"
 components:
-  - { type: DocumentSummary, source: branch_detail, title_field: name, subtitle_field: city, status_field: status, columns: [{ field: region, label: Area }] }
+  - type: OdooFormView
+    source: branch_detail
+    title_field: name
+    subtitle_field: city
+    status_field: status
+    statusbar:
+      - { value: Active, label: Working }
+      - { value: Inactive, label: Shut down }
+    header_actions:
+      - { id: edit_branch_detail, label: Edit branch, variant: secondary }
+    groups:
+      - title: Branch details
+        fields:
+          - { field: region, label: Area }
+    content_slot: true
   - type: DataGrid
     source: branch_departments
     page_size: 30
@@ -42,7 +56,6 @@ components:
     columns: [{ field: code, label: Employee code }, { field: name, label: Full name }, { field: job_title, label: Title }, { field: status, label: Status }]
 toolbar:
   - { id: back_branches, label: 'List of branches', icon: arrow-left, variant: secondary, action: back_branches }
-  - { id: edit_branch_detail, label: Edit branch, variant: primary, permission: settings.write, action: edit_branch_detail }
 actions:
   - { id: back_branches, type: navigate, navigate_to: /org/branches }
   - id: edit_branch_detail

@@ -27,46 +27,71 @@ toolbar:
     action: add_branch
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: org_branches
-    filter_field: q
+    create_action: add_branch
+    create_label: Add branch
     search:
-      label: Search for branches
-      placeholder: 'Search by name, province, area...'
-    actions: [{ id: org_branches.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: org_branches
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Work }
-      - { id: Inactive, label: Shut down }
-  - type: DataGrid
-    source: org_branches
+      label: Search branches
+      placeholder: 'Search by name, province, or area...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Working }
+          - { id: Inactive, label: Shut down }
+    actions: [{ id: org_branches.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add branch
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all branches
+      select_row: Select branch
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: city
+          fields:
+            - { field: region, label: Area }
+            - { field: truck_count, label: Vehicles }
+            - { field: status, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_open_action: view_branch
+    row_actions: menu
     empty_state: { title: No branches, description: Try changing the filter or creating a new branch. }
     columns:
       - { field: id, label: HT code, sortable: true }
       - { field: name, label: Branch name, type: PrimaryEntityCell, secondary: city }
       - { field: region, label: Area }
       - { field: truck_count, label: Number of vehicles, align: right }
-      - field: status
-        label: Status
-        type: StatusChip
-        colors: { Active: green, Inactive: red }
-      - { field: created_at, label: Creation date, type: DateCell }
+      - { field: status, label: Status, type: StatusChip, colors: { Active: green, Inactive: red } }
+      - { field: created_at, label: Creation date, optional: hide }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_branch, label: Detail, variant: primary, permission: settings.read }
-          - { id: edit_branch, label: Fix, variant: ghost, permission: settings.write }
-          - { id: delete_branch, label: Erase, variant: danger, permission: settings.write }
+          - { id: view_branch, label: Detail, variant: secondary, permission: settings.read }
+          - { id: edit_branch, label: Edit, variant: ghost, permission: settings.write }
+          - { id: delete_branch, label: Delete, variant: danger, permission: settings.write }
 
 actions:
   - { id: view_branch, type: navigate, permission: settings.read, navigate_to: /org/branches/detail, params: { id: '{row.id}' } }
