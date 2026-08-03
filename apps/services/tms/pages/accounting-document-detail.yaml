@@ -101,7 +101,7 @@ components:
       - { id: add_accounting_line, label: '+ Add lines', variant: primary, permission: accounting.write, show_if: "state.accounting_document_detail.status === 'Draft'" }
     empty_state: { title: No details yet }
     columns:
-      - { field: sequence, label: No, align: right }
+      - { field: sequence, label: 'No', align: right }
       - { field: description, label: Content }
       - { field: quantity_display, label: Quantity, align: right }
       - { field: unit, label: Unit }

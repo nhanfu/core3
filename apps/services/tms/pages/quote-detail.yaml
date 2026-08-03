@@ -93,7 +93,7 @@ components:
       - { id: add_quote_line, label: '+ Add lines', variant: primary, permission: crm.write, show_if: "state.quote_detail.status === 'Draft'" }
     empty_state: { title: There are no quotes yet }
     columns:
-      - { field: sequence, label: No, align: right }
+      - { field: sequence, label: 'No', align: right }
       - { field: description, label: Content }
       - { field: quantity_display, label: Quantity, align: right }
       - { field: unit, label: Unit }
