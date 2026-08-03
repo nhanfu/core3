@@ -44,82 +44,83 @@ toolbar:
     action: add_vehicle
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: vehicles
-    filter_field: q
+    create_action: add_vehicle
+    create_label: Add vehicle
     search:
-      label: Search for media
-      placeholder: 'Search by license plate / model number, name, brand...'
-    actions: [{ id: vehicles.export, label: '', title: 'Export CSV', icon: download }]
-    advanced_filter: true
-    help: true
-  - type: StatusTabs
-    source: vehicles
-    filter_field: status
-    show_counts: false
-    variant: toggle
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Ready }
-      - { id: Maintenance, label: Maintenance }
-      - { id: 'Out of Service', label: Shut down }
-  - type: DataGrid
-    source: vehicles
+      label: Search vehicles
+      placeholder: 'Search by license plate, model, or type...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Ready }
+          - { id: Maintenance, label: Maintenance }
+          - { id: 'Out of Service', label: Shut down }
+    actions: [{ id: vehicles.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add vehicle
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all vehicles
+      select_row: Select vehicle
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: plate
+          subtitle: model
+          fields:
+            - { field: vehicle_type, label: Vehicle type }
+            - { field: owner_name, label: Garage }
+            - { field: capacity_kg, label: Load }
+            - { field: availability, label: Status }
     page_size: 50
-    page_size_options: [10, 25, 50, 100]
-    row_numbers: true
     column_chooser: true
     row_key: id
     selectable: true
     empty_state:
-      title: No means
-      description: Try changing the filter or creating new media.
+      title: No vehicles
+      description: Try changing the filter or create a new vehicle.
+    row_open_action: view_vehicle
+    row_actions: menu
     columns:
-      - field: system_code
-        label: HT code
-        sortable: true
-      - field: plate
-        label: License plate / number
-        type: PrimaryEntityCell
-        secondary: model
-      - field: vehicle_type
-        label: Vehicle type
-      - field: model
-        label: Firm
-      - field: owner_name
-        label: Garage
-      - field: capacity_kg
-        label: Load
-        type: WeightCell
-        align: right
+      - { field: system_code, label: HT code, sortable: true }
+      - { field: plate, label: License plate / number, type: PrimaryEntityCell, secondary: model }
+      - { field: vehicle_type, label: Vehicle type }
+      - { field: owner_name, label: Garage }
+      - { field: capacity_kg, label: Load, align: right }
       - field: availability
         label: Status
         type: StatusChip
         colors:
-          Ready: green
-          Maintenance: amber
-          Shut down: red
-      - field: created_by
-        label: Creator
-      - field: created_at
-        label: Creation date and time
+          Sẵn sàng: green
+          Bảo dưỡng: amber
+          Ngưng hoạt động: red
+      - { field: created_by, label: Creator, optional: hide }
+      - { field: created_at, label: Creation date and time, optional: hide }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - id: view_vehicle
-            label: Detail
-            variant: primary
-            permission: fleet.read
-          - id: edit_vehicle
-            label: Fix
-            variant: ghost
-            permission: fleet.write
-          - id: delete_vehicle
-            label: Erase
-            variant: danger
-            permission: fleet.write
+          - { id: view_vehicle, label: Detail, variant: secondary, permission: fleet.read }
+          - { id: edit_vehicle, label: Edit, variant: ghost, permission: fleet.write }
+          - { id: delete_vehicle, label: Delete, variant: danger, permission: fleet.write }
 
 actions:
   - { id: view_vehicle, type: navigate, permission: fleet.read, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }

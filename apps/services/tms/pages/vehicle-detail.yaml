@@ -31,7 +31,31 @@ datasources:
     permission: fleet.read
     query: "SELECT id AS value, name AS label FROM drivers WHERE status = 'Active' ORDER BY name"
 components:
-  - { type: DocumentSummary, source: vehicle_detail, title_field: plate, subtitle_field: model, status_field: status_label, status_colors: { 'Ready': green, 'Maintenance': amber, 'Shut down': red }, columns: [{ field: type, label: Vehicle type }, { field: branch_name, label: Branch }, { field: capacity_kg, label: Load }, { field: mileage, label: Number of kilometers }, { field: last_service, label: Nearest maintenance }, { field: next_service, label: Next maintenance }, { field: driver_name, label: Driver in charge }, { field: license_number, label: License }] }
+  - type: OdooFormView
+    source: vehicle_detail
+    title_field: plate
+    subtitle_field: model
+    status_field: status
+    status_label_field: status_label
+    status_colors: { Sẵn sàng: green, Bảo dưỡng: amber, Ngưng hoạt động: red }
+    statusbar:
+      - { value: Active, label: Ready }
+      - { value: Maintenance, label: Maintenance }
+      - { value: 'Out of Service', label: Shut down }
+    header_actions:
+      - { id: edit_vehicle_detail, label: Edit vehicle, variant: secondary }
+    groups:
+      - title: Vehicle details
+        fields:
+          - { field: type, label: Vehicle type }
+          - { field: branch_name, label: Branch }
+          - { field: capacity_kg, label: Load }
+          - { field: mileage, label: Mileage }
+          - { field: last_service, label: Last service }
+          - { field: next_service, label: Next service }
+          - { field: driver_name, label: Driver in charge }
+          - { field: license_number, label: License }
+    content_slot: true
   - type: DataGrid
     source: vehicle_maintenance
     page_size: 20
@@ -48,7 +72,6 @@ components:
     columns: [{ field: trip_number, label: Trip }, { field: origin, label: Point go }, { field: destination, label: Destination }, { field: departure_time, label: Depart }, { field: status, label: Status }]
 toolbar:
   - { id: back_vehicles, label: 'Media list', icon: arrow-left, variant: secondary, action: back_vehicles }
-  - { id: edit_vehicle_detail, label: Vehicle repair, variant: primary, permission: fleet.write, action: edit_vehicle_detail }
 actions:
   - { id: back_vehicles, type: navigate, navigate_to: /vehicles }
   - id: edit_vehicle_detail
