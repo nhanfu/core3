@@ -1,7 +1,15 @@
 title: Trip fee formula
 page: { id: system-fee-rules, breadcrumb: [System, Trip fee formula], auth: { require: [system.read] } }
 datasources:
-  - { id: fee_rules, single: false, permission: system.read, query: "SELECT id, code, name, config_value, description, status, sort_order, created_at FROM system_configs WHERE kind = 'fee_rule' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY sort_order, code" }
+  - id: fee_rules
+    single: false
+    permission: system.read
+    table: system_configs
+    mutations:
+      create: { permission: system.write, scope: fee_rule, fields: [code, name, config_value, description, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] } } } }
+      update: { permission: system.write, scope: fee_rule, fields: [code, name, config_value, description, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] } } } }
+      delete: { permission: system.write, scope: fee_rule }
+    query: "SELECT id, code, name, config_value, description, status, sort_order, created_at FROM system_configs WHERE kind = 'fee_rule' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY sort_order, code"
 toolbar: [{ id: add_fee_rule, label: '+ Add formula', variant: primary, permission: system.write, action: add_fee_rule }]
 components:
   - type: ListView
@@ -69,6 +77,6 @@ components:
           - { id: edit_fee_rule, label: Edit, variant: ghost, permission: system.write }
           - { id: delete_fee_rule, label: Delete, variant: danger, permission: system.write }
 actions:
-  - { id: add_fee_rule, type: form, permission: system.write, title: Add fee formula, table: system_configs, scope: fee_rule, operation: insert, refresh: [fee_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Expression, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }
-  - { id: edit_fee_rule, type: form, permission: system.write, title: Update fee formula, table: system_configs, scope: fee_rule, operation: update, prefill: row, refresh: [fee_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Expression, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }] }
-  - { id: delete_fee_rule, type: delete, permission: system.write, table: system_configs, scope: fee_rule, confirm: 'Delete formula {{row.name}}?', refresh: [fee_rules] }
+  - { id: add_fee_rule, type: form, permission: system.write, datasource: fee_rules, title: Add fee formula, table: system_configs, scope: fee_rule, operation: insert, refresh: [fee_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Expression, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }
+  - { id: edit_fee_rule, type: form, permission: system.write, datasource: fee_rules, title: Update fee formula, table: system_configs, scope: fee_rule, operation: update, prefill: row, refresh: [fee_rules], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Expression, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }] }
+  - { id: delete_fee_rule, type: delete, permission: system.write, datasource: fee_rules, table: system_configs, scope: fee_rule, confirm: 'Delete formula {{row.name}}?', refresh: [fee_rules] }
