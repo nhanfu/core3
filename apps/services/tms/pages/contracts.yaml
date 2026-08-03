@@ -36,31 +36,71 @@ toolbar:
     action: add_contract
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: contracts
-    filter_field: q
-    search: { label: Search for contracts, placeholder: 'Find contract code, employee code or name...' }
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From effective date', to_label: 'Until effective date', presets: [today, week, month, quarter, year, all] }
-    actions: [{ id: contracts.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: contracts
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Effect }
-      - { id: Expiring, label: About to expire }
-      - { id: Expired, label: Expired }
-  - type: DataGrid
-    source: contracts
+    create_action: add_contract
+    create_label: Add contract
+    search:
+      label: Search contracts
+      placeholder: 'Find contract code, employee code or name...'
+    date_range:
+      label: Effective date
+      from_field: from_date
+      to_field: to_date
+      from_label: From effective date
+      to_label: Until effective date
+      presets: [today, week, month, quarter, year, all]
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Effect }
+          - { id: Expiring, label: About to expire }
+          - { id: Expired, label: Expired }
+          - { id: Terminated, label: Terminated }
+    actions: [{ id: contracts.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add contract
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all contracts
+      select_row: Select contract
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: code
+          subtitle: employee_name
+          fields:
+            - { field: contract_type_label, label: Contract type }
+            - { field: start_date, label: Starts }
+            - { field: end_date, label: Ends }
+            - { field: base_salary, label: Salary }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
-    empty_state: { title: No contract, description: Try changing the filter or creating a new contract. }
+    row_open_action: view_contract
+    row_actions: menu
+    empty_state:
+      title: No contracts
+      description: Try changing the filter or create a new contract.
     columns:
       - { field: id, label: HT code, sortable: true }
-      - { field: code, label: Contract }
+      - { field: code, label: Contract, type: PrimaryEntityCell, secondary: employee_name }
       - { field: employee_code, label: Staff, type: PrimaryEntityCell, secondary: employee_name }
       - { field: contract_type_label, label: Contract type }
       - { field: start_date, label: Magnetic effect }
@@ -69,15 +109,15 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Effect: green, About to expire: amber, Expired: red, Terminated: blue }
+        colors: { Hiệu lực: green, Sắp hết hạn: amber, Hết hạn: red, Đã chấm dứt: blue }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_contract, label: Detail, variant: primary, permission: hr.read }
-          - { id: edit_contract, label: Fix, variant: ghost, permission: hr.write }
-          - { id: delete_contract, label: Erase, variant: danger, permission: hr.write }
+          - { id: view_contract, label: Detail, variant: secondary, permission: hr.read }
+          - { id: edit_contract, label: Edit, variant: ghost, permission: hr.write }
+          - { id: delete_contract, label: Delete, variant: danger, permission: hr.write }
 
 actions:
   - { id: view_contract, type: navigate, permission: hr.read, navigate_to: /hr/contracts/detail, params: { id: '{row.id}' } }
