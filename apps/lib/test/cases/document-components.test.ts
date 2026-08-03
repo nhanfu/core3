@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ApprovalTimeline } from '../../components/ApprovalTimeline.ts';
 import { AsyncSelect } from '../../components/AsyncSelect.ts';
 import { ContactGrid } from '../../components/ContactGrid.ts';
@@ -9,6 +9,8 @@ import { MoneySummary } from '../../components/MoneySummary.ts';
 import { MoneyInput } from '../../components/MoneyInput.ts';
 import { OdooFormView } from '../../components/OdooFormView.ts';
 import { OdooChatter } from '../../components/OdooChatter.ts';
+import { OdooFollowerManager } from '../../components/OdooFollowerManager.ts';
+import { OdooAttachmentPanel } from '../../components/OdooAttachmentPanel.ts';
 import { ScheduleGrid } from '../../components/ScheduleGrid.ts';
 
 function mount(component: { mount(container: HTMLElement): void }) {
@@ -242,6 +244,99 @@ describe('document detail components', () => {
     expect(container.querySelector('.o-form-composer')).not.toBeNull();
     container.querySelector<HTMLButtonElement>('.o-form-composer-cancel')!.click();
     expect(container.querySelector('.o-form-composer')).toBeNull();
+  });
+
+  it('adds and removes followers through the shared chatter manager', async () => {
+    const component = new OdooFollowerManager('followers', {
+      record: { id: 'order-1' },
+      followers: [{ user_id: 'user-1', name: 'Admin User', email: 'admin@example.com' }],
+      candidates: [
+        { user_id: 'user-1', name: 'Admin User' },
+        { user_id: 'user-2', name: 'Dispatch User' },
+      ],
+    }, {
+      follower_add_action: 'add_follower',
+      follower_remove_action: 'remove_follower',
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._transport = { submit: async (action: string, params: any) => { submitted.push({ action, params }); } };
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('.o-form-follower-add-toggle')!.click();
+    const select = container.querySelector<HTMLSelectElement>('.o-form-follower-add-form select')!;
+    expect([...select.options].map(option => option.textContent)).toContain('Dispatch User');
+    expect([...select.options].map(option => option.textContent)).not.toContain('Admin User');
+    select.value = 'user-2';
+    container.querySelector<HTMLFormElement>('.o-form-follower-add-form')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    container.querySelector<HTMLButtonElement>('.o-form-follower-remove')!.click();
+    await Promise.resolve();
+
+    expect(submitted).toEqual([
+      { action: 'add_follower', params: { id: 'order-1', user_id: 'user-2' } },
+      { action: 'remove_follower', params: { id: 'order-1', user_id: 'user-1' } },
+    ]);
+  });
+
+  it('uploads multiple attachments and downloads persisted files', async () => {
+    const component = new OdooAttachmentPanel('attachments', {
+      record: { id: 'order-1' },
+      attachments: [{ id: 'file-1', file_name: 'manifest.pdf', mime_type: 'application/pdf', size_bytes: 2048 }],
+    }, {
+      attachment_upload_action: 'upload_attachment',
+      attachment_download_action: 'download_attachment',
+    });
+    const submitted: Array<{ action: string; params: any }> = [];
+    component._transport = { submit: async (action: string, params: any) => { submitted.push({ action, params }); } };
+    const container = mount(component);
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const files = [new File(['one'], 'proof.png', { type: 'image/png' }), new File(['two'], 'notes.txt', { type: 'text/plain' })];
+    Object.defineProperty(input, 'files', { configurable: true, value: files });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    container.querySelector<HTMLButtonElement>('.o-form-attachment-download')!.click();
+    await Promise.resolve();
+
+    expect(submitted.slice(0, 2).map(entry => [entry.action, entry.params.id, entry.params.file.name])).toEqual([
+      ['upload_attachment', 'order-1', 'proof.png'],
+      ['upload_attachment', 'order-1', 'notes.txt'],
+    ]);
+    expect(submitted[2]).toMatchObject({ action: 'download_attachment', params: { id: 'file-1', file_name: 'manifest.pdf' } });
+    expect(container.textContent).toContain('2 KB');
+  });
+
+  it('loads authenticated image previews and closes the viewer with Escape', async () => {
+    const originalCreateObjectURL = URL.createObjectURL;
+    const originalRevokeObjectURL = URL.revokeObjectURL;
+    const createObjectURL = vi.fn(() => 'blob:order-image');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+    const component = new OdooAttachmentPanel('image-attachments', {
+      record: { id: 'order-1' },
+      attachments: [{ id: 'image-1', file_name: 'delivery.png', mime_type: 'image/png', size_bytes: 1024 }],
+    }, {
+      attachment_download_action: 'download_attachment',
+      resolve_attachment_blob: async () => new Blob(['image'], { type: 'image/png' }),
+    });
+    component._transport = { submit: async () => {} };
+    const container = mount(component);
+    document.body.appendChild(container);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const image = container.querySelector<HTMLImageElement>('.o-form-attachment-preview-button img')!;
+    expect(image.src).toContain('blob:order-image');
+    container.querySelector<HTMLButtonElement>('.o-form-attachment-preview-button')!.click();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(document.body.querySelector('.o-form-attachment-preview-overlay')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.body.querySelector('.o-form-attachment-preview-overlay')).toBeNull();
+    component.dispose();
+    container.remove();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:order-image');
+    if (originalCreateObjectURL) Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: originalCreateObjectURL });
+    else delete (URL as any).createObjectURL;
+    if (originalRevokeObjectURL) Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: originalRevokeObjectURL });
+    else delete (URL as any).revokeObjectURL;
   });
 
   it('renders derived money values and activity events', () => {

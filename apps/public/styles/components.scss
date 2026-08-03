@@ -808,6 +808,49 @@
 .o-form-chatter-primary, .o-form-chatter-secondary { min-height: 28px; padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 3px; font: inherit; font-size: 12px; font-weight: 600; }
 .o-form-chatter-primary { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-chatter-secondary { background: var(--o-form-surface); color: var(--o-form-text); }.o-form-chatter-primary.is-active, .o-form-chatter-secondary.is-active { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-chatter-primary:disabled, .o-form-chatter-secondary:disabled { cursor: default; opacity: .7; }
 .o-form-chatter-tools { position: relative; display: flex; gap: 2px; margin-left: auto; color: var(--o-form-muted); }.o-form-chatter-tool-menu { position: relative; }.o-form-chatter-tool { display: inline-flex; min-width: 28px; min-height: 28px; align-items: center; justify-content: center; gap: 1px; padding: 3px; border-radius: 3px; cursor: pointer; list-style: none; }.o-form-chatter-tool::-webkit-details-marker { display: none; }.o-form-chatter-tool:hover, .o-form-chatter-tool-menu[open] > .o-form-chatter-tool { background: var(--o-form-hover); color: var(--o-form-action); }.o-form-chatter-tool .svg-icon { width: 15px; height: 15px; }.o-form-chatter-tool sup { font-size: 10px; }.o-form-chatter-tool-dropdown { position: absolute; z-index: 6; top: calc(100% + 5px); right: 0; width: 240px; padding: 10px; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); box-shadow: 0 6px 18px rgb(15 23 42 / 15%); }.o-form-chatter-tool-dropdown h3 { margin: 0 0 8px; font-size: 12px; }.o-form-chatter-tool-dropdown ul { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }.o-form-chatter-tool-dropdown li { font-size: 12px; }
+.o-form-chatter-tool-dropdown { width: min(320px, calc(100vw - 32px)); padding: 0; overflow: hidden; }
+.o-form-chatter-tool-dropdown > h3 { margin: 0; padding: 10px 12px; border-bottom: 1px solid var(--o-form-border); font-size: 13px; }
+.o-form-chatter-tool-content { max-height: min(440px, calc(100vh - 160px)); overflow-y: auto; }
+.o-form-chatter-menu-action { display: flex; width: 100%; min-height: 34px; align-items: center; gap: 7px; padding: 7px 12px; border: 0; border-bottom: 1px solid var(--o-form-border); background: transparent; color: var(--o-form-action); font: inherit; font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; }
+.o-form-chatter-menu-action:hover { background: var(--o-form-hover); }
+.o-form-chatter-menu-action .svg-icon, .o-form-follower-remove .svg-icon, .o-form-attachment-download .svg-icon, .o-form-attachment-preview-close .svg-icon { width: 15px; height: 15px; }
+.o-form-follower-add-form { display: grid; gap: 7px; padding: 9px 12px; border-bottom: 1px solid var(--o-form-border); background: var(--o-form-bg); }
+.o-form-follower-add-form[hidden] { display: none; }
+.o-form-follower-add-form select { width: 100%; min-height: 32px; padding: 4px 7px; border: 1px solid var(--o-form-border); border-radius: 3px; background: var(--o-form-surface); color: var(--o-form-text); font: inherit; font-size: 12px; }
+.o-form-follower-add-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.o-form-chatter-menu-confirm, .o-form-chatter-menu-cancel { min-height: 28px; padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 3px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.o-form-chatter-menu-confirm { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }
+.o-form-chatter-menu-cancel { background: var(--o-form-surface); color: var(--o-form-text); }
+.o-form-follower-list { display: grid !important; gap: 0 !important; }
+.o-form-follower-list li { display: grid; grid-template-columns: 30px minmax(0, 1fr) 28px; align-items: center; gap: 8px; min-height: 48px; padding: 7px 10px; border-bottom: 1px solid var(--o-form-border); }
+.o-form-follower-list li:last-child { border-bottom: 0; }
+.o-form-follower-avatar { display: inline-flex; width: 30px; height: 30px; align-items: center; justify-content: center; border-radius: 50%; background: #d8d1e6; color: #554477; font-size: 10px; font-weight: 700; }
+.o-form-follower-identity { display: flex; min-width: 0; flex-direction: column; }
+.o-form-follower-identity strong, .o-form-follower-identity small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-form-follower-identity strong { color: var(--o-form-text); font-size: 12px; }
+.o-form-follower-identity small { color: var(--o-form-muted); font-size: 10px; }
+.o-form-follower-remove, .o-form-attachment-download, .o-form-attachment-preview-close { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 3px; background: transparent; color: var(--o-form-muted); cursor: pointer; }
+.o-form-follower-remove:hover { background: rgb(163 51 43 / 10%); color: #a3332b; }
+.o-form-attachment-upload-status { display: block; padding: 0 12px; color: var(--o-form-muted); font-size: 11px; }
+.o-form-attachment-panel > .o-form-chatter-empty, .o-form-follower-manager > .o-form-chatter-empty { margin: 0; padding: 12px; }
+.o-form-attachment-list { display: grid; gap: 7px; padding: 9px; }
+.o-form-attachment-card { display: grid; grid-template-columns: 58px minmax(0, 1fr) 28px; align-items: center; gap: 8px; min-height: 58px; padding: 4px; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); }
+.o-form-attachment-card:hover { border-color: color-mix(in srgb, var(--o-form-action) 45%, var(--o-form-border)); background: var(--o-form-hover); }
+.o-form-attachment-preview-button { display: flex; width: 58px; height: 50px; align-items: center; justify-content: center; overflow: hidden; padding: 0; border: 0; border-radius: 3px; background: var(--o-form-bg); color: var(--o-form-muted); cursor: pointer; }
+.o-form-attachment-preview-button img { width: 100%; height: 100%; object-fit: cover; }
+.o-form-attachment-placeholder, .o-form-attachment-file-icon { display: inline-flex; align-items: center; justify-content: center; }
+.o-form-attachment-placeholder .svg-icon, .o-form-attachment-file-icon .svg-icon { width: 25px; height: 25px; }
+.o-form-attachment-info { display: flex; min-width: 0; flex-direction: column; }
+.o-form-attachment-info strong, .o-form-attachment-info small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.o-form-attachment-info strong { color: var(--o-form-text); font-size: 12px; }
+.o-form-attachment-info small { color: var(--o-form-muted); font-size: 10px; }
+.o-form-attachment-download:hover { background: var(--o-form-bg); color: var(--o-form-action); }
+.o-form-attachment-preview-overlay { position: fixed; z-index: 120; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(15 23 42 / 72%); }
+.o-form-attachment-preview-dialog { position: relative; display: grid; max-width: min(960px, 94vw); max-height: 92vh; overflow: hidden; border-radius: 5px; background: var(--o-form-surface); box-shadow: 0 22px 60px rgb(0 0 0 / 35%); }
+.o-form-attachment-preview-dialog > img { display: block; max-width: 100%; max-height: calc(92vh - 58px); object-fit: contain; background: #111827; }
+.o-form-attachment-preview-close { position: absolute; z-index: 1; top: 8px; right: 8px; background: rgb(15 23 42 / 72%); color: #fff; }
+.o-form-attachment-preview-footer { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 12px; }
+.o-form-attachment-preview-footer strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
 .o-form-composer { display: grid; gap: 8px; padding: 10px; border-bottom: 1px solid var(--o-form-border); background: var(--o-form-bg); }.o-form-composer textarea { min-height: 86px; resize: vertical; padding: 8px; border: 1px solid var(--o-form-border); border-radius: 3px; color: var(--o-form-text); background: var(--o-form-surface); font: inherit; font-size: 13px; }.o-form-composer textarea:focus { border-color: var(--o-form-action); outline: 1px solid var(--o-form-action); }.o-form-composer-actions { display: flex; gap: 6px; justify-content: flex-end; }.o-form-composer-submit, .o-form-composer-cancel { min-height: 30px; padding: 4px 9px; border: 1px solid var(--o-form-action); border-radius: 3px; font: inherit; font-size: 12px; font-weight: 600; }.o-form-composer-submit { color: #fff; background: var(--o-form-action); }.o-form-composer-cancel { border-color: var(--o-form-border); color: var(--o-form-text); background: var(--o-form-surface); }
 .o-form-chatter-stream { padding: 14px 8px 24px; }.o-form-chatter h2 { margin: 0 0 12px; color: var(--o-form-muted); font-size: 12px; font-weight: 600; }.o-form-chatter-empty { color: var(--o-form-muted); font-size: 12px; }
 .o-form-chatter-message { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 9px; padding: 8px 0; }.o-form-chatter-message + .o-form-chatter-message { border-top: 1px solid var(--o-form-border); }.o-form-chatter-avatar { display: inline-flex !important; width: 32px; height: 32px; align-items: center; justify-content: center; margin: 0 !important; border-radius: 50%; background: #d8d1e6; color: #554477 !important; font-size: 11px !important; font-weight: 700; }.o-form-chatter-message-content { min-width: 0; }.o-form-chatter-message-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 8px; color: var(--o-form-muted); font-size: 11px; }.o-form-chatter-message-meta strong { color: var(--o-form-text); font-size: 12px; }.o-form-chatter-message p { margin: 2px 0 0; color: var(--o-form-text); font-size: 13px; font-weight: 600; }.o-form-chatter-message-content > span { display: block; margin-top: 2px; color: var(--o-form-muted); font-size: 12px; }.o-form-chatter-message.is-note { padding-right: 6px; border-left: 3px solid #e5b849; background: rgb(229 184 73 / 8%); }.o-form-chatter-message.is-activity .o-form-chatter-avatar { background: #e9ecef; color: #6c757d !important; }
@@ -837,7 +880,7 @@
 .o-form-page .o-x2many-grid { border: 0 !important; border-radius: 0; }.o-form-page .o-x2many-grid .core3-token-toolbar { padding: 10px 16px; background: var(--o-form-surface) !important; }.o-form-page .o-x2many-grid .core3-token-header { background: var(--o-form-bg) !important; }.o-form-page .o-x2many-grid .core3-token-header th { padding-top: 8px; padding-bottom: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; }.o-form-page .o-x2many-grid .core3-token-cell { padding-top: 8px; padding-bottom: 8px; }.o-x2many-controls { display: flex; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--o-form-border); }.o-x2many-create { padding: 2px 0; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }.o-x2many-create:hover { text-decoration: underline; }.o-x2many-create:disabled { cursor: default; opacity: .6; text-decoration: none; }
 .o-x2many-row-action { padding: 2px 4px; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }.o-x2many-row-action:hover { text-decoration: underline; }.o-x2many-row-action.is-danger { color: #a3332b; }
 
-.o-form-action:focus-visible, .o-form-notebook-tab:focus-visible, .o-form-chatter-primary:focus-visible, .o-form-chatter-secondary:focus-visible, .o-form-chatter-tool:focus-visible, .o-form-composer-submit:focus-visible, .o-form-composer-cancel:focus-visible, .o-x2many-create:focus-visible { outline: 2px solid var(--o-form-action); outline-offset: 2px; }
+.o-form-action:focus-visible, .o-form-notebook-tab:focus-visible, .o-form-chatter-primary:focus-visible, .o-form-chatter-secondary:focus-visible, .o-form-chatter-tool:focus-visible, .o-form-composer-submit:focus-visible, .o-form-composer-cancel:focus-visible, .o-form-chatter-menu-action:focus-visible, .o-form-chatter-menu-confirm:focus-visible, .o-form-chatter-menu-cancel:focus-visible, .o-form-follower-remove:focus-visible, .o-form-attachment-preview-button:focus-visible, .o-form-attachment-download:focus-visible, .o-form-attachment-preview-close:focus-visible, .o-x2many-create:focus-visible { outline: 2px solid var(--o-form-action); outline-offset: 2px; }
 
 @container odoo-form (max-width: 1320px) {
   .o-form-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
@@ -862,6 +905,7 @@
   .o-form-statusbar-step { font-size: 9px; }
   .o-form-chatter-topbar { flex-wrap: wrap; }
   .o-form-chatter-tools { margin-left: 0; }
+  .o-form-chatter-tool-dropdown { right: auto; left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

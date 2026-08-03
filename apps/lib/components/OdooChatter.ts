@@ -1,5 +1,7 @@
 import { BaseComponent } from './BaseComponent.ts';
 import { appendIcon } from './Icon.ts';
+import { OdooAttachmentPanel } from './OdooAttachmentPanel.ts';
+import { OdooFollowerManager } from './OdooFollowerManager.ts';
 
 function initials(value: unknown) {
   const words = String(value || '?').trim().split(/\s+/).filter(Boolean);
@@ -26,10 +28,13 @@ export class OdooChatter extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    for (const child of this.children) child.dispose();
+    this.children = [];
     const record = this.state.record || {};
     const messages = Array.isArray(this.state.messages) ? this.state.messages : [];
     const followers = Array.isArray(this.state.followers) ? this.state.followers : [];
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
+    const followerCandidates = Array.isArray(this.state.followerCandidates) ? this.state.followerCandidates : [];
     const chatter = document.createElement('aside');
     chatter.className = 'o-form-chatter';
     chatter.setAttribute('aria-label', String(this.def.chatter_label || 'Chatter'));
@@ -61,22 +66,32 @@ export class OdooChatter extends BaseComponent {
     const tools = document.createElement('div');
     tools.className = 'o-form-chatter-tools';
     if (this.def.attachment_source) {
-      tools.appendChild(this.renderToolMenu({
+      const attachmentTool = this.renderToolMenu({
         icon: 'file',
         count: attachments.length,
         label: this.def.attachment_label || 'Attachments',
-        rows: attachments,
-        rowLabel: (row: any) => row.file_name || row.name,
-      }));
+      });
+      const panel = new OdooAttachmentPanel(`${this.id}-attachments`, { record, attachments }, this.def);
+      panel.parent = this;
+      this.children.push(panel);
+      panel.mount(attachmentTool.content);
+      tools.appendChild(attachmentTool.details);
     }
     if (this.def.follower_source) {
-      tools.appendChild(this.renderToolMenu({
+      const followerTool = this.renderToolMenu({
         icon: 'users',
         count: followers.length,
         label: this.def.follower_label || 'Followers',
-        rows: followers,
-        rowLabel: (row: any) => row.name || row.actor_name || row.created_by,
-      }));
+      });
+      const manager = new OdooFollowerManager(`${this.id}-followers`, {
+        record,
+        followers,
+        candidates: followerCandidates,
+      }, this.def);
+      manager.parent = this;
+      this.children.push(manager);
+      manager.mount(followerTool.content);
+      tools.appendChild(followerTool.details);
     }
     if (tools.childElementCount) topbar.appendChild(tools);
 
@@ -98,7 +113,7 @@ export class OdooChatter extends BaseComponent {
     chatter.appendChild(stream);
   }
 
-  private renderToolMenu(options: { icon: string; count: number; label: string; rows: any[]; rowLabel: (row: any) => unknown }) {
+  private renderToolMenu(options: { icon: string; count: number; label: string }) {
     const details = document.createElement('details');
     details.className = 'o-form-chatter-tool-menu';
     const summary = document.createElement('summary');
@@ -115,22 +130,11 @@ export class OdooChatter extends BaseComponent {
     const heading = document.createElement('h3');
     heading.textContent = options.label;
     menu.appendChild(heading);
-    if (!options.rows.length) {
-      const empty = document.createElement('p');
-      empty.className = 'o-form-chatter-empty';
-      empty.textContent = `No ${options.label.toLocaleLowerCase()}`;
-      menu.appendChild(empty);
-    } else {
-      const list = document.createElement('ul');
-      for (const row of options.rows) {
-        const item = document.createElement('li');
-        item.textContent = String(options.rowLabel(row) || '—');
-        list.appendChild(item);
-      }
-      menu.appendChild(list);
-    }
+    const content = document.createElement('div');
+    content.className = 'o-form-chatter-tool-content';
+    menu.appendChild(content);
     details.appendChild(menu);
-    return details;
+    return { details, content };
   }
 
   private renderComposer(item: { action: unknown; mode: string }, record: any) {

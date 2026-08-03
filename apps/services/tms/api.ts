@@ -94,6 +94,7 @@ export function createTmsApi(ctx: TmsApiContext) {
         if (component.source && component.page_size) sizes.set(component.source, Number(component.page_size));
         if (component.message_source && component.message_page_size) sizes.set(component.message_source, Number(component.message_page_size));
         if (component.attachment_source && component.attachment_page_size) sizes.set(component.attachment_source, Number(component.attachment_page_size));
+        if (component.follower_candidates_source) sizes.set(component.follower_candidates_source, Number(component.follower_candidates_page_size || 100));
         for (const tab of component.tabs || []) visit(tab.components);
       }
     };

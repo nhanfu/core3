@@ -17,6 +17,7 @@ export class OdooFormView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    for (const child of this.children) child.dispose();
     this.children = [];
     const sourceRecord = this.state.record || {};
     const editing = this.state.editing === true && this.def.editable !== false;
@@ -207,6 +208,7 @@ export class OdooFormView extends BaseComponent {
       record,
       messages: this.state.messages || [],
       followers: this.state.followers || [],
+      followerCandidates: this.state.followerCandidates || [],
       attachments: this.state.attachments || [],
     }, this.def);
     chatter.parent = this;

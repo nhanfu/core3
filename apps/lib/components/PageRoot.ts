@@ -643,6 +643,11 @@ function collectSources(config: any) {
           page_size: component.attachment_page_size || 100,
         });
       }
+      if (component.follower_candidates_source) {
+        add(component.follower_candidates_source, {
+          page_size: component.follower_candidates_page_size || 100,
+        });
+      }
       for (const tab of component.tabs || []) visit(tab.components);
     }
   };

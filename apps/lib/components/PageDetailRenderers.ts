@@ -50,9 +50,25 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
         : undefined),
     }));
   }
-  for (const key of ['message_action', 'note_action']) {
+  for (const key of ['message_action', 'note_action', 'follower_add_action', 'follower_remove_action', 'attachment_upload_action', 'attachment_download_action']) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === def[key]);
     if (!action || !hasPermission(ctx.user, action.permission)) delete formDef[key];
+  }
+  const attachmentDownloadAction = (config.actions || []).find((candidate: any) => candidate.id === formDef.attachment_download_action);
+  if (attachmentDownloadAction) {
+    formDef.resolve_attachment_blob = (row: any) => {
+      const id = encodeURIComponent(String(row?.id || ''));
+      const path = attachmentDownloadAction.kind === 'employee_document'
+        ? `/hr/employee-documents/${id}`
+        : attachmentDownloadAction.kind === 'contract_document'
+          ? `/hr/contract-documents/${id}`
+          : attachmentDownloadAction.kind === 'company_document'
+            ? `/org/company-documents/${id}`
+            : attachmentDownloadAction.kind === 'order_attachment'
+              ? `/orders/attachments/${id}`
+              : `/chat/attachments/${id}`;
+      return client.fetchFile(path);
+    };
   }
   formDef.header_actions = (def.header_actions || []).filter((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
@@ -66,6 +82,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       record: sourceResult.data || {},
       messages: dataMap[def.message_source]?.data || [],
       followers: dataMap[def.follower_source]?.data || [],
+      followerCandidates: dataMap[def.follower_candidates_source]?.data || [],
       attachments: dataMap[def.attachment_source]?.data || [],
       editing: def.initial_editing === true,
     },
@@ -87,7 +104,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;
     }
-    await handleAction(actionDef, params || {});
+    return handleAction(actionDef, params || {});
   };
   comp.state.onInlineSave = async (values: Record<string, unknown>) => {
     if (!editAction) return;
@@ -100,6 +117,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   bind(def.source, 'record');
   bind(def.message_source, 'messages');
   bind(def.follower_source, 'followers');
+  bind(def.follower_candidates_source, 'followerCandidates');
   bind(def.attachment_source, 'attachments');
   return def.content_slot ? comp.getEmbeddedContent() : undefined;
 }

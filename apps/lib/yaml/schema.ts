@@ -156,7 +156,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['StatRow', new Set(['type', 'source', 'title', 'stats'])],
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
-  ['OdooFormView', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_label_field', 'status_colors', 'statusbar', 'status_badges', 'form_mode', 'editable', 'fields', 'relations', 'groups', 'group_columns', 'notebook', 'header_actions', 'message_source', 'follower_source', 'attachment_source', 'chatter_label', 'chatter_empty', 'message_label', 'note_label', 'activity_label', 'message_action', 'note_action', 'activity_action', 'message_placeholder', 'note_placeholder', 'activity_placeholder', 'send_label', 'log_label', 'schedule_label', 'cancel_label', 'follower_label', 'attachment_label', 'message_actor_field', 'message_action_field', 'message_detail_field', 'message_timestamp_field', 'message_action_labels', 'message_detail_labels', 'content_slot'])],
+  ['OdooFormView', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_label_field', 'status_colors', 'statusbar', 'status_badges', 'form_mode', 'editable', 'fields', 'relations', 'groups', 'group_columns', 'notebook', 'header_actions', 'message_source', 'message_page_size', 'follower_source', 'follower_candidates_source', 'follower_candidates_page_size', 'attachment_source', 'attachment_page_size', 'chatter_label', 'chatter_empty', 'message_label', 'note_label', 'activity_label', 'message_action', 'note_action', 'activity_action', 'message_placeholder', 'note_placeholder', 'activity_placeholder', 'send_label', 'log_label', 'schedule_label', 'cancel_label', 'follower_label', 'attachment_label', 'add_follower_label', 'remove_follower_label', 'no_followers_label', 'follower_search_placeholder', 'add_label', 'add_attachment_label', 'no_attachments_label', 'uploading_label', 'upload_failed_label', 'download_label', 'preview_label', 'attachment_accept', 'follower_add_action', 'follower_remove_action', 'attachment_upload_action', 'attachment_download_action', 'message_actor_field', 'message_action_field', 'message_detail_field', 'message_timestamp_field', 'message_action_labels', 'message_detail_labels', 'content_slot'])],
   ['LineItemGrid', new Set(['type', 'source', 'title', 'description', 'variant', 'page_size', 'row_key', 'empty_state', 'columns', 'actions', 'footer', 'mount_in'])],
   ['ContactGrid', new Set(['type', 'source', 'title', 'description', 'page_size', 'row_key', 'empty_state', 'columns', 'actions'])],
   ['MoneySummary', new Set(['type', 'source', 'title', 'stats'])],
@@ -437,10 +437,10 @@ function validateComponents(
       requireSource(component.template_source, `${path}.template_source`, datasourceIds, options, issues);
     }
     if (component.type === 'OdooFormView') {
-      for (const key of ['message_source', 'follower_source', 'attachment_source']) {
+      for (const key of ['message_source', 'follower_source', 'follower_candidates_source', 'attachment_source']) {
         if (component[key] !== undefined) requireSource(component[key], `${path}.${key}`, datasourceIds, options, issues);
       }
-      for (const key of ['message_action', 'note_action']) {
+      for (const key of ['message_action', 'note_action', 'follower_add_action', 'follower_remove_action', 'attachment_upload_action', 'attachment_download_action']) {
         if (component[key] === undefined) continue;
         requireString(component[key], `${path}.${key}`, issues);
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
