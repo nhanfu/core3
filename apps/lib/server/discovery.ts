@@ -25,7 +25,8 @@ function routeItems(value: any, result: any[] = []) {
 function routeId(path: string, pages: Map<string, DiscoveredPage>) {
   const singular = (part: string) => part.endsWith('ies') ? `${part.slice(0, -3)}y` : part.endsWith('s') ? part.slice(0, -1) : part;
   const parts = path.split('/').filter(Boolean).map(singular);
-  const candidates = [parts.join('-'), parts.slice(-2).join('-'), parts.slice(-1)[0]];
+  const rawParts = path.split('/').filter(Boolean);
+  const candidates = [rawParts.join('-'), parts.join('-'), rawParts.slice(-2).join('-'), parts.slice(-2).join('-'), rawParts.slice(-1)[0], parts.slice(-1)[0]];
   for (const candidate of candidates) if (pages.has(candidate)) return candidate;
   const matches = [...pages.keys()].map((id) => {
     const tokens = id.split('-');

@@ -40,14 +40,6 @@ datasources:
     permission: hr.read
     query: "SELECT id AS value, code || ' - ' || name AS label FROM work_shifts WHERE status = 'Active' ORDER BY name"
 
-toolbar:
-  - id: add_shift_btn
-    label: '+ Add working shifts'
-    variant: primary
-    permission: hr.write
-    action: add_shift
-  - { id: add_shift_assignment_btn, label: '+ Split shifts', variant: secondary, permission: hr.write, action: add_shift_assignment }
-
 components:
   - type: ListView
     variant: odoo
@@ -118,12 +110,21 @@ components:
         actions:
           - { id: edit_shift, label: Edit, variant: ghost, permission: hr.write }
           - { id: delete_shift, label: Delete, variant: danger, permission: hr.write }
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: shift_assignments
+    create_action: add_shift_assignment
+    create_label: '+ Assign shift'
+    search:
+      label: Find shift division
+      placeholder: 'Find staff...'
     filter_sources: [shift_assignments]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
-    filter_field: assignment_q
-    search: { label: Find shift division, placeholder: 'Find staff...' }
+    date_range:
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
     actions: [{ id: shift_assignments.export, label: 'Export CSV', icon: download }]
   - type: ScheduleGrid
     source: shift_assignments
@@ -135,7 +136,8 @@ components:
     subtitle_field: shift_name
     status_field: status
     empty_state: { title: There is no shift schedule yet, description: Try changing the time period or adding new shifts. }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: shift_assignments
     page_size: 20
     column_chooser: true
