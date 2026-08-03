@@ -19,15 +19,70 @@ datasources:
 toolbar: [{ id: add_storage_config, label: '+ Add warehouse configuration', variant: primary, permission: system.write, action: add_storage_config }]
 components:
   - { type: StatRow, source: storage_usage, stats: [{ label: File number, field: file_count, color: blue }, { label: Used capacity (bytes), field: used_bytes, color: indigo }, { label: Storage folder, field: storage_root, color: blue }] }
-  - { type: ListToolbar, source: storage_configs, filter_field: q, search: { label: Find the warehouse configuration, placeholder: 'Find code or name...' }, actions: [{ id: storage_configs.export, label: 'Export CSV', icon: download }] }
-  - { type: StatusTabs, source: storage_configs, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: storage_configs
+    create_action: add_storage_config
+    create_label: Add storage configuration
+    search:
+      label: Search storage configurations
+      placeholder: 'Find code or name...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Active }
+          - { id: Inactive, label: Inactive }
+    actions:
+      - { id: storage_configs.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add storage configuration
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all storage configurations
+      select_row: Select storage configuration
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: config_value, label: Value }
+            - { field: description, label: Description }
+            - { field: status, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
+    selectable: true
+    row_actions: menu
     empty_state: { title: No warehouse configuration yet }
-    columns: [{ field: code, label: Code }, { field: name, label: Warehouse configuration, type: PrimaryEntityCell, secondary: description }, { field: config_value, label: Value }, { field: status, label: Status, type: StatusChip, colors: { Active: green, Inactive: red } }, { field: actions, label: '', sortable: false, actions: [{ id: edit_storage_config, label: Fix, variant: ghost, permission: system.write }, { id: delete_storage_config, label: Erase, variant: danger, permission: system.write }] }]
+    columns:
+      - { field: code, label: Code, sortable: true }
+      - { field: name, label: Storage configuration, type: PrimaryEntityCell, secondary: description }
+      - { field: config_value, label: Value }
+      - field: status
+        label: Status
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
+      - field: actions
+        label: ''
+        sortable: false
+        actions:
+          - { id: edit_storage_config, label: Edit, variant: ghost, permission: system.write }
+          - { id: delete_storage_config, label: Delete, variant: danger, permission: system.write }
 actions:
   - { id: add_storage_config, type: form, permission: system.write, title: Add warehouse configuration, table: system_configs, scope: storage, operation: insert, refresh: [storage_configs], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Value, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }
   - { id: edit_storage_config, type: form, permission: system.write, title: Update warehouse configuration, table: system_configs, scope: storage, operation: update, prefill: row, refresh: [storage_configs], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Value, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }] }
