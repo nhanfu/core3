@@ -583,21 +583,12 @@ export function createTmsApi(ctx: TmsApiContext) {
         return apiError(400, 'Invalid CRM contact kind');
       }
       if (!(await crmEntityInScope(domain, body.id))) return apiError(403, 'Record is outside the current view scope');
-      const isCustomer = domain === 'customer';
+      const declaredRelation = actionDefinition.datasource
+        ? SOURCES.get(actionDefinition.datasource)?.mutations?.[actionDefinition.operation]?.relations?.[domain]
+        : null;
+      if (!declaredRelation) return apiError(409, 'CRM contact relation is not configured');
       return json(await repository.mutateCrmContact(
-        isCustomer
-          ? {
-              parentTable: 'customers',
-              contactTable: 'customer_contacts',
-              parentKey: 'customer_id',
-              label: 'Customer',
-            }
-          : {
-              parentTable: 'partners',
-              contactTable: 'partner_contacts',
-              parentKey: 'partner_id',
-              label: 'Partner',
-            },
+        declaredRelation,
         actionDefinition.operation,
         body.id,
         typeof body.contact_id === 'string' ? body.contact_id : null,

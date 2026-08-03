@@ -38,6 +38,22 @@ datasources:
   - id: crm_entity_contacts
     single: false
     permission: crm.read
+    mutations:
+      create:
+        permission: crm.write
+        relations:
+          customer: { parentTable: customers, contactTable: customer_contacts, parentKey: customer_id, label: Customer }
+          partner: { parentTable: partners, contactTable: partner_contacts, parentKey: partner_id, label: Partner }
+      update:
+        permission: crm.write
+        relations:
+          customer: { parentTable: customers, contactTable: customer_contacts, parentKey: customer_id, label: Customer }
+          partner: { parentTable: partners, contactTable: partner_contacts, parentKey: partner_id, label: Partner }
+      delete:
+        permission: crm.write
+        relations:
+          customer: { parentTable: customers, contactTable: customer_contacts, parentKey: customer_id, label: Customer }
+          partner: { parentTable: partners, contactTable: partner_contacts, parentKey: partner_id, label: Partner }
     query: |
       SELECT id, customer_id AS entity_id, name, role_title, phone, email,
         is_primary, CASE WHEN is_primary THEN 'Liên hệ chính' ELSE 'Liên hệ phụ' END AS primary_label,
@@ -162,6 +178,7 @@ actions:
   - id: add_crm_contact
     type: server_form
     permission: crm.write
+    datasource: crm_entity_contacts
     title: Add a contact
     action: crm.contacts.create
     handler: contact
@@ -179,6 +196,7 @@ actions:
   - id: edit_crm_contact
     type: server_form
     permission: crm.write
+    datasource: crm_entity_contacts
     title: Update contact person
     action: crm.contacts.update
     handler: contact
@@ -197,6 +215,7 @@ actions:
   - id: delete_crm_contact
     type: server
     permission: crm.write
+    datasource: crm_entity_contacts
     action: crm.contacts.delete
     handler: contact
     operation: delete
