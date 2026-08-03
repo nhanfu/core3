@@ -21,6 +21,11 @@ datasources:
   - id: quote_detail_lines
     single: false
     permission: crm.read
+    table: quote_lines
+    mutations:
+      create: { permission: crm.write, parent: { parentTable: quotes, lineTable: quote_lines, parentKey: quote_id, label: Quote, hasCost: true, totalField: amount } }
+      update: { permission: crm.write, parent: { parentTable: quotes, lineTable: quote_lines, parentKey: quote_id, label: Quote, hasCost: true, totalField: amount } }
+      delete: { permission: crm.write, parent: { parentTable: quotes, lineTable: quote_lines, parentKey: quote_id, label: Quote, hasCost: true, totalField: amount } }
     query: |
       SELECT l.id, l.quote_id AS document_id, l.sequence, l.description,
         CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
@@ -193,6 +198,7 @@ actions:
   - id: add_quote_line
     type: server_form
     permission: crm.write
+    datasource: quote_detail_lines
     title: Add a quote line
     action: quotes.lines.create
     handler: line_item
@@ -210,6 +216,7 @@ actions:
   - id: edit_quote_line
     type: server_form
     permission: crm.write
+    datasource: quote_detail_lines
     title: Update quote line
     action: quotes.lines.update
     handler: line_item
@@ -228,6 +235,7 @@ actions:
   - id: delete_quote_line
     type: server
     permission: crm.write
+    datasource: quote_detail_lines
     action: quotes.lines.delete
     handler: line_item
     operation: delete

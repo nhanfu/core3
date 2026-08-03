@@ -27,6 +27,11 @@ datasources:
   - id: accounting_document_lines
     single: false
     permission: accounting.read
+    table: accounting_entry_lines
+    mutations:
+      create: { permission: accounting.write, parent: { parentTable: accounting_entries, lineTable: accounting_entry_lines, parentKey: entry_id, label: Financial document, hasCost: false, totalField: amount } }
+      update: { permission: accounting.write, parent: { parentTable: accounting_entries, lineTable: accounting_entry_lines, parentKey: entry_id, label: Financial document, hasCost: false, totalField: amount } }
+      delete: { permission: accounting.write, parent: { parentTable: accounting_entries, lineTable: accounting_entry_lines, parentKey: entry_id, label: Financial document, hasCost: false, totalField: amount } }
     query: |
       SELECT l.id, l.entry_id AS document_id, l.sequence, l.description,
         CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
@@ -162,6 +167,7 @@ actions:
   - id: add_accounting_line
     type: server_form
     permission: accounting.write
+    datasource: accounting_document_lines
     title: Add detail lines
     action: accounting.documents.lines.create
     handler: line_item
@@ -178,6 +184,7 @@ actions:
   - id: edit_accounting_line
     type: server_form
     permission: accounting.write
+    datasource: accounting_document_lines
     title: Update detail line
     action: accounting.documents.lines.update
     handler: line_item
@@ -195,6 +202,7 @@ actions:
   - id: delete_accounting_line
     type: server
     permission: accounting.write
+    datasource: accounting_document_lines
     action: accounting.documents.lines.delete
     handler: line_item
     operation: delete
