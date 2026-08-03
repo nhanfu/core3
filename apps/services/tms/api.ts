@@ -617,7 +617,8 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (handler === 'trip_transition') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      return json(await repository.transitionTrip(body.id, actionDefinition.operation, actionName, activityActor));
+      if (!actionDefinition.transition) return apiError(409, 'This trip transition is not configured');
+      return json(await repository.transitionTrip(body.id, actionDefinition.operation, actionDefinition.transition, actionName, activityActor));
     }
     if (handler === 'print_template') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');

@@ -281,6 +281,7 @@ actions:
     action: trips.cancel
     handler: trip_transition
     operation: cancel
+    transition: { from: [Scheduled, In Transit], to: Cancelled }
     confirm: "Cancel trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
@@ -290,6 +291,7 @@ actions:
     action: trips.start
     handler: trip_transition
     operation: start
+    transition: { from: [Scheduled], to: In Transit }
     confirm: "Departure confirmation for trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]
@@ -299,6 +301,7 @@ actions:
     action: trips.complete
     handler: trip_transition
     operation: complete
+    transition: { from: [In Transit], to: Completed }
     confirm: "Confirmed completion of trip {{row.trip_number}}?"
     params: { id: '{row.id}' }
     refresh: [trips, trips_stats]

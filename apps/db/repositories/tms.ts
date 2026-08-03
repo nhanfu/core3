@@ -1259,6 +1259,7 @@ export class DuckDbRepository {
   async transitionTrip(
     tripId: string,
     operation: 'start' | 'complete' | 'cancel',
+    declaredTransition: { from: string[]; to: string },
     action: string,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
@@ -1268,11 +1269,7 @@ export class DuckDbRepository {
         const [trip] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
         if (!trip) throw { status: 404, message: 'Trip not found' };
         const currentStatus = String(trip.status);
-        const transition = operation === 'start'
-          ? { from: ['Scheduled'], to: 'In Transit', label: 'start' }
-          : operation === 'complete'
-            ? { from: ['In Transit'], to: 'Completed', label: 'complete' }
-            : { from: ['Scheduled', 'In Transit'], to: 'Cancelled', label: 'cancel' };
+        const transition = { ...declaredTransition, label: operation };
         if (!transition.from.includes(currentStatus)) {
           throw { status: 409, message: `Trip cannot ${transition.label} while ${currentStatus}` };
         }
