@@ -177,6 +177,34 @@ export function createTmsApi(ctx: TmsApiContext) {
     return permission;
   };
 
+  const YAML_CRUD_SOURCES = new Map<string, any>();
+  for (const page of PAGES.values()) {
+    for (const action of page.actions || []) {
+      if (!['form', 'delete', 'patch'].includes(action.type) || typeof action.table !== 'string') continue;
+      const key = `${action.table}:${String(action.scope || '')}`;
+      const source = YAML_CRUD_SOURCES.get(key) || {
+        id: `crud:${key}`,
+        table: action.table,
+        permission: action.permission,
+        mutations: {},
+      };
+      const operation = action.type === 'form'
+        ? action.operation === 'insert' ? 'create' : action.operation
+        : action.type === 'delete' ? 'delete' : 'update';
+      const yamlFields = Array.isArray(action.fields)
+        ? action.fields.map((field: any) => field.field).filter(Boolean)
+        : [];
+      const tableFields = Array.isArray(TABLES[action.table]?.fields) ? TABLES[action.table].fields : [];
+      source.mutations[operation] = {
+        permission: action.permission || TABLES[action.table]?.permission,
+        scope: action.scope,
+        fields: [...new Set([...yamlFields, ...tableFields])],
+        timestamps: TABLES[action.table]?.timestamps !== false,
+      };
+      YAML_CRUD_SOURCES.set(key, source);
+    }
+  }
+
   for (const [pageId, page] of PAGES) {
     for (const action of page.actions || []) {
       if ((action.type === 'server' || action.type === 'server_form') && !REGISTERED_NAMED_ACTIONS.has(action.action)) {
@@ -1142,6 +1170,32 @@ export function createTmsApi(ctx: TmsApiContext) {
           409,
           `${table === 'quotes' ? 'Quote' : 'Payroll'} cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${record.status}`,
         );
+      }
+    }
+
+    // All compatibility guards have passed. Use the YAML-derived mutation
+    // contract for ordinary database writes; users retain their password
+    // hashing path until that capability is declared separately.
+    if (table !== 'users') {
+      const yamlSource = YAML_CRUD_SOURCES.get(`${table}:${String(scope || '')}`);
+      const mutationOperation = action === 'insert' ? 'create' : action;
+      if (yamlSource?.mutations?.[mutationOperation]) {
+        try {
+          const values = Object.fromEntries(
+            (Array.isArray(changes) ? changes : []).map((change: any) => [String(change.field), change.value]),
+          );
+          const result = await repository.executeDatasourceMutation(
+            yamlSource,
+            mutationOperation,
+            id ? String(id) : null,
+            values,
+            activityActor,
+          );
+          return json(result, mutationOperation === 'create' ? 201 : 200);
+        } catch (error: any) {
+          if (error?.status) return apiError(error.status, error.message || 'Datasource mutation failed');
+          throw error;
+        }
       }
     }
 
