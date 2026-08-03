@@ -12,8 +12,8 @@ datasources:
     permission: catalog.read
     table: master_data
     mutations:
-      create: { permission: catalog.write, scope: cargo_type, fields: [code, name, description, sort_order, status], timestamps: true }
-      update: { permission: catalog.write, scope: cargo_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      create: { permission: catalog.write, scope: cargo_type, fields: [code, name, description, sort_order, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] }, sort_order: { integer: true, min: 0 } } } }
+      update: { permission: catalog.write, scope: cargo_type, fields: [code, name, description, sort_order, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] }, sort_order: { integer: true, min: 0 } } } }
       delete: { permission: catalog.write, scope: cargo_type }
     query: |
       SELECT id, code, name, description, status, sort_order, created_at

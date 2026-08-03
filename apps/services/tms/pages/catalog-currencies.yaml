@@ -12,8 +12,8 @@ datasources:
     permission: catalog.read
     table: master_data
     mutations:
-      create: { permission: catalog.write, scope: currency, fields: [code, name, symbol, decimals, description, sort_order, status], timestamps: true }
-      update: { permission: catalog.write, scope: currency, fields: [code, name, symbol, decimals, description, sort_order, status], timestamps: true }
+      create: { permission: catalog.write, scope: currency, fields: [code, name, symbol, decimals, description, sort_order, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] }, sort_order: { integer: true, min: 0 }, decimals: { integer: true, min: 0, max: 6 } } } }
+      update: { permission: catalog.write, scope: currency, fields: [code, name, symbol, decimals, description, sort_order, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] }, sort_order: { integer: true, min: 0 }, decimals: { integer: true, min: 0, max: 6 } } } }
       delete: { permission: catalog.write, scope: currency }
     query: |
       SELECT m.id, m.code, m.name, m.description, m.symbol, m.decimals, m.status, m.sort_order,

@@ -408,6 +408,34 @@ export class DuckDbRepository {
     const allowedFields = Array.isArray(definition.fields)
       ? new Set(definition.fields.map((field: unknown) => String(field)))
       : null;
+    const validation = definition.validate && typeof definition.validate === 'object' ? definition.validate : {};
+    const required = Array.isArray(validation.required) ? validation.required.map((field: unknown) => String(field)) : [];
+    for (const field of required) {
+      if (operation === 'create' && !String(values[field] ?? '').trim()) {
+        throw { status: 400, message: `${field} is required` };
+      }
+      if (operation === 'update' && Object.prototype.hasOwnProperty.call(values, field) && !String(values[field] ?? '').trim()) {
+        throw { status: 400, message: `${field} is required` };
+      }
+    }
+    const rules = validation.fields && typeof validation.fields === 'object' ? validation.fields : {};
+    for (const [field, rule] of Object.entries(rules)) {
+      if (!Object.prototype.hasOwnProperty.call(values, field) || !rule || typeof rule !== 'object') continue;
+      const value = values[field];
+      const config = rule as any;
+      if (Array.isArray(config.enum) && !config.enum.map(String).includes(String(value))) {
+        throw { status: 400, message: `${field} has an invalid value` };
+      }
+      if (config.integer === true && (!Number.isInteger(Number(value)))) {
+        throw { status: 400, message: `${field} must be an integer` };
+      }
+      if (config.min !== undefined && Number(value) < Number(config.min)) {
+        throw { status: 400, message: `${field} is below the minimum` };
+      }
+      if (config.max !== undefined && Number(value) > Number(config.max)) {
+        throw { status: 400, message: `${field} is above the maximum` };
+      }
+    }
     const changes = Object.entries(values)
       .filter(([field]) => !['id', 'kind', 'created_at', 'updated_at'].includes(field))
       .filter(([field]) => !allowedFields || allowedFields.has(field))

@@ -287,6 +287,7 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
             if (mutation.timestamps !== undefined && typeof mutation.timestamps !== 'boolean') {
               issues.push(`${path}.mutations.${operation}.timestamps must be a boolean`);
             }
+            if (mutation.validate !== undefined) requireRecord(mutation.validate, `${path}.mutations.${operation}.validate`, issues);
           }
         }
       }
