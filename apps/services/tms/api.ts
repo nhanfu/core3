@@ -236,15 +236,17 @@ export function createTmsApi(ctx: TmsApiContext) {
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
   };
   const crmEntityInScope = async (kind: 'customer' | 'partner', id: string) => {
-    const table = kind === 'customer' ? 'customers' : 'partners';
-    const [row] = await repository.query(
-      `SELECT owner_name, visibility FROM ${table} WHERE id = ?`,
-      [id],
-    );
-    if (!row || String(authUser.view_scope || 'all') === 'all') return Boolean(row);
-    const ownerName = String(row.owner_name || '');
-    if (String(authUser.view_scope) === 'own') return ownerName === activityActor.name;
-    return String(row.visibility || 'Public') === 'Public' || ownerName === activityActor.name;
+    const source = SOURCES.get('crm_entity_detail');
+    if (!source) return false;
+    const result = await repository.querySource(source, {
+      id,
+      kind,
+      current_user_id: String(authUser.sub || ''),
+      current_user_name: String(authUser.name || ''),
+      current_branch_id: String(authUser.branch_id || ''),
+      view_scope: String(authUser.view_scope || 'all'),
+    }, 0, 1);
+    return Boolean(result.data?.[0]);
   };
   const branchForScopedResource = async (resourceTable: string, resourceId: string) => {
     if (resourceTable === 'users') {
