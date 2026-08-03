@@ -130,7 +130,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   delete: new Set(['id', 'type', 'confirm', 'table', 'datasource', 'refresh', 'scope', 'permission']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'datasource', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
-  server: new Set(['id', 'type', 'action', 'datasource', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind']),
+  server: new Set(['id', 'type', 'action', 'datasource', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind', 'transition']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'permission']),
@@ -383,6 +383,13 @@ function validateActions(
         issues.push(`${path}.result must be "alert" when provided`);
       }
       if (action.result_field !== undefined) requireString(action.result_field, `${path}.result_field`, issues);
+      if (action.transition !== undefined) {
+        requireRecord(action.transition, `${path}.transition`, issues);
+        if (isRecord(action.transition)) {
+          if (!Array.isArray(action.transition.from) || action.transition.from.some((status) => !isString(status))) issues.push(`${path}.transition.from must be an array of strings`);
+          requireString(action.transition.to, `${path}.transition.to`, issues);
+        }
+      }
     }
 
     validateRefresh(action.refresh, `${path}.refresh`, datasourceIds, options, issues);

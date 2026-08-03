@@ -157,10 +157,10 @@ components:
 
 actions:
   - { id: back_quotes, type: navigate, navigate_to: /quotes }
-  - { id: send_quote_detail, type: server, permission: crm.write, action: quotes.send, handler: business_transition, operation: send, domain: quote, confirm: 'Send quote {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
-  - { id: accept_quote_detail, type: server, permission: crm.write, action: quotes.accept, handler: business_transition, operation: accept, domain: quote, confirm: 'Confirm customer accepts {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
-  - { id: revise_quote_detail, type: server, permission: crm.write, action: quotes.revise, handler: business_transition, operation: revise, domain: quote, confirm: 'Send quote {{row.code}} to draft to edit?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
-  - { id: cancel_quote_detail, type: server, permission: crm.write, action: quotes.cancel, handler: business_transition, operation: cancel, domain: quote, confirm: 'Cancel quote {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: send_quote_detail, type: server, permission: crm.write, action: quotes.send, handler: business_transition, operation: send, domain: quote, transition: { from: [Draft], to: Sent }, confirm: 'Send quote {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: accept_quote_detail, type: server, permission: crm.write, action: quotes.accept, handler: business_transition, operation: accept, domain: quote, transition: { from: [Sent], to: Accepted }, confirm: 'Confirm customer accepts {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: revise_quote_detail, type: server, permission: crm.write, action: quotes.revise, handler: business_transition, operation: revise, domain: quote, transition: { from: [Sent], to: Draft }, confirm: 'Send quote {{row.code}} to draft to edit?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: cancel_quote_detail, type: server, permission: crm.write, action: quotes.cancel, handler: business_transition, operation: cancel, domain: quote, transition: { from: [Draft, Sent], to: Cancelled }, confirm: 'Cancel quote {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
   - id: send_quote_message
     type: server_form
     permission: crm.write

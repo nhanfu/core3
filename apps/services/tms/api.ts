@@ -3,8 +3,6 @@ import { requestLanguage } from '../../lib/server/locale.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { xlsxToCsv } from './services/xlsx-import.ts';
-import { financialWorkflow } from './services/financial-workflow.ts';
-import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -750,7 +748,8 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if (handler === 'financial_transition') {
       if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = financialWorkflow.get(actionDefinition.operation);
+      const transition = actionDefinition.transition;
+      if (!transition) return apiError(409, 'This financial transition is not configured');
       const document = await repository.transitionAccountingEntry(
         body.id,
         actionDefinition.kind,
@@ -764,7 +763,8 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if (handler === 'business_transition' && actionDefinition.domain === 'quote') {
       if (!(await recordInCurrentBranch('quotes', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = quoteWorkflow.get(actionDefinition.operation);
+      const transition = actionDefinition.transition;
+      if (!transition) return apiError(409, 'This quote transition is not configured');
       return json(await repository.transitionBusinessRecord(
         { table: 'quotes', label: 'Quote' },
         body.id,
@@ -776,7 +776,8 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
 
     if (!(await recordInCurrentBranch('payrolls', body.id))) return apiError(403, 'Record is outside the current view scope');
-    const transition = payrollWorkflow.get(actionDefinition.operation);
+    const transition = actionDefinition.transition;
+    if (!transition) return apiError(409, 'This payroll transition is not configured');
     return json(await repository.transitionBusinessRecord(
       { table: 'payrolls', label: 'Payroll' },
       body.id,
