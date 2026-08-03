@@ -31,6 +31,7 @@ datasources:
   - id: user_roles
     single: false
     permission: settings.read
+    meta: { relation: { parentTable: users, relationTable: user_roles, parentKey: user_id, relatedKey: role_id } }
     query: |
       SELECT r.id AS role_id, r.name AS role_name,
         CASE WHEN ur.user_id IS NULL THEN false ELSE true END AS enabled,
@@ -113,5 +114,5 @@ actions:
       - { field: department_id, label: Departments, type: select, options_source: user_detail_department_lookup }
       - { field: enabled, label: Activate, type: select, options: [{ id: true, label: Activating }, { id: false, label: Locked }] }
       - { field: roles, label: Role, type: multi-select, options_source: user_detail_role_lookup, search_placeholder: 'Find roles...', multiple: true }
-  - { id: grant_user_role, type: server, permission: settings.write, action: settings.users.grant_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } , handler: user_role, operation: grant}
-  - { id: revoke_user_role, type: server, permission: settings.write, action: settings.users.revoke_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } , handler: user_role, operation: revoke}
+  - { id: grant_user_role, type: server, permission: settings.write, datasource: user_roles, action: settings.users.grant_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } , handler: user_role, operation: grant}
+  - { id: revoke_user_role, type: server, permission: settings.write, datasource: user_roles, action: settings.users.revoke_role, refresh: [user_roles, user_permissions, user_activity], params: { id: '{state.id}', role_id: '{row.role_id}' } , handler: user_role, operation: revoke}

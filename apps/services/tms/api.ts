@@ -649,13 +649,17 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (handler === 'role_permission') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (typeof body.permission_key !== 'string' || !body.permission_key) return apiError(400, 'permission_key required');
-      return json(await repository.mutateRolePermission(actionDefinition.operation, body.id, body.permission_key, actionName, activityActor));
+      const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
+      if (!relation) return apiError(409, 'Role-permission relation is not configured');
+      return json(await repository.mutateRolePermission(relation, actionDefinition.operation, body.id, body.permission_key, actionName, activityActor));
     }
     if (handler === 'user_role') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (typeof body.role_id !== 'string' || !body.role_id) return apiError(400, 'role_id required');
       if (!(await recordInCurrentBranch('users', body.id))) return apiError(403, 'User is outside the current view scope');
-      return json(await repository.mutateUserRole(actionDefinition.operation, body.id, body.role_id, actionName, activityActor));
+      const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
+      if (!relation) return apiError(409, 'User-role relation is not configured');
+      return json(await repository.mutateUserRole(relation, actionDefinition.operation, body.id, body.role_id, actionName, activityActor));
     }
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 

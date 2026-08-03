@@ -299,20 +299,21 @@ export class DuckDbRepository {
     return perms.map((p: any) => p.permission_key);
   }
 
-  async mutateRolePermission(operation: 'grant' | 'revoke', roleId: string, permissionKey: string, action: string, actor: { id?: string | null; name: string }) {
+  async mutateRolePermission(relation: { parentTable: string; relationTable: string; parentKey: string; relatedKey: string }, operation: 'grant' | 'revoke', roleId: string, permissionKey: string, action: string, actor: { id?: string | null; name: string }) {
     if (!/^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/.test(permissionKey)) throw { status: 400, message: 'Invalid permission key' };
+    if ([relation.parentTable, relation.relationTable, relation.parentKey, relation.relatedKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid relation configuration' };
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        const [role] = await queryOnConnection(conn, 'SELECT id, name FROM roles WHERE id = ?', [roleId]);
+        const [role] = await queryOnConnection(conn, `SELECT id, name FROM ${relation.parentTable} WHERE id = ?`, [roleId]);
         if (!role) throw { status: 404, message: 'Role not found' };
         if (operation === 'grant') {
-          await runOnConnection(conn, 'INSERT INTO permissions(id, role_id, permission_key) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE role_id = ? AND permission_key = ?)', [crypto.randomUUID(), roleId, permissionKey, roleId, permissionKey]);
+          await runOnConnection(conn, `INSERT INTO ${relation.relationTable}(id, ${relation.parentKey}, ${relation.relatedKey}) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?)`, [crypto.randomUUID(), roleId, permissionKey, roleId, permissionKey]);
         } else {
-          await runOnConnection(conn, 'DELETE FROM permissions WHERE role_id = ? AND permission_key = ?', [roleId, permissionKey]);
+          await runOnConnection(conn, `DELETE FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?`, [roleId, permissionKey]);
         }
         await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'roles', roleId, `${operation === 'grant' ? 'Cấp' : 'Thu hồi'} quyền ${permissionKey}`]);
-        const rows = await queryOnConnection(conn, 'SELECT permission_key FROM permissions WHERE role_id = ? ORDER BY permission_key', [roleId]);
+        const rows = await queryOnConnection(conn, `SELECT ${relation.relatedKey} AS permission_key FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? ORDER BY ${relation.relatedKey}`, [roleId]);
         await runOnConnection(conn, 'COMMIT');
         return { role_id: roleId, permissions: rows.map((row: any) => row.permission_key) };
       } catch (error) {
@@ -322,20 +323,21 @@ export class DuckDbRepository {
     });
   }
 
-  async mutateUserRole(operation: 'grant' | 'revoke', userId: string, roleId: string, action: string, actor: { id?: string | null; name: string }) {
+  async mutateUserRole(relation: { parentTable: string; relationTable: string; parentKey: string; relatedKey: string }, operation: 'grant' | 'revoke', userId: string, roleId: string, action: string, actor: { id?: string | null; name: string }) {
+    if ([relation.parentTable, relation.relationTable, relation.parentKey, relation.relatedKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid relation configuration' };
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        const [user] = await queryOnConnection(conn, 'SELECT id, name FROM users WHERE id = ?', [userId]);
+        const [user] = await queryOnConnection(conn, `SELECT id, name FROM ${relation.parentTable} WHERE id = ?`, [userId]);
         const [role] = await queryOnConnection(conn, 'SELECT id, name FROM roles WHERE id = ?', [roleId]);
         if (!user || !role) throw { status: 404, message: 'User or role not found' };
         if (operation === 'grant') {
-          await runOnConnection(conn, 'INSERT INTO user_roles(user_id, role_id) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = ?)', [userId, roleId, userId, roleId]);
+          await runOnConnection(conn, `INSERT INTO ${relation.relationTable}(${relation.parentKey}, ${relation.relatedKey}) SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?)`, [userId, roleId, userId, roleId]);
         } else {
-          await runOnConnection(conn, 'DELETE FROM user_roles WHERE user_id = ? AND role_id = ?', [userId, roleId]);
+          await runOnConnection(conn, `DELETE FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?`, [userId, roleId]);
         }
         await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'users', userId, `${operation === 'grant' ? 'Gán' : 'Thu hồi'} vai trò ${role.name}`]);
-        const rows = await queryOnConnection(conn, 'SELECT r.id, r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ? ORDER BY r.name', [userId]);
+        const rows = await queryOnConnection(conn, `SELECT r.id, r.name FROM ${relation.relationTable} ur JOIN roles r ON r.id = ur.${relation.relatedKey} WHERE ur.${relation.parentKey} = ? ORDER BY r.name`, [userId]);
         await runOnConnection(conn, 'COMMIT');
         return { user_id: userId, roles: rows };
       } catch (error) {

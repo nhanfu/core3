@@ -8,6 +8,7 @@ datasources:
   - id: role_permissions
     single: false
     permission: settings.read
+    meta: { relation: { parentTable: roles, relationTable: permissions, parentKey: role_id, relatedKey: permission_key } }
     query: |
       SELECT catalog.permission_key, CASE WHEN p.id IS NULL THEN false ELSE true END AS enabled,
         CASE WHEN p.id IS NULL THEN 'Chưa cấp' ELSE 'Đã cấp' END AS status_label
@@ -77,5 +78,5 @@ toolbar:
 actions:
   - { id: back_roles, type: navigate, navigate_to: /org/roles }
   - { id: edit_role_scope, type: form, permission: settings.write, title: Update role view scope, table: roles, operation: update, prefill: source, prefill_source: role_detail, refresh: [role_detail, role_permissions, role_users], fields: [{ field: view_scope, label: View range, type: select, options: [{ id: all, label: Whole company }, { id: branch, label: According to branch }, { id: own, label: Individual in charge }], required: true }] }
-  - { id: grant_permission, type: server, permission: settings.write, action: settings.roles.grant_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } , handler: role_permission, operation: grant}
-  - { id: revoke_permission, type: server, permission: settings.write, action: settings.roles.revoke_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } , handler: role_permission, operation: revoke}
+  - { id: grant_permission, type: server, permission: settings.write, datasource: role_permissions, action: settings.roles.grant_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } , handler: role_permission, operation: grant}
+  - { id: revoke_permission, type: server, permission: settings.write, datasource: role_permissions, action: settings.roles.revoke_permission, refresh: [role_permissions], params: { id: '{state.id}', permission_key: '{row.permission_key}' } , handler: role_permission, operation: revoke}
