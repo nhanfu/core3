@@ -210,11 +210,13 @@ describe('document detail components', () => {
     const container = mount(component);
     container.querySelector<HTMLButtonElement>('.o-form-chatter-primary')!.click();
     const composer = container.querySelector<HTMLFormElement>('.o-form-composer')!;
+    expect(container.querySelector('.o-form-sheet')).not.toBeNull();
     const input = composer.querySelector<HTMLTextAreaElement>('textarea')!;
     input.value = 'Please review this order';
     composer.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await Promise.resolve();
     expect(submitted).toEqual([{ action: 'send_order_message', params: { id: 'order-1', content: 'Please review this order' } }]);
+    expect(container.querySelector('.o-form-sheet')).not.toBeNull();
   });
 
   it('renders chatter followers as a tool menu and closes composers explicitly', () => {

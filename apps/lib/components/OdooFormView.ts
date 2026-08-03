@@ -211,7 +211,10 @@ export class OdooFormView extends BaseComponent {
     }, this.def);
     chatter.parent = this;
     this.children.push(chatter);
-    chatter.mount(layout);
+    const chatterSlot = document.createElement('div');
+    chatterSlot.className = 'o-form-chatter-slot';
+    layout.appendChild(chatterSlot);
+    chatter.mount(chatterSlot);
   }
 
   getEmbeddedContent() {

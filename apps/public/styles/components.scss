@@ -777,6 +777,7 @@
 .o-form-action-primary { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-action-secondary { background: var(--o-form-surface); color: var(--o-form-text); }.o-form-action-danger { border-color: #c0392b; background: #c0392b; color: #fff; }.o-form-action-ghost { border-color: transparent; background: transparent; color: var(--o-form-action); }
 .o-form-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 390px); align-items: start; gap: 8px; min-width: 0; }
 .o-form-layout > * { min-width: 0; }
+.o-form-chatter-slot { min-width: 0; }
 .o-form-sheet-bg { min-width: 0; }
 .o-form-statusbar { position: sticky; z-index: 4; top: 0; display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 12px; padding: 5px 0; background: var(--o-form-bg); }
 .o-form-statusbar-steps { display: flex; min-width: 0; flex: 0 1 auto; align-items: stretch; justify-content: flex-end; overflow: hidden; }
