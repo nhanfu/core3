@@ -235,19 +235,31 @@ export class ListView extends BaseComponent {
       kanban.parent = this;
       kanban._transport = this._transport;
       this.children.push(kanban);
-      kanban.mount(root);
+      const content = html.take(root).div.className('o-list-content').getContext();
+      kanban.mount(content);
       return;
     }
     if (activeView.id === 'calendar') {
       const calendar = new CalendarView(
         `calendar-view-${this.id}`,
         { rows },
-        { view: activeView, rowKey: this.options.rowKey, openAction: this.options.openAction },
+        {
+          view: activeView,
+          rowKey: this.options.rowKey,
+          openAction: this.options.openAction,
+          doubleClickAction: this.options.doubleClickAction,
+          onSelect: this.options.formView ? row => this.selectFormRow(row) : undefined,
+        },
       );
       calendar.parent = this;
       calendar._transport = this._transport;
       this.children.push(calendar);
-      calendar.mount(root);
+      const content = html.take(root).div.className('o-list-content').getContext();
+      const calendarHost = html.take(content).div.className('o-list-calendar-host').getContext();
+      calendar.mount(calendarHost);
+      if (formEnabled && this.options.formView?.sidePanel && this.formRow(rows)) {
+        await this.drawFormPanel(content, rows, false);
+      }
       return;
     }
 
@@ -490,7 +502,8 @@ export class ListView extends BaseComponent {
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
         button.setAttribute('aria-pressed', String(this.isViewEnabled(view.id)));
         button.addEventListener('click', () => {
-          if (view.id === 'form' || (view.id === 'list' && this.options.formView)) {
+          const activeView = this.activeView();
+          if (view.id === 'form' || (view.id === 'list' && this.options.formView && (activeView.id === 'list' || activeView.id === 'form'))) {
             const key = view.id === 'list' ? 'listViewEnabled' : 'formViewEnabled';
             const enabled = this.isViewEnabled(view.id);
             const other = view.id === 'list' ? 'form' : 'list';
@@ -806,6 +819,12 @@ export class ListView extends BaseComponent {
   private setSelectedIds(selectedIds: string[]) {
     this.setState({ selectedIds });
     this.options.onSelectionChange?.(selectedIds);
+  }
+
+  private selectFormRow(row: ListRow) {
+    const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
+    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))) }, false);
+    if (this.options.formView?.sidePanel) this.redraw();
   }
 
   private setFilters(filters: Record<string, unknown>) {

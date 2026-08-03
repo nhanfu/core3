@@ -80,6 +80,31 @@ describe('YAML Odoo ListView renderer', () => {
     expect(new URLSearchParams(window.location.search).get('view')).toBe('list');
   });
 
+  it('passes calendar date metadata from YAML to the CalendarView', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o1', order_number: 'ORD-001', order_date: '2026-07-19' }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['orders.read'] };
+    window.history.replaceState({}, '', '/tms/orders?view=calendar');
+    const container = document.createElement('div');
+    await renderPage({
+      title: 'Orders',
+      page: { id: 'orders', breadcrumb: ['Management', 'Orders'] },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'orders',
+        views: [
+          { id: 'list', label: 'List' },
+          { id: 'calendar', label: 'Calendar', date_field: 'order_date', card: { title: 'order_number' } },
+        ],
+        columns: [{ field: 'order_number', label: 'Order' }],
+      }],
+    }, { container });
+
+    expect(container.querySelector('[data-row-id="o1"]')?.textContent).toBe('ORD-001');
+  });
+
   it('renders every configured detail component in the FormView side panel', async () => {
     vi.useFakeTimers();
     try {

@@ -460,6 +460,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     id: view.id,
     label: view.label || view.id,
     icon: view.icon,
+    dateField: view.date_field,
+    endDateField: view.end_date_field,
     groupBy: view.group_by,
     groups: view.groups_source
       ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))

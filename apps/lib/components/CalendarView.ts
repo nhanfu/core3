@@ -16,6 +16,8 @@ export type CalendarViewOptions = {
   view: CalendarViewDefinition;
   rowKey?: string;
   openAction?: string;
+  doubleClickAction?: string;
+  onSelect?: (row: CalendarRow) => void;
 };
 
 /** Month calendar used by list-backed pages with declarative date metadata. */
@@ -75,7 +77,27 @@ export class CalendarView extends BaseComponent {
     const title = row[card?.title || 'name'];
     event.textContent = title == null || title === '' ? '—' : String(title);
     if (card?.subtitle && row[card.subtitle] != null) event.title = String(row[card.subtitle]);
-    if (this.options.openAction) event.addEventListener('click', () => void this.submit(this.options.openAction!, { row }));
+    let clickTimer: ReturnType<typeof setTimeout> | undefined;
+    const selectOrOpen = () => {
+      if (this.options.onSelect) this.options.onSelect(row);
+      else if (this.options.openAction) void this.submit(this.options.openAction, { row });
+    };
+    event.addEventListener('click', () => {
+      if (!this.options.doubleClickAction) {
+        selectOrOpen();
+        return;
+      }
+      if (clickTimer) clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => {
+        clickTimer = undefined;
+        selectOrOpen();
+      }, 250);
+    });
+    event.addEventListener('dblclick', () => {
+      if (clickTimer) clearTimeout(clickTimer);
+      clickTimer = undefined;
+      if (this.options.doubleClickAction) void this.submit(this.options.doubleClickAction, { row });
+    });
   }
 
   private monthFromState() {
@@ -83,6 +105,11 @@ export class CalendarView extends BaseComponent {
     if (typeof value === 'string' && /^\d{4}-\d{2}$/.test(value)) {
       const [year, month] = value.split('-').map(Number);
       return new Date(year, month - 1, 1);
+    }
+    const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
+    for (const row of rows) {
+      const date = this.parseDate(row[this.options.view.dateField]);
+      if (date) return new Date(date.getFullYear(), date.getMonth(), 1);
     }
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);

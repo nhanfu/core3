@@ -21,4 +21,17 @@ describe('CalendarView', () => {
     (host.querySelector('[data-row-id="o1"]') as HTMLButtonElement).click();
     expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) }, expect.anything());
   });
+
+  it('starts on the first event month when no month is selected', () => {
+    const host = document.createElement('div');
+    const view = new CalendarView('orders-calendar', {
+      rows: [{ id: 'o1', order_date: '2026-07-19', number: 'ORD-001' }],
+    }, {
+      view: { id: 'calendar', label: 'Calendar', dateField: 'order_date', card: { title: 'number' } },
+    });
+    view.mount(host);
+
+    expect(host.querySelector('.o-calendar-title')?.textContent).toContain('July');
+    expect(host.querySelector('[data-row-id="o1"]')?.textContent).toBe('ORD-001');
+  });
 });

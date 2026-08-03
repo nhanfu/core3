@@ -21,11 +21,12 @@ const columns = [
   },
 ];
 
-function create(options: Record<string, unknown> = {}) {
+function create(options: Record<string, unknown> = {}, state: Record<string, unknown> = {}) {
   return new ListView('orders', {
     rows,
     meta: { total: 12, page: 1, pageSize: 2 },
     filters: {},
+    ...state,
   }, columns, {
     variant: 'odoo',
     breadcrumbs: ['Management', 'Orders'],
@@ -46,6 +47,7 @@ function create(options: Record<string, unknown> = {}) {
         groups: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }],
         card: { title: 'number', subtitle: 'customer', fields: [{ field: 'status', label: 'Status' }] },
       },
+      { id: 'calendar', label: 'Calendar', icon: 'calendar', dateField: 'order_date', card: { title: 'number' } },
     ],
     ...options,
   });
@@ -177,6 +179,72 @@ describe('Odoo ListView', () => {
     container.querySelector<HTMLButtonElement>('[data-list-view="kanban"]')!.click();
     expect(onViewChange).toHaveBeenCalledWith('kanban');
     expect(container.querySelector('[data-kanban-group="Draft"]')).not.toBeNull();
+  });
+
+  it('keeps the control panel mounted when Calendar changes month', () => {
+    const component = create({}, { rows: [{ ...rows[0], order_date: '2026-08-12' }], activeView: 'calendar' });
+    const container = mount(component);
+
+    expect(container.querySelector('.o-list-control-panel')).not.toBeNull();
+    expect(container.querySelector('[data-list-search]')).not.toBeNull();
+    expect(container.querySelector('[data-list-view="calendar"] svg')).not.toBeNull();
+
+    container.querySelector<HTMLButtonElement>('[aria-label="Previous month"]')!.click();
+
+    expect(container.querySelector('.o-list-control-panel')).not.toBeNull();
+    expect(container.querySelector('[data-list-search]')).not.toBeNull();
+    expect(container.querySelector('[data-list-view="calendar"] svg')).not.toBeNull();
+    expect(container.querySelector('.o-calendar-title')?.textContent).toContain('July');
+  });
+
+  it('opens Calendar cards in the FormView and navigates on double click', async () => {
+    vi.useFakeTimers();
+    try {
+      const renderForm = vi.fn((row: Record<string, unknown>, target: HTMLElement) => {
+        target.textContent = String(row.number);
+      });
+      const component = create({
+        formView: { page: 'order-detail.yaml', sidePanel: true },
+        renderForm,
+        doubleClickAction: 'view',
+      }, { rows: [{ ...rows[0], order_date: '2026-08-12' }], activeView: 'calendar' });
+      const submit = vi.fn().mockResolvedValue(undefined);
+      component._transport = { submit };
+      const container = mount(component);
+      const card = container.querySelector<HTMLButtonElement>('[data-row-id="o1"]')!;
+
+      card.click();
+      await vi.advanceTimersByTimeAsync(250);
+      expect(renderForm).toHaveBeenCalledWith(expect.objectContaining({ id: 'o1', number: 'ORD-001' }), expect.any(HTMLElement));
+      expect(submit).not.toHaveBeenCalled();
+      expect(container.querySelector('.o-list-form-side-panel')?.textContent).toBe('ORD-001');
+
+      submit.mockClear();
+      const secondCard = container.querySelector<HTMLButtonElement>('[data-row-id="o1"]')!;
+      secondCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      secondCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      secondCard.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await vi.runAllTimersAsync();
+      expect(submit).toHaveBeenCalledWith('view', { row: expect.objectContaining({ id: 'o1', number: 'ORD-001' }) });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('switches from Calendar back to List when a FormView is configured', () => {
+    const component = create({
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      renderForm: () => undefined,
+    }, { activeView: 'calendar' });
+    const onViewChange = vi.fn();
+    component.options.onViewChange = onViewChange;
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="list"]')!.click();
+
+    expect(onViewChange).toHaveBeenCalledWith('list');
+    expect(container.querySelector('.o-list-table')).not.toBeNull();
+    expect(container.querySelector('.o-calendar-view')).toBeNull();
   });
 
   it('opens rows and keeps conditional commands in an overflow menu', async () => {
