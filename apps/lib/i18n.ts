@@ -86,6 +86,8 @@ class I18n {
           childKey,
           nextComponent,
           displayKeys.has(childKey)
+            || childKey.endsWith('_label')
+            || childKey.endsWith('_placeholder')
             || childKey === 'breadcrumb'
             || key === 'labels'
             || key === 'preset_labels'

@@ -23,11 +23,18 @@ describe('declarative i18n maps', () => {
   it('translates chatter action and detail label maps', () => {
     i18n.hydrate('order-detail', {
       lang: 'vi',
-      page: { Created: 'Đã tạo', 'Order created': 'Khởi tạo đơn hàng' },
+      page: {
+        Created: 'Đã tạo',
+        'Order created': 'Khởi tạo đơn hàng',
+        'Send message': 'Gửi tin nhắn',
+        'Write a message...': 'Nhập tin nhắn...',
+      },
     });
     const translated = i18n.translatePageConfig('order-detail', {
       components: [{
         type: 'OdooFormView',
+        message_label: 'Send message',
+        message_placeholder: 'Write a message...',
         message_action_labels: { created: 'Created' },
         message_detail_labels: { 'Order created': 'Order created' },
       }],
@@ -35,5 +42,7 @@ describe('declarative i18n maps', () => {
 
     expect(translated.components[0].message_action_labels.created).toBe('Đã tạo');
     expect(translated.components[0].message_detail_labels['Order created']).toBe('Khởi tạo đơn hàng');
+    expect(translated.components[0].message_label).toBe('Gửi tin nhắn');
+    expect(translated.components[0].message_placeholder).toBe('Nhập tin nhắn...');
   });
 });
