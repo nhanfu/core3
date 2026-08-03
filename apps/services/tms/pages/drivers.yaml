@@ -46,30 +46,63 @@ toolbar:
     action: add_driver
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: drivers
-    filter_field: q
+    create_action: add_driver
+    create_label: Add driver
     search:
-      label: Search for driver
-      placeholder: 'Search by name, phone number, license...'
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'License term from', to_label: 'License deadline arrives', presets: [today, week, month, quarter, year, all] }
-    actions: [{ id: drivers.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: drivers
-    filter_field: status
-    show_counts: false
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Active }
-      - { id: 'On Leave', label: On leave }
-      - { id: Inactive, label: Shut down }
-  - type: DataGrid
-    source: drivers
+      label: Search drivers
+      placeholder: 'Search by name, phone number, or license...'
+    date_range:
+      label: License expiry
+      from_field: from_date
+      to_field: to_date
+      from_label: Expiry from
+      to_label: Expiry until
+      presets: [today, week, month, quarter, year, all]
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Active }
+          - { id: 'On Leave', label: On leave }
+          - { id: Inactive, label: Shut down }
+    actions: [{ id: drivers.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      new: Add driver
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all drivers
+      select_row: Select driver
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: license_number
+          fields:
+            - { field: truck_plate, label: Vehicle }
+            - { field: compliance_label, label: License }
+            - { field: availability, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_open_action: view_driver
+    row_actions: menu
     empty_state:
       title: There is no driver
       description: Try changing the filter or creating a new driver.
@@ -83,23 +116,17 @@ components:
         label: Follow
         type: StatusChip
         colors: { Còn hiệu lực: green, Sắp hết hạn: amber, Đã hết hạn: red }
-      - field: availability
-        label: Status
-        type: StatusChip
-        colors:
-          Active: green
-          On leave: amber
-          Shut down: red
-      - { field: created_by, label: Creator }
-      - { field: created_at, label: Creation date and time, type: DateCell }
+      - { field: availability, label: Status, type: StatusChip, colors: { Đang hoạt động: green, Nghỉ phép: amber, Ngưng hoạt động: red } }
+      - { field: created_by, label: Creator, optional: hide }
+      - { field: created_at, label: Creation date and time, type: DateCell, optional: hide }
       - field: actions
         label: ''
         sortable: false
         align: right
         actions:
-          - { id: view_driver, label: Detail, variant: primary, permission: drivers.read }
-          - { id: edit_driver, label: Fix, variant: ghost, permission: drivers.write }
-          - { id: delete_driver, label: Erase, variant: danger, permission: drivers.write }
+          - { id: view_driver, label: Detail, variant: secondary, permission: drivers.read }
+          - { id: edit_driver, label: Edit, variant: ghost, permission: drivers.write }
+          - { id: delete_driver, label: Delete, variant: danger, permission: drivers.write }
 
 actions:
   - { id: view_driver, type: navigate, permission: drivers.read, navigate_to: /drivers/detail, params: { id: '{row.id}' } }
