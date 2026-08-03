@@ -627,7 +627,10 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (handler === 'print_template') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
+      if (!relation) return apiError(409, 'Print-template block relation is not configured');
       return json(await repository.mutatePrintTemplateBlock(
+        relation,
         actionDefinition.operation,
         body.id,
         typeof body.block_id === 'string' ? body.block_id : null,

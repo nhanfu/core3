@@ -1293,6 +1293,7 @@ export class DuckDbRepository {
   }
 
   async mutatePrintTemplateBlock(
+    relation: { parentTable: string; parentKind: string; childTable: string; parentKey: string },
     operation: 'create' | 'update' | 'delete' | 'move_up' | 'move_down',
     templateId: string,
     blockId: string | null,
@@ -1300,10 +1301,11 @@ export class DuckDbRepository {
     action: string,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if ([relation.parentTable, relation.childTable, relation.parentKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(relation.parentKind)) throw { status: 400, message: 'Invalid relation configuration' };
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        const [template] = await queryOnConnection(conn, "SELECT id, code, name FROM system_configs WHERE id = ? AND kind = 'print_template'", [templateId]);
+        const [template] = await queryOnConnection(conn, `SELECT id, code, name FROM ${relation.parentTable} WHERE id = ? AND kind = ?`, [templateId, relation.parentKind]);
         if (!template) throw { status: 404, message: 'Print template not found' };
         if (operation === 'create' || operation === 'update') {
           const blockType = String(values.block_type || 'text');
@@ -1319,41 +1321,41 @@ export class DuckDbRepository {
           if (blockType === 'text' && !content) throw { status: 400, message: 'text content required' };
           if (!['Active', 'Inactive'].includes(status)) throw { status: 400, message: 'invalid block status' };
           if (operation === 'create') {
-            const [last] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) AS sequence FROM print_template_blocks WHERE template_id = ?', [templateId]);
+            const [last] = await queryOnConnection(conn, `SELECT COALESCE(MAX(sequence), 0) AS sequence FROM ${relation.childTable} WHERE ${relation.parentKey} = ?`, [templateId]);
             const id = crypto.randomUUID();
-            await runOnConnection(conn, 'INSERT INTO print_template_blocks(id, template_id, sequence, block_type, label, token_key, content, status) VALUES(?,?,?,?,?,?,?,?)', [id, templateId, Number(last?.sequence || 0) + 10, blockType, label, tokenKey || null, content || null, status]);
+            await runOnConnection(conn, `INSERT INTO ${relation.childTable}(id, ${relation.parentKey}, sequence, block_type, label, token_key, content, status) VALUES(?,?,?,?,?,?,?,?)`, [id, templateId, Number(last?.sequence || 0) + 10, blockType, label, tokenKey || null, content || null, status]);
             await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', id, `Thêm khối ${label}`]);
-            const [row] = await queryOnConnection(conn, 'SELECT * FROM print_template_blocks WHERE id = ?', [id]);
+            const [row] = await queryOnConnection(conn, `SELECT * FROM ${relation.childTable} WHERE id = ?`, [id]);
             await runOnConnection(conn, 'COMMIT');
             return row;
           }
           if (!blockId) throw { status: 400, message: 'block_id required' };
-          const [existing] = await queryOnConnection(conn, 'SELECT id FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          const [existing] = await queryOnConnection(conn, `SELECT id FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [blockId, templateId]);
           if (!existing) throw { status: 404, message: 'Print block not found' };
-          await runOnConnection(conn, 'UPDATE print_template_blocks SET block_type = ?, label = ?, token_key = ?, content = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND template_id = ?', [blockType, label, tokenKey || null, content || null, status, blockId, templateId]);
+          await runOnConnection(conn, `UPDATE ${relation.childTable} SET block_type = ?, label = ?, token_key = ?, content = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND ${relation.parentKey} = ?`, [blockType, label, tokenKey || null, content || null, status, blockId, templateId]);
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, `Cập nhật khối ${label}`]);
         } else if (operation === 'delete') {
           if (!blockId) throw { status: 400, message: 'block_id required' };
-          const [existing] = await queryOnConnection(conn, 'SELECT label FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          const [existing] = await queryOnConnection(conn, `SELECT label FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [blockId, templateId]);
           if (!existing) throw { status: 404, message: 'Print block not found' };
-          await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          await runOnConnection(conn, `DELETE FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [blockId, templateId]);
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, `Xóa khối ${existing.label}`]);
         } else {
           if (!blockId) throw { status: 400, message: 'block_id required' };
-          const [current] = await queryOnConnection(conn, 'SELECT id, sequence FROM print_template_blocks WHERE id = ? AND template_id = ?', [blockId, templateId]);
+          const [current] = await queryOnConnection(conn, `SELECT id, sequence FROM ${relation.childTable} WHERE id = ? AND ${relation.parentKey} = ?`, [blockId, templateId]);
           if (!current) throw { status: 404, message: 'Print block not found' };
           const direction = operation === 'move_up' ? '<' : '>';
           const order = operation === 'move_up' ? 'DESC' : 'ASC';
-          const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM print_template_blocks WHERE template_id = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [templateId, current.sequence]);
+          const [neighbor] = await queryOnConnection(conn, `SELECT id, sequence FROM ${relation.childTable} WHERE ${relation.parentKey} = ? AND sequence ${direction} ? ORDER BY sequence ${order} LIMIT 1`, [templateId, current.sequence]);
           if (neighbor) {
-            const [temporary] = await queryOnConnection(conn, 'SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM print_template_blocks WHERE template_id = ?', [templateId]);
-            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [temporary.sequence, current.id]);
-            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [current.sequence, neighbor.id]);
-            await runOnConnection(conn, 'UPDATE print_template_blocks SET sequence = ? WHERE id = ?', [neighbor.sequence, current.id]);
+            const [temporary] = await queryOnConnection(conn, `SELECT COALESCE(MAX(sequence), 0) + 1 AS sequence FROM ${relation.childTable} WHERE ${relation.parentKey} = ?`, [templateId]);
+            await runOnConnection(conn, `UPDATE ${relation.childTable} SET sequence = ? WHERE id = ?`, [temporary.sequence, current.id]);
+            await runOnConnection(conn, `UPDATE ${relation.childTable} SET sequence = ? WHERE id = ?`, [current.sequence, neighbor.id]);
+            await runOnConnection(conn, `UPDATE ${relation.childTable} SET sequence = ? WHERE id = ?`, [neighbor.sequence, current.id]);
           }
           await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)', [actor.id || null, actor.name, action, 'print_template_blocks', blockId, operation === 'move_up' ? 'Đưa khối lên' : 'Đưa khối xuống']);
         }
-        const rows = await queryOnConnection(conn, 'SELECT * FROM print_template_blocks WHERE template_id = ? ORDER BY sequence, id', [templateId]);
+        const rows = await queryOnConnection(conn, `SELECT * FROM ${relation.childTable} WHERE ${relation.parentKey} = ? ORDER BY sequence, id`, [templateId]);
         await runOnConnection(conn, 'COMMIT');
         return { data: rows };
       } catch (error) {
