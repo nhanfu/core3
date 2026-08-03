@@ -33,6 +33,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   const { OdooFormView } = await import('./OdooFormView.ts');
   const sourceResult = dataMap[def.source] || { data: {} };
   const formDef = { ...def };
+  formDef.locale = config.locale;
   const editButton = (def.header_actions || []).find((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return action && ['form', 'server_form'].includes(action.type)
@@ -515,4 +516,3 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
 }
 
 }
-

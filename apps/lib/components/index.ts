@@ -57,6 +57,7 @@ export { TimelinePanel }        from './TimelinePanel.ts';
 export { LineItemGrid }         from './LineItemGrid.ts';
 export { DocumentSummary }      from './DocumentSummary.ts';
 export { OdooFormView }         from './OdooFormView.ts';
+export { OdooChatter }          from './OdooChatter.ts';
 export { MoneySummary }         from './MoneySummary.ts';
 export { ApprovalTimeline }     from './ApprovalTimeline.ts';
 export { ChatWorkspace }        from './ChatWorkspace.ts';

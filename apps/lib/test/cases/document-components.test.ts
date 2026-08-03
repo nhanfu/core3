@@ -8,6 +8,7 @@ import { LineItemGrid } from '../../components/LineItemGrid.ts';
 import { MoneySummary } from '../../components/MoneySummary.ts';
 import { MoneyInput } from '../../components/MoneyInput.ts';
 import { OdooFormView } from '../../components/OdooFormView.ts';
+import { OdooChatter } from '../../components/OdooChatter.ts';
 import { ScheduleGrid } from '../../components/ScheduleGrid.ts';
 
 function mount(component: { mount(container: HTMLElement): void }) {
@@ -209,6 +210,27 @@ describe('document detail components', () => {
     composer.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await Promise.resolve();
     expect(submitted).toEqual([{ action: 'send_order_message', params: { id: 'order-1', content: 'Please review this order' } }]);
+  });
+
+  it('renders chatter followers as a tool menu and closes composers explicitly', () => {
+    const chatter = new OdooChatter('chatter', {
+      record: { id: 'order-1' },
+      followers: [{ name: 'Admin User' }],
+      messages: [{ actor_name: 'Admin User', action: 'orders.note', action_label: 'Log note', detail: 'Review rates', created_at: '2026-08-04 09:15:00' }],
+    }, {
+      message_source: 'messages',
+      follower_source: 'followers',
+      message_action: 'send_message',
+    });
+    const container = mount(chatter);
+
+    expect(container.querySelector('.o-form-chatter-tool-menu')).not.toBeNull();
+    expect(container.textContent).toContain('Admin User');
+    expect(container.querySelector('.o-form-chatter-message.is-note time')?.textContent).not.toContain('2026-08-04 09:15:00');
+    container.querySelector<HTMLButtonElement>('.o-form-chatter-primary')!.click();
+    expect(container.querySelector('.o-form-composer')).not.toBeNull();
+    container.querySelector<HTMLButtonElement>('.o-form-composer-cancel')!.click();
+    expect(container.querySelector('.o-form-composer')).toBeNull();
   });
 
   it('renders derived money values and activity events', () => {
