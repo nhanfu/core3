@@ -10,6 +10,11 @@ datasources:
   - id: vehicle_types
     single: false
     permission: catalog.read
+    table: master_data
+    mutations:
+      create: { permission: catalog.write, scope: vehicle_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      update: { permission: catalog.write, scope: vehicle_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      delete: { permission: catalog.write, scope: vehicle_type }
     query: |
       SELECT id, code, name, description, status, sort_order, created_at
       FROM master_data
@@ -95,6 +100,7 @@ actions:
   - id: add_vehicle_type
     type: form
     permission: catalog.write
+    datasource: vehicle_types
     title: Add vehicle type
     table: master_data
     scope: vehicle_type
@@ -109,6 +115,7 @@ actions:
   - id: edit_vehicle_type
     type: form
     permission: catalog.write
+    datasource: vehicle_types
     title: Update vehicle type
     table: master_data
     scope: vehicle_type
@@ -121,4 +128,4 @@ actions:
       - { field: description, label: Describe, type: textarea }
       - { field: sort_order, label: Order, type: number }
       - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - { id: delete_vehicle_type, type: delete, permission: catalog.write, table: master_data, scope: vehicle_type, confirm: 'Delete vehicle type {{row.name}}?', refresh: [vehicle_types] }
+  - { id: delete_vehicle_type, type: delete, permission: catalog.write, datasource: vehicle_types, table: master_data, scope: vehicle_type, confirm: 'Delete vehicle type {{row.name}}?', refresh: [vehicle_types] }

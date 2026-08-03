@@ -10,6 +10,11 @@ datasources:
   - id: fee_types
     single: false
     permission: catalog.read
+    table: master_data
+    mutations:
+      create: { permission: catalog.write, scope: fee_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      update: { permission: catalog.write, scope: fee_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      delete: { permission: catalog.write, scope: fee_type }
     query: |
       SELECT id, code, name, description, status, sort_order, created_at
       FROM master_data
@@ -95,6 +100,7 @@ actions:
   - id: add_fee_type
     type: form
     permission: catalog.write
+    datasource: fee_types
     title: Add fees
     table: master_data
     scope: fee_type
@@ -109,6 +115,7 @@ actions:
   - id: edit_fee_type
     type: form
     permission: catalog.write
+    datasource: fee_types
     title: Update fee types
     table: master_data
     scope: fee_type
@@ -121,4 +128,4 @@ actions:
       - { field: description, label: Describe, type: textarea }
       - { field: sort_order, label: Order, type: number }
       - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - { id: delete_fee_type, type: delete, permission: catalog.write, table: master_data, scope: fee_type, confirm: 'Delete fee type {{row.name}}?', refresh: [fee_types] }
+  - { id: delete_fee_type, type: delete, permission: catalog.write, datasource: fee_types, table: master_data, scope: fee_type, confirm: 'Delete fee type {{row.name}}?', refresh: [fee_types] }

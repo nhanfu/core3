@@ -10,6 +10,11 @@ datasources:
   - id: cargo_types
     single: false
     permission: catalog.read
+    table: master_data
+    mutations:
+      create: { permission: catalog.write, scope: cargo_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      update: { permission: catalog.write, scope: cargo_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      delete: { permission: catalog.write, scope: cargo_type }
     query: |
       SELECT id, code, name, description, status, sort_order, created_at
       FROM master_data
@@ -95,6 +100,7 @@ actions:
   - id: add_cargo_type
     type: form
     permission: catalog.write
+    datasource: cargo_types
     title: Add product type
     table: master_data
     scope: cargo_type
@@ -109,6 +115,7 @@ actions:
   - id: edit_cargo_type
     type: form
     permission: catalog.write
+    datasource: cargo_types
     title: Update product type
     table: master_data
     scope: cargo_type
@@ -121,4 +128,4 @@ actions:
       - { field: description, label: Describe, type: textarea }
       - { field: sort_order, label: Order, type: number }
       - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - { id: delete_cargo_type, type: delete, permission: catalog.write, table: master_data, scope: cargo_type, confirm: 'Delete commodity type {{row.name}}?', refresh: [cargo_types] }
+  - { id: delete_cargo_type, type: delete, permission: catalog.write, datasource: cargo_types, table: master_data, scope: cargo_type, confirm: 'Delete commodity type {{row.name}}?', refresh: [cargo_types] }

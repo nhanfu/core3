@@ -10,6 +10,11 @@ datasources:
   - id: currencies
     single: false
     permission: catalog.read
+    table: master_data
+    mutations:
+      create: { permission: catalog.write, scope: currency, fields: [code, name, symbol, decimals, description, sort_order, status], timestamps: true }
+      update: { permission: catalog.write, scope: currency, fields: [code, name, symbol, decimals, description, sort_order, status], timestamps: true }
+      delete: { permission: catalog.write, scope: currency }
     query: |
       SELECT m.id, m.code, m.name, m.description, m.symbol, m.decimals, m.status, m.sort_order,
         COALESCE(r.rate_to_vnd, CASE WHEN m.code = 'VND' THEN 1 ELSE NULL END) AS rate_to_vnd,
@@ -107,6 +112,7 @@ actions:
   - id: add_currency
     type: form
     permission: catalog.write
+    datasource: currencies
     title: Add currency
     table: master_data
     scope: currency
@@ -123,6 +129,7 @@ actions:
   - id: edit_currency
     type: form
     permission: catalog.write
+    datasource: currencies
     title: Currency update
     table: master_data
     scope: currency
@@ -137,4 +144,4 @@ actions:
       - { field: description, label: Describe, type: textarea }
       - { field: sort_order, label: Order, type: number }
       - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - { id: delete_currency, type: delete, permission: catalog.write, table: master_data, scope: currency, confirm: 'Delete currency {{row.name}}?', refresh: [currencies] }
+  - { id: delete_currency, type: delete, permission: catalog.write, datasource: currencies, table: master_data, scope: currency, confirm: 'Delete currency {{row.name}}?', refresh: [currencies] }

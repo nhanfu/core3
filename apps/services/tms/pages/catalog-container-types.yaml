@@ -10,6 +10,11 @@ datasources:
   - id: container_types
     single: false
     permission: catalog.read
+    table: master_data
+    mutations:
+      create: { permission: catalog.write, scope: container_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      update: { permission: catalog.write, scope: container_type, fields: [code, name, description, sort_order, status], timestamps: true }
+      delete: { permission: catalog.write, scope: container_type }
     query: |
       SELECT id, code, name, description, status, sort_order, created_at
       FROM master_data
@@ -95,6 +100,7 @@ actions:
   - id: add_container_type
     type: form
     permission: catalog.write
+    datasource: container_types
     title: Add container type
     table: master_data
     scope: container_type
@@ -109,6 +115,7 @@ actions:
   - id: edit_container_type
     type: form
     permission: catalog.write
+    datasource: container_types
     title: Update container type
     table: master_data
     scope: container_type
@@ -121,4 +128,4 @@ actions:
       - { field: description, label: Describe, type: textarea }
       - { field: sort_order, label: Order, type: number }
       - { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - { id: delete_container_type, type: delete, permission: catalog.write, table: master_data, scope: container_type, confirm: 'Delete container type {{row.name}}?', refresh: [container_types] }
+  - { id: delete_container_type, type: delete, permission: catalog.write, datasource: container_types, table: master_data, scope: container_type, confirm: 'Delete container type {{row.name}}?', refresh: [container_types] }
