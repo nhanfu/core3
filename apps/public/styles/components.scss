@@ -905,7 +905,8 @@
   .o-form-statusbar-step { font-size: 9px; }
   .o-form-chatter-topbar { flex-wrap: wrap; }
   .o-form-chatter-tools { margin-left: 0; }
-  .o-form-chatter-tool-dropdown { right: auto; left: 0; }
+  .o-form-chatter-tool-dropdown { position: fixed; top: 82px; right: 12px; left: 12px; width: auto; max-height: calc(100vh - 98px); }
+  .o-form-chatter-tool-content { max-height: calc(100vh - 138px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
