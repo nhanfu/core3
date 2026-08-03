@@ -552,7 +552,7 @@ function validateComponents(
             rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
-            if (!['list', 'kanban', 'calendar', 'form'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, or form`);
+            if (!['list', 'kanban', 'calendar', 'card', 'form'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, or form`);
             if (typeof view.id === 'string' && viewIds.has(view.id)) issues.push(`${viewPath}.id must be unique`);
             if (typeof view.id === 'string') viewIds.add(view.id);
             if (view.id === 'kanban' && typeof view.group_by !== 'string') issues.push(`${viewPath}.group_by is required for kanban`);

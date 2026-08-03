@@ -64,6 +64,7 @@ export { ContactGrid }          from './ContactGrid.ts';
 export { Kanban }               from './Kanban.ts';
 export { KanbanView }           from './KanbanView.ts';
 export { CalendarView }         from './CalendarView.ts';
+export { CardView }             from './CardView.ts';
 export { AdvancedSearch }       from './AdvancedSearch.ts';
 export { QrCode }               from './QrCode.ts';
 export { CodeEditor }           from './CodeEditor.ts';

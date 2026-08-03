@@ -1,0 +1,121 @@
+import { html } from '../html.ts';
+import { BaseComponent } from './BaseComponent.ts';
+
+type CardRow = Record<string, unknown>;
+
+export type CardViewDefinition = {
+  id: 'card';
+  label: string;
+  icon?: string;
+  groupBy?: string;
+  groups?: Array<{ value: string; label: string; color?: string }>;
+  groupsSource?: string;
+  card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
+};
+
+export type CardViewOptions = {
+  view: CardViewDefinition;
+  rowKey?: string;
+  openAction?: string;
+  doubleClickAction?: string;
+  onSelect?: (row: CardRow) => void;
+};
+
+/** Flat, optionally grouped card list for compact resource browsing. */
+export class CardView extends BaseComponent {
+  private readonly options: CardViewOptions;
+
+  constructor(id: string, state: { rows?: CardRow[] } = {}, options: CardViewOptions) {
+    super(id, state);
+    this.options = options;
+  }
+
+  draw(container: HTMLElement) {
+    const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
+    const root = html.take(container).section.className('o-card-view').getContext();
+    const groupBy = this.options.view.groupBy;
+    if (!groupBy) {
+      for (const [index, row] of rows.entries()) this.drawCard(root, row, index);
+      return;
+    }
+
+    const groups = (this.options.view.groups || []).map(group => ({ ...group, rows: [] as CardRow[] }));
+    const byValue = new Map(groups.map(group => [String(group.value), group]));
+    for (const row of rows) {
+      const value = String(row[groupBy] ?? '');
+      let group = byValue.get(value);
+      if (!group) {
+        group = { value, label: value || 'Undefined', rows: [] };
+        groups.push(group);
+        byValue.set(value, group);
+      }
+      group.rows.push(row);
+    }
+    for (const group of groups) {
+      const section = html.take(root).section.className('o-card-view-group').dataAttr('card-group', group.value).getContext();
+      const heading = html.take(section).h2.className('o-card-view-group-title').getContext();
+      if (group.color) heading.classList.add(`is-${group.color}`);
+      html.take(heading).span.text(group.label);
+      html.take(heading).span.className('o-card-view-group-count').text(String(group.rows.length));
+      const list = html.take(section).div.className('o-card-view-group-items').getContext();
+      for (const [index, row] of group.rows.entries()) this.drawCard(list, row, index);
+    }
+  }
+
+  private drawCard(container: HTMLElement, row: CardRow, index: number) {
+    const card = html.take(container).div.className('o-kanban-card o-card-view-item').dataAttr('row-id', this.rowId(row, index)).getContext();
+    if (this.options.openAction || this.options.doubleClickAction || this.options.onSelect) {
+      card.tabIndex = 0;
+      card.setAttribute('role', this.options.onSelect ? 'button' : 'link');
+      let clickTimer: ReturnType<typeof setTimeout> | undefined;
+      const selectOrOpen = () => {
+        if (this.options.onSelect) this.options.onSelect(row);
+        else if (this.options.openAction) void this.submit(this.options.openAction, { row });
+      };
+      card.addEventListener('click', () => {
+        if (!this.options.doubleClickAction) {
+          selectOrOpen();
+          return;
+        }
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          clickTimer = undefined;
+          selectOrOpen();
+        }, 250);
+      });
+      card.addEventListener('dblclick', () => {
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = undefined;
+        if (this.options.doubleClickAction) void this.submit(this.options.doubleClickAction, { row });
+      });
+      card.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          selectOrOpen();
+        }
+      });
+    }
+
+    const cardDef = this.options.view.card;
+    const title = row[cardDef?.title || 'name'];
+    html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
+    if (cardDef?.subtitle) {
+      const subtitle = row[cardDef.subtitle];
+      if (subtitle != null && subtitle !== '') html.take(card).p.className('o-kanban-card-subtitle').text(String(subtitle));
+    }
+    const fields = cardDef?.fields || [];
+    if (!fields.length) return;
+    const details = html.take(card).div.className('o-kanban-card-fields').getContext();
+    for (const field of fields) {
+      const value = row[field.field];
+      if (value == null || value === '') continue;
+      const line = html.take(details).div.getContext();
+      if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
+      html.take(line).span.className('o-kanban-card-field-value').text(String(value));
+    }
+  }
+
+  private rowId(row: CardRow, index: number) {
+    return String(row[this.options.rowKey || 'id'] ?? index);
+  }
+}

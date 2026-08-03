@@ -181,6 +181,75 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('[data-kanban-group="Draft"]')).not.toBeNull();
   });
 
+  it('routes CardView cards without opening the FormView side panel', () => {
+    const submit = vi.fn();
+    const component = create({
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      renderForm: () => undefined,
+      openAction: undefined,
+      doubleClickAction: 'view_order',
+      views: [{ id: 'list', label: 'List' }, {
+        id: 'card', label: 'Cards', groupBy: 'status',
+        card: { title: 'number', subtitle: 'customer' },
+      }],
+    }, { activeView: 'card', listViewEnabled: false });
+    component._transport = { submit };
+    const container = mount(component);
+
+    expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    container.querySelector<HTMLElement>('.o-card-view-item')!.click();
+    expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) });
+  });
+
+  it('defaults to CardView on small screens when no view is selected', () => {
+    const originalMatchMedia = window.matchMedia;
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+      value: () => ({ matches: true, media: '(max-width: 768px)' }),
+    });
+    try {
+      const component = create({
+        views: [
+          { id: 'list', label: 'List' },
+          { id: 'card', label: 'Cards', card: { title: 'number' } },
+        ],
+      });
+      const container = mount(component);
+
+      expect(container.querySelector('.o-card-view')).not.toBeNull();
+      expect(container.querySelector('.o-list-table')).toBeNull();
+      expect(container.querySelector('[data-list-view="list"]')?.className).toContain('o-list-view-desktop-only');
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia });
+    }
+  });
+
+  it('does not render FormView alongside ListView on small screens', () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({ matches: true, media: '(max-width: 768px)' }),
+    });
+    try {
+      const component = create({
+        formView: { page: 'order-detail.yaml', sidePanel: true },
+        renderForm: () => undefined,
+        views: [
+          { id: 'list', label: 'List' },
+          { id: 'kanban', label: 'Kanban', groupBy: 'status', card: { title: 'number' } },
+          { id: 'form', label: 'Form' },
+        ],
+      });
+      const container = mount(component);
+
+      expect(container.querySelector('.o-list-table')).not.toBeNull();
+      expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+      expect(container.querySelector('[data-list-view="form"]')?.className).toContain('o-list-view-form-only');
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia });
+    }
+  });
+
   it('keeps the control panel mounted when Calendar changes month', () => {
     const component = create({}, { rows: [{ ...rows[0], order_date: '2026-08-12' }], activeView: 'calendar' });
     const container = mount(component);

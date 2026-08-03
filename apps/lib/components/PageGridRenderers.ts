@@ -471,7 +471,16 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     form: view.form,
   }));
   const requestedView = String(pageParams.view || '');
-  const activeView = views.some((view: any) => view.id === requestedView) ? requestedView : undefined;
+  const hasCardView = views.some((view: any) => view.id === 'card');
+  const isSmallScreen = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 768px)').matches;
+  const mobileCardRoute = isSmallScreen && hasCardView
+    && (!requestedView || requestedView === 'list' || requestedView === 'form' || !views.some((view: any) => view.id === requestedView));
+  const activeView = mobileCardRoute
+    ? 'card'
+    : (views.some((view: any) => view.id === requestedView) ? requestedView : undefined);
+  if (mobileCardRoute && requestedView !== 'card') replaceParams({ ...pageParams, view: 'card' });
   const utilityActions = (def.actions || []).filter((action: any) => {
     if (!hasPermission(ctx.user, action.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
@@ -654,7 +663,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       renderForm,
       rowActions: def.row_actions || 'buttons',
       views,
-      onViewChange: (view: 'list' | 'kanban' | 'calendar') => {
+      onViewChange: (view: 'list' | 'kanban' | 'calendar' | 'card') => {
         replaceParams({ ...getPageParams(), view });
       },
       emptyState: def.empty_state,

@@ -76,6 +76,7 @@ describe('YAML page schema', () => {
       row_actions: 'menu',
       views: [
         { id: 'list', label: 'List' },
+        { id: 'card', label: 'Cards', icon: 'grid', card: { title: 'code' } },
         { id: 'kanban', label: 'Kanban', group_by: 'status', card: { title: 'code' } },
         { id: 'calendar', label: 'Calendar', date_field: 'order_date', card: { title: 'code' } },
         { id: 'form', label: 'Form', icon: 'form' },

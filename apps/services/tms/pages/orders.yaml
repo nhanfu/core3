@@ -122,6 +122,18 @@ components:
       more_actions: More actions
     views:
       - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: status
+        groups_source: order_statuses
+        card:
+          title: order_number
+          subtitle: customer_name
+          fields:
+            - { field: status, label: Status }
+            - { field: order_date, label: Order date }
+            - { field: total_amount_display, label: Total }
       - id: kanban
         label: Kanban
         icon: dashboard
@@ -147,6 +159,7 @@ components:
     column_chooser: true
     row_key: id
     selectable: true
+    row_open_action: view_order
     row_double_click_action: view_order
     form_view: { page: apps/services/tms/pages/order-detail.yaml, side_panel: true }
     row_actions: menu

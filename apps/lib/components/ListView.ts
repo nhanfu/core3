@@ -4,6 +4,7 @@ import { appendBadge } from './helpers.ts';
 import { appendIcon } from './Icon.ts';
 import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
 import { CalendarView, type CalendarViewDefinition } from './CalendarView.ts';
+import { CardView, type CardViewDefinition } from './CardView.ts';
 import { resolveDatePreset, type DateRangePreset } from './ListToolbar.ts';
 
 type ListRow = Record<string, unknown>;
@@ -58,7 +59,7 @@ export type FormViewDefinition = {
   label: string;
   icon?: string;
 };
-export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | FormViewDefinition;
+export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition;
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
@@ -111,7 +112,7 @@ export type ListViewOptions = {
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
-  onViewChange?: (view: 'list' | 'kanban' | 'calendar') => void;
+  onViewChange?: (view: 'list' | 'kanban' | 'calendar' | 'card') => void;
   onGroupByChange?: (field: string | null) => void;
   onFavoriteChange?: (favorite: ListViewFavorite) => void;
 };
@@ -215,10 +216,30 @@ export class ListView extends BaseComponent {
     const activeView = this.activeView();
     const listEnabled = this.isViewEnabled('list');
     const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
-    const formEnabled = Boolean(this.options.formView) && (!hasFormMode || this.isViewEnabled('form'));
-    if (hasFormMode && !listEnabled && formEnabled) {
+    const formEnabled = !this.isSmallScreen()
+      && Boolean(this.options.formView)
+      && (!hasFormMode || this.isViewEnabled('form'));
+    if (activeView.id !== 'card' && hasFormMode && !listEnabled && formEnabled) {
       const content = html.take(root).div.className('o-list-content is-form-only').getContext();
       await this.drawFormPanel(content, rows, true);
+      return;
+    }
+    if (activeView.id === 'card') {
+      const card = new CardView(
+        `card-view-${this.id}`,
+        { rows },
+        {
+          view: activeView,
+          rowKey: this.options.rowKey,
+          openAction: this.options.openAction || this.options.doubleClickAction,
+        },
+      );
+      card.parent = this;
+      card._transport = this._transport;
+      this.children.push(card);
+      const content = html.take(root).div.className('o-list-content').getContext();
+      const cardHost = html.take(content).div.className('o-list-card-host').getContext();
+      card.mount(cardHost);
       return;
     }
     if (activeView.id === 'kanban') {
@@ -543,8 +564,9 @@ export class ListView extends BaseComponent {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').getContext();
       const activeView = this.activeView();
       for (const view of views) {
+        const mobileCardView = views.some(candidate => candidate.id === 'card');
         const button = html.take(switcher).button
-          .className(this.isViewEnabled(view.id) ? 'is-active' : '')
+          .className(`${this.isViewEnabled(view.id) ? 'is-active ' : ''}${view.id === 'card' ? 'o-list-view-mobile-only' : ''}${view.id === 'form' ? 'o-list-view-form-only' : ''}${view.id === 'list' && mobileCardView ? 'o-list-view-desktop-only' : ''}`)
           .dataAttr('list-view', view.id)
           .attr('aria-label', view.label)
           .attr('title', view.label)
@@ -566,7 +588,7 @@ export class ListView extends BaseComponent {
             return;
           }
           this.setState({ activeView: view.id });
-          this.options.onViewChange?.(view.id as 'list' | 'kanban' | 'calendar');
+          this.options.onViewChange?.(view.id as 'list' | 'kanban' | 'calendar' | 'card');
         });
       }
     }
@@ -851,7 +873,21 @@ export class ListView extends BaseComponent {
 
   private activeView(): ListViewMode {
     const views = this.options.views || [];
+    if (this.isSmallScreen()) {
+      const cardView = views.find(view => view.id === 'card');
+      if (this.state.activeView === undefined || this.state.activeView === 'form') {
+        if (cardView) return cardView;
+        const nonFormView = views.find(view => view.id !== 'form');
+        if (nonFormView) return nonFormView;
+      }
+    }
     return views.find(view => view.id === this.state.activeView) || views[0] || { id: 'list', label: 'List' };
+  }
+
+  private isSmallScreen() {
+    return typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(max-width: 768px)').matches;
   }
 
   private formRow(rows: ListRow[]) {
