@@ -455,6 +455,11 @@ export class PageRuntime extends BaseComponent {
           if (actionDef.kind === 'chat_attachment') {
             uploadMeta.thread_id = row.id;
             uploadMeta.content = row.content;
+          } else if (actionDef.kind === 'order_attachment') {
+            uploadMeta.order_id = resolveActionParams(
+              actionDef.params || { order_id: '{row.id}' },
+              rowCtx,
+            ).order_id;
           } else if (actionDef.kind === 'employee_document') {
             uploadMeta.employee_id = resolveActionParams(actionDef.params || { employee_id: '{state.id}' }, { ...ctx, row: row || {} }).employee_id;
           } else if (actionDef.kind === 'contract_document') {
@@ -483,7 +488,9 @@ export class PageRuntime extends BaseComponent {
               ? `/hr/contract-documents/${encodeURIComponent(String(row.id))}`
               : actionDef.kind === 'company_document'
                 ? `/org/company-documents/${encodeURIComponent(String(row.id))}`
-            : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
+                : actionDef.kind === 'order_attachment'
+                  ? `/orders/attachments/${encodeURIComponent(String(row.id))}`
+                  : `/chat/attachments/${encodeURIComponent(String(row.id))}`;
           await client.downloadFile(
             path,
             String(row.file_name || 'attachment'),

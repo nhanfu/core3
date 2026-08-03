@@ -103,16 +103,29 @@ class Client {
       headers: this._token ? { Authorization: `Bearer ${this._token}` } : {},
       body: form,
     });
-    if (!res.ok) throw Object.assign(new Error('Upload failed'), { status: res.status });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw Object.assign(new Error(error.error || error.message || 'Upload failed'), { status: res.status });
+    }
     return res.json();
   }
 
-  async downloadFile(path, fileName = 'download') {
-    const res = await fetch(`${this._resolveBase()}${path}`, {
+  async fetchFile(path) {
+    let res = await fetch(`${this._resolveBase()}${path}`, {
       headers: this._token ? { Authorization: `Bearer ${this._token}` } : {},
     });
+    if (res.status === 401 && this._refreshFn) {
+      this._token = await this._refreshFn();
+      res = await fetch(`${this._resolveBase()}${path}`, {
+        headers: this._token ? { Authorization: `Bearer ${this._token}` } : {},
+      });
+    }
     if (!res.ok) throw Object.assign(new Error('Download failed'), { status: res.status });
-    const url = URL.createObjectURL(await res.blob());
+    return res.blob();
+  }
+
+  async downloadFile(path, fileName = 'download') {
+    const url = URL.createObjectURL(await this.fetchFile(path));
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;

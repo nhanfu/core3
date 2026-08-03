@@ -577,6 +577,68 @@ export class DuckDbRepository {
     return { id: orderId, action, detail: content };
   }
 
+  async mutateOrderFollower(
+    orderId: string,
+    operation: 'follower_add' | 'follower_remove',
+    userId: string,
+    actor: { id?: string | null; name: string },
+  ) {
+    const [order] = await this.query('SELECT id FROM orders WHERE id = ?', [orderId]);
+    if (!order) throw { status: 404, message: 'Order not found' };
+    const [user] = await this.query('SELECT id, name, email, avatar_url FROM users WHERE id = ? AND enabled = true', [userId]);
+    if (!user) throw { status: 404, message: 'Follower not found' };
+    const [existing] = await this.query('SELECT order_id FROM order_followers WHERE order_id = ? AND user_id = ?', [orderId, userId]);
+    const adding = operation === 'follower_add';
+    if (adding && !existing) {
+      await this.run('INSERT INTO order_followers(order_id, user_id, added_by) VALUES(?,?,?)', [orderId, userId, actor.id || null]);
+    } else if (!adding && existing) {
+      await this.run('DELETE FROM order_followers WHERE order_id = ? AND user_id = ?', [orderId, userId]);
+    }
+    if ((adding && !existing) || (!adding && existing)) {
+      await this.recordActivity({
+        actorId: actor.id,
+        actorName: actor.name,
+        action: adding ? 'orders.followers.add' : 'orders.followers.remove',
+        resource: 'orders',
+        resourceId: orderId,
+        detail: String(user.name),
+      });
+    }
+    return { order_id: orderId, user_id: userId, name: user.name, email: user.email, avatar_url: user.avatar_url, removed: !adding };
+  }
+
+  async createOrderAttachment(
+    orderId: string,
+    file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string },
+    actor: { id?: string | null; name: string },
+  ) {
+    const [order] = await this.query('SELECT id FROM orders WHERE id = ?', [orderId]);
+    if (!order) throw { status: 404, message: 'Order not found' };
+    const id = crypto.randomUUID();
+    await this.run(
+      'INSERT INTO order_attachments(id, order_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)',
+      [id, orderId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null],
+    );
+    await this.recordActivity({
+      actorId: actor.id,
+      actorName: actor.name,
+      action: 'orders.attachments.upload',
+      resource: 'orders',
+      resourceId: orderId,
+      detail: file.fileName,
+    });
+    const [row] = await this.query(
+      'SELECT id, order_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM order_attachments WHERE id = ?',
+      [id],
+    );
+    return row;
+  }
+
+  async getOrderAttachment(attachmentId: string) {
+    const [row] = await this.query('SELECT * FROM order_attachments WHERE id = ?', [attachmentId]);
+    return row || null;
+  }
+
   async createChatThread(
     values: Record<string, unknown>,
     actor: { id?: string | null; name: string },

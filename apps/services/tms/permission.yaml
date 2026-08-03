@@ -143,6 +143,7 @@ tables:
 
 endpoints:
   upload.chat_attachment: chat.write
+  upload.order_attachment: orders.write
   upload.employee_document: hr.write
   upload.contract_document: hr.write
   upload.company_document: settings.write
@@ -151,3 +152,4 @@ endpoints:
   org.company_document.download: settings.read
   hr.employee_document.download: hr.read
   chat.attachment.download: chat.read
+  orders.attachment.download: orders.read

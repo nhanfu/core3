@@ -273,10 +273,14 @@ export function createTmsApi(ctx: TmsApiContext) {
       return apiError(400, 'Invalid upload metadata');
     }
     if (!(file instanceof File)) return apiError(400, 'file required');
-    if (meta.kind !== 'chat_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'contract_document' && meta.kind !== 'company_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
+    if (meta.kind !== 'chat_attachment' && meta.kind !== 'order_attachment' && meta.kind !== 'employee_document' && meta.kind !== 'contract_document' && meta.kind !== 'company_document' && meta.kind !== 'master_data_import') return apiError(400, 'Unsupported upload kind');
     if (meta.kind === 'chat_attachment') {
       requirePerm(permissionForEndpoint('upload.chat_attachment'));
       if (typeof meta.thread_id !== 'string' || !meta.thread_id) return apiError(400, 'thread_id required');
+    } else if (meta.kind === 'order_attachment') {
+      requirePerm(permissionForEndpoint('upload.order_attachment'));
+      if (typeof meta.order_id !== 'string' || !meta.order_id) return apiError(400, 'order_id required');
+      if (!(await recordInCurrentBranch('orders', meta.order_id))) return apiError(403, 'Order is outside the current view scope');
     } else if (meta.kind === 'employee_document') {
       requirePerm(permissionForEndpoint('upload.employee_document'));
       if (typeof meta.employee_id !== 'string' || !meta.employee_id) return apiError(400, 'employee_id required');
@@ -316,6 +320,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     writeFileSync(targetPath, Buffer.from(await file.arrayBuffer()));
     try {
       const fileMeta = { fileName: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size, storageKey };
+      if (meta.kind === 'order_attachment') return json(await repository.createOrderAttachment(meta.order_id, fileMeta, activityActor));
       if (meta.kind === 'employee_document') return json(await repository.createEmployeeDocument(meta.employee_id, fileMeta, activityActor));
       if (meta.kind === 'contract_document') return json(await repository.createContractDocument(meta.contract_id, fileMeta, activityActor));
       if (meta.kind === 'company_document') return json(await repository.createCompanyDocument(meta.company_id, fileMeta, activityActor));
@@ -370,6 +375,23 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (!attachment) return apiError(404, 'Attachment not found');
     const file = Bun.file(join(UPLOAD_ROOT, attachment.storage_key));
     if (!(await file.exists())) return apiError(404, 'Attachment file not found');
+    return new Response(file, {
+      headers: {
+        'Content-Type': attachment.mime_type || 'application/octet-stream',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(attachment.file_name)}`,
+        ...CORS_HEADERS,
+      },
+    });
+  }
+
+  const orderAttachmentMatch = pathname.match(/^\/api\/orders\/attachments\/([A-Za-z0-9-]+)$/);
+  if (orderAttachmentMatch && method === 'GET') {
+    requirePerm(permissionForEndpoint('orders.attachment.download'));
+    const attachment = await repository.getOrderAttachment(orderAttachmentMatch[1]);
+    if (!attachment) return apiError(404, 'Order attachment not found');
+    if (!(await recordInCurrentBranch('orders', String(attachment.order_id)))) return apiError(403, 'Order is outside the current view scope');
+    const file = Bun.file(join(UPLOAD_ROOT, attachment.storage_key));
+    if (!(await file.exists())) return apiError(404, 'Order attachment file not found');
     return new Response(file, {
       headers: {
         'Content-Type': attachment.mime_type || 'application/octet-stream',
@@ -662,6 +684,10 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if (handler === 'order_chatter') {
       if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
+      if (actionDefinition.operation === 'follower_add' || actionDefinition.operation === 'follower_remove') {
+        if (typeof body.user_id !== 'string' || !body.user_id) return apiError(400, 'user_id required');
+        return json(await repository.mutateOrderFollower(body.id, actionDefinition.operation, body.user_id, activityActor));
+      }
       if (actionDefinition.operation !== 'message' && actionDefinition.operation !== 'note') return apiError(400, 'Invalid order chatter operation');
       return json(await repository.addOrderChatterEntry(
         body.id,
