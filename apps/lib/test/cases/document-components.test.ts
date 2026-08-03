@@ -97,7 +97,9 @@ describe('document detail components', () => {
     }));
 
     expect(container.querySelector('.o-form-sheet')).not.toBeNull();
+    expect(container.querySelector('.o-form-sheet-bg > .o-form-statusbar')).not.toBeNull();
     expect(container.querySelector('.o-form-statusbar-step.is-current')?.textContent).toBe('Draft');
+    expect(container.querySelector('.o-form-statusbar-step.is-current')?.getAttribute('aria-current')).toBe('step');
     expect(container.querySelector('.o-form-actionbar')?.textContent).toContain('Submit for approval');
     expect(container.textContent).toContain('SO-001');
     expect(container.textContent).toContain('Route');

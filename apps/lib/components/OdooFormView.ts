@@ -26,8 +26,17 @@ export class OdooFormView extends BaseComponent {
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
     const root = html.take(container).section.className('o-form-view').getContext();
     const headerActions = Array.isArray(this.def.header_actions) ? this.def.header_actions : [];
-    if (headerActions.length || editing) {
-      const actionBar = html.take(root).div.className('o-form-actionbar').getContext();
+    const status = this.def.status_field ? String(record[this.def.status_field] || '—') : '';
+    const statusLabel = this.def.status_field
+      ? String(record[this.def.status_label_field || this.def.status_field] || status)
+      : '';
+    const statusStages = Array.isArray(this.def.statusbar) ? this.def.statusbar : [];
+    const layout = html.take(root).div.className('o-form-layout').getContext();
+    const sheetBackground = html.take(layout).div.className('o-form-sheet-bg').getContext();
+
+    if (headerActions.length || editing || statusStages.length) {
+      const statusbar = html.take(sheetBackground).header.className('o-form-statusbar').getContext();
+      const actionBar = html.take(statusbar).div.className('o-form-actionbar').getContext();
       for (const action of headerActions.filter((candidate: any) => !editing || candidate.id !== this.def.edit_action_id)) {
         const button = html.take(actionBar).button
           .className(`o-form-action o-form-action-${action.variant || 'secondary'}`)
@@ -53,9 +62,19 @@ export class OdooFormView extends BaseComponent {
         });
         discard.addEventListener('click', () => this.setState({ editing: false, draft: {} }));
       }
+      if (statusStages.length) {
+        const steps = html.take(statusbar).nav.className('o-form-statusbar-steps').attr('aria-label', 'Workflow status').getContext();
+        for (const stage of statusStages) {
+          const stageValue = String(stage.value ?? stage.id ?? stage.label ?? '');
+          const stageLabel = String(stage.label ?? stageValue);
+          const item = html.take(steps).span.className(`o-form-statusbar-step${stageValue === status ? ' is-current' : ''}`).getContext();
+          item.textContent = stageLabel;
+          if (stageValue === status) item.setAttribute('aria-current', 'step');
+        }
+      }
     }
-    const layout = html.take(root).div.className('o-form-layout').getContext();
-    const sheet = html.take(layout).div.className('o-form-sheet').getContext();
+
+    const sheet = html.take(sheetBackground).div.className('o-form-sheet').getContext();
     const header = html.take(sheet).header.className('o-form-header').getContext();
     const identity = html.take(header).div.className('o-form-identity').getContext();
     html.take(identity).h1.className('o-form-title').text(String(record[this.def.title_field] || '—'));
@@ -63,19 +82,9 @@ export class OdooFormView extends BaseComponent {
       html.take(identity).p.className('o-form-subtitle').text(String(record[this.def.subtitle_field]));
     }
     if (this.def.status_field) {
-      const status = String(record[this.def.status_field] || '—');
-      const label = String(record[this.def.status_label_field || this.def.status_field] || status);
-      const tone = this.def.status_colors?.[label] || this.def.status_colors?.[status] || 'neutral';
-      if (Array.isArray(this.def.statusbar) && this.def.statusbar.length) {
-        const statusbar = html.take(sheet).nav.className('o-form-statusbar').attr('aria-label', 'Workflow status').getContext();
-        for (const stage of this.def.statusbar) {
-          const stageValue = String(stage.value ?? stage.id ?? stage.label ?? '');
-          const stageLabel = String(stage.label ?? stageValue);
-          const item = html.take(statusbar).span.className(`o-form-statusbar-step${stageValue === status ? ' is-current' : ''}`).getContext();
-          item.textContent = stageLabel;
-        }
-      } else {
-        html.take(header).span.className(`o-form-status data-grid-status data-grid-status-${tone}`).text(label);
+      const tone = this.def.status_colors?.[statusLabel] || this.def.status_colors?.[status] || 'neutral';
+      if (!statusStages.length) {
+        html.take(header).span.className(`o-form-status data-grid-status data-grid-status-${tone}`).text(statusLabel);
       }
     }
 
