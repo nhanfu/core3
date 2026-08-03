@@ -23,23 +23,65 @@ datasources:
     query: |
       SELECT status AS label, COUNT(*) AS value FROM quotes WHERE (:from_date IS NULL OR created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR branch_id = :current_branch_id) GROUP BY status ORDER BY status
 components:
-  - type: ListToolbar
-    source: crm_stage_kpis
-    filter_sources: [crm_kpi_totals, crm_stage_kpis, crm_quote_kpis]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
-    actions: [{ id: crm_stage_kpis.export, label: 'Export CSV', icon: download }]
   - type: StatRow
     source: crm_kpi_totals
-    stats: [{ label: Potential guests, field: lead_count, color: amber }, { label: Guest is active, field: active_customer_count, color: green }, { label: Quote accepted, field: accepted_quote_count, color: blue }, { label: Conversion rate, field: conversion_rate, color: indigo, format: percent }]
-  - { type: Chart, source: crm_quote_kpis, title: Quote by status, label_field: label, value_field: value, width: 560, height: 240, color: teal }
-  - type: DataGrid
+    stats: [{ label: Potential leads, field: lead_count, color: amber }, { label: Active customers, field: active_customer_count, color: green }, { label: Accepted quotes, field: accepted_quote_count, color: blue }, { label: Conversion rate, field: conversion_rate, color: indigo, format: percent }]
+  - { type: Chart, source: crm_quote_kpis, title: Quotes by status, label_field: label, value_field: value, width: 560, height: 240, color: teal }
+  - type: ListView
+    variant: odoo
     source: crm_stage_kpis
+    search:
+      label: Search stages
+      placeholder: 'Find a customer stage...'
+    date_range:
+      label: Activity date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filter_sources: [crm_kpi_totals, crm_stage_kpis, crm_quote_kpis]
+    actions:
+      - { id: crm_stage_kpis.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all stages
+      select_row: Select stage
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: metric
+        card:
+          title: metric
+          fields:
+            - { field: customer_count, label: Total customers }
+            - { field: active_count, label: Active customers }
     page_size: 20
     column_chooser: true
     row_key: metric
+    selectable: true
+    row_actions: menu
     empty_state: { title: There are no targets by stage }
     columns:
-      - { field: metric, label: Stage }
+      - { field: metric, label: Stage, sortable: true }
       - { field: customer_count, label: Total customers, align: right }
       - { field: active_count, label: Active, align: right }
 actions: []
