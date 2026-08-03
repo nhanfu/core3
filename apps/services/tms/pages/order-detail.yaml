@@ -128,16 +128,21 @@ components:
           - { field: route, label: Route }
           - { field: transport_method, label: Transport method }
           - { field: trip_count, label: Trip count }
-      - title: Additional information
-        wide: true
-        fields:
-          - { field: created_by, label: Created by }
-          - { field: notes, label: Notes, type: textarea, wide: true }
+    notebook:
+      active: order_lines
+      tabs:
+        - { id: order_lines, label: Order Lines, content_slot: true }
+        - id: other_information
+          label: Other Information
+          groups:
+            - title: Additional information
+              fields:
+                - { field: created_by, label: Created by }
+                - { field: notes, label: Notes, type: textarea, wide: true }
   - type: LineItemGrid
     mount_in: previous-panel
     source: order_detail_lines
-    title: Order Lines
-    description: The total amount is calculated from the order lines.
+    variant: odoo_x2many
     page_size: 50
     row_key: id
     actions:

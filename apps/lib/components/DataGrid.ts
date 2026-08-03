@@ -180,10 +180,11 @@ export class DataGrid extends BaseComponent {
     const rowReorder = this.options.onRowReorder;
     let draggedRow: DataGridRow | null = null;
 
-    const root = html.take(container).div.className('core3-token-panel rounded-lg border border-gray-200 bg-white').getContext();
+    const x2many = this.state.variant === 'odoo_x2many';
+    const root = html.take(container).div.className(`core3-token-panel rounded-lg border border-gray-200 bg-white${x2many ? ' o-x2many-grid' : ''}`).getContext();
     const title = meta.title || this.state.title;
     const description = meta.description || this.state.description;
-    if (title || description || actions.length || this.options.columnChooser) {
+    if (title || description || (!x2many && actions.length) || this.options.columnChooser) {
       const toolbar = html.take(root).div.className('core3-token-toolbar flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
       if (title || description) {
         const copy = html.take(toolbar).div.getContext();
@@ -376,7 +377,23 @@ export class DataGrid extends BaseComponent {
       });
     }
 
-    if (meta.total != null) {
+    if (x2many && actions.length) {
+      const controls = html.take(root).div.className('o-x2many-controls').getContext();
+      for (const action of actions) {
+        const button = html.take(controls).button.className('o-x2many-create').attr('type', 'button').dataAttr('grid-action', action.id).getContext() as HTMLButtonElement;
+        button.textContent = action.label;
+        button.disabled = action.disabled === true;
+        if (!button.disabled) button.addEventListener('click', () => {
+          const context = { selectedIds: this.selectedIds(), action };
+          if (typeof action.onClick === 'function') action.onClick(context);
+          else this.submit(action.id, { ...action.params, selectedIds: context.selectedIds });
+        });
+      }
+    }
+
+    const totalRows = Number(meta.total || 0);
+    const effectivePageSize = Number(meta.pageSize || rows.length || 1);
+    if (meta.total != null && (!x2many || totalRows > effectivePageSize)) {
       const summary = html.take(root).div.className('core3-token-summary flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
       const total = Number(meta.total);
       const page = Number(meta.page || 1);

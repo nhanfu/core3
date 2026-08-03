@@ -154,6 +154,12 @@ describe('document detail components', () => {
     const component = new OdooFormView('order', { record: { number: 'SO-001' } }, {
       title_field: 'number',
       content_slot: true,
+      notebook: {
+        tabs: [
+          { id: 'lines', label: 'Order Lines', content_slot: true },
+          { id: 'other', label: 'Other Information', fields: [{ field: 'note', label: 'Note' }] },
+        ],
+      },
     });
     const container = mount(component);
     const embedded = component.getEmbeddedContent();
@@ -162,6 +168,29 @@ describe('document detail components', () => {
     component.setState({ record: { number: 'SO-002' } });
 
     expect(container.querySelector('.o-form-embedded-content')?.textContent).toBe('Order Lines');
+  });
+
+  it('switches declarative form notebook panels without redrawing embedded content', () => {
+    const component = new OdooFormView('notebook-order', { record: { number: 'SO-003', note: 'Handle carefully' } }, {
+      title_field: 'number',
+      content_slot: true,
+      notebook: {
+        tabs: [
+          { id: 'lines', label: 'Order Lines', content_slot: true },
+          { id: 'other', label: 'Other Information', fields: [{ field: 'note', label: 'Note' }] },
+        ],
+      },
+    });
+    const container = mount(component);
+    component.getEmbeddedContent().textContent = 'Line content';
+
+    const other = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(button => button.textContent === 'Other Information')!;
+    other.click();
+
+    expect(other.getAttribute('aria-selected')).toBe('true');
+    expect(container.querySelector<HTMLElement>('[data-notebook-panel="other"]')?.hidden).toBe(false);
+    expect(container.textContent).toContain('Handle carefully');
+    expect(component.getEmbeddedContent().textContent).toBe('Line content');
   });
 
   it('submits configured chatter actions with the current record id', async () => {
@@ -240,6 +269,19 @@ describe('document detail components', () => {
     expect(grid).toBeInstanceOf(DataGrid);
     expect(new ContactGrid('contacts', { rows: [] }, [])).toBeInstanceOf(DataGrid);
     expect(mount(grid).querySelector('.o-document-totals')?.textContent).toContain('18,500,000 ₫');
+  });
+
+  it('renders Odoo x2many actions as inline create controls', () => {
+    const grid = new LineItemGrid('lines', {
+      rows: [],
+      variant: 'odoo_x2many',
+      actions: [{ id: 'add_line', label: 'Add a line' }],
+    }, [{ field: 'description', label: 'Description' }]);
+    const container = mount(grid);
+
+    expect(container.querySelector('.o-x2many-grid')).not.toBeNull();
+    expect(container.querySelector('.o-x2many-create')?.textContent).toBe('Add a line');
+    expect(container.querySelector('.core3-token-toolbar')).toBeNull();
   });
 
   it('renders resource rows across assignment dates', () => {

@@ -299,6 +299,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       emptyState: def.empty_state,
       footerStats: def.footer?.stats || [],
       footerRecord,
+      variant: def.variant,
     },
     columns,
     {

@@ -145,7 +145,49 @@ export class OdooFormView extends BaseComponent {
       renderFields(this.def.fields || []);
     }
 
-    if (this.def.content_slot) sheet.appendChild(this.getEmbeddedContent());
+    const notebookTabs = Array.isArray(this.def.notebook?.tabs) ? this.def.notebook.tabs : [];
+    if (!editing && notebookTabs.length) {
+      const notebook = html.take(sheet).section.className('o-form-notebook').getContext();
+      const tablist = html.take(notebook).div.className('o-form-notebook-tabs').attr('role', 'tablist').getContext();
+      const activeTab = String(this.state.activeNotebookTab || this.def.notebook.active || notebookTabs[0]?.id || '');
+      const buttons: HTMLButtonElement[] = [];
+      const panels: HTMLElement[] = [];
+      const selectTab = (id: string) => {
+        this.state.activeNotebookTab = id;
+        buttons.forEach(button => {
+          const selected = button.dataset.notebookTab === id;
+          button.classList.toggle('is-active', selected);
+          button.setAttribute('aria-selected', String(selected));
+        });
+        panels.forEach(panel => { panel.hidden = panel.dataset.notebookPanel !== id; });
+      };
+      for (const tab of notebookTabs) {
+        const id = String(tab.id || tab.label || `tab-${buttons.length}`);
+        const panelId = `${this.id}-notebook-${id}`;
+        const button = html.take(tablist).button.className(`o-form-notebook-tab${id === activeTab ? ' is-active' : ''}`).attr('type', 'button').attr('role', 'tab').getContext() as HTMLButtonElement;
+        button.textContent = String(tab.label || id);
+        button.dataset.notebookTab = id;
+        button.id = `${panelId}-tab`;
+        button.setAttribute('aria-controls', panelId);
+        button.setAttribute('aria-selected', String(id === activeTab));
+        buttons.push(button);
+        const panel = html.take(notebook).div.className(`o-form-notebook-panel${tab.content_slot ? ' o-form-notebook-panel-slot' : ''}`).attr('role', 'tabpanel').getContext();
+        panel.id = panelId;
+        panel.dataset.notebookPanel = id;
+        panel.setAttribute('aria-labelledby', button.id);
+        panel.hidden = id !== activeTab;
+        panels.push(panel);
+        if (tab.content_slot) panel.appendChild(this.getEmbeddedContent());
+        if (Array.isArray(tab.groups)) {
+          for (const group of tab.groups) renderFields(group.fields || [], group.title, panel, group.wide === true);
+        } else if (Array.isArray(tab.fields)) {
+          renderFields(tab.fields, undefined, panel);
+        }
+        button.addEventListener('click', () => selectTab(id));
+      }
+    } else if (this.def.content_slot) {
+      sheet.appendChild(this.getEmbeddedContent());
+    }
 
     if (!this.def.message_source && !this.def.follower_source && !this.def.attachment_source) return;
     const chatter = document.createElement('aside');
