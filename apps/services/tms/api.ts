@@ -687,6 +687,10 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
       if (actionDefinition.operation === 'follower_add' || actionDefinition.operation === 'follower_remove') {
         if (typeof body.user_id !== 'string' || !body.user_id) return apiError(400, 'user_id required');
+        if (actionDefinition.operation === 'follower_add' && String(authUser.view_scope || 'all') !== 'all') {
+          const [candidate] = await repository.query('SELECT id FROM users WHERE id = ? AND enabled = true AND branch_id = ?', [body.user_id, String(authUser.branch_id || '')]);
+          if (!candidate) return apiError(403, 'Follower is outside the current view scope');
+        }
         return json(await repository.mutateOrderFollower(body.id, actionDefinition.operation, body.user_id, activityActor));
       }
       if (actionDefinition.operation !== 'message' && actionDefinition.operation !== 'note') return apiError(400, 'Invalid order chatter operation');

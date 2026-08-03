@@ -6,6 +6,7 @@ node_modules/
 *.duckdb
 *.duckdb.wal
 *.duckdb.tmp
+apps/services/*/.data/
 
 # Build, test, and diagnostic output
 coverage/
