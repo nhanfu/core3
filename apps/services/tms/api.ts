@@ -332,7 +332,14 @@ export function createTmsApi(ctx: TmsApiContext) {
       } else {
         importText = await file.text();
       }
-      const result = await repository.importMasterData(meta.scope, importText, activityActor);
+      const importSource = [...SOURCES.values()].find((source: any) => source.import?.scope === meta.scope);
+      if (!importSource?.import) return apiError(400, 'Invalid master-data scope');
+      requirePerm(String(importSource.import.permission || permissionForEndpoint('upload.master_data_import')));
+      const result = await repository.importMasterData(
+        { table: String(importSource.import.table), scope: String(importSource.import.scope) },
+        importText,
+        activityActor,
+      );
       return json(result);
     }
     if (file.size <= 0 || file.size > 5 * 1024 * 1024) {

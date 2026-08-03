@@ -201,9 +201,9 @@ export class DuckDbRepository {
     return row || null;
   }
 
-  async importMasterData(scope: string, csvText: string, actor: { id?: string | null; name: string }) {
-    const allowed = new Set(['container_type', 'vehicle_type', 'unit', 'cargo_type', 'fee_type', 'currency']);
-    if (!allowed.has(scope)) throw { status: 400, message: 'Invalid master-data scope' };
+  async importMasterData(config: { table: string; scope: string }, csvText: string, actor: { id?: string | null; name: string }) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(config.table) || !config.scope) throw { status: 400, message: 'Invalid import datasource' };
+    const scope = config.scope;
     const lines = csvText.replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim());
     if (lines.length < 2 || lines.length > 1001) throw { status: 400, message: 'CSV must contain 1 to 1000 data rows' };
     const parse = (line: string) => {
@@ -237,10 +237,10 @@ export class DuckDbRepository {
           const status = statusIndex >= 0 && cells[statusIndex] ? cells[statusIndex] : 'Active';
           const sortOrder = sortIndex >= 0 && cells[sortIndex] ? Number(cells[sortIndex]) : 0;
           if (!Number.isInteger(decimals) || decimals < 0 || decimals > 6 || !Number.isInteger(sortOrder) || !['Active', 'Inactive'].includes(status)) throw { status: 400, message: `Invalid values for ${code}` };
-          await runOnConnection(conn, `INSERT INTO master_data(id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(kind, code) DO UPDATE SET name = excluded.name, description = excluded.description, symbol = excluded.symbol, decimals = excluded.decimals, status = excluded.status, sort_order = excluded.sort_order`, [crypto.randomUUID(), scope, code, name, description, symbol, decimals, status, sortOrder]);
+          await runOnConnection(conn, `INSERT INTO ${config.table}(id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(kind, code) DO UPDATE SET name = excluded.name, description = excluded.description, symbol = excluded.symbol, decimals = excluded.decimals, status = excluded.status, sort_order = excluded.sort_order`, [crypto.randomUUID(), scope, code, name, description, symbol, decimals, status, sortOrder]);
           imported++;
         }
-        await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, detail) VALUES(?,?,?,?,?)', [actor.id || null, actor.name, 'import', 'master_data', `Imported ${imported} ${scope} records`]);
+        await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, detail) VALUES(?,?,?,?,?)', [actor.id || null, actor.name, 'import', config.table, `Imported ${imported} ${scope} records`]);
         await runOnConnection(conn, 'COMMIT');
         return { imported, scope };
       } catch (error) {

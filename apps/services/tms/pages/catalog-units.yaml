@@ -11,6 +11,7 @@ datasources:
     single: false
     permission: catalog.read
     table: master_data
+    import: { permission: catalog.write, table: master_data, scope: unit }
     mutations:
       create: { permission: catalog.write, scope: unit, fields: [code, name, description, sort_order, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] }, sort_order: { integer: true, min: 0 } } } }
       update: { permission: catalog.write, scope: unit, fields: [code, name, description, sort_order, status], timestamps: true, validate: { required: [code, name], fields: { status: { enum: [Active, Inactive] }, sort_order: { integer: true, min: 0 } } } }

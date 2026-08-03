@@ -19,6 +19,7 @@ export type DatasourceDefinition = {
   meta?: Record<string, unknown>;
   table?: string;
   mutations?: Record<string, Record<string, unknown>>;
+  import?: Record<string, unknown>;
 };
 
 export type ToolbarDefinition = {
@@ -83,7 +84,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'table', 'mutations', 'workflow']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'table', 'mutations', 'import', 'workflow']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -268,6 +269,14 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
       issues.push(`${path}.single must be a boolean`);
     }
     if (source.table !== undefined) requireString(source.table, `${path}.table`, issues);
+    if (source.import !== undefined) {
+      requireRecord(source.import, `${path}.import`, issues);
+      if (isRecord(source.import)) {
+        requireString(source.import.permission, `${path}.import.permission`, issues);
+        requireString(source.import.table, `${path}.import.table`, issues);
+        requireString(source.import.scope, `${path}.import.scope`, issues);
+      }
+    }
     if (source.mutations !== undefined) {
       requireRecord(source.mutations, `${path}.mutations`, issues);
       if (isRecord(source.mutations)) {
