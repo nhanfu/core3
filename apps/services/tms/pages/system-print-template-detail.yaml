@@ -10,7 +10,20 @@ datasources:
     permission: system.read
     query: "SELECT id, template_id, sequence, block_type, label, token_key, content, status FROM print_template_blocks WHERE template_id = :id ORDER BY sequence, id"
 components:
-  - { type: DocumentSummary, source: print_template, title_field: name, subtitle_field: code, status_field: status, columns: [{ field: description, label: Describe }, { field: config_value, label: Sample code }] }
+  - type: OdooFormView
+    source: print_template
+    title_field: name
+    subtitle_field: code
+    status_field: status
+    statusbar:
+      - { value: Active, label: Active }
+      - { value: Inactive, label: Inactive }
+    groups:
+      - title: Template information
+        fields:
+          - { field: description, label: Description, wide: true }
+          - { field: config_value, label: Sample code, wide: true }
+    content_slot: true
   - { type: TemplatePreview, source: template_blocks, template_source: print_template }
   - type: DataGrid
     source: template_blocks
