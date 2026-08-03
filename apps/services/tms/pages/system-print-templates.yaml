@@ -7,26 +7,71 @@ datasources:
     query: "SELECT id, code, name, config_value, description, status, sort_order, created_at FROM system_configs WHERE kind = 'print_template' AND (:status IS NULL OR status = :status) AND (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY sort_order, code"
 toolbar: [{ id: add_print_template, label: '+ Add printing templates', variant: primary, permission: system.write, action: add_print_template }]
 components:
-  - { type: ListToolbar, source: print_templates, filter_field: q, search: { label: Find printable templates, placeholder: 'Find code or name...' }, actions: [{ id: print_templates.export, label: 'Export CSV', icon: download }] }
-  - { type: StatusTabs, source: print_templates, filter_field: status, tabs: [{ id: '', label: All }, { id: Active, label: Using }, { id: Inactive, label: Stop using }] }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: print_templates
+    create_action: add_print_template
+    create_label: Add print template
+    search:
+      label: Search print templates
+      placeholder: 'Find code or name...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Active }
+          - { id: Inactive, label: Inactive }
+    actions:
+      - { id: print_templates.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add print template
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all print templates
+      select_row: Select print template
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: config_value, label: Sample code }
+            - { field: description, label: Description }
+            - { field: status, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
+    selectable: true
+    row_actions: menu
     empty_state: { title: There are no printed samples yet }
     columns:
-      - { field: code, label: Code }
+      - { field: code, label: Code, sortable: true }
       - { field: name, label: Print template, type: PrimaryEntityCell, secondary: description }
       - { field: config_value, label: Sample code }
-      - { field: status, label: Status, type: StatusChip, colors: { Active: green, Inactive: red } }
+      - field: status
+        label: Status
+        type: StatusChip
+        colors: { Active: green, Inactive: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_print_template, label: Detail, variant: primary, permission: system.read }
-          - { id: edit_print_template, label: Fix, variant: ghost, permission: system.write }
-          - { id: delete_print_template, label: Erase, variant: danger, permission: system.write }
+          - { id: view_print_template, label: View details, variant: primary, permission: system.read }
+          - { id: edit_print_template, label: Edit, variant: ghost, permission: system.write }
+          - { id: delete_print_template, label: Delete, variant: danger, permission: system.write }
 actions:
   - { id: view_print_template, type: navigate, permission: system.read, navigate_to: /system/print-templates/detail, params: { id: '{row.id}' } }
   - { id: add_print_template, type: form, permission: system.write, title: Add a print template, table: system_configs, scope: print_template, operation: insert, refresh: [print_templates], fields: [{ field: code, label: Code, type: text, required: true }, { field: name, label: Name, type: text, required: true }, { field: config_value, label: Sample code, type: text }, { field: description, label: Describe, type: textarea }, { field: status, label: Status, type: select, options: [{ id: Active, label: Using }, { id: Inactive, label: Stop using }], default: Active }] }
