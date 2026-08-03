@@ -686,6 +686,8 @@
 .o-form-field-value { min-height: 22px; margin-top: 3px; color: var(--o-form-text); font-size: 14px; }
 .o-form-field-value.is-money { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .o-form-chatter { min-height: 380px; overflow: hidden; border: 1px solid var(--o-form-border); border-radius: 4px; background: var(--o-form-surface); }
+.o-form-inline-editor { width: 100%; min-height: 30px; padding: 5px 7px; border: 1px solid var(--o-form-border); border-radius: 3px; background: var(--o-form-surface); color: var(--o-form-text); font: inherit; }
+.o-form-inline-editor:focus { border-color: var(--o-form-action); outline: 1px solid var(--o-form-action); }
 .o-form-chatter-topbar { display: flex; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid var(--o-form-border); }
 .o-form-chatter-primary, .o-form-chatter-secondary { min-height: 28px; padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 3px; font: inherit; font-size: 12px; font-weight: 600; }
 .o-form-chatter-primary { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-chatter-secondary { background: var(--o-form-surface); color: var(--o-form-text); }.o-form-chatter-primary:disabled, .o-form-chatter-secondary:disabled { cursor: default; opacity: .7; }

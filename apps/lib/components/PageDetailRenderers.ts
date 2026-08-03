@@ -12,7 +12,7 @@ export class PageDetailRenderers extends BaseComponent {
   }
 
   private createRenderers(deps: any) {
-  const { config, dataMap, ctx, bindSource, filterState, paginationState, sortState, pageParams, client, createQuery, refreshSources, applySourceFilters, handleAction, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
+  const { config, dataMap, ctx, bindSource, filterState, paginationState, sortState, pageParams, client, createQuery, refreshSources, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
   const { DocumentSummary } = await import('./DocumentSummary.ts');
@@ -33,6 +33,21 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   const { OdooFormView } = await import('./OdooFormView.ts');
   const sourceResult = dataMap[def.source] || { data: {} };
   const formDef = { ...def };
+  const editButton = (def.header_actions || []).find((button: any) => {
+    const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
+    return action && ['form', 'server_form'].includes(action.type) && action.operation === 'update';
+  });
+  const editAction = editButton ? (config.actions || []).find((candidate: any) => candidate.id === editButton.id) : undefined;
+  if (editAction) {
+    formDef.editable = def.editable !== false;
+    formDef.edit_action_id = editAction.id;
+    formDef.edit_fields = (editAction.fields || []).map((field: any) => ({
+      ...field,
+      options: field.options || (field.options_source
+        ? (dataMap[field.options_source]?.data || []).map((row: any) => ({ id: row.value ?? row.id, label: row.label ?? row.name ?? row.value ?? row.id }))
+        : undefined),
+    }));
+  }
   for (const key of ['message_action', 'note_action']) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === def[key]);
     if (!action || !hasPermission(ctx.user, action.permission)) delete formDef[key];
@@ -50,6 +65,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       messages: dataMap[def.message_source]?.data || [],
       followers: dataMap[def.follower_source]?.data || [],
       attachments: dataMap[def.attachment_source]?.data || [],
+      editing: false,
     },
     formDef,
   );
@@ -70,6 +86,10 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
       return;
     }
     await handleAction(actionDef, params || {});
+  };
+  comp.state.onInlineSave = async (values: Record<string, unknown>) => {
+    if (!editAction) return;
+    await handleInlineForm(editAction, values);
   };
   comp.mount(slot);
   const bind = (sourceId: string | undefined, stateKey: string) => bindSource(sourceId, data => {

@@ -17,21 +17,41 @@ export class OdooFormView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const record = this.state.record || {};
+    const sourceRecord = this.state.record || {};
+    const editing = this.state.editing === true && this.def.editable !== false;
+    const draft = editing ? { ...sourceRecord, ...(this.state.draft || {}) } : sourceRecord;
+    const record = draft;
     const messages = Array.isArray(this.state.messages) ? this.state.messages : [];
     const followers = Array.isArray(this.state.followers) ? this.state.followers : [];
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
     const root = html.take(container).section.className('o-form-view').getContext();
     const headerActions = Array.isArray(this.def.header_actions) ? this.def.header_actions : [];
-    if (headerActions.length) {
+    if (headerActions.length || editing) {
       const actionBar = html.take(root).div.className('o-form-actionbar').getContext();
-      for (const action of headerActions) {
+      for (const action of headerActions.filter((candidate: any) => !editing || candidate.id !== this.def.edit_action_id)) {
         const button = html.take(actionBar).button
           .className(`o-form-action o-form-action-${action.variant || 'secondary'}`)
           .attr('type', 'button')
           .text(String(action.label || action.id || 'Action'))
           .getContext();
-        button.addEventListener('click', () => void this.submit(String(action.id), { ...record }));
+        button.addEventListener('click', () => {
+          if (action.id === this.def.edit_action_id && this.def.editable !== false) this.setState({ editing: true, draft: { ...sourceRecord } });
+          else void this.submit(String(action.id), { ...record });
+        });
+      }
+      if (editing) {
+        const save = html.take(actionBar).button.className('o-form-action o-form-action-primary').attr('type', 'button').text('Save').getContext() as HTMLButtonElement;
+        const discard = html.take(actionBar).button.className('o-form-action o-form-action-secondary').attr('type', 'button').text('Discard').getContext();
+        save.addEventListener('click', async () => {
+          save.disabled = true;
+          try {
+            await this.state.onInlineSave?.({ ...sourceRecord, ...(this.state.draft || {}), id: sourceRecord.id });
+            this.setState({ editing: false, draft: {} });
+          } finally {
+            save.disabled = false;
+          }
+        });
+        discard.addEventListener('click', () => this.setState({ editing: false, draft: {} }));
       }
     }
     const layout = html.take(root).div.className('o-form-layout').getContext();
@@ -67,12 +87,38 @@ export class OdooFormView extends BaseComponent {
       const item = html.take(fields).div.className(`o-form-field${field.wide || field.type === 'textarea' ? ' o-form-field-wide' : ''}`).getContext();
       html.take(item).div.className('o-form-field-label').text(String(field.label || ''));
       const value = html.take(item).div.className(`o-form-field-value${field.type === 'money' ? ' is-money' : ''}`).getContext();
-      value.textContent = record[field.field] == null || record[field.field] === ''
-        ? '—'
-        : String(record[field.field]);
+      if (!editing) {
+        value.textContent = record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]);
+        continue;
+      }
+      const current = record[field.field] ?? '';
+      let editor: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+      if (field.type === 'textarea' || field.type === 'richtext') {
+        editor = document.createElement('textarea');
+        editor.rows = 3;
+      } else if (field.type === 'select' || field.type === 'multi-select') {
+        editor = document.createElement('select');
+        for (const option of field.options || []) {
+          const itemOption = typeof option === 'string' ? { id: option, label: option } : option;
+          const optionEl = document.createElement('option');
+          optionEl.value = String(itemOption.id ?? itemOption.value ?? '');
+          optionEl.textContent = String(itemOption.label ?? optionEl.value);
+          editor.appendChild(optionEl);
+        }
+      } else {
+        editor = document.createElement('input');
+        editor.type = field.type === 'number' || field.type === 'money' ? 'number' : ['date', 'time'].includes(field.type) ? field.type : 'text';
+      }
+      editor.className = 'o-form-inline-editor';
+      editor.value = Array.isArray(current) ? current.join(',') : String(current);
+      editor.dataset.formField = field.field;
+      editor.addEventListener('input', () => { this.state.draft = { ...(this.state.draft || {}), [field.field]: editor.value }; });
+      value.appendChild(editor);
       }
     };
-    if (Array.isArray(this.def.groups) && this.def.groups.length) {
+    if (editing && Array.isArray(this.def.edit_fields)) {
+      renderFields(this.def.edit_fields, 'Edit details');
+    } else if (Array.isArray(this.def.groups) && this.def.groups.length) {
       for (const group of this.def.groups) renderFields(group.fields || [], group.title);
     } else {
       renderFields(this.def.fields || []);

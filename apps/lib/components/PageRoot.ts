@@ -499,6 +499,26 @@ export class PageRuntime extends BaseComponent {
     resolveActionParams,
   });
 
+  async function handleInlineForm(actionDef: any, values: Record<string, unknown>) {
+    if (!actionDef) return;
+    if (actionDef.type === 'form' && actionDef.operation === 'update') {
+      const id = values.id ?? pageParams.id ?? ctx.state.id;
+      const changes = (actionDef.fields || [])
+        .filter((field: any) => field.field !== 'id' && values[field.field] !== undefined)
+        .map((field: any) => ({ field: field.field, value: values[field.field] }));
+      await client.patch({ table: actionDef.table, action: 'update', id, scope: actionDef.scope, changes });
+      if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+      return;
+    }
+    if (actionDef.type === 'server_form') {
+      await client.action(actionDef.action, {
+        ...resolveActionParams(actionDef.params, { ...ctx, row: values }),
+        values,
+      });
+      if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+    }
+  }
+
   // ── Component renderers ───────────────────────────────────────────────────
 
   const gridRenderer = new PageGridRenderers({
@@ -534,6 +554,7 @@ export class PageRuntime extends BaseComponent {
     refreshSources,
     applySourceFilters,
     handleAction,
+    handleInlineForm,
     resolveActionParams,
     registry,
     renderStatRow,
