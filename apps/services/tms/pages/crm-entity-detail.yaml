@@ -84,22 +84,36 @@ datasources:
 
 toolbar:
   - { id: back_crm_btn, label: 'List', icon: arrow-left, variant: secondary, action: back_crm }
-  - { id: edit_crm_entity, label: Edit object, variant: primary, permission: crm.write, action: edit_crm_entity }
 
 components:
-  - type: DocumentSummary
+  - type: OdooFormView
     source: crm_entity_detail
     title_field: code
     subtitle_field: name
-    status_field: status_label
-    status_colors: { Work: green, Shut down: red }
-    columns:
-      - { field: category_label, label: Classify }
-      - { field: tax_code, label: Tax code }
-      - { field: owner_name, label: Sales is in charge }
-      - { field: visibility_label, label: Display range }
-      - { field: phone, label: Main phone }
-      - { field: email, label: Primary email }
+    status_field: status
+    status_label_field: status_label
+    status_colors: { Hoạt động: green, Ngưng hoạt động: red }
+    statusbar:
+      - { value: Active, label: Working }
+      - { value: Inactive, label: Shut down }
+    header_actions:
+      - { id: edit_crm_entity, label: Edit object, variant: secondary }
+    message_source: crm_entity_activity
+    chatter_label: Contact history
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    content_slot: true
+    groups:
+      - title: CRM object details
+        fields:
+          - { field: category_label, label: Classify }
+          - { field: tax_code, label: Tax code }
+          - { field: owner_name, label: Sales is in charge }
+          - { field: visibility_label, label: Display range }
+          - { field: phone, label: Main phone }
+          - { field: email, label: Primary email }
   - type: ContactGrid
     source: crm_entity_contacts
     title: Contact person
@@ -119,17 +133,8 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: edit_crm_contact, label: Fix, variant: ghost, permission: crm.write }
-          - { id: delete_crm_contact, label: Erase, variant: danger, permission: crm.write }
-  - type: ApprovalTimeline
-    source: crm_entity_activity
-    title: Contact history
-    empty_state: { title: No contact activity yet }
-    actor_field: actor_name
-    action_field: action_label
-    detail_field: detail
-    timestamp_field: created_at
-
+          - { id: edit_crm_contact, label: Edit, variant: ghost, permission: crm.write }
+          - { id: delete_crm_contact, label: Delete, variant: danger, permission: crm.write }
 actions:
   - { id: back_crm, type: navigate, navigate_to: '{state.back}' }
   - id: edit_crm_entity

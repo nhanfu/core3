@@ -51,65 +51,85 @@ toolbar:
     action: add_customer
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: customers
-    filter_field: q
+    create_action: add_customer
+    create_label: Add customer
     search:
-      label: Search for customers
-      placeholder: 'Find code, name, code, phone number...'
-    search_button: true
-    actions: [{ id: customers.export, label: '', title: 'Export Excel', icon: download }]
-    help: true
-  - type: StatusTabs
-    source: customers
-    filter_field: stage
-    show_counts: true
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Lead, label: Potential guests }
-      - { id: Contacting, label: Approaching }
-      - { id: Customer, label: Client }
-  - type: DataGrid
-    source: customers
+      label: Search customers
+      placeholder: 'Find code, name, tax code, or phone number...'
+    filters:
+      - field: stage
+        label: Stage
+        placeholder: All stages
+        options:
+          - { id: Lead, label: Potential guests }
+          - { id: Contacting, label: Approaching }
+          - { id: Customer, label: Client }
+      - field: visibility
+        label: Visibility
+        placeholder: All visibility
+        options:
+          - { id: Public, label: Public }
+          - { id: Private, label: Private }
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Working }
+          - { id: Inactive, label: Shut down }
+    actions: [{ id: customers.export, label: Export Excel, title: Export Excel, icon: download }]
+    labels:
+      new: Add customer
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all customers
+      select_row: Select customer
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: stage
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: stage_label, label: Stage }
+            - { field: owner_name, label: Sales owner }
+            - { field: phone, label: Phone }
+            - { field: visibility_label, label: Visibility }
     page_size: 50
-    page_size_options: [10, 25, 50, 100]
-    row_numbers: true
     column_chooser: true
     row_key: id
     selectable: true
+    row_open_action: view_customer
+    row_actions: menu
     empty_state:
       title: There are no customers
       description: Try changing filters or creating new customers.
     columns:
-      - field: system_code
-        label: HT code
-        sortable: true
-      - field: code
-        label: Code/name
-        type: PrimaryEntityCell
-        secondary: name
-        avatar: building
-      - field: entity_type
-        label: Type
-        type: StatusChip
-        colors:
-          Client: neutral
-      - field: tax_code
-        label: Tax code
+      - { field: system_code, label: HT code, sortable: true }
+      - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
+      - { field: entity_type, label: Type, type: StatusChip, colors: { Khách hàng: neutral } }
+      - { field: tax_code, label: Tax code }
       - field: stage_label
         label: Stage
         type: StatusChip
-        colors:
-          Potential guests: blue
-          Approaching: amber
-          Client: green
-      - field: owner_name
-        label: Sales is in charge
-      - field: phone
-        label: Main contact
-        type: PrimaryEntityCell
-        secondary: email
+        colors: { Khách tiềm năng: blue, Đang tiếp cận: amber, Khách hàng: green }
+      - { field: owner_name, label: Sales is in charge }
+      - { field: phone, label: Main contact, type: PrimaryEntityCell, secondary: email }
+      - { field: visibility_label, label: Visibility, optional: hide }
+      - { field: status_label, label: Status, type: StatusChip, colors: { Hoạt động: green, Ngưng hoạt động: red }, optional: hide }
       - field: actions
         label: ''
         sortable: false
@@ -117,14 +137,14 @@ components:
         actions:
           - id: view_customer
             label: Detail
-            variant: ghost
+            variant: secondary
             permission: crm.read
           - id: edit_customer
-            label: Fix
+            label: Edit
             variant: ghost
             permission: crm.write
           - id: delete_customer
-            label: Erase
+            label: Delete
             variant: danger
             permission: crm.write
 
