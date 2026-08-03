@@ -21,14 +21,72 @@ datasources:
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'currency' AND status = 'Active' UNION SELECT DISTINCT currency AS value, currency AS label FROM accounting_entries WHERE currency IS NOT NULL AND currency <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
 toolbar: [{ id: add_advance_btn, label: '+ Add advance', variant: primary, permission: accounting.write, action: add_advance }]
 components:
-  - { type: ListToolbar, source: advances, filter_field: q, search: { label: Looking for advance, placeholder: 'Find document number or recipient...' }, date_range: { from_field: from_date, to_field: to_date, from_label: 'From the date of advance payment', to_label: 'Until the advance date', presets: [today, week, month, quarter, year, all] }, actions: [{ id: advances.export, label: 'Export CSV', icon: download }] }
-  - { type: StatusTabs, source: advances, filter_field: status, variant: contained, tabs: [{ id: '', label: All }, { id: Draft, label: Draft }, { id: Pending Approval, label: Browsing }, { id: Approved, label: Approved }, { id: Cancelled, label: Canceled }] }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: advances
+    create_action: add_advance
+    create_label: Add advance
+    search:
+      label: Search advances
+      placeholder: 'Find document number, content, or recipient...'
+    date_range:
+      label: Advance date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        all: All dates
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Pending Approval, label: Pending approval }
+          - { id: Approved, label: Approved }
+          - { id: Cancelled, label: Cancelled }
+    actions:
+      - { id: advances.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add advance
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all advances
+      select_row: Select advance
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: code
+          subtitle: name
+          fields:
+            - { field: counterparty, label: Recipient }
+            - { field: amount_display, label: Amount }
+            - { field: due_date, label: Due date }
+            - { field: status_label, label: Status }
     page_size: 20
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state: { title: There is no advance }
     columns:
       - { field: code, label: Document number, sortable: true }
@@ -41,18 +99,18 @@ components:
       - field: status_label
         label: Status
         type: StatusChip
-        colors: { Draft: neutral, Browsing: amber, Approved: green, Canceled: red }
+        colors: { Nháp: neutral, Đang duyệt: amber, Đã duyệt: green, Đã hủy: red }
       - field: actions
         label: ''
         sortable: false
         actions:
-          - { id: view_advance, label: Detail, variant: secondary, permission: accounting.read }
-          - { id: edit_advance, label: Fix, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: submit_advance, label: Browser, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
-          - { id: approve_advance, label: Browse, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
-          - { id: reject_advance, label: Refuse, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: view_advance, label: View, variant: secondary, permission: accounting.read }
+          - { id: edit_advance, label: Edit, variant: ghost, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_advance, label: Submit, variant: primary, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_advance, label: Approve, variant: primary, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_advance, label: Reject, variant: ghost, permission: accounting.approve, show_if: "row.status === 'Pending Approval'" }
           - { id: cancel_advance, label: Cancel, variant: danger, permission: accounting.write, show_if: "['Draft', 'Pending Approval', 'Approved'].includes(row.status)" }
-          - { id: delete_advance, label: Erase, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
+          - { id: delete_advance, label: Delete, variant: danger, permission: accounting.write, show_if: "row.status === 'Draft'" }
 actions:
   - id: add_advance
     type: form
