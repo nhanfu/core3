@@ -51,6 +51,9 @@ datasources:
           WHEN 'orders.lines.delete' THEN 'Deleted order line'
           WHEN 'orders.message' THEN 'Message'
           WHEN 'orders.note' THEN 'Note'
+          WHEN 'orders.followers.add' THEN 'Added follower'
+          WHEN 'orders.followers.remove' THEN 'Removed follower'
+          WHEN 'orders.attachments.upload' THEN 'Uploaded attachment'
           ELSE action END AS action_label,
         detail, CAST(created_at AS VARCHAR) AS created_at
       FROM system_activity
@@ -65,10 +68,35 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT created_by AS name
-      FROM orders
-      WHERE id = :id AND created_by IS NOT NULL
-        AND (:view_scope = 'all' OR branch_id = :current_branch_id)
+      SELECT u.id AS user_id, u.name, u.email, u.avatar_url,
+        CAST(f.created_at AS VARCHAR) AS followed_at
+      FROM order_followers f
+      JOIN users u ON u.id = f.user_id
+      JOIN orders o ON o.id = f.order_id
+      WHERE f.order_id = :id
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY lower(u.name), lower(u.email)
+  - id: order_detail_follower_candidates
+    single: false
+    permission: orders.read
+    query: |
+      SELECT u.id AS user_id, u.name, u.email, u.avatar_url
+      FROM users u
+      WHERE u.enabled = true
+        AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
+      ORDER BY lower(u.name), lower(u.email)
+  - id: order_detail_attachments
+    single: false
+    permission: orders.read
+    query: |
+      SELECT a.id, a.order_id, a.file_name, a.mime_type, a.size_bytes,
+        u.name AS uploaded_by_name, CAST(a.created_at AS VARCHAR) AS created_at
+      FROM order_attachments a
+      JOIN orders o ON o.id = a.order_id
+      LEFT JOIN users u ON u.id = a.uploaded_by
+      WHERE a.order_id = :id
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY a.created_at DESC
   - id: order_unit_lookup
     single: false
     permission: orders.read
@@ -103,6 +131,10 @@ components:
       - { id: cancel_order_detail, label: Cancel, variant: secondary, show_if: "state.order_detail.status !== 'Cancelled'" }
     message_source: order_detail_timeline
     follower_source: order_detail_followers
+    follower_candidates_source: order_detail_follower_candidates
+    follower_candidates_page_size: 100
+    attachment_source: order_detail_attachments
+    attachment_page_size: 100
     chatter_label: Messages and activities
     message_label: Send message
     note_label: Log note
@@ -110,6 +142,22 @@ components:
     note_action: log_order_note
     follower_label: Followers
     attachment_label: Attachments
+    add_follower_label: Add Followers
+    remove_follower_label: Remove follower
+    no_followers_label: No followers
+    follower_search_placeholder: Select a follower
+    add_label: Add
+    add_attachment_label: Attach files
+    no_attachments_label: No attachments
+    uploading_label: Uploading…
+    upload_failed_label: Upload failed
+    download_label: Download
+    preview_label: Preview
+    attachment_accept: image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip
+    follower_add_action: add_order_follower
+    follower_remove_action: remove_order_follower
+    attachment_upload_action: upload_order_attachment
+    attachment_download_action: download_order_attachment
     message_actor_field: actor_name
     message_action_field: action_label
     message_detail_field: detail
@@ -124,6 +172,9 @@ components:
       orders.lines.delete: Deleted order line
       orders.message: Message
       orders.note: Note
+      orders.followers.add: Added follower
+      orders.followers.remove: Removed follower
+      orders.attachments.upload: Uploaded attachment
       created: Created
     message_detail_labels: { Order created: Order created }
     content_slot: true
@@ -201,6 +252,32 @@ actions:
     refresh: [order_detail_timeline]
     fields:
       - { field: content, label: Note, type: textarea, required: true }
+  - id: add_order_follower
+    type: server
+    permission: orders.write
+    action: orders.followers.add
+    handler: order_chatter
+    operation: follower_add
+    params: { user_id: '{row.user_id}' }
+    refresh: [order_detail_followers, order_detail_timeline]
+  - id: remove_order_follower
+    type: server
+    permission: orders.write
+    action: orders.followers.remove
+    handler: order_chatter
+    operation: follower_remove
+    params: { user_id: '{row.user_id}' }
+    refresh: [order_detail_followers, order_detail_timeline]
+  - id: upload_order_attachment
+    type: upload
+    permission: orders.write
+    kind: order_attachment
+    params: { order_id: '{row.id}' }
+    refresh: [order_detail_attachments, order_detail_timeline]
+  - id: download_order_attachment
+    type: download
+    permission: orders.read
+    kind: order_attachment
   - id: edit_order_detail
     type: form
     permission: orders.write
