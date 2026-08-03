@@ -42,11 +42,33 @@ datasources:
       WHERE (:from_date IS NULL OR e.created_at >= CAST(:from_date AS DATE)) AND (:to_date IS NULL OR e.created_at < CAST(:to_date AS DATE) + INTERVAL 1 DAY) AND (:view_scope = 'all' OR d.branch_id = :current_branch_id)
       GROUP BY e.department ORDER BY employee_count DESC, e.department
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: crm_recent_quotes
+    search:
+      label: Search quotes
+      placeholder: 'Find a quote...'
+    date_range:
+      label: Activity date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, all]
     filter_sources: [crm_kpis, crm_quote_pipeline, crm_recent_quotes, crm_customer_value, crm_employee_breakdown]
-    date_range: { from_field: from_date, to_field: to_date, from_label: 'From date', to_label: 'Come day', presets: [today, week, month, quarter, year, all] }
     actions: [{ id: crm_recent_quotes.export, label: 'Export CSV', icon: download }]
+    page_size: 10
+    column_chooser: true
+    row_key: code
+    selectable: true
+    row_actions: menu
+    empty_state: { title: There are no recent quotes yet }
+    columns:
+      - { field: code, label: Code }
+      - { field: title, label: Quote, type: PrimaryEntityCell, secondary: customer_name }
+      - { field: amount, label: Value, align: right }
+      - { field: valid_until, label: Effect arrives }
+      - { field: status, label: Status, type: StatusChip, colors: { Draft: neutral, Sent: blue, Accepted: green } }
   - type: StatRow
     source: crm_kpis
     stats:
@@ -59,33 +81,27 @@ components:
       - { label: Quoted value, field: accepted_quote_value, color: blue }
       - { label: Application approved, field: approved_order_count, color: indigo }
   - { type: Chart, source: crm_quote_pipeline, title: Quote funnel, label_field: label, value_field: value, width: 560, height: 240, color: blue }
-  - type: DataGrid
-    source: crm_recent_quotes
-    page_size: 10
-    column_chooser: true
-    row_key: code
-    empty_state: { title: There are no recent quotes yet }
-    columns:
-      - { field: code, label: Code }
-      - { field: title, label: Quote, type: PrimaryEntityCell, secondary: customer_name }
-      - { field: amount, label: Value, align: right }
-      - { field: valid_until, label: Effect arrives }
-      - { field: status, label: Status, type: StatusChip, colors: { Draft: neutral, Sent: blue, Accepted: green } }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: crm_customer_value
     page_size: 10
     column_chooser: true
     row_key: customer_name
+    selectable: true
+    row_actions: menu
     empty_state: { title: There are no customer ratings yet }
     columns:
       - { field: customer_name, label: Client, sortable: true }
       - { field: quote_count, label: Quotation number, align: right }
       - { field: quote_value, label: Quoted value, align: right }
-  - type: DataGrid
+  - type: ListView
+    variant: odoo
     source: crm_employee_breakdown
     page_size: 10
     column_chooser: true
     row_key: department
+    selectable: true
+    row_actions: menu
     empty_state: { title: There is no personnel allocation yet }
     columns:
       - { field: department, label: Part, sortable: true }
