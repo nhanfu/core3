@@ -17,16 +17,44 @@ datasources:
       GROUP BY r.id, r.name, r.description, r.view_scope
       ORDER BY r.name
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: org_roles
-    filter_field: q
-    search: { label: Search for roles, placeholder: 'Find name or description...' }
-    actions: [{ id: org_roles.export, label: 'Export CSV', icon: download }]
-  - type: DataGrid
-    source: org_roles
+    search:
+      label: Search roles
+      placeholder: 'Find name or description...'
+    actions: [{ id: org_roles.export, label: Export CSV, title: Export CSV, icon: download }]
+    labels:
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all roles
+      select_row: Select role
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: view_scope
+        card:
+          title: name
+          subtitle: description
+          fields:
+            - { field: view_scope, label: View range }
+            - { field: permission_count, label: Permissions }
+            - { field: user_count, label: Users }
     page_size: 20
     column_chooser: true
     row_key: id
+    row_open_action: view_role
+    row_actions: menu
     empty_state: { title: No role }
     columns:
       - { field: id, label: HT code, sortable: true }
@@ -37,6 +65,6 @@ components:
       - field: actions
         label: ''
         sortable: false
-        actions: [{ id: view_role, label: Detail, variant: primary, permission: settings.read }]
+        actions: [{ id: view_role, label: Detail, variant: secondary, permission: settings.read }]
 actions:
   - { id: view_role, type: navigate, permission: settings.read, navigate_to: /org/roles/detail, params: { id: '{row.id}' } }
