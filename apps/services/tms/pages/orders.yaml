@@ -142,11 +142,13 @@ components:
         card:
           title: order_number
           subtitle: customer_name
+      - { id: form, label: Form, icon: form }
     page_size: 50
     column_chooser: true
     row_key: id
     selectable: true
-    row_open_action: view_order
+    row_double_click_action: view_order
+    form_view: { page: apps/services/tms/pages/order-detail.yaml, side_panel: true }
     row_actions: menu
     empty_state:
       title: No orders

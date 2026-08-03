@@ -317,9 +317,9 @@ export class PageRuntime extends BaseComponent {
     popup.mount(document.body);
   }
 
-  async function handleAction(actionDef: any, row: any) {
+  async function handleAction(actionDef: any, row: any, actionContext: any = ctx) {
     if (!actionDef) return;
-    const rowCtx = { ...ctx, row: row || {} };
+    const rowCtx = { ...actionContext, row: row || {} };
     const resolved = resolveAction(actionDef, rowCtx);
     if (!resolved.visible) return;
 
@@ -537,6 +537,9 @@ export class PageRuntime extends BaseComponent {
     handleAction,
     applySourceFilters,
     refreshSources,
+    handleInlineForm,
+    resolveActionParams,
+    registry,
   });
   const { renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid } = gridRenderer.renderers;
 
@@ -624,5 +627,3 @@ function collectSources(config: any) {
   }
   return sources;
 }
-
-

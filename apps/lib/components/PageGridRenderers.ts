@@ -2,6 +2,8 @@ import { evalExpr } from '../expr.ts';
 import { hasPermission } from '../meta.ts';
 import { navigate, getPageParams, replaceParams } from '../navigate.ts';
 import { BaseComponent } from './BaseComponent.ts';
+import { PageDetailRenderers } from './PageDetailRenderers.ts';
+import { PageFormModal } from './PageFormModal.ts';
 
 export class PageGridRenderers extends BaseComponent {
   readonly renderers: any;
@@ -12,7 +14,7 @@ export class PageGridRenderers extends BaseComponent {
   }
 
   private createRenderers(deps: any) {
-  const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources } = deps;
+  const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources, handleInlineForm, resolveActionParams, registry } = deps;
 
 async function renderStatRow(def: any, targetContainer: HTMLElement) {
   const { StatRow } = await import('./StatRow.ts');
@@ -464,6 +466,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       : view.groups,
     card: view.card,
     groupsSource: view.groups_source,
+    form: view.form,
   }));
   const requestedView = String(pageParams.view || '');
   const activeView = views.some((view: any) => view.id === requestedView) ? requestedView : undefined;
@@ -485,6 +488,106 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     if (!hasPermission(ctx.user, action.permission || actionDef?.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
   });
+  const formView = def.form_view?.page ? {
+    page: def.form_view.page,
+    sidePanel: def.form_view.side_panel !== false,
+  } : undefined;
+  const renderForm = formView ? async (row: any, target: HTMLElement) => {
+    target.innerHTML = '<div class="o-list-form-loading">Loading form...</div>';
+    const pageId = String(formView.page).split('/').pop()!.replace(/\.ya?ml$/, '');
+    try {
+      const detailConfig = await client._fetch(
+        `${client._resolveBase()}/pages/${encodeURIComponent(pageId)}?id=${encodeURIComponent(String(row.id))}`,
+        { method: 'GET' },
+      );
+      const detailData = Object.fromEntries((detailConfig.datasources || []).map((source: any) => [source.id, source]));
+      const detailParams = { ...pageParams, id: String(row.id) };
+      const detailCtx = { ...ctx, row, state: { ...ctx.state, ...detailParams } };
+      for (const [sourceId, sourceResult] of Object.entries(detailData) as Array<[string, any]>) {
+        if (sourceResult?.data && !Array.isArray(sourceResult.data)) detailCtx.state[sourceId] = sourceResult.data;
+      }
+      const detailBindings: Record<string, Array<(data: any) => void>> = {};
+      const detailBindSource = (sourceId: string | undefined, update: (data: any) => void) => {
+        if (!sourceId) return;
+        (detailBindings[sourceId] ||= []).push(update);
+      };
+      const detailRefreshSources = async (sourceIds: string[] = []) => {
+        for (const sourceId of sourceIds) {
+          const source = (detailConfig.datasources || []).find((candidate: any) => candidate.id === sourceId);
+          if (!source) continue;
+          const result = await client.query(createQuery({ sourceId, params: detailParams, skip: 0, top: source.page_size || 100 }));
+          detailData[sourceId] = result;
+          if (result?.data && !Array.isArray(result.data)) detailCtx.state[sourceId] = result.data;
+          for (const update of detailBindings[sourceId] || []) update(result);
+        }
+      };
+      const detailHandleAction = async (actionDef: any, actionRow: any) => {
+        if (!actionDef) return;
+        if (actionDef.type === 'form' || actionDef.type === 'server_form') {
+          await detailFormModal.openFormModal({ ...actionDef, refresh: [] }, actionRow);
+          await detailRefreshSources(actionDef.refresh || []);
+          return;
+        }
+        await handleAction({ ...actionDef, refresh: [] }, actionRow, detailCtx);
+        await detailRefreshSources(actionDef.refresh || []);
+      };
+      const detailHandleInlineForm = async (actionDef: any, values: Record<string, unknown>) => {
+        await handleInlineForm({ ...actionDef, refresh: [] }, values);
+        await detailRefreshSources(actionDef.refresh || []);
+      };
+      const detailFormModal = new PageFormModal({
+        dataMap: detailData,
+        ctx: detailCtx,
+        client,
+        refreshSources: detailRefreshSources,
+        resolveActionParams,
+      });
+      const detailGridRenderer = new PageGridRenderers({
+        ...deps,
+        config: detailConfig,
+        dataMap: detailData,
+        ctx: detailCtx,
+        bindSource: detailBindSource,
+        pageParams: detailParams,
+        filterState: {},
+        paginationState: {},
+        sortState: {},
+        refreshSources: detailRefreshSources,
+        handleAction: detailHandleAction,
+        applySourceFilters: async () => undefined,
+        updateBoundComponents: (sourceId: string, result: any) => {
+          for (const update of detailBindings[sourceId] || []) update(result);
+        },
+      });
+      const detailRenderer = new PageDetailRenderers({
+        ...deps,
+        config: detailConfig,
+        dataMap: detailData,
+        ctx: detailCtx,
+        bindSource: detailBindSource,
+        pageParams: detailParams,
+        filterState: {},
+        paginationState: {},
+        sortState: {},
+        refreshSources: detailRefreshSources,
+        handleAction: detailHandleAction,
+        handleInlineForm: detailHandleInlineForm,
+        resolveActionParams,
+        registry,
+        ...detailGridRenderer.renderers,
+      });
+      target.innerHTML = '';
+      let previousPanelContent: HTMLElement | undefined;
+      for (const [index, componentDef] of (detailConfig.components || []).entries()) {
+        const destination = componentDef.mount_in === 'previous-panel' && previousPanelContent ? previousPanelContent : target;
+        const rendered = await detailRenderer.renderers.renderComponentDef(componentDef, destination);
+        previousPanelContent = rendered instanceof HTMLElement ? rendered : undefined;
+        if (!previousPanelContent && index === 0) previousPanelContent = undefined;
+      }
+    } catch (error) {
+      target.innerHTML = `<div class="o-list-form-error">${error instanceof Error ? error.message : 'Failed to load form'}</div>`;
+    }
+  } : undefined;
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
   const createAction = def.create_action && hasPermission(ctx.user, createDefinition?.permission)
     ? { id: def.create_action, label: def.create_label || 'New' }
@@ -524,9 +627,12 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       selectable: def.selectable === true,
       columnChooser: def.column_chooser === true,
       openAction: def.row_open_action,
+      doubleClickAction: def.row_double_click_action,
+      formView,
+      renderForm,
       rowActions: def.row_actions || 'buttons',
       views,
-      onViewChange: (view: 'list' | 'kanban') => {
+      onViewChange: (view: 'list' | 'kanban' | 'calendar') => {
         replaceParams({ ...getPageParams(), view });
       },
       emptyState: def.empty_state,
@@ -586,8 +692,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         await refreshSources([sourceId, ...(statusSource ? [statusSource] : [])]);
         if (statusSource) {
           for (const view of comp.options.views || []) {
-            if (view.groupsSource !== statusSource) continue;
-            view.groups = (dataMap[statusSource]?.data || []).map((group: any) => ({
+            const viewConfig = view as any;
+            if (viewConfig.groupsSource !== statusSource) continue;
+            viewConfig.groups = (dataMap[statusSource]?.data || []).map((group: any) => ({
               value: String(group.value), label: String(group.label || group.value), color: group.color,
             }));
           }
@@ -651,5 +758,3 @@ async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
 }
 
 }
-
-

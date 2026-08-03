@@ -147,7 +147,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
-  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'group_by', 'favorites', 'bulk_actions', 'labels', 'views', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_actions'])],
+  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'group_by', 'favorites', 'bulk_actions', 'labels', 'views', 'form_view', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_double_click_action', 'row_actions'])],
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
@@ -481,7 +481,7 @@ function validateComponents(
     }
     if (component.type === 'ListView') {
       if (component.variant !== 'odoo') issues.push(`${path}.variant must be odoo`);
-      for (const key of ['create_action', 'row_open_action']) {
+      for (const key of ['create_action', 'row_open_action', 'row_double_click_action']) {
         if (component[key] === undefined) continue;
         requireString(component[key], `${path}.${key}`, issues);
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
@@ -490,6 +490,10 @@ function validateComponents(
       }
       if (component.row_actions !== undefined && !['buttons', 'menu'].includes(String(component.row_actions))) {
         issues.push(`${path}.row_actions must be buttons or menu`);
+      }
+      if (component.form_view !== undefined) {
+        requireRecord(component.form_view, `${path}.form_view`, issues);
+        if (isRecord(component.form_view)) requireString(component.form_view.page, `${path}.form_view.page`, issues);
       }
       if (component.group_by !== undefined) {
         const groups = Array.isArray(component.group_by) ? component.group_by : [component.group_by];
@@ -548,7 +552,7 @@ function validateComponents(
             rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
-            if (!['list', 'kanban', 'calendar'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, or calendar`);
+            if (!['list', 'kanban', 'calendar', 'form'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, or form`);
             if (typeof view.id === 'string' && viewIds.has(view.id)) issues.push(`${viewPath}.id must be unique`);
             if (typeof view.id === 'string') viewIds.add(view.id);
             if (view.id === 'kanban' && typeof view.group_by !== 'string') issues.push(`${viewPath}.group_by is required for kanban`);

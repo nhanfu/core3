@@ -200,6 +200,83 @@ describe('Odoo ListView', () => {
     expect(firstRow.querySelector('.o-list-row-menu')?.hasAttribute('open')).toBe(false);
   });
 
+  it('uses single click for the inline form and double click for the detail action', async () => {
+    vi.useFakeTimers();
+    try {
+      const component = create({ openAction: 'edit', doubleClickAction: 'view' });
+      const submit = vi.fn().mockResolvedValue(undefined);
+      component._transport = { submit };
+      const container = mount(component);
+      const row = container.querySelector<HTMLElement>('[data-row-id="o1"] [data-column="number"]')!;
+
+      row.click();
+      expect(submit).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(250);
+      expect(submit).toHaveBeenCalledWith('edit', { row: rows[0] });
+
+      submit.mockClear();
+      row.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      row.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(250);
+      expect(submit).toHaveBeenCalledTimes(1);
+      expect(submit).toHaveBeenCalledWith('view', { row: rows[0] });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('selects a row for the Odoo form side panel without invoking the detail action', async () => {
+    vi.useFakeTimers();
+    try {
+      const renderForm = vi.fn((row: Record<string, unknown>, target: HTMLElement) => {
+        target.textContent = String(row.number);
+      });
+      const component = create({
+        formView: { page: 'order-detail.yaml', sidePanel: true },
+        renderForm,
+        doubleClickAction: 'view',
+        openAction: undefined,
+      });
+      const submit = vi.fn().mockResolvedValue(undefined);
+      component._transport = { submit };
+      const container = mount(component);
+
+      container.querySelector<HTMLElement>('[data-row-id="o1"] [data-column="number"]')!.click();
+      await vi.advanceTimersByTimeAsync(250);
+      expect(submit).not.toHaveBeenCalled();
+      expect(renderForm).toHaveBeenCalledWith(rows[0], expect.any(HTMLElement));
+      expect(container.querySelector('.o-list-form-side-panel')?.textContent).toBe('ORD-001');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('starts with the full grid and toggles list and form panes independently', async () => {
+    const renderForm = vi.fn((row: Record<string, unknown>, target: HTMLElement) => {
+      target.textContent = String(row.number);
+    });
+    const component = create({
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      renderForm,
+      views: [
+        { id: 'list', label: 'List', icon: 'table' },
+        { id: 'form', label: 'Form', icon: 'form' },
+      ],
+    });
+    const container = mount(component);
+
+    expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    expect(container.querySelector<HTMLButtonElement>('[data-list-view="list"]')?.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelector<HTMLButtonElement>('[data-list-view="form"]')?.getAttribute('aria-pressed')).toBe('true');
+
+    container.querySelector<HTMLButtonElement>('[data-list-view="list"]')!.click();
+    await Promise.resolve();
+    expect(container.querySelector('tbody')).toBeNull();
+    expect(container.querySelector('.o-list-form-side-panel')?.textContent).toBe('ORD-001');
+    expect(renderForm).toHaveBeenCalledWith(rows[0], expect.any(HTMLElement));
+  });
+
   it('switches to a YAML-declared Kanban board and opens its cards', async () => {
     const onKanbanMove = vi.fn();
     const component = create({ onKanbanMove });
