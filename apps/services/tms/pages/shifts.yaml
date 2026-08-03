@@ -49,11 +49,75 @@ toolbar:
   - { id: add_shift_assignment_btn, label: '+ Split shifts', variant: secondary, permission: hr.write, action: add_shift_assignment }
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: shifts
-    filter_field: q
-    search: { label: Search for shifts, placeholder: 'Find the code or name of the ca...' }
-    actions: [{ id: shifts.export, label: 'Export CSV', icon: download }]
+    create_action: add_shift
+    create_label: Add shift
+    search:
+      label: Search shifts
+      placeholder: 'Find shift code or name...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Active, label: Active }
+          - { id: Inactive, label: Inactive }
+    actions:
+      - { id: shifts.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Add shift
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all shifts
+      select_row: Select shift
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status_label
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: start_time, label: Start }
+            - { field: end_time, label: End }
+            - { field: break_minutes, label: Break minutes }
+            - { field: status_label, label: Status }
+    page_size: 10
+    column_chooser: true
+    row_key: id
+    selectable: true
+    row_actions: menu
+    empty_state: { title: There are no shifts, description: Try changing the filter or creating a new shift. }
+    columns:
+      - { field: id, label: HT code, sortable: true }
+      - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
+      - { field: start_time, label: Begin }
+      - { field: end_time, label: End }
+      - { field: break_minutes, label: Rest between shifts (minutes), align: right }
+      - field: status_label
+        label: Status
+        type: StatusChip
+        colors: { Hoạt động: green, Ngưng hoạt động: red }
+      - { field: created_at, label: Creation date and time }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: edit_shift, label: Edit, variant: ghost, permission: hr.write }
+          - { id: delete_shift, label: Delete, variant: danger, permission: hr.write }
   - type: ListToolbar
     source: shift_assignments
     filter_sources: [shift_assignments]
@@ -71,39 +135,6 @@ components:
     subtitle_field: shift_name
     status_field: status
     empty_state: { title: There is no shift schedule yet, description: Try changing the time period or adding new shifts. }
-  - type: StatusTabs
-    source: shifts
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Active, label: Work }
-      - { id: Inactive, label: Shut down }
-  - type: DataGrid
-    source: shifts
-    page_size: 10
-    column_chooser: true
-    row_key: id
-    selectable: true
-    empty_state: { title: There are no shifts, description: Try changing the filter or creating a new shift. }
-    columns:
-      - { field: id, label: HT code, sortable: true }
-      - { field: code, label: Code/name, type: PrimaryEntityCell, secondary: name }
-      - { field: start_time, label: Begin }
-      - { field: end_time, label: End }
-      - { field: break_minutes, label: Rest between shifts (minutes), align: right }
-      - field: status_label
-        label: Status
-        type: StatusChip
-        colors: { Work: green, Shut down: red }
-      - { field: created_at, label: Creation date and time }
-      - field: actions
-        label: ''
-        sortable: false
-        align: right
-        actions:
-          - { id: edit_shift, label: Fix, variant: ghost, permission: hr.write }
-          - { id: delete_shift, label: Erase, variant: danger, permission: hr.write }
   - type: DataGrid
     source: shift_assignments
     page_size: 20
