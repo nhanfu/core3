@@ -477,10 +477,15 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     && window.matchMedia('(max-width: 768px)').matches;
   const mobileCardRoute = isSmallScreen && hasCardView
     && (!requestedView || requestedView === 'list' || requestedView === 'form' || !views.some((view: any) => view.id === requestedView));
+  const desktopListRoute = !isSmallScreen && requestedView === 'card'
+    && views.some((view: any) => view.id === 'list');
   const activeView = mobileCardRoute
     ? 'card'
-    : (views.some((view: any) => view.id === requestedView) ? requestedView : undefined);
+    : desktopListRoute
+      ? 'list'
+      : (views.some((view: any) => view.id === requestedView) ? requestedView : undefined);
   if (mobileCardRoute && requestedView !== 'card') replaceParams({ ...pageParams, view: 'card' });
+  if (desktopListRoute) replaceParams({ ...pageParams, view: 'list' });
   const utilityActions = (def.actions || []).filter((action: any) => {
     if (!hasPermission(ctx.user, action.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));

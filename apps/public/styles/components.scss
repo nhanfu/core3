@@ -805,7 +805,7 @@
 .o-form-page .core3-token-table th, .o-form-page .core3-token-table td { border-color: var(--o-form-border) !important; color: var(--o-form-text) !important; }
 .o-form-page .core3-token-toolbar button { border-radius: 3px; }
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .o-form-view-slot { padding: 12px 12px 0; }
   .o-form-sheet { padding: 24px 20px; }
   .o-form-layout, .o-form-fields { grid-template-columns: 1fr; gap: 16px; }

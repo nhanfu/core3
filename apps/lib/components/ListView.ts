@@ -243,15 +243,16 @@ export class ListView extends BaseComponent {
       return;
     }
     if (activeView.id === 'kanban') {
+      const mobileNavigation = this.isSmallScreen();
       const kanban = new KanbanView(
         `kanban-view-${this.id}`,
         { rows },
         {
           view: activeView,
           rowKey: this.options.rowKey,
-          openAction: this.options.openAction,
-          doubleClickAction: this.options.doubleClickAction,
-          onSelect: this.options.formView ? row => this.selectFormRow(row) : undefined,
+          openAction: this.options.openAction || this.options.doubleClickAction,
+          doubleClickAction: mobileNavigation ? undefined : this.options.doubleClickAction,
+          onSelect: !mobileNavigation && this.options.formView ? row => this.selectFormRow(row) : undefined,
           onMove: this.options.onKanbanMove,
           onAddStatus: this.options.onKanbanAddStatus,
         },
@@ -268,15 +269,16 @@ export class ListView extends BaseComponent {
       return;
     }
     if (activeView.id === 'calendar') {
+      const mobileNavigation = this.isSmallScreen();
       const calendar = new CalendarView(
         `calendar-view-${this.id}`,
         { rows },
         {
           view: activeView,
           rowKey: this.options.rowKey,
-          openAction: this.options.openAction,
-          doubleClickAction: this.options.doubleClickAction,
-          onSelect: this.options.formView ? row => this.selectFormRow(row) : undefined,
+          openAction: this.options.openAction || this.options.doubleClickAction,
+          doubleClickAction: mobileNavigation ? undefined : this.options.doubleClickAction,
+          onSelect: !mobileNavigation && this.options.formView ? row => this.selectFormRow(row) : undefined,
         },
       );
       calendar.parent = this;

@@ -250,6 +250,34 @@ describe('Odoo ListView', () => {
     }
   });
 
+  it('routes Kanban and Calendar items to detail on small screens', async () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: () => ({ matches: true, media: '(max-width: 768px)' }),
+    });
+    try {
+      for (const activeView of ['kanban', 'calendar'] as const) {
+        const submit = vi.fn();
+        const component = create({
+          formView: { page: 'order-detail.yaml', sidePanel: true },
+          renderForm: () => undefined,
+          openAction: 'view_order',
+        }, {
+          ...(activeView === 'calendar' ? { rows: [{ ...rows[0], order_date: '2026-08-12' }] } : {}),
+          activeView,
+        });
+        component._transport = { submit };
+        const container = mount(component);
+        const item = container.querySelector<HTMLElement>('[data-row-id="o1"]')!;
+        item.click();
+        expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) });
+      }
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia });
+    }
+  });
+
   it('keeps the control panel mounted when Calendar changes month', () => {
     const component = create({}, { rows: [{ ...rows[0], order_date: '2026-08-12' }], activeView: 'calendar' });
     const container = mount(component);
