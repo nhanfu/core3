@@ -528,27 +528,22 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (handler === 'accounting_document') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      if (!FINANCIAL_WORKFLOW_SCOPES.has(String(body.kind))) return apiError(400, 'Invalid financial document kind');
+      const documentSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const document = documentSource?.meta?.documents?.[body.kind];
+      if (!document || typeof document.table !== 'string' || !Array.isArray(document.fields)) return apiError(400, 'Invalid financial document kind');
       if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
       const [existing] = await repository.query('SELECT kind, status FROM accounting_entries WHERE id = ?', [body.id]);
       if (!existing || existing.kind !== body.kind) return apiError(404, 'Financial document not found');
       if (existing.status !== 'Draft') return apiError(409, `Financial document cannot be edited while ${existing.status}`);
       const values = body.values && typeof body.values === 'object' ? body.values : {};
-      const fields = ['code', 'name', 'counterparty', 'currency', 'document_date', 'due_date', 'description'];
-      const changes = fields
-        .filter((field) => Object.prototype.hasOwnProperty.call(values, field))
-        .map((field) => ({ field, value: values[field] }));
-      if (!changes.some((change) => change.field === 'code' && String(change.value || '').trim())) return apiError(400, 'code required');
-      if (!changes.some((change) => change.field === 'name' && String(change.value || '').trim())) return apiError(400, 'name required');
-      if (!changes.some((change) => change.field === 'currency' && String(change.value || '').trim())) return apiError(400, 'currency required');
       const updated = await repository.executeDatasourceMutation(
         {
-          table: 'accounting_entries',
-          mutations: { update: { fields, timestamps: true } },
+          table: document.table,
+          mutations: { update: { fields: document.fields, timestamps: true, validate: document.validate } },
         },
         'update',
         body.id,
-        Object.fromEntries(changes.map((change) => [change.field, change.value])),
+        values,
         activityActor,
       );
       if (!updated) return apiError(404, 'Financial document not found');

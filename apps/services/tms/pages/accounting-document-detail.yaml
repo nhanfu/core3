@@ -5,6 +5,12 @@ datasources:
   - id: accounting_document_detail
     single: true
     permission: accounting.read
+    meta:
+      documents:
+        debit_note: { table: accounting_entries, fields: [code, name, counterparty, currency, document_date, due_date, description], validate: { required: [code, name, currency] } }
+        payment_request: { table: accounting_entries, fields: [code, name, counterparty, currency, document_date, due_date, description], validate: { required: [code, name, currency] } }
+        advance: { table: accounting_entries, fields: [code, name, counterparty, currency, document_date, due_date, description], validate: { required: [code, name, currency] } }
+        settlement: { table: accounting_entries, fields: [code, name, counterparty, currency, document_date, due_date, description], validate: { required: [code, name, currency] } }
     query: |
       SELECT a.id, a.kind, a.code, a.name, a.counterparty, a.currency, a.status,
         CASE a.kind WHEN 'debit_note' THEN 'Giấy báo nợ'
@@ -150,6 +156,7 @@ actions:
     permission: accounting.write
     title: Update documents
     action: accounting.documents.update
+    datasource: accounting_document_detail
     handler: accounting_document
     operation: update
     prefill: source
