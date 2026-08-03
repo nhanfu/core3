@@ -56,30 +56,23 @@ components:
         label: Branch
         permission: settings.read
         components:
-          - type: GridView
+          - type: ListView
+            variant: odoo
             source: branches
             page_size: 20
+            column_chooser: true
+            row_key: id
+            selectable: true
+            row_actions: menu
             empty_state: { title: No branches }
             columns:
-              - type: TextCell
-                field: name
-                label: Name
-              - type: TextCell
-                field: city
-                label: City
-                secondary: region
-              - type: BadgeCell
-                field: status
-                label: Status
-                colors:
-                  Active: green
-                  Inactive: red
-              - type: NumberCell
-                field: truck_count
-                label: Vehicle
-                format: "#,###"
-              - type: ActionCell
-                label: ""
+              - { field: name, label: Name, sortable: true }
+              - { field: city, label: City, type: PrimaryEntityCell, secondary: region }
+              - { field: status, label: Status, type: StatusChip, colors: { Active: green, Inactive: red } }
+              - { field: truck_count, label: Vehicle, align: right }
+              - field: actions
+                label: ''
+                sortable: false
                 actions:
                   - id: edit_branch
                     label: Fix
@@ -94,25 +87,23 @@ components:
         label: User
         permission: settings.read
         components:
-          - type: GridView
+          - type: ListView
+            variant: odoo
             source: users
             page_size: 20
+            column_chooser: true
+            row_key: id
+            selectable: true
+            row_actions: menu
             empty_state: { title: No users }
             columns:
-              - type: TextCell
-                field: name
-                label: Name
-              - type: TextCell
-                field: email
-                label: E-mail
-              - type: TextCell
-                field: roles_csv
-                label: Role
-              - type: TextCell
-                field: preferred_lang
-                label: Language
-              - type: ActionCell
-                label: ""
+              - { field: name, label: Name, sortable: true }
+              - { field: email, label: E-mail }
+              - { field: roles_csv, label: Role }
+              - { field: preferred_lang, label: Language }
+              - field: actions
+                label: ''
+                sortable: false
                 actions:
                   - id: edit_user
                     label: Fix
@@ -123,21 +114,19 @@ components:
         label: Role
         permission: settings.read
         components:
-          - type: GridView
+          - type: ListView
+            variant: odoo
             source: roles
             page_size: 20
+            column_chooser: true
+            row_key: id
+            selectable: true
+            row_actions: menu
             empty_state: { title: No role }
             columns:
-              - type: TextCell
-                field: name
-                label: Role
-              - type: TextCell
-                field: description
-                label: Describe
-              - type: NumberCell
-                field: permission_count
-                label: Rights
-                format: "#,###"
+              - { field: name, label: Role, sortable: true }
+              - { field: description, label: Describe }
+              - { field: permission_count, label: Rights, align: right }
 
 actions:
   - id: add_branch

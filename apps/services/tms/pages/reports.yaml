@@ -87,38 +87,18 @@ components:
       - id: driver-tab
         label: Driver performance
         components:
-          - type: GridView
+          - type: ListView
+            variant: odoo
             source: reports_drivers
             page_size: 20
+            column_chooser: true
+            row_key: driver_id
             empty_state: { title: No driver data available }
             columns:
-              - type: TextCell
-                field: driver_name
-                label: Driver
-              - type: BadgeCell
-                field: driver_status
-                label: Status
-                colors:
-                  Active: green
-                  On Leave: amber
-                  Inactive: red
-              - type: NumberCell
-                field: total_trips
-                label: Total trip
-                format: "#,###"
-              - type: NumberCell
-                field: completed_trips
-                label: Complete
-                format: "#,###"
-              - type: NumberCell
-                field: cancelled_trips
-                label: Canceled
-                format: "#,###"
-              - type: NumberCell
-                field: total_km
-                label: Total km
-                format: "#,###"
-              - type: NumberCell
-                field: completion_rate
-                label: Completion rate (%)
-                format: "#,###"
+              - { field: driver_name, label: Driver, sortable: true }
+              - { field: driver_status, label: Status, type: StatusChip, colors: { Active: green, 'On Leave': amber, Inactive: red } }
+              - { field: total_trips, label: Total trip, align: right }
+              - { field: completed_trips, label: Complete, align: right }
+              - { field: cancelled_trips, label: Canceled, align: right }
+              - { field: total_km, label: Total km, align: right }
+              - { field: completion_rate, label: Completion rate (%), align: right }
