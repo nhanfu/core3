@@ -73,16 +73,41 @@ toolbar:
   - { id: edit_quote_detail, label: Edit quote, variant: primary, permission: crm.write, show_if: "state.quote_detail.status === 'Draft'", action: edit_quote_detail }
 
 components:
-  - type: DocumentSummary
+  - type: OdooFormView
     source: quote_detail
     title_field: code
     subtitle_field: title
-    status_field: status_label
-    status_colors: { Nháp: neutral, Đã gửi: blue, Đã chấp nhận: green, Đã hủy: red }
-    columns:
-      - { field: customer_name, label: Client }
-      - { field: valid_until, label: Effect arrives }
-      - { field: margin_display, label: Profit margin }
+    status_field: status
+    status_label_field: status_label
+    status_colors: { Nháp: neutral, 'Đã gửi': blue, 'Đã chấp nhận': green, 'Đã hủy': red }
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Sent, label: Sent }
+      - { value: Accepted, label: Accepted }
+      - { value: Cancelled, label: Canceled }
+    header_actions:
+      - { id: edit_quote_detail, label: Edit quote, variant: secondary, show_if: "state.quote_detail.status === 'Draft'" }
+      - { id: send_quote_detail, label: Send, variant: primary, show_if: "state.quote_detail.status === 'Draft'" }
+      - { id: accept_quote_detail, label: Accept, variant: primary, show_if: "state.quote_detail.status === 'Sent'" }
+      - { id: revise_quote_detail, label: Revise, variant: secondary, show_if: "state.quote_detail.status === 'Sent'" }
+      - { id: cancel_quote_detail, label: Cancel, variant: danger, show_if: "state.quote_detail.status !== 'Cancelled'" }
+    message_source: quote_detail_timeline
+    chatter_label: Quote history
+    message_label: Send message
+    note_label: Log note
+    message_action: send_quote_message
+    note_action: log_quote_note
+    message_actor_field: actor_name
+    message_action_field: action_label
+    message_detail_field: detail
+    message_timestamp_field: created_at
+    content_slot: true
+    groups:
+      - title: Quote details
+        fields:
+          - { field: customer_name, label: Client }
+          - { field: valid_until, label: Valid until }
+          - { field: margin_display, label: Profit margin }
   - type: LineItemGrid
     source: quote_detail_lines
     title: Buy/sell details
@@ -127,6 +152,30 @@ components:
 
 actions:
   - { id: back_quotes, type: navigate, navigate_to: /quotes }
+  - { id: send_quote_detail, type: server, permission: crm.write, action: quotes.send, handler: business_transition, operation: send, domain: quote, confirm: 'Send quote {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: accept_quote_detail, type: server, permission: crm.write, action: quotes.accept, handler: business_transition, operation: accept, domain: quote, confirm: 'Confirm customer accepts {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: revise_quote_detail, type: server, permission: crm.write, action: quotes.revise, handler: business_transition, operation: revise, domain: quote, confirm: 'Send quote {{row.code}} to draft to edit?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - { id: cancel_quote_detail, type: server, permission: crm.write, action: quotes.cancel, handler: business_transition, operation: cancel, domain: quote, confirm: 'Cancel quote {{row.code}}?', params: { id: '{row.id}' }, refresh: [quote_detail, quote_detail_lines, quote_detail_timeline] }
+  - id: send_quote_message
+    type: server_form
+    permission: crm.write
+    title: Send message
+    action: quotes.chatter.send
+    handler: quote_chatter
+    operation: message
+    params: { id: '{row.id}' }
+    refresh: [quote_detail_timeline]
+    fields: [{ field: content, label: Message, type: textarea, required: true }]
+  - id: log_quote_note
+    type: server_form
+    permission: crm.write
+    title: Log note
+    action: quotes.chatter.note
+    handler: quote_chatter
+    operation: note
+    params: { id: '{row.id}' }
+    refresh: [quote_detail_timeline]
+    fields: [{ field: content, label: Note, type: textarea, required: true }]
   - id: edit_quote_detail
     type: form
     permission: crm.write
