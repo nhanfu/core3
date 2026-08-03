@@ -192,6 +192,11 @@ describe('document detail components', () => {
     expect(container.querySelector<HTMLElement>('[data-notebook-panel="other"]')?.hidden).toBe(false);
     expect(container.textContent).toContain('Handle carefully');
     expect(component.getEmbeddedContent().textContent).toBe('Line content');
+
+    other.focus();
+    other.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+    const lines = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]')).find(button => button.textContent === 'Order Lines')!;
+    expect(lines.getAttribute('aria-selected')).toBe('true');
   });
 
   it('submits configured chatter actions with the current record id', async () => {
@@ -304,6 +309,20 @@ describe('document detail components', () => {
     expect(container.querySelector('.o-x2many-grid')).not.toBeNull();
     expect(container.querySelector('.o-x2many-create')?.textContent).toBe('Add a line');
     expect(container.querySelector('.core3-token-toolbar')).toBeNull();
+  });
+
+  it('marks grid cells by column so responsive variants can retain essential data', () => {
+    const grid = new LineItemGrid('responsive-lines', {
+      rows: [{ id: 'line-1', description: 'Freight', line_total_display: '1,000 ₫' }],
+      variant: 'odoo_x2many',
+    }, [
+      { field: 'description', label: 'Description' },
+      { field: 'line_total_display', label: 'Amount' },
+    ]);
+    const container = mount(grid);
+
+    expect(container.querySelector('th[data-column="line_total_display"]')).not.toBeNull();
+    expect(container.querySelector('td[data-column="line_total_display"]')?.textContent).toBe('1,000 ₫');
   });
 
   it('renders resource rows across assignment dates', () => {

@@ -159,6 +159,21 @@ export class OdooFormView extends BaseComponent {
         });
         panels.forEach(panel => { panel.hidden = panel.dataset.notebookPanel !== id; });
       };
+      tablist.addEventListener('keydown', event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        const eventButton = (event.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
+        const current = buttons.indexOf(eventButton || document.activeElement as HTMLButtonElement);
+        if (current < 0 || !buttons.length) return;
+        const next = event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? buttons.length - 1
+            : (current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+        const button = buttons[next];
+        button.focus();
+        selectTab(String(button.dataset.notebookTab));
+        event.preventDefault();
+      });
       for (const tab of notebookTabs) {
         const id = String(tab.id || tab.label || `tab-${buttons.length}`);
         const panelId = `${this.id}-notebook-${id}`;

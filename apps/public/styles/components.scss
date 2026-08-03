@@ -771,7 +771,7 @@
 .o-form-page .page-breadcrumb-current { color: var(--o-form-text); font-weight: 600; }
 .o-form-page .page-header-actions .btn { min-height: 30px; border-radius: 3px; box-shadow: none; }
 .o-form-view-slot { padding: 24px 24px 0; }
-.o-form-view { max-width: 1480px; min-width: 0; margin: 0 auto; }
+.o-form-view { max-width: 1480px; min-width: 0; margin: 0 auto; container-name: odoo-form; container-type: inline-size; }
 .o-form-actionbar { display: flex; min-width: 0; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 6px; }
 .o-form-action { min-height: 30px; padding: 4px 10px; border: 1px solid var(--o-form-border); border-radius: 3px; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
 .o-form-action-primary { border-color: var(--o-form-action); background: var(--o-form-action); color: #fff; }.o-form-action-secondary { background: var(--o-form-surface); color: var(--o-form-text); }.o-form-action-danger { border-color: #c0392b; background: #c0392b; color: #fff; }.o-form-action-ghost { border-color: transparent; background: transparent; color: var(--o-form-action); }
@@ -834,6 +834,37 @@
 .o-form-page .o-form-lines-slot .core3-token-row:hover > .core3-token-cell { background: var(--o-form-hover) !important; }
 .o-form-page .o-form-lines-slot .core3-token-summary { border-color: var(--o-form-border) !important; background: var(--o-form-surface) !important; color: var(--o-form-muted) !important; }
 .o-form-page .o-x2many-grid { border: 0 !important; border-radius: 0; }.o-form-page .o-x2many-grid .core3-token-toolbar { padding: 10px 16px; background: var(--o-form-surface) !important; }.o-form-page .o-x2many-grid .core3-token-header { background: var(--o-form-bg) !important; }.o-form-page .o-x2many-grid .core3-token-header th { padding-top: 8px; padding-bottom: 8px; font-size: 11px; letter-spacing: 0; text-transform: none; }.o-form-page .o-x2many-grid .core3-token-cell { padding-top: 8px; padding-bottom: 8px; }.o-x2many-controls { display: flex; gap: 10px; padding: 8px 16px; border-top: 1px solid var(--o-form-border); }.o-x2many-create { padding: 2px 0; border: 0; background: transparent; color: var(--o-form-action); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }.o-x2many-create:hover { text-decoration: underline; }.o-x2many-create:disabled { cursor: default; opacity: .6; text-decoration: none; }
+
+.o-form-action:focus-visible, .o-form-notebook-tab:focus-visible, .o-form-chatter-primary:focus-visible, .o-form-chatter-secondary:focus-visible, .o-form-chatter-tool:focus-visible, .o-form-composer-submit:focus-visible, .o-form-composer-cancel:focus-visible, .o-x2many-create:focus-visible { outline: 2px solid var(--o-form-action); outline-offset: 2px; }
+
+@container odoo-form (max-width: 1320px) {
+  .o-form-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .o-form-chatter { min-height: 300px; }
+  .o-form-chatter-top { position: static; }
+}
+
+@container odoo-form (max-width: 600px) {
+  .o-form-groups { grid-template-columns: minmax(0, 1fr); }
+  .o-form-groups .o-form-field-group-wide { grid-column: auto; }
+  .o-x2many-grid [data-column='sequence'],
+  .o-x2many-grid [data-column='unit'],
+  .o-x2many-grid [data-column='unit_price_display'],
+  .o-x2many-grid [data-column='tax_rate_display'] { display: none; }
+  .o-x2many-grid .core3-token-header th, .o-x2many-grid .core3-token-cell { padding-right: 8px; padding-left: 8px; }
+  .o-document-totals-list { min-width: 0; width: 100%; }
+}
+
+@container odoo-form (max-width: 440px) {
+  .o-form-groups .o-form-fields { grid-template-columns: minmax(0, 1fr); gap: 3px; }
+  .o-form-groups .o-form-field-label { margin-top: 8px; }
+  .o-form-statusbar-step { font-size: 9px; }
+  .o-form-chatter-topbar { flex-wrap: wrap; }
+  .o-form-chatter-tools { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .o-form-page *, .o-form-page *::before, .o-form-page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
 
 @media (max-width: 768px) {
   .o-form-view-slot { padding: 12px 12px 0; }

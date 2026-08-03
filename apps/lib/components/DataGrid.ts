@@ -259,6 +259,7 @@ export class DataGrid extends BaseComponent {
     for (const column of visibleColumns) {
       const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
       const th = html.take(headerRow).th.className(`px-4 py-3 ${align} text-xs font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap`).getContext();
+      th.dataset.column = column.id || column.field;
       const sortable = column.sortable === true;
       if (sortable) {
         const active = sort?.field === column.field;
@@ -330,6 +331,7 @@ export class DataGrid extends BaseComponent {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
           const cell = html.take(tr).tdata.className(`core3-token-cell core3-grid-cell max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
+          cell.dataset.column = column.id || column.field;
           if (column.rowActions?.length) {
             const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
             for (const action of column.rowActions) {
