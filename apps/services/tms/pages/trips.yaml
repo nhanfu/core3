@@ -55,29 +55,58 @@ toolbar:
     action: add_trip
 
 components:
-  - type: ListToolbar
+  - type: ListView
+    variant: odoo
     source: trips
-    filter_field: q
+    create_action: add_trip
+    create_label: Create trip
     search:
-      label: Search for a trip
-      placeholder: 'Search by flight code, origin or destination...'
-    actions: [{ id: trips.export, label: 'Export CSV', icon: download }]
-  - type: StatusTabs
-    source: trips
-    filter_field: status
-    variant: contained
-    tabs:
-      - { id: '', label: All }
-      - { id: Scheduled, label: Scheduled }
-      - { id: 'In Transit', label: Shipping }
-      - { id: Completed, label: Complete }
-      - { id: Cancelled, label: Canceled }
-  - type: DataGrid
-    source: trips
+      label: Search trips
+      placeholder: 'Find trip code, origin, destination, vehicle, or driver...'
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Scheduled, label: Scheduled }
+          - { id: 'In Transit', label: In transit }
+          - { id: Completed, label: Completed }
+          - { id: Cancelled, label: Cancelled }
+    actions:
+      - { id: trips.export, label: Export CSV, title: Export CSV, icon: download }
+    labels:
+      new: Create trip
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all trips
+      select_row: Select trip
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        card:
+          title: trip_number
+          subtitle: origin
+          fields:
+            - { field: destination, label: Destination }
+            - { field: truck_plate, label: Vehicle }
+            - { field: driver_name, label: Driver }
+            - { field: status, label: Status }
     page_size: 10
     column_chooser: true
     row_key: id
     selectable: true
+    row_actions: menu
     empty_state:
       title: There are no buses
       description: Try changing the filter or creating a new trip.
@@ -102,11 +131,11 @@ components:
         align: right
         actions:
           - id: edit_trip
-            label: Fix
+            label: Edit
             variant: ghost
             permission: trips.write
           - id: start_trip
-            label: Depart
+            label: Start trip
             variant: primary
             permission: trips.write
             show_if: "row.status === 'Scheduled'"
