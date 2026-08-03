@@ -290,6 +290,17 @@ export function createTmsApi(ctx: TmsApiContext) {
     const branchId = await branchForScopedResource(resourceTable, resourceId);
     return Boolean(branchId && branchId === String(authUser.branch_id || ''));
   };
+  const configuredUploadFile = async (kind: string, documentId: string, permissionEndpoint: string, notFoundMessage: string) => {
+    requirePerm(permissionForEndpoint(permissionEndpoint));
+    const config = [...SOURCES.values()].find((source: any) => source.meta?.upload?.kind === kind)?.meta?.upload;
+    if (!config) return apiError(409, 'Upload datasource is not configured');
+    const document = await repository.getUploadedFile(config, documentId);
+    if (!document) return apiError(404, notFoundMessage);
+    if (config.scoped !== false && !(await recordInCurrentBranch(String(config.resource), String(document.parent_id)))) return apiError(403, 'Record is outside the current view scope');
+    const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
+    if (!(await file.exists())) return apiError(404, `${notFoundMessage.replace(/ not found$/, '')} file not found`);
+    return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
+  };
 
   if (pathname === '/api/upload' && method === 'POST') {
     const form = await req.formData();
@@ -366,34 +377,17 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const contractDocumentMatch = pathname.match(/^\/api\/hr\/contract-documents\/([A-Za-z0-9-]+)$/);
   if (contractDocumentMatch && method === 'GET') {
-    requirePerm(permissionForEndpoint('hr.contract_document.download'));
-    const document = await repository.getContractDocument(contractDocumentMatch[1]);
-    if (!document) return apiError(404, 'Contract document not found');
-    if (!(await recordInCurrentBranch('employment_contracts', String(document.contract_id)))) return apiError(403, 'Record is outside the current view scope');
-    const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
-    if (!(await file.exists())) return apiError(404, 'Contract document file not found');
-    return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
+    return configuredUploadFile('contract_document', contractDocumentMatch[1], 'hr.contract_document.download', 'Contract document not found');
   }
 
   const companyDocumentMatch = pathname.match(/^\/api\/org\/company-documents\/([A-Za-z0-9-]+)$/);
   if (companyDocumentMatch && method === 'GET') {
-    requirePerm(permissionForEndpoint('org.company_document.download'));
-    const document = await repository.getCompanyDocument(companyDocumentMatch[1]);
-    if (!document) return apiError(404, 'Company document not found');
-    const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
-    if (!(await file.exists())) return apiError(404, 'Company document file not found');
-    return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
+    return configuredUploadFile('company_document', companyDocumentMatch[1], 'org.company_document.download', 'Company document not found');
   }
 
   const employeeDocumentMatch = pathname.match(/^\/api\/hr\/employee-documents\/([A-Za-z0-9-]+)$/);
   if (employeeDocumentMatch && method === 'GET') {
-    requirePerm(permissionForEndpoint('hr.employee_document.download'));
-    const document = await repository.getEmployeeDocument(employeeDocumentMatch[1]);
-    if (!document) return apiError(404, 'Employee document not found');
-    if (!(await recordInCurrentBranch('employees', String(document.employee_id)))) return apiError(403, 'Record is outside the current view scope');
-    const file = Bun.file(join(UPLOAD_ROOT, document.storage_key));
-    if (!(await file.exists())) return apiError(404, 'Employee document file not found');
-    return new Response(file, { headers: { 'Content-Type': document.mime_type || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(document.file_name)}`, ...CORS_HEADERS } });
+    return configuredUploadFile('employee_document', employeeDocumentMatch[1], 'hr.employee_document.download', 'Employee document not found');
   }
 
   const attachmentMatch = pathname.match(/^\/api\/chat\/attachments\/([A-Za-z0-9-]+)$/);
@@ -417,19 +411,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const orderAttachmentMatch = pathname.match(/^\/api\/orders\/attachments\/([A-Za-z0-9-]+)$/);
   if (orderAttachmentMatch && method === 'GET') {
-    requirePerm(permissionForEndpoint('orders.attachment.download'));
-    const attachment = await repository.getOrderAttachment(orderAttachmentMatch[1]);
-    if (!attachment) return apiError(404, 'Order attachment not found');
-    if (!(await recordInCurrentBranch('orders', String(attachment.order_id)))) return apiError(403, 'Order is outside the current view scope');
-    const file = Bun.file(join(UPLOAD_ROOT, attachment.storage_key));
-    if (!(await file.exists())) return apiError(404, 'Order attachment file not found');
-    return new Response(file, {
-      headers: {
-        'Content-Type': attachment.mime_type || 'application/octet-stream',
-        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(attachment.file_name)}`,
-        ...CORS_HEADERS,
-      },
-    });
+    return configuredUploadFile('order_attachment', orderAttachmentMatch[1], 'orders.attachment.download', 'Order attachment not found');
   }
 
   // ── GET /api/pages/:id ────────────────────────────────────────────────────

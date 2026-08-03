@@ -739,6 +739,12 @@ export class DuckDbRepository {
     return this.query(`SELECT * FROM ${config.childTable} WHERE id = ?`, [id]).then((rows) => rows[0]);
   }
 
+  async getUploadedFile(config: { parentTable: string; childTable: string; parentKey: string }, documentId: string) {
+    if ([config.parentTable, config.childTable, config.parentKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid upload configuration' };
+    const [row] = await this.query(`SELECT d.*, p.id AS parent_id FROM ${config.childTable} d JOIN ${config.parentTable} p ON p.id = d.${config.parentKey} WHERE d.id = ?`, [documentId]);
+    return row || null;
+  }
+
   async getOrderAttachment(attachmentId: string) {
     const [row] = await this.query('SELECT * FROM order_attachments WHERE id = ?', [attachmentId]);
     return row || null;

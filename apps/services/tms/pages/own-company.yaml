@@ -15,7 +15,7 @@ datasources:
   - id: company_documents
     single: false
     permission: settings.read
-    meta: { upload: { kind: company_document, parentTable: company_profiles, childTable: company_documents, parentKey: company_id, resource: company_profiles, permission: settings.write } }
+    meta: { upload: { kind: company_document, parentTable: company_profiles, childTable: company_documents, parentKey: company_id, resource: company_profiles, permission: settings.write, scoped: false } }
     query: "SELECT id, company_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM company_documents WHERE company_id = (SELECT id FROM company_profiles ORDER BY created_at LIMIT 1) ORDER BY created_at DESC"
 components:
   - type: OdooFormView
