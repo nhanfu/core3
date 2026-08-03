@@ -126,11 +126,11 @@ const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   form: new Set(['id', 'type', 'title', 'table', 'datasource', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'datasource', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'datasource', 'refresh', 'scope', 'permission']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'datasource', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
-  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind']),
+  server: new Set(['id', 'type', 'action', 'datasource', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'permission']),

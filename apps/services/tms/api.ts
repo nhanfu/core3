@@ -629,6 +629,23 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
 
     if (handler === 'line_item') {
+      const declaredLineSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const declaredLineMutation = declaredLineSource?.mutations?.[actionDefinition.operation];
+      if (declaredLineMutation?.parent) {
+        if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+        if (!(await recordInCurrentBranch(String(declaredLineMutation.parent.parentTable), body.id))) {
+          return apiError(403, 'Record is outside the current view scope');
+        }
+        return json(await repository.mutateDocumentLine(
+          declaredLineMutation.parent,
+          actionDefinition.operation,
+          body.id,
+          typeof body.line_id === 'string' ? body.line_id : null,
+          body.values && typeof body.values === 'object' ? body.values : {},
+          actionName,
+          activityActor,
+        ));
+      }
       const isOrder = actionDefinition.domain === 'order';
       const isQuote = actionDefinition.domain === 'quote';
       if (!isOrder && !isQuote && !(await recordInCurrentBranch('accounting_entries', body.id))) {

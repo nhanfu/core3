@@ -21,6 +21,11 @@ datasources:
   - id: order_detail_lines
     single: false
     permission: orders.read
+    table: order_lines
+    mutations:
+      create: { permission: orders.write, parent: { parentTable: orders, lineTable: order_lines, parentKey: order_id, label: Order, hasCost: false, totalField: total_amount } }
+      update: { permission: orders.write, parent: { parentTable: orders, lineTable: order_lines, parentKey: order_id, label: Order, hasCost: false, totalField: total_amount } }
+      delete: { permission: orders.write, parent: { parentTable: orders, lineTable: order_lines, parentKey: order_id, label: Order, hasCost: false, totalField: total_amount } }
     query: |
       SELECT l.id, l.order_id AS document_id, l.sequence, l.description,
         CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
@@ -332,6 +337,7 @@ actions:
   - id: add_order_line
     type: server_form
     permission: orders.write
+    datasource: order_detail_lines
     title: Add a charge line
     action: orders.lines.create
     handler: line_item
@@ -348,6 +354,7 @@ actions:
   - id: edit_order_line
     type: server_form
     permission: orders.write
+    datasource: order_detail_lines
     title: Update freight lines
     action: orders.lines.update
     handler: line_item
@@ -365,6 +372,7 @@ actions:
   - id: delete_order_line
     type: server
     permission: orders.write
+    datasource: order_detail_lines
     action: orders.lines.delete
     handler: line_item
     operation: delete
