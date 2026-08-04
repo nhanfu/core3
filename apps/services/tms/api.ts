@@ -1125,8 +1125,13 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
 
     if ('scopes' in tbl && action !== 'insert') {
-      const existing = await repository.query(`SELECT kind FROM ${table} WHERE id = ?`, [id]);
-      if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
+      const scopeSource = table === 'master_data'
+        ? 'master_data_node'
+        : table === 'system_configs'
+          ? 'system_config_node'
+          : 'accounting_entry_node';
+      const existing = await validationRow(scopeSource, { id });
+      if (!existing || existing.kind !== scope) return apiError(404, 'Resource not found');
     }
     if (table === 'orders' && (action === 'update' || action === 'delete')) {
       const order = await validationRow('order_status', { id });
@@ -1256,9 +1261,9 @@ export function createTmsApi(ctx: TmsApiContext) {
     // ── delete ──────────────────────────────────────────────────────────────
     if (action === 'delete') {
       if (!id) return apiError(400, 'id required for delete');
-      if (!('scopes' in tbl) && table !== 'orders') {
-        const existing = await repository.query(`SELECT id FROM ${table} WHERE id = ?`, [id]);
-        if (!existing[0]) return apiError(404, 'Resource not found');
+      if (table === 'users') {
+        const existing = await validationRow('user_node', { id });
+        if (!existing) return apiError(404, 'Resource not found');
       }
       if (table === 'users') {
         await repository.deleteUserRoles(id);

@@ -238,3 +238,15 @@ validation_datasources:
   payroll_status:
     single: true
     query: "SELECT status FROM payrolls WHERE id = :id"
+  master_data_node:
+    single: true
+    query: "SELECT kind FROM master_data WHERE id = :id"
+  system_config_node:
+    single: true
+    query: "SELECT kind FROM system_configs WHERE id = :id"
+  accounting_entry_node:
+    single: true
+    query: "SELECT kind FROM accounting_entries WHERE id = :id"
+  user_node:
+    single: true
+    query: "SELECT id FROM users WHERE id = :id"
