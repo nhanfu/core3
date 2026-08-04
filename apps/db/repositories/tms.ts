@@ -661,9 +661,11 @@ export class DuckDbRepository {
   }
 
   async createChatThread(
+    relation: { threadTable: string; participantTable: string; userTable: string; threadKey: string; userKey: string; emailKey: string; titleKey: string; threadTypeKey: string; createdByKey: string } | null,
     values: Record<string, unknown>,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if (!relation || [relation.threadTable, relation.participantTable, relation.userTable, relation.threadKey, relation.userKey, relation.emailKey, relation.titleKey, relation.threadTypeKey, relation.createdByKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 409, message: 'Chat thread relation is not configured' };
     const actorId = String(actor.id || '');
     const title = String(values.title || '').trim();
     const requestedEmails = [...new Set(
@@ -682,9 +684,9 @@ export class DuckDbRepository {
         const users = requestedEmails.length
           ? await queryOnConnection(
               conn,
-              `SELECT id, lower(email) AS email
-               FROM users
-               WHERE lower(email) IN (${requestedEmails.map(() => '?').join(', ')})`,
+              `SELECT id, lower(${relation.emailKey}) AS email
+               FROM ${relation.userTable}
+               WHERE lower(${relation.emailKey}) IN (${requestedEmails.map(() => '?').join(', ')})`,
               requestedEmails,
             )
           : [];
@@ -701,14 +703,14 @@ export class DuckDbRepository {
         const threadId = crypto.randomUUID();
         await runOnConnection(
           conn,
-          `INSERT INTO chat_threads(id, title, thread_type, created_by)
+          `INSERT INTO ${relation.threadTable}(id, ${relation.titleKey}, ${relation.threadTypeKey}, ${relation.createdByKey})
            VALUES(?,?,?,?)`,
           [threadId, title, participantIds.length === 2 ? 'Direct' : 'Group', actorId],
         );
         for (const userId of participantIds) {
           await runOnConnection(
             conn,
-            `INSERT INTO chat_participants(thread_id, user_id, last_read_at)
+            `INSERT INTO ${relation.participantTable}(${relation.threadKey}, ${relation.userKey}, last_read_at)
              VALUES(?,?,CURRENT_TIMESTAMP)`,
             [threadId, userId],
           );

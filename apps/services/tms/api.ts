@@ -567,6 +567,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (handler === 'chat') {
       if (actionDefinition.operation === 'create_thread') {
         return json(await repository.createChatThread(
+          actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null,
           body.values && typeof body.values === 'object' ? body.values : {},
           activityActor,
         ));

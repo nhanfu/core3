@@ -5,7 +5,7 @@ datasources:
   - id: chat_threads
     single: false
     permission: chat.read
-    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, threadKey: thread_id, userKey: user_id } }
+    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, userTable: users, threadKey: thread_id, userKey: user_id, emailKey: email, titleKey: title, threadTypeKey: thread_type, createdByKey: created_by } }
     query: |
       SELECT t.id, t.title, t.thread_type,
         COALESCE((
@@ -89,6 +89,7 @@ actions:
     permission: chat.write
     title: Create a conversation
     action: chat.threads.create
+    datasource: chat_threads
     handler: chat
     operation: create_thread
     refresh: [chat_threads, chat_messages]
