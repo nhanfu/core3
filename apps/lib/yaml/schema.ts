@@ -133,7 +133,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
   server: new Set(['id', 'type', 'action', 'datasource', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind', 'transition']),
   upload: new Set(['id', 'type', 'kind', 'datasource', 'refresh', 'params', 'scope', 'permission']),
-  download: new Set(['id', 'type', 'kind', 'permission']),
+  download: new Set(['id', 'type', 'kind', 'datasource', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'permission']),
   event: new Set(['id', 'type', 'event', 'params', 'title', 'message', 'close_label', 'icon', 'permission']),
 };

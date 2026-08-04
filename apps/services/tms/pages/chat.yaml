@@ -53,6 +53,7 @@ datasources:
   - id: chat_attachments
     single: false
     permission: chat.read
+    meta: { relation: { attachmentTable: chat_attachments, messageTable: chat_messages, participantTable: chat_participants, messageKey: message_id, messageThreadKey: thread_id, threadKey: thread_id, userKey: user_id } }
     query: |
       SELECT a.id, a.message_id, m.thread_id, a.file_name, a.mime_type,
         CAST(a.size_bytes AS DOUBLE) AS size_bytes
@@ -117,4 +118,5 @@ actions:
   - id: download_attachment
     type: download
     permission: chat.read
+    datasource: chat_attachments
     kind: chat_attachment

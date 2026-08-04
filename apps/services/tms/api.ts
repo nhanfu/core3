@@ -386,10 +386,9 @@ export function createTmsApi(ctx: TmsApiContext) {
   const attachmentMatch = pathname.match(/^\/api\/chat\/attachments\/([A-Za-z0-9-]+)$/);
   if (attachmentMatch && method === 'GET') {
     requirePerm(permissionForEndpoint('chat.attachment.download'));
-    const attachment = await repository.getChatAttachment(
-      attachmentMatch[1],
-      String(authUser.sub),
-    );
+    const relation = SOURCES.get('chat_attachments')?.meta?.relation;
+    if (!relation) return apiError(409, 'Chat attachment relation is not configured');
+    const attachment = await repository.getChatAttachment(relation, attachmentMatch[1], String(authUser.sub));
     if (!attachment) return apiError(404, 'Attachment not found');
     const file = Bun.file(join(UPLOAD_ROOT, attachment.storage_key));
     if (!(await file.exists())) return apiError(404, 'Attachment file not found');

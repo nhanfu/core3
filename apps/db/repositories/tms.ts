@@ -910,13 +910,14 @@ export class DuckDbRepository {
     });
   }
 
-  async getChatAttachment(attachmentId: string, userId: string): Promise<any | null> {
+  async getChatAttachment(relation: { attachmentTable: string; messageTable: string; participantTable: string; messageKey: string; messageThreadKey: string; threadKey: string; userKey: string }, attachmentId: string, userId: string): Promise<any | null> {
+    if ([relation.attachmentTable, relation.messageTable, relation.participantTable, relation.messageKey, relation.messageThreadKey, relation.threadKey, relation.userKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid chat attachment relation' };
     const rows = await this.query(
       `SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key
-       FROM chat_attachments a
-       JOIN chat_messages m ON m.id = a.message_id
-       JOIN chat_participants p ON p.thread_id = m.thread_id
-       WHERE a.id = ? AND p.user_id = ?`,
+       FROM ${relation.attachmentTable} a
+       JOIN ${relation.messageTable} m ON m.id = a.${relation.messageKey}
+       JOIN ${relation.participantTable} p ON p.${relation.threadKey} = m.${relation.messageThreadKey}
+       WHERE a.id = ? AND p.${relation.userKey} = ?`,
       [attachmentId, userId],
     );
     return rows[0] || null;
