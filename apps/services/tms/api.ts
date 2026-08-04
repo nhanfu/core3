@@ -1305,13 +1305,20 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   // ── PROFILE (self-update) ─────────────────────────────────────────────────
   if (pathname === '/api/v1/profile' && method === 'GET') {
-    const profile = await repository.getProfile(authUser.sub);
+    const source = API_DATASOURCES.profile;
+    if (!source) return apiError(409, 'Profile datasource is not configured');
+    const result = await repository.querySource(source, { id: String(authUser.sub) }, 0, 1);
+    const row = result.data;
+    const profile = row && Object.keys(row).length ? { ...row, roles: row.roles_csv ? String(row.roles_csv).split(',').filter(Boolean) : [] } : null;
     if (!profile) return apiError(404, 'User not found');
     return json(profile);
   }
 
   if (pathname === '/api/v1/company' && method === 'GET') {
-    const company = await repository.getCompanyProfile();
+    const source = API_DATASOURCES.company_profile;
+    if (!source) return apiError(409, 'Company profile datasource is not configured');
+    const result = await repository.querySource(source, {}, 0, 1);
+    const company = result.data;
     if (!company) return apiError(404, 'Company profile not found');
     return json(company);
   }
@@ -1331,9 +1338,9 @@ export function createTmsApi(ctx: TmsApiContext) {
       }
     }
 
-    if (Object.keys(fields).length) {
-      await repository.updateProfile(authUser.sub, fields);
-    }
+    const source = API_DATASOURCES.profile;
+    if (!source) return apiError(409, 'Profile datasource is not configured');
+    if (Object.keys(fields).length) await repository.updateDatasourceRows(source, { id: String(authUser.sub) }, fields);
     return json({ ok: true });
   }
 

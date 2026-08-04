@@ -259,3 +259,14 @@ api_datasources:
     mutations:
       create: { permission: chat.write, fields: [user_id, type, title, body, target_path] }
       update: { permission: chat.read, fields: [read], where: [user_id] }
+  profile:
+    single: true
+    permission: settings.read
+    query: "SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at, string_agg(r.name, ',') AS roles_csv FROM users u LEFT JOIN user_roles ur ON ur.user_id = u.id LEFT JOIN roles r ON r.id = ur.role_id WHERE u.id = :id GROUP BY u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.created_at"
+    table: users
+    mutations:
+      update: { permission: settings.write, fields: [name, preferred_lang, avatar_url], where: [id] }
+  company_profile:
+    single: true
+    permission: settings.read
+    query: "SELECT id, name, short_name, tax_code, address, phone, email, website FROM company_profiles ORDER BY created_at ASC LIMIT 1"
