@@ -115,16 +115,6 @@ export class DuckDbRepository {
     return Number(rows[0]?.n || 0);
   }
 
-  async createEmployeeDocument(employeeId: string, file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string }, actor: { id?: string | null; name: string }) {
-    const [employee] = await this.query('SELECT id FROM employees WHERE id = ?', [employeeId]);
-    if (!employee) throw { status: 404, message: 'Employee not found' };
-    const id = crypto.randomUUID();
-    await this.run('INSERT INTO employee_documents(id, employee_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)', [id, employeeId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null]);
-    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'upload', resource: 'employees', resourceId: employeeId, detail: `Uploaded ${file.fileName}` });
-    const [row] = await this.query('SELECT id, employee_id, file_name, mime_type, size_bytes, created_at FROM employee_documents WHERE id = ?', [id]);
-    return row;
-  }
-
   async syncCurrencyRates(
     rates: Record<string, number>,
     source: string,
@@ -164,41 +154,6 @@ export class DuckDbRepository {
         throw error;
       }
     });
-  }
-
-  async getEmployeeDocument(documentId: string) {
-    const [row] = await this.query('SELECT d.*, e.id AS employee_id FROM employee_documents d JOIN employees e ON e.id = d.employee_id WHERE d.id = ?', [documentId]);
-    return row || null;
-  }
-
-  async createContractDocument(contractId: string, file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string }, actor: { id?: string | null; name: string }) {
-    const [contract] = await this.query('SELECT id FROM employment_contracts WHERE id = ?', [contractId]);
-    if (!contract) throw { status: 404, message: 'Contract not found' };
-    const id = crypto.randomUUID();
-    await this.run('INSERT INTO contract_documents(id, contract_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)', [id, contractId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null]);
-    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'upload', resource: 'employment_contracts', resourceId: contractId, detail: `Uploaded ${file.fileName}` });
-    const [row] = await this.query('SELECT id, contract_id, file_name, mime_type, size_bytes, created_at FROM contract_documents WHERE id = ?', [id]);
-    return row;
-  }
-
-  async getContractDocument(documentId: string) {
-    const [row] = await this.query('SELECT d.*, c.id AS contract_id FROM contract_documents d JOIN employment_contracts c ON c.id = d.contract_id WHERE d.id = ?', [documentId]);
-    return row || null;
-  }
-
-  async createCompanyDocument(companyId: string, file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string }, actor: { id?: string | null; name: string }) {
-    const [company] = await this.query('SELECT id FROM company_profiles WHERE id = ?', [companyId]);
-    if (!company) throw { status: 404, message: 'Company profile not found' };
-    const id = crypto.randomUUID();
-    await this.run('INSERT INTO company_documents(id, company_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)', [id, companyId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null]);
-    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'upload', resource: 'company_profiles', resourceId: companyId, detail: `Uploaded ${file.fileName}` });
-    const [row] = await this.query('SELECT id, company_id, file_name, mime_type, size_bytes, created_at FROM company_documents WHERE id = ?', [id]);
-    return row;
-  }
-
-  async getCompanyDocument(documentId: string) {
-    const [row] = await this.query('SELECT d.*, c.id AS company_id FROM company_documents d JOIN company_profiles c ON c.id = d.company_id WHERE d.id = ?', [documentId]);
-    return row || null;
   }
 
   async importMasterData(config: { table: string; scope: string }, csvText: string, actor: { id?: string | null; name: string }) {
@@ -697,33 +652,6 @@ export class DuckDbRepository {
     return { order_id: orderId, user_id: userId, name: user.name, email: user.email, avatar_url: user.avatar_url, removed: !adding };
   }
 
-  async createOrderAttachment(
-    orderId: string,
-    file: { fileName: string; mimeType: string; sizeBytes: number; storageKey: string },
-    actor: { id?: string | null; name: string },
-  ) {
-    const [order] = await this.query('SELECT id FROM orders WHERE id = ?', [orderId]);
-    if (!order) throw { status: 404, message: 'Order not found' };
-    const id = crypto.randomUUID();
-    await this.run(
-      'INSERT INTO order_attachments(id, order_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(?,?,?,?,?,?,?)',
-      [id, orderId, file.fileName, file.mimeType, file.sizeBytes, file.storageKey, actor.id || null],
-    );
-    await this.recordActivity({
-      actorId: actor.id,
-      actorName: actor.name,
-      action: 'orders.attachments.upload',
-      resource: 'orders',
-      resourceId: orderId,
-      detail: file.fileName,
-    });
-    const [row] = await this.query(
-      'SELECT id, order_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM order_attachments WHERE id = ?',
-      [id],
-    );
-    return row;
-  }
-
   async createUploadedFile(
     config: { kind: string; parentTable: string; childTable: string; parentKey: string; resource: string },
     parentId: string,
@@ -742,11 +670,6 @@ export class DuckDbRepository {
   async getUploadedFile(config: { parentTable: string; childTable: string; parentKey: string }, documentId: string) {
     if ([config.parentTable, config.childTable, config.parentKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid upload configuration' };
     const [row] = await this.query(`SELECT d.*, p.id AS parent_id FROM ${config.childTable} d JOIN ${config.parentTable} p ON p.id = d.${config.parentKey} WHERE d.id = ?`, [documentId]);
-    return row || null;
-  }
-
-  async getOrderAttachment(attachmentId: string) {
-    const [row] = await this.query('SELECT * FROM order_attachments WHERE id = ?', [attachmentId]);
     return row || null;
   }
 
