@@ -289,6 +289,15 @@ mutation_policies:
     delete:
       preconditions: [{ datasource: payroll_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Payroll not found, message: Payroll can only be deleted while Draft }]
 
+scope_mutation_policies:
+  trucks: { branch_field: branch_id }
+  departments: { branch_field: branch_id }
+  accounting_entries: { branch_field: branch_id }
+  orders: { branch_field: branch_id }
+  quotes: { branch_field: branch_id }
+  locations: { branch_field: branch_id }
+  containers: { branch_field: branch_id }
+
 api_datasources:
   notifications:
     permission: chat.read
