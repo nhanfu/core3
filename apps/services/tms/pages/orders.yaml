@@ -10,6 +10,7 @@ datasources:
   - id: orders
     single: false
     permission: orders.read
+    meta: { workflow: { table: orders, stateTable: order_workflow_states, stateKey: order_id, numberField: order_number, resource: orders } }
     query: |
       SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,

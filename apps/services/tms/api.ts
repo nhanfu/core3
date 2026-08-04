@@ -740,7 +740,10 @@ export function createTmsApi(ctx: TmsApiContext) {
       const transitionSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : SOURCES.get('orders');
       const transition = transitionSource?.workflow?.actions?.[actionDefinition.operation];
       if (!transition) return apiError(409, 'This order transition is not configured');
+      const workflowConfig = transitionSource?.meta?.workflow;
+      if (!workflowConfig) return apiError(409, 'This order workflow datasource is not configured');
       const order = await repository.transitionOrder(
+        workflowConfig,
         body.id,
         transition.from,
         transition.to,

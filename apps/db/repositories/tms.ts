@@ -1307,20 +1307,22 @@ export class DuckDbRepository {
   }
 
   async transitionOrder(
+    config: { table: string; stateTable: string; stateKey: string; numberField: string; resource: string },
     orderId: string,
     allowedFrom: readonly string[],
     targetStatus: string,
     action: string,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if ([config.table, config.stateTable, config.stateKey, config.numberField, config.resource].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid workflow configuration' };
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
         const rows = await queryOnConnection(
           conn,
           `SELECT o.*, COALESCE(s.status, o.status) AS workflow_status
-           FROM orders o
-           LEFT JOIN order_workflow_states s ON s.order_id = o.id
+           FROM ${config.table} o
+           LEFT JOIN ${config.stateTable} s ON s.${config.stateKey} = o.id
            WHERE o.id = ?`,
           [orderId],
         );
@@ -1334,9 +1336,9 @@ export class DuckDbRepository {
         }
         await runOnConnection(
           conn,
-           `INSERT INTO order_workflow_states(order_id, status, updated_at)
+           `INSERT INTO ${config.stateTable}(${config.stateKey}, status, updated_at)
            VALUES(?,?,?)
-           ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
+           ON CONFLICT(${config.stateKey}) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
           [orderId, targetStatus, new Date()],
         );
         await runOnConnection(
@@ -1349,16 +1351,16 @@ export class DuckDbRepository {
             actor.id || null,
             actor.name,
             action,
-            'orders',
+            config.resource,
             orderId,
-            `${order.order_number}: ${order.workflow_status} -> ${targetStatus}`,
+            `${order[config.numberField]}: ${order.workflow_status} -> ${targetStatus}`,
           ],
         );
         const [updated] = await queryOnConnection(
           conn,
           `SELECT o.*, COALESCE(s.status, o.status) AS status
-           FROM orders o
-           LEFT JOIN order_workflow_states s ON s.order_id = o.id
+           FROM ${config.table} o
+           LEFT JOIN ${config.stateTable} s ON s.${config.stateKey} = o.id
            WHERE o.id = ?`,
           [orderId],
         );
