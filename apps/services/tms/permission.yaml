@@ -291,12 +291,21 @@ mutation_policies:
 
 scope_mutation_policies:
   trucks: { branch_field: branch_id }
-  departments: { branch_field: branch_id }
+  departments: { branch_field: branch_id, references: [{ field: parent_id, resource: departments }] }
   accounting_entries: { branch_field: branch_id }
   orders: { branch_field: branch_id }
   quotes: { branch_field: branch_id }
   locations: { branch_field: branch_id }
-  containers: { branch_field: branch_id }
+  containers: { branch_field: branch_id, references: [{ field: location_id, resource: locations }] }
+  teams: { references: [{ field: department_id, resource: departments }] }
+  drivers: { references: [{ field: assigned_truck_id, resource: trucks }] }
+  trips: { branch_field: branch_id, references: [{ field: truck_id, resource: trucks }] }
+  maintenance: { references: [{ field: truck_id, resource: trucks }] }
+  users: { branch_field: branch_id, references: [{ field: department_id, resource: departments }] }
+  employees: { references: [{ field: department, datasource: department_by_name, params: { name: '$like' }, required: true }] }
+  employment_contracts: { references: [{ field: employee_id, resource: employees, required: true }] }
+  timesheets: { references: [{ field: employee_id, resource: employees, required: true }] }
+  payrolls: { references: [{ field: employee_id, resource: employees, required: true }] }
 
 api_datasources:
   notifications:

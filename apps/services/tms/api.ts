@@ -304,6 +304,25 @@ export function createTmsApi(ctx: TmsApiContext) {
     const row = result.data?.[0];
     return row?.branch_id ? String(row.branch_id) : null;
   };
+  const enforceScopeReferencePolicies = async (table: string, changes: any[], currentBranchId: string) => {
+    const references = Array.isArray(SCOPE_MUTATION_POLICIES[table]?.references) ? SCOPE_MUTATION_POLICIES[table].references : [];
+    for (const reference of references) {
+      const change = changes.find((entry: any) => entry.field === reference.field);
+      if (!change || !change.value) {
+        if (reference.required) throw { status: 403, message: 'Record is outside the current view scope' };
+        continue;
+      }
+      let branchId: string | null = null;
+      if (reference.resource) {
+        branchId = await branchForScopedResource(String(reference.resource), String(change.value));
+      } else if (reference.datasource) {
+        const params = Object.fromEntries(Object.entries(reference.params || {}).map(([key, value]) => [key, value === '$value' ? String(change.value) : value === '$like' ? `%${String(change.value)}%` : value]));
+        const row = await validationRow(String(reference.datasource), params);
+        branchId = row?.branch_id ? String(row.branch_id) : null;
+      }
+      if (!branchId || branchId !== currentBranchId) throw { status: 403, message: 'Record is outside the current view scope' };
+    }
+  };
   const recordInCurrentBranch = async (resourceTable: string, resourceId: string) => {
     if (String(authUser.view_scope || 'all') === 'all') return true;
     const branchId = await branchForScopedResource(resourceTable, resourceId);
@@ -860,35 +879,11 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (!currentBranchId) return rejectOutOfScope();
       try {
         changes = applyScopeMutationPolicy(table, policyOperation, changes, currentBranchId);
+        await enforceScopeReferencePolicies(table, changes, currentBranchId);
       } catch (error: any) {
         if (error?.status) return apiError(error.status, error.message || 'Record is outside the current view scope');
         throw error;
       }
-    }
-    const branchForRow = async (resourceTable: string, resourceId: string) => {
-      return branchForScopedResource(resourceTable, resourceId);
-    };
-    const departmentBranch = async (departmentId: unknown) => {
-      if (!departmentId) return null;
-      return branchForScopedResource('departments', String(departmentId));
-    };
-    const departmentBranchByName = async (department: unknown) => {
-      if (!department) return null;
-      const sourceId = 'department_by_name';
-      const definition = SCOPE_DATASOURCES[sourceId];
-      const result = await repository.querySource({ id: sourceId, ...definition }, {
-        name: `%${String(department)}%`,
-        current_user_id: String(authUser.sub || ''),
-        current_user_name: String(authUser.name || ''),
-        current_branch_id: String(authUser.branch_id || ''),
-        view_scope: String(authUser.view_scope || 'all'),
-      }, 0, 1);
-      return result.data?.[0]?.branch_id ? String(result.data[0].branch_id) : null;
-    };
-    if (table === 'trips' && action === 'insert' && !changes.some((change: any) => change.field === 'branch_id')) {
-      const truckId = changes.find((change: any) => change.field === 'truck_id')?.value;
-      const truckBranch = truckId ? await branchForRow('trucks', String(truckId)) : null;
-      if (truckBranch) changes = [...changes, { field: 'branch_id', value: truckBranch }];
     }
     if (table === 'customers' || table === 'partners') {
       const kind = table === 'customers' ? 'customer' : 'partner';
@@ -904,108 +899,10 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (scopedBranch) {
       if (action === 'insert') {
         if (table === 'branches') return rejectOutOfScope();
-        if (table === 'departments') {
-          const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
-          const parentBranch = parentId ? await departmentBranch(parentId) : currentBranchId;
-          if (!parentBranch || parentBranch !== currentBranchId) return rejectOutOfScope();
-        }
-        if (table === 'teams') {
-          const branchId = await departmentBranch(changes.find((change: any) => change.field === 'department_id')?.value);
-          if (branchId && branchId !== currentBranchId) return rejectOutOfScope();
-        }
-        if (table === 'drivers' || table === 'trips' || table === 'maintenance') {
-          const truckId = changes.find((change: any) => change.field === (table === 'drivers' ? 'assigned_truck_id' : 'truck_id'))?.value;
-          const requestedBranch = table === 'trips' ? changes.find((change: any) => change.field === 'branch_id')?.value : null;
-          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
-          const branchId = truckId ? await branchForRow('trucks', String(truckId)) : (requestedBranch ? String(requestedBranch) : currentBranchId);
-          if (!branchId || branchId !== currentBranchId) return rejectOutOfScope();
-          if (table === 'trips' && !requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
-        }
-        if (table === 'users') {
-          const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
-          if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
-          const departmentId = changes.find((change: any) => change.field === 'department_id')?.value;
-          const departmentScope = departmentId ? await departmentBranch(departmentId) : currentBranchId;
-          if (!departmentScope || departmentScope !== currentBranchId) return rejectOutOfScope();
-          if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
-        }
-        if (table === 'employees') {
-          const department = changes.find((change: any) => change.field === 'department')?.value;
-          const branchId = await departmentBranchByName(department);
-          if (!branchId || branchId !== currentBranchId) return rejectOutOfScope();
-        }
-        if (table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls') {
-          const employeeId = changes.find((change: any) => change.field === 'employee_id')?.value;
-          const employeeBranch = employeeId ? await branchForScopedResource('employees', String(employeeId)) : null;
-          if (!employeeBranch || employeeBranch !== currentBranchId) return rejectOutOfScope();
-        }
-        if (table === 'locations' || table === 'containers') {
-          if (table === 'containers') {
-            const locationId = changes.find((change: any) => change.field === 'location_id')?.value;
-            const locationBranch = locationId ? await branchForRow('locations', String(locationId)) : currentBranchId;
-            if (!locationBranch || locationBranch !== currentBranchId) return rejectOutOfScope();
-          }
-        }
       } else if (id) {
-        const rowBranch = await branchForRow(table, String(id));
+        const rowBranch = await branchForScopedResource(table, String(id));
         if (SCOPE_RESOURCES[table] && !rowBranch) return rejectOutOfScope();
         if (rowBranch && rowBranch !== currentBranchId) return rejectOutOfScope();
-        if (table === 'departments' && action === 'update') {
-          const parentChange = changes.find((change: any) => change.field === 'parent_id');
-          if (parentChange) {
-            const parentBranch = parentChange.value ? await departmentBranch(parentChange.value) : currentBranchId;
-            if (!parentBranch || parentBranch !== currentBranchId) return rejectOutOfScope();
-          }
-        }
-        if (table === 'teams' && action === 'update') {
-          const departmentId = changes.find((change: any) => change.field === 'department_id')?.value;
-          const nextBranch = await departmentBranch(departmentId);
-          if (nextBranch && nextBranch !== currentBranchId) return rejectOutOfScope();
-        }
-        if ((table === 'drivers' || table === 'trips' || table === 'maintenance') && action === 'update') {
-          const truckField = table === 'drivers' ? 'assigned_truck_id' : 'truck_id';
-          const truckChange = changes.find((change: any) => change.field === truckField);
-          if (truckChange && truckChange.value) {
-            const nextBranch = await branchForRow('trucks', String(truckChange.value || ''));
-            if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
-          }
-          if (table === 'trips') {
-            const branchChange = changes.find((change: any) => change.field === 'branch_id');
-            if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
-          }
-        }
-        if (table === 'users' && action === 'update') {
-          const branchChange = changes.find((change: any) => change.field === 'branch_id');
-          if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
-          const departmentChange = changes.find((change: any) => change.field === 'department_id');
-          if (departmentChange) {
-            const departmentScope = await departmentBranch(departmentChange.value);
-            if (!departmentScope || departmentScope !== currentBranchId) return rejectOutOfScope();
-          }
-        }
-        if (table === 'employees' && action === 'update') {
-          const departmentChange = changes.find((change: any) => change.field === 'department');
-          if (departmentChange) {
-            const nextBranch = await departmentBranchByName(departmentChange.value);
-            if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
-          }
-        }
-        if ((table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls') && action === 'update') {
-          const employeeChange = changes.find((change: any) => change.field === 'employee_id');
-          if (employeeChange) {
-            const nextBranch = await branchForScopedResource('employees', String(employeeChange.value || ''));
-            if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
-          }
-        }
-        if ((table === 'locations' || table === 'containers') && action === 'update') {
-          if (table === 'containers') {
-            const locationChange = changes.find((change: any) => change.field === 'location_id');
-            if (locationChange) {
-              const nextBranch = await branchForRow('locations', String(locationChange.value || ''));
-              if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
-            }
-          }
-        }
       }
     }
 
