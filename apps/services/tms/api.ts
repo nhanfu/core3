@@ -778,7 +778,11 @@ export function createTmsApi(ctx: TmsApiContext) {
         return json(await repository.mutateOrderFollower(relation, body.id, actionDefinition.operation, body.user_id, activityActor));
       }
       if (actionDefinition.operation !== 'message' && actionDefinition.operation !== 'note') return apiError(400, 'Invalid order chatter operation');
+      const activitySource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const activityConfig = activitySource?.meta?.activity;
+      if (!activityConfig) return apiError(409, 'Activity datasource is not configured');
       return json(await repository.addOrderChatterEntry(
+        activityConfig,
         body.id,
         actionDefinition.operation,
         body.values && typeof body.values === 'object' ? body.values : {},

@@ -44,6 +44,7 @@ datasources:
   - id: order_detail_timeline
     single: false
     permission: orders.read
+    meta: { activity: { table: orders, key: id, resource: orders, actionPrefix: orders } }
     query: |
       SELECT actor_name, action,
         CASE action
@@ -243,6 +244,7 @@ actions:
     permission: orders.write
     title: Send message
     action: orders.chatter.send
+    datasource: order_detail_timeline
     handler: order_chatter
     operation: message
     params: { id: '{row.id}' }
@@ -254,6 +256,7 @@ actions:
     permission: orders.write
     title: Log note
     action: orders.chatter.note
+    datasource: order_detail_timeline
     handler: order_chatter
     operation: note
     params: { id: '{row.id}' }

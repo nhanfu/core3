@@ -619,22 +619,24 @@ export class DuckDbRepository {
   }
 
   async addOrderChatterEntry(
+    config: { table: string; key: string; resource: string; actionPrefix: string },
     orderId: string,
-    operation: 'message' | 'note',
+    operation: string,
     values: Record<string, unknown>,
     actor: { id?: string | null; name: string },
   ) {
+    if ([config.table, config.key, config.resource, config.actionPrefix, operation].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid activity configuration' };
     const content = String(values.content || '').trim();
     if (!content) throw { status: 400, message: 'content required' };
     if (content.length > 4000) throw { status: 400, message: 'content must not exceed 4000 characters' };
-    const [order] = await this.query('SELECT id, order_number FROM orders WHERE id = ?', [orderId]);
-    if (!order) throw { status: 404, message: 'Order not found' };
-    const action = operation === 'message' ? 'orders.message' : 'orders.note';
+    const [parent] = await this.query(`SELECT ${config.key} FROM ${config.table} WHERE ${config.key} = ?`, [orderId]);
+    if (!parent) throw { status: 404, message: 'Activity parent not found' };
+    const action = `${config.actionPrefix}.${operation}`;
     await this.recordActivity({
       actorId: actor.id,
       actorName: actor.name,
       action,
-      resource: 'orders',
+      resource: config.resource,
       resourceId: orderId,
       detail: content,
     });
