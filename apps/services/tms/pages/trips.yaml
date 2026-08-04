@@ -20,6 +20,7 @@ datasources:
   - id: trips
     single: false
     permission: trips.read
+    meta: { workflow: { table: trips, resource: trips, label: Trip, numberField: trip_number } }
     query: |
       SELECT tr.*, t.plate AS truck_plate, d.name AS driver_name
       FROM trips tr
@@ -279,6 +280,7 @@ actions:
     type: server
     permission: trips.write
     action: trips.cancel
+    datasource: trips
     handler: trip_transition
     operation: cancel
     transition: { from: [Scheduled, In Transit], to: Cancelled }
@@ -289,6 +291,7 @@ actions:
     type: server
     permission: trips.write
     action: trips.start
+    datasource: trips
     handler: trip_transition
     operation: start
     transition: { from: [Scheduled], to: In Transit }
@@ -299,6 +302,7 @@ actions:
     type: server
     permission: trips.write
     action: trips.complete
+    datasource: trips
     handler: trip_transition
     operation: complete
     transition: { from: [In Transit], to: Completed }

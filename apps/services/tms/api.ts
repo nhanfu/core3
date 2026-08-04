@@ -627,8 +627,12 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     if (handler === 'trip_transition') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      const tripSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const tripConfig = tripSource?.meta?.workflow;
+      if (!tripConfig?.table || !tripConfig?.resource || !tripConfig?.label || !tripConfig?.numberField) return apiError(409, 'Trip workflow datasource is not configured');
+      if (!(await recordInCurrentBranch(String(tripConfig.table), body.id))) return apiError(403, 'Record is outside the current view scope');
       if (!actionDefinition.transition) return apiError(409, 'This trip transition is not configured');
-      return json(await repository.transitionTrip(body.id, actionDefinition.operation, actionDefinition.transition, actionName, activityActor));
+      return json(await repository.transitionTrip(tripConfig, body.id, actionDefinition.operation, actionDefinition.transition, actionName, activityActor));
     }
     if (handler === 'print_template') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');

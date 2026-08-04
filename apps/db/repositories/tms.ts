@@ -1241,25 +1241,27 @@ export class DuckDbRepository {
   }
 
   async transitionTrip(
+    config: { table: string; resource: string; label: string; numberField: string },
     tripId: string,
-    operation: 'start' | 'complete' | 'cancel',
+    operation: string,
     declaredTransition: { from: string[]; to: string },
     action: string,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if ([config.table, config.resource, config.label, config.numberField, operation].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid workflow configuration' };
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        const [trip] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
-        if (!trip) throw { status: 404, message: 'Trip not found' };
-        const currentStatus = String(trip.status);
+        const [record] = await queryOnConnection(conn, `SELECT * FROM ${config.table} WHERE id = ?`, [tripId]);
+        if (!record) throw { status: 404, message: `${config.label} not found` };
+        const currentStatus = String(record.status);
         const transition = { ...declaredTransition, label: operation };
         if (!transition.from.includes(currentStatus)) {
-          throw { status: 409, message: `Trip cannot ${transition.label} while ${currentStatus}` };
+          throw { status: 409, message: `${config.label} cannot ${transition.label} while ${currentStatus}` };
         }
-        await runOnConnection(conn, 'UPDATE trips SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [transition.to, tripId]);
-        await runOnConnection(conn, 'INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?,?)', [crypto.randomUUID(), actor.id || null, actor.name, action, 'trips', tripId, `Trip ${trip.trip_number}: ${currentStatus} -> ${transition.to}`]);
-        const [updated] = await queryOnConnection(conn, 'SELECT * FROM trips WHERE id = ?', [tripId]);
+        await runOnConnection(conn, `UPDATE ${config.table} SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [transition.to, tripId]);
+        await runOnConnection(conn, 'INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?,?)', [crypto.randomUUID(), actor.id || null, actor.name, action, config.resource, tripId, `${config.label} ${record[config.numberField]}: ${currentStatus} -> ${transition.to}`]);
+        const [updated] = await queryOnConnection(conn, `SELECT * FROM ${config.table} WHERE id = ?`, [tripId]);
         await runOnConnection(conn, 'COMMIT');
         return updated;
       } catch (error) {
