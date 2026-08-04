@@ -1410,23 +1410,24 @@ export class DuckDbRepository {
   }
 
   async transitionAccountingEntry(
+    config: { table: string; kind: string; resource: string; label: string },
     entryId: string,
-    kind: string,
     allowedFrom: readonly string[],
     targetStatus: string,
     action: string,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if ([config.table, config.kind, config.resource].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid financial workflow configuration' };
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
         const rows = await queryOnConnection(
           conn,
-          'SELECT * FROM accounting_entries WHERE id = ? AND kind = ?',
-          [entryId, kind],
+          `SELECT * FROM ${config.table} WHERE id = ? AND kind = ?`,
+          [entryId, config.kind],
         );
         const entry = rows[0];
-        if (!entry) throw { status: 404, message: 'Financial document not found' };
+        if (!entry) throw { status: 404, message: `${config.label} not found` };
         if (!allowedFrom.includes(entry.status)) {
           throw {
             status: 409,
@@ -1436,10 +1437,10 @@ export class DuckDbRepository {
 
         await runOnConnection(
           conn,
-          `UPDATE accounting_entries
+          `UPDATE ${config.table}
            SET status = ?, updated_at = CURRENT_TIMESTAMP
            WHERE id = ? AND kind = ? AND status = ?`,
-          [targetStatus, entryId, kind, entry.status],
+          [targetStatus, entryId, config.kind, entry.status],
         );
         await runOnConnection(
           conn,
@@ -1451,15 +1452,15 @@ export class DuckDbRepository {
             actor.id || null,
             actor.name,
             action,
-            'accounting_entries',
+            config.resource,
             entryId,
-            `${kind}:${entry.code}: ${entry.status} -> ${targetStatus}`,
+            `${config.kind}:${entry.code}: ${entry.status} -> ${targetStatus}`,
           ],
         );
         const [updated] = await queryOnConnection(
           conn,
-          'SELECT * FROM accounting_entries WHERE id = ? AND kind = ?',
-          [entryId, kind],
+          `SELECT * FROM ${config.table} WHERE id = ? AND kind = ?`,
+          [entryId, config.kind],
         );
         await runOnConnection(conn, 'COMMIT');
         return { ...updated, previous_status: entry.status };

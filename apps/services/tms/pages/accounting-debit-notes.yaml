@@ -4,6 +4,7 @@ datasources:
   - id: debit_notes
     single: false
     permission: accounting.read
+    meta: { workflow: { table: accounting_entries, kind: debit_note, resource: accounting_entries, label: Financial document } }
     query: |
       SELECT id, code, name, counterparty, amount, currency,
         printf('%,.0f', COALESCE(amount, 0)) AS amount_display, status,
@@ -133,9 +134,9 @@ actions:
     refresh: [debit_notes]
     fields: [{ field: code, label: Document number, type: text, required: true }, { field: name, label: Content, type: text, required: true }, { field: counterparty, label: Partner, type: text }, { field: currency, label: Money, type: select, options_source: debit_note_currency_lookup }, { field: document_date, label: Document date, type: date }, { field: due_date, label: Payment deadline, type: date }, { field: description, label: Note, type: textarea }]
   - { id: view_debit_note, type: navigate, permission: accounting.read, navigate_to: /accounting/documents/detail, params: { id: '{row.id}', kind: debit_note, back: /accounting/debit-notes } }
-  - { id: submit_debit_note, type: server, permission: accounting.write, action: accounting.debit_notes.submit_for_approval, confirm: 'Browse debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: submit_for_approval, kind: debit_note, transition: { from: [Draft], to: Pending Approval } }
-  - { id: approve_debit_note, type: server, permission: accounting.approve, action: accounting.debit_notes.approve, confirm: 'Browse debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: approve, kind: debit_note, transition: { from: [Pending Approval], to: Approved } }
-  - { id: reject_debit_note, type: server, permission: accounting.approve, action: accounting.debit_notes.reject, confirm: 'Reject debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: reject, kind: debit_note, transition: { from: [Pending Approval], to: Draft } }
-  - { id: pay_debit_note, type: server, permission: accounting.pay, action: accounting.debit_notes.mark_paid, confirm: 'Confirm payment of debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: mark_paid, kind: debit_note, transition: { from: [Approved], to: Paid } }
-  - { id: cancel_debit_note, type: server, permission: accounting.write, action: accounting.debit_notes.cancel, confirm: 'Cancel debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: cancel, kind: debit_note, transition: { from: [Draft, Pending Approval, Approved], to: Cancelled } }
+  - { id: submit_debit_note, type: server, permission: accounting.write, action: accounting.debit_notes.submit_for_approval, datasource: debit_notes, confirm: 'Browse debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: submit_for_approval, kind: debit_note, transition: { from: [Draft], to: Pending Approval } }
+  - { id: approve_debit_note, type: server, permission: accounting.approve, action: accounting.debit_notes.approve, datasource: debit_notes, confirm: 'Browse debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: approve, kind: debit_note, transition: { from: [Pending Approval], to: Approved } }
+  - { id: reject_debit_note, type: server, permission: accounting.approve, action: accounting.debit_notes.reject, datasource: debit_notes, confirm: 'Reject debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: reject, kind: debit_note, transition: { from: [Pending Approval], to: Draft } }
+  - { id: pay_debit_note, type: server, permission: accounting.pay, action: accounting.debit_notes.mark_paid, datasource: debit_notes, confirm: 'Confirm payment of debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: mark_paid, kind: debit_note, transition: { from: [Approved], to: Paid } }
+  - { id: cancel_debit_note, type: server, permission: accounting.write, action: accounting.debit_notes.cancel, datasource: debit_notes, confirm: 'Cancel debit note {{row.code}}?', refresh: [debit_notes] , handler: financial_transition, operation: cancel, kind: debit_note, transition: { from: [Draft, Pending Approval, Approved], to: Cancelled } }
   - { id: delete_debit_note, type: delete, permission: accounting.write, table: accounting_entries, scope: debit_note, confirm: 'Delete debit note {{row.code}}?', refresh: [debit_notes] }

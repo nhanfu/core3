@@ -751,12 +751,15 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
 
     if (handler === 'financial_transition') {
-      if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
+      const financialSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const financialConfig = financialSource?.meta?.workflow;
+      if (!financialConfig?.table || !financialConfig?.kind || !financialConfig?.resource || !financialConfig?.label) return apiError(409, 'Financial workflow datasource is not configured');
+      if (!(await recordInCurrentBranch(String(financialConfig.table), body.id))) return apiError(403, 'Record is outside the current view scope');
       const transition = actionDefinition.transition;
       if (!transition) return apiError(409, 'This financial transition is not configured');
       const document = await repository.transitionAccountingEntry(
+        financialConfig,
         body.id,
-        actionDefinition.kind,
         transition.from,
         transition.to,
         actionName,
