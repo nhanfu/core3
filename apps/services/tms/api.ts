@@ -717,8 +717,16 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (actionDefinition.operation === 'follower_add' || actionDefinition.operation === 'follower_remove') {
         if (typeof body.user_id !== 'string' || !body.user_id) return apiError(400, 'user_id required');
         if (actionDefinition.operation === 'follower_add' && String(authUser.view_scope || 'all') !== 'all') {
-          const [candidate] = await repository.query('SELECT id FROM users WHERE id = ? AND enabled = true AND branch_id = ?', [body.user_id, String(authUser.branch_id || '')]);
-          if (!candidate) return apiError(403, 'Follower is outside the current view scope');
+          const candidateSource = SOURCES.get('order_detail_follower_candidates');
+          if (!candidateSource) return apiError(409, 'Follower candidate datasource is not configured');
+          const candidates = await repository.querySource(candidateSource, {
+            id: body.user_id,
+            current_user_id: String(authUser.sub || ''),
+            current_user_name: String(authUser.name || ''),
+            current_branch_id: String(authUser.branch_id || ''),
+            view_scope: String(authUser.view_scope || 'all'),
+          }, 0, 1);
+          if (!candidates.data?.[0]) return apiError(403, 'Follower is outside the current view scope');
         }
         const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
         if (!relation) return apiError(409, 'Order-follower relation is not configured');

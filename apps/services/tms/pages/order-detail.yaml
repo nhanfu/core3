@@ -89,6 +89,7 @@ datasources:
       SELECT u.id AS user_id, u.name, u.email, u.avatar_url
       FROM users u
       WHERE u.enabled = true
+        AND (:id IS NULL OR u.id = :id)
         AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
       ORDER BY lower(u.name), lower(u.email)
   - id: order_detail_attachments
