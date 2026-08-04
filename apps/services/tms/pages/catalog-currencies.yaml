@@ -27,6 +27,11 @@ datasources:
         AND (:status IS NULL OR m.status = :status)
         AND (:q IS NULL OR m.code ILIKE '%' || :q || '%' OR m.name ILIKE '%' || :q || '%' OR m.symbol ILIKE '%' || :q || '%')
       ORDER BY m.sort_order, m.code
+  - id: currency_rate_sync
+    single: false
+    permission: catalog.write
+    meta: { sync: { table: currency_rates, keyField: currency_code, fields: [id, currency_code, rate_to_vnd, effective_date, source, synced_at, updated_at], activityResource: currencies, activityAction: sync_rates } }
+    query: "SELECT currency_code, rate_to_vnd, effective_date, source, synced_at, updated_at FROM currency_rates ORDER BY currency_code"
 
 toolbar:
   - { id: add_currency_btn, label: '+ Add currency', variant: primary, permission: catalog.write, action: add_currency }
@@ -108,7 +113,7 @@ components:
           - { id: delete_currency, label: Delete, variant: danger, permission: catalog.write }
 
 actions:
-  - { id: sync_currency_rates, type: server, permission: catalog.write, action: catalog.currencies.sync_rates, refresh: [currencies] , handler: currency_sync}
+  - { id: sync_currency_rates, type: server, permission: catalog.write, datasource: currency_rate_sync, action: catalog.currencies.sync_rates, refresh: [currencies] , handler: currency_sync}
   - { id: import_currencies, type: upload, permission: catalog.write, kind: master_data_import, scope: currency, refresh: [currencies] }
   - id: add_currency
     type: form

@@ -498,7 +498,17 @@ export function createTmsApi(ctx: TmsApiContext) {
     const body = await req.json() as any;
     if (handler === 'currency_sync') {
       const configured = configuredCurrencyRates();
-      return json(await repository.syncCurrencyRates(configured.rates, configured.source, activityActor));
+      const source = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+      const sync = source?.meta?.sync;
+      if (!sync) return apiError(409, 'Currency sync datasource is not configured');
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      const rows = Object.entries(configured.rates)
+        .map(([currencyCode, rawRate]) => ({ currency_code: String(currencyCode).trim().toUpperCase(), rate_to_vnd: Number(rawRate) }))
+        .filter((row) => /^[A-Z]{3}$/.test(row.currency_code) && Number.isFinite(row.rate_to_vnd) && row.rate_to_vnd > 0)
+        .map((row) => ({ id: crypto.randomUUID(), ...row, effective_date: today, source: configured.source, synced_at: now, updated_at: now }));
+      if (!rows.length) return apiError(400, 'No valid currency rates supplied');
+      return json(await repository.upsertDatasourceRows(sync, rows, configured.source, activityActor));
     }
     if (handler === 'crm_entity') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');

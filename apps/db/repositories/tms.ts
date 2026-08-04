@@ -115,40 +115,27 @@ export class DuckDbRepository {
     return Number(rows[0]?.n || 0);
   }
 
-  async syncCurrencyRates(
-    rates: Record<string, number>,
+  async upsertDatasourceRows(
+    config: { table: string; keyField: string; fields: string[]; activityResource: string; activityAction: string },
+    rows: Record<string, unknown>[],
     source: string,
     actor: { id?: string | null; name: string },
   ) {
+    if (![config.table, config.keyField, config.activityResource, config.activityAction, ...config.fields].every((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !config.fields.includes(config.keyField) || !rows.length) {
+      throw { status: 400, message: 'Invalid datasource upsert configuration' };
+    }
+    const updateFields = config.fields.filter((field) => field !== config.keyField && field !== 'id');
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-        const today = new Date().toISOString().slice(0, 10);
-        const now = new Date();
-        const updated: Array<{ currency_code: string; rate_to_vnd: number }> = [];
-        for (const [currencyCode, rawRate] of Object.entries(rates)) {
-          const code = String(currencyCode).trim().toUpperCase();
-          const rate = Number(rawRate);
-          if (!/^[A-Z]{3}$/.test(code) || !Number.isFinite(rate) || rate <= 0) continue;
-          await runOnConnection(conn, `
-            INSERT INTO currency_rates(id, currency_code, rate_to_vnd, effective_date, source, synced_at, updated_at)
-            VALUES(?,?,?,?,?,?,?)
-            ON CONFLICT(currency_code) DO UPDATE SET
-              rate_to_vnd = excluded.rate_to_vnd,
-              effective_date = excluded.effective_date,
-              source = excluded.source,
-              synced_at = excluded.synced_at,
-              updated_at = excluded.updated_at
-          `, [crypto.randomUUID(), code, rate, today, source, now, now]);
-          updated.push({ currency_code: code, rate_to_vnd: rate });
+        for (const row of rows) {
+          const columns = config.fields;
+          const assignments = updateFields.map((field) => `${field} = excluded.${field}`).join(', ');
+          await runOnConnection(conn, `INSERT INTO ${config.table}(${columns.join(', ')}) VALUES(${columns.map(() => '?').join(', ')}) ON CONFLICT(${config.keyField}) DO UPDATE SET ${assignments}`, columns.map((field) => row[field]));
         }
-        if (!updated.length) throw Object.assign(new Error('No valid currency rates supplied'), { status: 400 });
-        await runOnConnection(conn, `
-          INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail)
-          VALUES(gen_random_uuid(), ?, ?, 'sync_rates', 'currencies', NULL, ?)
-        `, [actor.id || null, actor.name, `Synchronized ${updated.length} currency rates from ${source}`]);
+        await runOnConnection(conn, 'INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), ?, ?, ?, ?, NULL, ?)', [actor.id || null, actor.name, config.activityAction, config.activityResource, `Synchronized ${rows.length} records from ${source}`]);
         await runOnConnection(conn, 'COMMIT');
-        return { synced: updated.length, source, rates: updated };
+        return { synced: rows.length, source, rows };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK').catch(() => {});
         throw error;
