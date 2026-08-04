@@ -212,3 +212,29 @@ scope_datasources:
     query: "SELECT branch_id FROM departments WHERE id = :id"
   department_by_name:
     query: "SELECT branch_id FROM departments WHERE name ILIKE :name LIMIT 1"
+
+validation_datasources:
+  area_node:
+    single: true
+    query: "SELECT id, parent_id FROM areas WHERE id = :id"
+  department_node:
+    single: true
+    query: "SELECT id, parent_id FROM departments WHERE id = :id"
+  ledger_account_node:
+    single: true
+    query: "SELECT id, parent_id FROM accounting_entries WHERE id = :id AND kind = 'ledger_account'"
+  advance_node:
+    single: true
+    query: "SELECT id FROM accounting_entries WHERE id = :id AND kind = 'advance'"
+  order_status:
+    single: true
+    query: "SELECT COALESCE(s.status, o.status) AS status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"
+  accounting_status:
+    single: true
+    query: "SELECT status FROM accounting_entries WHERE id = :id AND kind = :kind"
+  quote_status:
+    single: true
+    query: "SELECT status FROM quotes WHERE id = :id"
+  payroll_status:
+    single: true
+    query: "SELECT status FROM payrolls WHERE id = :id"

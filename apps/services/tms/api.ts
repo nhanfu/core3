@@ -143,6 +143,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   const ENDPOINT_PERMISSIONS: Record<string, string> = PERMISSIONS.endpoints || {};
   const SCOPE_RESOURCES: Record<string, string> = PERMISSIONS.scope_resources || {};
   const SCOPE_DATASOURCES: Record<string, any> = PERMISSIONS.scope_datasources || {};
+  const VALIDATION_DATASOURCES: Record<string, any> = PERMISSIONS.validation_datasources || {};
   const DECLARED_PERMISSIONS = new Set<string>(PERMISSIONS.permissions || []);
   for (const [name, table] of Object.entries(TABLES) as [string, any][]) {
     if (!DECLARED_PERMISSIONS.has(table.permission)) throw new Error(`Table ${name} uses undeclared permission: ${table.permission}`);
@@ -236,6 +237,18 @@ export function createTmsApi(ctx: TmsApiContext) {
   const activityActor = {
     id: authUser.sub ? String(authUser.sub) : null,
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
+  };
+  const validationRow = async (sourceId: string, params: Record<string, unknown>) => {
+    const definition = VALIDATION_DATASOURCES[sourceId];
+    if (!definition?.query) return null;
+    const result = await repository.querySource({ id: sourceId, ...definition }, {
+      ...params,
+      current_user_id: String(authUser.sub || ''),
+      current_user_name: String(authUser.name || ''),
+      current_branch_id: String(authUser.branch_id || ''),
+      view_scope: String(authUser.view_scope || 'all'),
+    }, 0, 1);
+    return result.data || null;
   };
   const crmEntityInScope = async (kind: 'customer' | 'partner', id: string) => {
     const source = SOURCES.get('crm_entity_detail');
@@ -1049,12 +1062,12 @@ export function createTmsApi(ctx: TmsApiContext) {
       const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
       if (parentId && String(parentId) === String(id)) return apiError(400, 'Area cannot be its own parent');
       if (parentId) {
-        const [parent] = await repository.query('SELECT id FROM areas WHERE id = ?', [parentId]);
+        const parent = await validationRow('area_node', { id: parentId });
         if (!parent) return apiError(400, 'Parent area not found');
         let cursor = String(parentId);
         for (let depth = 0; depth < 100 && cursor; depth++) {
           if (cursor === String(id)) return apiError(400, 'Area hierarchy cycle detected');
-          const [ancestor] = await repository.query('SELECT parent_id FROM areas WHERE id = ?', [cursor]);
+          const ancestor = await validationRow('area_node', { id: cursor });
           cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
         }
       }
@@ -1063,12 +1076,12 @@ export function createTmsApi(ctx: TmsApiContext) {
       const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
       if (parentId && String(parentId) === String(id)) return apiError(400, 'Department cannot be its own parent');
       if (parentId) {
-        const [parent] = await repository.query('SELECT id FROM departments WHERE id = ?', [parentId]);
+        const parent = await validationRow('department_node', { id: parentId });
         if (!parent) return apiError(400, 'Parent department not found');
         let cursor = String(parentId);
         for (let depth = 0; depth < 100 && cursor; depth++) {
           if (cursor === String(id)) return apiError(400, 'Department hierarchy cycle detected');
-          const [ancestor] = await repository.query('SELECT parent_id FROM departments WHERE id = ?', [cursor]);
+          const ancestor = await validationRow('department_node', { id: cursor });
           cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
         }
       }
@@ -1076,7 +1089,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (table === 'accounting_entries' && changes.some((change: any) => change.field === 'linked_advance_id')) {
       const linkedId = changes.find((change: any) => change.field === 'linked_advance_id')?.value;
       if (linkedId) {
-        const [advance] = await repository.query("SELECT id FROM accounting_entries WHERE id = ? AND kind = 'advance'", [linkedId]);
+        const advance = await validationRow('advance_node', { id: linkedId });
         if (!advance) return apiError(400, 'Linked advance not found');
       }
     }
@@ -1084,12 +1097,12 @@ export function createTmsApi(ctx: TmsApiContext) {
       const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
       if (parentId && String(parentId) === String(id)) return apiError(400, 'Ledger account cannot be its own parent');
       if (parentId) {
-        const [parent] = await repository.query("SELECT id FROM accounting_entries WHERE id = ? AND kind = 'ledger_account'", [parentId]);
+        const parent = await validationRow('ledger_account_node', { id: parentId });
         if (!parent) return apiError(400, 'Parent ledger account not found');
         let cursor = String(parentId);
         for (let depth = 0; depth < 100 && cursor; depth++) {
           if (cursor === String(id)) return apiError(400, 'Ledger account hierarchy cycle detected');
-          const [ancestor] = await repository.query("SELECT parent_id FROM accounting_entries WHERE id = ? AND kind = 'ledger_account'", [cursor]);
+          const ancestor = await validationRow('ledger_account_node', { id: cursor });
           cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
         }
       }
@@ -1116,12 +1129,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
     }
     if (table === 'orders' && (action === 'update' || action === 'delete')) {
-      const [order] = await repository.query(
-        `SELECT COALESCE(s.status, o.status) AS status
-         FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
-         WHERE o.id = ?`,
-        [id],
-      );
+      const order = await validationRow('order_status', { id });
       if (!order) return apiError(404, 'Order not found');
       if (order.status !== 'Draft') {
         return apiError(409, `Order cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${order.status}`);
@@ -1132,10 +1140,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       && FINANCIAL_WORKFLOW_SCOPES.has(scope)
       && (action === 'update' || action === 'delete')
     ) {
-      const [document] = await repository.query(
-        'SELECT status FROM accounting_entries WHERE id = ? AND kind = ?',
-        [id, scope],
-      );
+      const document = await validationRow('accounting_status', { id, kind: scope });
       if (!document) return apiError(404, 'Financial document not found');
       if (document.status !== 'Draft') {
         return apiError(
@@ -1148,10 +1153,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       (table === 'quotes' || table === 'payrolls')
       && (action === 'update' || action === 'delete')
     ) {
-      const [record] = await repository.query(
-        `SELECT status FROM ${table} WHERE id = ?`,
-        [id],
-      );
+      const record = await validationRow(table === 'quotes' ? 'quote_status' : 'payroll_status', { id });
       if (!record) return apiError(404, `${table === 'quotes' ? 'Quote' : 'Payroll'} not found`);
       if (record.status !== 'Draft') {
         return apiError(
