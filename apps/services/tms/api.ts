@@ -683,53 +683,13 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (handler === 'line_item') {
       const declaredLineSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
       const declaredLineMutation = declaredLineSource?.mutations?.[actionDefinition.operation];
-      if (declaredLineMutation?.parent) {
-        if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-        if (!(await recordInCurrentBranch(String(declaredLineMutation.parent.parentTable), body.id))) {
-          return apiError(403, 'Record is outside the current view scope');
-        }
-        return json(await repository.mutateDocumentLine(
-          declaredLineMutation.parent,
-          actionDefinition.operation,
-          body.id,
-          typeof body.line_id === 'string' ? body.line_id : null,
-          body.values && typeof body.values === 'object' ? body.values : {},
-          actionName,
-          activityActor,
-        ));
-      }
-      const isOrder = actionDefinition.domain === 'order';
-      const isQuote = actionDefinition.domain === 'quote';
-      if (!isOrder && !isQuote && !(await recordInCurrentBranch('accounting_entries', body.id))) {
+      if (!declaredLineMutation?.parent) return apiError(409, 'Line-item datasource mutation is not configured');
+      if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
+      if (!(await recordInCurrentBranch(String(declaredLineMutation.parent.parentTable), body.id))) {
         return apiError(403, 'Record is outside the current view scope');
       }
-      if (isOrder && !(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
-      if (isQuote && !(await recordInCurrentBranch('quotes', body.id))) return apiError(403, 'Record is outside the current view scope');
       return json(await repository.mutateDocumentLine(
-        isOrder
-          ? {
-              parentTable: 'orders',
-              lineTable: 'order_lines',
-              parentKey: 'order_id',
-              label: 'Order',
-              hasCost: false,
-              totalField: 'total_amount',
-            }
-          : isQuote ? {
-              parentTable: 'quotes',
-              lineTable: 'quote_lines',
-              parentKey: 'quote_id',
-              label: 'Quote',
-              hasCost: true,
-              totalField: 'amount',
-            } : {
-              parentTable: 'accounting_entries',
-              lineTable: 'accounting_entry_lines',
-              parentKey: 'entry_id',
-              label: 'Financial document',
-              hasCost: false,
-              totalField: 'amount',
-            },
+        declaredLineMutation.parent,
         actionDefinition.operation,
         body.id,
         typeof body.line_id === 'string' ? body.line_id : null,
