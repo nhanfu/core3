@@ -1052,10 +1052,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     // ── delete ──────────────────────────────────────────────────────────────
     if (action === 'delete') {
       if (!id) return apiError(400, 'id required for delete');
-      if (table === 'users') {
-        const existing = await validationRow('user_node', { id });
-        if (!existing) return apiError(404, 'Resource not found');
-      }
       await repository.deleteRecord(table, id);
       await repository.recordActivity({
         actorId: activityActor.id,
