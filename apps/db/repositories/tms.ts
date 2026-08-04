@@ -644,16 +644,16 @@ export class DuckDbRepository {
   }
 
   async mutateOrderFollower(
-    relation: { parentTable: string; relationTable: string; parentKey: string; relatedKey: string },
+    relation: { parentTable: string; relationTable: string; userTable: string; parentKey: string; relatedKey: string; userIdKey: string; userNameKey: string; userEmailKey: string; userAvatarKey: string; userEnabledKey: string; resource: string; actionPrefix: string; parentLabel: string },
     orderId: string,
     operation: 'follower_add' | 'follower_remove',
     userId: string,
     actor: { id?: string | null; name: string },
   ) {
-    if ([relation.parentTable, relation.relationTable, relation.parentKey, relation.relatedKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid relation configuration' };
+    if ([relation.parentTable, relation.relationTable, relation.userTable, relation.parentKey, relation.relatedKey, relation.userIdKey, relation.userNameKey, relation.userEmailKey, relation.userAvatarKey, relation.userEnabledKey, relation.resource, relation.parentLabel].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !/^[A-Za-z_][A-Za-z0-9_.]*$/.test(relation.actionPrefix)) throw { status: 400, message: 'Invalid relation configuration' };
     const [order] = await this.query(`SELECT id FROM ${relation.parentTable} WHERE id = ?`, [orderId]);
-    if (!order) throw { status: 404, message: 'Order not found' };
-    const [user] = await this.query('SELECT id, name, email, avatar_url FROM users WHERE id = ? AND enabled = true', [userId]);
+    if (!order) throw { status: 404, message: `${relation.parentLabel} not found` };
+    const [user] = await this.query(`SELECT ${relation.userIdKey} AS id, ${relation.userNameKey} AS name, ${relation.userEmailKey} AS email, ${relation.userAvatarKey} AS avatar_url FROM ${relation.userTable} WHERE ${relation.userIdKey} = ? AND ${relation.userEnabledKey} = true`, [userId]);
     if (!user) throw { status: 404, message: 'Follower not found' };
     const [existing] = await this.query(`SELECT ${relation.parentKey} FROM ${relation.relationTable} WHERE ${relation.parentKey} = ? AND ${relation.relatedKey} = ?`, [orderId, userId]);
     const adding = operation === 'follower_add';
@@ -666,8 +666,8 @@ export class DuckDbRepository {
       await this.recordActivity({
         actorId: actor.id,
         actorName: actor.name,
-        action: adding ? 'orders.followers.add' : 'orders.followers.remove',
-        resource: 'orders',
+        action: `${relation.actionPrefix}.${adding ? 'add' : 'remove'}`,
+        resource: relation.resource,
         resourceId: orderId,
         detail: String(user.name),
       });

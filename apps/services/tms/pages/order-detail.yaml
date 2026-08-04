@@ -73,7 +73,7 @@ datasources:
   - id: order_detail_followers
     single: false
     permission: orders.read
-    meta: { relation: { parentTable: orders, relationTable: order_followers, parentKey: order_id, relatedKey: user_id } }
+    meta: { relation: { parentTable: orders, relationTable: order_followers, userTable: users, parentKey: order_id, relatedKey: user_id, userIdKey: id, userNameKey: name, userEmailKey: email, userAvatarKey: avatar_url, userEnabledKey: enabled, resource: orders, actionPrefix: orders.followers, parentLabel: Order } }
     query: |
       SELECT u.id AS user_id, u.name, u.email, u.avatar_url,
         CAST(f.created_at AS VARCHAR) AS followed_at
