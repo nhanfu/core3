@@ -414,14 +414,19 @@ export class DuckDbRepository {
         ? [...changes.map((change) => change.value), ...(definition.timestamps ? [new Date()] : []), id, ...(scope ? [scope] : [])]
         : [id, ...(scope ? [scope] : [])];
       if (operation === 'update') {
+        if (Array.isArray(definition.preserve) && definition.preserve.length && !scope) {
+          result = await this.updateRecord(table, id, changes, Boolean(definition.timestamps), definition.preserve);
+          if (!result) throw { status: 404, message: 'Resource not found' };
+        } else {
         const sets = changes.map((change) => `${change.field} = ?`).join(', ');
         await this.run(`UPDATE ${table} SET ${sets}${definition.timestamps ? ', updated_at = ?' : ''} WHERE id = ?${where}`, params);
         [result] = await this.query(`SELECT * FROM ${table} WHERE id = ?${where}`, [id, ...(scope ? [scope] : [])]);
         if (!result) throw { status: 404, message: 'Resource not found' };
+        }
       } else {
         const [existing] = await this.query(`SELECT id FROM ${table} WHERE id = ?${where}`, params);
         if (!existing) throw { status: 404, message: 'Resource not found' };
-        await this.deleteRecord(table, id);
+        await this.deleteRecord(table, id, Array.isArray(definition.cascade) ? definition.cascade : []);
         result = { ok: true };
       }
     }
@@ -468,9 +473,37 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async updateRecord(table: string, id: any, changes: Change[], timestamps: boolean): Promise<any> {
-    if (table === 'orders') {
-      return this.updateOrderRecord(id, changes, timestamps);
+  async updateRecord(table: string, id: any, changes: Change[], timestamps: boolean, preserve: Array<{ table: string; key: string; columns?: string[] }> = []): Promise<any> {
+    if (preserve.length) {
+      const identifiers = [table, ...preserve.flatMap((relation) => [relation.table, relation.key, ...(relation.columns || [])])];
+      if (identifiers.some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value)))) throw { status: 400, message: 'Invalid preservation configuration' };
+      return this.withConnection(async (conn) => {
+        await runOnConnection(conn, 'BEGIN TRANSACTION');
+        try {
+          const snapshots = [] as Array<{ relation: { table: string; key: string; columns?: string[] }; rows: any[] }>;
+          for (const relation of preserve) {
+            const columns = relation.columns?.length ? relation.columns.join(', ') : '*';
+            const rows = await queryOnConnection(conn, `SELECT ${columns} FROM ${relation.table} WHERE ${relation.key} = ?`, [id]);
+            snapshots.push({ relation, rows });
+            await runOnConnection(conn, `DELETE FROM ${relation.table} WHERE ${relation.key} = ?`, [id]);
+          }
+          const sets = changes.map((change) => `${change.field} = ?`).join(', ');
+          await runOnConnection(conn, `UPDATE ${table} SET ${sets}${timestamps ? ', updated_at = CURRENT_TIMESTAMP' : ''} WHERE id = ?`, [...changes.map((change) => change.value), id]);
+          for (const snapshot of snapshots) {
+            for (const row of snapshot.rows) {
+              const columns = snapshot.relation.columns?.length ? snapshot.relation.columns : Object.keys(row);
+              const values = columns.map((column) => row[column]);
+              await runOnConnection(conn, `INSERT INTO ${snapshot.relation.table}(${columns.join(', ')}) VALUES(${columns.map(() => '?').join(', ')})`, values);
+            }
+          }
+          const [updated] = await queryOnConnection(conn, `SELECT * FROM ${table} WHERE id = ?`, [id]);
+          await runOnConnection(conn, 'COMMIT');
+          return updated || null;
+        } catch (error) {
+          await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+          throw error;
+        }
+      });
     }
     const sets = changes.map((c) => `${c.field} = ?`).join(', ');
     const tsClause = timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
@@ -482,108 +515,18 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  private async updateOrderRecord(id: any, changes: Change[], timestamps: boolean): Promise<any> {
-    return this.withConnection(async (conn) => {
-      await runOnConnection(conn, 'BEGIN TRANSACTION');
-      try {
-        const lines = await queryOnConnection(
-          conn,
-          'SELECT id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total, created_at, updated_at FROM order_lines WHERE order_id = ? ORDER BY sequence, id',
-          [id],
-        );
-        const [workflowState] = await queryOnConnection(
-          conn,
-          'SELECT order_id, status, updated_at FROM order_workflow_states WHERE order_id = ?',
-          [id],
-        );
-        if (lines.length) await runOnConnection(conn, 'DELETE FROM order_lines WHERE order_id = ?', [id]);
-        if (workflowState) await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [id]);
-
-        const sets = changes.map((change) => `${change.field} = ?`).join(', ');
-        const values = [...changes.map((change) => change.value), ...(timestamps ? [new Date()] : []), id];
-        await runOnConnection(
-          conn,
-          `UPDATE orders SET ${sets}${timestamps ? ', updated_at = ?' : ''} WHERE id = ?`,
-          values,
-        );
-
-        if (workflowState) {
-          await runOnConnection(
-            conn,
-            'INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(?,?,?)',
-            [workflowState.order_id, workflowState.status, workflowState.updated_at],
-          );
-        }
-        for (const line of lines) {
-          await runOnConnection(
-            conn,
-            `INSERT INTO order_lines(
-              id, order_id, sequence, description, quantity, unit, unit_price,
-              tax_rate, line_total, created_at, updated_at
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-            [line.id, line.order_id, line.sequence, line.description, line.quantity, line.unit, line.unit_price, line.tax_rate, line.line_total, line.created_at, line.updated_at],
-          );
-        }
-        const [updated] = await queryOnConnection(conn, 'SELECT * FROM orders WHERE id = ?', [id]);
-        await runOnConnection(conn, 'COMMIT');
-        return updated || null;
-      } catch (error) {
-        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
-        throw error;
-      }
-    });
-  }
-
-  async deleteRecord(table: string, id: any): Promise<void> {
-    if (
-      table !== 'orders'
-      && table !== 'quotes'
-      && table !== 'accounting_entries'
-      && table !== 'customers'
-      && table !== 'partners'
-      && table !== 'system_configs'
-    ) {
+  async deleteRecord(table: string, id: any, cascade: Array<{ table: string; key: string }> = []): Promise<void> {
+    const identifiers = [table, ...cascade.flatMap((relation) => [relation.table, relation.key])];
+    if (identifiers.some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value)))) throw { status: 400, message: 'Invalid cascade configuration' };
+    if (!cascade.length) {
       await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
       return;
     }
     await this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
-      await runOnConnection(
-        conn,
-          `DELETE FROM ${
-            table === 'orders'
-              ? 'order_lines'
-              : table === 'quotes'
-                ? 'quote_lines'
-                : table === 'accounting_entries'
-                  ? 'accounting_entry_lines'
-                  : table === 'customers'
-                    ? 'customer_contacts'
-                    : table === 'partners'
-                      ? 'partner_contacts'
-                      : 'approval_flow_steps'
-          }
-           WHERE ${
-             table === 'orders'
-               ? 'order_id'
-               : table === 'quotes'
-                 ? 'quote_id'
-                 : table === 'accounting_entries'
-                   ? 'entry_id'
-                 : table === 'customers'
-                     ? 'customer_id'
-                     : table === 'partners'
-                       ? 'partner_id'
-                       : 'flow_id'
-           } = ?`,
-        [id],
-      );
-        if (table === 'orders') {
-          await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [id]);
-        }
-        if (table === 'system_configs') {
-          await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE template_id = ?', [id]);
+        for (const relation of cascade) {
+          await runOnConnection(conn, `DELETE FROM ${relation.table} WHERE ${relation.key} = ?`, [id]);
         }
         await runOnConnection(conn, `DELETE FROM ${table} WHERE id = ?`, [id]);
         await runOnConnection(conn, 'COMMIT');

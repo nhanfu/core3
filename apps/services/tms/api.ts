@@ -201,6 +201,8 @@ export function createTmsApi(ctx: TmsApiContext) {
         scope: action.scope,
         fields: [...new Set([...yamlFields, ...tableFields])],
         timestamps: TABLES[action.table]?.timestamps !== false,
+        preserve: TABLES[action.table]?.preserve,
+        cascade: TABLES[action.table]?.cascade,
       };
       YAML_CRUD_SOURCES.set(key, source);
     }

@@ -41,6 +41,8 @@ tables:
     permission: orders.write
     timestamps: true
     fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes, branch_id]
+    preserve: [{ table: order_lines, key: order_id }, { table: order_workflow_states, key: order_id }]
+    cascade: [{ table: order_lines, key: order_id }, { table: order_workflow_states, key: order_id }]
   trucks:
     permission: fleet.write
     timestamps: true
@@ -61,14 +63,17 @@ tables:
     permission: crm.write
     timestamps: true
     fields: [code, name, tax_code, phone, email, stage, owner_name, visibility, status]
+    cascade: [{ table: customer_contacts, key: customer_id }]
   quotes:
     permission: crm.write
     timestamps: true
     fields: [code, customer_name, title, status, valid_until, branch_id]
+    cascade: [{ table: quote_lines, key: quote_id }]
   partners:
     permission: crm.write
     timestamps: true
     fields: [code, name, tax_code, phone, email, partner_type, owner_name, visibility, status]
+    cascade: [{ table: partner_contacts, key: partner_id }]
   containers:
     permission: dispatch.write
     timestamps: true
@@ -123,11 +128,13 @@ tables:
     timestamps: true
     fields: [code, name, counterparty, amount, currency, status, document_date, due_date, description, branch_id, linked_advance_id, parent_id, sort_order]
     scopes: [debit_note, payment_request, advance, settlement, invoice_template, ledger_account]
+    cascade: [{ table: accounting_entry_lines, key: entry_id }]
   system_configs:
     permission: system.write
     timestamps: true
     fields: [code, name, config_value, description, prefix, sequence_width, reset_cadence, next_sequence, status, sort_order]
     scopes: [code_rule, print_template, approval_flow, shipment_type, trip_status, fee_rule, storage]
+    cascade: [{ table: print_template_blocks, key: template_id }, { table: approval_flow_steps, key: flow_id }]
   branches:
     permission: settings.write
     timestamps: true
