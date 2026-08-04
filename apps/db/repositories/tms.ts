@@ -743,10 +743,12 @@ export class DuckDbRepository {
   }
 
   async sendChatMessage(
+    relation: { threadTable: string; participantTable: string; messageTable: string; threadKey: string; userKey: string; messageThreadKey: string; senderKey: string; bodyKey: string },
     threadId: string,
     content: unknown,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if ([relation.threadTable, relation.participantTable, relation.messageTable, relation.threadKey, relation.userKey, relation.messageThreadKey, relation.senderKey, relation.bodyKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid chat message relation' };
     const actorId = String(actor.id || '');
     const body = String(content || '').trim();
     if (!actorId) throw { status: 401, message: 'Authenticated user required' };
@@ -761,9 +763,9 @@ export class DuckDbRepository {
         const [thread] = await queryOnConnection(
           conn,
           `SELECT t.id, t.title
-           FROM chat_threads t
-           JOIN chat_participants p ON p.thread_id = t.id
-           WHERE t.id = ? AND p.user_id = ?`,
+           FROM ${relation.threadTable} t
+           JOIN ${relation.participantTable} p ON p.${relation.threadKey} = t.id
+           WHERE t.id = ? AND p.${relation.userKey} = ?`,
           [threadId, actorId],
         );
         if (!thread) throw { status: 404, message: 'Chat thread not found' };
@@ -771,20 +773,20 @@ export class DuckDbRepository {
         const messageId = crypto.randomUUID();
         await runOnConnection(
           conn,
-          `INSERT INTO chat_messages(id, thread_id, sender_id, body)
+          `INSERT INTO ${relation.messageTable}(id, ${relation.messageThreadKey}, ${relation.senderKey}, ${relation.bodyKey})
            VALUES(?,?,?,?)`,
           [messageId, threadId, actorId, body],
         );
         await runOnConnection(
           conn,
-          'UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          `UPDATE ${relation.threadTable} SET updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
           [threadId],
         );
         await runOnConnection(
           conn,
-          `UPDATE chat_participants
+          `UPDATE ${relation.participantTable}
            SET last_read_at = CURRENT_TIMESTAMP
-           WHERE thread_id = ? AND user_id = ?`,
+           WHERE ${relation.threadKey} = ? AND ${relation.userKey} = ?`,
           [threadId, actorId],
         );
         await runOnConnection(
@@ -817,6 +819,7 @@ export class DuckDbRepository {
   }
 
   async sendChatAttachment(
+    relation: { threadTable: string; participantTable: string; messageTable: string; attachmentTable: string; threadKey: string; userKey: string; messageThreadKey: string; senderKey: string; bodyKey: string; attachmentMessageKey: string },
     threadId: string,
     content: unknown,
     attachment: {
@@ -827,6 +830,7 @@ export class DuckDbRepository {
     },
     actor: { id?: string | null; name: string },
   ): Promise<any> {
+    if ([relation.threadTable, relation.participantTable, relation.messageTable, relation.attachmentTable, relation.threadKey, relation.userKey, relation.messageThreadKey, relation.senderKey, relation.bodyKey, relation.attachmentMessageKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid chat attachment relation' };
     const actorId = String(actor.id || '');
     const body = String(content || '').trim() || `Đã gửi tệp ${attachment.fileName}`;
     if (!actorId) throw { status: 401, message: 'Authenticated user required' };
@@ -840,9 +844,9 @@ export class DuckDbRepository {
         const [thread] = await queryOnConnection(
           conn,
           `SELECT t.id, t.title
-           FROM chat_threads t
-           JOIN chat_participants p ON p.thread_id = t.id
-           WHERE t.id = ? AND p.user_id = ?`,
+           FROM ${relation.threadTable} t
+           JOIN ${relation.participantTable} p ON p.${relation.threadKey} = t.id
+           WHERE t.id = ? AND p.${relation.userKey} = ?`,
           [threadId, actorId],
         );
         if (!thread) throw { status: 404, message: 'Chat thread not found' };
@@ -851,14 +855,14 @@ export class DuckDbRepository {
         const attachmentId = crypto.randomUUID();
         await runOnConnection(
           conn,
-          `INSERT INTO chat_messages(id, thread_id, sender_id, body)
+          `INSERT INTO ${relation.messageTable}(id, ${relation.messageThreadKey}, ${relation.senderKey}, ${relation.bodyKey})
            VALUES(?,?,?,?)`,
           [messageId, threadId, actorId, body],
         );
         await runOnConnection(
           conn,
-          `INSERT INTO chat_attachments(
-            id, message_id, file_name, mime_type, size_bytes, storage_key
+          `INSERT INTO ${relation.attachmentTable}(
+            id, ${relation.attachmentMessageKey}, file_name, mime_type, size_bytes, storage_key
           ) VALUES(?,?,?,?,?,?)`,
           [
             attachmentId,
@@ -871,14 +875,14 @@ export class DuckDbRepository {
         );
         await runOnConnection(
           conn,
-          'UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          `UPDATE ${relation.threadTable} SET updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
           [threadId],
         );
         await runOnConnection(
           conn,
-          `UPDATE chat_participants
+          `UPDATE ${relation.participantTable}
            SET last_read_at = CURRENT_TIMESTAMP
-           WHERE thread_id = ? AND user_id = ?`,
+           WHERE ${relation.threadKey} = ? AND ${relation.userKey} = ?`,
           [threadId, actorId],
         );
         await runOnConnection(

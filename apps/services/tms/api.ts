@@ -359,7 +359,9 @@ export function createTmsApi(ctx: TmsApiContext) {
         if (typeof parentId !== 'string' || !parentId) return apiError(400, `${parentKey} required`);
         return json(await repository.createUploadedFile(uploadConfig, parentId, fileMeta, activityActor));
       }
-      return json(await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor));
+      const chatRelation = SOURCES.get('chat_messages')?.meta?.relation;
+      if (!chatRelation) return apiError(409, 'Chat message relation is not configured');
+      return json(await repository.sendChatAttachment(chatRelation, meta.thread_id, meta.content, fileMeta, activityActor));
     } catch (error) {
       try {
         unlinkSync(targetPath);
@@ -571,7 +573,9 @@ export function createTmsApi(ctx: TmsApiContext) {
       }
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
       if (actionDefinition.operation === 'send_message') {
-        return json(await repository.sendChatMessage(body.id, body.content, activityActor));
+        const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
+        if (!relation) return apiError(409, 'Chat message relation is not configured');
+        return json(await repository.sendChatMessage(relation, body.id, body.content, activityActor));
       }
       const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
       if (!relation) return apiError(409, 'Chat membership relation is not configured');

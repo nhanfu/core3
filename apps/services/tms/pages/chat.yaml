@@ -36,6 +36,7 @@ datasources:
   - id: chat_messages
     single: false
     permission: chat.read
+    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, messageTable: chat_messages, attachmentTable: chat_attachments, threadKey: thread_id, userKey: user_id, messageThreadKey: thread_id, senderKey: sender_id, bodyKey: body, attachmentMessageKey: message_id } }
     query: |
       SELECT m.id, m.thread_id, m.sender_id, sender.name AS sender_name,
         m.body, CAST(m.created_at AS VARCHAR) AS created_at,
@@ -98,6 +99,7 @@ actions:
     type: server
     permission: chat.write
     action: chat.messages.send
+    datasource: chat_messages
     handler: chat
     operation: send_message
     params: { content: '{row.content}' }
