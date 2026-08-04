@@ -765,25 +765,15 @@ export function createTmsApi(ctx: TmsApiContext) {
       return json(document);
     }
 
-    if (handler === 'business_transition' && actionDefinition.domain === 'quote') {
-      if (!(await recordInCurrentBranch('quotes', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = actionDefinition.transition;
-      if (!transition) return apiError(409, 'This quote transition is not configured');
-      return json(await repository.transitionBusinessRecord(
-        { table: 'quotes', label: 'Quote' },
-        body.id,
-        transition.from,
-        transition.to,
-        actionName,
-        activityActor,
-      ));
-    }
-
-    if (!(await recordInCurrentBranch('payrolls', body.id))) return apiError(403, 'Record is outside the current view scope');
+    if (handler !== 'business_transition') return apiError(409, 'Business transition is not configured');
+    const businessSource = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource) : null;
+    const businessConfig = businessSource?.meta?.workflow;
+    if (!businessConfig?.table || !businessConfig?.label) return apiError(409, 'Business workflow datasource is not configured');
+    if (!(await recordInCurrentBranch(String(businessConfig.table), body.id))) return apiError(403, 'Record is outside the current view scope');
     const transition = actionDefinition.transition;
-    if (!transition) return apiError(409, 'This payroll transition is not configured');
+    if (!transition) return apiError(409, 'Business transition is not configured');
     return json(await repository.transitionBusinessRecord(
-      { table: 'payrolls', label: 'Payroll' },
+      businessConfig,
       body.id,
       transition.from,
       transition.to,

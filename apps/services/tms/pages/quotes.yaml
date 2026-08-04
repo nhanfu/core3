@@ -5,6 +5,7 @@ datasources:
   - id: quotes
     single: false
     permission: crm.read
+    meta: { workflow: { table: quotes, label: Quote } }
     query: |
       SELECT id, code, customer_name, title,
         printf('%,.0f', COALESCE(amount, 0)) AS amount_display,
@@ -147,8 +148,8 @@ actions:
     permission: crm.read
     navigate_to: /quotes/detail
     params: { id: '{row.id}' }
-  - { id: send_quote, type: server, permission: crm.write, action: quotes.send, confirm: 'Send quote {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: send, domain: quote, transition: { from: [Draft], to: Sent } }
-  - { id: accept_quote, type: server, permission: crm.write, action: quotes.accept, confirm: 'Confirm customer accepts {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: accept, domain: quote, transition: { from: [Sent], to: Accepted } }
-  - { id: revise_quote, type: server, permission: crm.write, action: quotes.revise, confirm: 'Send quote {{row.code}} to draft to edit?', refresh: [quotes] , handler: business_transition, operation: revise, domain: quote, transition: { from: [Sent], to: Draft } }
-  - { id: cancel_quote, type: server, permission: crm.write, action: quotes.cancel, confirm: 'Cancel quote {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: cancel, domain: quote, transition: { from: [Draft, Sent], to: Cancelled } }
+  - { id: send_quote, type: server, permission: crm.write, action: quotes.send, datasource: quotes, confirm: 'Send quote {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: send, domain: quote, transition: { from: [Draft], to: Sent } }
+  - { id: accept_quote, type: server, permission: crm.write, action: quotes.accept, datasource: quotes, confirm: 'Confirm customer accepts {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: accept, domain: quote, transition: { from: [Sent], to: Accepted } }
+  - { id: revise_quote, type: server, permission: crm.write, action: quotes.revise, datasource: quotes, confirm: 'Send quote {{row.code}} to draft to edit?', refresh: [quotes] , handler: business_transition, operation: revise, domain: quote, transition: { from: [Sent], to: Draft } }
+  - { id: cancel_quote, type: server, permission: crm.write, action: quotes.cancel, datasource: quotes, confirm: 'Cancel quote {{row.code}}?', refresh: [quotes] , handler: business_transition, operation: cancel, domain: quote, transition: { from: [Draft, Sent], to: Cancelled } }
   - { id: delete_quote, type: delete, permission: crm.write, table: quotes, confirm: 'Delete quote {{row.code}}?', refresh: [quotes] }
