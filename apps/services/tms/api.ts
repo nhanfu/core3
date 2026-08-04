@@ -136,6 +136,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   const TABLES = PERMISSIONS.tables || {};
   const ENDPOINT_PERMISSIONS: Record<string, string> = PERMISSIONS.endpoints || {};
   const SCOPE_RESOURCES: Record<string, string> = PERMISSIONS.scope_resources || {};
+  const SCOPE_NODE_SOURCES: Record<string, string> = PERMISSIONS.scope_node_sources || {};
   const SCOPE_DATASOURCES: Record<string, any> = PERMISSIONS.scope_datasources || {};
   const VALIDATION_DATASOURCES: Record<string, any> = PERMISSIONS.validation_datasources || {};
   const MUTATION_POLICIES: Record<string, any> = PERMISSIONS.mutation_policies || {};
@@ -960,11 +961,8 @@ export function createTmsApi(ctx: TmsApiContext) {
       return apiError(400, 'Invalid resource scope');
     }
     if ('scopes' in tbl && action !== 'insert') {
-      const scopeSource = table === 'master_data'
-        ? 'master_data_node'
-        : table === 'system_configs'
-          ? 'system_config_node'
-          : 'accounting_entry_node';
+      const scopeSource = SCOPE_NODE_SOURCES[table];
+      if (!scopeSource) return apiError(400, 'Resource scope validation is not configured');
       const existing = await validationRow(scopeSource, { id });
       if (!existing || existing.kind !== scope) return apiError(404, 'Resource not found');
     }
@@ -976,13 +974,17 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (yamlSource?.mutations?.[mutationOperation]) {
         try {
           const rawValues = Object.fromEntries((Array.isArray(changes) ? changes : []).map((change: any) => [String(change.field), change.value]));
-          const values = table === 'users'
-            ? Object.fromEntries(Object.entries(rawValues).filter(([field]) => field !== 'roles' && field !== 'password'))
+          const credentialContract = yamlSource.meta?.credentials;
+          const roleField = String(credentialContract?.rolesField || 'roles');
+          const passwordInputField = String(credentialContract?.inputField || 'password');
+          const passwordStorageField = String(credentialContract?.storageField || 'password_hash');
+          const values = credentialContract
+            ? Object.fromEntries(Object.entries(rawValues).filter(([field]) => field !== roleField && field !== passwordInputField))
             : rawValues;
-          if (table === 'users' && Object.prototype.hasOwnProperty.call(rawValues, 'password')) {
-            values.password_hash = await Bun.password.hash(String(rawValues.password));
+          if (credentialContract && Object.prototype.hasOwnProperty.call(rawValues, passwordInputField)) {
+            values[passwordStorageField] = await Bun.password.hash(String(rawValues[passwordInputField]));
           }
-          if (table === 'users' && mutationOperation === 'delete') {
+          if (credentialContract && mutationOperation === 'delete') {
             const relation = yamlSource.meta?.relation;
             if (!relation) return apiError(409, 'User-role relation is not configured');
             await repository.syncUserRoles(relation, String(id), []);
@@ -990,13 +992,13 @@ export function createTmsApi(ctx: TmsApiContext) {
           const result = Object.keys(values).length || mutationOperation === 'create' || mutationOperation === 'delete'
             ? await repository.executeDatasourceMutation(yamlSource, mutationOperation, id ? String(id) : null, values, activityActor)
             : null;
-          if (table === 'users' && Object.prototype.hasOwnProperty.call(rawValues, 'roles')) {
+          if (credentialContract && Object.prototype.hasOwnProperty.call(rawValues, roleField)) {
             const relation = yamlSource.meta?.relation;
             if (!relation) return apiError(409, 'User-role relation is not configured');
-            const roleNames = Array.isArray(rawValues.roles) ? rawValues.roles : String(rawValues.roles || '').split(',');
+            const roleNames = Array.isArray(rawValues[roleField]) ? rawValues[roleField] : String(rawValues[roleField] || '').split(',');
             await repository.syncUserRoles(relation, String(result?.id || id), roleNames);
           }
-          if (table === 'users' && !result) {
+          if (credentialContract && !result) {
             const current = await repository.querySource(yamlSource, { id: String(id) }, 0, 1);
             return json(current.data || {});
           }

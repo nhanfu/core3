@@ -181,6 +181,11 @@ scope_resources:
   teams: team_branch
   areas: area_branch
 
+scope_node_sources:
+  master_data: master_data_node
+  system_configs: system_config_node
+  accounting_entries: accounting_entry_node
+
 scope_datasources:
   users_branch:
     query: "SELECT branch_id FROM users WHERE id = :id"
@@ -347,7 +352,7 @@ api_datasources:
   users:
     permission: settings.write
     table: users
-    meta: { relation: { userTable: users, roleTable: roles, joinTable: user_roles, userKey: user_id, roleKey: role_id, roleNameKey: name } }
+    meta: { relation: { userTable: users, roleTable: roles, joinTable: user_roles, userKey: user_id, roleKey: role_id, roleNameKey: name }, credentials: { inputField: password, storageField: password_hash, rolesField: roles } }
     mutations:
       create: { permission: settings.write, fields: [email, name, avatar_url, preferred_lang, enabled, branch_id, department_id, password_hash], timestamps: true }
       update: { permission: settings.write, fields: [email, name, avatar_url, preferred_lang, enabled, branch_id, department_id, password_hash], timestamps: true }
