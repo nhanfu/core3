@@ -255,10 +255,45 @@ export function createTmsApi(ctx: TmsApiContext) {
     const policy = MUTATION_POLICIES[table]?.[operation];
     if (!policy || (Array.isArray(policy.scopes) && !policy.scopes.includes(scope))) return;
     const changedFields = new Set(changes.map((change: any) => String(change.field)));
-    const forbidden = Array.isArray(policy.forbid_fields) ? policy.forbid_fields.map(String).filter((field: string) => changedFields.has(field)) : [];
+    const forbidden = Array.isArray(policy.forbid_fields) && (!Array.isArray(policy.forbid_scopes) || policy.forbid_scopes.includes(scope)) ? policy.forbid_fields.map(String).filter((field: string) => changedFields.has(field)) : [];
     if (forbidden.length) throw { status: 400, message: String(policy.forbid_message || `Fields require a named action: ${forbidden.join(', ')}`) };
+    const validation = policy.validate && typeof policy.validate === 'object' ? policy.validate : {};
+    for (const [field, rule] of Object.entries(validation.fields || {})) {
+      if (!changedFields.has(field) || !rule || typeof rule !== 'object') continue;
+      const value = changes.find((change: any) => change.field === field)?.value;
+      const config = rule as any;
+      if (Array.isArray(config.enum) && !config.enum.map(String).includes(String(value))) throw { status: 400, message: `${field} has an invalid value` };
+      if (config.integer === true && !Number.isInteger(Number(value))) throw { status: 400, message: `${field} must be an integer` };
+      if (config.min !== undefined && Number(value) < Number(config.min)) throw { status: 400, message: `${field} is below the minimum` };
+      if (config.max !== undefined && Number(value) > Number(config.max)) throw { status: 400, message: `${field} is above the maximum` };
+    }
+    const resolvePolicyParams = (params: Record<string, unknown>, value: unknown) => Object.fromEntries(Object.entries(params || {}).map(([key, param]) => [key, param === '$id' ? id : param === '$scope' ? scope : param === '$value' ? value : param]));
+    for (const foreignKey of Array.isArray(policy.foreign_keys) ? policy.foreign_keys : []) {
+      if (Array.isArray(foreignKey.scopes) && !foreignKey.scopes.includes(scope)) continue;
+      const change = changes.find((entry: any) => entry.field === foreignKey.field);
+      if (!change || !change.value) continue;
+      const row = await validationRow(String(foreignKey.datasource || ''), resolvePolicyParams(foreignKey.params, change.value));
+      if (!row) throw { status: Number(foreignKey.status || 400), message: String(foreignKey.message || `${foreignKey.field} is invalid`) };
+    }
+    for (const hierarchy of Array.isArray(policy.hierarchies) ? policy.hierarchies : []) {
+      if (Array.isArray(hierarchy.scopes) && !hierarchy.scopes.includes(scope)) continue;
+      const change = changes.find((entry: any) => entry.field === hierarchy.field);
+      if (!change || !change.value) continue;
+      let cursor = String(change.value);
+      const visited = new Set<string>();
+      for (let depth = 0; depth < 100 && cursor; depth++) {
+        if (id && cursor === String(id)) throw { status: 400, message: String(hierarchy.cycle_message || 'Hierarchy cycle detected') };
+        if (visited.has(cursor)) throw { status: 400, message: String(hierarchy.cycle_message || 'Hierarchy cycle detected') };
+        visited.add(cursor);
+        const row = await validationRow(String(hierarchy.datasource || ''), { id: cursor });
+        if (!row) throw { status: 400, message: String(hierarchy.missing_message || 'Parent record not found') };
+        cursor = row.parent_id ? String(row.parent_id) : '';
+      }
+      if (cursor) throw { status: 400, message: String(hierarchy.cycle_message || 'Hierarchy is too deep') };
+    }
     for (const precondition of Array.isArray(policy.preconditions) ? policy.preconditions : []) {
-      const params = Object.fromEntries(Object.entries(precondition.params || {}).map(([key, value]) => [key, value === '$id' ? id : value === '$scope' ? scope : value]));
+      if (Array.isArray(precondition.scopes) && !precondition.scopes.includes(scope)) continue;
+      const params = resolvePolicyParams(precondition.params, null);
       const row = await validationRow(String(precondition.datasource || ''), params);
       if (!row) throw { status: Number(precondition.not_found_status || 404), message: String(precondition.not_found_message || 'Resource not found') };
       const actual = row[String(precondition.field || '')];
@@ -910,58 +945,6 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
       return apiError(400, 'Invalid field for this resource');
-    }
-    if (table === 'roles' && changes.some((change: any) => change.field === 'view_scope' && !['all', 'branch', 'own'].includes(String(change.value)))) {
-      return apiError(400, 'Invalid role view scope');
-    }
-    if (table === 'areas' && changes.some((change: any) => change.field === 'parent_id')) {
-      const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
-      if (parentId && String(parentId) === String(id)) return apiError(400, 'Area cannot be its own parent');
-      if (parentId) {
-        const parent = await validationRow('area_node', { id: parentId });
-        if (!parent) return apiError(400, 'Parent area not found');
-        let cursor = String(parentId);
-        for (let depth = 0; depth < 100 && cursor; depth++) {
-          if (cursor === String(id)) return apiError(400, 'Area hierarchy cycle detected');
-          const ancestor = await validationRow('area_node', { id: cursor });
-          cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
-        }
-      }
-    }
-    if (table === 'departments' && changes.some((change: any) => change.field === 'parent_id')) {
-      const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
-      if (parentId && String(parentId) === String(id)) return apiError(400, 'Department cannot be its own parent');
-      if (parentId) {
-        const parent = await validationRow('department_node', { id: parentId });
-        if (!parent) return apiError(400, 'Parent department not found');
-        let cursor = String(parentId);
-        for (let depth = 0; depth < 100 && cursor; depth++) {
-          if (cursor === String(id)) return apiError(400, 'Department hierarchy cycle detected');
-          const ancestor = await validationRow('department_node', { id: cursor });
-          cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
-        }
-      }
-    }
-    if (table === 'accounting_entries' && changes.some((change: any) => change.field === 'linked_advance_id')) {
-      const linkedId = changes.find((change: any) => change.field === 'linked_advance_id')?.value;
-      if (linkedId) {
-        const advance = await validationRow('advance_node', { id: linkedId });
-        if (!advance) return apiError(400, 'Linked advance not found');
-      }
-    }
-    if (table === 'accounting_entries' && scope === 'ledger_account' && changes.some((change: any) => change.field === 'parent_id')) {
-      const parentId = changes.find((change: any) => change.field === 'parent_id')?.value;
-      if (parentId && String(parentId) === String(id)) return apiError(400, 'Ledger account cannot be its own parent');
-      if (parentId) {
-        const parent = await validationRow('ledger_account_node', { id: parentId });
-        if (!parent) return apiError(400, 'Parent ledger account not found');
-        let cursor = String(parentId);
-        for (let depth = 0; depth < 100 && cursor; depth++) {
-          if (cursor === String(id)) return apiError(400, 'Ledger account hierarchy cycle detected');
-          const ancestor = await validationRow('ledger_account_node', { id: cursor });
-          cursor = ancestor?.parent_id ? String(ancestor.parent_id) : '';
-        }
-      }
     }
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
       return apiError(400, 'Invalid resource scope');
