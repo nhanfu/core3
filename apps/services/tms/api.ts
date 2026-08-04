@@ -141,6 +141,8 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   const TABLES = PERMISSIONS.tables || {};
   const ENDPOINT_PERMISSIONS: Record<string, string> = PERMISSIONS.endpoints || {};
+  const SCOPE_RESOURCES: Record<string, string> = PERMISSIONS.scope_resources || {};
+  const SCOPE_DATASOURCES: Record<string, any> = PERMISSIONS.scope_datasources || {};
   const DECLARED_PERMISSIONS = new Set<string>(PERMISSIONS.permissions || []);
   for (const [name, table] of Object.entries(TABLES) as [string, any][]) {
     if (!DECLARED_PERMISSIONS.has(table.permission)) throw new Error(`Table ${name} uses undeclared permission: ${table.permission}`);
@@ -249,41 +251,19 @@ export function createTmsApi(ctx: TmsApiContext) {
     return Boolean(result.data?.[0]);
   };
   const branchForScopedResource = async (resourceTable: string, resourceId: string) => {
-    if (resourceTable === 'users') {
-      const [row] = await repository.query('SELECT branch_id FROM users WHERE id = ?', [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'employees') {
-      const [row] = await repository.query(
-        "SELECT d.branch_id FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = ?",
-        [resourceId],
-      );
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'employment_contracts' || resourceTable === 'timesheets' || resourceTable === 'payrolls') {
-      const [row] = await repository.query(
-        `SELECT d.branch_id
-         FROM ${resourceTable} r
-         JOIN employees e ON e.id = r.employee_id
-         LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
-         WHERE r.id = ?`,
-        [resourceId],
-      );
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'accounting_entries') {
-      const [row] = await repository.query('SELECT branch_id FROM accounting_entries WHERE id = ?', [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'orders' || resourceTable === 'quotes') {
-      const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'locations' || resourceTable === 'containers') {
-      const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    return null;
+    if (resourceTable === 'branches') return resourceId;
+    const sourceId = SCOPE_RESOURCES[resourceTable];
+    const definition = sourceId ? SCOPE_DATASOURCES[sourceId] : null;
+    if (!definition?.query) return null;
+    const result = await repository.querySource({ id: sourceId, ...definition }, {
+      id: resourceId,
+      current_user_id: String(authUser.sub || ''),
+      current_user_name: String(authUser.name || ''),
+      current_branch_id: String(authUser.branch_id || ''),
+      view_scope: String(authUser.view_scope || 'all'),
+    }, 0, 1);
+    const row = result.data?.[0];
+    return row?.branch_id ? String(row.branch_id) : null;
   };
   const recordInCurrentBranch = async (resourceTable: string, resourceId: string) => {
     if (String(authUser.view_scope || 'all') === 'all') return true;
@@ -831,42 +811,24 @@ export function createTmsApi(ctx: TmsApiContext) {
     const currentBranchId = String(authUser.branch_id || '');
     const rejectOutOfScope = () => apiError(403, 'Record is outside the current view scope');
     const branchForRow = async (resourceTable: string, resourceId: string) => {
-      if (resourceTable === 'trucks' || resourceTable === 'departments') {
-        const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
-        return row?.branch_id ? String(row.branch_id) : null;
-      }
-      if (resourceTable === 'users' || resourceTable === 'employees' || resourceTable === 'employment_contracts' || resourceTable === 'timesheets' || resourceTable === 'payrolls') {
-        return branchForScopedResource(resourceTable, resourceId);
-      }
-      if (resourceTable === 'accounting_entries' || resourceTable === 'orders' || resourceTable === 'quotes' || resourceTable === 'locations' || resourceTable === 'containers') return branchForScopedResource(resourceTable, resourceId);
-      if (resourceTable === 'drivers') {
-        const [row] = await repository.query(
-          'SELECT t.branch_id FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id WHERE d.id = ?',
-          [resourceId],
-        );
-        return row?.branch_id ? String(row.branch_id) : null;
-      }
-      if (resourceTable === 'trips' || resourceTable === 'maintenance') {
-        const [row] = await repository.query(
-          `SELECT COALESCE(r.branch_id, t.branch_id) AS branch_id FROM ${resourceTable} r LEFT JOIN trucks t ON t.id = r.truck_id WHERE r.id = ?`,
-          [resourceId],
-        );
-        return row?.branch_id ? String(row.branch_id) : null;
-      }
-      if (resourceTable === 'branches') return resourceId;
-      if (resourceTable === 'teams') {
-        const [row] = await repository.query(
-          'SELECT d.branch_id FROM teams t LEFT JOIN departments d ON d.id = t.department_id WHERE t.id = ?',
-          [resourceId],
-        );
-        return row?.branch_id ? String(row.branch_id) : null;
-      }
-      return null;
+      return branchForScopedResource(resourceTable, resourceId);
     };
     const departmentBranch = async (departmentId: unknown) => {
       if (!departmentId) return null;
-      const [row] = await repository.query('SELECT branch_id FROM departments WHERE id = ?', [String(departmentId)]);
-      return row?.branch_id ? String(row.branch_id) : null;
+      return branchForScopedResource('departments', String(departmentId));
+    };
+    const departmentBranchByName = async (department: unknown) => {
+      if (!department) return null;
+      const sourceId = 'department_by_name';
+      const definition = SCOPE_DATASOURCES[sourceId];
+      const result = await repository.querySource({ id: sourceId, ...definition }, {
+        name: `%${String(department)}%`,
+        current_user_id: String(authUser.sub || ''),
+        current_user_name: String(authUser.name || ''),
+        current_branch_id: String(authUser.branch_id || ''),
+        view_scope: String(authUser.view_scope || 'all'),
+      }, 0, 1);
+      return result.data?.[0]?.branch_id ? String(result.data[0].branch_id) : null;
     };
     if (table === 'trips' && action === 'insert' && !changes.some((change: any) => change.field === 'branch_id')) {
       const truckId = changes.find((change: any) => change.field === 'truck_id')?.value;
@@ -920,8 +882,8 @@ export function createTmsApi(ctx: TmsApiContext) {
         }
         if (table === 'employees') {
           const department = changes.find((change: any) => change.field === 'department')?.value;
-          const [row] = department ? await repository.query('SELECT branch_id FROM departments WHERE name ILIKE ? LIMIT 1', [`%${String(department)}%`]) : [];
-          if (!row?.branch_id || String(row.branch_id) !== currentBranchId) return rejectOutOfScope();
+          const branchId = await departmentBranchByName(department);
+          if (!branchId || branchId !== currentBranchId) return rejectOutOfScope();
         }
         if (table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls') {
           const employeeId = changes.find((change: any) => change.field === 'employee_id')?.value;
@@ -992,8 +954,8 @@ export function createTmsApi(ctx: TmsApiContext) {
         if (table === 'employees' && action === 'update') {
           const departmentChange = changes.find((change: any) => change.field === 'department');
           if (departmentChange) {
-            const [nextDepartment] = await repository.query('SELECT branch_id FROM departments WHERE name ILIKE ? LIMIT 1', [`%${String(departmentChange.value || '')}%`]);
-            if (!nextDepartment?.branch_id || String(nextDepartment.branch_id) !== currentBranchId) return rejectOutOfScope();
+            const nextBranch = await departmentBranchByName(departmentChange.value);
+            if (!nextBranch || nextBranch !== currentBranchId) return rejectOutOfScope();
           }
         }
         if ((table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls') && action === 'update') {

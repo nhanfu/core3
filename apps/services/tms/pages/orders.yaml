@@ -53,7 +53,7 @@ datasources:
   - id: order_statuses
     single: false
     permission: orders.read
-      query: "SELECT code AS value, name AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' AND (:code IS NULL OR code = :code) ORDER BY sort_order, code"
+    query: "SELECT code AS value, name AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' AND (:code IS NULL OR code = :code) ORDER BY sort_order, code"
   - id: order_workflow_state
     single: true
     permission: orders.read

@@ -153,3 +153,62 @@ endpoints:
   hr.employee_document.download: hr.read
   chat.attachment.download: chat.read
   orders.attachment.download: orders.read
+
+scope_resources:
+  users: users_branch
+  employees: employees_branch
+  employment_contracts: employment_contracts_branch
+  timesheets: timesheets_branch
+  payrolls: payrolls_branch
+  accounting_entries: accounting_entries_branch
+  orders: orders_branch
+  quotes: quotes_branch
+  locations: locations_branch
+  containers: containers_branch
+  trucks: trucks_branch
+  departments: departments_branch
+  drivers: driver_branch
+  trips: trips_branch
+  maintenance: maintenance_branch
+  teams: team_branch
+  areas: area_branch
+
+scope_datasources:
+  users_branch:
+    query: "SELECT branch_id FROM users WHERE id = :id"
+  employees_branch:
+    query: "SELECT d.branch_id FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = :id"
+  employment_contracts_branch:
+    query: "SELECT d.branch_id FROM employment_contracts r JOIN employees e ON e.id = r.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE r.id = :id"
+  timesheets_branch:
+    query: "SELECT d.branch_id FROM timesheets r JOIN employees e ON e.id = r.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE r.id = :id"
+  payrolls_branch:
+    query: "SELECT d.branch_id FROM payrolls r JOIN employees e ON e.id = r.employee_id LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE r.id = :id"
+  accounting_entries_branch:
+    query: "SELECT branch_id FROM accounting_entries WHERE id = :id"
+  orders_branch:
+    query: "SELECT branch_id FROM orders WHERE id = :id"
+  quotes_branch:
+    query: "SELECT branch_id FROM quotes WHERE id = :id"
+  locations_branch:
+    query: "SELECT branch_id FROM locations WHERE id = :id"
+  containers_branch:
+    query: "SELECT branch_id FROM containers WHERE id = :id"
+  trucks_branch:
+    query: "SELECT branch_id FROM trucks WHERE id = :id"
+  departments_branch:
+    query: "SELECT branch_id FROM departments WHERE id = :id"
+  driver_branch:
+    query: "SELECT t.branch_id FROM drivers d LEFT JOIN trucks t ON t.id = d.assigned_truck_id WHERE d.id = :id"
+  trips_branch:
+    query: "SELECT COALESCE(r.branch_id, t.branch_id) AS branch_id FROM trips r LEFT JOIN trucks t ON t.id = r.truck_id WHERE r.id = :id"
+  maintenance_branch:
+    query: "SELECT COALESCE(r.branch_id, t.branch_id) AS branch_id FROM maintenance r LEFT JOIN trucks t ON t.id = r.truck_id WHERE r.id = :id"
+  team_branch:
+    query: "SELECT d.branch_id FROM teams t LEFT JOIN departments d ON d.id = t.department_id WHERE t.id = :id"
+  area_branch:
+    query: "SELECT branch_id FROM areas WHERE id = :id"
+  department_by_id:
+    query: "SELECT branch_id FROM departments WHERE id = :id"
+  department_by_name:
+    query: "SELECT branch_id FROM departments WHERE name ILIKE :name LIMIT 1"
