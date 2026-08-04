@@ -307,7 +307,9 @@ export function createTmsApi(ctx: TmsApiContext) {
   };
   const applyScopeMutationPolicy = (table: string, operation: string, changes: any[], currentBranchId: string) => {
     const policy = SCOPE_MUTATION_POLICIES[table];
-    if (!policy?.branch_field) return changes;
+    if (!policy) return changes;
+    if (operation === 'create' && policy.deny_create) throw { status: 403, message: 'Record is outside the current view scope' };
+    if (!policy.branch_field) return changes;
     const field = String(policy.branch_field);
     const requested = changes.find((change: any) => change.field === field)?.value;
     if (requested && String(requested) !== currentBranchId) throw { status: 403, message: 'Record is outside the current view scope' };
@@ -946,7 +948,6 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if (scopedBranch) {
       if (action === 'insert') {
-        if (table === 'branches') return rejectOutOfScope();
       } else if (id) {
         const rowBranch = await branchForScopedResource(table, String(id));
         if (SCOPE_RESOURCES[table] && !rowBranch) return rejectOutOfScope();
@@ -968,7 +969,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
     // All compatibility guards have passed. Use the YAML-derived mutation
     // contract for ordinary database writes, including user fields.
-    const yamlSource = table === 'users' ? API_DATASOURCES.users : YAML_CRUD_SOURCES.get(`${table}:${String(scope || '')}`);
+    const yamlSource = API_DATASOURCES[table] || YAML_CRUD_SOURCES.get(`${table}:${String(scope || '')}`);
     if (yamlSource) {
       const mutationOperation = action === 'insert' ? 'create' : action;
       if (yamlSource?.mutations?.[mutationOperation]) {

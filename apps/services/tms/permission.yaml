@@ -311,6 +311,7 @@ mutation_policies:
       preconditions: [{ datasource: accounting_status, params: { id: '$id', kind: '$scope' }, field: status, equals: Draft, not_found_message: Financial document not found, message: Financial document can only be deleted while Draft }]
 
 scope_mutation_policies:
+  branches: { deny_create: true }
   trucks: { branch_field: branch_id }
   departments: { branch_field: branch_id, references: [{ field: parent_id, resource: departments }] }
   accounting_entries: { branch_field: branch_id }
