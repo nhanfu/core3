@@ -192,11 +192,13 @@ export function createTmsApi(ctx: TmsApiContext) {
         ? action.fields.map((field: any) => field.field).filter(Boolean)
         : [];
       const tableFields = Array.isArray(TABLES[action.table]?.fields) ? TABLES[action.table].fields : [];
+      const declaredMutation = action.datasource ? SOURCES.get(action.datasource)?.mutations?.[operation] || {} : {};
       source.mutations[operation] = {
+        ...declaredMutation,
         permission: action.permission || TABLES[action.table]?.permission,
-        scope: action.scope,
+        scope: action.scope ?? declaredMutation.scope,
         fields: [...new Set([...yamlFields, ...tableFields])],
-        timestamps: TABLES[action.table]?.timestamps !== false,
+        timestamps: declaredMutation.timestamps ?? TABLES[action.table]?.timestamps !== false,
         preserve: TABLES[action.table]?.preserve,
         cascade: TABLES[action.table]?.cascade,
       };
@@ -908,41 +910,6 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     if ('fields' in tbl && changes.some((change: any) => !tbl.fields.includes(change.field))) {
       return apiError(400, 'Invalid field for this resource');
-    }
-    const changedValue = (field: string) => changes.find((change: any) => change.field === field)?.value;
-    const hasChanged = (field: string) => changes.some((change: any) => change.field === field);
-    const validateCatalogValue = (field: string, validate: (value: unknown) => boolean, message: string) => {
-      if (hasChanged(field) && !validate(changedValue(field))) return message;
-      return null;
-    };
-    if (table === 'master_data' || table === 'system_configs') {
-      if (action === 'insert' && (!String(changedValue('code') || '').trim() || !String(changedValue('name') || '').trim())) {
-        return apiError(400, 'code and name are required');
-      }
-      for (const [field, validate, message] of [
-        ['code', (value: unknown) => Boolean(String(value || '').trim()), 'code is required'],
-        ['name', (value: unknown) => Boolean(String(value || '').trim()), 'name is required'],
-        ['status', (value: unknown) => ['Active', 'Inactive'].includes(String(value)), 'status must be Active or Inactive'],
-        ['sort_order', (value: unknown) => Number.isInteger(Number(value)) && Number(value) >= 0, 'sort_order must be a non-negative integer'],
-      ] as const) {
-        const error = validateCatalogValue(field, validate, message);
-        if (error) return apiError(400, error);
-      }
-    }
-    if (table === 'master_data') {
-      const error = validateCatalogValue('decimals', (value) => Number.isInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 6, 'decimals must be an integer from 0 to 6');
-      if (error) return apiError(400, error);
-    }
-    if (table === 'system_configs' && scope === 'code_rule') {
-      for (const [field, validate, message] of [
-        ['prefix', (value: unknown) => Boolean(String(value || '').trim()), 'prefix is required'],
-        ['sequence_width', (value: unknown) => Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 12, 'sequence_width must be an integer from 1 to 12'],
-        ['next_sequence', (value: unknown) => Number.isInteger(Number(value)) && Number(value) >= 1, 'next_sequence must be a positive integer'],
-        ['reset_cadence', (value: unknown) => ['never', 'monthly', 'yearly'].includes(String(value)), 'reset_cadence is invalid'],
-      ] as const) {
-        const error = validateCatalogValue(field, validate, message);
-        if (error) return apiError(400, error);
-      }
     }
     if (table === 'roles' && changes.some((change: any) => change.field === 'view_scope' && !['all', 'branch', 'own'].includes(String(change.value)))) {
       return apiError(400, 'Invalid role view scope');
