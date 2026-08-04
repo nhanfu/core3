@@ -1189,23 +1189,37 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
 
     // All compatibility guards have passed. Use the YAML-derived mutation
-    // contract for ordinary database writes; users retain their password
-    // hashing path until that capability is declared separately.
-    if (table !== 'users') {
-      const yamlSource = YAML_CRUD_SOURCES.get(`${table}:${String(scope || '')}`);
+    // contract for ordinary database writes, including user fields.
+    const yamlSource = table === 'users' ? API_DATASOURCES.users : YAML_CRUD_SOURCES.get(`${table}:${String(scope || '')}`);
+    if (yamlSource) {
       const mutationOperation = action === 'insert' ? 'create' : action;
       if (yamlSource?.mutations?.[mutationOperation]) {
         try {
-          const values = Object.fromEntries(
-            (Array.isArray(changes) ? changes : []).map((change: any) => [String(change.field), change.value]),
-          );
-          const result = await repository.executeDatasourceMutation(
-            yamlSource,
-            mutationOperation,
-            id ? String(id) : null,
-            values,
-            activityActor,
-          );
+          const rawValues = Object.fromEntries((Array.isArray(changes) ? changes : []).map((change: any) => [String(change.field), change.value]));
+          const values = table === 'users'
+            ? Object.fromEntries(Object.entries(rawValues).filter(([field]) => field !== 'roles' && field !== 'password'))
+            : rawValues;
+          if (table === 'users' && Object.prototype.hasOwnProperty.call(rawValues, 'password')) {
+            values.password_hash = await Bun.password.hash(String(rawValues.password));
+          }
+          if (table === 'users' && mutationOperation === 'delete') {
+            const relation = yamlSource.meta?.relation;
+            if (!relation) return apiError(409, 'User-role relation is not configured');
+            await repository.syncUserRoles(relation, String(id), []);
+          }
+          const result = Object.keys(values).length || mutationOperation === 'create' || mutationOperation === 'delete'
+            ? await repository.executeDatasourceMutation(yamlSource, mutationOperation, id ? String(id) : null, values, activityActor)
+            : null;
+          if (table === 'users' && Object.prototype.hasOwnProperty.call(rawValues, 'roles')) {
+            const relation = yamlSource.meta?.relation;
+            if (!relation) return apiError(409, 'User-role relation is not configured');
+            const roleNames = Array.isArray(rawValues.roles) ? rawValues.roles : String(rawValues.roles || '').split(',');
+            await repository.syncUserRoles(relation, String(result?.id || id), roleNames);
+          }
+          if (table === 'users' && !result) {
+            const current = await repository.querySource(yamlSource, { id: String(id) }, 0, 1);
+            return json(current.data || {});
+          }
           return json(result, mutationOperation === 'create' ? 201 : 200);
         } catch (error: any) {
           if (error?.status) return apiError(error.status, error.message || 'Datasource mutation failed');
@@ -1216,19 +1230,6 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     // ── insert ──────────────────────────────────────────────────────────────
     if (action === 'insert') {
-      if (table === 'users') {
-        const created = await repository.createUser(changes);
-        await repository.recordActivity({
-          actorId: activityActor.id,
-          actorName: activityActor.name,
-          action: 'create',
-          resource: table,
-          resourceId: created?.id,
-          detail: `Created ${table} record`,
-        });
-        return json(created, 201);
-      }
-
       // Generic insert
       if (changes.length === 0) return apiError(400, 'No fields to insert');
       const scopedChanges = 'scopes' in tbl
@@ -1249,19 +1250,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     // ── update ──────────────────────────────────────────────────────────────
     if (action === 'update') {
       if (!id) return apiError(400, 'id required for update');
-
-      if (table === 'users') {
-        const updated = await repository.updateUser(id, changes);
-        await repository.recordActivity({
-          actorId: activityActor.id,
-          actorName: activityActor.name,
-          action: 'update',
-          resource: table,
-          resourceId: String(id),
-          detail: `Updated fields: ${changes.map((change: any) => change.field).join(', ')}`,
-        });
-        return json(updated);
-      }
 
       // Generic update
       if (changes.length === 0) return apiError(400, 'No fields to update');
@@ -1284,9 +1272,6 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (table === 'users') {
         const existing = await validationRow('user_node', { id });
         if (!existing) return apiError(404, 'Resource not found');
-      }
-      if (table === 'users') {
-        await repository.deleteUserRoles(id);
       }
       await repository.deleteRecord(table, id);
       await repository.recordActivity({

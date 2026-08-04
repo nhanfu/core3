@@ -1740,78 +1740,27 @@ export class DuckDbRepository {
     });
   }
 
-  async deleteUserRoles(userId: any): Promise<void> {
-    await this.run('DELETE FROM user_roles WHERE user_id = ?', [userId]);
-  }
-
-  async createUser(changes: Change[]): Promise<any> {
-    const rolesChange = changes.find((c) => c.field === 'roles');
-    const passwordChange = changes.find((c) => c.field === 'password');
-    let regularChanges = changes.filter((c) => c.field !== 'roles' && c.field !== 'password');
-    const newId = crypto.randomUUID();
-
-    if (passwordChange) {
-      const hash = await Bun.password.hash(passwordChange.value);
-      regularChanges = [...regularChanges, { field: 'password_hash', value: hash }];
-    }
-
-    const cols = ['id', ...regularChanges.map((c) => c.field)].join(', ');
-    const vals = [newId, ...regularChanges.map((c) => c.value)];
-    await this.run(
-      `INSERT INTO users(${cols}) VALUES(${vals.map(() => '?').join(', ')})`,
-      vals
-    );
-
-    if (rolesChange) {
-      const roleNames = Array.isArray(rolesChange.value)
-        ? rolesChange.value
-        : String(rolesChange.value).split(',').filter(Boolean);
-      for (const roleName of roleNames) {
-        const roleRows = await this.query('SELECT id FROM roles WHERE name = ?', [roleName.trim()]);
-        if (roleRows[0]) {
-          await this.run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [newId, roleRows[0].id]);
+  async syncUserRoles(
+    relation: { userTable: string; roleTable: string; joinTable: string; userKey: string; roleKey: string; roleNameKey: string },
+    userId: string,
+    roleNames: unknown[],
+  ): Promise<void> {
+    if ([relation.userTable, relation.roleTable, relation.joinTable, relation.userKey, relation.roleKey, relation.roleNameKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid user-role relation' };
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const normalized = [...new Set(roleNames.map((value) => String(value).trim()).filter(Boolean))];
+        await runOnConnection(conn, `DELETE FROM ${relation.joinTable} WHERE ${relation.userKey} = ?`, [userId]);
+        for (const roleName of normalized) {
+          const [role] = await queryOnConnection(conn, `SELECT id FROM ${relation.roleTable} WHERE ${relation.roleNameKey} = ?`, [roleName]);
+          if (role) await runOnConnection(conn, `INSERT INTO ${relation.joinTable}(${relation.userKey}, ${relation.roleKey}) VALUES(?,?)`, [userId, role.id]);
         }
+        await runOnConnection(conn, 'COMMIT');
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
       }
-    }
-
-    const rows = await this.query(
-      'SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?',
-      [newId]
-    );
-    return rows[0] || null;
-  }
-
-  async updateUser(id: any, changes: Change[]): Promise<any> {
-    const rolesChange = changes.find((c) => c.field === 'roles');
-    const passwordChange = changes.find((c) => c.field === 'password');
-    let regularChanges = changes.filter((c) => c.field !== 'roles' && c.field !== 'password');
-    if (passwordChange) {
-      regularChanges = [...regularChanges, { field: 'password_hash', value: await Bun.password.hash(passwordChange.value) }];
-    }
-    if (regularChanges.length > 0) {
-      const sets = regularChanges.map((c) => `${c.field} = ?`).join(', ');
-      await this.run(
-        `UPDATE users SET ${sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-        [...regularChanges.map((c) => c.value), id]
-      );
-    }
-    if (rolesChange !== undefined) {
-      const roleNames = Array.isArray(rolesChange.value)
-        ? rolesChange.value
-        : String(rolesChange.value).split(',').filter(Boolean);
-      await this.run('DELETE FROM user_roles WHERE user_id = ?', [id]);
-      for (const roleName of roleNames) {
-        const roleRows = await this.query('SELECT id FROM roles WHERE name = ?', [roleName.trim()]);
-        if (roleRows[0]) {
-          await this.run('INSERT INTO user_roles(user_id, role_id) VALUES(?,?)', [id, roleRows[0].id]);
-        }
-      }
-    }
-    const rows = await this.query(
-      'SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = ?',
-      [id]
-    );
-    return rows[0] || null;
+    });
   }
 
   async getUserPasswordHash(userId: any): Promise<string | null> {

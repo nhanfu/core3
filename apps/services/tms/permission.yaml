@@ -134,6 +134,7 @@ tables:
     fields: [name, city, region, status]
   users:
     permission: settings.write
+    query: "SELECT id, email, name, preferred_lang, created_at FROM users WHERE id = :id"
     timestamps: true
     fields: [email, name, avatar_url, preferred_lang, enabled, branch_id, department_id, roles, password]
   roles:
@@ -270,3 +271,11 @@ api_datasources:
     single: true
     permission: settings.read
     query: "SELECT id, name, short_name, tax_code, address, phone, email, website FROM company_profiles ORDER BY created_at ASC LIMIT 1"
+  users:
+    permission: settings.write
+    table: users
+    meta: { relation: { userTable: users, roleTable: roles, joinTable: user_roles, userKey: user_id, roleKey: role_id, roleNameKey: name } }
+    mutations:
+      create: { permission: settings.write, fields: [email, name, avatar_url, preferred_lang, enabled, branch_id, department_id, password_hash], timestamps: true }
+      update: { permission: settings.write, fields: [email, name, avatar_url, preferred_lang, enabled, branch_id, department_id, password_hash], timestamps: true }
+      delete: { permission: settings.write }
