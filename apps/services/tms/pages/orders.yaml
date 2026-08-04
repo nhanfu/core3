@@ -43,6 +43,7 @@ datasources:
       permission: orders.write
       status_source: order_statuses
       state_source: order_workflow_state
+      status_storage: { table: system_configs, kind: trip_status, prefix: 'order_status:', resource: order_status }
       allow_add: true
       transitions:
         - { from: '*', to: '*', permission: orders.write }

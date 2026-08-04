@@ -457,7 +457,8 @@ export function createTmsApi(ctx: TmsApiContext) {
     const body = await req.json() as any;
     if (body.operation === 'add_status') {
       if (!workflow.allow_add) return apiError(403, 'Adding statuses is not allowed');
-      return json(await repository.addOrderWorkflowStatus(String(body.label || ''), activityActor));
+      if (!workflow.status_storage) return apiError(409, 'Order status storage is not configured');
+      return json(await repository.addOrderWorkflowStatus(workflow.status_storage, String(body.label || ''), activityActor));
     }
     if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
     if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
@@ -485,7 +486,9 @@ export function createTmsApi(ctx: TmsApiContext) {
     const transition = (workflow.transitions || []).find((rule: any) => (rule.from === '*' || rule.from === current?.status) && (rule.to === '*' || rule.to === body.status));
     if (!transition) return apiError(409, 'This status transition is not allowed');
     requirePerm(String(transition.permission || workflow.permission));
-    return json(await repository.setOrderWorkflowStatus(body.id, body.status, activityActor));
+    const workflowConfig = { ...source.meta?.workflow, stateTable: source.meta?.workflow?.stateTable || 'order_workflow_states', stateKey: source.meta?.workflow?.stateKey || 'order_id' };
+    if (!workflowConfig.table || !workflowConfig.stateTable || !workflowConfig.stateKey) return apiError(409, 'Order workflow storage is not configured');
+    return json(await repository.setOrderWorkflowStatus(workflowConfig, body.id, body.status, activityActor));
   }
 
   // ── POST /api/actions/:name ───────────────────────────────────────────────

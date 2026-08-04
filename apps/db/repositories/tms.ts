@@ -70,12 +70,13 @@ export class DuckDbRepository {
     return this.withConnection((conn) => queryOnConnection(conn, sql, params));
   }
 
-  async setOrderWorkflowStatus(orderId: string, status: string, actor: { id?: string | null; name: string }) {
-    const [order] = await this.query('SELECT id FROM orders WHERE id = ?', [orderId]);
+  async setOrderWorkflowStatus(config: { table: string; stateTable: string; stateKey: string }, orderId: string, status: string, actor: { id?: string | null; name: string }) {
+    if ([config.table, config.stateTable, config.stateKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid workflow storage configuration' };
+    const [order] = await this.query(`SELECT id FROM ${config.table} WHERE id = ?`, [orderId]);
     if (!order) throw { status: 404, message: 'Order not found' };
     await this.run(
-      `INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(?,?,CURRENT_TIMESTAMP)
-       ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
+      `INSERT INTO ${config.stateTable}(${config.stateKey}, status, updated_at) VALUES(?,?,CURRENT_TIMESTAMP)
+       ON CONFLICT(${config.stateKey}) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
       [orderId, status],
     );
     await this.recordActivity({
@@ -89,18 +90,19 @@ export class DuckDbRepository {
     return { id: orderId, status };
   }
 
-  async addOrderWorkflowStatus(label: string, actor: { id?: string | null; name: string }) {
+  async addOrderWorkflowStatus(config: { table: string; kind: string; prefix: string; resource: string }, label: string, actor: { id?: string | null; name: string }) {
+    if (![config.table, config.kind, config.prefix, config.resource].every((value) => /^[A-Za-z_][A-Za-z0-9_: -]*$/.test(value))) throw { status: 400, message: 'Invalid order status configuration' };
     const status = label.trim();
     if (!status || status.length > 80) throw { status: 400, message: 'Status name must be 1-80 characters' };
-    const [existing] = await this.query("SELECT id FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND lower(code) = lower(?)", [status]);
+    const [existing] = await this.query(`SELECT id FROM ${config.table} WHERE kind = ? AND config_value LIKE ? AND lower(code) = lower(?)`, [config.kind, `${config.prefix}%`, status]);
     if (existing) throw { status: 409, message: 'Status already exists' };
-    const next = await this.query("SELECT COALESCE(MAX(sort_order), 0) + 10 AS value FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%'");
+    const next = await this.query(`SELECT COALESCE(MAX(sort_order), 0) + 10 AS value FROM ${config.table} WHERE kind = ? AND config_value LIKE ?`, [config.kind, `${config.prefix}%`]);
     const id = crypto.randomUUID();
     await this.run(
-      "INSERT INTO system_configs(id, kind, code, name, config_value, status, sort_order) VALUES(?, 'trip_status', ?, ?, 'order_status:neutral', 'Active', ?)",
-      [id, status, status, Number(next[0]?.value || 10)],
+      `INSERT INTO ${config.table}(id, kind, code, name, config_value, status, sort_order) VALUES(?,?,?,?,?,?,?)`,
+      [id, config.kind, status, status, `${config.prefix}neutral`, 'Active', Number(next[0]?.value || 10)],
     );
-    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'create', resource: 'order_status', resourceId: id, detail: `Created status ${status}` });
+    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'create', resource: config.resource, resourceId: id, detail: `Created status ${status}` });
     return { id, value: status, label: status, color: 'neutral' };
   }
 
