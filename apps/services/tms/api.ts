@@ -574,7 +574,9 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (actionDefinition.operation === 'send_message') {
         return json(await repository.sendChatMessage(body.id, body.content, activityActor));
       }
-      return json(await repository.markChatThreadRead(body.id, String(authUser.sub)));
+      const relation = actionDefinition.datasource ? SOURCES.get(actionDefinition.datasource)?.meta?.relation : null;
+      if (!relation) return apiError(409, 'Chat membership relation is not configured');
+      return json(await repository.markChatThreadRead(relation, body.id, String(authUser.sub)));
     }
     if (handler === 'contact') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');

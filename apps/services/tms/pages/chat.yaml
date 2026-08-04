@@ -5,6 +5,7 @@ datasources:
   - id: chat_threads
     single: false
     permission: chat.read
+    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, threadKey: thread_id, userKey: user_id } }
     query: |
       SELECT t.id, t.title, t.thread_type,
         COALESCE((
@@ -104,6 +105,7 @@ actions:
     type: server
     permission: chat.read
     action: chat.threads.mark_read
+    datasource: chat_threads
     handler: chat
     operation: mark_read
     refresh: [chat_threads]

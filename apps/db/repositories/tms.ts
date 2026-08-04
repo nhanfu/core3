@@ -922,16 +922,17 @@ export class DuckDbRepository {
     return rows[0] || null;
   }
 
-  async markChatThreadRead(threadId: string, userId: string): Promise<{ ok: true }> {
+  async markChatThreadRead(relation: { threadTable: string; participantTable: string; threadKey: string; userKey: string }, threadId: string, userId: string): Promise<{ ok: true }> {
+    if ([relation.threadTable, relation.participantTable, relation.threadKey, relation.userKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid chat relation configuration' };
     const participants = await this.query(
-      'SELECT thread_id FROM chat_participants WHERE thread_id = ? AND user_id = ?',
+      `SELECT ${relation.threadKey} FROM ${relation.participantTable} WHERE ${relation.threadKey} = ? AND ${relation.userKey} = ?`,
       [threadId, userId],
     );
     if (!participants[0]) throw { status: 404, message: 'Chat thread not found' };
     await this.run(
-      `UPDATE chat_participants
+      `UPDATE ${relation.participantTable}
        SET last_read_at = CURRENT_TIMESTAMP
-       WHERE thread_id = ? AND user_id = ?`,
+       WHERE ${relation.threadKey} = ? AND ${relation.userKey} = ?`,
       [threadId, userId],
     );
     return { ok: true };
