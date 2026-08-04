@@ -144,6 +144,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   const SCOPE_RESOURCES: Record<string, string> = PERMISSIONS.scope_resources || {};
   const SCOPE_DATASOURCES: Record<string, any> = PERMISSIONS.scope_datasources || {};
   const VALIDATION_DATASOURCES: Record<string, any> = PERMISSIONS.validation_datasources || {};
+  const API_DATASOURCES: Record<string, any> = PERMISSIONS.api_datasources || {};
   const DECLARED_PERMISSIONS = new Set<string>(PERMISSIONS.permissions || []);
   for (const [name, table] of Object.entries(TABLES) as [string, any][]) {
     if (!DECLARED_PERMISSIONS.has(table.permission)) throw new Error(`Table ${name} uses undeclared permission: ${table.permission}`);
@@ -1338,29 +1339,38 @@ export function createTmsApi(ctx: TmsApiContext) {
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
   if (pathname === '/api/v1/notifications' && method === 'GET') {
-    return json(await repository.listNotifications(authUser.sub));
+    const source = API_DATASOURCES.notifications;
+    if (!source) return apiError(409, 'Notification datasource is not configured');
+    const result = await repository.querySource(source, { user_id: String(authUser.sub) }, 0, 20);
+    return json(result.data || []);
   }
 
   if (pathname === '/api/v1/notifications' && method === 'POST') {
     const body = await req.json() as any;
-    const created = await repository.createNotification({
+    const source = API_DATASOURCES.notifications;
+    if (!source) return apiError(409, 'Notification datasource is not configured');
+    const created = await repository.executeDatasourceMutation(source, 'create', null, {
       user_id: body.user_id || authUser.sub,
       type: body.type,
       title: body.title,
       body: body.body || null,
       target_path: body.target_path || null,
-    });
+    }, activityActor);
     return json(created, 201);
   }
 
   if (pathname === '/api/v1/notifications/read-all' && method === 'PATCH') {
-    await repository.markAllNotificationsRead(authUser.sub);
+    const source = API_DATASOURCES.notifications;
+    if (!source) return apiError(409, 'Notification datasource is not configured');
+    await repository.updateDatasourceRows(source, { user_id: String(authUser.sub) }, { read: true });
     return json({ ok: true });
   }
 
   const notifReadMatch = pathname.match(/^\/api\/v1\/notifications\/([^/]+)\/read$/);
   if (notifReadMatch && method === 'PATCH') {
-    await repository.markNotificationRead(notifReadMatch[1], authUser.sub);
+    const source = API_DATASOURCES.notifications;
+    if (!source) return apiError(409, 'Notification datasource is not configured');
+    await repository.updateDatasourceRows(source, { id: notifReadMatch[1], user_id: String(authUser.sub) }, { read: true });
     return json({ ok: true });
   }
 

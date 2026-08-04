@@ -422,6 +422,25 @@ export class DuckDbRepository {
     return result;
   }
 
+  async updateDatasourceRows(
+    source: { table?: string; mutations?: Record<string, any> },
+    filters: Record<string, unknown>,
+    values: Record<string, unknown>,
+  ): Promise<void> {
+    const table = String(source.table || '');
+    const definition = source.mutations?.update;
+    const allowedFields = Array.isArray(definition?.fields) ? new Set(definition.fields.map((field: unknown) => String(field))) : null;
+    const whereFields = Array.isArray(definition?.where) ? definition.where.map((field: unknown) => String(field)) : Object.keys(filters);
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table) || !definition || !allowedFields || !whereFields.length || whereFields.some((field: string) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(field))) throw { status: 404, message: 'Datasource update is not configured' };
+    const changes = Object.entries(values).filter(([field]) => allowedFields.has(field));
+    const predicates = whereFields.filter((field: string) => Object.prototype.hasOwnProperty.call(filters, field));
+    if (!changes.length || !predicates.length) throw { status: 400, message: 'Datasource update values are incomplete' };
+    await this.run(
+      `UPDATE ${table} SET ${changes.map(([field]) => `${field} = ?`).join(', ')} WHERE ${predicates.map((field) => `${field} = ?`).join(' AND ')}`,
+      [...changes.map(([, value]) => value), ...predicates.map((field) => filters[field])],
+    );
+  }
+
   async createRecord(table: string, changes: Change[]): Promise<any> {
     const newId = crypto.randomUUID();
     const cols = ['id', ...changes.map((c) => c.field)].join(', ');
