@@ -1319,7 +1319,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     if (!source) return apiError(409, 'Company profile datasource is not configured');
     const result = await repository.querySource(source, {}, 0, 1);
     const company = result.data;
-    if (!company) return apiError(404, 'Company profile not found');
+    if (!company || !Object.keys(company).length) return apiError(404, 'Company profile not found');
     return json(company);
   }
 
