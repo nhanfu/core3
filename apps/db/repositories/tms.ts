@@ -697,11 +697,11 @@ export class DuckDbRepository {
   }
 
   async createChatThread(
-    relation: { threadTable: string; participantTable: string; userTable: string; threadKey: string; userKey: string; emailKey: string; titleKey: string; threadTypeKey: string; createdByKey: string } | null,
+    relation: { threadTable: string; participantTable: string; userTable: string; threadKey: string; userKey: string; emailKey: string; titleKey: string; threadTypeKey: string; createdByKey: string; activityResource: string; activityAction: string } | null,
     values: Record<string, unknown>,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
-    if (!relation || [relation.threadTable, relation.participantTable, relation.userTable, relation.threadKey, relation.userKey, relation.emailKey, relation.titleKey, relation.threadTypeKey, relation.createdByKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 409, message: 'Chat thread relation is not configured' };
+    if (!relation || [relation.threadTable, relation.participantTable, relation.userTable, relation.threadKey, relation.userKey, relation.emailKey, relation.titleKey, relation.threadTypeKey, relation.createdByKey, relation.activityResource].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !/^[A-Za-z_][A-Za-z0-9_.]*$/.test(relation.activityAction)) throw { status: 409, message: 'Chat thread relation is not configured' };
     const actorId = String(actor.id || '');
     const title = String(values.title || '').trim();
     const requestedEmails = [...new Set(
@@ -760,8 +760,8 @@ export class DuckDbRepository {
             crypto.randomUUID(),
             actorId,
             actor.name,
-            'chat.threads.create',
-            'chat_threads',
+            relation.activityAction,
+            relation.activityResource,
             threadId,
             `Created chat thread ${title}`,
           ],
@@ -781,12 +781,12 @@ export class DuckDbRepository {
   }
 
   async sendChatMessage(
-    relation: { threadTable: string; participantTable: string; messageTable: string; threadKey: string; userKey: string; messageThreadKey: string; senderKey: string; bodyKey: string },
+    relation: { threadTable: string; participantTable: string; messageTable: string; threadKey: string; userKey: string; messageThreadKey: string; senderKey: string; bodyKey: string; activityResource: string; activityAction: string },
     threadId: string,
     content: unknown,
     actor: { id?: string | null; name: string },
   ): Promise<any> {
-    if ([relation.threadTable, relation.participantTable, relation.messageTable, relation.threadKey, relation.userKey, relation.messageThreadKey, relation.senderKey, relation.bodyKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid chat message relation' };
+    if ([relation.threadTable, relation.participantTable, relation.messageTable, relation.threadKey, relation.userKey, relation.messageThreadKey, relation.senderKey, relation.bodyKey, relation.activityResource].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !/^[A-Za-z_][A-Za-z0-9_.]*$/.test(relation.activityAction)) throw { status: 400, message: 'Invalid chat message relation' };
     const actorId = String(actor.id || '');
     const body = String(content || '').trim();
     if (!actorId) throw { status: 401, message: 'Authenticated user required' };
@@ -836,8 +836,8 @@ export class DuckDbRepository {
             crypto.randomUUID(),
             actorId,
             actor.name,
-            'chat.messages.send',
-            'chat_threads',
+            relation.activityAction,
+            relation.activityResource,
             threadId,
             `Sent message in ${thread.title}`,
           ],
@@ -857,7 +857,7 @@ export class DuckDbRepository {
   }
 
   async sendChatAttachment(
-    relation: { threadTable: string; participantTable: string; messageTable: string; attachmentTable: string; threadKey: string; userKey: string; messageThreadKey: string; senderKey: string; bodyKey: string; attachmentMessageKey: string },
+    relation: { threadTable: string; participantTable: string; messageTable: string; attachmentTable: string; threadKey: string; userKey: string; messageThreadKey: string; senderKey: string; bodyKey: string; attachmentMessageKey: string; activityResource: string; attachmentActivityAction: string },
     threadId: string,
     content: unknown,
     attachment: {
@@ -868,7 +868,7 @@ export class DuckDbRepository {
     },
     actor: { id?: string | null; name: string },
   ): Promise<any> {
-    if ([relation.threadTable, relation.participantTable, relation.messageTable, relation.attachmentTable, relation.threadKey, relation.userKey, relation.messageThreadKey, relation.senderKey, relation.bodyKey, relation.attachmentMessageKey].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) throw { status: 400, message: 'Invalid chat attachment relation' };
+    if ([relation.threadTable, relation.participantTable, relation.messageTable, relation.attachmentTable, relation.threadKey, relation.userKey, relation.messageThreadKey, relation.senderKey, relation.bodyKey, relation.attachmentMessageKey, relation.activityResource].some((value) => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) || !/^[A-Za-z_][A-Za-z0-9_.]*$/.test(relation.attachmentActivityAction)) throw { status: 400, message: 'Invalid chat attachment relation' };
     const actorId = String(actor.id || '');
     const body = String(content || '').trim() || `Đã gửi tệp ${attachment.fileName}`;
     if (!actorId) throw { status: 401, message: 'Authenticated user required' };
@@ -932,8 +932,8 @@ export class DuckDbRepository {
             crypto.randomUUID(),
             actorId,
             actor.name,
-            'chat.attachments.upload',
-            'chat_threads',
+            relation.attachmentActivityAction,
+            relation.activityResource,
             threadId,
             `Uploaded ${attachment.fileName} in ${thread.title}`,
           ],

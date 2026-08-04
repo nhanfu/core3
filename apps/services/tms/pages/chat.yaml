@@ -5,7 +5,7 @@ datasources:
   - id: chat_threads
     single: false
     permission: chat.read
-    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, userTable: users, threadKey: thread_id, userKey: user_id, emailKey: email, titleKey: title, threadTypeKey: thread_type, createdByKey: created_by } }
+    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, userTable: users, threadKey: thread_id, userKey: user_id, emailKey: email, titleKey: title, threadTypeKey: thread_type, createdByKey: created_by, activityResource: chat_threads, activityAction: chat.threads.create } }
     query: |
       SELECT t.id, t.title, t.thread_type,
         COALESCE((
@@ -36,7 +36,7 @@ datasources:
   - id: chat_messages
     single: false
     permission: chat.read
-    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, messageTable: chat_messages, attachmentTable: chat_attachments, threadKey: thread_id, userKey: user_id, messageThreadKey: thread_id, senderKey: sender_id, bodyKey: body, attachmentMessageKey: message_id } }
+    meta: { relation: { threadTable: chat_threads, participantTable: chat_participants, messageTable: chat_messages, attachmentTable: chat_attachments, threadKey: thread_id, userKey: user_id, messageThreadKey: thread_id, senderKey: sender_id, bodyKey: body, attachmentMessageKey: message_id, activityResource: chat_threads, activityAction: chat.messages.send, attachmentActivityAction: chat.attachments.upload } }
     query: |
       SELECT m.id, m.thread_id, m.sender_id, sender.name AS sender_name,
         m.body, CAST(m.created_at AS VARCHAR) AS created_at,
