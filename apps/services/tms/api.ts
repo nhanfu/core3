@@ -514,7 +514,16 @@ export function createTmsApi(ctx: TmsApiContext) {
       const document = documentSource?.meta?.documents?.[body.kind];
       if (!document || typeof document.table !== 'string' || !Array.isArray(document.fields)) return apiError(400, 'Invalid financial document kind');
       if (!(await recordInCurrentBranch('accounting_entries', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const [existing] = await repository.query('SELECT kind, status FROM accounting_entries WHERE id = ?', [body.id]);
+      if (!documentSource) return apiError(409, 'Accounting document datasource is not configured');
+      const detailResult = await repository.querySource(documentSource, {
+        id: body.id,
+        kind: body.kind,
+        current_user_id: String(authUser.sub || ''),
+        current_user_name: String(authUser.name || ''),
+        current_branch_id: String(authUser.branch_id || ''),
+        view_scope: String(authUser.view_scope || 'all'),
+      }, 0, 1);
+      const existing = detailResult.data?.[0];
       if (!existing || existing.kind !== body.kind) return apiError(404, 'Financial document not found');
       if (existing.status !== 'Draft') return apiError(409, `Financial document cannot be edited while ${existing.status}`);
       const values = body.values && typeof body.values === 'object' ? body.values : {};
