@@ -275,6 +275,14 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
         requireString(source.import.permission, `${path}.import.permission`, issues);
         requireString(source.import.table, `${path}.import.table`, issues);
         requireString(source.import.scope, `${path}.import.scope`, issues);
+        if (!Array.isArray(source.import.fields) || source.import.fields.length === 0 || source.import.fields.some((field: unknown) => typeof field !== 'string')) {
+          issues.push(`${path}.import.fields must be a non-empty array of strings`);
+        }
+        if (!Array.isArray(source.import.key) || source.import.key.length === 0 || source.import.key.some((field: unknown) => typeof field !== 'string')) {
+          issues.push(`${path}.import.key must be a non-empty array of strings`);
+        }
+        if (source.import.defaults !== undefined) requireRecord(source.import.defaults, `${path}.import.defaults`, issues);
+        if (source.import.validate !== undefined) requireRecord(source.import.validate, `${path}.import.validate`, issues);
       }
     }
     if (source.mutations !== undefined) {

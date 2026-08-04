@@ -258,6 +258,8 @@ api_datasources:
     query: "SELECT * FROM notifications WHERE user_id = :user_id ORDER BY created_at DESC"
     table: notifications
     mutations:
+      update: { permission: chat.read, fields: [read], where: [id, user_id] }
+    mutations:
       create: { permission: chat.write, fields: [user_id, type, title, body, target_path] }
       update: { permission: chat.read, fields: [read], where: [user_id] }
   profile:

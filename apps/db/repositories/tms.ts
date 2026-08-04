@@ -145,8 +145,11 @@ export class DuckDbRepository {
     });
   }
 
-  async importMasterData(config: { table: string; scope: string }, csvText: string, actor: { id?: string | null; name: string }) {
+  async importMasterData(config: { table: string; scope: string; fields: string[]; key: string[]; defaults?: Record<string, unknown>; validate?: Record<string, any> }, csvText: string, actor: { id?: string | null; name: string }) {
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(config.table) || !config.scope) throw { status: 400, message: 'Invalid import datasource' };
+    const fields = config.fields.map(String);
+    const keys = config.key.map(String);
+    if ([...fields, ...keys].some(field => !/^[A-Za-z_][A-Za-z0-9_]*$/.test(field)) || keys.some(field => !fields.includes(field))) throw { status: 400, message: 'Invalid import fields' };
     const scope = config.scope;
     const lines = csvText.replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim());
     if (lines.length < 2 || lines.length > 1001) throw { status: 400, message: 'CSV must contain 1 to 1000 data rows' };
@@ -164,24 +167,34 @@ export class DuckDbRepository {
       return cells;
     };
     const header = parse(lines[0]).map(value => value.toLowerCase());
-    if (header[0] !== 'code' || header[1] !== 'name') throw { status: 400, message: 'CSV headers must start with code,name' };
-    const codeIndex = header.indexOf('code'); const nameIndex = header.indexOf('name');
-    const descriptionIndex = header.indexOf('description'); const symbolIndex = header.indexOf('symbol');
-    const decimalsIndex = header.indexOf('decimals'); const statusIndex = header.indexOf('status'); const sortIndex = header.indexOf('sort_order');
+    const required = Array.isArray(config.validate?.required) ? config.validate.required.map(String) : keys;
+    if (header[0] !== keys[0] || required.some(field => !header.includes(field))) throw { status: 400, message: `CSV headers must include ${required.join(',')}` };
+    const fieldIndexes = new Map(fields.map(field => [field, header.indexOf(field)]));
+    const fieldRules = config.validate?.fields && typeof config.validate.fields === 'object' ? config.validate.fields : {};
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
       try {
         let imported = 0;
         for (const line of lines.slice(1)) {
-          const cells = parse(line); const code = cells[codeIndex] || ''; const name = cells[nameIndex] || '';
-          if (!code || !name) throw { status: 400, message: 'code and name are required for every row' };
-          const description = descriptionIndex >= 0 ? cells[descriptionIndex] || null : null;
-          const symbol = symbolIndex >= 0 ? cells[symbolIndex] || null : null;
-          const decimals = decimalsIndex >= 0 && cells[decimalsIndex] ? Number(cells[decimalsIndex]) : 0;
-          const status = statusIndex >= 0 && cells[statusIndex] ? cells[statusIndex] : 'Active';
-          const sortOrder = sortIndex >= 0 && cells[sortIndex] ? Number(cells[sortIndex]) : 0;
-          if (!Number.isInteger(decimals) || decimals < 0 || decimals > 6 || !Number.isInteger(sortOrder) || !['Active', 'Inactive'].includes(status)) throw { status: 400, message: `Invalid values for ${code}` };
-          await runOnConnection(conn, `INSERT INTO ${config.table}(id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES(?,?,?,?,?,?,?,?,?) ON CONFLICT(kind, code) DO UPDATE SET name = excluded.name, description = excluded.description, symbol = excluded.symbol, decimals = excluded.decimals, status = excluded.status, sort_order = excluded.sort_order`, [crypto.randomUUID(), scope, code, name, description, symbol, decimals, status, sortOrder]);
+          const cells = parse(line);
+          const row: Record<string, unknown> = {};
+          for (const field of fields) {
+            const index = fieldIndexes.get(field) ?? -1;
+            const raw = index >= 0 ? cells[index] || '' : '';
+            const rule = fieldRules[field] || {};
+            let value: unknown = raw || (config.defaults?.[field] ?? null);
+            if (rule.integer && value !== null && value !== '') value = Number(value);
+            if (required.includes(field) && (value === null || value === '')) throw { status: 400, message: `${field} is required for every row` };
+            if (rule.integer && (!Number.isInteger(value) || (rule.min !== undefined && Number(value) < Number(rule.min)) || (rule.max !== undefined && Number(value) > Number(rule.max)))) throw { status: 400, message: `Invalid ${field} for ${String(row[keys[0]] || '')}` };
+            if (Array.isArray(rule.enum) && !rule.enum.includes(value)) throw { status: 400, message: `Invalid ${field} for ${String(row[keys[0]] || '')}` };
+            row[field] = value === '' ? null : value;
+          }
+          const insertFields = ['id', 'kind', ...fields];
+          const insertValues = [crypto.randomUUID(), scope, ...fields.map(field => row[field])];
+          const updateFields = fields.filter(field => !keys.includes(field));
+          const conflict = ['kind', ...keys].join(', ');
+          const updates = updateFields.map(field => `${field} = excluded.${field}`).join(', ');
+          await runOnConnection(conn, `INSERT INTO ${config.table}(${insertFields.join(', ')}) VALUES(${insertFields.map(() => '?').join(', ')}) ON CONFLICT(${conflict}) DO UPDATE SET ${updates}`, insertValues);
           imported++;
         }
         await runOnConnection(conn, 'INSERT INTO system_activity(actor_id, actor_name, action, resource, detail) VALUES(?,?,?,?,?)', [actor.id || null, actor.name, 'import', config.table, `Imported ${imported} ${scope} records`]);

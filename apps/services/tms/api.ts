@@ -335,7 +335,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (!importSource?.import) return apiError(400, 'Invalid master-data scope');
       requirePerm(String(importSource.import.permission || permissionForEndpoint('upload.master_data_import')));
       const result = await repository.importMasterData(
-        { table: String(importSource.import.table), scope: String(importSource.import.scope) },
+        importSource.import,
         importText,
         activityActor,
       );
