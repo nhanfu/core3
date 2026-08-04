@@ -25,9 +25,38 @@ describe('Odoo application shell', () => {
     expect(container.querySelector('[aria-label="Switch application"]')).not.toBeNull();
     expect(container.querySelector('nav[aria-label="Main navigation"]')).not.toBeNull();
 
-    container.querySelector<HTMLButtonElement>('.header-nav-trigger')!.click();
+    const rootTrigger = container.querySelector<HTMLButtonElement>('.header-nav-trigger')!;
+    rootTrigger.dispatchEvent(new MouseEvent('mouseenter'));
     expect(container.querySelector('.header-nav-group.open')).not.toBeNull();
     container.querySelector<HTMLButtonElement>('.theme-toggle')!.click();
     expect(document.documentElement.dataset.theme).toBe('dim');
+  });
+
+  it('opens nested menu items on hover and click', () => {
+    const container = document.createElement('div');
+    const shell = new AppShell('shell', {
+      user: { name: 'Admin', roles: [], permissions: [] },
+      menu: {
+        groups: [{ id: 'operations', label: 'Operations', items: [{
+          path: '/dispatch', label: 'Dispatch', icon: 'truck', children: [
+            { path: '/orders', label: 'Orders', icon: 'document' },
+          ],
+        }] }],
+      },
+      navigate: () => undefined,
+    });
+    shell.mount(container);
+
+    container.querySelector<HTMLButtonElement>('.header-nav-trigger')!.click();
+    expect(container.querySelector('.header-nav-trigger .header-nav-chevron')).toBeNull();
+    const submenuTrigger = container.querySelector<HTMLButtonElement>('.header-nav-submenu-trigger')!;
+    expect(submenuTrigger.querySelector('.header-nav-chevron')?.innerHTML).toContain('m9 6 6 6-6 6');
+    submenuTrigger.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(container.querySelector('.header-nav-submenu.open')).not.toBeNull();
+    submenuTrigger.click();
+
+    expect(container.querySelector('.header-nav-submenu.open')).toBeNull();
+    expect(container.querySelector('.header-nav-submenu-menu .header-nav-menu-item')).not.toBeNull();
+    expect(submenuTrigger.getAttribute('aria-expanded')).toBe('false');
   });
 });

@@ -47,7 +47,7 @@ export class AppShell extends BaseComponent {
       group.classList.remove('open');
       group.querySelector(':scope > button')?.setAttribute('aria-expanded', 'false');
     });
-    this._groupEls.values().next().value?.parentElement
+    this._appLayout
       ?.querySelectorAll('.header-nav-submenu.open')
       .forEach((submenu: Element) => {
         submenu.classList.remove('open');
@@ -181,18 +181,26 @@ export class AppShell extends BaseComponent {
           .getContext();
         html.take(trigger).span.className('header-nav-item-label').text(formatNavLabel(i18n.t('*', null, item.label)));
         const triggerChevron = html.take(trigger).span.className('header-nav-chevron').getContext();
-        appendIcon(triggerChevron, nested ? 'arrow-right' : 'chevron-down');
+        appendIcon(triggerChevron, 'chevron-right');
         const childMenu = html.take(submenu).div.className('header-nav-submenu-menu').getContext();
         children.forEach(child => createHeaderItem(childMenu, child, true));
         trigger.setAttribute('aria-expanded', 'false');
-        trigger.addEventListener('click', (event: MouseEvent) => {
-          event.stopPropagation();
+        const setSubmenuOpen = (open: boolean) => {
           target.querySelectorAll(':scope > .header-nav-submenu.open').forEach((sibling: Element) => {
             if (sibling !== submenu) closeMenuElement(sibling);
           });
-          const open = !submenu.classList.contains('open');
           submenu.classList.toggle('open', open);
           trigger.setAttribute('aria-expanded', String(open));
+        };
+        trigger.addEventListener('click', (event: MouseEvent) => {
+          event.stopPropagation();
+          setSubmenuOpen(!submenu.classList.contains('open'));
+        });
+        trigger.addEventListener('mouseenter', () => setSubmenuOpen(true));
+        submenu.addEventListener('mouseenter', () => setSubmenuOpen(true));
+        submenu.addEventListener('mouseleave', (event: MouseEvent) => {
+          const relatedTarget = event.relatedTarget as Node | null;
+          if (!relatedTarget || !submenu.contains(relatedTarget)) setSubmenuOpen(false);
         });
         return;
       }
@@ -231,21 +239,26 @@ export class AppShell extends BaseComponent {
         .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
         .getContext();
       html.take(trigger).span.className('header-nav-label').text(formatNavLabel(i18n.t('*', null, groupDef.label)));
-      const chevron = html.take(trigger).span.className('header-nav-chevron').getContext();
-      appendIcon(chevron, 'chevron-down');
       const menu = html.take(group).div.className('header-nav-menu').getContext();
       visibleItems.forEach(item => createHeaderItem(menu, item));
-      group.addEventListener('mouseenter', () => closeOtherTopMenus(group));
-      trigger.addEventListener('click', (event: MouseEvent) => {
-        event.stopPropagation();
+      const setGroupOpen = (open: boolean) => {
         closeOtherTopMenus(group);
         (this.menu.groups || []).forEach(other => {
           if (other.id !== groupDef.id) this.state.openGroups[other.id] = false;
         });
-        const open = !group.classList.contains('open');
         this.state.openGroups[groupDef.id] = open;
         group.classList.toggle('open', open);
         trigger.setAttribute('aria-expanded', String(open));
+      };
+      group.addEventListener('mouseenter', () => setGroupOpen(true));
+      trigger.addEventListener('mouseenter', () => setGroupOpen(true));
+      group.addEventListener('mouseleave', (event: MouseEvent) => {
+        const relatedTarget = event.relatedTarget as Node | null;
+        if (!relatedTarget || !group.contains(relatedTarget)) setGroupOpen(false);
+      });
+      trigger.addEventListener('click', (event: MouseEvent) => {
+        event.stopPropagation();
+        setGroupOpen(!group.classList.contains('open'));
       });
     }
     document.addEventListener('click', () => {

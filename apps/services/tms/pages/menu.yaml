@@ -2,73 +2,99 @@ menu:
   dashboard:
     path: /dashboard
     label: Dashboard
-    icon: dashboard
+    icon: logo
     permission: fleet.read
   groups:
     - id: operations
       label: OPERATIONS
       items:
-        - { path: /orders, label: Orders, icon: document, permission: orders.read }
+        - path: Orders & dispatch
+          label: Orders & dispatch
+          icon: truck
+          children:
+            - { path: /orders, label: Orders, icon: document, permission: orders.read }
+            - { path: /schedule, label: Dispatch schedule, icon: calendar, permission: dispatch.read }
         - { path: /chat, label: Messages, icon: message, permission: chat.read }
-        - { path: /schedule, label: Dispatch schedule, icon: calendar, permission: dispatch.read }
-    - id: sales
-      label: SALES
+        - path: Fleet
+          label: Fleet
+          icon: grid
+          children:
+            - { path: /drivers, label: Drivers, icon: users, permission: drivers.read }
+            - { path: /vehicles, label: Vehicles, icon: grid, permission: fleet.read }
+            - { path: /containers, label: Containers, icon: document, permission: dispatch.read }
+    - id: commercial
+      label: SALES & CRM
       items:
-        - { path: /customers, label: Customers, icon: users, permission: crm.read }
-        - { path: /partners, label: Partners, icon: users, permission: crm.read }
-        - { path: /quotes, label: Quotes, icon: warning, permission: crm.read }
-        - { path: /crm/dashboard, label: CRM overview, icon: report, permission: crm.read }
-        - { path: /crm/kpi, label: KPI targets, icon: analytics, permission: crm.read }
+        - path: Customers & partners
+          label: Customers & partners
+          icon: users
+          children:
+            - { path: /customers, label: Customers, icon: users, permission: crm.read }
+            - { path: /partners, label: Partners, icon: users, permission: crm.read }
+        - path: Sales
+          label: Sales
+          icon: quote
+          children:
+            - { path: /quotes, label: Quotes, icon: warning, permission: crm.read }
+            - { path: /crm/dashboard, label: CRM overview, icon: report, permission: crm.read }
+            - { path: /crm/kpi, label: KPI targets, icon: analytics, permission: crm.read }
     - id: accounting
-      label: ACCOUNTING
+      label: FINANCE
       items:
-        - { path: /accounting/debit-notes, label: Debit notes, icon: file, permission: accounting.read }
-        - { path: /accounting/debit-note-summary, label: Debit note summary, icon: report, permission: accounting.read }
-        - { path: /accounting/payment-requests, label: Payment requests, icon: file, permission: accounting.read }
-        - { path: /accounting/payment-request-summary, label: Payment request summary, icon: report, permission: accounting.read }
-        - { path: /accounting/advances, label: Advances, icon: money, permission: accounting.read }
-        - { path: /accounting/settlements, label: Settlements, icon: money, permission: accounting.read }
+        - path: Receivables & payments
+          label: Receivables & payments
+          icon: money
+          children:
+            - { path: /accounting/debit-notes, label: Debit notes, icon: file, permission: accounting.read }
+            - { path: /accounting/debit-note-summary, label: Debit note summary, icon: report, permission: accounting.read }
+            - { path: /accounting/payment-requests, label: Payment requests, icon: file, permission: accounting.read }
+            - { path: /accounting/payment-request-summary, label: Payment request summary, icon: report, permission: accounting.read }
+            - { path: /accounting/advances, label: Advances, icon: money, permission: accounting.read }
+            - { path: /accounting/settlements, label: Settlements, icon: money, permission: accounting.read }
         - { path: /accounting/invoice-templates, label: Invoice templates, icon: document, permission: accounting.read }
         - { path: /accounting/ledger-accounts, label: Chart of accounts, icon: table, permission: accounting.read }
-    - id: hr
-      label: HUMAN RESOURCES
+    - id: people
+      label: HR
       items:
         - { path: /hr/employees, label: Employees, icon: users, permission: hr.read }
         - { path: /hr/contracts, label: Contracts, icon: document, permission: hr.read }
-        - { path: /hr/timesheets, label: Timesheets, icon: dashboard, permission: hr.read }
+        - { path: /hr/timesheets, label: Timesheets, icon: calendar, permission: hr.read }
         - { path: /hr/shifts, label: Shifts, icon: calendar, permission: hr.read }
         - { path: /hr/payroll, label: Payroll, icon: file, permission: hr.read }
     - id: catalog
-      label: CATALOG
+      label: SETUP
       items:
-        - { path: /drivers, label: Drivers, icon: users, permission: drivers.read }
-        - { path: /vehicles, label: Vehicles, icon: grid, permission: fleet.read }
-        - { path: /containers, label: Containers, icon: document, permission: dispatch.read }
-        - { path: /locations, label: Locations, icon: pin, permission: dispatch.read }
-        - { path: /areas, label: Areas, icon: quote, permission: dispatch.read }
-        - { path: /catalog/container-types, label: Container types, icon: document, permission: catalog.read }
-        - { path: /catalog/vehicle-types, label: Vehicle types, icon: grid, permission: catalog.read }
-        - { path: /catalog/units, label: Units, icon: menu, permission: catalog.read }
-        - { path: /catalog/cargo-types, label: Cargo types, icon: quote, permission: catalog.read }
-        - { path: /catalog/fee-types, label: Fee types, icon: analytics, permission: catalog.read }
-        - { path: /catalog/currencies, label: Currencies, icon: money, permission: catalog.read }
-    - id: organization
-      label: ORGANIZATION & ACCESS
-      items:
-        - { path: /org/own-company, label: Company, icon: dashboard, permission: settings.read }
-        - { path: /org/branches, label: Branches, icon: home, permission: settings.read }
-        - { path: /org/departments, label: Departments, icon: report, permission: settings.read }
-        - { path: /org/teams, label: Teams, icon: users, permission: settings.read }
-        - { path: /org/users, label: Users, icon: users, permission: settings.read }
-        - { path: /org/roles, label: Roles, icon: quote, permission: settings.read }
-    - id: system
-      label: SYSTEM
-      items:
-        - { path: /system/activity, label: Activity log, icon: activity, permission: system.read }
-        - { path: /system/code-rules, label: Code rules, icon: number, permission: system.read }
-        - { path: /system/print-templates, label: Print templates, icon: file, permission: system.read }
-        - { path: /system/approval-flows, label: Approval workflows, icon: quote, permission: system.read }
-        - { path: /system/shipment-types, label: Shipment types, icon: grid, permission: system.read }
-        - { path: /system/trip-statuses, label: Trip statuses, icon: status, permission: system.read }
-        - { path: /system/fee-rules, label: Trip fee rules, icon: analytics, permission: system.read }
-        - { path: /system/storage, label: Storage, icon: table, permission: system.read }
+        - path: Locations & cargo
+          label: Locations & cargo
+          icon: pin
+          children:
+            - { path: /locations, label: Locations, icon: pin, permission: dispatch.read }
+            - { path: /areas, label: Areas, icon: quote, permission: dispatch.read }
+            - { path: /catalog/container-types, label: Container types, icon: document, permission: catalog.read }
+            - { path: /catalog/vehicle-types, label: Vehicle types, icon: grid, permission: catalog.read }
+            - { path: /catalog/units, label: Units, icon: menu, permission: catalog.read }
+            - { path: /catalog/cargo-types, label: Cargo types, icon: quote, permission: catalog.read }
+            - { path: /catalog/fee-types, label: Fee types, icon: analytics, permission: catalog.read }
+            - { path: /catalog/currencies, label: Currencies, icon: money, permission: catalog.read }
+        - path: Organization & access
+          label: Organization & access
+          icon: shield
+          children:
+            - { path: /org/own-company, label: Company, icon: home, permission: settings.read }
+            - { path: /org/branches, label: Branches, icon: home, permission: settings.read }
+            - { path: /org/departments, label: Departments, icon: report, permission: settings.read }
+            - { path: /org/teams, label: Teams, icon: users, permission: settings.read }
+            - { path: /org/users, label: Users, icon: users, permission: settings.read }
+            - { path: /org/roles, label: Roles, icon: quote, permission: settings.read }
+        - path: System
+          label: System
+          icon: settings
+          children:
+            - { path: /system/activity, label: Activity log, icon: activity, permission: system.read }
+            - { path: /system/code-rules, label: Code rules, icon: number, permission: system.read }
+            - { path: /system/print-templates, label: Print templates, icon: file, permission: system.read }
+            - { path: /system/approval-flows, label: Approval workflows, icon: quote, permission: system.read }
+            - { path: /system/shipment-types, label: Shipment types, icon: grid, permission: system.read }
+            - { path: /system/trip-statuses, label: Trip statuses, icon: status, permission: system.read }
+            - { path: /system/fee-rules, label: Trip fee rules, icon: analytics, permission: system.read }
+            - { path: /system/storage, label: Storage, icon: table, permission: system.read }

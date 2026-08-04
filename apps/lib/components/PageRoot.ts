@@ -225,7 +225,7 @@ export class PageRuntime extends BaseComponent {
   for (const src of sourceDefs.values()) {
     const pageSize = src.page_size || 25;
     paginationState[src.id] = { skip: 0, top: pageSize, page: 1 };
-    filterState[src.id] = { ...initialDateFilters };
+    filterState[src.id] = { ...pageParams, ...initialDateFilters };
     if (src.data !== undefined) {
       dataMap[src.id] = {
         data: src.data,
@@ -314,7 +314,8 @@ export class PageRuntime extends BaseComponent {
 
   async function applySourceFilters(sourceId: string, values: Record<string, unknown> = {}) {
     const normalized = Object.fromEntries(
-      Object.entries(values).map(([key, value]) => [key, value === '' ? null : value])
+      Object.entries({ ...(filterState[sourceId] || {}), ...values })
+        .map(([key, value]) => [key, value === '' ? null : value])
     );
     filterState[sourceId] = normalized;
     paginationState[sourceId] = {

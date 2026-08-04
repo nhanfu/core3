@@ -239,7 +239,7 @@ export class DataGrid extends BaseComponent {
 
     const scroll = html.take(root).div.className('overflow-x-auto').getContext();
     const table = html.take(scroll).table.className('core3-token-table min-w-full divide-y divide-gray-200').getContext();
-    const headerRow = html.take(table).thead.className('core3-token-header bg-gray-50').trow.getContext();
+    const headerRow = html.take(table).thead.className('core3-token-header').trow.getContext();
 
     if (selectable) {
       const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;

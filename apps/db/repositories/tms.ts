@@ -346,7 +346,7 @@ export class DuckDbRepository {
   }
 
   async querySource(
-    source: { query: string; single?: boolean },
+    source: { id?: string; query: string; single?: boolean },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -354,12 +354,34 @@ export class DuckDbRepository {
     sort?: { field?: unknown; direction?: unknown },
   ): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
+    const diagnostics = {
+      sourceId: source.id || '<anonymous>',
+      single: source.single === true,
+      params: Object.fromEntries(Object.entries(params).map(([key, value]) => [key, redactQueryValue(key, value)])),
+      statement,
+      boundValueTypes: values.map(value => value === null ? 'null' : typeof value),
+      boundValueCount: values.length,
+    };
+    const runQuery = async (phase: string, sql: string, queryValues: any[]) => {
+      try {
+        return await this.query(sql, queryValues);
+      } catch (error) {
+        console.error('[tms][datasource-query] failed', {
+          ...diagnostics,
+          phase,
+          sql,
+          queryValueTypes: queryValues.map(value => value === null ? 'null' : typeof value),
+          error: describeQueryError(error),
+        });
+        throw error;
+      }
+    };
     if (source.single) {
-      const rows = await this.query(statement, values);
+      const rows = await runQuery('single', statement, values);
       return { data: rows[0] || {} };
     }
 
-    const [count] = await this.query(`SELECT COUNT(*) AS n FROM (${statement}) AS source_rows`, values);
+    const [count] = await runQuery('count', `SELECT COUNT(*) AS n FROM (${statement}) AS source_rows`, values);
     const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
     const offset = Math.max(0, Number(skip) || 0);
     const sortField = typeof sort?.field === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(sort.field)
@@ -367,7 +389,7 @@ export class DuckDbRepository {
       : null;
     const sortDirection = sort?.direction === 'desc' ? 'DESC' : 'ASC';
     const sortClause = sortField ? ` ORDER BY source_rows."${sortField}" ${sortDirection} NULLS LAST` : '';
-    const rows = await this.query(
+    const rows = await runQuery('rows',
       `SELECT * FROM (${statement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
       [...values, pageSize, offset]
     );
@@ -1850,20 +1872,41 @@ function queryOnConnection(conn: any, sql: string, params: any[] = []): Promise<
   });
 }
 
+function redactQueryValue(key: string, value: unknown) {
+  if (value === null || value === undefined) return value;
+  if (/(password|token|secret|authorization|current_user_name)/i.test(key)) return '[REDACTED]';
+  if (typeof value === 'string' && value.length > 200) return `${value.slice(0, 200)}…`;
+  return value;
+}
+
+function describeQueryError(error: unknown) {
+  if (!error || typeof error !== 'object') return { message: String(error) };
+  const candidate = error as Record<string, unknown>;
+  return {
+    name: candidate.name,
+    message: candidate.message,
+    errno: candidate.errno,
+    errorType: candidate.errorType,
+    code: candidate.code,
+    stack: candidate.stack,
+  };
+}
+
 function bindNamedParams(sql: string, params: Record<string, any> = {}) {
   const values: any[] = [];
   const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_: string, name: string) => {
     const value = params[name];
     if (value === undefined || value === null) {
-      // DuckDB cannot infer the type of an untyped NULL placeholder in
-      // predicates such as `:status IS NULL`. Keep the value parameterized,
-      // but give the placeholder a type; callers that need another type can
-      // still apply an explicit CAST around the named parameter.
-      values.push(null);
-      return 'CAST(? AS VARCHAR)';
+      // Do not bind NULL as a parameter. DuckDB cannot always resolve the
+      // type of an untyped NULL placeholder in predicates such as
+      // `:status IS NULL`.
+      return 'NULL';
     }
     values.push(value);
-    return '?';
+    // DuckDB also cannot infer the type of a parameter used only by an
+    // `IS NULL` branch. Keep every named value explicitly typed; datasource
+    // queries add narrower casts for dates and other non-text expressions.
+    return 'CAST(? AS VARCHAR)';
   });
   return { statement, values };
 }

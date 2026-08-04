@@ -51,6 +51,34 @@ describe('YAML Odoo ListView renderer', () => {
     expect(container.querySelector('[data-list-row-action="approve:o1"]')).toBeNull();
   });
 
+  it('preserves routed filters when applying another list filter', async () => {
+    const query = vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['orders.read'] };
+    window.history.replaceState({}, '', '/tms/orders?status=Draft&q=ORD-001');
+    const container = document.createElement('div');
+    await renderPage({
+      page: { id: 'orders', breadcrumb: ['Management', 'Orders'] },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'orders',
+        search: { placeholder: 'Search...' },
+        filters: [{ field: 'status', label: 'Status', options: ['Draft', 'Approved'] }],
+        columns: [{ field: 'number', label: 'Order' }],
+      }],
+    }, { container });
+
+    container.querySelector<HTMLButtonElement>('[data-filter-field="status"][data-filter-value="Approved"]')!.click();
+    await Promise.resolve();
+
+    expect(query).toHaveBeenLastCalledWith(expect.objectContaining({
+      sourceId: 'orders',
+      params: { status: 'Approved', q: 'ORD-001' },
+    }));
+  });
+
   it('renders the view selected by the URL', async () => {
     vi.spyOn(client, 'query').mockResolvedValue({
       data: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],
