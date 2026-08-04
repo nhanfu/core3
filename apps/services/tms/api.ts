@@ -35,12 +35,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     reloadPages,
   } = ctx;
 
-  const FINANCIAL_WORKFLOW_SCOPES = new Set([
-    'debit_note',
-    'payment_request',
-    'advance',
-    'settlement',
-  ]);
   const DEFAULT_CURRENCY_RATES: Record<string, number> = { VND: 1, USD: 25400, EUR: 27600 };
 
   function configuredCurrencyRates(): { rates: Record<string, number>; source: string } {
@@ -144,6 +138,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   const SCOPE_RESOURCES: Record<string, string> = PERMISSIONS.scope_resources || {};
   const SCOPE_DATASOURCES: Record<string, any> = PERMISSIONS.scope_datasources || {};
   const VALIDATION_DATASOURCES: Record<string, any> = PERMISSIONS.validation_datasources || {};
+  const MUTATION_POLICIES: Record<string, any> = PERMISSIONS.mutation_policies || {};
   const API_DATASOURCES: Record<string, any> = PERMISSIONS.api_datasources || {};
   const DECLARED_PERMISSIONS = new Set<string>(PERMISSIONS.permissions || []);
   for (const [name, table] of Object.entries(TABLES) as [string, any][]) {
@@ -252,6 +247,24 @@ export function createTmsApi(ctx: TmsApiContext) {
       view_scope: String(authUser.view_scope || 'all'),
     }, 0, 1);
     return result.data || null;
+  };
+  const enforceMutationPolicy = async (table: string, operation: string, id: string | null, scope: string, changes: any[]) => {
+    const policy = MUTATION_POLICIES[table]?.[operation];
+    if (!policy || (Array.isArray(policy.scopes) && !policy.scopes.includes(scope))) return;
+    const changedFields = new Set(changes.map((change: any) => String(change.field)));
+    const forbidden = Array.isArray(policy.forbid_fields) ? policy.forbid_fields.map(String).filter((field: string) => changedFields.has(field)) : [];
+    if (forbidden.length) throw { status: 400, message: String(policy.forbid_message || `Fields require a named action: ${forbidden.join(', ')}`) };
+    for (const precondition of Array.isArray(policy.preconditions) ? policy.preconditions : []) {
+      const params = Object.fromEntries(Object.entries(precondition.params || {}).map(([key, value]) => [key, value === '$id' ? id : value === '$scope' ? scope : value]));
+      const row = await validationRow(String(precondition.datasource || ''), params);
+      if (!row) throw { status: Number(precondition.not_found_status || 404), message: String(precondition.not_found_message || 'Resource not found') };
+      const actual = row[String(precondition.field || '')];
+      const expected = precondition.equals;
+      const allowed = Array.isArray(precondition.one_of) ? precondition.one_of : undefined;
+      if (allowed ? !allowed.includes(actual) : String(actual) !== String(expected)) {
+        throw { status: Number(precondition.status || 409), message: String(precondition.message || 'Mutation is not allowed in the current state') };
+      }
+    }
   };
   const crmEntityInScope = async (kind: 'customer' | 'partner', id: string) => {
     const source = SOURCES.get('crm_entity_detail');
@@ -822,6 +835,13 @@ export function createTmsApi(ctx: TmsApiContext) {
     const tbl = TABLES[table as keyof typeof TABLES];
     if (!tbl) return apiError(404, `Unknown table: ${table}`);
     requirePerm(tbl.permission);
+    const policyOperation = action === 'insert' ? 'create' : action;
+    try {
+      await enforceMutationPolicy(table, policyOperation, id ? String(id) : null, String(scope || ''), changes);
+    } catch (error: any) {
+      if (error?.status) return apiError(error.status, error.message || 'Mutation is not allowed');
+      throw error;
+    }
 
     const scopedBranch = String(authUser.view_scope || 'all') !== 'all';
     const currentBranchId = String(authUser.branch_id || '');
@@ -1096,20 +1116,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     if ('scopes' in tbl && !tbl.scopes.includes(scope)) {
       return apiError(400, 'Invalid resource scope');
     }
-    if (
-      table === 'accounting_entries'
-      && FINANCIAL_WORKFLOW_SCOPES.has(scope)
-      && changes.some((change: any) => change.field === 'status' || change.field === 'amount')
-    ) {
-      return apiError(400, 'Financial document status and amount require named actions');
-    }
-    if (
-      (table === 'quotes' || table === 'payrolls')
-      && changes.some((change: any) => change.field === 'status')
-    ) {
-      return apiError(400, `${table === 'quotes' ? 'Quote' : 'Payroll'} status requires a named action`);
-    }
-
     if ('scopes' in tbl && action !== 'insert') {
       const scopeSource = table === 'master_data'
         ? 'master_data_node'
@@ -1119,41 +1125,6 @@ export function createTmsApi(ctx: TmsApiContext) {
       const existing = await validationRow(scopeSource, { id });
       if (!existing || existing.kind !== scope) return apiError(404, 'Resource not found');
     }
-    if (table === 'orders' && (action === 'update' || action === 'delete')) {
-      const order = await validationRow('order_status', { id });
-      if (!order) return apiError(404, 'Order not found');
-      if (order.status !== 'Draft') {
-        return apiError(409, `Order cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${order.status}`);
-      }
-    }
-    if (
-      table === 'accounting_entries'
-      && FINANCIAL_WORKFLOW_SCOPES.has(scope)
-      && (action === 'update' || action === 'delete')
-    ) {
-      const document = await validationRow('accounting_status', { id, kind: scope });
-      if (!document) return apiError(404, 'Financial document not found');
-      if (document.status !== 'Draft') {
-        return apiError(
-          409,
-          `Financial document cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${document.status}`,
-        );
-      }
-    }
-    if (
-      (table === 'quotes' || table === 'payrolls')
-      && (action === 'update' || action === 'delete')
-    ) {
-      const record = await validationRow(table === 'quotes' ? 'quote_status' : 'payroll_status', { id });
-      if (!record) return apiError(404, `${table === 'quotes' ? 'Quote' : 'Payroll'} not found`);
-      if (record.status !== 'Draft') {
-        return apiError(
-          409,
-          `${table === 'quotes' ? 'Quote' : 'Payroll'} cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${record.status}`,
-        );
-      }
-    }
-
     // All compatibility guards have passed. Use the YAML-derived mutation
     // contract for ordinary database writes, including user fields.
     const yamlSource = table === 'users' ? API_DATASOURCES.users : YAML_CRUD_SOURCES.get(`${table}:${String(scope || '')}`);

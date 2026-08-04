@@ -259,6 +259,36 @@ validation_datasources:
     single: true
     query: "SELECT id FROM users WHERE id = :id"
 
+mutation_policies:
+  orders:
+    update:
+      preconditions: [{ datasource: order_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Order not found, message: Order can only be edited while Draft }]
+    delete:
+      preconditions: [{ datasource: order_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Order not found, message: Order can only be deleted while Draft }]
+  accounting_entries:
+    update:
+      scopes: [debit_note, payment_request, advance, settlement]
+      forbid_fields: [status, amount]
+      forbid_message: Financial document status and amount require named actions
+      preconditions: [{ datasource: accounting_status, params: { id: '$id', kind: '$scope' }, field: status, equals: Draft, not_found_message: Financial document not found, message: Financial document can only be edited while Draft }]
+    delete:
+      scopes: [debit_note, payment_request, advance, settlement]
+      preconditions: [{ datasource: accounting_status, params: { id: '$id', kind: '$scope' }, field: status, equals: Draft, not_found_message: Financial document not found, message: Financial document can only be deleted while Draft }]
+  quotes:
+    update:
+      forbid_fields: [status]
+      forbid_message: Quote status requires a named action
+      preconditions: [{ datasource: quote_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Quote not found, message: Quote can only be edited while Draft }]
+    delete:
+      preconditions: [{ datasource: quote_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Quote not found, message: Quote can only be deleted while Draft }]
+  payrolls:
+    update:
+      forbid_fields: [status]
+      forbid_message: Payroll status requires a named action
+      preconditions: [{ datasource: payroll_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Payroll not found, message: Payroll can only be edited while Draft }]
+    delete:
+      preconditions: [{ datasource: payroll_status, params: { id: '$id' }, field: status, equals: Draft, not_found_message: Payroll not found, message: Payroll can only be deleted while Draft }]
+
 api_datasources:
   notifications:
     permission: chat.read
