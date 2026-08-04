@@ -326,6 +326,20 @@ export function createTmsApi(ctx: TmsApiContext) {
     }, 0, 1);
     return Boolean(result.data?.[0]);
   };
+  const applyEntityScopePolicy = async (table: string, operation: string, id: string | null, changes: any[], scoped: boolean) => {
+    const policy = SCOPE_MUTATION_POLICIES[table];
+    if (!policy?.entity_kind) return changes;
+    if (operation === 'create' && scoped) {
+      const ownerField = String(policy.owner_field || '');
+      const ownerChange = changes.find((change: any) => change.field === ownerField);
+      if (ownerChange && String(ownerChange.value || '') !== activityActor.name) throw { status: 403, message: 'Record is outside the current view scope' };
+      if (!ownerChange) return [...changes, { field: ownerField, value: activityActor.name }];
+    }
+    if (operation !== 'create' && id && !(await crmEntityInScope(String(policy.entity_kind) as 'customer' | 'partner', id))) {
+      throw { status: 403, message: 'Record is outside the current view scope' };
+    }
+    return changes;
+  };
   const branchForScopedResource = async (resourceTable: string, resourceId: string) => {
     if (resourceTable === 'branches') return resourceId;
     const sourceId = SCOPE_RESOURCES[resourceTable];
@@ -922,15 +936,11 @@ export function createTmsApi(ctx: TmsApiContext) {
         throw error;
       }
     }
-    if (table === 'customers' || table === 'partners') {
-      const kind = table === 'customers' ? 'customer' : 'partner';
-      if (action === 'insert') {
-        const ownerChange = changes.find((change: any) => change.field === 'owner_name');
-        if (scopedBranch && ownerChange && String(ownerChange.value || '') !== activityActor.name) return rejectOutOfScope();
-        if (scopedBranch && !ownerChange) changes = [...changes, { field: 'owner_name', value: activityActor.name }];
-      } else if (id && !(await crmEntityInScope(kind, String(id)))) {
-        return rejectOutOfScope();
-      }
+    try {
+      changes = await applyEntityScopePolicy(table, policyOperation, id ? String(id) : null, changes, scopedBranch);
+    } catch (error: any) {
+      if (error?.status) return apiError(error.status, error.message || 'Record is outside the current view scope');
+      throw error;
     }
 
     if (scopedBranch) {

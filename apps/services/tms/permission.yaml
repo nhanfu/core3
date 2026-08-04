@@ -322,6 +322,8 @@ scope_mutation_policies:
   employment_contracts: { references: [{ field: employee_id, resource: employees, required: true }] }
   timesheets: { references: [{ field: employee_id, resource: employees, required: true }] }
   payrolls: { references: [{ field: employee_id, resource: employees, required: true }] }
+  customers: { entity_kind: customer, owner_field: owner_name }
+  partners: { entity_kind: partner, owner_field: owner_name }
 
 api_datasources:
   notifications:
