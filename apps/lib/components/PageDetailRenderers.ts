@@ -167,12 +167,20 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     },
     def,
   );
-  if (def.refresh_interval_ms) {
+  if (def.refresh_interval_ms && !def.sse?.endpoint) {
     def.on_refresh = async () => {
       await refreshSources([threadSource, messageSource, attachmentSource].filter(Boolean));
     };
   }
   const _origSetState = comp.setState.bind(comp);
+  def.on_sse = (payload: any) => {
+    const sources = payload?.sources || {};
+    const update: any = {};
+    if (sources[threadSource]) update.threads = sources[threadSource].data || [];
+    if (sources[messageSource]) update.messages = sources[messageSource].data || [];
+    if (sources[attachmentSource]) update.attachments = sources[attachmentSource].data || [];
+    if (Object.keys(update).length) _origSetState(update, true);
+  };
   comp._onAction = async (actionId: string, params: any) => {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params?.row || params || {});

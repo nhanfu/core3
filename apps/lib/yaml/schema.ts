@@ -174,6 +174,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'upload_action',
     'download_action',
     'mark_read_action',
+    'sse',
     'refresh_interval_ms',
     'search_placeholder',
     'empty_threads',

@@ -75,7 +75,7 @@ components:
     upload_action: upload_attachment
     download_action: download_attachment
     mark_read_action: mark_thread_read
-    refresh_interval_ms: 5000
+    sse: { endpoint: /api/events/chat, permission: chat.read, sources: [chat_threads, chat_messages, chat_attachments], top: 1000, interval_ms: 5000 }
     search_placeholder: Find conversations...
     empty_threads: Chưa có cuộc trò chuyện
     empty_messages: Chọn một cuộc trò chuyện để bắt đầu
@@ -88,7 +88,6 @@ actions:
     action: chat.threads.create
     handler: chat
     operation: create_thread
-    refresh: [chat_threads, chat_messages]
     fields:
       - { field: title, label: Name of the conversation, type: text, required: true }
       - { field: participant_emails, label: Participant email (separated by commas), type: text, required: true }
@@ -117,7 +116,6 @@ actions:
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.messages.send', 'chat_threads', :thread_id, 'Sent message in ' || CAST(:thread_title AS VARCHAR))"
       result:
         query: "SELECT CAST(:message_id AS VARCHAR) AS id, CAST(:thread_id AS VARCHAR) AS thread_id, CAST(:current_user_id AS VARCHAR) AS sender_id, trim(CAST(:content AS VARCHAR)) AS body"
-    refresh: [chat_threads, chat_messages]
   - id: mark_thread_read
     type: server
     permission: chat.read
@@ -133,12 +131,10 @@ actions:
         - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
       result:
         query: "SELECT true AS ok"
-    refresh: [chat_threads]
   - id: upload_attachment
     type: upload
     permission: chat.write
     kind: chat_attachment
-    refresh: [chat_threads, chat_messages, chat_attachments]
   - id: download_attachment
     type: download
     permission: chat.read

@@ -6,6 +6,7 @@ import { handleDataRoutes } from './data.ts';
 import { handleActionRoutes } from './actions.ts';
 import { handlePatchRoutes } from './patch.ts';
 import { handleProfileRoutes } from './profile.ts';
+import { handleEventRoutes } from './events.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 
@@ -104,6 +105,18 @@ export function createTmsApi(ctx: TmsApiContext) {
     return sizes;
   }
 
+  function sseSourceIds(page: any): Set<string> {
+    const ids = new Set<string>();
+    const visit = (components: any[] = []) => {
+      for (const component of components) {
+        for (const source of component.sse?.sources || []) ids.add(String(source));
+        for (const tab of component.tabs || []) visit(tab.components);
+      }
+    };
+    visit(page.components);
+    return ids;
+  }
+
   async function prefetchedPageConfig(page: any, url: URL, user: any) {
     const params: Record<string, unknown> = {};
     for (const [key, value] of url.searchParams.entries()) {
@@ -112,6 +125,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
     }
     const pageSizes = sourcePageSizes(page);
+    const streamedSources = sseSourceIds(page);
     const serverParams = {
       ...params,
       current_user_id: String(user.sub || ''),
@@ -123,13 +137,9 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (source.permission && !authProvider.hasPermission(user, source.permission)) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
       }
-      const result = await repository.querySource(
-        source,
-        serverParams,
-        0,
-        pageSizes.get(source.id) || 25,
-      );
       const { query, ...publicSource } = source;
+      if (streamedSources.has(String(source.id))) return { ...publicSource, data: [], meta: { total: 0 } };
+      const result = await repository.querySource(source, serverParams, 0, pageSizes.get(source.id) || 25);
       return { ...publicSource, data: result.data, meta: result.meta };
     }));
     const lang = requestLanguage(url, user.preferred_lang || 'en');
@@ -276,7 +286,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
       configuredCurrencyRates, json, apiError, publicPageConfig, pageCacheHeaders, prefetchedPageConfig, CORS_HEADERS,
     };
-    for (const handler of [handleFileRoutes, handleDataRoutes, handleActionRoutes, handlePatchRoutes, handleProfileRoutes]) {
+    for (const handler of [handleEventRoutes, handleFileRoutes, handleDataRoutes, handleActionRoutes, handlePatchRoutes, handleProfileRoutes]) {
       const response = await handler(routeContext);
       if (response) return response;
     }
