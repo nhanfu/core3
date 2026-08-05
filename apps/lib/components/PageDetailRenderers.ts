@@ -181,6 +181,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     if (sources[attachmentSource]) update.attachments = sources[attachmentSource].data || [];
     if (Object.keys(update).length) _origSetState(update, true);
   };
+  def.on_chat_ack = (payload: any) => comp.handleChatAck(payload);
   comp._onAction = async (actionId: string, params: any) => {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params?.row || params || {});

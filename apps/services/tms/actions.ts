@@ -28,18 +28,43 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
         Object.entries(body && typeof body === 'object' ? body : {})
           .filter(([, value]) => value === null || ['boolean', 'number', 'string'].includes(typeof value)),
       );
-      const result = await repository.executeMutation(actionDefinition.mutation, {
-        ...mutationBody,
-        thread_id: typeof body?.id === 'string' ? body.id : '',
-        current_user_id: String(authUser.sub || ''),
-        current_user_name: activityActor.name,
-      });
-      if (handler === 'chat') {
-        chatMessageQueue.publish({
-          operation: String(actionDefinition.operation || 'changed'),
-          threadId: typeof body?.id === 'string' ? body.id : undefined,
+      const chatEvent = {
+        operation: String(actionDefinition.operation || 'changed'),
+        actorId: String(authUser.sub || ''),
+        clientMessageId: typeof body?.client_message_id === 'string' ? body.client_message_id : undefined,
+        threadId: typeof body?.id === 'string' ? body.id : undefined,
+      };
+      let result: any;
+      try {
+        result = await repository.executeMutation(actionDefinition.mutation, {
+          ...mutationBody,
+          thread_id: typeof body?.id === 'string' ? body.id : '',
+          current_user_id: String(authUser.sub || ''),
+          current_user_name: activityActor.name,
         });
+      } catch (error) {
+        if (handler === 'chat') chatMessageQueue.publish({
+          ...chatEvent,
+          status: 'failed',
+          error: String((error as any)?.message || 'Message failed'),
+        });
+        throw error;
       }
+      if (handler === 'chat') chatMessageQueue.publish({
+        ...chatEvent,
+        status: 'success',
+        messageId: typeof result?.id === 'string' ? result.id : undefined,
+        message: actionDefinition.operation === 'send_message'
+          ? {
+              id: result?.id,
+              thread_id: result?.thread_id,
+              sender_id: result?.sender_id,
+              sender_name: activityActor.name,
+              body: result?.body,
+              created_at: new Date().toISOString(),
+            }
+          : undefined,
+      });
       return json(result);
     }
     if (handler === 'currency_sync') {

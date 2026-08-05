@@ -1,6 +1,12 @@
 export type ChatQueueEvent = {
   sequence: number;
   operation: string;
+  status: 'success' | 'failed';
+  actorId?: string;
+  clientMessageId?: string;
+  messageId?: string;
+  message?: Record<string, any>;
+  error?: string;
   threadId?: string;
   at: number;
 };

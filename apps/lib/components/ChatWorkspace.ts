@@ -33,6 +33,7 @@ export class ChatWorkspace extends BaseComponent {
     super(id, {
       threads: [],
       messages: [],
+      pendingMessages: [],
       attachments: [],
       activeThreadId: null,
       query: '',
@@ -41,6 +42,39 @@ export class ChatWorkspace extends BaseComponent {
       ...state,
     });
     this.def = def;
+  }
+
+  handleChatAck(payload: any) {
+    const clientMessageId = String(payload?.client_message_id || '');
+    const pending = (this.state.pendingMessages || []).find(
+      (message: any) => message.client_message_id === clientMessageId,
+    );
+    if (!pending) return;
+    const remaining = (this.state.pendingMessages || []).filter(
+      (message: any) => message.client_message_id !== clientMessageId,
+    );
+    if (payload.status === 'success') {
+      this.state.messages = [
+        ...(this.state.messages || []),
+        { ...pending, id: payload.message_id || pending.id, pending: false, client_message_id: undefined },
+      ];
+    } else {
+      remaining.push({ ...pending, pending: false, failed: true, error: payload.error || 'Message failed' });
+    }
+    this.state.pendingMessages = remaining;
+    this.redraw();
+  }
+
+  handleChatMessage(message: any) {
+    if (!message?.id || (this.state.messages || []).some((item: any) => item.id === message.id)) return;
+    this.state.messages = [...(this.state.messages || []), {
+      ...message,
+      is_own: String(message.sender_id) === String(this.state.currentUserId || ''),
+    }];
+    this.state.threads = (this.state.threads || []).map((thread: any) => thread.id === message.thread_id
+      ? { ...thread, preview: message.body, updated_at: message.created_at }
+      : thread);
+    this.redraw();
   }
 
   private startRefreshTimer() {
@@ -83,7 +117,9 @@ export class ChatWorkspace extends BaseComponent {
             if (!data) continue;
             let payload: any = null;
             try { payload = JSON.parse(data); } catch { /* keep refresh fallback */ }
-            if (payload?.sources && typeof this.def.on_sse === 'function') this.def.on_sse(payload);
+            if (payload?.type === 'chat_ack') this.handleChatAck(payload);
+            else if (payload?.type === 'chat_message') this.handleChatMessage(payload.message);
+            else if (payload?.sources && typeof this.def.on_sse === 'function') this.def.on_sse(payload);
           }
         }
       } catch {
@@ -115,6 +151,7 @@ export class ChatWorkspace extends BaseComponent {
     this.startRefreshTimer();
     const threads = Array.isArray(this.state.threads) ? this.state.threads : [];
     const messages = Array.isArray(this.state.messages) ? this.state.messages : [];
+    const pendingMessages = Array.isArray(this.state.pendingMessages) ? this.state.pendingMessages : [];
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
     if (!threads.some((thread: any) => thread.id === this.state.activeThreadId)) {
       this.state.activeThreadId = threads[0]?.id || null;
@@ -246,7 +283,10 @@ export class ChatWorkspace extends BaseComponent {
     main.appendChild(mainHeader);
 
     const messageList = createElement('div', 'flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-slate-50 p-5');
-    const activeMessages = messages.filter((message: any) => message.thread_id === activeThread.id);
+    const activeMessages = [
+      ...messages.filter((message: any) => message.thread_id === activeThread.id),
+      ...pendingMessages.filter((message: any) => message.thread_id === activeThread.id),
+    ];
     if (!activeMessages.length) {
       messageList.appendChild(createElement(
         'p',
@@ -271,6 +311,15 @@ export class ChatWorkspace extends BaseComponent {
           : 'max-w-[76%] whitespace-pre-wrap break-words rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 shadow-sm',
         String(message.body || ''),
       ));
+      if (message.pending || message.failed) {
+        const status = createElement(
+          'span',
+          `mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`,
+          message.failed ? `✕ ${message.error || 'Failed'}` : '⟳ Sending',
+        );
+        if (message.pending) status.classList.add('animate-pulse');
+        row.appendChild(status);
+      }
       const messageAttachments = attachments.filter(
         (attachment: any) => attachment.message_id === message.id,
       );
@@ -356,10 +405,6 @@ export class ChatWorkspace extends BaseComponent {
       const content = input.value.trim();
       const file = this.state.selectedFile;
       if (!content && !file) return;
-      input.disabled = true;
-      attachButton.disabled = true;
-      sendButton.disabled = true;
-      sendButton.textContent = 'Đang gửi...';
       this.state.inputValue = '';
       this.state.selectedFile = null;
       if (file && this.def.upload_action) {
@@ -367,8 +412,30 @@ export class ChatWorkspace extends BaseComponent {
           row: { id: activeThread.id, content, file },
         });
       } else if (this.def.send_action) {
-        await this.submit(this.def.send_action, {
-          row: { id: activeThread.id, content },
+        if (!this.def.sse?.endpoint) {
+          await this.submit(this.def.send_action, { row: { id: activeThread.id, content } });
+          return;
+        }
+        const clientMessageId = typeof crypto?.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `message-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        this.state.pendingMessages = [
+          ...(this.state.pendingMessages || []),
+          {
+            id: `pending-${clientMessageId}`,
+            client_message_id: clientMessageId,
+            thread_id: activeThread.id,
+            sender_id: this.state.currentUserId,
+            sender_name: this.state.currentUserName || 'You',
+            body: content,
+            is_own: true,
+            pending: true,
+            created_at: new Date().toISOString(),
+          },
+        ];
+        this.redraw();
+        void this.submit(this.def.send_action, {
+          row: { id: activeThread.id, content, client_message_id: clientMessageId },
         });
       }
     });

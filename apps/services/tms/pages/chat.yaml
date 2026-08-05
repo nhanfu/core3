@@ -75,7 +75,7 @@ components:
     upload_action: upload_attachment
     download_action: download_attachment
     mark_read_action: mark_thread_read
-    sse: { endpoint: /api/events/chat, permission: chat.read, sources: [chat_threads, chat_messages, chat_attachments], top: 1000, interval_ms: 5000 }
+    sse: { endpoint: /api/events/chat, permission: chat.read }
     search_placeholder: Find conversations...
     empty_threads: Chưa có cuộc trò chuyện
     empty_messages: Chọn một cuộc trò chuyện để bắt đầu
@@ -97,7 +97,7 @@ actions:
     action: chat.messages.send
     handler: chat
     operation: send_message
-    params: { content: '{row.content}' }
+    params: { content: '{row.content}', client_message_id: '{row.client_message_id}' }
     mutation:
       guards:
         - query: "SELECT 1 AS ok WHERE length(trim(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000"

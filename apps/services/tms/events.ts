@@ -18,69 +18,45 @@ function findStream(pages: Map<string, any>, pathname: string): any {
 }
 
 export async function handleEventRoutes(ctx: TmsRouteContext): Promise<Response | null> {
-  const { pathname, method, PAGES, SOURCES, repository, authProvider, authUser, requirePerm, CORS_HEADERS } = ctx;
+  const { pathname, method, PAGES, authUser, requirePerm, CORS_HEADERS } = ctx;
   if (method !== 'GET' || !pathname.startsWith('/api/events/')) return null;
   const stream = findStream(PAGES, pathname);
   if (!stream) return null;
   requirePerm(String(stream.permission || ''));
 
-  const interval = Math.max(1000, Number(stream.interval_ms || 5000));
-  const sourceIds = Array.isArray(stream.sources) ? stream.sources.map(String) : [];
-  const params = {
-    current_user_id: String(authUser.sub || ''),
-    current_user_name: String(authUser.name || ''),
-    current_branch_id: String(authUser.branch_id || ''),
-    view_scope: String(authUser.view_scope || 'all'),
-  };
-  const snapshot = async () => {
-    const sources: Record<string, any> = {};
-    for (const sourceId of sourceIds) {
-      const source = SOURCES.get(sourceId);
-      if (!source) continue;
-      if (source.permission && !authProvider.hasPermission(authUser, source.permission)) continue;
-      sources[sourceId] = await repository.querySource(source, params, 0, Number(stream.top || 1000));
-    }
-    return { sources };
-  };
-  let keepAlive: ReturnType<typeof setInterval> | null = null;
+  let closed = false;
   let unsubscribe = () => {};
-  let previousPayload = '';
-  let sending = false;
-  let pending = false;
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
-      const send = async () => {
-        if (sending) {
-          pending = true;
-          return;
-        }
-        sending = true;
-        try {
-          const payload = await snapshot();
-          const serialized = JSON.stringify(payload);
-          const frame = serialized === previousPayload
-            ? ': keep-alive\n\n'
-            : `event: ${stream.event || 'refresh'}\ndata: ${serialized}\n\n`;
-          previousPayload = serialized;
-          controller.enqueue(encoder.encode(frame));
-        } catch {
-          controller.enqueue(encoder.encode('event: error\ndata: {}\n\n'));
-        } finally {
-          sending = false;
-          if (pending) {
-            pending = false;
-            void send();
-          }
-        }
+      controller.enqueue(encoder.encode(': connected\n\n'));
+      const sendAck = (event: any) => {
+        if (closed) return;
+        const payload = {
+          type: 'chat_ack',
+          status: event.status,
+          operation: event.operation,
+          client_message_id: event.clientMessageId,
+          message_id: event.messageId,
+          thread_id: event.threadId,
+          error: event.error,
+        };
+        controller.enqueue(encoder.encode(`event: chat_ack\ndata: ${JSON.stringify(payload)}\n\n`));
       };
-      void send();
-      unsubscribe = chatMessageQueue.subscribe(() => void send());
-      keepAlive = setInterval(() => controller.enqueue(encoder.encode(': keep-alive\n\n')), interval);
+      const sendMessage = (event: any) => {
+        if (closed) return;
+        controller.enqueue(encoder.encode(`event: chat_message\ndata: ${JSON.stringify({
+          type: 'chat_message',
+          message: event.message,
+        })}\n\n`));
+      };
+      unsubscribe = chatMessageQueue.subscribe((event) => {
+        if (event.actorId === String(authUser.sub || '')) sendAck(event);
+        else if (event.message) sendMessage(event);
+      });
     },
     cancel() {
-      if (keepAlive) clearInterval(keepAlive);
-      keepAlive = null;
+      closed = true;
       unsubscribe();
     },
   });

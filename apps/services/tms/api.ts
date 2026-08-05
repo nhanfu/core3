@@ -105,18 +105,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     return sizes;
   }
 
-  function sseSourceIds(page: any): Set<string> {
-    const ids = new Set<string>();
-    const visit = (components: any[] = []) => {
-      for (const component of components) {
-        for (const source of component.sse?.sources || []) ids.add(String(source));
-        for (const tab of component.tabs || []) visit(tab.components);
-      }
-    };
-    visit(page.components);
-    return ids;
-  }
-
   async function prefetchedPageConfig(page: any, url: URL, user: any) {
     const params: Record<string, unknown> = {};
     for (const [key, value] of url.searchParams.entries()) {
@@ -125,7 +113,6 @@ export function createTmsApi(ctx: TmsApiContext) {
       params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
     }
     const pageSizes = sourcePageSizes(page);
-    const streamedSources = sseSourceIds(page);
     const serverParams = {
       ...params,
       current_user_id: String(user.sub || ''),
@@ -138,7 +125,6 @@ export function createTmsApi(ctx: TmsApiContext) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
       }
       const { query, ...publicSource } = source;
-      if (streamedSources.has(String(source.id))) return { ...publicSource, data: [], meta: { total: 0 } };
       const result = await repository.querySource(source, serverParams, 0, pageSizes.get(source.id) || 25);
       return { ...publicSource, data: result.data, meta: result.meta };
     }));
