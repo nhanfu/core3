@@ -3,7 +3,7 @@ import { mkdir, open, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-export type ChatQueueEvent = {
+export type EventRecord = {
   id: string;
   sequence: number;
   shard: number;
@@ -18,8 +18,8 @@ export type ChatQueueEvent = {
   at: number;
 };
 
-type NewEvent = Omit<ChatQueueEvent, 'id' | 'sequence' | 'shard' | 'at'>;
-type Listener = (event: ChatQueueEvent) => void;
+type NewEvent = Omit<EventRecord, 'id' | 'sequence' | 'shard' | 'at'>;
+type EventListener = (event: EventRecord) => void;
 
 class DuckDbConnectionPool {
   private readonly writer: any;
@@ -80,8 +80,8 @@ function shardHash(value: string): number {
   return hash >>> 0;
 }
 
-export class TmsEventStore {
-  private readonly listeners = new Set<Listener>();
+export class EventStore {
+  private readonly listeners = new Set<EventListener>();
   private readonly shards: Shard[] = [];
   private readonly shardCount: number;
   private readonly baseLogPath: string;
@@ -138,7 +138,7 @@ export class TmsEventStore {
           message_json VARCHAR,
           error VARCHAR,
           thread_id VARCHAR,
-          at BIGINT NOT NULL
+          event_at BIGINT NOT NULL
         )
       `);
   }
@@ -157,7 +157,7 @@ export class TmsEventStore {
       if (error?.code === 'ENOENT') return;
       throw error;
     }
-    const events = contents.split('\n').filter(Boolean).map((line) => JSON.parse(line) as ChatQueueEvent);
+    const events = contents.split('\n').filter(Boolean).map((line) => JSON.parse(line) as EventRecord);
     for (const event of events) {
       if (event.shard !== shard.index) throw new Error(`Event ${event.id} belongs to shard ${event.shard}, not ${shard.index}`);
       await this.insert(shard, event);
@@ -166,14 +166,14 @@ export class TmsEventStore {
   }
 
   private shardFor(event: NewEvent): Shard {
-    if (!this.shards.length) throw new Error('TMS event store has not started');
+    if (!this.shards.length) throw new Error('Event store has not started');
     const key = event.threadId || event.actorId || '';
     return this.shards[shardHash(key) % this.shards.length];
   }
 
-  private insert(shard: Shard, event: ChatQueueEvent): Promise<void> {
+  private insert(shard: Shard, event: EventRecord): Promise<void> {
     return shard.pool.run(`INSERT OR REPLACE INTO event_log
-      (id, sequence, shard, operation, status, actor_id, client_message_id, message_id, message_json, error, thread_id, at)
+      (id, sequence, shard, operation, status, actor_id, client_message_id, message_id, message_json, error, thread_id, event_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
       event.id, event.sequence, event.shard, event.operation, event.status,
       event.actorId || null, event.clientMessageId || null, event.messageId || null,
@@ -182,9 +182,9 @@ export class TmsEventStore {
     ]);
   }
 
-  async publish(event: NewEvent): Promise<ChatQueueEvent> {
+  async publish(event: NewEvent): Promise<EventRecord> {
     const shard = this.shardFor(event);
-    const item: ChatQueueEvent = {
+    const item: EventRecord = {
       ...event,
       id: randomUUID(),
       sequence: shard.nextSequence++, shard: shard.index, at: Date.now(),
@@ -213,12 +213,12 @@ export class TmsEventStore {
 
   private async pruneShard(shard: Shard): Promise<void> {
     const cutoff = Date.now() - this.retentionMs;
-    await shard.pool.run(`DELETE FROM event_log WHERE at < ? OR sequence <= (
+    await shard.pool.run(`DELETE FROM event_log WHERE event_at < ? OR sequence <= (
       SELECT COALESCE(MAX(sequence), 0) - ? FROM event_log
     )`, [cutoff, this.maxRows]);
   }
 
-  subscribe(listener: Listener): () => void {
+  subscribe(listener: EventListener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
@@ -235,3 +235,4 @@ export class TmsEventStore {
     return counts.reduce((total, rows) => total + Number(rows[0]?.count || 0), 0);
   }
 }
+

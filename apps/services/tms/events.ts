@@ -1,5 +1,5 @@
 import type { TmsRouteContext } from './api-route-context.ts';
-import type { TmsEventStore } from './event-store.ts';
+import type { EventStore } from '../../lib/server/event-store.ts';
 
 function findStream(pages: Map<string, any>, pathname: string): any {
   const visit = (components: any[] = []): any => {
@@ -50,7 +50,7 @@ export async function handleEventRoutes(ctx: TmsRouteContext): Promise<Response 
           message: event.message,
         })}\n\n`));
       };
-      unsubscribe = (eventStore as TmsEventStore).subscribe((event) => {
+      unsubscribe = (eventStore as EventStore).subscribe((event) => {
         if (event.actorId === String(authUser.sub || '')) sendAck(event);
         else if (event.message) sendMessage(event);
       });

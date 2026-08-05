@@ -5,7 +5,7 @@ import { mkdirSync } from 'node:fs';
 import { discoverPages } from '../../lib/server/discovery.ts';
 import { createTmsApi } from './api.ts';
 import { DuckDbRepository as TmsRepository } from '../../db/repositories/tms.ts';
-import { TmsEventStore } from './event-store.ts';
+import { EventStore } from '../../lib/server/event-store.ts';
 
 export { DuckDbRepository } from '../../db/repositories/tms.ts';
 export { xlsxToCsv } from './services/xlsx-import.ts';
@@ -16,7 +16,7 @@ export class TmsModule {
   readonly id = 'tms';
   private db: any = null;
   private repository: any = null;
-  private eventStore: TmsEventStore | null = null;
+  private eventStore: EventStore | null = null;
 
   install(context: { moduleRoot: string }): void {
     mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
@@ -33,7 +33,7 @@ export class TmsModule {
     this.db = context.resolveService<any>('database');
     this.repository = new TmsRepository(this.db);
     const eventLogPath = context.env.TMS_EVENT_LOG_PATH || join(context.moduleRoot, '.data', 'events.jsonl');
-    this.eventStore = new TmsEventStore({
+    this.eventStore = new EventStore({
       logPath: eventLogPath,
       shardCount: Number(context.env.TMS_EVENT_SHARDS || 1),
       retentionMs: Number(context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
