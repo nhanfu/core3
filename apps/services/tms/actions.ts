@@ -2,6 +2,7 @@ import { orderWorkflow } from './services/order-workflow.ts';
 import { financialWorkflow } from './services/financial-workflow.ts';
 import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 import type { TmsRouteContext } from './api-route-context.ts';
+import { chatMessageQueue } from './chat-queue.ts';
 
 export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response | null> {
   const {
@@ -27,12 +28,19 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
         Object.entries(body && typeof body === 'object' ? body : {})
           .filter(([, value]) => value === null || ['boolean', 'number', 'string'].includes(typeof value)),
       );
-      return json(await repository.executeMutation(actionDefinition.mutation, {
+      const result = await repository.executeMutation(actionDefinition.mutation, {
         ...mutationBody,
         thread_id: typeof body?.id === 'string' ? body.id : '',
         current_user_id: String(authUser.sub || ''),
         current_user_name: activityActor.name,
-      }));
+      });
+      if (handler === 'chat') {
+        chatMessageQueue.publish({
+          operation: String(actionDefinition.operation || 'changed'),
+          threadId: typeof body?.id === 'string' ? body.id : undefined,
+        });
+      }
+      return json(result);
     }
     if (handler === 'currency_sync') {
       const configured = configuredCurrencyRates();

@@ -1,4 +1,5 @@
 import type { TmsRouteContext } from './api-route-context.ts';
+import { chatMessageQueue } from './chat-queue.ts';
 
 function findStream(pages: Map<string, any>, pathname: string): any {
   const visit = (components: any[] = []): any => {
@@ -41,24 +42,46 @@ export async function handleEventRoutes(ctx: TmsRouteContext): Promise<Response 
     }
     return { sources };
   };
-  let timer: ReturnType<typeof setInterval> | null = null;
+  let keepAlive: ReturnType<typeof setInterval> | null = null;
+  let unsubscribe = () => {};
+  let previousPayload = '';
+  let sending = false;
+  let pending = false;
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
       const encoder = new TextEncoder();
       const send = async () => {
+        if (sending) {
+          pending = true;
+          return;
+        }
+        sending = true;
         try {
           const payload = await snapshot();
-          controller.enqueue(encoder.encode(`event: ${stream.event || 'refresh'}\ndata: ${JSON.stringify(payload)}\n\n`));
+          const serialized = JSON.stringify(payload);
+          const frame = serialized === previousPayload
+            ? ': keep-alive\n\n'
+            : `event: ${stream.event || 'refresh'}\ndata: ${serialized}\n\n`;
+          previousPayload = serialized;
+          controller.enqueue(encoder.encode(frame));
         } catch {
           controller.enqueue(encoder.encode('event: error\ndata: {}\n\n'));
+        } finally {
+          sending = false;
+          if (pending) {
+            pending = false;
+            void send();
+          }
         }
       };
       void send();
-      timer = setInterval(() => void send(), interval);
+      unsubscribe = chatMessageQueue.subscribe(() => void send());
+      keepAlive = setInterval(() => controller.enqueue(encoder.encode(': keep-alive\n\n')), interval);
     },
     cancel() {
-      if (timer) clearInterval(timer);
-      timer = null;
+      if (keepAlive) clearInterval(keepAlive);
+      keepAlive = null;
+      unsubscribe();
     },
   });
   return new Response(body, {
