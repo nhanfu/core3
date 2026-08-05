@@ -202,81 +202,6 @@ export const activityChatMethods = {
     });
   },
 
-  sendChatMessage: async function(this: any,
-    threadId: string,
-    content: unknown,
-    actor: { id?: string | null; name: string },
-  ): Promise<any> {
-    const actorId = String(actor.id || '');
-    const body = String(content || '').trim();
-    if (!actorId) throw { status: 401, message: 'Authenticated user required' };
-    if (!body) throw { status: 400, message: 'message content required' };
-    if (body.length > 4000) {
-      throw { status: 400, message: 'message content must be 4000 characters or fewer' };
-    }
-
-    return this.withConnection(async (conn) => {
-      await runOnConnection(conn, 'BEGIN TRANSACTION');
-      try {
-        const [thread] = await queryOnConnection(
-          conn,
-          `SELECT t.id, t.title
-           FROM chat_threads t
-           JOIN chat_participants p ON p.thread_id = t.id
-           WHERE t.id = ? AND p.user_id = ?`,
-          [threadId, actorId],
-        );
-        if (!thread) throw { status: 404, message: 'Chat thread not found' };
-
-        const messageId = crypto.randomUUID();
-        await runOnConnection(
-          conn,
-          `INSERT INTO chat_messages(id, thread_id, sender_id, body)
-           VALUES(?,?,?,?)`,
-          [messageId, threadId, actorId, body],
-        );
-        await runOnConnection(
-          conn,
-          'UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [threadId],
-        );
-        await runOnConnection(
-          conn,
-          `UPDATE chat_participants
-           SET last_read_at = CURRENT_TIMESTAMP
-           WHERE thread_id = ? AND user_id = ?`,
-          [threadId, actorId],
-        );
-        await runOnConnection(
-          conn,
-          `INSERT INTO system_activity(
-            id, actor_id, actor_name, action, resource, resource_id, detail
-          ) VALUES(?,?,?,?,?,?,?)`,
-          [
-            crypto.randomUUID(),
-            actorId,
-            actor.name,
-            'chat.messages.send',
-
-            'chat_threads',
-            threadId,
-            `Sent message in ${thread.title}`,
-          ],
-        );
-        await runOnConnection(conn, 'COMMIT');
-        return {
-          id: messageId,
-          thread_id: threadId,
-          sender_id: actorId,
-          body,
-        };
-      } catch (error) {
-        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
-        throw error;
-      }
-    });
-  },
-
   sendChatAttachment: async function(this: any,
     threadId: string,
     content: unknown,
@@ -383,19 +308,4 @@ export const activityChatMethods = {
     return rows[0] || null;
   },
 
-  markChatThreadRead: async function(this: any,threadId: string, userId: string): Promise<{ ok: true }> {
-    const participants = await this.query(
-      'SELECT thread_id FROM chat_participants WHERE thread_id = ? AND user_id = ?',
-      [threadId, userId],
-    );
-    if (!participants[0]) throw { status: 404, message: 'Chat thread not found' };
-    await this.run(
-      `UPDATE chat_participants
-       SET last_read_at = CURRENT_TIMESTAMP
-       WHERE thread_id = ? AND user_id = ?`,
-      [threadId, userId],
-    );
-    return { ok: true };
-  },
 };
-

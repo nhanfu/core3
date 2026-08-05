@@ -99,6 +99,24 @@ actions:
     handler: chat
     operation: send_message
     params: { content: '{row.content}' }
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000"
+          status: 400
+          message: message content must be between 1 and 4000 characters
+        - query: "SELECT t.title AS thread_title FROM chat_threads t JOIN chat_participants p ON p.thread_id = t.id WHERE t.id = :thread_id AND p.user_id = :current_user_id"
+          status: 404
+          message: Chat thread not found
+          assign: thread_title
+      steps:
+        - query: "SELECT CAST(gen_random_uuid() AS VARCHAR) AS message_id"
+          assign: message_id
+        - query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, trim(CAST(:content AS VARCHAR)))"
+        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = :thread_id"
+        - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.messages.send', 'chat_threads', :thread_id, 'Sent message in ' || CAST(:thread_title AS VARCHAR))"
+      result:
+        query: "SELECT CAST(:message_id AS VARCHAR) AS id, CAST(:thread_id AS VARCHAR) AS thread_id, CAST(:current_user_id AS VARCHAR) AS sender_id, trim(CAST(:content AS VARCHAR)) AS body"
     refresh: [chat_threads, chat_messages]
   - id: mark_thread_read
     type: server
@@ -106,6 +124,15 @@ actions:
     action: chat.threads.mark_read
     handler: chat
     operation: mark_read
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok FROM chat_participants WHERE thread_id = :thread_id AND user_id = :current_user_id"
+          status: 404
+          message: Chat thread not found
+      steps:
+        - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
+      result:
+        query: "SELECT true AS ok"
     refresh: [chat_threads]
   - id: upload_attachment
     type: upload

@@ -22,6 +22,18 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
     requirePerm(permissionForAction(actionName));
 
     const body = await req.json() as any;
+    if (actionDefinition.mutation) {
+      const mutationBody = Object.fromEntries(
+        Object.entries(body && typeof body === 'object' ? body : {})
+          .filter(([, value]) => value === null || ['boolean', 'number', 'string'].includes(typeof value)),
+      );
+      return json(await repository.executeMutation(actionDefinition.mutation, {
+        ...mutationBody,
+        thread_id: typeof body?.id === 'string' ? body.id : '',
+        current_user_id: String(authUser.sub || ''),
+        current_user_name: activityActor.name,
+      }));
+    }
     if (handler === 'currency_sync') {
       const configured = configuredCurrencyRates();
       return json(await repository.syncCurrencyRates(configured.rates, configured.source, activityActor));
@@ -91,10 +103,7 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
         ));
       }
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
-      if (actionDefinition.operation === 'send_message') {
-        return json(await repository.sendChatMessage(body.id, body.content, activityActor));
-      }
-      return json(await repository.markChatThreadRead(body.id, String(authUser.sub)));
+      return apiError(400, 'Invalid chat operation');
     }
     if (handler === 'contact') {
       if (typeof body.id !== 'string' || !body.id) return apiError(400, 'id required');
