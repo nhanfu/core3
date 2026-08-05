@@ -126,7 +126,21 @@ process.once('SIGTERM', shutdown);
 
 Bun.serve({
   port: PORT,
-  async fetch(req: Request) {
+  websocket: {
+    open(ws: any) {
+      ws.data?.onOpen?.(ws);
+    },
+    message(ws: any, message: string | ArrayBuffer) {
+      const handler = ws.data?.onMessage;
+      if (typeof handler === 'function') {
+        Promise.resolve(handler(ws, message)).catch((error) => console.error('[WebSocket error]', error));
+      }
+    },
+    close(ws: any) {
+      ws.data?.onClose?.(ws);
+    },
+  },
+  async fetch(req: Request, server: any) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
 
@@ -142,7 +156,9 @@ Bun.serve({
             headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
           });
         }
-        return (await moduleManager.handle(req, url)) || apiError(404, 'API route not found');
+        const response = await moduleManager.handle(req, url, server);
+        if (response === undefined) return;
+        return response ?? apiError(404, 'API route not found');
       } catch (error) {
         const failure = error as any;
         if (failure?.status) return apiError(failure.status, failure.message);

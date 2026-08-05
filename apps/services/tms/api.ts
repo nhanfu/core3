@@ -9,6 +9,7 @@ import { handleProfileRoutes } from './profile.ts';
 import { handleEventRoutes } from './events.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import type { ModuleServer } from '../../lib/server/module.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -171,6 +172,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
   }
   const REGISTERED_NAMED_ACTIONS = new Set(Object.keys(NAMED_ACTIONS));
+  const CHAT_SEND_ACTION = Object.values(NAMED_ACTIONS).find((action: any) => action.handler === 'chat' && action.operation === 'send_message');
   const permissionForAction = (action: string) => {
     const permission = NAMED_ACTIONS[action]?.permission;
     if (!permission) throw new Error(`Missing YAML permission for named action: ${action}`);
@@ -185,7 +187,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     }
   }
 
-  async function handleAPI(req: Request, url: URL): Promise<Response> {
+  async function handleAPI(req: Request, url: URL, websocketServer?: ModuleServer): Promise<Response | undefined> {
   const pathname = url.pathname;
   const method   = req.method;
 
@@ -201,7 +203,10 @@ export function createTmsApi(ctx: TmsApiContext) {
 
 
   // ── All routes below require auth ──────────────────────────────────────────
-  const authUser = await requireAuth(req);
+  const authRequest = url.searchParams.has('token') && !req.headers.get('Authorization')
+    ? new Request(req, { headers: { ...Object.fromEntries(req.headers), Authorization: `Bearer ${url.searchParams.get('token')}` } })
+    : req;
+  const authUser = await requireAuth(authRequest);
 
   const hasPerm = (perm: string) => authProvider.hasPermission(authUser, perm);
   const requirePerm = (perm: string) => {
@@ -274,8 +279,21 @@ export function createTmsApi(ctx: TmsApiContext) {
       recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
       configuredCurrencyRates, json, apiError, publicPageConfig, pageCacheHeaders, prefetchedPageConfig, CORS_HEADERS,
     };
+    routeContext.executeAction = async (body: Record<string, unknown>) => {
+      if (!CHAT_SEND_ACTION?.action) throw new Error('Chat send action is not configured');
+      const actionUrl = new URL(`/api/actions/${encodeURIComponent(CHAT_SEND_ACTION.action)}`, req.url);
+      const actionRequest = new Request(actionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return handleActionRoutes({ ...routeContext, req: actionRequest, url: actionUrl, pathname: actionUrl.pathname, method: 'POST' });
+    };
     for (const handler of [handleEventRoutes, handleFileRoutes, handleDataRoutes, handleActionRoutes, handlePatchRoutes, handleProfileRoutes]) {
-      const response = await handler(routeContext);
+      const response = handler === handleEventRoutes
+        ? await handler(routeContext, websocketServer)
+        : await handler(routeContext);
+      if (handler === handleEventRoutes && response === undefined) return undefined;
       if (response) return response;
     }
     return apiError(404, 'API route not found');

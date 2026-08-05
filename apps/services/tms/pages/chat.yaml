@@ -75,7 +75,7 @@ components:
     upload_action: upload_attachment
     download_action: download_attachment
     mark_read_action: mark_thread_read
-    sse: { endpoint: /api/events/chat, permission: chat.read }
+    websocket: { endpoint: /api/events/chat, permission: chat.read }
     search_placeholder: Find conversations...
     empty_threads: Chưa có cuộc trò chuyện
     empty_messages: Chọn một cuộc trò chuyện để bắt đầu

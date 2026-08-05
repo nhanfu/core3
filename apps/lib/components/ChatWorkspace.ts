@@ -31,8 +31,9 @@ function initials(value: unknown) {
 export class ChatWorkspace extends BaseComponent {
   def: any;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
-  private streamAbort: AbortController | null = null;
+  private chatSocket: WebSocket | null = null;
   private streamRetry: ReturnType<typeof setTimeout> | null = null;
+  private chatSocketDisposed = false;
 
   constructor(id: string, state: any = {}, def: any = {}) {
     super(id, {
@@ -83,7 +84,7 @@ export class ChatWorkspace extends BaseComponent {
   }
 
   private startRefreshTimer() {
-    if (this.def.sse?.endpoint) return this.startEventStream();
+    if (this.def.websocket?.endpoint) return this.startWebSocket();
     const interval = Number(this.def.refresh_interval_ms || 0);
     if (interval < 1000 || this.refreshTimer || typeof this.def.on_refresh !== 'function') return;
     this.refreshTimer = setInterval(() => {
@@ -91,64 +92,44 @@ export class ChatWorkspace extends BaseComponent {
     }, interval);
   }
 
-  private startEventStream() {
-    if (this.streamAbort || typeof fetch !== 'function') return;
-    const endpoint = String(this.def.sse.endpoint);
-    const connect = async () => {
-      if (this.streamAbort) return;
-      const controller = new AbortController();
-      this.streamAbort = controller;
-      try {
-        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tms_token') : null;
-        const response = await fetch(endpoint, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          signal: controller.signal,
-        });
-        if (!response.ok || !response.body) throw new Error(`SSE connection failed: ${response.status}`);
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        while (!controller.signal.aborted) {
-          const chunk = await reader.read();
-          if (chunk.done) break;
-          buffer += decoder.decode(chunk.value, { stream: true });
-          const events = buffer.split('\n\n');
-          buffer = events.pop() || '';
-          for (const event of events) {
-            const data = event.split('\n')
-              .filter(line => line.startsWith('data:'))
-              .map(line => line.slice(5).trim())
-              .join('\n');
-            if (!data) continue;
-            let payload: any = null;
-            try { payload = JSON.parse(data); } catch { /* keep refresh fallback */ }
-            if (payload?.type === 'chat_ack') this.handleChatAck(payload);
-            else if (payload?.type === 'chat_message') this.handleChatMessage(payload.message);
-            else if (payload?.sources && typeof this.def.on_sse === 'function') this.def.on_sse(payload);
-          }
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          this.streamRetry = setTimeout(() => {
-            this.streamRetry = null;
-            this.streamAbort = null;
-            void connect();
-          }, 3000);
-        }
-      } finally {
-        if (this.streamAbort === controller && !this.streamRetry) this.streamAbort = null;
-      }
+  private startWebSocket() {
+    if (this.chatSocket || this.chatSocketDisposed || typeof WebSocket === 'undefined') return;
+    this.chatSocketDisposed = false;
+    const connect = () => {
+      const configured = String(this.def.websocket.endpoint);
+      const endpoint = configured.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tms_token') : null;
+      const url = new URL(endpoint, window.location.origin);
+      if (token) url.searchParams.set('token', token);
+      const socket = new WebSocket(url.toString());
+      this.chatSocket = socket;
+      socket.onmessage = (event) => {
+        let payload: any = null;
+        try { payload = JSON.parse(String(event.data)); } catch { return; }
+        if (payload?.type === 'chat_ack') this.handleChatAck(payload);
+        else if (payload?.type === 'chat_message') this.handleChatMessage(payload.message);
+      };
+      socket.onclose = () => {
+        if (this.chatSocket !== socket) return;
+        this.chatSocket = null;
+        if (this.chatSocketDisposed) return;
+        this.streamRetry = setTimeout(() => {
+          this.streamRetry = null;
+          if (!this.chatSocket) connect();
+        }, 3000);
+      };
+      socket.onerror = () => socket.close();
     };
-    void connect();
+    connect();
   }
 
   dispose() {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
     if (this.streamRetry) clearTimeout(this.streamRetry);
-    this.streamAbort?.abort();
+    this.chatSocketDisposed = true;
+    this.chatSocket?.close();
     this.refreshTimer = null;
     this.streamRetry = null;
-    this.streamAbort = null;
     super.dispose();
   }
 
@@ -412,7 +393,7 @@ export class ChatWorkspace extends BaseComponent {
           row: { id: activeThread.id, content, file },
         });
       } else if (this.def.send_action) {
-        if (!this.def.sse?.endpoint) {
+        if (!this.def.websocket?.endpoint) {
           await this.submit(this.def.send_action, { row: { id: activeThread.id, content } });
           return;
         }
@@ -434,9 +415,31 @@ export class ChatWorkspace extends BaseComponent {
           },
         ];
         this.redraw();
-        void this.submit(this.def.send_action, {
-          row: { id: activeThread.id, content, client_message_id: clientMessageId },
-        });
+        const socket = this.chatSocket;
+        if (socket?.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({
+            type: 'send_message',
+            thread_id: activeThread.id,
+            content,
+            client_message_id: clientMessageId,
+          }));
+        } else {
+          void this.submit(this.def.send_action, {
+            row: { id: activeThread.id, content, client_message_id: clientMessageId },
+          }).then((result: any) => {
+            this.handleChatAck({
+              status: 'success',
+              client_message_id: clientMessageId,
+              message_id: result?.id,
+            });
+          }).catch((error: any) => {
+            this.handleChatAck({
+              status: 'failed',
+              client_message_id: clientMessageId,
+              error: String(error?.message || 'Message failed'),
+            });
+          });
+        }
       }
     });
   }

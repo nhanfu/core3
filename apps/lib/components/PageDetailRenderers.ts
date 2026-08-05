@@ -167,7 +167,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     },
     def,
   );
-  if (def.refresh_interval_ms && !def.sse?.endpoint) {
+  if (def.refresh_interval_ms && !def.sse?.endpoint && !def.websocket?.endpoint) {
     def.on_refresh = async () => {
       await refreshSources([threadSource, messageSource, attachmentSource].filter(Boolean));
     };

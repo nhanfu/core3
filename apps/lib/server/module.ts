@@ -3,7 +3,8 @@ import { readdirSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import type { ModuleApplicationConfig } from './application-config.ts';
 
-export type ModuleApiHandler = (request: Request, url: URL) => Response | null | Promise<Response | null>;
+export type ModuleServer = { upgrade(request: Request, options?: { data?: unknown }): boolean };
+export type ModuleApiHandler = (request: Request, url: URL, server?: ModuleServer) => Response | null | undefined | Promise<Response | null | undefined>;
 
 export type ModuleContext = {
   appsRoot: string;
@@ -112,9 +113,10 @@ export class ModuleManager {
     for (const module of [...this.modules].reverse()) await module.uninstall({ ...context, config: context.moduleConfigs[module.id] || {}, moduleRoot: moduleRoot(context.appsRoot, module.id), registerApi: () => {}, registerService: () => {}, resolveService: <T>(name: string) => { throw new Error(`Module service is unavailable during uninstall: ${name}`); } });
   }
 
-  async handle(request: Request, url: URL): Promise<Response | null> {
+  async handle(request: Request, url: URL, server?: ModuleServer): Promise<Response | null | undefined> {
     for (const handler of this.apiHandlers) {
-      const response = await handler(request, url);
+      const response = await handler(request, url, server);
+      if (response === undefined) return undefined;
       if (response) return response;
     }
     return null;
