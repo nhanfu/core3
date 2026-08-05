@@ -26,19 +26,24 @@ export class TmsModule {
     appsRoot: string;
     moduleRoot: string;
     env: NodeJS.ProcessEnv;
+    serviceConfigs: Record<string, any>;
     registerApi(handler: (request: Request, url: URL) => Response | null | Promise<Response | null>): void;
     resolveService<T>(name: string): T;
   }): Promise<void> {
     const uploadRoot = context.env.TMS_UPLOAD_ROOT || join(context.moduleRoot, '.data', 'uploads');
     this.db = context.resolveService<any>('database');
     this.repository = new TmsRepository(this.db);
+    const eventConfig = context.serviceConfigs.event_store || {};
+    const eventDatabase = eventConfig.database || {};
+    const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH;
     const eventLogPath = context.env.TMS_EVENT_LOG_PATH || join(context.moduleRoot, '.data', 'events.jsonl');
     this.eventStore = new EventStore({
       logPath: eventLogPath,
-      shardCount: Number(context.env.TMS_EVENT_SHARDS || 1),
-      retentionMs: Number(context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
-      maxRows: Number(context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
-      readerCount: Number(context.env.TMS_EVENT_READER_CONNECTIONS || 2),
+      databasePath: eventDatabasePath,
+      shardCount: Number(eventConfig.shard_count || context.env.TMS_EVENT_SHARDS || 1),
+      retentionMs: Number(eventConfig.retention_ms || context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
+      maxRows: Number(eventConfig.max_rows || context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
+      readerCount: Number(eventConfig.reader_connections || context.env.TMS_EVENT_READER_CONNECTIONS || 2),
     });
     await this.eventStore.start();
     const authProvider: any = context.resolveService('auth');

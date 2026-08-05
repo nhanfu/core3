@@ -11,6 +11,7 @@ export type ModuleContext = {
   moduleRoot: string;
   env: NodeJS.ProcessEnv;
   config: ModuleApplicationConfig;
+  serviceConfigs: Record<string, ModuleApplicationConfig>;
   registerApi(handler: ModuleApiHandler): void;
   registerService<T>(name: string, service: T): void;
   resolveService<T>(name: string): T;
@@ -18,6 +19,7 @@ export type ModuleContext = {
 
 export type ModuleHostContext = Omit<ModuleContext, 'moduleRoot' | 'config' | 'registerApi' | 'registerService' | 'resolveService'> & {
   moduleConfigs: Record<string, ModuleApplicationConfig>;
+  serviceConfigs: Record<string, ModuleApplicationConfig>;
 };
 
 export interface ModuleLifecycle {

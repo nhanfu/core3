@@ -8,6 +8,27 @@ services:
         development: ${CORE3_DB_PATH:-:memory:}
         production: ${CORE3_DB_PATH:-./core3.duckdb}
 
+  # Shared chat storage. This is intentionally independent of TMS storage so
+  # other applications can use the same conversations and participants.
+  chat:
+    database:
+      driver: duckdb
+      path:
+        development: ${CORE3_CHAT_DB_PATH:-./chat.duckdb}
+        production: ${CORE3_CHAT_DB_PATH:-./chat.duckdb}
+
+  # Shared durable event stream used by chat and future real-time features.
+  event_store:
+    database:
+      driver: duckdb
+      path:
+        development: ${CORE3_EVENT_DB_PATH:-./events.duckdb}
+        production: ${CORE3_EVENT_DB_PATH:-./events.duckdb}
+    shard_count: ${CORE3_EVENT_SHARDS:-1}
+    retention_ms: ${CORE3_EVENT_RETENTION_MS:-3600000}
+    max_rows: ${CORE3_EVENT_MAX_ROWS:-1000}
+    reader_connections: ${CORE3_EVENT_READER_CONNECTIONS:-2}
+
 apps:
   - id: sales
     label: Sales

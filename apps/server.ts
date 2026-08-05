@@ -94,7 +94,7 @@ const moduleManifest = modules.map((module) => ({
   routes: pageRoutes.filter((route) => route.module === module.id)
     .map((route) => ({ ...route, path: `/${module.id}${route.path}` })),
 }));
-await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs });
+await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs });
 
 async function applicationCatalog() {
   try {
@@ -118,7 +118,7 @@ async function applicationCatalog() {
 }
 
 const shutdown = async () => {
-  await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs });
+  await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs });
   process.exit(0);
 };
 process.once('SIGINT', shutdown);

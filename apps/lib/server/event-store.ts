@@ -66,6 +66,7 @@ type Shard = {
   index: number;
   db: any;
   pool: DuckDbConnectionPool;
+  databasePath: string;
   logPath: string;
   nextSequence: number;
   write: Promise<void>;
@@ -84,19 +85,22 @@ export class EventStore {
   private readonly listeners = new Set<EventListener>();
   private readonly shards: Shard[] = [];
   private readonly shardCount: number;
+  private readonly databasePath: string | null;
   private readonly baseLogPath: string;
   private readonly retentionMs: number;
   private readonly maxRows: number;
   private readonly readerCount: number;
 
   constructor(options: {
-    logPath: string;
+    logPath?: string;
+    databasePath?: string;
     shardCount?: number;
     retentionMs?: number;
     maxRows?: number;
     readerCount?: number;
   }) {
-    this.baseLogPath = options.logPath;
+    this.baseLogPath = options.logPath || './events.jsonl';
+    this.databasePath = options.databasePath && options.databasePath !== ':memory:' ? options.databasePath : null;
     this.shardCount = Math.max(1, Math.floor(options.shardCount || 1));
     this.retentionMs = Math.max(0, options.retentionMs ?? 60 * 60 * 1000);
     this.maxRows = Math.max(1, Math.floor(options.maxRows || 1000));
@@ -104,15 +108,19 @@ export class EventStore {
   }
 
   async start(): Promise<void> {
-    await mkdir(dirname(this.baseLogPath), { recursive: true });
+    await mkdir(dirname(this.databasePath || this.baseLogPath), { recursive: true });
     for (let index = 0; index < this.shardCount; index += 1) {
+      const databasePath = this.databasePath
+        ? (this.shardCount === 1 ? this.databasePath : `${this.databasePath}.shard-${index}`)
+        : ':memory:';
       const logPath = this.shardCount === 1
         ? this.baseLogPath
         : `${this.baseLogPath}.shard-${index}`;
       const shard: Shard = {
         index,
-        db: new duckdb.Database(':memory:'),
+        db: new duckdb.Database(databasePath),
         pool: null as any,
+        databasePath,
         logPath,
         nextSequence: 1,
         write: Promise.resolve(),
@@ -120,7 +128,7 @@ export class EventStore {
       shard.pool = new DuckDbConnectionPool(shard.db, this.readerCount);
       await this.createSchema(shard);
       this.shards.push(shard);
-      await this.restore(shard);
+      if (!this.databasePath) await this.restore(shard);
     }
   }
 
@@ -145,10 +153,10 @@ export class EventStore {
 
   private async recover(shard: Shard): Promise<void> {
     await shard.pool.close();
-    shard.db = new duckdb.Database(':memory:');
+    shard.db = new duckdb.Database(shard.databasePath);
     shard.pool = new DuckDbConnectionPool(shard.db, this.readerCount);
     await this.createSchema(shard);
-    await this.restore(shard);
+    if (!this.databasePath) await this.restore(shard);
   }
 
   private async restore(shard: Shard): Promise<void> {
@@ -190,12 +198,14 @@ export class EventStore {
       sequence: shard.nextSequence++, shard: shard.index, at: Date.now(),
     };
     shard.write = shard.write.catch(() => {}).then(async () => {
-      const handle = await open(shard.logPath, 'a');
-      try {
-        await handle.appendFile(`${JSON.stringify(item)}\n`, 'utf8');
-        await handle.sync();
-      } finally {
-        await handle.close();
+      if (!this.databasePath) {
+        const handle = await open(shard.logPath, 'a');
+        try {
+          await handle.appendFile(`${JSON.stringify(item)}\n`, 'utf8');
+          await handle.sync();
+        } finally {
+          await handle.close();
+        }
       }
       try {
         await this.insert(shard, item);
@@ -235,4 +245,3 @@ export class EventStore {
     return counts.reduce((total, rows) => total + Number(rows[0]?.count || 0), 0);
   }
 }
-
