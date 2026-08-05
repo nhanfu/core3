@@ -25,6 +25,7 @@ type TmsApiContext = {
   menus: Map<string, any>;
   permissions: any;
   uploadRoot: string;
+  eventStore: any;
   reloadPages?: () => void;
 };
 
@@ -38,6 +39,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     menus: MENUS,
     permissions: PERMISSIONS,
     uploadRoot: UPLOAD_ROOT,
+    eventStore: EVENT_STORE,
     reloadPages,
   } = ctx;
 
@@ -265,7 +267,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
 
     const routeContext: TmsRouteContext = {
-      req, url, pathname, method, repository, authProvider,
+      req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE,
       SOURCES, PAGES, CATALOGS, UPLOAD_ROOT, reloadPages,
       authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES, NAMED_ACTIONS, TABLES,
       requirePerm, permissionForEndpoint, permissionForAction,

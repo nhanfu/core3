@@ -1,5 +1,5 @@
 import type { TmsRouteContext } from './api-route-context.ts';
-import { chatMessageQueue } from './chat-queue.ts';
+import type { TmsEventStore } from './event-store.ts';
 
 function findStream(pages: Map<string, any>, pathname: string): any {
   const visit = (components: any[] = []): any => {
@@ -18,7 +18,7 @@ function findStream(pages: Map<string, any>, pathname: string): any {
 }
 
 export async function handleEventRoutes(ctx: TmsRouteContext): Promise<Response | null> {
-  const { pathname, method, PAGES, authUser, requirePerm, CORS_HEADERS } = ctx;
+  const { pathname, method, PAGES, authUser, requirePerm, CORS_HEADERS, eventStore } = ctx;
   if (method !== 'GET' || !pathname.startsWith('/api/events/')) return null;
   const stream = findStream(PAGES, pathname);
   if (!stream) return null;
@@ -50,7 +50,7 @@ export async function handleEventRoutes(ctx: TmsRouteContext): Promise<Response 
           message: event.message,
         })}\n\n`));
       };
-      unsubscribe = chatMessageQueue.subscribe((event) => {
+      unsubscribe = (eventStore as TmsEventStore).subscribe((event) => {
         if (event.actorId === String(authUser.sub || '')) sendAck(event);
         else if (event.message) sendMessage(event);
       });

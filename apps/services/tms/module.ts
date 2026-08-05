@@ -5,6 +5,7 @@ import { mkdirSync } from 'node:fs';
 import { discoverPages } from '../../lib/server/discovery.ts';
 import { createTmsApi } from './api.ts';
 import { DuckDbRepository as TmsRepository } from '../../db/repositories/tms.ts';
+import { TmsEventStore } from './event-store.ts';
 
 export { DuckDbRepository } from '../../db/repositories/tms.ts';
 export { xlsxToCsv } from './services/xlsx-import.ts';
@@ -15,6 +16,7 @@ export class TmsModule {
   readonly id = 'tms';
   private db: any = null;
   private repository: any = null;
+  private eventStore: TmsEventStore | null = null;
 
   install(context: { moduleRoot: string }): void {
     mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
@@ -30,6 +32,15 @@ export class TmsModule {
     const uploadRoot = context.env.TMS_UPLOAD_ROOT || join(context.moduleRoot, '.data', 'uploads');
     this.db = context.resolveService<any>('database');
     this.repository = new TmsRepository(this.db);
+    const eventLogPath = context.env.TMS_EVENT_LOG_PATH || join(context.moduleRoot, '.data', 'events.jsonl');
+    this.eventStore = new TmsEventStore({
+      logPath: eventLogPath,
+      shardCount: Number(context.env.TMS_EVENT_SHARDS || 1),
+      retentionMs: Number(context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
+      maxRows: Number(context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
+      readerCount: Number(context.env.TMS_EVENT_READER_CONNECTIONS || 2),
+    });
+    await this.eventStore.start();
     const authProvider: any = context.resolveService('auth');
 
     const discovered = discoverPages(context.appsRoot);
@@ -62,11 +73,14 @@ export class TmsModule {
       menus: pageMaps.menus,
       permissions: discovered.permissions.get('tms')?.config || {},
       uploadRoot,
+      eventStore: this.eventStore,
       reloadPages,
     }));
   }
 
   async unload(): Promise<void> {
+    await this.eventStore?.stop();
+    this.eventStore = null;
     this.db = null;
     this.repository = null;
   }

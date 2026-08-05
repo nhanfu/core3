@@ -2,7 +2,7 @@ import { orderWorkflow } from './services/order-workflow.ts';
 import { financialWorkflow } from './services/financial-workflow.ts';
 import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 import type { TmsRouteContext } from './api-route-context.ts';
-import { chatMessageQueue } from './chat-queue.ts';
+import type { TmsEventStore } from './event-store.ts';
 
 export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response | null> {
   const {
@@ -10,7 +10,7 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
     UPLOAD_ROOT, reloadPages, authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES,
     NAMED_ACTIONS, TABLES, requirePerm, permissionForEndpoint, permissionForAction,
     recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
-    configuredCurrencyRates, json, apiError, pageCacheHeaders, prefetchedPageConfig,
+    configuredCurrencyRates, json, apiError, pageCacheHeaders, prefetchedPageConfig, eventStore,
   } = ctx;
 
   // ── POST /api/actions/:name ───────────────────────────────────────────────
@@ -43,14 +43,14 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
           current_user_name: activityActor.name,
         });
       } catch (error) {
-        if (handler === 'chat') chatMessageQueue.publish({
+        if (handler === 'chat') await (eventStore as TmsEventStore).publish({
           ...chatEvent,
           status: 'failed',
           error: String((error as any)?.message || 'Message failed'),
         });
         throw error;
       }
-      if (handler === 'chat') chatMessageQueue.publish({
+      if (handler === 'chat') await (eventStore as TmsEventStore).publish({
         ...chatEvent,
         status: 'success',
         messageId: typeof result?.id === 'string' ? result.id : undefined,
