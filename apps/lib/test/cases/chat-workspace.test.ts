@@ -114,6 +114,74 @@ describe('ChatWorkspace', () => {
     });
   });
 
+  it('renders the uploaded message and attachment returned by the server', async () => {
+    const submit = vi.fn().mockResolvedValue({
+      id: 'message-2',
+      thread_id: 'thread-1',
+      sender_id: 'user-1',
+      sender_name: 'You',
+      body: 'Đã gửi tệp photo.png',
+      created_at: '2026-08-06T10:00:00.000Z',
+      attachment: {
+        id: 'attachment-2',
+        message_id: 'message-2',
+        thread_id: 'thread-1',
+        file_name: 'photo.png',
+        mime_type: 'image/png',
+      },
+    });
+    const component = new ChatWorkspace('chat-upload-result', {
+      threads: [{ id: 'thread-1', title: 'Operations' }],
+      messages: [],
+    }, { upload_action: 'upload_attachment' });
+    component._transport = { submit };
+    const container = document.createElement('div');
+    component.mount(container);
+    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const file = new File(['image'], 'photo.png', { type: 'image/png' });
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    container.querySelector<HTMLFormElement>('form')!.dispatchEvent(
+      new SubmitEvent('submit', { bubbles: true, cancelable: true }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(component.state.messages).toEqual([expect.objectContaining({ id: 'message-2', body: 'Đã gửi tệp photo.png' })]);
+    expect(component.state.attachments).toEqual([expect.objectContaining({ id: 'attachment-2', message_id: 'message-2' })]);
+    expect(container.textContent).toContain('Tệp: photo.png');
+  });
+
+  it('adds an attachment received from the live chat stream', () => {
+    const component = new ChatWorkspace('chat-live-attachment', {
+      threads: [{ id: 'thread-1', title: 'Operations' }],
+      messages: [],
+      attachments: [],
+    });
+    const container = document.createElement('div');
+    component.mount(container);
+    component.handleChatMessage({
+      id: 'message-live',
+      thread_id: 'thread-1',
+      sender_id: 'partner-1',
+      sender_name: 'Partner',
+      body: 'Đã gửi tệp photo.png',
+      attachment: {
+        id: 'attachment-live',
+        message_id: 'message-live',
+        thread_id: 'thread-1',
+        file_name: 'photo.png',
+        mime_type: 'image/png',
+      },
+    });
+
+    expect(component.state.messages).toEqual([expect.objectContaining({ id: 'message-live' })]);
+    expect(component.state.attachments).toEqual([expect.objectContaining({
+      id: 'attachment-live',
+      message_id: 'message-live',
+    })]);
+    expect(container.textContent).toContain('Tệp: photo.png');
+  });
+
   it('previews recognized image attachments while retaining download behavior', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(['image']), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);

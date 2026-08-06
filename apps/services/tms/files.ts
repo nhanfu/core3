@@ -12,7 +12,7 @@ export async function handleFileRoutes(ctx: TmsRouteContext): Promise<Response |
     UPLOAD_ROOT, reloadPages, authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES,
     NAMED_ACTIONS, TABLES, requirePerm, permissionForEndpoint, permissionForAction,
     recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
-    configuredCurrencyRates, json, apiError, pageCacheHeaders, prefetchedPageConfig, CORS_HEADERS,
+    configuredCurrencyRates, json, apiError, pageCacheHeaders, prefetchedPageConfig, CORS_HEADERS, eventStore,
   } = ctx;
 
   if (pathname === '/api/upload' && method === 'POST') {
@@ -76,7 +76,20 @@ export async function handleFileRoutes(ctx: TmsRouteContext): Promise<Response |
       if (meta.kind === 'employee_document') return json(await repository.createEmployeeDocument(meta.employee_id, fileMeta, activityActor));
       if (meta.kind === 'contract_document') return json(await repository.createContractDocument(meta.contract_id, fileMeta, activityActor));
       if (meta.kind === 'company_document') return json(await repository.createCompanyDocument(meta.company_id, fileMeta, activityActor));
-      return json(await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor));
+      const result = await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor);
+      try {
+        await eventStore?.publish({
+          operation: 'send_attachment',
+          status: 'success',
+          actorId: String(activityActor.id || ''),
+          threadId: result.thread_id,
+          messageId: result.id,
+          message: result,
+        });
+      } catch (error) {
+        console.error('[chat] attachment event publish failed:', error);
+      }
+      return json(result);
     } catch (error) {
       try {
         unlinkSync(targetPath);

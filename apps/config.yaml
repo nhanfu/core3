@@ -34,6 +34,10 @@ services:
         - { name: message_sender_name, type: varchar, source: message.sender_name }
         - { name: message_body, type: varchar, source: message.body }
         - { name: message_created_at, type: varchar, source: message.created_at }
+        - { name: message_attachment_id, type: varchar, source: message.attachment.id }
+        - { name: message_attachment_file_name, type: varchar, source: message.attachment.file_name }
+        - { name: message_attachment_mime_type, type: varchar, source: message.attachment.mime_type }
+        - { name: message_attachment_size_bytes, type: bigint, source: message.attachment.size_bytes }
 
   # Shared durable event stream used by chat and future real-time features.
   event_store:

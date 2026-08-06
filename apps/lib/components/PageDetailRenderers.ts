@@ -188,7 +188,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
   def.on_chat_ack = (payload: any) => comp.handleChatAck(payload);
   comp._onAction = async (actionId: string, params: any) => {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
-    if (actionDef) await handleAction(actionDef, params?.row || params || {});
+    if (actionDef) return handleAction(actionDef, params?.row || params || {});
   };
   const slot = document.createElement('div');
   slot.style.marginBottom = '24px';

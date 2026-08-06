@@ -85,6 +85,12 @@ export class ChatWorkspace extends BaseComponent {
       ...message,
       is_own: String(message.sender_id) === String(this.state.currentUserId || ''),
     }];
+    if (message.attachment?.id) {
+      this.state.attachments = [
+        ...(this.state.attachments || []).filter((item: any) => item.id !== message.attachment.id),
+        message.attachment,
+      ];
+    }
     this.state.threads = (this.state.threads || []).map((thread: any) => thread.id === message.thread_id
       ? { ...thread, preview: message.body, updated_at: message.created_at }
       : thread);
@@ -443,9 +449,32 @@ export class ChatWorkspace extends BaseComponent {
       this.state.inputValue = '';
       this.state.selectedFile = null;
       if (file && this.def.upload_action) {
-        await this.submit(this.def.upload_action, {
+        const result = await this.submit(this.def.upload_action, {
           row: { id: activeThread.id, content, file },
         });
+        if (result?.id) {
+          const message = {
+            ...result,
+            thread_id: result.thread_id || activeThread.id,
+            sender_id: result.sender_id || this.state.currentUserId,
+            sender_name: result.sender_name || this.state.currentUserName || 'You',
+            is_own: true,
+          };
+          this.state.messages = [
+            ...(this.state.messages || []).filter((item: any) => item.id !== message.id),
+            message,
+          ];
+          if (result.attachment?.id) {
+            this.state.attachments = [
+              ...(this.state.attachments || []).filter((item: any) => item.id !== result.attachment.id),
+              result.attachment,
+            ];
+          }
+          this.state.threads = (this.state.threads || []).map((thread: any) => thread.id === message.thread_id
+            ? { ...thread, preview: message.body, updated_at: message.created_at }
+            : thread);
+        }
+        this.redraw();
       } else if (this.def.send_action) {
         if (!this.def.websocket?.endpoint) {
           await this.submit(this.def.send_action, { row: { id: activeThread.id, content } });

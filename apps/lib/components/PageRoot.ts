@@ -470,10 +470,11 @@ export class PageRuntime extends BaseComponent {
           } else if (actionDef.kind === 'master_data_import') {
             uploadMeta.scope = actionDef.scope;
           }
-          await client.uploadFile(uploadFile, {
+          const result = await client.uploadFile(uploadFile, {
             ...uploadMeta,
           });
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+          return result;
         } catch (error) {
           alert(error instanceof Error ? error.message : 'Upload failed');
         }

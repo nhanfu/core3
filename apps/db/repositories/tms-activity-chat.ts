@@ -284,10 +284,20 @@ export const activityChatMethods = {
         );
         await runOnConnection(conn, 'COMMIT');
         return {
-          id: attachmentId,
-          message_id: messageId,
+          id: messageId,
           thread_id: threadId,
-          file_name: attachment.fileName,
+          sender_id: actorId,
+          sender_name: actor.name,
+          body,
+          created_at: new Date().toISOString(),
+          attachment: {
+            id: attachmentId,
+            message_id: messageId,
+            thread_id: threadId,
+            file_name: attachment.fileName,
+            mime_type: attachment.mimeType,
+            size_bytes: attachment.sizeBytes,
+          },
         };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK').catch(() => {});
