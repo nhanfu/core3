@@ -12,7 +12,7 @@ export class PageDetailRenderers extends BaseComponent {
   }
 
   private createRenderers(deps: any) {
-  const { config, dataMap, ctx, bindSource, filterState, paginationState, sortState, pageParams, client, createQuery, refreshSources, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
+  const { config, dataMap, ctx, bindSource, filterState, paginationState, sortState, pageParams, client, createQuery, refreshSources, refetchSource, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
   const { DocumentSummary } = await import('./DocumentSummary.ts');
@@ -167,12 +167,16 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     },
     def,
   );
+  const _origSetState = comp.setState.bind(comp);
+  def.load_messages = async (threadId: string) => {
+    const result = await refetchSource(messageSource, { thread_id: threadId }, 0, Number(def.message_page_size || 100));
+    _origSetState({ messages: result.data || [] }, true);
+  };
   if (def.refresh_interval_ms && !def.sse?.endpoint && !def.websocket?.endpoint) {
     def.on_refresh = async () => {
       await refreshSources([threadSource, messageSource, attachmentSource].filter(Boolean));
     };
   }
-  const _origSetState = comp.setState.bind(comp);
   def.on_sse = (payload: any) => {
     const sources = payload?.sources || {};
     const update: any = {};

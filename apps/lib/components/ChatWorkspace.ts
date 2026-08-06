@@ -28,12 +28,20 @@ function initials(value: unknown) {
   return words.slice(0, 2).map(word => word[0]?.toUpperCase()).join('') || '?';
 }
 
+function isPreviewableImage(attachment: any): boolean {
+  const mime = String(attachment?.mime_type || '').toLowerCase();
+  if (['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/avif'].includes(mime)) return true;
+  return /\.(?:jpe?g|png|gif|webp|bmp|avif)$/i.test(String(attachment?.file_name || ''));
+}
+
 export class ChatWorkspace extends BaseComponent {
   def: any;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
   private chatSocket: WebSocket | null = null;
   private streamRetry: ReturnType<typeof setTimeout> | null = null;
   private chatSocketDisposed = false;
+  private readonly attachmentPreviewUrls = new Map<string, string>();
+  private readonly attachmentPreviewLoading = new Set<string>();
 
   constructor(id: string, state: any = {}, def: any = {}) {
     super(id, {
@@ -123,6 +131,28 @@ export class ChatWorkspace extends BaseComponent {
     connect();
   }
 
+  private async loadAttachmentPreview(attachment: any): Promise<void> {
+    const id = String(attachment?.id || '');
+    if (!id || this.attachmentPreviewUrls.has(id) || this.attachmentPreviewLoading.has(id)) return;
+    this.attachmentPreviewLoading.add(id);
+    try {
+      const apiBase = typeof window !== 'undefined' && window.__CORE3_API_BASE__
+        ? window.__CORE3_API_BASE__
+        : '/api';
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tms_token') : null;
+      const response = await fetch(`${apiBase}/chat/attachments/${encodeURIComponent(id)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) return;
+      this.attachmentPreviewUrls.set(id, URL.createObjectURL(await response.blob()));
+      this.redraw();
+    } catch {
+      // Keep the download action available when preview loading fails.
+    } finally {
+      this.attachmentPreviewLoading.delete(id);
+    }
+  }
+
   dispose() {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
     if (this.streamRetry) clearTimeout(this.streamRetry);
@@ -130,6 +160,9 @@ export class ChatWorkspace extends BaseComponent {
     this.chatSocket?.close();
     this.refreshTimer = null;
     this.streamRetry = null;
+    for (const url of this.attachmentPreviewUrls.values()) URL.revokeObjectURL(url);
+    this.attachmentPreviewUrls.clear();
+    this.attachmentPreviewLoading.clear();
     super.dispose();
   }
 
@@ -226,7 +259,11 @@ export class ChatWorkspace extends BaseComponent {
         button.appendChild(preview);
         button.addEventListener('click', async () => {
           this.state.activeThreadId = thread.id;
+          this.state.messages = [];
           this.redraw();
+          if (typeof this.def.load_messages === 'function') {
+            await this.def.load_messages(thread.id);
+          }
           if (Number(thread.unread_count) > 0 && this.def.mark_read_action) {
             await this.submit(this.def.mark_read_action, { row: { id: thread.id } });
           }
@@ -307,6 +344,23 @@ export class ChatWorkspace extends BaseComponent {
       if (messageAttachments.length) {
         const attachmentRow = createElement('div', 'mt-1 flex flex-wrap justify-end gap-1');
         for (const attachment of messageAttachments) {
+          const attachmentId = String(attachment.id || '');
+          if (isPreviewableImage(attachment)) {
+            const previewUrl = this.attachmentPreviewUrls.get(attachmentId);
+            if (previewUrl) {
+              const image = createElement('img', 'tms-chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain');
+              image.src = previewUrl;
+              image.alt = String(attachment.file_name || 'Image attachment');
+              image.loading = 'lazy';
+              image.addEventListener('click', () => {
+                if (this.def.download_action) void this.submit(this.def.download_action, { row: { id: attachment.id, file_name: attachment.file_name } });
+              });
+              attachmentRow.appendChild(image);
+            } else {
+              attachmentRow.appendChild(createElement('span', 'tms-chat-image-preview-loading text-xs text-slate-400', 'Loading image...'));
+              void this.loadAttachmentPreview(attachment);
+            }
+          }
           const attachmentButton = createElement(
             'button',
             'rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 hover:border-blue-300 hover:text-blue-700',

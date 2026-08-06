@@ -64,6 +64,19 @@ describe('ChatWorkspace', () => {
     expect(submit).toHaveBeenCalledWith('mark_read', { row: { id: 'thread-2' } });
   });
 
+  it('loads messages only after selecting another thread', async () => {
+    const loadMessages = vi.fn().mockResolvedValue(undefined);
+    const component = new ChatWorkspace('chat-lazy', {
+      threads: [{ id: 'thread-1', title: 'One' }, { id: 'thread-2', title: 'Two' }],
+      messages: [{ id: 'message-1', thread_id: 'thread-1', body: 'Recent' }],
+    }, { load_messages: loadMessages });
+    const container = document.createElement('div');
+    component.mount(container);
+    container.querySelector<HTMLButtonElement>('button[aria-label="Mở cuộc trò chuyện Two"]')!.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(loadMessages).toHaveBeenCalledWith('thread-2');
+  });
+
   it('submits trimmed composer content for the active thread', async () => {
     const { container, submit } = createWorkspace();
     const input = container.querySelector<HTMLTextAreaElement>('textarea')!;
@@ -99,6 +112,27 @@ describe('ChatWorkspace', () => {
     expect(submit).toHaveBeenCalledWith('download_attachment', {
       row: { id: 'attachment-1', file_name: 'proof.pdf' },
     });
+  });
+
+  it('previews recognized image attachments while retaining download behavior', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(new Blob(['image']), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:image-preview'),
+      revokeObjectURL: vi.fn(),
+    });
+    const component = new ChatWorkspace('chat-image', {
+      threads: [{ id: 'thread-1', title: 'Operations' }],
+      messages: [{ id: 'message-1', thread_id: 'thread-1', body: 'Photo' }],
+      attachments: [{ id: 'image-1', message_id: 'message-1', file_name: 'photo.png', mime_type: 'image/png' }],
+    }, { download_action: 'download_attachment' });
+    const container = document.createElement('div');
+    component.mount(container);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(fetchMock).toHaveBeenCalledWith('/api/chat/attachments/image-1', { headers: {} });
+    expect(container.querySelector('img.tms-chat-image-preview')?.getAttribute('alt')).toBe('photo.png');
+    component.dispose();
+    vi.restoreAllMocks();
   });
 
   it('refreshes on the configured interval and stops after disposal', async () => {

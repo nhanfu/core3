@@ -583,6 +583,7 @@ export class PageRuntime extends BaseComponent {
     client,
     createQuery,
     refreshSources,
+    refetchSource,
     applySourceFilters,
     handleAction,
     handleInlineForm,

@@ -36,19 +36,33 @@ datasources:
     single: false
     permission: chat.read
     query: |
-      SELECT m.id, m.thread_id, m.sender_id, sender.name AS sender_name,
-        m.body, CAST(m.created_at AS VARCHAR) AS created_at,
-        CASE WHEN m.sender_id = :current_user_id THEN true ELSE false END AS is_own,
-        COALESCE((
-          SELECT string_agg(a.file_name, '|' ORDER BY a.created_at)
-          FROM chat_attachments a
-          WHERE a.message_id = m.id
-        ), '') AS attachment_names
-      FROM chat_messages m
-      JOIN users sender ON sender.id = m.sender_id
-      JOIN chat_participants mine
-        ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
-      ORDER BY m.created_at
+      SELECT *
+      FROM (
+        SELECT m.id, m.thread_id, m.sender_id, sender.name AS sender_name,
+          m.body, CAST(m.created_at AS VARCHAR) AS created_at,
+          CASE WHEN m.sender_id = :current_user_id THEN true ELSE false END AS is_own,
+          COALESCE((
+            SELECT string_agg(a.file_name, '|' ORDER BY a.created_at)
+            FROM chat_attachments a
+            WHERE a.message_id = m.id
+          ), '') AS attachment_names
+        FROM chat_messages m
+        JOIN users sender ON sender.id = m.sender_id
+        JOIN chat_participants mine
+          ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
+        WHERE m.thread_id = COALESCE(
+          CAST(:thread_id AS VARCHAR),
+          (SELECT t.id
+           FROM chat_threads t
+           JOIN chat_participants first_mine
+             ON first_mine.thread_id = t.id AND first_mine.user_id = :current_user_id
+           ORDER BY t.updated_at DESC
+           LIMIT 1)
+        )
+        ORDER BY m.created_at DESC
+        LIMIT 100
+      ) recent_messages
+      ORDER BY created_at
   - id: chat_attachments
     single: false
     permission: chat.read
