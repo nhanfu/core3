@@ -36,11 +36,16 @@ export class TmsModule {
     const eventConfig = context.serviceConfigs.event_store || {};
     const eventDatabase = eventConfig.database || {};
     const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH || join(context.moduleRoot, '.data', 'events.duckdb');
+    const eventSchema = eventConfig.schema || context.serviceConfigs.chat?.event_schema;
+    if (!eventSchema) throw new Error('Chat event schema is not configured');
     this.eventStore = new EventStore({
+      schema: eventSchema,
       databasePath: eventDatabasePath,
       retentionMs: Number(eventConfig.retention_ms || context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
       maxRows: Number(eventConfig.max_rows || context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
       readerCount: Number(eventConfig.reader_connections || context.env.TMS_EVENT_READER_CONNECTIONS || 2),
+      bufferMaxRows: Number(eventConfig.buffer_max_rows || context.env.TMS_EVENT_BUFFER_MAX_ROWS || 10000),
+      writeMode: eventConfig.write_mode || context.env.TMS_EVENT_WRITE_MODE || 'low_latency',
     });
     await this.eventStore.start();
     const authProvider: any = context.resolveService('auth');

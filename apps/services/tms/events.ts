@@ -33,22 +33,25 @@ export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleSer
     data: {
       onOpen(socket: Socket) {
         socket.send(JSON.stringify({ type: 'connected' }));
-        const unsubscribe = store.subscribe((event) => {
-          if (event.actorId === String(authUser.sub || '')) {
-            socket.send(JSON.stringify({
-              type: 'chat_ack',
-              status: event.status,
-              operation: event.operation,
-              client_message_id: event.clientMessageId,
-              message_id: event.messageId,
-              thread_id: event.threadId,
-              error: event.error,
-            }));
-          } else if (event.message) {
-            socket.send(JSON.stringify({ type: 'chat_message', message: event.message }));
+        const subscription = store.subscribeStream();
+        void (async () => {
+          for await (const event of subscription.events) {
+            if (event.actorId === String(authUser.sub || '')) {
+              socket.send(JSON.stringify({
+                type: 'chat_ack',
+                status: event.status,
+                operation: event.operation,
+                client_message_id: event.clientMessageId,
+                message_id: event.messageId,
+                thread_id: event.threadId,
+                error: event.error,
+              }));
+            } else if (event.message) {
+              socket.send(JSON.stringify({ type: 'chat_message', message: event.message }));
+            }
           }
-        });
-        (socket as any).__eventUnsubscribe = unsubscribe;
+        })();
+        (socket as any).__eventUnsubscribe = subscription.close;
       },
       async onMessage(socket: Socket, raw: string | ArrayBuffer) {
         let payload: any;

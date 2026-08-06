@@ -1,21 +1,37 @@
+import { tableFromIPC } from 'apache-arrow';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { EventStore, type EventRecord } from '../../server/event-store.ts';
+import { EventStore, type EventRecord, type EventStoreSchema } from '../../server/event-store.ts';
 
 const stores: EventStore[] = [];
+
+const schema: EventStoreSchema = {
+  columns: [
+    { name: 'id', type: 'varchar', source: 'id', nullable: false },
+    { name: 'sequence', type: 'bigint', source: 'sequence', nullable: false },
+    { name: 'event_at', type: 'bigint', source: 'at', nullable: false },
+    { name: 'operation', type: 'varchar' },
+    { name: 'status', type: 'varchar' },
+    { name: 'actor_id', type: 'varchar', source: 'actorId' },
+    { name: 'thread_id', type: 'varchar', source: 'threadId' },
+    { name: 'message_body', type: 'varchar', source: 'message.body' },
+  ],
+};
 
 afterEach(async () => {
   await Promise.all(stores.splice(0).map((store) => store.stop()));
 });
 
-function makeStore(databasePath: string, options: { maxRows?: number; readerCount?: number } = {}) {
+function makeStore(databasePath: string, options: { maxRows?: number; readerCount?: number; writeMode?: 'low_latency' | 'durable' } = {}) {
   const store = new EventStore({
+    schema,
     databasePath,
     maxRows: options.maxRows ?? 1000,
     retentionMs: 60 * 60 * 1000,
     readerCount: options.readerCount ?? 4,
+    writeMode: options.writeMode,
   });
   stores.push(store);
   return store;
@@ -27,7 +43,7 @@ function event(publisher: number, sequence: number) {
     status: 'success' as const,
     actorId: `publisher-${publisher}`,
     threadId: `thread-${sequence % 8}`,
-    message: { publisher, sequence },
+    message: { publisher, sequence, body: `message-${publisher}-${sequence}` },
   };
 }
 
@@ -59,18 +75,29 @@ describe('EventStore', () => {
     unsubscribe.forEach((remove) => remove());
   });
 
+  it('delivers live events through a per-subscriber async stream', async () => {
+    const store = makeStore(':memory:');
+    await store.start();
+    const subscription = store.subscribeStream();
+    const nextEvent = subscription.events[Symbol.asyncIterator]().next();
+    const published = await store.publish(event(1, 1));
+    expect((await nextEvent).value.id).toBe(published.id);
+    subscription.close();
+    expect((await subscription.events[Symbol.asyncIterator]().next()).done).toBe(true);
+  });
+
   it('persists events in DuckDB and resumes sequence numbers after restart', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'core3-event-store-'));
     const databasePath = join(directory, 'events.duckdb');
     try {
-      const first = makeStore(databasePath);
+      const first = makeStore(databasePath, { writeMode: 'durable' });
       await first.start();
       const firstEvents = await Promise.all([first.publish(event(1, 1)), first.publish(event(2, 2))]);
       expect(await first.count()).toBe(2);
       await first.stop();
       stores.splice(stores.indexOf(first), 1);
 
-      const second = makeStore(databasePath);
+      const second = makeStore(databasePath, { writeMode: 'durable' });
       await second.start();
       expect(await second.count()).toBe(2);
       const restored = await second.publish(event(3, 3));
@@ -81,6 +108,20 @@ describe('EventStore', () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it('streams durable history as Arrow IPC', async () => {
+    const store = makeStore(':memory:');
+    await store.start();
+    await Promise.all([store.publish(event(1, 1)), store.publish(event(1, 2)), store.publish(event(1, 3))]);
+    const bytes = await store.history({ afterSequence: 1, limit: 10 });
+    const table = tableFromIPC(bytes);
+    expect(table.toArray()).toHaveLength(2);
+    expect(table.schema.fields.map((field) => field.name)).toContain('message_body');
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of store.historyStream({ afterSequence: 1, limit: 10 })) chunks.push(chunk);
+    expect(chunks.length).toBeGreaterThan(0);
+    expect(tableFromIPC(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))).toArray()).toHaveLength(2);
   });
 
   it('keeps only the configured event window', async () => {

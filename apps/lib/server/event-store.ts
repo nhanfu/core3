@@ -1,24 +1,50 @@
+import { RecordBatchStreamWriter, tableFromArrays } from 'apache-arrow';
 import { DuckDBInstance } from '@duckdb/node-api';
 import { mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { v7 as uuidv7 } from 'uuid';
 
-export type EventRecord = {
-  id: string;
-  sequence: number;
-  operation: string;
-  status: 'success' | 'failed';
-  actorId?: string;
-  clientMessageId?: string;
-  messageId?: string;
-  message?: Record<string, any>;
-  error?: string;
-  threadId?: string;
-  at: number;
+export type EventValueType = 'varchar' | 'bigint' | 'integer' | 'double' | 'boolean';
+
+export type EventSchemaColumn = {
+  name: string;
+  type: EventValueType;
+  source?: string;
+  nullable?: boolean;
 };
 
-type NewEvent = Omit<EventRecord, 'id' | 'sequence' | 'at'>;
-type EventListener = (event: EventRecord) => void;
+export type EventStoreSchema = {
+  table?: string;
+  columns: EventSchemaColumn[];
+};
+
+export type EventWriteMode = 'low_latency' | 'durable';
+
+export type EventEnvelope = {
+  id: string;
+  sequence: number;
+  at: number;
+  [key: string]: unknown;
+};
+
+export type EventRecord = EventEnvelope;
+
+type EventListener = (event: EventEnvelope) => void;
+
+export type EventSubscription = {
+  events: AsyncIterable<EventEnvelope>;
+  close: () => void;
+};
+
+function quoteIdentifier(identifier: string): string {
+  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)) throw new Error(`Invalid event identifier: ${identifier}`);
+  return `"${identifier}"`;
+}
+
+function valueAt(source: string | undefined, event: EventEnvelope): unknown {
+  if (!source) return undefined;
+  return source.split('.').reduce((value: any, key) => value?.[key], event);
+}
 
 class DuckDbConnectionPool {
   private readonly writer: any;
@@ -27,46 +53,55 @@ class DuckDbConnectionPool {
   private readonly readerQueues: Array<Promise<void>>;
   private nextReader = 0;
 
-  private constructor(private readonly db: any, writer: any, appender: any, readers: any[]) {
+  private constructor(
+    private readonly db: any,
+    writer: any,
+    appender: any,
+    readers: any[],
+    private readonly schema: EventStoreSchema,
+  ) {
     this.writer = writer;
     this.appender = appender;
     this.readers = readers;
     this.readerQueues = this.readers.map(() => Promise.resolve());
   }
 
-  static async create(db: any, readerCount: number): Promise<DuckDbConnectionPool> {
+  static async create(db: any, schema: EventStoreSchema, readerCount: number): Promise<DuckDbConnectionPool> {
+    const table = quoteIdentifier(schema.table || 'event_log');
     const writer = await db.connect();
-    const appender = await writer.createAppender('event_log');
-    const readers = await Promise.all(
-      Array.from({ length: Math.max(1, readerCount) }, () => db.connect()),
-    );
-    return new DuckDbConnectionPool(db, writer, appender, readers);
+    const appender = await writer.createAppender(table.slice(1, -1));
+    const readers = await Promise.all(Array.from({ length: Math.max(1, readerCount) }, () => db.connect()));
+    return new DuckDbConnectionPool(db, writer, appender, readers, schema);
   }
 
   async run(sql: string, params: any[] = []): Promise<void> {
     await this.writer.run(sql, params);
   }
 
-  append(event: EventRecord): void {
-    this.appender.appendVarchar(event.id);
-    this.appender.appendBigInt(BigInt(event.sequence));
-    this.appender.appendInteger(0);
-    this.appender.appendVarchar(event.operation);
-    this.appender.appendVarchar(event.status);
-    event.actorId === undefined ? this.appender.appendNull() : this.appender.appendVarchar(event.actorId);
-    event.clientMessageId === undefined ? this.appender.appendNull() : this.appender.appendVarchar(event.clientMessageId);
-    event.messageId === undefined ? this.appender.appendNull() : this.appender.appendVarchar(event.messageId);
-    event.error === undefined ? this.appender.appendNull() : this.appender.appendVarchar(event.error);
-    event.threadId === undefined ? this.appender.appendNull() : this.appender.appendVarchar(event.threadId);
-    this.appender.appendBigInt(BigInt(event.at));
-    const message = event.message;
-    message?.thread_id === undefined ? this.appender.appendNull() : this.appender.appendVarchar(String(message.thread_id));
-    message?.sender_id === undefined ? this.appender.appendNull() : this.appender.appendVarchar(String(message.sender_id));
-    message?.sender_name === undefined ? this.appender.appendNull() : this.appender.appendVarchar(String(message.sender_name));
-    message?.body === undefined ? this.appender.appendNull() : this.appender.appendVarchar(String(message.body));
-    message?.created_at === undefined ? this.appender.appendNull() : this.appender.appendVarchar(String(message.created_at));
+  append(event: EventEnvelope, flush = true): void {
+    for (const column of this.schema.columns) {
+      const value = valueAt(column.source || column.name, event);
+      if (value === undefined || value === null) {
+        this.appender.appendNull();
+      } else if (column.type === 'varchar') {
+        this.appender.appendVarchar(String(value));
+      } else if (column.type === 'bigint') {
+        this.appender.appendBigInt(BigInt(value as number | bigint));
+      } else if (column.type === 'integer') {
+        this.appender.appendInteger(Number(value));
+      } else if (column.type === 'double') {
+        this.appender.appendDouble(Number(value));
+      } else if (column.type === 'boolean') {
+        this.appender.appendBoolean(Boolean(value));
+      }
+    }
     this.appender.endRow();
-    this.appender.flushSync();
+    if (flush) this.appender.flushSync();
+  }
+
+  appendBatch(events: EventEnvelope[]): void {
+    for (const event of events) this.append(event, false);
+    if (events.length) this.appender.flushSync();
   }
 
   query(sql: string, params: any[] = []): Promise<any[]> {
@@ -95,23 +130,42 @@ export class EventStore {
   private pool: DuckDbConnectionPool | null = null;
   private cachePool: DuckDbConnectionPool | null = null;
   private nextSequence = 1;
-  private write: Promise<void> = Promise.resolve();
   private readonly databasePath: string;
   private readonly retentionMs: number;
   private readonly maxRows: number;
   private readonly readerCount: number;
+  private readonly bufferMaxRows: number;
+  private readonly schema: EventStoreSchema;
+  private readonly writeMode: EventWriteMode;
+  private readonly pending: EventEnvelope[] = [];
+  private readonly batchSize = 256;
+  private workerRunning = false;
+  private cacheMaintenance: Promise<void> = Promise.resolve();
+  private flushWaiters: Array<() => void> = [];
 
   constructor(options: {
+    schema: EventStoreSchema;
     databasePath?: string;
     retentionMs?: number;
     maxRows?: number;
     readerCount?: number;
-  } = {}) {
-    // Disk-backed DuckDB is the default. Tests can explicitly use :memory:.
+    bufferMaxRows?: number;
+    writeMode?: EventWriteMode;
+  }) {
+    this.schema = options.schema;
     this.databasePath = options.databasePath || './events.duckdb';
     this.retentionMs = Math.max(0, options.retentionMs ?? 60 * 60 * 1000);
     this.maxRows = Math.max(1, Math.floor(options.maxRows || 1000));
     this.readerCount = Math.max(1, Math.floor(options.readerCount || 2));
+    this.bufferMaxRows = Math.max(this.batchSize, Math.floor(options.bufferMaxRows || 10000));
+    this.writeMode = options.writeMode || 'low_latency';
+    if (!this.schema.columns.some((column) => column.name === 'id' && column.source === 'id')) throw new Error('Event schema requires id');
+    if (!this.schema.columns.some((column) => column.name === 'sequence' && column.source === 'sequence')) throw new Error('Event schema requires sequence');
+    if (!this.schema.columns.some((column) => column.name === 'event_at' && column.source === 'at')) throw new Error('Event schema requires event_at');
+  }
+
+  private table(): string {
+    return quoteIdentifier(this.schema.table || 'event_log');
   }
 
   async start(): Promise<void> {
@@ -119,37 +173,22 @@ export class EventStore {
     if (this.databasePath !== ':memory:') await mkdir(dirname(this.databasePath), { recursive: true });
     this.db = await DuckDBInstance.create(this.databasePath);
     this.cacheDb = await DuckDBInstance.create(':memory:');
-    await this.createSchema(this.db);
-    await this.createSchema(this.cacheDb);
-    this.pool = await DuckDbConnectionPool.create(this.db, this.readerCount);
-    this.cachePool = await DuckDbConnectionPool.create(this.cacheDb, this.readerCount);
-    const rows = await this.pool.query('SELECT COALESCE(MAX(sequence), 0) AS sequence FROM event_log');
+    await Promise.all([this.createSchema(this.db), this.createSchema(this.cacheDb)]);
+    this.pool = await DuckDbConnectionPool.create(this.db, this.schema, this.readerCount);
+    this.cachePool = await DuckDbConnectionPool.create(this.cacheDb, this.schema, this.readerCount);
+    const rows = await this.pool.query(`SELECT COALESCE(MAX("sequence"), 0) AS sequence FROM ${this.table()}`);
     this.nextSequence = Number(rows[0]?.sequence || 0) + 1;
   }
 
   private async createSchema(db: any): Promise<void> {
-    const schemaConnection = await db.connect();
-    await schemaConnection.run(`
-      CREATE TABLE IF NOT EXISTS event_log (
-        id VARCHAR PRIMARY KEY,
-        sequence BIGINT NOT NULL,
-        shard INTEGER NOT NULL DEFAULT 0,
-        operation VARCHAR NOT NULL,
-        status VARCHAR NOT NULL,
-        actor_id VARCHAR,
-        client_message_id VARCHAR,
-        message_id VARCHAR,
-        error VARCHAR,
-        thread_id VARCHAR,
-        event_at BIGINT NOT NULL,
-        message_thread_id VARCHAR,
-        message_sender_id VARCHAR,
-        message_sender_name VARCHAR,
-        message_body VARCHAR,
-        message_created_at VARCHAR
-      )
-    `);
-    schemaConnection.closeSync();
+    const connection = await db.connect();
+    const columns = this.schema.columns.map((column) => {
+      const nullable = column.nullable === false ? ' NOT NULL' : '';
+      const sqlType = column.type === 'varchar' ? 'VARCHAR' : column.type === 'bigint' ? 'BIGINT' : column.type === 'integer' ? 'INTEGER' : column.type === 'double' ? 'DOUBLE' : 'BOOLEAN';
+      return `${quoteIdentifier(column.name)} ${sqlType}${nullable}`;
+    }).join(',\n');
+    await connection.run(`CREATE TABLE IF NOT EXISTS ${this.table()} (${columns})`);
+    connection.closeSync();
   }
 
   private getPool(): DuckDbConnectionPool {
@@ -162,29 +201,61 @@ export class EventStore {
     return this.cachePool;
   }
 
-  private append(event: EventRecord): void {
-    this.getPool().append(event);
-    this.getCachePool().append(event);
-  }
-
-  async publish(event: NewEvent): Promise<EventRecord> {
-    const item: EventRecord = { ...event, id: uuidv7(), sequence: this.nextSequence++, at: Date.now() };
-    this.write = this.write.catch(() => {}).then(async () => {
-      this.append(item);
-      await this.prune();
-      for (const listener of this.listeners) {
-        try { listener(item); } catch {}
-      }
-    });
-    await this.write;
+  async publish(event: Omit<EventEnvelope, 'id' | 'sequence' | 'at'>): Promise<EventEnvelope> {
+    const item = { ...event, id: uuidv7(), sequence: this.nextSequence++, at: Date.now() } as EventEnvelope;
+    if (this.writeMode === 'durable') this.getPool().append(item);
+    this.getCachePool().append(item);
+    for (const listener of this.listeners) {
+      try { listener(item); } catch {}
+    }
+    this.cacheMaintenance = this.cacheMaintenance.catch(() => {}).then(() => this.pruneCache());
+    if (this.writeMode === 'low_latency') {
+      if (this.pending.length >= this.bufferMaxRows) await this.flush();
+      this.pending.push(item);
+      this.startWorker();
+    }
     return item;
   }
 
-  private async prune(): Promise<void> {
-    const cutoff = Date.now() - this.retentionMs;
-    await this.getCachePool().run(`DELETE FROM event_log WHERE event_at < ? OR sequence <= (
-      SELECT COALESCE(MAX(sequence), 0) - ? FROM event_log
-    )`, [cutoff, this.maxRows]);
+  private startWorker(): void {
+    if (this.workerRunning) return;
+    this.workerRunning = true;
+    void this.drainWorker();
+  }
+
+  private async drainWorker(): Promise<void> {
+    try {
+      while (this.pending.length) {
+        const batch = this.pending.splice(0, this.batchSize);
+        try {
+          this.getPool().appendBatch(batch);
+        } catch (error) {
+          this.pending.unshift(...batch);
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          if (!this.pool) throw error;
+        }
+      }
+    } finally {
+      this.workerRunning = false;
+      if (!this.pending.length) {
+        const waiters = this.flushWaiters.splice(0);
+        waiters.forEach((resolve) => resolve());
+      } else if (this.pool) {
+        this.startWorker();
+      }
+    }
+  }
+
+  async flush(): Promise<void> {
+    if (!this.pending.length && !this.workerRunning) return;
+    await new Promise<void>((resolve) => this.flushWaiters.push(resolve));
+    if (this.pending.length && !this.workerRunning) this.startWorker();
+  }
+
+  private async pruneCache(): Promise<void> {
+    await this.getCachePool().run(`DELETE FROM ${this.table()} WHERE "event_at" < ? OR "sequence" <= (
+      SELECT COALESCE(MAX("sequence"), 0) - ? FROM ${this.table()}
+    )`, [Date.now() - this.retentionMs, this.maxRows]);
   }
 
   subscribe(listener: EventListener): () => void {
@@ -192,9 +263,89 @@ export class EventStore {
     return () => this.listeners.delete(listener);
   }
 
+  subscribeStream(): EventSubscription {
+    const queue: EventEnvelope[] = [];
+    let closed = false;
+    let wake: (() => void) | null = null;
+    const listener = (event: EventEnvelope) => {
+      if (closed) return;
+      queue.push(event);
+      wake?.();
+      wake = null;
+    };
+    this.listeners.add(listener);
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      this.listeners.delete(listener);
+      wake?.();
+      wake = null;
+    };
+    const events = {
+      async *[Symbol.asyncIterator](): AsyncGenerator<EventEnvelope> {
+        while (!closed || queue.length) {
+          if (!queue.length) await new Promise<void>((resolve) => { wake = resolve; });
+          while (queue.length) yield queue.shift()!;
+        }
+      },
+    };
+    return { events, close };
+  }
+
+  private async historyRows(options: { afterSequence?: number; limit?: number } = {}): Promise<any[]> {
+    const afterSequence = Math.max(0, Math.floor(options.afterSequence || 0));
+    const limit = Math.max(1, Math.min(10000, Math.floor(options.limit || 1000)));
+    const cacheBounds = await this.getCachePool().query(`SELECT MIN("sequence") AS first_sequence, MAX("sequence") AS last_sequence FROM ${this.table()}`);
+    const firstCached = Number(cacheBounds[0]?.first_sequence ?? 0);
+    const lastCached = Number(cacheBounds[0]?.last_sequence ?? 0);
+    const offsetCached = firstCached > 0 && (afterSequence >= firstCached - 1 || afterSequence >= lastCached);
+    const rows = offsetCached
+      ? await this.getCachePool().query(`SELECT * FROM ${this.table()} WHERE "sequence" > ? ORDER BY "sequence" LIMIT ?`, [afterSequence, limit])
+      : await this.getPool().query(`SELECT * FROM ${this.table()} WHERE "sequence" > ? ORDER BY "sequence" LIMIT ?`, [afterSequence, limit]);
+    return rows;
+  }
+
+  async *historyStream(options: { afterSequence?: number; limit?: number } = {}): AsyncGenerator<Uint8Array> {
+    const rows = await this.historyRows(options);
+    const columns = Object.fromEntries(this.schema.columns.map((column) => [
+      column.name,
+      rows.map((row) => row[column.name] ?? null),
+    ]));
+    const writer = new RecordBatchStreamWriter();
+    const table = tableFromArrays(columns);
+    const writing = Promise.resolve().then(() => {
+      writer.write(table);
+      writer.close();
+    });
+    try {
+      for await (const chunk of writer) yield chunk;
+      await writing;
+    } catch (error) {
+      writer.abort(error);
+      throw error;
+    }
+  }
+
+  async history(options: { afterSequence?: number; limit?: number } = {}): Promise<Uint8Array> {
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    for await (const chunk of this.historyStream(options)) {
+      chunks.push(chunk);
+      length += chunk.byteLength;
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return bytes;
+  }
+
   async stop(): Promise<void> {
     if (!this.pool) return;
-    await this.write;
+    await this.flush();
+    await this.cacheMaintenance;
     this.pool.close();
     this.cachePool?.close();
     this.pool = null;
@@ -205,12 +356,14 @@ export class EventStore {
   }
 
   async count(): Promise<number> {
-    const rows = await this.getPool().query('SELECT COUNT(*) AS count FROM event_log');
+    await this.flush();
+    const rows = await this.getPool().query(`SELECT COUNT(*) AS count FROM ${this.table()}`);
     return Number(rows[0]?.count || 0);
   }
 
   async cacheCount(): Promise<number> {
-    const rows = await this.getCachePool().query('SELECT COUNT(*) AS count FROM event_log');
+    await this.cacheMaintenance;
+    const rows = await this.getCachePool().query(`SELECT COUNT(*) AS count FROM ${this.table()}`);
     return Number(rows[0]?.count || 0);
   }
 }

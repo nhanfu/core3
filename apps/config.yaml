@@ -16,6 +16,24 @@ services:
       path:
         development: ${CORE3_CHAT_DB_PATH:-./chat.duckdb}
         production: ${CORE3_CHAT_DB_PATH:-./chat.duckdb}
+    event_schema:
+      table: event_log
+      columns:
+        - { name: id, type: varchar, source: id, nullable: false }
+        - { name: sequence, type: bigint, source: sequence, nullable: false }
+        - { name: event_at, type: bigint, source: at, nullable: false }
+        - { name: operation, type: varchar }
+        - { name: status, type: varchar }
+        - { name: actor_id, type: varchar, source: actorId }
+        - { name: client_message_id, type: varchar, source: clientMessageId }
+        - { name: message_id, type: varchar, source: messageId }
+        - { name: error, type: varchar }
+        - { name: thread_id, type: varchar, source: threadId }
+        - { name: message_thread_id, type: varchar, source: message.thread_id }
+        - { name: message_sender_id, type: varchar, source: message.sender_id }
+        - { name: message_sender_name, type: varchar, source: message.sender_name }
+        - { name: message_body, type: varchar, source: message.body }
+        - { name: message_created_at, type: varchar, source: message.created_at }
 
   # Shared durable event stream used by chat and future real-time features.
   event_store:
@@ -27,6 +45,8 @@ services:
     retention_ms: ${CORE3_EVENT_RETENTION_MS:-3600000}
     max_rows: ${CORE3_EVENT_MAX_ROWS:-1000}
     reader_connections: ${CORE3_EVENT_READER_CONNECTIONS:-2}
+    buffer_max_rows: ${CORE3_EVENT_BUFFER_MAX_ROWS:-10000}
+    write_mode: ${CORE3_EVENT_WRITE_MODE:-low_latency}
 
 apps:
   - id: sales
