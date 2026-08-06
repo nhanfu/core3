@@ -185,7 +185,7 @@ export class ChatWorkspace extends BaseComponent {
     const activeThread = threads.find((thread: any) => thread.id === this.state.activeThreadId);
     const root = createElement(
       'section',
-      'tms-chat-workspace grid min-h-[560px] overflow-hidden rounded-md border bg-white',
+      'tms-chat-workspace grid min-h-[560px] overflow-hidden rounded-md border',
     );
     root.style.height = 'calc(100vh - 204px)';
     root.style.gridTemplateColumns = 'minmax(250px, 320px) minmax(0, 1fr)';
@@ -369,7 +369,7 @@ export class ChatWorkspace extends BaseComponent {
           }
           const attachmentButton = createElement(
             'button',
-            'rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 hover:border-blue-300 hover:text-blue-700',
+            'tms-chat-attachment rounded-full border px-2 py-1 text-[11px]',
             `Tệp: ${attachment.file_name}`,
           );
           attachmentButton.type = 'button';
@@ -416,7 +416,7 @@ export class ChatWorkspace extends BaseComponent {
     if (this.state.selectedFile) {
       const selected = createElement(
         'div',
-        'border-t border-slate-100 bg-white px-4 pb-2 text-xs text-slate-500',
+        'tms-chat-selected-file border-t px-4 pb-2 text-xs',
         `Tệp đã chọn: ${this.state.selectedFile.name}`,
       );
       main.insertBefore(selected, composer);

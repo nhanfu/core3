@@ -1022,16 +1022,16 @@
 .core3-money-input-display { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Odoo-style Discuss surface for the standalone chat workspace. */
-.tms-chat-workspace { --tms-chat-action: var(--o-form-action, #71639e); --tms-chat-bg: var(--o-form-bg, #f8f9fa); --tms-chat-surface: var(--o-form-surface, #fff); --tms-chat-border: var(--o-form-border, #dee2e6); --tms-chat-text: var(--o-form-text, #212529); --tms-chat-muted: var(--o-form-muted, #6c757d); --tms-chat-hover: var(--o-form-hover, #f1eff7); grid-template-rows: minmax(0, 1fr); min-height: 0; border-color: var(--tms-chat-border); background: var(--tms-chat-surface); color: var(--tms-chat-text); container-type: inline-size; }
+.tms-chat-workspace { --tms-chat-action: var(--color-primary, #71639e); --tms-chat-bg: var(--color-bg, #f8f9fa); --tms-chat-surface: var(--color-surface, #fff); --tms-chat-border: var(--color-border, #dee2e6); --tms-chat-text: var(--color-text, #212529); --tms-chat-muted: var(--color-text-muted, #6c757d); --tms-chat-hover: color-mix(in srgb, var(--tms-chat-action) 12%, var(--tms-chat-surface)); grid-template-rows: minmax(0, 1fr); min-height: 0; border-color: var(--tms-chat-border); background: var(--tms-chat-surface); color: var(--tms-chat-text); container-type: inline-size; }
 .tms-chat-sidebar, .tms-chat-main { min-height: 0; }
 .tms-chat-sidebar { background: var(--tms-chat-bg); border-color: var(--tms-chat-border); }
 .tms-chat-sidebar-header { display: grid; gap: 9px; padding: 12px; border-bottom: 1px solid var(--tms-chat-border); }
 .tms-chat-sidebar-title { color: var(--tms-chat-text); font-size: 14px; }
 .tms-chat-search { min-height: 30px !important; padding: 5px 8px !important; border-color: var(--tms-chat-border) !important; border-radius: 3px !important; background: var(--tms-chat-surface) !important; font-size: 12px !important; }
-.tms-chat-thread-list { background: var(--tms-chat-surface); }
-.tms-chat-thread { border-color: var(--tms-chat-border); background: transparent; color: var(--tms-chat-text); }
-.tms-chat-thread:hover { background: var(--tms-chat-hover); }
-.tms-chat-thread.is-active { background: var(--tms-chat-hover); box-shadow: inset 3px 0 0 var(--tms-chat-action); }
+.tms-chat-thread-list { background: var(--tms-chat-surface) !important; }
+.tms-chat-thread { border-color: var(--tms-chat-border); background: transparent !important; color: var(--tms-chat-text); }
+.tms-chat-thread:hover { background: var(--tms-chat-hover) !important; }
+.tms-chat-thread.is-active { background: var(--tms-chat-hover) !important; box-shadow: inset 3px 0 0 var(--tms-chat-action); }
 .tms-chat-thread-identity { display: flex; min-width: 0; align-items: center; gap: 9px; }
 .tms-chat-thread-heading { display: flex; min-width: 0; flex: 1; align-items: baseline; justify-content: space-between; gap: 7px; }
 .tms-chat-thread-heading strong { color: var(--tms-chat-text); font-size: 12px; }
@@ -1063,5 +1063,8 @@
 .tms-chat-input:focus { border-color: var(--tms-chat-action) !important; outline: 1px solid var(--tms-chat-action) !important; }
 .tms-chat-attach, .tms-chat-send { min-height: 32px !important; padding: 5px 9px !important; border-radius: 3px !important; font-size: 12px !important; font-weight: 600; }
 .tms-chat-attach { border-color: var(--tms-chat-border) !important; background: var(--tms-chat-surface) !important; color: var(--tms-chat-text) !important; }
+.tms-chat-attachment { border-color: var(--tms-chat-border); background: var(--tms-chat-surface); color: var(--tms-chat-muted); }
+.tms-chat-attachment:hover { border-color: var(--tms-chat-action); color: var(--tms-chat-action); }
+.tms-chat-selected-file { border-color: var(--tms-chat-border); background: var(--tms-chat-bg); color: var(--tms-chat-muted); }
 .tms-chat-send { border-color: var(--tms-chat-action) !important; background: var(--tms-chat-action) !important; }
 @media (max-width: 760px) { .tms-chat-workspace { grid-template-columns: 1fr !important; height: auto !important; min-height: 0; }.tms-chat-sidebar { max-height: 250px; border-right: 0; border-bottom: 1px solid var(--tms-chat-border); }.tms-chat-main { min-height: 520px; } }
