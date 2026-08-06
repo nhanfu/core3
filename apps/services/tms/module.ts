@@ -35,12 +35,9 @@ export class TmsModule {
     this.repository = new TmsRepository(this.db);
     const eventConfig = context.serviceConfigs.event_store || {};
     const eventDatabase = eventConfig.database || {};
-    const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH;
-    const eventLogPath = context.env.TMS_EVENT_LOG_PATH || join(context.moduleRoot, '.data', 'events.jsonl');
+    const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH || join(context.moduleRoot, '.data', 'events.duckdb');
     this.eventStore = new EventStore({
-      logPath: eventLogPath,
       databasePath: eventDatabasePath,
-      shardCount: Number(eventConfig.shard_count || context.env.TMS_EVENT_SHARDS || 1),
       retentionMs: Number(eventConfig.retention_ms || context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
       maxRows: Number(eventConfig.max_rows || context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
       readerCount: Number(eventConfig.reader_connections || context.env.TMS_EVENT_READER_CONNECTIONS || 2),

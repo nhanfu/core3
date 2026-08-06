@@ -24,7 +24,6 @@ services:
       path:
         development: ${CORE3_EVENT_DB_PATH:-./events.duckdb}
         production: ${CORE3_EVENT_DB_PATH:-./events.duckdb}
-    shard_count: ${CORE3_EVENT_SHARDS:-1}
     retention_ms: ${CORE3_EVENT_RETENTION_MS:-3600000}
     max_rows: ${CORE3_EVENT_MAX_ROWS:-1000}
     reader_connections: ${CORE3_EVENT_READER_CONNECTIONS:-2}
