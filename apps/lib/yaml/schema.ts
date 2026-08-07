@@ -37,7 +37,7 @@ export type ComponentDefinition = {
 
 export type ActionDefinition = {
   id: string;
-  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'event';
+  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'event' | 'request' | 'client' | 'logout';
   permission?: string;
   handler?: string;
   operation?: string;
@@ -131,6 +131,9 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'redirect_param', 'permission']),
+  request: new Set(['id', 'type', 'method', 'endpoint', 'body', 'permission']),
+  client: new Set(['id', 'type', 'script', 'permission']),
+  logout: new Set(['id', 'type', 'permission']),
   event: new Set(['id', 'type', 'event', 'params', 'title', 'message', 'close_label', 'icon', 'permission']),
 };
 const PERMISSION_REQUIRED_ACTION_TYPES = new Set<ActionDefinition['type']>([
@@ -182,6 +185,10 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'empty_messages',
   ])],
   ['LoginForm', new Set(['type', 'id', 'action', 'logo_title', 'logo_subtitle', 'title', 'email', 'password', 'submit_label', 'loading_label', 'required_message', 'provider_divider', 'credentials_label', 'credentials', 'providers'])],
+  ['Html', new Set(['type', 'id', 'tag', 'class', 'text', 'text_expr', 'children'])],
+  ['ChoiceGroup', new Set(['type', 'id', 'title', 'value', 'group_class', 'option_class', 'options', 'action'])],
+  ['Form', new Set(['type', 'id', 'title', 'class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
+  ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
 ]);
 
 export class PageSchemaError extends Error {

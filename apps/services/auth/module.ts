@@ -79,6 +79,12 @@ export default class AuthModule {
         if (!page || page.module !== 'auth') return json({ error: 'Unknown page: login' }, 404);
         return json({ ...page.config, i18n: translationMap(pages.catalogs, requestLanguage(url), 'login') });
       }
+      if (url.pathname === '/api/pages/profile' && request.method === 'GET') {
+        pages = discoverPages(context.appsRoot);
+        const page = pages.pages.get('profile');
+        if (!page || page.module !== 'auth') return json({ error: 'Unknown page: profile' }, 404);
+        return json({ ...page.config, i18n: translationMap(pages.catalogs, requestLanguage(url), 'profile') });
+      }
       return null;
     });
   }

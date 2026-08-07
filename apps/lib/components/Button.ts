@@ -1,5 +1,6 @@
 import { html } from '../html.ts';
 import { BaseComponent } from './BaseComponent.ts';
+import { appendIcon } from './Icon.ts';
 
 export class Button extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -19,11 +20,12 @@ export class Button extends BaseComponent {
     const disabledCls = (loading || disabled) ? 'opacity-60 cursor-not-allowed pointer-events-none' : '';
 
     const btn = html.take(container)
-      .button.className(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md transition-colors ${variantCls} ${disabledCls}`)
+      .button.className(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md transition-colors ${variantCls} ${disabledCls}${d.full_width ? ' btn-full' : ''}`)
       .getContext();
 
     if (loading || disabled) btn.setAttribute('disabled', '');
     if (loading) html.take(btn).span.className('animate-spin').text('⟳');
+    if (d.icon && !loading) appendIcon(btn, d.icon);
     html.take(btn).text(d.label || '');
 
     if (!loading && !disabled) {

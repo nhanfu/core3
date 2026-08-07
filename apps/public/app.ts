@@ -82,7 +82,18 @@ function showLogin(location: { langCode?: string }) {
   return renderRoute('/auth/login', location.langCode);
 }
 
-export function logout() {
+export async function logout() {
+  const token = getToken();
+  if (token) {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      // The local session must still be cleared if the server is unavailable.
+    }
+  }
   localStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(WELCOME_TOAST_KEY);
   _user = null;

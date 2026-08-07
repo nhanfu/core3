@@ -436,6 +436,55 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       component.mount(slot);
       break;
     }
+    case 'Html': {
+      const { Html } = await import('./Html.ts');
+      const runtimeContext = ctx.context || {};
+      const component = new Html(def.id || `${config.page.id}-html`, { context: { ...ctx, ...runtimeContext, user: { ...ctx.user, ...(runtimeContext.user || {}) } } }, def);
+      component._onAction = async (actionId: string, params: any) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (actionDef) await handleAction(actionDef, params);
+      };
+      const slot = document.createElement('div');
+      targetContainer.appendChild(slot);
+      component.mount(slot);
+      break;
+    }
+    case 'ChoiceGroup': {
+      const { ChoiceGroup } = await import('./ChoiceGroup.ts');
+      const component = new ChoiceGroup(def.id || `${config.page.id}-choices`, { record: ctx.user }, def);
+      component._onAction = async (actionId: string, params: any) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (actionDef) await handleAction(actionDef, params);
+      };
+      const slot = document.createElement('div');
+      targetContainer.appendChild(slot);
+      component.mount(slot);
+      break;
+    }
+    case 'Form': {
+      const { Form } = await import('./Form.ts');
+      const component = new Form(def.id || `${config.page.id}-form`, {}, def);
+      component._onAction = async (actionId: string, params: any) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (actionDef) await handleAction(actionDef, params);
+      };
+      const slot = document.createElement('div');
+      targetContainer.appendChild(slot);
+      component.mount(slot);
+      break;
+    }
+    case 'Button': {
+      const { Button } = await import('./Button.ts');
+      const component = new Button(def.id || `${config.page.id}-action`, {}, def);
+      component._onAction = async (actionId: string, params: any) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (actionDef) await handleAction(actionDef, params);
+      };
+      const slot = document.createElement('div');
+      targetContainer.appendChild(slot);
+      component.mount(slot);
+      break;
+    }
     case 'PageIntro': {
       const { PageIntro } = await import('./PageIntro.ts');
       const component = new PageIntro(def.id || `${config.page.id}-intro`, def);

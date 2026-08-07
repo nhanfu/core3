@@ -176,7 +176,7 @@ class PageRoot extends BaseComponent {
 }
 
 export class PageRuntime extends BaseComponent {
-  constructor(config: any, private readonly registry: Map<string, any>) {
+  constructor(config: any, private readonly registry: Map<string, any>, private readonly runtimeContext: any = {}) {
     super('page-runtime', { config });
   }
 
@@ -214,7 +214,7 @@ export class PageRuntime extends BaseComponent {
     initialDateFilters[range.to_field || 'to_date'] = dates.to;
   }
   Object.assign(pageParams, initialDateFilters);
-  const ctx: any = { user, row: {}, state: pageParams };
+  const ctx: any = { user, row: {}, state: pageParams, context: this.runtimeContext };
 
   // 3. Fetch datasources
   const dataMap: Record<string, any> = {};
@@ -370,6 +370,57 @@ export class PageRuntime extends BaseComponent {
           detail: resolveActionParams(actionDef.params, rowCtx),
         }));
         if (actionDef.message) showEventPopup(actionDef);
+        break;
+      }
+      case 'request': {
+        const token = (await import('../../public/app.ts')).getToken();
+        const response = await fetch(actionDef.endpoint, {
+          method: actionDef.method || 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify(resolveActionParams(actionDef.body, rowCtx)),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || 'Profile update failed');
+        break;
+      }
+      case 'client': {
+        const source = String(actionDef.script || '').trim();
+        // YAML client actions must contain a function source, for example:
+        // `async ({ row, request }) => { ... }`.
+        // eslint-disable-next-line no-new-func
+        const fn = new Function(`return (${source})`)();
+        if (typeof fn !== 'function') throw new TypeError('Client action script must evaluate to a JavaScript function');
+        const token = (await import('../../public/app.ts')).getToken();
+        const request = async (endpoint: string, options: RequestInit = {}) => {
+          const response = await fetch(endpoint, {
+            ...options,
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(options.headers || {}),
+            },
+            ...(options.body && typeof options.body !== 'string' ? { body: JSON.stringify(options.body) } : {}),
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(result.error || 'Request failed');
+          return result;
+        };
+        const { i18n } = await import('../i18n.ts');
+        const { navigate: appNavigate } = await import('../../public/app.ts');
+        await fn({
+          user: ctx.user,
+          row: row || {},
+          state: ctx.state,
+          request,
+          setLanguage: async (language: string) => {
+            await i18n.setLang(String(language));
+            await appNavigate(window.location.pathname, { lc: String(language) });
+          },
+        });
+        break;
+      }
+      case 'logout': {
+        await (await import('../../public/app.ts')).logout();
         break;
       }
       case 'form':

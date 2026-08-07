@@ -2,7 +2,7 @@ import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '../../lib/html.ts';
 import { i18n } from '../../lib/i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
-import { ProfileDrawer } from './ProfileDrawer.ts';
+import { RightModal } from './RightModal.ts';
 import { AppLauncher, type LauncherApp } from './AppLauncher.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
 import { hasPermission } from '../../lib/meta.ts';
@@ -31,7 +31,7 @@ export class AppShell extends BaseComponent {
   _groupEls: Map<string, HTMLElement>;
   _headerTitle: HTMLElement | null;
   _notifPanel: NotificationPanel | null;
-  _profileDrawer: ProfileDrawer | null;
+  _profileModal: RightModal | null;
   _shellToast: HTMLElement | null;
   _shellToastTimer: ReturnType<typeof setTimeout> | null;
   _languageUnsubscribe: (() => void) | null;
@@ -67,7 +67,7 @@ export class AppShell extends BaseComponent {
     this._groupEls = new Map();
     this._headerTitle = null;
     this._notifPanel = null;
-    this._profileDrawer = null;
+    this._profileModal = null;
     this._shellToast = null;
     this._shellToastTimer = null;
     this._languageUnsubscribe = i18n.onChange((lang: string) => {
@@ -81,7 +81,7 @@ export class AppShell extends BaseComponent {
 
   refreshLanguage() {
     this._notifPanel?.refreshLanguage();
-    this._profileDrawer?.refreshLanguage();
+    this._profileModal?.refreshLanguage();
     this._groupEls.forEach((group, groupId) => {
       const groupDef = (this.menu.groups || []).find(candidate => candidate.id === groupId);
       const label = group.querySelector('.sidebar-group-label, .header-nav-label');
@@ -325,7 +325,7 @@ export class AppShell extends BaseComponent {
       .text(initials)
       .attr('title', user?.name || i18n.t('*', null, 'Profile'))
       .attr('aria-label', user?.name || i18n.t('*', null, 'Profile'))
-      .event('click', () => this._profileDrawer?.open());
+      .event('click', () => this._profileModal?.open());
 
     // Content outlet
     html.take(main).div.id('outlet').className('app-content');
@@ -345,9 +345,14 @@ export class AppShell extends BaseComponent {
 
     this._notifPanel.mount(document.body);
 
-    // Mount ProfileDrawer
-    this._profileDrawer = new ProfileDrawer('profile-drawer', { user, company: this.state.company, open: false });
-    this._profileDrawer.mount(document.body);
+    // Mount the profile YAML page inside a generic right-side modal.
+    this._profileModal = new RightModal('profile-modal', {
+      page_id: 'profile',
+      title: 'Profile',
+      context: { user, company: this.state.company },
+      open: false,
+    });
+    this._profileModal.mount(document.body);
 
     // The welcome toast is only requested for the first shell mount after login.
     if (!this.state.showWelcomeToast) return;
@@ -381,10 +386,10 @@ export class AppShell extends BaseComponent {
     if (this._shellToastTimer) clearTimeout(this._shellToastTimer);
     this._shellToastTimer = null;
     this._notifPanel?.dispose();
-    this._profileDrawer?.dispose();
+    this._profileModal?.dispose();
     this._appLauncher?.dispose();
     this._notifPanel = null;
-    this._profileDrawer = null;
+    this._profileModal = null;
     this._appLauncher = null;
     this._shellToast?.remove();
     this._shellToast = null;

@@ -14,6 +14,7 @@ const ICON_PATHS: Record<string, string> = {
   check: '<path d="m5 12 4 4L19 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   x: '<path d="m6 6 12 12M18 6 6 18"/>',
+  'log-out': '<path d="M10 17l5-5-5-5M15 12H3M21 3v18"/>',
   'chevron-down': '<path d="m6 9 6 6 6-6"/>',
   'chevron-right': '<path d="m9 6 6 6-6 6"/>',
   'more-vertical': '<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>',

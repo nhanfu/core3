@@ -1,0 +1,97 @@
+title: Profile
+page:
+  id: profile
+
+components:
+  - type: Html
+    id: profile-summary
+    tag: div
+    class: profile-summary
+    children:
+      - tag: div
+        class: drawer-avatar
+        text_expr: |
+          // js
+          user => user.name ? user.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase() : 'U'
+      - tag: div
+        class: drawer-user-name
+        text_expr: |
+          // js
+          user => user.name
+      - tag: div
+        class: drawer-user-email
+        text_expr: |
+          // js
+          user => user.email
+      - tag: section
+        class: drawer-section
+        children:
+          - { tag: div, class: drawer-section-title, text: Company }
+          - tag: div
+            class: drawer-company-card
+            children:
+              - tag: div
+                class: drawer-company-name
+                text_expr: |
+                  // js
+                  user => user.company?.short_name
+              - tag: div
+                class: drawer-company-legal-name
+                text_expr: |
+                  // js
+                  user => user.company?.name
+              - tag: div
+                class: drawer-company-detail
+                text_expr: |
+                  // js
+                  user => user.company?.address
+  - type: ChoiceGroup
+    id: profile-language
+    title: Language
+    value: preferred_lang
+    group_class: lang-radio-group
+    option_class: lang-radio
+    options:
+      - { value: en, label: '🇺🇸 English' }
+      - { value: vi, label: '🇻🇳 Tiếng Việt' }
+    action: save-language
+  - type: Form
+    id: profile-password
+    title: Change Password
+    action: change-password
+    submit_label: Update password
+    loading_label: Updating…
+    fields:
+      - { field: current_password, label: Current password, type: password, required: true }
+      - { field: new_password, label: New password, type: password, required: true }
+      - { field: confirm_password, label: Confirm new password, type: password, required: true }
+    validation:
+      - { type: required, fields: [current_password, new_password, confirm_password], message: All fields required }
+      - { type: match, field: new_password, other_field: confirm_password, message: Passwords do not match }
+      - { type: min_length, field: new_password, value: 8, message: Password must be at least 8 characters }
+  - type: Button
+    id: profile-logout
+    action: logout
+    label: Sign out
+    icon: log-out
+    variant: danger
+
+actions:
+  - id: save-language
+    type: client
+    script: |
+      // js
+      async ({ row, request, setLanguage }) => {
+        await request('/api/v1/profile', {
+          method: 'PATCH',
+          body: { preferred_lang: row.preferred_lang },
+        })
+        await setLanguage(row.preferred_lang)
+      }
+  - id: change-password
+    type: request
+    method: PATCH
+    endpoint: /api/v1/profile
+    body: { current_password: '{row.current_password}', new_password: '{row.new_password}' }
+  - id: logout
+    type: logout
