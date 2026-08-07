@@ -1,0 +1,8 @@
+up: ''
+partition:
+  table: orders
+  column: order_date
+  strategy: range
+  interval: year
+down_partition: orders
+down: ''
