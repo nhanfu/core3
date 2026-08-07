@@ -1,3 +1,4 @@
+import { decodeEventBatch } from '../../lib/server/event-store.ts';
 import { EventMediatorClient } from '../../lib/server/event-mediator.ts';
 
 const port = Number(process.env.EVENT_MEDIATOR_STRESS_PORT || 3312);
@@ -12,18 +13,22 @@ const startedAt = performance.now();
 const deadline = Date.now() + deadlineMs;
 
 await client.start();
-const stream = client.subscribeStream({ topic: 'stress.throughput', maxEvents, maxWaitMs: 1000 });
 try {
-  for await (const event of stream.events) {
-    const id = String(event.clientMessageId || '');
-    if (id && !received.has(id)) {
-      received.add(id);
-      if (Number.isFinite(Number(event.sentAt))) latencies.push(Math.max(0, Date.now() - Number(event.sentAt)));
+  let cursor = 0;
+  while (Date.now() < deadline && received.size < expected) {
+    const bytes = await client.pollBytes({ topic: 'stress.throughput', afterSequence: cursor, maxEvents, maxWaitMs: 1000 });
+    const events = decodeEventBatch(bytes);
+    for (const event of events) {
+      cursor = Math.max(cursor, Number(event.sequence || 0));
+      const id = String(event.clientMessageId || '');
+      if (id && !received.has(id)) {
+        received.add(id);
+        if (Number.isFinite(Number(event.sentAt))) latencies.push(Math.max(0, Date.now() - Number(event.sentAt)));
+      }
+      if (received.size >= expected) break;
     }
-    if (received.size >= expected || Date.now() >= deadline) break;
   }
 } finally {
-  stream.close();
   await client.stop();
 }
 

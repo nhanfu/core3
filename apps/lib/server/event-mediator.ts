@@ -1,4 +1,4 @@
-import { EventStore, type EventEnvelope, type EventSubscription, type EventStoreSchema } from './event-store.ts';
+import { decodeEventBatch, encodeEventBatch, EventStore, type EventEnvelope, type EventSubscription, type EventStoreSchema } from './event-store.ts';
 
 export type MediatorConfig = {
   endpoint: string;
@@ -6,6 +6,18 @@ export type MediatorConfig = {
   nodeId?: string;
   reconnectMs?: number;
   requestTimeoutMs?: number;
+  segmentMaxRows?: number;
+  pullBatchSize?: number;
+};
+
+export type EventHistorySegment = {
+  file: string;
+  firstSequence: number;
+  lastSequence: number;
+  firstAt: number;
+  lastAt: number;
+  rows: number;
+  url?: string;
 };
 
 type WireMessage = Record<string, any> & { type: string };
@@ -14,6 +26,32 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 function decode(raw: string | ArrayBuffer): WireMessage {
   return JSON.parse(typeof raw === 'string' ? raw : new TextDecoder().decode(raw));
+}
+
+function decodeBinary(raw: ArrayBuffer | Uint8Array): WireMessage {
+  const bytes = new Uint8Array(raw);
+  const headerLength = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);
+  const header = JSON.parse(new TextDecoder().decode(bytes.slice(4, 4 + headerLength)));
+  return { ...header, events: decodeEventBatch(bytes.slice(4 + headerLength)) };
+}
+
+function splitBinary(raw: ArrayBuffer | Uint8Array): { header: WireMessage; body: Uint8Array } {
+  const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
+  const headerLength = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);
+  return {
+    header: JSON.parse(new TextDecoder().decode(bytes.slice(4, 4 + headerLength))),
+    body: bytes.slice(4 + headerLength),
+  };
+}
+
+function encodeBinary(requestId: unknown, events: EventEnvelope[]): Uint8Array {
+  const header = new TextEncoder().encode(JSON.stringify({ type: 'polled', requestId }));
+  const body = encodeEventBatch(events);
+  const result = new Uint8Array(4 + header.byteLength + body.byteLength);
+  new DataView(result.buffer).setUint32(0, header.byteLength);
+  result.set(header, 4);
+  result.set(body, 4 + header.byteLength);
+  return result;
 }
 
 export class EventMediatorClient {
@@ -31,6 +69,8 @@ export class EventMediatorClient {
       nodeId: config.nodeId || `node-${process.pid}`,
       reconnectMs: config.reconnectMs || 1000,
       requestTimeoutMs: config.requestTimeoutMs || 30000,
+      segmentMaxRows: Math.max(1, Math.floor(config.segmentMaxRows || 200)),
+      pullBatchSize: Math.max(1, Math.floor(config.pullBatchSize || 100)),
     };
   }
 
@@ -61,26 +101,64 @@ export class EventMediatorClient {
     return (response.events || []) as EventEnvelope[];
   }
 
-  async poll(options: { topic?: string; group?: string; afterSequence?: number; maxEvents?: number; maxWaitMs?: number } = {}): Promise<EventEnvelope[]> {
+  async poll(options: { topic?: string; group?: string; afterSequence?: number; maxEvents?: number; maxWaitMs?: number; format?: 'json' | 'arrow' } = {}): Promise<EventEnvelope[]> {
     const response = await this.request({
       type: 'poll',
       topic: options.topic || '*',
       group: options.group,
       afterSequence: options.afterSequence || 0,
-      maxEvents: options.maxEvents || 256,
+      maxEvents: options.maxEvents || this.config.pullBatchSize,
       maxWaitMs: options.maxWaitMs ?? 1000,
+      format: options.format || 'json',
     });
-    return (response.events || []) as EventEnvelope[];
+    return response.bytes ? decodeEventBatch(response.bytes) : (response.events || []) as EventEnvelope[];
+  }
+
+  async pollBytes(options: { topic?: string; group?: string; afterSequence?: number; maxEvents?: number; maxWaitMs?: number } = {}): Promise<Uint8Array> {
+    const response = await this.request({
+      type: 'poll',
+      topic: options.topic || '*',
+      group: options.group,
+      afterSequence: options.afterSequence || 0,
+      maxEvents: options.maxEvents || this.config.pullBatchSize,
+      maxWaitMs: options.maxWaitMs ?? 1000,
+      format: 'arrow',
+    });
+    return response.bytes || new Uint8Array();
   }
 
   async acknowledge(group: string, sequence: number): Promise<void> {
     await this.request({ type: 'ack', group, sequence });
   }
 
-  subscribeStream(options: { topic?: string; group?: string; maxEvents?: number; maxWaitMs?: number } = {}): EventSubscription {
+  async historyManifest(options: { afterSequence?: number; limit?: number } = {}): Promise<EventHistorySegment[]> {
+    const url = this.httpUrl('/events/history/manifest');
+    url.searchParams.set('afterSequence', String(options.afterSequence || 0));
+    url.searchParams.set('limit', String(options.limit || 1000));
+    if (this.config.token) url.searchParams.set('token', this.config.token);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Event history manifest failed: ${response.status}`);
+    return await response.json() as EventHistorySegment[];
+  }
+
+  async historySegment(file: string, range?: { start: number; end?: number }): Promise<Uint8Array> {
+    const url = this.httpUrl(`/events/history/segment/${encodeURIComponent(file)}`);
+    if (this.config.token) url.searchParams.set('token', this.config.token);
+    const response = await fetch(url, { headers: range ? { Range: `bytes=${range.start}-${range.end ?? ''}` } : undefined });
+    if (!response.ok && response.status !== 206) throw new Error(`Event history segment failed: ${response.status}`);
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  async metadata(): Promise<{ segmentMaxRows: number; pullBatchSize: number }> {
+    const response = await fetch(this.httpUrl('/events/metadata'));
+    if (!response.ok) throw new Error(`Event mediator metadata failed: ${response.status}`);
+    return await response.json() as { segmentMaxRows: number; pullBatchSize: number };
+  }
+
+  subscribeStream(options: { topic?: string; group?: string; maxEvents?: number; maxWaitMs?: number; format?: 'json' | 'arrow' } = {}): EventSubscription {
     const topic = options.topic || '*';
     const group = options.group;
-    const maxEvents = options.maxEvents || 256;
+    const maxEvents = options.maxEvents || this.config.pullBatchSize;
     const maxWaitMs = options.maxWaitMs ?? 1000;
     const reconnectMs = this.config.reconnectMs;
     let closed = false;
@@ -102,7 +180,7 @@ export class EventMediatorClient {
         }
       },
     };
-    const thisPoll = () => this.poll({ topic, group, afterSequence: group ? undefined : cursor, maxEvents, maxWaitMs });
+    const thisPoll = () => this.poll({ topic, group, afterSequence: group ? undefined : cursor, maxEvents, maxWaitMs, format: options.format });
     const close = () => { closed = true; };
     return { events, close, ack: group ? (sequence) => this.acknowledge(group, sequence) : undefined };
   }
@@ -117,11 +195,22 @@ export class EventMediatorClient {
       const socket: any = new WebSocket(url);
       let opened = false;
       socket.onopen = () => { opened = true; this.socket = socket; resolve(); };
-      socket.onmessage = (message: MessageEvent) => this.handle(decode(message.data));
+      socket.onmessage = (message: MessageEvent) => {
+        const data = message.data;
+        if (typeof data === 'string') this.handle(decode(data));
+        else this.handleBinary(data);
+      };
       socket.onerror = () => { if (!opened) reject(new Error('Unable to connect to event mediator')); };
       socket.onclose = () => { if (this.socket === socket) this.socket = null; };
     }).finally(() => { this.connecting = null; });
     return this.connecting;
+  }
+
+  private httpUrl(pathname: string): URL {
+    const url = new URL(this.config.endpoint.replace(/^ws/, 'http'));
+    url.pathname = pathname;
+    url.search = '';
+    return url;
   }
 
   private request(message: WireMessage): Promise<any> {
@@ -134,6 +223,21 @@ export class EventMediatorClient {
       this.pending.set(requestId, { resolve, reject, timer });
       this.socket!.send(JSON.stringify({ ...message, requestId }));
     }));
+  }
+
+  private decodeBinary(raw: ArrayBuffer | Uint8Array): WireMessage {
+    const { header, body } = splitBinary(raw);
+    return { ...header, events: decodeEventBatch(body) };
+  }
+
+  private handleBinary(raw: ArrayBuffer | Uint8Array): void {
+    const { header, body } = splitBinary(raw);
+    if (!header.requestId || !this.pending.has(String(header.requestId))) return;
+    const pending = this.pending.get(String(header.requestId))!;
+    this.pending.delete(String(header.requestId));
+    clearTimeout(pending.timer);
+    if (header.type === 'error') pending.reject(new Error(header.message || 'Event mediator error'));
+    else pending.resolve({ ...header, bytes: body });
   }
 
   private handle(message: WireMessage): void {
@@ -163,6 +267,8 @@ export type EventMediatorServerOptions = {
   writeMode?: 'low_latency' | 'durable';
   ackTimeoutMs?: number;
   maxPendingPerClient?: number;
+  segmentMaxRows?: number;
+  pullBatchSize?: number;
 };
 
 type GroupInFlight = { socket: any; events: EventEnvelope[]; expiresAt: number };
@@ -211,6 +317,9 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
         let message: WireMessage;
         try { message = decode(raw); } catch { socket.send(JSON.stringify({ type: 'error', message: 'Invalid JSON' })); return; }
         const reply = (body: WireMessage) => socket.send(JSON.stringify({ ...body, requestId: message.requestId }));
+        const replyPoll = (events: EventEnvelope[]) => message.format === 'arrow'
+          ? socket.send(encodeBinary(message.requestId, events))
+          : reply({ type: 'polled', events });
         try {
           if (message.type === 'publish') {
             const event = await enqueuePublish(() => store.publish({ topic: 'events', ...(message.event || {}) }));
@@ -222,7 +331,7 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
           } else if (message.type === 'poll' || message.type === 'fetch') {
             const topic = String(message.topic || '*');
             const group = message.group ? String(message.group) : undefined;
-            const limit = Math.max(1, Math.min(1000, Math.floor(Number(message.maxEvents || 100))));
+            const limit = Math.max(1, Math.min(1000, Math.floor(Number(message.maxEvents || options.pullBatchSize || 100))));
             const waitMs = Math.max(0, Math.min(30000, Math.floor(Number(message.maxWaitMs || 0))));
             let afterSequence = Math.max(0, Math.floor(Number(message.afterSequence || 0)));
             let key = '';
@@ -236,7 +345,7 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
               groupMembers.set(key, members);
               const inFlight = groupInFlight.get(key);
               if (inFlight && inFlight.expiresAt > Date.now()) {
-                reply({ type: 'polled', events: [], retryAfterMs: 25 });
+                replyPoll([]);
                 return;
               }
               if (inFlight) {
@@ -248,7 +357,7 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
               const owner = active.length ? active[cursor % active.length] : socket;
               selectedCursor = cursor;
               if (owner !== socket) {
-                reply({ type: 'polled', events: [], retryAfterMs: 10 });
+                replyPoll([]);
                 return;
               }
               // Reserve the group while this poll is waiting. This prevents
@@ -278,7 +387,7 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
               const members = [...(groupMembers.get(key) || [])].filter((member) => clients.has(member));
               if (members.length) groupCursors.set(key, (selectedCursor + 1) % members.length);
             }
-            reply({ type: 'polled', events: redelivery ? events.map((event) => ({ ...event, redelivery: true })) : events });
+            replyPoll(redelivery ? events.map((event) => ({ ...event, redelivery: true })) : events);
           } else if (message.type === 'ack') {
             if (!message.group) throw new Error('Acknowledgements require a consumer group');
             const group = String(message.group);
@@ -304,9 +413,39 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
         for (const [key, pending] of groupInFlight) if (pending.socket === socket) groupInFlight.delete(key);
       },
     },
-    fetch(req: Request, server: any) {
+    async fetch(req: Request, server: any) {
       const url = new URL(req.url);
       if (url.pathname === '/health') return new Response('ok');
+      if (url.pathname === '/events/metadata') return Response.json({ segmentMaxRows: Math.max(1, options.segmentMaxRows || 200), pullBatchSize: Math.max(1, options.pullBatchSize || 100) });
+      if (url.pathname === '/events/history') {
+        if (options.token && url.searchParams.get('token') !== options.token) return new Response('Unauthorized', { status: 401 });
+        try {
+          const segment = url.searchParams.get('segment');
+          if (segment) return new Response(Buffer.from(await store.parquetSegment(segment)), { headers: { 'content-type': 'application/vnd.apache.parquet' } });
+          return new Response(Buffer.from(await store.history({ afterSequence: Number(url.searchParams.get('afterSequence') || 0), limit: Number(url.searchParams.get('limit') || 1000) })), { headers: { 'content-type': 'application/vnd.apache.arrow.stream' } });
+        } catch (error: any) { return new Response(String(error?.message || 'History request failed'), { status: 404 }); }
+      }
+      if (url.pathname === '/events/history/manifest') {
+        if (options.token && url.searchParams.get('token') !== options.token) return new Response('Unauthorized', { status: 401 });
+        const segments = await store.historyManifest({ afterSequence: Number(url.searchParams.get('afterSequence') || 0), limit: Number(url.searchParams.get('limit') || 1000) });
+        return Response.json(segments.map((segment) => ({ ...segment, url: `/events/history/segment/${encodeURIComponent(segment.file)}` })));
+      }
+      if (url.pathname.startsWith('/events/history/segment/')) {
+        if (options.token && url.searchParams.get('token') !== options.token) return new Response('Unauthorized', { status: 401 });
+        try {
+          const file = decodeURIComponent(url.pathname.slice('/events/history/segment/'.length));
+          const bytes = await store.parquetSegment(file);
+          const range = req.headers.get('range');
+          if (!range) return new Response(Buffer.from(bytes), { headers: { 'accept-ranges': 'bytes', 'content-length': String(bytes.byteLength), 'content-type': 'application/vnd.apache.parquet' } });
+          const match = /^bytes=(\d+)-(\d*)$/.exec(range);
+          if (!match) return new Response('Invalid range', { status: 416 });
+          const start = Number(match[1]);
+          const end = Math.min(bytes.byteLength - 1, match[2] ? Number(match[2]) : bytes.byteLength - 1);
+          if (start > end || start >= bytes.byteLength) return new Response('Range not satisfiable', { status: 416, headers: { 'content-range': `bytes */${bytes.byteLength}` } });
+          const body = Buffer.from(bytes.slice(start, end + 1));
+          return new Response(body, { status: 206, headers: { 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${bytes.byteLength}`, 'content-length': String(body.byteLength), 'content-type': 'application/vnd.apache.parquet' } });
+        } catch (error: any) { return new Response(String(error?.message || 'History segment failed'), { status: 404 }); }
+      }
       if (url.pathname === '/events') {
         if (options.token && url.searchParams.get('token') !== options.token) return new Response('Unauthorized', { status: 401 });
         const nodeId = url.searchParams.get('node_id') || 'node';

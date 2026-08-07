@@ -37,7 +37,7 @@ export class TmsModule {
     const eventConfig = context.serviceConfigs.event_store || {};
     const eventMode = String(eventConfig.mode || context.env.CORE3_EVENT_MODE || 'embedded');
     const eventDatabase = eventConfig.database || {};
-    const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH || join(context.moduleRoot, '.data', 'events.duckdb');
+    const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH || join(context.moduleRoot, '.data', 'events-parquet');
     const eventSchema = eventConfig.schema || context.serviceConfigs.chat?.event_schema;
     if (!eventSchema) throw new Error('Chat event schema is not configured');
     this.eventStore = eventMode === 'mediator'
@@ -46,6 +46,8 @@ export class TmsModule {
         token: String((eventConfig.mediator as any)?.token || context.env.CORE3_EVENT_MEDIATOR_TOKEN || ''),
         nodeId: String((eventConfig.mediator as any)?.node_id || context.env.CORE3_NODE_ID || `tms-${process.pid}`),
         reconnectMs: Number((eventConfig.mediator as any)?.reconnect_ms || 1000),
+        segmentMaxRows: Number(eventConfig.segment_max_rows || context.env.CORE3_EVENT_SEGMENT_MAX_ROWS || 200),
+        pullBatchSize: Number(eventConfig.pull_batch_size || context.env.CORE3_EVENT_PULL_BATCH_SIZE || 100),
       })
       : new EventStore({
         schema: eventSchema,
@@ -56,6 +58,8 @@ export class TmsModule {
         hotMaxBytes: Number(eventConfig.hot_max_bytes || context.env.CORE3_EVENT_HOT_MAX_BYTES || 128 * 1024 * 1024),
         hotRetentionMs: Number(eventConfig.hot_retention_ms || context.env.CORE3_EVENT_HOT_RETENTION_MS || eventConfig.retention_ms || 60 * 60 * 1000),
         hotConsumerTtlMs: Number(eventConfig.hot_consumer_ttl_ms || context.env.CORE3_EVENT_HOT_CONSUMER_TTL_MS || 30000),
+        segmentMaxRows: Number(eventConfig.segment_max_rows || context.env.CORE3_EVENT_SEGMENT_MAX_ROWS || 200),
+        pullBatchSize: Number(eventConfig.pull_batch_size || context.env.CORE3_EVENT_PULL_BATCH_SIZE || 100),
         readerCount: Number(eventConfig.reader_connections || context.env.TMS_EVENT_READER_CONNECTIONS || 2),
         bufferMaxRows: Number(eventConfig.buffer_max_rows || context.env.TMS_EVENT_BUFFER_MAX_ROWS || 10000),
         writeMode: eventConfig.write_mode || context.env.TMS_EVENT_WRITE_MODE || 'low_latency',

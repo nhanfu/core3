@@ -24,12 +24,13 @@ afterEach(async () => {
   await Promise.all(stores.splice(0).map((store) => store.stop()));
 });
 
-function makeStore(databasePath: string, options: { maxRows?: number; hotMaxRows?: number; readerCount?: number; writeMode?: 'low_latency' | 'durable' } = {}) {
+function makeStore(databasePath: string, options: { maxRows?: number; hotMaxRows?: number; segmentMaxRows?: number; readerCount?: number; writeMode?: 'low_latency' | 'durable' } = {}) {
   const store = new EventStore({
     schema,
     databasePath,
     maxRows: options.maxRows ?? 1000,
     hotMaxRows: options.hotMaxRows ?? options.maxRows ?? 1000,
+    segmentMaxRows: options.segmentMaxRows ?? 200,
     retentionMs: 60 * 60 * 1000,
     readerCount: options.readerCount ?? 4,
     writeMode: options.writeMode,
@@ -96,7 +97,7 @@ describe('EventStore', () => {
     expect(await store.count()).toBe(3);
   });
 
-  it('persists events in DuckDB and resumes sequence numbers after restart', async () => {
+  it('persists events in Parquet and resumes sequence numbers after restart', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'core3-event-store-'));
     const databasePath = join(directory, 'events.duckdb');
     try {
@@ -163,5 +164,12 @@ describe('EventStore', () => {
       stores.splice(stores.indexOf(store), 1);
       await rm(directory, { recursive: true, force: true });
     }
+  });
+
+  it('splits Parquet files at the configured segment row limit', async () => {
+    const store = makeStore(':memory:', { segmentMaxRows: 2, writeMode: 'durable' });
+    await store.start();
+    await store.publishBatch(Array.from({ length: 8 }, (_, sequence) => event(1, sequence)));
+    expect((await store.historyManifest({ limit: 20 })).map((segment) => segment.rows)).toEqual([2, 2, 2, 2]);
   });
 });

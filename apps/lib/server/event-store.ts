@@ -1,51 +1,22 @@
-import { RecordBatchStreamWriter, tableFromArrays } from 'apache-arrow';
-import { DuckDBInstance } from '@duckdb/node-api';
-import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
+import { mkdir, readdir, readFile, rename, rm, unlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { v7 as uuidv7 } from 'uuid';
+import parquet from 'parquet-wasm';
 
 export type EventValueType = 'varchar' | 'bigint' | 'integer' | 'double' | 'boolean';
-
-export type EventSchemaColumn = {
-  name: string;
-  type: EventValueType;
-  source?: string;
-  nullable?: boolean;
-};
-
-export type EventStoreSchema = {
-  table?: string;
-  columns: EventSchemaColumn[];
-};
-
+export type EventSchemaColumn = { name: string; type: EventValueType; source?: string; nullable?: boolean };
+export type EventStoreSchema = { table?: string; columns: EventSchemaColumn[] };
 export type EventWriteMode = 'low_latency' | 'durable';
-
-export type EventEnvelope = {
-  id: string;
-  sequence: number;
-  at: number;
-  topic?: string;
-  key?: string;
-  sourceNode?: string;
-  [key: string]: unknown;
-};
-
+export type EventEnvelope = { id: string; sequence: number; at: number; topic?: string; key?: string; sourceNode?: string; [key: string]: unknown };
 export type EventRecord = EventEnvelope;
-
 type EventListener = (event: EventEnvelope) => void;
-
-export type EventSubscription = {
-  events: AsyncIterable<EventEnvelope>;
-  close: () => void;
-  ack?: (sequence: number) => Promise<void>;
-};
-
+export type EventSubscription = { events: AsyncIterable<EventEnvelope>; close: () => void; ack?: (sequence: number) => Promise<void> };
 export type EventBus = Pick<EventStore, 'start' | 'stop' | 'publish' | 'subscribeStream'>;
 
-function quoteIdentifier(identifier: string): string {
-  if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)) throw new Error(`Invalid event identifier: ${identifier}`);
-  return `"${identifier}"`;
-}
+type Segment = { file: string; firstSequence: number; lastSequence: number; firstAt: number; lastAt: number; rows: number; bytes?: number };
+type HotSegment = { firstSequence: number; lastSequence: number; bytes: Uint8Array; events: EventEnvelope[] };
 
 function valueAt(source: string | undefined, event: EventEnvelope): unknown {
   if (!source) return undefined;
@@ -53,478 +24,286 @@ function valueAt(source: string | undefined, event: EventEnvelope): unknown {
   return source.split('.').reduce((value: any, key) => value?.[key], event);
 }
 
-class DuckDbConnectionPool {
-  private readonly writer: any;
-  private readonly appender: any;
-  private readonly readers: any[];
-  private readonly readerQueues: Array<Promise<void>>;
-  private nextReader = 0;
-
-  private constructor(
-    private readonly db: any,
-    writer: any,
-    appender: any,
-    readers: any[],
-    private readonly schema: EventStoreSchema,
-  ) {
-    this.writer = writer;
-    this.appender = appender;
-    this.readers = readers;
-    this.readerQueues = this.readers.map(() => Promise.resolve());
+function normalizeRow(row: any): EventEnvelope {
+  let envelope: Record<string, unknown> = {};
+  if (typeof row.event_json === 'string') {
+    try { envelope = JSON.parse(row.event_json); } catch {}
   }
+  return { ...envelope, sequence: Number(row.sequence), at: Number(row.event_at), id: String(row.id), topic: row.topic || envelope.topic || 'events' } as EventEnvelope;
+}
 
-  static async create(db: any, schema: EventStoreSchema, readerCount: number): Promise<DuckDbConnectionPool> {
-    const table = quoteIdentifier(schema.table || 'event_log');
-    const writer = await db.connect();
-    const appender = await writer.createAppender(table.slice(1, -1));
-    const readers = await Promise.all(Array.from({ length: Math.max(1, readerCount) }, () => db.connect()));
-    return new DuckDbConnectionPool(db, writer, appender, readers, schema);
-  }
+export function encodeEventBatch(events: EventEnvelope[]): Uint8Array {
+  const table = tableFromArrays({
+    id: events.map((event) => event.id),
+    sequence: events.map((event) => event.sequence),
+    event_at: events.map((event) => event.at),
+    event_json: events.map((event) => JSON.stringify(event)),
+  });
+  return tableToIPC(table, 'stream');
+}
 
-  async run(sql: string, params: any[] = []): Promise<void> {
-    await this.writer.run(sql, params);
-  }
+export function decodeEventBatch(bytes: Uint8Array): EventEnvelope[] {
+  return tableFromIPC(bytes).toArray().map(normalizeRow);
+}
 
-  append(event: EventEnvelope, flush = true): void {
-    for (const column of this.schema.columns) {
-      const value = valueAt(column.source || column.name, event);
-      if (value === undefined || value === null) {
-        this.appender.appendNull();
-      } else if (column.type === 'varchar') {
-        this.appender.appendVarchar(String(value));
-      } else if (column.type === 'bigint') {
-        this.appender.appendBigInt(BigInt(value as number | bigint));
-      } else if (column.type === 'integer') {
-        this.appender.appendInteger(Number(value));
-      } else if (column.type === 'double') {
-        this.appender.appendDouble(Number(value));
-      } else if (column.type === 'boolean') {
-        this.appender.appendBoolean(Boolean(value));
-      }
-    }
-    this.appender.endRow();
-    if (flush) this.appender.flushSync();
-  }
-
-  appendBatch(events: EventEnvelope[]): void {
-    for (const event of events) this.append(event, false);
-    if (events.length) this.appender.flushSync();
-  }
-
-  query(sql: string, params: any[] = []): Promise<any[]> {
-    const index = this.nextReader++ % this.readers.length;
-    let rows: any[] = [];
-    const task = this.readerQueues[index].then(async () => {
-      const result = await this.readers[index].runAndReadAll(sql, params);
-      rows = result.getRowObjectsJS();
-    });
-    this.readerQueues[index] = task.catch(() => {});
-    return task.then(() => rows);
-  }
-
-  close(): void {
-    this.appender.closeSync();
-    this.writer.closeSync();
-    this.readers.forEach((reader) => reader.closeSync());
-    this.db.closeSync();
-  }
+function arrowBytes(events: EventEnvelope[], schema: EventStoreSchema): Uint8Array {
+  const columns = Object.fromEntries(schema.columns.map((column) => [column.name, events.map((event) => valueAt(column.source || column.name, event) ?? null)]));
+  const table = tableFromArrays(columns);
+  return tableToIPC(table, 'stream');
 }
 
 export class EventStore {
   private readonly listeners = new Set<EventListener>();
-  private db: any = null;
-  private cacheDb: any = null;
-  private pool: DuckDbConnectionPool | null = null;
-  private cachePool: DuckDbConnectionPool | null = null;
-  private nextSequence = 1;
-  private readonly databasePath: string;
+  private readonly dataPath: string;
+  private readonly temporaryDataPath: boolean;
   private readonly retentionMs: number;
   private readonly maxRows: number;
   private readonly hotMaxRows: number;
   private readonly hotMaxBytes: number;
   private readonly hotRetentionMs: number;
   private readonly hotConsumerTtlMs: number;
-  private readonly readerCount: number;
+  private readonly segmentMaxRows: number;
   private readonly bufferMaxRows: number;
+  private readonly batchSize = 256;
   private readonly schema: EventStoreSchema;
   private readonly writeMode: EventWriteMode;
   private readonly pending: EventEnvelope[] = [];
-  private readonly batchSize = 256;
-  private workerRunning = false;
-  private cacheMaintenance: Promise<void> = Promise.resolve();
-  private cacheMaintenanceScheduled = false;
-  private cacheDirtyRows = 0;
-  private lastCachePruneAt = 0;
-  private flushWaiters: Array<() => void> = [];
-  private readonly cachePruneBatch = 256;
-  private readonly cachePruneIntervalMs = 1000;
-  private readonly hotEvents: EventEnvelope[] = [];
-  private hotBytes = 0;
+  private readonly segments: Segment[] = [];
+  private readonly hotSegments: HotSegment[] = [];
   private readonly activeCursors = new Map<string, { sequence: number; touchedAt: number }>();
+  private nextSequence = 1;
+  private hotRows = 0;
+  private hotBytes = 0;
+  private workerRunning = false;
+  private workerTimer: ReturnType<typeof setTimeout> | null = null;
+  private flushWaiters: Array<() => void> = [];
+  private persistTail: Promise<void> = Promise.resolve();
+  private offsetWriteTail: Promise<void> = Promise.resolve();
+  private manifestDirty = false;
 
   constructor(options: {
-    schema: EventStoreSchema;
-    databasePath?: string;
-    retentionMs?: number;
-    maxRows?: number;
-    hotMaxRows?: number;
-    hotMaxBytes?: number;
-    hotRetentionMs?: number;
-    hotConsumerTtlMs?: number;
-    readerCount?: number;
-    bufferMaxRows?: number;
-    writeMode?: EventWriteMode;
+    schema: EventStoreSchema; databasePath?: string; retentionMs?: number; maxRows?: number;
+    hotMaxRows?: number; hotMaxBytes?: number; hotRetentionMs?: number; hotConsumerTtlMs?: number;
+    segmentMaxRows?: number; pullBatchSize?: number; readerCount?: number; bufferMaxRows?: number; writeMode?: EventWriteMode;
   }) {
     this.schema = options.schema;
-    this.databasePath = options.databasePath || './events.duckdb';
+    const configuredPath = options.databasePath || './events-parquet';
+    this.temporaryDataPath = configuredPath === ':memory:';
+    this.dataPath = this.temporaryDataPath
+      ? join(tmpdir(), `core3-event-${process.pid}-${Math.random().toString(36).slice(2)}`)
+      : configuredPath.endsWith('.duckdb') ? configuredPath.slice(0, -'.duckdb'.length) + '-parquet' : configuredPath;
     this.retentionMs = Math.max(0, options.retentionMs ?? 60 * 60 * 1000);
     this.maxRows = Math.max(1, Math.floor(options.maxRows || 1000));
     this.hotMaxRows = Math.max(1, Math.floor(options.hotMaxRows || this.maxRows));
     this.hotMaxBytes = Math.max(1024, Math.floor(options.hotMaxBytes || 128 * 1024 * 1024));
     this.hotRetentionMs = Math.max(0, options.hotRetentionMs ?? options.retentionMs ?? 60 * 60 * 1000);
     this.hotConsumerTtlMs = Math.max(1000, Math.floor(options.hotConsumerTtlMs || 30000));
-    this.readerCount = Math.max(1, Math.floor(options.readerCount || 2));
+    this.segmentMaxRows = Math.max(1, Math.floor(options.segmentMaxRows || 200));
     this.bufferMaxRows = Math.max(this.batchSize, Math.floor(options.bufferMaxRows || 10000));
     this.writeMode = options.writeMode || 'low_latency';
-    if (!this.schema.columns.some((column) => column.name === 'id' && column.source === 'id')) throw new Error('Event schema requires id');
-    if (!this.schema.columns.some((column) => column.name === 'sequence' && column.source === 'sequence')) throw new Error('Event schema requires sequence');
-    if (!this.schema.columns.some((column) => column.name === 'event_at' && column.source === 'at')) throw new Error('Event schema requires event_at');
   }
 
-  private table(): string {
-    return quoteIdentifier(this.schema.table || 'event_log');
-  }
-
+  private manifestPath(): string { return join(this.dataPath, 'manifest.json'); }
+  private offsetsPath(): string { return join(this.dataPath, 'consumer-offsets.json'); }
   async start(): Promise<void> {
-    if (this.pool) return;
-    if (this.databasePath !== ':memory:') await mkdir(dirname(this.databasePath), { recursive: true });
-    this.db = await DuckDBInstance.create(this.databasePath);
-    this.cacheDb = await DuckDBInstance.create(':memory:');
-    await Promise.all([this.createSchema(this.db), this.createSchema(this.cacheDb)]);
-    const metadata = await this.db.connect();
-    await metadata.run(`CREATE TABLE IF NOT EXISTS "_event_consumer_offsets" (
-      "consumer_group" VARCHAR PRIMARY KEY,
-      "sequence" BIGINT NOT NULL,
-      "updated_at" BIGINT NOT NULL
-    )`);
-    metadata.closeSync();
-    this.pool = await DuckDbConnectionPool.create(this.db, this.schema, this.readerCount);
-    this.cachePool = await DuckDbConnectionPool.create(this.cacheDb, this.schema, this.readerCount);
-    const rows = await this.pool.query(`SELECT COALESCE(MAX("sequence"), 0) AS sequence FROM ${this.table()}`);
-    this.nextSequence = Number(rows[0]?.sequence || 0) + 1;
-  }
-
-  private async createSchema(db: any): Promise<void> {
-    const connection = await db.connect();
-    const columns = this.schema.columns.map((column) => {
-      const nullable = column.nullable === false ? ' NOT NULL' : '';
-      const sqlType = column.type === 'varchar' ? 'VARCHAR' : column.type === 'bigint' ? 'BIGINT' : column.type === 'integer' ? 'INTEGER' : column.type === 'double' ? 'DOUBLE' : 'BOOLEAN';
-      return `${quoteIdentifier(column.name)} ${sqlType}${nullable}`;
-    }).join(',\n');
-    await connection.run(`CREATE TABLE IF NOT EXISTS ${this.table()} (${columns})`);
-    // Keep deployments using an older event schema readable when optional
-    // mediator metadata columns are introduced.
-    for (const column of this.schema.columns) {
-      const sqlType = column.type === 'varchar' ? 'VARCHAR' : column.type === 'bigint' ? 'BIGINT' : column.type === 'integer' ? 'INTEGER' : column.type === 'double' ? 'DOUBLE' : 'BOOLEAN';
-      await connection.run(`ALTER TABLE ${this.table()} ADD COLUMN IF NOT EXISTS ${quoteIdentifier(column.name)} ${sqlType}`);
+    await mkdir(this.dataPath, { recursive: true });
+    const manifest = await this.readJson<{ segments?: Segment[] }>(this.manifestPath(), {});
+    const listed = Array.isArray(manifest.segments) ? manifest.segments : [];
+    const files = await readdir(this.dataPath);
+    const known = new Set(listed.map((segment) => segment.file));
+    for (const file of files.filter((name) => name.endsWith('.parquet') && !known.has(name))) {
+      const match = /^events-(\d+)-(\d+)\.parquet$/.exec(file);
+      if (match) listed.push({ file, firstSequence: Number(match[1]), lastSequence: Number(match[2]), firstAt: 0, lastAt: 0, rows: Number(match[2]) - Number(match[1]) + 1 });
     }
-    connection.closeSync();
+    listed.sort((a, b) => a.firstSequence - b.firstSequence);
+    this.segments.push(...listed);
+    this.nextSequence = Math.max(0, ...this.segments.map((segment) => segment.lastSequence)) + 1;
+    await this.writeManifest();
   }
 
-  private getPool(): DuckDbConnectionPool {
-    if (!this.pool) throw new Error('Event store has not been started');
-    return this.pool;
+  private async readJson<T>(path: string, fallback: T): Promise<T> {
+    try { return JSON.parse(await readFile(path, 'utf8')) as T; } catch { return fallback; }
   }
 
-  private getCachePool(): DuckDbConnectionPool {
-    if (!this.cachePool) throw new Error('Event store has not been started');
-    return this.cachePool;
+  private async writeAtomic(path: string, content: string): Promise<void> {
+    const temporary = `${path}.${process.pid}.${Date.now()}.tmp`;
+    await writeFile(temporary, content);
+    await rename(temporary, path);
   }
 
-  async publish(event: Omit<EventEnvelope, 'id' | 'sequence' | 'at'>): Promise<EventEnvelope> {
-    return (await this.publishBatch([event]))[0];
+  private async writeManifest(): Promise<void> {
+    await this.writeAtomic(this.manifestPath(), JSON.stringify({ version: 1, segments: this.segments }, null, 2));
+    this.manifestDirty = false;
   }
+
+  private async persistSegment(events: EventEnvelope[]): Promise<void> {
+    if (!events.length) return;
+    const first = events[0];
+    const last = events[events.length - 1];
+    const file = `events-${String(first.sequence).padStart(16, '0')}-${String(last.sequence).padStart(16, '0')}.parquet`;
+    const temporary = join(this.dataPath, `${file}.tmp`);
+    const rows = events.map((event) => {
+      const row: Record<string, unknown> = { id: event.id, sequence: event.sequence, event_at: event.at, event_json: JSON.stringify(event), topic: event.topic || 'events', event_key: event.key, source_node: event.sourceNode };
+      for (const column of this.schema.columns) row[column.name] = valueAt(column.source || column.name, event) ?? null;
+      return row;
+    });
+    const table = tableFromArrays(Object.fromEntries(Object.keys(rows[0]).map((name) => [name, rows.map((row) => row[name])])))
+    const wasmTable = parquet.Table.fromIPCStream(tableToIPC(table, 'stream'));
+    const parquetBytes = parquet.writeParquet(wasmTable);
+    await writeFile(temporary, parquetBytes);
+    await rename(temporary, join(this.dataPath, file));
+    this.segments.push({ file, firstSequence: first.sequence, lastSequence: last.sequence, firstAt: first.at, lastAt: last.at, rows: events.length });
+    this.manifestDirty = true;
+    await this.pruneSegments();
+    await this.writeManifest();
+  }
+
+  private async persist(events: EventEnvelope[]): Promise<void> {
+    const previous = this.persistTail;
+    let release!: () => void;
+    this.persistTail = new Promise<void>((resolve) => { release = resolve; });
+    await previous;
+    try {
+      for (let offset = 0; offset < events.length; offset += this.segmentMaxRows) await this.persistSegment(events.slice(offset, offset + this.segmentMaxRows));
+    } finally { release(); }
+  }
+
+  private async pruneSegments(): Promise<void> {
+    let rows = this.segments.reduce((sum, segment) => sum + segment.rows, 0);
+    const cutoff = Date.now() - this.retentionMs;
+    while (this.segments.length > 1 && this.segments[0].lastAt > 0 && this.segments[0].lastAt < cutoff) {
+      const segment = this.segments.shift()!;
+      rows -= segment.rows;
+      await unlink(join(this.dataPath, segment.file)).catch(() => {});
+    }
+  }
+
+  async publish(event: Omit<EventEnvelope, 'id' | 'sequence' | 'at'>): Promise<EventEnvelope> { return (await this.publishBatch([event]))[0]; }
 
   async publishBatch(events: Array<Omit<EventEnvelope, 'id' | 'sequence' | 'at'>>): Promise<EventEnvelope[]> {
-    const items = events.map((event) => ({
-      topic: 'events',
-      ...event,
-      id: uuidv7(),
-      sequence: this.nextSequence++,
-      at: Date.now(),
-    } as EventEnvelope));
+    const items = events.map((event) => ({ topic: 'events', ...event, id: uuidv7(), sequence: this.nextSequence++, at: Date.now() } as EventEnvelope));
     if (!items.length) return items;
-    for (const item of items) {
-      this.hotEvents.push(item);
-      this.hotBytes += this.eventBytes(item);
-    }
+    const bytes = arrowBytes(items, this.schema);
+    this.hotSegments.push({ firstSequence: items[0].sequence, lastSequence: items.at(-1)!.sequence, bytes, events: items });
+    this.hotRows += items.length; this.hotBytes += bytes.byteLength;
     this.trimHot();
-    if (this.writeMode === 'durable') this.getPool().appendBatch(items);
-    this.getCachePool().appendBatch(items);
-    for (const item of items) {
-      for (const listener of this.listeners) {
-        try { listener(item); } catch {}
-      }
-    }
-    this.scheduleCacheMaintenance(items.length);
-    if (this.writeMode === 'low_latency') {
-      if (this.pending.length + items.length >= this.bufferMaxRows) await this.flush();
+    for (const item of items) for (const listener of this.listeners) { try { listener(item); } catch {} }
+    if (this.writeMode === 'durable') await this.persist(items);
+    else {
       this.pending.push(...items);
-      this.startWorker();
+      if (this.pending.length >= this.bufferMaxRows) await this.flush();
+      else this.scheduleWorker();
     }
     return items;
   }
 
-  private startWorker(): void {
-    if (this.workerRunning) return;
-    this.workerRunning = true;
-    void this.drainWorker();
+  private scheduleWorker(): void {
+    if (this.workerRunning || this.workerTimer) return;
+    if (this.pending.length >= this.batchSize) { this.startWorker(); return; }
+    this.workerTimer = setTimeout(() => { this.workerTimer = null; this.startWorker(); }, 10);
   }
-
+  private startWorker(): void { if (!this.workerRunning) { this.workerRunning = true; void this.drainWorker(); } }
   private async drainWorker(): Promise<void> {
-    try {
-      while (this.pending.length) {
-        const batch = this.pending.splice(0, this.batchSize);
-        try {
-          this.getPool().appendBatch(batch);
-        } catch (error) {
-          this.pending.unshift(...batch);
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          if (!this.pool) throw error;
-        }
-      }
-    } finally {
+    try { while (this.pending.length) await this.persist(this.pending.splice(0, this.batchSize)); }
+    finally {
       this.workerRunning = false;
-      if (!this.pending.length) {
-        const waiters = this.flushWaiters.splice(0);
-        waiters.forEach((resolve) => resolve());
-      } else if (this.pool) {
-        this.startWorker();
-      }
+      const waiters = this.flushWaiters.splice(0);
+      if (!this.pending.length) waiters.forEach((resolve) => resolve());
+      else if (waiters.length) this.startWorker();
+      else this.scheduleWorker();
     }
   }
-
   async flush(): Promise<void> {
     if (!this.pending.length && !this.workerRunning) return;
+    if (this.workerTimer) { clearTimeout(this.workerTimer); this.workerTimer = null; }
+    if (!this.workerRunning && this.pending.length) this.startWorker();
     await new Promise<void>((resolve) => this.flushWaiters.push(resolve));
-    if (this.pending.length && !this.workerRunning) this.startWorker();
-  }
-
-  private async pruneCache(): Promise<void> {
-    await this.getCachePool().run(`DELETE FROM ${this.table()} WHERE "event_at" < ? OR "sequence" <= (
-      SELECT COALESCE(MAX("sequence"), 0) - ? FROM ${this.table()}
-    )`, [Date.now() - this.hotRetentionMs, this.hotMaxRows]);
-  }
-
-  private eventBytes(event: EventEnvelope): number {
-    // This is deliberately an estimate. The durable/cache append path already
-    // serializes the envelope when it materializes event_json; serializing it a
-    // second time here makes the hot path pay the payload cost twice.
-    let bytes = 128;
-    for (const value of Object.values(event)) {
-      if (typeof value === 'string') bytes += value.length * 2;
-      else if (typeof value === 'number' || typeof value === 'boolean') bytes += 16;
-      else if (value !== null && value !== undefined) bytes += 256;
-    }
-    return bytes;
   }
 
   private trimHot(): void {
     const now = Date.now();
-    for (const [id, cursor] of this.activeCursors) {
-      if (now - cursor.touchedAt > this.hotConsumerTtlMs) this.activeCursors.delete(id);
-    }
-    const protectedSequence = this.activeCursors.size
-      ? Math.min(...[...this.activeCursors.values()].map((cursor) => cursor.sequence))
-      : Number.POSITIVE_INFINITY;
-    while (this.hotEvents.length > 1) {
-      const first = this.hotEvents[0];
-      const tooOld = first.at < now - this.hotRetentionMs;
-      const tooManyRows = this.hotEvents.length > this.hotMaxRows;
-      const tooLarge = this.hotBytes > this.hotMaxBytes;
-      if ((!tooOld && !tooManyRows && !tooLarge) || first.sequence >= protectedSequence) break;
-      this.hotEvents.shift();
-      this.hotBytes -= this.eventBytes(first);
+    for (const [id, cursor] of this.activeCursors) if (now - cursor.touchedAt > this.hotConsumerTtlMs) this.activeCursors.delete(id);
+    const protectedSequence = this.activeCursors.size ? Math.min(...[...this.activeCursors.values()].map((cursor) => cursor.sequence)) : Infinity;
+    while (this.hotSegments.length > 1) {
+      const first = this.hotSegments[0];
+      if ((this.hotRows <= this.hotMaxRows && this.hotBytes <= this.hotMaxBytes && first.events[0].at >= now - this.hotRetentionMs) || first.lastSequence >= protectedSequence) break;
+      this.hotSegments.shift(); this.hotRows -= first.events.length; this.hotBytes -= first.bytes.byteLength;
     }
   }
+  touchCursor(id: string, sequence: number): void { this.activeCursors.set(id, { sequence: Math.max(0, Math.floor(sequence)), touchedAt: Date.now() }); }
+  releaseCursor(id: string): void { this.activeCursors.delete(id); this.trimHot(); }
 
-  touchCursor(id: string, sequence: number): void {
-    this.activeCursors.set(id, { sequence: Math.max(0, Math.floor(sequence)), touchedAt: Date.now() });
-  }
-
-  releaseCursor(id: string): void {
-    this.activeCursors.delete(id);
-    this.trimHot();
-  }
-
-  private scheduleCacheMaintenance(rows = 1): void {
-    this.cacheDirtyRows += rows;
-    const now = Date.now();
-    if (this.cacheMaintenanceScheduled
-      || (this.cacheDirtyRows < this.cachePruneBatch && now - this.lastCachePruneAt < this.cachePruneIntervalMs)) return;
-    this.cacheMaintenanceScheduled = true;
-    this.cacheMaintenance = this.cacheMaintenance.catch(() => {}).then(async () => {
-      await this.pruneCache();
-      this.cacheDirtyRows = 0;
-      this.lastCachePruneAt = Date.now();
-    }).finally(() => {
-      this.cacheMaintenanceScheduled = false;
-    });
-  }
-
-  subscribe(listener: EventListener): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-
+  subscribe(listener: EventListener): () => void { this.listeners.add(listener); return () => this.listeners.delete(listener); }
   subscribeStream(): EventSubscription {
-    const queue: EventEnvelope[] = [];
-    let closed = false;
-    let wake: (() => void) | null = null;
-    const listener = (event: EventEnvelope) => {
-      if (closed) return;
-      queue.push(event);
-      wake?.();
-      wake = null;
-    };
+    const queue: EventEnvelope[] = []; let closed = false; let wake: (() => void) | null = null;
+    const listener = (event: EventEnvelope) => { if (!closed) { queue.push(event); wake?.(); wake = null; } };
     this.listeners.add(listener);
-    const close = () => {
-      if (closed) return;
-      closed = true;
-      this.listeners.delete(listener);
-      wake?.();
-      wake = null;
-    };
-    const events = {
-      async *[Symbol.asyncIterator](): AsyncGenerator<EventEnvelope> {
-        while (!closed || queue.length) {
-          if (!queue.length) await new Promise<void>((resolve) => { wake = resolve; });
-          while (queue.length) yield queue.shift()!;
-        }
-      },
-    };
+    const close = () => { if (!closed) { closed = true; this.listeners.delete(listener); wake?.(); wake = null; } };
+    const events = { async *[Symbol.asyncIterator](): AsyncGenerator<EventEnvelope> { while (!closed || queue.length) { if (!queue.length) await new Promise<void>((resolve) => { wake = resolve; }); while (queue.length) yield queue.shift()!; } } };
     return { events, close };
   }
 
-  private async historyRows(options: { afterSequence?: number; limit?: number } = {}): Promise<any[]> {
-    const afterSequence = Math.max(0, Math.floor(options.afterSequence || 0));
-    const limit = Math.max(1, Math.min(10000, Math.floor(options.limit || 1000)));
-    const cacheBounds = await this.getCachePool().query(`SELECT MIN("sequence") AS first_sequence, MAX("sequence") AS last_sequence FROM ${this.table()}`);
-    const firstCached = Number(cacheBounds[0]?.first_sequence ?? 0);
-    const lastCached = Number(cacheBounds[0]?.last_sequence ?? 0);
-    const offsetCached = firstCached > 0 && (afterSequence >= firstCached - 1 || afterSequence >= lastCached);
-    const rows = offsetCached
-      ? await this.getCachePool().query(`SELECT * FROM ${this.table()} WHERE "sequence" > ? ORDER BY "sequence" LIMIT ?`, [afterSequence, limit])
-      : await this.getPool().query(`SELECT * FROM ${this.table()} WHERE "sequence" > ? ORDER BY "sequence" LIMIT ?`, [afterSequence, limit]);
-    return rows;
+  private findHotIndex(sequence: number): number {
+    let low = 0, high = this.hotSegments.length;
+    while (low < high) { const mid = (low + high) >> 1; if (this.hotSegments[mid].lastSequence <= sequence) low = mid + 1; else high = mid; }
+    return low;
   }
 
   async records(options: { afterSequence?: number; limit?: number; topic?: string } = {}): Promise<EventEnvelope[]> {
-    const afterSequence = Math.max(0, Math.floor(options.afterSequence || 0));
-    const limit = Math.max(1, Math.min(10000, Math.floor(options.limit || 1000)));
-    const firstHot = this.hotEvents[0]?.sequence || 0;
-    if (firstHot > 0 && afterSequence >= firstHot - 1) {
-      return this.hotEvents
-        .filter((event) => event.sequence > afterSequence && (!options.topic || String(event.topic || 'events') === options.topic))
-        .slice(0, limit);
+    const after = Math.max(0, Math.floor(options.afterSequence || 0)); const limit = Math.max(1, Math.min(10000, Math.floor(options.limit || 1000))); const topic = options.topic;
+    if (this.hotSegments.length && after >= this.hotSegments[0].firstSequence - 1) {
+      const result: EventEnvelope[] = [];
+      for (let index = this.findHotIndex(after); index < this.hotSegments.length && result.length < limit; index++) for (const event of this.hotSegments[index].events) if (event.sequence > after && (!topic || String(event.topic || 'events') === topic)) { result.push(event); if (result.length >= limit) break; }
+      return result;
     }
-    const rows = await this.historyRows(options);
-    const topic = options.topic;
-    return rows
-      .filter((row) => !topic || String(row.topic || 'events') === topic)
-      .map((row) => {
-        const normalized = Object.fromEntries(Object.entries(row)
-          .filter(([name]) => name !== 'event_at' && name !== 'event_json')
-          .map(([name, value]) => [name, typeof value === 'bigint' ? Number(value) : value]));
-        let envelope: Record<string, unknown> = {};
-        if (typeof row.event_json === 'string') {
-          try { envelope = JSON.parse(row.event_json); } catch {}
-        }
-        return {
-          ...envelope,
-          ...normalized,
-          sequence: Number(row.sequence),
-          at: Number(row.event_at),
-          topic: row.topic || 'events',
-        } as EventEnvelope;
-      });
-  }
-
-  async consumerOffset(group: string): Promise<number> {
-    const rows = await this.getPool().query('SELECT "sequence" FROM "_event_consumer_offsets" WHERE "consumer_group" = ?', [group]);
-    return Number(rows[0]?.sequence || 0);
-  }
-
-  async acknowledge(group: string, sequence: number): Promise<void> {
-    const offset = Math.max(0, Math.floor(sequence));
-    await this.getPool().run(`INSERT INTO "_event_consumer_offsets" ("consumer_group", "sequence", "updated_at")
-      VALUES (?, ?, ?) ON CONFLICT ("consumer_group") DO UPDATE SET
-      "sequence" = GREATEST("_event_consumer_offsets"."sequence", excluded."sequence"),
-      "updated_at" = excluded."updated_at"`, [group, offset, Date.now()]);
+    const result: EventEnvelope[] = [];
+    const candidates = this.segments.filter((segment) => segment.lastSequence > after);
+    for (const segment of candidates) {
+      const parquetBytes = await readFile(join(this.dataPath, segment.file));
+      const wasmTable = parquet.readParquet(parquetBytes);
+      const rows = tableFromIPC(wasmTable.intoIPCStream()).toArray();
+      for (const row of rows) {
+        const event = normalizeRow(row);
+        if (result.length < limit && Number(row.sequence) > after && (!topic || String(row.topic || 'events') === topic)) result.push(event);
+      }
+      if (result.length >= limit) break;
+    }
+    return result;
   }
 
   async *historyStream(options: { afterSequence?: number; limit?: number } = {}): AsyncGenerator<Uint8Array> {
-    const rows = await this.historyRows(options);
-    const columns = Object.fromEntries(this.schema.columns.map((column) => [
-      column.name,
-      rows.map((row) => row[column.name] ?? null),
-    ]));
-    const writer = new RecordBatchStreamWriter();
-    const table = tableFromArrays(columns);
-    const writing = Promise.resolve().then(() => {
-      writer.write(table);
-      writer.close();
-    });
-    try {
-      for await (const chunk of writer) yield chunk;
-      await writing;
-    } catch (error) {
-      writer.abort(error);
-      throw error;
+    const events = await this.records(options);
+    const columns = Object.fromEntries(this.schema.columns.map((column) => [column.name, events.map((event) => valueAt(column.source || column.name, event) ?? null)]));
+    yield tableToIPC(tableFromArrays(columns), 'stream');
+  }
+  async history(options: { afterSequence?: number; limit?: number } = {}): Promise<Uint8Array> { const chunks: Uint8Array[] = []; for await (const chunk of this.historyStream(options)) chunks.push(chunk); const bytes = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0)); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; } return bytes; }
+
+  async parquetSegment(file: string): Promise<Uint8Array> {
+    if (!/^[A-Za-z0-9_-]+\.parquet$/.test(file) || !this.segments.some((segment) => segment.file === file)) throw new Error('Unknown event history segment');
+    return readFile(join(this.dataPath, file));
+  }
+
+  async historyManifest(options: { afterSequence?: number; limit?: number } = {}): Promise<Segment[]> {
+    const after = Math.max(0, Math.floor(options.afterSequence || 0));
+    const limit = Math.max(1, Math.min(1000000, Math.floor(options.limit || 1000)));
+    let rows = 0;
+    const result: Segment[] = [];
+    for (const segment of this.segments) {
+      if (segment.lastSequence <= after) continue;
+      result.push({ ...segment });
+      rows += segment.rows;
+      if (rows >= limit) break;
     }
+    return result;
   }
 
-  async history(options: { afterSequence?: number; limit?: number } = {}): Promise<Uint8Array> {
-    const chunks: Uint8Array[] = [];
-    let length = 0;
-    for await (const chunk of this.historyStream(options)) {
-      chunks.push(chunk);
-      length += chunk.byteLength;
-    }
-    const bytes = new Uint8Array(length);
-    let offset = 0;
-    for (const chunk of chunks) {
-      bytes.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return bytes;
+  async consumerOffset(group: string): Promise<number> { const offsets = await this.readJson<Record<string, number>>(this.offsetsPath(), {}); return Number(offsets[group] || 0); }
+  async acknowledge(group: string, sequence: number): Promise<void> {
+    const offset = Math.max(0, Math.floor(sequence));
+    this.offsetWriteTail = this.offsetWriteTail.then(async () => { const offsets = await this.readJson<Record<string, number>>(this.offsetsPath(), {}); offsets[group] = Math.max(Number(offsets[group] || 0), offset); await this.writeAtomic(this.offsetsPath(), JSON.stringify(offsets, null, 2)); });
+    await this.offsetWriteTail;
   }
-
-  async stop(): Promise<void> {
-    if (!this.pool) return;
-    await this.flush();
-    await this.cacheMaintenance;
-    this.pool.close();
-    this.cachePool?.close();
-    this.pool = null;
-    this.cachePool = null;
-    this.db = null;
-    this.cacheDb = null;
-    this.listeners.clear();
-    this.hotEvents.length = 0;
-    this.hotBytes = 0;
-    this.activeCursors.clear();
-  }
-
-  async count(): Promise<number> {
-    await this.flush();
-    const rows = await this.getPool().query(`SELECT COUNT(*) AS count FROM ${this.table()}`);
-    return Number(rows[0]?.count || 0);
-  }
-
-  async cacheCount(): Promise<number> {
-    await this.cacheMaintenance;
-    const rows = await this.getCachePool().query(`SELECT COUNT(*) AS count FROM ${this.table()}`);
-    return Number(rows[0]?.count || 0);
-  }
+  async count(): Promise<number> { await this.flush(); return this.segments.reduce((sum, segment) => sum + segment.rows, 0); }
+  async cacheCount(): Promise<number> { return this.hotRows; }
+  async stop(): Promise<void> { if (this.workerTimer) { clearTimeout(this.workerTimer); this.workerTimer = null; } if (!this.segments.length && !this.pending.length && !this.workerRunning) { this.listeners.clear(); this.hotRows = 0; this.hotBytes = 0; if (this.temporaryDataPath) await rm(this.dataPath, { recursive: true, force: true }).catch(() => {}); return; } await this.flush(); if (this.manifestDirty) await this.writeManifest(); this.listeners.clear(); this.hotSegments.length = 0; this.hotRows = 0; this.hotBytes = 0; this.activeCursors.clear(); if (this.temporaryDataPath) await rm(this.dataPath, { recursive: true, force: true }).catch(() => {}); }
 }

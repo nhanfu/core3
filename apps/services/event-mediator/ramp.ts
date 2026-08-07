@@ -5,14 +5,17 @@ import { join } from 'node:path';
 const bunRuntime = (globalThis as any).Bun;
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const startPublishers = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_START_PUBLISHERS || 1));
-const startSubscribers = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_START_SUBSCRIBERS || 1));
+const subscriberMultiplier = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_SUBSCRIBER_MULTIPLIER || 4));
+const startSubscribers = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_START_SUBSCRIBERS || startPublishers * subscriberMultiplier));
 const maxPublishers = Math.max(startPublishers, Number(process.env.EVENT_MEDIATOR_RAMP_MAX_PUBLISHERS || 32));
-const maxSubscribers = Math.max(startSubscribers, Number(process.env.EVENT_MEDIATOR_RAMP_MAX_SUBSCRIBERS || 32));
-const eventsPerPublisher = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_EVENTS || 1000));
+const maxSubscribers = Math.max(startSubscribers, Number(process.env.EVENT_MEDIATOR_RAMP_MAX_SUBSCRIBERS || maxPublishers * subscriberMultiplier));
+const eventsPerPublisher = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_EVENTS || 10000));
 const meaningfulTimeMs = Math.max(1000, Number(process.env.EVENT_MEDIATOR_RAMP_MEANINGFUL_TIME_MS || 30000));
 const inFlight = Math.max(1, Number(process.env.EVENT_MEDIATOR_STRESS_IN_FLIGHT || 64));
 const batchSize = Math.max(1, Number(process.env.EVENT_MEDIATOR_STRESS_BATCH_SIZE || 100));
+const pollBatch = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_POLL_BATCH || batchSize));
 const payloadBytes = Math.max(0, Number(process.env.EVENT_MEDIATOR_STRESS_PAYLOAD_BYTES || 4096));
+const writeMode = process.env.EVENT_MEDIATOR_RAMP_WRITE_MODE || 'low_latency';
 const outputPath = process.env.EVENT_MEDIATOR_RAMP_OUTPUT || join(process.cwd(), 'event-mediator-ramp-result.json');
 const results: any[] = [];
 
@@ -39,7 +42,7 @@ async function runStage(publishers: number, subscribers: number, port: number) {
   const directory = await mkdtemp(join(tmpdir(), `core3-event-ramp-${publishers}-${subscribers}-`));
   const server = bunRuntime.spawn(['bun', 'services/event-mediator/server.ts'], {
     cwd: process.cwd(),
-    env: { ...process.env, EVENT_MEDIATOR_PORT: String(port), CORE3_EVENT_DB_PATH: join(directory, 'events.duckdb'), CORE3_EVENT_MAX_ROWS: String(expected * 2 + 1000), CORE3_EVENT_HOT_MAX_ROWS: String(expected * 2 + 1000), CORE3_EVENT_HOT_MAX_BYTES: String(Math.max(128 * 1024 * 1024, expected * payloadBytes * 2)) },
+    env: { ...process.env, EVENT_MEDIATOR_PORT: String(port), CORE3_EVENT_DB_PATH: join(directory, 'events.duckdb'), CORE3_EVENT_WRITE_MODE: writeMode, CORE3_EVENT_MAX_ROWS: String(expected * 2 + 1000), CORE3_EVENT_HOT_MAX_ROWS: String(expected * 2 + 1000), CORE3_EVENT_HOT_MAX_BYTES: String(Math.max(128 * 1024 * 1024, expected * payloadBytes * 2)) },
     stdout: 'ignore', stderr: 'pipe',
   });
   const children: any[] = [];
@@ -49,7 +52,7 @@ async function runStage(publishers: number, subscribers: number, port: number) {
     for (let subscriber = 0; subscriber < subscribers; subscriber += 1) {
       children.push(bunRuntime.spawn(['bun', 'services/event-mediator/stress-subscriber.ts'], {
         cwd: process.cwd(),
-        env: { ...process.env, EVENT_MEDIATOR_STRESS_PORT: String(port), EVENT_MEDIATOR_STRESS_SUBSCRIBER: String(subscriber), EVENT_MEDIATOR_STRESS_EXPECTED: String(expected), EVENT_MEDIATOR_STRESS_DEADLINE_MS: String(meaningfulTimeMs) },
+        env: { ...process.env, EVENT_MEDIATOR_STRESS_PORT: String(port), EVENT_MEDIATOR_STRESS_SUBSCRIBER: String(subscriber), EVENT_MEDIATOR_STRESS_EXPECTED: String(expected), EVENT_MEDIATOR_STRESS_POLL_BATCH: String(pollBatch), EVENT_MEDIATOR_STRESS_DEADLINE_MS: String(meaningfulTimeMs) },
         stdout: 'pipe', stderr: 'pipe',
       }));
     }
@@ -87,9 +90,9 @@ try {
     console.log(JSON.stringify({ stage: results.length, publishers, subscribers, elapsedMs: result.elapsedMs, complete: result.complete }));
     if (!result.complete) break;
     publishers *= 2;
-    subscribers *= 2;
+    subscribers = Math.min(maxSubscribers, subscribers * 2);
   }
-  const report = { meaningfulTimeMs, eventsPerPublisher, batchSize, payloadBytes, stages: results, lastPassing: results.filter((result) => result.complete).at(-1) || null, firstFailing: results.find((result) => !result.complete) || null };
+  const report = { meaningfulTimeMs, eventsPerPublisher, batchSize, pollBatch, payloadBytes, writeMode, subscriberMultiplier, stages: results, lastPassing: results.filter((result) => result.complete).at(-1) || null, firstFailing: results.find((result) => !result.complete) || null };
   await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report, null, 2));
   if (report.firstFailing) process.exitCode = 1;
