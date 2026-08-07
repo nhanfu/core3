@@ -136,6 +136,16 @@ describe('EventStore', () => {
     expect(tableFromIPC(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))).toArray()).toHaveLength(2);
   });
 
+  it('streams large history as one multi-batch Arrow IPC stream', async () => {
+    const store = makeStore(':memory:');
+    await store.start();
+    await store.publishBatch(Array.from({ length: 600 }, (_, sequence) => event(1, sequence)));
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of store.historyStream({ limit: 600 })) chunks.push(chunk);
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(tableFromIPC(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)))).toArray()).toHaveLength(600);
+  });
+
   it('keeps only the configured event window', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'core3-event-cache-'));
     const store = makeStore(join(directory, 'events.duckdb'), { maxRows: 5 });

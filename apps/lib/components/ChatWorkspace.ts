@@ -1,4 +1,5 @@
 import { BaseComponent } from './BaseComponent.ts';
+import { decodeChatFrame, encodeChatFrame } from '../chat-wire-client.ts';
 
 function createElement<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -116,10 +117,11 @@ export class ChatWorkspace extends BaseComponent {
       const url = new URL(endpoint, window.location.origin);
       if (token) url.searchParams.set('token', token);
       const socket = new WebSocket(url.toString());
+      socket.binaryType = 'arraybuffer';
       this.chatSocket = socket;
       socket.onmessage = (event) => {
         let payload: any = null;
-        try { payload = JSON.parse(String(event.data)); } catch { return; }
+        try { payload = decodeChatFrame(event.data); } catch { return; }
         if (payload?.type === 'chat_ack') this.handleChatAck(payload);
         else if (payload?.type === 'chat_message') this.handleChatMessage(payload.message);
       };
@@ -500,7 +502,7 @@ export class ChatWorkspace extends BaseComponent {
         this.redraw();
         const socket = this.chatSocket;
         if (socket?.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({
+          socket.send(encodeChatFrame({
             type: 'send_message',
             thread_id: activeThread.id,
             content,

@@ -1,4 +1,4 @@
-import { tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
+import { Float64, Int32, Int64, RecordBatchStreamWriter, Utf8, vectorFromArray, tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
 import { mkdir, readdir, readFile, rename, rm, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -68,9 +68,22 @@ export function decodeEventBatch(bytes: Uint8Array): EventEnvelope[] {
 }
 
 function arrowBytes(events: EventEnvelope[], schema: EventStoreSchema): Uint8Array {
-  const columns = Object.fromEntries(schema.columns.map((column) => [column.name, events.map((event) => valueAt(column.source || column.name, event) ?? null)]));
-  const table = tableFromArrays(columns);
+  const table = eventTable(events, schema);
   return tableToIPC(table, 'stream');
+}
+
+function eventTable(events: EventEnvelope[], schema: EventStoreSchema) {
+  const columns = Object.fromEntries(schema.columns.map((column) => {
+    const values = events.map((event) => valueAt(column.source || column.name, event) ?? null);
+    switch (column.type) {
+      case 'bigint': return [column.name, vectorFromArray(values.map((value) => value == null ? null : BigInt(Number(value))), new Int64())];
+      case 'integer': return [column.name, vectorFromArray(values.map((value) => value == null ? null : Number(value)), new Int32())];
+      case 'double': return [column.name, vectorFromArray(values.map((value) => value == null ? null : Number(value)), new Float64())];
+      case 'boolean': return [column.name, vectorFromArray(values.map((value) => value == null ? null : Boolean(value)))];
+      default: return [column.name, vectorFromArray(values.map((value) => value == null ? null : String(value)), new Utf8())];
+    }
+  }));
+  return tableFromArrays(columns);
 }
 
 export class EventStore {
@@ -278,14 +291,16 @@ export class EventStore {
     return low;
   }
 
-  async records(options: { afterSequence?: number; limit?: number; topic?: string } = {}): Promise<EventEnvelope[]> {
+  private async *iterateRecords(options: { afterSequence?: number; limit?: number; topic?: string } = {}): AsyncGenerator<EventEnvelope> {
     const after = Math.max(0, Math.floor(options.afterSequence || 0)); const limit = Math.max(1, Math.min(10000, Math.floor(options.limit || 1000))); const topic = options.topic;
+    let emitted = 0;
     if (this.hotSegments.length && after >= this.hotSegments[0].firstSequence - 1) {
-      const result: EventEnvelope[] = [];
-      for (let index = this.findHotIndex(after); index < this.hotSegments.length && result.length < limit; index++) for (const event of this.hotSegments[index].events) if (event.sequence > after && (!topic || String(event.topic || 'events') === topic)) { result.push(event); if (result.length >= limit) break; }
-      return result;
+      for (let index = this.findHotIndex(after); index < this.hotSegments.length && emitted < limit; index++) for (const event of this.hotSegments[index].events) if (event.sequence > after && (!topic || String(event.topic || 'events') === topic)) {
+        yield event;
+        if (++emitted >= limit) return;
+      }
+      return;
     }
-    const result: EventEnvelope[] = [];
     const candidates = this.segments.filter((segment) => segment.lastSequence > after);
     for (const segment of candidates) {
       const parquetBytes = await readFile(join(this.dataPath, segment.file));
@@ -293,17 +308,45 @@ export class EventStore {
       const rows = tableFromIPC(wasmTable.intoIPCStream()).toArray();
       for (const row of rows) {
         const event = normalizeRow(row, this.schema);
-        if (result.length < limit && Number(row.sequence) > after && (!topic || String(row.topic || 'events') === topic)) result.push(event);
+        if (emitted < limit && Number(row.sequence) > after && (!topic || String(row.topic || 'events') === topic)) {
+          yield event;
+          if (++emitted >= limit) return;
+        }
       }
-      if (result.length >= limit) break;
     }
+  }
+
+  async records(options: { afterSequence?: number; limit?: number; topic?: string } = {}): Promise<EventEnvelope[]> {
+    const result: EventEnvelope[] = [];
+    for await (const event of this.iterateRecords(options)) result.push(event);
     return result;
   }
 
   async *historyStream(options: { afterSequence?: number; limit?: number } = {}): AsyncGenerator<Uint8Array> {
-    const events = await this.records(options);
-    const columns = Object.fromEntries(this.schema.columns.map((column) => [column.name, events.map((event) => valueAt(column.source || column.name, event) ?? null)]));
-    yield tableToIPC(tableFromArrays(columns), 'stream');
+    const writer = new RecordBatchStreamWriter({ autoDestroy: false });
+    const produce = (async () => {
+      const batch: EventEnvelope[] = [];
+      let wroteBatch = false;
+      for await (const event of this.iterateRecords(options)) {
+        batch.push(event);
+        if (batch.length >= 256) {
+          writer.write(eventTable(batch, this.schema).batches[0]);
+          wroteBatch = true;
+          batch.length = 0;
+        }
+      }
+      if (batch.length) {
+        writer.write(eventTable(batch, this.schema).batches[0]);
+        wroteBatch = true;
+      } else if (!wroteBatch) {
+        writer.write(eventTable([], this.schema).batches[0]);
+      }
+      writer.close();
+    })().catch((error) => { writer.abort(error); throw error; });
+    try {
+      for await (const chunk of writer) yield chunk;
+      await produce;
+    } finally { await produce.catch(() => {}); }
   }
   async history(options: { afterSequence?: number; limit?: number } = {}): Promise<Uint8Array> { const chunks: Uint8Array[] = []; for await (const chunk of this.historyStream(options)) chunks.push(chunk); const bytes = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0)); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; } return bytes; }
 

@@ -1,8 +1,9 @@
 import type { ModuleServer } from '../../lib/server/module.ts';
 import type { EventStore } from '../../lib/server/event-store.ts';
 import type { TmsRouteContext } from './api-route-context.ts';
+import { decodeChatFrame, encodeChatFrame } from '../../lib/server/chat-wire.ts';
 
-type Socket = { send(data: string): void; close(code?: number, reason?: string): void };
+type Socket = { send(data: string | Uint8Array): void; close(code?: number, reason?: string): void };
 
 function findStream(pages: Map<string, any>, pathname: string): any {
   const visit = (components: any[] = []) => {
@@ -32,12 +33,12 @@ export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleSer
   const upgraded = server.upgrade(req, {
     data: {
       onOpen(socket: Socket) {
-        socket.send(JSON.stringify({ type: 'connected' }));
+        socket.send(encodeChatFrame({ type: 'connected' }));
         const subscription = store.subscribeStream();
         void (async () => {
           for await (const event of subscription.events) {
             if (event.actorId === String(authUser.sub || '')) {
-              socket.send(JSON.stringify({
+              socket.send(encodeChatFrame({
                 type: 'chat_ack',
                 status: event.status,
                 operation: event.operation,
@@ -47,7 +48,7 @@ export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleSer
                 error: event.error,
               }));
             } else if (event.message) {
-              socket.send(JSON.stringify({ type: 'chat_message', message: event.message }));
+              socket.send(encodeChatFrame({ type: 'chat_message', message: event.message }));
             }
           }
         })();
@@ -55,13 +56,13 @@ export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleSer
       },
       async onMessage(socket: Socket, raw: string | ArrayBuffer) {
         let payload: any;
-        try { payload = JSON.parse(typeof raw === 'string' ? raw : new TextDecoder().decode(raw)); } catch {
-          socket.send(JSON.stringify({ type: 'chat_error', message: 'Invalid WebSocket message' }));
+        try { payload = decodeChatFrame(typeof raw === 'string' ? new TextEncoder().encode(raw) : raw); } catch {
+          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Invalid Arrow message' }));
           return;
         }
         if (payload?.type !== 'send_message') return;
         if (typeof executeAction !== 'function') {
-          socket.send(JSON.stringify({ type: 'chat_error', message: 'Chat action handler is unavailable' }));
+          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Chat action handler is unavailable' }));
           return;
         }
         try {
@@ -71,7 +72,7 @@ export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleSer
             client_message_id: payload.client_message_id,
           });
         } catch (error: any) {
-          socket.send(JSON.stringify({ type: 'chat_error', message: String(error?.message || 'Message failed') }));
+          socket.send(encodeChatFrame({ type: 'chat_error', error: String(error?.message || 'Message failed') }));
         }
       },
       onClose(socket: Socket) {

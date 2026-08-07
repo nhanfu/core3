@@ -422,7 +422,20 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
         try {
           const segment = url.searchParams.get('segment');
           if (segment) return new Response(Buffer.from(await store.parquetSegment(segment)), { headers: { 'content-type': 'application/vnd.apache.parquet' } });
-          return new Response(Buffer.from(await store.history({ afterSequence: Number(url.searchParams.get('afterSequence') || 0), limit: Number(url.searchParams.get('limit') || 1000) })), { headers: { 'content-type': 'application/vnd.apache.arrow.stream' } });
+          const stream = new ReadableStream<Uint8Array>({
+            start(controller) {
+              void (async () => {
+                try {
+                  for await (const chunk of store.historyStream({
+                    afterSequence: Number(url.searchParams.get('afterSequence') || 0),
+                    limit: Number(url.searchParams.get('limit') || 1000),
+                  })) controller.enqueue(chunk);
+                  controller.close();
+                } catch (error) { controller.error(error); }
+              })();
+            },
+          });
+          return new Response(stream, { headers: { 'content-type': 'application/vnd.apache.arrow.stream' } });
         } catch (error: any) { return new Response(String(error?.message || 'History request failed'), { status: 404 }); }
       }
       if (url.pathname === '/events/history/manifest') {

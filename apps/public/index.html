@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="/styles/index.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+  <script type="importmap">
+    { "imports": {
+      "apache-arrow": "/node_modules/apache-arrow/Arrow.dom.mjs",
+      "tslib": "/node_modules/tslib/tslib.es6.mjs",
+      "flatbuffers": "/node_modules/flatbuffers/mjs/flatbuffers.js"
+    } }
+  </script>
   <script>
     // Suppress Tailwind's reset so our CSS vars take precedence on shell elements
     tailwind.config = {

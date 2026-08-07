@@ -28,6 +28,7 @@ function apiError(status: number, message: string): Response {
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.ts': 'application/javascript',
+  '.js': 'application/javascript',
   '.mjs': 'application/javascript',
   '.css': 'text/css',
   '.json': 'application/json',
