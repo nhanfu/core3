@@ -4,6 +4,7 @@ import { getPageParams, registerNavigator } from '../lib/navigate.ts';
 import { client } from '../lib/client.ts';
 import { validatePageDefinition } from '../lib/yaml/schema.ts';
 import { PageRuntime } from '../lib/components/PageRoot.ts';
+import { loginPath, safeRedirect } from '../lib/auth-redirect.ts';
 
 const TOKEN_KEY = 'tms_token';
 const DEFAULT_APP_KEY = 'core3_default_app';
@@ -69,6 +70,16 @@ export async function setAuth(token: string, user: any) {
   _user = user;
   window.__CORE3_USER__ = user;
   client.setToken(token);
+}
+
+function showLogin(location: { langCode?: string }) {
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const redirect = current.startsWith('/auth/login')
+    ? safeRedirect(new URLSearchParams(window.location.search).get('redirect'))
+    : safeRedirect(current);
+  const target = loginPath(redirect, location.langCode);
+  window.history.replaceState({}, '', target);
+  return renderRoute('/auth/login', location.langCode);
 }
 
 export function logout() {
@@ -228,7 +239,7 @@ async function bootstrap() {
   if (!token) {
     app.innerHTML = '<div id="outlet"></div>';
     const location = currentLocation();
-    await renderRoute('/auth/login', location.langCode);
+    await showLogin(location);
     return;
   }
 
@@ -246,7 +257,7 @@ async function bootstrap() {
     sessionStorage.removeItem(WELCOME_TOAST_KEY);
     app.innerHTML = '<div id="outlet"></div>';
     const location = currentLocation();
-    await renderRoute('/auth/login', location.langCode);
+    await showLogin(location);
     return;
   }
 

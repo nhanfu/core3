@@ -46,6 +46,7 @@ actions:
   - id: login
     type: login
     endpoint: /api/auth/login
+    redirect_param: redirect
   - id: login-sso
     type: event
     event: core3:auth:sso

@@ -130,7 +130,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind', 'mutation']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
-  login: new Set(['id', 'type', 'endpoint', 'permission']),
+  login: new Set(['id', 'type', 'endpoint', 'redirect_param', 'permission']),
   event: new Set(['id', 'type', 'event', 'params', 'title', 'message', 'close_label', 'icon', 'permission']),
 };
 const PERMISSION_REQUIRED_ACTION_TYPES = new Set<ActionDefinition['type']>([

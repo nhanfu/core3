@@ -8,6 +8,7 @@ import { PageFormModal } from './PageFormModal.ts';
 import { PageGridRenderers } from './PageGridRenderers.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { BaseComponent } from './BaseComponent.ts';
+import { loginPath, safeRedirect } from '../auth-redirect.ts';
 
 class PageChild extends BaseComponent {
   constructor(id: string, private readonly definition: any, private readonly renderDefinition: any) {
@@ -196,7 +197,8 @@ export class PageRuntime extends BaseComponent {
   const requiredPerms = config.page?.auth?.require || [];
   if (requiredPerms.length) {
     if (!requiredPerms.every(p => hasPermission(user, p))) {
-        window.location.href = '/auth/login';
+        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.href = loginPath(safeRedirect(current));
       return;
     }
   }
@@ -355,7 +357,9 @@ export class PageRuntime extends BaseComponent {
         if (!response.ok) throw new Error(result.error || 'Invalid credentials');
         const { setAuth, getDefaultRoute } = await import('../../public/app.ts');
         await setAuth(result.token, result.user);
-        window.history.replaceState(null, '', getDefaultRoute(result.user));
+        const redirectParam = String(actionDef.redirect_param || 'redirect');
+        const redirect = safeRedirect(new URLSearchParams(window.location.search).get(redirectParam));
+        window.history.replaceState(null, '', redirect || getDefaultRoute(result.user));
         window.location.reload();
         break;
       }
