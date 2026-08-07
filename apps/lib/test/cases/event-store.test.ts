@@ -86,6 +86,15 @@ describe('EventStore', () => {
     expect((await subscription.events[Symbol.asyncIterator]().next()).done).toBe(true);
   });
 
+  it('publishes a batch with contiguous sequences', async () => {
+    const store = makeStore(':memory:');
+    await store.start();
+    const published = await store.publishBatch([event(1, 1), event(1, 2), event(1, 3)]);
+    expect(published).toHaveLength(3);
+    expect(published.map((item) => item.sequence)).toEqual([1, 2, 3]);
+    expect(await store.count()).toBe(3);
+  });
+
   it('persists events in DuckDB and resumes sequence numbers after restart', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'core3-event-store-'));
     const databasePath = join(directory, 'events.duckdb');

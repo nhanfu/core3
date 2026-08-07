@@ -24,6 +24,9 @@ export type EventEnvelope = {
   id: string;
   sequence: number;
   at: number;
+  topic?: string;
+  key?: string;
+  sourceNode?: string;
   [key: string]: unknown;
 };
 
@@ -34,7 +37,10 @@ type EventListener = (event: EventEnvelope) => void;
 export type EventSubscription = {
   events: AsyncIterable<EventEnvelope>;
   close: () => void;
+  ack?: (sequence: number) => Promise<void>;
 };
+
+export type EventBus = Pick<EventStore, 'start' | 'stop' | 'publish' | 'subscribeStream'>;
 
 function quoteIdentifier(identifier: string): string {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)) throw new Error(`Invalid event identifier: ${identifier}`);
@@ -43,6 +49,7 @@ function quoteIdentifier(identifier: string): string {
 
 function valueAt(source: string | undefined, event: EventEnvelope): unknown {
   if (!source) return undefined;
+  if (source === '@json') return JSON.stringify(event);
   return source.split('.').reduce((value: any, key) => value?.[key], event);
 }
 
@@ -141,7 +148,12 @@ export class EventStore {
   private readonly batchSize = 256;
   private workerRunning = false;
   private cacheMaintenance: Promise<void> = Promise.resolve();
+  private cacheMaintenanceScheduled = false;
+  private cacheDirtyRows = 0;
+  private lastCachePruneAt = 0;
   private flushWaiters: Array<() => void> = [];
+  private readonly cachePruneBatch = 256;
+  private readonly cachePruneIntervalMs = 1000;
 
   constructor(options: {
     schema: EventStoreSchema;
@@ -174,6 +186,13 @@ export class EventStore {
     this.db = await DuckDBInstance.create(this.databasePath);
     this.cacheDb = await DuckDBInstance.create(':memory:');
     await Promise.all([this.createSchema(this.db), this.createSchema(this.cacheDb)]);
+    const metadata = await this.db.connect();
+    await metadata.run(`CREATE TABLE IF NOT EXISTS "_event_consumer_offsets" (
+      "consumer_group" VARCHAR PRIMARY KEY,
+      "sequence" BIGINT NOT NULL,
+      "updated_at" BIGINT NOT NULL
+    )`);
+    metadata.closeSync();
     this.pool = await DuckDbConnectionPool.create(this.db, this.schema, this.readerCount);
     this.cachePool = await DuckDbConnectionPool.create(this.cacheDb, this.schema, this.readerCount);
     const rows = await this.pool.query(`SELECT COALESCE(MAX("sequence"), 0) AS sequence FROM ${this.table()}`);
@@ -188,6 +207,12 @@ export class EventStore {
       return `${quoteIdentifier(column.name)} ${sqlType}${nullable}`;
     }).join(',\n');
     await connection.run(`CREATE TABLE IF NOT EXISTS ${this.table()} (${columns})`);
+    // Keep deployments using an older event schema readable when optional
+    // mediator metadata columns are introduced.
+    for (const column of this.schema.columns) {
+      const sqlType = column.type === 'varchar' ? 'VARCHAR' : column.type === 'bigint' ? 'BIGINT' : column.type === 'integer' ? 'INTEGER' : column.type === 'double' ? 'DOUBLE' : 'BOOLEAN';
+      await connection.run(`ALTER TABLE ${this.table()} ADD COLUMN IF NOT EXISTS ${quoteIdentifier(column.name)} ${sqlType}`);
+    }
     connection.closeSync();
   }
 
@@ -202,19 +227,32 @@ export class EventStore {
   }
 
   async publish(event: Omit<EventEnvelope, 'id' | 'sequence' | 'at'>): Promise<EventEnvelope> {
-    const item = { ...event, id: uuidv7(), sequence: this.nextSequence++, at: Date.now() } as EventEnvelope;
-    if (this.writeMode === 'durable') this.getPool().append(item);
-    this.getCachePool().append(item);
-    for (const listener of this.listeners) {
-      try { listener(item); } catch {}
+    return (await this.publishBatch([event]))[0];
+  }
+
+  async publishBatch(events: Array<Omit<EventEnvelope, 'id' | 'sequence' | 'at'>>): Promise<EventEnvelope[]> {
+    const items = events.map((event) => ({
+      topic: 'events',
+      ...event,
+      id: uuidv7(),
+      sequence: this.nextSequence++,
+      at: Date.now(),
+    } as EventEnvelope));
+    if (!items.length) return items;
+    if (this.writeMode === 'durable') this.getPool().appendBatch(items);
+    this.getCachePool().appendBatch(items);
+    for (const item of items) {
+      for (const listener of this.listeners) {
+        try { listener(item); } catch {}
+      }
     }
-    this.cacheMaintenance = this.cacheMaintenance.catch(() => {}).then(() => this.pruneCache());
+    this.scheduleCacheMaintenance(items.length);
     if (this.writeMode === 'low_latency') {
-      if (this.pending.length >= this.bufferMaxRows) await this.flush();
-      this.pending.push(item);
+      if (this.pending.length + items.length >= this.bufferMaxRows) await this.flush();
+      this.pending.push(...items);
       this.startWorker();
     }
-    return item;
+    return items;
   }
 
   private startWorker(): void {
@@ -256,6 +294,21 @@ export class EventStore {
     await this.getCachePool().run(`DELETE FROM ${this.table()} WHERE "event_at" < ? OR "sequence" <= (
       SELECT COALESCE(MAX("sequence"), 0) - ? FROM ${this.table()}
     )`, [Date.now() - this.retentionMs, this.maxRows]);
+  }
+
+  private scheduleCacheMaintenance(rows = 1): void {
+    this.cacheDirtyRows += rows;
+    const now = Date.now();
+    if (this.cacheMaintenanceScheduled
+      || (this.cacheDirtyRows < this.cachePruneBatch && now - this.lastCachePruneAt < this.cachePruneIntervalMs)) return;
+    this.cacheMaintenanceScheduled = true;
+    this.cacheMaintenance = this.cacheMaintenance.catch(() => {}).then(async () => {
+      await this.pruneCache();
+      this.cacheDirtyRows = 0;
+      this.lastCachePruneAt = Date.now();
+    }).finally(() => {
+      this.cacheMaintenanceScheduled = false;
+    });
   }
 
   subscribe(listener: EventListener): () => void {
@@ -303,6 +356,42 @@ export class EventStore {
       ? await this.getCachePool().query(`SELECT * FROM ${this.table()} WHERE "sequence" > ? ORDER BY "sequence" LIMIT ?`, [afterSequence, limit])
       : await this.getPool().query(`SELECT * FROM ${this.table()} WHERE "sequence" > ? ORDER BY "sequence" LIMIT ?`, [afterSequence, limit]);
     return rows;
+  }
+
+  async records(options: { afterSequence?: number; limit?: number; topic?: string } = {}): Promise<EventEnvelope[]> {
+    const rows = await this.historyRows(options);
+    const topic = options.topic;
+    return rows
+      .filter((row) => !topic || String(row.topic || 'events') === topic)
+      .map((row) => {
+        const normalized = Object.fromEntries(Object.entries(row)
+          .filter(([name]) => name !== 'event_at' && name !== 'event_json')
+          .map(([name, value]) => [name, typeof value === 'bigint' ? Number(value) : value]));
+        let envelope: Record<string, unknown> = {};
+        if (typeof row.event_json === 'string') {
+          try { envelope = JSON.parse(row.event_json); } catch {}
+        }
+        return {
+          ...envelope,
+          ...normalized,
+          sequence: Number(row.sequence),
+          at: Number(row.event_at),
+          topic: row.topic || 'events',
+        } as EventEnvelope;
+      });
+  }
+
+  async consumerOffset(group: string): Promise<number> {
+    const rows = await this.getPool().query('SELECT "sequence" FROM "_event_consumer_offsets" WHERE "consumer_group" = ?', [group]);
+    return Number(rows[0]?.sequence || 0);
+  }
+
+  async acknowledge(group: string, sequence: number): Promise<void> {
+    const offset = Math.max(0, Math.floor(sequence));
+    await this.getPool().run(`INSERT INTO "_event_consumer_offsets" ("consumer_group", "sequence", "updated_at")
+      VALUES (?, ?, ?) ON CONFLICT ("consumer_group") DO UPDATE SET
+      "sequence" = GREATEST("_event_consumer_offsets"."sequence", excluded."sequence"),
+      "updated_at" = excluded."updated_at"`, [group, offset, Date.now()]);
   }
 
   async *historyStream(options: { afterSequence?: number; limit?: number } = {}): AsyncGenerator<Uint8Array> {

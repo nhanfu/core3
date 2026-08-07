@@ -5,7 +5,8 @@ import { mkdirSync } from 'node:fs';
 import { discoverPages } from '../../lib/server/discovery.ts';
 import { createTmsApi } from './api.ts';
 import { DuckDbRepository as TmsRepository } from '../../db/repositories/tms.ts';
-import { EventStore } from '../../lib/server/event-store.ts';
+import { EventStore, type EventBus } from '../../lib/server/event-store.ts';
+import { EventMediatorClient } from '../../lib/server/event-mediator.ts';
 
 export { DuckDbRepository } from '../../db/repositories/tms.ts';
 export { xlsxToCsv } from './services/xlsx-import.ts';
@@ -16,7 +17,7 @@ export class TmsModule {
   readonly id = 'tms';
   private db: any = null;
   private repository: any = null;
-  private eventStore: EventStore | null = null;
+  private eventStore: EventBus | null = null;
 
   install(context: { moduleRoot: string }): void {
     mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
@@ -34,19 +35,27 @@ export class TmsModule {
     this.db = context.resolveService<any>('database');
     this.repository = new TmsRepository(this.db);
     const eventConfig = context.serviceConfigs.event_store || {};
+    const eventMode = String(eventConfig.mode || context.env.CORE3_EVENT_MODE || 'embedded');
     const eventDatabase = eventConfig.database || {};
     const eventDatabasePath = eventDatabase.path || context.env.TMS_EVENT_DB_PATH || join(context.moduleRoot, '.data', 'events.duckdb');
     const eventSchema = eventConfig.schema || context.serviceConfigs.chat?.event_schema;
     if (!eventSchema) throw new Error('Chat event schema is not configured');
-    this.eventStore = new EventStore({
-      schema: eventSchema,
-      databasePath: eventDatabasePath,
-      retentionMs: Number(eventConfig.retention_ms || context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
-      maxRows: Number(eventConfig.max_rows || context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
-      readerCount: Number(eventConfig.reader_connections || context.env.TMS_EVENT_READER_CONNECTIONS || 2),
-      bufferMaxRows: Number(eventConfig.buffer_max_rows || context.env.TMS_EVENT_BUFFER_MAX_ROWS || 10000),
-      writeMode: eventConfig.write_mode || context.env.TMS_EVENT_WRITE_MODE || 'low_latency',
-    });
+    this.eventStore = eventMode === 'mediator'
+      ? new EventMediatorClient({
+        endpoint: String((eventConfig.mediator as any)?.endpoint || context.env.CORE3_EVENT_MEDIATOR_URL || 'ws://127.0.0.1:3010/events'),
+        token: String((eventConfig.mediator as any)?.token || context.env.CORE3_EVENT_MEDIATOR_TOKEN || ''),
+        nodeId: String((eventConfig.mediator as any)?.node_id || context.env.CORE3_NODE_ID || `tms-${process.pid}`),
+        reconnectMs: Number((eventConfig.mediator as any)?.reconnect_ms || 1000),
+      })
+      : new EventStore({
+        schema: eventSchema,
+        databasePath: eventDatabasePath,
+        retentionMs: Number(eventConfig.retention_ms || context.env.TMS_EVENT_MEMORY_RETENTION_MS || 60 * 60 * 1000),
+        maxRows: Number(eventConfig.max_rows || context.env.TMS_EVENT_MEMORY_MAX_ROWS || 1000),
+        readerCount: Number(eventConfig.reader_connections || context.env.TMS_EVENT_READER_CONNECTIONS || 2),
+        bufferMaxRows: Number(eventConfig.buffer_max_rows || context.env.TMS_EVENT_BUFFER_MAX_ROWS || 10000),
+        writeMode: eventConfig.write_mode || context.env.TMS_EVENT_WRITE_MODE || 'low_latency',
+      });
     await this.eventStore.start();
     const authProvider: any = context.resolveService('auth');
 

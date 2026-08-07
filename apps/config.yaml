@@ -22,6 +22,10 @@ services:
         - { name: id, type: varchar, source: id, nullable: false }
         - { name: sequence, type: bigint, source: sequence, nullable: false }
         - { name: event_at, type: bigint, source: at, nullable: false }
+        - { name: event_json, type: varchar, source: '@json' }
+        - { name: topic, type: varchar, source: topic }
+        - { name: event_key, type: varchar, source: key }
+        - { name: source_node, type: varchar, source: sourceNode }
         - { name: operation, type: varchar }
         - { name: status, type: varchar }
         - { name: actor_id, type: varchar, source: actorId }
@@ -41,6 +45,12 @@ services:
 
   # Shared durable event stream used by chat and future real-time features.
   event_store:
+    mode: ${CORE3_EVENT_MODE:-embedded}
+    mediator:
+      endpoint: ${CORE3_EVENT_MEDIATOR_URL:-ws://127.0.0.1:3010/events}
+      token: ${CORE3_EVENT_MEDIATOR_TOKEN:-}
+      node_id: ${CORE3_NODE_ID:-}
+      reconnect_ms: ${CORE3_EVENT_MEDIATOR_RECONNECT_MS:-1000}
     database:
       driver: duckdb
       path:
