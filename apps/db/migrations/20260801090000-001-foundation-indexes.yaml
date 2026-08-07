@@ -621,13 +621,13 @@ up: |
   CREATE INDEX IF NOT EXISTS idx_notifications_user_read_created ON notifications(user_id, read, created_at);
 
   -- ── Branches ────────────────────────────────────────────────────────────────
-  INSERT INTO branches (id, name, city, region, status) VALUES
+  INSERT OR IGNORE INTO branches (id, name, city, region, status) VALUES
   ('branch-hcm', 'Ho Chi Minh City Branch', 'Ho Chi Minh City', 'South', 'Active'),
   ('branch-hn',  'Ha Noi Branch',           'Ha Noi',           'North', 'Active'),
   ('branch-dn',  'Da Nang Branch',          'Da Nang',          'Central', 'Active');
 
   -- ── Roles ────────────────────────────────────────────────────────────────────
-  INSERT INTO roles (id, name, description) VALUES
+  INSERT OR IGNORE INTO roles (id, name, description) VALUES
   ('role-admin',         'admin',         'Full system access'),
   ('role-fleet-manager', 'fleet_manager', 'Fleet and driver management'),
   ('role-dispatcher',    'dispatcher',    'Trip scheduling and dispatch'),
@@ -637,7 +637,7 @@ up: |
 
   -- ── Permissions ──────────────────────────────────────────────────────────────
   -- admin
-  INSERT INTO permissions (id, role_id, permission_key) VALUES
+  INSERT OR IGNORE INTO permissions (id, role_id, permission_key) VALUES
   ('perm-adm-01', 'role-admin', 'fleet.read'),
   ('perm-adm-02', 'role-admin', 'fleet.write'),
   ('perm-adm-03', 'role-admin', 'drivers.read'),
@@ -673,7 +673,7 @@ up: |
   ('perm-adm-33', 'role-admin', 'chat.write');
 
   -- fleet_manager
-  INSERT INTO permissions (id, role_id, permission_key) VALUES
+  INSERT OR IGNORE INTO permissions (id, role_id, permission_key) VALUES
   ('perm-fm-01', 'role-fleet-manager', 'fleet.read'),
   ('perm-fm-02', 'role-fleet-manager', 'fleet.write'),
   ('perm-fm-03', 'role-fleet-manager', 'drivers.read'),
@@ -685,7 +685,7 @@ up: |
   ('perm-fm-09', 'role-fleet-manager', 'chat.write');
 
   -- dispatcher
-  INSERT INTO permissions (id, role_id, permission_key) VALUES
+  INSERT OR IGNORE INTO permissions (id, role_id, permission_key) VALUES
   ('perm-dp-01', 'role-dispatcher', 'trips.read'),
   ('perm-dp-02', 'role-dispatcher', 'trips.write'),
   ('perm-dp-03', 'role-dispatcher', 'fleet.read'),
@@ -698,21 +698,21 @@ up: |
   ('perm-dp-10', 'role-dispatcher', 'chat.write');
 
   -- accountant
-  INSERT INTO permissions (id, role_id, permission_key) VALUES
+  INSERT OR IGNORE INTO permissions (id, role_id, permission_key) VALUES
   ('perm-ac-01', 'role-accountant', 'accounting.read'),
   ('perm-ac-02', 'role-accountant', 'accounting.write'),
   ('perm-ac-03', 'role-accountant', 'chat.read'),
   ('perm-ac-04', 'role-accountant', 'chat.write');
 
   -- hr_officer
-  INSERT INTO permissions (id, role_id, permission_key) VALUES
+  INSERT OR IGNORE INTO permissions (id, role_id, permission_key) VALUES
   ('perm-hr-01', 'role-hr-officer', 'hr.read'),
   ('perm-hr-02', 'role-hr-officer', 'hr.write'),
   ('perm-hr-03', 'role-hr-officer', 'chat.read'),
   ('perm-hr-04', 'role-hr-officer', 'chat.write');
 
   -- mechanic
-  INSERT INTO permissions (id, role_id, permission_key) VALUES
+  INSERT OR IGNORE INTO permissions (id, role_id, permission_key) VALUES
   ('perm-mc-01', 'role-mechanic', 'maintenance.read'),
   ('perm-mc-02', 'role-mechanic', 'maintenance.write'),
   ('perm-mc-03', 'role-mechanic', 'fleet.read'),
@@ -721,7 +721,7 @@ up: |
 
   -- ── Users ────────────────────────────────────────────────────────────────────
   -- password_hash stored as plaintext; server detects and upgrades on first login
-  INSERT INTO users (id, email, name, password_hash, preferred_lang, branch_id, department_id) VALUES
+  INSERT OR IGNORE INTO users (id, email, name, password_hash, preferred_lang, branch_id, department_id) VALUES
   ('user-admin', 'admin@tms.local',  'Admin User',     'admin123', 'en', 'branch-hcm', 'department-04'),
   ('user-fleet', 'fleet@tms.local',  'Fleet Manager',  'fleet123', 'vi', 'branch-hcm', 'department-02'),
   ('user-disp',  'disp@tms.local',   'Dispatcher One', 'disp123',  'en', 'branch-hcm', 'department-02'),
@@ -729,7 +729,7 @@ up: |
   ('user-hr', 'hr@tms.local', 'HR Officer', 'hr123', 'vi', 'branch-hcm', 'department-04');
 
   -- ── HR ─────────────────────────────────────────────────────────────────────
-  INSERT INTO employees (id, code, name, job_title, phone, email, department, start_date, dependents, status) VALUES
+  INSERT OR IGNORE INTO employees (id, code, name, job_title, phone, email, department, start_date, dependents, status) VALUES
   ('employee-01', 'NV001', 'Lê Hoàng Nam', 'Trưởng phòng Kinh doanh', '0980-542-089', 'nam.le@tms.local', 'Kinh doanh', '2024-10-24', 2, 'Active'),
   ('employee-02', 'NV002', 'Phạm Thị Thu Hà', 'Trưởng nhóm KD Hàng nhập', '0912-289-181', 'ha.pham@tms.local', 'Kinh doanh', '2024-04-27', 1, 'Active'),
   ('employee-03', 'NV003', 'Đỗ Thị Ngọc Ánh', 'Nhân viên Kinh doanh', '0929-717-608', 'anh.do@tms.local', 'Kinh doanh', '2025-11-10', 1, 'Active'),
@@ -737,7 +737,7 @@ up: |
   ('employee-05', 'NV005', 'Tạ Minh Hiếu', 'Kế toán công nợ', '0919-551-205', 'hieu.ta@tms.local', 'Kế toán', '2026-01-20', 1, 'OnLeave'),
   ('employee-06', 'NV006', 'Hồ Văn Lâm', 'Kỹ thuật viên bảo dưỡng', '0986-494-850', 'lam.ho@tms.local', 'Kỹ thuật - Bảo dưỡng', '2025-10-13', 2, 'Inactive');
 
-  INSERT INTO employment_contracts (id, code, employee_id, contract_type, start_date, end_date, base_salary, status) VALUES
+  INSERT OR IGNORE INTO employment_contracts (id, code, employee_id, contract_type, start_date, end_date, base_salary, status) VALUES
   ('contract-01', 'HD001', 'employee-01', 'Indefinite', '2024-10-24', NULL, 28000000, 'Active'),
   ('contract-02', 'HD002', 'employee-02', 'FixedTerm', '2025-01-01', '2026-12-31', 22000000, 'Active'),
   ('contract-03', 'HD003', 'employee-03', 'FixedTerm', '2025-11-10', '2026-11-09', 16000000, 'Active'),
@@ -745,14 +745,14 @@ up: |
   ('contract-05', 'HD005', 'employee-05', 'FixedTerm', '2025-01-20', '2026-07-31', 17000000, 'Expiring'),
   ('contract-06', 'HD006', 'employee-06', 'Probation', '2025-10-13', '2025-12-13', 12000000, 'Expired');
 
-  INSERT INTO work_shifts (id, code, name, start_time, end_time, break_minutes, status) VALUES
+  INSERT OR IGNORE INTO work_shifts (id, code, name, start_time, end_time, break_minutes, status) VALUES
   ('shift-01', 'HC', 'Hành chính', '08:00', '17:00', 60, 'Active'),
   ('shift-02', 'SANG', 'Ca sáng', '06:00', '14:00', 30, 'Active'),
   ('shift-03', 'CHIEU', 'Ca chiều', '14:00', '22:00', 30, 'Active'),
   ('shift-04', 'DEM', 'Ca đêm', '22:00', '06:00', 30, 'Active'),
   ('shift-05', 'CU', 'Ca cũ', '08:30', '17:30', 60, 'Inactive');
 
-  INSERT INTO timesheets (id, employee_id, work_date, shift_id, hours, status, notes) VALUES
+  INSERT OR IGNORE INTO timesheets (id, employee_id, work_date, shift_id, hours, status, notes) VALUES
   ('timesheet-01', 'employee-01', '2026-07-24', 'shift-01', 8, 'Present', NULL),
   ('timesheet-02', 'employee-02', '2026-07-24', 'shift-01', 8, 'Present', NULL),
   ('timesheet-03', 'employee-03', '2026-07-24', 'shift-01', 8, 'Present', NULL),
@@ -760,7 +760,7 @@ up: |
   ('timesheet-05', 'employee-05', '2026-07-24', 'shift-01', 0, 'Leave', 'Nghỉ phép'),
   ('timesheet-06', 'employee-06', '2026-07-24', 'shift-02', 0, 'Absent', 'Nghỉ việc');
 
-  INSERT INTO payrolls (id, code, employee_id, pay_month, base_salary, allowance, deduction, net_salary, status) VALUES
+  INSERT OR IGNORE INTO payrolls (id, code, employee_id, pay_month, base_salary, allowance, deduction, net_salary, status) VALUES
   ('payroll-01', 'BL202607001', 'employee-01', '2026-07-01', 28000000, 3000000, 2500000, 28500000, 'Paid'),
   ('payroll-02', 'BL202607002', 'employee-02', '2026-07-01', 22000000, 2500000, 2100000, 22400000, 'Paid'),
   ('payroll-03', 'BL202607003', 'employee-03', '2026-07-01', 16000000, 1500000, 1500000, 16000000, 'Approved'),
@@ -769,7 +769,7 @@ up: |
   ('payroll-06', 'BL202607006', 'employee-06', '2026-07-01', 12000000, 500000, 500000, 12000000, 'Draft');
 
   -- ── Dispatch master data ───────────────────────────────────────────────────
-  INSERT INTO areas (id, code, name, region, description, status) VALUES
+  INSERT OR IGNORE INTO areas (id, code, name, region, description, status) VALUES
   ('area-01', 'MN', 'Miền Nam', 'Nam Bộ', 'Khu vực vận hành phía Nam', 'Active'),
   ('area-02', 'MT', 'Miền Trung', 'Trung Bộ', 'Khu vực vận hành miền Trung', 'Active'),
   ('area-03', 'MB', 'Miền Bắc', 'Bắc Bộ', 'Khu vực vận hành phía Bắc', 'Active'),
@@ -778,10 +778,10 @@ up: |
   UPDATE areas SET parent_id = 'area-03' WHERE id = 'area-04';
 
   -- ── Organization ───────────────────────────────────────────────────────────
-  INSERT INTO company_profiles (id, name, short_name, tax_code, address, invoice_address, phone, email, website, bank_name, bank_account, notes) VALUES
+  INSERT OR IGNORE INTO company_profiles (id, name, short_name, tax_code, address, invoice_address, phone, email, website, bank_name, bank_account, notes) VALUES
   ('company-main', 'Công ty Vận tải ABC', 'ABC Transport', '0312345678', '12 Nguyễn Văn Quỳ, Quận 7, TP. Hồ Chí Minh', '12 Nguyễn Văn Quỳ, Quận 7, TP. Hồ Chí Minh', '028-3775-1234', 'contact@abctransport.vn', 'https://abctransport.vn', 'Vietcombank', '0011001234567', 'Công ty chủ quản của hệ thống');
 
-  INSERT INTO departments (id, code, name, branch_id, status) VALUES
+  INSERT OR IGNORE INTO departments (id, code, name, branch_id, status) VALUES
   ('department-01', 'KD', 'Phòng Kinh doanh', 'branch-hcm', 'Active'),
   ('department-02', 'DD', 'Phòng Điều độ', 'branch-hcm', 'Active'),
   ('department-03', 'KT', 'Phòng Kế toán', 'branch-hcm', 'Active'),
@@ -789,14 +789,14 @@ up: |
   ('department-05', 'OLD', 'Phòng cũ', 'branch-hn', 'Inactive');
   UPDATE departments SET parent_id = 'department-01' WHERE id = 'department-04';
 
-  INSERT INTO teams (id, code, name, department_id, status) VALUES
+  INSERT OR IGNORE INTO teams (id, code, name, department_id, status) VALUES
   ('team-01', 'KD-NHAP', 'Kinh doanh Hàng nhập', 'department-01', 'Active'),
   ('team-02', 'KD-XUAT', 'Kinh doanh Hàng xuất', 'department-01', 'Active'),
   ('team-03', 'DD-CONT', 'Điều độ Xe container', 'department-02', 'Active'),
   ('team-04', 'KT-CN', 'Kế toán Công nợ', 'department-03', 'Active'),
   ('team-05', 'OLD', 'Tổ cũ', 'department-05', 'Inactive');
 
-  INSERT INTO locations (id, code, name, location_type, address, city, area_id, status) VALUES
+  INSERT OR IGNORE INTO locations (id, code, name, location_type, address, city, area_id, status) VALUES
   ('location-01', 'CATLAI', 'Cảng Cát Lái', 'Port', 'Đường Nguyễn Thị Định, TP. Thủ Đức', 'TP. Hồ Chí Minh', 'area-01', 'Active'),
   ('location-02', 'TCIT', 'Cảng Tân Cảng - Cái Mép', 'Port', 'Phú Mỹ', 'Bà Rịa - Vũng Tàu', 'area-01', 'Active'),
   ('location-03', 'KHOHN', 'Kho hàng không Nội Bài', 'Warehouse', 'Phú Minh, Sóc Sơn', 'Hà Nội', 'area-03', 'Active'),
@@ -805,7 +805,7 @@ up: |
   UPDATE locations SET branch_id = 'branch-hcm';
   UPDATE locations SET branch_id = 'branch-hn' WHERE id = 'location-03';
 
-  INSERT INTO containers (id, container_number, container_type, owner_name, location_id, status, notes) VALUES
+  INSERT OR IGNORE INTO containers (id, container_number, container_type, owner_name, location_id, status, notes) VALUES
   ('container-01', 'MSKU1234567', '20DC', 'Maersk Việt Nam', 'location-01', 'Available', NULL),
   ('container-02', 'TGHU2345678', '40HC', 'Hapag-Lloyd', 'location-02', 'InUse', 'Đang giao hàng'),
   ('container-03', 'OOLU3456789', '40HC', 'OOCL', 'location-01', 'Maintenance', 'Kiểm tra vỏ container'),
@@ -814,7 +814,7 @@ up: |
   UPDATE containers c SET branch_id = l.branch_id FROM locations l WHERE c.location_id = l.id;
 
   -- ── Customers ──────────────────────────────────────────────────────────────
-  INSERT INTO customers (id, code, name, tax_code, phone, email, stage, owner_name, visibility, status) VALUES
+  INSERT OR IGNORE INTO customers (id, code, name, tax_code, phone, email, stage, owner_name, visibility, status) VALUES
   ('customer-01', 'KH001', 'Công ty CP Nhựa Bình Minh', '0312234578', '028-3810-1234', 'logistics@binhminh.vn', 'Customer', 'Lê Hoàng Nam', 'Public', 'Active'),
   ('customer-02', 'KH002', 'Công ty CP Xuất nhập khẩu Sài Gòn Logistics', '0302234568', '028-3822-4567', 'ops@sglogistics.vn', 'Customer', 'Phạm Thị Thu Hà', 'Private', 'Active'),
   ('customer-03', 'KH003', 'Công ty TNHH Thương mại Minh Phát', '0301234567', '028-3930-9898', 'contact@minhphat.vn', 'Contacting', 'Lê Hoàng Nam', 'Private', 'Active'),
@@ -822,13 +822,13 @@ up: |
   ('customer-05', 'KH005', 'Công ty CP Dầu thực vật Tường An', '0326234592', '028-3822-4545', 'procurement@tuongan.vn', 'Lead', 'Bùi Thị Kim Chi', 'Public', 'Active'),
   ('customer-06', 'KH006', 'Công ty TNHH Hóa chất Đông Á', '0311234577', '028-3772-6464', 'sale@hoachatdonga.vn', 'Lead', 'Hoàng Việt Anh', 'Private', 'Inactive');
 
-  INSERT INTO customer_contacts (id, customer_id, name, role_title, phone, email, is_primary, notes) VALUES
+  INSERT OR IGNORE INTO customer_contacts (id, customer_id, name, role_title, phone, email, is_primary, notes) VALUES
   ('customer-contact-01', 'customer-01', 'Nguyễn Thanh Hà', 'Trưởng phòng Logistics', '0908-111-201', 'ha.nguyen@minhlong.vn', true, 'Liên hệ điều phối chính'),
   ('customer-contact-02', 'customer-01', 'Trần Quốc Huy', 'Kế toán công nợ', '0908-111-202', 'huy.tran@minhlong.vn', false, 'Nhận chứng từ đối soát'),
   ('customer-contact-03', 'customer-02', 'Lê Minh Anh', 'Quản lý chuỗi cung ứng', '0908-222-101', 'anh.le@daiphat.vn', true, NULL),
   ('customer-contact-04', 'customer-03', 'Phạm Thu Trang', 'Mua hàng', '0908-333-101', 'trang.pham@minhphat.vn', true, NULL),
   ('customer-contact-05', 'customer-04', 'Võ Hoàng Nam', 'Điều phối kho', '0908-444-101', 'nam.vo@globaltextile.vn', true, NULL);
-  INSERT INTO quotes (id, code, customer_name, title, amount, status, valid_until) VALUES
+  INSERT OR IGNORE INTO quotes (id, code, customer_name, title, amount, status, valid_until) VALUES
   ('quote-01', 'BG-0001', 'Công ty CP Nhựa Bình Minh', 'Báo giá tuyến HCM - Hà Nội', 48600000, 'Sent', '2026-08-15'),
   ('quote-02', 'BG-0002', 'Công ty TNHH Thương mại Minh Phát', 'Báo giá hàng lẻ', 14200000, 'Draft', '2026-08-10'),
   ('quote-03', 'BG-0003', 'Công ty CP Dầu thực vật Tường An', 'Báo giá hàng lạnh', 59300000, 'Accepted', '2026-08-20');
@@ -837,7 +837,7 @@ up: |
     profit_amount = CASE id WHEN 'quote-01' THEN 9600000 WHEN 'quote-02' THEN 2800000 ELSE 11800000 END;
   UPDATE quotes SET branch_id = 'branch-hcm';
   UPDATE quotes SET branch_id = 'branch-hn' WHERE id = 'quote-03';
-  INSERT INTO quote_lines (
+  INSERT OR IGNORE INTO quote_lines (
     id, quote_id, sequence, description, quantity, unit, unit_price, cost_price,
     tax_rate, line_total, cost_total
   ) VALUES
@@ -846,7 +846,7 @@ up: |
   ('quote-line-03', 'quote-03', 10, 'Cước vận chuyển lạnh', 1, 'Chuyến', 59300000, 47500000, 0, 59300000, 47500000);
 
   -- ── Partners ───────────────────────────────────────────────────────────────
-  INSERT INTO partners (id, code, name, tax_code, phone, email, partner_type, owner_name, visibility, status) VALUES
+  INSERT OR IGNORE INTO partners (id, code, name, tax_code, phone, email, partner_type, owner_name, visibility, status) VALUES
   ('partner-01', 'NX001', 'Công ty Vận tải Thành Đạt', '0310876543', '028-3822-0988', 'ops@thanhdat.vn', 'Carrier', 'Phạm Thị Thu Hà', 'Public', 'Active'),
   ('partner-02', 'NCC001', 'Công ty TNHH ForwardX', '0318875081', '028-3778-0101', 'contact@forwardx.vn', 'Supplier', 'Lê Hoàng Nam', 'Private', 'Active'),
   ('partner-03', 'HT001', 'Maersk Việt Nam', '0380567890', '028-3911-2000', 'booking@maersk.vn', 'ShippingLine', 'Vũ Minh Quân', 'Public', 'Active'),
@@ -854,7 +854,7 @@ up: |
   ('partner-05', 'DP001', 'Depot Tân Thuận', '0312234599', '028-3771-0202', 'yard@tantuan.vn', 'Depot', 'Hoàng Việt Anh', 'Private', 'Active'),
   ('partner-06', 'NCC002', 'Công ty CP Dịch vụ Cảng Sài Gòn', '0316234567', '028-3829-1000', 'sales@saigonport.vn', 'Supplier', 'Phạm Thị Thu Hà', 'Public', 'Inactive');
 
-  INSERT INTO partner_contacts (id, partner_id, name, role_title, phone, email, is_primary, notes) VALUES
+  INSERT OR IGNORE INTO partner_contacts (id, partner_id, name, role_title, phone, email, is_primary, notes) VALUES
   ('partner-contact-01', 'partner-01', 'Trần Minh Tâm', 'Điều hành đội xe', '0909-111-301', 'tam.tran@thanhdat.vn', true, 'Liên hệ điều xe'),
   ('partner-contact-02', 'partner-01', 'Ngô Thùy Linh', 'Kế toán', '0909-111-302', 'linh.ngo@thanhdat.vn', false, NULL),
   ('partner-contact-03', 'partner-02', 'Đặng Quốc Bảo', 'Giám đốc vận hành', '0909-222-101', 'bao.dang@forwardx.vn', true, NULL),
@@ -862,7 +862,7 @@ up: |
   ('partner-contact-05', 'partner-04', 'Bùi Đức Long', 'Quản lý kho', '0909-444-101', 'long.bui@tcs.vn', true, NULL);
 
   -- ── User Roles ────────────────────────────────────────────────────────────────
-  INSERT INTO user_roles (user_id, role_id) VALUES
+  INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES
   ('user-admin', 'role-admin'),
   ('user-fleet', 'role-fleet-manager'),
   ('user-disp',  'role-dispatcher'),
@@ -870,12 +870,12 @@ up: |
   ('user-hr', 'role-hr-officer');
 
   -- ── Chat ───────────────────────────────────────────────────────────────────
-  INSERT INTO chat_threads (id, title, thread_type, created_by, created_at, updated_at) VALUES
+  INSERT OR IGNORE INTO chat_threads (id, title, thread_type, created_by, created_at, updated_at) VALUES
   ('chat-thread-ops-south', 'Điều phối miền Nam', 'Group', 'user-disp', '2026-07-26 08:45:00', '2026-07-26 09:15:00'),
   ('chat-thread-minh-long', 'Khách hàng Minh Long', 'Group', 'user-admin', '2026-07-26 08:20:00', '2026-07-26 08:48:00'),
   ('chat-thread-finance', 'Đối soát kế toán', 'Group', 'user-accountant', '2026-07-25 16:00:00', '2026-07-25 16:25:00');
 
-  INSERT INTO chat_participants (thread_id, user_id, joined_at, last_read_at) VALUES
+  INSERT OR IGNORE INTO chat_participants (thread_id, user_id, joined_at, last_read_at) VALUES
   ('chat-thread-ops-south', 'user-admin', '2026-07-26 08:45:00', '2026-07-26 09:10:00'),
   ('chat-thread-ops-south', 'user-fleet', '2026-07-26 08:45:00', '2026-07-26 09:15:00'),
   ('chat-thread-ops-south', 'user-disp', '2026-07-26 08:45:00', '2026-07-26 09:15:00'),
@@ -884,7 +884,7 @@ up: |
   ('chat-thread-finance', 'user-admin', '2026-07-25 16:00:00', '2026-07-25 16:10:00'),
   ('chat-thread-finance', 'user-accountant', '2026-07-25 16:00:00', '2026-07-25 16:25:00');
 
-  INSERT INTO chat_messages (id, thread_id, sender_id, body, created_at) VALUES
+  INSERT OR IGNORE INTO chat_messages (id, thread_id, sender_id, body, created_at) VALUES
   ('chat-message-01', 'chat-thread-ops-south', 'user-disp', 'Đơn DH-2026-0007 đã sẵn sàng điều xe.', '2026-07-26 09:12:00'),
   ('chat-message-02', 'chat-thread-ops-south', 'user-admin', 'Đã phân công xe CA-101-ABC.', '2026-07-26 09:15:00'),
   ('chat-message-03', 'chat-thread-minh-long', 'user-disp', 'Khách hàng cần cập nhật ETA chuyến HCM - Đà Nẵng.', '2026-07-26 08:42:00'),
@@ -893,7 +893,7 @@ up: |
   ('chat-message-06', 'chat-thread-finance', 'user-admin', 'Đã nhận, vui lòng bổ sung biên bản giao hàng.', '2026-07-25 16:25:00');
 
   -- ── Drivers ──────────────────────────────────────────────────────────────────
-  INSERT INTO drivers (id, name, phone, email, license_number, license_expiry, status, assigned_truck_id) VALUES
+  INSERT OR IGNORE INTO drivers (id, name, phone, email, license_number, license_expiry, status, assigned_truck_id) VALUES
   ('driver-01', 'Nguyen Van An',    '+84-901-001-001', 'nguyen.an@tms.local',    'VN-DL-001001', '2027-06-30', 'Active',    'truck-01'),
   ('driver-02', 'Tran Thi Bich',   '+84-901-001-002', 'tran.bich@tms.local',    'VN-DL-001002', '2026-12-31', 'Active',    'truck-02'),
   ('driver-03', 'Le Van Cuong',    '+84-901-001-003', 'le.cuong@tms.local',     'VN-DL-001003', '2027-03-15', 'Active',    'truck-03'),
@@ -906,7 +906,7 @@ up: |
   ('driver-10', 'Vo Thi Lan',      '+84-901-001-010', 'vo.lan@tms.local',       'VN-DL-001010', '2025-09-05', 'Suspended', 'truck-10');
 
   -- ── Trucks ────────────────────────────────────────────────────────────────────
-  INSERT INTO trucks (id, plate, model, type, status, capacity_kg, mileage, driver_id, last_service, next_service, branch_id, notes) VALUES
+  INSERT OR IGNORE INTO trucks (id, plate, model, type, status, capacity_kg, mileage, driver_id, last_service, next_service, branch_id, notes) VALUES
   ('truck-01', 'CA-101-ABC', 'Freightliner Cascadia', 'Semi',         'Active',         20000, 125400, 'driver-01', '2026-07-01', '2026-08-15', 'branch-hcm', NULL),
   ('truck-02', 'CA-102-DEF', 'Kenworth T680',         'Semi',         'Maintenance',    20000,  98200, 'driver-02', '2026-06-15', '2026-07-15', 'branch-hcm', 'Oil leak repair in progress'),
   ('truck-03', 'TX-201-GHI', 'Peterbilt 579',         'Semi',         'Active',         22000, 210500, 'driver-03', '2026-07-10', '2026-08-10', 'branch-hn',  NULL),
@@ -921,7 +921,7 @@ up: |
   ('truck-12', 'WA-502-HIJ', 'Peterbilt 567',          'Flatbed',      'Active',         18000, 142300, NULL,        '2026-07-03', '2026-08-03', 'branch-hcm', NULL);
 
   -- ── Trips ────────────────────────────────────────────────────────────────────
-  INSERT INTO trips (id, trip_number, truck_id, driver_id, origin, destination, status, departure_time, arrival_time, distance_km, cargo_type, cargo_weight, notes) VALUES
+  INSERT OR IGNORE INTO trips (id, trip_number, truck_id, driver_id, origin, destination, status, departure_time, arrival_time, distance_km, cargo_type, cargo_weight, notes) VALUES
   ('trip-01',  'TRP-001', 'truck-01', 'driver-01', 'Ho Chi Minh City', 'Ha Noi',           'Completed',  '2026-07-10 06:00:00', '2026-07-11 18:00:00', 1726.50, 'Electronics',    18500.00, 'Delivered on time'),
   ('trip-02',  'TRP-002', 'truck-03', 'driver-03', 'Ha Noi',           'Da Nang',          'Completed',  '2026-07-12 07:00:00', '2026-07-12 22:00:00',  764.00, 'Machinery',      22000.00, NULL),
   ('trip-03',  'TRP-003', 'truck-04', 'driver-04', 'Da Nang',          'Ho Chi Minh City', 'Completed',  '2026-07-14 05:30:00', '2026-07-14 23:00:00',  964.00, 'Consumer Goods', 12000.00, NULL),
@@ -943,7 +943,7 @@ up: |
   WHERE branch_id IS NULL AND truck_id IS NOT NULL;
 
   -- ── Orders ──────────────────────────────────────────────────────────────────
-  INSERT INTO orders (id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, created_by, notes) VALUES
+  INSERT OR IGNORE INTO orders (id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, created_by, notes) VALUES
   ('order-01', 'DH-2026-0001', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', '2026-07-25', 'Draft', 'Hàng lẻ', 'Hồ Chí Minh → Đà Nẵng', 'Đường bộ', 0, 18500000, 'Admin User', 'Chờ xác nhận khối lượng'),
   ('order-02', 'DH-2026-0002', 'Công ty CP Đại Phát', 'Dai Phat JSC', '2026-07-25', 'Draft', 'Nguyên chuyến', 'Hà Nội → Hải Phòng', 'Đường bộ', 0, 12600000, 'Admin User', NULL),
   ('order-03', 'DH-2026-0003', 'Công ty Thực phẩm An Bình', 'An Binh Foods', '2026-07-24', 'Draft', 'Hàng lạnh', 'Cần Thơ → Hồ Chí Minh', 'Đường bộ', 0, 21800000, 'Admin User', NULL),
@@ -958,7 +958,7 @@ up: |
   ('order-12', 'DH-2026-0012', 'Công ty CP Phú Mỹ', 'Phu My JSC', '2026-07-19', 'Cancelled', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 0, 16800000, 'Admin User', 'Không đủ phương tiện');
   UPDATE orders SET branch_id = 'branch-hcm';
   UPDATE orders SET branch_id = 'branch-hn' WHERE id = 'order-03';
-  INSERT INTO order_lines (
+  INSERT OR IGNORE INTO order_lines (
     id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
   ) VALUES
   ('order-line-01', 'order-01', 10, 'Cước vận chuyển Hồ Chí Minh - Đà Nẵng', 1, 'Lô', 18500000, 0, 18500000),
@@ -975,7 +975,7 @@ up: |
   ('order-line-12', 'order-12', 10, 'Cước vận chuyển Đà Nẵng - Quy Nhơn', 1, 'Chuyến', 16800000, 0, 16800000);
 
   -- ── Catalog master data ─────────────────────────────────────────────────────
-  INSERT INTO master_data (id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES
+  INSERT OR IGNORE INTO master_data (id, kind, code, name, description, symbol, decimals, status, sort_order) VALUES
   ('catalog-ct-01', 'container_type', '20GP', 'Container khô 20 feet', 'Container bách hóa tiêu chuẩn 20 feet', NULL, NULL, 'Active', 10),
   ('catalog-ct-02', 'container_type', '40GP', 'Container khô 40 feet', 'Container bách hóa tiêu chuẩn 40 feet', NULL, NULL, 'Active', 20),
   ('catalog-ct-03', 'container_type', '40HC', 'Container cao 40 feet', 'Container high-cube 40 feet', NULL, NULL, 'Active', 30),
@@ -995,13 +995,13 @@ up: |
   ('catalog-currency-02', 'currency', 'USD', 'Đô la Mỹ', 'United States dollar', '$', 2, 'Active', 20),
   ('catalog-currency-03', 'currency', 'EUR', 'Euro', 'European euro', '€', 2, 'Active', 30);
 
-  INSERT INTO currency_rates (id, currency_code, rate_to_vnd, effective_date, source) VALUES
+  INSERT OR IGNORE INTO currency_rates (id, currency_code, rate_to_vnd, effective_date, source) VALUES
   ('currency-rate-vnd', 'VND', 1, CURRENT_DATE, 'seed'),
   ('currency-rate-usd', 'USD', 25400, CURRENT_DATE, 'seed'),
   ('currency-rate-eur', 'EUR', 27600, CURRENT_DATE, 'seed');
 
   -- ── Accounting records ──────────────────────────────────────────────────────
-  INSERT INTO accounting_entries (id, kind, code, name, counterparty, amount, currency, status, document_date, due_date, description, sort_order) VALUES
+  INSERT OR IGNORE INTO accounting_entries (id, kind, code, name, counterparty, amount, currency, status, document_date, due_date, description, sort_order) VALUES
   ('acct-debit-01', 'debit_note', 'GBN-0001', 'Cước vận chuyển tháng 7', 'Công ty CP Đại Phát', 32600000, 'VND', 'Draft', '2026-07-24', '2026-08-05', 'Đối soát tuyến Hà Nội - Đà Nẵng', 10),
   ('acct-debit-02', 'debit_note', 'GBN-0002', 'Phụ phí giao hàng', 'Công ty TNHH Minh Long', 8400000, 'VND', 'Pending Approval', '2026-07-23', '2026-08-03', 'Phụ phí giao hàng Nha Trang', 20),
   ('acct-debit-03', 'debit_note', 'GBN-0003', 'Cước container', 'Công ty CP Xuất nhập khẩu Sao', 17400000, 'VND', 'Approved', '2026-07-20', '2026-07-30', 'Cước vận chuyển container', 30),
@@ -1020,7 +1020,7 @@ up: |
   UPDATE accounting_entries SET branch_id = 'branch-hcm';
   UPDATE accounting_entries SET branch_id = 'branch-hn' WHERE id = 'acct-debit-03';
   UPDATE accounting_entries SET parent_id = 'acct-ledger-01' WHERE id IN ('acct-ledger-02', 'acct-ledger-03');
-  INSERT INTO accounting_entry_lines (
+  INSERT OR IGNORE INTO accounting_entry_lines (
     id, entry_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
   ) VALUES
   ('acct-line-01', 'acct-debit-01', 10, 'Cước vận chuyển tháng 7', 1, 'Khoản', 32600000, 0, 32600000),
@@ -1036,7 +1036,7 @@ up: |
   UPDATE accounting_entries SET linked_advance_id = 'acct-advance-01' WHERE id = 'acct-settle-01';
   UPDATE accounting_entries SET linked_advance_id = 'acct-advance-02' WHERE id = 'acct-settle-02';
 
-  INSERT INTO system_configs (id, kind, code, name, config_value, description, status, sort_order) VALUES
+  INSERT OR IGNORE INTO system_configs (id, kind, code, name, config_value, description, status, sort_order) VALUES
   ('sys-01', 'code_rule', 'ORDER', 'Mã đơn hàng', 'DH-{YYYY}-{SEQ:4}', 'Quy tắc sinh mã đơn hàng', 'Active', 10),
   ('sys-02', 'print_template', 'ORDER', 'Phiếu xác nhận đơn hàng', 'order-confirmation', 'Mẫu in đơn hàng', 'Active', 10),
   ('sys-03', 'approval_flow', 'ORDER_APPROVAL', 'Duyệt đơn hàng', 'draft>pending>approved', 'Quy trình duyệt đơn hàng', 'Active', 10),
@@ -1045,20 +1045,20 @@ up: |
   ('sys-06', 'fee_rule', 'DISTANCE', 'Cước theo quãng đường', 'distance_km * rate', 'Công thức phí', 'Active', 10),
   ('sys-07', 'storage', 'LOCAL', 'Kho tệp đính kèm', '/data/uploads', 'Vị trí lưu tệp', 'Active', 10),
   ('sys-08', 'organization', 'USER_SEATS', 'Số chỗ người dùng', '50', 'Giới hạn tài khoản người dùng theo gói', 'Active', 10);
-  INSERT INTO approval_flow_steps (id, flow_id, sequence, name, approver_role, min_amount, status) VALUES
+  INSERT OR IGNORE INTO approval_flow_steps (id, flow_id, sequence, name, approver_role, min_amount, status) VALUES
   ('flow-step-01', 'sys-03', 10, 'Kiểm tra chứng từ', 'Sales Manager', 0, 'Active'),
   ('flow-step-02', 'sys-03', 20, 'Phê duyệt giá', 'Finance Manager', 10000000, 'Active');
-  INSERT INTO print_template_blocks (id, template_id, sequence, block_type, label, token_key, content, status) VALUES
+  INSERT OR IGNORE INTO print_template_blocks (id, template_id, sequence, block_type, label, token_key, content, status) VALUES
   ('tpl-block-01', 'sys-02', 10, 'text', 'Tiêu đề phiếu', NULL, 'PHIẾU XÁC NHẬN ĐƠN HÀNG', 'Active'),
   ('tpl-block-02', 'sys-02', 20, 'token', 'Mã đơn hàng', 'order.order_number', NULL, 'Active'),
   ('tpl-block-03', 'sys-02', 30, 'token', 'Tên khách hàng', 'order.customer_name', NULL, 'Active'),
   ('tpl-block-04', 'sys-02', 40, 'table', 'Danh sách cước', 'order.lines', NULL, 'Active');
-  INSERT INTO system_activity (id, actor_name, action, resource, detail, created_at) VALUES
+  INSERT OR IGNORE INTO system_activity (id, actor_name, action, resource, detail, created_at) VALUES
   ('act-01', 'Admin User', 'Cập nhật', 'Quy tắc mã đơn hàng', 'Đổi tiền tố mã', '2026-07-25 09:30:00'),
   ('act-02', 'Admin User', 'Duyệt', 'Đề nghị thanh toán', 'Đã duyệt đề nghị chi', '2026-07-24 14:20:00');
 
   -- ── Maintenance ───────────────────────────────────────────────────────────────
-  INSERT INTO maintenance (id, truck_id, service_type, status, scheduled_date, completed_date, technician_id, cost, notes) VALUES
+  INSERT OR IGNORE INTO maintenance (id, truck_id, service_type, status, scheduled_date, completed_date, technician_id, cost, notes) VALUES
   ('maint-01', 'truck-02', 'Oil Change',            'Completed',   '2026-06-15', '2026-06-15', 'user-admin', 850000.00,  'Full synthetic 15W-40'),
   ('maint-02', 'truck-05', 'Brake Inspection',      'Overdue',     '2026-06-01', NULL,         NULL,          NULL,       'Critical — truck out of service'),
   ('maint-03', 'truck-07', 'Tire Rotation',         'In Progress', '2026-07-20', NULL,         'user-admin', NULL,       '6 tires rotated, 2 flagged for replacement'),
@@ -1069,7 +1069,7 @@ up: |
   ('maint-08', 'truck-04', 'Tire Rotation',         'Scheduled',   '2026-08-20', NULL,         NULL,          NULL,       'Routine rotation — all 4 tires');
 
   -- ── Notifications ─────────────────────────────────────────────────────────────
-  INSERT INTO notifications (id, user_id, type, title, body, read) VALUES
+  INSERT OR IGNORE INTO notifications (id, user_id, type, title, body, read) VALUES
   ('notif-01', 'user-admin', 'alert',   'Service Overdue',          'Trucks TX-202-MNO and IL-402-EFG have passed their service due dates.',  false),
   ('notif-02', 'user-admin', 'warning', 'License Expiring Soon',    'Driver Vo Thi Lan''s license expires in 30 days. Please renew.',         false),
   ('notif-03', 'user-admin', 'info',    'Trip TRP-004 Departed',    'Truck IL-401-STU departed Ho Chi Minh City at 08:00 on schedule.',       true),

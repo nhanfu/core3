@@ -1,4 +1,3 @@
-import duckdb from 'duckdb';
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { discoverPages, translationMap } from '../../lib/server/discovery.ts';
@@ -7,6 +6,7 @@ import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { AuthRepository } from '../../db/repositories/auth.ts';
 import { AuthService } from './service.ts';
 import { AUTH_SERVICE_KEY } from '../../lib/interfaces/auth.ts';
+import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -34,10 +34,10 @@ export default class AuthModule {
   async load(context: any): Promise<void> {
     const database = context.config?.database as { path?: string } | undefined;
     const dbPath = database?.path || context.env.AUTH_DB_PATH || join(context.moduleRoot, 'auth.duckdb');
-    this.db = new duckdb.Database(dbPath);
+    this.db = await HybridDuckDbDatabase.open(dbPath);
     const repository = new AuthRepository(this.db);
     context.registerService('database', this.db);
-    await migrateDatabase(repository, join(context.appsRoot, 'db', 'migrations'));
+    await this.db.withDurableWrites(() => migrateDatabase(repository, join(context.appsRoot, 'db', 'migrations')));
     this.service = new AuthService(repository, new TextEncoder().encode(context.env.AUTH_JWT_SECRET || context.env.JWT_SECRET || 'core3-auth-dev-secret-32chars!!!!'));
     context.registerService(AUTH_SERVICE_KEY, this.service);
 

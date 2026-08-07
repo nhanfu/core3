@@ -5,7 +5,7 @@ services:
     database:
       driver: duckdb
       path:
-        development: ${CORE3_DB_PATH:-:memory:}
+        development: ${CORE3_DB_PATH:-./core3.duckdb}
         production: ${CORE3_DB_PATH:-./core3.duckdb}
 
   # Shared chat storage. This is intentionally independent of TMS storage so
