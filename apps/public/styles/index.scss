@@ -925,6 +925,17 @@ body {
 
 .drawer-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 24px; }
 
+/* Compact YAML profile content so all controls fit comfortably in the modal. */
+.right-modal-page { padding: 16px; }
+.right-modal-page .drawer-avatar { width: 56px; height: 56px; font-size: 1.2rem; margin-bottom: 8px; }
+.right-modal-page .drawer-user-name { font-size: 1rem; }
+.right-modal-page .drawer-user-email { margin-bottom: 14px; }
+.right-modal-page .drawer-section { margin-bottom: 16px; }
+.right-modal-page .drawer-section-title { margin-bottom: 7px; }
+.right-modal-page .drawer-company-card { padding: 9px 11px; }
+.right-modal-page .lang-radio { padding: 8px; }
+.right-modal-page .form-group { margin-bottom: 10px; }
+
 .drawer-footer {
   flex: 0 0 auto;
   padding: 16px 24px;

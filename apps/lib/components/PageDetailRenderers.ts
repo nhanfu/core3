@@ -439,7 +439,9 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     case 'Html': {
       const { Html } = await import('./Html.ts');
       const runtimeContext = ctx.context || {};
-      const component = new Html(def.id || `${config.page.id}-html`, { context: { ...ctx, ...runtimeContext, user: { ...ctx.user, ...(runtimeContext.user || {}) } } }, def);
+      const runtimeUser = { ...ctx.user, ...(runtimeContext.user || {}) };
+      if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
+      const component = new Html(def.id || `${config.page.id}-html`, { context: { ...ctx, ...runtimeContext, user: runtimeUser } }, def);
       component._onAction = async (actionId: string, params: any) => {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);

@@ -75,6 +75,7 @@ components:
     label: Sign out
     icon: log-out
     variant: danger
+    full_width: true
 
 actions:
   - id: save-language
