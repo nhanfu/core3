@@ -14,6 +14,7 @@ export type PartitionDefinition = {
   column?: string;
   strategy: 'range' | 'time' | 'year' | 'list' | 'hash';
   interval?: 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour';
+  bounds?: Array<{ name: string; from?: string; to?: string }>;
   partitions?: Array<{ name: string; values: unknown[] }>;
   buckets?: number;
   default_partition?: string;

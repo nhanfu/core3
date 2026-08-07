@@ -1,7 +1,7 @@
 export class AuthRepository {
   constructor(private readonly db: any) {}
 
-  partition(definition: { table: string; column?: string; strategy: 'range' | 'time' | 'year' | 'list' | 'hash'; interval?: 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour'; partitions?: Array<{ name: string; values: unknown[] }>; buckets?: number; default_partition?: string; replace?: boolean }): Promise<void> {
+  partition(definition: { table: string; column?: string; strategy: 'range' | 'time' | 'year' | 'list' | 'hash'; interval?: 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour'; bounds?: Array<{ name: string; from?: string; to?: string }>; partitions?: Array<{ name: string; values: unknown[] }>; buckets?: number; default_partition?: string; replace?: boolean }): Promise<void> {
     return this.db.partition(definition);
   }
 

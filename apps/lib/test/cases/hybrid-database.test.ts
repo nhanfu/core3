@@ -134,4 +134,26 @@ describe('HybridDuckDbDatabase', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+
+  it('supports explicit range bounds and a range default partition', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'core3-hybrid-range-bounds-'));
+    const path = join(directory, 'tms.duckdb');
+    try {
+      const database = await HybridDuckDbDatabase.open(path);
+      databases.push(database);
+      await run(database, 'CREATE TABLE invoices (id VARCHAR PRIMARY KEY, issued_on DATE)');
+      await database.withDurableWrites(() => database.partition({
+        table: 'invoices', column: 'issued_on', strategy: 'range',
+        bounds: [{ name: '2024', from: '2024-01-01', to: '2025-01-01' }, { name: '2025', from: '2025-01-01', to: '2026-01-01' }],
+        default_partition: 'other',
+      }));
+      await run(database, 'INSERT INTO invoices (id, issued_on) VALUES (?, ?)', 'i1', '2024-05-01');
+      await run(database, 'INSERT INTO invoices (id, issued_on) VALUES (?, ?)', 'i2', '2027-05-01');
+      expect(await query(database, 'SELECT id FROM invoices WHERE issued_on >= ? AND issued_on < ? ORDER BY id', '2024-01-01', '2025-01-01')).toEqual([{ id: 'i1' }]);
+      expect(await query(database, 'SELECT id FROM invoices ORDER BY id')).toEqual([{ id: 'i1' }, { id: 'i2' }]);
+    } finally {
+      for (const database of databases.splice(0)) database.close();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 });
