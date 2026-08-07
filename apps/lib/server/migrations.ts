@@ -5,6 +5,20 @@ export type MigrationRepository = {
   run(sql: string, params?: any[]): Promise<void>;
   query(sql: string, params?: any[]): Promise<any[]>;
   runStatements(sql: string): Promise<void>;
+  partition?(definition: PartitionDefinition): Promise<void>;
+  unpartition?(table: string): Promise<void>;
+};
+
+export type PartitionDefinition = {
+  table: string;
+  column?: string;
+  strategy: 'range' | 'time' | 'year' | 'list' | 'hash';
+  interval?: 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour';
+  bounds?: Array<{ name: string; from?: string; to?: string }>;
+  partitions?: Array<{ name: string; values: unknown[] }>;
+  buckets?: number;
+  default_partition?: string;
+  replace?: boolean;
 };
 
 export type Migration = {
@@ -13,6 +27,8 @@ export type Migration = {
   file: string;
   up: string;
   down: string;
+  partition?: PartitionDefinition;
+  downPartition?: string;
 };
 
 function loadMigrations(root: string): Migration[] {
@@ -31,6 +47,8 @@ function loadMigrations(root: string): Migration[] {
       const parsed = Bun.YAML.parse(readFileSync(join(root, name), 'utf8')) as {
         up?: unknown;
         down?: unknown;
+        partition?: unknown;
+        down_partition?: unknown;
       };
       if (typeof parsed?.up !== 'string' || typeof parsed.down !== 'string') {
         throw new Error(`Migration ${name} must define string up and down properties`);
@@ -43,6 +61,10 @@ function loadMigrations(root: string): Migration[] {
         down: parsed.down,
         timestamp,
         description,
+        partition: parsed.partition as PartitionDefinition | undefined,
+        downPartition: typeof parsed.down_partition === 'string'
+          ? parsed.down_partition
+          : (parsed.down_partition as { table?: string } | undefined)?.table,
       };
     })
     .sort((a, b) => a.version - b.version);
@@ -75,12 +97,20 @@ export async function migrateDatabase(
   for (const migration of migrations) {
     if (migration.version <= desired && !applied.has(migration.version)) {
       await repository.runStatements(migration.up);
+      if (migration.partition) {
+        if (!repository.partition) throw new Error(`Database does not support partitioning ${migration.partition.table}`);
+        await repository.partition(migration.partition);
+      }
       await repository.run('INSERT INTO schema_migrations(version) VALUES(?)', [migration.name]);
       applied.add(migration.version);
     }
   }
   for (const migration of [...migrations].reverse()) {
     if (migration.version > desired && applied.has(migration.version)) {
+      if (migration.downPartition) {
+        if (!repository.unpartition) throw new Error(`Database does not support unpartitioning ${migration.downPartition}`);
+        await repository.unpartition(migration.downPartition);
+      }
       await repository.runStatements(migration.down);
       await repository.run('DELETE FROM schema_migrations WHERE version = ?', [migration.name]);
     }

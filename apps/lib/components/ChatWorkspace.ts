@@ -443,6 +443,14 @@ export class ChatWorkspace extends BaseComponent {
         composer.requestSubmit();
       }
     });
+    const refocusInput = () => {
+      const focusCurrentInput = () => {
+        const currentInput = this._container?.querySelector<HTMLTextAreaElement>('.tms-chat-input');
+        currentInput?.focus();
+      };
+      focusCurrentInput();
+      requestAnimationFrame(focusCurrentInput);
+    };
     composer.addEventListener('submit', async (event) => {
       event.preventDefault();
       const content = input.value.trim();
@@ -477,9 +485,11 @@ export class ChatWorkspace extends BaseComponent {
             : thread);
         }
         this.redraw();
+        refocusInput();
       } else if (this.def.send_action) {
         if (!this.def.websocket?.endpoint) {
           await this.submit(this.def.send_action, { row: { id: activeThread.id, content } });
+          refocusInput();
           return;
         }
         const clientMessageId = typeof crypto?.randomUUID === 'function'
@@ -525,6 +535,7 @@ export class ChatWorkspace extends BaseComponent {
             });
           });
         }
+        refocusInput();
       }
     });
   }

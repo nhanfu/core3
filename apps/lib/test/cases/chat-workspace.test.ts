@@ -92,6 +92,19 @@ describe('ChatWorkspace', () => {
     });
   });
 
+  it('refocuses the composer after sending a message', async () => {
+    const { container } = createWorkspace();
+    document.body.appendChild(container);
+    const input = container.querySelector<HTMLTextAreaElement>('textarea')!;
+    input.value = 'Keep typing';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    container.querySelector<HTMLFormElement>('form')!.dispatchEvent(
+      new SubmitEvent('submit', { bubbles: true, cancelable: true }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.activeElement).toBe(container.querySelector('textarea'));
+  });
+
   it('submits selected files and exposes persisted attachments', async () => {
     const { container, submit } = createWorkspace();
     const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]')!;

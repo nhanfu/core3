@@ -7,7 +7,7 @@
     "prestart": "bun run css:build",
     "start": "PORT=3001 bun server.ts",
     "predev": "bun run css:build",
-    "dev": "PORT=3001 bun --hot server.ts",
+    "dev": "bun scripts/dev.ts",
     "event-mediator": "bun services/event-mediator/server.ts",
     "event-mediator:throughput": "bun services/event-mediator/throughput.ts",
     "event-mediator:consumer-groups": "bun services/event-mediator/consumer-groups.ts",
