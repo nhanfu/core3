@@ -3,6 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import parquet from 'parquet-wasm';
 import { EventStore, type EventRecord, type EventStoreSchema } from '../../server/event-store.ts';
 
 const stores: EventStore[] = [];
@@ -171,5 +172,39 @@ describe('EventStore', () => {
     await store.start();
     await store.publishBatch(Array.from({ length: 8 }, (_, sequence) => event(1, sequence)));
     expect((await store.historyManifest({ limit: 20 })).map((segment) => segment.rows)).toEqual([2, 2, 2, 2]);
+  });
+
+  it('batches individually published durable events into segments', async () => {
+    const store = makeStore(':memory:', { segmentMaxRows: 2, writeMode: 'durable' });
+    await store.start();
+    for (let sequence = 0; sequence < 5; sequence++) await store.publish(event(1, sequence));
+    await store.flush();
+    expect((await store.historyManifest({ limit: 20 })).map((segment) => segment.rows)).toEqual([2, 2, 1]);
+  });
+
+  it('accumulates low-latency worker batches up to the segment limit', async () => {
+    const store = makeStore(':memory:', { segmentMaxRows: 1000 });
+    await store.start();
+    await store.publishBatch(Array.from({ length: 2050 }, (_, sequence) => event(1, sequence)));
+    await store.flush();
+    expect((await store.historyManifest({ limit: 3000 })).map((segment) => segment.rows)).toEqual([1000, 1000, 50]);
+  });
+
+  it('stores configured columns without an event JSON blob', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'core3-event-schema-'));
+    const store = makeStore(join(directory, 'events.duckdb'), { segmentMaxRows: 2, writeMode: 'durable' });
+    try {
+      await store.start();
+      await store.publishBatch([event(1, 1), event(1, 2)]);
+      const segment = (await store.historyManifest({ limit: 10 }))[0];
+      const bytes = await store.parquetSegment(segment.file);
+      const fields = tableFromIPC(parquet.readParquet(bytes).intoIPCStream()).schema.fields.map((field) => field.name);
+      expect(fields).not.toContain('event_json');
+      expect(fields).toContain('message_body');
+    } finally {
+      await store.stop();
+      stores.splice(stores.indexOf(store), 1);
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });

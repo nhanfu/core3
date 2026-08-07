@@ -24,10 +24,31 @@ function valueAt(source: string | undefined, event: EventEnvelope): unknown {
   return source.split('.').reduce((value: any, key) => value?.[key], event);
 }
 
-function normalizeRow(row: any): EventEnvelope {
+function setPath(target: Record<string, unknown>, path: string, value: unknown): void {
+  const parts = path.split('.');
+  let current = target;
+  for (const part of parts.slice(0, -1)) {
+    const next = current[part];
+    if (!next || typeof next !== 'object' || Array.isArray(next)) current[part] = {};
+    current = current[part] as Record<string, unknown>;
+  }
+  current[parts.at(-1)!] = value;
+}
+
+function normalizeRow(row: any, schema?: EventStoreSchema): EventEnvelope {
   let envelope: Record<string, unknown> = {};
+  // Older segments may contain the JSON envelope. Keep reading them while new
+  // segments use only the declarative columns from the configured schema.
   if (typeof row.event_json === 'string') {
     try { envelope = JSON.parse(row.event_json); } catch {}
+  }
+  if (!Object.keys(envelope).length && schema) {
+    for (const column of schema.columns) {
+      if (column.name === 'id' || column.name === 'sequence' || column.name === 'event_at') continue;
+      const value = row[column.name];
+      if (value === null || value === undefined) continue;
+      setPath(envelope, column.source && column.source !== '@json' ? column.source : column.name, value);
+    }
   }
   return { ...envelope, sequence: Number(row.sequence), at: Number(row.event_at), id: String(row.id), topic: row.topic || envelope.topic || 'events' } as EventEnvelope;
 }
@@ -64,7 +85,6 @@ export class EventStore {
   private readonly hotConsumerTtlMs: number;
   private readonly segmentMaxRows: number;
   private readonly bufferMaxRows: number;
-  private readonly batchSize = 256;
   private readonly schema: EventStoreSchema;
   private readonly writeMode: EventWriteMode;
   private readonly pending: EventEnvelope[] = [];
@@ -75,6 +95,7 @@ export class EventStore {
   private hotRows = 0;
   private hotBytes = 0;
   private workerRunning = false;
+  private workerForcePartial = false;
   private workerTimer: ReturnType<typeof setTimeout> | null = null;
   private flushWaiters: Array<() => void> = [];
   private persistTail: Promise<void> = Promise.resolve();
@@ -143,7 +164,7 @@ export class EventStore {
     const file = `events-${String(first.sequence).padStart(16, '0')}-${String(last.sequence).padStart(16, '0')}.parquet`;
     const temporary = join(this.dataPath, `${file}.tmp`);
     const rows = events.map((event) => {
-      const row: Record<string, unknown> = { id: event.id, sequence: event.sequence, event_at: event.at, event_json: JSON.stringify(event), topic: event.topic || 'events', event_key: event.key, source_node: event.sourceNode };
+      const row: Record<string, unknown> = { id: event.id, sequence: event.sequence, event_at: event.at };
       for (const column of this.schema.columns) row[column.name] = valueAt(column.source || column.name, event) ?? null;
       return row;
     });
@@ -188,35 +209,43 @@ export class EventStore {
     this.hotRows += items.length; this.hotBytes += bytes.byteLength;
     this.trimHot();
     for (const item of items) for (const listener of this.listeners) { try { listener(item); } catch {} }
-    if (this.writeMode === 'durable') await this.persist(items);
-    else {
-      this.pending.push(...items);
-      if (this.pending.length >= this.bufferMaxRows) await this.flush();
-      else this.scheduleWorker();
-    }
+    this.pending.push(...items);
+    if (this.pending.length >= this.bufferMaxRows) await this.flush();
+    else if (this.writeMode === 'durable' && this.pending.length >= this.segmentMaxRows) await this.flush();
+    else this.scheduleWorker();
     return items;
   }
 
   private scheduleWorker(): void {
     if (this.workerRunning || this.workerTimer) return;
-    if (this.pending.length >= this.batchSize) { this.startWorker(); return; }
-    this.workerTimer = setTimeout(() => { this.workerTimer = null; this.startWorker(); }, 10);
+    if (this.pending.length >= this.segmentMaxRows) { this.startWorker(); return; }
+    // Keep the tail in memory until it reaches segmentMaxRows. This prevents
+    // a quiet stream from producing one small Parquet file per time window.
   }
-  private startWorker(): void { if (!this.workerRunning) { this.workerRunning = true; void this.drainWorker(); } }
+  private startWorker(forcePartial = false): void {
+    this.workerForcePartial ||= forcePartial;
+    if (!this.workerRunning) { this.workerRunning = true; void this.drainWorker(); }
+  }
   private async drainWorker(): Promise<void> {
-    try { while (this.pending.length) await this.persist(this.pending.splice(0, this.batchSize)); }
+    try {
+      while (this.pending.length >= this.segmentMaxRows || (this.workerForcePartial && this.pending.length)) {
+        const size = this.workerForcePartial ? Math.min(this.segmentMaxRows, this.pending.length) : this.segmentMaxRows;
+        await this.persist(this.pending.splice(0, size));
+      }
+    }
     finally {
       this.workerRunning = false;
+      const forcePartial = this.workerForcePartial;
+      this.workerForcePartial = false;
       const waiters = this.flushWaiters.splice(0);
       if (!this.pending.length) waiters.forEach((resolve) => resolve());
-      else if (waiters.length) this.startWorker();
-      else this.scheduleWorker();
+      else if (waiters.length || forcePartial) this.startWorker(true);
     }
   }
   async flush(): Promise<void> {
     if (!this.pending.length && !this.workerRunning) return;
     if (this.workerTimer) { clearTimeout(this.workerTimer); this.workerTimer = null; }
-    if (!this.workerRunning && this.pending.length) this.startWorker();
+    if (this.pending.length) this.startWorker(true);
     await new Promise<void>((resolve) => this.flushWaiters.push(resolve));
   }
 
@@ -263,7 +292,7 @@ export class EventStore {
       const wasmTable = parquet.readParquet(parquetBytes);
       const rows = tableFromIPC(wasmTable.intoIPCStream()).toArray();
       for (const row of rows) {
-        const event = normalizeRow(row);
+        const event = normalizeRow(row, this.schema);
         if (result.length < limit && Number(row.sequence) > after && (!topic || String(row.topic || 'events') === topic)) result.push(event);
       }
       if (result.length >= limit) break;
