@@ -24,11 +24,12 @@ afterEach(async () => {
   await Promise.all(stores.splice(0).map((store) => store.stop()));
 });
 
-function makeStore(databasePath: string, options: { maxRows?: number; readerCount?: number; writeMode?: 'low_latency' | 'durable' } = {}) {
+function makeStore(databasePath: string, options: { maxRows?: number; hotMaxRows?: number; readerCount?: number; writeMode?: 'low_latency' | 'durable' } = {}) {
   const store = new EventStore({
     schema,
     databasePath,
     maxRows: options.maxRows ?? 1000,
+    hotMaxRows: options.hotMaxRows ?? options.maxRows ?? 1000,
     retentionMs: 60 * 60 * 1000,
     readerCount: options.readerCount ?? 4,
     writeMode: options.writeMode,
@@ -141,6 +142,22 @@ describe('EventStore', () => {
       await Promise.all(Array.from({ length: 12 }, (_, sequence) => store.publish(event(1, sequence))));
       expect(await store.cacheCount()).toBe(5);
       expect(await store.count()).toBe(12);
+    } finally {
+      await store.stop();
+      stores.splice(stores.indexOf(store), 1);
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('serves the hot window from memory and falls back to durable history', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'core3-event-hot-'));
+    const store = makeStore(join(directory, 'events.duckdb'), { maxRows: 5, hotMaxRows: 2, writeMode: 'durable' });
+    try {
+      await store.start();
+      await store.publishBatch([event(1, 1), event(1, 2), event(1, 3)]);
+
+      expect((await store.records({ afterSequence: 2, limit: 10 })).map((item) => item.sequence)).toEqual([3]);
+      expect((await store.records({ afterSequence: 0, limit: 10 })).map((item) => item.sequence)).toEqual([1, 2, 3]);
     } finally {
       await store.stop();
       stores.splice(stores.indexOf(store), 1);

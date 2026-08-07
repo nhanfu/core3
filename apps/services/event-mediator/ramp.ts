@@ -11,8 +11,8 @@ const maxSubscribers = Math.max(startSubscribers, Number(process.env.EVENT_MEDIA
 const eventsPerPublisher = Math.max(1, Number(process.env.EVENT_MEDIATOR_RAMP_EVENTS || 1000));
 const meaningfulTimeMs = Math.max(1000, Number(process.env.EVENT_MEDIATOR_RAMP_MEANINGFUL_TIME_MS || 30000));
 const inFlight = Math.max(1, Number(process.env.EVENT_MEDIATOR_STRESS_IN_FLIGHT || 64));
-const batchSize = Math.max(1, Number(process.env.EVENT_MEDIATOR_STRESS_BATCH_SIZE || 256));
-const payloadBytes = Math.max(0, Number(process.env.EVENT_MEDIATOR_STRESS_PAYLOAD_BYTES || 256));
+const batchSize = Math.max(1, Number(process.env.EVENT_MEDIATOR_STRESS_BATCH_SIZE || 100));
+const payloadBytes = Math.max(0, Number(process.env.EVENT_MEDIATOR_STRESS_PAYLOAD_BYTES || 4096));
 const outputPath = process.env.EVENT_MEDIATOR_RAMP_OUTPUT || join(process.cwd(), 'event-mediator-ramp-result.json');
 const results: any[] = [];
 
@@ -39,7 +39,7 @@ async function runStage(publishers: number, subscribers: number, port: number) {
   const directory = await mkdtemp(join(tmpdir(), `core3-event-ramp-${publishers}-${subscribers}-`));
   const server = bunRuntime.spawn(['bun', 'services/event-mediator/server.ts'], {
     cwd: process.cwd(),
-    env: { ...process.env, EVENT_MEDIATOR_PORT: String(port), CORE3_EVENT_DB_PATH: join(directory, 'events.duckdb'), CORE3_EVENT_MAX_ROWS: String(expected * 2 + 1000) },
+    env: { ...process.env, EVENT_MEDIATOR_PORT: String(port), CORE3_EVENT_DB_PATH: join(directory, 'events.duckdb'), CORE3_EVENT_MAX_ROWS: String(expected * 2 + 1000), CORE3_EVENT_HOT_MAX_ROWS: String(expected * 2 + 1000), CORE3_EVENT_HOT_MAX_BYTES: String(Math.max(128 * 1024 * 1024, expected * payloadBytes * 2)) },
     stdout: 'ignore', stderr: 'pipe',
   });
   const children: any[] = [];

@@ -140,6 +140,10 @@ export class EventStore {
   private readonly databasePath: string;
   private readonly retentionMs: number;
   private readonly maxRows: number;
+  private readonly hotMaxRows: number;
+  private readonly hotMaxBytes: number;
+  private readonly hotRetentionMs: number;
+  private readonly hotConsumerTtlMs: number;
   private readonly readerCount: number;
   private readonly bufferMaxRows: number;
   private readonly schema: EventStoreSchema;
@@ -154,12 +158,19 @@ export class EventStore {
   private flushWaiters: Array<() => void> = [];
   private readonly cachePruneBatch = 256;
   private readonly cachePruneIntervalMs = 1000;
+  private readonly hotEvents: EventEnvelope[] = [];
+  private hotBytes = 0;
+  private readonly activeCursors = new Map<string, { sequence: number; touchedAt: number }>();
 
   constructor(options: {
     schema: EventStoreSchema;
     databasePath?: string;
     retentionMs?: number;
     maxRows?: number;
+    hotMaxRows?: number;
+    hotMaxBytes?: number;
+    hotRetentionMs?: number;
+    hotConsumerTtlMs?: number;
     readerCount?: number;
     bufferMaxRows?: number;
     writeMode?: EventWriteMode;
@@ -168,6 +179,10 @@ export class EventStore {
     this.databasePath = options.databasePath || './events.duckdb';
     this.retentionMs = Math.max(0, options.retentionMs ?? 60 * 60 * 1000);
     this.maxRows = Math.max(1, Math.floor(options.maxRows || 1000));
+    this.hotMaxRows = Math.max(1, Math.floor(options.hotMaxRows || this.maxRows));
+    this.hotMaxBytes = Math.max(1024, Math.floor(options.hotMaxBytes || 128 * 1024 * 1024));
+    this.hotRetentionMs = Math.max(0, options.hotRetentionMs ?? options.retentionMs ?? 60 * 60 * 1000);
+    this.hotConsumerTtlMs = Math.max(1000, Math.floor(options.hotConsumerTtlMs || 30000));
     this.readerCount = Math.max(1, Math.floor(options.readerCount || 2));
     this.bufferMaxRows = Math.max(this.batchSize, Math.floor(options.bufferMaxRows || 10000));
     this.writeMode = options.writeMode || 'low_latency';
@@ -239,6 +254,11 @@ export class EventStore {
       at: Date.now(),
     } as EventEnvelope));
     if (!items.length) return items;
+    for (const item of items) {
+      this.hotEvents.push(item);
+      this.hotBytes += this.eventBytes(item);
+    }
+    this.trimHot();
     if (this.writeMode === 'durable') this.getPool().appendBatch(items);
     this.getCachePool().appendBatch(items);
     for (const item of items) {
@@ -293,7 +313,48 @@ export class EventStore {
   private async pruneCache(): Promise<void> {
     await this.getCachePool().run(`DELETE FROM ${this.table()} WHERE "event_at" < ? OR "sequence" <= (
       SELECT COALESCE(MAX("sequence"), 0) - ? FROM ${this.table()}
-    )`, [Date.now() - this.retentionMs, this.maxRows]);
+    )`, [Date.now() - this.hotRetentionMs, this.hotMaxRows]);
+  }
+
+  private eventBytes(event: EventEnvelope): number {
+    // This is deliberately an estimate. The durable/cache append path already
+    // serializes the envelope when it materializes event_json; serializing it a
+    // second time here makes the hot path pay the payload cost twice.
+    let bytes = 128;
+    for (const value of Object.values(event)) {
+      if (typeof value === 'string') bytes += value.length * 2;
+      else if (typeof value === 'number' || typeof value === 'boolean') bytes += 16;
+      else if (value !== null && value !== undefined) bytes += 256;
+    }
+    return bytes;
+  }
+
+  private trimHot(): void {
+    const now = Date.now();
+    for (const [id, cursor] of this.activeCursors) {
+      if (now - cursor.touchedAt > this.hotConsumerTtlMs) this.activeCursors.delete(id);
+    }
+    const protectedSequence = this.activeCursors.size
+      ? Math.min(...[...this.activeCursors.values()].map((cursor) => cursor.sequence))
+      : Number.POSITIVE_INFINITY;
+    while (this.hotEvents.length > 1) {
+      const first = this.hotEvents[0];
+      const tooOld = first.at < now - this.hotRetentionMs;
+      const tooManyRows = this.hotEvents.length > this.hotMaxRows;
+      const tooLarge = this.hotBytes > this.hotMaxBytes;
+      if ((!tooOld && !tooManyRows && !tooLarge) || first.sequence >= protectedSequence) break;
+      this.hotEvents.shift();
+      this.hotBytes -= this.eventBytes(first);
+    }
+  }
+
+  touchCursor(id: string, sequence: number): void {
+    this.activeCursors.set(id, { sequence: Math.max(0, Math.floor(sequence)), touchedAt: Date.now() });
+  }
+
+  releaseCursor(id: string): void {
+    this.activeCursors.delete(id);
+    this.trimHot();
   }
 
   private scheduleCacheMaintenance(rows = 1): void {
@@ -359,6 +420,14 @@ export class EventStore {
   }
 
   async records(options: { afterSequence?: number; limit?: number; topic?: string } = {}): Promise<EventEnvelope[]> {
+    const afterSequence = Math.max(0, Math.floor(options.afterSequence || 0));
+    const limit = Math.max(1, Math.min(10000, Math.floor(options.limit || 1000)));
+    const firstHot = this.hotEvents[0]?.sequence || 0;
+    if (firstHot > 0 && afterSequence >= firstHot - 1) {
+      return this.hotEvents
+        .filter((event) => event.sequence > afterSequence && (!options.topic || String(event.topic || 'events') === options.topic))
+        .slice(0, limit);
+    }
     const rows = await this.historyRows(options);
     const topic = options.topic;
     return rows
@@ -442,6 +511,9 @@ export class EventStore {
     this.db = null;
     this.cacheDb = null;
     this.listeners.clear();
+    this.hotEvents.length = 0;
+    this.hotBytes = 0;
+    this.activeCursors.clear();
   }
 
   async count(): Promise<number> {

@@ -154,6 +154,10 @@ export type EventMediatorServerOptions = {
   schema: EventStoreSchema;
   retentionMs?: number;
   maxRows?: number;
+  hotMaxRows?: number;
+  hotMaxBytes?: number;
+  hotRetentionMs?: number;
+  hotConsumerTtlMs?: number;
   readerCount?: number;
   bufferMaxRows?: number;
   writeMode?: 'low_latency' | 'durable';
@@ -201,6 +205,7 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
       open(socket: any) {
         clients.add(socket);
         socket.data.groups = new Set<string>();
+        socket.data.cursorIds = new Set<string>();
       },
       async message(socket: any, raw: string | ArrayBuffer) {
         let message: WireMessage;
@@ -251,6 +256,9 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
               groupInFlight.set(key, { socket, events: [], expiresAt: Date.now() + ackTimeoutMs });
               afterSequence = await store.consumerOffset(group);
             }
+            const cursorId = `${socket.data.cursorPrefix}:${group || topic}`;
+            socket.data.cursorIds.add(cursorId);
+            store.touchCursor(cursorId, afterSequence);
             let events = await store.records({ afterSequence, limit, topic: topic === '*' ? undefined : topic });
             if (!events.length && waitMs) {
               await waitForEvent(topic, waitMs);
@@ -292,6 +300,7 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
       close(socket: any) {
         clients.delete(socket);
         for (const key of socket.data?.groups || []) groupMembers.get(key)?.delete(socket);
+        for (const id of socket.data?.cursorIds || []) store.releaseCursor(id);
         for (const [key, pending] of groupInFlight) if (pending.socket === socket) groupInFlight.delete(key);
       },
     },
@@ -300,7 +309,9 @@ export async function serveEventMediator(options: EventMediatorServerOptions): P
       if (url.pathname === '/health') return new Response('ok');
       if (url.pathname === '/events') {
         if (options.token && url.searchParams.get('token') !== options.token) return new Response('Unauthorized', { status: 401 });
-        return server.upgrade(req, { data: {} }) ? undefined : new Response('WebSocket upgrade failed', { status: 400 });
+        const nodeId = url.searchParams.get('node_id') || 'node';
+        const cursorPrefix = `${nodeId}:${crypto.randomUUID()}`;
+        return server.upgrade(req, { data: { nodeId, cursorPrefix } }) ? undefined : new Response('WebSocket upgrade failed', { status: 400 });
       }
       return new Response('Event mediator WebSocket endpoint', { status: 426 });
     },

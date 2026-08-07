@@ -58,6 +58,10 @@ services:
         production: ${CORE3_EVENT_DB_PATH:-./events.duckdb}
     retention_ms: ${CORE3_EVENT_RETENTION_MS:-3600000}
     max_rows: ${CORE3_EVENT_MAX_ROWS:-1000}
+    hot_max_rows: ${CORE3_EVENT_HOT_MAX_ROWS:-100000}
+    hot_max_bytes: ${CORE3_EVENT_HOT_MAX_BYTES:-134217728}
+    hot_retention_ms: ${CORE3_EVENT_HOT_RETENTION_MS:-3600000}
+    hot_consumer_ttl_ms: ${CORE3_EVENT_HOT_CONSUMER_TTL_MS:-30000}
     reader_connections: ${CORE3_EVENT_READER_CONNECTIONS:-2}
     buffer_max_rows: ${CORE3_EVENT_BUFFER_MAX_ROWS:-10000}
     write_mode: ${CORE3_EVENT_WRITE_MODE:-low_latency}
