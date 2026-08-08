@@ -170,7 +170,6 @@ components:
             rows: [status_label]
             columns: [transport_method]
             measures:
-              - { aggregate: count, column: Orders }
               - { field: total_amount, aggregate: sum, column: Amount }
       - id: graph
         label: Graph

@@ -731,7 +731,15 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       rowActions: def.row_actions || 'buttons',
       views,
       onViewChange: (view: string) => {
-        replaceParams({ ...getPageParams(), view });
+        const params = { ...getPageParams(), view } as Record<string, string | undefined>;
+        if (view !== 'pivot') {
+          delete params.pivot_rows;
+          delete params.pivot_columns;
+          delete params.pivot_measures;
+        }
+        // Keep the previous Pivot URL in browser history. This lets Back
+        // restore its rows, columns, and measures after visiting another view.
+        pushParams(params);
         const selectedView = views.find((candidate: any) => candidate.id === view);
         const nextPivot = selectedView?.id === 'pivot'
           ? { rows: selectedView.rowFields, columns: selectedView.columnFields, measures: selectedView.measures }

@@ -12,7 +12,7 @@ import {
 
 export const dataMethods = {
   querySource: async function(this: any,
-    source: { id?: string; query: string; single?: boolean },
+    source: { id?: string; query: string; single?: boolean; pivot?: any },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -236,7 +236,6 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   const rows = Array.isArray(request.rows) ? request.rows : request.rowField ? [request.rowField] : [];
   const columns = Array.isArray(request.columns) ? request.columns : request.columnField ? [request.columnField] : [];
   const measures = Array.isArray(request.measures) ? request.measures : [{ field: request.measureField, aggregate: request.aggregate || 'sum', label: request.measureLabel }];
-  if (!columns.length) throw Object.assign(new Error('Pivot requires at least one column field'), { status: 400 });
   if (!measures.length) throw Object.assign(new Error('Pivot requires at least one measure'), { status: 400 });
   const checkField = (field: unknown, label: string) => {
     const name = String(field || '');
@@ -245,15 +244,6 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   };
   const rowSql = rows.map((field: unknown) => checkField(field, 'Pivot row field'));
   const columnSql = columns.map((field: unknown) => checkField(field, 'Pivot column field'));
-  const distinctRows = await repository.query(
-    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${statement}) AS pivot_values`,
-    values,
-  );
-  const pivotValues = distinctRows.length
-    ? distinctRows.map((row: any) => columns.length === 1
-      ? sqlLiteral(row[String(columns[0])])
-      : `(${columns.map((column: unknown) => sqlLiteral(row[String(column)])).join(', ')})`).join(', ')
-    : 'NULL';
   const measureSql = measures.map((measure: any, index: number) => {
     const aggregate = String(measure?.aggregate || 'sum').toLowerCase();
     if (!AGGREGATES.has(aggregate)) throw Object.assign(new Error(`Unsupported pivot aggregate: ${aggregate}`), { status: 400 });
@@ -265,6 +255,18 @@ async function nativePivotStatement(repository: any, statement: string, values: 
     return `${expression} AS ${quoteIdentifier(alias, 'Pivot measure label')}`;
   });
   const groupBy = rowSql.length ? ` GROUP BY ${rowSql.join(', ')}` : '';
+  if (!columns.length) {
+    return `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${statement}) AS pivot_source${groupBy}`;
+  }
+  const distinctRows = await repository.query(
+    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${statement}) AS pivot_values`,
+    values,
+  );
+  const pivotValues = distinctRows.length
+    ? distinctRows.map((row: any) => columns.length === 1
+    ? sqlLiteral(row[String(columns[0])])
+      : `(${columns.map((column: unknown) => sqlLiteral(row[String(column)])).join(', ')})`).join(', ')
+    : 'NULL';
   return `PIVOT (${statement}) ON ${columnSql.join(', ')} IN (${pivotValues}) USING ${measureSql.join(', ')}${groupBy}`;
 }
 
