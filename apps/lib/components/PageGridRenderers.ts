@@ -1,9 +1,28 @@
 import { evalExpr } from '../expr.ts';
 import { hasPermission } from '../meta.ts';
-import { navigate, getPageParams, replaceParams } from '../navigate.ts';
+import { navigate, getPageParams, replaceParams, pushParams } from '../navigate.ts';
 import { BaseComponent } from './BaseComponent.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';
+
+function pivotRequestFromUrl(params: Record<string, string>, view: any) {
+  const defaults = view?.pivot?.default || {};
+  const rows = String(params.pivot_rows || (defaults.rows || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
+  const columns = String(params.pivot_columns || (defaults.columns || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
+  const defaultMeasures = Array.isArray(defaults.measures) ? defaults.measures : [];
+  const measureSpecs = params.pivot_measures
+    ? String(params.pivot_measures).split(',').map(value => value.trim()).filter(Boolean)
+    : defaultMeasures.map((measure: any) => measure.aggregate === 'count'
+      ? `count:${measure.column || measure.label || 'Count'}`
+      : `${measure.field}:${measure.aggregate || 'sum'}:${measure.column || measure.label || measure.field}`);
+  const measures = measureSpecs.map((spec: string) => {
+    const [field, aggregate = 'sum', label] = spec.split(':').map((value: string) => value.trim());
+    if (field === 'count' && aggregate !== 'sum') return { aggregate: 'count', label: label || aggregate || 'Count' };
+    if (field === 'count') return { aggregate: 'count', label: label || 'Count' };
+    return { field, aggregate, label: label || field };
+  });
+  return rows.length && columns.length && measures.length ? { rows, columns, measures } : undefined;
+}
 
 export class PageGridRenderers extends BaseComponent {
   readonly renderers: any;
@@ -384,7 +403,16 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   const { ListView } = await import('./ListView.ts');
   const sourceId = def.source;
   const sourceWorkflow = (config.datasources || []).find((source: any) => source.id === sourceId)?.workflow;
+  const sourceDefinition = (config.datasources || []).find((source: any) => source.id === sourceId);
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+  const pivotConfig = (def.views || []).find((view: any) => view.id === 'pivot')?.pivot || {};
+  const pivotFieldMappings = Array.isArray(pivotConfig.fields) ? pivotConfig.fields : [];
+  const pivotFields = pivotFieldMappings.length
+    ? pivotFieldMappings.map((field: any) => String(field.field))
+    : Array.isArray(sourceDefinition?.pivot?.fields)
+      ? sourceDefinition.pivot.fields.map(String)
+    : Object.keys((Array.isArray(sourceResult.data) ? sourceResult.data[0] : {}) || {});
+  const pivotFieldLabels = Object.fromEntries(pivotFieldMappings.map((field: any) => [String(field.field), String(field.column || field.field)]));
   const pageSize = def.page_size || 25;
   const filters = (def.filters || []).map((filter: any) => {
     if (!filter.options_source) return filter;
@@ -463,6 +491,23 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     icon: view.icon,
     dateField: view.date_field,
     endDateField: view.end_date_field,
+    rowField: view.row_field,
+    columnField: view.column_field,
+    measureField: view.measure_field,
+    measureLabel: view.measure_label,
+    categoryField: view.category_field,
+    type: view.type,
+    labelField: view.label_field,
+    subtitleField: view.subtitle_field,
+    latitudeField: view.latitude_field,
+    longitudeField: view.longitude_field,
+    pivot: view.pivot,
+    fields: view.id === 'pivot' ? pivotFields : undefined,
+    fieldLabels: view.id === 'pivot' ? pivotFieldLabels : undefined,
+    configLabel: view.pivot?.config_label,
+    rowFields: view.row_fields || (view.row_field ? [view.row_field] : view.pivot?.default?.rows || []),
+    columnFields: view.column_fields || (view.column_field ? [view.column_field] : view.pivot?.default?.columns || []),
+    measures: view.measures || view.pivot?.default?.measures?.map((measure: any) => ({ field: measure.field, aggregate: measure.aggregate || 'sum', label: measure.column || measure.label })) || [],
     groupBy: view.group_by,
     groups: view.groups_source
       ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))
@@ -487,6 +532,22 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       : (views.some((view: any) => view.id === requestedView) ? requestedView : undefined);
   if (mobileCardRoute && requestedView !== 'card') replaceParams({ ...pageParams, view: 'card' });
   if (desktopListRoute) replaceParams({ ...pageParams, view: 'list' });
+  const pivotView = activeView === 'pivot' ? views.find((view: any) => view.id === 'pivot') : undefined;
+  const pivotQuery = pivotView ? pivotRequestFromUrl(pageParams, pivotView) : undefined;
+  if (pivotView && pivotQuery) Object.assign(pivotView, {
+    rowFields: pivotQuery.rows,
+    columnFields: pivotQuery.columns,
+    measures: pivotQuery.measures,
+  });
+  let activeSourceResult = sourceResult;
+  if (pivotQuery) {
+    try {
+      activeSourceResult = await client.query(createQuery({ sourceId, params: pageParams, skip: 0, top: pageSize, pivot: pivotQuery }));
+      dataMap[sourceId] = activeSourceResult;
+    } catch (error) {
+      console.error(`[page-renderer] pivot query failed for "${sourceId}":`, error);
+    }
+  }
   const utilityActions = (def.actions || []).filter((action: any) => {
     if (!hasPermission(ctx.user, action.permission)) return false;
     return !action.show_if || Boolean(evalExpr(action.show_if, ctx));
@@ -633,8 +694,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   const comp = new ListView(
     `list-view-${sourceId || def.id || Date.now()}`,
     {
-      rows: sourceResult.data || [],
-      meta: sourceResult.meta || {},
+      rows: activeSourceResult.data || [],
+      meta: activeSourceResult.meta || {},
       filters: { ...(filterState[sourceId] || {}) },
       selectedIds: [],
       ...(activeView ? { activeView } : {}),
@@ -669,8 +730,29 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       renderForm,
       rowActions: def.row_actions || 'buttons',
       views,
-      onViewChange: (view: 'list' | 'kanban' | 'calendar' | 'card') => {
+      onViewChange: (view: string) => {
         replaceParams({ ...getPageParams(), view });
+        const selectedView = views.find((candidate: any) => candidate.id === view);
+        const nextPivot = selectedView?.id === 'pivot'
+          ? { rows: selectedView.rowFields, columns: selectedView.columnFields, measures: selectedView.measures }
+          : undefined;
+        void refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId]?.top || pageSize, sortState[sourceId], nextPivot)
+          .then((data: any) => comp.setState({ rows: data.data || [], meta: data.meta || {} }));
+      },
+      onPivotChange: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }> }) => {
+        const params = {
+          ...getPageParams(),
+          view: 'pivot',
+          pivot_rows: request.rows.join(','),
+          pivot_columns: request.columns.join(','),
+          pivot_measures: request.measures.map(measure => measure.aggregate === 'count'
+            ? `count:${measure.label || 'Count'}`
+            : `${measure.field}:${measure.aggregate}:${measure.label || measure.field}`).join(','),
+        };
+        pushParams(params);
+        void refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId]?.top || pageSize, sortState[sourceId], request)
+          .then((data: any) => comp.setState({ rows: data.data || [], meta: data.meta || {}, pivotError: undefined }))
+          .catch((error: unknown) => comp.setState({ pivotError: error instanceof Error ? error.message : String(error) }));
       },
       emptyState: def.empty_state,
       labels: {
@@ -694,7 +776,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           ? def.filter_sources
           : [sourceId];
         for (const target of targets) {
-          await applySourceFilters(target, { ...(filterState[target] || {}), ...values });
+          await applySourceFilters(target, { ...(filterState[target] || {}), ...values }, pivotQuery);
         }
       },
       onPageChange: async (page: number) => {
@@ -703,7 +785,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         const newSkip = (nextPage - 1) * currentPageSize;
         paginationState[sourceId] = { skip: newSkip, top: currentPageSize, page: nextPage };
         try {
-          const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, currentPageSize, sortState[sourceId]);
+          const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, currentPageSize, sortState[sourceId], pivotQuery);
           updateBoundComponents(sourceId, data);
         } catch (error) {
           console.error('[page-renderer] list pagination fetch error:', error);
@@ -713,7 +795,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         sortState[sourceId] = sort;
         paginationState[sourceId] = { skip: 0, top: paginationState[sourceId]?.top || pageSize, page: 1 };
         try {
-          const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId].top, sort);
+          const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId].top, sort, pivotQuery);
           updateBoundComponents(sourceId, data);
         } catch (error) {
           console.error('[page-renderer] list sort fetch error:', error);

@@ -259,9 +259,10 @@ export class PageRuntime extends BaseComponent {
     skip = 0,
     top = 25,
     sort = sortState[sourceId],
+    pivot = undefined,
   ) {
     const result = await client.query(
-      createQuery({ sourceId, params: { ...pageParams, ...filters }, sort, skip, top })
+      createQuery({ sourceId, params: { ...pageParams, ...filters }, sort, skip, top, pivot })
     );
     dataMap[sourceId] = result;
     if (result?.data && !Array.isArray(result.data)) {
@@ -314,7 +315,7 @@ export class PageRuntime extends BaseComponent {
     }
   }
 
-  async function applySourceFilters(sourceId: string, values: Record<string, unknown> = {}) {
+  async function applySourceFilters(sourceId: string, values: Record<string, unknown> = {}, pivot?: any) {
     const normalized = Object.fromEntries(
       Object.entries({ ...(filterState[sourceId] || {}), ...values })
         .map(([key, value]) => [key, value === '' ? null : value])
@@ -326,7 +327,7 @@ export class PageRuntime extends BaseComponent {
       page: 1,
     };
     try {
-      const data = await refetchSource(sourceId, normalized, 0, paginationState[sourceId].top);
+      const data = await refetchSource(sourceId, normalized, 0, paginationState[sourceId].top, sortState[sourceId], pivot);
       updateBoundComponents(sourceId, data);
     } catch (err) {
       console.error('[page-renderer] filter fetch error:', err);

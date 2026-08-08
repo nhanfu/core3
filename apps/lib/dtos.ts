@@ -18,8 +18,9 @@ export function createQuery(options: any = {}) {
     facetField = null,
     metaConn = null,
     dataConn = null,
+    pivot = undefined,
   } = options;
-  return { sourceId, action, params, select, where, orderBy, groupBy, sort, skip, top, facetField, metaConn, dataConn };
+  return { sourceId, action, params, select, where, orderBy, groupBy, sort, skip, top, facetField, metaConn, dataConn, pivot };
 }
 
 export function createPatch(options: any = {}) {

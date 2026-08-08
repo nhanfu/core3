@@ -22,6 +22,7 @@ datasources:
           ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
         END AS status_label,
         o.shipment_type, o.route, o.transport_method, o.trip_count,
+        CAST(COALESCE(o.total_amount, 0) AS DOUBLE) AS total_amount,
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, CAST(o.created_at AS VARCHAR) AS created_at
       FROM orders o
@@ -44,6 +45,8 @@ datasources:
       allow_add: true
       transitions:
         - { from: '*', to: '*', permission: orders.write }
+    pivot:
+      fields: [status_label, transport_method, shipment_type, total_amount]
   - id: order_statuses
     single: false
     permission: orders.read
@@ -154,6 +157,31 @@ components:
         card:
           title: order_number
           subtitle: customer_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: status_label, column: Status }
+            - { field: transport_method, column: Transport method }
+            - { field: shipment_type, column: Shipment type }
+            - { field: total_amount, column: Total amount }
+          default:
+            rows: [status_label]
+            columns: [transport_method]
+            measures:
+              - { aggregate: count, column: Orders }
+              - { field: total_amount, aggregate: sum, column: Amount }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: status_label
+        measure_field: total_amount
+      - id: map
+        label: Map
+        icon: map
+        label_field: order_number
+        subtitle_field: route
       - { id: form, label: Form, icon: form }
     page_size: 50
     column_chooser: true

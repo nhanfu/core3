@@ -44,6 +44,7 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
       vm.top || 25,
       typeof vm.facetField === 'string' ? vm.facetField : undefined,
       vm.sort,
+      vm.pivot,
     );
     return json(result);
   }

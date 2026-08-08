@@ -5,6 +5,9 @@ import { appendIcon } from './Icon.ts';
 import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
 import { CalendarView, type CalendarViewDefinition } from './CalendarView.ts';
 import { CardView, type CardViewDefinition } from './CardView.ts';
+import { PivotView, type PivotViewDefinition } from './PivotView.ts';
+import { GraphView, type GraphViewDefinition } from './GraphView.ts';
+import { MapView, type MapViewDefinition } from './MapView.ts';
 import { resolveDatePreset, type DateRangePreset } from './ListToolbar.ts';
 
 type ListRow = Record<string, unknown>;
@@ -59,7 +62,8 @@ export type FormViewDefinition = {
   label: string;
   icon?: string;
 };
-export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition;
+export type AnalyticsViewMode = PivotViewDefinition | GraphViewDefinition | MapViewDefinition;
+export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition | AnalyticsViewMode;
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
@@ -112,7 +116,8 @@ export type ListViewOptions = {
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
-  onViewChange?: (view: 'list' | 'kanban' | 'calendar' | 'card') => void;
+  onViewChange?: (view: string) => void;
+  onPivotChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }> }) => void;
   onGroupByChange?: (field: string | null) => void;
   onFavoriteChange?: (favorite: ListViewFavorite) => void;
 };
@@ -290,6 +295,18 @@ export class ListView extends BaseComponent {
       if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
         await this.drawFormPanel(content, rows, false);
       }
+      return;
+    }
+    if (activeView.id === 'pivot' || activeView.id === 'graph' || activeView.id === 'map') {
+      const content = html.take(root).div.className('o-list-content').getContext();
+      const host = html.take(content).div.className(`o-list-${activeView.id}-host`).getContext();
+      const options = { view: activeView as AnalyticsViewMode, openAction: this.options.openAction, rowKey: this.options.rowKey };
+      const View = activeView.id === 'pivot' ? PivotView : activeView.id === 'graph' ? GraphView : MapView;
+      const child = new View(`${activeView.id}-view-${this.id}`, { rows }, {
+        ...options,
+        ...(activeView.id === 'pivot' ? { onChange: this.options.onPivotChange } : {}),
+      } as any);
+      child.parent = this; child._transport = this._transport; this.children.push(child); child.mount(host);
       return;
     }
 

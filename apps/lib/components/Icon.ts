@@ -60,6 +60,7 @@ const ICON_PATHS: Record<string, string> = {
 };
 
 const ICON_ALIASES: Record<string, string> = {
+  pivot: 'analytics', graph: 'analytics', map: 'pin',
   '⌕': 'search',
   '↓': 'download',
   '↑': 'upload',

@@ -18,13 +18,15 @@ export const dataMethods = {
     top = 25,
     facetField?: string,
     sort?: { field?: unknown; direction?: unknown },
+    pivot?: any,
   ): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
+    const pivotStatement = pivot ? await nativePivotStatement(this, statement, values, source.pivot, pivot) : statement;
     const diagnostics = {
       sourceId: source.id || '<anonymous>',
       single: source.single === true,
       params: Object.fromEntries(Object.entries(params).map(([key, value]) => [key, redactQueryValue(key, value)])),
-      statement,
+      statement: pivotStatement,
       boundValueTypes: values.map(value => value === null ? 'null' : typeof value),
       boundValueCount: values.length,
     };
@@ -47,7 +49,7 @@ export const dataMethods = {
       return { data: rows[0] || {} };
     }
 
-    const [count] = await runQuery('count', `SELECT COUNT(*) AS n FROM (${statement}) AS source_rows`, values);
+    const [count] = await runQuery('count', `SELECT COUNT(*) AS n FROM (${pivotStatement}) AS source_rows`, values);
     const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
     const offset = Math.max(0, Number(skip) || 0);
     const sortField = typeof sort?.field === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(sort.field)
@@ -56,7 +58,7 @@ export const dataMethods = {
     const sortDirection = sort?.direction === 'desc' ? 'DESC' : 'ASC';
     const sortClause = sortField ? ` ORDER BY source_rows."${sortField}" ${sortDirection} NULLS LAST` : '';
     const rows = await runQuery('rows',
-      `SELECT * FROM (${statement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
+      `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
       [...values, pageSize, offset]
     );
     const total = Number(count?.n || 0);
@@ -65,7 +67,7 @@ export const dataMethods = {
       try {
         const facetRows = await this.query(
 
-          `SELECT CAST(source_rows."${facetField}" AS VARCHAR) AS value, COUNT(*) AS n FROM (${statement}) AS source_rows GROUP BY source_rows."${facetField}"`,
+          `SELECT CAST(source_rows."${facetField}" AS VARCHAR) AS value, COUNT(*) AS n FROM (${pivotStatement}) AS source_rows GROUP BY source_rows."${facetField}"`,
           values,
         );
         meta.facets = Object.fromEntries(facetRows.map((row: any) => [String(row.value ?? ''), Number(row.n || 0)]));
@@ -220,3 +222,55 @@ export const dataMethods = {
   },
 };
 
+const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const AGGREGATES = new Set(['count', 'sum', 'avg', 'min', 'max']);
+const quoteIdentifier = (value: unknown, label: string) => {
+  const identifier = String(value || '');
+  if (!IDENTIFIER.test(identifier)) throw Object.assign(new Error(`${label} must be a safe identifier`), { status: 400 });
+  return `"${identifier}"`;
+};
+
+async function nativePivotStatement(repository: any, statement: string, values: any[], declaration: any, request: any): Promise<string> {
+  const allowed = new Set(Array.isArray(declaration?.fields) ? declaration.fields.map(String) : []);
+  if (!allowed.size) throw Object.assign(new Error('Datasource does not declare pivot fields'), { status: 400 });
+  const rows = Array.isArray(request.rows) ? request.rows : request.rowField ? [request.rowField] : [];
+  const columns = Array.isArray(request.columns) ? request.columns : request.columnField ? [request.columnField] : [];
+  const measures = Array.isArray(request.measures) ? request.measures : [{ field: request.measureField, aggregate: request.aggregate || 'sum', label: request.measureLabel }];
+  if (!columns.length) throw Object.assign(new Error('Pivot requires at least one column field'), { status: 400 });
+  if (!measures.length) throw Object.assign(new Error('Pivot requires at least one measure'), { status: 400 });
+  const checkField = (field: unknown, label: string) => {
+    const name = String(field || '');
+    if (!allowed.has(name)) throw Object.assign(new Error(`${label} is not declared as pivotable`), { status: 400 });
+    return quoteIdentifier(name, label);
+  };
+  const rowSql = rows.map((field: unknown) => checkField(field, 'Pivot row field'));
+  const columnSql = columns.map((field: unknown) => checkField(field, 'Pivot column field'));
+  const distinctRows = await repository.query(
+    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${statement}) AS pivot_values`,
+    values,
+  );
+  const pivotValues = distinctRows.length
+    ? distinctRows.map((row: any) => columns.length === 1
+      ? sqlLiteral(row[String(columns[0])])
+      : `(${columns.map((column: unknown) => sqlLiteral(row[String(column)])).join(', ')})`).join(', ')
+    : 'NULL';
+  const measureSql = measures.map((measure: any, index: number) => {
+    const aggregate = String(measure?.aggregate || 'sum').toLowerCase();
+    if (!AGGREGATES.has(aggregate)) throw Object.assign(new Error(`Unsupported pivot aggregate: ${aggregate}`), { status: 400 });
+    const expression = aggregate === 'count' && !measure.field ? 'count(*)' : `${aggregate}(${checkField(measure.field, `Pivot measure ${index + 1}`)})`;
+    const alias = String(measure.label || `${aggregate}_${measure.field || 'rows'}`)
+      .trim()
+      .replace(/[^A-Za-z0-9_]+/g, '_')
+      .replace(/^[^A-Za-z_]+/, '') || `${aggregate}_${measure.field || 'rows'}`;
+    return `${expression} AS ${quoteIdentifier(alias, 'Pivot measure label')}`;
+  });
+  const groupBy = rowSql.length ? ` GROUP BY ${rowSql.join(', ')}` : '';
+  return `PIVOT (${statement}) ON ${columnSql.join(', ')} IN (${pivotValues}) USING ${measureSql.join(', ')}${groupBy}`;
+}
+
+function sqlLiteral(value: unknown): string {
+  if (value === null || value === undefined) return 'NULL';
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
+  return `'${String(value).replace(/'/g, "''")}'`;
+}

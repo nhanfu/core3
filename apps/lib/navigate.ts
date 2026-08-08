@@ -53,3 +53,13 @@ export function replaceParams(params = {}) {
   const url = `${window.location.pathname}${qs.toString() ? '?' + qs.toString() : ''}`;
   window.history.replaceState({}, '', url);
 }
+
+/** Push URL-backed page state so browser Back restores the previous state. */
+export function pushParams(params = {}) {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v != null) qs.set(k, String(v));
+  }
+  const url = `${window.location.pathname}${qs.toString() ? '?' + qs.toString() : ''}`;
+  window.history.pushState({}, '', url);
+}
