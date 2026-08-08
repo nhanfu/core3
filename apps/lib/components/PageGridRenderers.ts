@@ -747,6 +747,18 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           delete params.pivot_columns;
           delete params.pivot_measures;
           delete params.pivot_ranges;
+          const pageState = paginationState[sourceId] || { page: 1, top: pageSize };
+          params.page = String(pageState.page || 1);
+          params.page_size = String(pageState.top || pageSize);
+          if (sortState[sourceId]) {
+            params.sort = sortState[sourceId].field;
+            params.sort_dir = sortState[sourceId].direction;
+          }
+        } else {
+          delete params.page;
+          delete params.page_size;
+          delete params.sort;
+          delete params.sort_dir;
         }
         // Keep the previous Pivot URL in browser history. This lets Back
         // restore its rows, columns, and measures after visiting another view.
@@ -800,6 +812,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           if (value == null || value === '') delete nextParams[key];
           else nextParams[key] = value;
         }
+        nextParams.page = '1';
         pushParams(nextParams);
         for (const target of targets) {
           await applySourceFilters(target, { ...(filterState[target] || {}), ...values }, pivotQuery, false);
@@ -810,6 +823,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         const currentPageSize = paginationState[sourceId]?.top || pageSize;
         const newSkip = (nextPage - 1) * currentPageSize;
         paginationState[sourceId] = { skip: newSkip, top: currentPageSize, page: nextPage };
+        pushParams({ ...getPageParams(), page: String(nextPage), page_size: String(currentPageSize) });
         try {
           const data = await refetchSource(sourceId, filterState[sourceId] || {}, newSkip, currentPageSize, sortState[sourceId], pivotQuery);
           updateBoundComponents(sourceId, data);
@@ -820,6 +834,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       onSort: async (sort: { field: string; direction: 'asc' | 'desc' }) => {
         sortState[sourceId] = sort;
         paginationState[sourceId] = { skip: 0, top: paginationState[sourceId]?.top || pageSize, page: 1 };
+        pushParams({ ...getPageParams(), page: '1', page_size: String(paginationState[sourceId].top), sort: sort.field, sort_dir: sort.direction });
         try {
           const data = await refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId].top, sort, pivotQuery);
           updateBoundComponents(sourceId, data);

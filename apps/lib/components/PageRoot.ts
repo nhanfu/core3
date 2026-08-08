@@ -226,7 +226,20 @@ export class PageRuntime extends BaseComponent {
   const sourceDefs = collectSources(config);
   for (const src of sourceDefs.values()) {
     const pageSize = src.page_size || 25;
-    paginationState[src.id] = { skip: 0, top: pageSize, page: 1 };
+    const usesListUrlState = src.url_pagination === true;
+    const requestedPageSize = usesListUrlState ? Number(pageParams.page_size) : NaN;
+    const top = Number.isFinite(requestedPageSize) && requestedPageSize > 0
+      ? Math.max(1, Math.min(Math.floor(requestedPageSize), 100))
+      : pageSize;
+    const requestedPage = usesListUrlState ? Number(pageParams.page) : NaN;
+    const page = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
+    paginationState[src.id] = { skip: (page - 1) * top, top, page };
+    if (usesListUrlState && pageParams.sort) {
+      sortState[src.id] = {
+        field: String(pageParams.sort),
+        direction: pageParams.sort_dir === 'desc' ? 'desc' : 'asc',
+      };
+    }
     filterState[src.id] = { ...pageParams, ...initialDateFilters };
     if (src.data !== undefined) {
       dataMap[src.id] = {
@@ -237,7 +250,7 @@ export class PageRuntime extends BaseComponent {
     }
     try {
       const result = await client.query(
-        createQuery({ sourceId: src.id, params: pageParams, skip: 0, top: pageSize })
+        createQuery({ sourceId: src.id, params: pageParams, skip: paginationState[src.id].skip, top: paginationState[src.id].top, sort: sortState[src.id] })
       );
       dataMap[src.id] = result;
     } catch (err) {
@@ -327,6 +340,7 @@ export class PageRuntime extends BaseComponent {
         if (value == null || value === '') delete nextParams[key];
         else nextParams[key] = value;
       }
+      nextParams.page = '1';
       pushParams(nextParams);
     }
     paginationState[sourceId] = {
@@ -686,12 +700,14 @@ function collectSources(config: any) {
       // A toolbar/tabs component may reference the source before its grid.
       // Keep the grid's page size rather than freezing the default at 25.
       if (def.page_size) existing.page_size = def.page_size;
+      if (def.type === 'ListView') existing.url_pagination = true;
       return;
     }
     sources.set(id, {
       id,
       single: def.single ?? def.type === 'StatRow',
       page_size: def.page_size,
+      url_pagination: def.type === 'ListView',
       data: def.data,
       meta: def.meta,
     });
