@@ -234,7 +234,7 @@ export class PageRuntime extends BaseComponent {
     const requestedPage = usesListUrlState ? Number(pageParams.page) : NaN;
     const page = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
     paginationState[src.id] = { skip: (page - 1) * top, top, page };
-    if (usesListUrlState && pageParams.sort) {
+    if (pageParams.sort) {
       sortState[src.id] = {
         field: String(pageParams.sort),
         direction: pageParams.sort_dir === 'desc' ? 'desc' : 'asc',

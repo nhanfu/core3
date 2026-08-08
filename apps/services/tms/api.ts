@@ -97,7 +97,9 @@ export function createTmsApi(ctx: TmsApiContext) {
     const sizes = new Map<string, number>();
     const visit = (components: any[] = []) => {
       for (const component of components) {
-        if (component.source && component.page_size) sizes.set(component.source, Number(component.page_size));
+        if (component.source && (component.type === 'ListView' || component.page_size)) {
+          sizes.set(component.source, Number(component.page_size || 25));
+        }
         if (component.message_source && component.message_page_size) sizes.set(component.message_source, Number(component.message_page_size));
         if (component.attachment_source && component.attachment_page_size) sizes.set(component.attachment_source, Number(component.attachment_page_size));
         if (component.follower_candidates_source) sizes.set(component.follower_candidates_source, Number(component.follower_candidates_page_size || 100));
@@ -116,6 +118,12 @@ export function createTmsApi(ctx: TmsApiContext) {
       params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
     }
     const pageSizes = sourcePageSizes(page);
+    const listSort = typeof params.sort === 'string'
+      ? {
+          field: params.sort,
+          direction: params.sort_dir === 'desc' ? 'desc' : 'asc',
+        }
+      : undefined;
     const serverParams = {
       ...params,
       current_user_id: String(user.sub || ''),
@@ -128,7 +136,14 @@ export function createTmsApi(ctx: TmsApiContext) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
       }
       const { query, ...publicSource } = source;
-      const result = await repository.querySource(source, serverParams, 0, pageSizes.get(source.id) || 25);
+      const result = await repository.querySource(
+        source,
+        serverParams,
+        0,
+        pageSizes.get(source.id) || 25,
+        undefined,
+        pageSizes.has(source.id) ? listSort : undefined,
+      );
       return { ...publicSource, data: result.data, meta: result.meta };
     }));
     const lang = requestLanguage(url, user.preferred_lang || 'en');

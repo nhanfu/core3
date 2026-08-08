@@ -344,11 +344,16 @@ export class ListView extends BaseComponent {
       const active = sort?.field === column.field;
       const button = html.take(th).button.className('o-list-sort').dataAttr('sort-field', column.field).getContext();
       button.append(document.createTextNode(column.label));
-      if (active) {
-        const icon = document.createElement('span');
-        appendIcon(icon, sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending');
-        button.append(icon);
-      }
+      const indicator = document.createElement('span');
+      indicator.className = 'o-list-sort-indicator';
+      const ascending = document.createElement('span');
+      ascending.className = `o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`;
+      appendIcon(ascending, 'sort-ascending');
+      const descending = document.createElement('span');
+      descending.className = `o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`;
+      appendIcon(descending, 'sort-descending');
+      indicator.append(ascending, descending);
+      button.append(indicator);
       button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
       button.addEventListener('click', () => this.setSort(column.field));
     }

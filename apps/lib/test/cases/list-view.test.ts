@@ -143,6 +143,16 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('thead')?.textContent).toContain('Status');
   });
 
+  it('always renders both sort directions and activates the selected direction', () => {
+    const container = mount(create({}, { sort: { field: 'number', direction: 'asc' } }));
+    const numberSort = container.querySelector('[data-sort-field="number"]')!;
+
+    expect(numberSort.querySelector('.o-list-sort-ascending')).not.toBeNull();
+    expect(numberSort.querySelector('.o-list-sort-descending')).not.toBeNull();
+    expect(numberSort.querySelector('.o-list-sort-ascending')?.className).toContain('is-active');
+    expect(numberSort.querySelector('.o-list-sort-descending')?.className).not.toContain('is-active');
+  });
+
   it('groups list rows from the search bar and exposes a removable group facet', () => {
     const onGroupByChange = vi.fn();
     const container = mount(create({ onGroupByChange }));

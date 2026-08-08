@@ -105,6 +105,8 @@ describe('YAML Odoo ListView renderer', () => {
       sourceId: 'orders', skip: 2, top: 2,
       sort: { field: 'number', direction: 'desc' },
     }));
+    expect(container.querySelector('.o-list-sort-ascending')?.className).not.toContain('is-active');
+    expect(container.querySelector('.o-list-sort-descending')?.className).toContain('is-active');
     expect(container.querySelector('[aria-label="Next page"]')).not.toBeNull();
 
     container.querySelector<HTMLButtonElement>('[data-sort-field="number"]')!.click();
@@ -120,6 +122,27 @@ describe('YAML Odoo ListView renderer', () => {
     params = new URLSearchParams(window.location.search);
     expect(params.get('page')).toBe('3');
     expect(params.get('page_size')).toBe('2');
+  });
+
+  it('uses the URL sort direction for refreshed datasource rows', async () => {
+    const query = vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o2', number: 'ORD-002' }, { id: 'o1', number: 'ORD-001' }],
+      meta: { total: 2, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['orders.read'] };
+    window.history.replaceState({}, '', '/tms/orders?sort=number&sort_dir=desc');
+    await renderPage({
+      page: { id: 'orders' },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'orders',
+        columns: [{ field: 'number', label: 'Order', sortable: true }],
+      }],
+    });
+
+    expect(query).toHaveBeenCalledWith(expect.objectContaining({
+      sourceId: 'orders', sort: { field: 'number', direction: 'desc' },
+    }));
   });
 
   it('renders the view selected by the URL', async () => {

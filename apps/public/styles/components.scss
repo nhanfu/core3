@@ -731,8 +731,13 @@
   text-align: inherit;
 }
 .o-list-sort:hover { color: var(--o-list-action); }
-.o-list-sort .svg-icon,
-.o-list-sort svg { width: 13px; height: 13px; }
+.o-list-sort-indicator { position: relative; display: inline-flex; width: 16px; height: 18px; align-items: center; justify-content: center; color: var(--o-list-muted); }
+.o-list-sort-indicator > span { position: absolute; left: 0; display: inline-flex; width: 16px; height: 9px; opacity: .42; }
+.o-list-sort-indicator > .o-list-sort-ascending { top: 0; }
+.o-list-sort-indicator > .o-list-sort-descending { bottom: 0; }
+.o-list-sort-indicator > span.is-active { opacity: 1; color: var(--o-list-action); }
+.o-list-sort-indicator .svg-icon,
+.o-list-sort-indicator svg { width: 16px; height: 9px; }
 .o-list-table td {
   max-width: 260px;
   padding: 5px 8px;

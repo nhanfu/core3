@@ -708,6 +708,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       meta: activeSourceResult.meta || {},
       filters: { ...(filterState[sourceId] || {}) },
       selectedIds: [],
+      ...(sortState[sourceId] ? { sort: sortState[sourceId] } : {}),
       ...(activeView ? { activeView } : {}),
     },
     columns,
