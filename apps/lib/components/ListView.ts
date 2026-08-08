@@ -213,12 +213,12 @@ export class ListView extends BaseComponent {
 
     const controlPanel = html.take(root).div.className('o-list-control-panel').getContext();
     const main = html.take(controlPanel).div.className('o-list-control-main').getContext();
+    const activeView = this.activeView();
     this.drawPrimaryControls(main, labels);
     this.drawSearch(main, filters, selectedIds, labels);
-    this.drawNavigation(main, meta, visibleColumnIds, labels);
+    this.drawNavigation(main, meta, visibleColumnIds, labels, activeView.id !== 'pivot');
     this.drawFacets(controlPanel, filters, labels);
 
-    const activeView = this.activeView();
     const listEnabled = this.isViewEnabled('list');
     const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
     const formEnabled = !this.isSmallScreen()
@@ -565,23 +565,25 @@ export class ListView extends BaseComponent {
     this.dismissDetails(details);
   }
 
-  private drawNavigation(container: HTMLElement, meta: Record<string, unknown>, visibleColumnIds: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
+  private drawNavigation(container: HTMLElement, meta: Record<string, unknown>, visibleColumnIds: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, showPager = true) {
     const navigation = html.take(container).div.className('o-list-navigation').getContext();
-    const total = Number(meta.total || 0);
-    const page = Math.max(1, Number(meta.page || 1));
-    const pageSize = Math.max(1, Number(meta.pageSize || this.state.pageSize || 1));
-    const start = total ? (page - 1) * pageSize + 1 : 0;
-    const end = Math.min(page * pageSize, total);
-    const pager = html.take(navigation).div.className('o-list-pager').getContext();
-    html.take(pager).span.className('o-list-pager-range').text(`${start}-${end} / ${total}`);
-    const previous = html.take(pager).button.text('‹').getContext() as HTMLButtonElement;
-    previous.setAttribute('aria-label', labels.previousPage);
-    previous.disabled = page <= 1;
-    if (!previous.disabled) previous.addEventListener('click', () => this.options.onPageChange?.(page - 1));
-    const next = html.take(pager).button.text('›').getContext() as HTMLButtonElement;
-    next.setAttribute('aria-label', labels.nextPage);
-    next.disabled = end >= total;
-    if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
+    if (showPager) {
+      const total = Number(meta.total || 0);
+      const page = Math.max(1, Number(meta.page || 1));
+      const pageSize = Math.max(1, Number(meta.pageSize || this.state.pageSize || 1));
+      const start = total ? (page - 1) * pageSize + 1 : 0;
+      const end = Math.min(page * pageSize, total);
+      const pager = html.take(navigation).div.className('o-list-pager').getContext();
+      html.take(pager).span.className('o-list-pager-range').text(`${start}-${end} / ${total}`);
+      const previous = html.take(pager).button.text('‹').getContext() as HTMLButtonElement;
+      previous.setAttribute('aria-label', labels.previousPage);
+      previous.disabled = page <= 1;
+      if (!previous.disabled) previous.addEventListener('click', () => this.options.onPageChange?.(page - 1));
+      const next = html.take(pager).button.text('›').getContext() as HTMLButtonElement;
+      next.setAttribute('aria-label', labels.nextPage);
+      next.disabled = end >= total;
+      if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
+    }
 
     const views = this.options.views || [];
     if (views.length > 1) {

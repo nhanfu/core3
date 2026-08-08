@@ -54,7 +54,8 @@ export const dataMethods = {
     }
 
     const [count] = await runQuery('count', `SELECT COUNT(*) AS n FROM (${pivotStatement}) AS source_rows`, queryValues);
-    const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
+    const total = Number(count?.n || 0);
+    const pageSize = pivot ? Math.max(1, total) : Math.max(1, Math.min(Number(top) || 25, 100));
     const offset = Math.max(0, Number(skip) || 0);
     const sortField = typeof sort?.field === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(sort.field)
       ? sort.field
@@ -62,10 +63,11 @@ export const dataMethods = {
     const sortDirection = sort?.direction === 'desc' ? 'DESC' : 'ASC';
     const sortClause = sortField ? ` ORDER BY source_rows."${sortField}" ${sortDirection} NULLS LAST` : '';
     const rows = await runQuery('rows',
-      `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
-      [...queryValues, pageSize, offset]
+      pivot
+        ? `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause}`
+        : `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
+      pivot ? queryValues : [...queryValues, pageSize, offset],
     );
-    const total = Number(count?.n || 0);
     const meta: any = { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) };
     if (pivotResult.columns) meta.pivotColumns = pivotResult.columns;
     if (facetField && /^[A-Za-z_][A-Za-z0-9_]*$/.test(facetField)) {

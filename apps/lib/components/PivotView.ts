@@ -79,13 +79,13 @@ export class PivotView extends BaseComponent {
     } else if (!item.leaf && !rowFields.includes(column)) {
       value = this.aggregatePivotValue(node.leaves, column);
     }
-    if (columnIndex === 0 && !item.leaf && node.children.length) {
+    if (!item.leaf && column === node.field && node.children.length) {
       const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
       toggle.textContent = this.isCollapsed(node.key) ? '+' : '−'; toggle.setAttribute('aria-label', `${this.isCollapsed(node.key) ? 'Expand' : 'Collapse'} ${String(node.value ?? '')}`);
       toggle.addEventListener('click', () => this.setState({ collapsed: { ...(this.state.collapsed || {}), [node.key]: !this.isCollapsed(node.key) } }));
       cell.appendChild(toggle);
-      const indent = document.createElement('span'); indent.className = 'o-pivot-group-indent'; indent.style.width = `${node.level * 16}px`; cell.appendChild(indent);
     }
+    if (rowFields.includes(column) && (item.leaf || column === node.field)) cell.style.paddingLeft = `${12 + node.level * 18}px`;
     if (value !== '') { const text = document.createElement('span'); text.textContent = this.formatPivotValue(value); cell.appendChild(text); }
     row.appendChild(cell);
   }

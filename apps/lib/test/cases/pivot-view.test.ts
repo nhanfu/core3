@@ -119,6 +119,7 @@ describe('PivotView builder', () => {
 
     expect(host.querySelector('.o-pivot-table')?.textContent).toContain('1.234');
     expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(5);
+    expect((host.querySelectorAll('.o-pivot-table tbody tr')[1].querySelectorAll('td')[1] as HTMLElement).style.paddingLeft).toBe('30px');
     (host.querySelector('.o-pivot-group-toggle') as HTMLButtonElement).click();
     expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(3);
   });
