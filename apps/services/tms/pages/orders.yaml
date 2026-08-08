@@ -165,7 +165,7 @@ components:
             - { field: status_label, column: Status }
             - { field: transport_method, column: Transport method }
             - { field: shipment_type, column: Shipment type }
-            - { field: order_date, column: Order date }
+            - { field: order_date, column: Order date, type: date }
             - { field: customer_name, column: Customer }
             - { field: route, column: Route }
             - { field: trip_count, column: Trip count }
@@ -176,6 +176,7 @@ components:
             columns: [transport_method]
             measures:
               - { field: total_amount, aggregate: sum, column: Amount }
+          date_ranges: { order_date: month }
       - id: graph
         label: Graph
         icon: graph

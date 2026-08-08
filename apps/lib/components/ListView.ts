@@ -117,7 +117,7 @@ export type ListViewOptions = {
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
   onViewChange?: (view: string) => void;
-  onPivotChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }> }) => void;
+  onPivotChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => void;
   onGroupByChange?: (field: string | null) => void;
   onFavoriteChange?: (favorite: ListViewFavorite) => void;
 };

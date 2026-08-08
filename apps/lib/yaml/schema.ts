@@ -579,12 +579,18 @@ function validateComponents(
               if (view.pivot !== undefined) {
                 requireRecord(view.pivot, `${viewPath}.pivot`, issues);
                 if (isRecord(view.pivot)) {
-                  rejectUnknownKeys(view.pivot, new Set(['fields', 'default', 'config_label']), `${viewPath}.pivot`, issues);
+                  rejectUnknownKeys(view.pivot, new Set(['fields', 'default', 'config_label', 'date_ranges']), `${viewPath}.pivot`, issues);
                   if (!Array.isArray(view.pivot.fields) || !view.pivot.fields.length) issues.push(`${viewPath}.pivot.fields must be a non-empty array`);
                   for (const [fieldIndex, field] of (Array.isArray(view.pivot.fields) ? view.pivot.fields : []).entries()) {
                     const fieldPath = `${viewPath}.pivot.fields[${fieldIndex}]`;
                     requireRecord(field, fieldPath, issues);
-                    if (isRecord(field)) { rejectUnknownKeys(field, new Set(['field', 'column']), fieldPath, issues); requireString(field.field, `${fieldPath}.field`, issues); requireString(field.column, `${fieldPath}.column`, issues); }
+                    if (isRecord(field)) { rejectUnknownKeys(field, new Set(['field', 'column', 'type']), fieldPath, issues); requireString(field.field, `${fieldPath}.field`, issues); requireString(field.column, `${fieldPath}.column`, issues); if (field.type !== undefined && field.type !== 'date') issues.push(`${fieldPath}.type must be date when provided`); }
+                  }
+                  if (view.pivot.date_ranges !== undefined) {
+                    requireRecord(view.pivot.date_ranges, `${viewPath}.pivot.date_ranges`, issues);
+                    if (isRecord(view.pivot.date_ranges)) for (const [field, range] of Object.entries(view.pivot.date_ranges)) {
+                      if (!['day', 'week', 'month', 'quarter', 'year'].includes(String(range))) issues.push(`${viewPath}.pivot.date_ranges.${field} must be day, week, month, quarter, or year`);
+                    }
                   }
                   if (view.pivot.default !== undefined) {
                     requireRecord(view.pivot.default, `${viewPath}.pivot.default`, issues);

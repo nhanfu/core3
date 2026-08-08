@@ -241,6 +241,7 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   if (!allowed.size) throw Object.assign(new Error('Datasource does not declare pivot fields'), { status: 400 });
   const rows = Array.isArray(request.rows) ? request.rows : request.rowField ? [request.rowField] : [];
   const columns = Array.isArray(request.columns) ? request.columns : request.columnField ? [request.columnField] : [];
+  const dateRanges = request.ranges || request.dateRanges || {};
   const measures = Array.isArray(request.measures) ? request.measures : [{ field: request.measureField, aggregate: request.aggregate || 'sum', label: request.measureLabel }];
   if (!measures.length) throw Object.assign(new Error('Pivot requires at least one measure'), { status: 400 });
   const checkField = (field: unknown, label: string) => {
@@ -250,6 +251,8 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   };
   const rowSql = rows.map((field: unknown) => checkField(field, 'Pivot row field'));
   const columnSql = columns.map((field: unknown) => checkField(field, 'Pivot column field'));
+  const rangedFields = [...new Set([...rows, ...columns].map(String))].filter(field => validDateRange(dateRanges[field]));
+  const sourceWithParams = pivotDateSource(statement, rangedFields, dateRanges);
   const measureSql = measures.map((measure: any, index: number) => {
     const aggregate = String(measure?.aggregate || 'sum').toLowerCase();
     if (!AGGREGATES.has(aggregate)) throw Object.assign(new Error(`Unsupported pivot aggregate: ${aggregate}`), { status: 400 });
@@ -262,10 +265,10 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   });
   const groupBy = rowSql.length ? ` GROUP BY ${rowSql.join(', ')}` : '';
   if (!columns.length) {
-    return { statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${statement}) AS pivot_source${groupBy}`, values };
+    return { statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${sourceWithParams}) AS pivot_source${groupBy}`, values };
   }
   const distinctRows = await repository.query(
-    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${statement}) AS pivot_values`,
+    `SELECT DISTINCT ${columnSql.join(', ')} FROM (${sourceWithParams}) AS pivot_values`,
     values,
   );
   if (!distinctRows.length) {
@@ -273,7 +276,7 @@ async function nativePivotStatement(repository: any, statement: string, values: 
     // is rejected when the source query contains bound parameters, which is
     // common after filters remove every pivot column value.
     return {
-      statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${inlineBoundParameters(statement, values)}) AS pivot_source${groupBy}`,
+      statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${pivotDateSource(inlineBoundParameters(statement, values), rangedFields, dateRanges)}) AS pivot_source${groupBy}`,
       values: [],
       columns: [],
     };
@@ -299,10 +302,29 @@ async function nativePivotStatement(repository: any, statement: string, values: 
     `${column} IN (${pivotDimensions[index].map(([, dimension]) => sqlLiteral(dimension.pivotValue)).join(', ')})`,
   ).join(', ');
   return {
-    statement: `PIVOT (${inlineBoundParameters(statement, values)}) ON ${pivotValues} USING ${measureSql.join(', ')}${groupBy}`,
+    statement: `PIVOT (${pivotDateSource(inlineBoundParameters(statement, values), rangedFields, dateRanges)}) ON ${pivotValues} USING ${measureSql.join(', ')}${groupBy}`,
     values: [],
     columns: pivotColumns,
   };
+}
+
+function validDateRange(value: unknown): value is string {
+  return ['day', 'week', 'month', 'quarter', 'year'].includes(String(value));
+}
+
+function pivotDateExpression(field: string, range: string) {
+  const date = `TRY_CAST(${quoteIdentifier(field, 'Pivot date field')} AS DATE)`;
+  if (range === 'day') return `strftime(${date}, '%Y-%m-%d')`;
+  if (range === 'week') return `strftime(date_trunc('week', ${date}), '%G-W%V')`;
+  if (range === 'quarter') return `strftime(${date}, '%Y') || '-Q' || CAST(quarter(${date}) AS VARCHAR)`;
+  if (range === 'year') return `strftime(${date}, '%Y')`;
+  return `strftime(${date}, '%Y-%m')`;
+}
+
+function pivotDateSource(statement: string, fields: string[], ranges: Record<string, unknown>) {
+  if (!fields.length) return statement;
+  const replacements = fields.map(field => `${pivotDateExpression(field, String(ranges[field]))} AS ${quoteIdentifier(field, 'Pivot date field')}`);
+  return `SELECT * REPLACE (${replacements.join(', ')}) FROM (${statement}) AS pivot_date_source`;
 }
 
 function sqlLiteral(value: unknown): string {

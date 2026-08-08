@@ -585,8 +585,11 @@
 .o-list-selection button { margin-left: 5px; border: 0; background: transparent; color: var(--o-list-action); cursor: pointer; font: inherit; }
 .o-list-selection .o-list-bulk-action { margin-left: 0; border: 1px solid var(--o-list-action); background: var(--o-list-action); color: #fff; }
 
-.o-list-facets { min-width: 0; flex-wrap: wrap; gap: 5px; }
+.o-list-facets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); align-items: stretch; min-width: 0; gap: 5px; }
 .o-list-facet {
+  display: flex;
+  min-width: 0;
+  width: 100%;
   max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--o-list-border);

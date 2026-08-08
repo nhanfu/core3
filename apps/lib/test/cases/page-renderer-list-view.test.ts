@@ -77,6 +77,8 @@ describe('YAML Odoo ListView renderer', () => {
       sourceId: 'orders',
       params: { status: 'Approved', q: 'ORD-001' },
     }));
+    expect(new URLSearchParams(window.location.search).get('status')).toBe('Approved');
+    expect(new URLSearchParams(window.location.search).get('q')).toBe('ORD-001');
   });
 
   it('renders the view selected by the URL', async () => {

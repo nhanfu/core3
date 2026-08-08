@@ -5,6 +5,7 @@ export type PivotViewDefinition = {
   fields?: string[];
   fieldLabels?: Record<string, string>; configLabel?: string;
   pivotColumns?: Array<{ values: string[]; prefix: string }>;
+  dateFields?: string[]; dateRanges?: Record<string, string>;
   rowFields: string[]; columnFields: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>;
 };
 
@@ -21,7 +22,7 @@ type PivotTreeNode = {
 export class PivotView extends BaseComponent {
   constructor(id: string, state: { rows?: Record<string, unknown>[] } = {}, readonly options: {
     view: PivotViewDefinition; openAction?: string; rowKey?: string; pivotColumns?: Array<{ values: string[]; prefix: string }>;
-    onChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }> }) => void;
+    onChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => void;
   }) { super(id, state); }
 
   draw(container: HTMLElement) {
@@ -214,8 +215,9 @@ export class PivotView extends BaseComponent {
     builder.className = 'o-pivot-builder';
     const title = document.createElement('h3'); title.textContent = 'Pivot configuration'; builder.appendChild(title);
     const grid = document.createElement('div'); grid.className = 'o-pivot-builder-grid'; builder.appendChild(grid);
-    const rowsAxis = this.axisEditor(grid, 'Rows', fields, view.rowFields || []);
-    const columnsAxis = this.axisEditor(grid, 'Columns', fields, view.columnFields || []);
+    const dateRanges: Record<string, string> = { ...(view.dateRanges || {}) };
+    const rowsAxis = this.axisEditor(grid, 'Rows', fields, view.rowFields || [], dateRanges);
+    const columnsAxis = this.axisEditor(grid, 'Columns', fields, view.columnFields || [], dateRanges);
     const measureSection = document.createElement('div'); measureSection.className = 'o-pivot-measures';
     const measureTitle = document.createElement('label'); measureTitle.textContent = 'Measures'; measureSection.appendChild(measureTitle);
     const measureHost = document.createElement('div'); measureHost.className = 'o-pivot-measure-list'; measureSection.appendChild(measureHost);
@@ -248,6 +250,7 @@ export class PivotView extends BaseComponent {
         rows: rowsAxis.values(),
         columns: columnsAxis.values(),
         measures: measures.filter(measure => measure.aggregate && (measure.aggregate === 'count' || measure.field)),
+        ...((Object.keys({ ...rowsAxis.ranges(), ...columnsAxis.ranges() }).length) ? { ranges: { ...rowsAxis.ranges(), ...columnsAxis.ranges() } } : {}),
       };
       if (!request.measures.length) {
         const error = document.createElement('p'); error.className = 'o-analytics-error'; error.textContent = 'Select at least one measure.';
@@ -259,8 +262,9 @@ export class PivotView extends BaseComponent {
     actions.appendChild(apply); builder.appendChild(actions); container.appendChild(builder);
   }
 
-  private axisEditor(container: HTMLElement, labelText: string, fields: string[], initial: string[]) {
+  private axisEditor(container: HTMLElement, labelText: string, fields: string[], initial: string[], ranges: Record<string, string>) {
     let values = initial.filter(field => fields.includes(field));
+    const dateFields = new Set(this.options.view.dateFields || []);
     const group = document.createElement('section'); group.className = 'o-pivot-builder-field o-pivot-axis';
     const title = document.createElement('h4'); title.textContent = labelText; group.appendChild(title);
     const list = document.createElement('div'); list.className = 'o-pivot-axis-list'; list.setAttribute('aria-label', `${labelText} fields`); group.appendChild(list);
@@ -280,6 +284,11 @@ export class PivotView extends BaseComponent {
           if (!Number.isInteger(from) || !Number.isInteger(to) || from === to) return;
           const [moved] = values.splice(from, 1); values.splice(to, 0, moved); render();
         });
+        if (dateFields.has(field)) {
+          const range = document.createElement('select'); range.className = 'o-pivot-date-range'; range.setAttribute('aria-label', `${field} date range`);
+          this.addOptions(range, ['day', 'week', 'month', 'quarter', 'year'], ranges[field] || 'month');
+          range.addEventListener('change', () => { ranges[field] = range.value; }); item.appendChild(range);
+        }
         const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'o-pivot-remove'; remove.textContent = '×'; remove.title = `Remove ${field}`;
         remove.addEventListener('click', () => { values = values.filter((_, current) => current !== index); render(); });
         item.appendChild(remove); list.appendChild(item);
@@ -292,7 +301,7 @@ export class PivotView extends BaseComponent {
       if (!available.childElementCount) { const hint = document.createElement('span'); hint.className = 'o-pivot-axis-hint'; hint.textContent = 'All fields added'; available.appendChild(hint); }
     };
     render(); container.appendChild(group);
-    return { values: () => [...values] };
+    return { values: () => [...values], ranges: () => ({ ...ranges }) };
   }
 
   private addOptions(select: HTMLSelectElement, values: string[], selected: string | string[], labels?: Record<string, string>) {

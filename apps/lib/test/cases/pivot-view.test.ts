@@ -146,4 +146,24 @@ describe('PivotView builder', () => {
     expect(host.querySelector('tbody')?.textContent).toContain('1.234');
     expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(2);
   });
+
+  it('defaults date fields to month and emits a changed date range', () => {
+    const host = document.createElement('div');
+    const onChange = vi.fn();
+    const view = new PivotView('orders-pivot-date-range', { rows: [] }, {
+      view: {
+        id: 'pivot', label: 'Pivot', fields: ['order_date', 'transport_method', 'total_amount'],
+        fieldLabels: { order_date: 'Order date' }, dateFields: ['order_date'], dateRanges: { order_date: 'month' },
+        rowFields: ['order_date'], columnFields: ['transport_method'], measures: [{ field: 'total_amount', aggregate: 'sum', label: 'Amount' }],
+      },
+      onChange,
+    });
+    view.mount(host);
+    (host.querySelector('.o-pivot-configure') as HTMLButtonElement).click();
+    const range = host.querySelector('.o-pivot-date-range') as HTMLSelectElement;
+    expect(range.value).toBe('month');
+    range.value = 'quarter'; range.dispatchEvent(new Event('change'));
+    (host.querySelector('.o-pivot-apply') as HTMLButtonElement).click();
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ ranges: { order_date: 'quarter' } }));
+  });
 });

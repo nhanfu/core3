@@ -1,6 +1,6 @@
 import { evalExpr, interpolate } from '../expr.ts';
 import { hasPermission, resolveAction } from '../meta.ts';
-import { navigate, getPageParams } from '../navigate.ts';
+import { navigate, getPageParams, pushParams } from '../navigate.ts';
 import { appendIcon, hasIcon } from './Icon.ts';
 import { EventPopup } from './EventPopup.ts';
 import { resolveDatePreset } from './ListToolbar.ts';
@@ -315,12 +315,20 @@ export class PageRuntime extends BaseComponent {
     }
   }
 
-  async function applySourceFilters(sourceId: string, values: Record<string, unknown> = {}, pivot?: any) {
+  async function applySourceFilters(sourceId: string, values: Record<string, unknown> = {}, pivot?: any, updateUrl = true) {
     const normalized = Object.fromEntries(
       Object.entries({ ...(filterState[sourceId] || {}), ...values })
         .map(([key, value]) => [key, value === '' ? null : value])
     );
     filterState[sourceId] = normalized;
+    if (updateUrl) {
+      const nextParams = { ...getPageParams() } as Record<string, unknown>;
+      for (const [key, value] of Object.entries(values)) {
+        if (value == null || value === '') delete nextParams[key];
+        else nextParams[key] = value;
+      }
+      pushParams(nextParams);
+    }
     paginationState[sourceId] = {
       skip: 0,
       top: paginationState[sourceId]?.top || 25,

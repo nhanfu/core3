@@ -11,6 +11,11 @@ function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   const hasColumns = Object.prototype.hasOwnProperty.call(params, 'pivot_columns');
   const rows = String(hasRows ? params.pivot_rows : (defaults.rows || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
   const columns = String(hasColumns ? params.pivot_columns : (defaults.columns || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
+  const ranges: Record<string, string> = { ...(view?.pivot?.date_ranges || {}) };
+  if (params.pivot_ranges) for (const spec of String(params.pivot_ranges).split(',').map(value => value.trim()).filter(Boolean)) {
+    const [field, range] = spec.split(':').map(value => value.trim());
+    if (field && ['day', 'week', 'month', 'quarter', 'year'].includes(range)) ranges[field] = range;
+  }
   const defaultMeasures = Array.isArray(defaults.measures) ? defaults.measures : [];
   const measureSpecs = params.pivot_measures
     ? String(params.pivot_measures).split(',').map(value => value.trim()).filter(Boolean)
@@ -23,7 +28,7 @@ function pivotRequestFromUrl(params: Record<string, string>, view: any) {
     if (field === 'count') return { aggregate: 'count', label: label || 'Count' };
     return { field, aggregate, label: label || field };
   });
-  return measures.length ? { rows, columns, measures } : undefined;
+  return measures.length ? { rows, columns, measures, ranges } : undefined;
 }
 
 export class PageGridRenderers extends BaseComponent {
@@ -506,6 +511,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     pivot: view.pivot,
     fields: view.id === 'pivot' ? pivotFields : undefined,
     fieldLabels: view.id === 'pivot' ? pivotFieldLabels : undefined,
+    dateFields: view.id === 'pivot' ? pivotFieldMappings.filter((field: any) => field.type === 'date' || view.pivot?.date_ranges?.[field.field]).map((field: any) => String(field.field)) : undefined,
+    dateRanges: view.id === 'pivot' ? view.pivot?.date_ranges || {} : undefined,
     configLabel: view.pivot?.config_label,
     rowFields: view.row_fields || (view.row_field ? [view.row_field] : view.pivot?.default?.rows || []),
     columnFields: view.column_fields || (view.column_field ? [view.column_field] : view.pivot?.default?.columns || []),
@@ -540,6 +547,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     rowFields: pivotQuery.rows,
     columnFields: pivotQuery.columns,
     measures: pivotQuery.measures,
+    dateRanges: pivotQuery.ranges,
   });
   let activeSourceResult = sourceResult;
   if (pivotQuery) {
@@ -738,18 +746,19 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           delete params.pivot_rows;
           delete params.pivot_columns;
           delete params.pivot_measures;
+          delete params.pivot_ranges;
         }
         // Keep the previous Pivot URL in browser history. This lets Back
         // restore its rows, columns, and measures after visiting another view.
         pushParams(params);
         const selectedView = views.find((candidate: any) => candidate.id === view);
         const nextPivot = selectedView?.id === 'pivot'
-          ? { rows: selectedView.rowFields, columns: selectedView.columnFields, measures: selectedView.measures }
+          ? { rows: selectedView.rowFields, columns: selectedView.columnFields, measures: selectedView.measures, ranges: selectedView.dateRanges || {} }
           : undefined;
         void refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId]?.top || pageSize, sortState[sourceId], nextPivot)
           .then((data: any) => comp.setState({ rows: data.data || [], meta: data.meta || {} }));
       },
-      onPivotChange: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }> }) => {
+      onPivotChange: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => {
         const params = {
           ...getPageParams(),
           view: 'pivot',
@@ -758,6 +767,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           pivot_measures: request.measures.map(measure => measure.aggregate === 'count'
             ? `count:${measure.label || 'Count'}`
             : `${measure.field}:${measure.aggregate}:${measure.label || measure.field}`).join(','),
+          pivot_ranges: Object.entries(request.ranges || {}).map(([field, range]) => `${field}:${range}`).join(','),
         };
         pushParams(params);
         void refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId]?.top || pageSize, sortState[sourceId], request)
@@ -785,8 +795,14 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         const targets = def.filter_sources && dateFields.some((field: string) => Object.prototype.hasOwnProperty.call(values, field))
           ? def.filter_sources
           : [sourceId];
+        const nextParams = { ...getPageParams() } as Record<string, unknown>;
+        for (const [key, value] of Object.entries(values)) {
+          if (value == null || value === '') delete nextParams[key];
+          else nextParams[key] = value;
+        }
+        pushParams(nextParams);
         for (const target of targets) {
-          await applySourceFilters(target, { ...(filterState[target] || {}), ...values }, pivotQuery);
+          await applySourceFilters(target, { ...(filterState[target] || {}), ...values }, pivotQuery, false);
         }
       },
       onPageChange: async (page: number) => {
