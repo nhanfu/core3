@@ -98,4 +98,52 @@ describe('PivotView builder', () => {
       measures: [{ field: 'total_amount', aggregate: 'sum', label: 'Amount' }],
     });
   });
+
+  it('formats numeric values and expands or collapses multiple row levels', () => {
+    const host = document.createElement('div');
+    const view = new PivotView('orders-pivot-groups', {
+      rows: [
+        { status_label: 'Approved', shipment_type: 'Road', Road_Amount: 1234 },
+        { status_label: 'Approved', shipment_type: 'Sea', Road_Amount: 2000 },
+        { status_label: 'Draft', shipment_type: 'Road', Road_Amount: 10 },
+      ],
+    }, {
+      view: {
+        id: 'pivot', label: 'Pivot', fields: ['status_label', 'shipment_type', 'total_amount'],
+        fieldLabels: { status_label: 'Status', shipment_type: 'Shipment type', total_amount: 'Total amount' },
+        rowFields: ['status_label', 'shipment_type'], columnFields: ['transport_method'],
+        measures: [{ field: 'total_amount', aggregate: 'sum', label: 'Amount' }],
+      },
+    });
+    view.mount(host);
+
+    expect(host.querySelector('.o-pivot-table')?.textContent).toContain('1.234');
+    expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(5);
+    (host.querySelector('.o-pivot-group-toggle') as HTMLButtonElement).click();
+    expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(3);
+  });
+
+  it('renders nested column groups from pivot metadata', () => {
+    const host = document.createElement('div');
+    const view = new PivotView('orders-pivot-column-groups', {
+      rows: [{ status_label: 'Approved', 'Road_Full load_Amount': 1234, 'Road_Part load_Amount': 56 }],
+    }, {
+      view: {
+        id: 'pivot', label: 'Pivot', fields: ['status_label', 'transport_method', 'shipment_type', 'total_amount'],
+        fieldLabels: { status_label: 'Status', transport_method: 'Transport method', shipment_type: 'Shipment type' },
+        rowFields: ['status_label'], columnFields: ['transport_method', 'shipment_type'],
+        measures: [{ field: 'total_amount', aggregate: 'sum', label: 'Amount' }],
+      },
+      pivotColumns: [
+        { values: ['Road', 'Full load'], prefix: 'Road_Full load' },
+        { values: ['Road', 'Part load'], prefix: 'Road_Part load' },
+      ],
+    });
+    view.mount(host);
+
+    expect(host.querySelector('thead')?.textContent).toContain('Transport method: Road');
+    expect(host.querySelector('thead')?.textContent).toContain('Shipment type: Full load');
+    expect(host.querySelector('tbody')?.textContent).toContain('1.234');
+    expect(host.querySelectorAll('.o-pivot-group-toggle')).toHaveLength(2);
+  });
 });

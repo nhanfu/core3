@@ -4,18 +4,29 @@ export type PivotViewDefinition = {
   id: 'pivot'; label: string; icon?: string;
   fields?: string[];
   fieldLabels?: Record<string, string>; configLabel?: string;
+  pivotColumns?: Array<{ values: string[]; prefix: string }>;
   rowFields: string[]; columnFields: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>;
+};
+
+type PivotTreeNode = {
+  key: string;
+  level: number;
+  field?: string;
+  value?: unknown;
+  row?: Record<string, unknown>;
+  children: PivotTreeNode[];
+  leaves: Record<string, unknown>[];
 };
 
 export class PivotView extends BaseComponent {
   constructor(id: string, state: { rows?: Record<string, unknown>[] } = {}, readonly options: {
-    view: PivotViewDefinition; openAction?: string; rowKey?: string;
+    view: PivotViewDefinition; openAction?: string; rowKey?: string; pivotColumns?: Array<{ values: string[]; prefix: string }>;
     onChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }> }) => void;
   }) { super(id, state); }
 
   draw(container: HTMLElement) {
     const rows = (Array.isArray(this.state.rows) ? this.state.rows : []) as Record<string, unknown>[];
-    const view = this.options.view;
+    const view = { ...this.options.view, pivotColumns: this.options.pivotColumns || this.options.view.pivotColumns };
     const root = document.createElement('section'); root.className = 'o-pivot-view';
     const toolbar = document.createElement('header'); toolbar.className = 'o-pivot-toolbar';
     const configure = document.createElement('button'); configure.type = 'button'; configure.className = 'o-pivot-configure'; configure.textContent = this.state.builderOpen ? 'Close configuration' : (view.configLabel || 'Configure');
@@ -25,23 +36,175 @@ export class PivotView extends BaseComponent {
     if (this.state.pivotError) {
       const error = document.createElement('p'); error.className = 'o-analytics-error'; error.textContent = String(this.state.pivotError); root.appendChild(error); container.appendChild(root); return;
     }
-    if (!view.rowFields?.length || !view.columnFields?.length || !view.measures?.length) {
+    if (!view.measures?.length) {
       const empty = document.createElement('p'); empty.className = 'o-analytics-empty'; empty.textContent = 'Configure the pivot to choose rows, columns, and measures.'; root.appendChild(empty); container.appendChild(root); return;
     }
     const columns = rows.length ? Object.keys(rows[0]) : [];
+    const columnDescriptors = this.pivotColumnDescriptors(columns, view);
+    const visibleDataColumns = columnDescriptors.length
+      ? [...columns.filter(column => !columnDescriptors.some(descriptor => descriptor.column === column)), ...columnDescriptors.filter(descriptor => !this.isColumnHidden(descriptor.values))].map(column => typeof column === 'string' ? column : column.column)
+      : columns;
     const table = document.createElement('table'); table.className = 'o-pivot-table'; table.setAttribute('aria-label', view.label);
-    const head = document.createElement('thead'); const headRow = document.createElement('tr');
-    for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
-    head.appendChild(headRow); table.appendChild(head);
+    const head = document.createElement('thead');
+    if (columnDescriptors.length && view.columnFields?.length) this.drawColumnHeaders(head, columns, columnDescriptors, view);
+    else {
+      const headRow = document.createElement('tr');
+      for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
+      head.appendChild(headRow);
+    }
+    table.appendChild(head);
     const body = document.createElement('tbody');
-    for (const row of rows) { const tr = document.createElement('tr'); for (const column of columns) this.addCell(tr, row[column] as string | number, 'td'); body.appendChild(tr); }
+    const tree = this.buildPivotTree(rows, view.rowFields || []);
+    for (const item of this.visiblePivotRows(tree)) {
+      const tr = document.createElement('tr');
+      for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);
+      body.appendChild(tr);
+    }
     table.appendChild(body);
     if (!rows.length) { const empty = document.createElement('p'); empty.className = 'o-analytics-empty'; empty.textContent = 'No data'; root.appendChild(empty); container.appendChild(root); return; }
     const tableScroll = document.createElement('div'); tableScroll.className = 'o-pivot-table-scroll'; tableScroll.appendChild(table); root.appendChild(tableScroll); container.appendChild(root);
   }
 
   private addCell(row: HTMLTableRowElement, text: string | number, kind: 'th' | 'td') {
-    const cell = document.createElement(kind); cell.textContent = text == null ? '_' : String(text); row.appendChild(cell);
+    const cell = document.createElement(kind); cell.textContent = this.formatPivotValue(text); row.appendChild(cell);
+  }
+
+  private addPivotCell(row: HTMLTableRowElement, item: { node: PivotTreeNode; leaf: boolean }, column: string, columnIndex: number, rowFields: string[]) {
+    const cell = document.createElement('td');
+    const node = item.node;
+    let value = node.row?.[column];
+    if (!item.leaf && rowFields.includes(column)) {
+      value = column === node.field ? node.value : '';
+    } else if (!item.leaf && !rowFields.includes(column)) {
+      value = this.aggregatePivotValue(node.leaves, column);
+    }
+    if (columnIndex === 0 && !item.leaf && node.children.length) {
+      const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
+      toggle.textContent = this.isCollapsed(node.key) ? '+' : '−'; toggle.setAttribute('aria-label', `${this.isCollapsed(node.key) ? 'Expand' : 'Collapse'} ${String(node.value ?? '')}`);
+      toggle.addEventListener('click', () => this.setState({ collapsed: { ...(this.state.collapsed || {}), [node.key]: !this.isCollapsed(node.key) } }));
+      cell.appendChild(toggle);
+      const indent = document.createElement('span'); indent.className = 'o-pivot-group-indent'; indent.style.width = `${node.level * 16}px`; cell.appendChild(indent);
+    }
+    if (value !== '') { const text = document.createElement('span'); text.textContent = this.formatPivotValue(value); cell.appendChild(text); }
+    row.appendChild(cell);
+  }
+
+  private pivotColumnDescriptors(columns: string[], view: PivotViewDefinition) {
+    const rowFields = new Set(view.rowFields || []);
+    return columns.filter(column => !rowFields.has(column)).flatMap(column => {
+      const metadata = (view.pivotColumns || [])
+        .filter(candidate => column === candidate.prefix || column.startsWith(`${candidate.prefix}_`))
+        .sort((left, right) => right.prefix.length - left.prefix.length)[0];
+      if (!metadata) return [];
+      const suffix = column.slice(metadata.prefix.length).replace(/^_/, '');
+      const measure = (view.measures || []).find(candidate => this.safeMeasureLabel(candidate) === suffix)
+        || ((view.measures || []).length === 1 ? view.measures[0] : undefined);
+      return [{ column, values: metadata.values, measureLabel: measure?.label || measure?.field || measure?.aggregate || suffix }];
+    });
+  }
+
+  private drawColumnHeaders(head: HTMLTableSectionElement, columns: string[], descriptors: Array<{ column: string; values: string[]; measureLabel: string }>, view: PivotViewDefinition) {
+    const rowFields = new Set(view.rowFields || []);
+    const rowColumns = columns.filter(column => rowFields.has(column));
+    const depth = (view.columnFields || []).length + 1;
+    const first = document.createElement('tr');
+    rowColumns.forEach(column => { const cell = document.createElement('th'); cell.rowSpan = depth; cell.textContent = this.columnLabel(column); first.appendChild(cell); });
+    this.drawColumnLevel(first, descriptors, 0, view);
+    head.appendChild(first);
+    for (let level = 1; level < (view.columnFields || []).length; level++) {
+      if (!descriptors.some(descriptor => !this.isColumnHidden(descriptor.values, level - 1))) continue;
+      const row = document.createElement('tr'); this.drawColumnLevel(row, descriptors, level, view); head.appendChild(row);
+    }
+    const measures = document.createElement('tr');
+    const visibleDescriptors = descriptors.filter(descriptor => !this.isColumnHidden(descriptor.values));
+    visibleDescriptors.forEach(descriptor => {
+      const cell = document.createElement('th'); cell.textContent = descriptor.measureLabel; measures.appendChild(cell);
+    });
+    if (visibleDescriptors.length) head.appendChild(measures);
+  }
+
+  private drawColumnLevel(row: HTMLTableRowElement, descriptors: Array<{ column: string; values: string[]; measureLabel: string }>, level: number, view: PivotViewDefinition) {
+    const visible = descriptors.filter(descriptor => !this.isColumnHidden(descriptor.values, level - 1));
+    let index = 0;
+    while (index < visible.length) {
+      const descriptor = visible[index];
+      const prefix = descriptor.values.slice(0, level + 1).join('|');
+      let end = index + 1;
+      while (end < visible.length && visible[end].values.slice(0, level + 1).join('|') === prefix) end++;
+      const cell = document.createElement('th'); cell.colSpan = end - index;
+      const field = view.columnFields[level];
+      const value = descriptor.values[level] || '';
+      if (level < view.columnFields.length - 1) {
+        const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
+        toggle.textContent = this.isColumnCollapsed(descriptor.values, level) ? '+' : '−';
+        toggle.setAttribute('aria-label', `${this.isColumnCollapsed(descriptor.values, level) ? 'Expand' : 'Collapse'} ${value}`);
+        toggle.addEventListener('click', () => this.setState({ collapsedColumns: { ...(this.state.collapsedColumns || {}), [this.columnCollapseKey(descriptor.values, level)]: !this.isColumnCollapsed(descriptor.values, level) } }));
+        cell.appendChild(toggle);
+      }
+      const text = document.createElement('span'); text.textContent = `${this.options.view.fieldLabels?.[field] || field}: ${this.readablePivotValue(value)}`; cell.appendChild(text);
+      row.appendChild(cell); index = end;
+    }
+  }
+
+  private safeMeasureLabel(measure: { field?: string; aggregate: string; label?: string }) {
+    return String(measure.label || measure.field || measure.aggregate).replace(/[^A-Za-z0-9_]+/g, '_').replace(/^[^A-Za-z_]+/, '');
+  }
+
+  private columnCollapseKey(values: string[], level: number) { return `${level}:${values.slice(0, level + 1).join('|')}`; }
+
+  private isColumnCollapsed(values: string[], level: number) { return Boolean((this.state.collapsedColumns || {})[this.columnCollapseKey(values, level)]); }
+
+  private isColumnHidden(values: string[], ancestorLevel = values.length - 1) {
+    return values.some((_, level) => level <= ancestorLevel && this.isColumnCollapsed(values, level));
+  }
+
+  private buildPivotTree(rows: Record<string, unknown>[], rowFields: string[]) {
+    if (!rowFields.length) return rows.map((row, index) => ({ node: { key: `leaf-${index}`, level: 0, row, children: [], leaves: [row] }, leaf: true }));
+    const root: PivotTreeNode = { key: 'root', level: -1, children: [], leaves: rows };
+    for (const row of rows) {
+      let parent = root;
+      rowFields.forEach((field, level) => {
+        const value = row[field];
+        const valueKey = value == null ? 'NULL' : String(value);
+        const key = `${parent.key}/${field}=${valueKey}`;
+        let child = parent.children.find(candidate => candidate.key === key);
+        if (!child) {
+          child = { key, level, field, value, children: [], leaves: [] };
+          parent.children.push(child);
+        }
+        child.leaves.push(row);
+        parent = child;
+      });
+      parent.children.push({ key: `${parent.key}/leaf-${parent.children.length}`, level: rowFields.length, row, children: [], leaves: [row] });
+    }
+    return this.flattenPivotTree(root);
+  }
+
+  private flattenPivotTree(root: PivotTreeNode) {
+    const visible: Array<{ node: PivotTreeNode; leaf: boolean }> = [];
+    const visit = (node: PivotTreeNode) => {
+      for (const child of node.children) {
+        const leaf = child.children.length === 0;
+        visible.push({ node: child, leaf });
+        if (!leaf && !this.isCollapsed(child.key)) visit(child);
+      }
+    };
+    visit(root); return visible;
+  }
+
+  private visiblePivotRows(tree: Array<{ node: PivotTreeNode; leaf: boolean }>) { return tree; }
+
+  private isCollapsed(key: string) { return Boolean((this.state.collapsed || {})[key]); }
+
+  private aggregatePivotValue(rows: Record<string, unknown>[], column: string) {
+    const values = rows.map(row => row[column]).filter(value => typeof value === 'number') as number[];
+    return values.length ? values.reduce((sum, value) => sum + value, 0) : rows[0]?.[column];
+  }
+
+  private formatPivotValue(value: unknown) {
+    if (value == null) return '_';
+    if (typeof value === 'number' && Number.isFinite(value)) return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value);
+    return String(value);
   }
 
   private drawBuilder(container: HTMLElement) {
@@ -157,6 +320,6 @@ export class PivotView extends BaseComponent {
   }
 
   private readablePivotValue(value: string) {
-    return value === 'NULL' ? 'Not set' : value;
+    return value === 'NULL' || value === '__core3_null__' ? 'Not set' : value;
   }
 }

@@ -7,8 +7,10 @@ import { PageFormModal } from './PageFormModal.ts';
 
 function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   const defaults = view?.pivot?.default || {};
-  const rows = String(params.pivot_rows || (defaults.rows || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
-  const columns = String(params.pivot_columns || (defaults.columns || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
+  const hasRows = Object.prototype.hasOwnProperty.call(params, 'pivot_rows');
+  const hasColumns = Object.prototype.hasOwnProperty.call(params, 'pivot_columns');
+  const rows = String(hasRows ? params.pivot_rows : (defaults.rows || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
+  const columns = String(hasColumns ? params.pivot_columns : (defaults.columns || []).join(',')).split(',').map(value => value.trim()).filter(Boolean);
   const defaultMeasures = Array.isArray(defaults.measures) ? defaults.measures : [];
   const measureSpecs = params.pivot_measures
     ? String(params.pivot_measures).split(',').map(value => value.trim()).filter(Boolean)
@@ -21,7 +23,7 @@ function pivotRequestFromUrl(params: Record<string, string>, view: any) {
     if (field === 'count') return { aggregate: 'count', label: label || 'Count' };
     return { field, aggregate, label: label || field };
   });
-  return rows.length && columns.length && measures.length ? { rows, columns, measures } : undefined;
+  return measures.length ? { rows, columns, measures } : undefined;
 }
 
 export class PageGridRenderers extends BaseComponent {

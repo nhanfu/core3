@@ -46,7 +46,7 @@ datasources:
       transitions:
         - { from: '*', to: '*', permission: orders.write }
     pivot:
-      fields: [status_label, transport_method, shipment_type, total_amount]
+      fields: [status_label, transport_method, shipment_type, order_date, customer_name, route, trip_count, total_amount, created_by]
   - id: order_statuses
     single: false
     permission: orders.read
@@ -165,7 +165,12 @@ components:
             - { field: status_label, column: Status }
             - { field: transport_method, column: Transport method }
             - { field: shipment_type, column: Shipment type }
+            - { field: order_date, column: Order date }
+            - { field: customer_name, column: Customer }
+            - { field: route, column: Route }
+            - { field: trip_count, column: Trip count }
             - { field: total_amount, column: Total amount }
+            - { field: created_by, column: Created by }
           default:
             rows: [status_label]
             columns: [transport_method]

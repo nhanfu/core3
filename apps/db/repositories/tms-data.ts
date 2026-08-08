@@ -21,14 +21,18 @@ export const dataMethods = {
     pivot?: any,
   ): Promise<any> {
     const { statement, values } = bindNamedParams(source.query, params);
-    const pivotStatement = pivot ? await nativePivotStatement(this, statement, values, source.pivot, pivot) : statement;
+    const pivotResult = pivot
+      ? await nativePivotStatement(this, statement, values, source.pivot, pivot)
+      : { statement, values };
+    const pivotStatement = pivotResult.statement;
+    const queryValues = pivotResult.values || values;
     const diagnostics = {
       sourceId: source.id || '<anonymous>',
       single: source.single === true,
       params: Object.fromEntries(Object.entries(params).map(([key, value]) => [key, redactQueryValue(key, value)])),
       statement: pivotStatement,
-      boundValueTypes: values.map(value => value === null ? 'null' : typeof value),
-      boundValueCount: values.length,
+      boundValueTypes: queryValues.map(value => value === null ? 'null' : typeof value),
+      boundValueCount: queryValues.length,
     };
     const runQuery = async (phase: string, sql: string, queryValues: any[]) => {
       try {
@@ -49,7 +53,7 @@ export const dataMethods = {
       return { data: rows[0] || {} };
     }
 
-    const [count] = await runQuery('count', `SELECT COUNT(*) AS n FROM (${pivotStatement}) AS source_rows`, values);
+    const [count] = await runQuery('count', `SELECT COUNT(*) AS n FROM (${pivotStatement}) AS source_rows`, queryValues);
     const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
     const offset = Math.max(0, Number(skip) || 0);
     const sortField = typeof sort?.field === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(sort.field)
@@ -59,16 +63,17 @@ export const dataMethods = {
     const sortClause = sortField ? ` ORDER BY source_rows."${sortField}" ${sortDirection} NULLS LAST` : '';
     const rows = await runQuery('rows',
       `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
-      [...values, pageSize, offset]
+      [...queryValues, pageSize, offset]
     );
     const total = Number(count?.n || 0);
     const meta: any = { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) };
+    if (pivotResult.columns) meta.pivotColumns = pivotResult.columns;
     if (facetField && /^[A-Za-z_][A-Za-z0-9_]*$/.test(facetField)) {
       try {
         const facetRows = await this.query(
 
           `SELECT CAST(source_rows."${facetField}" AS VARCHAR) AS value, COUNT(*) AS n FROM (${pivotStatement}) AS source_rows GROUP BY source_rows."${facetField}"`,
-          values,
+          queryValues,
         );
         meta.facets = Object.fromEntries(facetRows.map((row: any) => [String(row.value ?? ''), Number(row.n || 0)]));
       } catch {
@@ -224,13 +229,14 @@ export const dataMethods = {
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const AGGREGATES = new Set(['count', 'sum', 'avg', 'min', 'max']);
+const NULL_PIVOT_VALUE = '__core3_null__';
 const quoteIdentifier = (value: unknown, label: string) => {
   const identifier = String(value || '');
   if (!IDENTIFIER.test(identifier)) throw Object.assign(new Error(`${label} must be a safe identifier`), { status: 400 });
   return `"${identifier}"`;
 };
 
-async function nativePivotStatement(repository: any, statement: string, values: any[], declaration: any, request: any): Promise<string> {
+async function nativePivotStatement(repository: any, statement: string, values: any[], declaration: any, request: any): Promise<{ statement: string; values: any[]; columns?: Array<{ values: string[]; prefix: string }> }> {
   const allowed = new Set(Array.isArray(declaration?.fields) ? declaration.fields.map(String) : []);
   if (!allowed.size) throw Object.assign(new Error('Datasource does not declare pivot fields'), { status: 400 });
   const rows = Array.isArray(request.rows) ? request.rows : request.rowField ? [request.rowField] : [];
@@ -256,18 +262,47 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   });
   const groupBy = rowSql.length ? ` GROUP BY ${rowSql.join(', ')}` : '';
   if (!columns.length) {
-    return `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${statement}) AS pivot_source${groupBy}`;
+    return { statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${statement}) AS pivot_source${groupBy}`, values };
   }
   const distinctRows = await repository.query(
     `SELECT DISTINCT ${columnSql.join(', ')} FROM (${statement}) AS pivot_values`,
     values,
   );
-  const pivotValues = distinctRows.length
-    ? distinctRows.map((row: any) => columns.length === 1
-    ? sqlLiteral(row[String(columns[0])])
-      : `(${columns.map((column: unknown) => sqlLiteral(row[String(column)])).join(', ')})`).join(', ')
-    : 'NULL';
-  return `PIVOT (${statement}) ON ${columnSql.join(', ')} IN (${pivotValues}) USING ${measureSql.join(', ')}${groupBy}`;
+  if (!distinctRows.length) {
+    // DuckDB treats IN (NULL) as an implicit, data-extracted pivot. That form
+    // is rejected when the source query contains bound parameters, which is
+    // common after filters remove every pivot column value.
+    return {
+      statement: `SELECT ${[...rowSql, ...measureSql].join(', ')} FROM (${inlineBoundParameters(statement, values)}) AS pivot_source${groupBy}`,
+      values: [],
+      columns: [],
+    };
+  }
+  const pivotDimensions = columns.map((column: unknown) => [...new Map(
+    distinctRows.map((row: any) => {
+      const raw = row[String(column)];
+      const value = raw == null ? 'NULL' : String(raw);
+      const pivotValue = raw == null ? NULL_PIVOT_VALUE : String(raw);
+      return [value, { raw, pivotValue }] as const;
+    }),
+  ).entries()]);
+  const pivotColumns: Array<{ values: string[]; prefix: string }> = [];
+  const addPivotColumn = (displayValues: string[], pivotValues: string[], index: number) => {
+    if (index === pivotDimensions.length) { pivotColumns.push({ values: displayValues, prefix: pivotValues.join('_') }); return; }
+    for (const [value, dimension] of pivotDimensions[index]) addPivotColumn([...displayValues, value], [...pivotValues, dimension.pivotValue], index + 1);
+  };
+  addPivotColumn([], [], 0);
+  // DuckDB's multi-element PIVOT syntax requires one IN list per ON field;
+  // tuple values such as IN (('date', 'Road')) are rejected by the binder.
+  const pivotOnColumns = columnSql.map(column => `COALESCE(CAST(${column} AS VARCHAR), ${sqlLiteral(NULL_PIVOT_VALUE)})`);
+  const pivotValues = pivotOnColumns.map((column, index) =>
+    `${column} IN (${pivotDimensions[index].map(([, dimension]) => sqlLiteral(dimension.pivotValue)).join(', ')})`,
+  ).join(', ');
+  return {
+    statement: `PIVOT (${inlineBoundParameters(statement, values)}) ON ${pivotValues} USING ${measureSql.join(', ')}${groupBy}`,
+    values: [],
+    columns: pivotColumns,
+  };
 }
 
 function sqlLiteral(value: unknown): string {
@@ -275,4 +310,25 @@ function sqlLiteral(value: unknown): string {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE';
   return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function inlineBoundParameters(statement: string, values: any[]): string {
+  let valueIndex = 0;
+  let output = '';
+  let quote: "'" | '"' | null = null;
+  for (let index = 0; index < statement.length; index++) {
+    const character = statement[index];
+    const next = statement[index + 1];
+    if (quote) {
+      output += character;
+      if (character === quote && next === quote) { output += next; index++; continue; }
+      if (character === quote) quote = null;
+      continue;
+    }
+    if (character === "'" || character === '"') { quote = character; output += character; continue; }
+    if (character === '?' && valueIndex < values.length) { output += sqlLiteral(values[valueIndex++]); continue; }
+    output += character;
+  }
+  if (valueIndex !== values.length) throw new Error('Datasource parameter count did not match the generated pivot source');
+  return output;
 }

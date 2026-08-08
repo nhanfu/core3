@@ -300,7 +300,12 @@ export class ListView extends BaseComponent {
     if (activeView.id === 'pivot' || activeView.id === 'graph' || activeView.id === 'map') {
       const content = html.take(root).div.className('o-list-content').getContext();
       const host = html.take(content).div.className(`o-list-${activeView.id}-host`).getContext();
-      const options = { view: activeView as AnalyticsViewMode, openAction: this.options.openAction, rowKey: this.options.rowKey };
+      const options = {
+        view: activeView as AnalyticsViewMode,
+        openAction: this.options.openAction,
+        rowKey: this.options.rowKey,
+        ...(activeView.id === 'pivot' ? { pivotColumns: (this.state.meta as any)?.pivotColumns } : {}),
+      };
       const View = activeView.id === 'pivot' ? PivotView : activeView.id === 'graph' ? GraphView : MapView;
       const child = new View(`${activeView.id}-view-${this.id}`, { rows }, {
         ...options,
