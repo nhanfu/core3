@@ -740,6 +740,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       renderForm,
       rowActions: def.row_actions || 'buttons',
       views,
+      viewNavigation: def.view_navigation || 'icons',
       onViewChange: (view: string) => {
         const params = { ...getPageParams(), view } as Record<string, string | undefined>;
         if (view !== 'pivot') {

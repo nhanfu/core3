@@ -71,6 +71,30 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('[data-list-action="orders.export"] svg')).not.toBeNull();
   });
 
+  it('renders view navigation as labeled tabs above the control panel', () => {
+    const container = mount(create({ viewNavigation: 'tabs' }));
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('.o-list-view-tabs [role="tab"]')];
+
+    expect(tabs.map(tab => tab.textContent)).toEqual(['List', 'Kanban', 'Calendar']);
+    expect(container.querySelector('.o-list-view-tabs')?.nextElementSibling?.className).toBe('o-list-control-panel');
+    expect(container.querySelector('.o-list-view-switcher')).toBeNull();
+  });
+
+  it('keeps FormView out of the tab navigation', () => {
+    const container = mount(create({
+      viewNavigation: 'tabs',
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      views: [
+        { id: 'list', label: 'List' },
+        { id: 'kanban', label: 'Kanban', groupBy: 'status', card: { title: 'number' } },
+        { id: 'form', label: 'Form' },
+      ],
+    }));
+
+    expect(container.querySelector('.o-list-view-tabs [data-list-view="form"]')).toBeNull();
+    expect(container.querySelector('.o-list-view-tabs')?.textContent).not.toContain('Form');
+  });
+
   it('commits search and option filters as removable facets', () => {
     const onFilterChange = vi.fn();
     const component = create({ onFilterChange });

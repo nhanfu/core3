@@ -109,6 +109,7 @@ components:
       - { id: approved_orders, label: Approved orders, filters: { status: Approved }, group_by: status_label }
     actions:
       - { id: orders.export, label: Export, title: Export, icon: download }
+    view_navigation: tabs
     labels:
       new: New
       filters: Filters
@@ -187,7 +188,6 @@ components:
         icon: map
         label_field: order_number
         subtitle_field: route
-      - { id: form, label: Form, icon: form }
     page_size: 50
     column_chooser: true
     row_key: id

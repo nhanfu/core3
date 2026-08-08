@@ -94,6 +94,7 @@ export type ListViewOptions = {
   renderForm?: (row: ListRow, container: HTMLElement) => Promise<void> | void;
   rowActions?: 'buttons' | 'menu';
   views?: ListViewMode[];
+  viewNavigation?: 'icons' | 'tabs';
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
   onKanbanAddStatus?: (label: string) => Promise<void> | void;
   emptyState?: { title?: string; description?: string };
@@ -210,6 +211,8 @@ export class ListView extends BaseComponent {
     );
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field));
     const root = html.take(container).section.className('o-list-view').getContext();
+
+    if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
 
     const controlPanel = html.take(root).div.className('o-list-control-panel').getContext();
     const main = html.take(controlPanel).div.className('o-list-control-main').getContext();
@@ -586,7 +589,7 @@ export class ListView extends BaseComponent {
     }
 
     const views = this.options.views || [];
-    if (views.length > 1) {
+    if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').getContext();
       const activeView = this.activeView();
       for (const view of views) {
@@ -599,23 +602,7 @@ export class ListView extends BaseComponent {
           .getContext();
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
         button.setAttribute('aria-pressed', String(this.isViewEnabled(view.id)));
-        button.addEventListener('click', () => {
-          if (view.id === 'form' && this.options.formView) {
-            this.setState({ formPanelClosed: this.state.formPanelClosed !== true });
-            return;
-          }
-          const activeView = this.activeView();
-          if (view.id === 'form' || (view.id === 'list' && this.options.formView && (activeView.id === 'list' || activeView.id === 'form'))) {
-            const key = view.id === 'list' ? 'listViewEnabled' : 'formViewEnabled';
-            const enabled = this.isViewEnabled(view.id);
-            const other = view.id === 'list' ? 'form' : 'list';
-            if (enabled && this.isViewEnabled(other)) this.setState({ [key]: false });
-            else if (!enabled) this.setState({ [key]: true });
-            return;
-          }
-          this.setState({ activeView: view.id });
-          this.options.onViewChange?.(view.id as 'list' | 'kanban' | 'calendar' | 'card');
-        });
+        button.addEventListener('click', () => this.selectView(view.id));
       }
     }
 
@@ -671,6 +658,43 @@ export class ListView extends BaseComponent {
       }
     }
     this.dismissDetails(details);
+  }
+
+  private drawViewTabs(container: HTMLElement) {
+    // FormView is an inline/detail presentation, not a collection view tab.
+    const views = (this.options.views || []).filter(view => view.id !== 'form');
+    if (views.length <= 1) return;
+    const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', 'View').getContext();
+    for (const view of views) {
+      const tab = html.take(tabList).button
+        .className(this.isViewEnabled(view.id) ? 'is-active' : '')
+        .attr('type', 'button')
+        .attr('role', 'tab')
+        .attr('aria-label', view.label)
+        .attr('aria-selected', String(this.isViewEnabled(view.id)))
+        .dataAttr('list-view', view.id)
+        .text(view.label)
+        .getContext();
+      tab.addEventListener('click', () => this.selectView(view.id));
+    }
+  }
+
+  private selectView(viewId: string) {
+    if (viewId === 'form' && this.options.formView) {
+      this.setState({ formPanelClosed: this.state.formPanelClosed !== true });
+      return;
+    }
+    const activeView = this.activeView();
+    if (viewId === 'form' || (viewId === 'list' && this.options.formView && (activeView.id === 'list' || activeView.id === 'form'))) {
+      const key = viewId === 'list' ? 'listViewEnabled' : 'formViewEnabled';
+      const enabled = this.isViewEnabled(viewId);
+      const other = viewId === 'list' ? 'form' : 'list';
+      if (enabled && this.isViewEnabled(other)) this.setState({ [key]: false });
+      else if (!enabled) this.setState({ [key]: true });
+      return;
+    }
+    this.setState({ activeView: viewId });
+    this.options.onViewChange?.(viewId as 'list' | 'kanban' | 'calendar' | 'card');
   }
 
   private drawFacets(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {

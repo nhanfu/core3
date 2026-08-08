@@ -536,6 +536,30 @@
 .o-list-view-switcher .o-list-view-form-only { display: inline-flex; }
 .o-list-view-switcher svg { width: 16px; height: 16px; }
 
+.o-list-view-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 20px;
+  min-height: 42px;
+  align-items: end;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--o-list-border);
+  background: var(--o-list-bg);
+}
+.o-list-view-tabs button {
+  min-height: 42px;
+  padding: 9px 2px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--o-list-muted);
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+}
+.o-list-view-tabs button:hover,
+.o-list-view-tabs button.is-active { border-bottom-color: var(--o-list-action); color: var(--o-list-action); }
+
 .o-kanban-board { display: flex; min-height: 0; flex: 1; gap: 12px; overflow: auto; padding: 16px; background: var(--o-list-panel-bg); }
 .o-kanban-column { display: flex; width: min(320px, calc(100vw - 48px)); min-width: 280px; height: fit-content; max-height: 100%; flex-direction: column; border-radius: 5px; background: var(--o-list-muted-bg); }
 .o-kanban-column-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; color: var(--o-list-text); }
