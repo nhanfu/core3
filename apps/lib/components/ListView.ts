@@ -5,6 +5,9 @@ import { appendIcon } from './Icon.ts';
 import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
 import { CalendarView, type CalendarViewDefinition } from './CalendarView.ts';
 import { CardView, type CardViewDefinition } from './CardView.ts';
+import { PivotView, type PivotViewDefinition } from './PivotView.ts';
+import { GraphView, type GraphViewDefinition } from './GraphView.ts';
+import { MapView, type MapViewDefinition } from './MapView.ts';
 import { resolveDatePreset, type DateRangePreset } from './ListToolbar.ts';
 
 type ListRow = Record<string, unknown>;
@@ -59,10 +62,12 @@ export type FormViewDefinition = {
   label: string;
   icon?: string;
 };
-export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition;
+export type AnalyticsViewMode = PivotViewDefinition | GraphViewDefinition | MapViewDefinition;
+export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarViewDefinition | CardViewDefinition | FormViewDefinition | AnalyticsViewMode;
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
+  scroll?: 'list' | 'body';
   breadcrumbs?: string[];
   createAction?: { id: string; label: string };
   search?: false | { label?: string; placeholder?: string };
@@ -90,6 +95,7 @@ export type ListViewOptions = {
   renderForm?: (row: ListRow, container: HTMLElement) => Promise<void> | void;
   rowActions?: 'buttons' | 'menu';
   views?: ListViewMode[];
+  viewNavigation?: 'icons' | 'tabs';
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
   onKanbanAddStatus?: (label: string) => Promise<void> | void;
   emptyState?: { title?: string; description?: string };
@@ -112,7 +118,8 @@ export type ListViewOptions = {
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onPageChange?: (page: number) => void;
   onSelectionChange?: (selectedIds: string[]) => void;
-  onViewChange?: (view: 'list' | 'kanban' | 'calendar' | 'card') => void;
+  onViewChange?: (view: string) => void;
+  onPivotChange?: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => void;
   onGroupByChange?: (field: string | null) => void;
   onFavoriteChange?: (favorite: ListViewFavorite) => void;
 };
@@ -125,6 +132,7 @@ export type ListViewOptions = {
 export class ListView extends BaseComponent {
   defs: ListViewColumn[];
   options: ListViewOptions;
+  private dismissCleanup: Array<() => void> = [];
 
   constructor(id: string, state: Record<string, unknown> = {}, defs: ListViewColumn[] = [], options: ListViewOptions = {}) {
     super(id, state);
@@ -133,6 +141,8 @@ export class ListView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    for (const cleanup of this.dismissCleanup) cleanup();
+    this.dismissCleanup = [];
     for (const child of this.children) child.dispose();
     this.children = [];
     if (this.options.variant !== 'odoo') {
@@ -204,16 +214,18 @@ export class ListView extends BaseComponent {
         : this.defs.filter(column => column.optional !== 'hide').map(column => column.id || column.field),
     );
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field));
-    const root = html.take(container).section.className('o-list-view').getContext();
+    const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).getContext();
+
+    if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
 
     const controlPanel = html.take(root).div.className('o-list-control-panel').getContext();
     const main = html.take(controlPanel).div.className('o-list-control-main').getContext();
+    const activeView = this.activeView();
     this.drawPrimaryControls(main, labels);
     this.drawSearch(main, filters, selectedIds, labels);
-    this.drawNavigation(main, meta, visibleColumnIds, labels);
+    this.drawNavigation(main, meta, visibleColumnIds, labels, activeView.id !== 'pivot');
     this.drawFacets(controlPanel, filters, labels);
 
-    const activeView = this.activeView();
     const listEnabled = this.isViewEnabled('list');
     const hasFormMode = (this.options.views || []).some(view => view.id === 'form');
     const formEnabled = !this.isSmallScreen()
@@ -227,7 +239,7 @@ export class ListView extends BaseComponent {
     if (activeView.id === 'card') {
       const card = new CardView(
         `card-view-${this.id}`,
-        { rows },
+        { rows, groupBy: typeof this.state.groupBy === 'string' ? this.state.groupBy : undefined },
         {
           view: activeView,
           rowKey: this.options.rowKey,
@@ -263,7 +275,7 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const kanbanHost = html.take(content).div.className('o-list-kanban-host').getContext();
       kanban.mount(kanbanHost);
-      if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+      if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
       }
       return;
@@ -287,9 +299,26 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const calendarHost = html.take(content).div.className('o-list-calendar-host').getContext();
       calendar.mount(calendarHost);
-      if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+      if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
       }
+      return;
+    }
+    if (activeView.id === 'pivot' || activeView.id === 'graph' || activeView.id === 'map') {
+      const content = html.take(root).div.className('o-list-content').getContext();
+      const host = html.take(content).div.className(`o-list-${activeView.id}-host`).getContext();
+      const options = {
+        view: activeView as AnalyticsViewMode,
+        openAction: this.options.openAction,
+        rowKey: this.options.rowKey,
+        ...(activeView.id === 'pivot' ? { pivotColumns: (this.state.meta as any)?.pivotColumns } : {}),
+      };
+      const View = activeView.id === 'pivot' ? PivotView : activeView.id === 'graph' ? GraphView : MapView;
+      const child = new View(`${activeView.id}-view-${this.id}`, { rows }, {
+        ...options,
+        ...(activeView.id === 'pivot' ? { onChange: this.options.onPivotChange } : {}),
+      } as any);
+      child.parent = this; child._transport = this._transport; this.children.push(child); child.mount(host);
       return;
     }
 
@@ -319,11 +348,16 @@ export class ListView extends BaseComponent {
       const active = sort?.field === column.field;
       const button = html.take(th).button.className('o-list-sort').dataAttr('sort-field', column.field).getContext();
       button.append(document.createTextNode(column.label));
-      if (active) {
-        const icon = document.createElement('span');
-        appendIcon(icon, sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending');
-        button.append(icon);
-      }
+      const indicator = document.createElement('span');
+      indicator.className = 'o-list-sort-indicator';
+      const ascending = document.createElement('span');
+      ascending.className = `o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`;
+      appendIcon(ascending, 'sort-ascending');
+      const descending = document.createElement('span');
+      descending.className = `o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`;
+      appendIcon(descending, 'sort-descending');
+      indicator.append(ascending, descending);
+      button.append(indicator);
       button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
       button.addEventListener('click', () => this.setSort(column.field));
     }
@@ -377,7 +411,7 @@ export class ListView extends BaseComponent {
         }
       }
     }
-    if (formEnabled && this.options.formView?.sidePanel && (rows.length || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+    if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (rows.length || this.state.formRowId === '__new__')) {
       await this.drawFormPanel(content, rows, false);
     }
   }
@@ -387,14 +421,11 @@ export class ListView extends BaseComponent {
       ? { id: '', __new_record: true }
       : this.formRow(rows) || (rows.length ? rows[0] : undefined);
     if (!selectedRow || !this.options.renderForm) return;
-    const panel = html.take(content).aside.className('o-list-form-side-panel is-loading').getContext();
+    const mode = this.formPanelMode();
+    const panel = html.take(content).aside.className(`o-list-form-side-panel is-${mode} is-loading`).getContext();
     const width = Number(this.state.formPanelWidth);
     if (Number.isFinite(width) && width > 0) panel.style.width = `${Math.min(75, Math.max(25, width))}%`;
     const handle = html.take(panel).div.className('o-list-form-resize-handle').attr('role', 'separator').attr('aria-label', 'Resize form panel').getContext();
-    const collapseButton = html.take(panel).button.className('o-list-form-collapse').attr('type', 'button').getContext();
-    collapseButton.setAttribute('aria-label', 'Close form');
-    collapseButton.setAttribute('title', 'Close form');
-    appendIcon(collapseButton, 'x');
     let dragging = false;
     let draggedWidth: number | undefined;
     const updateWidth = (event: PointerEvent) => {
@@ -420,9 +451,6 @@ export class ListView extends BaseComponent {
       handle.releasePointerCapture?.(event.pointerId);
     });
     const body = html.take(panel).div.className('o-list-form-panel-body').getContext();
-    collapseButton.addEventListener('click', () => {
-      this.setState({ formPanelClosed: true });
-    });
     await this.options.renderForm(selectedRow, body);
     if (panel.isConnected) panel.classList.remove('is-loading');
   }
@@ -433,6 +461,7 @@ export class ListView extends BaseComponent {
       const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).getContext();
       button.addEventListener('click', () => {
         if (this.options.formView?.sidePanel) {
+          this.setFormPanelMode('right');
           this.setState({ formRowId: '__new__', formPanelClosed: false });
           return;
         }
@@ -488,6 +517,14 @@ export class ListView extends BaseComponent {
     const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', labels.filters).getContext();
     appendIcon(summary, 'chevron-down');
     const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
+    const positionFilterMenu = () => {
+      if (!details.open) return;
+      const bounds = details.getBoundingClientRect();
+      menu.style.top = `${Math.round(bounds.bottom + 4)}px`;
+    };
+    details.addEventListener('toggle', positionFilterMenu);
+    window.addEventListener('resize', positionFilterMenu);
+    this.dismissCleanup.push(() => window.removeEventListener('resize', positionFilterMenu));
 
     for (const filter of this.options.filters || []) {
       const group = html.take(menu).section.className('o-list-filter-group').getContext();
@@ -543,26 +580,46 @@ export class ListView extends BaseComponent {
     this.dismissDetails(details);
   }
 
-  private drawNavigation(container: HTMLElement, meta: Record<string, unknown>, visibleColumnIds: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
+  private drawNavigation(container: HTMLElement, meta: Record<string, unknown>, visibleColumnIds: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, showPager = true) {
     const navigation = html.take(container).div.className('o-list-navigation').getContext();
-    const total = Number(meta.total || 0);
-    const page = Math.max(1, Number(meta.page || 1));
-    const pageSize = Math.max(1, Number(meta.pageSize || this.state.pageSize || 1));
-    const start = total ? (page - 1) * pageSize + 1 : 0;
-    const end = Math.min(page * pageSize, total);
-    const pager = html.take(navigation).div.className('o-list-pager').getContext();
-    html.take(pager).span.className('o-list-pager-range').text(`${start}-${end} / ${total}`);
-    const previous = html.take(pager).button.text('‹').getContext() as HTMLButtonElement;
-    previous.setAttribute('aria-label', labels.previousPage);
-    previous.disabled = page <= 1;
-    if (!previous.disabled) previous.addEventListener('click', () => this.options.onPageChange?.(page - 1));
-    const next = html.take(pager).button.text('›').getContext() as HTMLButtonElement;
-    next.setAttribute('aria-label', labels.nextPage);
-    next.disabled = end >= total;
-    if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
+    if (showPager) {
+      const total = Number(meta.total || 0);
+      const page = Math.max(1, Number(meta.page || 1));
+      const pageSize = Math.max(1, Number(meta.pageSize || this.state.pageSize || 1));
+      const start = total ? (page - 1) * pageSize + 1 : 0;
+      const end = Math.min(page * pageSize, total);
+      const pager = html.take(navigation).div.className('o-list-pager').getContext();
+      html.take(pager).span.className('o-list-pager-range').text(`${start}-${end} / ${total}`);
+      const previous = html.take(pager).button.text('‹').getContext() as HTMLButtonElement;
+      previous.setAttribute('aria-label', labels.previousPage);
+      previous.disabled = page <= 1;
+      if (!previous.disabled) previous.addEventListener('click', () => this.options.onPageChange?.(page - 1));
+      const next = html.take(pager).button.text('›').getContext() as HTMLButtonElement;
+      next.setAttribute('aria-label', labels.nextPage);
+      next.disabled = end >= total;
+      if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
+    }
+
+    if (this.options.formView?.sidePanel) {
+      const mode = this.formPanelMode();
+      const modeLabels = {
+        right: 'Right FormView panel',
+        hidden: 'Hidden FormView panel',
+      } as const;
+      const modeIcons = { right: 'panel', hidden: 'eye-off' } as const;
+      const toggle = html.take(navigation).button
+        .className(`o-list-form-mode-toggle is-${mode}`)
+        .attr('type', 'button')
+        .attr('aria-label', modeLabels[mode])
+        .attr('title', `${modeLabels[mode]} (click to change)`)
+        .dataAttr('form-panel-mode', mode)
+        .getContext() as HTMLButtonElement;
+      appendIcon(toggle, modeIcons[mode]);
+      toggle.addEventListener('click', () => this.cycleFormPanelMode());
+    }
 
     const views = this.options.views || [];
-    if (views.length > 1) {
+    if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').getContext();
       const activeView = this.activeView();
       for (const view of views) {
@@ -575,23 +632,7 @@ export class ListView extends BaseComponent {
           .getContext();
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
         button.setAttribute('aria-pressed', String(this.isViewEnabled(view.id)));
-        button.addEventListener('click', () => {
-          if (view.id === 'form' && this.options.formView) {
-            this.setState({ formPanelClosed: this.state.formPanelClosed !== true });
-            return;
-          }
-          const activeView = this.activeView();
-          if (view.id === 'form' || (view.id === 'list' && this.options.formView && (activeView.id === 'list' || activeView.id === 'form'))) {
-            const key = view.id === 'list' ? 'listViewEnabled' : 'formViewEnabled';
-            const enabled = this.isViewEnabled(view.id);
-            const other = view.id === 'list' ? 'form' : 'list';
-            if (enabled && this.isViewEnabled(other)) this.setState({ [key]: false });
-            else if (!enabled) this.setState({ [key]: true });
-            return;
-          }
-          this.setState({ activeView: view.id });
-          this.options.onViewChange?.(view.id as 'list' | 'kanban' | 'calendar' | 'card');
-        });
+        button.addEventListener('click', () => this.selectView(view.id));
       }
     }
 
@@ -649,6 +690,43 @@ export class ListView extends BaseComponent {
     this.dismissDetails(details);
   }
 
+  private drawViewTabs(container: HTMLElement) {
+    // FormView is an inline/detail presentation, not a collection view tab.
+    const views = (this.options.views || []).filter(view => view.id !== 'form');
+    if (views.length <= 1) return;
+    const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', 'View').getContext();
+    for (const view of views) {
+      const tab = html.take(tabList).button
+        .className(this.isViewEnabled(view.id) ? 'is-active' : '')
+        .attr('type', 'button')
+        .attr('role', 'tab')
+        .attr('aria-label', view.label)
+        .attr('aria-selected', String(this.isViewEnabled(view.id)))
+        .dataAttr('list-view', view.id)
+        .text(view.label)
+        .getContext();
+      tab.addEventListener('click', () => this.selectView(view.id));
+    }
+  }
+
+  private selectView(viewId: string) {
+    if (viewId === 'form' && this.options.formView) {
+      this.setFormPanelMode(this.formPanelMode() === 'hidden' ? 'right' : 'hidden');
+      return;
+    }
+    const activeView = this.activeView();
+    if (viewId === 'form' || (viewId === 'list' && this.options.formView && (activeView.id === 'list' || activeView.id === 'form'))) {
+      const key = viewId === 'list' ? 'listViewEnabled' : 'formViewEnabled';
+      const enabled = this.isViewEnabled(viewId);
+      const other = viewId === 'list' ? 'form' : 'list';
+      if (enabled && this.isViewEnabled(other)) this.setState({ [key]: false });
+      else if (!enabled) this.setState({ [key]: true });
+      return;
+    }
+    this.setState({ activeView: viewId });
+    this.options.onViewChange?.(viewId as 'list' | 'kanban' | 'calendar' | 'card');
+  }
+
   private drawFacets(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     const facets: Array<{ key: string; label: string; clear: () => void }> = [];
     if (filters.q) {
@@ -695,13 +773,8 @@ export class ListView extends BaseComponent {
     const openRow = (action: string) => void this.submit(action, { row });
     tr.addEventListener('click', (event: MouseEvent) => {
       if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
-      if (this.options.formView) {
-        if (openClickTimer) clearTimeout(openClickTimer);
-        openClickTimer = setTimeout(() => {
-          openClickTimer = undefined;
-          this.setState({ formRowId: id }, false);
-          if (this.options.formView?.sidePanel) this.redraw();
-        }, 250);
+      if (this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
+        this.selectFormRow(row);
         return;
       }
       if (!this.options.openAction) return;
@@ -747,15 +820,19 @@ export class ListView extends BaseComponent {
           }
         });
       }
-      if (columnIndex === 0 && this.options.formView) {
+      if (columnIndex === 0 && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
         cell.classList.add('o-list-open-cell');
         cell.tabIndex = 0;
         cell.setAttribute('role', 'button');
+        cell.addEventListener('click', (event: MouseEvent) => {
+          if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
+          event.stopPropagation();
+          this.selectFormRow(row);
+        });
         cell.addEventListener('keydown', (event: KeyboardEvent) => {
           if (event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
-          this.setState({ formRowId: id }, false);
-          if (this.options.formView?.sidePanel) this.redraw();
+          this.selectFormRow(row);
         });
       }
       if (column.rowActions?.length) {
@@ -867,6 +944,11 @@ export class ListView extends BaseComponent {
       const next = event.relatedTarget as Node | null;
       if (next && !details.contains(next)) details.open = false;
     });
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (details.open && !details.contains(event.target as Node)) details.open = false;
+    };
+    document.addEventListener('click', closeOnOutsideClick);
+    this.dismissCleanup.push(() => document.removeEventListener('click', closeOnOutsideClick));
   }
 
   private rowId(row: ListRow, index: number) {
@@ -903,7 +985,7 @@ export class ListView extends BaseComponent {
       && Boolean(this.options.formView)
       && this.activeView().id !== 'card'
       && this.state.formViewEnabled !== false
-      && this.state.formPanelClosed !== true;
+      && this.formPanelMode() !== 'hidden';
     if (viewId === 'list') {
       if (hasFormMode && this.options.formView && ['list', 'form'].includes(this.activeView().id)) {
         return this.state.listViewEnabled !== false;
@@ -925,8 +1007,23 @@ export class ListView extends BaseComponent {
 
   private selectFormRow(row: ListRow) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
-    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))), formPanelClosed: false }, false);
+    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))), formPanelMode: this.formPanelMode() === 'hidden' ? 'right' : this.formPanelMode(), formPanelClosed: false }, false);
     if (this.options.formView?.sidePanel) this.redraw();
+  }
+
+  private formPanelMode(): 'right' | 'hidden' {
+    const mode = this.state.formPanelMode;
+    if (mode === 'hidden') return 'hidden';
+    return 'right';
+  }
+
+  private setFormPanelMode(mode: 'right' | 'hidden') {
+    this.setState({ formPanelMode: mode, formPanelClosed: mode === 'hidden' });
+  }
+
+  private cycleFormPanelMode() {
+    const next = this.formPanelMode() === 'hidden' ? 'right' : 'hidden';
+    this.setFormPanelMode(next);
   }
 
   private setFilters(filters: Record<string, unknown>) {

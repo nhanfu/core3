@@ -80,7 +80,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'pivot']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -150,7 +150,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['PageIntro', new Set(['type', 'greeting', 'title', 'description', 'action_label', 'greeting_side', 'compact'])],
   ['ComingSoon', new Set(['type', 'id', 'eyebrow', 'title', 'description', 'icon'])],
   ['DataGrid', new Set(['type', 'source', 'page_size', 'page_size_options', 'row_key', 'row_numbers', 'empty_state', 'columns', 'selectable', 'column_chooser', 'reorder', 'tree'])],
-  ['ListView', new Set(['type', 'source', 'variant', 'create_action', 'create_label', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'group_by', 'favorites', 'bulk_actions', 'labels', 'views', 'form_view', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_double_click_action', 'row_actions'])],
+  ['ListView', new Set(['type', 'source', 'variant', 'scroll', 'create_action', 'create_label', 'search', 'date_range', 'filter_sources', 'filters', 'actions', 'group_by', 'favorites', 'bulk_actions', 'labels', 'views', 'view_navigation', 'form_view', 'page_size', 'row_key', 'tree', 'parent_field', 'empty_state', 'columns', 'selectable', 'column_chooser', 'row_open_action', 'row_double_click_action', 'row_actions'])],
   ['ScheduleGrid', new Set(['type', 'source', 'title', 'date_field', 'resource_field', 'resource_label_field', 'title_field', 'subtitle_field', 'status_field', 'empty_state'])],
   ['GridView', new Set(['type', 'source', 'page_size', 'empty_state', 'labels', 'columns'])],
   ['ListToolbar', new Set(['type', 'source', 'filter_field', 'search', 'search_button', 'actions', 'date_range', 'filters', 'filter_sources', 'advanced_filter', 'help', 'actions_inline'])],
@@ -272,6 +272,15 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);
+    }
+    if (source.pivot !== undefined) {
+      requireRecord(source.pivot, `${path}.pivot`, issues);
+      if (isRecord(source.pivot)) {
+        rejectUnknownKeys(source.pivot, new Set(['fields']), `${path}.pivot`, issues);
+        if (!Array.isArray(source.pivot.fields) || !source.pivot.fields.length || source.pivot.fields.some((field: unknown) => !isString(field))) {
+          issues.push(`${path}.pivot.fields must be a non-empty array of field names`);
+        }
+      }
     }
     if (source.workflow !== undefined) {
       requireRecord(source.workflow, `${path}.workflow`, issues);
@@ -490,6 +499,9 @@ function validateComponents(
     }
     if (component.type === 'ListView') {
       if (component.variant !== 'odoo') issues.push(`${path}.variant must be odoo`);
+      if (component.scroll !== undefined && !['list', 'body'].includes(String(component.scroll))) {
+        issues.push(`${path}.scroll must be list or body`);
+      }
       for (const key of ['create_action', 'row_open_action', 'row_double_click_action']) {
         if (component[key] === undefined) continue;
         requireString(component[key], `${path}.${key}`, issues);
@@ -558,14 +570,43 @@ function validateComponents(
             const viewPath = `${path}.views[${viewIndex}]`;
             requireRecord(view, viewPath, issues);
             if (!isRecord(view)) return;
-            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card']), viewPath, issues);
+            rejectUnknownKeys(view, new Set(['id', 'label', 'icon', 'group_by', 'date_field', 'end_date_field', 'groups', 'groups_source', 'card', 'row_field', 'column_field', 'row_fields', 'column_fields', 'measure_field', 'measure_label', 'measures', 'aggregate', 'category_field', 'type', 'label_field', 'subtitle_field', 'latitude_field', 'longitude_field', 'pivot']), viewPath, issues);
             requireString(view.id, `${viewPath}.id`, issues);
             requireString(view.label, `${viewPath}.label`, issues);
-            if (!['list', 'kanban', 'calendar', 'card', 'form'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, or form`);
+            if (!['list', 'kanban', 'calendar', 'card', 'form', 'pivot', 'graph', 'map'].includes(String(view.id))) issues.push(`${viewPath}.id must be list, kanban, calendar, card, form, pivot, graph, or map`);
             if (typeof view.id === 'string' && viewIds.has(view.id)) issues.push(`${viewPath}.id must be unique`);
             if (typeof view.id === 'string') viewIds.add(view.id);
             if (view.id === 'kanban' && typeof view.group_by !== 'string') issues.push(`${viewPath}.group_by is required for kanban`);
             if (view.id === 'calendar' && typeof view.date_field !== 'string') issues.push(`${viewPath}.date_field is required for calendar`);
+            if (view.id === 'pivot') {
+              if (view.pivot !== undefined) {
+                requireRecord(view.pivot, `${viewPath}.pivot`, issues);
+                if (isRecord(view.pivot)) {
+                  rejectUnknownKeys(view.pivot, new Set(['fields', 'default', 'config_label', 'date_ranges']), `${viewPath}.pivot`, issues);
+                  if (!Array.isArray(view.pivot.fields) || !view.pivot.fields.length) issues.push(`${viewPath}.pivot.fields must be a non-empty array`);
+                  for (const [fieldIndex, field] of (Array.isArray(view.pivot.fields) ? view.pivot.fields : []).entries()) {
+                    const fieldPath = `${viewPath}.pivot.fields[${fieldIndex}]`;
+                    requireRecord(field, fieldPath, issues);
+                    if (isRecord(field)) { rejectUnknownKeys(field, new Set(['field', 'column', 'type']), fieldPath, issues); requireString(field.field, `${fieldPath}.field`, issues); requireString(field.column, `${fieldPath}.column`, issues); if (field.type !== undefined && field.type !== 'date') issues.push(`${fieldPath}.type must be date when provided`); }
+                  }
+                  if (view.pivot.date_ranges !== undefined) {
+                    requireRecord(view.pivot.date_ranges, `${viewPath}.pivot.date_ranges`, issues);
+                    if (isRecord(view.pivot.date_ranges)) for (const [field, range] of Object.entries(view.pivot.date_ranges)) {
+                      if (!['day', 'week', 'month', 'quarter', 'year'].includes(String(range))) issues.push(`${viewPath}.pivot.date_ranges.${field} must be day, week, month, quarter, or year`);
+                    }
+                  }
+                  if (view.pivot.default !== undefined) {
+                    requireRecord(view.pivot.default, `${viewPath}.pivot.default`, issues);
+                    if (isRecord(view.pivot.default)) { rejectUnknownKeys(view.pivot.default, new Set(['rows', 'columns', 'measures']), `${viewPath}.pivot.default`, issues); }
+                  }
+                }
+              }
+              if (view.row_fields !== undefined && (!Array.isArray(view.row_fields) || view.row_fields.some((field: unknown) => !isString(field)))) issues.push(`${viewPath}.row_fields must be an array of field names`);
+              if (view.column_fields !== undefined && (!Array.isArray(view.column_fields) || view.column_fields.some((field: unknown) => !isString(field)))) issues.push(`${viewPath}.column_fields must be an array of field names`);
+              if (view.measures !== undefined && (!Array.isArray(view.measures) || !view.measures.length)) issues.push(`${viewPath}.measures must be a non-empty array`);
+            }
+            if (view.id === 'graph' && typeof view.category_field !== 'string') issues.push(`${viewPath}.category_field is required for graph`);
+            if (view.id === 'map' && typeof view.label_field !== 'string') issues.push(`${viewPath}.label_field is required for map`);
           });
         }
       }

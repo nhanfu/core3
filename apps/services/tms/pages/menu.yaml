@@ -14,7 +14,6 @@ menu:
           children:
             - { path: /orders, label: Orders, icon: document, permission: orders.read }
             - { path: /schedule, label: Dispatch schedule, icon: calendar, permission: dispatch.read }
-        - { path: /chat, label: Messages, icon: message, permission: chat.read }
         - path: Fleet
           label: Fleet
           icon: grid

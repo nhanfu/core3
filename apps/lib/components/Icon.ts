@@ -11,6 +11,7 @@ const ICON_PATHS: Record<string, string> = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   message: '<path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.3 8.3 0 0 1-3.4-.7L4 20l1.3-3.3A7.2 7.2 0 0 1 4 11.5 7.5 7.5 0 0 1 12 4a7.5 7.5 0 0 1 8 7.5Z"/>',
   panel: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 4v16"/>',
+  'eye-off': '<path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10.8 10.8 0 0 1 12 5c5 0 8.7 3.5 10 7-0.4 1.1-1.1 2.3-2.1 3.3M6.2 6.2C4.6 7.2 3.4 8.7 2 12c1.3 3.5 5 7 10 7 1 0 2-.2 2.9-.5"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   x: '<path d="m6 6 12 12M18 6 6 18"/>',
@@ -55,11 +56,12 @@ const ICON_PATHS: Record<string, string> = {
   lightbulb: '<path d="M9 18h6M10 22h4M8.5 14.5A6 6 0 1 1 16 14c-.8.7-1 1.3-1 2H9c0-.7-.2-1.3-.5-1.5Z"/>',
   image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/>',
   sort: '<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>',
-  'sort-ascending': '<path d="m8 9 4-4 4 4"/>',
-  'sort-descending': '<path d="m8 15 4 4 4-4"/>',
+  'sort-ascending': '<path d="m4 10 8-8 8 8"/>',
+  'sort-descending': '<path d="m4 14 8 8 8-8"/>',
 };
 
 const ICON_ALIASES: Record<string, string> = {
+  pivot: 'analytics', graph: 'analytics', map: 'pin',
   '⌕': 'search',
   '↓': 'download',
   '↑': 'upload',

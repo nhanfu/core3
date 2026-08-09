@@ -71,6 +71,30 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('[data-list-action="orders.export"] svg')).not.toBeNull();
   });
 
+  it('renders view navigation as labeled tabs above the control panel', () => {
+    const container = mount(create({ viewNavigation: 'tabs' }));
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('.o-list-view-tabs [role="tab"]')];
+
+    expect(tabs.map(tab => tab.textContent)).toEqual(['List', 'Kanban', 'Calendar']);
+    expect(container.querySelector('.o-list-view-tabs')?.nextElementSibling?.className).toBe('o-list-control-panel');
+    expect(container.querySelector('.o-list-view-switcher')).toBeNull();
+  });
+
+  it('keeps FormView out of the tab navigation', () => {
+    const container = mount(create({
+      viewNavigation: 'tabs',
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      views: [
+        { id: 'list', label: 'List' },
+        { id: 'kanban', label: 'Kanban', groupBy: 'status', card: { title: 'number' } },
+        { id: 'form', label: 'Form' },
+      ],
+    }));
+
+    expect(container.querySelector('.o-list-view-tabs [data-list-view="form"]')).toBeNull();
+    expect(container.querySelector('.o-list-view-tabs')?.textContent).not.toContain('Form');
+  });
+
   it('commits search and option filters as removable facets', () => {
     const onFilterChange = vi.fn();
     const component = create({ onFilterChange });
@@ -119,6 +143,16 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('thead')?.textContent).toContain('Status');
   });
 
+  it('always renders both sort directions and activates the selected direction', () => {
+    const container = mount(create({}, { sort: { field: 'number', direction: 'asc' } }));
+    const numberSort = container.querySelector('[data-sort-field="number"]')!;
+
+    expect(numberSort.querySelector('.o-list-sort-ascending')).not.toBeNull();
+    expect(numberSort.querySelector('.o-list-sort-descending')).not.toBeNull();
+    expect(numberSort.querySelector('.o-list-sort-ascending')?.className).toContain('is-active');
+    expect(numberSort.querySelector('.o-list-sort-descending')?.className).not.toContain('is-active');
+  });
+
   it('groups list rows from the search bar and exposes a removable group facet', () => {
     const onGroupByChange = vi.fn();
     const container = mount(create({ onGroupByChange }));
@@ -131,6 +165,16 @@ describe('Odoo ListView', () => {
     container.querySelector<HTMLButtonElement>('[data-filter-facet="groupBy"] button')!.click();
     expect(onGroupByChange).toHaveBeenLastCalledWith(null);
     expect(container.querySelectorAll('.o-list-group-header')).toHaveLength(0);
+  });
+
+  it('closes the filter and grouping menu when clicking outside it', () => {
+    const container = mount(create());
+    const menu = container.querySelector<HTMLDetailsElement>('.o-list-filter-menu')!;
+    menu.querySelector('summary')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(menu.open).toBe(true);
+
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(menu.open).toBe(false);
   });
 
   it('supports grouping, favorite filters, and bulk actions', async () => {
@@ -378,6 +422,31 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('.o-calendar-view')).toBeNull();
   });
 
+  it('toggles the right FormView panel and navigates rows when hidden', async () => {
+    const renderForm = vi.fn((row: Record<string, unknown>, target: HTMLElement) => {
+      target.textContent = String(row.number);
+    });
+    const component = create({
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      renderForm,
+    });
+    const submit = vi.fn().mockResolvedValue(undefined);
+    component._transport = { submit };
+    const container = mount(component);
+    const toggle = () => container.querySelector<HTMLButtonElement>('.o-list-form-mode-toggle')!;
+
+    expect(toggle().dataset.formPanelMode).toBe('right');
+    toggle().click();
+    expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    expect(toggle().dataset.formPanelMode).toBe('hidden');
+    container.querySelector<HTMLElement>('[data-row-id="o1"] [data-column="number"]')!.click();
+    expect(submit).toHaveBeenCalledWith('view', { row: rows[0] });
+
+    toggle().click();
+    expect(container.querySelector('.o-list-form-side-panel')?.classList.contains('is-right')).toBe(true);
+    expect(renderForm).toHaveBeenCalledWith(rows[0], expect.any(HTMLElement));
+  });
+
   it('opens Kanban cards in the FormView and navigates on double click', async () => {
     vi.useFakeTimers();
     try {
@@ -488,8 +557,8 @@ describe('Odoo ListView', () => {
       handle.dispatchEvent(Object.assign(new Event('pointermove', { bubbles: true }), { pointerId: 1, clientX: 400 }));
       handle.dispatchEvent(Object.assign(new Event('pointerup', { bubbles: true }), { pointerId: 1, clientX: 400 }));
       expect(panel.style.width).toBe('60%');
-      const collapse = panel.querySelector<HTMLButtonElement>('.o-list-form-collapse')!;
-      collapse.click();
+      expect(panel.querySelector('.o-list-form-collapse')).toBeNull();
+      container.querySelector<HTMLButtonElement>('.o-list-form-mode-toggle')!.click();
       await Promise.resolve();
       expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
     } finally {
@@ -515,7 +584,8 @@ describe('Odoo ListView', () => {
     expect(container.querySelector<HTMLButtonElement>('[data-list-view="list"]')?.getAttribute('aria-pressed')).toBe('true');
     expect(container.querySelector<HTMLButtonElement>('[data-list-view="form"]')?.getAttribute('aria-pressed')).toBe('true');
 
-    container.querySelector<HTMLButtonElement>('.o-list-form-collapse')!.click();
+    expect(container.querySelector('.o-list-form-collapse')).toBeNull();
+    container.querySelector<HTMLButtonElement>('.o-list-form-mode-toggle')!.click();
     await Promise.resolve();
     expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
     container.querySelector<HTMLButtonElement>('[data-list-view="form"]')!.click();
