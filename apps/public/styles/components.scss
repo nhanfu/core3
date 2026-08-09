@@ -693,9 +693,10 @@
 }
 .o-list-form-side-panel.is-resizing { transition: none; }
 .o-list-form-side-panel.is-right {
-  position: sticky;
-  top: 0;
-  max-height: calc(100vh - var(--header-height));
+  position: relative;
+  z-index: 20;
+  max-height: calc(100vh - var(--header-height) - 103px);
+  box-shadow: -8px 0 20px rgb(15 23 42 / 12%), 0 8px 18px rgb(15 23 42 / 10%);
 }
 :root[data-theme='dim'] .o-list-form-side-panel {
   --o-form-action: #a99bd3;
