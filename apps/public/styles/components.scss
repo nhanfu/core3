@@ -696,7 +696,16 @@
   position: relative;
   z-index: 20;
   max-height: calc(100vh - var(--header-height) - 103px);
+  overflow: hidden;
   box-shadow: -8px 0 20px rgb(15 23 42 / 12%), 0 8px 18px rgb(15 23 42 / 10%);
+}
+.o-list-view-body-scroll .o-list-form-side-panel.is-right {
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  height: calc(100vh - var(--header-height));
+  max-height: calc(100vh - var(--header-height));
+  overflow: hidden;
 }
 :root[data-theme='dim'] .o-list-form-side-panel {
   --o-form-action: #a99bd3;
@@ -711,7 +720,7 @@
 .o-list-form-resize-handle { position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; width: 14px; cursor: col-resize; }
 .o-list-form-resize-handle::after { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--o-form-border); content: ''; }
 .o-list-form-resize-handle:hover::after { width: 4px; background: var(--o-form-action); }
-.o-list-form-panel-body { min-height: 0; overflow: auto; }
+.o-list-form-panel-body { min-height: 0; flex: 1 1 auto; overflow: auto; }
 .o-list-form-loading, .o-list-form-error { min-height: 160px; padding: 24px; color: var(--o-list-muted); animation: o-list-form-content-in 180ms ease-out both; }
 .o-list-form-error { color: #b42318; }
 .o-list-form-side-panel .o-form-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
