@@ -70,6 +70,7 @@ describe('YAML page schema', () => {
     page.components = [{
       type: 'ListView',
       variant: 'odoo',
+      scroll: 'body',
       source: 'orders',
       create_action: 'add_order',
       row_open_action: 'edit_order',

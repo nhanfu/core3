@@ -412,6 +412,31 @@ describe('Odoo ListView', () => {
     expect(container.querySelector('.o-calendar-view')).toBeNull();
   });
 
+  it('toggles the right FormView panel and navigates rows when hidden', async () => {
+    const renderForm = vi.fn((row: Record<string, unknown>, target: HTMLElement) => {
+      target.textContent = String(row.number);
+    });
+    const component = create({
+      formView: { page: 'order-detail.yaml', sidePanel: true },
+      renderForm,
+    });
+    const submit = vi.fn().mockResolvedValue(undefined);
+    component._transport = { submit };
+    const container = mount(component);
+    const toggle = () => container.querySelector<HTMLButtonElement>('.o-list-form-mode-toggle')!;
+
+    expect(toggle().dataset.formPanelMode).toBe('right');
+    toggle().click();
+    expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
+    expect(toggle().dataset.formPanelMode).toBe('hidden');
+    container.querySelector<HTMLElement>('[data-row-id="o1"] [data-column="number"]')!.click();
+    expect(submit).toHaveBeenCalledWith('view', { row: rows[0] });
+
+    toggle().click();
+    expect(container.querySelector('.o-list-form-side-panel')?.classList.contains('is-right')).toBe(true);
+    expect(renderForm).toHaveBeenCalledWith(rows[0], expect.any(HTMLElement));
+  });
+
   it('opens Kanban cards in the FormView and navigates on double click', async () => {
     vi.useFakeTimers();
     try {
@@ -522,8 +547,8 @@ describe('Odoo ListView', () => {
       handle.dispatchEvent(Object.assign(new Event('pointermove', { bubbles: true }), { pointerId: 1, clientX: 400 }));
       handle.dispatchEvent(Object.assign(new Event('pointerup', { bubbles: true }), { pointerId: 1, clientX: 400 }));
       expect(panel.style.width).toBe('60%');
-      const collapse = panel.querySelector<HTMLButtonElement>('.o-list-form-collapse')!;
-      collapse.click();
+      expect(panel.querySelector('.o-list-form-collapse')).toBeNull();
+      container.querySelector<HTMLButtonElement>('.o-list-form-mode-toggle')!.click();
       await Promise.resolve();
       expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
     } finally {
@@ -549,7 +574,8 @@ describe('Odoo ListView', () => {
     expect(container.querySelector<HTMLButtonElement>('[data-list-view="list"]')?.getAttribute('aria-pressed')).toBe('true');
     expect(container.querySelector<HTMLButtonElement>('[data-list-view="form"]')?.getAttribute('aria-pressed')).toBe('true');
 
-    container.querySelector<HTMLButtonElement>('.o-list-form-collapse')!.click();
+    expect(container.querySelector('.o-list-form-collapse')).toBeNull();
+    container.querySelector<HTMLButtonElement>('.o-list-form-mode-toggle')!.click();
     await Promise.resolve();
     expect(container.querySelector('.o-list-form-side-panel')).toBeNull();
     container.querySelector<HTMLButtonElement>('[data-list-view="form"]')!.click();

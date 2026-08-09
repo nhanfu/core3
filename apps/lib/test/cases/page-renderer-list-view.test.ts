@@ -13,6 +13,25 @@ describe('YAML Odoo ListView renderer', () => {
     delete window.__CORE3_USER__;
   });
 
+  it('opts into body scrolling for long resource lists', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o1', number: 'ORD-001' }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['orders.read'] };
+    const container = document.createElement('div');
+    await renderPage({
+      page: { id: 'orders' },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', scroll: 'body', source: 'orders',
+        columns: [{ field: 'number', label: 'Order' }],
+      }],
+    }, { container });
+
+    expect(container.querySelector('.o-list-view')?.classList.contains('o-list-view-body-scroll')).toBe(true);
+  });
+
   it('owns the page control panel and filters row commands by permission and state', async () => {
     vi.spyOn(client, 'query').mockResolvedValue({
       data: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],

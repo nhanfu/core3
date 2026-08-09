@@ -67,6 +67,7 @@ export type ListViewMode = ListViewDefinition | KanbanViewDefinition | CalendarV
 
 export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
+  scroll?: 'list' | 'body';
   breadcrumbs?: string[];
   createAction?: { id: string; label: string };
   search?: false | { label?: string; placeholder?: string };
@@ -210,7 +211,7 @@ export class ListView extends BaseComponent {
         : this.defs.filter(column => column.optional !== 'hide').map(column => column.id || column.field),
     );
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field));
-    const root = html.take(container).section.className('o-list-view').getContext();
+    const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).getContext();
 
     if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
 
@@ -271,7 +272,7 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const kanbanHost = html.take(content).div.className('o-list-kanban-host').getContext();
       kanban.mount(kanbanHost);
-      if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+      if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
       }
       return;
@@ -295,7 +296,7 @@ export class ListView extends BaseComponent {
       const content = html.take(root).div.className('o-list-content').getContext();
       const calendarHost = html.take(content).div.className('o-list-calendar-host').getContext();
       calendar.mount(calendarHost);
-      if (formEnabled && this.options.formView?.sidePanel && (this.formRow(rows) || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+      if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
       }
       return;
@@ -407,7 +408,7 @@ export class ListView extends BaseComponent {
         }
       }
     }
-    if (formEnabled && this.options.formView?.sidePanel && (rows.length || this.state.formRowId === '__new__') && this.state.formPanelClosed !== true) {
+    if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (rows.length || this.state.formRowId === '__new__')) {
       await this.drawFormPanel(content, rows, false);
     }
   }
@@ -417,14 +418,11 @@ export class ListView extends BaseComponent {
       ? { id: '', __new_record: true }
       : this.formRow(rows) || (rows.length ? rows[0] : undefined);
     if (!selectedRow || !this.options.renderForm) return;
-    const panel = html.take(content).aside.className('o-list-form-side-panel is-loading').getContext();
+    const mode = this.formPanelMode();
+    const panel = html.take(content).aside.className(`o-list-form-side-panel is-${mode} is-loading`).getContext();
     const width = Number(this.state.formPanelWidth);
     if (Number.isFinite(width) && width > 0) panel.style.width = `${Math.min(75, Math.max(25, width))}%`;
     const handle = html.take(panel).div.className('o-list-form-resize-handle').attr('role', 'separator').attr('aria-label', 'Resize form panel').getContext();
-    const collapseButton = html.take(panel).button.className('o-list-form-collapse').attr('type', 'button').getContext();
-    collapseButton.setAttribute('aria-label', 'Close form');
-    collapseButton.setAttribute('title', 'Close form');
-    appendIcon(collapseButton, 'x');
     let dragging = false;
     let draggedWidth: number | undefined;
     const updateWidth = (event: PointerEvent) => {
@@ -450,9 +448,6 @@ export class ListView extends BaseComponent {
       handle.releasePointerCapture?.(event.pointerId);
     });
     const body = html.take(panel).div.className('o-list-form-panel-body').getContext();
-    collapseButton.addEventListener('click', () => {
-      this.setState({ formPanelClosed: true });
-    });
     await this.options.renderForm(selectedRow, body);
     if (panel.isConnected) panel.classList.remove('is-loading');
   }
@@ -463,6 +458,7 @@ export class ListView extends BaseComponent {
       const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).getContext();
       button.addEventListener('click', () => {
         if (this.options.formView?.sidePanel) {
+          this.setFormPanelMode('right');
           this.setState({ formRowId: '__new__', formPanelClosed: false });
           return;
         }
@@ -593,6 +589,24 @@ export class ListView extends BaseComponent {
       if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
     }
 
+    if (this.options.formView?.sidePanel) {
+      const mode = this.formPanelMode();
+      const modeLabels = {
+        right: 'Right FormView panel',
+        hidden: 'Hidden FormView panel',
+      } as const;
+      const modeIcons = { right: 'panel', hidden: 'eye-off' } as const;
+      const toggle = html.take(navigation).button
+        .className(`o-list-form-mode-toggle is-${mode}`)
+        .attr('type', 'button')
+        .attr('aria-label', modeLabels[mode])
+        .attr('title', `${modeLabels[mode]} (click to change)`)
+        .dataAttr('form-panel-mode', mode)
+        .getContext() as HTMLButtonElement;
+      appendIcon(toggle, modeIcons[mode]);
+      toggle.addEventListener('click', () => this.cycleFormPanelMode());
+    }
+
     const views = this.options.views || [];
     if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').getContext();
@@ -686,7 +700,7 @@ export class ListView extends BaseComponent {
 
   private selectView(viewId: string) {
     if (viewId === 'form' && this.options.formView) {
-      this.setState({ formPanelClosed: this.state.formPanelClosed !== true });
+      this.setFormPanelMode(this.formPanelMode() === 'hidden' ? 'right' : 'hidden');
       return;
     }
     const activeView = this.activeView();
@@ -748,13 +762,8 @@ export class ListView extends BaseComponent {
     const openRow = (action: string) => void this.submit(action, { row });
     tr.addEventListener('click', (event: MouseEvent) => {
       if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
-      if (this.options.formView) {
-        if (openClickTimer) clearTimeout(openClickTimer);
-        openClickTimer = setTimeout(() => {
-          openClickTimer = undefined;
-          this.setState({ formRowId: id }, false);
-          if (this.options.formView?.sidePanel) this.redraw();
-        }, 250);
+      if (this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
+        this.selectFormRow(row);
         return;
       }
       if (!this.options.openAction) return;
@@ -800,15 +809,19 @@ export class ListView extends BaseComponent {
           }
         });
       }
-      if (columnIndex === 0 && this.options.formView) {
+      if (columnIndex === 0 && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
         cell.classList.add('o-list-open-cell');
         cell.tabIndex = 0;
         cell.setAttribute('role', 'button');
+        cell.addEventListener('click', (event: MouseEvent) => {
+          if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
+          event.stopPropagation();
+          this.selectFormRow(row);
+        });
         cell.addEventListener('keydown', (event: KeyboardEvent) => {
           if (event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
-          this.setState({ formRowId: id }, false);
-          if (this.options.formView?.sidePanel) this.redraw();
+          this.selectFormRow(row);
         });
       }
       if (column.rowActions?.length) {
@@ -956,7 +969,7 @@ export class ListView extends BaseComponent {
       && Boolean(this.options.formView)
       && this.activeView().id !== 'card'
       && this.state.formViewEnabled !== false
-      && this.state.formPanelClosed !== true;
+      && this.formPanelMode() !== 'hidden';
     if (viewId === 'list') {
       if (hasFormMode && this.options.formView && ['list', 'form'].includes(this.activeView().id)) {
         return this.state.listViewEnabled !== false;
@@ -978,8 +991,23 @@ export class ListView extends BaseComponent {
 
   private selectFormRow(row: ListRow) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
-    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))), formPanelClosed: false }, false);
+    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))), formPanelMode: this.formPanelMode() === 'hidden' ? 'right' : this.formPanelMode(), formPanelClosed: false }, false);
     if (this.options.formView?.sidePanel) this.redraw();
+  }
+
+  private formPanelMode(): 'right' | 'hidden' {
+    const mode = this.state.formPanelMode;
+    if (mode === 'hidden') return 'hidden';
+    return 'right';
+  }
+
+  private setFormPanelMode(mode: 'right' | 'hidden') {
+    this.setState({ formPanelMode: mode, formPanelClosed: mode === 'hidden' });
+  }
+
+  private cycleFormPanelMode() {
+    const next = this.formPanelMode() === 'hidden' ? 'right' : 'hidden';
+    this.setFormPanelMode(next);
   }
 
   private setFilters(filters: Record<string, unknown>) {

@@ -714,6 +714,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     columns,
     {
       variant: 'odoo',
+      scroll: def.scroll === 'body' ? 'body' : 'list',
       breadcrumbs: config.page?.breadcrumb || [config.title].filter(Boolean),
       createAction,
       search: def.search,

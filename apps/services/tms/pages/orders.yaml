@@ -63,6 +63,7 @@ datasources:
 components:
   - type: ListView
     variant: odoo
+    scroll: body
     source: orders
     create_action: add_order
     create_label: New
