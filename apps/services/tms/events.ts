@@ -57,7 +57,7 @@ export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleSer
       async onMessage(socket: Socket, raw: string | ArrayBuffer) {
         let payload: any;
         try { payload = decodeChatFrame(typeof raw === 'string' ? new TextEncoder().encode(raw) : raw); } catch {
-          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Invalid Arrow message' }));
+          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Invalid binary message' }));
           return;
         }
         if (payload?.type !== 'send_message') return;
