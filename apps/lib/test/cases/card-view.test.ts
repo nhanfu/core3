@@ -7,6 +7,7 @@ describe('CardView', () => {
     const submit = vi.fn();
     const view = new CardView('orders-card', {
       rows: [{ id: 'o1', number: 'ORD-001', customer: 'Acme', status: 'Draft' }],
+      groupBy: 'status',
     }, {
       view: {
         id: 'card',
@@ -27,5 +28,38 @@ describe('CardView', () => {
     expect(card.textContent).toContain('Draft');
     card.click();
     expect(submit).toHaveBeenCalledWith('view_order', { row: expect.objectContaining({ id: 'o1' }) });
+  });
+
+  it('does not group from the card view definition without searchbar grouping state', () => {
+    const host = document.createElement('div');
+    const view = new CardView('orders-card', {
+      rows: [{ id: 'o1', number: 'ORD-001', status: 'Draft' }],
+    }, {
+      view: { id: 'card', label: 'Cards', groupBy: 'status', card: { title: 'number' } },
+    });
+    view.mount(host);
+
+    expect(host.querySelector('[data-card-group]')).toBeNull();
+    expect(host.querySelectorAll('.o-card-view-item')).toHaveLength(1);
+  });
+
+  it('uses one localized group when rows contain the group label instead of its code', () => {
+    const host = document.createElement('div');
+    const view = new CardView('orders-card', {
+      rows: [{ id: 'o1', number: 'ORD-001', status_label: 'Nháp' }],
+      groupBy: 'status_label',
+    }, {
+      view: {
+        id: 'card',
+        label: 'Cards',
+        groups: [{ value: 'Draft', label: 'Nháp' }],
+        card: { title: 'number' },
+      },
+    });
+    view.mount(host);
+
+    expect(host.querySelectorAll('[data-card-group]')).toHaveLength(1);
+    expect(host.querySelector('[data-card-group="Draft"]')?.textContent).toContain('Nháp');
+    expect(host.querySelector('[data-card-group="Draft"]')?.textContent).not.toContain('Draft');
   });
 });

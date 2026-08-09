@@ -1,6 +1,6 @@
 import { evalExpr } from '../expr.ts';
 import { hasPermission } from '../meta.ts';
-import { navigate, getPageParams, replaceParams, pushParams } from '../navigate.ts';
+import { navigate, getPageParams, pushParams } from '../navigate.ts';
 import { BaseComponent } from './BaseComponent.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';
@@ -526,21 +526,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     form: view.form,
   }));
   const requestedView = String(pageParams.view || '');
-  const hasCardView = views.some((view: any) => view.id === 'card');
-  const isSmallScreen = typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(max-width: 768px)').matches;
-  const mobileCardRoute = isSmallScreen && hasCardView
-    && (!requestedView || requestedView === 'list' || requestedView === 'form' || !views.some((view: any) => view.id === requestedView));
-  const desktopListRoute = !isSmallScreen && requestedView === 'card'
-    && views.some((view: any) => view.id === 'list');
-  const activeView = mobileCardRoute
-    ? 'card'
-    : desktopListRoute
-      ? 'list'
-      : (views.some((view: any) => view.id === requestedView) ? requestedView : undefined);
-  if (mobileCardRoute && requestedView !== 'card') replaceParams({ ...pageParams, view: 'card' });
-  if (desktopListRoute) replaceParams({ ...pageParams, view: 'list' });
+  // Keep an explicitly selected view stable across viewport sizes. CardView
+  // and ListView are separate view modes, not responsive aliases.
+  const activeView = views.some((view: any) => view.id === requestedView) ? requestedView : undefined;
   const pivotView = activeView === 'pivot' ? views.find((view: any) => view.id === 'pivot') : undefined;
   const pivotQuery = pivotView ? pivotRequestFromUrl(pageParams, pivotView) : undefined;
   if (pivotView && pivotQuery) Object.assign(pivotView, {

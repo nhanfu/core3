@@ -193,6 +193,33 @@ describe('YAML Odoo ListView renderer', () => {
     expect(new URLSearchParams(window.location.search).get('view')).toBe('list');
   });
 
+  it('keeps CardView selected on desktop instead of redirecting to ListView', async () => {
+    vi.spyOn(client, 'query').mockResolvedValue({
+      data: [{ id: 'o1', number: 'ORD-001' }],
+      meta: { total: 1, page: 1, pageSize: 50 },
+    });
+    window.__CORE3_USER__ = { permissions: ['orders.read'] };
+    window.history.replaceState({}, '', '/tms/orders?view=card');
+    const container = document.createElement('div');
+    await renderPage({
+      title: 'Orders',
+      page: { id: 'orders' },
+      datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
+      components: [{
+        type: 'ListView', variant: 'odoo', source: 'orders',
+        views: [
+          { id: 'list', label: 'List' },
+          { id: 'card', label: 'Cards', card: { title: 'number' } },
+        ],
+        columns: [{ field: 'number', label: 'Order' }],
+      }],
+    }, { container });
+
+    expect(container.querySelector('.o-card-view')).not.toBeNull();
+    expect(container.querySelector('.o-list-table')).toBeNull();
+    expect(new URLSearchParams(window.location.search).get('view')).toBe('card');
+  });
+
   it('passes calendar date metadata from YAML to the CalendarView', async () => {
     vi.spyOn(client, 'query').mockResolvedValue({
       data: [{ id: 'o1', order_number: 'ORD-001', order_date: '2026-07-19' }],

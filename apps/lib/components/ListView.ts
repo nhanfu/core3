@@ -132,6 +132,7 @@ export type ListViewOptions = {
 export class ListView extends BaseComponent {
   defs: ListViewColumn[];
   options: ListViewOptions;
+  private dismissCleanup: Array<() => void> = [];
 
   constructor(id: string, state: Record<string, unknown> = {}, defs: ListViewColumn[] = [], options: ListViewOptions = {}) {
     super(id, state);
@@ -140,6 +141,8 @@ export class ListView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
+    for (const cleanup of this.dismissCleanup) cleanup();
+    this.dismissCleanup = [];
     for (const child of this.children) child.dispose();
     this.children = [];
     if (this.options.variant !== 'odoo') {
@@ -236,7 +239,7 @@ export class ListView extends BaseComponent {
     if (activeView.id === 'card') {
       const card = new CardView(
         `card-view-${this.id}`,
-        { rows },
+        { rows, groupBy: typeof this.state.groupBy === 'string' ? this.state.groupBy : undefined },
         {
           view: activeView,
           rowKey: this.options.rowKey,
@@ -514,6 +517,14 @@ export class ListView extends BaseComponent {
     const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', labels.filters).getContext();
     appendIcon(summary, 'chevron-down');
     const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
+    const positionFilterMenu = () => {
+      if (!details.open) return;
+      const bounds = details.getBoundingClientRect();
+      menu.style.top = `${Math.round(bounds.bottom + 4)}px`;
+    };
+    details.addEventListener('toggle', positionFilterMenu);
+    window.addEventListener('resize', positionFilterMenu);
+    this.dismissCleanup.push(() => window.removeEventListener('resize', positionFilterMenu));
 
     for (const filter of this.options.filters || []) {
       const group = html.take(menu).section.className('o-list-filter-group').getContext();
@@ -933,6 +944,11 @@ export class ListView extends BaseComponent {
       const next = event.relatedTarget as Node | null;
       if (next && !details.contains(next)) details.open = false;
     });
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (details.open && !details.contains(event.target as Node)) details.open = false;
+    };
+    document.addEventListener('click', closeOnOutsideClick);
+    this.dismissCleanup.push(() => document.removeEventListener('click', closeOnOutsideClick));
   }
 
   private rowId(row: ListRow, index: number) {

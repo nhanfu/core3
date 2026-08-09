@@ -25,7 +25,7 @@ export type CardViewOptions = {
 export class CardView extends BaseComponent {
   private readonly options: CardViewOptions;
 
-  constructor(id: string, state: { rows?: CardRow[] } = {}, options: CardViewOptions) {
+  constructor(id: string, state: { rows?: CardRow[]; groupBy?: string } = {}, options: CardViewOptions) {
     super(id, state);
     this.options = options;
   }
@@ -33,7 +33,9 @@ export class CardView extends BaseComponent {
   draw(container: HTMLElement) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
     const root = html.take(container).section.className('o-card-view').getContext();
-    const groupBy = this.options.view.groupBy;
+    // Grouping is a searchbar concern. The view definition may provide the
+    // available group metadata, but must not enable grouping by itself.
+    const groupBy = typeof this.state.groupBy === 'string' ? this.state.groupBy : '';
     if (!groupBy) {
       for (const [index, row] of rows.entries()) this.drawCard(root, row, index);
       return;
@@ -41,6 +43,12 @@ export class CardView extends BaseComponent {
 
     const groups = (this.options.view.groups || []).map(group => ({ ...group, rows: [] as CardRow[] }));
     const byValue = new Map(groups.map(group => [String(group.value), group]));
+    // Datasources may expose either a stable code (for example, Draft) or
+    // the localized display value (for example, Nháp) for the selected group
+    // field. Treat both as aliases of the same predefined group.
+    for (const group of groups) {
+      if (group.label) byValue.set(String(group.label), group);
+    }
     for (const row of rows) {
       const value = String(row[groupBy] ?? '');
       let group = byValue.get(value);

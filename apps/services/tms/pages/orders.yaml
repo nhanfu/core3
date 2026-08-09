@@ -50,7 +50,7 @@ datasources:
   - id: order_statuses
     single: false
     permission: orders.read
-    query: "SELECT code AS value, name AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' ORDER BY sort_order, code"
+    query: "SELECT code AS value, CASE code WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt' WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Cancelled' THEN 'Đã hủy' ELSE name END AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' ORDER BY sort_order, code"
   - id: order_customer_lookup
     single: false
     permission: orders.read

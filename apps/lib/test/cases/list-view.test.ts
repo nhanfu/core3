@@ -167,6 +167,16 @@ describe('Odoo ListView', () => {
     expect(container.querySelectorAll('.o-list-group-header')).toHaveLength(0);
   });
 
+  it('closes the filter and grouping menu when clicking outside it', () => {
+    const container = mount(create());
+    const menu = container.querySelector<HTMLDetailsElement>('.o-list-filter-menu')!;
+    menu.querySelector('summary')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(menu.open).toBe(true);
+
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(menu.open).toBe(false);
+  });
+
   it('supports grouping, favorite filters, and bulk actions', async () => {
     const component = create({
       groupBy: [{ field: 'status', label: 'Status' }],
