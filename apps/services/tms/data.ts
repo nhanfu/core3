@@ -1,9 +1,10 @@
 import type { TmsRouteContext } from './api-route-context.ts';
 import { declaredFromStates, findDeclaredMove } from '../../lib/workflow.ts';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response | null> {
   const {
-    req, url, pathname, method, repository, authProvider, SOURCES, PAGES, CATALOGS, WORKFLOWS,
+    req, url, pathname, method, repository, authProvider, SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES,
     UPLOAD_ROOT, reloadPages, authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES,
     NAMED_ACTIONS, TABLES, requirePerm, permissionForEndpoint, permissionForAction,
     recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
@@ -63,7 +64,37 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
     const body = await req.json() as any;
     if (body.operation === 'add_status') {
       if (!workflow.allow_add) return apiError(403, 'Adding statuses is not allowed');
-      return apiError(501, 'Workflow state editing requires the workflow editor');
+      requirePerm(String(workflow.permission));
+      const label = typeof body.label === 'string' ? body.label.trim() : '';
+      if (!label || label.length > 80 || /[\r\n]/.test(label)) return apiError(400, 'A valid status name is required');
+      if (workflow.states.some((state: any) => String(state.id) === label || String(state.label) === label)) {
+        return apiError(409, 'That status already exists');
+      }
+      const stateIds = new Set(workflow.states.map((state: any) => String(state.id)));
+      const fromStates = normalizeWorkflowStates(body.from, stateIds);
+      const toStates = normalizeWorkflowStates(body.to, stateIds);
+      if (!fromStates.length && !toStates.length) return apiError(400, 'Choose at least one state transition');
+      const workflowFile = WORKFLOW_FILES.get(String(source.workflow));
+      if (!workflowFile) return apiError(500, 'Workflow file is not available');
+      const state = { id: label, label, color: 'neutral' };
+      const yaml = readFileSync(workflowFile, 'utf8');
+      const marker = /^(\s*)transitions:\s*$/m;
+      const match = yaml.match(marker);
+      if (!match || match.index === undefined) return apiError(500, 'Workflow file has no transitions section');
+      const line = `    - { id: ${JSON.stringify(label)}, label: ${JSON.stringify(label)}, color: neutral }`;
+      const newline = yaml.includes('\r\n') ? '\r\n' : '\n';
+      const transitions = [
+        ...fromStates.map(from => ({ from, to: label })),
+        ...toStates.map(to => ({ from: label, to })),
+      ].map(({ from, to }, index) => `    - { id: ${JSON.stringify(uniqueTransitionId(workflow, from, to, index))}, from: ${JSON.stringify(from)}, to: ${JSON.stringify(to)}, permission: ${JSON.stringify(workflow.permission)} }`);
+      const nextYaml = `${yaml.slice(0, match.index)}${line}${newline}${yaml.slice(match.index, match.index + match[0].length)}${newline}${transitions.join(newline)}${newline}${yaml.slice(match.index + match[0].length)}`;
+      writeFileSync(workflowFile, nextYaml, 'utf8');
+      workflow.states.push(state);
+      workflow.transitions.push(...[
+        ...fromStates.map(from => ({ id: uniqueTransitionId(workflow, from, label, 0), from, to: label, permission: workflow.permission })),
+        ...toStates.map(to => ({ id: uniqueTransitionId(workflow, label, to, 0), from: label, to, permission: workflow.permission })),
+      ]);
+      return json(state, 201);
     }
     if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
     if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
@@ -91,4 +122,19 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
 
 
   return null;
+}
+
+function normalizeWorkflowStates(value: unknown, knownStates: Set<string>): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((candidate): candidate is string => typeof candidate === 'string' && knownStates.has(candidate)))];
+}
+
+function uniqueTransitionId(workflow: any, from: string, to: string, index: number): string {
+  const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'state';
+  const base = `move_${slug(from)}_to_${slug(to)}`;
+  const used = new Set((workflow.transitions || []).map((transition: any) => String(transition.id)));
+  let id = base;
+  let suffix = index || 1;
+  while (used.has(id)) id = `${base}_${suffix++}`;
+  return id;
 }

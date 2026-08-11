@@ -1,7 +1,7 @@
 import { html } from '../html.ts';
 import { BaseComponent } from './BaseComponent.ts';
 import { appendIcon } from './Icon.ts';
-import { Dialog } from './Dialog.ts';
+import { Dialog, type DialogTagGroup } from './Dialog.ts';
 
 type ListRow = Record<string, unknown>;
 
@@ -22,7 +22,7 @@ export type KanbanViewOptions = {
   doubleClickAction?: string;
   onSelect?: (row: ListRow) => void;
   onMove?: (row: ListRow, status: string) => Promise<void> | void;
-  onAddStatus?: (label: string) => Promise<void> | void;
+  onAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
 };
 
 /** Reusable grouped board used by list-backed pages. */
@@ -148,11 +148,23 @@ export class KanbanView extends BaseComponent {
     const dialog = new Dialog(`kanban-add-status-${Date.now()}`, { open: true }, {
       title: 'Add status',
       input: { label: 'Status name', placeholder: 'Enter a status name' },
+      tagGroups: this.statusTagGroups(),
       confirmLabel: 'Add status',
       cancelLabel: 'Cancel',
-      onConfirm: value => this.options.onAddStatus?.(value),
+      onConfirm: (value, tags) => this.options.onAddStatus?.(value, tags?.from || [], tags?.to || []),
     });
     dialog.mount(host);
+  }
+
+  private statusTagGroups(): DialogTagGroup[] {
+    const options = (this.options.view.groups || []).map(group => ({
+      value: String(group.value),
+      label: String(group.label || group.value),
+    }));
+    return [
+      { id: 'from', label: 'Can move from', options },
+      { id: 'to', label: 'Can move to', options },
+    ];
   }
 
   private rowId(row: ListRow, index: number) {

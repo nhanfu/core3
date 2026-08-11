@@ -190,6 +190,8 @@ export const workflowsMethods = {
     targetStatus: string,
     action: string,
     actor: { id?: string | null; name: string },
+    conditions?: WorkflowConditions,
+    conditionMessage?: string,
   ): Promise<any> {
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
@@ -216,9 +218,9 @@ export const workflowsMethods = {
         await runOnConnection(
           conn,
            `INSERT INTO order_workflow_states(order_id, status, updated_at)
-           VALUES(?,?,?)
+           VALUES(?,?,CURRENT_TIMESTAMP)
            ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
-          [orderId, targetStatus, new Date()],
+          [orderId, targetStatus],
         );
         await runOnConnection(
           conn,

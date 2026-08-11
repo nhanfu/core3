@@ -26,4 +26,21 @@ describe('Dialog', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(secondHost.querySelector('[role="dialog"]')).toBeNull();
   });
+
+  it('returns selected tag values with the confirmation', () => {
+    const host = document.createElement('div');
+    const onConfirm = vi.fn();
+    new Dialog('tag-dialog', { open: true }, {
+      input: { label: 'Status name' },
+      tagGroups: [{ id: 'from', label: 'Can move from', options: [{ value: 'Draft', label: 'Draft' }, { value: 'Approved', label: 'Approved' }] }],
+      onConfirm,
+    }).mount(host);
+
+    const dialog = host.querySelector('[role="dialog"]') as HTMLElement;
+    (dialog.querySelector('input[type="text"]') as HTMLInputElement).value = 'In transit';
+    (dialog.querySelector('input[type="checkbox"]') as HTMLInputElement).checked = true;
+    dialog.querySelector<HTMLButtonElement>('.core3-dialog-confirm')!.click();
+
+    expect(onConfirm).toHaveBeenCalledWith('In transit', { from: ['Draft'] });
+  });
 });

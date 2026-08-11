@@ -97,7 +97,7 @@ export type ListViewOptions = {
   views?: ListViewMode[];
   viewNavigation?: 'icons' | 'tabs';
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
-  onKanbanAddStatus?: (label: string) => Promise<void> | void;
+  onKanbanAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
   emptyState?: { title?: string; description?: string };
   labels?: {
     new?: string;

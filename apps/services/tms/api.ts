@@ -25,6 +25,7 @@ type TmsApiContext = {
   catalogs: Map<string, any>;
   menus: Map<string, any>;
   workflows: Map<string, any>;
+  workflowFiles: Map<string, string>;
   permissions: any;
   uploadRoot: string;
   eventStore: any;
@@ -40,6 +41,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     catalogs: CATALOGS,
     menus: MENUS,
     workflows: WORKFLOWS,
+    workflowFiles: WORKFLOW_FILES,
     permissions: PERMISSIONS,
     uploadRoot: UPLOAD_ROOT,
     eventStore: EVENT_STORE,
@@ -314,7 +316,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     const routeContext: TmsRouteContext = {
       req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE,
-      SOURCES, PAGES, CATALOGS, WORKFLOWS, UPLOAD_ROOT, reloadPages,
+      SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES, UPLOAD_ROOT, reloadPages,
       authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES, NAMED_ACTIONS, TABLES,
       requirePerm, permissionForEndpoint, permissionForAction,
       recordInCurrentBranch, branchForScopedResource, crmEntityInScope,

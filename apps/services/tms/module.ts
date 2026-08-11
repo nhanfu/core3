@@ -73,6 +73,7 @@ export class TmsModule {
       catalogs: new Map(discovered.catalogs),
       menus: new Map(discovered.menus),
       workflows: new Map([...discovered.workflows].map(([id, workflow]) => [id, workflow.config])),
+      workflowFiles: new Map([...discovered.workflows].map(([id, workflow]) => [id, workflow.file])),
     };
     const reloadPages = () => {
       const next = discoverPages(context.appsRoot);
@@ -82,6 +83,7 @@ export class TmsModule {
         catalogs: next.catalogs,
         menus: next.menus,
         workflows: new Map([...next.workflows].map(([id, workflow]) => [id, workflow.config])),
+        workflowFiles: new Map([...next.workflows].map(([id, workflow]) => [id, workflow.file])),
       };
       for (const key of Object.keys(pageMaps) as Array<keyof typeof pageMaps>) {
         const target = pageMaps[key];
@@ -97,6 +99,7 @@ export class TmsModule {
       catalogs: pageMaps.catalogs,
       menus: pageMaps.menus,
       workflows: pageMaps.workflows,
+      workflowFiles: pageMaps.workflowFiles,
       permissions: discovered.permissions.get('tms')?.config || {},
       uploadRoot,
       eventStore: this.eventStore,

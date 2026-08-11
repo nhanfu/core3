@@ -6,13 +6,21 @@ export type DialogInput = {
   value?: string;
 };
 
+export type DialogTagGroup = {
+  id: string;
+  label: string;
+  options: Array<{ value: string; label: string }>;
+  values?: string[];
+};
+
 export type DialogOptions = {
   title?: string;
   message?: string;
   input?: DialogInput;
+  tagGroups?: DialogTagGroup[];
   confirmLabel?: string;
   cancelLabel?: string;
-  onConfirm?: (value: string) => void | Promise<void>;
+  onConfirm?: (value: string, tags?: Record<string, string[]>) => void | Promise<void>;
   onCancel?: () => void;
 };
 
@@ -67,6 +75,32 @@ export class Dialog extends BaseComponent {
       dialog.appendChild(field);
     }
 
+    const tagInputs = new Map<string, HTMLInputElement[]>();
+    for (const group of this.options.tagGroups || []) {
+      const field = document.createElement('fieldset');
+      field.className = 'core3-dialog-tags';
+      const legend = document.createElement('legend');
+      legend.textContent = group.label;
+      field.appendChild(legend);
+      const choices = document.createElement('div');
+      choices.className = 'core3-dialog-tag-choices';
+      const inputs: HTMLInputElement[] = [];
+      for (const option of group.options) {
+        const label = document.createElement('label');
+        label.className = 'core3-dialog-tag';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = option.value;
+        checkbox.checked = group.values?.includes(option.value) || false;
+        inputs.push(checkbox);
+        label.append(checkbox, document.createTextNode(option.label));
+        choices.appendChild(label);
+      }
+      tagInputs.set(group.id, inputs);
+      field.appendChild(choices);
+      dialog.appendChild(field);
+    }
+
     const footer = document.createElement('div');
     footer.className = 'core3-dialog-footer';
     const close = (notifyCancel = true) => {
@@ -96,7 +130,11 @@ export class Dialog extends BaseComponent {
         return;
       }
       close(false);
-      void this.options.onConfirm?.(value);
+      const tags = tagInputs.size
+        ? Object.fromEntries([...tagInputs].map(([id, inputs]) => [id, inputs.filter(input => input.checked).map(input => input.value)]))
+        : undefined;
+      if (tags) void this.options.onConfirm?.(value, tags);
+      else void this.options.onConfirm?.(value);
     });
     footer.appendChild(confirm);
     dialog.appendChild(footer);
