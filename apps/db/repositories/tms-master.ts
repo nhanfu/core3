@@ -11,40 +11,6 @@ import {
 } from './tms-shared.ts';
 
 export const masterMethods = {
-  setOrderWorkflowStatus: async function(this: any,orderId: string, status: string, actor: { id?: string | null; name: string }) {
-    const [order] = await this.query('SELECT id FROM orders WHERE id = ?', [orderId]);
-    if (!order) throw { status: 404, message: 'Order not found' };
-    await this.run(
-      `INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(?,?,CURRENT_TIMESTAMP)
-       ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
-      [orderId, status],
-    );
-    await this.recordActivity({
-      actorId: actor.id,
-      actorName: actor.name,
-      action: 'kanban_status',
-      resource: 'orders',
-      resourceId: orderId,
-      detail: `Moved order to ${status}`,
-    });
-    return { id: orderId, status };
-  },
-
-  addOrderWorkflowStatus: async function(this: any,label: string, actor: { id?: string | null; name: string }) {
-    const status = label.trim();
-    if (!status || status.length > 80) throw { status: 400, message: 'Status name must be 1-80 characters' };
-    const [existing] = await this.query("SELECT id FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND lower(code) = lower(?)", [status]);
-    if (existing) throw { status: 409, message: 'Status already exists' };
-    const next = await this.query("SELECT COALESCE(MAX(sort_order), 0) + 10 AS value FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%'");
-    const id = crypto.randomUUID();
-    await this.run(
-      "INSERT INTO system_configs(id, kind, code, name, config_value, status, sort_order) VALUES(?, 'trip_status', ?, ?, 'order_status:neutral', 'Active', ?)",
-      [id, status, status, Number(next[0]?.value || 10)],
-    );
-    await this.recordActivity({ actorId: actor.id, actorName: actor.name, action: 'create', resource: 'order_status', resourceId: id, detail: `Created status ${status}` });
-    return { id, value: status, label: status, color: 'neutral' };
-  },
-
   runStatements: async function(this: any,sqlText: string): Promise<void> {
     for (const stmt of splitSQL(sqlText)) {
       await this.run(stmt);
@@ -287,4 +253,3 @@ export const masterMethods = {
     });
   },
 };
-

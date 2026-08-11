@@ -302,6 +302,7 @@ actions:
     permission: orders.write
     action: orders.submit_for_approval
     handler: order_transition
+    workflow: orders
     operation: submit_for_approval
     confirm: 'Submit order {{row.order_number}}?'
     refresh: [order_detail, order_detail_lines, order_detail_timeline]
@@ -310,6 +311,7 @@ actions:
     permission: orders.approve
     action: orders.approve
     handler: order_transition
+    workflow: orders
     operation: approve
     confirm: 'Approve order {{row.order_number}}?'
     refresh: [order_detail, order_detail_lines, order_detail_timeline]
@@ -318,6 +320,7 @@ actions:
     permission: orders.approve
     action: orders.reject
     handler: order_transition
+    workflow: orders
     operation: reject
     confirm: 'Reject and return order {{row.order_number}} to draft?'
     refresh: [order_detail, order_detail_lines, order_detail_timeline]
@@ -326,6 +329,7 @@ actions:
     permission: orders.write
     action: orders.cancel
     handler: order_transition
+    workflow: orders
     operation: cancel
     confirm: 'Cancel order {{row.order_number}}?'
     refresh: [order_detail, order_detail_lines, order_detail_timeline]

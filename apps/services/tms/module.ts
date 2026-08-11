@@ -10,7 +10,6 @@ import { EventMediatorClient } from '../../lib/server/event-mediator.ts';
 
 export { DuckDbRepository } from '../../db/repositories/tms.ts';
 export { xlsxToCsv } from './services/xlsx-import.ts';
-export { orderWorkflow } from './services/order-workflow.ts';
 export { financialWorkflow } from './services/financial-workflow.ts';
 export { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 export class TmsModule {
@@ -73,6 +72,7 @@ export class TmsModule {
       datasources: new Map(discovered.datasources),
       catalogs: new Map(discovered.catalogs),
       menus: new Map(discovered.menus),
+      workflows: new Map([...discovered.workflows].map(([id, workflow]) => [id, workflow.config])),
     };
     const reloadPages = () => {
       const next = discoverPages(context.appsRoot);
@@ -81,6 +81,7 @@ export class TmsModule {
         datasources: next.datasources,
         catalogs: next.catalogs,
         menus: next.menus,
+        workflows: new Map([...next.workflows].map(([id, workflow]) => [id, workflow.config])),
       };
       for (const key of Object.keys(pageMaps) as Array<keyof typeof pageMaps>) {
         const target = pageMaps[key];
@@ -95,6 +96,7 @@ export class TmsModule {
       pages: pageMaps.pages,
       catalogs: pageMaps.catalogs,
       menus: pageMaps.menus,
+      workflows: pageMaps.workflows,
       permissions: discovered.permissions.get('tms')?.config || {},
       uploadRoot,
       eventStore: this.eventStore,

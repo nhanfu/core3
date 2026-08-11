@@ -1,3 +1,5 @@
+import { validateWorkflowDefinition, WorkflowSchemaError, type WorkflowDefinition } from './workflow-schema.ts';
+
 export type PageAuthDefinition = {
   require?: string[];
 };
@@ -16,6 +18,8 @@ export type DatasourceDefinition = {
   query?: string;
   single?: boolean;
   data?: unknown;
+  workflow?: string | WorkflowDefinition;
+  workflow_states?: string;
   meta?: Record<string, unknown>;
 };
 
@@ -80,7 +84,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'pivot']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -127,7 +131,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
-  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'operation', 'domain', 'kind', 'mutation']),
+  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'workflow', 'operation', 'domain', 'kind', 'mutation']),
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'redirect_param', 'permission']),
@@ -243,7 +247,7 @@ export function validatePageDefinition(
 
   const datasourceIds = new Set<string>();
   const actionIds = new Set<string>();
-  validateDatasources(input.datasources, datasourceIds, issues);
+  validateDatasources(input.datasources, datasourceIds, options, issues);
   validateActions(input.actions, actionIds, datasourceIds, options, issues);
   validateToolbar(input.toolbar, actionIds, issues);
   validateFilters(input.filters, datasourceIds, options, issues);
@@ -253,7 +257,7 @@ export function validatePageDefinition(
   return input as PageConfig;
 }
 
-function validateDatasources(value: unknown, ids: Set<string>, issues: string[]) {
+function validateDatasources(value: unknown, ids: Set<string>, options: PageValidationOptions, issues: string[]) {
   if (value === undefined) return;
   if (!Array.isArray(value)) {
     issues.push('datasources must be an array');
@@ -266,9 +270,8 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
     rejectUnknownKeys(source, DATASOURCE_KEYS, path, issues);
     requireString(source.id, `${path}.id`, issues);
     requireString(source.permission, `${path}.permission`, issues);
-    if (source.query === undefined && source.data === undefined) {
-      issues.push(`${path} must define query or data`);
-    }
+    const sourceKinds = [source.query, source.data, source.workflow_states].filter(value => value !== undefined).length;
+    if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, or workflow_states`);
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);
@@ -283,16 +286,16 @@ function validateDatasources(value: unknown, ids: Set<string>, issues: string[])
       }
     }
     if (source.workflow !== undefined) {
-      requireRecord(source.workflow, `${path}.workflow`, issues);
-      if (isRecord(source.workflow)) {
-        rejectUnknownKeys(source.workflow, new Set(['handler', 'permission', 'status_source', 'allow_add', 'transitions']), `${path}.workflow`, issues);
-        requireString(source.workflow.handler, `${path}.workflow.handler`, issues);
-        requireString(source.workflow.permission, `${path}.workflow.permission`, issues);
-        if (source.workflow.status_source !== undefined) requireString(source.workflow.status_source, `${path}.workflow.status_source`, issues);
-        if (source.workflow.allow_add !== undefined && typeof source.workflow.allow_add !== 'boolean') issues.push(`${path}.workflow.allow_add must be a boolean`);
-        if (!Array.isArray(source.workflow.transitions) || !source.workflow.transitions.length) issues.push(`${path}.workflow.transitions must be a non-empty array`);
-      }
+      if (options.allowExternalSources && isRecord(source.workflow)) {
+        try {
+          validateWorkflowDefinition({ workflow: source.workflow });
+        } catch (error) {
+          if (error instanceof WorkflowSchemaError) issues.push(...error.issues.map(issue => `${path}.${issue}`));
+          else throw error;
+        }
+      } else requireString(source.workflow, `${path}.workflow`, issues);
     }
+    if (source.workflow_states !== undefined) requireString(source.workflow_states, `${path}.workflow_states`, issues);
     if (typeof source.id === 'string') addUnique(ids, source.id, `${path}.id`, 'datasource', issues);
   });
 }
@@ -354,6 +357,7 @@ function validateActions(
       }
     } else if (type === 'server') {
       requireString(action.action, `${path}.action`, issues);
+      if (action.handler === 'order_transition') requireString(action.workflow, `${path}.workflow`, issues);
       if (action.params !== undefined && !isRecord(action.params)) {
         issues.push(`${path}.params must be an object`);
       }

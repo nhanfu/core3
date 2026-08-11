@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { StateWorkflow, WorkflowTransitionError } from '../../workflow.ts';
+import {
+  declaredFromStates,
+  findDeclaredMove,
+  findDeclaredTransition,
+  StateWorkflow,
+  WorkflowTransitionError,
+  workflowConditionsMatch,
+} from '../../workflow.ts';
 
 type OrderState = 'Draft' | 'Pending Approval' | 'Approved' | 'Cancelled';
 type OrderAction = 'submit_for_approval' | 'approve' | 'reject' | 'cancel';
@@ -38,5 +45,53 @@ describe('StateWorkflow', () => {
   it('keeps target states in the server-owned definition', () => {
     expect(Object.keys(workflow.get('approve'))).toEqual(['from', 'to']);
     expect(workflow.get('approve').to).toBe('Approved');
+  });
+});
+
+describe('declared workflow transitions', () => {
+  const transitions = [
+    { id: 'submit_for_approval', from: 'Draft', to: 'Pending Approval', permission: 'orders.write' },
+    { id: 'approve', from: 'Pending Approval', to: 'Approved', permission: 'orders.approve' },
+    { id: 'reject', from: 'Pending Approval', to: 'Draft', permission: 'orders.approve' },
+    { id: 'cancel', from: ['Draft', 'Pending Approval', 'Approved'], to: 'Cancelled', permission: 'orders.write' },
+  ];
+
+  it('resolves named actions and Kanban moves from the same declarations', () => {
+    const approval = findDeclaredTransition(transitions, 'approve');
+    expect(approval).toMatchObject({ from: 'Pending Approval', to: 'Approved', permission: 'orders.approve' });
+    expect(findDeclaredMove(transitions, 'Pending Approval', 'Approved')).toBe(approval);
+    expect(declaredFromStates(approval!)).toEqual(['Pending Approval']);
+  });
+
+  it('rejects undeclared direct moves', () => {
+    expect(findDeclaredMove(transitions, 'Draft', 'Approved')).toBeUndefined();
+    expect(findDeclaredMove(transitions, 'Cancelled', 'Draft')).toBeUndefined();
+  });
+
+  it('supports transitions with multiple source states', () => {
+    expect(findDeclaredMove(transitions, 'Approved', 'Cancelled')?.id).toBe('cancel');
+  });
+});
+
+describe('workflow conditions', () => {
+  const order = { customer_name: 'Acme', total_amount: 100, shipment_type: 'FTL' };
+
+  it('evaluates structured all and any guards', () => {
+    expect(workflowConditionsMatch(order, {
+      all: [
+        { field: 'customer_name', operator: 'present' },
+        { field: 'total_amount', operator: 'greater_than', value: 0 },
+      ],
+      any: [
+        { field: 'shipment_type', operator: 'equals', value: 'LTL' },
+        { field: 'shipment_type', operator: 'equals', value: 'FTL' },
+      ],
+    })).toBe(true);
+  });
+
+  it('rejects records that do not satisfy a guard', () => {
+    expect(workflowConditionsMatch(order, {
+      all: [{ field: 'total_amount', operator: 'less_than_or_equal', value: 0 }],
+    })).toBe(false);
   });
 });

@@ -1,8 +1,9 @@
 import type { TmsRouteContext } from './api-route-context.ts';
+import { declaredFromStates, findDeclaredMove } from '../../lib/workflow.ts';
 
 export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response | null> {
   const {
-    req, url, pathname, method, repository, authProvider, SOURCES, PAGES, CATALOGS,
+    req, url, pathname, method, repository, authProvider, SOURCES, PAGES, CATALOGS, WORKFLOWS,
     UPLOAD_ROOT, reloadPages, authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES,
     NAMED_ACTIONS, TABLES, requirePerm, permissionForEndpoint, permissionForAction,
     recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
@@ -29,6 +30,11 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
     const src = SOURCES.get(vm.sourceId);
     if (!src) return apiError(404, `Unknown source: ${vm.sourceId}`);
     if (src.permission) requirePerm(src.permission);
+    if (typeof src.workflow_states === 'string') {
+      const workflow = WORKFLOWS.get(src.workflow_states);
+      if (!workflow) return apiError(500, `Unknown workflow: ${src.workflow_states}`);
+      return json({ data: workflow.states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} });
+    }
     const result = await repository.querySource(
       src,
       {
@@ -52,23 +58,35 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
   const workflowMatch = pathname.match(/^\/api\/datasources\/([A-Za-z0-9_-]+)\/workflow$/);
   if (workflowMatch && method === 'POST') {
     const source = SOURCES.get(workflowMatch[1]);
-    const workflow = source?.workflow;
+    const workflow = typeof source?.workflow === 'string' ? WORKFLOWS.get(source.workflow) : undefined;
     if (!workflow || workflow.handler !== 'order_status') return apiError(404, 'Unknown datasource workflow');
-    requirePerm(String(workflow.permission));
     const body = await req.json() as any;
     if (body.operation === 'add_status') {
       if (!workflow.allow_add) return apiError(403, 'Adding statuses is not allowed');
-      return json(await repository.addOrderWorkflowStatus(String(body.label || ''), activityActor));
+      return apiError(501, 'Workflow state editing requires the workflow editor');
     }
     if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
     if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
-    const [status] = await repository.query("SELECT code FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' AND code = ?", [body.status]);
-    if (!status) return apiError(400, 'Unknown order status');
-    const [current] = await repository.query('SELECT status FROM order_workflow_states WHERE order_id = ?', [body.id]);
-    const transition = (workflow.transitions || []).find((rule: any) => (rule.from === '*' || rule.from === current?.status) && (rule.to === '*' || rule.to === body.status));
+    if (!workflow.states.some((state: any) => state.id === body.status)) return apiError(400, 'Unknown order status');
+    const [current] = await repository.query(
+      `SELECT COALESCE(s.status, o.status) AS status
+       FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
+       WHERE o.id = ?`,
+      [body.id],
+    );
+    if (!current) return apiError(404, 'Order not found');
+    const transition = findDeclaredMove(workflow.transitions || [], String(current.status), body.status);
     if (!transition) return apiError(409, 'This status transition is not allowed');
     requirePerm(String(transition.permission || workflow.permission));
-    return json(await repository.setOrderWorkflowStatus(body.id, body.status, activityActor));
+    return json(await repository.transitionOrder(
+      body.id,
+      declaredFromStates(transition),
+      transition.to,
+      `orders.${transition.id}`,
+      activityActor,
+      transition.conditions,
+      transition.condition_message,
+    ));
   }
 
 

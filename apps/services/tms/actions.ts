@@ -1,12 +1,12 @@
-import { orderWorkflow } from './services/order-workflow.ts';
 import { financialWorkflow } from './services/financial-workflow.ts';
 import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
+import { declaredFromStates, findDeclaredTransition } from '../../lib/workflow.ts';
 import type { TmsRouteContext } from './api-route-context.ts';
 import type { EventStore } from '../../lib/server/event-store.ts';
 
 export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response | null> {
   const {
-    req, url, pathname, method, repository, authProvider, SOURCES, PAGES, CATALOGS,
+    req, url, pathname, method, repository, authProvider, SOURCES, PAGES, CATALOGS, WORKFLOWS,
     UPLOAD_ROOT, reloadPages, authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES,
     NAMED_ACTIONS, TABLES, requirePerm, permissionForEndpoint, permissionForAction,
     recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
@@ -264,13 +264,18 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
 
     if (handler === 'order_transition') {
       if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const transition = orderWorkflow.get(actionDefinition.operation);
+      const workflow = WORKFLOWS.get(String(actionDefinition.workflow || ''));
+      const transition = findDeclaredTransition(workflow?.transitions || [], String(actionDefinition.operation || ''));
+      if (!transition) return apiError(500, 'Order workflow transition is not configured');
+      requirePerm(transition.permission);
       const order = await repository.transitionOrder(
         body.id,
-        transition.from,
+        declaredFromStates(transition),
         transition.to,
         actionName,
         activityActor,
+        transition.conditions,
+        transition.condition_message,
       );
       return json(order);
     }

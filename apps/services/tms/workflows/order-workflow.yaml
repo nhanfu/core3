@@ -1,0 +1,21 @@
+workflow:
+  id: orders
+  entity: orders
+  handler: order_status
+  initial: Draft
+  permission: orders.write
+  mutable: true
+  status_source: order_statuses
+  # State creation will be enabled with the workflow editor. The existing
+  # label-only Kanban dialog cannot define transitions or their conditions.
+  allow_add: true
+  states:
+    - { id: Draft, label: Nháp, color: neutral }
+    - { id: Pending Approval, label: Đang duyệt, color: amber }
+    - { id: Approved, label: Đã duyệt, color: green }
+    - { id: Cancelled, label: Đã hủy, color: red, terminal: true }
+  transitions:
+    - { id: submit_for_approval, from: Draft, to: Pending Approval, permission: orders.write }
+    - { id: approve, from: Pending Approval, to: Approved, permission: orders.approve }
+    - { id: reject, from: Pending Approval, to: Draft, permission: orders.approve }
+    - { id: cancel, from: [Draft, Pending Approval, Approved], to: Cancelled, permission: orders.write }

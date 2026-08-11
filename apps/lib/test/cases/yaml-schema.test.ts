@@ -286,6 +286,46 @@ describe('YAML page schema', () => {
     expect(page.actions.at(-1)).not.toHaveProperty('body');
   });
 
+  it('validates external workflow references on datasources and actions', () => {
+    const page = validPage() as any;
+    page.datasources[0].workflow = 'orders';
+    page.datasources.push({ id: 'order_statuses', permission: 'orders.read', workflow_states: 'orders' });
+    page.actions.push({
+      id: 'approve_order',
+      type: 'server',
+      permission: 'orders.approve',
+      action: 'orders.approve',
+      handler: 'order_transition',
+      workflow: 'orders',
+      operation: 'approve',
+      refresh: ['orders'],
+    });
+
+    expect(() => validatePageDefinition(page)).not.toThrow();
+
+    page.datasources[0].workflow = {
+      id: 'orders',
+      entity: 'orders',
+      handler: 'order_status',
+      initial: 'Draft',
+      permission: 'orders.write',
+      states: [
+        { id: 'Draft', label: 'Draft' },
+        { id: 'Approved', label: 'Approved' },
+      ],
+      transitions: [{ id: 'approve', from: 'Draft', to: 'Approved', permission: 'orders.approve' }],
+    };
+    expect(() => validatePageDefinition(page, { allowExternalSources: true })).not.toThrow();
+    expect(() => validatePageDefinition(page)).toThrow(/datasources\[0\]\.workflow must be a non-empty string/);
+
+    delete page.actions.at(-1).workflow;
+    expect(() => validatePageDefinition(page)).toThrow(/actions\[2\]\.workflow must be a non-empty string/);
+
+    page.actions.at(-1).workflow = 'orders';
+    page.datasources[0].workflow = {};
+    expect(() => validatePageDefinition(page)).toThrow(/datasources\[0\]\.workflow must be a non-empty string/);
+  });
+
   it('validates chat workspace source and action references', () => {
     const page = validPage() as any;
     page.datasources.push({

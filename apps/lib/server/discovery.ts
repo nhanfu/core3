@@ -1,6 +1,7 @@
 import { join, relative, sep } from 'node:path';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { validatePageDefinition } from '../yaml/schema.ts';
+import { validateWorkflowDefinition, type WorkflowDefinition } from '../yaml/workflow-schema.ts';
 import { discoverModuleRoots } from './module.ts';
 
 export type DiscoveredPage = {
@@ -13,6 +14,7 @@ export type DiscoveredPage = {
 export type TranslationCatalog = Record<string, Record<string, string>>;
 export type ModuleMenu = { module: string; config: any };
 export type PermissionDefinition = { module: string; file: string; config: any };
+export type DiscoveredWorkflow = { id: string; module: string; file: string; config: WorkflowDefinition };
 export type PageRoute = { path: string; page: string; module: string };
 
 function routeItems(value: any, result: any[] = []) {
@@ -118,6 +120,7 @@ export function discoverPages(appsRoot: string) {
   const catalogs = new Map<string, TranslationCatalog>();
   const menus = new Map<string, ModuleMenu>();
   const permissions = new Map<string, PermissionDefinition>();
+  const workflows = new Map<string, DiscoveredWorkflow>();
 
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
     const moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
@@ -129,6 +132,19 @@ export function discoverPages(appsRoot: string) {
         config: parseYaml(file) || {},
       });
     } catch {}
+    const workflowsRoot = join(moduleRoot, 'workflows');
+    try {
+      if (statSync(workflowsRoot).isDirectory()) {
+        for (const workflowFile of walk(workflowsRoot).filter(name => /-workflow\.ya?ml$/i.test(name)).sort()) {
+          const config = validateWorkflowDefinition(parseYaml(workflowFile));
+          assertUnique(workflows, config.id, workflowFile, 'workflow id');
+          workflows.set(config.id, { id: config.id, module: moduleName, file: workflowFile, config });
+        }
+      }
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') continue;
+      throw error;
+    }
   }
 
   for (const pagesRoot of pageRoots) {
@@ -159,7 +175,7 @@ export function discoverPages(appsRoot: string) {
       }
     }
   }
-  return { pages, datasources, catalogs, menus, permissions };
+  return { pages, datasources, catalogs, menus, permissions, workflows };
 }
 
 export function translationMap(catalogs: Map<string, TranslationCatalog>, lang: string, page = '*') {

@@ -9,6 +9,7 @@ import {
   runOnConnection,
   splitSQL,
 } from './tms-shared.ts';
+import { workflowConditionsMatch, type WorkflowConditions } from '../../lib/workflow.ts';
 
 export const workflowsMethods = {
   mutateApprovalFlowStep: async function(this: any,
@@ -18,6 +19,8 @@ export const workflowsMethods = {
     values: Record<string, unknown>,
     action: string,
     actor: { id?: string | null; name: string },
+    conditions?: WorkflowConditions,
+    conditionMessage?: string,
   ): Promise<any> {
     return this.withConnection(async (conn) => {
       await runOnConnection(conn, 'BEGIN TRANSACTION');
@@ -207,6 +210,9 @@ export const workflowsMethods = {
             message: `Action "${action}" is not allowed while order is "${order.workflow_status}"`,
           };
         }
+        if (!workflowConditionsMatch(order, conditions)) {
+          throw { status: 409, message: conditionMessage || `Conditions for action "${action}" are not satisfied` };
+        }
         await runOnConnection(
           conn,
            `INSERT INTO order_workflow_states(order_id, status, updated_at)
@@ -372,4 +378,3 @@ export const workflowsMethods = {
     });
   },
 };
-

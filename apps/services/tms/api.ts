@@ -24,6 +24,7 @@ type TmsApiContext = {
   pages: Map<string, any>;
   catalogs: Map<string, any>;
   menus: Map<string, any>;
+  workflows: Map<string, any>;
   permissions: any;
   uploadRoot: string;
   eventStore: any;
@@ -38,6 +39,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     pages: PAGES,
     catalogs: CATALOGS,
     menus: MENUS,
+    workflows: WORKFLOWS,
     permissions: PERMISSIONS,
     uploadRoot: UPLOAD_ROOT,
     eventStore: EVENT_STORE,
@@ -135,16 +137,21 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (source.permission && !authProvider.hasPermission(user, source.permission)) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
       }
-      const { query, ...publicSource } = source;
-      const result = await repository.querySource(
-        source,
-        serverParams,
-        0,
-        pageSizes.get(source.id) || 25,
-        undefined,
-        pageSizes.has(source.id) ? listSort : undefined,
-      );
-      return { ...publicSource, data: result.data, meta: result.meta };
+      const { query, workflow_states, ...publicSource } = source;
+      const workflow = typeof source.workflow === 'string' ? WORKFLOWS.get(source.workflow) : undefined;
+      const stateWorkflow = typeof workflow_states === 'string' ? WORKFLOWS.get(workflow_states) : undefined;
+      if (workflow_states && !stateWorkflow) throw { status: 500, message: `Unknown workflow: ${workflow_states}` };
+      const result = stateWorkflow
+        ? { data: stateWorkflow.states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} }
+        : await repository.querySource(
+            source,
+            serverParams,
+            0,
+            pageSizes.get(source.id) || 25,
+            undefined,
+            pageSizes.has(source.id) ? listSort : undefined,
+          );
+      return { ...publicSource, ...(workflow ? { workflow } : {}), data: result.data, meta: result.meta };
     }));
     const lang = requestLanguage(url, user.preferred_lang || 'en');
     return {
@@ -167,6 +174,18 @@ export function createTmsApi(ctx: TmsApiContext) {
   for (const [name, permission] of Object.entries(ENDPOINT_PERMISSIONS)) {
     if (!DECLARED_PERMISSIONS.has(permission)) throw new Error(`Endpoint ${name} uses undeclared permission: ${permission}`);
   }
+  for (const [workflowId, workflow] of WORKFLOWS) {
+    if (!DECLARED_PERMISSIONS.has(workflow.permission)) throw new Error(`Workflow ${workflowId} uses undeclared permission: ${workflow.permission}`);
+    for (const transition of workflow.transitions || []) {
+      if (!DECLARED_PERMISSIONS.has(transition.permission)) throw new Error(`Workflow ${workflowId} transition ${transition.id} uses undeclared permission: ${transition.permission}`);
+    }
+    if (workflow.status_source && !SOURCES.has(workflow.status_source)) throw new Error(`Workflow ${workflowId} references unknown status datasource: ${workflow.status_source}`);
+  }
+  for (const [sourceId, source] of SOURCES) {
+    for (const workflowId of [source.workflow, source.workflow_states]) {
+      if (typeof workflowId === 'string' && !WORKFLOWS.has(workflowId)) throw new Error(`Datasource ${sourceId} references unknown workflow: ${workflowId}`);
+    }
+  }
   const permissionForEndpoint = (endpoint: string) => {
     const permission = ENDPOINT_PERMISSIONS[endpoint];
     if (!permission) throw new Error(`Missing YAML permission for endpoint: ${endpoint}`);
@@ -180,13 +199,20 @@ export function createTmsApi(ctx: TmsApiContext) {
       if (!action.handler) throw new Error(`Page ${pageId} named action ${action.action} is missing handler metadata`);
       if (!action.permission || !DECLARED_PERMISSIONS.has(action.permission)) throw new Error(`Page ${pageId} action ${action.action} uses undeclared permission: ${action.permission}`);
       const existing = NAMED_ACTIONS[action.action];
-      if (existing && JSON.stringify({ handler: existing.handler, operation: existing.operation, domain: existing.domain, kind: existing.kind }) !== JSON.stringify({ handler: action.handler, operation: action.operation, domain: action.domain, kind: action.kind })) {
+      if (existing && JSON.stringify({ handler: existing.handler, workflow: existing.workflow, operation: existing.operation, domain: existing.domain, kind: existing.kind }) !== JSON.stringify({ handler: action.handler, workflow: action.workflow, operation: action.operation, domain: action.domain, kind: action.kind })) {
         throw new Error(`Conflicting declarations for named action: ${action.action}`);
       }
       NAMED_ACTIONS[action.action] = action;
     }
   }
   const REGISTERED_NAMED_ACTIONS = new Set(Object.keys(NAMED_ACTIONS));
+  for (const action of Object.values(NAMED_ACTIONS) as any[]) {
+    if (action.handler !== 'order_transition') continue;
+    const workflow = WORKFLOWS.get(String(action.workflow || ''));
+    const transition = workflow?.transitions?.find((candidate: any) => candidate.id === action.operation);
+    if (!transition) throw new Error(`Named action ${action.action} references an unknown workflow transition`);
+    if (transition.permission !== action.permission) throw new Error(`Named action ${action.action} permission does not match its workflow transition`);
+  }
   const CHAT_SEND_ACTION = Object.values(NAMED_ACTIONS).find((action: any) => action.handler === 'chat' && action.operation === 'send_message');
   const permissionForAction = (action: string) => {
     const permission = NAMED_ACTIONS[action]?.permission;
@@ -288,7 +314,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
     const routeContext: TmsRouteContext = {
       req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE,
-      SOURCES, PAGES, CATALOGS, UPLOAD_ROOT, reloadPages,
+      SOURCES, PAGES, CATALOGS, WORKFLOWS, UPLOAD_ROOT, reloadPages,
       authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES, NAMED_ACTIONS, TABLES,
       requirePerm, permissionForEndpoint, permissionForAction,
       recordInCurrentBranch, branchForScopedResource, crmEntityInScope,

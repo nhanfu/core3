@@ -52,13 +52,14 @@ export class HybridDuckDbDatabase {
   private readonly partitions = new Map<string, PartitionState>();
 
   private constructor(
-    private readonly disk: any,
+    private disk: any,
     private memory: any,
     private readonly path: string,
   ) {}
 
   static async open(path: string): Promise<HybridDuckDbDatabase> {
-    if (path !== ':memory:') await mkdir(dirname(path), { recursive: true });
+    const parent = dirname(path);
+    if (path !== ':memory:' && parent !== '.') await mkdir(parent, { recursive: true });
     const disk = await DuckDBInstance.create(path);
     const memory = await DuckDBInstance.create(':memory:');
     const database = new HybridDuckDbDatabase(disk, memory, path);
@@ -115,15 +116,28 @@ export class HybridDuckDbDatabase {
 
   private async copySchema(): Promise<void> {
     const diskConnection = await this.disk.connect();
-    const memoryConnection = await this.memory.connect();
+    let tables: any[] = [];
+    let views: any[] = [];
     try {
-      const tables = (await diskConnection.runAndReadAll(
+      tables = (await diskConnection.runAndReadAll(
         "SELECT table_name, sql FROM duckdb_tables() WHERE schema_name = 'main' ORDER BY table_name",
       )).getRowObjectsJS();
+      views = (await diskConnection.runAndReadAll(
+        "SELECT view_name, sql FROM duckdb_views() WHERE schema_name = 'main'",
+      )).getRowObjectsJS();
+      if (tables.length && this.path !== ':memory:') await diskConnection.run('CHECKPOINT');
+    } finally {
+      diskConnection.closeSync();
+    }
+
+    if (!tables.length && !views.length) return;
+    if (this.path !== ':memory:') this.disk.closeSync();
+    const memoryConnection = await this.memory.connect();
+    try {
       if (tables.length && this.path !== ':memory:') {
-        // Flush migration WAL pages before the read-only cache snapshot opens
-        // the same database file through ATTACH.
-        await diskConnection.run('CHECKPOINT');
+        // DuckDB on Windows cannot attach a file while another instance in
+        // this process owns its write lock. Close and reopen the durable
+        // instance around the read-only cache snapshot.
         await memoryConnection.run(`ATTACH ${quoteLiteral(this.path)} AS disk (READ_ONLY)`);
         const pending = tables.map((row: any) => ({
           name: String(row.table_name || ''),
@@ -153,15 +167,12 @@ export class HybridDuckDbDatabase {
         // foreign keys while the cache is already populated.
         await memoryConnection.run('DETACH disk');
       }
-      const views = (await diskConnection.runAndReadAll(
-        "SELECT view_name, sql FROM duckdb_views() WHERE schema_name = 'main'",
-      )).getRowObjectsJS();
       for (const view of views) {
         if (view.sql) await memoryConnection.run(String(view.sql));
       }
     } finally {
       memoryConnection.closeSync();
-      diskConnection.closeSync();
+      if (this.path !== ':memory:') this.disk = await DuckDBInstance.create(this.path);
     }
   }
 

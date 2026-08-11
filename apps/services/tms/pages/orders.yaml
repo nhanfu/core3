@@ -38,19 +38,13 @@ datasources:
           OR o.customer_legal_name ILIKE '%' || :q || '%'
           OR o.route ILIKE '%' || :q || '%')
       ORDER BY o.order_date DESC, o.created_at DESC
-    workflow:
-      handler: order_status
-      permission: orders.write
-      status_source: order_statuses
-      allow_add: true
-      transitions:
-        - { from: '*', to: '*', permission: orders.write }
+    workflow: orders
     pivot:
       fields: [status_label, transport_method, shipment_type, order_date, customer_name, route, trip_count, total_amount, created_by]
   - id: order_statuses
     single: false
     permission: orders.read
-    query: "SELECT code AS value, CASE code WHEN 'Draft' THEN 'Nháp' WHEN 'Pending Approval' THEN 'Đang duyệt' WHEN 'Approved' THEN 'Đã duyệt' WHEN 'Cancelled' THEN 'Đã hủy' ELSE name END AS label, replace(config_value, 'order_status:', '') AS color FROM system_configs WHERE kind = 'trip_status' AND config_value LIKE 'order_status:%' AND status = 'Active' ORDER BY sort_order, code"
+    workflow_states: orders
   - id: order_customer_lookup
     single: false
     permission: orders.read
@@ -278,6 +272,7 @@ actions:
     permission: orders.write
     action: orders.submit_for_approval
     handler: order_transition
+    workflow: orders
     operation: submit_for_approval
     confirm: 'Submit order {{row.order_number}}?'
     refresh: [orders]
@@ -286,6 +281,7 @@ actions:
     permission: orders.approve
     action: orders.approve
     handler: order_transition
+    workflow: orders
     operation: approve
     confirm: 'Approve order {{row.order_number}}?'
     refresh: [orders]
@@ -294,6 +290,7 @@ actions:
     permission: orders.approve
     action: orders.reject
     handler: order_transition
+    workflow: orders
     operation: reject
     confirm: 'Reject and return order {{row.order_number}} to draft?'
     refresh: [orders]
@@ -302,6 +299,7 @@ actions:
     permission: orders.write
     action: orders.cancel
     handler: order_transition
+    workflow: orders
     operation: cancel
     confirm: 'Cancel order {{row.order_number}}?'
     refresh: [orders]
