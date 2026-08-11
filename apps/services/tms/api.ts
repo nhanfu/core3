@@ -1,6 +1,5 @@
 import { translationMap } from '../../lib/server/discovery.ts';
 import { requestLanguage } from '../../lib/server/locale.ts';
-import type { TmsRouteContext } from './api-route-context.ts';
 import { handleFileRoutes } from './files.ts';
 import { handleDataRoutes } from './data.ts';
 import { handleActionRoutes } from './actions.ts';
@@ -268,7 +267,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   };
 
 
-    const routeContext: TmsRouteContext = {
+    const routeContext: Record<string, any> = {
       req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE,
       SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES, UPLOAD_ROOT, reloadPages,
       authUser, activityActor, NAMED_ACTIONS, TABLES,

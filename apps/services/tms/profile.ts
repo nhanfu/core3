@@ -1,6 +1,5 @@
-import type { TmsRouteContext } from './api-route-context.ts';
 
-export async function handleProfileRoutes(ctx: TmsRouteContext): Promise<Response | null> {
+export async function handleProfileRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const { req, pathname, method, repository, authProvider, authUser, json, apiError } = ctx;
 
   // ── PROFILE (self-update) ─────────────────────────────────────────────────

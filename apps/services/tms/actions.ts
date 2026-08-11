@@ -1,11 +1,10 @@
 import { findDeclaredTransition } from '../../lib/workflow.ts';
-import type { TmsRouteContext } from './api-route-context.ts';
 import type { EventStore } from '../../lib/server/event-store.ts';
 
 /** Action handlers used by the order and chat pages. Domain management actions
  * belong in YAML mutations; this adapter only supplies order-specific guards
  * and the durable chat event bridge. */
-export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response | null> {
+export async function handleActionRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const {
     req, pathname, method, repository, WORKFLOWS, authUser, activityActor,
     NAMED_ACTIONS, requirePerm, permissionForAction, recordInCurrentBranch,

@@ -1,6 +1,5 @@
 import type { ModuleServer } from '../../lib/server/module.ts';
 import type { EventStore } from '../../lib/server/event-store.ts';
-import type { TmsRouteContext } from './api-route-context.ts';
 import { decodeChatFrame, encodeChatFrame } from '../../lib/server/chat-wire.ts';
 
 type Socket = { send(data: string | Uint8Array): void; close(code?: number, reason?: string): void };
@@ -21,7 +20,7 @@ function findStream(pages: Map<string, any>, pathname: string): any {
   return null;
 }
 
-export async function handleEventRoutes(ctx: TmsRouteContext, server?: ModuleServer): Promise<Response | null | undefined> {
+export async function handleEventRoutes(ctx: Record<string, any>, server?: ModuleServer): Promise<Response | null | undefined> {
   const { req, pathname, method, PAGES, authUser, requirePerm, eventStore, executeAction } = ctx;
   if (method !== 'GET' || !pathname.startsWith('/api/events/')) return null;
   const stream = findStream(PAGES, pathname);

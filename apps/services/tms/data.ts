@@ -1,11 +1,10 @@
-import type { TmsRouteContext } from './api-route-context.ts';
 import { findDeclaredMove } from '../../lib/workflow.ts';
 import { translationMap } from '../../lib/server/discovery.ts';
 import { requestLanguage } from '../../lib/server/locale.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { executeYamlMutation } from '../../lib/yaml/mutation.ts';
 
-export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response | null> {
+export async function handleDataRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const { req, url, pathname, method, repository, SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES,
     reloadPages, authUser, activityActor, requirePerm, recordInCurrentBranch,
     json, apiError, publicPageConfig, pageCacheHeaders, prefetchedPageConfig } = ctx;

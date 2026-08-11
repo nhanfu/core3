@@ -3,11 +3,10 @@
 
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import type { TmsRouteContext } from './api-route-context.ts';
 
 const UPLOAD_KINDS = new Set(['chat_attachment', 'order_attachment']);
 
-export async function handleFileRoutes(ctx: TmsRouteContext): Promise<Response | null> {
+export async function handleFileRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const {
     req, url, pathname, method, repository, UPLOAD_ROOT, authUser, activityActor,
     requirePerm, permissionForEndpoint, recordInCurrentBranch, json, apiError,
