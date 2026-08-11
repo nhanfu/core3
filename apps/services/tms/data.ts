@@ -1,6 +1,6 @@
 import type { TmsRouteContext } from './api-route-context.ts';
 import { declaredFromStates, findDeclaredMove } from '../../lib/workflow.ts';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { executeYamlMutation } from '../../lib/yaml/mutation.ts';
 
 export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response | null> {
@@ -86,7 +86,7 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
         to: toStates,
         permission: workflow.permission,
       }) as any;
-      writeFileSync(workflowFile, Bun.YAML.stringify(nextWorkflow), 'utf8');
+      writeWorkflowSections(workflowFile, nextWorkflow.workflow);
       workflow.states.splice(0, workflow.states.length, ...nextWorkflow.workflow.states);
       workflow.transitions.splice(0, workflow.transitions.length, ...nextWorkflow.workflow.transitions);
       return json(state, 201);
@@ -125,7 +125,7 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
         states: workflow.states.map((candidate: any) => candidate === state ? { ...candidate, label } : candidate),
         transitions: [...remaining, ...newTransitions],
       }) as any;
-      writeFileSync(workflowFile, Bun.YAML.stringify(nextWorkflow), 'utf8');
+      writeWorkflowSections(workflowFile, nextWorkflow.workflow);
       state.label = label;
       workflow.transitions.splice(0, workflow.transitions.length, ...nextWorkflow.workflow.transitions);
       return json(state);
@@ -162,7 +162,7 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
         current_user_id: activityActor.id || null,
         current_user_name: activityActor.name,
       });
-      writeFileSync(workflowFile, Bun.YAML.stringify(mutatedDocument), 'utf8');
+      writeWorkflowSections(workflowFile, mutatedDocument.workflow);
       workflow.states.splice(0, workflow.states.length, ...mutatedDocument.workflow.states);
       workflow.transitions.splice(0, workflow.transitions.length, ...mutatedDocument.workflow.transitions);
       return json({ deleted: stateId, reassigned_to: replacement });
@@ -198,4 +198,22 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
 function normalizeWorkflowStates(value: unknown, knownStates: Set<string>): string[] {
   if (!Array.isArray(value)) return [];
   return [...new Set(value.filter((candidate): candidate is string => typeof candidate === 'string' && knownStates.has(candidate)))];
+}
+
+function writeWorkflowSections(file: string, workflow: any): void {
+  const source = readFileSync(file, 'utf8');
+  const newline = source.includes('\r\n') ? '\r\n' : '\n';
+  const lines = source.split(/\r?\n/);
+  const statesIndex = lines.findIndex((line) => /^\s{2}states:\s*$/.test(line));
+  const transitionsIndex = lines.findIndex((line) => /^\s{2}transitions:\s*$/.test(line));
+  if (statesIndex < 0 || transitionsIndex <= statesIndex) throw { status: 500, message: 'Workflow file has no writable states and transitions sections' };
+  const states = (workflow.states || []).map((state: any) => `    - ${flowObject(state)}`);
+  const transitions = (workflow.transitions || []).map((transition: any) => `    - ${flowObject(transition)}`);
+  lines.splice(transitionsIndex + 1, lines.length - transitionsIndex - 1, ...transitions);
+  lines.splice(statesIndex + 1, transitionsIndex - statesIndex - 1, ...states);
+  writeFileSync(file, `${lines.join(newline).replace(/[\r\n]*$/, '')}${newline}`, 'utf8');
+}
+
+function flowObject(value: Record<string, unknown>): string {
+  return `{ ${Object.entries(value).map(([key, entry]) => `${key}: ${JSON.stringify(entry)}`).join(', ')} }`;
 }

@@ -1,1 +1,60 @@
-{workflow: {id: orders,entity: orders,handler: order_status,initial: Draft,permission: orders.write,mutable: true,status_source: order_statuses,allow_add: true,state_editor: {allow_edit: true,allow_delete: true,add_title: Add status,edit_title: Edit status,name_label: Status name,from_label: Can move from,to_label: Can move to,add_label: Add status,save_label: Save status,cancel_label: Cancel,delete_label: Delete status,delete_title: Delete status,delete_message: Choose the status that should receive these orders.,replacement_label: Move orders to,delete_confirm_label: Delete and move orders},mutations: {add_status: {steps: [{append: workflow.states,value: {id: $input.label,label: $input.label,color: neutral}},{for_each: {input: from,steps: [{append: workflow.transitions,value: {id: "${slug(input.from)}_to_${slug(input.label)}",from: $item,to: $input.label,permission: $input.permission}}]}},{for_each: {input: to,steps: [{append: workflow.transitions,value: {id: "${slug(input.label)}_to_${slug(input.to)}",from: $input.label,to: $item,permission: $input.permission}}]}}]},edit_status: {steps: [{set: workflow.states,value: $input.states},{set: workflow.transitions,value: $input.transitions}]},delete_status: {database: {steps: [{query: "UPDATE order_workflow_states SET status = :to_status, updated_at = CURRENT_TIMESTAMP WHERE status = :from_status"},{query: UPDATE orders AS o SET status = :to_status WHERE status = :from_status AND NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = o.id)},{query: "INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(:current_user_id, :current_user_name, 'orders.workflow_state.delete', 'orders', NULL, 'Moved orders from ' || CAST(:from_status AS VARCHAR) || ' to ' || CAST(:to_status AS VARCHAR))"}]},steps: [{set: workflow.states,value: $input.states},{set: workflow.transitions,value: $input.transitions}]}},states: [{id: Draft,label: Nháp,color: neutral},{id: Pending Approval,label: Đang duyệt,color: amber},{id: Approved,label: Đã duyệt,color: green},{id: Cancelled,label: Đã hủy,color: red,terminal: true}],transitions: [{id: submit_for_approval,from: Draft,to: Pending Approval,permission: orders.write},{id: approve,from: Pending Approval,to: Approved,permission: orders.approve},{id: reject,from: Pending Approval,to: Draft,permission: orders.approve},{id: cancel,from: [Draft,Pending Approval,Approved],to: Cancelled,permission: orders.write}]}}
+workflow:
+  id: orders
+  entity: orders
+  handler: order_status
+  initial: Draft
+  permission: orders.write
+  mutable: true
+  status_source: order_statuses
+  allow_add: true
+  state_editor:
+    allow_edit: true
+    allow_delete: true
+    add_title: Add status
+    edit_title: Edit status
+    name_label: Status name
+    from_label: Can move from
+    to_label: Can move to
+    add_label: Add status
+    save_label: Save status
+    cancel_label: Cancel
+    delete_label: Delete status
+    delete_title: Delete status
+    delete_message: Choose the status that should receive these orders.
+    replacement_label: Move orders to
+    delete_confirm_label: Delete and move orders
+  mutations:
+    add_status:
+      steps:
+        - { append: workflow.states, value: { id: '$input.label', label: '$input.label', color: neutral } }
+        - for_each:
+            input: from
+            steps:
+              - { append: workflow.transitions, value: { id: '${slug(input.from)}_to_${slug(input.label)}', from: '$item', to: '$input.label', permission: '$input.permission' } }
+        - for_each:
+            input: to
+            steps:
+              - { append: workflow.transitions, value: { id: '${slug(input.label)}_to_${slug(input.to)}', from: '$input.label', to: '$item', permission: '$input.permission' } }
+    edit_status:
+      steps:
+        - { set: workflow.states, value: '$input.states' }
+        - { set: workflow.transitions, value: '$input.transitions' }
+    delete_status:
+      database:
+        steps:
+          - query: "UPDATE order_workflow_states SET status = :to_status, updated_at = CURRENT_TIMESTAMP WHERE status = :from_status"
+          - query: "UPDATE orders AS o SET status = :to_status WHERE status = :from_status AND NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = o.id)"
+          - query: "INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(:current_user_id, :current_user_name, 'orders.workflow_state.delete', 'orders', NULL, 'Moved orders from ' || CAST(:from_status AS VARCHAR) || ' to ' || CAST(:to_status AS VARCHAR))"
+      steps:
+        - { set: workflow.states, value: '$input.states' }
+        - { set: workflow.transitions, value: '$input.transitions' }
+  states:
+    - { id: "Draft", label: "Nháp", color: "neutral" }
+    - { id: "Pending Approval", label: "Đang duyệt", color: "amber" }
+    - { id: "Approved", label: "Đã duyệt", color: "green" }
+    - { id: "Cancelled", label: "Đã hủy", color: "red", terminal: true }
+  transitions:
+    - { id: "submit_for_approval", from: "Draft", to: "Pending Approval", permission: "orders.write" }
+    - { id: "approve", from: "Pending Approval", to: "Approved", permission: "orders.approve" }
+    - { id: "reject", from: "Pending Approval", to: "Draft", permission: "orders.approve" }
+    - { id: "cancel", from: ["Draft","Pending Approval","Approved"], to: "Cancelled", permission: "orders.write" }

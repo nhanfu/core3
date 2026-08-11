@@ -1,4 +1,5 @@
 import { createServer } from 'node:net';
+import { watch } from 'node:fs';
 
 export async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -23,11 +24,53 @@ if (import.meta.main) {
   const port = await findAvailablePort(start);
   if (port !== start) console.log(`Port ${start} is busy; using port ${port}`);
 
-  const child = Bun.spawn(['bun', '--hot', 'server.ts'], {
-    env: { ...process.env, PORT: String(port) },
-    stdin: 'inherit',
-    stdout: 'inherit',
-    stderr: 'inherit',
+  let stopped = false;
+  let restartRequested = false;
+  let child: ReturnType<typeof Bun.spawn> | null = null;
+  let restartTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const sourceChanged = (filename: string | Buffer | null) => {
+    const path = String(filename || '').replaceAll('\\', '/');
+    return /\.(ts|tsx|yaml|yml|scss)$/i.test(path)
+      && !path.includes('/node_modules/')
+      && !path.includes('/.data/');
+  };
+
+  const watcher = watch('.', { recursive: true }, (_event, filename) => {
+    if (!sourceChanged(filename) || stopped) return;
+    clearTimeout(restartTimer);
+    restartTimer = setTimeout(() => {
+      restartRequested = true;
+      child?.kill();
+    }, 100);
   });
-  process.exitCode = await child.exited;
+
+  const stop = () => {
+    stopped = true;
+    watcher.close();
+    clearTimeout(restartTimer);
+    child?.kill();
+  };
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
+
+  try {
+    while (!stopped) {
+      child = Bun.spawn(['bun', 'server.ts'], {
+        env: { ...process.env, PORT: String(port) },
+        stdin: 'inherit',
+        stdout: 'inherit',
+        stderr: 'inherit',
+      });
+      const exitCode = await child.exited;
+      child = null;
+      if (!restartRequested || stopped) {
+        process.exitCode = exitCode;
+        break;
+      }
+      restartRequested = false;
+    }
+  } finally {
+    stop();
+  }
 }
