@@ -1,10 +1,12 @@
 import type { TmsRouteContext } from './api-route-context.ts';
 import { findDeclaredMove } from '../../lib/workflow.ts';
+import { translationMap } from '../../lib/server/discovery.ts';
+import { requestLanguage } from '../../lib/server/locale.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { executeYamlMutation } from '../../lib/yaml/mutation.ts';
 
 export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response | null> {
-  const { req, url, pathname, method, repository, SOURCES, PAGES, WORKFLOWS, WORKFLOW_FILES,
+  const { req, url, pathname, method, repository, SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES,
     reloadPages, authUser, activityActor, requirePerm, recordInCurrentBranch,
     json, apiError, publicPageConfig, pageCacheHeaders, prefetchedPageConfig } = ctx;
 
@@ -29,7 +31,8 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
     if (typeof source.workflow_states === 'string') {
       const workflow = WORKFLOWS.get(source.workflow_states);
       if (!workflow) return apiError(500, `Unknown workflow: ${source.workflow_states}`);
-      return json({ data: workflow.states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} });
+      const labels = translationMap(CATALOGS, requestLanguage(url, authUser.preferred_lang || 'en'), 'order-workflow');
+      return json({ data: workflow.states.map((state: any) => ({ value: state.id, label: labels[state.label] || state.label, color: state.color })), meta: {} });
     }
     return json(await repository.querySource(source, {
       ...(vm.params || {}),

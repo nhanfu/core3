@@ -1,0 +1,16 @@
+vi:
+  Draft: Nháp
+  Pending Approval: Đang duyệt
+  Approved: Đã duyệt
+  Cancelled: Đã hủy
+  Add status: Thêm trạng thái
+  Edit status: Sửa trạng thái
+  Delete status: Xóa trạng thái
+  Status name: Tên trạng thái
+  Enter a status name: Nhập tên trạng thái
+  Can move from: Có thể chuyển từ
+  Can move to: Có thể chuyển đến
+  Save status: Lưu trạng thái
+  Choose the status that should receive these orders.: Chọn trạng thái nhận các đơn hàng này.
+  Move orders to: Chuyển đơn hàng đến
+  Delete and move orders: Xóa và chuyển đơn hàng

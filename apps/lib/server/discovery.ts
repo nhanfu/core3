@@ -132,19 +132,6 @@ export function discoverPages(appsRoot: string) {
         config: parseYaml(file) || {},
       });
     } catch {}
-    const workflowsRoot = join(moduleRoot, 'workflows');
-    try {
-      if (statSync(workflowsRoot).isDirectory()) {
-        for (const workflowFile of walk(workflowsRoot).filter(name => /-workflow\.ya?ml$/i.test(name)).sort()) {
-          const config = validateWorkflowDefinition(parseYaml(workflowFile));
-          assertUnique(workflows, config.id, workflowFile, 'workflow id');
-          workflows.set(config.id, { id: config.id, module: moduleName, file: workflowFile, config });
-        }
-      }
-    } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') continue;
-      throw error;
-    }
   }
 
   for (const pagesRoot of pageRoots) {
@@ -152,6 +139,12 @@ export function discoverPages(appsRoot: string) {
     for (const file of walk(pagesRoot).filter((name) => /\.ya?ml$/i.test(name)).sort()) {
       const value = parseYaml(file);
       const relativeFile = relative(pagesRoot, file).split(sep);
+      if (relativeFile[0] !== 'i18n' && /-workflow\.ya?ml$/i.test(file)) {
+        const config = validateWorkflowDefinition(value);
+        assertUnique(workflows, config.id, file, 'workflow id');
+        workflows.set(config.id, { id: config.id, module: moduleName, file, config });
+        continue;
+      }
       if (relativeFile.length === 1 && /^menu\.ya?ml$/i.test(relativeFile[0])) {
         menus.set(moduleName, { module: moduleName, config: parseYaml(file) || {} });
         continue;

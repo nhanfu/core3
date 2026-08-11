@@ -1,5 +1,5 @@
 import { createServer } from 'node:net';
-import { watch } from 'node:fs';
+import { statSync, watch } from 'node:fs';
 
 export async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -36,18 +36,19 @@ if (import.meta.main) {
       && !path.includes('/.data/');
   };
 
-  const watcher = watch('.', { recursive: true }, (_event, filename) => {
+  const watchTargets = ['lib', 'services', 'db', 'public', 'scripts', 'server.ts', 'config.yaml'];
+  const watchers = watchTargets.map((target) => watch(target, { recursive: statSync(target).isDirectory() }, (_event, filename) => {
     if (!sourceChanged(filename) || stopped) return;
     clearTimeout(restartTimer);
     restartTimer = setTimeout(() => {
       restartRequested = true;
       child?.kill();
     }, 100);
-  });
+  }));
 
   const stop = () => {
     stopped = true;
-    watcher.close();
+    for (const watcher of watchers) watcher.close();
     clearTimeout(restartTimer);
     child?.kill();
   };

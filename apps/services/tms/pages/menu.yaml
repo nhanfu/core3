@@ -13,4 +13,3 @@ menu:
           icon: truck
           children:
             - { path: /orders, label: Orders, icon: document, permission: orders.read }
-            - { path: /chat, label: Chat, icon: chat, permission: chat.read }

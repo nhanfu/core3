@@ -114,6 +114,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
     };
+    const lang = requestLanguage(url, user.preferred_lang || 'en');
     const datasources = await Promise.all((page.datasources || []).map(async (source: any) => {
       if (source.permission && !authProvider.hasPermission(user, source.permission)) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
@@ -123,7 +124,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       const stateWorkflow = typeof workflow_states === 'string' ? WORKFLOWS.get(workflow_states) : undefined;
       if (workflow_states && !stateWorkflow) throw { status: 500, message: `Unknown workflow: ${workflow_states}` };
       const result = stateWorkflow
-        ? { data: stateWorkflow.states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} }
+        ? { data: localizedWorkflow(stateWorkflow, lang).states.map((state: any) => ({ value: state.id, label: state.label, color: state.color })), meta: {} }
         : await repository.querySource(
             source,
             serverParams,
@@ -132,9 +133,8 @@ export function createTmsApi(ctx: TmsApiContext) {
             undefined,
             pageSizes.has(source.id) ? listSort : undefined,
           );
-      return { ...publicSource, ...(workflow ? { workflow } : {}), data: result.data, meta: result.meta };
+      return { ...publicSource, ...(workflow ? { workflow: localizedWorkflow(workflow, lang) } : {}), data: result.data, meta: result.meta };
     }));
-    const lang = requestLanguage(url, user.preferred_lang || 'en');
     return {
       ...publicPageConfig(page),
       datasources,
@@ -144,6 +144,24 @@ export function createTmsApi(ctx: TmsApiContext) {
         global: translationMap(CATALOGS, lang, '*'),
       },
     };
+  }
+
+  function localizedWorkflow(workflow: any, lang: string): any {
+    const labels = translationMap(CATALOGS, lang, 'order-workflow');
+    const localized = JSON.parse(JSON.stringify(workflow));
+    for (const state of localized.states || []) state.label = labels[state.label] || state.label;
+    const editor = localized.state_editor;
+    if (editor?.labels) for (const key of Object.keys(editor.labels)) editor.labels[key] = labels[editor.labels[key]] || editor.labels[key];
+    for (const modal of Object.values(editor?.modals || {}) as any[]) {
+      for (const key of ['title', 'message', 'from_label', 'to_label', 'replacement_label', 'confirm_label', 'cancel_label', 'danger_label']) {
+        if (modal[key]) modal[key] = labels[modal[key]] || modal[key];
+      }
+      if (modal.input) {
+        if (modal.input.label) modal.input.label = labels[modal.input.label] || modal.input.label;
+        if (modal.input.placeholder) modal.input.placeholder = labels[modal.input.placeholder] || modal.input.placeholder;
+      }
+    }
+    return localized;
   }
 
   const TABLES = PERMISSIONS.tables || {};
