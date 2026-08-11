@@ -74,9 +74,9 @@ function resolveValue(value: unknown, context: Context): unknown {
   if (typeof value !== 'string') return value;
   const exact = value.match(/^\$(input|item)(?:\.(.+))?$/);
   if (exact) return exact[2] ? resolvePath(exact[1] === 'input' ? context.input : context.item, exact[2]) : (exact[1] === 'input' ? context.input : context.item);
-  return value.replace(/\$\{(input|item)\.([^}]+)\}|\$\{slug\((input|item)\.([^}]+)\)\}/g, (_match, scope, path, slugScope, slugPath) => {
+  return value.replace(/\$\{(input|item)(?:\.([^}]+))?\}|\$\{slug\((input|item)(?:\.([^}]+))?\)\}/g, (_match, scope, path, slugScope, slugPath) => {
     const target = slugScope ? (slugScope === 'input' ? context.input : context.item) : (scope === 'input' ? context.input : context.item);
-    const resolved = resolvePath(target, slugPath || path);
+    const resolved = (slugPath || path) ? resolvePath(target, slugPath || path) : target;
     return slugScope ? slug(String(resolved ?? '')) : String(resolved ?? '');
   });
 }
