@@ -1,24 +1,14 @@
-import {
-  type Change,
-  bindNamedParams,
-  describeQueryError,
-  normalizeContactValues,
-  normalizeLineValues,
-  queryOnConnection,
-  redactQueryValue,
-  runOnConnection,
-  splitSQL,
-} from './tms-shared.ts';
+import { normalizeLineValues, queryOnConnection, runOnConnection } from './tms-shared.ts';
 
 export const documentLinesMethods = {
   mutateDocumentLine: async function(this: any,
     config: {
-      parentTable: 'orders' | 'quotes' | 'accounting_entries';
-      lineTable: 'order_lines' | 'quote_lines' | 'accounting_entry_lines';
-      parentKey: 'order_id' | 'quote_id' | 'entry_id';
-      label: 'Order' | 'Quote' | 'Financial document';
-      hasCost: boolean;
-      totalField: 'total_amount' | 'amount';
+      parentTable: 'orders';
+      lineTable: 'order_lines';
+      parentKey: 'order_id';
+      label: 'Order';
+      hasCost: false;
+      totalField: 'total_amount';
     },
     operation: 'create' | 'update' | 'delete',
     parentId: string,
@@ -32,15 +22,13 @@ export const documentLinesMethods = {
       try {
         const [parent] = await queryOnConnection(
           conn,
-          config.parentTable === 'orders'
-            ? `SELECT o.*, COALESCE(s.status, o.status) AS workflow_status
-               FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
-               WHERE o.id = ?`
-            : `SELECT * FROM ${config.parentTable} WHERE id = ?`,
+          `SELECT o.*, COALESCE(s.status, o.status) AS workflow_status
+           FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
+           WHERE o.id = ?`,
           [parentId],
         );
         if (!parent) throw { status: 404, message: `${config.label} not found` };
-        const parentStatus = config.parentTable === 'orders' ? parent.workflow_status : parent.status;
+        const parentStatus = parent.workflow_status;
         if (parentStatus !== 'Draft') {
           throw {
             status: 409,
@@ -75,9 +63,8 @@ export const documentLinesMethods = {
             const columns = [
               'id', config.parentKey, 'sequence', 'description', 'quantity',
               'unit', 'unit_price',
-              ...(config.hasCost ? ['cost_price'] : []),
+
               'tax_rate', 'line_total',
-              ...(config.hasCost ? ['cost_total'] : []),
             ];
             const params = [
               lineId,
@@ -87,10 +74,8 @@ export const documentLinesMethods = {
               normalized.quantity,
               normalized.unit,
               normalized.unitPrice,
-              ...(config.hasCost ? [normalized.costPrice] : []),
               normalized.taxRate,
               normalized.lineTotal,
-              ...(config.hasCost ? [normalized.costTotal] : []),
             ];
             await runOnConnection(
               conn,
@@ -108,9 +93,7 @@ export const documentLinesMethods = {
             if (!existingLine) throw { status: 404, message: 'Line item not found' };
             const assignments = [
               'description = ?', 'quantity = ?', 'unit = ?', 'unit_price = ?',
-              ...(config.hasCost ? ['cost_price = ?'] : []),
               'tax_rate = ?', 'line_total = ?',
-              ...(config.hasCost ? ['cost_total = ?'] : []),
               'updated_at = CURRENT_TIMESTAMP',
             ];
             const params = [
@@ -118,10 +101,8 @@ export const documentLinesMethods = {
               normalized.quantity,
               normalized.unit,
               normalized.unitPrice,
-              ...(config.hasCost ? [normalized.costPrice] : []),
               normalized.taxRate,
               normalized.lineTotal,
-              ...(config.hasCost ? [normalized.costTotal] : []),
               lineId,
               parentId,
 
@@ -143,21 +124,10 @@ export const documentLinesMethods = {
         const [totals] = await queryOnConnection(
           conn,
           `SELECT COALESCE(SUM(line_total), 0) AS amount
-            ${config.hasCost ? ', COALESCE(SUM(cost_total), 0) AS cost_amount' : ''}
            FROM ${config.lineTable} WHERE ${config.parentKey} = ?`,
           [parentId],
         );
-        if (config.hasCost) {
-          const amount = Number(totals.amount || 0);
-          const costAmount = Number(totals.cost_amount || 0);
-          await runOnConnection(
-            conn,
-            `UPDATE quotes SET amount = ?, cost_amount = ?, profit_amount = ?,
-             updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            [amount, costAmount, amount - costAmount, parentId],
-          );
-        } else {
-          if (config.parentTable === 'orders') {
+        {
             const currentLines = await queryOnConnection(
               conn,
               'SELECT id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total, created_at, updated_at FROM order_lines WHERE order_id = ? ORDER BY sequence, id',
@@ -192,14 +162,6 @@ export const documentLinesMethods = {
                 [currentLine.id, currentLine.order_id, currentLine.sequence, currentLine.description, currentLine.quantity, currentLine.unit, currentLine.unit_price, currentLine.tax_rate, currentLine.line_total, currentLine.created_at, currentLine.updated_at],
               );
             }
-          } else {
-            await runOnConnection(
-              conn,
-              `UPDATE ${config.parentTable}
-               SET ${config.totalField} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-              [Number(totals.amount || 0), parentId],
-            );
-          }
         }
 
         await runOnConnection(
@@ -220,13 +182,7 @@ export const documentLinesMethods = {
         await runOnConnection(conn, 'COMMIT');
         return {
           line: operation === 'delete' ? null : line,
-          totals: config.hasCost
-            ? {
-                amount: Number(totals.amount || 0),
-                cost_amount: Number(totals.cost_amount || 0),
-                profit_amount: Number(totals.amount || 0) - Number(totals.cost_amount || 0),
-              }
-            : { [config.totalField]: Number(totals.amount || 0) },
+          totals: { [config.totalField]: Number(totals.amount || 0) },
         };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK').catch(() => {});
@@ -235,4 +191,3 @@ export const documentLinesMethods = {
     });
   },
 };
-

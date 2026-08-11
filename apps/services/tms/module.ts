@@ -9,9 +9,6 @@ import { EventStore, type EventBus } from '../../lib/server/event-store.ts';
 import { EventMediatorClient } from '../../lib/server/event-mediator.ts';
 
 export { DuckDbRepository } from '../../db/repositories/tms.ts';
-export { xlsxToCsv } from './services/xlsx-import.ts';
-export { financialWorkflow } from './services/financial-workflow.ts';
-export { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
 export class TmsModule {
   readonly id = 'tms';
   private db: any = null;

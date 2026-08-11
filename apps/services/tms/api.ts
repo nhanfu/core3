@@ -4,7 +4,6 @@ import type { TmsRouteContext } from './api-route-context.ts';
 import { handleFileRoutes } from './files.ts';
 import { handleDataRoutes } from './data.ts';
 import { handleActionRoutes } from './actions.ts';
-import { handlePatchRoutes } from './patch.ts';
 import { handleProfileRoutes } from './profile.ts';
 import { handleEventRoutes } from './events.ts';
 import { join } from 'node:path';
@@ -47,26 +46,6 @@ export function createTmsApi(ctx: TmsApiContext) {
     eventStore: EVENT_STORE,
     reloadPages,
   } = ctx;
-
-  const FINANCIAL_WORKFLOW_SCOPES = new Set([
-    'debit_note',
-    'payment_request',
-    'advance',
-    'settlement',
-  ]);
-  const DEFAULT_CURRENCY_RATES: Record<string, number> = { VND: 1, USD: 25400, EUR: 27600 };
-
-  function configuredCurrencyRates(): { rates: Record<string, number>; source: string } {
-    const raw = process.env.TMS_CURRENCY_RATES_JSON;
-    if (!raw) return { rates: DEFAULT_CURRENCY_RATES, source: 'demo-config' };
-    try {
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('object required');
-      return { rates: parsed as Record<string, number>, source: 'environment' };
-    } catch {
-      throw Object.assign(new Error('TMS_CURRENCY_RATES_JSON must be a JSON object'), { status: 400 });
-    }
-  }
 
   function json(data: any, status = 200, extraHeaders: Record<string, string> = {}): Response {
     return new Response(JSON.stringify(data), {
@@ -259,53 +238,10 @@ export function createTmsApi(ctx: TmsApiContext) {
     id: authUser.sub ? String(authUser.sub) : null,
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
   };
-  const crmEntityInScope = async (kind: 'customer' | 'partner', id: string) => {
-    const table = kind === 'customer' ? 'customers' : 'partners';
-    const [row] = await repository.query(
-      `SELECT owner_name, visibility FROM ${table} WHERE id = ?`,
-      [id],
-    );
-    if (!row || String(authUser.view_scope || 'all') === 'all') return Boolean(row);
-    const ownerName = String(row.owner_name || '');
-    if (String(authUser.view_scope) === 'own') return ownerName === activityActor.name;
-    return String(row.visibility || 'Public') === 'Public' || ownerName === activityActor.name;
-  };
   const branchForScopedResource = async (resourceTable: string, resourceId: string) => {
-    if (resourceTable === 'users') {
-      const [row] = await repository.query('SELECT branch_id FROM users WHERE id = ?', [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'employees') {
-      const [row] = await repository.query(
-        "SELECT d.branch_id FROM employees e LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%' WHERE e.id = ?",
-        [resourceId],
-      );
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'employment_contracts' || resourceTable === 'timesheets' || resourceTable === 'payrolls') {
-      const [row] = await repository.query(
-        `SELECT d.branch_id
-         FROM ${resourceTable} r
-         JOIN employees e ON e.id = r.employee_id
-         LEFT JOIN departments d ON d.name ILIKE '%' || e.department || '%'
-         WHERE r.id = ?`,
-        [resourceId],
-      );
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'accounting_entries') {
-      const [row] = await repository.query('SELECT branch_id FROM accounting_entries WHERE id = ?', [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'orders' || resourceTable === 'quotes') {
-      const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    if (resourceTable === 'locations' || resourceTable === 'containers') {
-      const [row] = await repository.query(`SELECT branch_id FROM ${resourceTable} WHERE id = ?`, [resourceId]);
-      return row?.branch_id ? String(row.branch_id) : null;
-    }
-    return null;
+    if (resourceTable !== 'orders') return null;
+    const [row] = await repository.query('SELECT branch_id FROM orders WHERE id = ?', [resourceId]);
+    return row?.branch_id ? String(row.branch_id) : null;
   };
   const recordInCurrentBranch = async (resourceTable: string, resourceId: string) => {
     if (String(authUser.view_scope || 'all') === 'all') return true;
@@ -317,10 +253,10 @@ export function createTmsApi(ctx: TmsApiContext) {
     const routeContext: TmsRouteContext = {
       req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE,
       SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES, UPLOAD_ROOT, reloadPages,
-      authUser, activityActor, FINANCIAL_WORKFLOW_SCOPES, NAMED_ACTIONS, TABLES,
+      authUser, activityActor, NAMED_ACTIONS, TABLES,
       requirePerm, permissionForEndpoint, permissionForAction,
-      recordInCurrentBranch, branchForScopedResource, crmEntityInScope,
-      configuredCurrencyRates, json, apiError, publicPageConfig, pageCacheHeaders, prefetchedPageConfig, CORS_HEADERS,
+      recordInCurrentBranch, branchForScopedResource,
+      json, apiError, publicPageConfig, pageCacheHeaders, prefetchedPageConfig, CORS_HEADERS,
     };
     routeContext.executeAction = async (body: Record<string, unknown>) => {
       if (!CHAT_SEND_ACTION?.action) throw new Error('Chat send action is not configured');
@@ -332,7 +268,7 @@ export function createTmsApi(ctx: TmsApiContext) {
       });
       return handleActionRoutes({ ...routeContext, req: actionRequest, url: actionUrl, pathname: actionUrl.pathname, method: 'POST' });
     };
-    for (const handler of [handleEventRoutes, handleFileRoutes, handleDataRoutes, handleActionRoutes, handlePatchRoutes, handleProfileRoutes]) {
+    for (const handler of [handleEventRoutes, handleFileRoutes, handleDataRoutes, handleActionRoutes, handleProfileRoutes]) {
       const response = handler === handleEventRoutes
         ? await handler(routeContext, websocketServer)
         : await handler(routeContext);

@@ -14,9 +14,7 @@
     "event-mediator:stress": "bun services/event-mediator/stress.ts",
     "event-mediator:ramp": "bun services/event-mediator/ramp.ts",
     "test": "cd services/tms && vitest run --environment jsdom",
-    "audit": "bun services/tms/scripts/audit-pages.ts",
-    "audit:ui": "bun services/tms/scripts/audit-ui.ts",
-    "audit:workflows": "bun services/tms/scripts/audit-workflows.ts"
+    "audit": "bun services/tms/scripts/audit-ui.ts"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.3",

@@ -68,59 +68,10 @@ services:
     write_mode: ${CORE3_EVENT_WRITE_MODE:-low_latency}
 
 apps:
-  - id: sales
-    label: Sales
-    description: Customers, leads, opportunities, and quotations
-    icon: users
-    route: /customers
-    module: sales
-    enabled: false
-  - id: inventory
-    label: Inventory
-    description: Products, stock, warehouses, and movements
-    icon: grid
-    route: /inventory
-    module: inventory
-    enabled: false
-  - id: purchase
-    label: Purchase
-    description: Vendors, purchase orders, and approvals
-    icon: money
-    route: /purchase
-    module: purchase
-    enabled: false
-  - id: accounting
-    label: Accounting
-    description: Invoices, payments, and financial reporting
-    icon: document
-    route: /accounting
-    module: accounting
-    enabled: false
-  - id: projects
-    label: Projects
-    description: Plans, tasks, milestones, and delivery
-    icon: calendar
-    route: /projects
-    module: projects
-    enabled: false
-  - id: employees
-    label: Employees
-    description: People, time off, and workforce information
-    icon: users
-    route: /employees
-    module: employees
-    enabled: false
-  - id: crm
-    label: CRM
-    description: Customer relationships and pipeline management
-    icon: users
-    route: /crm/dashboard
-    module: crm
-    enabled: false
   - id: tms
-    label: TMS
-    description: Fleet and transport management
+    label: Orders
+    description: Order management and collaboration
     icon: truck
-    route: /dashboard
+    route: /orders
     module: tms
     enabled: true

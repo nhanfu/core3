@@ -212,27 +212,6 @@ describe('YAML form modal', () => {
     expect(labels).toEqual(['Giai đoạn CRM']);
   });
 
-  it('surfaces a returned server-action result when declared by YAML', async () => {
-    vi.spyOn(client, 'action').mockResolvedValue({ preview: 'DH-0001' });
-    const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
-    window.__CORE3_USER__ = { permissions: ['system.read'] };
-    const container = document.createElement('div');
-    await renderPage({
-      page: { id: 'server-result-test' },
-      toolbar: [{ id: 'preview', label: 'Xem mẫu', action: 'preview' }],
-      actions: [{
-        id: 'preview', type: 'server', permission: 'system.read', action: 'system.code_rules.preview',
-        result: 'alert', result_field: 'preview',
-      }],
-    }, { container });
-
-    container.querySelector<HTMLButtonElement>('button')?.click();
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(client.action).toHaveBeenCalledWith('system.code_rules.preview', { id: null });
-    expect(alert).toHaveBeenCalledWith('DH-0001');
-  });
-
   it('hides row actions when the current user lacks the declared permission', async () => {
     vi.spyOn(client, 'query').mockResolvedValue({
       data: [{ id: 'item-1', name: 'Existing' }],

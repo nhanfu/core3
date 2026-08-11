@@ -1,14 +1,4 @@
-import {
-  type Change,
-  bindNamedParams,
-  describeQueryError,
-  normalizeContactValues,
-  normalizeLineValues,
-  queryOnConnection,
-  redactQueryValue,
-  runOnConnection,
-  splitSQL,
-} from './tms-shared.ts';
+import { bindNamedParams, describeQueryError, queryOnConnection, redactQueryValue } from './tms-shared.ts';
 
 export const dataMethods = {
   querySource: async function(this: any,
@@ -90,54 +80,6 @@ export const dataMethods = {
     };
   },
 
-  createRecord: async function(this: any,table: string, changes: Change[]): Promise<any> {
-    const newId = crypto.randomUUID();
-    const cols = ['id', ...changes.map((c) => c.field)].join(', ');
-    const vals = [newId, ...changes.map((c) => c.value)];
-    await this.run(
-      `INSERT INTO ${table}(${cols}) VALUES(${vals.map(() => '?').join(', ')})`,
-      vals
-    );
-    const rows = await this.query(`SELECT * FROM ${table} WHERE id = ?`, [newId]);
-    return rows[0] || null;
-  },
-
-  updateRecord: async function(this: any,table: string, id: any, changes: Change[], timestamps: boolean): Promise<any> {
-    const sets = changes.map((c) => `${c.field} = ?`).join(', ');
-    const tsClause = timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
-    await this.run(
-      `UPDATE ${table} SET ${sets}${tsClause} WHERE id = ?`,
-      [...changes.map((c) => c.value), id]
-    );
-    const rows = await this.query(`SELECT * FROM ${table} WHERE id = ?`, [id]);
-    return rows[0] || null;
-  },
-
-  deleteRecord: async function(this: any,table: string, id: any): Promise<void> {
-    if (!['quotes', 'accounting_entries', 'customers', 'partners', 'system_configs'].includes(table)) {
-      await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
-      return;
-    }
-    await this.withConnection(async (conn) => {
-      await runOnConnection(conn, 'BEGIN TRANSACTION');
-      try {
-      await runOnConnection(
-        conn,
-          `DELETE FROM ${table === 'quotes' ? 'quote_lines' : table === 'accounting_entries' ? 'accounting_entry_lines' : table === 'customers' ? 'customer_contacts' : table === 'partners' ? 'partner_contacts' : 'approval_flow_steps'}
-           WHERE ${table === 'quotes' ? 'quote_id' : table === 'accounting_entries' ? 'entry_id' : table === 'customers' ? 'customer_id' : table === 'partners' ? 'partner_id' : 'flow_id'} = ?`,
-        [id],
-      );
-        if (table === 'system_configs') {
-          await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE template_id = ?', [id]);
-        }
-        await runOnConnection(conn, `DELETE FROM ${table} WHERE id = ?`, [id]);
-        await runOnConnection(conn, 'COMMIT');
-      } catch (error) {
-        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
-        throw error;
-      }
-    });
-  },
 };
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
