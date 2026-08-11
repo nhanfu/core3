@@ -56,9 +56,10 @@
 .core3-dialog-tag:has(input:checked) { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-text); }
 .core3-dialog-tag input { accent-color: var(--color-primary); }
 .core3-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
-.core3-dialog-cancel, .core3-dialog-confirm { padding: 8px 14px; border-radius: var(--radius-md); font-size: .875rem; font-weight: 600; cursor: pointer; }
+.core3-dialog-cancel, .core3-dialog-confirm, .core3-dialog-danger { padding: 8px 14px; border-radius: var(--radius-md); font-size: .875rem; font-weight: 600; cursor: pointer; }
 .core3-dialog-cancel { border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); }
 .core3-dialog-confirm { border: 1px solid var(--color-primary); background: var(--color-primary); color: white; }
+.core3-dialog-danger { margin-right: auto; border: 1px solid var(--color-danger); background: transparent; color: var(--color-danger); }
 
 .core3-form-dialog {
   width: min(480px, 95vw);

@@ -31,6 +31,29 @@ function sqlLiteral(value: unknown): string {
   return quoteLiteral(String(value));
 }
 
+function literalInsertValue(sql: string, index: number): unknown {
+  const match = /\bVALUES\s*\((.*)\)/is.exec(sql);
+  if (!match) return sql.match(/(?:DATE\s*)?'(\d{4}-\d{2}-\d{2})'/i)?.[1];
+  const values: string[] = [];
+  let current = '';
+  let quote = false;
+  for (const char of match[1]) {
+    if (char === "'") quote = !quote;
+    if (char === ',' && !quote) {
+      values.push(current.trim());
+      current = '';
+    } else current += char;
+  }
+  values.push(current.trim());
+  const value = values[index];
+  if (!value || value === '?') return sql.match(/(?:DATE\s*)?'(\d{4}-\d{2}-\d{2})'/i)?.[1];
+  const date = value.match(/^DATE\s*'([^']+)'$/i);
+  if (date) return date[1];
+  const string = value.match(/^'([^']*)'$/);
+  if (string) return string[1].replaceAll("''", "'");
+  return value;
+}
+
 function safeSuffix(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '') || 'default';
 }
@@ -349,40 +372,43 @@ export class HybridDuckDbDatabase {
   }
 
   private async routedStatements(sql: string, params: any[], disk: NativeConnection, memory: NativeConnection): Promise<string[]> {
-    const stateEntry = [...this.partitions.entries()].find(([table]) => new RegExp(`\\b${table}\\b`, 'i').test(sql));
+    const stateEntry = [...this.partitions.entries()].find(([table]) => new RegExp(`^\\s*(?:INSERT(?:\\s+OR\\s+IGNORE)?\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+${table}\\b`, 'i').test(sql));
     const state = stateEntry?.[1];
     if (!state) return [sql];
     if (/^\s*INSERT\s+/i.test(sql)) {
       const columns = new RegExp(`INSERT\\s+(?:OR\\s+IGNORE\\s+)?INTO\\s+${state.table}\\s*\\(([^)]+)\\)`, 'i').exec(sql)?.[1]
         ?.split(',').map((column) => column.trim().replaceAll('"', '').toLowerCase());
       const index = columns?.indexOf(state.column!.toLowerCase()) ?? -1;
-      if (index < 0 || params[index] === undefined) throw new Error(`Partitioned ${state.table} inserts require ${state.column}`);
+      const partitionValue = index >= 0 ? (params[index] ?? literalInsertValue(sql, index)) : undefined;
+      if (partitionValue === undefined) {
+        throw new Error(`Partitioned ${state.table} inserts require ${state.column}; columns=${columns?.join(',') || 'unknown'}; sql=${sql.slice(0, 240)}`);
+      }
       let physical: string;
       if (['range', 'time', 'year'].includes(state.strategy)) {
         if (state.bounds?.length) {
-          const value = String(params[index]);
+          const value = String(partitionValue);
           const boundIndex = state.bounds.findIndex((bound) => (!bound.from || value >= bound.from) && (!bound.to || value < bound.to));
           const name = boundIndex >= 0 ? state.bounds[boundIndex].name : state.default_partition;
           if (!name) throw new Error(`No range partition matches ${state.column}=${value}`);
           physical = `${state.table}__p_${safeSuffix(name)}`;
         } else {
-          const year = new Date(String(params[index])).getUTCFullYear();
+          const year = new Date(String(partitionValue)).getUTCFullYear();
           physical = await this.ensurePhysicalTable(state, year, disk, memory);
         }
       } else if (state.strategy === 'list') {
-        const part = (state.partitions || []).find((candidate) => candidate.values.some((value) => String(value) === String(params[index])));
+        const part = (state.partitions || []).find((candidate) => candidate.values.some((value) => String(value) === String(partitionValue)));
         const name = part?.name || state.default_partition;
         if (!name) throw new Error(`No list partition matches ${state.column}=${String(params[index])}`);
         physical = `${state.table}__p_${safeSuffix(name)}`;
       } else {
         const buckets = Math.max(1, Math.floor(state.buckets || 1));
-        const result = (await disk.runAndReadAll(`SELECT hash(?) % ? AS bucket`, [params[index], buckets])).getRowObjectsJS()[0];
+        const result = (await disk.runAndReadAll(`SELECT hash(?) % ? AS bucket`, [partitionValue, buckets])).getRowObjectsJS()[0];
         physical = `${state.table}__p${Number(result.bucket)}`;
       }
       return [sql, sql.replace(new RegExp(`\\b${state.table}\\b`, 'i'), physical)];
     }
     if (new RegExp(`^\\s*(UPDATE\\s+${state.table}|DELETE\\s+FROM\\s+${state.table})\\b`, 'i').test(sql)) {
-      return [sql, ...state.physicalTables.map((table) => sql.replace(new RegExp(`\\b${state.table}\\b`, 'i'), table))];
+      return state.physicalTables.map((table) => sql.replace(new RegExp(`\\b${state.table}\\b`, 'i'), table));
     }
     return [sql];
   }

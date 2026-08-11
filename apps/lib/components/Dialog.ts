@@ -11,6 +11,8 @@ export type DialogTagGroup = {
   label: string;
   options: Array<{ value: string; label: string }>;
   values?: string[];
+  multiple?: boolean;
+  required?: boolean;
 };
 
 export type DialogOptions = {
@@ -19,8 +21,10 @@ export type DialogOptions = {
   input?: DialogInput;
   tagGroups?: DialogTagGroup[];
   confirmLabel?: string;
+  dangerLabel?: string;
   cancelLabel?: string;
   onConfirm?: (value: string, tags?: Record<string, string[]>) => void | Promise<void>;
+  onDanger?: () => void | Promise<void>;
   onCancel?: () => void;
 };
 
@@ -92,6 +96,10 @@ export class Dialog extends BaseComponent {
         checkbox.type = 'checkbox';
         checkbox.value = option.value;
         checkbox.checked = group.values?.includes(option.value) || false;
+        if (group.multiple === false) checkbox.addEventListener('change', () => {
+          if (!checkbox.checked) return;
+          for (const other of inputs) if (other !== checkbox) other.checked = false;
+        });
         inputs.push(checkbox);
         label.append(checkbox, document.createTextNode(option.label));
         choices.appendChild(label);
@@ -118,6 +126,15 @@ export class Dialog extends BaseComponent {
     cancel.addEventListener('click', close);
     footer.appendChild(cancel);
 
+    if (this.options.dangerLabel && this.options.onDanger) {
+      const danger = document.createElement('button');
+      danger.type = 'button';
+      danger.className = 'core3-dialog-danger';
+      danger.textContent = this.options.dangerLabel;
+      danger.addEventListener('click', () => { close(false); void this.options.onDanger?.(); });
+      footer.appendChild(danger);
+    }
+
     const confirm = document.createElement('button');
     confirm.type = 'button';
     confirm.className = 'core3-dialog-confirm';
@@ -129,10 +146,11 @@ export class Dialog extends BaseComponent {
         input.classList.add('is-invalid');
         return;
       }
-      close(false);
       const tags = tagInputs.size
         ? Object.fromEntries([...tagInputs].map(([id, inputs]) => [id, inputs.filter(input => input.checked).map(input => input.value)]))
         : undefined;
+      if ((this.options.tagGroups || []).some(group => group.required && !(tags?.[group.id]?.length))) return;
+      close(false);
       if (tags) void this.options.onConfirm?.(value, tags);
       else void this.options.onConfirm?.(value);
     });

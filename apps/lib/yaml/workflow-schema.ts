@@ -29,8 +29,28 @@ export type WorkflowDefinition = {
   mutable?: boolean;
   status_source?: string;
   allow_add?: boolean;
+  state_editor?: WorkflowStateEditorDefinition;
   states: WorkflowStateDefinition[];
   transitions: WorkflowTransitionDefinition[];
+  mutations?: Record<string, { steps: unknown[]; database?: { guards?: unknown[]; steps: unknown[] } }>;
+};
+
+export type WorkflowStateEditorDefinition = {
+  allow_edit?: boolean;
+  allow_delete?: boolean;
+  add_title?: string;
+  edit_title?: string;
+  name_label?: string;
+  from_label?: string;
+  to_label?: string;
+  add_label?: string;
+  save_label?: string;
+  cancel_label?: string;
+  delete_label?: string;
+  delete_title?: string;
+  delete_message?: string;
+  replacement_label?: string;
+  delete_confirm_label?: string;
 };
 
 export class WorkflowSchemaError extends Error {
@@ -46,7 +66,8 @@ export class WorkflowSchemaError extends Error {
 const isRecord = (value: unknown): value is Record<string, any> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const ROOT_KEYS = new Set(['workflow']);
-const WORKFLOW_KEYS = new Set(['id', 'entity', 'handler', 'initial', 'permission', 'mutable', 'status_source', 'allow_add', 'states', 'transitions']);
+const WORKFLOW_KEYS = new Set(['id', 'entity', 'handler', 'initial', 'permission', 'mutable', 'status_source', 'allow_add', 'state_editor', 'states', 'transitions', 'mutations']);
+const STATE_EDITOR_KEYS = new Set(['allow_edit', 'allow_delete', 'add_title', 'edit_title', 'name_label', 'from_label', 'to_label', 'add_label', 'save_label', 'cancel_label', 'delete_label', 'delete_title', 'delete_message', 'replacement_label', 'delete_confirm_label']);
 const STATE_KEYS = new Set(['id', 'label', 'color', 'terminal']);
 const TRANSITION_KEYS = new Set(['id', 'from', 'to', 'permission', 'conditions', 'condition_message']);
 const CONDITION_GROUP_KEYS = new Set(['all', 'any']);
@@ -100,6 +121,18 @@ export function validateWorkflowDefinition(input: unknown): WorkflowDefinition {
   if (workflow.mutable !== undefined && typeof workflow.mutable !== 'boolean') issues.push('workflow.mutable must be a boolean');
   if (workflow.allow_add !== undefined && typeof workflow.allow_add !== 'boolean') issues.push('workflow.allow_add must be a boolean');
   if (workflow.status_source !== undefined) requiredString(workflow.status_source, 'workflow.status_source', issues);
+  if (workflow.state_editor !== undefined) {
+    if (!isRecord(workflow.state_editor)) issues.push('workflow.state_editor must be an object');
+    else {
+      unknownKeys(workflow.state_editor, STATE_EDITOR_KEYS, 'workflow.state_editor', issues);
+      for (const key of ['allow_edit', 'allow_delete'] as const) {
+        if (workflow.state_editor[key] !== undefined && typeof workflow.state_editor[key] !== 'boolean') issues.push(`workflow.state_editor.${key} must be a boolean`);
+      }
+      for (const key of [...STATE_EDITOR_KEYS].filter(key => !['allow_edit', 'allow_delete'].includes(key))) {
+        if (workflow.state_editor[key] !== undefined) requiredString(workflow.state_editor[key], `workflow.state_editor.${key}`, issues);
+      }
+    }
+  }
 
   const stateIds = new Set<string>();
   if (!Array.isArray(workflow.states) || !workflow.states.length) issues.push('workflow.states must be a non-empty array');

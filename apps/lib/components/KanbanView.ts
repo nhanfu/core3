@@ -24,7 +24,9 @@ export type KanbanViewOptions = {
   onMove?: (row: ListRow, status: string) => Promise<void> | void;
   onAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
   onEditStatus?: (stateId: string, label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
+  onDeleteStatus?: (stateId: string, replacementState: string) => Promise<void> | void;
   transitions?: Array<{ from: string | string[]; to: string }>;
+  stateEditor?: Record<string, any>;
 };
 
 /** Reusable grouped board used by list-backed pages. */
@@ -158,11 +160,11 @@ export class KanbanView extends BaseComponent {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const dialog = new Dialog(`kanban-add-status-${Date.now()}`, { open: true }, {
-      title: 'Add status',
-      input: { label: 'Status name', placeholder: 'Enter a status name' },
+      title: this.options.stateEditor?.add_title || 'Add status',
+      input: { label: this.options.stateEditor?.name_label || 'Status name', placeholder: 'Enter a status name' },
       tagGroups: this.statusTagGroups(),
-      confirmLabel: 'Add status',
-      cancelLabel: 'Cancel',
+      confirmLabel: this.options.stateEditor?.add_label || 'Add status',
+      cancelLabel: this.options.stateEditor?.cancel_label || 'Cancel',
       onConfirm: (value, tags) => this.options.onAddStatus?.(value, tags?.from || [], tags?.to || []),
     });
     dialog.mount(host);
@@ -180,12 +182,35 @@ export class KanbanView extends BaseComponent {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const dialog = new Dialog(`kanban-edit-status-${Date.now()}`, { open: true }, {
-      title: 'Edit status',
-      input: { label: 'Status name', value: label, placeholder: 'Enter a status name' },
+      title: this.options.stateEditor?.edit_title || 'Edit status',
+      input: { label: this.options.stateEditor?.name_label || 'Status name', value: label, placeholder: 'Enter a status name' },
       tagGroups: this.statusTagGroups(fromStates, toStates, stateId),
-      confirmLabel: 'Save status',
-      cancelLabel: 'Cancel',
+      confirmLabel: this.options.stateEditor?.save_label || 'Save status',
+      cancelLabel: this.options.stateEditor?.cancel_label || 'Cancel',
+      dangerLabel: this.options.stateEditor?.allow_delete === true ? (this.options.stateEditor?.delete_label || 'Delete status') : undefined,
+      onDanger: this.options.onDeleteStatus ? () => this.openDeleteStatusDialog(stateId) : undefined,
       onConfirm: (nextLabel, tags) => this.options.onEditStatus?.(stateId, nextLabel, tags?.from || [], tags?.to || []),
+    });
+    dialog.mount(host);
+  }
+
+  private openDeleteStatusDialog(stateId: string) {
+    if (!this.options.onDeleteStatus) return;
+    const options = (this.options.view.groups || []).filter(group => String(group.value) !== stateId).map(group => ({
+      value: String(group.value), label: String(group.label || group.value),
+    }));
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const dialog = new Dialog(`kanban-delete-status-${Date.now()}`, { open: true }, {
+      title: this.options.stateEditor?.delete_title || 'Delete status',
+      message: this.options.stateEditor?.delete_message,
+      tagGroups: [{ id: 'replacement', label: this.options.stateEditor?.replacement_label || 'Move orders to', options, multiple: false, required: true }],
+      confirmLabel: this.options.stateEditor?.delete_confirm_label || 'Delete and move orders',
+      cancelLabel: this.options.stateEditor?.cancel_label || 'Cancel',
+      onConfirm: (_value, tags) => {
+        const replacement = tags?.replacement?.[0];
+        if (replacement) void this.options.onDeleteStatus?.(stateId, replacement);
+      },
     });
     dialog.mount(host);
   }
@@ -196,8 +221,8 @@ export class KanbanView extends BaseComponent {
       label: String(group.label || group.value),
     }));
     return [
-      { id: 'from', label: 'Can move from', options, values: fromValues },
-      { id: 'to', label: 'Can move to', options, values: toValues },
+      { id: 'from', label: this.options.stateEditor?.from_label || 'Can move from', options, values: fromValues },
+      { id: 'to', label: this.options.stateEditor?.to_label || 'Can move to', options, values: toValues },
     ];
   }
 

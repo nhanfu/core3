@@ -852,7 +852,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           comp.redraw();
         }
       } : undefined,
-      onKanbanEditStatus: sourceWorkflow?.allow_add ? async (stateId: string, label: string, fromStates: string[], toStates: string[]) => {
+      onKanbanEditStatus: sourceWorkflow?.allow_add && sourceWorkflow.state_editor?.allow_edit !== false ? async (stateId: string, label: string, fromStates: string[], toStates: string[]) => {
         await client.workflow(sourceId, 'edit_status', { id: stateId, label, from: fromStates, to: toStates });
         sourceWorkflow.transitions = (sourceWorkflow.transitions || [])
           .filter((transition: any) => {
@@ -876,7 +876,28 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           comp.redraw();
         }
       } : undefined,
+      onKanbanDeleteStatus: sourceWorkflow?.state_editor?.allow_delete ? async (stateId: string, replacementState: string) => {
+        await client.workflow(sourceId, 'delete_status', { id: stateId, replacement: replacementState });
+        sourceWorkflow.states = (sourceWorkflow.states || []).filter((state: any) => String(state.id) !== stateId);
+        sourceWorkflow.transitions = (sourceWorkflow.transitions || []).filter((transition: any) => {
+          const from = Array.isArray(transition.from) ? transition.from : [transition.from];
+          return transition.to !== stateId && !from.includes(stateId);
+        });
+        const statusSource = sourceWorkflow.status_source;
+        await refreshSources([sourceId, ...(statusSource ? [statusSource] : [])]);
+        if (statusSource) {
+          for (const view of comp.options.views || []) {
+            const viewConfig = view as any;
+            if (viewConfig.groupsSource !== statusSource) continue;
+            viewConfig.groups = (dataMap[statusSource]?.data || []).map((group: any) => ({
+              value: String(group.value), label: String(group.label || group.value), color: group.color,
+            }));
+          }
+          comp.redraw();
+        }
+      } : undefined,
       kanbanTransitions: sourceWorkflow?.transitions,
+      kanbanStateEditor: sourceWorkflow?.state_editor,
     },
   );
   const _origSetState = comp.setState.bind(comp);

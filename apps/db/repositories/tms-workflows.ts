@@ -254,6 +254,34 @@ export const workflowsMethods = {
     });
   },
 
+  reassignOrderWorkflowStatus: async function(this: any,
+    fromStatus: string,
+    toStatus: string,
+    actor: { id?: string | null; name: string },
+  ): Promise<void> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        await runOnConnection(conn, 'UPDATE order_workflow_states SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE status = ?', [toStatus, fromStatus]);
+        await runOnConnection(
+          conn,
+          `UPDATE orders SET status = ?
+           WHERE status = ? AND NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = orders.id)`,
+          [toStatus, fromStatus],
+        );
+        await runOnConnection(
+          conn,
+          'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)',
+          [actor.id || null, actor.name, 'orders.workflow_state.delete', 'orders', null, `Moved orders from ${fromStatus} to ${toStatus}`],
+        );
+        await runOnConnection(conn, 'COMMIT');
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  },
+
   transitionAccountingEntry: async function(this: any,
     entryId: string,
     kind: string,

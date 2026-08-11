@@ -99,7 +99,9 @@ export type ListViewOptions = {
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
   onKanbanAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
   onKanbanEditStatus?: (stateId: string, label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
+  onKanbanDeleteStatus?: (stateId: string, replacementState: string) => Promise<void> | void;
   kanbanTransitions?: Array<{ from: string | string[]; to: string }>;
+  kanbanStateEditor?: Record<string, any>;
   emptyState?: { title?: string; description?: string };
   labels?: {
     new?: string;
@@ -270,7 +272,9 @@ export class ListView extends BaseComponent {
           onMove: this.options.onKanbanMove,
           onAddStatus: this.options.onKanbanAddStatus,
           onEditStatus: this.options.onKanbanEditStatus,
+          onDeleteStatus: this.options.onKanbanDeleteStatus,
           transitions: this.options.kanbanTransitions,
+          stateEditor: this.options.kanbanStateEditor,
         },
       );
       kanban.parent = this;
