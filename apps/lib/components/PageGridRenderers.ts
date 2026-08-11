@@ -596,7 +596,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       const detailParams = { ...pageParams, id: String(row.id) };
       const detailCtx = { ...ctx, row, state: { ...ctx.state, ...detailParams } };
       for (const [sourceId, sourceResult] of Object.entries(detailData) as Array<[string, any]>) {
-        if (sourceResult?.data && !Array.isArray(sourceResult.data)) detailCtx.state[sourceId] = sourceResult.data;
+        if (sourceResult?.data && !Array.isArray(sourceResult.data)) {
+          detailCtx.state = { ...detailCtx.state, [sourceId]: sourceResult.data };
+        }
       }
       const detailBindings: Record<string, Array<(data: any) => void>> = {};
       const detailBindSource = (sourceId: string | undefined, update: (data: any) => void) => {
@@ -609,7 +611,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           if (!source) continue;
           const result = await client.query(createQuery({ sourceId, params: detailParams, skip: 0, top: source.page_size || 100 }));
           detailData[sourceId] = result;
-          if (result?.data && !Array.isArray(result.data)) detailCtx.state[sourceId] = result.data;
+          if (result?.data && !Array.isArray(result.data)) {
+            detailCtx.state = { ...detailCtx.state, [sourceId]: result.data };
+          }
           for (const update of detailBindings[sourceId] || []) update(result);
         }
       };

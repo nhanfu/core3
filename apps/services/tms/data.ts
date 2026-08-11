@@ -1,5 +1,5 @@
 import type { TmsRouteContext } from './api-route-context.ts';
-import { declaredFromStates, findDeclaredMove } from '../../lib/workflow.ts';
+import { findDeclaredMove } from '../../lib/workflow.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { executeYamlMutation } from '../../lib/yaml/mutation.ts';
 
@@ -180,15 +180,14 @@ export async function handleDataRoutes(ctx: TmsRouteContext): Promise<Response |
     const transition = findDeclaredMove(workflow.transitions || [], String(current.status), body.status);
     if (!transition) return apiError(409, 'This status transition is not allowed');
     requirePerm(String(transition.permission || workflow.permission));
-    return json(await repository.transitionOrder(
-      body.id,
-      declaredFromStates(transition),
-      transition.to,
-      `orders.${transition.id}`,
-      activityActor,
-      transition.conditions,
-      transition.condition_message,
-    ));
+    if (!transition.mutation) return apiError(500, 'Order transition mutation is not configured');
+    return json(await repository.executeMutation({ ...transition.mutation, scope: { field: 'branch_id' } }, {
+      id: body.id,
+      current_user_id: activityActor.id || null,
+      current_user_name: activityActor.name,
+      current_branch_id: String(authUser.branch_id || ''),
+      view_scope: String(authUser.view_scope || 'all'),
+    }));
   }
 
 

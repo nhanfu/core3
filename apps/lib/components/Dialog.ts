@@ -23,6 +23,7 @@ export type DialogOptions = {
   confirmLabel?: string;
   dangerLabel?: string;
   cancelLabel?: string;
+  messageOnly?: boolean;
   onConfirm?: (value: string, tags?: Record<string, string[]>) => void | Promise<void>;
   onDanger?: () => void | Promise<void>;
   onCancel?: () => void;
@@ -124,7 +125,7 @@ export class Dialog extends BaseComponent {
     cancel.className = 'core3-dialog-cancel';
     cancel.textContent = this.options.cancelLabel || 'Cancel';
     cancel.addEventListener('click', close);
-    footer.appendChild(cancel);
+    if (!this.options.messageOnly) footer.appendChild(cancel);
 
     if (this.options.dangerLabel && this.options.onDanger) {
       const danger = document.createElement('button');
@@ -175,4 +176,16 @@ export class Dialog extends BaseComponent {
     this.onKeyDown = null;
     super.dispose();
   }
+}
+
+export function showMessageDialog(options: { title?: string; message: string; confirmLabel?: string }): Promise<void> {
+  return new Promise(resolve => {
+    const dialog = new Dialog(`message-dialog-${Date.now()}`, { open: true }, {
+      ...options,
+      messageOnly: true,
+      onConfirm: () => resolve(),
+      onCancel: () => resolve(),
+    });
+    dialog.mount(document.body);
+  });
 }

@@ -18,6 +18,8 @@ export type WorkflowTransitionDefinition = {
   permission: string;
   conditions?: { all?: WorkflowConditionDefinition[]; any?: WorkflowConditionDefinition[] };
   condition_message?: string;
+  scope?: { field: string; message?: string };
+  mutation?: Record<string, unknown>;
 };
 
 export type WorkflowDefinition = {
@@ -77,7 +79,7 @@ const STATE_EDITOR_LABEL_KEYS = new Set(['edit_status', 'add_status']);
 const STATE_EDITOR_MODAL_KEYS = new Set(['title', 'message', 'input', 'from_label', 'to_label', 'replacement_label', 'confirm_label', 'cancel_label', 'danger_label']);
 const STATE_EDITOR_INPUT_KEYS = new Set(['label', 'placeholder']);
 const STATE_KEYS = new Set(['id', 'label', 'color', 'terminal']);
-const TRANSITION_KEYS = new Set(['id', 'from', 'to', 'permission', 'conditions', 'condition_message']);
+const TRANSITION_KEYS = new Set(['id', 'from', 'to', 'permission', 'conditions', 'condition_message', 'scope', 'mutation']);
 const CONDITION_GROUP_KEYS = new Set(['all', 'any']);
 const CONDITION_KEYS = new Set(['field', 'operator', 'value']);
 const OPERATORS = new Set(['present', 'equals', 'not_equals', 'greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'in']);

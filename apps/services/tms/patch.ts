@@ -125,7 +125,7 @@ export async function handlePatchRoutes(ctx: TmsRouteContext): Promise<Response 
           if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
           if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
         }
-        if (table === 'orders' || table === 'quotes') {
+        if (table === 'quotes') {
           const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
           if (requestedBranch && String(requestedBranch) !== currentBranchId) return rejectOutOfScope();
           if (!requestedBranch) changes = [...changes, { field: 'branch_id', value: currentBranchId }];
@@ -142,7 +142,7 @@ export async function handlePatchRoutes(ctx: TmsRouteContext): Promise<Response 
         }
       } else if (id) {
         const rowBranch = await branchForRow(table, String(id));
-        if ((table === 'drivers' || table === 'trips' || table === 'maintenance' || table === 'users' || table === 'employees' || table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls' || table === 'accounting_entries' || table === 'orders' || table === 'quotes' || table === 'locations' || table === 'containers') && !rowBranch) return rejectOutOfScope();
+        if ((table === 'drivers' || table === 'trips' || table === 'maintenance' || table === 'users' || table === 'employees' || table === 'employment_contracts' || table === 'timesheets' || table === 'payrolls' || table === 'accounting_entries' || table === 'quotes' || table === 'locations' || table === 'containers') && !rowBranch) return rejectOutOfScope();
         if (rowBranch && rowBranch !== currentBranchId) return rejectOutOfScope();
         if (table === 'trucks' || table === 'departments') {
           const requestedBranch = changes.find((change: any) => change.field === 'branch_id')?.value;
@@ -199,7 +199,7 @@ export async function handlePatchRoutes(ctx: TmsRouteContext): Promise<Response 
           const branchChange = changes.find((change: any) => change.field === 'branch_id');
           if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
         }
-        if ((table === 'orders' || table === 'quotes') && action === 'update') {
+        if (table === 'quotes' && action === 'update') {
           const branchChange = changes.find((change: any) => change.field === 'branch_id');
           if (branchChange && String(branchChange.value || '') !== currentBranchId) return rejectOutOfScope();
         }
@@ -328,18 +328,6 @@ export async function handlePatchRoutes(ctx: TmsRouteContext): Promise<Response 
     if ('scopes' in tbl && action !== 'insert') {
       const existing = await repository.query(`SELECT kind FROM ${table} WHERE id = ?`, [id]);
       if (!existing[0] || existing[0].kind !== scope) return apiError(404, 'Resource not found');
-    }
-    if (table === 'orders' && (action === 'update' || action === 'delete')) {
-      const [order] = await repository.query(
-        `SELECT COALESCE(s.status, o.status) AS status
-         FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id
-         WHERE o.id = ?`,
-        [id],
-      );
-      if (!order) return apiError(404, 'Order not found');
-      if (order.status !== 'Draft') {
-        return apiError(409, `Order cannot be ${action === 'update' ? 'edited' : 'deleted'} while ${order.status}`);
-      }
     }
     if (
       table === 'accounting_entries'

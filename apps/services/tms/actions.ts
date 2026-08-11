@@ -1,6 +1,6 @@
 import { financialWorkflow } from './services/financial-workflow.ts';
 import { payrollWorkflow, quoteWorkflow } from './services/business-workflow.ts';
-import { declaredFromStates, findDeclaredTransition } from '../../lib/workflow.ts';
+import { findDeclaredTransition } from '../../lib/workflow.ts';
 import type { TmsRouteContext } from './api-route-context.ts';
 import type { EventStore } from '../../lib/server/event-store.ts';
 
@@ -23,7 +23,18 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
     requirePerm(permissionForAction(actionName));
 
     const body = await req.json() as any;
-    if (actionDefinition.mutation) {
+    const actionWorkflow = actionDefinition.handler === 'order_transition'
+      ? WORKFLOWS.get(String(actionDefinition.workflow || ''))
+      : undefined;
+    const actionTransition = actionWorkflow
+      ? findDeclaredTransition(actionWorkflow.transitions || [], String(actionDefinition.operation || ''))
+      : undefined;
+    const declaredMutation = actionDefinition.mutation || (actionTransition?.mutation
+      ? { ...actionTransition.mutation, ...(actionTransition.scope ? { scope: actionTransition.scope } : {}) }
+      : undefined);
+    if (declaredMutation) {
+      if (actionDefinition.handler === 'order_transition' && actionTransition?.permission) requirePerm(actionTransition.permission);
+      const values = body?.values && typeof body.values === 'object' ? body.values : {};
       const mutationBody = Object.fromEntries(
         Object.entries(body && typeof body === 'object' ? body : {})
           .filter(([, value]) => value === null || ['boolean', 'number', 'string'].includes(typeof value)),
@@ -36,11 +47,15 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
       };
       let result: any;
       try {
-        result = await repository.executeMutation(actionDefinition.mutation, {
+        result = await repository.executeMutation(declaredMutation, {
           ...mutationBody,
+          values,
+          id: typeof body?.id === 'string' ? body.id : undefined,
           thread_id: typeof body?.id === 'string' ? body.id : '',
           current_user_id: String(authUser.sub || ''),
           current_user_name: activityActor.name,
+          current_branch_id: String(authUser.branch_id || ''),
+          view_scope: String(authUser.view_scope || 'all'),
         });
       } catch (error) {
         if (handler === 'chat') await (eventStore as EventStore).publish({
@@ -262,23 +277,7 @@ export async function handleActionRoutes(ctx: TmsRouteContext): Promise<Response
       ));
     }
 
-    if (handler === 'order_transition') {
-      if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Record is outside the current view scope');
-      const workflow = WORKFLOWS.get(String(actionDefinition.workflow || ''));
-      const transition = findDeclaredTransition(workflow?.transitions || [], String(actionDefinition.operation || ''));
-      if (!transition) return apiError(500, 'Order workflow transition is not configured');
-      requirePerm(transition.permission);
-      const order = await repository.transitionOrder(
-        body.id,
-        declaredFromStates(transition),
-        transition.to,
-        actionName,
-        activityActor,
-        transition.conditions,
-        transition.condition_message,
-      );
-      return json(order);
-    }
+    if (handler === 'order_transition') return apiError(500, 'Order transition mutation is not configured');
 
     if (handler === 'order_chatter') {
       if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');

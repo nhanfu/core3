@@ -1,6 +1,7 @@
 import { html } from '../html.ts';
 import { BaseComponent } from './BaseComponent.ts';
 import { OdooChatter } from './OdooChatter.ts';
+import { showMessageDialog } from './Dialog.ts';
 
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only
@@ -56,6 +57,8 @@ export class OdooFormView extends BaseComponent {
           try {
             await this.state.onInlineSave?.({ ...sourceRecord, ...(this.state.draft || {}), id: sourceRecord.id });
             this.setState({ editing: false, draft: {} });
+          } catch (error: any) {
+            await showMessageDialog({ title: 'Unable to save', message: error instanceof Error ? error.message : 'Unable to save the order', confirmLabel: 'OK' });
           } finally {
             save.disabled = false;
           }

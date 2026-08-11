@@ -103,9 +103,6 @@ export const dataMethods = {
   },
 
   updateRecord: async function(this: any,table: string, id: any, changes: Change[], timestamps: boolean): Promise<any> {
-    if (table === 'orders') {
-      return this.updateOrderRecord(id, changes, timestamps);
-    }
     const sets = changes.map((c) => `${c.field} = ?`).join(', ');
     const tsClause = timestamps ? ', updated_at = CURRENT_TIMESTAMP' : '';
     await this.run(
@@ -116,67 +113,8 @@ export const dataMethods = {
     return rows[0] || null;
   },
 
-  updateOrderRecord: async function(this: any,id: any, changes: Change[], timestamps: boolean): Promise<any> {
-    return this.withConnection(async (conn) => {
-      await runOnConnection(conn, 'BEGIN TRANSACTION');
-      try {
-        const lines = await queryOnConnection(
-          conn,
-          'SELECT id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total, created_at, updated_at FROM order_lines WHERE order_id = ? ORDER BY sequence, id',
-          [id],
-        );
-        const [workflowState] = await queryOnConnection(
-          conn,
-          'SELECT order_id, status, updated_at FROM order_workflow_states WHERE order_id = ?',
-          [id],
-        );
-        if (lines.length) await runOnConnection(conn, 'DELETE FROM order_lines WHERE order_id = ?', [id]);
-        if (workflowState) await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [id]);
-
-        const sets = changes.map((change) => `${change.field} = ?`).join(', ');
-        const values = [...changes.map((change) => change.value), ...(timestamps ? [new Date()] : []), id];
-        await runOnConnection(
-          conn,
-          `UPDATE orders SET ${sets}${timestamps ? ', updated_at = ?' : ''} WHERE id = ?`,
-          values,
-        );
-
-        if (workflowState) {
-          await runOnConnection(
-            conn,
-            'INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(?,?,?)',
-            [workflowState.order_id, workflowState.status, workflowState.updated_at],
-          );
-        }
-        for (const line of lines) {
-          await runOnConnection(
-            conn,
-            `INSERT INTO order_lines(
-              id, order_id, sequence, description, quantity, unit, unit_price,
-              tax_rate, line_total, created_at, updated_at
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-            [line.id, line.order_id, line.sequence, line.description, line.quantity, line.unit, line.unit_price, line.tax_rate, line.line_total, line.created_at, line.updated_at],
-          );
-        }
-        const [updated] = await queryOnConnection(conn, 'SELECT * FROM orders WHERE id = ?', [id]);
-        await runOnConnection(conn, 'COMMIT');
-        return updated || null;
-      } catch (error) {
-        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
-        throw error;
-      }
-    });
-  },
-
   deleteRecord: async function(this: any,table: string, id: any): Promise<void> {
-    if (
-      table !== 'orders'
-      && table !== 'quotes'
-      && table !== 'accounting_entries'
-      && table !== 'customers'
-      && table !== 'partners'
-      && table !== 'system_configs'
-    ) {
+    if (!['quotes', 'accounting_entries', 'customers', 'partners', 'system_configs'].includes(table)) {
       await this.run(`DELETE FROM ${table} WHERE id = ?`, [id]);
       return;
     }
@@ -185,37 +123,10 @@ export const dataMethods = {
       try {
       await runOnConnection(
         conn,
-          `DELETE FROM ${
-            table === 'orders'
-              ? 'order_lines'
-              : table === 'quotes'
-                ? 'quote_lines'
-                : table === 'accounting_entries'
-                  ? 'accounting_entry_lines'
-                  : table === 'customers'
-                    ? 'customer_contacts'
-                    : table === 'partners'
-                      ? 'partner_contacts'
-                      : 'approval_flow_steps'
-          }
-           WHERE ${
-             table === 'orders'
-               ? 'order_id'
-               : table === 'quotes'
-                 ? 'quote_id'
-                 : table === 'accounting_entries'
-                   ? 'entry_id'
-                 : table === 'customers'
-                     ? 'customer_id'
-                     : table === 'partners'
-                       ? 'partner_id'
-                       : 'flow_id'
-           } = ?`,
+          `DELETE FROM ${table === 'quotes' ? 'quote_lines' : table === 'accounting_entries' ? 'accounting_entry_lines' : table === 'customers' ? 'customer_contacts' : table === 'partners' ? 'partner_contacts' : 'approval_flow_steps'}
+           WHERE ${table === 'quotes' ? 'quote_id' : table === 'accounting_entries' ? 'entry_id' : table === 'customers' ? 'customer_id' : table === 'partners' ? 'partner_id' : 'flow_id'} = ?`,
         [id],
       );
-        if (table === 'orders') {
-          await runOnConnection(conn, 'DELETE FROM order_workflow_states WHERE order_id = ?', [id]);
-        }
         if (table === 'system_configs') {
           await runOnConnection(conn, 'DELETE FROM print_template_blocks WHERE template_id = ?', [id]);
         }

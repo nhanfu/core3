@@ -228,12 +228,26 @@ components:
 
 actions:
   - id: add_order
-    type: form
+    type: server_form
     permission: orders.write
     title: Add order
-    table: orders
-    operation: insert
+    action: orders.create
+    handler: yaml_mutation
+    operation: create
+    success_message: Order created successfully.
     refresh: [orders]
+    mutation:
+      operation: insert
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      required: [order_number, customer_name, order_date]
+      defaults: { status: Draft, trip_count: 0 }
+      scope: { field: branch_id, message: Order branch is invalid }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
+          status: 409
+          message: Order number already exists
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
     fields:
       - { field: order_number, label: Order number, type: text, required: true }
       - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
@@ -245,13 +259,30 @@ actions:
       - { field: trip_count, label: Trip count, type: number, default: 0 }
       - { field: notes, label: Notes, type: textarea }
   - id: edit_order
-    type: form
+    type: server_form
     permission: orders.write
     title: Update order
-    table: orders
+    action: orders.update
+    handler: yaml_mutation
     operation: update
+    success_message: Order updated successfully.
     prefill: row
     refresh: [orders]
+    mutation:
+      operation: update
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      required: [order_number, customer_name, order_date]
+      timestamps: true
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
+          status: 409
+          message: Order number already exists
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be edited while Draft
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
     fields:
       - { field: order_number, label: Order number, type: text, required: true }
       - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
@@ -304,8 +335,24 @@ actions:
     confirm: 'Cancel order {{row.order_number}}?'
     refresh: [orders]
   - id: delete_order
-    type: delete
+    type: server
     permission: orders.write
+    action: orders.delete
+    handler: yaml_mutation
+    operation: delete
     confirm: 'Delete order {{row.order_number}}?'
-    table: orders
     refresh: [orders]
+    mutation:
+      operation: delete
+      table: orders
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be deleted while Draft
+      before_steps:
+        - query: "DELETE FROM order_lines WHERE order_id = :id"
+        - query: "DELETE FROM order_workflow_states WHERE order_id = :id"
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.delete', 'orders', :id, 'Deleted order')"
+      result: { query: "SELECT true AS ok" }

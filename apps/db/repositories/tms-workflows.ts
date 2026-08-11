@@ -9,7 +9,6 @@ import {
   runOnConnection,
   splitSQL,
 } from './tms-shared.ts';
-import { workflowConditionsMatch, type WorkflowConditions } from '../../lib/workflow.ts';
 
 export const workflowsMethods = {
   mutateApprovalFlowStep: async function(this: any,
@@ -179,104 +178,6 @@ export const workflowsMethods = {
         return { data: rows };
       } catch (error) {
         await runOnConnection(conn, 'ROLLBACK');
-        throw error;
-      }
-    });
-  },
-
-  transitionOrder: async function(this: any,
-    orderId: string,
-    allowedFrom: readonly string[],
-    targetStatus: string,
-    action: string,
-    actor: { id?: string | null; name: string },
-    conditions?: WorkflowConditions,
-    conditionMessage?: string,
-  ): Promise<any> {
-    return this.withConnection(async (conn) => {
-      await runOnConnection(conn, 'BEGIN TRANSACTION');
-      try {
-        const rows = await queryOnConnection(
-          conn,
-          `SELECT o.*, COALESCE(s.status, o.status) AS workflow_status
-           FROM orders o
-           LEFT JOIN order_workflow_states s ON s.order_id = o.id
-           WHERE o.id = ?`,
-          [orderId],
-        );
-        const order = rows[0];
-        if (!order) throw { status: 404, message: 'Order not found' };
-        if (!allowedFrom.includes(order.workflow_status)) {
-          throw {
-            status: 409,
-            message: `Action "${action}" is not allowed while order is "${order.workflow_status}"`,
-          };
-        }
-        if (!workflowConditionsMatch(order, conditions)) {
-          throw { status: 409, message: conditionMessage || `Conditions for action "${action}" are not satisfied` };
-        }
-        await runOnConnection(
-          conn,
-           `INSERT INTO order_workflow_states(order_id, status, updated_at)
-           VALUES(?,?,CURRENT_TIMESTAMP)
-           ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
-          [orderId, targetStatus],
-        );
-        await runOnConnection(
-          conn,
-          `INSERT INTO system_activity(
-            id, actor_id, actor_name, action, resource, resource_id, detail
-          ) VALUES(?,?,?,?,?,?,?)`,
-          [
-            crypto.randomUUID(),
-            actor.id || null,
-            actor.name,
-            action,
-            'orders',
-            orderId,
-            `${order.order_number}: ${order.workflow_status} -> ${targetStatus}`,
-          ],
-        );
-        const [updated] = await queryOnConnection(
-          conn,
-          `SELECT o.*, COALESCE(s.status, o.status) AS status
-           FROM orders o
-           LEFT JOIN order_workflow_states s ON s.order_id = o.id
-           WHERE o.id = ?`,
-          [orderId],
-        );
-        await runOnConnection(conn, 'COMMIT');
-        return { ...updated, previous_status: order.workflow_status };
-      } catch (error) {
-        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
-        throw error;
-      }
-    });
-  },
-
-  reassignOrderWorkflowStatus: async function(this: any,
-    fromStatus: string,
-    toStatus: string,
-    actor: { id?: string | null; name: string },
-  ): Promise<void> {
-    return this.withConnection(async (conn) => {
-      await runOnConnection(conn, 'BEGIN TRANSACTION');
-      try {
-        await runOnConnection(conn, 'UPDATE order_workflow_states SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE status = ?', [toStatus, fromStatus]);
-        await runOnConnection(
-          conn,
-          `UPDATE orders SET status = ?
-           WHERE status = ? AND NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = orders.id)`,
-          [toStatus, fromStatus],
-        );
-        await runOnConnection(
-          conn,
-          'INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(?,?,?,?,?,?)',
-          [actor.id || null, actor.name, 'orders.workflow_state.delete', 'orders', null, `Moved orders from ${fromStatus} to ${toStatus}`],
-        );
-        await runOnConnection(conn, 'COMMIT');
-      } catch (error) {
-        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
         throw error;
       }
     });

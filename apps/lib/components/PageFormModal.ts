@@ -3,6 +3,7 @@ import { appendIcon } from './Icon.ts';
 import { AsyncSelect } from './AsyncSelect.ts';
 import { MoneyInput } from './MoneyInput.ts';
 import { BaseComponent } from './BaseComponent.ts';
+import { showMessageDialog } from './Dialog.ts';
 
 export class PageFormModal extends BaseComponent {
   readonly openFormModal: any;
@@ -286,6 +287,7 @@ export class PageFormModal extends BaseComponent {
               const actionContext = { ...ctx, row: row || {} };
               await client.action(actionDef.action, {
                 ...resolveActionParams(actionDef.params, actionContext),
+                id: formRecord.id ?? null,
                 values: Object.fromEntries(changes.map(change => [change.field, change.value])),
               });
             } else {
@@ -297,6 +299,7 @@ export class PageFormModal extends BaseComponent {
                 changes,
               });
             }
+            if (actionDef.success_message) await showMessageDialog({ title: 'Success', message: actionDef.success_message, confirmLabel: 'OK' });
             closeModal();
             if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
           } catch (err: any) {

@@ -8,6 +8,7 @@ import { PageFormModal } from './PageFormModal.ts';
 import { PageGridRenderers } from './PageGridRenderers.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { BaseComponent } from './BaseComponent.ts';
+import { showMessageDialog } from './Dialog.ts';
 import { loginPath, safeRedirect } from '../auth-redirect.ts';
 
 class PageChild extends BaseComponent {
@@ -260,7 +261,7 @@ export class PageRuntime extends BaseComponent {
   }
   for (const [sourceId, result] of Object.entries(dataMap)) {
     if (result?.data && !Array.isArray(result.data)) {
-      ctx.state[sourceId] = result.data;
+      ctx.state = { ...ctx.state, [sourceId]: result.data };
     }
   }
 
@@ -501,12 +502,12 @@ export class PageRuntime extends BaseComponent {
           if (actionDef.result === 'alert') {
             const field = actionDef.result_field || 'message';
             const value = result && typeof result === 'object' ? result[field] : result;
-            alert(String(value ?? 'Thành công'));
+            await showMessageDialog({ title: 'Success', message: String(value ?? 'Success'), confirmLabel: 'OK' });
           }
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Action failed';
-          alert(message);
+          await showMessageDialog({ title: 'Action failed', message, confirmLabel: 'OK' });
         }
         break;
       }
@@ -554,7 +555,7 @@ export class PageRuntime extends BaseComponent {
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
           return result;
         } catch (error) {
-          alert(error instanceof Error ? error.message : 'Upload failed');
+          await showMessageDialog({ title: 'Upload failed', message: error instanceof Error ? error.message : 'Upload failed', confirmLabel: 'OK' });
         }
         break;
       }
@@ -576,7 +577,7 @@ export class PageRuntime extends BaseComponent {
             String(row.file_name || 'attachment'),
           );
         } catch (error) {
-          alert(error instanceof Error ? error.message : 'Download failed');
+          await showMessageDialog({ title: 'Download failed', message: error instanceof Error ? error.message : 'Download failed', confirmLabel: 'OK' });
         }
         break;
       }
@@ -620,8 +621,10 @@ export class PageRuntime extends BaseComponent {
     if (actionDef.type === 'server_form') {
       await client.action(actionDef.action, {
         ...resolveActionParams(actionDef.params, { ...ctx, row: values }),
+        id: values.id ?? pageParams.id ?? ctx.state.id ?? null,
         values,
       });
+      if (actionDef.success_message) await showMessageDialog({ title: 'Success', message: actionDef.success_message, confirmLabel: 'OK' });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
     }
   }

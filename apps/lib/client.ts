@@ -35,7 +35,7 @@ class Client {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
-      throw Object.assign(new Error(err.message || 'Request failed'), { status: res.status });
+      throw Object.assign(new Error(err.message || err.error || 'Request failed'), { status: res.status });
     }
 
     return res.json();
