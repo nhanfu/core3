@@ -98,6 +98,8 @@ export type ListViewOptions = {
   viewNavigation?: 'icons' | 'tabs';
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
   onKanbanAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
+  onKanbanEditStatus?: (stateId: string, label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
+  kanbanTransitions?: Array<{ from: string | string[]; to: string }>;
   emptyState?: { title?: string; description?: string };
   labels?: {
     new?: string;
@@ -267,6 +269,8 @@ export class ListView extends BaseComponent {
           onSelect: !mobileNavigation && this.options.formView ? row => this.selectFormRow(row) : undefined,
           onMove: this.options.onKanbanMove,
           onAddStatus: this.options.onKanbanAddStatus,
+          onEditStatus: this.options.onKanbanEditStatus,
+          transitions: this.options.kanbanTransitions,
         },
       );
       kanban.parent = this;

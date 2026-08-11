@@ -625,7 +625,7 @@
 .o-kanban-board { display: flex; min-height: 0; flex: 1; gap: 12px; overflow: auto; padding: 16px; background: var(--o-list-panel-bg); }
 .o-kanban-column { display: flex; width: min(320px, calc(100vw - 48px)); min-width: 280px; height: fit-content; max-height: 100%; flex-direction: column; border-radius: 5px; background: var(--o-list-muted-bg); }
 .o-kanban-column-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; color: var(--o-list-text); }
-.o-kanban-column-title { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+.o-kanban-column-title { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }.o-kanban-column-title[role='button'] { cursor: pointer; }.o-kanban-column-title[role='button']:focus-visible { outline: 2px solid var(--o-list-action); outline-offset: 2px; }
 .o-kanban-column-title::before { width: 8px; height: 8px; border-radius: 50%; background: var(--o-list-muted); content: ''; }
 .o-kanban-column-title.is-amber::before { background: #d69621; }.o-kanban-column-title.is-green::before { background: #2b9a6d; }.o-kanban-column-title.is-red::before { background: #d9534f; }
 .o-kanban-count { min-width: 20px; padding: 1px 6px; border-radius: 10px; background: var(--o-list-bg); color: var(--o-list-muted); font-size: 12px; text-align: center; }

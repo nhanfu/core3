@@ -23,6 +23,8 @@ export type KanbanViewOptions = {
   onSelect?: (row: ListRow) => void;
   onMove?: (row: ListRow, status: string) => Promise<void> | void;
   onAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
+  onEditStatus?: (stateId: string, label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
+  transitions?: Array<{ from: string | string[]; to: string }>;
 };
 
 /** Reusable grouped board used by list-backed pages. */
@@ -58,6 +60,16 @@ export class KanbanView extends BaseComponent {
       const heading = html.take(header).div.className('o-kanban-column-title').getContext();
       if (group.color) heading.classList.add(`is-${group.color}`);
       html.take(heading).span.text(group.label);
+      if (this.options.onEditStatus) {
+        heading.title = 'Edit status';
+        heading.tabIndex = 0;
+        heading.setAttribute('role', 'button');
+        const edit = () => this.openEditStatusDialog(group.value, group.label);
+        heading.addEventListener('click', edit);
+        heading.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); edit(); }
+        });
+      }
       html.take(header).span.className('o-kanban-count').text(String(group.rows.length));
       if (this.options.onAddStatus && group === groups[groups.length - 1]) {
         const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', 'Add status').attr('title', 'Add status').getContext();
@@ -156,14 +168,36 @@ export class KanbanView extends BaseComponent {
     dialog.mount(host);
   }
 
-  private statusTagGroups(): DialogTagGroup[] {
-    const options = (this.options.view.groups || []).map(group => ({
+  private openEditStatusDialog(stateId: string, label: string) {
+    if (!this.options.onEditStatus) return;
+    const fromStates: string[] = [];
+    const toStates: string[] = [];
+    for (const transition of this.options.transitions || []) {
+      const from = Array.isArray(transition.from) ? transition.from : [transition.from];
+      if (transition.to === stateId) fromStates.push(...from);
+      if (from.includes(stateId)) toStates.push(transition.to);
+    }
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const dialog = new Dialog(`kanban-edit-status-${Date.now()}`, { open: true }, {
+      title: 'Edit status',
+      input: { label: 'Status name', value: label, placeholder: 'Enter a status name' },
+      tagGroups: this.statusTagGroups(fromStates, toStates, stateId),
+      confirmLabel: 'Save status',
+      cancelLabel: 'Cancel',
+      onConfirm: (nextLabel, tags) => this.options.onEditStatus?.(stateId, nextLabel, tags?.from || [], tags?.to || []),
+    });
+    dialog.mount(host);
+  }
+
+  private statusTagGroups(fromValues: string[] = [], toValues: string[] = [], exclude?: string): DialogTagGroup[] {
+    const options = (this.options.view.groups || []).filter(group => String(group.value) !== exclude).map(group => ({
       value: String(group.value),
       label: String(group.label || group.value),
     }));
     return [
-      { id: 'from', label: 'Can move from', options },
-      { id: 'to', label: 'Can move to', options },
+      { id: 'from', label: 'Can move from', options, values: fromValues },
+      { id: 'to', label: 'Can move to', options, values: toValues },
     ];
   }
 

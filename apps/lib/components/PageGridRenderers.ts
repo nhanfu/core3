@@ -852,6 +852,31 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           comp.redraw();
         }
       } : undefined,
+      onKanbanEditStatus: sourceWorkflow?.allow_add ? async (stateId: string, label: string, fromStates: string[], toStates: string[]) => {
+        await client.workflow(sourceId, 'edit_status', { id: stateId, label, from: fromStates, to: toStates });
+        sourceWorkflow.transitions = (sourceWorkflow.transitions || [])
+          .filter((transition: any) => {
+            const from = Array.isArray(transition.from) ? transition.from : [transition.from];
+            return transition.to !== stateId && !from.includes(stateId);
+          })
+          .concat([
+            ...fromStates.map(from => ({ id: `move_${from}_to_${stateId}`, from, to: stateId, permission: sourceWorkflow.permission })),
+            ...toStates.map(to => ({ id: `move_${stateId}_to_${to}`, from: stateId, to, permission: sourceWorkflow.permission })),
+          ]);
+        const statusSource = sourceWorkflow.status_source;
+        await refreshSources([sourceId, ...(statusSource ? [statusSource] : [])]);
+        if (statusSource) {
+          for (const view of comp.options.views || []) {
+            const viewConfig = view as any;
+            if (viewConfig.groupsSource !== statusSource) continue;
+            viewConfig.groups = (dataMap[statusSource]?.data || []).map((group: any) => ({
+              value: String(group.value), label: String(group.label || group.value), color: group.color,
+            }));
+          }
+          comp.redraw();
+        }
+      } : undefined,
+      kanbanTransitions: sourceWorkflow?.transitions,
     },
   );
   const _origSetState = comp.setState.bind(comp);

@@ -12,12 +12,16 @@ datasources:
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Draft'
           WHEN 'Pending Approval' THEN 'Pending approval'
           WHEN 'Approved' THEN 'Approved'
-          WHEN 'Cancelled' THEN 'Cancelled' ELSE o.status END AS status_label,
+          WHEN 'Cancelled' THEN 'Cancelled' ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) END AS status_label,
         o.shipment_type, o.route, o.transport_method, o.trip_count,
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, o.notes
       FROM orders o
       WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+  - id: order_detail_statuses
+    single: false
+    permission: orders.read
+    workflow_states: orders
   - id: order_detail_lines
     single: false
     permission: orders.read
@@ -116,6 +120,7 @@ components:
     title_field: order_number
     status_field: status
     status_label_field: status_label
+    statusbar_source: order_detail_statuses
     status_colors: { Draft: neutral, Pending approval: amber, Approved: green, Cancelled: red }
     status_badges:
       - { value: Cancelled, label: Cancelled, tone: red }
