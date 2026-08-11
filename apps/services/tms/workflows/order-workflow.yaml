@@ -10,19 +10,31 @@ workflow:
   state_editor:
     allow_edit: true
     allow_delete: true
-    add_title: Add status
-    edit_title: Edit status
-    name_label: Status name
-    from_label: Can move from
-    to_label: Can move to
-    add_label: Add status
-    save_label: Save status
-    cancel_label: Cancel
-    delete_label: Delete status
-    delete_title: Delete status
-    delete_message: Choose the status that should receive these orders.
-    replacement_label: Move orders to
-    delete_confirm_label: Delete and move orders
+    labels:
+      edit_status: Edit status
+      add_status: Add status
+    modals:
+      add:
+        title: Add status
+        input: { label: Status name, placeholder: Enter a status name }
+        from_label: Can move from
+        to_label: Can move to
+        confirm_label: Add status
+        cancel_label: Cancel
+      edit:
+        title: Edit status
+        input: { label: Status name, placeholder: Enter a status name }
+        from_label: Can move from
+        to_label: Can move to
+        confirm_label: Save status
+        cancel_label: Cancel
+        danger_label: Delete status
+      delete:
+        title: Delete status
+        message: Choose the status that should receive these orders.
+        replacement_label: Move orders to
+        confirm_label: Delete and move orders
+        cancel_label: Cancel
   mutations:
     add_status:
       steps:

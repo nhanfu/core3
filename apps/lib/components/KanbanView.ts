@@ -63,7 +63,7 @@ export class KanbanView extends BaseComponent {
       if (group.color) heading.classList.add(`is-${group.color}`);
       html.take(heading).span.text(group.label);
       if (this.options.onEditStatus) {
-        heading.title = 'Edit status';
+        heading.title = this.options.stateEditor?.labels?.edit_status || '';
         heading.tabIndex = 0;
         heading.setAttribute('role', 'button');
         const edit = () => this.openEditStatusDialog(group.value, group.label);
@@ -74,7 +74,8 @@ export class KanbanView extends BaseComponent {
       }
       html.take(header).span.className('o-kanban-count').text(String(group.rows.length));
       if (this.options.onAddStatus && group === groups[groups.length - 1]) {
-        const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', 'Add status').attr('title', 'Add status').getContext();
+        const addLabel = this.options.stateEditor?.labels?.add_status || '';
+        const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', addLabel).attr('title', addLabel).getContext();
         appendIcon(add, 'plus');
         add.addEventListener('click', () => this.openAddStatusDialog());
       }
@@ -159,12 +160,13 @@ export class KanbanView extends BaseComponent {
     if (!this.options.onAddStatus) return;
     const host = document.createElement('div');
     document.body.appendChild(host);
+    const modal = this.options.stateEditor?.modals?.add || {};
     const dialog = new Dialog(`kanban-add-status-${Date.now()}`, { open: true }, {
-      title: this.options.stateEditor?.add_title || 'Add status',
-      input: { label: this.options.stateEditor?.name_label || 'Status name', placeholder: 'Enter a status name' },
-      tagGroups: this.statusTagGroups(),
-      confirmLabel: this.options.stateEditor?.add_label || 'Add status',
-      cancelLabel: this.options.stateEditor?.cancel_label || 'Cancel',
+      title: modal.title,
+      input: modal.input,
+      tagGroups: this.statusTagGroups([], [], undefined, modal),
+      confirmLabel: modal.confirm_label,
+      cancelLabel: modal.cancel_label,
       onConfirm: (value, tags) => this.options.onAddStatus?.(value, tags?.from || [], tags?.to || []),
     });
     dialog.mount(host);
@@ -181,13 +183,14 @@ export class KanbanView extends BaseComponent {
     }
     const host = document.createElement('div');
     document.body.appendChild(host);
+    const modal = this.options.stateEditor?.modals?.edit || {};
     const dialog = new Dialog(`kanban-edit-status-${Date.now()}`, { open: true }, {
-      title: this.options.stateEditor?.edit_title || 'Edit status',
-      input: { label: this.options.stateEditor?.name_label || 'Status name', value: label, placeholder: 'Enter a status name' },
-      tagGroups: this.statusTagGroups(fromStates, toStates, stateId),
-      confirmLabel: this.options.stateEditor?.save_label || 'Save status',
-      cancelLabel: this.options.stateEditor?.cancel_label || 'Cancel',
-      dangerLabel: this.options.stateEditor?.allow_delete === true ? (this.options.stateEditor?.delete_label || 'Delete status') : undefined,
+      title: modal.title,
+      input: { ...modal.input, value: label },
+      tagGroups: this.statusTagGroups(fromStates, toStates, stateId, modal),
+      confirmLabel: modal.confirm_label,
+      cancelLabel: modal.cancel_label,
+      dangerLabel: this.options.stateEditor?.allow_delete === true ? modal.danger_label : undefined,
       onDanger: this.options.onDeleteStatus ? () => this.openDeleteStatusDialog(stateId) : undefined,
       onConfirm: (nextLabel, tags) => this.options.onEditStatus?.(stateId, nextLabel, tags?.from || [], tags?.to || []),
     });
@@ -201,12 +204,13 @@ export class KanbanView extends BaseComponent {
     }));
     const host = document.createElement('div');
     document.body.appendChild(host);
+    const modal = this.options.stateEditor?.modals?.delete || {};
     const dialog = new Dialog(`kanban-delete-status-${Date.now()}`, { open: true }, {
-      title: this.options.stateEditor?.delete_title || 'Delete status',
-      message: this.options.stateEditor?.delete_message,
-      tagGroups: [{ id: 'replacement', label: this.options.stateEditor?.replacement_label || 'Move orders to', options, multiple: false, required: true }],
-      confirmLabel: this.options.stateEditor?.delete_confirm_label || 'Delete and move orders',
-      cancelLabel: this.options.stateEditor?.cancel_label || 'Cancel',
+      title: modal.title,
+      message: modal.message,
+      tagGroups: [{ id: 'replacement', label: modal.replacement_label || '', options, multiple: false, required: true }],
+      confirmLabel: modal.confirm_label,
+      cancelLabel: modal.cancel_label,
       onConfirm: (_value, tags) => {
         const replacement = tags?.replacement?.[0];
         if (replacement) void this.options.onDeleteStatus?.(stateId, replacement);
@@ -215,14 +219,14 @@ export class KanbanView extends BaseComponent {
     dialog.mount(host);
   }
 
-  private statusTagGroups(fromValues: string[] = [], toValues: string[] = [], exclude?: string): DialogTagGroup[] {
+  private statusTagGroups(fromValues: string[] = [], toValues: string[] = [], exclude?: string, modal: Record<string, any> = this.options.stateEditor?.modals?.edit || {}): DialogTagGroup[] {
     const options = (this.options.view.groups || []).filter(group => String(group.value) !== exclude).map(group => ({
       value: String(group.value),
       label: String(group.label || group.value),
     }));
     return [
-      { id: 'from', label: this.options.stateEditor?.from_label || 'Can move from', options, values: fromValues },
-      { id: 'to', label: this.options.stateEditor?.to_label || 'Can move to', options, values: toValues },
+      { id: 'from', label: modal.from_label || '', options, values: fromValues },
+      { id: 'to', label: modal.to_label || '', options, values: toValues },
     ];
   }
 

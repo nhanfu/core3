@@ -38,19 +38,24 @@ export type WorkflowDefinition = {
 export type WorkflowStateEditorDefinition = {
   allow_edit?: boolean;
   allow_delete?: boolean;
-  add_title?: string;
-  edit_title?: string;
-  name_label?: string;
+  labels?: { edit_status?: string; add_status?: string };
+  modals?: {
+    add?: WorkflowStateEditorModalDefinition;
+    edit?: WorkflowStateEditorModalDefinition;
+    delete?: WorkflowStateEditorModalDefinition;
+  };
+};
+
+export type WorkflowStateEditorModalDefinition = {
+  title?: string;
+  message?: string;
+  input?: { label?: string; placeholder?: string };
   from_label?: string;
   to_label?: string;
-  add_label?: string;
-  save_label?: string;
-  cancel_label?: string;
-  delete_label?: string;
-  delete_title?: string;
-  delete_message?: string;
   replacement_label?: string;
-  delete_confirm_label?: string;
+  confirm_label?: string;
+  cancel_label?: string;
+  danger_label?: string;
 };
 
 export class WorkflowSchemaError extends Error {
@@ -67,7 +72,10 @@ const isRecord = (value: unknown): value is Record<string, any> => Boolean(value
 const isString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const ROOT_KEYS = new Set(['workflow']);
 const WORKFLOW_KEYS = new Set(['id', 'entity', 'handler', 'initial', 'permission', 'mutable', 'status_source', 'allow_add', 'state_editor', 'states', 'transitions', 'mutations']);
-const STATE_EDITOR_KEYS = new Set(['allow_edit', 'allow_delete', 'add_title', 'edit_title', 'name_label', 'from_label', 'to_label', 'add_label', 'save_label', 'cancel_label', 'delete_label', 'delete_title', 'delete_message', 'replacement_label', 'delete_confirm_label']);
+const STATE_EDITOR_KEYS = new Set(['allow_edit', 'allow_delete', 'labels', 'modals']);
+const STATE_EDITOR_LABEL_KEYS = new Set(['edit_status', 'add_status']);
+const STATE_EDITOR_MODAL_KEYS = new Set(['title', 'message', 'input', 'from_label', 'to_label', 'replacement_label', 'confirm_label', 'cancel_label', 'danger_label']);
+const STATE_EDITOR_INPUT_KEYS = new Set(['label', 'placeholder']);
 const STATE_KEYS = new Set(['id', 'label', 'color', 'terminal']);
 const TRANSITION_KEYS = new Set(['id', 'from', 'to', 'permission', 'conditions', 'condition_message']);
 const CONDITION_GROUP_KEYS = new Set(['all', 'any']);
@@ -129,7 +137,31 @@ export function validateWorkflowDefinition(input: unknown): WorkflowDefinition {
         if (workflow.state_editor[key] !== undefined && typeof workflow.state_editor[key] !== 'boolean') issues.push(`workflow.state_editor.${key} must be a boolean`);
       }
       for (const key of [...STATE_EDITOR_KEYS].filter(key => !['allow_edit', 'allow_delete'].includes(key))) {
-        if (workflow.state_editor[key] !== undefined) requiredString(workflow.state_editor[key], `workflow.state_editor.${key}`, issues);
+        if (key === 'labels' && workflow.state_editor.labels !== undefined) {
+          if (!isRecord(workflow.state_editor.labels)) issues.push('workflow.state_editor.labels must be an object');
+          else {
+            unknownKeys(workflow.state_editor.labels, STATE_EDITOR_LABEL_KEYS, 'workflow.state_editor.labels', issues);
+            for (const label of Object.keys(workflow.state_editor.labels)) requiredString(workflow.state_editor.labels[label], `workflow.state_editor.labels.${label}`, issues);
+          }
+        }
+        if (key === 'modals' && workflow.state_editor.modals !== undefined) {
+          if (!isRecord(workflow.state_editor.modals)) issues.push('workflow.state_editor.modals must be an object');
+          else for (const [modalId, modal] of Object.entries(workflow.state_editor.modals)) {
+            const modalPath = `workflow.state_editor.modals.${modalId}`;
+            if (!isRecord(modal)) { issues.push(`${modalPath} must be an object`); continue; }
+            unknownKeys(modal, STATE_EDITOR_MODAL_KEYS, modalPath, issues);
+            for (const key of [...STATE_EDITOR_MODAL_KEYS].filter(candidate => candidate !== 'input')) {
+              if (modal[key] !== undefined) requiredString(modal[key], `${modalPath}.${key}`, issues);
+            }
+            if (modal.input !== undefined) {
+              if (!isRecord(modal.input)) issues.push(`${modalPath}.input must be an object`);
+              else {
+                unknownKeys(modal.input, STATE_EDITOR_INPUT_KEYS, `${modalPath}.input`, issues);
+                for (const key of Object.keys(modal.input)) requiredString(modal.input[key], `${modalPath}.input.${key}`, issues);
+              }
+            }
+          }
+        }
       }
     }
   }

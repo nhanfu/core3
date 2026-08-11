@@ -40,6 +40,12 @@ function create(options: Record<string, unknown> = {}, state: Record<string, unk
     columnChooser: true,
     openAction: 'view',
     rowActions: 'menu',
+    kanbanStateEditor: {
+      labels: { add_status: 'Add status', edit_status: 'Edit status' },
+      modals: {
+        add: { title: 'Add status', input: { label: 'Status name', placeholder: 'Enter a status name' }, from_label: 'Can move from', to_label: 'Can move to', confirm_label: 'Add status', cancel_label: 'Cancel' },
+      },
+    },
     views: [
       { id: 'list', label: 'List', icon: 'table' },
       {
@@ -646,6 +652,6 @@ describe('Odoo ListView', () => {
     const input = dialog.querySelector('input') as HTMLInputElement;
     input.value = 'In transit';
     dialog.querySelector<HTMLButtonElement>('.core3-dialog-confirm')!.click();
-    expect(onKanbanAddStatus).toHaveBeenCalledWith('In transit');
+    expect(onKanbanAddStatus).toHaveBeenCalledWith('In transit', [], []);
   });
 });
