@@ -57,6 +57,7 @@ export interface AuthenticationResult {
 
 export interface AuthServiceProtocol {
   login(request: AuthenticationRequest): Promise<AuthenticationResult>;
+  loginExternal(profile: { email: string; name?: string; avatar_url?: string | null }): Promise<AuthenticationResult>;
   logout(userId: string): Promise<void>;
   getCurrentUser(request: Request | unknown): Promise<AuthClaims>;
   hasPermission(user: AuthClaims | User, permission: string): boolean;

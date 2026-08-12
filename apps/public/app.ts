@@ -250,6 +250,11 @@ async function bootstrap() {
     _apps = [];
   }
   _activeModuleId = String(getDefaultApp()?.module || getDefaultApp()?.id || '');
+  const oauthToken = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('oauth_token');
+  if (oauthToken) {
+    localStorage.setItem(TOKEN_KEY, oauthToken);
+    window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}`);
+  }
   const token = getToken();
   if (!app) return;
 

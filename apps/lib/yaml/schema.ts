@@ -41,7 +41,7 @@ export type ComponentDefinition = {
 
 export type ActionDefinition = {
   id: string;
-  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'event' | 'request' | 'client' | 'logout';
+  type: 'form' | 'server_form' | 'delete' | 'patch' | 'navigate' | 'server' | 'upload' | 'download' | 'login' | 'redirect' | 'event' | 'request' | 'client' | 'logout';
   permission?: string;
   handler?: string;
   operation?: string;
@@ -137,6 +137,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission', 'action', 'handler', 'topic', 'topic_version', 'event', 'mutation']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'redirect_param', 'permission']),
+  redirect: new Set(['id', 'type', 'endpoint', 'permission']),
   request: new Set(['id', 'type', 'method', 'endpoint', 'body', 'permission']),
   client: new Set(['id', 'type', 'script', 'permission']),
   logout: new Set(['id', 'type', 'permission']),
@@ -352,6 +353,8 @@ function validateActions(
       if (type === 'patch' && !isRecord(action.body)) issues.push(`${path}.body must be an object`);
     } else if (type === 'navigate') {
       requireString(action.navigate_to, `${path}.navigate_to`, issues);
+    } else if (type === 'redirect') {
+      requireString(action.endpoint, `${path}.endpoint`, issues);
     } else if (type === 'event') {
       requireString(action.event, `${path}.event`, issues);
       if (action.params !== undefined && !isRecord(action.params)) {

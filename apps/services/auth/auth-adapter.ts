@@ -9,6 +9,10 @@ export class MediatorAuthAdapter implements AuthServiceProtocol {
     throw new Error('Login must be handled by the Auth module HTTP endpoint');
   }
 
+  async loginExternal(): Promise<never> {
+    throw new Error('External login must be handled by the Auth module HTTP endpoint');
+  }
+
   async logout(userId: string): Promise<void> {
     void userId;
   }

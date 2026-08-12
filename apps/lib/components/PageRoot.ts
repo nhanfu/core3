@@ -388,6 +388,14 @@ export class PageRuntime extends BaseComponent {
         await appNavigate(redirect || getDefaultRoute(result.user));
         break;
       }
+      case 'redirect': {
+        const endpoint = String(actionDef.endpoint || '').trim();
+        if (!endpoint.startsWith('/')) throw new Error('Redirect endpoint must be same-origin');
+        const target = safeRedirect(new URLSearchParams(window.location.search).get('redirect'));
+        const separator = endpoint.includes('?') ? '&' : '?';
+        window.location.assign(`${endpoint}${separator}redirect=${encodeURIComponent(target || '/')}`);
+        break;
+      }
       case 'event': {
         const eventName = String(actionDef.event || '').trim();
         if (!eventName) throw new Error('Event action requires an event name');

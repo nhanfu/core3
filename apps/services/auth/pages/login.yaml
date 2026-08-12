@@ -56,13 +56,8 @@ actions:
     params:
       provider: sso
   - id: login-google
-    type: event
-    event: core3:auth:sso
-    title: Coming soon
-    message: Google login is under construction.
-    close_label: Close
-    params:
-      provider: google
+    type: redirect
+    endpoint: /api/auth/google/start
   - id: login-microsoft
     type: event
     event: core3:auth:sso

@@ -12,6 +12,14 @@ providers:
   - id: oauth2
     type: oidc
     enabled: false
+  - id: google
+    type: oidc
+    enabled: true
+    start_endpoint: /api/auth/google/start
+    callback_endpoint: /api/auth/google/callback
+    required_env:
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
   - id: saml
     type: saml
     enabled: false
