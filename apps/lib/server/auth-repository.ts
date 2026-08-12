@@ -51,4 +51,13 @@ export class AuthRepository {
   recordLogin(userId: string): Promise<void> {
     return this.execute('record_login', { user_id: userId }).then(() => undefined);
   }
+
+  async profile(userId: string): Promise<any | null> {
+    const [row] = await this.execute('profile', { user_id: userId });
+    return row || null;
+  }
+
+  updateProfile(userId: string, fields: Record<string, unknown>): Promise<void> {
+    return this.execute('update_profile', { user_id: userId, ...fields }).then(() => undefined);
+  }
 }

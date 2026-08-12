@@ -22,3 +22,13 @@ queries:
   password_hash: SELECT password_hash FROM users WHERE id = :user_id
   update_password: UPDATE users SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP WHERE id = :user_id
   record_login: UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :user_id
+  profile: |
+    SELECT id, email, name, avatar_url, preferred_lang, branch_id, department_id
+    FROM users WHERE id = :user_id
+  update_profile: |
+    UPDATE users
+    SET name = COALESCE(:name, name),
+        preferred_lang = COALESCE(:preferred_lang, preferred_lang),
+        avatar_url = COALESCE(:avatar_url, avatar_url),
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = :user_id

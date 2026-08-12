@@ -60,6 +60,9 @@ export default class AuthModule {
     this.topics.start();
 
     let pages = discoverPages(context.appsRoot);
+    const profileApi = pages.pages.get('profile')?.config?.api || {};
+    const profileEndpoint = String(profileApi.endpoint || '/api/v1/profile');
+    const profileFields = new Set(Array.isArray(profileApi.fields) ? profileApi.fields.map(String) : []);
     context.registerApi(async (request: Request, url: URL) => {
       if (url.pathname === '/api/auth/login' && request.method === 'POST') {
         try {
@@ -88,6 +91,25 @@ export default class AuthModule {
           const user = await this.service.getCurrentUser(request);
           const body = await request.json() as any;
           await this.service.changePassword(String(user.sub), String(body.current_password || ''), String(body.new_password || ''));
+          return json({ ok: true });
+        } catch (error) { return errorResponse(error); }
+      }
+      if (url.pathname === profileEndpoint && (request.method === 'GET' || request.method === 'PATCH')) {
+        try {
+          const user = await this.service.getCurrentUser(request);
+          if (request.method === 'GET') {
+            const profile = await repository.profile(String(user.sub));
+            return profile ? json(profile) : json({ error: 'User not found' }, 404);
+          }
+          const body = await request.json() as Record<string, unknown>;
+          if (body.new_password) {
+            if (!body.current_password) return json({ error: 'current_password required' }, 400);
+            await this.service.changePassword(String(user.sub), String(body.current_password), String(body.new_password));
+          }
+          const fields = Object.fromEntries([...profileFields]
+            .filter((field) => body[field] !== undefined)
+            .map((field) => [field, body[field]]));
+          if (Object.keys(fields).length) await repository.updateProfile(String(user.sub), fields);
           return json({ ok: true });
         } catch (error) { return errorResponse(error); }
       }

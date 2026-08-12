@@ -60,6 +60,7 @@ export type PageConfig = {
   filters?: Record<string, unknown>;
   components?: ComponentDefinition[];
   actions?: ActionDefinition[];
+  api?: { endpoint: string; fields?: string[] };
 };
 
 export type PageValidationOptions = {
@@ -80,6 +81,7 @@ const ROOT_KEYS = new Set([
   'filters',
   'components',
   'actions',
+  'api',
 ]);
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);

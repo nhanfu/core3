@@ -1,6 +1,9 @@
 title: Profile
 page:
   id: profile
+api:
+  endpoint: /api/v1/profile
+  fields: [name, preferred_lang, avatar_url]
 
 components:
   - type: Html

@@ -3,7 +3,6 @@ import { requestLanguage } from '../locale.ts';
 import { handleFileRoutes } from './file-routes.ts';
 import { handleDataRoutes } from './yaml-data.ts';
 import { handleActionRoutes } from './yaml-actions.ts';
-import { handleProfileRoutes } from './profile-routes.ts';
 import { handleEventRoutes } from './event-websocket.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -302,7 +301,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       });
       return handleActionRoutes({ ...routeContext, req: actionRequest, url: actionUrl, pathname: actionUrl.pathname, method: 'POST' });
     };
-    for (const handler of [handleEventRoutes, handleFileRoutes, handleDataRoutes, handleActionRoutes, handleProfileRoutes]) {
+    for (const handler of [handleEventRoutes, handleFileRoutes, handleDataRoutes, handleActionRoutes]) {
       const response = handler === handleEventRoutes
         ? await handler(routeContext, websocketServer)
         : await handler(routeContext);
