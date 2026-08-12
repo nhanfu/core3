@@ -3,6 +3,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import type { ModuleApplicationConfig } from './application-config.ts';
 import type { EventBus } from './event-store.ts';
+import { loadYamlServiceManifest, YamlServiceModule } from './yaml-service.ts';
 
 export type ModuleServer = { upgrade(request: Request, options?: { data?: unknown }): boolean };
 export type ModuleApiHandler = (request: Request, url: URL, server?: ModuleServer) => Response | null | undefined | Promise<Response | null | undefined>;
@@ -46,7 +47,13 @@ export function discoverModuleRoots(appsRoot: string): string[] {
     }
   } catch {}
   for (const root of candidates) {
-    try { if (statSync(join(root, 'module.ts')).isFile()) roots.push(root); } catch {}
+    try {
+      let moduleFile = false;
+      let manifestFile = false;
+      try { moduleFile = statSync(join(root, 'module.ts')).isFile(); } catch {}
+      try { manifestFile = statSync(join(root, 'manifest.yaml')).isFile(); } catch {}
+      if (moduleFile || manifestFile) roots.push(root);
+    } catch {}
   }
   return roots.sort();
 }
@@ -60,9 +67,23 @@ function moduleRoot(appsRoot: string, moduleId: string): string {
 export async function discoverModules(appsRoot: string): Promise<ModuleLifecycle[]> {
   const modules: ModuleLifecycle[] = [];
   for (const root of discoverModuleRoots(appsRoot)) {
-    const loaded = await import(pathToFileURL(join(root, 'module.ts')).href);
-    const candidate = loaded.default ?? loaded.createModule;
-    const instance = typeof candidate === 'function' ? new candidate() : candidate;
+    let instance: ModuleLifecycle;
+    let hasModule = false;
+    try { hasModule = statSync(join(root, 'module.ts')).isFile(); } catch {}
+    if (hasModule) {
+      const loaded = await import(pathToFileURL(join(root, 'module.ts')).href);
+      const candidate = loaded.default ?? loaded.createModule;
+      instance = typeof candidate === 'function' ? new candidate() : candidate;
+    } else {
+      const service = loadYamlServiceManifest(root);
+      if (service.manifest.runtime === 'auth') {
+        const loaded = await import(pathToFileURL(join(appsRoot, 'lib', 'server', 'auth-module.ts')).href);
+        const candidate = loaded.default ?? loaded.AuthModule;
+        instance = typeof candidate === 'function' ? new candidate() : candidate;
+      } else {
+        instance = new YamlServiceModule(service);
+      }
+    }
     if (!instance || typeof instance.load !== 'function' || typeof instance.install !== 'function'
       || typeof instance.unload !== 'function' || typeof instance.uninstall !== 'function') {
       throw new Error(`Module ${root} must export a lifecycle class as default`);

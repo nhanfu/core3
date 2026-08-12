@@ -1,0 +1,7 @@
+events:
+  - id: chat.message.created
+    payload:
+      thread_id: string
+      message_id: string
+      sender_id: string
+      body: string

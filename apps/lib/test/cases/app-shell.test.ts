@@ -12,7 +12,7 @@ describe('Odoo application shell', () => {
     const container = document.createElement('div');
     const shell = new AppShell('shell', {
       user: { name: 'Admin', roles: ['Administrator'], permissions: [] },
-      apps: [{ id: 'tms', label: 'TMS', route: '/dashboard', available: true }],
+      apps: [{ id: 'order', label: 'Orders', route: '/order', available: true }],
       menu: {
         dashboard: { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
         groups: [{ id: 'operations', label: 'Operations', items: [{ path: '/orders', label: 'Orders', icon: 'document' }] }],

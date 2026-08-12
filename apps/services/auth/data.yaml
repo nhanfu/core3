@@ -1,0 +1,24 @@
+queries:
+  find_user_by_email: |
+    SELECT u.*, string_agg(r.name, ',') AS roles_csv,
+      COALESCE((SELECT CASE
+        WHEN bool_or(sr.view_scope = 'all') THEN 'all'
+        WHEN bool_or(sr.view_scope = 'branch') THEN 'branch'
+        ELSE 'own' END
+        FROM user_roles sur JOIN roles sr ON sr.id = sur.role_id
+        WHERE sur.user_id = u.id), 'all') AS view_scope
+    FROM users u
+    LEFT JOIN user_roles ur ON ur.user_id = u.id
+    LEFT JOIN roles r ON r.id = ur.role_id
+    WHERE lower(u.email) = lower(:email)
+    GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
+      u.preferred_lang, u.enabled, u.branch_id, u.department_id,
+      u.last_login, u.created_at, u.updated_at
+  permissions: |
+    SELECT DISTINCT p.permission_key
+    FROM permissions p
+    JOIN user_roles ur ON ur.role_id = p.role_id
+    WHERE ur.user_id = :user_id
+  password_hash: SELECT password_hash FROM users WHERE id = :user_id
+  update_password: UPDATE users SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP WHERE id = :user_id
+  record_login: UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :user_id

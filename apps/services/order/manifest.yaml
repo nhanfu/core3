@@ -1,0 +1,11 @@
+id: order
+kind: domain-service
+database: order
+migrations: ../../db/migrations
+pages:
+  - pages/menu.yaml
+  - pages/orders.yaml
+  - pages/order-detail.yaml
+  - pages/order-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

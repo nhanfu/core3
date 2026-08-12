@@ -29,7 +29,7 @@ class I18n {
       return;
     }
     try {
-      const token = localStorage.getItem('tms_token');
+      const token = localStorage.getItem('core3_token');
       const endpoint = `/api/menu?lc=${encodeURIComponent(this.lang)}`;
       const res = await fetch(
         endpoint,

@@ -5,17 +5,26 @@ services:
     database:
       driver: duckdb
       path:
-        development: ${CORE3_DB_PATH:-./core3.duckdb}
-        production: ${CORE3_DB_PATH:-./core3.duckdb}
+        development: ${CORE3_DB_PATH:-../coredb/core3.duckdb}
+        production: ${CORE3_DB_PATH:-../coredb/core3.duckdb}
 
-  # Shared chat storage. This is intentionally independent of TMS storage so
+  # Order storage is declared independently so the YAML service can acquire
+  # its own database adapter for the Order service.
+  order:
+    database:
+      driver: duckdb
+      path:
+        development: ${CORE3_ORDER_DB_PATH:-../coredb/order.duckdb}
+        production: ${CORE3_ORDER_DB_PATH:-../coredb/order.duckdb}
+
+  # Shared chat storage. This is intentionally independent of Order storage so
   # other applications can use the same conversations and participants.
   chat:
     database:
       driver: duckdb
       path:
-        development: ${CORE3_CHAT_DB_PATH:-./chat.duckdb}
-        production: ${CORE3_CHAT_DB_PATH:-./chat.duckdb}
+        development: ${CORE3_CHAT_DB_PATH:-../coredb/chat.duckdb}
+        production: ${CORE3_CHAT_DB_PATH:-../coredb/chat.duckdb}
     event_schema:
       table: event_log
       columns:
@@ -53,8 +62,8 @@ services:
     database:
       driver: parquet
       path:
-        development: ${CORE3_EVENT_DB_PATH:-./events-parquet}
-        production: ${CORE3_EVENT_DB_PATH:-./events-parquet}
+        development: ${CORE3_EVENT_DB_PATH:-../coredb/events-parquet}
+        production: ${CORE3_EVENT_DB_PATH:-../coredb/events-parquet}
     retention_ms: ${CORE3_EVENT_RETENTION_MS:-3600000}
     max_rows: ${CORE3_EVENT_MAX_ROWS:-1000}
     hot_max_rows: ${CORE3_EVENT_HOT_MAX_ROWS:-100000}
@@ -68,10 +77,17 @@ services:
     write_mode: ${CORE3_EVENT_WRITE_MODE:-low_latency}
 
 apps:
-  - id: tms
+  - id: order
     label: Orders
-    description: Order management and collaboration
+    description: Order management
     icon: truck
     route: /orders
-    module: tms
+    module: order
+    enabled: true
+  - id: chat
+    label: Chat
+    description: Conversations and collaboration
+    icon: message
+    route: /chat
+    module: chat
     enabled: true

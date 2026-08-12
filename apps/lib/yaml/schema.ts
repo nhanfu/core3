@@ -127,12 +127,12 @@ const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission', 'action', 'handler', 'mutation', 'success_message']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind', 'mutation', 'success_message']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind', 'topic', 'topic_version', 'event', 'mutation', 'success_message']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission', 'action', 'handler', 'mutation']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
-  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'workflow', 'operation', 'domain', 'kind', 'mutation']),
-  upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission', 'action', 'handler', 'mutation']),
+  server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'workflow', 'operation', 'domain', 'kind', 'topic', 'topic_version', 'event', 'mutation']),
+  upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission', 'action', 'handler', 'topic', 'topic_version', 'event', 'mutation']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'redirect_param', 'permission']),
   request: new Set(['id', 'type', 'method', 'endpoint', 'body', 'permission']),

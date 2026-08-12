@@ -1,0 +1,7 @@
+# Authorization required by the Chat pages.
+permissions:
+  - chat.read
+  - chat.write
+endpoints:
+  upload.chat_attachment: chat.write
+  chat.attachment.download: chat.read

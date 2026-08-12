@@ -3,6 +3,7 @@ node_modules/
 *.css.map
 
 # Local databases and DuckDB runtime files
+coredb
 *.duckdb
 *.duckdb.wal
 *.duckdb.tmp

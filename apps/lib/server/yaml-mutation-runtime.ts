@@ -1,4 +1,4 @@
-import { bindNamedParams, queryOnConnection, runOnConnection } from '../../db/repositories/tms-shared.ts';
+import { bindNamedParams, queryOnConnection, runOnConnection } from './database/sql.ts';
 
 export type MutationConnection = {
   run(sql: string, ...args: any[]): void;

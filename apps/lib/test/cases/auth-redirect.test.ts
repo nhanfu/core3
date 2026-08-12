@@ -3,8 +3,8 @@ import { loginPath, safeRedirect } from '../../auth-redirect.ts';
 
 describe('auth redirect', () => {
   it('keeps an internal path and query string', () => {
-    expect(safeRedirect('/tms/orders?status=Draft#lines', 'http://localhost'))
-      .toBe('/tms/orders?status=Draft#lines');
+    expect(safeRedirect('/order/orders?status=Draft#lines', 'http://localhost'))
+      .toBe('/order/orders?status=Draft#lines');
   });
 
   it('rejects external redirect targets', () => {
@@ -13,8 +13,8 @@ describe('auth redirect', () => {
   });
 
   it('encodes the return target in the login URL', () => {
-    expect(loginPath('/tms/orders?status=Draft', 'vi')).toBe(
-      '/auth/login?redirect=%2Ftms%2Forders%3Fstatus%3DDraft&lc=vi',
+    expect(loginPath('/order/orders?status=Draft', 'vi')).toBe(
+      '/auth/login?redirect=%2Forder%2Forders%3Fstatus%3DDraft&lc=vi',
     );
   });
 });

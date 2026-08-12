@@ -1,0 +1,9 @@
+# Authorization required by the Order pages.
+permissions:
+  - orders.read
+  - orders.write
+  - orders.approve
+  - orders.chatter
+endpoints:
+  upload.order_attachment: orders.write
+  orders.attachment.download: orders.read

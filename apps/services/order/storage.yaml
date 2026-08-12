@@ -1,0 +1,7 @@
+attachments:
+  order_attachment:
+    download:
+      route: /api/orders/attachments
+      permission: orders.attachment.download
+      query: SELECT * FROM order_attachments WHERE id = :attachment_id
+      scope: { table: orders, field: branch_id }

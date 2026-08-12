@@ -76,7 +76,7 @@ describe('YAML Odoo ListView renderer', () => {
       meta: { total: 1, page: 1, pageSize: 50 },
     });
     window.__CORE3_USER__ = { permissions: ['orders.read'] };
-    window.history.replaceState({}, '', '/tms/orders?status=Draft&q=ORD-001');
+    window.history.replaceState({}, '', '/order/orders?status=Draft&q=ORD-001');
     const container = document.createElement('div');
     await renderPage({
       page: { id: 'orders', breadcrumb: ['Management', 'Orders'] },
@@ -109,7 +109,7 @@ describe('YAML Odoo ListView renderer', () => {
       meta: { total: 6, page: 2, pageSize: 2 },
     });
     window.__CORE3_USER__ = { permissions: ['orders.read'] };
-    window.history.replaceState({}, '', '/tms/orders?page=2&page_size=2&sort=number&sort_dir=desc');
+    window.history.replaceState({}, '', '/order/orders?page=2&page_size=2&sort=number&sort_dir=desc');
     const container = document.createElement('div');
     await renderPage({
       page: { id: 'orders', breadcrumb: ['Management', 'Orders'] },
@@ -149,7 +149,7 @@ describe('YAML Odoo ListView renderer', () => {
       meta: { total: 2, page: 1, pageSize: 50 },
     });
     window.__CORE3_USER__ = { permissions: ['orders.read'] };
-    window.history.replaceState({}, '', '/tms/orders?sort=number&sort_dir=desc');
+    window.history.replaceState({}, '', '/order/orders?sort=number&sort_dir=desc');
     await renderPage({
       page: { id: 'orders' },
       datasources: [{ id: 'orders', permission: 'orders.read', query: 'SELECT 1' }],
@@ -170,7 +170,7 @@ describe('YAML Odoo ListView renderer', () => {
       meta: { total: 1, page: 1, pageSize: 50 },
     });
     window.__CORE3_USER__ = { permissions: ['orders.read'] };
-    window.history.replaceState({}, '', '/tms/orders?view=kanban');
+    window.history.replaceState({}, '', '/order/orders?view=kanban');
     const container = document.createElement('div');
     await renderPage({
       title: 'Orders',
@@ -199,7 +199,7 @@ describe('YAML Odoo ListView renderer', () => {
       meta: { total: 1, page: 1, pageSize: 50 },
     });
     window.__CORE3_USER__ = { permissions: ['orders.read'] };
-    window.history.replaceState({}, '', '/tms/orders?view=card');
+    window.history.replaceState({}, '', '/order/orders?view=card');
     const container = document.createElement('div');
     await renderPage({
       title: 'Orders',
@@ -226,7 +226,7 @@ describe('YAML Odoo ListView renderer', () => {
       meta: { total: 1, page: 1, pageSize: 50 },
     });
     window.__CORE3_USER__ = { permissions: ['orders.read'] };
-    window.history.replaceState({}, '', '/tms/orders?view=calendar');
+    window.history.replaceState({}, '', '/order/orders?view=calendar');
     const container = document.createElement('div');
     await renderPage({
       title: 'Orders',

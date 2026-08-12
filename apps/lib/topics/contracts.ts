@@ -29,6 +29,10 @@ export type TopicDefinition<TRequest = unknown, TResponse = unknown> = {
   response?: (value: unknown) => TResponse;
 };
 
+export function topicDefinition<TRequest = unknown, TResponse = unknown>(topic: string, version = 1): TopicDefinition<TRequest, TResponse> {
+  return { topic, version, kind: 'command' };
+}
+
 export type TopicHandlerContext = {
   source: string;
   correlationId: string;

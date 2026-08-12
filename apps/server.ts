@@ -1,5 +1,7 @@
 import { join } from 'node:path';
 import { discoverModules, ModuleManager } from './lib/server/module.ts';
+import { YamlServiceModule } from './lib/server/yaml-service.ts';
+import { createYamlHostApi } from './lib/server/routes/yaml-host-api.ts';
 import { discoverPageRoutes, discoverPages } from './lib/server/discovery.ts';
 import { loadApplicationConfig, resolveEnvironmentValues } from './lib/server/application-config.ts';
 import { EventStore, type EventBus } from './lib/server/event-store.ts';
@@ -30,7 +32,7 @@ const eventBus: EventBus = eventMode === 'mediator'
   })
   : new EventStore({
     schema: eventSchema,
-    databasePath: eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || './events-parquet',
+    databasePath: eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet',
     retentionMs: Number(eventConfig.retention_ms || 60 * 60 * 1000),
     maxRows: Number(eventConfig.max_rows || 1000),
     hotMaxRows: Number(eventConfig.hot_max_rows || 100000),
@@ -129,6 +131,11 @@ const moduleManifest = modules.map((module) => ({
     .map((route) => ({ ...route, path: `/${module.id}${route.path}` })),
 }));
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
+const yamlServiceContexts = modules
+  .filter((module): module is YamlServiceModule => module instanceof YamlServiceModule)
+  .map((module) => module.getRuntimeContext())
+  .filter((context): context is NonNullable<typeof context> => Boolean(context));
+if (yamlServiceContexts.length) moduleManager.apiHandlers.unshift(createYamlHostApi(yamlServiceContexts));
 
 async function applicationCatalog() {
   try {

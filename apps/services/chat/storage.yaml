@@ -1,0 +1,11 @@
+attachments:
+  chat_attachment:
+    download:
+      route: /api/chat/attachments
+      permission: chat.attachment.download
+      query: |
+        SELECT a.id, a.file_name, a.mime_type, a.size_bytes, a.storage_key
+        FROM chat_attachments a
+        JOIN chat_messages m ON m.id = a.message_id
+        JOIN chat_participants p ON p.thread_id = m.thread_id
+        WHERE a.id = :attachment_id AND p.user_id = :user_id

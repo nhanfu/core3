@@ -113,7 +113,7 @@ export class ChatWorkspace extends BaseComponent {
     const connect = () => {
       const configured = String(this.def.websocket.endpoint);
       const endpoint = configured.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
-      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tms_token') : null;
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('core3_token') : null;
       const url = new URL(endpoint, window.location.origin);
       if (token) url.searchParams.set('token', token);
       const socket = new WebSocket(url.toString());
@@ -147,7 +147,7 @@ export class ChatWorkspace extends BaseComponent {
       const apiBase = typeof window !== 'undefined' && window.__CORE3_API_BASE__
         ? window.__CORE3_API_BASE__
         : '/api';
-      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('tms_token') : null;
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('core3_token') : null;
       const response = await fetch(`${apiBase}/chat/attachments/${encodeURIComponent(id)}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });

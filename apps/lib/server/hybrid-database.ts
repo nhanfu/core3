@@ -1,5 +1,5 @@
 import { DuckDBInstance } from '@duckdb/node-api';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, rename, stat } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 type NativeConnection = any;
@@ -82,8 +82,12 @@ export class HybridDuckDbDatabase {
 
   static async open(path: string): Promise<HybridDuckDbDatabase> {
     const parent = dirname(path);
-    if (path !== ':memory:' && parent !== '.') await mkdir(parent, { recursive: true });
-    const disk = await DuckDBInstance.create(path);
+    if (path !== ':memory:' && parent !== '.') {
+      await mkdir(parent, { recursive: true }).catch((error: any) => {
+        if (error?.code !== 'EEXIST') throw error;
+      });
+    }
+    const disk = await openDurableDatabase(path);
     const memory = await DuckDBInstance.create(':memory:');
     const database = new HybridDuckDbDatabase(disk, memory, path);
     await database.copySchema();
@@ -101,7 +105,7 @@ export class HybridDuckDbDatabase {
       )).getRowObjectsJS();
       for (const row of rows) {
         const table = String(row.table_name);
-        this.partitions.set(table, {
+        const state: PartitionState = {
           table,
           ...(row.definition_json ? JSON.parse(String(row.definition_json)) : {}),
           column: row.partition_column ? String(row.partition_column) : undefined,
@@ -112,7 +116,17 @@ export class HybridDuckDbDatabase {
             `SELECT table_name FROM duckdb_tables() WHERE table_name LIKE ? ORDER BY table_name`,
             [`${table}__p%`],
           )).getRowObjectsJS().map((item: any) => String(item.table_name)),
-        });
+        };
+        this.partitions.set(table, state);
+        await connection.run(`CREATE OR REPLACE VIEW ${quoteIdentifier(state.logicalView)} AS ${this.partitionViewSql(state, state.physicalTables)}`).catch(() => {});
+      }
+      const memoryConnection = await this.memory.connect();
+      try {
+        for (const state of this.partitions.values()) {
+          await memoryConnection.run(`CREATE OR REPLACE VIEW ${quoteIdentifier(state.logicalView)} AS ${this.partitionViewSql(state, state.physicalTables)}`).catch(() => {});
+        }
+      } finally {
+        memoryConnection.closeSync();
       }
     } catch {
       // The metadata table is created by the first partitioning migration.
@@ -515,5 +529,27 @@ export class HybridDuckDbDatabase {
     this.memory.closeSync();
     this.disk.closeSync();
     callback?.();
+  }
+}
+
+async function openDurableDatabase(path: string): Promise<any> {
+  try {
+    return await DuckDBInstance.create(path);
+  } catch (error) {
+    const message = String((error as any)?.message || error);
+    const walPath = `${path}.wal`;
+    const isBrokenWalReplay = /Failure while replaying WAL file/i.test(message)
+      && /GetDefaultDatabase with no default database set/i.test(message);
+    if (path === ':memory:' || !isBrokenWalReplay) throw error;
+
+    try {
+      await stat(walPath);
+      const quarantinePath = `${walPath}.recovery-${Date.now()}`;
+      await rename(walPath, quarantinePath);
+      console.warn(`[core3] DuckDB WAL replay failed; quarantined ${walPath} as ${quarantinePath}`);
+    } catch (recoveryError) {
+      throw new Error(`DuckDB WAL recovery failed for ${walPath}: ${String((recoveryError as any)?.message || recoveryError)}`, { cause: error as Error });
+    }
+    return DuckDBInstance.create(path);
   }
 }

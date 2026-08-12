@@ -1,0 +1,9 @@
+id: auth
+kind: infrastructure-service
+runtime: auth
+database: auth
+pages:
+  - pages/login.yaml
+  - pages/profile.yaml
+permissions: permissions.yaml
+data: data.yaml

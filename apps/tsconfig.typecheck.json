@@ -12,8 +12,6 @@
   "include": [
     "./server.ts",
     "./public/app.ts",
-    "./*.d.ts",
-    "./services/tms/globals.d.ts",
-    "./services/tms/types/*.d.ts"
+    "./*.d.ts"
   ]
 }

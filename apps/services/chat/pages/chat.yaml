@@ -1,0 +1,191 @@
+title: Message
+page: { id: chat, breadcrumb: [Executive, Message], auth: { require: [chat.read] } }
+
+datasources:
+  - id: chat_threads
+    single: false
+    permission: chat.read
+    query: |
+      SELECT t.id, t.title, t.thread_type,
+        COALESCE((
+          SELECT string_agg(u.name, ', ' ORDER BY u.name)
+          FROM chat_participants other
+          JOIN users u ON u.id = other.user_id
+          WHERE other.thread_id = t.id AND other.user_id <> :current_user_id
+        ), 'Chỉ mình bạn') AS participant_names,
+        COALESCE((
+          SELECT m.body
+          FROM chat_messages m
+          WHERE m.thread_id = t.id
+          ORDER BY m.created_at DESC
+          LIMIT 1
+        ), 'Chưa có tin nhắn') AS preview,
+        CAST(t.updated_at AS VARCHAR) AS updated_at,
+        (
+          SELECT COUNT(*)
+          FROM chat_messages unread
+          WHERE unread.thread_id = t.id
+            AND unread.sender_id <> :current_user_id
+            AND unread.created_at > COALESCE(mine.last_read_at, TIMESTAMP '1970-01-01')
+        ) AS unread_count
+      FROM chat_threads t
+      JOIN chat_participants mine
+        ON mine.thread_id = t.id AND mine.user_id = :current_user_id
+      ORDER BY t.updated_at DESC
+  - id: chat_messages
+    single: false
+    permission: chat.read
+    query: |
+      SELECT *
+      FROM (
+        SELECT m.id, m.thread_id, m.sender_id, sender.name AS sender_name,
+          m.body, CAST(m.created_at AS VARCHAR) AS created_at,
+          CASE WHEN m.sender_id = :current_user_id THEN true ELSE false END AS is_own,
+          COALESCE((
+            SELECT string_agg(a.file_name, '|' ORDER BY a.created_at)
+            FROM chat_attachments a
+            WHERE a.message_id = m.id
+          ), '') AS attachment_names
+        FROM chat_messages m
+        JOIN users sender ON sender.id = m.sender_id
+        JOIN chat_participants mine
+          ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
+        WHERE m.thread_id = COALESCE(
+          CAST(:thread_id AS VARCHAR),
+          (SELECT t.id
+           FROM chat_threads t
+           JOIN chat_participants first_mine
+             ON first_mine.thread_id = t.id AND first_mine.user_id = :current_user_id
+           ORDER BY t.updated_at DESC
+           LIMIT 1)
+        )
+        ORDER BY m.created_at DESC
+        LIMIT 100
+      ) recent_messages
+      ORDER BY created_at
+  - id: chat_attachments
+    single: false
+    permission: chat.read
+    query: |
+      SELECT a.id, a.message_id, m.thread_id, a.file_name, a.mime_type,
+        CAST(a.size_bytes AS DOUBLE) AS size_bytes
+      FROM chat_attachments a
+      JOIN chat_messages m ON m.id = a.message_id
+      JOIN chat_participants mine
+        ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
+      ORDER BY a.created_at
+
+toolbar:
+  - { id: new_thread_btn, label: '+ Conversations', variant: primary, permission: chat.write, action: create_thread }
+
+components:
+  - type: ChatWorkspace
+    source: chat_threads
+    message_source: chat_messages
+    attachment_source: chat_attachments
+    page_size: 50
+    message_page_size: 100
+    send_action: send_message
+    upload_action: upload_attachment
+    download_action: download_attachment
+    mark_read_action: mark_thread_read
+    websocket: { endpoint: /api/events/chat, permission: chat.read, send_action: send_message }
+    search_placeholder: Find conversations...
+    empty_threads: Chưa có cuộc trò chuyện
+    empty_messages: Chọn một cuộc trò chuyện để bắt đầu
+
+actions:
+  - id: create_thread
+    type: server_form
+    permission: chat.write
+    title: Create a conversation
+    action: chat.threads.create
+    handler: chat
+    topic: chat.thread.create
+    topic_version: 1
+    operation: create_thread
+    fields:
+      - { field: title, label: Name of the conversation, type: text, required: true }
+      - { field: participant_emails, label: Participant email (separated by commas), type: text, required: true }
+    mutation:
+      generated: [thread_id]
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:title AS VARCHAR))) BETWEEN 1 AND 160 AND length(trim(CAST(:participant_emails AS VARCHAR))) > 0"
+          status: 400
+          message: A valid conversation title and participant list are required
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM UNNEST(string_split(lower(CAST(:participant_emails AS VARCHAR)), ',')) AS requested(email) LEFT JOIN users u ON lower(trim(u.email)) = trim(requested.email) WHERE trim(requested.email) <> '' AND u.id IS NULL)"
+          status: 400
+          message: One or more participants were not found
+      steps:
+        - query: "INSERT INTO chat_threads(id, title, thread_type, created_by) VALUES(:thread_id, trim(CAST(:title AS VARCHAR)), CASE WHEN (SELECT count(DISTINCT u.id) FROM users u JOIN UNNEST(string_split(lower(CAST(:participant_emails AS VARCHAR)), ',')) AS requested(email) ON lower(trim(u.email)) = trim(requested.email)) = 1 THEN 'Direct' ELSE 'Group' END, :current_user_id)"
+        - query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) VALUES(:thread_id, :current_user_id, CURRENT_TIMESTAMP)"
+        - query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) SELECT :thread_id, u.id, CURRENT_TIMESTAMP FROM users u JOIN UNNEST(string_split(lower(CAST(:participant_emails AS VARCHAR)), ',')) AS requested(email) ON lower(trim(u.email)) = trim(requested.email) WHERE u.id <> :current_user_id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.threads.create', 'chat_threads', :thread_id, 'Created chat thread ' || trim(CAST(:title AS VARCHAR)))"
+      result: { query: "SELECT :thread_id AS id, trim(CAST(:title AS VARCHAR)) AS title, (SELECT thread_type FROM chat_threads WHERE id = :thread_id) AS thread_type, (SELECT count(*) FROM chat_participants WHERE thread_id = :thread_id) AS participant_count" }
+  - id: send_message
+    type: server
+    permission: chat.write
+    action: chat.messages.send
+    handler: chat
+    event: chat.message.created
+    operation: send_message
+    params: { content: '{row.content}', client_message_id: '{row.client_message_id}' }
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000"
+          status: 400
+          message: message content must be between 1 and 4000 characters
+        - query: "SELECT t.title AS thread_title FROM chat_threads t JOIN chat_participants p ON p.thread_id = t.id WHERE t.id = :thread_id AND p.user_id = :current_user_id"
+          status: 404
+          message: Chat thread not found
+          assign: thread_title
+      steps:
+        - query: "SELECT CAST(gen_random_uuid() AS VARCHAR) AS message_id"
+          assign: message_id
+        - query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, trim(CAST(:content AS VARCHAR)))"
+        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = :thread_id"
+        - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.messages.send', 'chat_threads', :thread_id, 'Sent message in ' || CAST(:thread_title AS VARCHAR))"
+      result:
+        query: "SELECT CAST(:message_id AS VARCHAR) AS id, CAST(:thread_id AS VARCHAR) AS thread_id, CAST(:current_user_id AS VARCHAR) AS sender_id, trim(CAST(:content AS VARCHAR)) AS body"
+  - id: mark_thread_read
+    type: server
+    permission: chat.read
+    action: chat.threads.mark_read
+    handler: chat
+    operation: mark_read
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok FROM chat_participants WHERE thread_id = :thread_id AND user_id = :current_user_id"
+          status: 404
+          message: Chat thread not found
+      steps:
+        - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
+      result:
+        query: "SELECT true AS ok"
+  - id: upload_attachment
+    type: upload
+    action: chat.attachments.send
+    handler: chat_attachment
+    topic: chat.attachment.send
+    topic_version: 1
+    permission: chat.write
+    kind: chat_attachment
+    mutation:
+      generated: [message_id, attachment_id]
+      guards:
+        - query: "SELECT t.title FROM chat_threads t JOIN chat_participants p ON p.thread_id = t.id WHERE t.id = :thread_id AND p.user_id = :current_user_id"
+          status: 404
+          message: Chat thread not found
+          assign: true
+      steps:
+        - query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'Đã gửi tệp ' || CAST(:fileName AS VARCHAR)))"
+        - query: "INSERT INTO chat_attachments(id, message_id, file_name, mime_type, size_bytes, storage_key) VALUES(:attachment_id, :message_id, :fileName, :mimeType, :sizeBytes, :storageKey)"
+        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = :thread_id"
+        - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.attachments.upload', 'chat_threads', :thread_id, 'Uploaded ' || CAST(:fileName AS VARCHAR))"
+      result: { query: "SELECT :message_id AS id, :thread_id AS thread_id, :current_user_id AS sender_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'Đã gửi tệp ' || CAST(:fileName AS VARCHAR)) AS body" }
+  - id: download_attachment
+    type: download
+    permission: chat.read
+    kind: chat_attachment

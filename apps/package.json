@@ -8,13 +8,9 @@
     "start": "PORT=3001 bun server.ts",
     "predev": "bun run css:build",
     "dev": "bun scripts/dev.ts",
-    "event-mediator": "bun services/event-mediator/server.ts",
-    "event-mediator:throughput": "bun services/event-mediator/throughput.ts",
-    "event-mediator:consumer-groups": "bun services/event-mediator/consumer-groups.ts",
-    "event-mediator:stress": "bun services/event-mediator/stress.ts",
-    "event-mediator:ramp": "bun services/event-mediator/ramp.ts",
-    "test": "cd services/tms && vitest run --environment jsdom",
-    "audit": "bun services/tms/scripts/audit-ui.ts"
+    "event-mediator": "bun lib/server/event-mediator-server.ts",
+    "test": "vitest run --environment jsdom lib/test/cases",
+    "audit": "bun scripts/audit-order-ui.ts"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.3",

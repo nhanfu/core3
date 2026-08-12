@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { validatePageDefinition } from '../yaml/schema.ts';
 import { validateWorkflowDefinition, type WorkflowDefinition } from '../yaml/workflow-schema.ts';
 import { discoverModuleRoots } from './module.ts';
+import { loadYamlServiceManifest } from './yaml-service.ts';
 
 export type DiscoveredPage = {
   id: string;
@@ -124,7 +125,11 @@ export function discoverPages(appsRoot: string) {
 
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
     const moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
-    const file = join(moduleRoot, 'permission.yaml');
+    let file = join(moduleRoot, 'permission.yaml');
+    try {
+      const manifest = loadYamlServiceManifest(moduleRoot).manifest;
+      if (manifest.permissions) file = join(moduleRoot, manifest.permissions);
+    } catch {}
     try {
       if (statSync(file).isFile()) permissions.set(moduleName, {
         module: moduleName,

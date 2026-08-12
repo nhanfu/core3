@@ -121,7 +121,7 @@ export class EventStore {
     segmentMaxRows?: number; pullBatchSize?: number; readerCount?: number; bufferMaxRows?: number; writeMode?: EventWriteMode;
   }) {
     this.schema = options.schema;
-    const configuredPath = options.databasePath || './events-parquet';
+    const configuredPath = options.databasePath || '../coredb/events-parquet';
     this.temporaryDataPath = configuredPath === ':memory:';
     this.dataPath = this.temporaryDataPath
       ? join(tmpdir(), `core3-event-${process.pid}-${Math.random().toString(36).slice(2)}`)
@@ -140,7 +140,9 @@ export class EventStore {
   private manifestPath(): string { return join(this.dataPath, 'manifest.json'); }
   private offsetsPath(): string { return join(this.dataPath, 'consumer-offsets.json'); }
   async start(): Promise<void> {
-    await mkdir(this.dataPath, { recursive: true });
+    await mkdir(this.dataPath, { recursive: true }).catch((error: any) => {
+      if (error?.code !== 'EEXIST') throw error;
+    });
     const manifest = await this.readJson<{ segments?: Segment[] }>(this.manifestPath(), {});
     const listed = Array.isArray(manifest.segments) ? manifest.segments : [];
     const files = await readdir(this.dataPath);

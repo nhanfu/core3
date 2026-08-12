@@ -6,7 +6,7 @@ import { validatePageDefinition } from '../lib/yaml/schema.ts';
 import { PageRuntime } from '../lib/components/PageRoot.ts';
 import { loginPath, safeRedirect } from '../lib/auth-redirect.ts';
 
-const TOKEN_KEY = 'tms_token';
+const TOKEN_KEY = 'core3_token';
 const DEFAULT_APP_KEY = 'core3_default_app';
 const WELCOME_TOAST_KEY = 'core3_show_welcome_toast';
 let _user: any = null;
@@ -110,7 +110,7 @@ function routeWithModule(path: string) {
   if (routePath === '/apps') return routePath;
   if (_manifest.some((module) => routePath === `/${module.id}` || routePath.startsWith(`/${module.id}/`))) return routePath;
   if (routePath === '/login' || routePath.startsWith('/login/')) return `/auth${routePath}`;
-  const moduleId = _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'tms');
+  const moduleId = _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order');
   return `/${moduleId}${routePath}`;
 }
 
@@ -184,7 +184,7 @@ async function renderRoute(path: string, langCode?: string) {
   if (_shell) {
     const activePath = route ? cleanPath.slice(`/${_activeModuleId}`.length) || '/' : cleanPath;
     _shell.setActivePath(activePath);
-    _shell.setTitle(i18n.t(pageName, null, page?.title || 'TMS'));
+    _shell.setTitle(i18n.t(pageName, null, page?.title || 'Core3'));
   }
 
   try {
@@ -208,7 +208,7 @@ async function renderRoute(path: string, langCode?: string) {
       const translatedConfig = i18n.translatePageConfig(pageId, config);
       translatedConfig.locale = i18n.lang;
       if (_shell) {
-        _shell.setTitle(i18n.t(pageId, null, page?.title || 'TMS'));
+    _shell.setTitle(i18n.t(pageId, null, page?.title || 'Core3'));
       }
       await renderPage(translatedConfig, { container: outlet });
     }
