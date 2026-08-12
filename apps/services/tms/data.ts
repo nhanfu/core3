@@ -1,6 +1,6 @@
-import { findDeclaredMove } from '../../lib/workflow.ts';
 import { translationMap } from '../../lib/server/discovery.ts';
 import { requestLanguage } from '../../lib/server/locale.ts';
+import { WorkflowRuntime } from '../../lib/server/workflow-runtime.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { executeYamlMutation } from '../../lib/yaml/mutation.ts';
 
@@ -142,26 +142,16 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
     }
     if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
     if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
-    if (typeof workflow.status_query !== 'string' || !workflow.status_query.trim()) return apiError(500, 'Workflow status query is not configured');
-    const [current] = await repository.query(
-      String(workflow.status_query || ''),
-      [body.id],
-    );
-    if (!current) return apiError(404, 'Order not found');
-    const transition = findDeclaredMove(workflow.transitions || [], String(current.status), body.status);
-    if (!transition) return apiError(409, 'This status transition is not allowed');
-    requirePerm(String(transition.permission || workflow.permission));
-    const mutation = transition.mutation || workflow.default_mutation;
-    if (!mutation) return apiError(500, `Workflow transition is missing a mutation: ${transition.id}`);
-    return json(await repository.executeMutation({ ...mutation, scope: workflow.scope }, {
+    const runtime = new WorkflowRuntime(repository);
+    const result = await runtime.move(workflow, {
       id: body.id,
-      current_status: String(current.status),
-      target_status: String(transition.to),
+      status: body.status,
       current_user_id: activityActor.id || null,
       current_user_name: activityActor.name,
       current_branch_id: String(authUser.branch_id || ''),
       view_scope: String(authUser.view_scope || 'all'),
-    }));
+    }, (transition) => requirePerm(String(transition.permission || workflow.permission)));
+    return json(result);
   }
 
   return null;

@@ -7,6 +7,8 @@ import { AuthRepository } from '../../db/repositories/auth.ts';
 import { AuthService } from './service.ts';
 import { AUTH_SERVICE_KEY } from '../../lib/interfaces/auth.ts';
 import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';
+import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_RESOLVE } from '../../lib/topics/auth.ts';
+import { TopicMediator } from '../../lib/topics/mediator.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +28,7 @@ export default class AuthModule {
   readonly id = 'auth';
   private db: any;
   private service!: AuthService;
+  private topics: TopicMediator | null = null;
 
   install(context: { moduleRoot: string }): void {
     mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
@@ -40,6 +43,20 @@ export default class AuthModule {
     await this.db.withDurableWrites(() => migrateDatabase(repository, join(context.appsRoot, 'db', 'migrations')));
     this.service = new AuthService(repository, new TextEncoder().encode(context.env.AUTH_JWT_SECRET || context.env.JWT_SECRET || 'core3-auth-dev-secret-32chars!!!!'));
     context.registerService(AUTH_SERVICE_KEY, this.service);
+    this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);
+    this.topics.register({
+      definition: AUTH_USER_RESOLVE,
+      handle: ({ token }) => this.service.introspect(String(token)),
+    });
+    this.topics.register({
+      definition: AUTH_PERMISSION_CHECK,
+      handle: ({ user, permission }) => ({ allowed: this.service.hasPermission(user, permission) }),
+    });
+    this.topics.register({
+      definition: AUTH_PASSWORD_CHANGE,
+      handle: ({ userId, currentPassword, newPassword }) => this.service.changePassword(userId, currentPassword, newPassword).then(() => ({ ok: true as const })),
+    });
+    this.topics.start();
 
     let pages = discoverPages(context.appsRoot);
     context.registerApi(async (request: Request, url: URL) => {
@@ -90,6 +107,8 @@ export default class AuthModule {
   }
 
   async unload(): Promise<void> {
+    this.topics?.stop();
+    this.topics = null;
     if (!this.db) return;
     await new Promise<void>((resolve) => this.db.close(() => resolve()));
     this.db = null;

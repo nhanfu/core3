@@ -2,6 +2,7 @@ import { basename, join } from 'node:path';
 import { readdirSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import type { ModuleApplicationConfig } from './application-config.ts';
+import type { EventBus } from './event-store.ts';
 
 export type ModuleServer = { upgrade(request: Request, options?: { data?: unknown }): boolean };
 export type ModuleApiHandler = (request: Request, url: URL, server?: ModuleServer) => Response | null | undefined | Promise<Response | null | undefined>;
@@ -12,6 +13,7 @@ export type ModuleContext = {
   env: NodeJS.ProcessEnv;
   config: ModuleApplicationConfig;
   serviceConfigs: Record<string, ModuleApplicationConfig>;
+  eventBus: EventBus;
   registerApi(handler: ModuleApiHandler): void;
   registerService<T>(name: string, service: T): void;
   resolveService<T>(name: string): T;

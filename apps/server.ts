@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import { discoverModules, ModuleManager } from './lib/server/module.ts';
 import { discoverPageRoutes, discoverPages } from './lib/server/discovery.ts';
 import { loadApplicationConfig, resolveEnvironmentValues } from './lib/server/application-config.ts';
+import { EventStore, type EventBus } from './lib/server/event-store.ts';
+import { EventMediatorClient } from './lib/server/event-mediator.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
@@ -11,6 +13,37 @@ const moduleConfigs = Object.fromEntries(Object.entries(appConfig.services).map(
   id,
   resolveEnvironmentValues(config, appConfig.environment) as Record<string, unknown>,
 ]));
+
+const eventConfig: any = moduleConfigs.event_store || {};
+const eventDatabase = eventConfig.database || {};
+const eventSchema = eventConfig.schema || moduleConfigs.chat?.event_schema;
+if (!eventSchema) throw new Error('Chat event schema is not configured');
+const eventMode = String(eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
+const eventBus: EventBus = eventMode === 'mediator'
+  ? new EventMediatorClient({
+    endpoint: String(eventConfig.mediator?.endpoint || process.env.CORE3_EVENT_MEDIATOR_URL || 'ws://127.0.0.1:3010/events'),
+    token: String(eventConfig.mediator?.token || process.env.CORE3_EVENT_MEDIATOR_TOKEN || ''),
+    nodeId: String(eventConfig.mediator?.node_id || process.env.CORE3_NODE_ID || `core3-${process.pid}`),
+    reconnectMs: Number(eventConfig.mediator?.reconnect_ms || 1000),
+    segmentMaxRows: Number(eventConfig.segment_max_rows || 200),
+    pullBatchSize: Number(eventConfig.pull_batch_size || 100),
+  })
+  : new EventStore({
+    schema: eventSchema,
+    databasePath: eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || './events-parquet',
+    retentionMs: Number(eventConfig.retention_ms || 60 * 60 * 1000),
+    maxRows: Number(eventConfig.max_rows || 1000),
+    hotMaxRows: Number(eventConfig.hot_max_rows || 100000),
+    hotMaxBytes: Number(eventConfig.hot_max_bytes || 128 * 1024 * 1024),
+    hotRetentionMs: Number(eventConfig.hot_retention_ms || 60 * 60 * 1000),
+    hotConsumerTtlMs: Number(eventConfig.hot_consumer_ttl_ms || 30000),
+    segmentMaxRows: Number(eventConfig.segment_max_rows || 1000),
+    pullBatchSize: Number(eventConfig.pull_batch_size || 100),
+    readerCount: Number(eventConfig.reader_connections || 2),
+    bufferMaxRows: Number(eventConfig.buffer_max_rows || 10000),
+    writeMode: eventConfig.write_mode || 'low_latency',
+  });
+await eventBus.start();
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -95,7 +128,7 @@ const moduleManifest = modules.map((module) => ({
   routes: pageRoutes.filter((route) => route.module === module.id)
     .map((route) => ({ ...route, path: `/${module.id}${route.path}` })),
 }));
-await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs });
+await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
 
 async function applicationCatalog() {
   try {
@@ -119,7 +152,8 @@ async function applicationCatalog() {
 }
 
 const shutdown = async () => {
-  await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs });
+  await moduleManager.unloadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
+  await eventBus.stop();
   process.exit(0);
 };
 process.once('SIGINT', shutdown);

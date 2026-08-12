@@ -132,7 +132,7 @@ const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
   server: new Set(['id', 'type', 'action', 'confirm', 'refresh', 'params', 'permission', 'result', 'result_field', 'handler', 'workflow', 'operation', 'domain', 'kind', 'mutation']),
-  upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission']),
+  upload: new Set(['id', 'type', 'kind', 'refresh', 'params', 'scope', 'permission', 'action', 'handler', 'mutation']),
   download: new Set(['id', 'type', 'kind', 'permission']),
   login: new Set(['id', 'type', 'endpoint', 'redirect_param', 'permission']),
   request: new Set(['id', 'type', 'method', 'endpoint', 'body', 'permission']),

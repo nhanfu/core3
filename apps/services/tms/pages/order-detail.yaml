@@ -246,6 +246,21 @@ actions:
     refresh: [order_detail_timeline]
     fields:
       - { field: content, label: Message, type: textarea, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000"
+          status: 400
+          message: Message content must be between 1 and 4000 characters
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - query: "SELECT id FROM orders WHERE id = :id"
+          status: 404
+          message: Order not found
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.message', 'orders', :id, :content)"
+      result: { query: "SELECT :id AS id, 'orders.message' AS action, :content AS detail" }
   - id: log_order_note
     type: server_form
     permission: orders.write
@@ -257,6 +272,21 @@ actions:
     refresh: [order_detail_timeline]
     fields:
       - { field: content, label: Note, type: textarea, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000"
+          status: 400
+          message: Note content must be between 1 and 4000 characters
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - query: "SELECT id FROM orders WHERE id = :id"
+          status: 404
+          message: Order not found
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.note', 'orders', :id, :content)"
+      result: { query: "SELECT :id AS id, 'orders.note' AS action, :content AS detail" }
   - id: add_order_follower
     type: server
     permission: orders.write
@@ -265,6 +295,19 @@ actions:
     operation: follower_add
     params: { user_id: '{row.user_id}' }
     refresh: [order_detail_followers, order_detail_timeline]
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - query: "SELECT id, name, email, avatar_url FROM users WHERE id = :user_id AND enabled = true AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 404
+          message: Follower not found
+      steps:
+        - query: "INSERT INTO order_followers(order_id, user_id, added_by) SELECT :id, :user_id, :current_user_id WHERE NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.add', 'orders', :id, name FROM users WHERE id = :user_id AND NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
+      result: { query: "SELECT u.id AS user_id, u.name, u.email, u.avatar_url, false AS removed FROM users u WHERE u.id = :user_id" }
   - id: remove_order_follower
     type: server
     permission: orders.write
@@ -273,12 +316,38 @@ actions:
     operation: follower_remove
     params: { user_id: '{row.user_id}' }
     refresh: [order_detail_followers, order_detail_timeline]
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - query: "SELECT id, name, email, avatar_url FROM users WHERE id = :user_id AND enabled = true"
+          status: 404
+          message: Follower not found
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.remove', 'orders', :id, u.name FROM users u JOIN order_followers f ON f.user_id = u.id AND f.order_id = :id WHERE u.id = :user_id"
+        - query: "DELETE FROM order_followers WHERE order_id = :id AND user_id = :user_id"
+      result: { query: "SELECT u.id AS user_id, u.name, u.email, u.avatar_url, true AS removed FROM users u WHERE u.id = :user_id" }
   - id: upload_order_attachment
     type: upload
+    action: orders.attachments.upload
+    handler: attachment_metadata
     permission: orders.write
     kind: order_attachment
     params: { order_id: '{row.id}' }
     refresh: [order_detail_attachments, order_detail_timeline]
+    mutation:
+      generated: [attachment_id]
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :order_id"
+          status: 404
+          message: Order not found
+      steps:
+        - query: "INSERT INTO order_attachments(id, order_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :order_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.attachments.upload', 'orders', :order_id, :fileName)"
+      result: { query: "SELECT id, order_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM order_attachments WHERE id = :attachment_id" }
   - id: download_order_attachment
     type: download
     permission: orders.read
@@ -371,6 +440,19 @@ actions:
       - { field: unit, label: Unit, type: select, options_source: order_unit_lookup, default: Chuyến, required: true }
       - { field: unit_price, label: Unit price, type: money, currency: VND, default: 0, required: true }
       - { field: tax_rate, label: Tax rate (%), type: number, default: 0, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      generated: [line_id]
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order lines cannot be changed while the order is not Draft
+      steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
+        - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2))"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, :description)"
+      result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
   - id: edit_order_line
     type: server_form
     permission: orders.write
@@ -388,6 +470,20 @@ actions:
       - { field: unit, label: Unit, type: select, options_source: order_unit_lookup, required: true }
       - { field: unit_price, label: Unit price, type: money, currency: VND, required: true }
       - { field: tax_rate, label: Tax rate (%), type: number, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order lines cannot be changed while the order is not Draft
+        - query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id"
+          status: 404
+          message: Line item not found
+      steps:
+        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2), updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.update', 'orders', :id, :description)"
+      result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
   - id: delete_order_line
     type: server
     permission: orders.write
@@ -398,3 +494,18 @@ actions:
     confirm: 'Delete charge line {{row.description}}?'
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [order_detail_lines, order_detail, order_detail_timeline]
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order lines cannot be changed while the order is not Draft
+        - query: "SELECT id, description FROM order_lines WHERE id = :line_id AND order_id = :id"
+          status: 404
+          message: Line item not found
+          assign: true
+      steps:
+        - query: "DELETE FROM order_lines WHERE id = :line_id AND order_id = :id"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.delete', 'orders', :id, :description)"
+      result: { query: "SELECT true AS deleted, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount" }

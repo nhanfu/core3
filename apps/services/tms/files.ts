@@ -3,12 +3,14 @@
 
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import type { TopicMediator } from '../../lib/topics/mediator.ts';
+import { CHAT_ATTACHMENT_SEND } from '../../lib/topics/chat.ts';
 
 const UPLOAD_KINDS = new Set(['chat_attachment', 'order_attachment']);
 
 export async function handleFileRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const {
-    req, url, pathname, method, repository, UPLOAD_ROOT, authUser, activityActor,
+    req, url, pathname, method, repository, NAMED_ACTIONS, topics, UPLOAD_ROOT, authUser, activityActor,
     requirePerm, permissionForEndpoint, recordInCurrentBranch, json, apiError,
     CORS_HEADERS, eventStore,
   } = ctx;
@@ -37,8 +39,24 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
     writeFileSync(targetPath, Buffer.from(await file.arrayBuffer()));
     try {
       const fileMeta = { fileName: file.name, mimeType: file.type || 'application/octet-stream', sizeBytes: file.size, storageKey };
-      if (meta.kind === 'order_attachment') return json(await repository.createOrderAttachment(meta.order_id, fileMeta, activityActor));
-      const result = await repository.sendChatAttachment(meta.thread_id, meta.content, fileMeta, activityActor);
+      if (meta.kind === 'order_attachment') {
+        const action = Object.values(NAMED_ACTIONS || {}).find((candidate: any) => candidate.kind === 'order_attachment' && candidate.type === 'upload') as any;
+        if (!action?.mutation) return apiError(500, 'Order attachment mutation is not configured');
+        return json(await repository.executeMutation(action.mutation, {
+          ...meta,
+          ...fileMeta,
+          current_user_id: activityActor.id || null,
+          current_user_name: activityActor.name,
+          current_branch_id: String(authUser.branch_id || ''),
+          view_scope: String(authUser.view_scope || 'all'),
+        }));
+      }
+      const result = await (topics as TopicMediator).request(CHAT_ATTACHMENT_SEND, {
+        threadId: meta.thread_id,
+        content: meta.content,
+        attachment: fileMeta,
+        actor: activityActor,
+      });
       await eventStore?.publish({ operation: 'send_attachment', status: 'success', actorId: String(activityActor.id || ''), threadId: result.thread_id, messageId: result.id, message: result });
       return json(result);
     } catch (error) {

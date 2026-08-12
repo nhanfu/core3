@@ -8,6 +8,7 @@ import { handleEventRoutes } from './events.ts';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import type { ModuleServer } from '../../lib/server/module.ts';
+import type { TopicMediator } from '../../lib/topics/mediator.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,7 @@ type TmsApiContext = {
   permissions: any;
   uploadRoot: string;
   eventStore: any;
+  topics: TopicMediator;
   reloadPages?: () => void;
 };
 
@@ -43,6 +45,7 @@ export function createTmsApi(ctx: TmsApiContext) {
     permissions: PERMISSIONS,
     uploadRoot: UPLOAD_ROOT,
     eventStore: EVENT_STORE,
+    topics: TOPICS,
     reloadPages,
   } = ctx;
 
@@ -192,7 +195,7 @@ export function createTmsApi(ctx: TmsApiContext) {
   const NAMED_ACTIONS: Record<string, any> = {};
   for (const [pageId, page] of PAGES) {
     for (const action of page.actions || []) {
-      if (action.type !== 'server' && action.type !== 'server_form') continue;
+      if (action.type !== 'server' && action.type !== 'server_form' && action.type !== 'upload') continue;
       if (!action.action) continue;
       if (!action.handler) throw new Error(`Page ${pageId} named action ${action.action} is missing handler metadata`);
       if (!action.permission || !DECLARED_PERMISSIONS.has(action.permission)) throw new Error(`Page ${pageId} action ${action.action} uses undeclared permission: ${action.permission}`);
@@ -273,7 +276,7 @@ export function createTmsApi(ctx: TmsApiContext) {
 
 
     const routeContext: Record<string, any> = {
-      req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE,
+      req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE, topics: TOPICS,
       SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES, UPLOAD_ROOT, reloadPages,
       authUser, activityActor, NAMED_ACTIONS, TABLES,
       requirePerm, permissionForEndpoint, permissionForAction,

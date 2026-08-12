@@ -1,5 +1,7 @@
 import { findDeclaredTransition } from '../../lib/workflow.ts';
 import type { EventStore } from '../../lib/server/event-store.ts';
+import type { TopicMediator } from '../../lib/topics/mediator.ts';
+import { CHAT_THREAD_CREATE } from '../../lib/topics/chat.ts';
 
 /** Action handlers used by the order and chat pages. Domain management actions
  * belong in YAML mutations; this adapter only supplies order-specific guards
@@ -7,8 +9,8 @@ import type { EventStore } from '../../lib/server/event-store.ts';
 export async function handleActionRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const {
     req, pathname, method, repository, WORKFLOWS, authUser, activityActor,
-    NAMED_ACTIONS, requirePerm, permissionForAction, recordInCurrentBranch,
-    json, apiError, eventStore,
+    NAMED_ACTIONS, requirePerm, permissionForAction,
+    json, apiError, eventStore, topics,
   } = ctx;
 
   const match = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
@@ -21,6 +23,9 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
 
   const body = await req.json() as any;
   const handler = actionDefinition.handler;
+  if (handler === 'chat' && actionDefinition.operation === 'create_thread') {
+    return json(await (topics as TopicMediator).request(CHAT_THREAD_CREATE, { values: valuesFrom(body), actor: activityActor }));
+  }
   const workflow = handler === 'order_transition'
     ? WORKFLOWS.get(String(actionDefinition.workflow || ''))
     : undefined;
@@ -73,42 +78,6 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
       });
       throw error;
     }
-  }
-
-  if (handler === 'chat' && actionDefinition.operation === 'create_thread') {
-    return json(await repository.createChatThread(valuesFrom(body), activityActor));
-  }
-
-  if (typeof body?.id !== 'string' || !body.id) return apiError(400, 'id required');
-
-  if (handler === 'line_item' && actionDefinition.domain === 'order') {
-    if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
-    return json(await repository.mutateDocumentLine(
-      { parentTable: 'orders', lineTable: 'order_lines', parentKey: 'order_id', label: 'Order', hasCost: false, totalField: 'total_amount' },
-      actionDefinition.operation,
-      body.id,
-      typeof body.line_id === 'string' ? body.line_id : null,
-      valuesFrom(body),
-      actionName,
-      activityActor,
-    ));
-  }
-
-  if (handler === 'order_chatter') {
-    if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
-    if (actionDefinition.operation === 'follower_add' || actionDefinition.operation === 'follower_remove') {
-      if (typeof body.user_id !== 'string' || !body.user_id) return apiError(400, 'user_id required');
-      if (actionDefinition.operation === 'follower_add' && String(authUser.view_scope || 'all') !== 'all') {
-        const [candidate] = await repository.query(
-          'SELECT id FROM users WHERE id = ? AND enabled = true AND branch_id = ?',
-          [body.user_id, String(authUser.branch_id || '')],
-        );
-        if (!candidate) return apiError(403, 'Follower is outside the current view scope');
-      }
-      return json(await repository.mutateOrderFollower(body.id, actionDefinition.operation, body.user_id, activityActor));
-    }
-    if (actionDefinition.operation !== 'message' && actionDefinition.operation !== 'note') return apiError(400, 'Invalid order chatter operation');
-    return json(await repository.addOrderChatterEntry(body.id, actionDefinition.operation, valuesFrom(body), activityActor));
   }
 
   return apiError(404, `Unsupported action handler: ${handler}`);
