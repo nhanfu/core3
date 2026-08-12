@@ -30,6 +30,9 @@ export type WorkflowDefinition = {
   permission: string;
   mutable?: boolean;
   status_source?: string;
+  scope?: { table: string; field: string; message?: string };
+  status_query?: string;
+  default_mutation?: Record<string, unknown>;
   allow_add?: boolean;
   state_editor?: WorkflowStateEditorDefinition;
   states: WorkflowStateDefinition[];
@@ -73,7 +76,7 @@ export class WorkflowSchemaError extends Error {
 const isRecord = (value: unknown): value is Record<string, any> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const ROOT_KEYS = new Set(['workflow']);
-const WORKFLOW_KEYS = new Set(['id', 'entity', 'handler', 'initial', 'permission', 'mutable', 'status_source', 'allow_add', 'state_editor', 'states', 'transitions', 'mutations']);
+const WORKFLOW_KEYS = new Set(['id', 'entity', 'handler', 'initial', 'permission', 'mutable', 'status_source', 'scope', 'status_query', 'default_mutation', 'allow_add', 'state_editor', 'states', 'transitions', 'mutations']);
 const STATE_EDITOR_KEYS = new Set(['allow_edit', 'allow_delete', 'labels', 'modals']);
 const STATE_EDITOR_LABEL_KEYS = new Set(['edit_status', 'add_status']);
 const STATE_EDITOR_MODAL_KEYS = new Set(['title', 'message', 'input', 'from_label', 'to_label', 'replacement_label', 'confirm_label', 'cancel_label', 'danger_label']);

@@ -28,7 +28,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
     ? findDeclaredTransition(workflow.transitions || [], String(actionDefinition.operation || ''))
     : undefined;
   const mutation = actionDefinition.mutation || (transition?.mutation
-    ? { ...transition.mutation, ...(transition.scope ? { scope: transition.scope } : {}) }
+    ? { ...transition.mutation, ...(transition.scope ? { scope: { ...workflow?.scope, ...transition.scope } } : {}) }
     : undefined);
 
   if (mutation) {

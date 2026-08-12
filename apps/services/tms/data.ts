@@ -142,16 +142,18 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
     }
     if (body.operation !== 'move' || typeof body.id !== 'string' || typeof body.status !== 'string') return apiError(400, 'id and status are required');
     if (!(await recordInCurrentBranch('orders', body.id))) return apiError(403, 'Order is outside the current view scope');
+    if (typeof workflow.status_query !== 'string' || !workflow.status_query.trim()) return apiError(500, 'Workflow status query is not configured');
     const [current] = await repository.query(
-      'SELECT COALESCE(s.status, o.status) AS status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = ?',
+      String(workflow.status_query || ''),
       [body.id],
     );
     if (!current) return apiError(404, 'Order not found');
     const transition = findDeclaredMove(workflow.transitions || [], String(current.status), body.status);
     if (!transition) return apiError(409, 'This status transition is not allowed');
     requirePerm(String(transition.permission || workflow.permission));
-    const mutation = transition.mutation || dynamicOrderStatusMutation(String(transition.to));
-    return json(await repository.executeMutation({ ...mutation, scope: { field: 'branch_id' } }, {
+    const mutation = transition.mutation || workflow.default_mutation;
+    if (!mutation) return apiError(500, `Workflow transition is missing a mutation: ${transition.id}`);
+    return json(await repository.executeMutation({ ...mutation, scope: workflow.scope }, {
       id: body.id,
       current_status: String(current.status),
       target_status: String(transition.to),
@@ -171,24 +173,6 @@ function normalizeStates(value: unknown, known: Set<string>): string[] {
 
 function slugWorkflowState(value: unknown): string {
   return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'state';
-}
-
-function dynamicOrderStatusMutation(targetStatus: string): Record<string, unknown> {
-  return {
-    guards: [{
-      query: "SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = :current_status",
-      status: 409,
-      message: 'Order status has changed; refresh and try again',
-      assign: true,
-    }],
-    steps: [
-      "INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, :target_status, CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at",
-      "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.status_changed', 'orders', :id, CAST(:current_status AS VARCHAR) || ' -> ' || CAST(:target_status AS VARCHAR))",
-    ].map(query => ({ query })),
-    result: {
-      query: "SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id",
-    },
-  };
 }
 
 function writeWorkflowSections(file: string, workflow: any): void {

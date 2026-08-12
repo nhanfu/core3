@@ -255,10 +255,15 @@ export function createTmsApi(ctx: TmsApiContext) {
     id: authUser.sub ? String(authUser.sub) : null,
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),
   };
+  const resourceScope = (resourceTable: string) => [...WORKFLOWS.values()]
+    .map((workflow: any) => workflow.scope)
+    .find((scope: any) => scope?.table === resourceTable);
   const branchForScopedResource = async (resourceTable: string, resourceId: string) => {
-    if (resourceTable !== 'orders') return null;
-    const [row] = await repository.query('SELECT branch_id FROM orders WHERE id = ?', [resourceId]);
-    return row?.branch_id ? String(row.branch_id) : null;
+    const scope = resourceScope(resourceTable);
+    if (!scope) return null;
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(scope.table)) || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(scope.field))) return null;
+    const [row] = await repository.query(`SELECT ${scope.field} FROM ${scope.table} WHERE id = ?`, [resourceId]);
+    return row?.[scope.field] ? String(row[scope.field]) : null;
   };
   const recordInCurrentBranch = async (resourceTable: string, resourceId: string) => {
     if (String(authUser.view_scope || 'all') === 'all') return true;

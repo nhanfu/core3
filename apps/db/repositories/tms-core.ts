@@ -94,9 +94,10 @@ db: any;
     }
     const id = params.id;
     if (id === undefined || id === null || id === '') throw { status: 400, message: 'id required' };
-    if (definition.scope?.field) {
+    if (definition.scope?.field && definition.scope?.table) {
       const scopeField = String(definition.scope.field);
-      const bound = bindNamedParams(`SELECT id FROM ${table} WHERE id = :id AND (:view_scope = 'all' OR ${scopeField} = :current_branch_id)`, { ...params, id });
+      const scopeTable = String(definition.scope.table);
+      const bound = bindNamedParams(`SELECT id FROM ${scopeTable} WHERE id = :id AND (:view_scope = 'all' OR ${scopeField} = :current_branch_id)`, { ...params, id });
       const [scoped] = await queryOnConnection(conn, bound.statement, bound.values);
       if (!scoped) throw { status: 403, message: String(definition.scope.message || 'Record is outside the current view scope') };
     }
