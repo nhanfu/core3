@@ -108,7 +108,14 @@ export async function logout() {
 function routeWithModule(path: string) {
   const routePath = path.startsWith('/') ? path : `/${path}`;
   if (routePath === '/apps') return routePath;
-  if (_manifest.some((module) => routePath === `/${module.id}` || routePath.startsWith(`/${module.id}/`))) return routePath;
+  const module = _manifest.find((entry) => routePath === `/${entry.id}` || routePath.startsWith(`/${entry.id}/`));
+  if (module) {
+    if (routePath === `/${module.id}`) {
+      const appRoute = _apps.find((app) => String(app.module || app.id) === module.id)?.route;
+      return appRoute && appRoute !== routePath ? String(appRoute) : module.routes?.[0]?.path || routePath;
+    }
+    return routePath;
+  }
   if (routePath === '/login' || routePath.startsWith('/login/')) return `/auth${routePath}`;
   const moduleId = _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order');
   return `/${moduleId}${routePath}`;

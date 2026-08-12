@@ -88,6 +88,6 @@ apps:
     label: Chat
     description: Conversations and collaboration
     icon: message
-    route: /chat
+    route: /chat/chat
     module: chat
     enabled: true

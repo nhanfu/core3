@@ -34,7 +34,7 @@ async function uploadKind(request: Request): Promise<string | null> {
 
 export function createYamlHostApi(services: YamlRuntimeContext[]) {
   const call = async (service: YamlRuntimeContext, request: Request, url: URL, server?: ModuleServer) =>
-    service.api(request.clone(), url, server);
+    service.api(url.pathname.startsWith('/api/events/') ? request : request.clone(), url, server);
 
   return async (request: Request, url: URL, server?: ModuleServer): Promise<Response | null | undefined> => {
     const { pathname } = url;
