@@ -1,6 +1,6 @@
 up: |
   DELETE FROM order_lines WHERE id IN ('order-line-demo-01', 'order-line-demo-02', 'order-line-demo-03', 'order-line-demo-04', 'order-line-demo-05', 'order-line-demo-06', 'order-line-demo-07', 'order-line-demo-09', 'order-line-demo-10a', 'order-line-demo-10b', 'order-line-demo-11');
-  DELETE FROM orders WHERE id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
+  DELETE FROM orders WHERE id LIKE 'order-demo-%';
   DELETE FROM customers WHERE id IN ('customer-minh-long', 'customer-dai-phat', 'customer-an-binh', 'customer-hung-thinh', 'customer-nam-viet', 'customer-thanh-cong', 'customer-dong-a', 'customer-phu-my');
 
   INSERT INTO customers(id, code, name, owner_name, visibility, status)
@@ -52,6 +52,42 @@ up: |
   VALUES ('order-demo-11', 'DH-2026-0111', 'Công ty CP Hưng Thịnh', 'Hung Thinh Trading JSC', DATE '2026-08-02', 'Approved', 'Hàng lẻ', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 1, 7600000, 'branch-hcm', 'Admin User', NULL);
   INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
   VALUES ('order-demo-12', 'DH-2026-0112', 'Công ty Thực phẩm An Bình', 'An Binh Foods', DATE '2026-08-01', 'Cancelled', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 0, 29300000, 'branch-hn', 'Dispatcher User', 'Khách hàng hủy đơn');
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-13', 'DH-2026-0113', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', DATE '2026-07-31', 'Draft', 'Hàng lẻ', 'Hồ Chí Minh → Đà Nẵng', 'Đường bộ', 1, 11200000, 'branch-hcm', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-14', 'DH-2026-0114', 'Công ty CP Đại Phát', 'Dai Phat JSC', DATE '2026-07-30', 'Approved', 'Container', 'Hải Phòng → Hà Nội', 'Đường bộ', 2, 38900000, 'branch-hn', 'Dispatcher User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-15', 'DH-2026-0115', 'Công ty CP Hưng Thịnh', 'Hung Thinh Trading JSC', DATE '2026-07-29', 'Pending Approval', 'Nguyên chuyến', 'Hồ Chí Minh → Nha Trang', 'Đường bộ', 1, 17600000, 'branch-hcm', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-16', 'DH-2026-0116', 'Công ty TNHH Nam Việt', 'Nam Viet Co., Ltd.', DATE '2026-07-28', 'Cancelled', 'Hàng lạnh', 'Cần Thơ → Hồ Chí Minh', 'Đường bộ', 0, 9400000, 'branch-dn', 'Admin User', 'Khách hàng đổi lịch');
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-17', 'DH-2026-0117', 'Công ty CP May Thành Công', 'Thanh Cong Garment JSC', DATE '2026-07-27', 'Approved', 'Hàng lẻ', 'Đà Nẵng → Huế', 'Đường bộ', 1, 6800000, 'branch-dn', 'Dispatcher User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-18', 'DH-2026-0118', 'Công ty TNHH Điện tử Đông Á', 'Dong A Electronics Co., Ltd.', DATE '2026-07-26', 'Draft', 'Container', 'Hồ Chí Minh → Biên Hòa', 'Đường bộ', 1, 22100000, 'branch-hcm', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-19', 'DH-2026-0119', 'Công ty CP Phú Mỹ', 'Phu My JSC', DATE '2026-07-25', 'Pending Approval', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 1, 15400000, 'branch-dn', 'Dispatcher User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-20', 'DH-2026-0120', 'Công ty Thực phẩm An Bình', 'An Binh Foods', DATE '2026-07-24', 'Approved', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 2, 44700000, 'branch-hn', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-21', 'DH-2026-0121', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', DATE '2026-07-23', 'Draft', 'Nguyên chuyến', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 1, 8300000, 'branch-hcm', 'Dispatcher User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-22', 'DH-2026-0122', 'Công ty CP Đại Phát', 'Dai Phat JSC', DATE '2026-07-22', 'Approved', 'Hàng lẻ', 'Hà Nội → Hải Phòng', 'Đường bộ', 1, 7200000, 'branch-hn', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-23', 'DH-2026-0123', 'Công ty CP Hưng Thịnh', 'Hung Thinh Trading JSC', DATE '2026-07-21', 'Cancelled', 'Container', 'Hồ Chí Minh → Nha Trang', 'Đường bộ', 0, 19700000, 'branch-hcm', 'Dispatcher User', 'Thiếu phương tiện');
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-24', 'DH-2026-0124', 'Công ty TNHH Nam Việt', 'Nam Viet Co., Ltd.', DATE '2026-07-20', 'Pending Approval', 'Hàng lạnh', 'Hà Nội → Đà Nẵng', 'Đường bộ', 2, 51200000, 'branch-hn', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-25', 'DH-2026-0125', 'Công ty CP May Thành Công', 'Thanh Cong Garment JSC', DATE '2026-07-19', 'Approved', 'Hàng lẻ', 'Đà Nẵng → Huế', 'Đường bộ', 1, 6100000, 'branch-dn', 'Dispatcher User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-26', 'DH-2026-0126', 'Công ty TNHH Điện tử Đông Á', 'Dong A Electronics Co., Ltd.', DATE '2026-07-18', 'Draft', 'Container', 'Hải Phòng → Hà Nội', 'Đường bộ', 1, 26500000, 'branch-hn', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-27', 'DH-2026-0127', 'Công ty CP Phú Mỹ', 'Phu My JSC', DATE '2026-07-17', 'Approved', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 1, 14900000, 'branch-dn', 'Admin User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-28', 'DH-2026-0128', 'Công ty Thực phẩm An Bình', 'An Binh Foods', DATE '2026-07-16', 'Pending Approval', 'Hàng lạnh', 'Cần Thơ → Hồ Chí Minh', 'Đường bộ', 1, 23100000, 'branch-hcm', 'Dispatcher User', NULL);
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-29', 'DH-2026-0129', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', DATE '2026-07-15', 'Cancelled', 'Hàng lẻ', 'Hồ Chí Minh → Đà Nẵng', 'Đường bộ', 0, 10300000, 'branch-hcm', 'Admin User', 'Hủy theo yêu cầu khách hàng');
+  INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+  VALUES ('order-demo-30', 'DH-2026-0130', 'Công ty CP Đại Phát', 'Dai Phat JSC', DATE '2026-07-14', 'Approved', 'Container', 'Hà Nội → Hải Phòng', 'Đường bộ', 2, 33500000, 'branch-hn', 'Admin User', NULL);
 
   INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
   SELECT 'order-line-demo-01', 'order-demo-01', 10, 'Vận chuyển hàng lẻ', 1, 'Chuyến', 18500000, 0, 18500000
@@ -99,5 +135,5 @@ up: |
     AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-11');
 down: |
   DELETE FROM order_lines WHERE id IN ('order-line-demo-01', 'order-line-demo-02', 'order-line-demo-03', 'order-line-demo-04', 'order-line-demo-05', 'order-line-demo-06', 'order-line-demo-07', 'order-line-demo-09', 'order-line-demo-10a', 'order-line-demo-10b', 'order-line-demo-11');
-  DELETE FROM orders WHERE id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
+  DELETE FROM orders WHERE id LIKE 'order-demo-%';
   DELETE FROM customers WHERE id IN ('customer-minh-long', 'customer-dai-phat', 'customer-an-binh', 'customer-hung-thinh', 'customer-nam-viet', 'customer-thanh-cong', 'customer-dong-a', 'customer-phu-my');

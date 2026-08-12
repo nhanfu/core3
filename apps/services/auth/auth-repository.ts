@@ -40,6 +40,10 @@ export class AuthRepository {
     return rows[0] || null;
   }
 
+  async listUsers(): Promise<any[]> {
+    return this.execute('list_users', {});
+  }
+
   async permissions(userId: string): Promise<string[]> {
     const rows = await this.execute('permissions', { user_id: userId });
     return rows.map((row) => String(row.permission_key));

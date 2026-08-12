@@ -8,9 +8,8 @@ datasources:
     query: |
       SELECT t.id, t.title, t.thread_type,
         COALESCE((
-          SELECT string_agg(u.name, ', ' ORDER BY u.name)
+          SELECT string_agg(other.user_id, ', ' ORDER BY other.user_id)
           FROM chat_participants other
-          JOIN chat_users u ON u.id = other.user_id
           WHERE other.thread_id = t.id AND other.user_id <> :current_user_id
         ), 'Chỉ mình bạn') AS participant_names,
         COALESCE((
@@ -38,7 +37,7 @@ datasources:
     query: |
       SELECT *
       FROM (
-        SELECT m.id, m.thread_id, m.sender_id, sender.name AS sender_name,
+        SELECT m.id, m.thread_id, m.sender_id, m.sender_id AS sender_name,
           m.body, CAST(m.created_at AS VARCHAR) AS created_at,
           CASE WHEN m.sender_id = :current_user_id THEN true ELSE false END AS is_own,
           COALESCE((
@@ -47,7 +46,6 @@ datasources:
             WHERE a.message_id = m.id
           ), '') AS attachment_names
         FROM chat_messages m
-        JOIN chat_users sender ON sender.id = m.sender_id
         JOIN chat_participants mine
           ON mine.thread_id = m.thread_id AND mine.user_id = :current_user_id
         WHERE m.thread_id = COALESCE(
@@ -113,13 +111,13 @@ actions:
         - query: "SELECT 1 AS ok WHERE length(trim(CAST(:title AS VARCHAR))) BETWEEN 1 AND 160 AND length(trim(CAST(:participant_emails AS VARCHAR))) > 0"
           status: 400
           message: A valid conversation title and participant list are required
-        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM UNNEST(string_split(lower(CAST(:participant_emails AS VARCHAR)), ',')) AS requested(email) LEFT JOIN chat_users u ON lower(trim(u.email)) = trim(requested.email) WHERE trim(requested.email) <> '' AND u.id IS NULL)"
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:participant_emails AS VARCHAR))) > 0"
           status: 400
           message: One or more participants were not found
       steps:
-        - query: "INSERT INTO chat_threads(id, title, thread_type, created_by) VALUES(:thread_id, trim(CAST(:title AS VARCHAR)), CASE WHEN (SELECT count(DISTINCT u.id) FROM chat_users u JOIN UNNEST(string_split(lower(CAST(:participant_emails AS VARCHAR)), ',')) AS requested(email) ON lower(trim(u.email)) = trim(requested.email)) = 1 THEN 'Direct' ELSE 'Group' END, :current_user_id)"
+        - query: "INSERT INTO chat_threads(id, title, thread_type, created_by) VALUES(:thread_id, trim(CAST(:title AS VARCHAR)), CASE WHEN length(trim(CAST(:participant_emails AS VARCHAR))) > 0 AND strpos(CAST(:participant_emails AS VARCHAR), ',') = 0 THEN 'Direct' ELSE 'Group' END, :current_user_id)"
         - query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) VALUES(:thread_id, :current_user_id, CURRENT_TIMESTAMP)"
-        - query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) SELECT :thread_id, u.id, CURRENT_TIMESTAMP FROM chat_users u JOIN UNNEST(string_split(lower(CAST(:participant_emails AS VARCHAR)), ',')) AS requested(email) ON lower(trim(u.email)) = trim(requested.email) WHERE u.id <> :current_user_id"
+        - query: "INSERT INTO chat_participants(thread_id, user_id, last_read_at) SELECT :thread_id, trim(requested.email), CURRENT_TIMESTAMP FROM UNNEST(string_split(CAST(:participant_emails AS VARCHAR), ',')) AS requested(email) WHERE trim(requested.email) <> '' AND trim(requested.email) <> :current_user_id"
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.threads.create', 'chat_threads', :thread_id, 'Created chat thread ' || trim(CAST(:title AS VARCHAR)))"
       result: { query: "SELECT :thread_id AS id, trim(CAST(:title AS VARCHAR)) AS title, (SELECT thread_type FROM chat_threads WHERE id = :thread_id) AS thread_type, (SELECT count(*) FROM chat_participants WHERE thread_id = :thread_id) AS participant_count" }
   - id: send_message

@@ -1,0 +1,4 @@
+up: |
+  DROP TABLE IF EXISTS order_users;
+down: |
+  -- User data is owned by Auth and is not recreated by Order rollback.

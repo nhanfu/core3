@@ -379,12 +379,13 @@ export class PageRuntime extends BaseComponent {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || 'Invalid credentials');
-        const { setAuth, getDefaultRoute } = await import('../../public/app.ts');
+        const { setAuth, getDefaultRoute, navigate: appNavigate } = await import('../../public/app.ts');
         await setAuth(result.token, result.user);
         const redirectParam = String(actionDef.redirect_param || 'redirect');
         const redirect = safeRedirect(new URLSearchParams(window.location.search).get(redirectParam));
-        window.history.replaceState(null, '', redirect || getDefaultRoute(result.user));
-        window.location.reload();
+        // The login page is rendered before the SPA registers the generic
+        // page navigator, so use the application router for this transition.
+        await appNavigate(redirect || getDefaultRoute(result.user));
         break;
       }
       case 'event': {

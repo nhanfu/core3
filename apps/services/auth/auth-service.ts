@@ -31,12 +31,15 @@ export class AuthService implements AuthServiceProtocol {
 
     const roles = user.roles_csv ? String(user.roles_csv).split(',').filter(Boolean) : [];
     const permissions = await this.repository.permissions(user.id);
+    const effectivePermissions = roles.includes('admin')
+      ? ['*', ...permissions]
+      : permissions;
     await this.repository.recordLogin(user.id);
     const claims: AuthClaims = {
       sub: String(user.id), id: String(user.id), email: user.email, name: user.name,
       avatar_url: user.avatar_url, preferred_lang: user.preferred_lang,
       branch_id: user.branch_id || null, view_scope: user.view_scope || 'all',
-      roles, branches: user.branch_id ? [String(user.branch_id)] : [], permissions,
+      roles, branches: user.branch_id ? [String(user.branch_id)] : [], permissions: effectivePermissions,
       attributes: { department_id: user.department_id }, token_type: 'user',
     };
     const token = await new SignJWT(claims as any)

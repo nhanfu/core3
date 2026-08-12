@@ -6,7 +6,7 @@ import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';
-import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
+import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LIST, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
 import { TopicMediator } from '../../lib/topics/mediator.ts';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
 
@@ -55,6 +55,10 @@ export default class AuthModule {
     this.topics.register({
       definition: AUTH_USER_LOOKUP,
       handle: ({ email }) => this.serviceUserLookup(repository, email),
+    });
+    this.topics.register({
+      definition: AUTH_USER_LIST,
+      handle: () => repository.listUsers(),
     });
     this.topics.register({
       definition: AUTH_PERMISSION_CHECK,

@@ -17,6 +17,20 @@ export const AUTH_USER_LOOKUP: TopicDefinition<AuthUserLookupRequest, AuthUserLo
   kind: 'query',
 };
 
+export type AuthUserListResponse = Array<{
+  id: string;
+  email: string;
+  name: string;
+  avatar_url?: string | null;
+  enabled: boolean;
+  branch_id?: string | null;
+}>;
+export const AUTH_USER_LIST: TopicDefinition<Record<string, never>, AuthUserListResponse> = {
+  topic: 'auth.user.list',
+  version: 1,
+  kind: 'query',
+};
+
 export type AuthPermissionRequest = { user: AuthClaims; permission: string };
 export type AuthPermissionResponse = { allowed: boolean };
 export const AUTH_PERMISSION_CHECK: TopicDefinition<AuthPermissionRequest, AuthPermissionResponse> = {

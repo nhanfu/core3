@@ -72,32 +72,27 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT u.id AS user_id, u.name, u.email, u.avatar_url,
+      SELECT f.user_id, f.user_id AS name, '' AS email, NULL AS avatar_url,
         CAST(f.created_at AS VARCHAR) AS followed_at
       FROM order_followers f
-      JOIN order_users u ON u.id = f.user_id
       JOIN orders o ON o.id = f.order_id
       WHERE f.order_id = :id
         AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
-      ORDER BY lower(u.name), lower(u.email)
+      ORDER BY lower(f.user_id)
   - id: order_detail_follower_candidates
     single: false
     permission: orders.read
     query: |
-      SELECT u.id AS user_id, u.name, u.email, u.avatar_url
-      FROM order_users u
-      WHERE u.enabled = true
-        AND (:view_scope = 'all' OR u.branch_id = :current_branch_id)
-      ORDER BY lower(u.name), lower(u.email)
+      SELECT :current_user_id AS user_id, :current_user_name AS name, '' AS email, NULL AS avatar_url
+      WHERE length(trim(CAST(:current_user_id AS VARCHAR))) > 0
   - id: order_detail_attachments
     single: false
     permission: orders.read
     query: |
       SELECT a.id, a.order_id, a.file_name, a.mime_type, a.size_bytes,
-        u.name AS uploaded_by_name, CAST(a.created_at AS VARCHAR) AS created_at
+        a.uploaded_by AS uploaded_by_name, CAST(a.created_at AS VARCHAR) AS created_at
       FROM order_attachments a
       JOIN orders o ON o.id = a.order_id
-      LEFT JOIN order_users u ON u.id = a.uploaded_by
       WHERE a.order_id = :id
         AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
       ORDER BY a.created_at DESC
@@ -301,13 +296,13 @@ actions:
         - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
           status: 403
           message: Order is outside the current view scope
-        - query: "SELECT id, name, email, avatar_url FROM order_users WHERE id = :user_id AND enabled = true AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+        - query: "SELECT :user_id AS id, :user_id AS name, '' AS email, NULL AS avatar_url WHERE length(trim(CAST(:user_id AS VARCHAR))) > 0"
           status: 404
           message: Follower not found
       steps:
         - query: "INSERT INTO order_followers(order_id, user_id, added_by) SELECT :id, :user_id, :current_user_id WHERE NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
-        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.add', 'orders', :id, name FROM order_users WHERE id = :user_id AND NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
-      result: { query: "SELECT u.id AS user_id, u.name, u.email, u.avatar_url, false AS removed FROM order_users u WHERE u.id = :user_id" }
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.add', 'orders', :id, :user_id)"
+      result: { query: "SELECT :user_id AS user_id, :user_id AS name, '' AS email, NULL AS avatar_url, false AS removed" }
   - id: remove_order_follower
     type: server
     permission: orders.write
@@ -322,13 +317,13 @@ actions:
         - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
           status: 403
           message: Order is outside the current view scope
-        - query: "SELECT id, name, email, avatar_url FROM order_users WHERE id = :user_id AND enabled = true"
+        - query: "SELECT :user_id AS id, :user_id AS name, '' AS email, NULL AS avatar_url WHERE length(trim(CAST(:user_id AS VARCHAR))) > 0"
           status: 404
           message: Follower not found
       steps:
-        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.remove', 'orders', :id, u.name FROM order_users u JOIN order_followers f ON f.user_id = u.id AND f.order_id = :id WHERE u.id = :user_id"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.remove', 'orders', :id, :user_id)"
         - query: "DELETE FROM order_followers WHERE order_id = :id AND user_id = :user_id"
-      result: { query: "SELECT u.id AS user_id, u.name, u.email, u.avatar_url, true AS removed FROM order_users u WHERE u.id = :user_id" }
+      result: { query: "SELECT :user_id AS user_id, :user_id AS name, '' AS email, NULL AS avatar_url, true AS removed" }
   - id: upload_order_attachment
     type: upload
     action: orders.attachments.upload
