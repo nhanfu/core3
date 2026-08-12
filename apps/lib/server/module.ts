@@ -77,7 +77,7 @@ export async function discoverModules(appsRoot: string): Promise<ModuleLifecycle
     } else {
       const service = loadYamlServiceManifest(root);
       if (service.manifest.runtime === 'auth') {
-        const loaded = await import(pathToFileURL(join(appsRoot, 'lib', 'server', 'auth-module.ts')).href);
+        const loaded = await import(pathToFileURL(join(appsRoot, 'services', 'auth', 'auth-module.ts')).href);
         const candidate = loaded.default ?? loaded.AuthModule;
         instance = typeof candidate === 'function' ? new candidate() : candidate;
       } else {

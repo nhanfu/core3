@@ -7,7 +7,6 @@ import { HybridDuckDbDatabase } from './hybrid-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { migrateDatabase } from './migrations.ts';
 import { createYamlApi } from './routes/yaml-api.ts';
-import { MediatorAuthAdapter } from '../topics/auth-adapter.ts';
 import { TopicMediator } from '../topics/mediator.ts';
 import { topicDefinition } from '../topics/contracts.ts';
 import type { ModuleApiHandler } from './module.ts';
@@ -124,7 +123,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       });
     }
     this.topics.start();
-    const authProvider: any = new MediatorAuthAdapter(this.topics);
+    const authProvider: any = context.resolveService('auth.adapter');
     const api = createYamlApi({
       repository: this.repository,
       authProvider,

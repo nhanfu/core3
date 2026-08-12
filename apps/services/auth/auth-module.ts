@@ -1,14 +1,17 @@
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { discoverPages, translationMap } from './discovery.ts';
-import { requestLanguage } from './locale.ts';
-import { migrateDatabase } from './migrations.ts';
+import { discoverPages, translationMap } from '../../lib/server/discovery.ts';
+import { requestLanguage } from '../../lib/server/locale.ts';
+import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
-import { AUTH_SERVICE_KEY } from '../interfaces/auth.ts';
-import { HybridDuckDbDatabase } from './hybrid-database.ts';
-import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_RESOLVE } from '../topics/auth.ts';
-import { TopicMediator } from '../topics/mediator.ts';
+import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';
+import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_RESOLVE } from './topics.ts';
+import { TopicMediator } from '../../lib/topics/mediator.ts';
+import { MediatorAuthAdapter } from './auth-adapter.ts';
+
+export const AUTH_SERVICE_KEY = 'auth';
+export const AUTH_ADAPTER_KEY = 'auth.adapter';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,6 +61,7 @@ export default class AuthModule {
       handle: ({ userId, currentPassword, newPassword }) => this.service.changePassword(userId, currentPassword, newPassword).then(() => ({ ok: true as const })),
     });
     this.topics.start();
+    context.registerService(AUTH_ADAPTER_KEY, new MediatorAuthAdapter(this.topics));
 
     let pages = discoverPages(context.appsRoot);
     const profileApi = pages.pages.get('profile')?.config?.api || {};

@@ -5,8 +5,8 @@ services:
     database:
       driver: duckdb
       path:
-        development: ${CORE3_DB_PATH:-../coredb/core3.duckdb}
-        production: ${CORE3_DB_PATH:-../coredb/core3.duckdb}
+        development: ${CORE3_AUTH_DB_PATH:-../coredb/auth.duckdb}
+        production: ${CORE3_AUTH_DB_PATH:-../coredb/auth.duckdb}
 
   # Order storage is declared independently so the YAML service can acquire
   # its own database adapter for the Order service.

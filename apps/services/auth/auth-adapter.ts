@@ -1,6 +1,6 @@
-import type { AuthClaims, AuthIdentity, AuthServiceProtocol, SecurityContext, User } from '../interfaces/auth.ts';
-import { AUTH_PASSWORD_CHANGE, AUTH_USER_RESOLVE } from './auth.ts';
-import { TopicMediator } from './mediator.ts';
+import type { AuthClaims, AuthIdentity, AuthServiceProtocol, SecurityContext, User } from './interfaces.ts';
+import { AUTH_PASSWORD_CHANGE, AUTH_USER_RESOLVE } from './topics.ts';
+import { TopicMediator } from '../../lib/topics/mediator.ts';
 
 export class MediatorAuthAdapter implements AuthServiceProtocol {
   constructor(private readonly topics: TopicMediator) {}
