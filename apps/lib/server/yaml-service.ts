@@ -91,7 +91,7 @@ export class YamlServiceModule implements ModuleLifecycle {
     this.db = await HybridDuckDbDatabase.open(String(path));
     this.repository = new YamlRepository(this.db);
     if (this.manifest.migrations) {
-      await migrateDatabase(this.repository, join(context.moduleRoot, this.manifest.migrations));
+      await migrateDatabase(this.repository, join(context.moduleRoot, this.manifest.migrations), undefined, `${this.id}_schema_migrations`);
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
 

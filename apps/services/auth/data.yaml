@@ -1,4 +1,7 @@
 queries:
+  lookup_user: |
+    SELECT id, email, name, avatar_url, enabled, branch_id
+    FROM users WHERE lower(email) = lower(:email)
   find_user_by_email: |
     SELECT u.*, string_agg(r.name, ',') AS roles_csv,
       COALESCE((SELECT CASE

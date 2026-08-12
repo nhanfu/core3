@@ -1,7 +1,7 @@
 id: order
 kind: domain-service
 database: order
-migrations: ../../db/migrations
+migrations: migrations
 pages:
   - pages/menu.yaml
   - pages/orders.yaml

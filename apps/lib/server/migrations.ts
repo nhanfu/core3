@@ -81,15 +81,17 @@ export async function migrateDatabase(
   repository: MigrationRepository,
   migrationsRoot: string,
   target?: number,
+  migrationTable = 'schema_migrations',
 ): Promise<void> {
   const migrations = loadMigrations(migrationsRoot);
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(migrationTable)) throw new Error(`Invalid migration table: ${migrationTable}`);
   await repository.runStatements(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
+    CREATE TABLE IF NOT EXISTS ${migrationTable} (
       version VARCHAR PRIMARY KEY,
       applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  const appliedRows = await repository.query('SELECT version FROM schema_migrations');
+  const appliedRows = await repository.query(`SELECT version FROM ${migrationTable}`);
   const applied = new Set(appliedRows.map((row) => Number(row.version)));
   const desired = target ?? (migrations.at(-1)?.version || 0);
   if (!Number.isInteger(desired) || desired < 0) throw new Error(`Invalid migration target: ${desired}`);
@@ -101,7 +103,7 @@ export async function migrateDatabase(
         if (!repository.partition) throw new Error(`Database does not support partitioning ${migration.partition.table}`);
         await repository.partition(migration.partition);
       }
-      await repository.run('INSERT INTO schema_migrations(version) VALUES(?)', [migration.name]);
+      await repository.run(`INSERT INTO ${migrationTable}(version) VALUES(?)`, [migration.name]);
       applied.add(migration.version);
     }
   }
@@ -112,7 +114,7 @@ export async function migrateDatabase(
         await repository.unpartition(migration.downPartition);
       }
       await repository.runStatements(migration.down);
-      await repository.run('DELETE FROM schema_migrations WHERE version = ?', [migration.name]);
+      await repository.run(`DELETE FROM ${migrationTable} WHERE version = ?`, [migration.name]);
     }
   }
 }

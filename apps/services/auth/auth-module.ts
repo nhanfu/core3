@@ -6,7 +6,7 @@ import { migrateDatabase } from '../../lib/server/migrations.ts';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';
-import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_RESOLVE } from './topics.ts';
+import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
 import { TopicMediator } from '../../lib/topics/mediator.ts';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
 
@@ -44,13 +44,17 @@ export default class AuthModule {
     const data = Bun.YAML.parse(await Bun.file(join(context.moduleRoot, 'data.yaml')).text()) as { queries?: Record<string, string> };
     const repository = new AuthRepository(this.db, data.queries || {});
     context.registerService('database', this.db);
-    await this.db.withDurableWrites(() => migrateDatabase(repository, join(context.appsRoot, 'db', 'migrations')));
+    await this.db.withDurableWrites(() => migrateDatabase(repository, join(context.moduleRoot, 'migrations'), undefined, 'auth_schema_migrations'));
     this.service = new AuthService(repository, new TextEncoder().encode(context.env.AUTH_JWT_SECRET || context.env.JWT_SECRET || 'core3-auth-dev-secret-32chars!!!!'));
     context.registerService(AUTH_SERVICE_KEY, this.service);
     this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);
     this.topics.register({
       definition: AUTH_USER_RESOLVE,
       handle: ({ token }) => this.service.introspect(String(token)),
+    });
+    this.topics.register({
+      definition: AUTH_USER_LOOKUP,
+      handle: ({ email }) => this.serviceUserLookup(repository, email),
     });
     this.topics.register({
       definition: AUTH_PERMISSION_CHECK,
@@ -61,6 +65,7 @@ export default class AuthModule {
       handle: ({ userId, currentPassword, newPassword }) => this.service.changePassword(userId, currentPassword, newPassword).then(() => ({ ok: true as const })),
     });
     this.topics.start();
+    context.registerService('auth.topic', this.topics);
     context.registerService(AUTH_ADAPTER_KEY, new MediatorAuthAdapter(this.topics));
 
     let pages = discoverPages(context.appsRoot);
@@ -131,6 +136,10 @@ export default class AuthModule {
       }
       return null;
     });
+  }
+
+  private serviceUserLookup(repository: AuthRepository, email: string): Promise<any | null> {
+    return repository.lookupUser(String(email));
   }
 
   async unload(): Promise<void> {

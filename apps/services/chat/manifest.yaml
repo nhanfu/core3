@@ -1,7 +1,7 @@
 id: chat
 kind: domain-service
 database: chat
-migrations: ../../db/migrations
+migrations: migrations
 pages:
   - pages/chat.yaml
 permissions: permissions.yaml

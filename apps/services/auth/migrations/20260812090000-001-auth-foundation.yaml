@@ -1,0 +1,52 @@
+up: |
+  CREATE TABLE IF NOT EXISTS roles (
+    id VARCHAR PRIMARY KEY,
+    name VARCHAR NOT NULL UNIQUE,
+    description VARCHAR,
+    view_scope VARCHAR NOT NULL DEFAULT 'all'
+  );
+  CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR PRIMARY KEY,
+    email VARCHAR NOT NULL UNIQUE,
+    name VARCHAR NOT NULL,
+    password_hash VARCHAR NOT NULL,
+    avatar_url VARCHAR,
+    preferred_lang VARCHAR DEFAULT 'en',
+    enabled BOOLEAN DEFAULT true,
+    branch_id VARCHAR,
+    department_id VARCHAR,
+    last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS user_roles (
+    user_id VARCHAR NOT NULL,
+    role_id VARCHAR NOT NULL REFERENCES roles(id),
+    PRIMARY KEY (user_id, role_id)
+  );
+  CREATE TABLE IF NOT EXISTS permissions (
+    id VARCHAR PRIMARY KEY,
+    role_id VARCHAR NOT NULL REFERENCES roles(id),
+    permission_key VARCHAR NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_auth_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_auth_user_roles_user ON user_roles(user_id);
+  CREATE INDEX IF NOT EXISTS idx_auth_permissions_role ON permissions(role_id);
+  INSERT OR IGNORE INTO roles(id, name, description, view_scope) VALUES
+    ('role-admin', 'admin', 'Full system access', 'all'),
+    ('role-dispatcher', 'dispatcher', 'Order and dispatch access', 'branch');
+  INSERT OR IGNORE INTO users(id, email, name, password_hash, preferred_lang, branch_id, department_id) VALUES
+    ('user-admin', 'admin@tms.local', 'Admin User', 'admin123', 'en', 'branch-hcm', 'department-04'),
+    ('user-disp', 'dispatcher@tms.local', 'Dispatcher User', 'dispatcher123', 'en', 'branch-hcm', 'department-02');
+  INSERT OR IGNORE INTO user_roles(user_id, role_id) VALUES
+    ('user-admin', 'role-admin'), ('user-disp', 'role-dispatcher');
+  INSERT OR IGNORE INTO permissions(id, role_id, permission_key) VALUES
+    ('perm-disp-orders-read', 'role-dispatcher', 'orders.read'),
+    ('perm-disp-orders-write', 'role-dispatcher', 'orders.write'),
+    ('perm-disp-chat-read', 'role-dispatcher', 'chat.read'),
+    ('perm-disp-chat-write', 'role-dispatcher', 'chat.write');
+down: |
+  DROP TABLE IF EXISTS permissions;
+  DROP TABLE IF EXISTS user_roles;
+  DROP TABLE IF EXISTS users;
+  DROP TABLE IF EXISTS roles;

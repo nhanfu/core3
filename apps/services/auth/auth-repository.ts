@@ -35,6 +35,11 @@ export class AuthRepository {
     return rows[0] || null;
   }
 
+  async lookupUser(email: string): Promise<any | null> {
+    const rows = await this.execute('lookup_user', { email: email.trim() });
+    return rows[0] || null;
+  }
+
   async permissions(userId: string): Promise<string[]> {
     const rows = await this.execute('permissions', { user_id: userId });
     return rows.map((row) => String(row.permission_key));

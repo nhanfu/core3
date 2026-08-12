@@ -9,6 +9,14 @@ export const AUTH_USER_RESOLVE: TopicDefinition<AuthResolveRequest, AuthResolveR
   kind: 'query',
 };
 
+export type AuthUserLookupRequest = { email: string };
+export type AuthUserLookupResponse = { id: string; email: string; name: string; avatar_url?: string | null; enabled: boolean; branch_id?: string | null } | null;
+export const AUTH_USER_LOOKUP: TopicDefinition<AuthUserLookupRequest, AuthUserLookupResponse> = {
+  topic: 'auth.user.lookup',
+  version: 1,
+  kind: 'query',
+};
+
 export type AuthPermissionRequest = { user: AuthClaims; permission: string };
 export type AuthPermissionResponse = { allowed: boolean };
 export const AUTH_PERMISSION_CHECK: TopicDefinition<AuthPermissionRequest, AuthPermissionResponse> = {
