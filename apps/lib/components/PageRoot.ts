@@ -133,7 +133,7 @@ class PageRoot extends BaseComponent {
     }
 
     if (config.filters) {
-      const { FilterBar } = await import('./FilterBar.ts');
+      const { FilterBar } = await import('@core3/client/components/FilterBar');
       const filters = (config.filters.fields || []).map((field: any) => {
         if (!field.options_source) return field;
         const rows = dataMap[field.options_source]?.data;
