@@ -1,7 +1,7 @@
 import { evalExpr } from '@core3/client/expr';
 import { appendIcon } from '@core3/client/components/Icon';
-import { AsyncSelect } from './AsyncSelect.ts';
-import { MoneyInput } from './MoneyInput.ts';
+import { AsyncSelect } from '@core3/client/components/AsyncSelect';
+import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from '@core3/client/components/Dialog';
 

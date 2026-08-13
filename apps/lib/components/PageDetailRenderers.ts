@@ -460,7 +460,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       break;
     }
     case 'ChoiceGroup': {
-      const { ChoiceGroup } = await import('./ChoiceGroup.ts');
+      const { ChoiceGroup } = await import('@core3/client/components/ChoiceGroup');
       const component = new ChoiceGroup(def.id || `${config.page.id}-choices`, { record: ctx.user }, def);
       component._onAction = async (actionId: string, params: any) => {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ApprovalTimeline } from '../../components/ApprovalTimeline.ts';
-import { AsyncSelect } from '../../components/AsyncSelect.ts';
+import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { ContactGrid } from '../../components/ContactGrid.ts';
 import { DataGrid } from '../../components/DataGrid.ts';
 import { DocumentSummary } from '../../components/DocumentSummary.ts';
 import { LineItemGrid } from '../../components/LineItemGrid.ts';
 import { MoneySummary } from '../../components/MoneySummary.ts';
-import { MoneyInput } from '../../components/MoneyInput.ts';
+import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { OdooFormView } from '../../components/OdooFormView.ts';
 import { OdooChatter } from '../../components/OdooChatter.ts';
 import { OdooFollowerManager } from '../../components/OdooFollowerManager.ts';
