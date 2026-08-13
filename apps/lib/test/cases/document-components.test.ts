@@ -3,7 +3,7 @@ import { ApprovalTimeline } from '../../components/ApprovalTimeline.ts';
 import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { ContactGrid } from '../../components/ContactGrid.ts';
 import { DataGrid } from '../../components/DataGrid.ts';
-import { DocumentSummary } from '../../components/DocumentSummary.ts';
+import { DocumentSummary } from '@core3/client/components/DocumentSummary';
 import { LineItemGrid } from '../../components/LineItemGrid.ts';
 import { MoneySummary } from '../../components/MoneySummary.ts';
 import { MoneyInput } from '@core3/client/components/MoneyInput';

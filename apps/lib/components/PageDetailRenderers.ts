@@ -15,7 +15,7 @@ export class PageDetailRenderers extends BaseComponent {
   const { config, dataMap, ctx, bindSource, filterState, paginationState, sortState, pageParams, client, createQuery, refreshSources, refetchSource, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
-  const { DocumentSummary } = await import('./DocumentSummary.ts');
+  const { DocumentSummary } = await import('@core3/client/components/DocumentSummary');
   const sourceResult = dataMap[def.source] || { data: {} };
   const comp = new DocumentSummary(
     `document-summary-${def.source || def.id || Date.now()}`,
@@ -445,7 +445,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       break;
     }
     case 'Html': {
-      const { Html } = await import('./Html.ts');
+      const { Html } = await import('@core3/client/components/Html');
       const runtimeContext = ctx.context || {};
       const runtimeUser = { ...ctx.user, ...(runtimeContext.user || {}) };
       if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
