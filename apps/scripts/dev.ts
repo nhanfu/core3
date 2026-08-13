@@ -23,11 +23,26 @@ if (import.meta.main) {
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
+  const mediatorPort = await findAvailablePort(Number(process.env.EVENT_MEDIATOR_PORT || '3010'));
+  const mediatorUrl = `ws://127.0.0.1:${mediatorPort}/events`;
   if (port !== start) console.log(`Port ${start} is busy; using port ${port}`);
+  if (mediatorPort !== 3010) console.log(`Event mediator port 3010 is busy; using port ${mediatorPort}`);
 
   let stopped = false;
   let restartRequested = false;
   let child: ReturnType<typeof Bun.spawn> | null = null;
+  const mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts', ...process.argv.slice(2)], {
+    env: {
+      ...process.env,
+      EVENT_MEDIATOR_PORT: String(mediatorPort),
+      CORE3_EVENT_MODE: 'mediator',
+      CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
+      ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
+    },
+    stdin: 'inherit',
+    stdout: 'inherit',
+    stderr: 'inherit',
+  });
   let restartTimer: ReturnType<typeof setTimeout> | undefined;
 
   const sourceChanged = (filename: string | Buffer | null) => {
@@ -61,6 +76,7 @@ if (import.meta.main) {
     for (const watcher of watchers) watcher.close();
     clearTimeout(restartTimer);
     child?.kill();
+    mediator.kill();
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
@@ -71,6 +87,8 @@ if (import.meta.main) {
         env: {
           ...process.env,
           PORT: String(port),
+          CORE3_EVENT_MODE: 'mediator',
+          CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
           ...(memoryDb ? {
             CORE3_AUTH_DB_PATH: ':memory:',
             CORE3_ORDER_DB_PATH: ':memory:',
