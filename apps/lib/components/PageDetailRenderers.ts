@@ -209,7 +209,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
-  const { StatusTabs } = await import('./StatusTabs.ts');
+  const { StatusTabs } = await import('@core3/client/components/StatusTabs');
   const sourceResult = def.source ? dataMap[def.source] || {} : {};
   const rows = Array.isArray(sourceResult.data) ? sourceResult.data : [];
   const field = def.filter_field || 'status';

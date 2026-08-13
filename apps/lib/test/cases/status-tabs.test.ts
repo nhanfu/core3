@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StatusTabs } from '../../components/StatusTabs.ts';
+import { StatusTabs } from '@core3/client/components/StatusTabs';
 
 describe('StatusTabs', () => {
   it('can render reference-style toggles without count badges', () => {
