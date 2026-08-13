@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { PageIntro } from '../../components/PageIntro.ts';
+import { PageIntro } from '@core3/client/components/PageIntro';
 
 function mount(component: PageIntro) {
   const container = document.createElement('div');

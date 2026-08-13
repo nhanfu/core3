@@ -36,7 +36,7 @@ export { Chart }                from '@core3/client/components/Chart';
 export { ButtonExcel }          from '@core3/client/components/ButtonExcel';
 export { ButtonPdf }            from '@core3/client/components/ButtonPdf';
 export { ButtonImportExcel }    from '@core3/client/components/ButtonImportExcel';
-export { PdfReport }            from './PdfReport.ts';
+export { PdfReport }            from '@core3/client/components/PdfReport';
 export { Section }              from '@core3/client/components/Section';
 export { TabGroup }             from '@core3/client/components/TabGroup';
 export { Paginator }            from '@core3/client/components/Paginator';
