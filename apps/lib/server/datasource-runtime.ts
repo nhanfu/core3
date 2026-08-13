@@ -1,4 +1,4 @@
-import { bindNamedParams, describeQueryError, redactQueryValue } from './database/sql.ts';
+import { bindNamedParams, describeQueryError, redactQueryValue } from '@core3/server/database/sql';
 
 export const datasourceMethods = {
   querySource: async function(this: any,

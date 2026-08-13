@@ -1,5 +1,5 @@
 import { translationMap } from '../discovery.ts';
-import { requestLanguage } from '../locale.ts';
+import { requestLanguage } from '@core3/server/locale';
 import { handleFileRoutes } from './file-routes.ts';
 import { handleDataRoutes } from './yaml-data.ts';
 import { handleActionRoutes } from './yaml-actions.ts';

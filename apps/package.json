@@ -13,6 +13,8 @@
     "audit": "bun scripts/audit-order-ui.ts"
   },
   "dependencies": {
+    "@core3/client": "workspace:*",
+    "@core3/server": "workspace:*",
     "@duckdb/node-api": "^1.5.5-r.3",
     "apache-arrow": "^21.2.0",
     "duckdb": "^1.1.0",

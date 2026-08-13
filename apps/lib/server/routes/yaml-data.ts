@@ -1,5 +1,5 @@
 import { translationMap } from '../discovery.ts';
-import { requestLanguage } from '../locale.ts';
+import { requestLanguage } from '@core3/server/locale';
 import { WorkflowRuntime } from '../workflow-runtime.ts';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { executeYamlMutation } from '../../yaml/mutation.ts';

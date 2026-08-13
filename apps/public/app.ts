@@ -1,10 +1,10 @@
 import { AppShell } from './components/AppShell.ts';
 import { i18n } from '../lib/i18n.ts';
-import { getPageParams, registerNavigator } from '../lib/navigate.ts';
+import { getPageParams, registerNavigator } from '@core3/client/navigate';
 import { client } from '../lib/client.ts';
 import { validatePageDefinition } from '../lib/yaml/schema.ts';
 import { PageRuntime } from '../lib/components/PageRoot.ts';
-import { loginPath, safeRedirect } from '../lib/auth-redirect.ts';
+import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 
 const TOKEN_KEY = 'core3_token';
 const DEFAULT_APP_KEY = 'core3_default_app';

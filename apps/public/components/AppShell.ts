@@ -1,11 +1,11 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
-import { html } from '../../lib/html.ts';
+import { html } from '@core3/client/html';
 import { i18n } from '../../lib/i18n.ts';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { RightModal } from './RightModal.ts';
 import { AppLauncher, type LauncherApp } from './AppLauncher.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
-import { hasPermission } from '../../lib/meta.ts';
+import { hasPermission } from '@core3/client/meta';
 
 export type NavItem = { path: string; label: string; icon: string; permission?: string; children?: NavItem[] };
 type NavGroup = { id: string; label: string; items: NavItem[] };

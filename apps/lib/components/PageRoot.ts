@@ -1,6 +1,6 @@
-import { evalExpr, interpolate } from '../expr.ts';
-import { hasPermission, resolveAction } from '../meta.ts';
-import { navigate, getPageParams, pushParams } from '../navigate.ts';
+import { evalExpr, interpolate } from '@core3/client/expr';
+import { hasPermission, resolveAction } from '@core3/client/meta';
+import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
 import { appendIcon, hasIcon } from './Icon.ts';
 import { EventPopup } from './EventPopup.ts';
 import { resolveDatePreset } from './ListToolbar.ts';
@@ -9,7 +9,7 @@ import { PageGridRenderers } from './PageGridRenderers.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { BaseComponent } from './BaseComponent.ts';
 import { showMessageDialog } from './Dialog.ts';
-import { loginPath, safeRedirect } from '../auth-redirect.ts';
+import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 
 class PageChild extends BaseComponent {
   constructor(id: string, private readonly definition: any, private readonly renderDefinition: any) {

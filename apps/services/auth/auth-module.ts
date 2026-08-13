@@ -1,8 +1,8 @@
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { discoverPages, translationMap } from '../../lib/server/discovery.ts';
-import { requestLanguage } from '../../lib/server/locale.ts';
-import { migrateDatabase } from '../../lib/server/migrations.ts';
+import { requestLanguage } from '@core3/server/locale';
+import { migrateDatabase } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';

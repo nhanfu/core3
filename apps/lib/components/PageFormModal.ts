@@ -1,4 +1,4 @@
-import { evalExpr } from '../expr.ts';
+import { evalExpr } from '@core3/client/expr';
 import { appendIcon } from './Icon.ts';
 import { AsyncSelect } from './AsyncSelect.ts';
 import { MoneyInput } from './MoneyInput.ts';

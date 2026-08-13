@@ -7,7 +7,7 @@
  * Import: import { BaseComponent } from '/lib/components/BaseComponent.ts';
  */
 
-import { HTML } from '../html.ts';
+import { HTML } from '@core3/client/html';
 import { ExternalWidgetAdapter } from '../adapters/ExternalWidgetAdapter.ts';
 
 export { HTML };

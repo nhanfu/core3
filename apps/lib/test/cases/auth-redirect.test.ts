@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loginPath, safeRedirect } from '../../auth-redirect.ts';
+import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 
 describe('auth redirect', () => {
   it('keeps an internal path and query string', () => {

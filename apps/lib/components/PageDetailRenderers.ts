@@ -1,5 +1,5 @@
-import { evalExpr } from '../expr.ts';
-import { hasPermission } from '../meta.ts';
+import { evalExpr } from '@core3/client/expr';
+import { hasPermission } from '@core3/client/meta';
 import { resolveDatePreset } from './ListToolbar.ts';
 import { BaseComponent } from './BaseComponent.ts';
 
@@ -294,7 +294,7 @@ async function renderListToolbar(def: any, targetContainer: HTMLElement) {
       return;
     }
     if (actionId.endsWith('.export')) {
-      const { downloadCsv, toCsv } = await import('../list-utils.ts');
+      const { downloadCsv, toCsv } = await import('@core3/client/list-utils');
       const { downloadXlsx, toXlsx } = await import('../xlsx-utils.ts');
       const grid = (config.components || []).find(component => component.type === 'DataGrid' && component.source === sourceId);
       const columns = (grid?.columns || []).filter(column => column.field && column.field !== 'actions');

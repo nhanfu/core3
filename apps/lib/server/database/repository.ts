@@ -1,6 +1,6 @@
-import { queryOnConnection, runOnConnection } from './sql.ts';
+import { queryOnConnection, runOnConnection } from '@core3/server/database/sql';
 import { YamlMutationRuntime, type MutationDefinition } from '../yaml-mutation-runtime.ts';
-import { splitSQL } from './sql.ts';
+import { splitSQL } from '@core3/server/database/sql';
 
 export class DuckDbRepository {
 db: any;

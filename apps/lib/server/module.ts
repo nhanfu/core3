@@ -1,7 +1,7 @@
 import { basename, join } from 'node:path';
 import { readdirSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import type { ModuleApplicationConfig } from './application-config.ts';
+import type { ModuleApplicationConfig } from '@core3/server/application-config';
 import type { EventBus } from './event-store.ts';
 import { loadYamlServiceManifest, YamlServiceModule } from './yaml-service.ts';
 

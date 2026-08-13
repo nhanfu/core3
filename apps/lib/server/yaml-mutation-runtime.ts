@@ -1,4 +1,4 @@
-import { bindNamedParams, queryOnConnection, runOnConnection } from './database/sql.ts';
+import { bindNamedParams, queryOnConnection, runOnConnection } from '@core3/server/database/sql';
 
 export type MutationConnection = {
   run(sql: string, ...args: any[]): void;

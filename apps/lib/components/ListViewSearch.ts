@@ -1,4 +1,4 @@
-import { html } from '../html.ts';
+import { html } from '@core3/client/html';
 import { BaseComponent } from './BaseComponent.ts';
 import { appendIcon } from './Icon.ts';
 import { appendBadge } from './helpers.ts';

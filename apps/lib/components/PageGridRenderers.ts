@@ -1,6 +1,6 @@
-import { evalExpr } from '../expr.ts';
-import { hasPermission } from '../meta.ts';
-import { navigate, getPageParams, pushParams } from '../navigate.ts';
+import { evalExpr } from '@core3/client/expr';
+import { hasPermission } from '@core3/client/meta';
+import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
 import { BaseComponent } from './BaseComponent.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';

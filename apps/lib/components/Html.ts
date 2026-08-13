@@ -1,4 +1,4 @@
-import { interpolate } from '../expr.ts';
+import { interpolate } from '@core3/client/expr';
 import { BaseComponent } from './BaseComponent.ts';
 
 const TAGS = new Set(['div', 'span', 'p', 'section', 'strong', 'small']);

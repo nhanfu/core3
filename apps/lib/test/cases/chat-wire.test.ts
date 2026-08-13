@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeChatFrame, encodeChatFrame } from '../../chat-wire.ts';
+import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
 
 describe('binary chat wire', () => {
   it('round trips chat commands without Arrow IPC', () => {

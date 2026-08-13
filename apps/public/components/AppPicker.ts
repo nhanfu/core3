@@ -1,5 +1,5 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
-import { html } from '../../lib/html.ts';
+import { html } from '@core3/client/html';
 import { appendIcon } from '../../lib/components/Icon.ts';
 import { getApps, selectApp, setDefaultApp } from '../app.ts';
 

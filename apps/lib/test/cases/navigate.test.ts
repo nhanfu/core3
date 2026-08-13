@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { getPageParams } from '../../navigate.ts';
+import { getPageParams } from '@core3/client/navigate';
 
 describe('page parameters', () => {
   afterEach(() => {

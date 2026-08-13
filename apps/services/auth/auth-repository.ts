@@ -1,4 +1,4 @@
-import { bindNamedParams, queryOnConnection, runOnConnection, splitSQL } from '../../lib/server/database/sql.ts';
+import { bindNamedParams, queryOnConnection, runOnConnection, splitSQL } from '@core3/server/database/sql';
 
 export class AuthRepository {
   constructor(private readonly db: any, private readonly queries: Record<string, string>) {}

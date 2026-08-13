@@ -1,5 +1,5 @@
 import { BaseComponent } from './BaseComponent.ts';
-import { decodeChatFrame, encodeChatFrame } from '../chat-wire.ts';
+import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
 
 function createElement<K extends keyof HTMLElementTagNameMap>(
   tag: K,

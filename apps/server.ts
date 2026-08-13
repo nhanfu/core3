@@ -3,7 +3,7 @@ import { discoverModules, ModuleManager } from './lib/server/module.ts';
 import { YamlServiceModule } from './lib/server/yaml-service.ts';
 import { createYamlHostApi } from './lib/server/routes/yaml-host-api.ts';
 import { discoverPageRoutes, discoverPages } from './lib/server/discovery.ts';
-import { loadApplicationConfig, resolveEnvironmentValues } from './lib/server/application-config.ts';
+import { loadApplicationConfig, resolveEnvironmentValues } from '@core3/server/application-config';
 import { EventStore, type EventBus } from './lib/server/event-store.ts';
 import { EventMediatorClient } from './lib/server/event-mediator.ts';
 

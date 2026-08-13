@@ -5,7 +5,7 @@ import type { ModuleContext, ModuleLifecycle } from './module.ts';
 import { discoverPages } from './discovery.ts';
 import { HybridDuckDbDatabase } from './hybrid-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
-import { migrateDatabase } from './migrations.ts';
+import { migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
 import { TopicMediator } from '../topics/mediator.ts';
 import { topicDefinition } from '../topics/contracts.ts';

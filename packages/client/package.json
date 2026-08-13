@@ -1,0 +1,9 @@
+{
+  "name": "@core3/client",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  }
+}

@@ -1,5 +1,5 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
-import { html } from '../../lib/html.ts';
+import { html } from '@core3/client/html';
 import { i18n } from '../../lib/i18n.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';
 

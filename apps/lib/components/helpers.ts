@@ -1,4 +1,4 @@
-import { html } from '../html.ts';
+import { html } from '@core3/client/html';
 
 export const STATUS_COLORS = {
   'active':         'bg-green-100 text-green-800',
