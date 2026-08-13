@@ -35,6 +35,8 @@ export type ListToolbarDefinition = {
     presets?: Array<'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all'>;
     preset_style?: 'select' | 'segmented';
     default_preset?: 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';
+    max_years?: number;
+    deny_unbounded?: boolean;
   };
   filter_sources?: string[];
   advanced_filter?: boolean;
@@ -128,7 +130,8 @@ export class ListToolbar extends BaseComponent {
       const range = document.createElement('div');
       range.className = 'flex flex-wrap items-center gap-2';
       const dateRange = this.def.date_range;
-      if (dateRange.presets?.length) {
+      const presets = (dateRange.presets || []).filter((preset) => !(dateRange.deny_unbounded && preset === 'all'));
+      if (presets.length) {
         const labels: Record<string, string> = {
           today: 'Hôm nay', previous_month: 'Tháng trước', week: 'Tuần này', month: 'Tháng này', quarter: 'Quý này', year: 'Năm nay', last_12_months: '12 tháng', all: 'Tất cả thời gian',
         };
@@ -144,7 +147,7 @@ export class ListToolbar extends BaseComponent {
           const segments = document.createElement('div');
           segments.className = 'core3-token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1';
           segments.setAttribute('aria-label', 'Khoảng thời gian');
-          for (const preset of dateRange.presets) {
+          for (const preset of presets) {
             const button = document.createElement('button');
             button.type = 'button';
             button.dataset.datePreset = preset;
@@ -162,7 +165,7 @@ export class ListToolbar extends BaseComponent {
           placeholder.value = '';
           placeholder.textContent = 'Khoảng thời gian';
           select.append(placeholder);
-          for (const preset of dateRange.presets) {
+          for (const preset of presets) {
             const option = document.createElement('option');
             option.value = preset;
             option.textContent = labels[preset] || preset;
@@ -184,9 +187,22 @@ export class ListToolbar extends BaseComponent {
         const input = document.createElement('input');
         input.type = 'date';
         input.value = String((this.state as any)[field.key] || '');
+        if (dateRange.max_years) {
+          const bounds = rollingDateBounds(dateRange.max_years);
+          input.min = bounds.from;
+          input.max = bounds.to;
+        }
         input.className = 'core3-token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
         input.setAttribute('aria-label', field.label);
         input.addEventListener('change', () => {
+          if (dateRange.max_years && input.value) {
+            const bounds = rollingDateBounds(dateRange.max_years);
+            if (input.value < bounds.from || input.value > bounds.to) {
+              input.setCustomValidity(`Choose a date between ${bounds.from} and ${bounds.to}`);
+              return;
+            }
+          }
+          input.setCustomValidity('');
           this.setState({ [field.key]: input.value, preset: undefined }, false);
           this.submit('date-range', { [field.key]: input.value });
         });
@@ -327,6 +343,15 @@ export class ListToolbar extends BaseComponent {
     if (variant === 'ghost') return 'border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900';
     return 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50';
   }
+}
+
+function rollingDateBounds(years: number): { from: string; to: string } {
+  const now = new Date();
+  const toDate = new Date(now);
+  toDate.setUTCDate(toDate.getUTCDate() + 1);
+  const fromDate = new Date(now);
+  fromDate.setUTCFullYear(fromDate.getUTCFullYear() - years);
+  return { from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) };
 }
 
 export type DateRangePreset = 'today' | 'previous_month' | 'week' | 'month' | 'quarter' | 'year' | 'last_12_months' | 'all';

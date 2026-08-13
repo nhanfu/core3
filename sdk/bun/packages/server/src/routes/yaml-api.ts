@@ -102,6 +102,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       const previous = params[key];
       params[key] = previous === undefined ? value : Array.isArray(previous) ? [...previous, value] : [previous, value];
     }
+    applyDefaultDateRanges(page.components || [], params);
     const pageSizes = sourcePageSizes(page);
     const listSort = typeof params.sort === 'string'
       ? {
@@ -311,4 +312,40 @@ export function createYamlApi(ctx: YamlApiContext) {
     return apiError(404, 'API route not found');
   }
   return handleAPI;
+}
+
+function applyDefaultDateRanges(components: any[], params: Record<string, unknown>): void {
+  for (const component of components) {
+    const range = component?.date_range;
+    if (component?.source && range?.default_preset) {
+      const fromKey = String(range.from_field || 'from_date');
+      const toKey = String(range.to_field || 'to_date');
+      if (params[fromKey] === undefined && params[toKey] === undefined) {
+        const dates = defaultDatePreset(String(range.default_preset));
+        if (dates) {
+          params[fromKey] = dates.from;
+          params[toKey] = dates.to;
+        }
+      }
+    }
+    for (const tab of component?.tabs || []) applyDefaultDateRanges(tab.components || [], params);
+  }
+}
+
+function defaultDatePreset(preset: string): { from: string; to: string } | undefined {
+  if (preset === 'all') return undefined;
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const end = new Date(start);
+  if (preset === 'last_12_months') start.setUTCMonth(start.getUTCMonth() - 11, 1);
+  else if (preset === 'year') start.setUTCMonth(0, 1);
+  else if (preset === 'quarter') start.setUTCMonth(Math.floor(start.getUTCMonth() / 3) * 3, 1);
+  else if (preset === 'month') start.setUTCDate(1);
+  else if (preset === 'week') start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
+  else if (preset === 'previous_month') {
+    start.setUTCMonth(start.getUTCMonth() - 1, 1);
+    end.setUTCDate(0);
+  }
+  const format = (date: Date) => date.toISOString().slice(0, 10);
+  return { from: format(start), to: format(end) };
 }

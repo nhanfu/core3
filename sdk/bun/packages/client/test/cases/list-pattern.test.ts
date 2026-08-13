@@ -153,6 +153,17 @@ describe('ListToolbar', () => {
     expect(submit).toHaveBeenCalledWith('date-range', { from_date: '', to_date: '' });
   });
 
+  it('removes unrestricted presets and constrains protected date inputs', () => {
+    const { container } = mount(new ListToolbar('toolbar', {}, {
+      search: false,
+      date_range: { presets: ['month', 'all'], max_years: 2, deny_unbounded: true },
+    }));
+    expect(container.querySelector('[data-date-preset="all"]')).toBeNull();
+    const from = container.querySelector<HTMLInputElement>('input[aria-label="Từ ngày"]')!;
+    expect(from.min).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(from.max).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   it('renders segmented period presets when requested', () => {
     const component = new ListToolbar('toolbar', {}, {
       search: false,

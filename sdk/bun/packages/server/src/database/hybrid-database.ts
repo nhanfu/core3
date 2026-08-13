@@ -2,6 +2,7 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import { mkdir, rename, stat } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import type { HotDataDefinition } from '../migrations.ts';
+import type { QueryWindowBounds, QueryWindowDefinition } from './query-window.ts';
 
 type NativeConnection = any;
 export type HybridDatabaseOpenOptions = {
@@ -80,6 +81,7 @@ function isRead(sql: string): boolean {
 export class HybridDuckDbDatabase {
   private mirroring = true;
   private readonly partitions = new Map<string, PartitionState>();
+  private readonly loadedColdRanges = new Map<string, { definition: QueryWindowDefinition; from: string; to: string; refs: number }>();
 
   private constructor(
     private disk: any,
@@ -176,6 +178,74 @@ export class HybridDuckDbDatabase {
       }
     } finally {
       connection.closeSync();
+    }
+  }
+
+  async prepareQueryWindow(definition: QueryWindowDefinition, bounds: QueryWindowBounds): Promise<() => Promise<void>> {
+    const hot = this.hotData.find((candidate) => candidate.table === definition.table && candidate.dateColumn === definition.date_field);
+    if (!hot) return async () => {};
+    const hotBounds = hotDataBounds(hot);
+    const ranges: Array<[string, string]> = [];
+    if (bounds.from < hotBounds.from) ranges.push([bounds.from, bounds.to < hotBounds.from ? bounds.to : hotBounds.from]);
+    if (bounds.to > hotBounds.to) ranges.push([bounds.from > hotBounds.to ? bounds.from : hotBounds.to, bounds.to]);
+    const loaded: string[] = [];
+    for (const [from, to] of ranges) {
+      if (from >= to) continue;
+      const key = `${definition.table}:${definition.date_field}:${from}:${to}`;
+      const existing = this.loadedColdRanges.get(key);
+      if (existing) {
+        existing.refs += 1;
+      } else {
+        await this.loadColdRange(definition, from, to);
+        this.loadedColdRanges.set(key, { definition, from, to, refs: 1 });
+      }
+      loaded.push(key);
+    }
+    return async () => {
+      for (const key of loaded) {
+        const range = this.loadedColdRanges.get(key);
+        if (!range) continue;
+        range.refs -= 1;
+        if (range.refs > 0) continue;
+        const memory = await this.memory.connect();
+        try {
+          await memory.run(
+            `DELETE FROM ${quoteIdentifier(range.definition.table)} WHERE ${quoteIdentifier(range.definition.date_field)} >= ? AND ${quoteIdentifier(range.definition.date_field)} < ?`,
+            [range.from, range.to],
+          );
+        } finally {
+          memory.closeSync();
+        }
+        this.loadedColdRanges.delete(key);
+      }
+    };
+  }
+
+  private async loadColdRange(definition: QueryWindowDefinition, from: string, to: string): Promise<void> {
+    const durable = await this.disk.connect();
+    let rows: any[] = [];
+    try {
+      rows = await new Promise<any[]>((resolve, reject) => durable.all(
+        `SELECT * FROM ${quoteIdentifier(definition.table)} WHERE ${quoteIdentifier(definition.date_field)} >= ? AND ${quoteIdentifier(definition.date_field)} < ?`,
+        from,
+        to,
+        (error: any, result: any[]) => error ? reject(error) : resolve(result || []),
+      ));
+    } finally {
+      durable.closeSync?.();
+    }
+    if (!rows.length) return;
+    const columns = Object.keys(rows[0]);
+    const memory = await this.memory.connect();
+    try {
+      const names = columns.map(quoteIdentifier).join(', ');
+      const placeholders = columns.map(() => '?').join(', ');
+      for (const row of rows) await memory.run(
+        `INSERT INTO ${quoteIdentifier(definition.table)} (${names}) VALUES (${placeholders})`,
+        columns.map((column) => row[column]),
+      );
+    } finally {
+      memory.closeSync();
     }
   }
 
@@ -477,8 +547,9 @@ export class HybridDuckDbDatabase {
     const close = (callback?: () => void) => {
       Promise.all([diskPromise, memoryPromise]).then(([disk, memory]) => {
         memory.closeSync();
-        disk.closeSync();
-        callback?.();
+        if (typeof disk.closeSync === 'function') disk.closeSync();
+        else if (typeof disk.close === 'function') disk.close(callback);
+        else callback?.();
       });
     };
     return {

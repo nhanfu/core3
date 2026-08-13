@@ -10,6 +10,13 @@ datasources:
   - id: orders
     single: false
     permission: orders.read
+    query_window:
+      table: orders
+      date_field: order_date
+      from_param: from_date
+      to_param: to_date
+      max_years: 2
+      deny_unbounded: true
     query: |
       SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
@@ -70,14 +77,17 @@ components:
       to_field: to_date
       from_label: From date
       to_label: To date
-      presets: [today, week, month, quarter, year, all]
+      presets: [today, week, month, quarter, year, last_12_months]
+      default_preset: last_12_months
+      max_years: 2
+      deny_unbounded: true
       preset_labels:
         today: Today
         week: This week
         month: This month
         quarter: This quarter
         year: This year
-        all: All dates
+        last_12_months: Last 12 months
     filters:
       - field: status
         label: Status

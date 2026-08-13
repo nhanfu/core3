@@ -19,7 +19,12 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
     const page = PAGES.get(pageMatch[1]);
     if (!page) return apiError(404, `Unknown page: ${pageMatch[1]}`);
     for (const permission of page.page?.auth?.require || []) requirePerm(permission);
-    return json(await prefetchedPageConfig(page, url, authUser), 200, pageCacheHeaders(url));
+    try {
+      return json(await prefetchedPageConfig(page, url, authUser), 200, pageCacheHeaders(url));
+    } catch (error: any) {
+      if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message);
+      throw error;
+    }
   }
 
   if (pathname === '/api/query' && method === 'POST') {
@@ -33,13 +38,18 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
       const labels = translationMap(CATALOGS, requestLanguage(url, authUser.preferred_lang || 'en'), 'order-workflow');
       return json({ data: workflow.states.map((state: any) => ({ value: state.id, label: labels[state.label] || state.label, color: state.color })), meta: {} });
     }
-    return json(await repository.querySource(source, {
-      ...(vm.params || {}),
-      current_user_id: String(authUser.sub || ''),
-      current_user_name: String(authUser.name || ''),
-      current_branch_id: String(authUser.branch_id || ''),
-      view_scope: String(authUser.view_scope || 'all'),
-    }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
+    try {
+      return json(await repository.querySource(source, {
+        ...(vm.params || {}),
+        current_user_id: String(authUser.sub || ''),
+        current_user_name: String(authUser.name || ''),
+        current_branch_id: String(authUser.branch_id || ''),
+        view_scope: String(authUser.view_scope || 'all'),
+      }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
+    } catch (error: any) {
+      if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message);
+      throw error;
+    }
   }
 
   const workflowMatch = pathname.match(/^\/api\/datasources\/([A-Za-z0-9_-]+)\/workflow$/);

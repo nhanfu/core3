@@ -86,7 +86,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot']);
+const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -109,7 +109,7 @@ const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission',
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
-const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'label', 'presets', 'preset_labels', 'preset_style', 'default_preset']);
+const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'label', 'presets', 'preset_labels', 'preset_style', 'default_preset', 'max_years', 'deny_unbounded']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'options_source', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
@@ -275,6 +275,7 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     const sourceKinds = [source.query, source.data, source.workflow_states].filter(value => value !== undefined).length;
     if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, or workflow_states`);
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
+    if (source.query_window !== undefined) validateQueryWindow(source.query_window, `${path}.query_window`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);
     }
@@ -300,6 +301,19 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     if (source.workflow_states !== undefined) requireString(source.workflow_states, `${path}.workflow_states`, issues);
     if (typeof source.id === 'string') addUnique(ids, source.id, `${path}.id`, 'datasource', issues);
   });
+}
+
+function validateQueryWindow(value: unknown, path: string, issues: string[]) {
+  requireRecord(value, path, issues);
+  if (!isRecord(value)) return;
+  rejectUnknownKeys(value, new Set(['table', 'date_field', 'from_param', 'to_param', 'max_years', 'deny_unbounded']), path, issues);
+  for (const key of ['table', 'date_field', 'from_param', 'to_param']) {
+    if (value[key] !== undefined) requireString(value[key], `${path}.${key}`, issues);
+  }
+  if (typeof value.table !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value.table)) issues.push(`${path}.table must be a safe identifier`);
+  if (typeof value.date_field !== 'string' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(value.date_field)) issues.push(`${path}.date_field must be a safe identifier`);
+  if (value.max_years !== undefined && (!Number.isInteger(value.max_years) || value.max_years <= 0)) issues.push(`${path}.max_years must be a positive integer`);
+  if (value.deny_unbounded !== undefined && typeof value.deny_unbounded !== 'boolean') issues.push(`${path}.deny_unbounded must be a boolean`);
 }
 
 function validateActions(
@@ -817,6 +831,8 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
   if (value.preset_style !== undefined && value.preset_style !== 'select' && value.preset_style !== 'segmented') {
     issues.push(`${path}.preset_style must be select or segmented`);
   }
+  if (value.max_years !== undefined && (!Number.isInteger(value.max_years) || value.max_years <= 0)) issues.push(`${path}.max_years must be a positive integer`);
+  if (value.deny_unbounded !== undefined && typeof value.deny_unbounded !== 'boolean') issues.push(`${path}.deny_unbounded must be a boolean`);
 }
 
 function validateToolbarFilters(

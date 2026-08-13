@@ -1,7 +1,29 @@
 import { bindNamedParams, describeQueryError, redactQueryValue } from '@core3/server/database/sql';
+import { resolveQueryWindow, type QueryWindowDefinition } from './database/query-window.ts';
 
 export const datasourceMethods = {
   querySource: async function(this: any,
+    source: { id?: string; query: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition },
+    params: Record<string, any> = {},
+    skip = 0,
+    top = 25,
+    facetField?: string,
+    sort?: { field?: unknown; direction?: unknown },
+    pivot?: any,
+  ): Promise<any> {
+    const bounds = source.query_window ? resolveQueryWindow(source.query_window, params) : undefined;
+    const release = bounds && this.prepareQueryWindow
+      ? await this.prepareQueryWindow(source.query_window, bounds)
+      : undefined;
+    try {
+      return await querySourceInternal.call(this, source, params, skip, top, facetField, sort, pivot);
+    } finally {
+      await release?.();
+    }
+  },
+};
+
+async function querySourceInternal(this: any,
     source: { id?: string; query: string; single?: boolean; pivot?: any },
     params: Record<string, any> = {},
     skip = 0,
@@ -78,9 +100,7 @@ export const datasourceMethods = {
       data: rows,
       meta,
     };
-  },
-
-};
+}
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const AGGREGATES = new Set(['count', 'sum', 'avg', 'min', 'max']);
