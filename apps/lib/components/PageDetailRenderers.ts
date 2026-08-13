@@ -504,7 +504,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       break;
     }
     case 'ComingSoon': {
-      const { ComingSoon } = await import('./ComingSoon.ts');
+      const { ComingSoon } = await import('@core3/client/components/ComingSoon');
       const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);
       const slot = document.createElement('div');
       targetContainer.appendChild(slot);

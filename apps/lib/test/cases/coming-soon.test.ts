@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ComingSoon } from '../../components/ComingSoon.ts';
+import { ComingSoon } from '@core3/client/components/ComingSoon';
 
 describe('ComingSoon', () => {
   it('renders declarative copy and an accessible heading relationship', () => {
