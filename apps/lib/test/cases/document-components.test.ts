@@ -1,17 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ApprovalTimeline } from '../../components/ApprovalTimeline.ts';
+import { ApprovalTimeline } from '@core3/client/components/ApprovalTimeline';
 import { AsyncSelect } from '@core3/client/components/AsyncSelect';
-import { ContactGrid } from '../../components/ContactGrid.ts';
+import { ContactGrid } from '@core3/client/components/ContactGrid';
 import { DataGrid } from '@core3/client/components/DataGrid';
 import { DocumentSummary } from '@core3/client/components/DocumentSummary';
-import { LineItemGrid } from '../../components/LineItemGrid.ts';
-import { MoneySummary } from '../../components/MoneySummary.ts';
+import { LineItemGrid } from '@core3/client/components/LineItemGrid';
+import { MoneySummary } from '@core3/client/components/MoneySummary';
 import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { OdooFormView } from '../../components/OdooFormView.ts';
 import { OdooChatter } from '../../components/OdooChatter.ts';
 import { OdooFollowerManager } from '../../components/OdooFollowerManager.ts';
 import { OdooAttachmentPanel } from '../../components/OdooAttachmentPanel.ts';
-import { ScheduleGrid } from '../../components/ScheduleGrid.ts';
+import { ScheduleGrid } from '@core3/client/components/ScheduleGrid';
 
 function mount(component: { mount(container: HTMLElement): void }) {
   const container = document.createElement('div');

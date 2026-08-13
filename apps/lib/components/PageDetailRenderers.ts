@@ -131,7 +131,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
-  const { MoneySummary } = await import('./MoneySummary.ts');
+  const { MoneySummary } = await import('@core3/client/components/MoneySummary');
   const sourceResult = dataMap[def.source] || { data: {} };
   const comp = new MoneySummary(
     `money-summary-${def.source || def.id || Date.now()}`,
@@ -146,7 +146,7 @@ async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
-  const { ApprovalTimeline } = await import('./ApprovalTimeline.ts');
+  const { ApprovalTimeline } = await import('@core3/client/components/ApprovalTimeline');
   const sourceResult = dataMap[def.source] || { data: [] };
   const comp = new ApprovalTimeline(
     `approval-timeline-${def.source || def.id || Date.now()}`,

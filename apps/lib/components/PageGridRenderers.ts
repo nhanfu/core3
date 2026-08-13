@@ -212,9 +212,9 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
 
 async function renderDataGrid(def: any, targetContainer: HTMLElement) {
   const GridCtor = def.type === 'LineItemGrid'
-    ? (await import('./LineItemGrid.ts')).LineItemGrid
+    ? (await import('@core3/client/components/LineItemGrid')).LineItemGrid
     : def.type === 'ContactGrid'
-      ? (await import('./ContactGrid.ts')).ContactGrid
+      ? (await import('@core3/client/components/ContactGrid')).ContactGrid
       : (await import('@core3/client/components/DataGrid')).DataGrid;
   const sourceId = def.source;
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
@@ -940,7 +940,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
-  const { ScheduleGrid } = await import('./ScheduleGrid.ts');
+  const { ScheduleGrid } = await import('@core3/client/components/ScheduleGrid');
   const sourceResult = dataMap[def.source] || { data: [] };
   const component = new ScheduleGrid(
     `schedule-grid-${def.source || def.id || Date.now()}`,
