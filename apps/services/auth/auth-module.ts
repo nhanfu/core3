@@ -5,7 +5,7 @@ import { requestLanguage } from '@core3/server/locale';
 import { migrateDatabase } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
-import { HybridDuckDbDatabase } from '../../lib/server/hybrid-database.ts';
+import { HybridDuckDbDatabase } from '@core3/server/hybrid-database';
 import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
 import { TopicMediator } from '../../lib/topics/mediator.ts';
 import { MediatorAuthAdapter } from './auth-adapter.ts';

@@ -3,7 +3,7 @@ import { requestLanguage } from '@core3/server/locale';
 import { handleFileRoutes } from './file-routes.ts';
 import { handleDataRoutes } from './yaml-data.ts';
 import { handleActionRoutes } from './yaml-actions.ts';
-import { handleEventRoutes } from './event-websocket.ts';
+import { handleEventRoutes } from '@core3/server/routes/event-websocket';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import type { ModuleServer } from '../module.ts';

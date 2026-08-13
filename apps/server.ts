@@ -4,8 +4,8 @@ import { YamlServiceModule } from '@core3/server/yaml-service';
 import { createYamlHostApi } from './lib/server/routes/yaml-host-api.ts';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { loadApplicationConfig, resolveEnvironmentValues } from '@core3/server/application-config';
-import { EventStore, type EventBus } from './lib/server/event-store.ts';
-import { EventMediatorClient } from './lib/server/event-mediator.ts';
+import { EventStore, type EventBus } from '@core3/server/event-store';
+import { EventMediatorClient } from '@core3/server/event-mediator';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;

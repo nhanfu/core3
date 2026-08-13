@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import type { EventEnvelope, EventSubscription } from '../server/event-store.ts';
+import type { EventEnvelope, EventSubscription } from '@core3/server/event-store';
 import { topicError, type TopicDefinition, type TopicHandler, type TopicRequestEnvelope, type TopicResponseEnvelope } from './contracts.ts';
 
 export class TopicMediator {

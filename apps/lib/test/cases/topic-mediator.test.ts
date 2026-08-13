@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { EventStore } from '../../server/event-store.ts';
+import { EventStore } from '@core3/server/event-store';
 import { TopicMediator } from '../../topics/mediator.ts';
 import { AUTH_USER_LOOKUP } from '../../../services/auth/topics.ts';
 

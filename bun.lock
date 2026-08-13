@@ -33,6 +33,10 @@
       "name": "@core3/server",
       "dependencies": {
         "@core3/client": "workspace:*",
+        "@duckdb/node-api": "^1.5.5-r.3",
+        "apache-arrow": "^21.2.0",
+        "parquet-wasm": "^0.7.2",
+        "uuid": "^14.0.1",
       },
     },
   },
