@@ -1,7 +1,8 @@
 import { serveEventMediator } from './event-mediator.ts';
 
 const port = Number(process.env.EVENT_MEDIATOR_PORT || 3010);
-const databasePath = process.env.CORE3_EVENT_DB_PATH || '../coredb/events-mediator-parquet';
+const memoryDb = process.argv.slice(2).some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
+const databasePath = memoryDb ? ':memory:' : process.env.CORE3_EVENT_DB_PATH || '../coredb/events-mediator-parquet';
 const token = process.env.CORE3_EVENT_MEDIATOR_TOKEN || '';
 const schema = {
   table: 'event_log',
