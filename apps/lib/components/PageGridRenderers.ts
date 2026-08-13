@@ -43,7 +43,7 @@ export class PageGridRenderers extends BaseComponent {
   const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources, handleInlineForm, resolveActionParams, registry } = deps;
 
 async function renderStatRow(def: any, targetContainer: HTMLElement) {
-  const { StatRow } = await import('./StatRow.ts');
+  const { StatRow } = await import('@core3/client/components/StatRow');
   const sourceData = def.source ? ((dataMap[def.source] || {}).data || {}) : {};
   const getPath = (obj, path) => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
   const mappedStats = (def.stats || []).map(s => ({ ...s, value: getPath(sourceData, s.field) }));

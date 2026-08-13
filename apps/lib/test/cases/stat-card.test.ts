@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { StatCard } from '../../components/StatCard.ts';
+import { StatCard } from '@core3/client/components/StatCard';
 
 describe('StatCard navigation', () => {
   it('supports mouse and keyboard activation for navigable stats', () => {

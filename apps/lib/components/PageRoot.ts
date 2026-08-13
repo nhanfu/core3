@@ -3,7 +3,7 @@ import { hasPermission, resolveAction } from '@core3/client/meta';
 import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 import { EventPopup } from './EventPopup.ts';
-import { resolveDatePreset } from './ListToolbar.ts';
+import { resolveDatePreset } from '@core3/client/components/ListToolbar';
 import { PageFormModal } from './PageFormModal.ts';
 import { PageGridRenderers } from './PageGridRenderers.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';

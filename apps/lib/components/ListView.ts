@@ -8,7 +8,7 @@ import { CardView, type CardViewDefinition } from './CardView.ts';
 import { PivotView, type PivotViewDefinition } from './PivotView.ts';
 import { GraphView, type GraphViewDefinition } from './GraphView.ts';
 import { MapView, type MapViewDefinition } from './MapView.ts';
-import { resolveDatePreset, type DateRangePreset } from './ListToolbar.ts';
+import { resolveDatePreset, type DateRangePreset } from '@core3/client/components/ListToolbar';
 
 type ListRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';

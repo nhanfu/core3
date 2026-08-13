@@ -1,6 +1,6 @@
 import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
-import { resolveDatePreset } from './ListToolbar.ts';
+import { resolveDatePreset } from '@core3/client/components/ListToolbar';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 export class PageDetailRenderers extends BaseComponent {
@@ -260,7 +260,7 @@ async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderListToolbar(def: any, targetContainer: HTMLElement) {
-  const { ListToolbar } = await import('./ListToolbar.ts');
+  const { ListToolbar } = await import('@core3/client/components/ListToolbar');
   const filters = (def.filters || []).map((filter: any) => {
     if (!filter.options_source) return filter;
     const rows = dataMap[filter.options_source]?.data;
