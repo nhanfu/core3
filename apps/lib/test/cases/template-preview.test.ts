@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TemplatePreview } from '../../components/TemplatePreview.ts';
+import { TemplatePreview } from '@core3/client/components/TemplatePreview';
 
 describe('TemplatePreview', () => {
   afterEach(() => {

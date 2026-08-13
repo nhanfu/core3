@@ -583,7 +583,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
-  const { TemplatePreview } = await import('./TemplatePreview.ts');
+  const { TemplatePreview } = await import('@core3/client/components/TemplatePreview');
   const component = new TemplatePreview(
     `template-preview-${def.id || def.source || Date.now()}`,
     {
