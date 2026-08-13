@@ -8,7 +8,7 @@ import { PageFormModal } from './PageFormModal.ts';
 import { PageGridRenderers } from './PageGridRenderers.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { showMessageDialog } from './Dialog.ts';
+import { showMessageDialog } from '@core3/client/components/Dialog';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 
 class PageChild extends BaseComponent {

@@ -1,7 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
-import { Dialog, type DialogTagGroup } from './Dialog.ts';
+import { Dialog, type DialogTagGroup } from '@core3/client/components/Dialog';
 
 type ListRow = Record<string, unknown>;
 

@@ -3,7 +3,7 @@ import { appendIcon } from '@core3/client/components/Icon';
 import { AsyncSelect } from './AsyncSelect.ts';
 import { MoneyInput } from './MoneyInput.ts';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { showMessageDialog } from './Dialog.ts';
+import { showMessageDialog } from '@core3/client/components/Dialog';
 
 export class PageFormModal extends BaseComponent {
   readonly openFormModal: any;

@@ -1,7 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
-import { showMessageDialog } from './Dialog.ts';
+import { showMessageDialog } from '@core3/client/components/Dialog';
 
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only

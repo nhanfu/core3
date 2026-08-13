@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { Dialog } from '../../components/Dialog.ts';
+import { Dialog } from '@core3/client/components/Dialog';
 
 describe('Dialog', () => {
   it('supports accessible input confirmation and Escape dismissal', () => {
