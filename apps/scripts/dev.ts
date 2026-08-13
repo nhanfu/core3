@@ -19,6 +19,7 @@ export async function findAvailablePort(start: number): Promise<number> {
 }
 
 if (import.meta.main) {
+  const memoryDb = process.argv.slice(2).some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
@@ -67,7 +68,16 @@ if (import.meta.main) {
   try {
     while (!stopped) {
       child = Bun.spawn(['bun', 'server.ts'], {
-        env: { ...process.env, PORT: String(port) },
+        env: {
+          ...process.env,
+          PORT: String(port),
+          ...(memoryDb ? {
+            CORE3_AUTH_DB_PATH: ':memory:',
+            CORE3_ORDER_DB_PATH: ':memory:',
+            CORE3_CHAT_DB_PATH: ':memory:',
+            CORE3_EVENT_DB_PATH: ':memory:',
+          } : {}),
+        },
         stdin: 'inherit',
         stdout: 'inherit',
         stderr: 'inherit',
