@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { executeYamlMutation } from '../../yaml/mutation.ts';
+import { executeYamlMutation } from '@core3/server/yaml/mutation';
 
 describe('YAML mutation scripts', () => {
   it('mutates the YAML document with input references and loops', () => {

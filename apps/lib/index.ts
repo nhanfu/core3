@@ -7,7 +7,7 @@ export {
   PageSchemaError,
   registerPageComponentSchema,
   validatePageDefinition,
-} from './yaml/index.ts';
+} from '@core3/server/yaml';
 export {
   StateWorkflow,
   WorkflowTransitionError,

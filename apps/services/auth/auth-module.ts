@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
-import { discoverPages, translationMap } from '../../lib/server/discovery.ts';
+import { discoverPages, translationMap } from '@core3/server/discovery';
 import { requestLanguage } from '@core3/server/locale';
 import { migrateDatabase } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';

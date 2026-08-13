@@ -2,7 +2,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { getToken } from '../app.ts';
 import { i18n } from '@core3/client/i18n';
-import { validatePageDefinition } from '../../lib/yaml/schema.ts';
+import { validatePageDefinition } from '@core3/server/yaml/schema';
 import { PageRuntime } from '@core3/client/components/PageRoot';
 import { appendIcon } from '@core3/client/components/Icon';
 

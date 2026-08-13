@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { validateServiceManifest, type YamlServiceManifest } from '../yaml/service-schema.ts';
+import { validateServiceManifest, type YamlServiceManifest } from './yaml/service-schema.ts';
 import type { ModuleContext, ModuleLifecycle } from './module.ts';
 import { discoverPages } from './discovery.ts';
 import { HybridDuckDbDatabase } from './hybrid-database.ts';

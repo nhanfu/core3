@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateServiceManifest } from '../../yaml/service-schema.ts';
+import { validateServiceManifest } from '@core3/server/yaml/service-schema';
 
 describe('YAML service manifest schema', () => {
   it('accepts a declarative domain service manifest', () => {

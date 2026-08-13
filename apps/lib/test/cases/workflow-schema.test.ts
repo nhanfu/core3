@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateWorkflowDefinition } from '../../yaml/workflow-schema.ts';
+import { validateWorkflowDefinition } from '@core3/server/yaml/workflow-schema';
 
 function validWorkflow() {
   return {

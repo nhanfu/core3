@@ -1,8 +1,8 @@
-import { translationMap } from '../discovery.ts';
+import { translationMap } from '@core3/server/discovery';
 import { requestLanguage } from '@core3/server/locale';
 import { WorkflowRuntime } from '@core3/server/workflow-runtime';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { executeYamlMutation } from '../../yaml/mutation.ts';
+import { executeYamlMutation } from '@core3/server/yaml/mutation';
 
 export async function handleDataRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const { req, url, pathname, method, repository, SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES,

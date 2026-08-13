@@ -1,4 +1,4 @@
-import { discoverPageRoutes, discoverPages } from '../lib/server/discovery.ts';
+import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { fileURLToPath } from 'node:url';
 
 const appsRoot = fileURLToPath(new URL('../', import.meta.url));

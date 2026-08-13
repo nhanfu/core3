@@ -1,5 +1,5 @@
 import type { ModuleServer } from '../module.ts';
-import type { YamlRuntimeContext } from '../yaml-service.ts';
+import type { YamlRuntimeContext } from '@core3/server/yaml-service';
 
 function json(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), {

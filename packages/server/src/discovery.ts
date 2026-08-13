@@ -1,7 +1,7 @@
 import { join, relative, sep } from 'node:path';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { validatePageDefinition } from '../yaml/schema.ts';
-import { validateWorkflowDefinition, type WorkflowDefinition } from '../yaml/workflow-schema.ts';
+import { validatePageDefinition } from './yaml/schema.ts';
+import { validateWorkflowDefinition, type WorkflowDefinition } from './yaml/workflow-schema.ts';
 import { discoverModuleRoots } from './module.ts';
 import { loadYamlServiceManifest } from './yaml-service.ts';
 

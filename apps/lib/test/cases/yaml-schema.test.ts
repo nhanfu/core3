@@ -3,7 +3,7 @@ import {
   PageSchemaError,
   registerPageComponentSchema,
   validatePageDefinition,
-} from '../../yaml/schema.ts';
+} from '@core3/server/yaml/schema';
 
 function validPage() {
   return {
