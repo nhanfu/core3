@@ -8,7 +8,7 @@ import { evalExpr } from './expr.ts';
 export function hasPermission(user: any, permission: string): boolean {
   if (!permission) return true;
   const permissions = user?.permissions || [];
-  return permissions.includes('*') || permissions.includes(permission);
+  return user?.roles?.includes('admin') || permissions.includes('*') || permissions.includes(permission);
 }
 
 /**

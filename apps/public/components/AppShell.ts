@@ -1,6 +1,6 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '@core3/client/html';
-import { i18n } from '../../lib/i18n.ts';
+import { i18n } from '@core3/client/i18n';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { RightModal } from './RightModal.ts';
 import { AppLauncher, type LauncherApp } from './AppLauncher.ts';

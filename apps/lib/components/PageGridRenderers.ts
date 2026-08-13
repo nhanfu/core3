@@ -907,7 +907,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   const _origSetState = comp.setState.bind(comp);
   comp._onAction = async (actionId: string, params: any) => {
     if (actionId.endsWith('.export')) {
-      const { downloadXlsx, toXlsx } = await import('../xlsx-utils.ts');
+      const { downloadXlsx, toXlsx } = await import('@core3/client/xlsx-utils');
       const exportColumns = (def.columns || []).filter((column: any) => column.field && column.field !== 'actions');
       const current = dataMap[sourceId] || { data: [], meta: {} };
       const total = Math.max(Number(current.meta?.total) || 0, Array.isArray(current.data) ? current.data.length : 0);

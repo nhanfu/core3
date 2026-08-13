@@ -1,7 +1,7 @@
 import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '@core3/client/html';
 import { getToken } from '../app.ts';
-import { i18n } from '../../lib/i18n.ts';
+import { i18n } from '@core3/client/i18n';
 import { validatePageDefinition } from '../../lib/yaml/schema.ts';
 import { PageRuntime } from '../../lib/components/PageRoot.ts';
 import { appendIcon } from '../../lib/components/Icon.ts';

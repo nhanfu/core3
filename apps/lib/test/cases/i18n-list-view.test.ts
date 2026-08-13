@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { i18n } from '../../i18n.ts';
+import { i18n } from '@core3/client/i18n';
 
 describe('declarative i18n maps', () => {
   it('translates declarative control labels and date preset labels', () => {

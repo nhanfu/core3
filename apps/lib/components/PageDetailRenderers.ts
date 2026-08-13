@@ -295,7 +295,7 @@ async function renderListToolbar(def: any, targetContainer: HTMLElement) {
     }
     if (actionId.endsWith('.export')) {
       const { downloadCsv, toCsv } = await import('@core3/client/list-utils');
-      const { downloadXlsx, toXlsx } = await import('../xlsx-utils.ts');
+      const { downloadXlsx, toXlsx } = await import('@core3/client/xlsx-utils');
       const grid = (config.components || []).find(component => component.type === 'DataGrid' && component.source === sourceId);
       const columns = (grid?.columns || []).filter(column => column.field && column.field !== 'actions');
       const current = dataMap[sourceId] || { data: [], meta: {} };

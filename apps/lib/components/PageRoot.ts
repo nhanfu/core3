@@ -191,7 +191,7 @@ export class PageRuntime extends BaseComponent {
     const registry = this.registry;
   // Dynamic imports to avoid circular deps
   const { client } = await import('../client.ts');
-  const { createQuery } = await import('../dtos.ts');
+  const { createQuery } = await import('@core3/client/dtos');
 
   // 1. Auth check
   const user: any = window.__CORE3_USER__ || {};
@@ -379,12 +379,11 @@ export class PageRuntime extends BaseComponent {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || 'Invalid credentials');
-        const { setAuth, getDefaultRoute } = await import('/app.ts');
+        const { setAuth, getDefaultRoute, navigate: appNavigate } = await import('/app.ts');
         await setAuth(result.token, result.user);
         const redirectParam = String(actionDef.redirect_param || 'redirect');
         const redirect = safeRedirect(new URLSearchParams(window.location.search).get(redirectParam));
-        window.history.replaceState(null, '', redirect || getDefaultRoute(result.user));
-        window.location.reload();
+        await appNavigate(redirect || getDefaultRoute(result.user));
         break;
       }
       case 'event': {
@@ -429,7 +428,7 @@ export class PageRuntime extends BaseComponent {
           if (!response.ok) throw new Error(result.error || 'Request failed');
           return result;
         };
-        const { i18n } = await import('../i18n.ts');
+        const { i18n } = await import('@core3/client/i18n');
         const { navigate: appNavigate } = await import('/app.ts');
         await fn({
           user: ctx.user,

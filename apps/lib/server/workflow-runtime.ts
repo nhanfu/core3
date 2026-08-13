@@ -1,4 +1,4 @@
-import { findDeclaredMove } from '../workflow.ts';
+import { findDeclaredMove } from '@core3/client/workflow';
 import type { MutationDefinition } from './yaml-mutation-runtime.ts';
 
 export type WorkflowMoveDefinition = {

@@ -6,7 +6,7 @@ import {
   StateWorkflow,
   WorkflowTransitionError,
   workflowConditionsMatch,
-} from '../../workflow.ts';
+} from '@core3/client/workflow';
 
 type OrderState = 'Draft' | 'Pending Approval' | 'Approved' | 'Cancelled';
 type OrderAction = 'submit_for_approval' | 'approve' | 'reject' | 'cancel';

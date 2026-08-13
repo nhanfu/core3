@@ -1,5 +1,5 @@
 import { AppShell } from './components/AppShell.ts';
-import { i18n } from '../lib/i18n.ts';
+import { i18n } from '@core3/client/i18n';
 import { getPageParams, registerNavigator } from '@core3/client/navigate';
 import { client } from '../lib/client.ts';
 import { validatePageDefinition } from '../lib/yaml/schema.ts';

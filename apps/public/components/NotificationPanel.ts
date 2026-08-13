@@ -2,7 +2,7 @@ import { BaseComponent } from '../../lib/components/BaseComponent.ts';
 import { html } from '@core3/client/html';
 import { appendIcon } from '../../lib/components/Icon.ts';
 import { getToken, navigate } from '../app.ts';
-import { i18n } from '../../lib/i18n.ts';
+import { i18n } from '@core3/client/i18n';
 
 const TYPE_ICONS: Record<string, string> = {
   alert:                 'warning',

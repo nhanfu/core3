@@ -9,7 +9,7 @@ describe('list CSV export', () => {
 
 describe('list XLSX export', () => {
   it('creates a readable OOXML zip workbook with escaped cells', async () => {
-    const { toXlsx } = await import('../../xlsx-utils.ts');
+    const { toXlsx } = await import('@core3/client/xlsx-utils');
     const workbook = toXlsx([{ code: 'A&B', amount: 12 }], [
       { field: 'code', label: 'Code' },
       { field: 'amount', label: 'Amount' },
