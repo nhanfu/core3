@@ -484,7 +484,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       break;
     }
     case 'Button': {
-      const { Button } = await import('./Button.ts');
+      const { Button } = await import('@core3/client/components/Button');
       const component = new Button(def.id || `${config.page.id}-action`, {}, def);
       component._onAction = async (actionId: string, params: any) => {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
