@@ -1,12 +1,14 @@
 import { DuckDBInstance } from '@duckdb/node-api';
 import { mkdir, rename, stat } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import type { HotDataDefinition } from '../migrations.ts';
 
 type NativeConnection = any;
 export type HybridDatabaseOpenOptions = {
   durable: any;
   kind: 'postgres' | 'duckdb';
   path?: string;
+  hotData?: HotDataDefinition[];
 };
 type PartitionDefinition = {
   table: string;
@@ -84,6 +86,7 @@ export class HybridDuckDbDatabase {
     private memory: any,
     private readonly path: string,
     private readonly durableKind: 'postgres' | 'duckdb',
+    private readonly hotData: HotDataDefinition[] = [],
   ) {}
 
   static async open(pathOrOptions: string | HybridDatabaseOpenOptions): Promise<HybridDuckDbDatabase> {
@@ -99,7 +102,7 @@ export class HybridDuckDbDatabase {
     }
     const disk = options.durable || await openDurableDatabase(path);
     const memory = await DuckDBInstance.create(':memory:');
-    const database = new HybridDuckDbDatabase(disk, memory, path, options.kind);
+    const database = new HybridDuckDbDatabase(disk, memory, path, options.kind, options.hotData || []);
     database.mirroring = true;
     if (options.kind === 'duckdb') {
       database.mirroring = path !== ':memory:';
@@ -157,6 +160,22 @@ export class HybridDuckDbDatabase {
     } finally {
       this.mirroring = restoreMirroring;
       if (restoreMirroring) await this.refreshCache();
+    }
+  }
+
+  async applyHotDataPolicy(): Promise<void> {
+    if (!this.hotData.length) return;
+    const connection = await this.memory.connect();
+    try {
+      for (const definition of this.hotData) {
+        const bounds = hotDataBounds(definition);
+        await connection.run(
+          `DELETE FROM ${quoteIdentifier(definition.table)} WHERE ${quoteIdentifier(definition.dateColumn)} < ? OR ${quoteIdentifier(definition.dateColumn)} >= ?`,
+          [bounds.from, bounds.to],
+        );
+      }
+    } finally {
+      connection.closeSync();
     }
   }
 
@@ -548,6 +567,19 @@ export class HybridDuckDbDatabase {
     else callback?.();
   }
 }
+
+function hotDataBounds(definition: HotDataDefinition): { from: string; to: string } {
+  if (definition.from && definition.to) return { from: definition.from, to: definition.to };
+  const now = new Date();
+  const toDate = new Date(now);
+  toDate.setUTCDate(toDate.getUTCDate() + 1);
+  const to = toDate.toISOString().slice(0, 10);
+  const fromDate = new Date(now);
+  fromDate.setUTCFullYear(fromDate.getUTCFullYear() - Number(definition.windowYears || 1));
+  return { from: fromDate.toISOString().slice(0, 10), to };
+}
+
+export { hotDataBounds };
 
 async function openDurableDatabase(path: string): Promise<any> {
   try {

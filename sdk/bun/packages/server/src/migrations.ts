@@ -21,6 +21,14 @@ export type PartitionDefinition = {
   replace?: boolean;
 };
 
+export type HotDataDefinition = {
+  table: string;
+  dateColumn: string;
+  windowYears?: number;
+  from?: string;
+  to?: string;
+};
+
 export type Migration = {
   version: number;
   name: string;
@@ -29,7 +37,34 @@ export type Migration = {
   down: string;
   partition?: PartitionDefinition;
   downPartition?: string;
+  hotData?: HotDataDefinition[];
 };
+
+function parseHotData(value: unknown, file: string): HotDataDefinition[] | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) throw new Error(`Migration ${file} hot_data must be a list`);
+  return value.map((entry, index) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) throw new Error(`Migration ${file} hot_data[${index}] must be an object`);
+    const item = entry as Record<string, unknown>;
+    const table = String(item.table || '');
+    const dateColumn = String(item.date_column || '');
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table) || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(dateColumn)) {
+      throw new Error(`Migration ${file} hot_data[${index}] table and date_column must be safe identifiers`);
+    }
+    const window = item.window && typeof item.window === 'object' && !Array.isArray(item.window)
+      ? item.window as Record<string, unknown>
+      : {};
+    const windowYears = window.years === undefined ? undefined : Number(window.years);
+    const from = window.from === undefined ? undefined : String(window.from);
+    const to = window.to === undefined ? undefined : String(window.to);
+    if (windowYears !== undefined && (!Number.isInteger(windowYears) || windowYears <= 0)) {
+      throw new Error(`Migration ${file} hot_data[${index}].window.years must be a positive integer`);
+    }
+    if (!windowYears && (!from || !to)) throw new Error(`Migration ${file} hot_data[${index}] requires window.years or window.from/window.to`);
+    if (windowYears && (from || to)) throw new Error(`Migration ${file} hot_data[${index}] cannot combine years and explicit bounds`);
+    return { table, dateColumn, windowYears, from, to };
+  });
+}
 
 function loadMigrations(root: string): Migration[] {
   let entries: string[];
@@ -49,6 +84,7 @@ function loadMigrations(root: string): Migration[] {
         down?: unknown;
         partition?: unknown;
         down_partition?: unknown;
+        hot_data?: unknown;
       };
       if (typeof parsed?.up !== 'string' || typeof parsed.down !== 'string') {
         throw new Error(`Migration ${name} must define string up and down properties`);
@@ -65,6 +101,7 @@ function loadMigrations(root: string): Migration[] {
         downPartition: typeof parsed.down_partition === 'string'
           ? parsed.down_partition
           : (parsed.down_partition as { table?: string } | undefined)?.table,
+        hotData: parseHotData(parsed.hot_data, name),
       };
     })
     .sort((a, b) => a.version - b.version);

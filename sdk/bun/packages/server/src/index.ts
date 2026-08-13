@@ -2,7 +2,7 @@ export { loadApplicationConfig, resolveEnvironmentValues } from './application-c
 export type { ApplicationConfig, ModuleApplicationConfig } from './application-config.ts';
 export { requestLanguage } from './locale.ts';
 export { discoverMigrations, migrateDatabase } from './migrations.ts';
-export type { Migration, MigrationRepository, PartitionDefinition } from './migrations.ts';
+export type { HotDataDefinition, Migration, MigrationRepository, PartitionDefinition } from './migrations.ts';
 export { YamlMutationRuntime } from './yaml-mutation-runtime.ts';
 export type { MutationDefinition, MutationConnection, MutationStep } from './yaml-mutation-runtime.ts';
 export { WorkflowRuntime } from './workflow-runtime.ts';

@@ -6,7 +6,7 @@ import { discoverPages } from './discovery.ts';
 import { HybridDuckDbDatabase } from './database/hybrid-database.ts';
 import { PostgresDatabase } from './database/postgres-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
-import { migrateDatabase } from '@core3/server/migrations';
+import { discoverMigrations, migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
 import { TopicMediator } from './topics/mediator.ts';
 import { topicDefinition } from './topics/contracts.ts';
@@ -110,6 +110,8 @@ export class YamlServiceModule implements ModuleLifecycle {
   async load(context: ModuleContext): Promise<void> {
     context.registerService(`yaml.service.${this.id}`, this.definition);
     const databaseConfig = resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
+    const migrationsRoot = this.manifest.migrations ? join(context.moduleRoot, this.manifest.migrations) : undefined;
+    const hotData = migrationsRoot ? discoverMigrations(migrationsRoot).flatMap((migration) => migration.hotData || []) : [];
     const storageDriver = databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb';
     if (storageDriver === 'postgres') {
       const urlEnv = databaseConfig?.storage?.url_env;
@@ -118,16 +120,18 @@ export class YamlServiceModule implements ModuleLifecycle {
       this.db = await HybridDuckDbDatabase.open({
         durable: PostgresDatabase.open(String(url)),
         kind: 'postgres',
+        hotData,
       });
     } else if (storageDriver === 'duckdb') {
       const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
-      this.db = await HybridDuckDbDatabase.open(String(path));
+      this.db = await HybridDuckDbDatabase.open({ durable: undefined, kind: 'duckdb', path: String(path), hotData });
     } else {
       throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
     }
     this.repository = new YamlRepository(this.db);
     if (this.manifest.migrations) {
-      await migrateDatabase(this.repository, join(context.moduleRoot, this.manifest.migrations), undefined, `${this.id}_schema_migrations`);
+      await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`);
+      await this.db.applyHotDataPolicy();
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
 
