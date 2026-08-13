@@ -60,6 +60,30 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
   };
 }
 
+function resolveServiceDatabase(
+  database: YamlServiceManifest['database'],
+  serviceConfigs: Record<string, any>,
+): any {
+  if (typeof database === 'string') {
+    const configured = serviceConfigs[database];
+    return configured?.database || configured;
+  }
+  return database;
+}
+
+function resolveDatabasePath(
+  serviceId: string,
+  database: any,
+  env: Record<string, string | undefined>,
+  moduleRoot: string,
+): string {
+  const storage = database?.storage || database || {};
+  const configuredPath = storage.path
+    || (storage.path_env ? env[String(storage.path_env)] : undefined)
+    || env[`${serviceId.toUpperCase()}_DB_PATH`];
+  return String(configuredPath || join(moduleRoot, '..', '..', 'coredb', `${serviceId}.duckdb`));
+}
+
 /**
  * Transitional generic module seam. Runtime execution is deliberately added
  * behind this interface; YAML services must not grow a service-specific
@@ -84,10 +108,12 @@ export class YamlServiceModule implements ModuleLifecycle {
 
   async load(context: ModuleContext): Promise<void> {
     context.registerService(`yaml.service.${this.id}`, this.definition);
-    const databaseName = this.manifest.database;
-    const serviceConfig = databaseName ? context.serviceConfigs[databaseName] as any : undefined;
-    const databaseConfig = serviceConfig?.database || serviceConfig;
-    const path = databaseConfig?.path || context.env[`${this.id.toUpperCase()}_DB_PATH`] || join(context.moduleRoot, '..', '..', 'coredb', `${this.id}.duckdb`);
+    const databaseConfig = resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
+    const storageDriver = databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb';
+    if (storageDriver !== 'duckdb') {
+      throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
+    }
+    const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
     this.db = await HybridDuckDbDatabase.open(String(path));
     this.repository = new YamlRepository(this.db);
     if (this.manifest.migrations) {
