@@ -181,6 +181,50 @@ export class HybridDuckDbDatabase {
     }
   }
 
+  /** Rebuild the in-memory compute schema after a service restart. */
+  async hydrateFromDurable(): Promise<void> {
+    if (this.durableKind !== 'postgres') return;
+    const durable = await this.disk.connect();
+    try {
+      const tables = await new Promise<any[]>((resolve, reject) => durable.all(
+        `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+        (error: any, rows: any[]) => error ? reject(error) : resolve(rows || []),
+      ));
+      const memory = await this.memory.connect();
+      try {
+        for (const tableRow of tables) {
+          const table = String(tableRow.table_name || '');
+          if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table)) continue;
+          const columns = await new Promise<any[]>((resolve, reject) => durable.all(
+            `SELECT column_name, data_type, udt_name, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position`,
+            table,
+            (error: any, rows: any[]) => error ? reject(error) : resolve(rows || []),
+          ));
+          if (!columns.length) continue;
+          const columnSql = columns.map((column) => `${quoteIdentifier(String(column.column_name))} ${postgresTypeToDuckDb(column)}`).join(', ');
+          await memory.run(`CREATE TABLE IF NOT EXISTS ${quoteIdentifier(table)} (${columnSql})`);
+        }
+      } finally {
+        memory.closeSync();
+      }
+    } finally {
+      durable.closeSync?.();
+    }
+    for (const definition of this.hotData) {
+      const bounds = hotDataBounds(definition);
+      const memory = await this.memory.connect();
+      try {
+        await memory.run(
+          `DELETE FROM ${quoteIdentifier(definition.table)} WHERE ${quoteIdentifier(definition.dateColumn)} >= ? AND ${quoteIdentifier(definition.dateColumn)} < ?`,
+          [bounds.from, bounds.to],
+        );
+      } finally {
+        memory.closeSync();
+      }
+      await this.loadColdRange(definition, bounds.from, bounds.to);
+    }
+  }
+
   async prepareQueryWindow(definition: QueryWindowDefinition, bounds: QueryWindowBounds): Promise<() => Promise<void>> {
     const hot = this.hotData.find((candidate) => candidate.table === definition.table && candidate.dateColumn === definition.date_field);
     if (!hot) return async () => {};
@@ -651,6 +695,23 @@ function hotDataBounds(definition: HotDataDefinition): { from: string; to: strin
 }
 
 export { hotDataBounds };
+
+function postgresTypeToDuckDb(column: any): string {
+  const dataType = String(column.data_type || '').toLowerCase();
+  const udtName = String(column.udt_name || '').toLowerCase();
+  if (dataType === 'boolean') return 'BOOLEAN';
+  if (dataType.includes('timestamp')) return 'TIMESTAMP';
+  if (dataType === 'date') return 'DATE';
+  if (dataType === 'time') return 'TIME';
+  if (dataType === 'smallint' || udtName === 'int2') return 'SMALLINT';
+  if (dataType === 'integer' || udtName === 'int4') return 'INTEGER';
+  if (dataType === 'bigint' || udtName === 'int8') return 'BIGINT';
+  if (dataType === 'numeric' || dataType === 'decimal') return 'DECIMAL';
+  if (dataType === 'real') return 'REAL';
+  if (dataType === 'double precision') return 'DOUBLE';
+  if (dataType === 'json' || dataType === 'jsonb') return 'JSON';
+  return 'VARCHAR';
+}
 
 async function openDurableDatabase(path: string): Promise<any> {
   try {

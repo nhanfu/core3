@@ -63,4 +63,30 @@ describe('migration hot-data policy', () => {
       database.close();
     }
   });
+
+  it('reconstructs the DuckDB schema and hot rows after a Postgres-backed restart', async () => {
+    const durable = PostgresDatabase.fromExecutor({
+      unsafe: async (sql) => {
+        if (sql.includes('information_schema.tables')) return [{ table_name: 'records' }];
+        if (sql.includes('information_schema.columns')) return [
+          { column_name: 'id', data_type: 'integer', udt_name: 'int4' },
+          { column_name: 'recorded_on', data_type: 'date', udt_name: 'date' },
+        ];
+        if (sql.includes('FROM "records"')) return [{ id: 2, recorded_on: '2026-01-01' }];
+        return [];
+      },
+    });
+    const database = await HybridDuckDbDatabase.open({
+      durable,
+      kind: 'postgres',
+      hotData: [{ table: 'records', dateColumn: 'recorded_on', from: '2025-01-01', to: '2027-01-01' }],
+    });
+    try {
+      await database.hydrateFromDurable();
+      const rows = await new YamlRepository(database).query('SELECT id FROM records');
+      expect(rows).toEqual([{ id: 2 }]);
+    } finally {
+      database.close();
+    }
+  });
 });

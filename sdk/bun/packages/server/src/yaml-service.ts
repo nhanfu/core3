@@ -131,6 +131,7 @@ export class YamlServiceModule implements ModuleLifecycle {
     this.repository = new YamlRepository(this.db);
     if (this.manifest.migrations) {
       await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`);
+      await this.db.hydrateFromDurable();
       await this.db.applyHotDataPolicy();
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
