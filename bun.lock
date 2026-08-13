@@ -31,6 +31,9 @@
     },
     "packages/server": {
       "name": "@core3/server",
+      "dependencies": {
+        "@core3/client": "workspace:*",
+      },
     },
   },
   "packages": {

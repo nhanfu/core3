@@ -3,6 +3,11 @@ export type { ApplicationConfig, ModuleApplicationConfig } from './application-c
 export { requestLanguage } from './locale.ts';
 export { discoverMigrations, migrateDatabase } from './migrations.ts';
 export type { Migration, MigrationRepository, PartitionDefinition } from './migrations.ts';
+export { YamlMutationRuntime } from './yaml-mutation-runtime.ts';
+export type { MutationDefinition, MutationConnection, MutationStep } from './yaml-mutation-runtime.ts';
+export { WorkflowRuntime } from './workflow-runtime.ts';
+export type { WorkflowMoveDefinition } from './workflow-runtime.ts';
+export { DuckDbRepository } from './database/repository.ts';
 export { decodeChatFrame, encodeChatFrame } from './chat-wire.ts';
 export type { ChatWireMessage } from './chat-wire.ts';
 export {

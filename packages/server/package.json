@@ -2,6 +2,9 @@
   "name": "@core3/server",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@core3/client": "workspace:*"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./*": "./src/*.ts",
