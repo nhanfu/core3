@@ -1,6 +1,6 @@
-import { BaseComponent } from '../../lib/components/BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
-import { appendIcon } from '../../lib/components/Icon.ts';
+import { appendIcon } from '@core3/client/components/Icon';
 import { getApps, selectApp, setDefaultApp } from '../app.ts';
 
 export class AppPicker extends BaseComponent {

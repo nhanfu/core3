@@ -1,5 +1,5 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { TextCell } from './TextCell.ts';
 import { BadgeCell } from './BadgeCell.ts';
 import { CurrencyCell } from './CurrencyCell.ts';
@@ -9,7 +9,7 @@ import { BooleanCell } from './BooleanCell.ts';
 import { ActionCell } from './ActionCell.ts';
 import { AvatarCell } from './AvatarCell.ts';
 import { PercentCell } from './PercentCell.ts';
-import { appendIcon } from './Icon.ts';
+import { appendIcon } from '@core3/client/components/Icon';
 
 const CELL_MAP = { TextCell, BadgeCell, CurrencyCell, NumberCell, DateCell, BooleanCell, ActionCell, AvatarCell, PercentCell };
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { BaseComponent } from '../../components/BaseComponent.ts';
-import { ExternalWidgetAdapter } from '../../adapters/ExternalWidgetAdapter.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { ExternalWidgetAdapter } from '@core3/client/adapters/ExternalWidgetAdapter';
 
 type WidgetOptions = { value: string };
 type WidgetInstance = { container: HTMLElement; value: string };

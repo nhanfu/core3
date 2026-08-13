@@ -1,4 +1,4 @@
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 export type MapViewDefinition = { id: 'map'; label: string; icon?: string; labelField: string; subtitleField?: string; latitudeField?: string; longitudeField?: string; };
 

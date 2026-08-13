@@ -1,8 +1,8 @@
 import { evalExpr } from '@core3/client/expr';
-import { appendIcon } from './Icon.ts';
+import { appendIcon } from '@core3/client/components/Icon';
 import { AsyncSelect } from './AsyncSelect.ts';
 import { MoneyInput } from './MoneyInput.ts';
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from './Dialog.ts';
 
 export class PageFormModal extends BaseComponent {

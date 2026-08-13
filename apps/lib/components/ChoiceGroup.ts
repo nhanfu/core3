@@ -1,4 +1,4 @@
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 /** Generic clickable option group with a YAML-defined action. */
 export class ChoiceGroup extends BaseComponent {

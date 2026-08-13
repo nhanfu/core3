@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendIcon, hasIcon } from '../../components/Icon.ts';
+import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 
 describe('shared SVG icon adapter', () => {
   it('renders semantic and legacy navigation aliases as SVG icons', () => {

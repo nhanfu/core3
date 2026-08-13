@@ -1,6 +1,6 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
-import { appendBadge, formatDate } from './helpers.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendBadge, formatDate } from '@core3/client/components/helpers';
 
 export class TimelinePanel extends BaseComponent {
   draw(container) {

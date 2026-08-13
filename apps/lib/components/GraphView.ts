@@ -1,4 +1,4 @@
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 export type GraphViewDefinition = { id: 'graph'; label: string; icon?: string; categoryField: string; measureField?: string; type?: 'bar' | 'line'; };
 

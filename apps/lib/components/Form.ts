@@ -1,4 +1,4 @@
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 /** Generic inline form. Field definitions and validation remain in YAML. */
 export class Form extends BaseComponent {

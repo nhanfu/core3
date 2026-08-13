@@ -1,7 +1,7 @@
 import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
 import { resolveDatePreset } from './ListToolbar.ts';
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;

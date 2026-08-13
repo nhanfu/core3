@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BaseComponent } from '../../components/BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 // ─── Minimal concrete component for testing ──────────────────────────────────
 

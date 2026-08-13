@@ -1,4 +1,8 @@
 export { HTML, html } from './html.ts';
+export { BaseComponent } from './components/BaseComponent.ts';
+export { ExternalWidgetAdapter } from './adapters/index.ts';
+export { appendIcon, hasIcon } from './components/Icon.ts';
+export { appendBadge, formatDate, fmtCurrency, fmtNumber } from './components/helpers.ts';
 export { evalExpr, interpolate } from './expr.ts';
 export { getPageParams, navigate, pushParams, registerNavigator, replaceParams } from './navigate.ts';
 export { loginPath, safeRedirect } from './auth-redirect.ts';

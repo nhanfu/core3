@@ -1,5 +1,5 @@
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
 
 function initials(value: unknown) {
   const words = String(value || '?').trim().split(/\s+/).filter(Boolean);

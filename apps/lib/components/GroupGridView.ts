@@ -1,5 +1,5 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { TextCell } from './TextCell.ts';
 import { BadgeCell } from './BadgeCell.ts';
 import { CurrencyCell } from './CurrencyCell.ts';

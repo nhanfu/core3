@@ -1,7 +1,7 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
-import { appendBadge } from './helpers.ts';
-import { appendIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendBadge } from '@core3/client/components/helpers';
+import { appendIcon } from '@core3/client/components/Icon';
 import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
 import { CalendarView, type CalendarViewDefinition } from './CalendarView.ts';
 import { CardView, type CardViewDefinition } from './CardView.ts';

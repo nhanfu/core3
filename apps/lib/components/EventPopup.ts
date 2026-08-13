@@ -1,5 +1,5 @@
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
 
 /** Shared modal for YAML event actions that need to notify the user. */
 export class EventPopup extends BaseComponent {

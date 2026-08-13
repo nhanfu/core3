@@ -1,5 +1,5 @@
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
 
 export type ComingSoonState = {
   eyebrow?: string;

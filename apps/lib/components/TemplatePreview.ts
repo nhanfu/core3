@@ -1,6 +1,6 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
 
 type TemplatePreviewState = {
   template?: Record<string, unknown>;

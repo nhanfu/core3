@@ -1,10 +1,10 @@
-import { BaseComponent } from '../../lib/components/BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
 import { NotificationPanel } from './NotificationPanel.ts';
 import { RightModal } from './RightModal.ts';
 import { AppLauncher, type LauncherApp } from './AppLauncher.ts';
-import { appendIcon } from '../../lib/components/Icon.ts';
+import { appendIcon } from '@core3/client/components/Icon';
 import { hasPermission } from '@core3/client/meta';
 
 export type NavItem = { path: string; label: string; icon: string; permission?: string; children?: NavItem[] };

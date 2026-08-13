@@ -1,5 +1,5 @@
-import { BaseComponent } from './BaseComponent.ts';
-import { appendBadge } from './helpers.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendBadge } from '@core3/client/components/helpers';
 
 export class BadgeCell extends BaseComponent {
   draw(container) {

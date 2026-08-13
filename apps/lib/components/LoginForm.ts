@@ -1,6 +1,6 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
 
 /** Declarative authentication form used by YAML pages. */
 export class LoginForm extends BaseComponent {

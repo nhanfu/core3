@@ -1,5 +1,5 @@
 import { interpolate } from '@core3/client/expr';
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 const TAGS = new Set(['div', 'span', 'p', 'section', 'strong', 'small']);
 const TEXT_FUNCTIONS = new Map<string, (user: any, row: any, state: any) => unknown>();

@@ -1,6 +1,6 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon, hasIcon } from './Icon.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 
 export class ActionCell extends BaseComponent {
   draw(container) {

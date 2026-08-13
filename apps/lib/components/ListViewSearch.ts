@@ -1,7 +1,7 @@
 import { html } from '@core3/client/html';
-import { BaseComponent } from './BaseComponent.ts';
-import { appendIcon } from './Icon.ts';
-import { appendBadge } from './helpers.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
+import { appendBadge } from '@core3/client/components/helpers';
 
 export class ListViewSearch extends BaseComponent {
   constructor(id, state, defs = []) {

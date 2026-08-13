@@ -1,7 +1,7 @@
-import { BaseComponent } from '../../lib/components/BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
-import { appendIcon } from '../../lib/components/Icon.ts';
+import { appendIcon } from '@core3/client/components/Icon';
 
 export type LauncherApp = {
   id: string;

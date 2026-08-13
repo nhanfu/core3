@@ -1,13 +1,13 @@
 import { evalExpr, interpolate } from '@core3/client/expr';
 import { hasPermission, resolveAction } from '@core3/client/meta';
 import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
-import { appendIcon, hasIcon } from './Icon.ts';
+import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 import { EventPopup } from './EventPopup.ts';
 import { resolveDatePreset } from './ListToolbar.ts';
 import { PageFormModal } from './PageFormModal.ts';
 import { PageGridRenderers } from './PageGridRenderers.ts';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
-import { BaseComponent } from './BaseComponent.ts';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from './Dialog.ts';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 
