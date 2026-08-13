@@ -8,6 +8,8 @@ export type { MutationDefinition, MutationConnection, MutationStep } from './yam
 export { WorkflowRuntime } from './workflow-runtime.ts';
 export type { WorkflowMoveDefinition } from './workflow-runtime.ts';
 export { DuckDbRepository } from './database/repository.ts';
+export { TopicMediator } from './topics/mediator.ts';
+export { topicDefinition } from './topics/contracts.ts';
 export { decodeChatFrame, encodeChatFrame } from './chat-wire.ts';
 export type { ChatWireMessage } from './chat-wire.ts';
 export {

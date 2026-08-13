@@ -2,8 +2,8 @@
 
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import type { TopicMediator } from '../../topics/mediator.ts';
-import { topicDefinition } from '../../topics/contracts.ts';
+import type { TopicMediator } from '../topics/mediator.ts';
+import { topicDefinition } from '../topics/contracts.ts';
 import { bindNamedParams } from '@core3/server/database/sql';
 
 export async function handleFileRoutes(ctx: Record<string, any>): Promise<Response | null> {

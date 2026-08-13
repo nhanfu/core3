@@ -1,5 +1,5 @@
 import type { AuthClaims } from './interfaces.ts';
-import type { TopicDefinition } from '../../lib/topics/contracts.ts';
+import type { TopicDefinition } from '@core3/server/topics/contracts';
 
 export type AuthResolveRequest = { token: string };
 export type AuthResolveResponse = AuthClaims | null;

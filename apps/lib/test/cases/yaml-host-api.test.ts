@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createYamlHostApi } from '../../server/routes/yaml-host-api.ts';
+import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 
 function makeService(id: string, pageId: string, sourceId: string) {
   return {

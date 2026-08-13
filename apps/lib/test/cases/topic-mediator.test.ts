@@ -3,7 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { EventStore } from '@core3/server/event-store';
-import { TopicMediator } from '../../topics/mediator.ts';
+import { TopicMediator } from '@core3/server/topics/mediator';
 import { AUTH_USER_LOOKUP } from '../../../services/auth/topics.ts';
 
 describe('TopicMediator', () => {

@@ -7,7 +7,7 @@ import { handleEventRoutes } from '@core3/server/routes/event-websocket';
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import type { ModuleServer } from '../module.ts';
-import type { TopicMediator } from '../../topics/mediator.ts';
+import type { TopicMediator } from '../topics/mediator.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',

@@ -7,7 +7,7 @@ import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { HybridDuckDbDatabase } from '@core3/server/hybrid-database';
 import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
-import { TopicMediator } from '../../lib/topics/mediator.ts';
+import { TopicMediator } from '@core3/server/topics/mediator';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
 
 export const AUTH_SERVICE_KEY = 'auth';

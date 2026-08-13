@@ -7,8 +7,8 @@ import { HybridDuckDbDatabase } from './hybrid-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
-import { TopicMediator } from '../topics/mediator.ts';
-import { topicDefinition } from '../topics/contracts.ts';
+import { TopicMediator } from './topics/mediator.ts';
+import { topicDefinition } from './topics/contracts.ts';
 import type { ModuleApiHandler } from './module.ts';
 
 export type YamlRuntimeContext = {

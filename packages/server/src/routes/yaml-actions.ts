@@ -1,7 +1,7 @@
 import { findDeclaredTransition } from '@core3/client/workflow';
 import type { EventStore } from '../event-store.ts';
-import type { TopicMediator } from '../../topics/mediator.ts';
-import { topicDefinition } from '../../topics/contracts.ts';
+import type { TopicMediator } from '../topics/mediator.ts';
+import { topicDefinition } from '../topics/contracts.ts';
 
 /** Generic action transport. Domain mutations, topics, and events are YAML. */
 export async function handleActionRoutes(ctx: Record<string, any>): Promise<Response | null> {
