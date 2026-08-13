@@ -30,6 +30,14 @@ function postgresPlaceholders(sql: string): string {
   return result;
 }
 
+function postgresSql(sql: string): string {
+  const insertIgnore = /\bINSERT\s+OR\s+IGNORE\s+INTO\b/i.test(sql);
+  return postgresPlaceholders(sql)
+    .replace(/\bINSERT\s+OR\s+IGNORE\s+INTO\b/gi, 'INSERT INTO')
+    .replace(/;\s*$/, '')
+    .concat(insertIgnore ? ' ON CONFLICT DO NOTHING' : '');
+}
+
 /**
  * Callback-shaped Postgres database seam used by the generic repository.
  * Bun.SQL supplies the native Postgres pool; the adapter only translates the
@@ -77,11 +85,11 @@ export class PostgresDatabase {
   }
 
   private async execute(sql: string, params: unknown[]): Promise<void> {
-    await this.executor.unsafe(postgresPlaceholders(sql), params);
+    await this.executor.unsafe(postgresSql(sql), params);
   }
 
   private async query(sql: string, params: unknown[]): Promise<any[]> {
-    const rows = await this.executor.unsafe(postgresPlaceholders(sql), params);
+    const rows = await this.executor.unsafe(postgresSql(sql), params);
     return (Array.isArray(rows) ? rows : []).map((row) => convertRow(row));
   }
 
@@ -90,4 +98,4 @@ export class PostgresDatabase {
   }
 }
 
-export { postgresPlaceholders };
+export { postgresPlaceholders, postgresSql };

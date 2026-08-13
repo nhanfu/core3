@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PostgresDatabase, postgresPlaceholders } from '@core3/server/database/postgres-database';
+import { PostgresDatabase, postgresPlaceholders, postgresSql } from '@core3/server/database/postgres-database';
 
 describe('Postgres durable database adapter', () => {
   it('translates positional repository parameters without changing quoted question marks', () => {
     expect(postgresPlaceholders("SELECT '?' AS literal, value FROM records WHERE id = ? AND note = \"?\" AND code = ?"))
       .toBe("SELECT '?' AS literal, value FROM records WHERE id = $1 AND note = \"?\" AND code = $2");
+  });
+
+  it('translates the DuckDB seed upsert form for Postgres', () => {
+    expect(postgresSql("INSERT OR IGNORE INTO order_users(id) VALUES(?)"))
+      .toBe('INSERT INTO order_users(id) VALUES($1) ON CONFLICT DO NOTHING');
   });
 
   it('provides the repository callback connection over a Postgres executor', async () => {

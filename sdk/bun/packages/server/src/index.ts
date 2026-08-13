@@ -8,7 +8,7 @@ export type { MutationDefinition, MutationConnection, MutationStep } from './yam
 export { WorkflowRuntime } from './workflow-runtime.ts';
 export type { WorkflowMoveDefinition } from './workflow-runtime.ts';
 export { DuckDbRepository } from './database/repository.ts';
-export { PostgresDatabase, postgresPlaceholders } from './database/postgres-database.ts';
+export { PostgresDatabase, postgresPlaceholders, postgresSql } from './database/postgres-database.ts';
 export { TopicMediator } from './topics/mediator.ts';
 export { topicDefinition } from './topics/contracts.ts';
 export { decodeChatFrame, encodeChatFrame } from './chat-wire.ts';

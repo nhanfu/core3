@@ -4,6 +4,7 @@ import { validateServiceManifest, type YamlServiceManifest } from './yaml/servic
 import type { ModuleContext, ModuleLifecycle } from './module.ts';
 import { discoverPages } from './discovery.ts';
 import { HybridDuckDbDatabase } from './database/hybrid-database.ts';
+import { PostgresDatabase } from './database/postgres-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
@@ -110,11 +111,20 @@ export class YamlServiceModule implements ModuleLifecycle {
     context.registerService(`yaml.service.${this.id}`, this.definition);
     const databaseConfig = resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
     const storageDriver = databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb';
-    if (storageDriver !== 'duckdb') {
+    if (storageDriver === 'postgres') {
+      const urlEnv = databaseConfig?.storage?.url_env;
+      const url = urlEnv ? context.env[String(urlEnv)] : databaseConfig?.storage?.url;
+      if (!url) throw new Error(`Postgres storage requires ${urlEnv || 'database.storage.url'}`);
+      this.db = await HybridDuckDbDatabase.open({
+        durable: PostgresDatabase.open(String(url)),
+        kind: 'postgres',
+      });
+    } else if (storageDriver === 'duckdb') {
+      const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
+      this.db = await HybridDuckDbDatabase.open(String(path));
+    } else {
       throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
     }
-    const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
-    this.db = await HybridDuckDbDatabase.open(String(path));
     this.repository = new YamlRepository(this.db);
     if (this.manifest.migrations) {
       await migrateDatabase(this.repository, join(context.moduleRoot, this.manifest.migrations), undefined, `${this.id}_schema_migrations`);

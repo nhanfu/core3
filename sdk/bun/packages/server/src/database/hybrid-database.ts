@@ -3,6 +3,11 @@ import { mkdir, rename, stat } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 type NativeConnection = any;
+export type HybridDatabaseOpenOptions = {
+  durable: any;
+  kind: 'postgres' | 'duckdb';
+  path?: string;
+};
 type PartitionDefinition = {
   table: string;
   column?: string;
@@ -78,21 +83,29 @@ export class HybridDuckDbDatabase {
     private disk: any,
     private memory: any,
     private readonly path: string,
+    private readonly durableKind: 'postgres' | 'duckdb',
   ) {}
 
-  static async open(path: string): Promise<HybridDuckDbDatabase> {
+  static async open(pathOrOptions: string | HybridDatabaseOpenOptions): Promise<HybridDuckDbDatabase> {
+    const options = typeof pathOrOptions === 'string'
+      ? { durable: undefined, kind: 'duckdb' as const, path: pathOrOptions }
+      : pathOrOptions;
+    const path = options.path || (options.kind === 'duckdb' ? ':memory:' : ':external:');
     const parent = dirname(path);
-    if (path !== ':memory:' && parent !== '.') {
+    if (options.kind === 'duckdb' && path !== ':memory:' && parent !== '.') {
       await mkdir(parent, { recursive: true }).catch((error: any) => {
         if (error?.code !== 'EEXIST') throw error;
       });
     }
-    const disk = await openDurableDatabase(path);
+    const disk = options.durable || await openDurableDatabase(path);
     const memory = await DuckDBInstance.create(':memory:');
-    const database = new HybridDuckDbDatabase(disk, memory, path);
-    database.mirroring = path !== ':memory:';
-    await database.copySchema();
-    await database.loadPartitions();
+    const database = new HybridDuckDbDatabase(disk, memory, path, options.kind);
+    database.mirroring = true;
+    if (options.kind === 'duckdb') {
+      database.mirroring = path !== ':memory:';
+      await database.copySchema();
+      await database.loadPartitions();
+    }
     return database;
   }
 
@@ -148,6 +161,7 @@ export class HybridDuckDbDatabase {
   }
 
   private async refreshCache(): Promise<void> {
+    if (this.durableKind === 'postgres') return;
     this.memory.closeSync();
     this.memory = await DuckDBInstance.create(':memory:');
     await this.copySchema();
@@ -529,8 +543,9 @@ export class HybridDuckDbDatabase {
 
   close(callback?: () => void): void {
     this.memory.closeSync();
-    this.disk.closeSync();
-    callback?.();
+    if (typeof this.disk.closeSync === 'function') this.disk.closeSync();
+    else if (typeof this.disk.close === 'function') this.disk.close(callback);
+    else callback?.();
   }
 }
 
