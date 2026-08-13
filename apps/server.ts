@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { discoverModules, ModuleManager } from '@core3/server/module';
 import { YamlServiceModule } from '@core3/server/yaml-service';
-import { createYamlHostApi } from './lib/server/routes/yaml-host-api.ts';
+import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { loadApplicationConfig, resolveEnvironmentValues } from '@core3/server/application-config';
 import { EventStore, type EventBus } from '@core3/server/event-store';
