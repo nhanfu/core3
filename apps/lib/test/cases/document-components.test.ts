@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ApprovalTimeline } from '../../components/ApprovalTimeline.ts';
 import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { ContactGrid } from '../../components/ContactGrid.ts';
-import { DataGrid } from '../../components/DataGrid.ts';
+import { DataGrid } from '@core3/client/components/DataGrid';
 import { DocumentSummary } from '@core3/client/components/DocumentSummary';
 import { LineItemGrid } from '../../components/LineItemGrid.ts';
 import { MoneySummary } from '../../components/MoneySummary.ts';

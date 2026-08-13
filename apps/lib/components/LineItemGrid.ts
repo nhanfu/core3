@@ -1,4 +1,4 @@
-import { DataGrid } from './DataGrid.ts';
+import { DataGrid } from '@core3/client/components/DataGrid';
 
 /**
  * Semantic document-line grid. It intentionally inherits DataGrid behavior so

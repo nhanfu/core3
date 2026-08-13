@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { KanbanView } from '../../components/KanbanView.ts';
+import { KanbanView } from '@core3/client/components/KanbanView';
 
 describe('KanbanView', () => {
   it('renders independently from ListView and supports grouped cards', () => {

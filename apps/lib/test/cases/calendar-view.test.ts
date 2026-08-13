@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CalendarView } from '../../components/CalendarView.ts';
+import { CalendarView } from '@core3/client/components/CalendarView';
 
 describe('CalendarView', () => {
   it('renders dated rows in a month grid and opens an event', () => {

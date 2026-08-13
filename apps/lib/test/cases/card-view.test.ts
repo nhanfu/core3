@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CardView } from '../../components/CardView.ts';
+import { CardView } from '@core3/client/components/CardView';
 
 describe('CardView', () => {
   it('renders grouped Kanban-style cards and routes on selection', () => {

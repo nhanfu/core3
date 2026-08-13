@@ -2,12 +2,12 @@ import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendBadge } from '@core3/client/components/helpers';
 import { appendIcon } from '@core3/client/components/Icon';
-import { KanbanView, type KanbanViewDefinition } from './KanbanView.ts';
-import { CalendarView, type CalendarViewDefinition } from './CalendarView.ts';
-import { CardView, type CardViewDefinition } from './CardView.ts';
-import { PivotView, type PivotViewDefinition } from './PivotView.ts';
-import { GraphView, type GraphViewDefinition } from './GraphView.ts';
-import { MapView, type MapViewDefinition } from './MapView.ts';
+import { KanbanView, type KanbanViewDefinition } from '@core3/client/components/KanbanView';
+import { CalendarView, type CalendarViewDefinition } from '@core3/client/components/CalendarView';
+import { CardView, type CardViewDefinition } from '@core3/client/components/CardView';
+import { PivotView, type PivotViewDefinition } from '@core3/client/components/PivotView';
+import { GraphView, type GraphViewDefinition } from '@core3/client/components/GraphView';
+import { MapView, type MapViewDefinition } from '@core3/client/components/MapView';
 import { resolveDatePreset, type DateRangePreset } from '@core3/client/components/ListToolbar';
 
 type ListRow = Record<string, unknown>;

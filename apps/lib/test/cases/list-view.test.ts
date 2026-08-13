@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ListView } from '../../components/ListView.ts';
+import { ListView } from '@core3/client/components/ListView';
 
 const rows = [
   { id: 'o1', number: 'ORD-001', customer: 'Acme', status: 'Draft' },

@@ -69,7 +69,7 @@ async function renderStatRow(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderGridView(def: any, targetContainer: HTMLElement) {
-  const { GridView } = await import('./GridView.ts');
+  const { GridView } = await import('@core3/client/components/GridView');
   const sourceId = def.source;
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
   const treeRows = sourceResult.data || [];
@@ -215,7 +215,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     ? (await import('./LineItemGrid.ts')).LineItemGrid
     : def.type === 'ContactGrid'
       ? (await import('./ContactGrid.ts')).ContactGrid
-      : (await import('./DataGrid.ts')).DataGrid;
+      : (await import('@core3/client/components/DataGrid')).DataGrid;
   const sourceId = def.source;
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
   const footerSourceId = def.type === 'LineItemGrid' ? def.footer?.source : undefined;
@@ -407,7 +407,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderListView(def: any, targetContainer: HTMLElement) {
-  const { ListView } = await import('./ListView.ts');
+  const { ListView } = await import('@core3/client/components/ListView');
   const sourceId = def.source;
   const sourceWorkflow = (config.datasources || []).find((source: any) => source.id === sourceId)?.workflow;
   const sourceDefinition = (config.datasources || []).find((source: any) => source.id === sourceId);

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PivotView } from '../../components/PivotView.ts';
+import { PivotView } from '@core3/client/components/PivotView';
 
 describe('PivotView builder', () => {
   it('maps DuckDB generated pivot keys to configured field labels', () => {
