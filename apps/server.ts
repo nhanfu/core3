@@ -9,6 +9,7 @@ import { EventMediatorClient } from './lib/server/event-mediator.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
+const REPO_ROOT = join(APPS_ROOT, '..');
 const PUBLIC_ROOT = join(APPS_ROOT, 'public');
 const appConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
 const moduleConfigs = Object.fromEntries(Object.entries(appConfig.services).map(([id, config]) => [
@@ -88,7 +89,9 @@ async function serveStatic(pathname: string) {
   if (/(^|\/)pages\/.+\.ya?ml$/i.test(rel)) return null;
   try {
     const publicFile = Bun.file(join(PUBLIC_ROOT, rel));
-    const file = await publicFile.exists() ? publicFile : Bun.file(join(APPS_ROOT, rel));
+    const appFile = Bun.file(join(APPS_ROOT, rel));
+    const packageFile = Bun.file(join(REPO_ROOT, rel));
+    const file = await publicFile.exists() ? publicFile : await appFile.exists() ? appFile : packageFile;
     if (!(await file.exists())) return null;
     if (rel.endsWith('.ts')) {
       const transpiler = new Bun.Transpiler({ loader: 'ts' });

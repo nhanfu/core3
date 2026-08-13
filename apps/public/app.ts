@@ -108,7 +108,8 @@ export async function logout() {
 function routeWithModule(path: string) {
   const routePath = path.startsWith('/') ? path : `/${path}`;
   if (routePath === '/apps') return routePath;
-  const module = _manifest.find((entry) => routePath === `/${entry.id}` || routePath.startsWith(`/${entry.id}/`));
+  const normalizedPath = routePath.toLowerCase();
+  const module = _manifest.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
   if (module) {
     if (routePath === `/${module.id}`) {
       const appRoute = _apps.find((app) => String(app.module || app.id) === module.id)?.route;
@@ -163,7 +164,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 
 function currentLocation() {
   const path = window.location.pathname === '/' ? getDefaultRoute(_user) : window.location.pathname;
-  const module = _manifest.find((entry) => path === `/${entry.id}` || path.startsWith(`/${entry.id}/`));
+  const normalizedPath = path.toLowerCase();
+  const module = _manifest.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
   if (module) _activeModuleId = module.id;
   return { path: path.replace(/\/$/, '') || '/', langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
 }
@@ -172,8 +174,9 @@ async function renderRoute(path: string, langCode?: string) {
   if (langCode && langCode !== i18n.lang) await i18n.setLang(langCode);
   // Normalize: strip trailing slash
   const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/$/, '');
-  const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path === cleanPath);
-  const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route === cleanPath);
+  const normalizedPath = cleanPath.toLowerCase();
+  const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path.toLowerCase() === normalizedPath);
+  const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route.toLowerCase() === normalizedPath);
   const pageId = page?.id || 'dashboard';
 
   const outlet = document.getElementById('outlet');

@@ -379,7 +379,7 @@ export class PageRuntime extends BaseComponent {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || 'Invalid credentials');
-        const { setAuth, getDefaultRoute } = await import('../../public/app.ts');
+        const { setAuth, getDefaultRoute } = await import('/app.ts');
         await setAuth(result.token, result.user);
         const redirectParam = String(actionDef.redirect_param || 'redirect');
         const redirect = safeRedirect(new URLSearchParams(window.location.search).get(redirectParam));
@@ -397,7 +397,7 @@ export class PageRuntime extends BaseComponent {
         break;
       }
       case 'request': {
-        const token = (await import('../../public/app.ts')).getToken();
+        const token = (await import('/app.ts')).getToken();
         const response = await fetch(actionDef.endpoint, {
           method: actionDef.method || 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -414,7 +414,7 @@ export class PageRuntime extends BaseComponent {
         // eslint-disable-next-line no-new-func
         const fn = new Function(`return (${source})`)();
         if (typeof fn !== 'function') throw new TypeError('Client action script must evaluate to a JavaScript function');
-        const token = (await import('../../public/app.ts')).getToken();
+        const token = (await import('/app.ts')).getToken();
         const request = async (endpoint: string, options: RequestInit = {}) => {
           const response = await fetch(endpoint, {
             ...options,
@@ -430,7 +430,7 @@ export class PageRuntime extends BaseComponent {
           return result;
         };
         const { i18n } = await import('../i18n.ts');
-        const { navigate: appNavigate } = await import('../../public/app.ts');
+        const { navigate: appNavigate } = await import('/app.ts');
         await fn({
           user: ctx.user,
           row: row || {},
@@ -444,7 +444,7 @@ export class PageRuntime extends BaseComponent {
         break;
       }
       case 'logout': {
-        await (await import('../../public/app.ts')).logout();
+        await (await import('/app.ts')).logout();
         break;
       }
       case 'form':
