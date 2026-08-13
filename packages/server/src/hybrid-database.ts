@@ -90,6 +90,7 @@ export class HybridDuckDbDatabase {
     const disk = await openDurableDatabase(path);
     const memory = await DuckDBInstance.create(':memory:');
     const database = new HybridDuckDbDatabase(disk, memory, path);
+    database.mirroring = path !== ':memory:';
     await database.copySchema();
     await database.loadPartitions();
     return database;
@@ -136,12 +137,13 @@ export class HybridDuckDbDatabase {
   }
 
   async withDurableWrites<T>(fn: () => Promise<T>): Promise<T> {
+    const restoreMirroring = this.path !== ':memory:';
     this.mirroring = false;
     try {
       return await fn();
     } finally {
-      this.mirroring = true;
-      await this.refreshCache();
+      this.mirroring = restoreMirroring;
+      if (restoreMirroring) await this.refreshCache();
     }
   }
 

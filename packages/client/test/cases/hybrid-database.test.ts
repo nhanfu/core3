@@ -19,6 +19,17 @@ function query(database: HybridDuckDbDatabase, sql: string, ...params: any[]) {
 }
 
 describe('HybridDuckDbDatabase', () => {
+  it('keeps schema and rows in a process-local memory database', async () => {
+    const database = await HybridDuckDbDatabase.open(':memory:');
+    databases.push(database);
+    await database.withDurableWrites(async () => {
+      await run(database, 'CREATE TABLE records (id BIGINT, label VARCHAR)');
+      await run(database, 'INSERT INTO records VALUES (?, ?)', 1, 'one');
+    });
+
+    expect(await query(database, 'SELECT * FROM records')).toEqual([{ id: 1n, label: 'one' }]);
+  });
+
   it('writes durably before mirroring reads into memory', async () => {
     const directory = await mkdtemp(join(tmpdir(), 'core3-hybrid-db-'));
     const path = join(directory, 'tms.duckdb');
