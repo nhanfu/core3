@@ -1,9 +1,9 @@
-export { TextCell }       from './TextCell.ts';
-export { BadgeCell }      from './BadgeCell.ts';
+export { TextCell }       from '@core3/client/components/TextCell';
+export { BadgeCell }      from '@core3/client/components/BadgeCell';
 export { CurrencyCell }   from './CurrencyCell.ts';
-export { NumberCell }     from './NumberCell.ts';
-export { DateCell }       from './DateCell.ts';
-export { BooleanCell }    from './BooleanCell.ts';
+export { NumberCell }     from '@core3/client/components/NumberCell';
+export { DateCell }       from '@core3/client/components/DateCell';
+export { BooleanCell }    from '@core3/client/components/BooleanCell';
 export { ActionCell }     from './ActionCell.ts';
 export { GridView }       from './GridView.ts';
 export { DataGrid }       from './DataGrid.ts';

@@ -1,11 +1,11 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { TextCell } from './TextCell.ts';
-import { BadgeCell } from './BadgeCell.ts';
+import { TextCell } from '@core3/client/components/TextCell';
+import { BadgeCell } from '@core3/client/components/BadgeCell';
 import { CurrencyCell } from './CurrencyCell.ts';
-import { NumberCell } from './NumberCell.ts';
-import { DateCell } from './DateCell.ts';
-import { BooleanCell } from './BooleanCell.ts';
+import { NumberCell } from '@core3/client/components/NumberCell';
+import { DateCell } from '@core3/client/components/DateCell';
+import { BooleanCell } from '@core3/client/components/BooleanCell';
 import { ActionCell } from './ActionCell.ts';
 
 const CELL_MAP = { TextCell, BadgeCell, CurrencyCell, NumberCell, DateCell, BooleanCell, ActionCell };
