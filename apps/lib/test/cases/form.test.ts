@@ -14,7 +14,7 @@ import {
   DateInput,
   TextareaInput,
   CheckboxInput,
-} from '../../components/index.ts';
+} from '@core3/client';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { client } from '../../client.ts';
-import { PageRuntime } from '../../components/PageRoot.ts';
+import { client } from '@core3/client/client';
+import { PageRuntime } from '@core3/client/components/PageRoot';
 
 const renderPage = (config: any, { container = document.body }: { container?: HTMLElement } = {}) =>
   new PageRuntime(config, new Map()).render(container);

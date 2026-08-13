@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { FilterBar, ListToolbar, StatusTabs } from '../../components/index.ts';
+import { FilterBar, ListToolbar, StatusTabs } from '@core3/client';
 
 function mount<T extends { mount(container: HTMLElement): void }>(component: T) {
   const container = document.createElement('div');

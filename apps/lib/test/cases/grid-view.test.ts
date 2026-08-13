@@ -15,7 +15,7 @@ import {
   DateCell,
   BooleanCell,
   ActionCell,
-} from '../../components/index.ts';
+} from '@core3/client';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

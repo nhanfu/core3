@@ -190,7 +190,7 @@ export class PageRuntime extends BaseComponent {
     const { config } = this.state;
     const registry = this.registry;
   // Dynamic imports to avoid circular deps
-  const { client } = await import('../client.ts');
+  const { client } = await import('@core3/client/client');
   const { createQuery } = await import('@core3/client/dtos');
 
   // 1. Auth check

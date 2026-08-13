@@ -3,7 +3,7 @@ import { html } from '@core3/client/html';
 import { getToken } from '../app.ts';
 import { i18n } from '@core3/client/i18n';
 import { validatePageDefinition } from '../../lib/yaml/schema.ts';
-import { PageRuntime } from '../../lib/components/PageRoot.ts';
+import { PageRuntime } from '@core3/client/components/PageRoot';
 import { appendIcon } from '@core3/client/components/Icon';
 
 /** Generic right-side modal that renders a YAML page. */

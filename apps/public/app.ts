@@ -1,9 +1,9 @@
 import { AppShell } from './components/AppShell.ts';
 import { i18n } from '@core3/client/i18n';
 import { getPageParams, registerNavigator } from '@core3/client/navigate';
-import { client } from '../lib/client.ts';
+import { client } from '@core3/client/client';
 import { validatePageDefinition } from '../lib/yaml/schema.ts';
-import { PageRuntime } from '../lib/components/PageRoot.ts';
+import { PageRuntime } from '@core3/client/components/PageRoot';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 
 const TOKEN_KEY = 'core3_token';
