@@ -1,15 +1,18 @@
 {
-  "name": "@core3/client",
+  "name": "@core3/med",
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "bun src/event-mediator-server.ts",
+    "dev": "bun src/event-mediator-server.ts",
     "test": "vitest run --config vitest.config.ts"
   },
+  "dependencies": {
+    "apache-arrow": "^21.2.0",
+    "parquet-wasm": "^0.7.2",
+    "uuid": "^14.0.1"
+  },
   "devDependencies": {
-    "@core3/med": "workspace:*",
-    "@types/node": "^26.1.1",
-    "jsdom": "^25.0.0",
-    "jest-extended": "^4.0.0",
     "vitest": "^3.0.0"
   },
   "exports": {

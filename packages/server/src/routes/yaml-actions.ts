@@ -1,5 +1,5 @@
 import { findDeclaredTransition } from '@core3/client/workflow';
-import type { EventStore } from '../event-store.ts';
+import type { EventStore } from '@core3/med';
 import type { TopicMediator } from '../topics/mediator.ts';
 import { topicDefinition } from '../topics/contracts.ts';
 

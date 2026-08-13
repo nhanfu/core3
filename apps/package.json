@@ -8,12 +8,13 @@
     "start": "PORT=3001 bun server.ts",
     "predev": "bun run css:build",
     "dev": "bun scripts/dev.ts",
-    "event-mediator": "bun ../packages/server/src/event-mediator-server.ts",
+    "event-mediator": "bun ../med/src/event-mediator-server.ts",
     "test": "vitest run --environment jsdom --config ../packages/client/vitest.config.ts",
     "audit": "bun scripts/audit-order-ui.ts"
   },
   "dependencies": {
     "@core3/client": "workspace:*",
+    "@core3/med": "workspace:*",
     "@core3/server": "workspace:*",
     "@duckdb/node-api": "^1.5.5-r.3",
     "apache-arrow": "^21.2.0",

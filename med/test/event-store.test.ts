@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import parquet from 'parquet-wasm';
-import { EventStore, type EventRecord, type EventStoreSchema } from '@core3/server/event-store';
+import { EventStore, type EventRecord, type EventStoreSchema } from '../src/event-store.ts';
 
 const stores: EventStore[] = [];
 

@@ -1,5 +1,5 @@
 import type { ModuleServer } from '../module.ts';
-import type { EventStore } from '../event-store.ts';
+import type { EventStore } from '@core3/med';
 import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
 
 type Socket = { send(data: string | Uint8Array): void; close(code?: number, reason?: string): void };
