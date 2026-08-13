@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { EventStore } from '@core3/server/event-store';
 import { TopicMediator } from '@core3/server/topics/mediator';
-import { AUTH_USER_LOOKUP } from '../../../services/auth/topics.ts';
+import { AUTH_USER_LOOKUP } from '../../../../apps/services/auth/topics.ts';
 
 describe('TopicMediator', () => {
   it('routes a request to a registered handler and returns its response', async () => {

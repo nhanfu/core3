@@ -28,6 +28,12 @@
     },
     "packages/client": {
       "name": "@core3/client",
+      "devDependencies": {
+        "@types/node": "^26.1.1",
+        "jest-extended": "^4.0.0",
+        "jsdom": "^25.0.0",
+        "vitest": "^3.0.0",
+      },
     },
     "packages/server": {
       "name": "@core3/server",

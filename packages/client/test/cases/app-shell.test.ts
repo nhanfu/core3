@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { AppShell } from '../../../public/components/AppShell.ts';
+import { AppShell } from '../../../../apps/public/components/AppShell.ts';
 
 afterEach(() => {
   document.body.innerHTML = '';

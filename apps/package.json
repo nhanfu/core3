@@ -9,7 +9,7 @@
     "predev": "bun run css:build",
     "dev": "bun scripts/dev.ts",
     "event-mediator": "bun lib/server/event-mediator-server.ts",
-    "test": "vitest run --environment jsdom lib/test/cases",
+    "test": "vitest run --environment jsdom --config ../packages/client/vitest.config.ts",
     "audit": "bun scripts/audit-order-ui.ts"
   },
   "dependencies": {

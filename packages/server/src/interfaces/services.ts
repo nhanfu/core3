@@ -1,5 +1,5 @@
-import type { IAuthProvider } from './auth';
-import type { IRepository } from './datasource';
+import type { IAuthProvider } from '../../../../apps/services/auth/interfaces.ts';
+import type { IRepository } from '@core3/client/interfaces/datasource';
 
 /** Host application services consumed by the framework server runtime. */
 export interface FrameworkServices {
