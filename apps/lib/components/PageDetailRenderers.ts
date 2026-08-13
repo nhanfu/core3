@@ -347,7 +347,7 @@ function chartState(def: any, sourceResult: any) {
 }
 
 async function renderChart(def: any, targetContainer: HTMLElement) {
-  const { Chart } = await import('./Chart.ts');
+  const { Chart } = await import('@core3/client/components/Chart');
   const sourceResult = def.source ? dataMap[def.source] : { data: def.rows || [] };
   const comp = new Chart(
     `chart-${def.source || def.id || Date.now()}`,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Chart } from '../../components/Chart.ts';
+import { Chart } from '@core3/client/components/Chart';
 
 describe('Chart', () => {
   it('renders a localized empty state and accessible chart label', () => {
