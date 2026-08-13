@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { validateServiceManifest, type YamlServiceManifest } from './yaml/service-schema.ts';
 import type { ModuleContext, ModuleLifecycle } from './module.ts';
 import { discoverPages } from './discovery.ts';
-import { HybridDuckDbDatabase } from './hybrid-database.ts';
+import { HybridDuckDbDatabase } from './database/hybrid-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
