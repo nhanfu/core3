@@ -30,7 +30,7 @@ async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
-  const { OdooFormView } = await import('./OdooFormView.ts');
+  const { OdooFormView } = await import('@core3/client/components/OdooFormView');
   const sourceResult = dataMap[def.source] || { data: {} };
   const formDef = { ...def };
   formDef.locale = config.locale;
@@ -472,7 +472,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       break;
     }
     case 'Form': {
-      const { Form } = await import('./Form.ts');
+      const { Form } = await import('@core3/client/components/Form');
       const component = new Form(def.id || `${config.page.id}-form`, {}, def);
       component._onAction = async (actionId: string, params: any) => {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);

@@ -7,10 +7,10 @@ import { DocumentSummary } from '@core3/client/components/DocumentSummary';
 import { LineItemGrid } from '@core3/client/components/LineItemGrid';
 import { MoneySummary } from '@core3/client/components/MoneySummary';
 import { MoneyInput } from '@core3/client/components/MoneyInput';
-import { OdooFormView } from '../../components/OdooFormView.ts';
-import { OdooChatter } from '../../components/OdooChatter.ts';
-import { OdooFollowerManager } from '../../components/OdooFollowerManager.ts';
-import { OdooAttachmentPanel } from '../../components/OdooAttachmentPanel.ts';
+import { OdooFormView } from '@core3/client/components/OdooFormView';
+import { OdooChatter } from '@core3/client/components/OdooChatter';
+import { OdooFollowerManager } from '@core3/client/components/OdooFollowerManager';
+import { OdooAttachmentPanel } from '@core3/client/components/OdooAttachmentPanel';
 import { ScheduleGrid } from '@core3/client/components/ScheduleGrid';
 
 function mount(component: { mount(container: HTMLElement): void }) {
