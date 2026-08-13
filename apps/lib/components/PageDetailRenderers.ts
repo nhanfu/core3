@@ -161,7 +161,7 @@ async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
-  const { ChatWorkspace } = await import('./ChatWorkspace.ts');
+  const { ChatWorkspace } = await import('@core3/client/components/ChatWorkspace');
   const threadSource = def.source;
   const messageSource = def.message_source;
   const attachmentSource = def.attachment_source;
@@ -433,7 +433,7 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
 async function renderComponentDef(def: any, targetContainer: HTMLElement) {
   switch (def.type) {
     case 'LoginForm': {
-      const { LoginForm } = await import('./LoginForm.ts');
+      const { LoginForm } = await import('@core3/client/components/LoginForm');
       const component = new LoginForm(def.id || `${config.page.id}-login`, {}, def);
       component._onAction = async (actionId: string, params: any) => {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);

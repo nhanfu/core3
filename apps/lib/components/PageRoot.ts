@@ -2,7 +2,7 @@ import { evalExpr, interpolate } from '@core3/client/expr';
 import { hasPermission, resolveAction } from '@core3/client/meta';
 import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
-import { EventPopup } from './EventPopup.ts';
+import { EventPopup } from '@core3/client/components/EventPopup';
 import { resolveDatePreset } from '@core3/client/components/ListToolbar';
 import { PageFormModal } from './PageFormModal.ts';
 import { PageGridRenderers } from './PageGridRenderers.ts';

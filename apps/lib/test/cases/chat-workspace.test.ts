@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ChatWorkspace } from '../../components/ChatWorkspace.ts';
+import { ChatWorkspace } from '@core3/client/components/ChatWorkspace';
 
 function createWorkspace() {
   const submit = vi.fn().mockResolvedValue({ ok: true });
