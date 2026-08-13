@@ -81,6 +81,8 @@ export type ListViewOptions = {
     label?: string;
     presets?: DateRangePreset[];
     presetLabels?: Partial<Record<DateRangePreset, string>>;
+    maxYears?: number;
+    denyUnbounded?: boolean;
   };
   actions?: ListViewAction[];
   favorites?: ListViewFavorite[];
@@ -555,7 +557,8 @@ export class ListView extends BaseComponent {
       const toField = range.toField || 'to_date';
       const group = html.take(menu).section.className('o-list-filter-group').getContext();
       html.take(group).h4.text(range.label || 'Date');
-      for (const preset of range.presets || []) {
+      const presets = (range.presets || []).filter((preset) => !(range.denyUnbounded && preset === 'all'));
+      for (const preset of presets) {
         const button = html.take(group).button.dataAttr('date-preset', preset).text(range.presetLabels?.[preset] || this.datePresetLabel(preset)).getContext();
         button.addEventListener('click', () => {
           const dates = resolveDatePreset(preset);
@@ -567,6 +570,13 @@ export class ListView extends BaseComponent {
       const to = html.take(custom).input.attr('type', 'date').getContext() as HTMLInputElement;
       from.setAttribute('aria-label', range.fromLabel || 'From date');
       to.setAttribute('aria-label', range.toLabel || 'To date');
+      if (range.maxYears) {
+        const bounds = rollingDateBounds(range.maxYears);
+        from.min = bounds.from;
+        from.max = bounds.to;
+        to.min = bounds.from;
+        to.max = bounds.to;
+      }
       from.value = String(filters[fromField] || '');
       to.value = String(filters[toField] || '');
       const apply = html.take(custom).button.className('o-list-date-apply').text(labels.apply).getContext();
@@ -1064,4 +1074,13 @@ export class ListView extends BaseComponent {
       all: 'All dates',
     } as Record<DateRangePreset, string>)[preset];
   }
+}
+
+function rollingDateBounds(years: number): { from: string; to: string } {
+  const now = new Date();
+  const toDate = new Date(now);
+  toDate.setUTCDate(toDate.getUTCDate() + 1);
+  const fromDate = new Date(now);
+  fromDate.setUTCFullYear(fromDate.getUTCFullYear() - years);
+  return { from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) };
 }

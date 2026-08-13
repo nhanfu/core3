@@ -719,6 +719,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         label: def.date_range.label,
         presets: def.date_range.presets,
         presetLabels: def.date_range.preset_labels,
+        maxYears: def.date_range.max_years,
+        denyUnbounded: def.date_range.deny_unbounded,
       } : undefined,
       actions: utilityActions,
       groupBy,

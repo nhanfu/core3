@@ -590,10 +590,11 @@ export class HybridDuckDbDatabase {
     let inTransaction = false;
     const close = (callback?: () => void) => {
       Promise.all([diskPromise, memoryPromise]).then(([disk, memory]) => {
-        memory.closeSync();
         if (typeof disk.closeSync === 'function') disk.closeSync();
         else if (typeof disk.close === 'function') disk.close(callback);
-        else callback?.();
+        if (typeof memory.closeSync === 'function') memory.closeSync();
+        else if (typeof memory.close === 'function') memory.close(callback);
+        callback?.();
       });
     };
     return {
