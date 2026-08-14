@@ -22,32 +22,37 @@ if (import.meta.main) {
   const argumentsList = process.argv.slice(2);
   const dbArgument = argumentsList.find((argument) => argument.startsWith('--db='));
   const legacyMemoryFlag = argumentsList.some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
-  const memoryDb = legacyMemoryFlag || argumentsList.some((argument) => argument === '--memory' || argument === '--memory=true');
-  const requestedDb = dbArgument?.slice('--db='.length) || (process.env.CORE3_DB_DRIVER === 'duckdb' || process.env.CORE3_DB_DRIVER === 'duckdb-memory' ? 'ddb' : 'pg');
+  const memoryDb = process.env.CORE3_DB_DRIVER === 'duckdb-memory'
+    || legacyMemoryFlag
+    || argumentsList.some((argument) => argument === '--memory' || argument === '--memory=true');
+  const requestedDbValue = dbArgument?.slice('--db='.length) || (process.env.CORE3_DB_DRIVER === 'duckdb' || process.env.CORE3_DB_DRIVER === 'duckdb-memory' ? 'ddb' : 'pg');
+  const requestedDb = requestedDbValue === 'postgres' ? 'pg' : requestedDbValue;
   if (requestedDb !== 'pg' && requestedDb !== 'ddb') throw new Error(`Unsupported database mode: ${requestedDb}. Use --db=pg or --db=ddb`);
   if (memoryDb && requestedDb !== 'ddb') throw new Error('--memory can only be used with --db=ddb');
-  const databaseEnv = memoryDb
-    ? {
-        CORE3_DB_DRIVER: 'duckdb-memory',
-        CORE3_AUTH_DB_PATH: ':memory:',
-        CORE3_ORDER_DB_PATH: ':memory:',
-        CORE3_CHAT_DB_PATH: ':memory:',
-        CORE3_EVENT_DB_PATH: ':memory:',
-      }
-    : requestedDb === 'ddb'
-      ? {
-        CORE3_DB_DRIVER: 'duckdb',
-        CORE3_AUTH_DB_PATH: process.env.CORE3_AUTH_DB_PATH || '../coredb/auth.duckdb',
-        CORE3_ORDER_DB_PATH: process.env.CORE3_ORDER_DB_PATH || '../coredb/order.duckdb',
-        CORE3_CHAT_DB_PATH: process.env.CORE3_CHAT_DB_PATH || '../coredb/chat.duckdb',
-      }
-      : {
-        CORE3_DB_DRIVER: 'postgres',
-        CORE3_AUTH_DATABASE_URL: process.env.CORE3_AUTH_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3',
-        CORE3_ORDER_DATABASE_URL: process.env.CORE3_ORDER_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3',
-        CORE3_CHAT_DATABASE_URL: process.env.CORE3_CHAT_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3',
-      };
-  console.log(`Starting Core3 with ${requestedDb === 'pg' ? 'PostgreSQL' : memoryDb ? 'in-memory DuckDB' : 'durable DuckDB'} database`);
+  const defaultDriver = requestedDb === 'pg' ? 'postgres' : memoryDb ? 'duckdb-memory' : 'duckdb';
+  const serviceIds = ['auth', 'order', 'chat'] as const;
+  const databaseEnv: Record<string, string> = {
+    CORE3_DB_DRIVER: defaultDriver,
+  };
+  for (const serviceId of serviceIds) {
+    const prefix = serviceId.toUpperCase();
+    databaseEnv[`CORE3_${prefix}_DB_DRIVER`] = process.env[`CORE3_${prefix}_DB_DRIVER`] || defaultDriver;
+  }
+  if (memoryDb) {
+    databaseEnv.CORE3_AUTH_DB_PATH = ':memory:';
+    databaseEnv.CORE3_ORDER_DB_PATH = ':memory:';
+    databaseEnv.CORE3_CHAT_DB_PATH = ':memory:';
+    databaseEnv.CORE3_EVENT_DB_PATH = ':memory:';
+  } else if (requestedDb === 'ddb') {
+    databaseEnv.CORE3_AUTH_DB_PATH = process.env.CORE3_AUTH_DB_PATH || '../coredb/auth.duckdb';
+    databaseEnv.CORE3_ORDER_DB_PATH = process.env.CORE3_ORDER_DB_PATH || '../coredb/order.duckdb';
+    databaseEnv.CORE3_CHAT_DB_PATH = process.env.CORE3_CHAT_DB_PATH || '../coredb/chat.duckdb';
+  } else {
+    databaseEnv.CORE3_AUTH_DATABASE_URL = process.env.CORE3_AUTH_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3';
+    databaseEnv.CORE3_ORDER_DATABASE_URL = process.env.CORE3_ORDER_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3';
+    databaseEnv.CORE3_CHAT_DATABASE_URL = process.env.CORE3_CHAT_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3';
+  }
+  console.log(`Starting Core3 with service databases: ${serviceIds.map((serviceId) => `${serviceId}=${databaseEnv[`CORE3_${serviceId.toUpperCase()}_DB_DRIVER`]}`).join(', ')}`);
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);

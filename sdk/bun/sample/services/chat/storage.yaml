@@ -1,7 +1,21 @@
-columnstore:
-  mirrors:
-    - { name: chat_messages_columnstore, source: chat_messages }
-    - { name: chat_participants_columnstore, source: chat_participants }
+database:
+  driver: ${CORE3_CHAT_DB_DRIVER:-postgres}
+  credentials:
+    url: ${CORE3_CHAT_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:55433/core3}
+    url_env: CORE3_CHAT_DATABASE_URL
+
+files:
+  driver: local
+  path: ${CHAT_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+  s3:
+    driver: s3
+    endpoint: ${CHAT_S3_ENDPOINT:-}
+    region: ${CHAT_S3_REGION:-}
+    bucket: ${CHAT_S3_BUCKET:-}
+    credentials:
+      access_key_id: ${CHAT_S3_ACCESS_KEY_ID:-}
+      secret_access_key: ${CHAT_S3_SECRET_ACCESS_KEY:-}
 
 attachments:
   chat_attachment:

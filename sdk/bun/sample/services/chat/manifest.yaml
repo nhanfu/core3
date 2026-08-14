@@ -1,6 +1,5 @@
 id: chat
 kind: domain-service
-database: chat
 migrations: migrations
 pages:
   - pages/chat.yaml

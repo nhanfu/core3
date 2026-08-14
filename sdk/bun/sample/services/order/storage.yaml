@@ -1,7 +1,21 @@
-columnstore:
-  mirrors:
-    - { name: orders_columnstore, source: orders }
-    - { name: order_lines_columnstore, source: order_lines }
+database:
+  driver: ${CORE3_ORDER_DB_DRIVER:-postgres}
+  credentials:
+    url: ${CORE3_ORDER_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:55433/core3}
+    url_env: CORE3_ORDER_DATABASE_URL
+
+files:
+  driver: local
+  path: ${ORDER_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+  s3:
+    driver: s3
+    endpoint: ${ORDER_S3_ENDPOINT:-}
+    region: ${ORDER_S3_REGION:-}
+    bucket: ${ORDER_S3_BUCKET:-}
+    credentials:
+      access_key_id: ${ORDER_S3_ACCESS_KEY_ID:-}
+      secret_access_key: ${ORDER_S3_SECRET_ACCESS_KEY:-}
 
 attachments:
   order_attachment:

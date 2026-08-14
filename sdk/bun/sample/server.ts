@@ -3,7 +3,7 @@ import { discoverModules, ModuleManager } from '@core3/server/module';
 import { YamlServiceModule } from '@core3/server/yaml-service';
 import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
-import { loadApplicationConfig, resolveEnvironmentValues } from '@core3/server/application-config';
+import { interpolateEnvironment, loadApplicationConfig, resolveEnvironmentValues } from '@core3/server/application-config';
 import { EventStore, EventMediatorClient, type EventBus } from '@core3/med';
 
 const PORT = parseInt(process.env.PORT || '3001');
@@ -16,9 +16,13 @@ const moduleConfigs = Object.fromEntries(Object.entries(appConfig.services).map(
   resolveEnvironmentValues(config, appConfig.environment) as Record<string, unknown>,
 ]));
 
-const eventConfig: any = moduleConfigs.event_store || {};
+const chatEvents = resolveEnvironmentValues(
+  interpolateEnvironment(Bun.YAML.parse(await Bun.file(join(APPS_ROOT, 'services/chat/events.yaml')).text()), process.env),
+  appConfig.environment,
+) as any;
+const eventConfig: any = chatEvents.event_store || {};
 const eventDatabase = eventConfig.database || {};
-const eventSchema = eventConfig.schema || moduleConfigs.chat?.event_schema;
+const eventSchema = chatEvents.event_schema;
 if (!eventSchema) throw new Error('Chat event schema is not configured');
 const eventMode = String(eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
 const eventBus: EventBus = eventMode === 'mediator'

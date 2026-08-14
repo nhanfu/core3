@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateServiceManifest } from '@core3/server/yaml/service-schema';
+import { addColumnstoreAccessMethod } from '@core3/server/migrations';
 
 describe('YAML service manifest schema', () => {
   it('accepts a declarative domain service manifest', () => {
@@ -36,6 +37,20 @@ describe('YAML service manifest schema', () => {
       storage: { driver: 'postgres', url_env: 'ORDER_DATABASE_URL', schema: 'orders' },
       compute: { driver: 'duckdb', mode: 'memory' },
     });
+  });
+
+  it('accepts a service-owned in-memory DuckDB storage driver', () => {
+    expect(validateServiceManifest({
+      id: 'chat',
+      database: { storage: { driver: 'duckdb-memory' } },
+    }).database).toEqual({
+      storage: { driver: 'duckdb-memory' },
+    });
+  });
+
+  it('adds the columnstore access method without changing the table schema or name', () => {
+    const sql = 'CREATE TABLE IF NOT EXISTS orders (id VARCHAR PRIMARY KEY, note VARCHAR); CREATE INDEX idx_orders ON orders(id);';
+    expect(addColumnstoreAccessMethod(sql, ['orders'])).toBe('CREATE TABLE IF NOT EXISTS orders (id VARCHAR PRIMARY KEY, note VARCHAR) USING columnstore; CREATE INDEX idx_orders ON orders(id);');
   });
 
   it('rejects invalid service identifiers and declaration types', () => {

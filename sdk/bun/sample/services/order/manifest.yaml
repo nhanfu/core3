@@ -1,6 +1,5 @@
 id: order
 kind: domain-service
-database: order
 migrations: migrations
 pages:
   - pages/menu.yaml

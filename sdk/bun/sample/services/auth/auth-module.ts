@@ -5,10 +5,11 @@ import { requestLanguage } from '@core3/server/locale';
 import { migrateDatabase } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
-import { DuckDbDatabase, PostgresDatabase } from '@core3/server';
+import { DuckDbDatabase, HybridDuckDbDatabase, PostgresDatabase } from '@core3/server';
 import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
 import { TopicMediator } from '@core3/server/topics/mediator';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
+import { interpolateEnvironment } from '@core3/server/application-config';
 
 export const AUTH_SERVICE_KEY = 'auth';
 export const AUTH_ADAPTER_KEY = 'auth.adapter';
@@ -38,17 +39,22 @@ export default class AuthModule {
   }
 
   async load(context: any): Promise<void> {
-    const database = context.config?.database as any || {};
+    let declaredStorage: any = {};
+    const storageFile = Bun.file(join(context.moduleRoot, 'storage.yaml'));
+    if (await storageFile.exists()) declaredStorage = interpolateEnvironment(Bun.YAML.parse(await storageFile.text()) || {}, context.env);
+    const database = declaredStorage.database || context.config?.database as any || {};
     const storage = database.storage || database;
+    const credentials = storage.credentials || {};
     const configuredDriver = String(storage.driver || 'duckdb');
     const driver = configuredDriver === 'duckdb-memory' ? 'duckdb' : configuredDriver;
     if (driver === 'postgres') {
-      const url = storage.url || (storage.url_env ? context.env[String(storage.url_env)] : undefined);
-      if (!url) throw new Error(`Auth Postgres storage requires ${storage.url_env || 'database.storage.url'}`);
+      const url = storage.url || credentials.url || (storage.url_env ? context.env[String(storage.url_env)] : undefined) || (credentials.url_env ? context.env[String(credentials.url_env)] : undefined);
+      if (!url) throw new Error(`Auth Postgres storage requires ${storage.url_env || credentials.url_env || 'database.storage.url'}`);
       this.db = PostgresDatabase.open(String(url));
     } else {
-      const dbPath = storage.path || context.env.AUTH_DB_PATH || join(context.moduleRoot, '..', '..', 'coredb', 'auth.duckdb');
-      this.db = await DuckDbDatabase.open(String(dbPath));
+      const memoryOnly = configuredDriver === 'duckdb-memory';
+      const dbPath = storage.path || credentials.path || context.env.CORE3_AUTH_DB_PATH || context.env.AUTH_DB_PATH || join(context.moduleRoot, '..', '..', 'coredb', 'auth.duckdb');
+      this.db = memoryOnly ? await DuckDbDatabase.open(':memory:') : await HybridDuckDbDatabase.open(String(dbPath));
     }
     const data = Bun.YAML.parse(await Bun.file(join(context.moduleRoot, 'data.yaml')).text()) as { queries?: Record<string, string> };
     const repository = new AuthRepository(this.db, data.queries || {});

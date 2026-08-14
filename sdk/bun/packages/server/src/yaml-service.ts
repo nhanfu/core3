@@ -1,9 +1,11 @@
 import { join } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { interpolateEnvironment } from './application-config.ts';
 import { validateServiceManifest, type YamlServiceManifest } from './yaml/service-schema.ts';
 import type { ModuleContext, ModuleLifecycle } from './module.ts';
 import { discoverPages } from './discovery.ts';
 import { DuckDbDatabase } from './database/duckdb-database.ts';
+import { HybridDuckDbDatabase } from './database/hybrid-duckdb-database.ts';
 import { PostgresDatabase } from './database/postgres-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { migrateDatabase } from '@core3/server/migrations';
@@ -45,7 +47,7 @@ export function loadYamlServiceManifest(root: string): DiscoveredYamlService {
 
 function readOptionalYaml(root: string, file: string | undefined): unknown {
   if (!file) return undefined;
-  return Bun.YAML.parse(readFileSync(join(root, file), 'utf8'));
+  return interpolateEnvironment(Bun.YAML.parse(readFileSync(join(root, file), 'utf8')), process.env);
 }
 
 export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlServiceDefinition {
@@ -79,8 +81,11 @@ function resolveDatabasePath(
   moduleRoot: string,
 ): string {
   const storage = database?.storage || database || {};
+  const credentials = storage.credentials || {};
   const configuredPath = storage.path
+    || credentials.path
     || (storage.path_env ? env[String(storage.path_env)] : undefined)
+    || (credentials.path_env ? env[String(credentials.path_env)] : undefined)
     || env[`CORE3_${serviceId.toUpperCase()}_DB_PATH`]
     || env[`${serviceId.toUpperCase()}_DB_PATH`];
   return String(configuredPath || join(moduleRoot, '..', '..', 'coredb', `${serviceId}.duckdb`));
@@ -88,27 +93,19 @@ function resolveDatabasePath(
 
 function resolveDatabaseUrl(database: any, env: Record<string, string | undefined>): string | undefined {
   const storage = database?.storage || database || {};
-  const envName = storage.url_env;
-  return String(storage.url || (envName ? env[String(envName)] : '') || '') || undefined;
+  const credentials = storage.credentials || {};
+  const envName = storage.url_env || credentials.url_env;
+  return String(storage.url || credentials.url || (envName ? env[String(envName)] : '') || '') || undefined;
 }
 
-async function provisionColumnstore(database: any, storage: any): Promise<void> {
-  const mirrors = Array.isArray(storage?.columnstore?.mirrors) ? storage.columnstore.mirrors : [];
-  if (!mirrors.length) return;
+async function ensureColumnstoreExtension(database: any, storage: any): Promise<string[]> {
+  const tables = Array.isArray(storage?.columnstore?.tables) ? storage.columnstore.tables.map(String) : [];
+  if (!tables.length) return [];
   const connection = database.connect();
   try {
     const extension = await connection.all("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_mooncake') AS installed");
-    if (!extension[0]?.installed) throw new Error('pg_mooncake is required for configured columnstore mirrors');
-    for (const mirror of mirrors) {
-      const source = String(mirror?.source || '');
-      const name = String(mirror?.name || '');
-      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(source) || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
-        throw new Error(`Invalid pg_mooncake mirror declaration: ${name || source}`);
-      }
-      const existing = await connection.all('SELECT to_regclass(?) AS relation', [name]);
-      if (existing[0]?.relation) continue;
-      await connection.run('CALL mooncake.create_table(?, ?)', [name, source]);
-    }
+    if (!extension[0]?.installed) throw new Error('pg_mooncake is required for configured columnstore tables');
+    return tables;
   } finally {
     await new Promise<void>((resolve) => connection.close(resolve));
   }
@@ -138,7 +135,8 @@ export class YamlServiceModule implements ModuleLifecycle {
 
   async load(context: ModuleContext): Promise<void> {
     context.registerService(`yaml.service.${this.id}`, this.definition);
-    const databaseConfig = resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
+    const declaredStorage = this.definition.storage as any;
+    const databaseConfig = declaredStorage?.database || resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
     const migrationsRoot = this.manifest.migrations ? join(context.moduleRoot, this.manifest.migrations) : undefined;
     const configuredDriver = String(databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb');
     const storageDriver = configuredDriver === 'duckdb-memory' ? 'duckdb' : configuredDriver;
@@ -148,16 +146,18 @@ export class YamlServiceModule implements ModuleLifecycle {
       this.db = PostgresDatabase.open(url);
     } else if (storageDriver === 'duckdb') {
       const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
-      this.db = await DuckDbDatabase.open(String(path));
+      this.db = configuredDriver === 'duckdb-memory'
+        ? await DuckDbDatabase.open(':memory:')
+        : await HybridDuckDbDatabase.open(String(path));
     } else {
       throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
     }
     this.repository = new YamlRepository(this.db, context.resolveService);
+    const columnstoreTables = storageDriver === 'postgres' && context.env.CORE3_MOONCAKE_ENABLED === 'true'
+      ? await ensureColumnstoreExtension(this.db, this.definition.storage)
+      : [];
     if (this.manifest.migrations) {
-      await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`);
-    }
-    if (storageDriver === 'postgres' && context.env.CORE3_MOONCAKE_ENABLED === 'true') {
-      await provisionColumnstore(this.db, this.definition.storage);
+      await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`, ['schema', 'data'], { columnstoreTables });
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
 
@@ -200,7 +200,12 @@ export class YamlServiceModule implements ModuleLifecycle {
       workflows: pageMaps.workflows,
       workflowFiles: pageMaps.workflowFiles,
       permissions: discovered.permissions.get(this.id)?.config || {},
-      uploadRoot: context.env[`${this.id.toUpperCase()}_UPLOAD_ROOT`] || join(context.moduleRoot, '.data', 'uploads'),
+      uploadRoot: context.env[`${this.id.toUpperCase()}_UPLOAD_ROOT`]
+        || (String((declaredStorage?.files || {}).driver || 'local') === 'local' && (() => {
+          const path = String(declaredStorage?.files?.path || declaredStorage?.files?.root || '');
+          return path.startsWith('/') ? path : path ? join(context.moduleRoot, path) : undefined;
+        })())
+        || join(context.moduleRoot, '.data', 'uploads'),
       eventStore: context.eventBus,
       topics: this.topics,
       storage: this.definition.storage,

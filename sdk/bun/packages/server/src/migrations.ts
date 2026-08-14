@@ -11,6 +11,10 @@ export type MigrationRepository = {
 
 export type MigrationKind = 'schema' | 'data';
 
+export type MigrationOptions = {
+  columnstoreTables?: string[];
+};
+
 export type PartitionDefinition = {
   table: string;
   column?: string;
@@ -42,6 +46,60 @@ export type Migration = {
   downPartition?: string;
   hotData?: HotDataDefinition[];
 };
+
+function columnstoreTableNames(tables: string[]): Set<string> {
+  const names = new Set<string>();
+  for (const table of tables) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(table)) throw new Error(`Invalid columnstore table identifier: ${table}`);
+    names.add(table.toLowerCase());
+  }
+  return names;
+}
+
+function findCreateTableEnd(sql: string, openParen: number): number {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let index = openParen; index < sql.length; index += 1) {
+    const character = sql[index];
+    if (quote) {
+      if (character === quote) {
+        if (sql[index + 1] === quote) index += 1;
+        else quote = null;
+      }
+      continue;
+    }
+    if (character === "'" || character === '"' || character === '`') {
+      quote = character;
+      continue;
+    }
+    if (character === '(') depth += 1;
+    if (character === ')' && --depth === 0) return index;
+  }
+  return -1;
+}
+
+export function addColumnstoreAccessMethod(sql: string, tables: string[]): string {
+  const configured = columnstoreTableNames(tables);
+  if (!configured.size) return sql;
+  const createTable = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?("?[A-Za-z_][A-Za-z0-9_]*"?)\s*\(/gi;
+  let result = '';
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  while ((match = createTable.exec(sql))) {
+    const table = match[1].replaceAll('"', '').toLowerCase();
+    if (!configured.has(table)) continue;
+    const openParen = createTable.lastIndex - 1;
+    const closeParen = findCreateTableEnd(sql, openParen);
+    if (closeParen < 0) throw new Error(`Could not find the end of CREATE TABLE ${table}`);
+    const suffix = sql.slice(closeParen + 1).match(/^\s*(USING\s+\w+)?/i)?.[1];
+    if (suffix) continue;
+    result += sql.slice(cursor, closeParen + 1);
+    result += ' USING columnstore';
+    cursor = closeParen + 1;
+    createTable.lastIndex = closeParen + 1;
+  }
+  return result ? result + sql.slice(cursor) : sql;
+}
 
 function parseHotData(value: unknown, file: string): HotDataDefinition[] | undefined {
   if (value === undefined) return undefined;
@@ -127,6 +185,7 @@ export async function migrateDatabase(
   target?: number,
   migrationTable = 'schema_migrations',
   kinds: MigrationKind[] = ['schema', 'data'],
+  options: MigrationOptions = {},
 ): Promise<void> {
   const migrations = loadMigrations(migrationsRoot).filter((migration) => kinds.includes(migration.kind));
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(migrationTable)) throw new Error(`Invalid migration table: ${migrationTable}`);
@@ -143,7 +202,7 @@ export async function migrateDatabase(
 
   for (const migration of migrations) {
     if (migration.version <= desired && !applied.has(migration.version)) {
-      await repository.runStatements(migration.up);
+      await repository.runStatements(addColumnstoreAccessMethod(migration.up, options.columnstoreTables || []));
       if (migration.partition) {
         if (!repository.partition) throw new Error(`Database does not support partitioning ${migration.partition.table}`);
         await repository.partition(migration.partition);

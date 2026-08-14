@@ -13,7 +13,7 @@ export type YamlServiceManifest = {
 
 export type YamlServiceDatabase = {
   storage: {
-    driver: 'postgres' | 'duckdb';
+    driver: 'postgres' | 'duckdb' | 'duckdb-memory';
     url_env?: string;
     path_env?: string;
     path?: string;
@@ -57,7 +57,7 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
       throw new Error(`Service manifest database.storage must be an object: ${file}`);
     }
     const driver = (storage as Record<string, unknown>).driver;
-    if (driver !== 'postgres' && driver !== 'duckdb') {
+    if (driver !== 'postgres' && driver !== 'duckdb' && driver !== 'duckdb-memory') {
       throw new Error(`Service manifest database.storage.driver is invalid: ${file}`);
     }
     for (const key of ['url_env', 'path_env', 'path', 'schema']) {
