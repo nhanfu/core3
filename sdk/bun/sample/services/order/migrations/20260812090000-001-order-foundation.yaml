@@ -58,9 +58,6 @@ up: |
   CREATE INDEX IF NOT EXISTS idx_order_date ON orders(order_date);
   CREATE INDEX IF NOT EXISTS idx_order_lines_order ON order_lines(order_id);
   CREATE INDEX IF NOT EXISTS idx_order_followers_user ON order_followers(user_id, order_id);
-  INSERT OR IGNORE INTO order_users(id, email, name, enabled, branch_id) VALUES
-    ('user-admin', 'admin@tms.local', 'Admin User', true, 'branch-hcm'),
-    ('user-disp', 'dispatcher@tms.local', 'Dispatcher User', true, 'branch-hcm');
 down: |
   DROP TABLE IF EXISTS order_attachments;
   DROP TABLE IF EXISTS order_followers;

@@ -9,6 +9,8 @@ export type MigrationRepository = {
   unpartition?(table: string): Promise<void>;
 };
 
+export type MigrationKind = 'schema' | 'data';
+
 export type PartitionDefinition = {
   table: string;
   column?: string;
@@ -32,6 +34,7 @@ export type HotDataDefinition = {
 export type Migration = {
   version: number;
   name: string;
+  kind: MigrationKind;
   file: string;
   up: string;
   down: string;
@@ -80,6 +83,7 @@ function loadMigrations(root: string): Migration[] {
       if (!match) throw new Error(`Invalid migration filename: ${name}`);
       const [, timestamp, order, description] = match;
       const parsed = Bun.YAML.parse(readFileSync(join(root, name), 'utf8')) as {
+        kind?: unknown;
         up?: unknown;
         down?: unknown;
         partition?: unknown;
@@ -89,9 +93,12 @@ function loadMigrations(root: string): Migration[] {
       if (typeof parsed?.up !== 'string' || typeof parsed.down !== 'string') {
         throw new Error(`Migration ${name} must define string up and down properties`);
       }
+      const kind = parsed.kind === undefined ? 'schema' : String(parsed.kind);
+      if (kind !== 'schema' && kind !== 'data') throw new Error(`Migration ${name} kind must be schema or data`);
       return {
         version: Number(order),
         name: order,
+        kind: kind as MigrationKind,
         file: name,
         up: parsed.up,
         down: parsed.down,
@@ -119,8 +126,9 @@ export async function migrateDatabase(
   migrationsRoot: string,
   target?: number,
   migrationTable = 'schema_migrations',
+  kinds: MigrationKind[] = ['schema', 'data'],
 ): Promise<void> {
-  const migrations = loadMigrations(migrationsRoot);
+  const migrations = loadMigrations(migrationsRoot).filter((migration) => kinds.includes(migration.kind));
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(migrationTable)) throw new Error(`Invalid migration table: ${migrationTable}`);
   await repository.runStatements(`
     CREATE TABLE IF NOT EXISTS ${migrationTable} (

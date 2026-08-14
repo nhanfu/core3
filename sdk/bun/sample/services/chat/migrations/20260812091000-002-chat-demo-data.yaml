@@ -1,0 +1,7 @@
+kind: data
+up: |
+  INSERT OR IGNORE INTO chat_users(id, email, name, enabled) VALUES
+    ('user-admin', 'admin@tms.local', 'Admin User', true),
+    ('user-disp', 'dispatcher@tms.local', 'Dispatcher User', true);
+down: |
+  DELETE FROM chat_users WHERE id IN ('user-admin', 'user-disp');

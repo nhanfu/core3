@@ -121,5 +121,8 @@ Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with arc
 
 ## Local Development
 
-- Framework tests live under [`apps/lib/test`](apps/lib/test) and run with `bun run test` from [`apps/lib`](apps/lib).
-- The app runtime lives under [`apps`](apps), TMS frontend assets under [`apps/public`](apps/public), while shared framework source lives under [`apps/lib`](apps/lib).
+- Install the Bun workspace from [`sdk/bun`](sdk/bun): `bun install`.
+- The sample app uses PostgreSQL by default. Set `CORE3_AUTH_DATABASE_URL`, `CORE3_ORDER_DATABASE_URL`, and `CORE3_CHAT_DATABASE_URL`, then run `bun run dev` from [`sdk/bun/sample`](sdk/bun/sample).
+- For fast disposable development without PostgreSQL, run `bun run dev:memory` from [`sdk/bun/sample`](sdk/bun/sample). This selects the in-memory DuckDB driver and uses no hybrid cache.
+- The application depends on the [`DatabaseAdapter`](sdk/bun/packages/server/src/database/types.ts) interface. PostgreSQL and memory DuckDB are interchangeable drivers; repositories and YAML services do not open engine-specific connections.
+- Optional pg_mooncake development infrastructure is defined in [`sdk/bun/docker-compose.pgmooncake.yml`](sdk/bun/docker-compose.pgmooncake.yml). Start it with `docker compose -f docker-compose.pgmooncake.yml up -d`, set `CORE3_MOONCAKE_ENABLED=true`, and use the mapped PostgreSQL URL.

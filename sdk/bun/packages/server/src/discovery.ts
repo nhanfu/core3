@@ -26,6 +26,12 @@ function routeItems(value: any, result: any[] = []) {
 }
 
 function routeId(path: string, pages: Map<string, DiscoveredPage>) {
+  if (path === '/') {
+    // A module dashboard may intentionally use its module root as the public
+    // entry point. Prefer conventional dashboard page IDs before falling back
+    // to the module's primary list page.
+    for (const candidate of ['dashboard', 'home', 'orders']) if (pages.has(candidate)) return candidate;
+  }
   const singular = (part: string) => part.endsWith('ies') ? `${part.slice(0, -3)}y` : part.endsWith('s') ? part.slice(0, -1) : part;
   const parts = path.split('/').filter(Boolean).map(singular);
   const rawParts = path.split('/').filter(Boolean);

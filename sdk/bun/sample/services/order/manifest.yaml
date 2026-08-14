@@ -1,12 +1,6 @@
 id: order
 kind: domain-service
-database:
-  storage:
-    driver: duckdb
-    path_env: CORE3_ORDER_DB_PATH
-  compute:
-    driver: duckdb
-    mode: memory
+database: order
 migrations: migrations
 pages:
   - pages/menu.yaml

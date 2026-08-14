@@ -5,28 +5,6 @@
     "": {
       "name": "core3",
     },
-    "apps": {
-      "name": "@core3/services",
-      "dependencies": {
-        "@core3/client": "workspace:*",
-        "@core3/med": "workspace:*",
-        "@core3/server": "workspace:*",
-        "@duckdb/node-api": "^1.5.5-r.3",
-        "apache-arrow": "^21.2.0",
-        "duckdb": "^1.1.0",
-        "jose": "^5.9.6",
-        "parquet-wasm": "^0.7.2",
-        "uuid": "^14.0.1",
-      },
-      "devDependencies": {
-        "@types/node": "^26.1.1",
-        "jest-extended": "^4.0.0",
-        "jsdom": "^25.0.0",
-        "sass": "^1.102.0",
-        "typescript": "^7.0.2",
-        "vitest": "^3.0.0",
-      },
-    },
     "med": {
       "name": "@core3/med",
       "dependencies": {
@@ -57,6 +35,28 @@
         "uuid": "^14.0.1",
       },
     },
+    "sample": {
+      "name": "@core3/services",
+      "dependencies": {
+        "@core3/client": "workspace:*",
+        "@core3/med": "workspace:*",
+        "@core3/server": "workspace:*",
+        "@duckdb/node-api": "^1.5.5-r.3",
+        "apache-arrow": "^21.2.0",
+        "duckdb": "^1.1.0",
+        "jose": "^5.9.6",
+        "parquet-wasm": "^0.7.2",
+        "uuid": "^14.0.1",
+      },
+      "devDependencies": {
+        "@types/node": "^26.1.1",
+        "jest-extended": "^4.0.0",
+        "jsdom": "^25.0.0",
+        "sass": "^1.102.0",
+        "typescript": "^7.0.2",
+        "vitest": "^3.0.0",
+      },
+    },
   },
   "packages": {
     "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.2.0", "", { "dependencies": { "@csstools/css-calc": "^2.1.3", "@csstools/css-color-parser": "^3.0.9", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw=="],
@@ -67,7 +67,7 @@
 
     "@core3/server": ["@core3/server@workspace:packages/server"],
 
-    "@core3/services": ["@core3/services@workspace:apps"],
+    "@core3/services": ["@core3/services@workspace:sample"],
 
     "@csstools/color-helpers": ["@csstools/color-helpers@5.1.0", "", {}, "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA=="],
 

@@ -2,12 +2,13 @@ import { queryOnConnection, runOnConnection } from '@core3/server/database/sql';
 import { YamlMutationRuntime, type MutationDefinition } from '../yaml-mutation-runtime.ts';
 import { splitSQL } from '@core3/server/database/sql';
 import type { QueryWindowBounds, QueryWindowDefinition } from './query-window.ts';
+import type { DatabaseAdapter } from './types.ts';
 
 export class DuckDbRepository {
 db: any;
 private readonly mutationRuntime = new YamlMutationRuntime();
 
-  constructor(db: any) {
+  constructor(db: DatabaseAdapter) {
     this.db = db;
   }
 
@@ -45,6 +46,8 @@ private readonly mutationRuntime = new YamlMutationRuntime();
   }
 
   prepareQueryWindow(definition: QueryWindowDefinition, bounds: QueryWindowBounds): Promise<() => Promise<void>> {
-    return this.db.prepareQueryWindow(definition, bounds);
+    return this.db.prepareQueryWindow
+      ? this.db.prepareQueryWindow(definition, bounds)
+      : Promise.resolve(async () => {});
   }
 }

@@ -28,9 +28,6 @@ up: |
   );
   CREATE INDEX IF NOT EXISTS idx_chat_participants_user ON chat_participants(user_id, thread_id);
   CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages(thread_id, created_at);
-  INSERT OR IGNORE INTO chat_users(id, email, name, enabled) VALUES
-    ('user-admin', 'admin@tms.local', 'Admin User', true),
-    ('user-disp', 'dispatcher@tms.local', 'Dispatcher User', true);
 down: |
   DROP TABLE IF EXISTS chat_attachments;
   DROP TABLE IF EXISTS chat_messages;

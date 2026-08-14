@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: mooncakelabs/pg_mooncake:latest
+    container_name: core3-pgmooncake
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: core3
+    ports:
+      - "${CORE3_MOONCAKE_HOST_PORT:-55433}:5432"
+    volumes:
+      - core3-pgmooncake-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d core3"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  core3-pgmooncake-pgdata:

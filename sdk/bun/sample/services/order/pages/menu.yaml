@@ -1,6 +1,6 @@
 menu:
   dashboard:
-    path: /orders
+    path: /
     label: Orders
     icon: logo
     permission: orders.read
@@ -11,5 +11,3 @@ menu:
         - path: Orders
           label: Orders
           icon: truck
-          children:
-            - { path: /orders, label: Orders, icon: document, permission: orders.read }

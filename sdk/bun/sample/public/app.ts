@@ -122,6 +122,14 @@ function routeWithModule(path: string) {
   return `/${moduleId}${routePath}`;
 }
 
+function resolveModuleRootPath(path: string): string {
+  const normalizedPath = path.replace(/\/$/, '') || '/';
+  const module = _manifest.find((entry) => normalizedPath.toLowerCase() === `/${entry.id}`);
+  if (!module) return path;
+  if (module.routes?.some((route) => route.path === normalizedPath)) return normalizedPath;
+  return module.routes?.[0]?.path || path;
+}
+
 export async function navigate(path: string, params: Record<string, string | number | boolean | null | undefined> = {}) {
   const routePath = routeWithModule(path);
   const currentParams = new URLSearchParams(window.location.search);
@@ -167,7 +175,8 @@ function currentLocation() {
   const normalizedPath = path.toLowerCase();
   const module = _manifest.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
   if (module) _activeModuleId = module.id;
-  return { path: path.replace(/\/$/, '') || '/', langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
+  const cleanPath = path.replace(/\/$/, '') || '/';
+  return { path: resolveModuleRootPath(cleanPath), langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
 }
 
 async function renderRoute(path: string, langCode?: string) {

@@ -306,7 +306,7 @@ actions:
   - id: view_order
     type: navigate
     permission: orders.read
-    navigate_to: /orders/detail
+    navigate_to: /detail
     params: { id: '{row.id}' }
   - id: submit_order
     type: server

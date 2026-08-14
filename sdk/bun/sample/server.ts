@@ -60,6 +60,11 @@ function apiError(status: number, message: string): Response {
   });
 }
 
+function moduleRoute(moduleId: string, route: string): string {
+  const path = route.startsWith('/') ? route : `/${route}`;
+  return `/${moduleId}${path}`.replace(/\/$/, '') || '/';
+}
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.ts': 'application/javascript',
@@ -125,12 +130,12 @@ const moduleManifest = modules.map((module) => ({
     .map((page) => ({
       id: page.id,
       route: pageRoutes.find((route) => route.page === page.id)?.path
-        ? `/${module.id}${pageRoutes.find((route) => route.page === page.id)!.path}`
+        ? moduleRoute(module.id, pageRoutes.find((route) => route.page === page.id)!.path)
         : null,
       title: page.config?.title || page.id,
     })),
   routes: pageRoutes.filter((route) => route.module === module.id)
-    .map((route) => ({ ...route, path: `/${module.id}${route.path}` })),
+    .map((route) => ({ ...route, path: moduleRoute(module.id, route.path) })),
 }));
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
 const yamlServiceContexts = modules
@@ -148,8 +153,8 @@ async function applicationCatalog() {
         const moduleId = String(app.module || app.id);
         const route = String(app.route || '/dashboard');
         return route === `/${moduleId}` || route.startsWith(`/${moduleId}/`)
-          ? route
-          : `/${moduleId}${route.startsWith('/') ? route : `/${route}`}`;
+          ? route.replace(/\/$/, '') || '/'
+          : moduleRoute(moduleId, route);
       })(),
       available: app.enabled !== false && moduleIds.has(String(app.module || app.id)),
     }));

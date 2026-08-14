@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { validateServiceManifest, type YamlServiceManifest } from './yaml/service-schema.ts';
 import type { ModuleContext, ModuleLifecycle } from './module.ts';
 import { discoverPages } from './discovery.ts';
-import { HybridDuckDbDatabase } from './database/hybrid-database.ts';
+import { DuckDbDatabase } from './database/duckdb-database.ts';
 import { PostgresDatabase } from './database/postgres-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
-import { discoverMigrations, migrateDatabase } from '@core3/server/migrations';
+import { migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
 import { TopicMediator } from './topics/mediator.ts';
 import { topicDefinition } from './topics/contracts.ts';
@@ -85,6 +85,34 @@ function resolveDatabasePath(
   return String(configuredPath || join(moduleRoot, '..', '..', 'coredb', `${serviceId}.duckdb`));
 }
 
+function resolveDatabaseUrl(database: any, env: Record<string, string | undefined>): string | undefined {
+  const storage = database?.storage || database || {};
+  const envName = storage.url_env;
+  return String(storage.url || (envName ? env[String(envName)] : '') || '') || undefined;
+}
+
+async function provisionColumnstore(database: any, storage: any): Promise<void> {
+  const mirrors = Array.isArray(storage?.columnstore?.mirrors) ? storage.columnstore.mirrors : [];
+  if (!mirrors.length) return;
+  const connection = database.connect();
+  try {
+    const extension = await connection.all("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_mooncake') AS installed");
+    if (!extension[0]?.installed) throw new Error('pg_mooncake is required for configured columnstore mirrors');
+    for (const mirror of mirrors) {
+      const source = String(mirror?.source || '');
+      const name = String(mirror?.name || '');
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(source) || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+        throw new Error(`Invalid pg_mooncake mirror declaration: ${name || source}`);
+      }
+      const existing = await connection.all('SELECT to_regclass(?) AS relation', [name]);
+      if (existing[0]?.relation) continue;
+      await connection.run('CALL mooncake.create_table(?, ?)', [name, source]);
+    }
+  } finally {
+    await new Promise<void>((resolve) => connection.close(resolve));
+  }
+}
+
 /**
  * Transitional generic module seam. Runtime execution is deliberately added
  * behind this interface; YAML services must not grow a service-specific
@@ -111,28 +139,24 @@ export class YamlServiceModule implements ModuleLifecycle {
     context.registerService(`yaml.service.${this.id}`, this.definition);
     const databaseConfig = resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
     const migrationsRoot = this.manifest.migrations ? join(context.moduleRoot, this.manifest.migrations) : undefined;
-    const hotData = migrationsRoot ? discoverMigrations(migrationsRoot).flatMap((migration) => migration.hotData || []) : [];
-    const storageDriver = databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb';
+    const configuredDriver = String(databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb');
+    const storageDriver = configuredDriver === 'duckdb-memory' ? 'duckdb' : configuredDriver;
     if (storageDriver === 'postgres') {
-      const urlEnv = databaseConfig?.storage?.url_env;
-      const url = urlEnv ? context.env[String(urlEnv)] : databaseConfig?.storage?.url;
-      if (!url) throw new Error(`Postgres storage requires ${urlEnv || 'database.storage.url'}`);
-      this.db = await HybridDuckDbDatabase.open({
-        durable: PostgresDatabase.open(String(url)),
-        kind: 'postgres',
-        hotData,
-      });
+      const url = resolveDatabaseUrl(databaseConfig, context.env);
+      if (!url) throw new Error(`Postgres storage requires ${databaseConfig?.storage?.url_env || databaseConfig?.url_env || 'database.storage.url'}`);
+      this.db = PostgresDatabase.open(url);
     } else if (storageDriver === 'duckdb') {
       const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
-      this.db = await HybridDuckDbDatabase.open({ durable: undefined, kind: 'duckdb', path: String(path), hotData });
+      this.db = await DuckDbDatabase.open(String(path));
     } else {
       throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
     }
     this.repository = new YamlRepository(this.db);
     if (this.manifest.migrations) {
       await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`);
-      await this.db.hydrateFromDurable();
-      await this.db.applyHotDataPolicy();
+    }
+    if (storageDriver === 'postgres' && context.env.CORE3_MOONCAKE_ENABLED === 'true') {
+      await provisionColumnstore(this.db, this.definition.storage);
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
 

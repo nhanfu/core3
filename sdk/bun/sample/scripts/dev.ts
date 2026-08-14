@@ -32,9 +32,10 @@ if (import.meta.main) {
   let restartRequested = false;
   let child: ReturnType<typeof Bun.spawn> | null = null;
   const mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts', ...process.argv.slice(2)], {
-    env: {
-      ...process.env,
-      EVENT_MEDIATOR_PORT: String(mediatorPort),
+      env: {
+        ...process.env,
+        ...(memoryDb ? { CORE3_DB_DRIVER: 'duckdb-memory' } : {}),
+        EVENT_MEDIATOR_PORT: String(mediatorPort),
       CORE3_EVENT_MODE: 'mediator',
       CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
       ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
@@ -86,6 +87,7 @@ if (import.meta.main) {
       child = Bun.spawn(['bun', 'server.ts'], {
         env: {
           ...process.env,
+          ...(memoryDb ? { CORE3_DB_DRIVER: 'duckdb-memory' } : {}),
           PORT: String(port),
           CORE3_EVENT_MODE: 'mediator',
           CORE3_EVENT_MEDIATOR_URL: mediatorUrl,

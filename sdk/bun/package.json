@@ -1,5 +1,5 @@
 {
   "name": "core3",
   "private": true,
-  "workspaces": ["apps", "packages/*", "med"]
+  "workspaces": ["sample", "packages/*", "med"]
 }

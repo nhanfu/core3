@@ -1,3 +1,8 @@
+columnstore:
+  mirrors:
+    - { name: orders_columnstore, source: orders }
+    - { name: order_lines_columnstore, source: order_lines }
+
 attachments:
   order_attachment:
     download:

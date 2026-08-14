@@ -1,4 +1,5 @@
 import { convertRow } from './sql.ts';
+import type { DatabaseAdapter } from './types.ts';
 
 export type PostgresExecutor = {
   unsafe(sql: string, params?: unknown[]): Promise<any>;
@@ -34,6 +35,12 @@ function postgresSql(sql: string): string {
   const insertIgnore = /\bINSERT\s+OR\s+IGNORE\s+INTO\b/i.test(sql);
   return postgresPlaceholders(sql)
     .replace(/\bINSERT\s+OR\s+IGNORE\s+INTO\b/gi, 'INSERT INTO')
+    .replace(/\bINTERVAL\s+(\d+)\s+(DAY|WEEK|MONTH|QUARTER|YEAR)\b/gi, "INTERVAL '$1 $2'")
+    .replace(/\bDOUBLE\b/gi, 'DOUBLE PRECISION')
+    .replace(/printf\('\%,\.0f ₫',\s*(COALESCE\([^\n]+?\))\)/gi, "to_char($1, 'FM999G999G999G990') || ' ₫'")
+    .replace(/printf\('\%,\.3f',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990.000')")
+    .replace(/printf\('\%,\.0f ₫',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990') || ' ₫'")
+    .replace(/printf\('\%\.2f%%',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990.00') || '%'")
     .replace(/;\s*$/, '')
     .concat(insertIgnore ? ' ON CONFLICT DO NOTHING' : '');
 }
@@ -43,7 +50,7 @@ function postgresSql(sql: string): string {
  * Bun.SQL supplies the native Postgres pool; the adapter only translates the
  * repository's positional `?` parameters to PostgreSQL `$n` parameters.
  */
-export class PostgresDatabase {
+export class PostgresDatabase implements DatabaseAdapter {
   private constructor(private readonly executor: PostgresExecutor) {}
 
   static open(url: string): PostgresDatabase {

@@ -5,7 +5,7 @@ import { requestLanguage } from '@core3/server/locale';
 import { migrateDatabase } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
-import { HybridDuckDbDatabase } from '@core3/server/database/hybrid-database';
+import { DuckDbDatabase, PostgresDatabase } from '@core3/server';
 import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
 import { TopicMediator } from '@core3/server/topics/mediator';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
@@ -38,13 +38,22 @@ export default class AuthModule {
   }
 
   async load(context: any): Promise<void> {
-    const database = context.config?.database as { path?: string } | undefined;
-    const dbPath = database?.path || context.env.AUTH_DB_PATH || join(context.moduleRoot, '..', '..', 'coredb', 'auth.duckdb');
-    this.db = await HybridDuckDbDatabase.open(dbPath);
+    const database = context.config?.database as any || {};
+    const storage = database.storage || database;
+    const configuredDriver = String(storage.driver || 'duckdb');
+    const driver = configuredDriver === 'duckdb-memory' ? 'duckdb' : configuredDriver;
+    if (driver === 'postgres') {
+      const url = storage.url || (storage.url_env ? context.env[String(storage.url_env)] : undefined);
+      if (!url) throw new Error(`Auth Postgres storage requires ${storage.url_env || 'database.storage.url'}`);
+      this.db = PostgresDatabase.open(String(url));
+    } else {
+      const dbPath = storage.path || context.env.AUTH_DB_PATH || join(context.moduleRoot, '..', '..', 'coredb', 'auth.duckdb');
+      this.db = await DuckDbDatabase.open(String(dbPath));
+    }
     const data = Bun.YAML.parse(await Bun.file(join(context.moduleRoot, 'data.yaml')).text()) as { queries?: Record<string, string> };
     const repository = new AuthRepository(this.db, data.queries || {});
     context.registerService('database', this.db);
-    await this.db.withDurableWrites(() => migrateDatabase(repository, join(context.moduleRoot, 'migrations'), undefined, 'auth_schema_migrations'));
+    await migrateDatabase(repository, join(context.moduleRoot, 'migrations'), undefined, 'auth_schema_migrations');
     this.service = new AuthService(repository, new TextEncoder().encode(context.env.AUTH_JWT_SECRET || context.env.JWT_SECRET || 'core3-auth-dev-secret-32chars!!!!'));
     context.registerService(AUTH_SERVICE_KEY, this.service);
     this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);

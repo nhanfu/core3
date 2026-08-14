@@ -3,7 +3,8 @@
 services:
   auth:
     database:
-      driver: duckdb
+      driver: ${CORE3_DB_DRIVER:-postgres}
+      url_env: CORE3_AUTH_DATABASE_URL
       path:
         development: ${CORE3_AUTH_DB_PATH:-../coredb/auth.duckdb}
         production: ${CORE3_AUTH_DB_PATH:-../coredb/auth.duckdb}
@@ -12,19 +13,15 @@ services:
   # its own database adapter for the Order service.
   order:
     database:
-      driver: duckdb
-      path:
-        development: ${CORE3_ORDER_DB_PATH:-../coredb/order.duckdb}
-        production: ${CORE3_ORDER_DB_PATH:-../coredb/order.duckdb}
+      driver: ${CORE3_DB_DRIVER:-postgres}
+      url_env: CORE3_ORDER_DATABASE_URL
 
   # Shared chat storage. This is intentionally independent of Order storage so
   # other applications can use the same conversations and participants.
   chat:
     database:
-      driver: duckdb
-      path:
-        development: ${CORE3_CHAT_DB_PATH:-../coredb/chat.duckdb}
-        production: ${CORE3_CHAT_DB_PATH:-../coredb/chat.duckdb}
+      driver: ${CORE3_DB_DRIVER:-postgres}
+      url_env: CORE3_CHAT_DATABASE_URL
     event_schema:
       table: event_log
       columns:
@@ -81,7 +78,8 @@ apps:
     label: Orders
     description: Order management
     icon: truck
-    route: /orders
+    # The module root is the canonical entry point for the Orders app.
+    route: /
     module: order
     enabled: true
   - id: chat
