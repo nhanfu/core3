@@ -15,7 +15,12 @@ export type PageDefinition = {
 export type DatasourceDefinition = {
   id: string;
   permission: string;
+  type?: 'local' | 'service';
   query?: string;
+  service?: string;
+  operation?: string;
+  service_params?: Record<string, unknown>;
+  enrich?: Record<string, unknown>;
   single?: boolean;
   data?: unknown;
   workflow?: string | WorkflowDefinition;
@@ -86,7 +91,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window']);
+const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -272,9 +277,18 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     rejectUnknownKeys(source, DATASOURCE_KEYS, path, issues);
     requireString(source.id, `${path}.id`, issues);
     requireString(source.permission, `${path}.permission`, issues);
-    const sourceKinds = [source.query, source.data, source.workflow_states].filter(value => value !== undefined).length;
+    const sourceKinds = options.allowExternalSources && source.data !== undefined
+      ? 1
+      : [source.query, source.data, source.workflow_states, source.type === 'service' ? source.operation : undefined].filter(value => value !== undefined).length;
     if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, or workflow_states`);
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
+    if (source.type !== undefined && source.type !== 'local' && source.type !== 'service') issues.push(`${path}.type must be local or service`);
+    if (source.type === 'service') {
+      requireString(source.service, `${path}.service`, issues);
+      requireString(source.operation, `${path}.operation`, issues);
+      if (source.service_params !== undefined) requireRecord(source.service_params, `${path}.service_params`, issues);
+    }
+    if (source.enrich !== undefined) requireRecord(source.enrich, `${path}.enrich`, issues);
     if (source.query_window !== undefined) validateQueryWindow(source.query_window, `${path}.query_window`, issues);
     if (source.single !== undefined && typeof source.single !== 'boolean') {
       issues.push(`${path}.single must be a boolean`);

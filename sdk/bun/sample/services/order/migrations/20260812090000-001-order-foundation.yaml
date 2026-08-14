@@ -5,10 +5,6 @@ hot_data:
       years: 2
 
 up: |
-  CREATE TABLE IF NOT EXISTS order_users (
-    id VARCHAR PRIMARY KEY, email VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL,
-    avatar_url VARCHAR, enabled BOOLEAN DEFAULT true, branch_id VARCHAR, department_id VARCHAR
-  );
   CREATE TABLE IF NOT EXISTS customers (
     id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL,
     owner_name VARCHAR, visibility VARCHAR DEFAULT 'Public', status VARCHAR DEFAULT 'Active'
@@ -68,4 +64,3 @@ down: |
   DROP TABLE IF EXISTS system_configs;
   DROP TABLE IF EXISTS master_data;
   DROP TABLE IF EXISTS customers;
-  DROP TABLE IF EXISTS order_users;

@@ -3,7 +3,7 @@ import { resolveQueryWindow, type QueryWindowDefinition } from './database/query
 
 export const datasourceMethods = {
   querySource: async function(this: any,
-    source: { id?: string; query: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition },
+    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -11,12 +11,14 @@ export const datasourceMethods = {
     sort?: { field?: unknown; direction?: unknown },
     pivot?: any,
   ): Promise<any> {
+    if (source.type === 'service') return queryServiceSource.call(this, source, params, top);
     const bounds = source.query_window ? resolveQueryWindow(source.query_window, params) : undefined;
     const release = bounds && this.prepareQueryWindow
       ? await this.prepareQueryWindow(source.query_window, bounds)
       : undefined;
     try {
-      return await querySourceInternal.call(this, source, params, skip, top, facetField, sort, pivot);
+      const result = await querySourceInternal.call(this, source, params, skip, top, facetField, sort, pivot);
+      return source.enrich ? enrichSourceResult.call(this, result, source.enrich, params) : result;
     } finally {
       await release?.();
     }
@@ -24,7 +26,7 @@ export const datasourceMethods = {
 };
 
 async function querySourceInternal(this: any,
-    source: { id?: string; query: string; single?: boolean; pivot?: any },
+    source: { id?: string; query?: string; single?: boolean; pivot?: any },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -32,7 +34,7 @@ async function querySourceInternal(this: any,
     sort?: { field?: unknown; direction?: unknown },
     pivot?: any,
   ): Promise<any> {
-    const { statement, values } = bindNamedParams(source.query, params);
+    const { statement, values } = bindNamedParams(String(source.query || ''), params);
     const pivotResult = pivot
       ? await nativePivotStatement(this, statement, values, source.pivot, pivot)
       : { statement, values };
@@ -100,6 +102,47 @@ async function querySourceInternal(this: any,
       data: rows,
       meta,
     };
+}
+
+async function queryServiceSource(this: any, source: any, params: Record<string, any>, top: number): Promise<any> {
+  const request = serviceRequest(source.service_params || {}, params);
+  if (source.limit_param && request.limit === undefined) request.limit = Math.min(Number(params[source.limit_param] || top || 100), 100);
+  const response = await this.callService(String(source.service || ''), String(source.operation || ''), request);
+  const rows = Array.isArray(response) ? response : Array.isArray(response?.users) ? response.users : Array.isArray(response?.data) ? response.data : [];
+  return { data: rows, meta: response?.meta || { total: rows.length, page: 1, pageSize: rows.length, pages: rows.length ? 1 : 0 } };
+}
+
+async function enrichSourceResult(this: any, result: any, definition: any, params: Record<string, any>): Promise<any> {
+  const rows = result?.data || [];
+  const list = Array.isArray(rows) ? rows : [rows];
+  const localKey = String(definition.local_key || definition.key || 'user_id');
+  const remoteKey = String(definition.remote_key || 'id');
+  const ids = [...new Set(list.map((row: any) => row?.[localKey]).filter((value: any) => value !== undefined && value !== null && value !== ''))];
+  if (!ids.length) return result;
+  const request = serviceRequest(definition.service_params || {}, params);
+  request[String(definition.ids_param || 'user_ids')] = ids;
+  const response = await this.callService(String(definition.service || ''), String(definition.operation || ''), request);
+  const remoteRows = Array.isArray(response) ? response : Array.isArray(response?.users) ? response.users : [];
+  const byId = new Map(remoteRows.map((row: any) => [String(row?.[remoteKey]), row]));
+  const fields = Array.isArray(definition.fields) ? definition.fields : [];
+  const enriched = list.map((row: any) => {
+    const remote = byId.get(String(row?.[localKey]));
+    if (!remote) return row;
+    const output = { ...row };
+    for (const field of fields) {
+      if (typeof field === 'string') output[field] = remote[field];
+      else if (field && typeof field === 'object' && field.source) output[String(field.target || field.source)] = remote[String(field.source)];
+    }
+    return output;
+  });
+  return { ...result, data: Array.isArray(rows) ? enriched : enriched[0] || {} };
+}
+
+function serviceRequest(mapping: Record<string, unknown>, params: Record<string, any>): Record<string, any> {
+  return Object.fromEntries(Object.entries(mapping).map(([key, value]) => [
+    key,
+    typeof value === 'string' ? (Object.prototype.hasOwnProperty.call(params, value) ? params[value] : null) : value,
+  ]));
 }
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;

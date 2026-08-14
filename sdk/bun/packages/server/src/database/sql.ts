@@ -45,6 +45,11 @@ export function bindNamedParams(sql: string, params: Record<string, any> = {}) {
   const statement = sql.trim().replace(/;\s*$/, '').replace(/:([A-Za-z_]\w*)/g, (_: string, name: string) => {
     const value = params[name];
     if (value === undefined || value === null) return 'NULL';
+    if (Array.isArray(value)) {
+      if (!value.length) return 'NULL';
+      values.push(...value);
+      return `(${value.map(() => 'CAST(? AS VARCHAR)').join(', ')})`;
+    }
     values.push(value);
     return 'CAST(? AS VARCHAR)';
   });

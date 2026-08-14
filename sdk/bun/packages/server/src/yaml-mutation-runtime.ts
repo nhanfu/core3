@@ -13,7 +13,7 @@ export type MutationDefinition = {
   defaults?: Record<string, unknown>;
   timestamps?: boolean;
   scope?: { table?: string; field: string; message?: string };
-  guards?: Array<{ query: string; status?: number; message?: string; assign?: boolean }>;
+  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; assign?: boolean }>;
   before_steps?: MutationStep[];
   steps?: MutationStep[];
   result?: { query?: string };
@@ -25,6 +25,8 @@ export type MutationStep = { query: string; assign?: boolean } | string;
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export class YamlMutationRuntime {
+  constructor(private readonly resolveService?: (name: string) => any) {}
+
   async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
     const params = { ...input };
     if (params.values && typeof params.values === 'object') Object.assign(params, params.values);
@@ -35,6 +37,12 @@ export class YamlMutationRuntime {
     await runOnConnection(connection, 'BEGIN TRANSACTION');
     try {
       for (const guard of definition.guards || []) {
+        if (guard.type === 'service') {
+          const response = await this.executeServiceGuard(guard, params);
+          if (!response) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected') };
+          if (guard.assign) Object.assign(params, response);
+          continue;
+        }
         const { statement, values } = bindNamedParams(String(guard.query || ''), params);
         const rows = await queryOnConnection(connection, statement, values);
         if (!rows[0]) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected') };
@@ -55,6 +63,17 @@ export class YamlMutationRuntime {
       await runOnConnection(connection, 'ROLLBACK').catch(() => {});
       throw error;
     }
+  }
+
+  private async executeServiceGuard(guard: any, params: Record<string, any>): Promise<any> {
+    if (!this.resolveService) throw { status: 500, message: 'Service guards are unavailable in this repository' };
+    const service = this.resolveService(String(guard.service || ''));
+    if (!service || typeof service.call !== 'function') throw { status: 500, message: `Service does not support calls: ${guard.service}` };
+    const request = Object.fromEntries(Object.entries(guard.request || {}).map(([key, value]) => [
+      key,
+      typeof value === 'string' && Object.prototype.hasOwnProperty.call(params, value) ? params[value] : value,
+    ]));
+    return service.call(String(guard.operation || ''), request);
   }
 
   private async executeStep(connection: MutationConnection, step: MutationStep, params: Record<string, any>): Promise<void> {

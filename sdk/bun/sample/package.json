@@ -8,7 +8,9 @@
     "start": "PORT=3001 bun server.ts",
     "predev": "bun run css:build",
     "dev": "bun scripts/dev.ts",
-    "dev:memory": "bun scripts/dev.ts --memory-db",
+    "dev:ddb": "bun scripts/dev.ts --db=ddb",
+    "dev:memory": "bun scripts/dev.ts --db=ddb --memory",
+    "dev:pg": "bun scripts/dev.ts --db=pg",
     "event-mediator": "bun ../med/src/event-mediator-server.ts",
     "test": "vitest run --environment jsdom --config ../packages/client/vitest.config.ts",
     "audit": "bun scripts/audit-order-ui.ts"

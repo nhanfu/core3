@@ -90,6 +90,19 @@ export class AuthService implements AuthServiceProtocol {
     await this.emit({ type: 'auth.password_changed', subject: userId, at: new Date().toISOString() });
   }
 
+  async call(operation: string, request: Record<string, any> = {}): Promise<any> {
+    switch (operation) {
+      case 'users.resolve':
+        return { users: await this.repository.userSummariesByIds((request.user_ids || []).map(String)) };
+      case 'users.search':
+        return { users: await this.repository.userSearch(request.query == null ? null : String(request.query), request.branch_id == null ? null : String(request.branch_id), String(request.view_scope || 'all'), Number(request.limit || 100)) };
+      case 'users.validate':
+        return this.repository.userValidate(String(request.user_id || ''), request.branch_id == null ? null : String(request.branch_id), String(request.view_scope || 'all'));
+      default:
+        throw new Error(`Unknown auth service operation: ${operation}`);
+    }
+  }
+
   subscribe(listener: (event: AuthEvent) => void | Promise<void>): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);

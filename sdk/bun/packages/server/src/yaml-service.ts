@@ -81,6 +81,7 @@ function resolveDatabasePath(
   const storage = database?.storage || database || {};
   const configuredPath = storage.path
     || (storage.path_env ? env[String(storage.path_env)] : undefined)
+    || env[`CORE3_${serviceId.toUpperCase()}_DB_PATH`]
     || env[`${serviceId.toUpperCase()}_DB_PATH`];
   return String(configuredPath || join(moduleRoot, '..', '..', 'coredb', `${serviceId}.duckdb`));
 }
@@ -151,7 +152,7 @@ export class YamlServiceModule implements ModuleLifecycle {
     } else {
       throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
     }
-    this.repository = new YamlRepository(this.db);
+    this.repository = new YamlRepository(this.db, context.resolveService);
     if (this.manifest.migrations) {
       await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`);
     }

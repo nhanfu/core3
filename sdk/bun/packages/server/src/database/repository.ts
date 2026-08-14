@@ -6,10 +6,20 @@ import type { DatabaseAdapter } from './types.ts';
 
 export class DuckDbRepository {
 db: any;
-private readonly mutationRuntime = new YamlMutationRuntime();
+private readonly mutationRuntime: YamlMutationRuntime;
+private readonly resolveService?: (name: string) => any;
 
-  constructor(db: DatabaseAdapter) {
+  constructor(db: DatabaseAdapter, resolveService?: (name: string) => any) {
     this.db = db;
+    this.resolveService = resolveService;
+    this.mutationRuntime = new YamlMutationRuntime(resolveService);
+  }
+
+  async callService(serviceName: string, operation: string, request: Record<string, any>): Promise<any> {
+    if (!this.resolveService) throw new Error('Service calls are unavailable in this repository');
+    const service = this.resolveService(serviceName);
+    if (!service || typeof service.call !== 'function') throw new Error(`Service does not support calls: ${serviceName}`);
+    return service.call(operation, request);
   }
 
   async withConnection<T>(fn: (conn: any) => Promise<T> | T): Promise<T> {

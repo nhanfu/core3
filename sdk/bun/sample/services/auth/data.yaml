@@ -35,3 +35,20 @@ queries:
         avatar_url = COALESCE(:avatar_url, avatar_url),
         updated_at = CURRENT_TIMESTAMP
     WHERE id = :user_id
+  user_summaries_by_ids: |
+    SELECT id, email, name, avatar_url, enabled, branch_id
+    FROM users
+    WHERE id IN :user_ids
+  user_search: |
+    SELECT id, email, name, avatar_url, enabled, branch_id
+    FROM users
+    WHERE enabled = true
+      AND (:query IS NULL OR lower(name) LIKE '%' || lower(:query) || '%' OR lower(email) LIKE '%' || lower(:query) || '%')
+      AND (:view_scope = 'all' OR branch_id = :branch_id)
+    ORDER BY lower(name), lower(email)
+  user_validate: |
+    SELECT id, email, name, avatar_url, enabled, branch_id
+    FROM users
+    WHERE id = :user_id
+      AND enabled = true
+      AND (:view_scope = 'all' OR branch_id = :branch_id)

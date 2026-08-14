@@ -19,7 +19,35 @@ export async function findAvailablePort(start: number): Promise<number> {
 }
 
 if (import.meta.main) {
-  const memoryDb = process.argv.slice(2).some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
+  const argumentsList = process.argv.slice(2);
+  const dbArgument = argumentsList.find((argument) => argument.startsWith('--db='));
+  const legacyMemoryFlag = argumentsList.some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
+  const memoryDb = legacyMemoryFlag || argumentsList.some((argument) => argument === '--memory' || argument === '--memory=true');
+  const requestedDb = dbArgument?.slice('--db='.length) || (process.env.CORE3_DB_DRIVER === 'duckdb' || process.env.CORE3_DB_DRIVER === 'duckdb-memory' ? 'ddb' : 'pg');
+  if (requestedDb !== 'pg' && requestedDb !== 'ddb') throw new Error(`Unsupported database mode: ${requestedDb}. Use --db=pg or --db=ddb`);
+  if (memoryDb && requestedDb !== 'ddb') throw new Error('--memory can only be used with --db=ddb');
+  const databaseEnv = memoryDb
+    ? {
+        CORE3_DB_DRIVER: 'duckdb-memory',
+        CORE3_AUTH_DB_PATH: ':memory:',
+        CORE3_ORDER_DB_PATH: ':memory:',
+        CORE3_CHAT_DB_PATH: ':memory:',
+        CORE3_EVENT_DB_PATH: ':memory:',
+      }
+    : requestedDb === 'ddb'
+      ? {
+        CORE3_DB_DRIVER: 'duckdb',
+        CORE3_AUTH_DB_PATH: process.env.CORE3_AUTH_DB_PATH || '../coredb/auth.duckdb',
+        CORE3_ORDER_DB_PATH: process.env.CORE3_ORDER_DB_PATH || '../coredb/order.duckdb',
+        CORE3_CHAT_DB_PATH: process.env.CORE3_CHAT_DB_PATH || '../coredb/chat.duckdb',
+      }
+      : {
+        CORE3_DB_DRIVER: 'postgres',
+        CORE3_AUTH_DATABASE_URL: process.env.CORE3_AUTH_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3',
+        CORE3_ORDER_DATABASE_URL: process.env.CORE3_ORDER_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3',
+        CORE3_CHAT_DATABASE_URL: process.env.CORE3_CHAT_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3',
+      };
+  console.log(`Starting Core3 with ${requestedDb === 'pg' ? 'PostgreSQL' : memoryDb ? 'in-memory DuckDB' : 'durable DuckDB'} database`);
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
@@ -31,11 +59,11 @@ if (import.meta.main) {
   let stopped = false;
   let restartRequested = false;
   let child: ReturnType<typeof Bun.spawn> | null = null;
-  const mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts', ...process.argv.slice(2)], {
-      env: {
-        ...process.env,
-        ...(memoryDb ? { CORE3_DB_DRIVER: 'duckdb-memory' } : {}),
-        EVENT_MEDIATOR_PORT: String(mediatorPort),
+  const mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts'], {
+    env: {
+      ...process.env,
+      ...databaseEnv,
+      EVENT_MEDIATOR_PORT: String(mediatorPort),
       CORE3_EVENT_MODE: 'mediator',
       CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
       ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
@@ -87,16 +115,11 @@ if (import.meta.main) {
       child = Bun.spawn(['bun', 'server.ts'], {
         env: {
           ...process.env,
-          ...(memoryDb ? { CORE3_DB_DRIVER: 'duckdb-memory' } : {}),
+          ...databaseEnv,
           PORT: String(port),
           CORE3_EVENT_MODE: 'mediator',
           CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
-          ...(memoryDb ? {
-            CORE3_AUTH_DB_PATH: ':memory:',
-            CORE3_ORDER_DB_PATH: ':memory:',
-            CORE3_CHAT_DB_PATH: ':memory:',
-            CORE3_EVENT_DB_PATH: ':memory:',
-          } : {}),
+          ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
         },
         stdin: 'inherit',
         stdout: 'inherit',

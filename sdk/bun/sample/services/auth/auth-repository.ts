@@ -65,4 +65,16 @@ export class AuthRepository {
   updateProfile(userId: string, fields: Record<string, unknown>): Promise<void> {
     return this.execute('update_profile', { user_id: userId, ...fields }).then(() => undefined);
   }
+
+  userSummariesByIds(userIds: string[]): Promise<any[]> {
+    return this.execute('user_summaries_by_ids', { user_ids: userIds });
+  }
+
+  userSearch(query: string | null, branchId: string | null, viewScope: string, limit: number): Promise<any[]> {
+    return this.execute('user_search', { query: query || null, branch_id: branchId, view_scope: viewScope, limit }).then(rows => rows.slice(0, Math.max(1, Math.min(limit || 100, 100))));
+  }
+
+  userValidate(userId: string, branchId: string | null, viewScope: string): Promise<any | null> {
+    return this.execute('user_validate', { user_id: userId, branch_id: branchId, view_scope: viewScope }).then(rows => rows[0] || null);
+  }
 }
