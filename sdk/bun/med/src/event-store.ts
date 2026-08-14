@@ -13,7 +13,7 @@ export type EventEnvelope = { id: string; sequence: number; at: number; topic?: 
 export type EventRecord = EventEnvelope;
 type EventListener = (event: EventEnvelope) => void;
 export type EventSubscription = { events: AsyncIterable<EventEnvelope>; close: () => void; ack?: (sequence: number) => Promise<void> };
-export type EventBus = Pick<EventStore, 'start' | 'stop' | 'publish' | 'subscribeStream'>;
+export type EventBus = Pick<EventStore, 'start' | 'stop' | 'publish' | 'poll' | 'subscribeStream'>;
 
 type Segment = { file: string; firstSequence: number; lastSequence: number; firstAt: number; lastAt: number; rows: number; bytes?: number };
 type HotSegment = { firstSequence: number; lastSequence: number; bytes: Uint8Array; events: EventEnvelope[] };
@@ -215,6 +215,10 @@ export class EventStore {
   }
 
   async publish(event: Omit<EventEnvelope, 'id' | 'sequence' | 'at'>): Promise<EventEnvelope> { return (await this.publishBatch([event]))[0]; }
+
+  async poll(options: { topic?: string; afterSequence?: number; maxEvents?: number; maxWaitMs?: number } = {}): Promise<EventEnvelope[]> {
+    return this.records({ afterSequence: options.afterSequence, limit: options.maxEvents, topic: options.topic });
+  }
 
   async publishBatch(events: Array<Omit<EventEnvelope, 'id' | 'sequence' | 'at'>>): Promise<EventEnvelope[]> {
     const items = events.map((event) => ({ topic: 'events', ...event, id: uuidv7(), sequence: this.nextSequence++, at: Date.now() } as EventEnvelope));

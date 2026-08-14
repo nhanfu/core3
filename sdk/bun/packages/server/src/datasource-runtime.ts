@@ -117,7 +117,12 @@ async function enrichSourceResult(this: any, result: any, definition: any, param
   const list = Array.isArray(rows) ? rows : [rows];
   const localKey = String(definition.local_key || definition.key || 'user_id');
   const remoteKey = String(definition.remote_key || 'id');
-  const ids = [...new Set(list.map((row: any) => row?.[localKey]).filter((value: any) => value !== undefined && value !== null && value !== ''))];
+  const ids = [...new Set(list.flatMap((row: any) => {
+    const value = row?.[localKey];
+    if (Array.isArray(value)) return value;
+    if (definition.split && typeof value === 'string') return value.split(String(definition.split));
+    return [value];
+  }).filter((value: any) => value !== undefined && value !== null && value !== ''))];
   if (!ids.length) return result;
   const request = serviceRequest(definition.service_params || {}, params);
   request[String(definition.ids_param || 'user_ids')] = ids;
@@ -126,12 +131,21 @@ async function enrichSourceResult(this: any, result: any, definition: any, param
   const byId = new Map(remoteRows.map((row: any) => [String(row?.[remoteKey]), row]));
   const fields = Array.isArray(definition.fields) ? definition.fields : [];
   const enriched = list.map((row: any) => {
-    const remote = byId.get(String(row?.[localKey]));
+    const localValues = Array.isArray(row?.[localKey])
+      ? row[localKey]
+      : definition.split && typeof row?.[localKey] === 'string'
+        ? row[localKey].split(String(definition.split))
+        : [row?.[localKey]];
+    const remotes = localValues.map((value: any) => byId.get(String(value))).filter(Boolean);
+    const remote = remotes[0];
     if (!remote) return row;
     const output = { ...row };
     for (const field of fields) {
       if (typeof field === 'string') output[field] = remote[field];
-      else if (field && typeof field === 'object' && field.source) output[String(field.target || field.source)] = remote[String(field.source)];
+      else if (field && typeof field === 'object' && field.source) {
+        const values = remotes.map((item: any) => item[String(field.source)]).filter((value: any) => value !== undefined && value !== null && value !== '');
+        output[String(field.target || field.source)] = field.join === undefined ? remote[String(field.source)] : values.join(String(field.join));
+      }
     }
     return output;
   });

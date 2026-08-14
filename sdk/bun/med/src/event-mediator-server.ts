@@ -1,9 +1,13 @@
 import { serveEventMediator } from './event-mediator.ts';
+import { loadMedConfig } from './config.ts';
 
 const port = Number(process.env.EVENT_MEDIATOR_PORT || 3010);
 const memoryDb = process.argv.slice(2).some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
-const databasePath = memoryDb ? ':memory:' : process.env.CORE3_EVENT_DB_PATH || '../coredb/events-mediator-parquet';
-const token = process.env.CORE3_EVENT_MEDIATOR_TOKEN || '';
+const config: any = await loadMedConfig();
+const eventConfig = config.event_store || {};
+const eventDatabase = eventConfig.database || {};
+const databasePath = memoryDb ? ':memory:' : eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet';
+const token = String(eventConfig.mediator?.token || process.env.CORE3_EVENT_MEDIATOR_TOKEN || '');
 const schema = {
   table: 'event_log',
   columns: [
@@ -23,19 +27,19 @@ const mediator = await serveEventMediator({
   token,
   databasePath,
   schema,
-  retentionMs: Number(process.env.CORE3_EVENT_RETENTION_MS || 60 * 60 * 1000),
-  maxRows: Number(process.env.CORE3_EVENT_MAX_ROWS || 100000),
-  hotMaxRows: Number(process.env.CORE3_EVENT_HOT_MAX_ROWS || process.env.CORE3_EVENT_MAX_ROWS || 100000),
-  hotMaxBytes: Number(process.env.CORE3_EVENT_HOT_MAX_BYTES || 128 * 1024 * 1024),
-  hotRetentionMs: Number(process.env.CORE3_EVENT_HOT_RETENTION_MS || process.env.CORE3_EVENT_RETENTION_MS || 60 * 60 * 1000),
-  hotConsumerTtlMs: Number(process.env.CORE3_EVENT_HOT_CONSUMER_TTL_MS || 30000),
-  segmentMaxRows: Number(process.env.CORE3_EVENT_SEGMENT_MAX_ROWS || 200),
-  pullBatchSize: Number(process.env.CORE3_EVENT_PULL_BATCH_SIZE || 100),
-  readerCount: Number(process.env.CORE3_EVENT_READER_CONNECTIONS || 4),
-  bufferMaxRows: Number(process.env.CORE3_EVENT_BUFFER_MAX_ROWS || 10000),
-  writeMode: (process.env.CORE3_EVENT_WRITE_MODE || 'low_latency') as 'low_latency' | 'durable',
-  ackTimeoutMs: Number(process.env.CORE3_EVENT_ACK_TIMEOUT_MS || 30000),
-  maxPendingPerClient: Number(process.env.CORE3_EVENT_MAX_PENDING_PER_CLIENT || 10000),
+  retentionMs: Number(eventConfig.retention_ms || 60 * 60 * 1000),
+  maxRows: Number(eventConfig.max_rows || 100000),
+  hotMaxRows: Number(eventConfig.hot_max_rows || eventConfig.max_rows || 100000),
+  hotMaxBytes: Number(eventConfig.hot_max_bytes || 128 * 1024 * 1024),
+  hotRetentionMs: Number(eventConfig.hot_retention_ms || eventConfig.retention_ms || 60 * 60 * 1000),
+  hotConsumerTtlMs: Number(eventConfig.hot_consumer_ttl_ms || 30000),
+  segmentMaxRows: Number(eventConfig.segment_max_rows || 200),
+  pullBatchSize: Number(eventConfig.pull_batch_size || 100),
+  readerCount: Number(eventConfig.reader_connections || 4),
+  bufferMaxRows: Number(eventConfig.buffer_max_rows || 10000),
+  writeMode: (eventConfig.write_mode || 'low_latency') as 'low_latency' | 'durable',
+  ackTimeoutMs: Number(eventConfig.ack_timeout_ms || 30000),
+  maxPendingPerClient: Number(eventConfig.max_pending_per_client || 10000),
 });
 
 const shutdown = async () => {

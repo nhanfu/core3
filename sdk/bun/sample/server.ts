@@ -3,32 +3,27 @@ import { discoverModules, ModuleManager } from '@core3/server/module';
 import { YamlServiceModule } from '@core3/server/yaml-service';
 import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
-import { interpolateEnvironment, loadApplicationConfig, resolveEnvironmentValues } from '@core3/server/application-config';
-import { EventStore, EventMediatorClient, type EventBus } from '@core3/med';
+import { loadApplicationConfig } from '@core3/server/application-config';
+import { EventStore, EventMediatorClient, loadMedConfig, type EventBus } from '@core3/med';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
 const REPO_ROOT = join(APPS_ROOT, '..');
 const PUBLIC_ROOT = join(APPS_ROOT, 'public');
 const appConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
-const moduleConfigs = Object.fromEntries(Object.entries(appConfig.services).map(([id, config]) => [
-  id,
-  resolveEnvironmentValues(config, appConfig.environment) as Record<string, unknown>,
-]));
-
-const chatEvents = resolveEnvironmentValues(
-  interpolateEnvironment(Bun.YAML.parse(await Bun.file(join(APPS_ROOT, 'services/chat/events.yaml')).text()), process.env),
-  appConfig.environment,
-) as any;
-const eventConfig: any = chatEvents.event_store || {};
+const moduleConfigs: Record<string, Record<string, unknown>> = {};
+const medStoreConfig = await loadMedConfig();
+const eventConfig: any = medStoreConfig.event_store || {};
 const eventDatabase = eventConfig.database || {};
+const chatEvents = Bun.YAML.parse(await Bun.file(join(APPS_ROOT, 'services/chat/events.yaml')).text()) as any;
 const eventSchema = chatEvents.event_schema;
 if (!eventSchema) throw new Error('Chat event schema is not configured');
 const eventMode = String(eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
+const medConnectionConfig = appConfig.med || {};
 const eventBus: EventBus = eventMode === 'mediator'
   ? new EventMediatorClient({
-    endpoint: String(eventConfig.mediator?.endpoint || process.env.CORE3_EVENT_MEDIATOR_URL || 'ws://127.0.0.1:3010/events'),
-    token: String(eventConfig.mediator?.token || process.env.CORE3_EVENT_MEDIATOR_TOKEN || ''),
+    endpoint: String(medConnectionConfig.endpoint || process.env.CORE3_EVENT_MEDIATOR_URL || 'ws://127.0.0.1:3010/events'),
+    token: String(medConnectionConfig.token || process.env.CORE3_EVENT_MEDIATOR_TOKEN || ''),
     nodeId: String(eventConfig.mediator?.node_id || process.env.CORE3_NODE_ID || `core3-${process.pid}`),
     reconnectMs: Number(eventConfig.mediator?.reconnect_ms || 1000),
     segmentMaxRows: Number(eventConfig.segment_max_rows || 200),
@@ -50,6 +45,22 @@ const eventBus: EventBus = eventMode === 'mediator'
     writeMode: eventConfig.write_mode || 'low_latency',
   });
 await eventBus.start();
+
+async function seedChatEvents(): Promise<void> {
+  if (appConfig.environment !== 'development') return;
+  const seeds = Array.isArray(chatEvents.seed_events) ? chatEvents.seed_events : [];
+  if (!seeds.length) return;
+  const existing = await eventBus.poll({ topic: 'chat.message.created', afterSequence: 0, maxEvents: 10000, maxWaitMs: 0 });
+  const keys = new Set(existing.map((event: any) => String(event.key || '')));
+  for (const seed of seeds) {
+    const key = String(seed.key || '');
+    if (!key || keys.has(key)) continue;
+    await eventBus.publish({ ...seed, key });
+    keys.add(key);
+  }
+}
+
+await seedChatEvents();
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',

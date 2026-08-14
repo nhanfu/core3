@@ -94,6 +94,12 @@ export class AuthService implements AuthServiceProtocol {
     switch (operation) {
       case 'users.resolve':
         return { users: await this.repository.userSummariesByIds((request.user_ids || []).map(String)) };
+      case 'users.resolve_emails': {
+        const emails = String(request.emails || '').split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
+        const users = await this.repository.userSummariesByEmails(emails);
+        if (users.length !== new Set(emails).size) return null;
+        return { users, user_ids_csv: users.map((user) => String(user.id)).join(',') };
+      }
       case 'users.search':
         return { users: await this.repository.userSearch(request.query == null ? null : String(request.query), request.branch_id == null ? null : String(request.branch_id), String(request.view_scope || 'all'), Number(request.limit || 100)) };
       case 'users.validate':

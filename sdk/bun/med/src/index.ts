@@ -11,3 +11,4 @@ export type {
 export { EventMediatorClient, serveEventMediator } from './event-mediator.ts';
 export type { EventMediatorServerOptions } from './event-mediator.ts';
 export { decodeEventBatch, encodeEventBatch } from './event-store.ts';
+export { loadMedConfig } from './config.ts';

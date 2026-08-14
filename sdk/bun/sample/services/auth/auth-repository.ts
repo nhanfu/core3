@@ -70,6 +70,10 @@ export class AuthRepository {
     return this.execute('user_summaries_by_ids', { user_ids: userIds });
   }
 
+  userSummariesByEmails(emails: string[]): Promise<any[]> {
+    return this.execute('user_summaries_by_emails', { emails: emails.map((email) => email.toLowerCase()) });
+  }
+
   userSearch(query: string | null, branchId: string | null, viewScope: string, limit: number): Promise<any[]> {
     return this.execute('user_search', { query: query || null, branch_id: branchId, view_scope: viewScope, limit }).then(rows => rows.slice(0, Math.max(1, Math.min(limit || 100, 100))));
   }

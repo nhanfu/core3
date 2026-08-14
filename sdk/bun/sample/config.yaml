@@ -1,3 +1,7 @@
+med:
+  endpoint: ${CORE3_EVENT_MEDIATOR_URL:-ws://127.0.0.1:3010/events}
+  token: ${CORE3_EVENT_MEDIATOR_TOKEN:-}
+
 apps:
   - id: order
     label: Orders

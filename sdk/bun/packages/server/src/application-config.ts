@@ -5,6 +5,7 @@ export type ModuleApplicationConfig = Record<string, unknown>;
 export type ApplicationConfig = {
   environment: string;
   services: Record<string, ModuleApplicationConfig>;
+  med: Record<string, unknown>;
   apps: Array<Record<string, unknown>>;
 };
 
@@ -25,6 +26,7 @@ export function loadApplicationConfig(path: string, env: NodeJS.ProcessEnv): App
   return {
     environment: env.CORE3_ENV || 'development',
     services: resolved.services || {},
+    med: resolved.med || {},
     apps: resolved.apps || [],
   };
 }

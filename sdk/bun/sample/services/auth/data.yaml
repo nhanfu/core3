@@ -39,6 +39,10 @@ queries:
     SELECT id, email, name, avatar_url, enabled, branch_id
     FROM users
     WHERE id IN :user_ids
+  user_summaries_by_emails: |
+    SELECT id, email, name, avatar_url, enabled, branch_id
+    FROM users
+    WHERE enabled = true AND lower(email) IN :emails
   user_search: |
     SELECT id, email, name, avatar_url, enabled, branch_id
     FROM users
