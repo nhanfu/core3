@@ -18,6 +18,7 @@ const schema: EventStoreSchema = {
     { name: 'actor_id', type: 'varchar', source: 'actorId' },
     { name: 'thread_id', type: 'varchar', source: 'threadId' },
     { name: 'message_body', type: 'varchar', source: 'message.body' },
+    { name: 'payload', type: 'varchar', source: 'payload' },
   ],
 };
 
@@ -47,6 +48,7 @@ function event(publisher: number, sequence: number) {
     actorId: `publisher-${publisher}`,
     threadId: `thread-${sequence % 8}`,
     message: { publisher, sequence, body: `message-${publisher}-${sequence}` },
+    payload: sequence % 2 === 0 ? { sequence, publisher } : undefined,
   };
 }
 

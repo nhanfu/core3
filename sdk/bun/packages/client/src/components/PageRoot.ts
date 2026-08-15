@@ -208,7 +208,9 @@ export class PageRuntime extends BaseComponent {
   const pageParams: Record<string, string> = { ...getPageParams() };
   const initialDateFilters: Record<string, string> = {};
   for (const component of config.components || []) {
-    const range = component.type === 'ListToolbar' ? component.date_range : undefined;
+    const range = component.type === 'ListToolbar' || component.type === 'ListView'
+      ? component.date_range
+      : undefined;
     if (!range?.default_preset) continue;
     const dates = resolveDatePreset(range.default_preset);
     initialDateFilters[range.from_field || 'from_date'] = dates.from;

@@ -178,12 +178,11 @@ export class EventStore {
     const last = events[events.length - 1];
     const file = `events-${String(first.sequence).padStart(16, '0')}-${String(last.sequence).padStart(16, '0')}.parquet`;
     const temporary = join(this.dataPath, `${file}.tmp`);
-    const rows = events.map((event) => {
-      const row: Record<string, unknown> = { id: event.id, sequence: event.sequence, event_at: event.at };
-      for (const column of this.schema.columns) row[column.name] = valueAt(column.source || column.name, event) ?? null;
-      return row;
-    });
-    const table = tableFromArrays(Object.fromEntries(Object.keys(rows[0]).map((name) => [name, rows.map((row) => row[name])])))
+    // Build the IPC table through the schema-aware path. Raw tableFromArrays
+    // infers object columns from values such as `{ ... }` and then crashes
+    // when another row has null for the same column (Object.keys(null)).
+    // eventTable also preserves the declared Arrow type for all-null columns.
+    const table = eventTable(events, this.schema);
     const wasmTable = parquet.Table.fromIPCStream(tableToIPC(table, 'stream'));
     const parquetBytes = parquet.writeParquet(wasmTable);
     await writeFile(temporary, parquetBytes);

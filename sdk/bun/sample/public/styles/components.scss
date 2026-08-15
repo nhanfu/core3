@@ -341,7 +341,7 @@
 
 .o-list-control-panel {
   position: sticky;
-  z-index: 8;
+  z-index: 30;
   top: 0;
   display: flex;
   flex-direction: column;
@@ -350,11 +350,6 @@
   border-bottom: 1px solid var(--o-list-border);
   background: var(--o-list-panel-bg);
 }
-
-/* The filter menu is fixed, but it still participates in this stacking
- * context. Raise the control panel while it is open so the inline FormView
- * cannot paint over the menu. */
-.o-list-control-panel:has(.o-list-filter-menu[open]) { z-index: 30; }
 
 .o-list-control-main {
   display: grid;

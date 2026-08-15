@@ -139,6 +139,7 @@ export class ListView extends BaseComponent {
   defs: ListViewColumn[];
   options: ListViewOptions;
   private dismissCleanup: Array<() => void> = [];
+  private drawVersion = 0;
 
   constructor(id: string, state: Record<string, unknown> = {}, defs: ListViewColumn[] = [], options: ListViewOptions = {}) {
     super(id, state);
@@ -155,7 +156,8 @@ export class ListView extends BaseComponent {
       this.drawCards(container);
       return;
     }
-    void this.drawOdoo(container);
+    const version = ++this.drawVersion;
+    void this.drawOdoo(container, version);
   }
 
   private drawCards(container: HTMLElement) {
@@ -189,7 +191,7 @@ export class ListView extends BaseComponent {
     }
   }
 
-  private async drawOdoo(container: HTMLElement) {
+  private async drawOdoo(container: HTMLElement, version: number) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
     const meta = (this.state.meta as Record<string, unknown> | undefined) || {};
     const filters = (this.state.filters as Record<string, unknown> | undefined) || {};
@@ -240,6 +242,7 @@ export class ListView extends BaseComponent {
     if (['list', 'form'].includes(activeView.id) && hasFormMode && !listEnabled && formEnabled) {
       const content = html.take(root).div.className('o-list-content is-form-only').getContext();
       await this.drawFormPanel(content, rows, true);
+      if (version !== this.drawVersion) return;
       return;
     }
     if (activeView.id === 'card') {
@@ -287,6 +290,7 @@ export class ListView extends BaseComponent {
       kanban.mount(kanbanHost);
       if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
+        if (version !== this.drawVersion) return;
       }
       return;
     }
@@ -311,6 +315,7 @@ export class ListView extends BaseComponent {
       calendar.mount(calendarHost);
       if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
+        if (version !== this.drawVersion) return;
       }
       return;
     }
@@ -423,6 +428,7 @@ export class ListView extends BaseComponent {
     }
     if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (rows.length || this.state.formRowId === '__new__')) {
       await this.drawFormPanel(content, rows, false);
+      if (version !== this.drawVersion) return;
     }
   }
 
