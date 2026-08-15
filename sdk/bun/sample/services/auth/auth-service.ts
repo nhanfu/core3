@@ -1,4 +1,3 @@
-import { SignJWT, jwtVerify } from 'jose';
 import type {
   AuthClaims,
   AuthEvent,
@@ -9,6 +8,7 @@ import type {
   User,
 } from './interfaces.ts';
 import { AuthRepository } from './auth-repository.ts';
+import { signAuthJwt, verifyAuthJwt } from '@core3/server/auth/jwt';
 
 export class AuthService implements AuthServiceProtocol {
   private readonly listeners = new Set<(event: AuthEvent) => void | Promise<void>>();
@@ -39,8 +39,7 @@ export class AuthService implements AuthServiceProtocol {
       roles, branches: user.branch_id ? [String(user.branch_id)] : [], permissions,
       attributes: { department_id: user.department_id }, token_type: 'user',
     };
-    const token = await new SignJWT(claims as any)
-      .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('8h').sign(this.secret);
+    const token = await signAuthJwt(claims as any, this.secret);
     await this.emit({ type: 'auth.login', user: claims, at: new Date().toISOString() });
     return { token, user: claims, token_type: 'Bearer', expires_in: 8 * 60 * 60 };
   }
@@ -59,11 +58,8 @@ export class AuthService implements AuthServiceProtocol {
 
   async introspect(token: string): Promise<AuthClaims | null> {
     try {
-      const result = await jwtVerify(token, this.secret);
-      return result.payload as AuthClaims;
-    } catch {
-      return null;
-    }
+      return await verifyAuthJwt<AuthClaims>(token, this.secret);
+    } catch { return null; }
   }
 
   hasPermission(user: AuthClaims | User, permission: string): boolean {

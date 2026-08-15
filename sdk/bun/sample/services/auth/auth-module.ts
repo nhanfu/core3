@@ -11,6 +11,7 @@ import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USE
 import { TopicMediator } from '@core3/server/topics/mediator';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
 import { interpolateEnvironment } from '@core3/server/application-config';
+import { authJwtSecret } from '@core3/server/auth/jwt';
 
 export const AUTH_SERVICE_KEY = 'auth';
 export const AUTH_ADAPTER_KEY = 'auth.adapter';
@@ -65,7 +66,8 @@ export default class AuthModule {
     const repository = new AuthRepository(this.db, data.queries || {});
     context.registerService('database', this.db);
     await migrateDatabase(repository, join(context.moduleRoot, 'migrations'), undefined, 'auth_schema_migrations');
-    this.service = new AuthService(repository, new TextEncoder().encode(context.env.AUTH_JWT_SECRET || context.env.JWT_SECRET || 'core3-auth-dev-secret-32chars!!!!'));
+    const jwtSecret = authJwtSecret(context.env);
+    this.service = new AuthService(repository, jwtSecret);
     context.registerService(AUTH_SERVICE_KEY, this.service);
     this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);
     this.topics.register({
@@ -86,7 +88,7 @@ export default class AuthModule {
     });
     this.topics.start();
     context.registerService('auth.topic', this.topics);
-    context.registerService(AUTH_ADAPTER_KEY, new MediatorAuthAdapter(this.topics));
+    context.registerService(AUTH_ADAPTER_KEY, new MediatorAuthAdapter(this.topics, jwtSecret));
 
     let pages = discoverPages(context.appsRoot);
     const profileApi = pages.pages.get('profile')?.config?.api || {};

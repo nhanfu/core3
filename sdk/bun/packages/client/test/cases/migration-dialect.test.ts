@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDialect } from '@core3/server/database/dialects';
 import { migrationSqlForDriver } from '@core3/server/migrations';
+import { translateSql } from '@core3/server/database/sql-database';
 import type { DatabaseDriver } from '@core3/server/database/types';
 
 describe('database dialect contract', () => {
@@ -23,6 +24,15 @@ describe('database dialect contract', () => {
     expect(migrationSqlForDriver(migration, 'postgres').up).toContain('postgres_table');
     expect(migrationSqlForDriver(migration, 'mysql').up).toContain('mysql_table');
     expect(() => migrationSqlForDriver(migration, 'oracle')).toThrow('does not support database type oracle');
+  });
+
+  it('translates all order printf formats for MySQL', () => {
+    const sql = `SELECT printf('%,.3f', l.quantity), printf('%.2f%%', l.tax_rate), printf('%,.0f ₫', COALESCE(l.line_total, 0))`;
+    const translated = translateSql(sql, 'mysql');
+    expect(translated).toContain('FORMAT(l.quantity, 3)');
+    expect(translated).toContain("CONCAT(FORMAT(l.tax_rate, 2), '%')");
+    expect(translated).toContain("CONCAT(FORMAT(COALESCE(l.line_total, 0), 0), ' ₫')");
+    expect(translated).not.toContain('printf(');
   });
 
 });
