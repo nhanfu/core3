@@ -4,10 +4,3 @@ menu:
     label: Orders
     icon: logo
     permission: orders.read
-  groups:
-    - id: operations
-      label: ORDERS
-      items:
-        - path: Orders
-          label: Orders
-          icon: truck

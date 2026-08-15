@@ -77,6 +77,7 @@ function apiError(status: number, message: string): Response {
 
 function moduleRoute(moduleId: string, route: string): string {
   const path = route.startsWith('/') ? route : `/${route}`;
+  if (path.replace(/\/$/, '') === `/${moduleId}`) return `/${moduleId}`;
   return `/${moduleId}${path}`.replace(/\/$/, '') || '/';
 }
 

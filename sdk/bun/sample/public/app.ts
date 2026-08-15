@@ -297,13 +297,11 @@ async function bootstrap() {
   await i18n.setLang(lang);
 
   // Menus belong to modules and are discovered from pages/menu.yaml on the
-  // server. The shell only receives the public, parsed declaration.
-  let menu: any = {};
+  // server. Only the active app's menu belongs in the shell; app switching is
+  // handled separately by the application launcher.
   const modules = i18n.menuModules;
-  menu = modules.reduce((merged, entry) => ({
-    dashboard: merged.dashboard || entry.menu?.dashboard,
-    groups: [...(merged.groups || []), ...(entry.menu?.groups || [])],
-  }), {});
+  const activeMenuModule = modules.find((entry) => String(entry.module || '') === _activeModuleId);
+  const menu = activeMenuModule?.menu || {};
 
   // Mount app shell
   const showWelcomeToast = sessionStorage.getItem(WELCOME_TOAST_KEY) === '1';

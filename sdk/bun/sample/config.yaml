@@ -15,6 +15,6 @@ apps:
     label: Chat
     description: Conversations and collaboration
     icon: message
-    route: /chat/chat
+    route: /chat/
     module: chat
     enabled: true
