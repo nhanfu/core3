@@ -112,12 +112,15 @@ export class DateRangeFilterTag {
         const label = document.createElement('span'); label.className = 'o-list-date-picker-weekday'; label.textContent = weekday; grid.append(label);
       }
       const first = calendarMonth.getUTCDay() || 7;
-      for (let index = 1; index < first; index++) grid.append(document.createElement('span'));
-      const days = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth() + 1, 0)).getUTCDate();
-      for (let day = 1; day <= days; day++) {
-        const value = isoDate(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth(), day);
+      const firstVisibleDate = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth(), 1 - (first - 1)));
+      const monthKey = isoDate(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth(), 1).slice(0, 7);
+      for (let index = 0; index < 42; index++) {
+        const date = new Date(firstVisibleDate);
+        date.setUTCDate(date.getUTCDate() + index);
+        const value = isoDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
         const button = document.createElement('button');
-        button.type = 'button'; button.className = 'o-list-date-picker-day'; button.textContent = String(day); button.dataset.calendarDate = value;
+        button.type = 'button'; button.className = 'o-list-date-picker-day'; button.textContent = String(date.getUTCDate()); button.dataset.calendarDate = value;
+        if (!value.startsWith(monthKey)) button.classList.add('is-outside-month');
         if (!this.isDateAllowed(value, activeField, selectedFrom, definition)) button.disabled = true;
         if (value === selectedFrom || value === selectedTo) button.classList.add('is-selected');
         if (selectedFrom && selectedTo && value > selectedFrom && value < selectedTo) button.classList.add('is-in-range');
@@ -131,8 +134,16 @@ export class DateRangeFilterTag {
       }
       calendar.append(grid);
     };
-    from.addEventListener('focus', () => { activeField = 'from'; drawCalendar(); });
-    to.addEventListener('focus', () => { activeField = 'to'; drawCalendar(); });
+    from.addEventListener('focus', () => {
+      activeField = 'from';
+      calendarMonth = monthStart(from.value || selectedFrom || calendarMonth.toISOString().slice(0, 10));
+      drawCalendar();
+    });
+    to.addEventListener('focus', () => {
+      activeField = 'to';
+      calendarMonth = monthStart(to.value || selectedTo || calendarMonth.toISOString().slice(0, 10));
+      drawCalendar();
+    });
     from.addEventListener('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
     to.addEventListener('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
     drawCalendar();

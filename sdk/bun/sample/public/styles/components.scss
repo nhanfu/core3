@@ -707,6 +707,8 @@
 .o-list-date-picker-weekday { padding: 3px 0; color: var(--o-list-muted); font-size: 10px; font-weight: 700; text-align: center; text-transform: uppercase; }
 .o-list-date-picker-day { min-height: 28px; border: 0; border-radius: 3px; background: transparent; color: var(--o-list-text); cursor: pointer; font: inherit; font-size: 12px; }
 .o-list-date-picker-day:hover, .o-list-date-picker-day.is-selected { background: var(--o-list-action); color: #fff; font-weight: 700; }
+.o-list-date-picker-day.is-outside-month { color: var(--o-list-muted); opacity: .62; }
+.o-list-date-picker-day.is-outside-month:hover { opacity: 1; }
 .o-list-date-picker-day.is-in-range { border-radius: 0; background: color-mix(in srgb, var(--o-list-action) 16%, var(--o-list-bg)); color: var(--o-list-action); }
 .o-list-date-range-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 5px; padding-top: 8px; }
 .o-list-date-range-fields input { min-width: 0; height: 30px; padding: 3px 6px; border: 1px solid var(--o-list-border); border-radius: 3px; background: var(--o-list-bg); color: var(--o-list-text); }

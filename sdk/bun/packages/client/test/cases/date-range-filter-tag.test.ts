@@ -45,9 +45,29 @@ describe('DateRangeFilterTag', () => {
 
     expect(container.querySelector('[data-date-preset="month"]')?.classList.contains('is-active')).toBe(true);
     const days = [...container.querySelectorAll<HTMLButtonElement>('[data-calendar-date]')];
+    expect(days).toHaveLength(42);
+    expect(container.querySelector('.o-list-date-picker-day.is-outside-month')).not.toBeNull();
     days[0].click();
     days[4].click();
     container.querySelector<HTMLButtonElement>('.o-list-date-range-apply')!.click();
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ from_date: expect.any(String), to_date: expect.any(String) }));
+  });
+
+  it('centers the calendar on the focused field value', () => {
+    const container = document.createElement('div');
+    new DateRangeFilterTag({
+      values: { from_date: '2025-01-15', to_date: '2026-08-15' },
+      definition: { fromField: 'from_date', toField: 'to_date', maxYears: 2 },
+      onChange: vi.fn(),
+    }).render(container);
+
+    const from = container.querySelector<HTMLInputElement>('input[aria-label="From date"]')!;
+    const to = container.querySelector<HTMLInputElement>('input[aria-label="To date"]')!;
+    const title = () => container.querySelector('.o-list-date-picker-header strong')?.textContent;
+
+    from.dispatchEvent(new FocusEvent('focus'));
+    expect(title()).toContain('January 2025');
+    to.dispatchEvent(new FocusEvent('focus'));
+    expect(title()).toContain('August 2026');
   });
 });
