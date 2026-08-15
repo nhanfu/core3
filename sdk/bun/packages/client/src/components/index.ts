@@ -8,6 +8,7 @@ export { ActionCell }     from '@core3/client/components/ActionCell';
 export { GridView }       from '@core3/client/components/GridView';
 export { DataGrid }       from '@core3/client/components/DataGrid';
 export { ListView }       from '@core3/client/components/ListView';
+export { DateRangeFilterTag } from '@core3/client/components/DateRangeFilterTag';
 export { TextInput }      from '@core3/client/components/TextInput';
 export { NumberInput }    from '@core3/client/components/NumberInput';
 export { SelectInput }    from '@core3/client/components/SelectInput';

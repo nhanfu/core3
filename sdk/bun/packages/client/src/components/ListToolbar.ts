@@ -185,7 +185,10 @@ export class ListToolbar extends BaseComponent {
       ];
       for (const field of fields) {
         const input = document.createElement('input');
-        input.type = 'date';
+        input.type = 'text';
+        input.inputMode = 'numeric';
+        input.placeholder = 'YYYY-MM-DD';
+        input.pattern = '\\d{4}-\\d{2}-\\d{2}';
         input.value = String((this.state as any)[field.key] || '');
         if (dateRange.max_years) {
           const bounds = rollingDateBounds(dateRange.max_years);

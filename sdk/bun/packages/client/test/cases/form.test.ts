@@ -215,9 +215,9 @@ describe('CheckboxInput', () => {
 // ─── DateInput ────────────────────────────────────────────────────────────────
 
 describe('DateInput', () => {
-  it('renders type="date" input', () => {
+  it('renders a text-based custom date input', () => {
     const { el } = mount(new DateInput('d', { value: '2025-06-01' }));
-    expect(el.querySelector('input')?.type).toBe('date');
+    expect(el.querySelector('input')?.type).toBe('text');
   });
 
   it('renders with formatted date value', () => {

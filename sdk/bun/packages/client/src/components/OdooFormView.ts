@@ -125,7 +125,11 @@ export class OdooFormView extends BaseComponent {
         }
       } else {
         editor = document.createElement('input');
-        editor.type = field.type === 'number' || field.type === 'money' ? 'number' : ['date', 'time'].includes(field.type) ? field.type : 'text';
+        editor.type = field.type === 'number' || field.type === 'money' ? 'number' : 'text';
+        if (field.type === 'date' || field.type === 'time' || field.type === 'datetime') {
+          editor.inputMode = 'numeric';
+          editor.placeholder = field.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm';
+        }
       }
       editor.className = 'o-form-inline-editor';
       editor.value = Array.isArray(current) ? current.join(',') : String(current);

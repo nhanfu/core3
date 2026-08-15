@@ -156,7 +156,11 @@ export class PageFormModal extends BaseComponent {
               : 'form-input core3-form-control core3-form-textarea';
           } else {
             el = document.createElement('input');
-            el.type = fieldDef.type === 'datetime' ? 'datetime-local' : (fieldDef.type || 'text');
+            el.type = ['date', 'time', 'datetime'].includes(fieldDef.type) ? 'text' : (fieldDef.type || 'text');
+            if (fieldDef.type === 'date' || fieldDef.type === 'time' || fieldDef.type === 'datetime') {
+              el.inputMode = 'numeric';
+              el.placeholder = fieldDef.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm';
+            }
             el.className = 'form-input core3-form-control';
           }
           el.id = fieldId;

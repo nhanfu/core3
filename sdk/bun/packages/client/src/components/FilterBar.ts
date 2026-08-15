@@ -57,10 +57,14 @@ export class FilterBar extends BaseComponent {
         const grp       = html.take(bar).div.className('flex flex-col gap-1').getContext();
         html.take(grp).label.className('text-xs font-medium text-gray-500 uppercase tracking-wide').text(f.label);
         const rangeWrap = html.take(grp).div.className('flex gap-2 items-center').getContext();
-        const inpFrom   = html.take(rangeWrap).input.type('date').className('px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white').dataAttr('ff', f.field + '_from').value(String(values[f.field + '_from'] || '')).getContext();
+        const inpFrom   = html.take(rangeWrap).input.type('text').className('px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white').dataAttr('ff', f.field + '_from').value(String(values[f.field + '_from'] || '')).getContext();
         const separator = html.take(rangeWrap).span.className('text-gray-400 text-xs').getContext();
         appendIcon(separator, 'arrow-right');
-        const inpTo     = html.take(rangeWrap).input.type('date').className('px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white').dataAttr('ff', f.field + '_to').value(String(values[f.field + '_to'] || '')).getContext();
+        const inpTo     = html.take(rangeWrap).input.type('text').className('px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white').dataAttr('ff', f.field + '_to').value(String(values[f.field + '_to'] || '')).getContext();
+        inpFrom.inputMode = 'numeric';
+        inpTo.inputMode = 'numeric';
+        inpFrom.placeholder = 'YYYY-MM-DD';
+        inpTo.placeholder = 'YYYY-MM-DD';
         inpFrom.addEventListener('change', e => {
           const newValues = { ...this.state.values, [f.field + '_from']: e.target.value };
           this.setState({ values: newValues }, false);

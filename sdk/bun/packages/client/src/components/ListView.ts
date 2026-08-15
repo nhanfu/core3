@@ -8,7 +8,7 @@ import { CardView, type CardViewDefinition } from '@core3/client/components/Card
 import { PivotView, type PivotViewDefinition } from '@core3/client/components/PivotView';
 import { GraphView, type GraphViewDefinition } from '@core3/client/components/GraphView';
 import { MapView, type MapViewDefinition } from '@core3/client/components/MapView';
-import { resolveDatePreset, type DateRangePreset } from '@core3/client/components/ListToolbar';
+import { DateRangeFilterTag } from '@core3/client/components/DateRangeFilterTag';
 
 type ListRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';
@@ -528,7 +528,7 @@ export class ListView extends BaseComponent {
   }
 
   private drawFilterMenu(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
-    if (!this.options.filters?.length && !this.options.dateRange && !this.options.groupBy?.length) return;
+    if (!this.options.filters?.length && !this.options.groupBy?.length) return;
     const details = html.take(container).details.className('o-list-dropdown o-list-filter-menu').getContext() as HTMLDetailsElement;
     const shortcutLabel = `${labels.filters} (Ctrl+Shift+F)`;
     const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', shortcutLabel).attr('aria-keyshortcuts', 'Control+Shift+F').getContext();
@@ -572,37 +572,6 @@ export class ListView extends BaseComponent {
       }
     }
 
-    if (this.options.dateRange) {
-      const range = this.options.dateRange;
-      const fromField = range.fromField || 'from_date';
-      const toField = range.toField || 'to_date';
-      const group = html.take(menu).section.className('o-list-filter-group').getContext();
-      html.take(group).h4.text(range.label || 'Date');
-      const presets = (range.presets || []).filter((preset) => !(range.denyUnbounded && preset === 'all'));
-      for (const preset of presets) {
-        const button = html.take(group).button.dataAttr('date-preset', preset).text(range.presetLabels?.[preset] || this.datePresetLabel(preset)).getContext();
-        button.addEventListener('click', () => {
-          const dates = resolveDatePreset(preset);
-          this.setFilters({ ...filters, [fromField]: dates.from || null, [toField]: dates.to || null });
-        });
-      }
-      const custom = html.take(group).div.className('o-list-date-custom').getContext();
-      const from = html.take(custom).input.attr('type', 'date').getContext() as HTMLInputElement;
-      const to = html.take(custom).input.attr('type', 'date').getContext() as HTMLInputElement;
-      from.setAttribute('aria-label', range.fromLabel || 'From date');
-      to.setAttribute('aria-label', range.toLabel || 'To date');
-      if (range.maxYears) {
-        const bounds = rollingDateBounds(range.maxYears);
-        from.min = bounds.from;
-        from.max = bounds.to;
-        to.min = bounds.from;
-        to.max = bounds.to;
-      }
-      from.value = String(filters[fromField] || '');
-      to.value = String(filters[toField] || '');
-      const apply = html.take(custom).button.className('o-list-date-apply').text(labels.apply).getContext();
-      apply.addEventListener('click', () => this.setFilters({ ...filters, [fromField]: from.value || null, [toField]: to.value || null }));
-    }
     if (this.options.groupBy?.length) {
       const group = html.take(menu).section.className('o-list-filter-group').getContext();
       html.take(group).h4.text('Group By');
@@ -782,20 +751,15 @@ export class ListView extends BaseComponent {
       const group = this.options.groupBy?.find(option => option.field === this.state.groupBy);
       if (group) facets.push({ key: 'groupBy', label: `Group By: ${group.label}`, clear: () => this.setGroupBy(null) });
     }
-    if (this.options.dateRange) {
-      const fromField = this.options.dateRange.fromField || 'from_date';
-      const toField = this.options.dateRange.toField || 'to_date';
-      if (filters[fromField] || filters[toField]) {
-        const value = [filters[fromField] || '...', filters[toField] || '...'].join(' - ');
-        facets.push({
-          key: 'date-range',
-          label: `${this.options.dateRange.label || 'Date'}: ${value}`,
-          clear: () => this.setFilters({ ...filters, [fromField]: null, [toField]: null }),
-        });
-      }
-    }
-    if (!facets.length) return;
+    if (!facets.length && !this.options.dateRange) return;
     const bar = html.take(container).div.className('o-list-facets').getContext();
+    if (this.options.dateRange) {
+      new DateRangeFilterTag({
+        values: filters,
+        definition: this.options.dateRange,
+        onChange: values => this.setFilters({ ...filters, ...values }),
+      }).render(bar);
+    }
     for (const facet of facets) {
       const item = html.take(bar).div.className('o-list-facet').dataAttr('filter-facet', facet.key).getContext();
       html.take(item).span.text(facet.label);
@@ -1083,25 +1047,4 @@ export class ListView extends BaseComponent {
     this.options.onSort?.(sort);
   }
 
-  private datePresetLabel(preset: DateRangePreset) {
-    return ({
-      today: 'Today',
-      previous_month: 'Previous month',
-      week: 'This week',
-      month: 'This month',
-      quarter: 'This quarter',
-      year: 'This year',
-      last_12_months: 'Last 12 months',
-      all: 'All dates',
-    } as Record<DateRangePreset, string>)[preset];
-  }
-}
-
-function rollingDateBounds(years: number): { from: string; to: string } {
-  const now = new Date();
-  const toDate = new Date(now);
-  toDate.setUTCDate(toDate.getUTCDate() + 1);
-  const fromDate = new Date(now);
-  fromDate.setUTCFullYear(fromDate.getUTCFullYear() - years);
-  return { from: fromDate.toISOString().slice(0, 10), to: toDate.toISOString().slice(0, 10) };
 }

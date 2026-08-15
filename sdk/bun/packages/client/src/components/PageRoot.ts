@@ -1,6 +1,6 @@
 import { evalExpr, interpolate } from '@core3/client/expr';
 import { hasPermission, resolveAction } from '@core3/client/meta';
-import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
+import { navigate, getPageParams, pushParams, replaceParams } from '@core3/client/navigate';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 import { EventPopup } from '@core3/client/components/EventPopup';
 import { resolveDatePreset } from '@core3/client/components/ListToolbar';
@@ -216,7 +216,12 @@ export class PageRuntime extends BaseComponent {
     initialDateFilters[range.from_field || 'from_date'] = dates.from;
     initialDateFilters[range.to_field || 'to_date'] = dates.to;
   }
-  Object.assign(pageParams, initialDateFilters);
+  const urlParams = getPageParams();
+  for (const [key, value] of Object.entries(initialDateFilters)) {
+    if (pageParams[key] === undefined) pageParams[key] = value;
+    if (urlParams[key] === undefined) urlParams[key] = value;
+  }
+  if (Object.keys(initialDateFilters).length) replaceParams(urlParams);
   const ctx: any = { user, row: {}, state: pageParams, context: this.runtimeContext };
 
   // 3. Fetch datasources

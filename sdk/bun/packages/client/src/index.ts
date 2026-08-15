@@ -68,6 +68,7 @@ export { GridView } from './components/GridView.ts';
 export { GroupGridView } from './components/GroupGridView.ts';
 export { CardView } from './components/CardView.ts';
 export { ListView } from './components/ListView.ts';
+export { DateRangeFilterTag } from './components/DateRangeFilterTag.ts';
 export { KanbanView } from './components/KanbanView.ts';
 export { CalendarView } from './components/CalendarView.ts';
 export { PivotView } from './components/PivotView.ts';

@@ -15,10 +15,14 @@ export class DateInput extends BaseComponent {
     if (d.label) html.take(wrap).label.className('core3-token-form-label text-sm font-medium text-gray-700').text(d.label);
 
     const inp = html.take(wrap)
-      .input.type('date')
+      .input.type('text')
       .className('core3-token-form-control w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white')
       .value(String(value))
       .getContext();
+
+    inp.inputMode = 'numeric';
+    inp.placeholder = d.placeholder || 'YYYY-MM-DD';
+    inp.pattern = '\\d{4}-\\d{2}-\\d{2}';
 
     if (d.min) inp.setAttribute('min', d.min);
     if (d.max) inp.setAttribute('max', d.max);

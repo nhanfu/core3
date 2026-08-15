@@ -165,7 +165,7 @@ describe('YAML form modal', () => {
     }, { container });
 
     container.querySelector<HTMLButtonElement>('button')?.click();
-    const input = document.querySelector<HTMLInputElement>('[role="dialog"] input[type="datetime-local"]')!;
+    const input = document.querySelector<HTMLInputElement>('[role="dialog"] input')!;
     expect(input.value).toBe('2026-07-27T14:30');
     input.value = '2026-07-28T09:45';
     document.querySelector<HTMLButtonElement>('[role="dialog"] button.btn-primary')!.click();
