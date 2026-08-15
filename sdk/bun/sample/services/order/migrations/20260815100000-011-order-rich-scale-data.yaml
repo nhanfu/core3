@@ -1,0 +1,214 @@
+version: 0.2.0
+kind: data
+description: Replace flat scale orders with realistic order details and lines
+type:
+  postgres:
+    up: |
+      DELETE FROM order_lines WHERE order_id LIKE 'bulk-order-%';
+      DELETE FROM orders WHERE id LIKE 'bulk-order-%';
+
+      INSERT INTO orders(
+        id, order_number, customer_name, customer_legal_name, order_date, status,
+        shipment_type, route, transport_method, trip_count, total_amount, branch_id,
+        created_by, notes
+      )
+      SELECT
+        'bulk-order-' || n,
+        'SCALE-' || LPAD(CAST(n AS VARCHAR), 4, '0'),
+        CASE (n - 1) % 8
+          WHEN 0 THEN 'Công ty TNHH Minh Long'
+          WHEN 1 THEN 'Công ty CP Đại Phát'
+          WHEN 2 THEN 'Công ty Thực phẩm An Bình'
+          WHEN 3 THEN 'Công ty CP Hưng Thịnh'
+          WHEN 4 THEN 'Công ty TNHH Nam Việt'
+          WHEN 5 THEN 'Công ty CP May Thành Công'
+          WHEN 6 THEN 'Công ty TNHH Điện tử Đông Á'
+          ELSE 'Công ty CP Phú Mỹ'
+        END,
+        CASE (n - 1) % 8
+          WHEN 0 THEN 'Minh Long Logistics Co., Ltd.'
+          WHEN 1 THEN 'Dai Phat JSC'
+          WHEN 2 THEN 'An Binh Foods JSC'
+          WHEN 3 THEN 'Hung Thinh Trading JSC'
+          WHEN 4 THEN 'Nam Viet Co., Ltd.'
+          WHEN 5 THEN 'Thanh Cong Garment JSC'
+          WHEN 6 THEN 'Dong A Electronics Co., Ltd.'
+          ELSE 'Phu My JSC'
+        END,
+        DATE '2026-01-01' + CAST(((n - 1) % 220) AS INTEGER),
+        CASE (n - 1) % 4
+          WHEN 0 THEN 'Draft'
+          WHEN 1 THEN 'Pending Approval'
+          WHEN 2 THEN 'Approved'
+          ELSE 'Cancelled'
+        END,
+        CASE (n - 1) % 4
+          WHEN 0 THEN 'Hàng lẻ'
+          WHEN 1 THEN 'Nguyên chuyến'
+          WHEN 2 THEN 'Hàng lạnh'
+          ELSE 'Container'
+        END,
+        CASE (n - 1) % 8
+          WHEN 0 THEN 'Hồ Chí Minh → Đà Nẵng'
+          WHEN 1 THEN 'Hà Nội → Hải Phòng'
+          WHEN 2 THEN 'Cần Thơ → Hồ Chí Minh'
+          WHEN 3 THEN 'Hồ Chí Minh → Nha Trang'
+          WHEN 4 THEN 'Hà Nội → Đà Nẵng'
+          WHEN 5 THEN 'Đà Nẵng → Huế'
+          WHEN 6 THEN 'Hồ Chí Minh → Biên Hòa'
+          ELSE 'Đà Nẵng → Quy Nhơn'
+        END,
+        CASE (n - 1) % 3 WHEN 0 THEN 'Đường bộ' WHEN 1 THEN 'Đường sắt' ELSE 'Đường thủy' END,
+        1 + ((n - 1) % 3),
+        (1 + ((n - 1) % 3)) * (3500000 + ((n * 137000) % 12000000))
+          + (1 + ((n - 1) % 2)) * (850000 + ((n * 97000) % 4500000)) * 1.08,
+        CASE (n - 1) % 3 WHEN 0 THEN 'branch-hcm' WHEN 1 THEN 'branch-hn' ELSE 'branch-dn' END,
+        CASE (n - 1) % 3 WHEN 0 THEN 'Admin User' WHEN 1 THEN 'Dispatcher User' ELSE 'Operations User' END,
+        CASE (n - 1) % 5
+          WHEN 0 THEN 'Chờ xác nhận khối lượng và lịch lấy hàng'
+          WHEN 1 THEN 'Đã nhận đủ thông tin giao nhận'
+          WHEN 2 THEN 'Ưu tiên xe có thiết bị theo dõi hành trình'
+          WHEN 3 THEN 'Khách hàng yêu cầu giao trong giờ hành chính'
+          ELSE NULL
+        END
+      FROM generate_series(1, 1000) AS series(n);
+
+      INSERT INTO order_lines(
+        id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
+      )
+      SELECT
+        'bulk-order-line-' || n || '-1',
+        'bulk-order-' || n,
+        10,
+        CASE (n - 1) % 4
+          WHEN 0 THEN 'Vận chuyển hàng lẻ'
+          WHEN 1 THEN 'Vận chuyển nguyên chuyến'
+          WHEN 2 THEN 'Vận chuyển hàng lạnh'
+          ELSE 'Vận chuyển container'
+        END,
+        1 + ((n - 1) % 3),
+        'Chuyến',
+        3500000 + ((n * 137000) % 12000000),
+        0,
+        (1 + ((n - 1) % 3)) * (3500000 + ((n * 137000) % 12000000))
+      FROM generate_series(1, 1000) AS series(n);
+
+      INSERT INTO order_lines(
+        id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total
+      )
+      SELECT
+        'bulk-order-line-' || n || '-2',
+        'bulk-order-' || n,
+        20,
+        CASE (n - 1) % 3
+          WHEN 0 THEN 'Phí nâng hạ và giao nhận'
+          WHEN 1 THEN 'Phí phụ trội nhiên liệu'
+          ELSE 'Phí bảo quản và điều phối'
+        END,
+        1 + ((n - 1) % 2),
+        'Khoản',
+        850000 + ((n * 97000) % 4500000),
+        8,
+        (1 + ((n - 1) % 2)) * (850000 + ((n * 97000) % 4500000)) * 1.08
+      FROM generate_series(1, 1000) AS series(n);
+
+    down: |
+      DELETE FROM order_lines WHERE order_id LIKE 'bulk-order-%';
+      DELETE FROM orders WHERE id LIKE 'bulk-order-%';
+  duckdb: postgres
+  mysql:
+    up: |
+      DELETE FROM order_lines WHERE order_id LIKE 'bulk-order-%';
+      DELETE FROM orders WHERE id LIKE 'bulk-order-%';
+
+      INSERT INTO orders(
+        id, order_number, customer_name, customer_legal_name, order_date, status,
+        shipment_type, route, transport_method, trip_count, total_amount, branch_id,
+        created_by, notes
+      )
+      WITH RECURSIVE series(n) AS (
+        SELECT 1
+        UNION ALL
+        SELECT n + 1 FROM series WHERE n < 1000
+      )
+      SELECT
+        CONCAT('bulk-order-', n),
+        CONCAT('SCALE-', LPAD(CAST(n AS CHAR), 4, '0')),
+        CASE MOD(n - 1, 8)
+          WHEN 0 THEN 'Công ty TNHH Minh Long'
+          WHEN 1 THEN 'Công ty CP Đại Phát'
+          WHEN 2 THEN 'Công ty Thực phẩm An Bình'
+          WHEN 3 THEN 'Công ty CP Hưng Thịnh'
+          WHEN 4 THEN 'Công ty TNHH Nam Việt'
+          WHEN 5 THEN 'Công ty CP May Thành Công'
+          WHEN 6 THEN 'Công ty TNHH Điện tử Đông Á'
+          ELSE 'Công ty CP Phú Mỹ'
+        END,
+        CASE MOD(n - 1, 8)
+          WHEN 0 THEN 'Minh Long Logistics Co., Ltd.'
+          WHEN 1 THEN 'Dai Phat JSC'
+          WHEN 2 THEN 'An Binh Foods JSC'
+          WHEN 3 THEN 'Hung Thinh Trading JSC'
+          WHEN 4 THEN 'Nam Viet Co., Ltd.'
+          WHEN 5 THEN 'Thanh Cong Garment JSC'
+          WHEN 6 THEN 'Dong A Electronics Co., Ltd.'
+          ELSE 'Phu My JSC'
+        END,
+        DATE_ADD('2026-01-01', INTERVAL MOD(n - 1, 220) DAY),
+        CASE MOD(n - 1, 4) WHEN 0 THEN 'Draft' WHEN 1 THEN 'Pending Approval' WHEN 2 THEN 'Approved' ELSE 'Cancelled' END,
+        CASE MOD(n - 1, 4) WHEN 0 THEN 'Hàng lẻ' WHEN 1 THEN 'Nguyên chuyến' WHEN 2 THEN 'Hàng lạnh' ELSE 'Container' END,
+        CASE MOD(n - 1, 8)
+          WHEN 0 THEN 'Hồ Chí Minh → Đà Nẵng'
+          WHEN 1 THEN 'Hà Nội → Hải Phòng'
+          WHEN 2 THEN 'Cần Thơ → Hồ Chí Minh'
+          WHEN 3 THEN 'Hồ Chí Minh → Nha Trang'
+          WHEN 4 THEN 'Hà Nội → Đà Nẵng'
+          WHEN 5 THEN 'Đà Nẵng → Huế'
+          WHEN 6 THEN 'Hồ Chí Minh → Biên Hòa'
+          ELSE 'Đà Nẵng → Quy Nhơn'
+        END,
+        CASE MOD(n - 1, 3) WHEN 0 THEN 'Đường bộ' WHEN 1 THEN 'Đường sắt' ELSE 'Đường thủy' END,
+        1 + MOD(n - 1, 3),
+        (1 + MOD(n - 1, 3)) * (3500000 + MOD(n * 137000, 12000000))
+          + (1 + MOD(n - 1, 2)) * (850000 + MOD(n * 97000, 4500000)) * 1.08,
+        CASE MOD(n - 1, 3) WHEN 0 THEN 'branch-hcm' WHEN 1 THEN 'branch-hn' ELSE 'branch-dn' END,
+        CASE MOD(n - 1, 3) WHEN 0 THEN 'Admin User' WHEN 1 THEN 'Dispatcher User' ELSE 'Operations User' END,
+        CASE MOD(n - 1, 5)
+          WHEN 0 THEN 'Chờ xác nhận khối lượng và lịch lấy hàng'
+          WHEN 1 THEN 'Đã nhận đủ thông tin giao nhận'
+          WHEN 2 THEN 'Ưu tiên xe có thiết bị theo dõi hành trình'
+          WHEN 3 THEN 'Khách hàng yêu cầu giao trong giờ hành chính'
+          ELSE NULL
+        END
+      FROM series;
+
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      WITH RECURSIVE series(n) AS (
+        SELECT 1
+        UNION ALL
+        SELECT n + 1 FROM series WHERE n < 1000
+      )
+      SELECT
+        CONCAT('bulk-order-line-', n, '-1'), CONCAT('bulk-order-', n), 10,
+        CASE MOD(n - 1, 4) WHEN 0 THEN 'Vận chuyển hàng lẻ' WHEN 1 THEN 'Vận chuyển nguyên chuyến' WHEN 2 THEN 'Vận chuyển hàng lạnh' ELSE 'Vận chuyển container' END,
+        1 + MOD(n - 1, 3), 'Chuyến', 3500000 + MOD(n * 137000, 12000000), 0,
+        (1 + MOD(n - 1, 3)) * (3500000 + MOD(n * 137000, 12000000))
+      FROM series;
+
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      WITH RECURSIVE series(n) AS (
+        SELECT 1
+        UNION ALL
+        SELECT n + 1 FROM series WHERE n < 1000
+      )
+      SELECT
+        CONCAT('bulk-order-line-', n, '-2'), CONCAT('bulk-order-', n), 20,
+        CASE MOD(n - 1, 3) WHEN 0 THEN 'Phí nâng hạ và giao nhận' WHEN 1 THEN 'Phí phụ trội nhiên liệu' ELSE 'Phí bảo quản và điều phối' END,
+        1 + MOD(n - 1, 2), 'Khoản', 850000 + MOD(n * 97000, 4500000), 8,
+        (1 + MOD(n - 1, 2)) * (850000 + MOD(n * 97000, 4500000)) * 1.08
+      FROM series;
+    down: |
+      DELETE FROM order_lines WHERE order_id LIKE 'bulk-order-%';
+      DELETE FROM orders WHERE id LIKE 'bulk-order-%';
+  oracle: postgres
+  sqlserver: postgres

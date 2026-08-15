@@ -25,6 +25,7 @@ function valueLiteral(value: unknown): string {
 
 /** Durable DuckDB source of truth with an in-memory read copy. */
 export class HybridDuckDbDatabase implements DatabaseAdapter {
+  readonly driver = 'duckdb' as const;
   private constructor(private readonly durable: any, private readonly memory: any) {}
 
   static async open(path: string): Promise<HybridDuckDbDatabase> {

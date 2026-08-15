@@ -215,6 +215,35 @@ export function migrationSqlForDriver(migration: Migration, driver: DatabaseDriv
   return sql;
 }
 
+export async function cleanDatabase(
+  repository: MigrationRepository,
+  migrationsRoot: string,
+  migrationTable = 'schema_migrations',
+  kinds: MigrationKind[] = ['schema', 'data'],
+): Promise<void> {
+  const migrations = discoverMigrations(migrationsRoot).filter((migration) => kinds.includes(migration.kind));
+  const driver = repository.driver;
+  if (!driver) throw new Error('Migration repository must declare its database driver');
+  const tableExistsQuery = driver === 'oracle'
+    ? 'SELECT 1 AS present FROM user_tables WHERE table_name = UPPER(?)'
+    : 'SELECT 1 AS present FROM information_schema.tables WHERE LOWER(table_name) = LOWER(?)';
+  const tableExists = await repository.query(
+    tableExistsQuery,
+    [migrationTable],
+  );
+  if (!tableExists.length) return;
+  const appliedRows = await repository.query(`SELECT version FROM ${migrationTable}`);
+  const applied = new Set(appliedRows.map((row) => {
+    const stored = String(row.version);
+    return /^\d+$/.test(stored) ? `0.0.${stored}` : stored;
+  }));
+  for (const migration of [...migrations].reverse()) {
+    if (!applied.has(migration.version)) continue;
+    await repository.runStatements(migrationSqlForDriver(migration, driver).down);
+  }
+  await repository.run(`DELETE FROM ${migrationTable}`);
+}
+
 function generatedValue(value: unknown, index: number): unknown {
   if (typeof value !== 'string') return value;
   return value.replaceAll('${index}', String(index)).replaceAll('${n}', String(index + 1))

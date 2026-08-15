@@ -1,7 +1,7 @@
 export { loadApplicationConfig, resolveEnvironmentValues } from './application-config.ts';
 export type { ApplicationConfig, ModuleApplicationConfig } from './application-config.ts';
 export { requestLanguage } from './locale.ts';
-export { addColumnstoreAccessMethod, discoverMigrations, migrateDatabase } from './migrations.ts';
+export { addColumnstoreAccessMethod, cleanDatabase, discoverMigrations, migrateDatabase } from './migrations.ts';
 export type { HotDataDefinition, Migration, MigrationKind, MigrationRepository, PartitionDefinition } from './migrations.ts';
 export { YamlMutationRuntime } from './yaml-mutation-runtime.ts';
 export type { MutationDefinition, MutationConnection, MutationStep } from './yaml-mutation-runtime.ts';

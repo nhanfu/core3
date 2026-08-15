@@ -2,7 +2,8 @@ import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { discoverPages, translationMap } from '@core3/server/discovery';
 import { requestLanguage } from '@core3/server/locale';
-import { migrateDatabase } from '@core3/server/migrations';
+import { cleanDatabase, migrateDatabase } from '@core3/server/migrations';
+import type { MigrationKind } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { DuckDbDatabase, HybridDuckDbDatabase, PostgresDatabase } from '@core3/server';
@@ -65,7 +66,13 @@ export default class AuthModule {
     const data = Bun.YAML.parse(await Bun.file(join(context.moduleRoot, 'data.yaml')).text()) as { queries?: Record<string, string> };
     const repository = new AuthRepository(this.db, data.queries || {});
     context.registerService('database', this.db);
-    await migrateDatabase(repository, join(context.moduleRoot, 'migrations'), undefined, 'auth_schema_migrations');
+    const migrationsRoot = join(context.moduleRoot, 'migrations');
+    const schemaOnly = context.env.CORE3_SCHEMA_ONLY === 'true';
+    const migrationKinds: MigrationKind[] = schemaOnly ? ['schema'] : ['schema', 'data'];
+    if (context.env.CORE3_CLEAN_DB === 'true' || schemaOnly) {
+      await cleanDatabase(repository, migrationsRoot, 'auth_schema_migrations');
+    }
+    await migrateDatabase(repository, migrationsRoot, undefined, 'auth_schema_migrations', migrationKinds);
     const jwtSecret = authJwtSecret(context.env);
     this.service = new AuthService(repository, jwtSecret);
     context.registerService(AUTH_SERVICE_KEY, this.service);

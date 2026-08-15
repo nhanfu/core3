@@ -21,6 +21,8 @@ export async function findAvailablePort(start: number): Promise<number> {
 if (import.meta.main) {
   const argumentsList = process.argv.slice(2);
   const dbArgument = argumentsList.find((argument) => argument.startsWith('--db='));
+  const demoData = argumentsList.some((argument) => argument === '--demo-data' || argument === '--demo-data=true');
+  const schemaOnly = argumentsList.some((argument) => argument === '--schema-only' || argument === '--schema-only=true');
   const legacyMemoryFlag = argumentsList.some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
   const memoryDb = process.env.CORE3_DB_DRIVER === 'duckdb-memory'
     || legacyMemoryFlag
@@ -35,6 +37,8 @@ if (import.meta.main) {
   const databaseEnv: Record<string, string> = {
     CORE3_DB_DRIVER: defaultDriver,
   };
+  if (demoData || schemaOnly) databaseEnv.CORE3_CLEAN_DB = 'true';
+  if (schemaOnly) databaseEnv.CORE3_SCHEMA_ONLY = 'true';
   for (const serviceId of serviceIds) {
     const prefix = serviceId.toUpperCase();
     databaseEnv[`CORE3_${prefix}_DB_DRIVER`] = process.env[`CORE3_${prefix}_DB_DRIVER`] || defaultDriver;
@@ -79,6 +83,7 @@ if (import.meta.main) {
       EVENT_MEDIATOR_PORT: String(mediatorPort),
       CORE3_EVENT_MODE: 'mediator',
       CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
+      ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),
       ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
     },
     stdin: 'inherit',
@@ -104,14 +109,23 @@ if (import.meta.main) {
     '../packages/client',
     '../packages/server',
   ].filter((target) => existsSync(target));
-  const watchers = watchTargets.map((target) => watch(target, { recursive: statSync(target).isDirectory() }, (_event, filename) => {
-    if (!sourceChanged(filename) || stopped) return;
-    clearTimeout(restartTimer);
-    restartTimer = setTimeout(() => {
-      restartRequested = true;
-      child?.kill();
-    }, 100);
-  }));
+  const watchers: Array<{ close(): void }> = [];
+  try {
+    for (const target of watchTargets) {
+      watchers.push(watch(target, { recursive: statSync(target).isDirectory() }, (_event, filename) => {
+        if (!sourceChanged(filename) || stopped) return;
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(() => {
+          restartRequested = true;
+          child?.kill();
+        }, 100);
+      }));
+    }
+  } catch (error: any) {
+    for (const watcher of watchers) watcher.close();
+    watchers.length = 0;
+    console.warn(`File watching disabled: ${error?.code || error?.message || 'unable to open watcher'}`);
+  }
 
   const stop = () => {
     stopped = true;
@@ -132,6 +146,7 @@ if (import.meta.main) {
           PORT: String(port),
           CORE3_EVENT_MODE: 'mediator',
           CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
+          ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),
           ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
         },
         stdin: 'inherit',

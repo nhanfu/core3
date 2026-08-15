@@ -9,7 +9,8 @@ import { HybridDuckDbDatabase } from './database/hybrid-duckdb-database.ts';
 import { PostgresDatabase } from './database/postgres-database.ts';
 import { openSqlDatabase } from './database/sql-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
-import { migrateDatabase } from '@core3/server/migrations';
+import { cleanDatabase, migrateDatabase } from '@core3/server/migrations';
+import type { MigrationKind } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
 import { TopicMediator } from './topics/mediator.ts';
 import { topicDefinition } from './topics/contracts.ts';
@@ -162,7 +163,12 @@ export class YamlServiceModule implements ModuleLifecycle {
       ? await ensureColumnstoreExtension(this.db, this.definition.storage)
       : [];
     if (this.manifest.migrations) {
-      await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`, ['schema', 'data'], { columnstoreTables });
+      const schemaOnly = context.env.CORE3_SCHEMA_ONLY === 'true';
+      const migrationKinds: MigrationKind[] = schemaOnly ? ['schema'] : ['schema', 'data'];
+      if (context.env.CORE3_CLEAN_DB === 'true' || schemaOnly) {
+        await cleanDatabase(this.repository, migrationsRoot!, `${this.id}_schema_migrations`, ['schema', 'data']);
+      }
+      await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`, migrationKinds, { columnstoreTables });
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
 

@@ -1,5 +1,6 @@
 import { serveEventMediator } from './event-mediator.ts';
 import { loadMedConfig } from './config.ts';
+import { rm } from 'node:fs/promises';
 
 const port = Number(process.env.EVENT_MEDIATOR_PORT || 3010);
 const memoryDb = process.argv.slice(2).some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
@@ -7,6 +8,9 @@ const config: any = await loadMedConfig();
 const eventConfig = config.event_store || {};
 const eventDatabase = eventConfig.database || {};
 const databasePath = memoryDb ? ':memory:' : eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet';
+if (process.env.CORE3_CLEAN_EVENT_STORE === 'true' && databasePath !== ':memory:') {
+  await rm(databasePath, { recursive: true, force: true });
+}
 const token = String(eventConfig.mediator?.token || process.env.CORE3_EVENT_MEDIATOR_TOKEN || '');
 const schema = {
   table: 'event_log',
