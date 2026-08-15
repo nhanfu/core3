@@ -3,6 +3,11 @@ database:
   credentials:
     url: ${CORE3_ORDER_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:55433/core3}
     url_env: CORE3_ORDER_DATABASE_URL
+  encryption:
+    enabled: ${CORE3_ORDER_DB_ENCRYPTION:-false}
+    key_env: CORE3_ORDER_DB_ENCRYPTION_KEY
+    key_id: ${CORE3_ORDER_DB_ENCRYPTION_KEY_ID:-order-db-key-v1}
+    cipher: ${CORE3_ORDER_DB_ENCRYPTION_CIPHER:-GCM}
 
 files:
   driver: local

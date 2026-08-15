@@ -9,6 +9,7 @@ import { HybridDuckDbDatabase } from './database/hybrid-duckdb-database.ts';
 import { PostgresDatabase } from './database/postgres-database.ts';
 import { openSqlDatabase } from './database/sql-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
+import { resolveDuckDbEncryption } from './database/duckdb-encryption.ts';
 import { cleanDatabase, migrateDatabase } from '@core3/server/migrations';
 import type { MigrationKind } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
@@ -148,9 +149,11 @@ export class YamlServiceModule implements ModuleLifecycle {
       this.db = PostgresDatabase.open(url);
     } else if (storageDriver === 'duckdb') {
       const path = resolveDatabasePath(this.id, databaseConfig, context.env, context.moduleRoot);
+      const encryption = resolveDuckDbEncryption(declaredStorage?.database || databaseConfig, context.env, this.id);
+      if (encryption && configuredDriver === 'duckdb-memory') throw new Error(`DuckDB encryption requires durable storage for service ${this.id}`);
       this.db = configuredDriver === 'duckdb-memory'
         ? await DuckDbDatabase.open(':memory:')
-        : await HybridDuckDbDatabase.open(String(path));
+        : await HybridDuckDbDatabase.open(String(path), encryption);
     } else if (storageDriver === 'mysql' || storageDriver === 'oracle' || storageDriver === 'sqlserver') {
       const url = resolveDatabaseUrl(databaseConfig, context.env);
       if (!url) throw new Error(`${storageDriver} storage requires ${databaseConfig?.storage?.url_env || databaseConfig?.url_env || 'database.storage.url'}`);

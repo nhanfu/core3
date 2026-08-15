@@ -18,6 +18,12 @@ export type YamlServiceDatabase = {
     path_env?: string;
     path?: string;
     schema?: string;
+    encryption?: {
+      enabled?: string;
+      key_env?: string;
+      key_id?: string;
+      cipher?: string;
+    };
   };
   compute?: {
     driver: 'duckdb';
@@ -63,6 +69,17 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
     for (const key of ['url_env', 'path_env', 'path', 'schema']) {
       if ((storage as Record<string, unknown>)[key] !== undefined && typeof (storage as Record<string, unknown>)[key] !== 'string') {
         throw new Error(`Service manifest database.storage.${key} must be a string: ${file}`);
+      }
+    }
+    const encryption = (storage as Record<string, unknown>).encryption;
+    if (encryption !== undefined) {
+      if (!encryption || typeof encryption !== 'object' || Array.isArray(encryption)) {
+        throw new Error(`Service manifest database.storage.encryption must be an object: ${file}`);
+      }
+      for (const key of ['enabled', 'key_env', 'key_id', 'cipher']) {
+        if ((encryption as Record<string, unknown>)[key] !== undefined && typeof (encryption as Record<string, unknown>)[key] !== 'string') {
+          throw new Error(`Service manifest database.storage.encryption.${key} must be a string: ${file}`);
+        }
       }
     }
     const compute = (database as Record<string, unknown>).compute;

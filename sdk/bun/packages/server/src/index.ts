@@ -10,6 +10,8 @@ export type { WorkflowMoveDefinition } from './workflow-runtime.ts';
 export { DuckDbRepository } from './database/repository.ts';
 export { DuckDbDatabase } from './database/duckdb-database.ts';
 export { HybridDuckDbDatabase } from './database/hybrid-duckdb-database.ts';
+export { resolveDuckDbEncryption } from './database/duckdb-encryption.ts';
+export type { DuckDbEncryptionOptions } from './database/duckdb-encryption.ts';
 export type { DatabaseAdapter, DatabaseConnection } from './database/types.ts';
 export { PostgresDatabase, postgresPlaceholders, postgresSql } from './database/postgres-database.ts';
 export { resolveQueryWindow } from './database/query-window.ts';

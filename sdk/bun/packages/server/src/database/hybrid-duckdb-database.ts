@@ -1,5 +1,6 @@
 import { DuckDBInstance } from '@duckdb/node-api';
 import type { DatabaseAdapter, DatabaseConnection } from './types.ts';
+import type { DuckDbEncryptionOptions } from './duckdb-encryption.ts';
 
 function normalizeArgs(args: any[]): { params: any[]; callback?: Function } {
   const callback = typeof args.at(-1) === 'function' ? args.pop() : undefined;
@@ -23,23 +24,48 @@ function valueLiteral(value: unknown): string {
   return quoteLiteral(value instanceof Date ? value.toISOString() : String(value));
 }
 
+function sqlLiteral(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
 /** Durable DuckDB source of truth with an in-memory read copy. */
 export class HybridDuckDbDatabase implements DatabaseAdapter {
   readonly driver = 'duckdb' as const;
-  private constructor(private readonly durable: any, private readonly memory: any) {}
+  private constructor(
+    private readonly durable: any,
+    private readonly memory: any,
+    private readonly durableAlias?: string,
+  ) {}
 
-  static async open(path: string): Promise<HybridDuckDbDatabase> {
-    const durable = await DuckDBInstance.create(path);
+  static async open(path: string, encryption?: DuckDbEncryptionOptions): Promise<HybridDuckDbDatabase> {
+    const durable = encryption ? await DuckDBInstance.create(':memory:') : await DuckDBInstance.create(path);
+    if (encryption) {
+      const connection = await durable.connect();
+      try {
+        await connection.run(`ATTACH ${sqlLiteral(path)} AS durable (ENCRYPTION_KEY ${sqlLiteral(encryption.key)}, ENCRYPTION_CIPHER ${sqlLiteral(encryption.cipher)})`);
+        await connection.run('USE durable');
+        await connection.run('SET temp_file_encryption = true');
+      } finally {
+        connection.closeSync();
+      }
+    }
     const memory = await DuckDBInstance.create(':memory:');
-    const database = new HybridDuckDbDatabase(durable, memory);
+    const database = new HybridDuckDbDatabase(durable, memory, encryption ? 'durable' : undefined);
     await database.hydrate();
     return database;
+  }
+
+  private async configureDurableConnection(connection: any): Promise<void> {
+    if (!this.durableAlias) return;
+    await connection.run(`USE ${this.durableAlias}`);
+    await connection.run('SET temp_file_encryption = true');
   }
 
   private async hydrate(): Promise<void> {
     const durableConnection = await this.durable.connect();
     const memoryConnection = await this.memory.connect();
     try {
+      await this.configureDurableConnection(durableConnection);
       const tables = (await durableConnection.runAndReadAll(
         "SELECT table_name, sql FROM duckdb_tables() WHERE schema_name = 'main' ORDER BY table_name",
       )).getRowObjectsJS();
@@ -87,7 +113,10 @@ export class HybridDuckDbDatabase implements DatabaseAdapter {
       run: async (sql: string, ...args: any[]) => {
         const { params, callback } = normalizeArgs(args);
         const promise = durableConnectionPromise
-          .then((connection: any) => connection.run(sql, params))
+          .then(async (connection: any) => {
+            await this.configureDurableConnection(connection);
+            return connection.run(sql, params);
+          })
           .then(() => memoryConnectionPromise.then((connection: any) => connection.run(sql, params)));
         if (callback) promise.then(() => callback(null), callback);
         return promise;

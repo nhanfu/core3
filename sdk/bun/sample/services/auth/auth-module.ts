@@ -13,6 +13,7 @@ import { TopicMediator } from '@core3/server/topics/mediator';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
 import { interpolateEnvironment } from '@core3/server/application-config';
 import { authJwtSecret } from '@core3/server/auth/jwt';
+import { resolveDuckDbEncryption } from '@core3/server/database/duckdb-encryption';
 
 export const AUTH_SERVICE_KEY = 'auth';
 export const AUTH_ADAPTER_KEY = 'auth.adapter';
@@ -61,7 +62,9 @@ export default class AuthModule {
     } else {
       const memoryOnly = configuredDriver === 'duckdb-memory';
       const dbPath = storage.path || credentials.path || context.env.CORE3_AUTH_DB_PATH || context.env.AUTH_DB_PATH || join(context.moduleRoot, '..', '..', 'coredb', 'auth.duckdb');
-      this.db = memoryOnly ? await DuckDbDatabase.open(':memory:') : await HybridDuckDbDatabase.open(String(dbPath));
+      const encryption = resolveDuckDbEncryption(storage, context.env, this.id);
+      if (encryption && memoryOnly) throw new Error('Auth DuckDB encryption requires durable storage');
+      this.db = memoryOnly ? await DuckDbDatabase.open(':memory:') : await HybridDuckDbDatabase.open(String(dbPath), encryption);
     }
     const data = Bun.YAML.parse(await Bun.file(join(context.moduleRoot, 'data.yaml')).text()) as { queries?: Record<string, string> };
     const repository = new AuthRepository(this.db, data.queries || {});
