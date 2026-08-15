@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
 
 export type StatusTab = {
   id: string;
@@ -33,21 +34,16 @@ export class StatusTabs extends BaseComponent {
 
   draw(container: HTMLElement) {
     const active = this.state.active ?? this.tabs[0]?.id;
-    const tabList = document.createElement('div');
-    tabList.className = `token-status-tabs ${this.variant === 'toggle'
+    const tabList = html.take(container).div.className(`token-status-tabs ${this.variant === 'toggle'
       ? 'flex min-w-max items-center gap-2 bg-white'
       : this.variant === 'contained'
         ? 'status-tabs-contained flex min-w-max items-end gap-5 rounded-t-lg border-x border-t border-slate-200 bg-white px-4 pt-1'
-      : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4'}`;
-    tabList.setAttribute('role', 'tablist');
-    tabList.setAttribute('aria-label', 'Bộ lọc trạng thái');
+      : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4'}`)
+      .attr('role', 'tablist').attr('aria-label', 'Bộ lọc trạng thái').getContext() as HTMLDivElement;
 
     for (const tab of this.tabs) {
       const selected = tab.id === active;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.statusTab = tab.id;
-      button.className = [
+      const button = html.take(tabList).button.type('button').dataAttr('status-tab', tab.id).className([
         'token-status-tab',
         'inline-flex items-center gap-2 text-sm font-medium transition-colors',
         this.variant === 'toggle'
@@ -67,23 +63,18 @@ export class StatusTabs extends BaseComponent {
               ? 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
             : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900',
         tab.disabled ? 'cursor-not-allowed opacity-50' : '',
-      ].filter(Boolean).join(' ');
-      button.textContent = tab.label;
-      button.setAttribute('role', 'tab');
-      button.setAttribute('aria-selected', String(selected));
-      if (tab.disabled) button.disabled = true;
+      ].filter(Boolean).join(' ')).text(tab.label).attr('role', 'tab').attr('aria-selected', String(selected))
+        .getContext() as HTMLButtonElement;
+      if (tab.disabled) html.take(button).prop('disabled', true);
 
       if (this.showCounts && tab.count !== undefined) {
-        const count = document.createElement('span');
-        count.className = `token-status-count ${selected
+        html.take(button).span.className(`token-status-count ${selected
           ? 'rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-700'
-          : 'rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600'}`;
-        count.textContent = String(tab.count);
-        button.append(count);
+          : 'rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600'}`).text(String(tab.count));
       }
 
       if (!tab.disabled) {
-        button.addEventListener('click', () => {
+        html.take(button).event('click', () => {
           this.setState({ active: tab.id });
           this.submit(tab.action || 'status.select', {
             id: tab.id,
@@ -93,9 +84,6 @@ export class StatusTabs extends BaseComponent {
         });
       }
 
-      tabList.append(button);
     }
-
-    container.append(tabList);
   }
 }

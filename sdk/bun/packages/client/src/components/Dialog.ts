@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
 
 export type DialogInput = {
   label?: string;
@@ -42,76 +43,46 @@ export class Dialog extends BaseComponent {
   draw(container: HTMLElement) {
     if (this.state.open === false) return;
 
-    const overlay = document.createElement('div');
-    overlay.className = 'dialog-overlay';
-    overlay.setAttribute('aria-hidden', 'false');
+    const overlay = html.take(container).div.className('dialog-overlay').attr('aria-hidden', 'false').getContext() as HTMLDivElement;
 
-    const dialog = document.createElement('div');
-    dialog.className = 'dialog';
-    dialog.setAttribute('role', 'dialog');
-    dialog.setAttribute('aria-modal', 'true');
+    const dialog = html.take(overlay).div.className('dialog').attr('role', 'dialog').attr('aria-modal', 'true').getContext() as HTMLDivElement;
 
     const titleId = `dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    dialog.setAttribute('aria-labelledby', titleId);
-    const title = document.createElement('h2');
-    title.className = 'dialog-title';
-    title.id = titleId;
-    title.textContent = this.options.title || 'Dialog';
-    dialog.appendChild(title);
+    html.take(dialog).h2.className('dialog-title').id(titleId).text(this.options.title || 'Dialog');
 
     if (this.options.message) {
-      const message = document.createElement('p');
-      message.className = 'dialog-message';
-      message.textContent = this.options.message;
-      dialog.appendChild(message);
+      html.take(dialog).p.className('dialog-message').text(this.options.message);
     }
 
-    const input = this.options.input ? document.createElement('input') : null;
+    const input = this.options.input
+      ? html.take(dialog).label.className('dialog-field').text(this.options.input.label || '').input
+        .className('dialog-input').type('text').value(this.options.input.value || '')
+        .attr('placeholder', this.options.input.placeholder || '').prop('required', true).getContext() as HTMLInputElement
+      : null;
     if (input) {
-      const field = document.createElement('label');
-      field.className = 'dialog-field';
-      field.textContent = this.options.input?.label || '';
-      input.className = 'dialog-input';
-      input.type = 'text';
-      input.value = this.options.input?.value || '';
-      input.placeholder = this.options.input?.placeholder || '';
-      input.required = true;
-      field.appendChild(input);
-      dialog.appendChild(field);
     }
 
     const tagInputs = new Map<string, HTMLInputElement[]>();
     for (const group of this.options.tagGroups || []) {
-      const field = document.createElement('fieldset');
-      field.className = 'dialog-tags';
-      const legend = document.createElement('legend');
-      legend.textContent = group.label;
-      field.appendChild(legend);
-      const choices = document.createElement('div');
-      choices.className = 'dialog-tag-choices';
+      const field = html.take(dialog).fieldset.className('dialog-tags').getContext() as HTMLFieldSetElement;
+      html.take(field).legend.text(group.label);
+      const choices = html.take(field).div.className('dialog-tag-choices').getContext() as HTMLDivElement;
       const inputs: HTMLInputElement[] = [];
       for (const option of group.options) {
-        const label = document.createElement('label');
-        label.className = 'dialog-tag';
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = option.value;
-        checkbox.checked = group.values?.includes(option.value) || false;
-        if (group.multiple === false) checkbox.addEventListener('change', () => {
+        const label = html.take(choices).label.className('dialog-tag').getContext() as HTMLLabelElement;
+        const checkbox = html.take(label).input.type('checkbox').value(option.value)
+          .prop('checked', group.values?.includes(option.value) || false).getContext() as HTMLInputElement;
+        if (group.multiple === false) html.take(checkbox).event('change', () => {
           if (!checkbox.checked) return;
           for (const other of inputs) if (other !== checkbox) other.checked = false;
         });
         inputs.push(checkbox);
-        label.append(checkbox, document.createTextNode(option.label));
-        choices.appendChild(label);
+        html.take(label).text(option.label);
       }
       tagInputs.set(group.id, inputs);
-      field.appendChild(choices);
-      dialog.appendChild(field);
     }
 
-    const footer = document.createElement('div');
-    footer.className = 'dialog-footer';
+    const footer = html.take(dialog).div.className('dialog-footer').getContext() as HTMLDivElement;
     const close = (notifyCancel = true) => {
       if (this.onKeyDown) document.removeEventListener('keydown', this.onKeyDown);
       this.onKeyDown = null;
@@ -120,27 +91,16 @@ export class Dialog extends BaseComponent {
       overlay.remove();
     };
 
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'dialog-cancel';
-    cancel.textContent = this.options.cancelLabel || 'Cancel';
-    cancel.addEventListener('click', close);
-    if (!this.options.messageOnly) footer.appendChild(cancel);
+    const cancel = html.take(footer).button.type('button').className('dialog-cancel')
+      .text(this.options.cancelLabel || 'Cancel').event('click', close).getContext() as HTMLButtonElement;
 
     if (this.options.dangerLabel && this.options.onDanger) {
-      const danger = document.createElement('button');
-      danger.type = 'button';
-      danger.className = 'dialog-danger';
-      danger.textContent = this.options.dangerLabel;
-      danger.addEventListener('click', () => { close(false); void this.options.onDanger?.(); });
-      footer.appendChild(danger);
+      html.take(footer).button.type('button').className('dialog-danger').text(this.options.dangerLabel)
+        .event('click', () => { close(false); void this.options.onDanger?.(); });
     }
 
-    const confirm = document.createElement('button');
-    confirm.type = 'button';
-    confirm.className = 'dialog-confirm';
-    confirm.textContent = this.options.confirmLabel || 'Confirm';
-    confirm.addEventListener('click', () => {
+    const confirm = html.take(footer).button.type('button').className('dialog-confirm')
+      .text(this.options.confirmLabel || 'Confirm').event('click', () => {
       const value = input?.value.trim() || '';
       if (input && !value) {
         input.focus();
@@ -154,11 +114,9 @@ export class Dialog extends BaseComponent {
       close(false);
       if (tags) void this.options.onConfirm?.(value, tags);
       else void this.options.onConfirm?.(value);
-    });
-    footer.appendChild(confirm);
-    dialog.appendChild(footer);
+      });
 
-    overlay.addEventListener('click', event => {
+    html.take(overlay).event('click', event => {
       if (event.target === overlay) close();
     });
     this.onKeyDown = event => {
@@ -166,8 +124,6 @@ export class Dialog extends BaseComponent {
     };
     document.addEventListener('keydown', this.onKeyDown);
 
-    overlay.appendChild(dialog);
-    container.appendChild(overlay);
     (input || cancel).focus();
   }
 

@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { html } from '@core3/client/html';
 
 /** Shared modal for YAML event actions that need to notify the user. */
 export class EventPopup extends BaseComponent {
@@ -12,32 +13,18 @@ export class EventPopup extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const overlay = document.createElement('div');
-    overlay.className = 'event-overlay';
-    overlay.setAttribute('aria-hidden', 'false');
+    const overlay = html.take(container).div.className('event-overlay').attr('aria-hidden', 'false').getContext() as HTMLDivElement;
 
-    const dialog = document.createElement('div');
-    dialog.className = 'event-dialog';
-    dialog.setAttribute('role', 'dialog');
-    dialog.setAttribute('aria-modal', 'true');
+    const dialog = html.take(overlay).div.className('event-dialog').attr('role', 'dialog').attr('aria-modal', 'true').getContext() as HTMLDivElement;
     const titleId = `event-dialog-title-${Date.now()}`;
     dialog.setAttribute('aria-labelledby', titleId);
 
-    const icon = document.createElement('div');
-    icon.className = 'event-icon';
+    const icon = html.take(dialog).div.className('event-icon').attr('aria-hidden', 'true').getContext() as HTMLDivElement;
     appendIcon(icon, this.def.icon || 'lightbulb');
-    dialog.appendChild(icon);
 
-    const title = document.createElement('h2');
-    title.className = 'event-title';
-    title.id = titleId;
-    title.textContent = this.def.title || 'Coming soon';
-    dialog.appendChild(title);
+    html.take(dialog).h2.className('event-title').id(titleId).text(this.def.title || 'Coming soon');
 
-    const message = document.createElement('p');
-    message.className = 'event-message';
-    message.textContent = this.def.message || 'This feature is under construction.';
-    dialog.appendChild(message);
+    html.take(dialog).p.className('event-message').text(this.def.message || 'This feature is under construction.');
 
     const close = () => {
       this.dispose();
@@ -47,19 +34,13 @@ export class EventPopup extends BaseComponent {
       if (event.key === 'Escape') close();
     };
 
-    const closeButton = document.createElement('button');
-    closeButton.type = 'button';
-    closeButton.className = 'btn btn-primary event-close';
-    closeButton.textContent = this.def.close_label || 'Close';
-    closeButton.addEventListener('click', close);
-    dialog.appendChild(closeButton);
+    const closeButton = html.take(dialog).button.type('button').className('btn btn-primary event-close')
+      .text(this.def.close_label || 'Close').event('click', close).getContext() as HTMLButtonElement;
 
-    overlay.addEventListener('click', event => {
+    html.take(overlay).event('click', event => {
       if (event.target === overlay) close();
     });
     document.addEventListener('keydown', this.onKeyDown);
-    overlay.appendChild(dialog);
-    container.appendChild(overlay);
     closeButton.focus();
   }
 

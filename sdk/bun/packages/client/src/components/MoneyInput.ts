@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
 
 export type MoneyInputDefinition = {
   currency?: string;
@@ -60,31 +61,24 @@ export class MoneyInput extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const root = document.createElement('div');
-    root.className = 'money-input';
+    const root = html.take(container).div.className('money-input').getContext() as HTMLDivElement;
     this.rootElement = root;
 
-    const hidden = document.createElement('input');
-    hidden.type = 'hidden';
-    hidden.name = this.id;
+    const hidden = html.take(root).input.type('hidden').attr('name', this.id).getContext() as HTMLInputElement;
     this.input = hidden;
-    root.appendChild(hidden);
 
-    const display = document.createElement('input');
-    display.type = 'text';
-    display.inputMode = 'decimal';
-    display.className = 'form-input form-control money-input-display';
-    display.placeholder = this.def.placeholder || '0';
-    display.setAttribute('aria-label', this.def.currency ? `Số tiền (${this.def.currency})` : 'Số tiền');
+    const display = html.take(root).input.type('text').attr('inputmode', 'decimal')
+      .className('form-input form-control money-input-display')
+      .attr('placeholder', this.def.placeholder || '0')
+      .attr('aria-label', this.def.currency ? `Số tiền (${this.def.currency})` : 'Số tiền')
+      .getContext() as HTMLInputElement;
     this.displayInput = display;
     root.appendChild(display);
 
     const initial = String(this.state.value ?? '');
     display.value = this.displayValue(initial) || initial;
     this.sync(initial);
-    display.addEventListener('input', () => this.sync(display.value));
-    display.addEventListener('blur', () => this.sync(display.value, true));
-    container.appendChild(root);
+    html.take(display).event('input', () => this.sync(display.value)).event('blur', () => this.sync(display.value, true));
   }
 
   dispose() {

@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
 
 /** Generic inline form. Field definitions and validation remain in YAML. */
 export class Form extends BaseComponent {
@@ -7,48 +8,29 @@ export class Form extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const section = document.createElement('section');
-    section.className = this.def.class || 'drawer-section';
+    const section = html.take(container).section.className(this.def.class || 'drawer-section').getContext() as HTMLElement;
     if (this.def.title) {
-      const title = document.createElement('div');
-      title.className = 'drawer-section-title';
-      title.textContent = this.def.title;
-      section.appendChild(title);
+      html.take(section).div.className('drawer-section-title').text(this.def.title);
     }
-    const form = document.createElement('div');
-    const error = document.createElement('div');
-    error.className = 'alert alert-error';
-    error.style.display = 'none';
-    form.appendChild(error);
+    const form = html.take(section).div.getContext() as HTMLDivElement;
+    const error = html.take(form).div.className('alert alert-error').prop('hidden', true).getContext() as HTMLDivElement;
     const inputs: Record<string, HTMLInputElement> = {};
     for (const field of this.def.fields || []) {
-      const group = document.createElement('div');
-      group.className = 'form-group';
-      const label = document.createElement('label');
-      label.className = 'form-label';
-      label.textContent = `${field.label || field.field}${field.required ? ' *' : ''}`;
-      group.appendChild(label);
-      const input = document.createElement('input');
-      input.type = field.type || 'text';
-      input.className = 'form-input';
-      input.placeholder = field.placeholder || '';
-      group.appendChild(input);
-      form.appendChild(group);
+      const group = html.take(form).div.className('form-group').getContext() as HTMLDivElement;
+      html.take(group).label.className('form-label').text(`${field.label || field.field}${field.required ? ' *' : ''}`);
+      const input = html.take(group).input.type(field.type || 'text').className('form-input').attr('placeholder', field.placeholder || '').getContext() as HTMLInputElement;
       inputs[field.field] = input;
     }
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `btn btn-${this.def.submit_variant || 'primary'} btn-sm`;
-    button.textContent = this.def.submit_label || 'Submit';
-    button.addEventListener('click', async () => {
+    const button = html.take(form).button.type('button').className(`btn btn-${this.def.submit_variant || 'primary'} btn-sm`)
+      .text(this.def.submit_label || 'Submit').event('click', async () => {
       const values = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
       const validation = this.validate(values);
       if (validation) {
         error.textContent = validation;
-        error.style.display = 'flex';
+        error.hidden = false;
         return;
       }
-      error.style.display = 'none';
+      error.hidden = true;
       button.disabled = true;
       button.textContent = this.def.loading_label || 'Saving…';
       try {
@@ -57,15 +39,12 @@ export class Form extends BaseComponent {
         button.textContent = this.def.success_label || 'Updated';
       } catch (cause) {
         error.textContent = cause instanceof Error ? cause.message : String(cause);
-        error.style.display = 'flex';
+        error.hidden = false;
         button.textContent = this.def.submit_label || 'Submit';
       } finally {
         button.disabled = false;
       }
-    });
-    form.appendChild(button);
-    section.appendChild(form);
-    container.appendChild(section);
+      }).getContext() as HTMLButtonElement;
   }
 
   private validate(values: Record<string, string>) {

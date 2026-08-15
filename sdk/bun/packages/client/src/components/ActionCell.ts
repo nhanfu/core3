@@ -25,13 +25,11 @@ export class ActionCell extends BaseComponent {
         })
         .getContext();
       if (a.icon) {
-        const icon = document.createElement('span');
-        icon.setAttribute('aria-hidden', 'true');
+        const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
         if (hasIcon(a.icon)) appendIcon(icon, a.icon);
         else icon.textContent = a.icon;
-        button.appendChild(icon);
       }
-      button.appendChild(document.createTextNode(a.label));
+      html.take(button).text(a.label);
     }
   }
 }

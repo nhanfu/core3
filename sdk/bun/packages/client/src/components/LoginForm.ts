@@ -70,10 +70,8 @@ export class LoginForm extends BaseComponent {
           .attr('type', 'button')
           .getContext() as HTMLButtonElement;
         appendIcon(providerButton, provider.icon || 'shield');
-        const providerLabel = document.createElement('span');
-        providerLabel.textContent = provider.label;
-        providerButton.append(providerLabel);
-        providerButton.addEventListener('click', () => {
+        html.take(providerButton).span.text(provider.label);
+        html.take(providerButton).event('click', () => {
           providerButton.disabled = true;
           void this.submit(provider.action).catch((error) => {
             errorEl.textContent = error instanceof Error ? error.message : String(error);

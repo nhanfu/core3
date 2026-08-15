@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
 
 export type AsyncSelectOption = { value: string; label: string };
 
@@ -52,33 +53,22 @@ export class AsyncSelect extends BaseComponent {
     for (const value of this.selected) {
       const option = this.options().find(candidate => candidate.value === value);
       if (!option) continue;
-      const chip = document.createElement('span');
-      chip.className = 'async-select-chip';
-      chip.textContent = option.label;
+      const chip = html.take(this.selectedElement).span.className('async-select-chip').text(option.label).getContext() as HTMLSpanElement;
       if (this.def.multiple) {
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'async-select-chip-remove';
-        remove.setAttribute('aria-label', `Bỏ chọn ${option.label}`);
-        remove.textContent = '×';
-        remove.addEventListener('click', () => {
+        html.take(chip).button.type('button').className('async-select-chip-remove')
+          .attr('aria-label', `Bỏ chọn ${option.label}`).text('×').event('click', () => {
           this.selected = this.selected.filter(selected => selected !== option.value);
           this.syncValue();
           this.renderOptions();
-        });
-        chip.appendChild(remove);
+          });
       }
-      this.selectedElement.appendChild(chip);
     }
 
     for (const option of options) {
-      const item = document.createElement('button');
-      item.type = 'button';
-      item.className = `async-select-option${selectedSet.has(option.value) ? ' is-selected' : ''}`;
-      item.setAttribute('role', 'option');
-      item.setAttribute('aria-selected', String(selectedSet.has(option.value)));
-      item.textContent = option.label;
-      item.addEventListener('click', () => {
+      const item = html.take(this.listElement).button.type('button')
+        .className(`async-select-option${selectedSet.has(option.value) ? ' is-selected' : ''}`)
+        .attr('role', 'option').attr('aria-selected', String(selectedSet.has(option.value))).text(option.label)
+        .event('click', () => {
         if (this.def.multiple) {
           this.selected = selectedSet.has(option.value)
             ? this.selected.filter(selected => selected !== option.value)
@@ -88,50 +78,33 @@ export class AsyncSelect extends BaseComponent {
         }
         this.syncValue();
         this.renderOptions();
-      });
-      this.listElement.appendChild(item);
+        });
     }
     if (!options.length) {
-      const empty = document.createElement('div');
-      empty.className = 'async-select-empty';
-      empty.textContent = 'Không tìm thấy lựa chọn';
-      this.listElement.appendChild(empty);
+      html.take(this.listElement).div.className('async-select-empty').text('Không tìm thấy lựa chọn');
     }
   }
 
   draw(container: HTMLElement) {
-    const root = document.createElement('div');
-    root.className = 'async-select';
+    const root = html.take(container).div.className('async-select').getContext() as HTMLDivElement;
     this.rootElement = root;
-    const hidden = document.createElement('input');
-    hidden.type = 'hidden';
-    hidden.name = this.id;
+    const hidden = html.take(root).input.type('hidden').attr('name', this.id).getContext() as HTMLInputElement;
     this.input = hidden;
-    root.appendChild(hidden);
 
-    const selected = document.createElement('div');
-    selected.className = 'async-select-selected';
+    const selected = html.take(root).div.className('async-select-selected').getContext() as HTMLDivElement;
     this.selectedElement = selected;
-    root.appendChild(selected);
 
-    const search = document.createElement('input');
-    search.type = 'search';
-    search.className = 'async-select-search';
-    search.placeholder = this.def.search_placeholder || this.def.placeholder || 'Tìm lựa chọn…';
-    search.setAttribute('aria-label', search.placeholder);
-    search.addEventListener('input', () => {
+    const search = html.take(root).input.type('search').className('async-select-search')
+      .attr('placeholder', this.def.search_placeholder || this.def.placeholder || 'Tìm lựa chọn…')
+      .attr('aria-label', this.def.search_placeholder || this.def.placeholder || 'Tìm lựa chọn…')
+      .event('input', () => {
       this.query = search.value;
       this.renderOptions();
-    });
-    root.appendChild(search);
+      }).getContext() as HTMLInputElement;
 
-    const list = document.createElement('div');
-    list.className = 'async-select-options';
-    list.setAttribute('role', 'listbox');
-    list.setAttribute('aria-multiselectable', String(!!this.def.multiple));
+    const list = html.take(root).div.className('async-select-options').attr('role', 'listbox')
+      .attr('aria-multiselectable', String(!!this.def.multiple)).getContext() as HTMLDivElement;
     this.listElement = list;
-    root.appendChild(list);
-    container.appendChild(root);
     this.syncValue();
     this.renderOptions();
   }

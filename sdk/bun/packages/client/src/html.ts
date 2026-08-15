@@ -35,6 +35,16 @@ export class HTML {
         }
         return this;
     }
+    svgNode(node) {
+        const ele = document.createElementNS('http://www.w3.org/2000/svg', node);
+        if (this.context) {
+            this.context.appendChild(ele);
+            this.context = ele;
+        } else {
+            this.context = ele;
+        }
+        return this;
+    }
     get div() {
         return this.add('div');
     }
@@ -52,6 +62,18 @@ export class HTML {
     }
     get section() {
         return this.add('section');
+    }
+    get article() {
+        return this.add('article');
+    }
+    get time() {
+        return this.add('time');
+    }
+    get fieldset() {
+        return this.add('fieldset');
+    }
+    get legend() {
+        return this.add('legend');
     }
     get canvas() {
         return this.add('canvas');
@@ -100,6 +122,9 @@ export class HTML {
     }
     get small() {
         return this.add('small');
+    }
+    get sup() {
+        return this.add('sup');
     }
     get i() {
         return this.add('i');
@@ -255,6 +280,11 @@ export class HTML {
      */
     attr(name, value) {
         this.context.setAttribute(name, value);
+        return this;
+    }
+
+    prop(name, value) {
+        this.context[name] = value;
         return this;
     }
 

@@ -26,12 +26,10 @@ export class PageIntro extends BaseComponent {
       html.take(root).p.className('page-intro-greeting text-sm text-slate-500').text(name ? `${greeting}, ${name}` : greeting);
     }
     if (this.state.action_label) {
-      const action = document.createElement('span');
-      action.className = 'page-intro-action text-amber-500';
-      action.setAttribute('title', String(this.state.action_label));
-      action.setAttribute('aria-label', String(this.state.action_label));
+      const action = html.take(root).span.className('page-intro-action text-amber-500')
+        .attr('title', String(this.state.action_label))
+        .attr('aria-label', String(this.state.action_label)).getContext() as HTMLSpanElement;
       appendIcon(action, 'lightbulb', String(this.state.action_label));
-      root.append(action);
     }
   }
 }

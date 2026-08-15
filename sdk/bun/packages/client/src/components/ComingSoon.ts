@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { html } from '@core3/client/html';
 
 export type ComingSoonState = {
   eyebrow?: string;
@@ -23,37 +24,21 @@ export class ComingSoon extends BaseComponent {
       icon = 'calendar',
     } = this.state;
 
-    const section = document.createElement('section');
-    section.className = 'coming-soon';
-    section.setAttribute('aria-labelledby', `${this.id}-title`);
+    const section = html.take(container).section.className('coming-soon')
+      .attr('aria-labelledby', `${this.id}-title`).getContext() as HTMLElement;
 
-    const artwork = document.createElement('div');
-    artwork.className = 'coming-soon-artwork';
-    artwork.setAttribute('aria-hidden', 'true');
-    artwork.dataset.icon = icon;
+    const artwork = html.take(section).div.className('coming-soon-artwork')
+      .attr('aria-hidden', 'true').dataAttr('icon', icon).getContext() as HTMLDivElement;
     appendIcon(artwork, icon);
 
-    const copy = document.createElement('div');
-    copy.className = 'coming-soon-copy';
+    const copy = html.take(section).div.className('coming-soon-copy').getContext() as HTMLDivElement;
 
-    const eyebrowElement = document.createElement('p');
-    eyebrowElement.className = 'coming-soon-eyebrow';
-    eyebrowElement.textContent = eyebrow;
+    html.take(copy).p.className('coming-soon-eyebrow').text(eyebrow);
 
-    const titleElement = document.createElement('h2');
-    titleElement.id = `${this.id}-title`;
-    titleElement.className = 'coming-soon-title';
-    titleElement.textContent = title;
+    html.take(copy).h2.id(`${this.id}-title`).className('coming-soon-title').text(title);
 
-    copy.append(eyebrowElement, titleElement);
     if (description) {
-      const descriptionElement = document.createElement('p');
-      descriptionElement.className = 'coming-soon-description';
-      descriptionElement.textContent = description;
-      copy.append(descriptionElement);
+      html.take(copy).p.className('coming-soon-description').text(description);
     }
-
-    section.append(artwork, copy);
-    container.append(section);
   }
 }

@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
 
 /** Generic clickable option group with a YAML-defined action. */
 export class ChoiceGroup extends BaseComponent {
@@ -7,27 +8,17 @@ export class ChoiceGroup extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const section = document.createElement('section');
-    section.className = this.def.class || 'drawer-section';
-    const title = document.createElement('div');
-    title.className = 'drawer-section-title';
-    title.textContent = this.def.title || '';
-    section.appendChild(title);
-    const group = document.createElement('div');
-    group.className = this.def.group_class || 'lang-radio-group';
+    const section = html.take(container).section.className(this.def.class || 'drawer-section').getContext() as HTMLElement;
+    html.take(section).div.className('drawer-section-title').text(this.def.title || '');
+    const group = html.take(section).div.className(this.def.group_class || 'lang-radio-group').getContext() as HTMLDivElement;
     const current = this.state.record?.[this.def.value];
     for (const option of this.def.options || []) {
-      const card = document.createElement('div');
-      card.className = `${this.def.option_class || 'lang-radio'}${String(option.value) === String(current || '') ? ' selected' : ''}`;
-      card.textContent = option.label || option.value || '';
-      card.addEventListener('click', () => {
+      const card = html.take(group).div.className(`${this.def.option_class || 'lang-radio'}${String(option.value) === String(current || '') ? ' selected' : ''}`)
+        .text(option.label || option.value || '').event('click', () => {
         group.querySelectorAll(`.${this.def.option_class || 'lang-radio'}`).forEach(item => item.classList.remove('selected'));
         card.classList.add('selected');
         void this.submit(this.def.action, { [this.def.value]: option.value });
-      });
-      group.appendChild(card);
+        }).getContext() as HTMLDivElement;
     }
-    section.appendChild(group);
-    container.appendChild(section);
   }
 }

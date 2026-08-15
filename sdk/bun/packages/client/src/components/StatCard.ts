@@ -35,10 +35,8 @@ export class StatCard extends BaseComponent {
     html.take(card).p.className('text-sm font-medium leading-4 text-gray-500').text(String(label ?? ''));
     const valueEl = html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—')).getContext();
     if (state.navigate_to) {
-      const arrow = document.createElement('span');
-      arrow.className = 'stat-card-arrow';
+      const arrow = html.take(valueEl).span.className('stat-card-arrow').getContext() as HTMLSpanElement;
       appendIcon(arrow, 'arrow-right');
-      valueEl.append(arrow);
     }
 
     if (trend) {

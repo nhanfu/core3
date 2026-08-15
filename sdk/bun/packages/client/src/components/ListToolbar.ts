@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
+import { html } from '@core3/client/html';
 
 export type ListToolbarAction = {
   id: string;
@@ -269,7 +270,7 @@ export class ListToolbar extends BaseComponent {
         });
         actionBar.append(advancedButton);
       }
-      for (const action of actions) actionBar.append(this.renderAction(action));
+      for (const action of actions) this.renderAction(action, actionBar);
       if (this.def.help) {
         const helpButton = document.createElement('button');
         helpButton.type = 'button';
@@ -308,37 +309,32 @@ export class ListToolbar extends BaseComponent {
     this.submit(action || 'search', { query, value: query });
   }
 
-  private renderAction(action: ListToolbarAction) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.toolbarAction = action.id;
-    button.className = [
+  private renderAction(action: ListToolbarAction, parent: HTMLElement) {
+    const button = html.take(parent).button.type('button').dataAttr('toolbar-action', action.id).className([
       'inline-flex h-10 items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors',
       this.actionClass(action.variant),
       action.disabled ? 'cursor-not-allowed opacity-50' : '',
       !action.label ? 'w-10 px-0' : '',
-    ].filter(Boolean).join(' ');
+    ].filter(Boolean).join(' '));
     const label = action.id.endsWith('.export') && action.label === 'Xuất CSV' ? 'Xuất Excel' : action.label;
-    button.title = action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id);
-    button.setAttribute('aria-label', button.title);
-    button.disabled = Boolean(action.disabled);
+    button.attr('title', action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id))
+      .attr('aria-label', action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id))
+      .prop('disabled', Boolean(action.disabled));
 
     if (action.icon) {
-      const icon = document.createElement('span');
-      icon.setAttribute('aria-hidden', 'true');
+      const icon = html.take(button.getContext()).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
       if (hasIcon(action.icon)) appendIcon(icon, action.icon);
       else icon.textContent = action.icon;
-      button.append(icon);
     }
-    if (label) button.append(document.createTextNode(label));
+    if (label) html.take(button.getContext()).text(label);
 
     if (!action.disabled) {
-      button.addEventListener('click', () => {
+      button.event('click', () => {
         this.submit(action.action || action.id, { id: action.id, ...(action.params || {}) });
       });
     }
 
-    return button;
+    return button.getContext() as HTMLButtonElement;
   }
 
   private actionClass(variant: ListToolbarAction['variant']) {
