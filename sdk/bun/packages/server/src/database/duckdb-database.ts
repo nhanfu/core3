@@ -1,5 +1,6 @@
 import { DuckDBInstance } from '@duckdb/node-api';
 import type { DatabaseAdapter, DatabaseConnection } from './types.ts';
+import { createDialect } from './dialects.ts';
 
 function normalizeArgs(args: any[]): { params: any[]; callback?: Function } {
   const callback = typeof args.at(-1) === 'function' ? args.pop() : undefined;
@@ -8,6 +9,8 @@ function normalizeArgs(args: any[]): { params: any[]; callback?: Function } {
 }
 
 export class DuckDbDatabase implements DatabaseAdapter {
+  readonly driver = 'duckdb' as const;
+  readonly dialect = createDialect(this.driver);
   private constructor(private readonly instance: any) {}
 
   static async open(path = ':memory:'): Promise<DuckDbDatabase> {

@@ -75,12 +75,23 @@ async function querySourceInternal(this: any,
       ? sort.field
       : null;
     const sortDirection = sort?.direction === 'desc' ? 'DESC' : 'ASC';
-    const sortClause = sortField ? ` ORDER BY source_rows."${sortField}" ${sortDirection} NULLS LAST` : '';
+    const sortIdentifier = sortField ? this.db?.dialect?.quoteIdentifier(sortField) || `"${sortField}"` : '';
+    const sortNulls = this.db?.driver === 'mysql' || this.db?.driver === 'sqlserver' ? '' : ' NULLS LAST';
+    const sortClause = sortField ? ` ORDER BY source_rows.${sortIdentifier} ${sortDirection}${sortNulls}` : '';
+    const pagination = this.db?.driver === 'oracle'
+      ? ` FETCH FIRST ? ROWS ONLY`
+      : this.db?.driver === 'sqlserver'
+        ? ` ORDER BY (SELECT NULL) OFFSET ? ROWS FETCH NEXT ? ROWS ONLY`
+      : ` LIMIT ? OFFSET ?`;
     const rows = await runQuery('rows',
       pivot
         ? `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause}`
-        : `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause} LIMIT ? OFFSET ?`,
-      pivot ? queryValues : [...queryValues, pageSize, offset],
+        : `SELECT * FROM (${pivotStatement}) AS source_rows${sortClause}${pagination}`,
+      pivot ? queryValues : this.db?.driver === 'oracle'
+        ? [...queryValues, pageSize]
+        : this.db?.driver === 'sqlserver'
+          ? [...queryValues, offset, pageSize]
+        : [...queryValues, pageSize, offset],
     );
     const meta: any = { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize) };
     if (pivotResult.columns) meta.pivotColumns = pivotResult.columns;
@@ -88,7 +99,7 @@ async function querySourceInternal(this: any,
       try {
         const facetRows = await this.query(
 
-          `SELECT CAST(source_rows."${facetField}" AS VARCHAR) AS value, COUNT(*) AS n FROM (${pivotStatement}) AS source_rows GROUP BY source_rows."${facetField}"`,
+          `SELECT CAST(source_rows.${this.db?.dialect?.quoteIdentifier(facetField) || `"${facetField}"`} AS VARCHAR) AS value, COUNT(*) AS n FROM (${pivotStatement}) AS source_rows GROUP BY source_rows.${this.db?.dialect?.quoteIdentifier(facetField) || `"${facetField}"`}`,
           queryValues,
         );
         meta.facets = Object.fromEntries(facetRows.map((row: any) => [String(row.value ?? ''), Number(row.n || 0)]));
@@ -139,12 +150,13 @@ async function enrichSourceResult(this: any, result: any, definition: any, param
     const remotes = localValues.map((value: any) => byId.get(String(value))).filter(Boolean);
     const remote = remotes[0];
     if (!remote) return row;
+    const remoteRecord = remote as Record<string, any>;
     const output = { ...row };
     for (const field of fields) {
-      if (typeof field === 'string') output[field] = remote[field];
+      if (typeof field === 'string') output[field] = remoteRecord[field];
       else if (field && typeof field === 'object' && field.source) {
-        const values = remotes.map((item: any) => item[String(field.source)]).filter((value: any) => value !== undefined && value !== null && value !== '');
-        output[String(field.target || field.source)] = field.join === undefined ? remote[String(field.source)] : values.join(String(field.join));
+        const values = remotes.map((item: any) => (item as Record<string, any>)[String(field.source)]).filter((value: any) => value !== undefined && value !== null && value !== '');
+        output[String(field.target || field.source)] = field.join === undefined ? remoteRecord[String(field.source)] : values.join(String(field.join));
       }
     }
     return output;
@@ -162,10 +174,10 @@ function serviceRequest(mapping: Record<string, unknown>, params: Record<string,
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const AGGREGATES = new Set(['count', 'sum', 'avg', 'min', 'max']);
 const NULL_PIVOT_VALUE = '__core3_null__';
-const quoteIdentifier = (value: unknown, label: string) => {
+const quoteIdentifier = (value: unknown, label: string, dialect?: any) => {
   const identifier = String(value || '');
   if (!IDENTIFIER.test(identifier)) throw Object.assign(new Error(`${label} must be a safe identifier`), { status: 400 });
-  return `"${identifier}"`;
+  return dialect?.quoteIdentifier(identifier) || `"${identifier}"`;
 };
 
 async function nativePivotStatement(repository: any, statement: string, values: any[], declaration: any, request: any): Promise<{ statement: string; values: any[]; columns?: Array<{ values: string[]; prefix: string }> }> {
@@ -179,7 +191,7 @@ async function nativePivotStatement(repository: any, statement: string, values: 
   const checkField = (field: unknown, label: string) => {
     const name = String(field || '');
     if (!allowed.has(name)) throw Object.assign(new Error(`${label} is not declared as pivotable`), { status: 400 });
-    return quoteIdentifier(name, label);
+    return quoteIdentifier(name, label, repository.db?.dialect);
   };
   const rowSql = rows.map((field: unknown) => checkField(field, 'Pivot row field'));
   const columnSql = columns.map((field: unknown) => checkField(field, 'Pivot column field'));
@@ -193,7 +205,7 @@ async function nativePivotStatement(repository: any, statement: string, values: 
       .trim()
       .replace(/[^A-Za-z0-9_]+/g, '_')
       .replace(/^[^A-Za-z_]+/, '') || `${aggregate}_${measure.field || 'rows'}`;
-    return `${expression} AS ${quoteIdentifier(alias, 'Pivot measure label')}`;
+    return `${expression} AS ${quoteIdentifier(alias, 'Pivot measure label', repository.db?.dialect)}`;
   });
   const groupBy = rowSql.length ? ` GROUP BY ${rowSql.join(', ')}` : '';
   if (!columns.length) {
@@ -227,14 +239,28 @@ async function nativePivotStatement(repository: any, statement: string, values: 
     for (const [value, dimension] of pivotDimensions[index]) addPivotColumn([...displayValues, value], [...pivotValues, dimension.pivotValue], index + 1);
   };
   addPivotColumn([], [], 0);
-  // DuckDB's multi-element PIVOT syntax requires one IN list per ON field;
-  // tuple values such as IN (('date', 'Road')) are rejected by the binder.
-  const pivotOnColumns = columnSql.map(column => `COALESCE(CAST(${column} AS VARCHAR), ${sqlLiteral(NULL_PIVOT_VALUE)})`);
-  const pivotValues = pivotOnColumns.map((column, index) =>
-    `${column} IN (${pivotDimensions[index].map(([, dimension]) => sqlLiteral(dimension.pivotValue)).join(', ')})`,
-  ).join(', ');
+  // Render pivot columns as conditional aggregates. This is deliberately
+  // portable SQL; DuckDB's PIVOT syntax cannot be sent to PostgreSQL, MySQL,
+  // Oracle, or SQL Server.
+  const aggregateExpressions = pivotColumns.flatMap((column) => {
+    const conditions = column.values.map((value, index) => {
+    const raw = pivotDimensions[index].find(([display]: [string, any]) => display === value)?.[1].raw;
+      return `${columnSql[index]} ${raw == null ? 'IS NULL' : `= ${sqlLiteral(raw)}`}`;
+    });
+    const condition = conditions.join(' AND ');
+    return measures.map((measure: any, measureIndex: number) => {
+      const aggregate = String(measure?.aggregate || 'sum').toLowerCase();
+      const expression = aggregate === 'count' && !measure.field ? '1' : checkField(measure.field, `Pivot measure ${measureIndex + 1}`);
+      const neutral = aggregate === 'sum' || aggregate === 'count' ? '0' : 'NULL';
+      const alias = String(measure.label || `${aggregate}_${measure.field || 'rows'}`)
+        .trim().replace(/[^A-Za-z0-9_]+/g, '_').replace(/^[^A-Za-z_]+/, '') || `${aggregate}_${measure.field || 'rows'}`;
+      const columnAlias = `${column.prefix}_${alias}`.replace(/[^A-Za-z0-9_]+/g, '_');
+      return `${aggregate}(CASE WHEN ${condition} THEN ${expression} ELSE ${neutral} END) AS ${quoteIdentifier(columnAlias, 'Pivot column', repository.db?.dialect)}`;
+    });
+  });
+  const portableSource = inlineBoundParameters(pivotDateSource(statement, rangedFields, dateRanges), values);
   return {
-    statement: `PIVOT (${pivotDateSource(inlineBoundParameters(statement, values), rangedFields, dateRanges)}) ON ${pivotValues} USING ${measureSql.join(', ')}${groupBy}`,
+    statement: `SELECT ${[...rowSql, ...aggregateExpressions].join(', ')} FROM (${portableSource}) AS pivot_source${groupBy}`,
     values: [],
     columns: pivotColumns,
   };

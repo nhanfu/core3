@@ -1,7 +1,10 @@
 import { bindNamedParams, queryOnConnection, runOnConnection, splitSQL } from '@core3/server/database/sql';
+import type { DatabaseDriver } from '@core3/server/database/types';
 
 export class AuthRepository {
   constructor(private readonly db: any, private readonly queries: Record<string, string>) {}
+
+  get driver(): DatabaseDriver | undefined { return this.db.driver; }
 
   partition(definition: any): Promise<void> { return this.db.partition(definition); }
   unpartition(table: string): Promise<void> { return this.db.unpartition(table); }
