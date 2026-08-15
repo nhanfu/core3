@@ -351,6 +351,11 @@
   background: var(--o-list-panel-bg);
 }
 
+/* The filter menu is fixed, but it still participates in this stacking
+ * context. Raise the control panel while it is open so the inline FormView
+ * cannot paint over the menu. */
+.o-list-control-panel:has(.o-list-filter-menu[open]) { z-index: 30; }
+
 .o-list-control-main {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) minmax(260px, 600px) minmax(180px, 1fr);
@@ -480,7 +485,7 @@
   grid-template-columns: repeat(3, minmax(280px, 1fr));
   position: fixed;
   z-index: 2000;
-  top: var(--header-height);
+  top: 155px;
   right: auto;
   left: 50%;
   width: 1100px;
@@ -673,12 +678,12 @@
 .o-list-selection button { margin-left: 5px; border: 0; background: transparent; color: var(--o-list-action); cursor: pointer; font: inherit; }
 .o-list-selection .o-list-bulk-action { margin-left: 0; border: 1px solid var(--o-list-action); background: var(--o-list-action); color: #fff; }
 
-.o-list-facets { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); align-items: stretch; min-width: 0; gap: 5px; }
+.o-list-facets { display: flex; flex-wrap: wrap; align-items: center; min-width: 0; gap: 5px; }
 .o-list-facet {
   display: flex;
   min-width: 0;
-  width: 100%;
-  max-width: 100%;
+  width: auto;
+  max-width: min(100%, 360px);
   overflow: hidden;
   border: 1px solid var(--o-list-border);
   border-radius: 3px;

@@ -183,6 +183,16 @@ describe('Odoo ListView', () => {
     expect(menu.open).toBe(false);
   });
 
+  it('opens the filter menu with Ctrl/Cmd+Shift+F', () => {
+    const container = mount(create());
+    const menu = container.querySelector<HTMLDetailsElement>('.o-list-filter-menu')!;
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, shiftKey: true, bubbles: true }));
+
+    expect(menu.open).toBe(true);
+    expect(menu.querySelector('summary')?.getAttribute('aria-keyshortcuts')).toBe('Control+Shift+F');
+  });
+
   it('supports grouping, favorite filters, and bulk actions', async () => {
     const component = create({
       groupBy: [{ field: 'status', label: 'Status' }],

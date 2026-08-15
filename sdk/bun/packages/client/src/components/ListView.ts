@@ -524,17 +524,32 @@ export class ListView extends BaseComponent {
   private drawFilterMenu(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     if (!this.options.filters?.length && !this.options.dateRange && !this.options.groupBy?.length) return;
     const details = html.take(container).details.className('o-list-dropdown o-list-filter-menu').getContext() as HTMLDetailsElement;
-    const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', labels.filters).getContext();
+    const shortcutLabel = `${labels.filters} (Ctrl+Shift+F)`;
+    const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', shortcutLabel).attr('aria-keyshortcuts', 'Control+Shift+F').getContext();
     appendIcon(summary, 'chevron-down');
     const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
     const positionFilterMenu = () => {
       if (!details.open) return;
-      const bounds = details.getBoundingClientRect();
-      menu.style.top = `${Math.round(bounds.bottom + 4)}px`;
+      menu.style.top = '155px';
     };
     details.addEventListener('toggle', positionFilterMenu);
     window.addEventListener('resize', positionFilterMenu);
-    this.dismissCleanup.push(() => window.removeEventListener('resize', positionFilterMenu));
+    const onFilterShortcut = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (target instanceof HTMLElement && target.matches('input, textarea, select, [contenteditable="true"]')) return;
+      if (event.key.toLowerCase() !== 'f' || !event.shiftKey || !(event.ctrlKey || event.metaKey)) return;
+      event.preventDefault();
+      details.open = !details.open;
+      if (details.open) {
+        positionFilterMenu();
+        menu.querySelector<HTMLElement>('button, input')?.focus();
+      }
+    };
+    window.addEventListener('keydown', onFilterShortcut);
+    this.dismissCleanup.push(() => {
+      window.removeEventListener('resize', positionFilterMenu);
+      window.removeEventListener('keydown', onFilterShortcut);
+    });
 
     for (const filter of this.options.filters || []) {
       const group = html.take(menu).section.className('o-list-filter-group').getContext();
