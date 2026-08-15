@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
 
 export type AsyncSelectOption = { value: string; label: string };
@@ -56,7 +57,7 @@ export class AsyncSelect extends BaseComponent {
       const chip = html.take(this.selectedElement).span.className('async-select-chip').text(option.label).ele() as HTMLSpanElement;
       if (this.def.multiple) {
         html.take(chip).button.type('button').className('async-select-chip-remove')
-          .attr('aria-label', `Bỏ chọn ${option.label}`).text('×').event('click', () => {
+          .attr('aria-label', `${i18n.tKey('labels.remove', {}, 'Remove')} ${option.label}`).text('×').event('click', () => {
           this.selected = this.selected.filter(selected => selected !== option.value);
           this.syncValue();
           this.renderOptions();
@@ -81,7 +82,7 @@ export class AsyncSelect extends BaseComponent {
         });
     }
     if (!options.length) {
-      html.take(this.listElement).div.className('async-select-empty').text('Không tìm thấy lựa chọn');
+      html.take(this.listElement).div.className('async-select-empty').text(i18n.tKey('select.no_options', {}, 'No options found'));
     }
   }
 

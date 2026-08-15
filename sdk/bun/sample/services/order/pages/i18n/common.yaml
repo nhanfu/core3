@@ -1,0 +1,181 @@
+en:
+  errors.stale_record: Record was changed by another user. Reload it before saving.
+  errors.unauthorized: You are not authorized to perform this action.
+  errors.request_failed: Request failed.
+  errors.not_found: Record not found.
+  errors.invalid_transition: This status transition is not allowed.
+  errors.query_range_not_allowed: The requested date range is not allowed.
+  errors.missing_mutation: The workflow mutation is not configured.
+  errors.missing_status_query: The workflow status query is not configured.
+  auth.invalid_credentials: Invalid credentials.
+  auth.account_disabled: This account is disabled.
+  auth.invalid_token: The session is invalid or expired.
+  auth.invalid_current_password: The current password is incorrect.
+  actions.saved: Saved successfully.
+  labels.close: Close
+  labels.cancel: Cancel
+  labels.failed: Failed
+  labels.sending: Sending
+  labels.loading: Loading…
+  labels.retry: Retry
+  labels.select: Select…
+  labels.save: Save
+  labels.saving: Saving…
+  toast.saved: Saved
+  toast.error: Unable to complete
+  toast.warning: Not saved
+  toast.info: Notice
+  auth.credentials_required: Email and password are required.
+  auth.or_continue_with: Or continue with
+  chat.select_conversation: Select a conversation
+  chat.empty_messages: No messages yet. Start the conversation.
+  chat.messages: Messages
+  chat.active_conversation: Active conversation
+  files.upload_failed_title: Upload failed
+  files.upload_failed: Upload failed
+  files.download_failed_title: Download failed
+  files.download_failed: Download failed
+  files.image_attachment: Image attachment
+  labels.loading_image: Loading image…
+  labels.ok: OK
+  labels.apply: Apply
+  labels.send: Send
+  pagination.previous: Prev
+  pagination.next: Next
+  calendar.previous_month: Previous month
+  calendar.next_month: Next month
+  calendar.today: Today
+  search.field: Field
+  search.add_filter: Add Filter
+  search.choose_filter: Select at least one filter
+  search.placeholder: Search…
+  search.label: Search list
+  search.clear: Clear search
+  search.submit: Search
+  search.advanced: Advanced filters
+  date_range.label: Date range
+  files.selected: Selected file
+  files.attach: Attach file
+  files.change: Change file
+  chat.message_placeholder: Type a message…
+  chat.message_label: Message content
+  list.no_items: No items
+  list.group_by: Group By
+  list.no_grouping: No grouping
+  list.view: View
+  list.favorites: Favorites
+  list.no_records: No records found
+  labels.field: Field
+  labels.label: Label
+  analytics.no_data: No data
+  pivot.configure_hint: Configure the pivot to choose rows, columns, and measures.
+  pivot.configuration: Pivot configuration
+  pivot.rows: Rows
+  pivot.columns: Columns
+  pivot.measures: Measures
+  pivot.remove_measure: Remove measure
+  pivot.add_measure: Add measure
+  pivot.choose_measure: Select at least one measure
+  pivot.all_fields_added: All fields added
+  template.print: Print template
+  template.preview: Print template preview
+  template.empty: No content blocks yet.
+  labels.remove: Remove
+  select.no_options: No options found
+  schedule.employee: Employee
+  map.no_locations: No locations
+  chart.no_data: No chart data
+  qr.generate: Generate
+  errors.invalid_message: Invalid message.
+  errors.action_unavailable: The message action is unavailable.
+  errors.message_failed: Message failed.
+vi:
+  errors.stale_record: Dữ liệu đã được người dùng khác thay đổi. Hãy tải lại trước khi lưu.
+  errors.unauthorized: Bạn không có quyền thực hiện thao tác này.
+  errors.request_failed: Yêu cầu thất bại.
+  errors.not_found: Không tìm thấy dữ liệu.
+  errors.invalid_transition: Không được phép chuyển trạng thái này.
+  errors.query_range_not_allowed: Khoảng thời gian truy vấn không được phép.
+  errors.missing_mutation: Chưa cấu hình thao tác của quy trình.
+  errors.missing_status_query: Chưa cấu hình truy vấn trạng thái quy trình.
+  auth.invalid_credentials: Thông tin đăng nhập không hợp lệ.
+  auth.account_disabled: Tài khoản này đã bị vô hiệu hóa.
+  auth.invalid_token: Phiên đăng nhập không hợp lệ hoặc đã hết hạn.
+  auth.invalid_current_password: Mật khẩu hiện tại không đúng.
+  actions.saved: Đã lưu thành công.
+  labels.close: Đóng
+  labels.cancel: Hủy
+  labels.failed: Thất bại
+  labels.sending: Đang gửi
+  labels.loading: Đang tải…
+  labels.retry: Thử lại
+  labels.select: Chọn…
+  labels.save: Lưu
+  labels.saving: Đang lưu…
+  toast.saved: Đã lưu
+  toast.error: Không thể hoàn tất
+  toast.warning: Chưa lưu
+  toast.info: Thông báo
+  auth.credentials_required: Vui lòng nhập email và mật khẩu.
+  auth.or_continue_with: Hoặc tiếp tục với
+  chat.select_conversation: Chọn một cuộc trò chuyện
+  chat.empty_messages: Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.
+  chat.messages: Tin nhắn
+  chat.active_conversation: Cuộc trò chuyện đang hoạt động
+  files.upload_failed_title: Tải lên thất bại
+  files.upload_failed: Tải lên thất bại
+  files.download_failed_title: Tải xuống thất bại
+  files.image_attachment: Hình ảnh đính kèm
+  labels.loading_image: Đang tải hình ảnh…
+  labels.ok: Đồng ý
+  labels.apply: Áp dụng
+  labels.send: Gửi
+  pagination.previous: Trước
+  pagination.next: Sau
+  calendar.previous_month: Tháng trước
+  calendar.next_month: Tháng sau
+  calendar.today: Hôm nay
+  search.field: Trường
+  search.add_filter: Thêm bộ lọc
+  search.choose_filter: Chọn ít nhất một bộ lọc
+  search.placeholder: Tìm kiếm…
+  search.label: Tìm kiếm danh sách
+  search.clear: Xóa tìm kiếm
+  search.submit: Tìm kiếm
+  search.advanced: Bộ lọc nâng cao
+  date_range.label: Khoảng thời gian
+  files.selected: Tệp đã chọn
+  files.attach: Đính kèm tệp
+  files.change: Đổi tệp
+  chat.message_placeholder: Nhập tin nhắn…
+  chat.message_label: Nội dung tin nhắn
+  list.no_items: Không có mục nào
+  list.group_by: Nhóm theo
+  list.no_grouping: Không nhóm
+  list.view: Chế độ xem
+  list.favorites: Yêu thích
+  list.no_records: Không tìm thấy dữ liệu
+  labels.field: Trường
+  labels.label: Nhãn
+  analytics.no_data: Không có dữ liệu
+  pivot.configure_hint: Cấu hình pivot để chọn hàng, cột và chỉ số.
+  pivot.configuration: Cấu hình pivot
+  pivot.rows: Hàng
+  pivot.columns: Cột
+  pivot.measures: Chỉ số
+  pivot.remove_measure: Xóa chỉ số
+  pivot.add_measure: Thêm chỉ số
+  pivot.choose_measure: Chọn ít nhất một chỉ số
+  pivot.all_fields_added: Đã thêm tất cả trường
+  template.print: In mẫu
+  template.preview: Bản xem trước mẫu in
+  template.empty: Chưa có khối nội dung.
+  labels.remove: Bỏ chọn
+  select.no_options: Không tìm thấy lựa chọn
+  schedule.employee: Nhân viên
+  map.no_locations: Không có địa điểm
+  chart.no_data: Không có dữ liệu biểu đồ
+  qr.generate: Tạo mã
+  errors.invalid_message: Tin nhắn không hợp lệ.
+  errors.action_unavailable: Thao tác tin nhắn hiện không khả dụng.
+  errors.message_failed: Gửi tin nhắn thất bại.

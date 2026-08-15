@@ -1,6 +1,7 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 export type ListToolbarAction = {
   id: string;
@@ -79,14 +80,14 @@ export class ListToolbar extends BaseComponent {
       const input = html.take(searchWrap).input.type('search').ele() as HTMLInputElement;
       input.dataset.listSearch = 'true';
       html.take(input).className('token-input h-10 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100').prop('value', this.state.query || '');
-      html.take(input).prop('placeholder', searchDef.placeholder || 'Tìm kiếm…').attr('aria-label', searchDef.label || 'Tìm kiếm danh sách').event('input', () => this.setState({ query: input.value }, false)).event('keydown', event => {
+      html.take(input).prop('placeholder', searchDef.placeholder || i18n.tKey('search.placeholder', {}, 'Search…')).attr('aria-label', searchDef.label || i18n.tKey('search.label', {}, 'Search list')).event('input', () => this.setState({ query: input.value }, false)).event('keydown', event => {
         if (event.key === 'Enter') this.emitSearch(searchDef.action);
       });
 
       if (input.value) {
         const clear = html.take(searchWrap).button.type('button').className('absolute inset-y-0 right-2 px-1 text-slate-400 hover:text-slate-700').ele() as HTMLButtonElement;
         appendIcon(clear, 'x');
-        html.take(clear).attr('aria-label', 'Xóa tìm kiếm').event('click', () => {
+        html.take(clear).attr('aria-label', i18n.tKey('search.clear', {}, 'Clear search')).event('click', () => {
           this.setState({ query: '' });
           this.submit(searchDef.action || 'search', { query: '', value: '' });
         });
@@ -96,7 +97,7 @@ export class ListToolbar extends BaseComponent {
         const searchButton = html.take(searchControls).button.type('button').ele() as HTMLButtonElement;
         searchButton.dataset.listSearchSubmit = 'true';
         html.take(searchButton).className('token-control inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900');
-        html.take(searchButton).prop('title', 'Tìm kiếm').attr('aria-label', 'Tìm kiếm');
+        html.take(searchButton).prop('title', i18n.tKey('search.submit', {}, 'Search')).attr('aria-label', i18n.tKey('search.submit', {}, 'Search'));
         const buttonIcon = html.take(searchButton).span.ele() as HTMLSpanElement;
         appendIcon(buttonIcon, 'search');
         html.take(searchButton).event('click', () => this.emitSearch(searchDef.action));
@@ -126,15 +127,15 @@ export class ListToolbar extends BaseComponent {
           });
         };
         if (dateRange.preset_style === 'segmented') {
-          const segments = html.take(range).div.className('token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1').attr('aria-label', 'Khoảng thời gian').ele() as HTMLDivElement;
+          const segments = html.take(range).div.className('token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1').attr('aria-label', i18n.tKey('date_range.label', {}, 'Date range')).ele() as HTMLDivElement;
           for (const preset of presets) {
             const button = html.take(segments).button.type('button').ele() as HTMLButtonElement;
             button.dataset.datePreset = preset;
             html.take(button).className(`token-preset rounded px-2.5 py-1.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${this.state.preset === preset ? 'bg-blue-600 text-white' : 'text-slate-700'}`).text(labels[preset] || preset).event('click', () => submitPreset(preset));
           }
         } else {
-          const select = html.take(range).select.className('token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700').attr('aria-label', 'Khoảng thời gian').ele() as HTMLSelectElement;
-          html.take(select).option.prop('value', '').text('Khoảng thời gian');
+          const select = html.take(range).select.className('token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700').attr('aria-label', i18n.tKey('date_range.label', {}, 'Date range')).ele() as HTMLSelectElement;
+          html.take(select).option.prop('value', '').text(i18n.tKey('date_range.label', {}, 'Date range'));
           for (const preset of presets) {
             html.take(select).option.prop('value', preset).text(labels[preset] || preset);
           }
@@ -196,7 +197,7 @@ export class ListToolbar extends BaseComponent {
       if (collapseAdvanced) {
         const advancedButton = html.take(actionBar).button.type('button').ele() as HTMLButtonElement;
         html.take(advancedButton).className('token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900');
-        html.take(advancedButton).prop('title', 'Bộ lọc nâng cao');
+        html.take(advancedButton).prop('title', i18n.tKey('search.advanced', {}, 'Advanced filters'));
         html.take(advancedButton).attr('aria-label', advancedButton.title).attr('aria-expanded', 'false');
         const icon = html.take(advancedButton).span.ele() as HTMLSpanElement;
         appendIcon(icon, 'filter');

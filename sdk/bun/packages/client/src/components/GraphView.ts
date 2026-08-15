@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html, SvgTag } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 export type GraphViewDefinition = { id: 'graph'; label: string; icon?: string; categoryField: string; measureField?: string; type?: 'bar' | 'line'; };
 
@@ -12,7 +13,7 @@ export class GraphView extends BaseComponent {
     for (const row of rows) { const key = String(row[categoryField] ?? '—'); values.set(key, (values.get(key) || 0) + (measureField ? Number(row[measureField]) || 0 : 1)); }
     const entries = [...values.entries()];
     const root = html.take(container).div.className('o-graph-view').ele() as HTMLDivElement;
-    if (!entries.length) { html.take(root).toggleClass('o-analytics-empty', true).text('No data'); return; }
+    if (!entries.length) { html.take(root).toggleClass('o-analytics-empty', true).text(i18n.tKey('analytics.no_data', {}, 'No data')); return; }
     const max = Math.max(...entries.map(([, value]) => value), 1);
     const svg = html.take(root).svg(SvgTag.Svg).attr('viewBox', `0 0 ${Math.max(560, entries.length * 100)} 300`).attr('role', 'img').attr('aria-label', this.options.view.label).ele() as SVGSVGElement;
     entries.forEach(([label, value], index) => {

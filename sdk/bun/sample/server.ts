@@ -68,8 +68,13 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
-function apiError(status: number, message: string, code?: string): Response {
-  return new Response(JSON.stringify({ error: message, ...(code ? { code } : {}) }), {
+function apiError(status: number, message: string, code?: string, messageKey?: string, messageParams?: Record<string, unknown>): Response {
+  return new Response(JSON.stringify({
+    error: message,
+    ...(code ? { code } : {}),
+    message_key: messageKey || (code ? `errors.${String(code).toLowerCase()}` : `errors.http_${status}`),
+    ...(messageParams ? { message_params: messageParams } : {}),
+  }), {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
   });
@@ -226,7 +231,7 @@ Bun.serve({
         return response ?? apiError(404, 'API route not found');
       } catch (error) {
         const failure = error as any;
-        if (failure?.status) return apiError(failure.status, failure.message, failure.code);
+        if (failure?.status) return apiError(failure.status, failure.message, failure.code, failure.message_key, failure.message_params);
         console.error('[API error]', error);
         return apiError(500, 'Internal server error');
       }

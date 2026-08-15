@@ -18,6 +18,22 @@ export type PermissionDefinition = { module: string; file: string; config: any }
 export type DiscoveredWorkflow = { id: string; module: string; file: string; config: WorkflowDefinition };
 export type PageRoute = { path: string; page: string; module: string };
 
+export function validateTranslationCatalogs(catalogs: Map<string, TranslationCatalog>): void {
+  for (const [catalogId, catalog] of catalogs) {
+    if (!catalog || typeof catalog !== 'object' || Array.isArray(catalog)) {
+      throw new Error(`Translation catalog ${catalogId} must be a language map`);
+    }
+    for (const [language, values] of Object.entries(catalog)) {
+      if (!/^[a-z]{2}(?:-[A-Z]{2})?$/.test(language)) throw new Error(`Invalid translation language "${language}" in ${catalogId}`);
+      if (!values || typeof values !== 'object' || Array.isArray(values)) throw new Error(`Translation language ${language} in ${catalogId} must be a string map`);
+      for (const [key, value] of Object.entries(values)) {
+        if (!key.trim()) throw new Error(`Empty translation key in ${catalogId}:${language}`);
+        if (typeof value !== 'string') throw new Error(`Translation ${catalogId}:${language}:${key} must be a string`);
+      }
+    }
+  }
+}
+
 function routeItems(value: any, result: any[] = []) {
   if (!value || typeof value !== 'object') return result;
   if (typeof value.path === 'string') result.push(value);
@@ -179,6 +195,7 @@ export function discoverPages(appsRoot: string) {
       }
     }
   }
+  validateTranslationCatalogs(catalogs);
   return { pages, datasources, catalogs, menus, permissions, workflows };
 }
 

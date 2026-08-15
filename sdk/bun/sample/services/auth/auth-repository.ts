@@ -81,14 +81,14 @@ export class AuthRepository {
       const current = await this.profile(userId);
       if (!current) throw { status: 404, message: 'User not found' };
       if (String(current.row_version) === String(params.expected_row_version)) {
-        throw { status: 409, code: 'STALE_RECORD', message: 'Profile was changed by another user. Reload it before saving.' };
+        throw { status: 409, code: 'STALE_RECORD', message_key: 'errors.stale_record', message: 'Profile was changed by another user. Reload it before saving.' };
       }
       return;
     }
     if (changed === 0) {
       const current = await this.profile(userId);
       if (!current) throw { status: 404, message: 'User not found' };
-      throw { status: 409, code: 'STALE_RECORD', message: 'Profile was changed by another user. Reload it before saving.' };
+      throw { status: 409, code: 'STALE_RECORD', message_key: 'errors.stale_record', message: 'Profile was changed by another user. Reload it before saving.' };
     }
   }
 

@@ -3,6 +3,11 @@ class I18n {
   _cache: Map<string, Record<string, string>> = new Map(); // 'en:fleet' → { text: translated, ... }
   _listeners: Set<(lang: string) => void> = new Set();
   _menuModules: any[] = [];
+  _currentPage = '*';
+  _missingKeys: Set<string> = new Set();
+
+  get missingKeys() { return [...this._missingKeys].sort(); }
+  clearMissingKeys() { this._missingKeys.clear(); }
 
   get menuModules() {
     return this._menuModules;
@@ -51,6 +56,7 @@ class I18n {
   }
 
   hydrate(page: string, payload: { lang?: string; page?: Record<string, string>; global?: Record<string, string> } = {}) {
+    this._currentPage = page;
     const lang = payload.lang || this.lang;
     if (lang !== this.lang) {
       this.lang = lang;
@@ -59,6 +65,29 @@ class I18n {
     }
     if (payload.page) this._cache.set(`${lang}:${page}`, payload.page);
     if (payload.global) this._cache.set(`${lang}:*`, payload.global);
+    // Accept the pre-structured auth-page response during rolling upgrades.
+    if (!payload.page && !payload.global) {
+      const legacy = payload as unknown as Record<string, string>;
+      const values = Object.fromEntries(Object.entries(legacy).filter(([key, value]) => key !== 'lang' && typeof value === 'string'));
+      if (Object.keys(values).length) this._cache.set(`${lang}:${page}`, values);
+    }
+  }
+
+  /** Translate a stable catalog key, with optional `{name}` interpolation. */
+  tKey(key: string, params: Record<string, unknown> = {}, fallback = key): string {
+    const pageBucket = this._cache.get(`${this.lang}:${this._currentPage}`) || {};
+    const globalBucket = this._cache.get(`${this.lang}:*`) || {};
+    const value = pageBucket[key] ?? globalBucket[key] ?? fallback;
+    if (pageBucket[key] === undefined && globalBucket[key] === undefined) this._missingKeys.add(`${this.lang}:${key}`);
+    return String(value).replace(/\{\{?\s*([\w.-]+)\s*\}?\}/g, (match, name) => {
+      const replacement = params[name];
+      return replacement === undefined || replacement === null ? match : String(replacement);
+    });
+  }
+
+  /** Translate legacy source text while catalogs migrate to stable keys. */
+  text(source: string, fallback = source): string {
+    return this.t(this._currentPage, null, source) || fallback;
   }
 
   translatePageConfig(page: string, config: any) {

@@ -10,6 +10,7 @@ import { PageDetailRenderers } from '@core3/client/components/PageDetailRenderer
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from '@core3/client/components/Dialog';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
+import { i18n } from '@core3/client/i18n';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 import { html } from '@core3/client/html';
 
@@ -412,10 +413,13 @@ export class PageRuntime extends BaseComponent {
             ...(options.body && typeof options.body !== 'string' ? { body: JSON.stringify(options.body) } : {}),
           });
           const result = await response.json().catch(() => ({}));
-          if (!response.ok) throw new Error(result.error || 'Request failed');
+          if (!response.ok) {
+            const fallback = result.error || result.message || i18n.tKey('errors.request_failed', {}, 'Request failed');
+            const message = result.message_key ? i18n.tKey(String(result.message_key), result.message_params || {}, fallback) : fallback;
+            throw Object.assign(new Error(message), { status: response.status, code: result.code, messageKey: result.message_key, messageParams: result.message_params });
+          }
           return result;
         };
-        const { i18n } = await import('@core3/client/i18n');
         const { navigate: appNavigate } = await import(/* @vite-ignore */ ['/app.ts'].join(''));
         await fn({
           user: ctx.user,
@@ -545,7 +549,7 @@ export class PageRuntime extends BaseComponent {
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
           return result;
         } catch (error) {
-          await showMessageDialog({ title: 'Upload failed', message: error instanceof Error ? error.message : 'Upload failed', confirmLabel: 'OK' });
+          await showMessageDialog({ title: i18n.tKey('files.upload_failed_title', {}, 'Upload failed'), message: error instanceof Error ? error.message : i18n.tKey('files.upload_failed', {}, 'Upload failed'), confirmLabel: i18n.tKey('labels.ok', {}, 'OK') });
         }
         break;
       }
@@ -567,7 +571,7 @@ export class PageRuntime extends BaseComponent {
             String(row.file_name || 'attachment'),
           );
         } catch (error) {
-          await showMessageDialog({ title: 'Download failed', message: error instanceof Error ? error.message : 'Download failed', confirmLabel: 'OK' });
+          await showMessageDialog({ title: i18n.tKey('files.download_failed_title', {}, 'Download failed'), message: error instanceof Error ? error.message : i18n.tKey('files.download_failed', {}, 'Download failed'), confirmLabel: i18n.tKey('labels.ok', {}, 'OK') });
         }
         break;
       }

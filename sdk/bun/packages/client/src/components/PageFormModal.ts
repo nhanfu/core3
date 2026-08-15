@@ -4,6 +4,7 @@ import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
+import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
 
 export class PageFormModal extends BaseComponent {
@@ -41,8 +42,8 @@ export class PageFormModal extends BaseComponent {
         const closeBtn = html.take(header).button.className('form-close').ele() as HTMLButtonElement;
         appendIcon(closeBtn, 'x');
         html.take(closeBtn).type('button');
-        html.take(closeBtn).attr('aria-label', 'Đóng');
-        html.take(closeBtn).prop('title', 'Đóng');
+        html.take(closeBtn).attr('aria-label', i18n.tKey('labels.close', {}, 'Close'));
+        html.take(closeBtn).prop('title', i18n.tKey('labels.close', {}, 'Close'));
 
 
         // Fields
@@ -110,7 +111,7 @@ export class PageFormModal extends BaseComponent {
             }
 
             if (!fieldDef.multiple) {
-              html.take(el).option.prop('value', '').replaceText('Chọn…');
+              html.take(el).option.prop('value', '').replaceText(i18n.tKey('labels.select', {}, 'Chọn…'));
             }
 
             const optionRows = fieldDef.options_source
@@ -174,11 +175,11 @@ export class PageFormModal extends BaseComponent {
 
         const cancelBtn = html.take(footer).button.ele() as HTMLButtonElement;
         html.take(cancelBtn).type('button');
-        html.take(cancelBtn).className('btn btn-secondary').replaceText('Hủy');
+        html.take(cancelBtn).className('btn btn-secondary').replaceText(i18n.tKey('labels.cancel', {}, 'Cancel'));
 
         const saveBtn = html.take(footer).button.ele() as HTMLButtonElement;
         html.take(saveBtn).type('button');
-        html.take(saveBtn).className('btn btn-primary').replaceText('Lưu');
+        html.take(saveBtn).className('btn btn-primary').replaceText(i18n.tKey('labels.save', {}, 'Save'));
 
 
         // Error banner (created lazily)
@@ -233,7 +234,7 @@ export class PageFormModal extends BaseComponent {
                 : el.value,
           }));
 
-          html.take(saveBtn).prop('disabled', true).replaceText('Đang lưu…');
+              html.take(saveBtn).prop('disabled', true).replaceText(i18n.tKey('labels.saving', {}, 'Saving…'));
           try {
             if (actionDef.type === 'server_form') {
               const actionContext = { ...ctx, row: row || {} };
@@ -260,7 +261,7 @@ export class PageFormModal extends BaseComponent {
           } catch (err: any) {
             console.error('[page-renderer] patch error:', err);
             showToast(err.message || 'Lưu thất bại. Vui lòng thử lại.', toastTypeForError(err));
-            html.take(saveBtn).prop('disabled', false).replaceText('Lưu');
+            html.take(saveBtn).prop('disabled', false).replaceText(i18n.tKey('labels.save', {}, 'Save'));
           }
         });
       });

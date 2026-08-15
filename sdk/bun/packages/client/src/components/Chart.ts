@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class Chart extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -28,7 +29,7 @@ export class Chart extends BaseComponent {
       .ele();
 
     if (!data.length) {
-      html.take(wrap).p.className('text-sm text-gray-400 py-8 w-full text-center').text('Không có dữ liệu biểu đồ');
+      html.take(wrap).p.className('text-sm text-gray-400 py-8 w-full text-center').text(i18n.tKey('chart.no_data', {}, 'No chart data'));
       return;
     }
 

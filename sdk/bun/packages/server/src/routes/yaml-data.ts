@@ -22,7 +22,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
     try {
       return json(await prefetchedPageConfig(page, url, authUser), 200, pageCacheHeaders(url));
     } catch (error: any) {
-      if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message);
+      if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message, error.code, 'errors.query_range_not_allowed');
       throw error;
     }
   }
@@ -47,7 +47,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
         view_scope: String(authUser.view_scope || 'all'),
       }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
     } catch (error: any) {
-      if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message);
+      if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message, error.code, 'errors.query_range_not_allowed');
       throw error;
     }
   }

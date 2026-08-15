@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { i18n } from '@core3/client/i18n';
 
 /** Declarative authentication form used by YAML pages. */
 export class LoginForm extends BaseComponent {
@@ -35,7 +36,7 @@ export class LoginForm extends BaseComponent {
       const email = emailInput.value.trim();
       const password = passwordInput.value;
       if (!email || !password) {
-        html.take(errorEl).replaceText(d.required_message || 'Email and password are required.').css('display', 'block');
+        html.take(errorEl).replaceText(d.required_message || i18n.tKey('auth.credentials_required', {}, 'Email and password are required.')).css('display', 'block');
         return;
       }
       html.take(button).prop('disabled', true).innerHTML(`<span class="spinner"></span> ${d.loading_label || ''}`);
@@ -56,7 +57,7 @@ export class LoginForm extends BaseComponent {
     const providers = Array.isArray(d.providers) ? d.providers : [];
     if (providers.length) {
       const divider = html.take(card).div.className('login-provider-divider').ele();
-      html.take(divider).span.text(d.provider_divider || 'Or continue with');
+      html.take(divider).span.text(d.provider_divider || i18n.tKey('auth.or_continue_with', {}, 'Or continue with'));
       const providerList = html.take(card).div.className('login-providers').ele();
       for (const provider of providers) {
         if (!provider?.action || !provider?.label) continue;

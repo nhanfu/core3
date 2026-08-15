@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { i18n } from '@core3/client/i18n';
 
 export class PopupEditor extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -28,7 +29,7 @@ export class PopupEditor extends BaseComponent {
     html.take(header).h3.className('text-base font-semibold text-gray-900').text(title);
     const close = html.take(header)
       .button.className('text-gray-400 hover:text-gray-600 text-xl leading-none')
-      .attr('aria-label', 'Đóng')
+      .attr('aria-label', i18n.tKey('labels.close', {}, 'Close'))
       .ele();
     appendIcon(close, 'x');
     html.take(close).event('click', () => this.setState({ open: false }));

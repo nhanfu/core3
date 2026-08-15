@@ -7,6 +7,7 @@ import { NumberCell } from '@core3/client/components/NumberCell';
 import { DateCell } from '@core3/client/components/DateCell';
 import { BooleanCell } from '@core3/client/components/BooleanCell';
 import { ActionCell } from '@core3/client/components/ActionCell';
+import { i18n } from '@core3/client/i18n';
 
 const CELL_MAP = { TextCell, BadgeCell, CurrencyCell, NumberCell, DateCell, BooleanCell, ActionCell };
 
@@ -57,7 +58,7 @@ export class GroupGridView extends BaseComponent {
       html.take(tbody).trow
         .tdata.attr('colspan', String(this.defs.length))
           .className('px-4 py-10 text-center text-sm text-gray-400')
-          .text('No records found');
+          .text(i18n.tKey('list.no_records', {}, 'No records found'));
     } else {
       const groups = new Map();
       for (const row of rows) {

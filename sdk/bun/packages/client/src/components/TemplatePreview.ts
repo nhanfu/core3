@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 import { appendIcon } from '@core3/client/components/Icon';
 
 type TemplatePreviewState = {
@@ -32,18 +33,18 @@ export class TemplatePreview extends BaseComponent {
     const printButton = html.take(header).button
       .className('inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50')
       .attr('type', 'button')
-      .attr('aria-label', 'In mẫu')
+      .attr('aria-label', i18n.tKey('template.print', {}, 'Print template'))
       .ele();
     appendIcon(printButton, 'printer');
-    html.take(printButton).span.text('In mẫu');
+    html.take(printButton).span.text(i18n.tKey('template.print', {}, 'Print template'));
     html.take(printButton).event('click', () => window.print());
 
     const paper = html.take(root).div
       .className('template-preview-paper mt-4 min-h-[180px] rounded-md border border-dashed border-gray-300 bg-gray-50 p-6')
-      .attr('aria-label', 'Bản xem trước mẫu in')
+      .attr('aria-label', i18n.tKey('template.preview', {}, 'Print template preview'))
       .ele();
     if (!blocks.length) {
-      html.take(paper).p.className('text-sm text-gray-500').text('Chưa có khối nội dung.');
+      html.take(paper).p.className('text-sm text-gray-500').text(i18n.tKey('template.empty', {}, 'No content blocks yet.'));
       return;
     }
     for (const block of blocks) {

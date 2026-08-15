@@ -9,6 +9,7 @@ import { PivotView, type PivotViewDefinition } from '@core3/client/components/Pi
 import { GraphView, type GraphViewDefinition } from '@core3/client/components/GraphView';
 import { MapView, type MapViewDefinition } from '@core3/client/components/MapView';
 import { DateRangeFilterTag } from '@core3/client/components/DateRangeFilterTag';
+import { i18n } from '@core3/client/i18n';
 
 type ListRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';
@@ -175,7 +176,7 @@ export class ListView extends BaseComponent {
     }
 
     if (!items?.length) {
-      html.take(container).div.className('py-8 text-center text-sm text-gray-400').text('No items');
+      html.take(container).div.className('py-8 text-center text-sm text-gray-400').text(i18n.tKey('list.no_items', {}, 'No items'));
       return;
     }
 
@@ -597,8 +598,8 @@ export class ListView extends BaseComponent {
 
     if (this.options.groupBy?.length) {
       const group = html.take(menu).section.className('o-list-filter-group').ele();
-      html.take(group).h4.text('Group By');
-      const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text('No grouping').ele();
+      html.take(group).h4.text(i18n.tKey('list.group_by', {}, 'Group By'));
+      const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text(i18n.tKey('list.no_grouping', {}, 'No grouping')).ele();
       clear.dataset.groupBy = '';
       html.take(clear).event('click', () => this.setGroupBy(null));
       for (const option of this.options.groupBy) {
@@ -649,7 +650,7 @@ export class ListView extends BaseComponent {
 
     const views = this.options.views || [];
     if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
-      const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').ele();
+      const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
       const activeView = this.activeView();
       for (const view of views) {
         const mobileCardView = views.some(candidate => candidate.id === 'card');
@@ -706,7 +707,7 @@ export class ListView extends BaseComponent {
     }
     if (this.options.favorites?.length) {
       const group = html.take(menu).section.className('o-list-favorites-menu').ele();
-      html.take(group).h4.text('Favorites');
+      html.take(group).h4.text(i18n.tKey('list.favorites', {}, 'Favorites'));
       for (const favorite of this.options.favorites) {
         const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).ele();
         html.take(button).event('click', () => {
@@ -723,7 +724,7 @@ export class ListView extends BaseComponent {
     // FormView is an inline/detail presentation, not a collection view tab.
     const views = (this.options.views || []).filter(view => view.id !== 'form');
     if (views.length <= 1) return;
-    const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', 'View').ele();
+    const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
     for (const view of views) {
       const tab = html.take(tabList).button
         .className(this.isViewEnabled(view.id) ? 'is-active' : '')

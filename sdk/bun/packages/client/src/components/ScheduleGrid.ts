@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
 
 function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
@@ -73,7 +74,7 @@ export class ScheduleGrid extends BaseComponent {
 
     const thead = html.take(table).thead.ele() as HTMLTableSectionElement;
     const header = html.take(thead).trow.ele() as HTMLTableRowElement;
-    html.take(header).th.prop('scope', 'col').replaceText('Nhân viên');
+      html.take(header).th.prop('scope', 'col').replaceText(i18n.tKey('schedule.employee', {}, 'Employee'));
     for (const date of dates) {
       html.take(header).th.prop('scope', 'col').replaceText(this.formatDate(date)).attr('data-schedule-date', date);
     }

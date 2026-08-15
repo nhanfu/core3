@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class CompareGridView extends BaseComponent {
   constructor(id, state, fields = []) {
@@ -14,7 +15,7 @@ export class CompareGridView extends BaseComponent {
     const table    = html.take(outerDiv).table.className('min-w-full divide-y divide-gray-200').ele();
     const theadRow = html.take(table).thead.className('bg-gray-50').trow.ele();
 
-    html.take(theadRow).th.className('px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap').text('Field');
+    html.take(theadRow).th.className('px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap').text(i18n.tKey('labels.field', {}, 'Field'));
     html.take(theadRow).th.className('px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap').text(leftLabel);
     html.take(theadRow).th.className('px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap').text(rightLabel);
 

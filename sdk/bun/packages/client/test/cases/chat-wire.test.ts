@@ -13,6 +13,12 @@ describe('binary chat wire', () => {
     });
   });
 
+  it('carries structured server error metadata for localized chat failures', () => {
+    expect(decodeChatFrame(encodeChatFrame({
+      type: 'chat_error', error: 'Record was changed', error_code: 'STALE_RECORD', error_message_key: 'errors.stale_record',
+    }))).toMatchObject({ type: 'chat_error', error: 'Record was changed', error_code: 'STALE_RECORD', error_message_key: 'errors.stale_record' });
+  });
+
   it('round trips nested messages and numeric attachment metadata', () => {
     const message = {
       id: 'message-1', thread_id: 'thread-1', sender_id: 'user-1', sender_name: 'A', body: 'file',

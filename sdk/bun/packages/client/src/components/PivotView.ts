@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
   return html.node(tag) as HTMLElementTagNameMap[K];
@@ -42,7 +43,7 @@ export class PivotView extends BaseComponent {
       html.take(root).p.className('o-analytics-error').replaceText(String(this.state.pivotError)); return;
     }
     if (!view.measures?.length) {
-      html.take(root).p.className('o-analytics-empty').replaceText('Configure the pivot to choose rows, columns, and measures.'); return;
+      html.take(root).p.className('o-analytics-empty').replaceText(i18n.tKey('pivot.configure_hint', {}, 'Configure the pivot to choose rows, columns, and measures.')); return;
     }
     const columns = rows.length ? Object.keys(rows[0]) : [];
     const columnDescriptors = this.pivotColumnDescriptors(columns, view);
@@ -63,7 +64,7 @@ export class PivotView extends BaseComponent {
       const tr = html.take(body).trow.ele() as HTMLTableRowElement;
       for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);
     }
-    if (!rows.length) { html.take(root).p.className('o-analytics-empty').replaceText('No data'); return; }
+    if (!rows.length) { html.take(root).p.className('o-analytics-empty').replaceText(i18n.tKey('analytics.no_data', {}, 'No data')); return; }
   }
 
   private addCell(row: HTMLTableRowElement, text: string | number, kind: 'th' | 'td') {
@@ -202,13 +203,13 @@ export class PivotView extends BaseComponent {
     const view = this.options.view;
     const fields = view.fields || [];
     const builder = html.take(container).section.className('o-pivot-builder').ele() as HTMLElement;
-    html.take(builder).h3.replaceText('Pivot configuration');
+    html.take(builder).h3.replaceText(i18n.tKey('pivot.configuration', {}, 'Pivot configuration'));
     const grid = html.take(builder).div.className('o-pivot-builder-grid').ele() as HTMLElement;
     const dateRanges: Record<string, string> = { ...(view.dateRanges || {}) };
-    const rowsAxis = this.axisEditor(grid, 'Rows', fields, view.rowFields || [], dateRanges);
-    const columnsAxis = this.axisEditor(grid, 'Columns', fields, view.columnFields || [], dateRanges);
+    const rowsAxis = this.axisEditor(grid, i18n.tKey('pivot.rows', {}, 'Rows'), fields, view.rowFields || [], dateRanges);
+    const columnsAxis = this.axisEditor(grid, i18n.tKey('pivot.columns', {}, 'Columns'), fields, view.columnFields || [], dateRanges);
     const measureSection = html.take(builder).div.className('o-pivot-measures').ele() as HTMLElement;
-    html.take(measureSection).label.replaceText('Measures');
+    html.take(measureSection).label.replaceText(i18n.tKey('pivot.measures', {}, 'Measures'));
     const measureHost = html.take(measureSection).div.className('o-pivot-measure-list').ele() as HTMLElement;
     const measures = (view.measures || []).map(measure => ({ ...measure }));
     const drawMeasures = () => {
@@ -219,8 +220,8 @@ export class PivotView extends BaseComponent {
         this.addOptions(field, fields, measure.field || '');
         const aggregate = html.take(row).select.attr('aria-label', `Measure ${index + 1} aggregation`).ele() as HTMLSelectElement;
         this.addOptions(aggregate, ['count', 'sum', 'avg', 'min', 'max'], measure.aggregate || 'sum');
-        const label = html.take(row).input.type('text').prop('placeholder', 'Label').prop('value', measure.label || '').ele() as HTMLInputElement;
-        const remove = html.take(row).button.type('button').className('o-pivot-remove').replaceText('×').prop('title', 'Remove measure').ele() as HTMLButtonElement;
+        const label = html.take(row).input.type('text').prop('placeholder', i18n.tKey('labels.label', {}, 'Label')).prop('value', measure.label || '').ele() as HTMLInputElement;
+        const remove = html.take(row).button.type('button').className('o-pivot-remove').replaceText('×').prop('title', i18n.tKey('pivot.remove_measure', {}, 'Remove measure')).ele() as HTMLButtonElement;
         html.take(field).event('change', () => { measure.field = field.value || undefined; });
         html.take(aggregate).event('change', () => { measure.aggregate = aggregate.value; });
         html.take(label).event('input', () => { measure.label = label.value || undefined; });
@@ -228,9 +229,9 @@ export class PivotView extends BaseComponent {
       });
     };
     drawMeasures();
-    html.take(measureSection).button.type('button').className('o-pivot-add').replaceText('+ Add measure').event('click', () => { measures.push({ field: fields[0], aggregate: 'sum', label: fields[0] }); drawMeasures(); });
+    html.take(measureSection).button.type('button').className('o-pivot-add').replaceText(`+ ${i18n.tKey('pivot.add_measure', {}, 'Add measure')}`).event('click', () => { measures.push({ field: fields[0], aggregate: 'sum', label: fields[0] }); drawMeasures(); });
     const actions = html.take(builder).div.className('o-pivot-builder-actions').ele() as HTMLElement;
-    html.take(actions).button.type('button').className('o-pivot-apply').replaceText('Apply').event('click', () => {
+    html.take(actions).button.type('button').className('o-pivot-apply').replaceText(i18n.tKey('labels.apply', {}, 'Apply')).event('click', () => {
       const request = {
         rows: rowsAxis.values(),
         columns: columnsAxis.values(),
@@ -238,7 +239,7 @@ export class PivotView extends BaseComponent {
         ...((Object.keys({ ...rowsAxis.ranges(), ...columnsAxis.ranges() }).length) ? { ranges: { ...rowsAxis.ranges(), ...columnsAxis.ranges() } } : {}),
       };
       if (!request.measures.length) {
-        html.take(builder).p.className('o-analytics-error').replaceText('Select at least one measure'); return;
+        html.take(builder).p.className('o-analytics-error').replaceText(i18n.tKey('pivot.choose_measure', {}, 'Select at least one measure')); return;
       }
       view.rowFields = request.rows; view.columnFields = request.columns; view.measures = request.measures;
       this.options.onChange?.(request);
@@ -276,7 +277,7 @@ export class PivotView extends BaseComponent {
       fields.filter(field => !values.includes(field)).forEach(field => {
         html.take(available).button.type('button').className('o-pivot-add-field').replaceText(`+ ${this.options.view.fieldLabels?.[field] || field}`).prop('title', `Add ${field}`).event('click', () => { values.push(field); render(); });
       });
-      if (!available.childElementCount) html.take(available).span.className('o-pivot-axis-hint').replaceText('All fields added');
+      if (!available.childElementCount) html.take(available).span.className('o-pivot-axis-hint').replaceText(i18n.tKey('pivot.all_fields_added', {}, 'All fields added'));
     };
     render();
     return { values: () => [...values], ranges: () => ({ ...ranges }) };

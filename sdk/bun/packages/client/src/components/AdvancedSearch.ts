@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { i18n } from '@core3/client/i18n';
 
 export class AdvancedSearch extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -25,7 +26,7 @@ export class AdvancedSearch extends BaseComponent {
       const fieldSel = html.take(row)
         .select.className('text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
         .ele();
-      html.take(fieldSel).option.value('').text('Field');
+      html.take(fieldSel).option.value('').text(i18n.tKey('search.field', {}, 'Field'));
       for (const f of fields) {
         const opt = html.take(fieldSel).option.value(f).text(f).ele();
         if (filter.field === f) html.take(opt).attr('selected', '');
@@ -70,7 +71,7 @@ export class AdvancedSearch extends BaseComponent {
 
     const addBtn = html.take(actions).button
       .className('text-sm px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 hover:border-indigo-500 hover:text-indigo-600 rounded-md transition-colors')
-      .text('+ Add Filter')
+      .text(`+ ${i18n.tKey('search.add_filter', {}, 'Add Filter')}`)
       .ele();
     html.take(addBtn).event('click', () => {
       const newFilters = [...this.state.filters, { field: '', operator: 'equals', value: '' }];
@@ -79,7 +80,7 @@ export class AdvancedSearch extends BaseComponent {
 
     const applyBtn = html.take(actions).button
       .className('ml-auto text-sm px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium')
-      .text('Apply')
+      .text(i18n.tKey('labels.apply', {}, 'Apply'))
       .ele();
     html.take(applyBtn).event('click', () => {
       this.submit('search.filter', { filters: this.state.filters });

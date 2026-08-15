@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 function drawPlaceholder(canvasEl, size) {
   const ctx = canvasEl.getContext('2d');
@@ -71,7 +72,7 @@ export class QrCode extends BaseComponent {
 
     const genBtn = html.take(wrap).button
       .className('text-sm px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium')
-      .text('Generate')
+      .text(i18n.tKey('qr.generate', {}, 'Generate'))
       .ele();
     html.take(genBtn).event('click', () => {
       this.submit('qr.generate', { value: this.state.value });

@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class FormPanel extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -73,7 +74,7 @@ export class FormPanel extends BaseComponent {
     if (saving) {
       const savDiv = html.take(panel).div.className('mb-3 text-sm text-indigo-600 flex items-center gap-2').ele();
       html.take(savDiv).span.className('animate-spin inline-block').text('⟳');
-      html.take(savDiv).text(' Saving…');
+      html.take(savDiv).text(` ${i18n.tKey('labels.saving', {}, 'Saving…')}`);
     }
 
     html.take(panel).div.className('flex flex-col gap-4').dataAttr('form-fields', '');

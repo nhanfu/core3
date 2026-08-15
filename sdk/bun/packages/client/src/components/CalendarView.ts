@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 type CalendarRow = Record<string, unknown>;
 
@@ -34,15 +35,15 @@ export class CalendarView extends BaseComponent {
     const month = this.monthFromState();
     const root = html.take(container).section.className('o-calendar-view').ele();
     const toolbar = html.take(root).header.className('o-calendar-toolbar').ele();
-    const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Previous month').text('‹').ele();
+    const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', i18n.tKey('calendar.previous_month', {}, 'Previous month')).text('‹').ele();
     html.take(previous).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() - 1));
     html.take(toolbar).h2.className('o-calendar-title').text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(month));
-    const today = html.take(toolbar).button.className('o-calendar-today').text('Today').ele();
+    const today = html.take(toolbar).button.className('o-calendar-today').text(i18n.tKey('calendar.today', {}, 'Today')).ele();
     html.take(today).event('click', () => {
       const now = new Date();
       this.setMonth(now.getFullYear(), now.getMonth());
     });
-    const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Next month').text('›').ele();
+    const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', i18n.tKey('calendar.next_month', {}, 'Next month')).text('›').ele();
     html.take(next).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() + 1));
 
     const grid = html.take(root).div.className('o-calendar-grid').attr('role', 'grid').ele();

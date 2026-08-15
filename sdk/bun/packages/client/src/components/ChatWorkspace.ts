@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
 import { html } from '@core3/client/html';
 
@@ -18,7 +19,7 @@ function formatTimestamp(value: unknown) {
   if (!value) return '';
   const date = new Date(String(value));
   if (Number.isNaN(date.valueOf())) return String(value);
-  return new Intl.DateTimeFormat('vi-VN', {
+  return new Intl.DateTimeFormat(i18n.lang || 'en', {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -76,7 +77,14 @@ export class ChatWorkspace extends BaseComponent {
         { ...pending, id: payload.message_id || pending.id, pending: false, client_message_id: undefined },
       ];
     } else {
-      remaining.push({ ...pending, pending: false, failed: true, error: payload.error || 'Message failed' });
+      const fallback = payload.error || i18n.tKey('errors.message_failed', {}, 'Message failed');
+      remaining.push({
+        ...pending,
+        pending: false,
+        failed: true,
+        error: payload.error_message_key ? i18n.tKey(payload.error_message_key, {}, fallback) : fallback,
+        error_code: payload.error_code,
+      });
     }
     this.state.pendingMessages = remaining;
     this.redraw();
@@ -191,7 +199,7 @@ export class ChatWorkspace extends BaseComponent {
 
     const sidebar = html.take(root).aside.className('chat-sidebar flex min-w-0 flex-col border-r').ele() as HTMLElement;
     const sidebarHeader = html.take(sidebar).div.className('chat-sidebar-header').ele() as HTMLElement;
-    html.take(sidebarHeader).strong.className('chat-sidebar-title').text('Messages');
+    html.take(sidebarHeader).strong.className('chat-sidebar-title').text(i18n.tKey('chat.messages', {}, 'Messages'));
     const search = html.take(sidebarHeader).input.className('chat-search form-input w-full').ele() as HTMLInputElement;
     html.take(search).type('search').prop('value', String(this.state.query || ''));
     const searchPlaceholder = String(this.def.search_placeholder || 'Search conversations...');
@@ -253,7 +261,7 @@ export class ChatWorkspace extends BaseComponent {
 
     const main = html.take(root).div.className('chat-main flex min-w-0 flex-col').ele() as HTMLElement;
     if (!activeThread) {
-      html.take(main).div.className('chat-empty flex flex-1 items-center justify-center p-8 text-center text-sm').text(String(this.def.empty_messages || 'Select a conversation'));
+      html.take(main).div.className('chat-empty flex flex-1 items-center justify-center p-8 text-center text-sm').text(String(this.def.empty_messages || i18n.tKey('chat.select_conversation', {}, 'Select a conversation')));
       return;
     }
 
@@ -263,7 +271,7 @@ export class ChatWorkspace extends BaseComponent {
     const headerCopy = html.take(headerIdentity).div.className('min-w-0').ele() as HTMLElement;
     html.take(headerCopy).h2.className('truncate').text(String(activeThread.title || ''));
     html.take(headerCopy).p.className('truncate').text(String(activeThread.participant_names || ''));
-    html.take(mainHeader).span.className('chat-online-status').text('● Active conversation');
+    html.take(mainHeader).span.className('chat-online-status').text(`● ${i18n.tKey('chat.active_conversation', {}, 'Active conversation')}`);
 
     const messageList = html.take(main).div.className('chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5').ele() as HTMLElement;
     const activeMessages = [
@@ -271,7 +279,7 @@ export class ChatWorkspace extends BaseComponent {
       ...pendingMessages.filter((message: any) => message.thread_id === activeThread.id),
     ];
     if (!activeMessages.length) {
-      html.take(messageList).p.className('chat-empty m-auto text-sm').text('Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.');
+      html.take(messageList).p.className('chat-empty m-auto text-sm').text(i18n.tKey('chat.empty_messages', {}, 'No messages yet. Start the conversation.'));
     }
     for (const message of activeMessages) {
       const row = html.take(messageList).article.className(`chat-message flex flex-col ${message.is_own ? 'is-own items-end' : 'items-start'}`).ele() as HTMLElement;
@@ -282,7 +290,7 @@ export class ChatWorkspace extends BaseComponent {
       html.take(messageMetaCopy).time.text(formatTimestamp(message.created_at));
       html.take(row).div.className(`chat-bubble max-w-[76%] whitespace-pre-wrap break-words px-3 py-2 text-sm ${message.is_own ? 'is-own' : ''}`).text(String(message.body || ''));
       if (message.pending || message.failed) {
-        const status = html.take(row).span.className(`mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`).text(message.failed ? `✕ ${message.error || 'Failed'}` : '⟳ Sending').ele() as HTMLElement;
+        const status = html.take(row).span.className(`mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`).text(message.failed ? `✕ ${message.error || i18n.tKey('labels.failed', {}, 'Failed')}` : `⟳ ${i18n.tKey('labels.sending', {}, 'Sending')}`).ele() as HTMLElement;
         if (message.pending) html.take(status).toggleClass('animate-pulse', true);
       }
       const messageAttachments = attachments.filter(
@@ -295,13 +303,13 @@ export class ChatWorkspace extends BaseComponent {
           if (isPreviewableImage(attachment)) {
             const previewUrl = this.attachmentPreviewUrls.get(attachmentId);
             if (previewUrl) {
-              const image = html.take(attachmentRow).img.className('chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain').attr('src', previewUrl).attr('alt', String(attachment.file_name || 'Image attachment')).attr('loading', 'lazy').ele() as HTMLImageElement;
+              const image = html.take(attachmentRow).img.className('chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain').attr('src', previewUrl).attr('alt', String(attachment.file_name || i18n.tKey('files.image_attachment', {}, 'Image attachment'))).attr('loading', 'lazy').ele() as HTMLImageElement;
               html.take(image).event('click', () => {
                 if (this.def.download_action) void this.submit(this.def.download_action, { row: { id: attachment.id, file_name: attachment.file_name } });
               });
 
             } else {
-              html.take(attachmentRow).span.className('chat-image-preview-loading text-xs text-slate-400').text('Loading image...');
+              html.take(attachmentRow).span.className('chat-image-preview-loading text-xs text-slate-400').text(i18n.tKey('labels.loading_image', {}, 'Loading image…'));
               void this.loadAttachmentPreview(attachment);
             }
           }
@@ -321,15 +329,15 @@ export class ChatWorkspace extends BaseComponent {
       messageList.scrollTop = messageList.scrollHeight;
     });
 
-    if (this.state.selectedFile) html.take(main).div.className('chat-selected-file border-t px-4 pb-2 text-xs').text(`Tệp đã chọn: ${this.state.selectedFile.name}`);
+    if (this.state.selectedFile) html.take(main).div.className('chat-selected-file border-t px-4 pb-2 text-xs').text(`${i18n.tKey('files.selected', {}, 'Selected file')}: ${this.state.selectedFile.name}`);
     const composer = html.take(main).form.className('chat-composer flex items-end gap-2').ele() as HTMLElement;
-    const fileInput = html.take(composer).input.type('file').prop('hidden', true).attr('aria-label', 'Chọn tệp đính kèm').ele() as HTMLInputElement;
-    const attachButton = html.take(composer).button.className('chat-attach btn btn-secondary flex-none').text(this.state.selectedFile ? 'Đổi tệp' : 'Đính kèm').ele() as HTMLButtonElement;
+    const fileInput = html.take(composer).input.type('file').prop('hidden', true).attr('aria-label', i18n.tKey('files.attach', {}, 'Attach file')).ele() as HTMLInputElement;
+    const attachButton = html.take(composer).button.className('chat-attach btn btn-secondary flex-none').text(this.state.selectedFile ? i18n.tKey('files.change', {}, 'Change file') : i18n.tKey('files.attach', {}, 'Attach file')).ele() as HTMLButtonElement;
     html.take(attachButton).type('button').event('click', () => html.take(fileInput).click());
     const input = html.take(composer).textarea.className('chat-input form-input flex-1 resize-none').ele() as HTMLTextAreaElement;
-    html.take(input).prop('rows', 1).prop('maxLength', 4000).prop('placeholder', 'Nhập tin nhắn...')
-      .attr('aria-label', 'Nội dung tin nhắn').prop('value', String(this.state.inputValue || ''));
-    html.take(composer).button.type('submit').className('chat-send btn btn-primary flex-none').text('Gửi');
+    html.take(input).prop('rows', 1).prop('maxLength', 4000).prop('placeholder', i18n.tKey('chat.message_placeholder', {}, 'Type a message…'))
+      .attr('aria-label', i18n.tKey('chat.message_label', {}, 'Message content')).prop('value', String(this.state.inputValue || ''));
+    html.take(composer).button.type('submit').className('chat-send btn btn-primary flex-none').text(i18n.tKey('labels.send', {}, 'Send'));
     html.take(fileInput).event('change', () => {
       const file = fileInput.files?.[0] || null;
       if (file && file.size > 5 * 1024 * 1024) {
@@ -438,7 +446,9 @@ export class ChatWorkspace extends BaseComponent {
             this.handleChatAck({
               status: 'failed',
               client_message_id: clientMessageId,
-              error: String(error?.message || 'Message failed'),
+            error: String(error?.message || i18n.tKey('errors.message_failed', {}, 'Message failed')),
+            error_code: error?.code,
+            error_message_key: error?.message_key,
             });
           });
         }

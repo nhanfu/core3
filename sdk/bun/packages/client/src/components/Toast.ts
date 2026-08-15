@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { i18n } from '@core3/client/i18n';
 
 export class Toast extends BaseComponent {
   draw(container) {
@@ -16,7 +17,12 @@ export class Toast extends BaseComponent {
     const cls = colorMap[type] || colorMap.info;
 
     const iconMap = { success: 'check', error: 'x', warning: 'warning', info: 'info' };
-    const titleMap = { success: 'Saved', error: 'Unable to complete', warning: 'Not saved', info: 'Notice' };
+    const titleMap = {
+      success: i18n.tKey('toast.saved', {}, 'Saved'),
+      error: i18n.tKey('toast.error', {}, 'Unable to complete'),
+      warning: i18n.tKey('toast.warning', {}, 'Not saved'),
+      info: i18n.tKey('toast.info', {}, 'Notice'),
+    };
     const wrap = html.take(container)
       .div.className(`core3-toast core3-toast-${type} ${cls}`)
       .attr('role', 'status')
@@ -30,7 +36,7 @@ export class Toast extends BaseComponent {
     html.take(content).span.className('core3-toast-message').text(String(message));
     const close = html.take(wrap)
       .button.className('core3-toast-close')
-      .attr('aria-label', 'Đóng')
+      .attr('aria-label', i18n.tKey('labels.close', {}, 'Close'))
       .ele();
     appendIcon(close, 'x');
     html.take(close).event('click', () => this.setState({ visible: false }));

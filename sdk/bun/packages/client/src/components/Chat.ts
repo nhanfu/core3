@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 function relativeTime(ts) {
   const diff = Date.now() - new Date(ts).getTime();
@@ -74,7 +75,7 @@ export class Chat extends BaseComponent {
 
     const sendBtn = html.take(inputRow).button
       .className('text-sm px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors font-medium shrink-0')
-      .text('Send')
+      .text(i18n.tKey('labels.send', {}, 'Send'))
       .ele();
     html.take(sendBtn).event('click', sendMessage);
   }

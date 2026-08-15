@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class Paginator extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -20,7 +21,7 @@ export class Paginator extends BaseComponent {
 
     const prevBtn = html.take(ctrl)
       .button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')
-      .text('← Prev')
+      .text(`← ${i18n.tKey('pagination.previous', {}, 'Prev')}`)
       .ele();
     if (page <= 1) html.take(prevBtn).attr('disabled', '');
 
@@ -28,7 +29,7 @@ export class Paginator extends BaseComponent {
 
     const nextBtn = html.take(ctrl)
       .button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')
-      .text('Next →')
+      .text(`${i18n.tKey('pagination.next', {}, 'Next')} →`)
       .ele();
     if (page >= totalPages) html.take(nextBtn).attr('disabled', '');
 

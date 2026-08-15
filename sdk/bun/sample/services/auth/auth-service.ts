@@ -17,8 +17,8 @@ export class AuthService implements AuthServiceProtocol {
 
   async login(request: AuthenticationRequest): Promise<AuthenticationResult> {
     const user = await this.repository.findUserByEmail(request.email);
-    if (!user) throw { status: 401, message: 'Invalid credentials' };
-    if (user.enabled === false) throw { status: 403, message: 'Account is disabled' };
+    if (!user) throw { status: 401, code: 'INVALID_CREDENTIALS', message_key: 'auth.invalid_credentials', message: 'Invalid credentials' };
+    if (user.enabled === false) throw { status: 403, code: 'ACCOUNT_DISABLED', message_key: 'auth.account_disabled', message: 'Account is disabled' };
 
     let valid = false;
     if (!String(user.password_hash).startsWith('$')) {
@@ -27,7 +27,7 @@ export class AuthService implements AuthServiceProtocol {
     } else {
       valid = await Bun.password.verify(request.password, user.password_hash);
     }
-    if (!valid) throw { status: 401, message: 'Invalid credentials' };
+    if (!valid) throw { status: 401, code: 'INVALID_CREDENTIALS', message_key: 'auth.invalid_credentials', message: 'Invalid credentials' };
 
     const roles = user.roles_csv ? String(user.roles_csv).split(',').filter(Boolean) : [];
     const permissions = await this.repository.permissions(user.id);
@@ -50,9 +50,9 @@ export class AuthService implements AuthServiceProtocol {
 
   async getCurrentUser(request: Request): Promise<AuthClaims> {
     const header = request.headers.get('Authorization') || '';
-    if (!header.startsWith('Bearer ')) throw { status: 401, message: 'Unauthorized' };
+    if (!header.startsWith('Bearer ')) throw { status: 401, code: 'UNAUTHORIZED', message_key: 'errors.unauthorized', message: 'Unauthorized' };
     const user = await this.introspect(header.slice(7));
-    if (!user) throw { status: 401, message: 'Invalid or expired token' };
+    if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
     return user;
   }
 
@@ -77,11 +77,11 @@ export class AuthService implements AuthServiceProtocol {
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
     const rows = await this.repository.getPasswordHash(userId);
     const stored = rows[0]?.password_hash;
-    if (!stored) throw { status: 404, message: 'User not found' };
+    if (!stored) throw { status: 404, code: 'NOT_FOUND', message_key: 'errors.not_found', message: 'User not found' };
     const valid = String(stored).startsWith('$')
       ? await Bun.password.verify(currentPassword, stored)
       : currentPassword === stored;
-    if (!valid) throw { status: 400, message: 'Current password incorrect' };
+    if (!valid) throw { status: 400, code: 'INVALID_PASSWORD', message_key: 'auth.invalid_current_password', message: 'Current password incorrect' };
     await this.repository.updatePassword(userId, await Bun.password.hash(newPassword));
     await this.emit({ type: 'auth.password_changed', subject: userId, at: new Date().toISOString() });
   }

@@ -56,12 +56,12 @@ export async function handleEventRoutes(ctx: Record<string, any>, server?: Modul
       async onMessage(socket: Socket, raw: string | ArrayBuffer) {
         let payload: any;
         try { payload = decodeChatFrame(typeof raw === 'string' ? new TextEncoder().encode(raw) : raw); } catch {
-          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Invalid binary message' }));
+          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Invalid binary message', error_code: 'INVALID_MESSAGE', error_message_key: 'errors.invalid_message' }));
           return;
         }
         if (payload?.type !== 'send_message') return;
         if (typeof executeAction !== 'function') {
-          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Chat action handler is unavailable' }));
+          socket.send(encodeChatFrame({ type: 'chat_error', error: 'Chat action handler is unavailable', error_code: 'ACTION_UNAVAILABLE', error_message_key: 'errors.action_unavailable' }));
           return;
         }
         try {
@@ -72,7 +72,12 @@ export async function handleEventRoutes(ctx: Record<string, any>, server?: Modul
             expected_row_version: payload.expected_row_version,
           });
         } catch (error: any) {
-          socket.send(encodeChatFrame({ type: 'chat_error', error: String(error?.message || 'Message failed') }));
+          socket.send(encodeChatFrame({
+            type: 'chat_error',
+            error: String(error?.message || 'Message failed'),
+            error_code: typeof error?.code === 'string' ? error.code : 'MESSAGE_FAILED',
+            error_message_key: typeof error?.message_key === 'string' ? error.message_key : 'errors.message_failed',
+          }));
         }
       },
       onClose(socket: Socket) {

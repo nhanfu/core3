@@ -29,7 +29,12 @@ function json(data: unknown, status = 200): Response {
 }
 
 function errorResponse(error: any): Response {
-  return json({ error: error?.message || 'Authentication failed', ...(error?.code ? { code: error.code } : {}) }, error?.status || 401);
+  return json({
+    error: error?.message || 'Authentication failed',
+    ...(error?.code ? { code: error.code } : {}),
+    message_key: error?.message_key || (error?.code ? `errors.${String(error.code).toLowerCase()}` : `errors.http_${error?.status || 401}`),
+    ...(error?.message_params ? { message_params: error.message_params } : {}),
+  }, error?.status || 401);
 }
 
 export default class AuthModule {
@@ -163,13 +168,15 @@ export default class AuthModule {
         pages = discoverPages(context.appsRoot);
         const page = pages.pages.get('login');
         if (!page || page.module !== 'auth') return json({ error: 'Unknown page: login' }, 404);
-        return json({ ...page.config, i18n: translationMap(pages.catalogs, requestLanguage(url), 'login') });
+        const lang = requestLanguage(url);
+        return json({ ...page.config, i18n: { lang, page: translationMap(pages.catalogs, lang, 'login'), global: translationMap(pages.catalogs, lang, '*') } });
       }
       if (url.pathname === '/api/pages/profile' && request.method === 'GET') {
         pages = discoverPages(context.appsRoot);
         const page = pages.pages.get('profile');
         if (!page || page.module !== 'auth') return json({ error: 'Unknown page: profile' }, 404);
-        return json({ ...page.config, i18n: translationMap(pages.catalogs, requestLanguage(url), 'profile') });
+        const lang = requestLanguage(url);
+        return json({ ...page.config, i18n: { lang, page: translationMap(pages.catalogs, lang, 'profile'), global: translationMap(pages.catalogs, lang, '*') } });
       }
       return null;
     });

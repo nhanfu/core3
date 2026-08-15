@@ -2,6 +2,8 @@
  * HTTP client singleton — JWT-aware, routes to DuckDB WASM or HTTP backend.
  */
 
+import { i18n } from './i18n.ts';
+
 class Client {
   _token: string | null = null;
   _refreshFn: null | (() => Promise<string>) = null;
@@ -15,6 +17,7 @@ class Client {
   _headers() {
     const h: Record<string, string> = { 'Content-Type': 'application/json' };
     if (this._token) h['Authorization'] = `Bearer ${this._token}`;
+    if (i18n.lang) h['Accept-Language'] = i18n.lang;
     return h;
   }
 
@@ -35,7 +38,14 @@ class Client {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
-      throw Object.assign(new Error(err.message || err.error || 'Request failed'), { status: res.status, code: err.code });
+      const fallback = err.message || err.error || 'Request failed';
+      const message = err.message_key ? i18n.tKey(String(err.message_key), err.message_params || {}, fallback) : fallback;
+      throw Object.assign(new Error(message), {
+        status: res.status,
+        code: err.code,
+        messageKey: err.message_key,
+        messageParams: err.message_params,
+      });
     }
 
     return res.json();
@@ -105,7 +115,14 @@ class Client {
     });
     if (!res.ok) {
       const error = await res.json().catch(() => ({}));
-      throw Object.assign(new Error(error.error || error.message || 'Upload failed'), { status: res.status });
+      const fallback = error.error || error.message || 'Upload failed';
+      const message = error.message_key ? i18n.tKey(String(error.message_key), error.message_params || {}, fallback) : fallback;
+      throw Object.assign(new Error(message), {
+        status: res.status,
+        code: error.code,
+        messageKey: error.message_key,
+        messageParams: error.message_params,
+      });
     }
     return res.json();
   }
@@ -120,7 +137,17 @@ class Client {
         headers: this._token ? { Authorization: `Bearer ${this._token}` } : {},
       });
     }
-    if (!res.ok) throw Object.assign(new Error('Download failed'), { status: res.status });
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      const fallback = error.error || error.message || 'Download failed';
+      const message = error.message_key ? i18n.tKey(String(error.message_key), error.message_params || {}, fallback) : fallback;
+      throw Object.assign(new Error(message), {
+        status: res.status,
+        code: error.code,
+        messageKey: error.message_key,
+        messageParams: error.message_params,
+      });
+    }
     return res.blob();
   }
 

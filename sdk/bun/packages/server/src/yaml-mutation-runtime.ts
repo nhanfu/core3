@@ -14,6 +14,7 @@ export type MutationDefinition = {
   timestamps?: boolean;
   concurrency?: false | { field?: string; input?: string; required?: boolean };
   scope?: { table?: string; field: string; message?: string };
+  message_key?: string;
   guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; assign?: boolean }>;
   before_steps?: MutationStep[];
   steps?: MutationStep[];
@@ -21,7 +22,7 @@ export type MutationDefinition = {
   generated?: string[];
 };
 
-export type MutationStep = { query: string; assign?: boolean; expect_changed?: boolean; status?: number; message?: string; code?: string } | string;
+export type MutationStep = { query: string; assign?: boolean; expect_changed?: boolean; status?: number; message?: string; code?: string; message_key?: string } | string;
 
 const IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -100,7 +101,12 @@ export class YamlMutationRuntime {
     } else {
       const result = await runOnConnection(connection, statement, values);
       if (definition.expect_changed && this.changedRows(result) === 0) {
-        throw { status: Number(definition.status || 409), message: String(definition.message || 'Record was changed by another user. Reload it before saving.'), ...(definition.code ? { code: definition.code } : { code: 'STALE_RECORD' }) };
+        throw {
+          status: Number(definition.status || 409),
+          message: String(definition.message || 'Record was changed by another user. Reload it before saving.'),
+          ...(definition.code ? { code: definition.code } : { code: 'STALE_RECORD' }),
+          message_key: definition.message_key || 'errors.stale_record',
+        };
       }
     }
   }
@@ -198,7 +204,12 @@ export class YamlMutationRuntime {
   private async throwStaleOrMissing(connection: MutationConnection, table: string, id: unknown, versionField: string): Promise<never> {
     const [current] = await queryOnConnection(connection, `SELECT id, ${versionField} FROM ${table} WHERE id = ?`, [id]);
     if (!current) throw { status: 404, message: 'Record not found' };
-    throw { status: 409, code: 'STALE_RECORD', message: 'Record was changed by another user. Reload it before saving.' };
+    throw {
+      status: 409,
+      code: 'STALE_RECORD',
+      message: 'Record was changed by another user. Reload it before saving.',
+      message_key: 'errors.stale_record',
+    };
   }
 
   private identifier(value: unknown, label: string): string {

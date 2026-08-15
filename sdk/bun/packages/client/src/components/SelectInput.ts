@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class SelectInput extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -22,7 +23,7 @@ export class SelectInput extends BaseComponent {
       .select.className('token-form-control w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white')
       .ele();
 
-    html.take(sel).option.value('').text('— Select —');
+    html.take(sel).option.value('').text(`— ${i18n.tKey('labels.select', {}, 'Select')} —`);
     for (const o of options) {
       const opt = html.take(sel).option.value(String(o)).text(String(o)).ele();
       if (o === value) html.take(opt).attr('selected', '');

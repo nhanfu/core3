@@ -16,9 +16,9 @@ export class MediatorAuthAdapter implements AuthServiceProtocol {
 
   async getCurrentUser(request: Request | unknown): Promise<AuthClaims> {
     const header = request instanceof Request ? request.headers.get('Authorization') || '' : '';
-    if (!header.startsWith('Bearer ')) throw { status: 401, message: 'Unauthorized' };
+    if (!header.startsWith('Bearer ')) throw { status: 401, code: 'UNAUTHORIZED', message_key: 'errors.unauthorized', message: 'Unauthorized' };
     const user = await verifyAuthJwt<AuthClaims>(header.slice(7), this.secret);
-    if (!user) throw { status: 401, message: 'Invalid or expired token' };
+    if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
     return user;
   }
 

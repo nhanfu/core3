@@ -65,8 +65,13 @@ export function createYamlApi(ctx: YamlApiContext) {
     return { 'Cache-Control': `private, max-age=${ttl}` };
   }
 
-  function apiError(status: number, message: string, code?: string): Response {
-    return json({ error: message, ...(code ? { code } : {}) }, status);
+  function apiError(status: number, message: string, code?: string, messageKey?: string, messageParams?: Record<string, unknown>): Response {
+    return json({
+      error: message,
+      ...(code ? { code } : {}),
+      message_key: messageKey || (code ? `errors.${String(code).toLowerCase()}` : `errors.http_${status}`),
+      ...(messageParams ? { message_params: messageParams } : {}),
+    }, status);
   }
 
   async function requireAuth(req: Request) {
