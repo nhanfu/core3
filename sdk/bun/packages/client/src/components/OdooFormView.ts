@@ -21,6 +21,13 @@ export class OdooFormView extends BaseComponent {
     for (const child of this.children) child.dispose();
     this.children = [];
     const sourceRecord = this.state.record || {};
+    const labels = {
+      save: 'Save',
+      discard: 'Discard',
+      editDetails: 'Edit details',
+      workflowStatus: 'Workflow status',
+      ...this.def.labels,
+    };
     const editing = this.state.editing === true && this.def.editable !== false;
     const draft = editing ? { ...sourceRecord, ...(this.state.draft || {}) } : sourceRecord;
     const record = draft;
@@ -50,8 +57,8 @@ export class OdooFormView extends BaseComponent {
         });
       }
       if (editing) {
-        const save = html.take(actionBar).button.className('o-form-action o-form-action-primary').attr('type', 'button').text('Save').ele() as HTMLButtonElement;
-        const discard = html.take(actionBar).button.className('o-form-action o-form-action-secondary').attr('type', 'button').text('Discard').ele();
+        const save = html.take(actionBar).button.className('o-form-action o-form-action-primary').attr('type', 'button').text(labels.save).ele() as HTMLButtonElement;
+        const discard = html.take(actionBar).button.className('o-form-action o-form-action-secondary').attr('type', 'button').text(labels.discard).ele();
         html.take(save).event('click', async () => {
           html.take(save).prop('disabled', true);
           try {
@@ -66,7 +73,7 @@ export class OdooFormView extends BaseComponent {
         html.take(discard).event('click', () => this.setState({ editing: false, draft: {} }));
       }
       if (statusStages.length) {
-        const steps = html.take(statusbar).nav.className('o-form-statusbar-steps').attr('aria-label', 'Workflow status').ele();
+        const steps = html.take(statusbar).nav.className('o-form-statusbar-steps').attr('aria-label', labels.workflowStatus).ele();
         for (const stage of statusStages) {
           const stageValue = String(stage.value ?? stage.id ?? stage.label ?? '');
           const stageLabel = String(stage.label ?? stageValue);
@@ -135,7 +142,7 @@ export class OdooFormView extends BaseComponent {
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {
-      renderFields(this.def.edit_fields, 'Edit details');
+      renderFields(this.def.edit_fields, labels.editDetails);
     } else if (Array.isArray(this.def.groups) && this.def.groups.length) {
       if (this.def.group_columns) {
         const groups = html.take(sheet).div.className(`o-form-groups o-form-groups-${this.def.group_columns}`).ele();

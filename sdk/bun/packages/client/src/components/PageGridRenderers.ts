@@ -5,6 +5,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
   return html.node(tag) as HTMLElementTagNameMap[K];
@@ -318,7 +319,8 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       selectable: !!def.selectable,
       columnChooser: def.column_chooser === true,
       rowNumbers: def.row_numbers === true,
-      labels: config.locale === 'vi' ? {
+      labels: {
+        ...(config.locale === 'vi' ? {
         rowNumber: 'Số dòng',
         selectRow: (id: string) => `Chọn dòng ${id}`,
         expandRow: 'Mở rộng dòng',
@@ -326,7 +328,9 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         summaryOf: 'trên',
         previousPage: 'Trang trước',
         nextPage: 'Trang sau',
-      } : undefined,
+        } : {}),
+        ...(def.labels || {}),
+      },
       pageSizeOptions,
       tree: def.tree ? { parentField: 'parent_id' } : undefined,
     onPageChange: async (page: number) => {
@@ -547,6 +551,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         `${client._resolveBase()}/pages/${encodeURIComponent(pageId)}?id=${encodeURIComponent(String(row.id))}`,
         { method: 'GET' },
       );
+      if (detailConfig.i18n) i18n.hydrate(pageId, detailConfig.i18n);
+      const translatedDetailConfig = i18n.translatePageConfig(pageId, detailConfig);
+      Object.assign(detailConfig, translatedDetailConfig);
       if (newRecord && createDefinition) {
         const inlineCreateId = `inline_create_${sourceId}`;
         detailConfig.actions = [
@@ -663,6 +670,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     ? { id: def.create_action, label: def.create_label || 'New' }
     : undefined;
   const translatedLabels = def.labels || {};
+  const initialFormMode = pageParams.form === 'hidden' ? 'hidden' : 'right';
+  const initialFormRowId = pageParams.form_id ? String(pageParams.form_id) : undefined;
   const comp = new ListView(
     `list-view-${sourceId || def.id || Date.now()}`,
     {
@@ -672,6 +681,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       selectedIds: [],
       ...(sortState[sourceId] ? { sort: sortState[sourceId] } : {}),
       ...(activeView ? { activeView } : {}),
+      formPanelMode: initialFormMode,
+      ...(initialFormRowId ? { formRowId: initialFormRowId } : {}),
     },
     columns,
     {
@@ -709,6 +720,13 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       doubleClickAction: def.row_double_click_action,
       formView,
       renderForm,
+      onFormStateChange: ({ mode, rowId }: { mode: 'right' | 'hidden'; rowId?: string }) => {
+        const nextParams = { ...getPageParams() } as Record<string, unknown>;
+        nextParams.form = mode === 'hidden' ? 'hidden' : 'show';
+        if (rowId && rowId !== '__new__') nextParams.form_id = rowId;
+        else delete nextParams.form_id;
+        pushParams(nextParams);
+      },
       rowActions: def.row_actions || 'buttons',
       views,
       viewNavigation: def.view_navigation || 'icons',

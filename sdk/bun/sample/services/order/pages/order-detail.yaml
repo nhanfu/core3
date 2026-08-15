@@ -140,6 +140,11 @@ components:
       - { value: Draft, label: Draft }
       - { value: Pending Approval, label: Pending approval }
       - { value: Approved, label: Approved }
+    labels:
+      save: Save
+      discard: Discard
+      editDetails: Edit details
+      workflowStatus: Workflow status
     header_actions:
       - { id: edit_order_detail, label: Edit, variant: secondary, show_if: "state.order_detail.status === 'Draft'" }
       - { id: submit_order_detail, label: Submit for approval, variant: primary, show_if: "state.order_detail.status === 'Draft'" }
@@ -244,8 +249,23 @@ components:
         label: ''
         sortable: false
         actions:
-          - { id: edit_order_line, label: Edit, variant: ghost, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
-          - { id: delete_order_line, label: Delete, variant: danger, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: edit_order_line, label: Edit, icon: edit, variant: ghost, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: delete_order_line, label: Delete, icon: trash, variant: danger, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
+    labels:
+      rowNumber: Row number
+      selectAll: Select all lines
+      selectRow: Select line
+      expandRow: Expand line
+      collapseRow: Collapse line
+      summaryOf: of
+      previousPage: Previous lines page
+      nextPage: Next lines page
+      columnChooser: Columns
+      columnVisibility: Show {label}
+      pageSize: Rows per page
+      pageSizeAria: Rows per page
+      noRecords: No records found
+      total: Total
 actions:
   - id: send_order_message
     type: server_form

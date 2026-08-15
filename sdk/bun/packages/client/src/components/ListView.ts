@@ -95,6 +95,7 @@ export type ListViewOptions = {
   doubleClickAction?: string;
   formView?: { page: string; sidePanel?: boolean };
   renderForm?: (row: ListRow, container: HTMLElement) => Promise<void> | void;
+  onFormStateChange?: (state: { mode: 'right' | 'hidden'; rowId?: string }) => void;
   rowActions?: 'buttons' | 'menu';
   views?: ListViewMode[];
   viewNavigation?: 'icons' | 'tabs';
@@ -467,6 +468,7 @@ export class ListView extends BaseComponent {
         if (this.options.formView?.sidePanel) {
           this.setFormPanelMode('right');
           this.setState({ formRowId: '__new__', formPanelClosed: false });
+          this.options.onFormStateChange?.({ mode: 'right', rowId: '__new__' });
           return;
         }
         void this.submit(this.options.createAction!.id);
@@ -977,7 +979,10 @@ export class ListView extends BaseComponent {
 
   private selectFormRow(row: ListRow) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
-    this.setState({ formRowId: this.rowId(row, Math.max(0, rows.indexOf(row))), formPanelMode: this.formPanelMode() === 'hidden' ? 'right' : this.formPanelMode(), formPanelClosed: false }, false);
+    const rowId = this.rowId(row, Math.max(0, rows.indexOf(row)));
+    const mode = this.formPanelMode() === 'hidden' ? 'right' : this.formPanelMode();
+    this.setState({ formRowId: rowId, formPanelMode: mode, formPanelClosed: false }, false);
+    this.options.onFormStateChange?.({ mode, rowId });
     if (this.options.formView?.sidePanel) this.redraw();
   }
 
@@ -989,6 +994,7 @@ export class ListView extends BaseComponent {
 
   private setFormPanelMode(mode: 'right' | 'hidden') {
     this.setState({ formPanelMode: mode, formPanelClosed: mode === 'hidden' });
+    this.options.onFormStateChange?.({ mode, rowId: String(this.state.formRowId || '') || undefined });
   }
 
   private cycleFormPanelMode() {

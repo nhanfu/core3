@@ -42,6 +42,12 @@ export interface DataGridOptions {
     rowNumber?: string;
     selectAll?: string;
     selectRow?: (id: string) => string;
+    columnChooser?: string;
+    columnVisibility?: string | ((label: string) => string);
+    pageSize?: string;
+    pageSizeAria?: string;
+    noRecords?: string;
+    total?: string;
     expandRow?: string;
     collapseRow?: string;
     summaryOf?: string;
@@ -168,8 +174,14 @@ export class DataGrid extends BaseComponent {
     const selected = new Set(selectedIds);
     const labels = {
       rowNumber: 'Row number',
-      selectAll: 'Chọn tất cả dòng',
+      selectAll: 'Select all rows',
       selectRow: (id: string) => `Select row ${id}`,
+      columnChooser: 'Columns',
+      columnVisibility: 'Show {label}',
+      pageSize: 'Rows per page',
+      pageSizeAria: 'Rows per page',
+      noRecords: 'No records found',
+      total: 'Total',
       expandRow: 'Expand row',
       collapseRow: 'Collapse row',
       summaryOf: 'of',
@@ -214,14 +226,16 @@ export class DataGrid extends BaseComponent {
       }
       if (this.options.columnChooser) {
         const chooser = html.take(toolbar).details.className('relative').ele();
-        html.take(chooser).summary.className('token-control cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Cột');
+        html.take(chooser).summary.className('token-control cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text(labels.columnChooser);
         const menu = html.take(chooser).div.className('token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').ele();
         for (const column of this.columns) {
           const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').ele();
           const checkbox = html.take(label).input
             .attr('type', 'checkbox')
             .prop('checked', visibleColumnIds.has(column.id || column.field))
-            .attr('aria-label', `Hiển thị ${column.label}`)
+            .attr('aria-label', typeof labels.columnVisibility === 'function'
+              ? labels.columnVisibility(column.label)
+              : String(labels.columnVisibility).replace('{label}', column.label))
             .event('change', () => {
               const next = new Set(visibleColumnIds);
               checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
@@ -243,7 +257,7 @@ export class DataGrid extends BaseComponent {
     if (selectable) {
       const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').ele() as HTMLInputElement;
       html.take(checkbox)
-        .attr('aria-label', 'Chọn tất cả dòng')
+        .attr('aria-label', labels.selectAll)
         .prop('checked', rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index))));
       html.take(checkbox).prop('indeterminate', selected.size > 0 && !checkbox.checked);
       html.take(checkbox).event('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
@@ -277,7 +291,7 @@ export class DataGrid extends BaseComponent {
     if (!rows.length) {
       const empty = this.options.emptyState || (this.state.emptyState as DataGridOptions['emptyState']) || {};
       const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0) + (rowNumbers ? 1 : 0))).className('px-4 py-12 text-center').ele();
-      html.take(cell).p.className('text-sm font-medium text-gray-900').text(empty.title || 'No records found');
+      html.take(cell).p.className('text-sm font-medium text-gray-900').text(empty.title || labels.noRecords);
       if (empty.description) html.take(cell).p.className('mt-1 text-sm text-gray-500').text(empty.description);
     } else {
       rows.forEach((row, index) => {
@@ -338,12 +352,15 @@ export class DataGrid extends BaseComponent {
                   : `rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
                 .dataAttr('grid-row-action', `${action.id}:${id}`)
                 .ele();
+              html.take(button).attr('type', 'button').attr('aria-label', action.label).attr('title', action.label);
               if (action.icon) {
                 const icon = html.take(button).span.attr('aria-hidden', 'true').ele() as HTMLSpanElement;
                 if (hasIcon(action.icon)) appendIcon(icon, action.icon);
                 else html.take(icon).text(action.icon);
+                html.take(button).className(`${button.className} is-icon-only`);
+              } else {
+                html.take(button).text(action.label);
               }
-              html.take(button).text(action.label);
               html.take(button).event('click', () => this.submit(action.id, { row }));
             }
           } else if (column.render) {
@@ -399,10 +416,10 @@ export class DataGrid extends BaseComponent {
       const pages = Math.max(1, Math.ceil(total / pageSize));
       const controls = html.take(summary).div.className('inline-flex items-center gap-2').ele();
       if (this.options.pageSizeOptions?.length) {
-        html.take(controls).span.className('text-xs text-gray-500').text('Số dòng');
+        html.take(controls).span.className('text-xs text-gray-500').text(labels.pageSize);
         const select = html.take(controls).select
           .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700')
-          .attr('aria-label', 'Số dòng')
+          .attr('aria-label', labels.pageSizeAria)
           .ele() as HTMLSelectElement;
         for (const optionValue of this.options.pageSizeOptions) {
           html.take(select).option.value(String(optionValue)).text(String(optionValue)).prop('selected', optionValue === pageSize);
@@ -434,7 +451,7 @@ export class DataGrid extends BaseComponent {
       const list = html.take(footer).div.className('o-document-totals-list').ele();
       for (const stat of footerStats) {
         const item = html.take(list).div.className('o-document-total').ele();
-        html.take(item).div.className('o-document-total-label').text(String(stat.label || 'Total'));
+        html.take(item).div.className('o-document-total-label').text(String(stat.label || labels.total));
         html.take(item).div.className('o-document-total-value').text(footerRecord[stat.field] == null || footerRecord[stat.field] === ''
           ? '0'
           : String(footerRecord[stat.field]));

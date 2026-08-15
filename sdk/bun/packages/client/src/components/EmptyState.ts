@@ -3,7 +3,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
 
 export class EmptyState extends BaseComponent {
-  draw(container) {
+  draw(container: HTMLElement) {
     const { title = 'No records', description = '', action = null } = this.state;
     const wrap = html.take(container).div
       .className('flex flex-col items-center justify-center py-12 px-4 w-full text-center')

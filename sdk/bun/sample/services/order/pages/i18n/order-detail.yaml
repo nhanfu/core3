@@ -1,4 +1,20 @@
 vi:
+  Save: Lưu
+  Discard: Hủy bỏ
+  Edit details: Sửa thông tin
+  Workflow status: Trạng thái quy trình
+  Row number: STT
+  Select all lines: Chọn tất cả dòng
+  Select line: Chọn dòng
+  Expand line: Mở rộng dòng
+  Collapse line: Thu gọn dòng
+  Previous lines page: Trang dòng trước
+  Next lines page: Trang dòng sau
+  Columns: Cột
+  "Show {label}": "Hiển thị {label}"
+  Rows per page: Số dòng mỗi trang
+  No records found: Không tìm thấy dữ liệu
+  Total: Tổng cộng
   Order details: Chi tiết đơn hàng
   Manage: Quản lý
   Order: Đơn hàng
