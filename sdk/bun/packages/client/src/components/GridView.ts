@@ -72,18 +72,13 @@ export class GridView extends BaseComponent {
         continue;
       }
       const active = sort?.field === d.field;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'sort-button inline-flex items-center gap-1 hover:text-gray-900';
-      button.dataset.sortField = d.field;
-      button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
-      button.textContent = d.label || '';
-      const indicator = document.createElement('span');
-      indicator.className = 'sort-indicator text-gray-400';
+      const button = html.take(th).button.type('button').className('sort-button inline-flex items-center gap-1 hover:text-gray-900')
+        .dataAttr('sort-field', d.field)
+        .attr('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none')
+        .text(d.label || '').getContext() as HTMLButtonElement;
+      const indicator = html.take(button).span.className('sort-indicator text-gray-400').getContext() as HTMLSpanElement;
       appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
-      button.append(indicator);
-      button.addEventListener('click', () => this.setSort(d.field));
-      th.append(button);
+      html.take(button).event('click', () => this.setSort(d.field));
     }
 
     const tbody = html.take(table).tbody.className('bg-white divide-y divide-gray-100').getContext();

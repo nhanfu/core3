@@ -363,16 +363,11 @@ export class ListView extends BaseComponent {
       const active = sort?.field === column.field;
       const button = html.take(th).button.className('o-list-sort').dataAttr('sort-field', column.field).getContext();
       button.append(document.createTextNode(column.label));
-      const indicator = document.createElement('span');
-      indicator.className = 'o-list-sort-indicator';
-      const ascending = document.createElement('span');
-      ascending.className = `o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`;
+      const indicator = html.take(button).span.className('o-list-sort-indicator').getContext();
+      const ascending = html.take(indicator).span.className(`o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`).getContext();
       appendIcon(ascending, 'sort-ascending');
-      const descending = document.createElement('span');
-      descending.className = `o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`;
+      const descending = html.take(indicator).span.className(`o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`).getContext();
       appendIcon(descending, 'sort-descending');
-      indicator.append(ascending, descending);
-      button.append(indicator);
       button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
       button.addEventListener('click', () => this.setSort(column.field));
     }
@@ -400,7 +395,7 @@ export class ListView extends BaseComponent {
         const groupRow = html.take(body).trow.className('o-list-group-header o-list-group-row').dataAttr('list-group', value).getContext();
         const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
         groupCell.dataset.groupBy = groupBy;
-        const heading = document.createElement('strong');
+        const heading = html.take(groupCell).strong.getContext();
         heading.textContent = `${groupLabel}: ${value}`;
         groupCell.append(heading);
         html.take(groupCell).span.className('o-list-group-count').text(` (${groupRows.length})`);
@@ -674,7 +669,7 @@ export class ListView extends BaseComponent {
       for (const action of this.options.actions) {
         const button = html.take(group).button.dataAttr('list-action', action.id).getContext() as HTMLButtonElement;
         if (action.icon) {
-          const icon = document.createElement('span');
+          const icon = html.take(button).span.getContext();
           appendIcon(icon, action.icon);
           button.append(icon);
         }
@@ -851,7 +846,7 @@ export class ListView extends BaseComponent {
         cell.dataset.treeDepth = String(depth);
         if (hasChildren) {
           const collapsed = this.collapsedTreeIds().has(id);
-          const toggle = document.createElement('button');
+          const toggle = html.take(cell).button.getContext();
           toggle.type = 'button';
           toggle.className = 'o-list-tree-toggle';
           toggle.textContent = collapsed ? '▸' : '▾';
@@ -922,7 +917,7 @@ export class ListView extends BaseComponent {
     for (const action of visibleActions) {
       const button = html.take(menu).button.className(action.variant === 'danger' ? 'is-danger' : '').dataAttr('list-row-action', `${action.id}:${rowId}`).getContext();
       if (action.icon) {
-        const icon = document.createElement('span');
+          const icon = html.take(button).span.getContext();
         appendIcon(icon, action.icon);
         button.append(icon);
       }

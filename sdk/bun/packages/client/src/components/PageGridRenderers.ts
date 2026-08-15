@@ -4,6 +4,11 @@ import { navigate, getPageParams, pushParams } from '@core3/client/navigate';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';
+import { html } from '@core3/client/html';
+
+function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
+  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+}
 
 function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   const defaults = view?.pivot?.default || {};
@@ -54,7 +59,7 @@ async function renderStatRow(def: any, targetContainer: HTMLElement) {
     def.title || '',
     path => void navigate(path),
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.className = def.variant === 'contained' ? 'status-tabs-slot-contained' : '';
   slot.style.marginBottom = def.variant === 'contained' ? '0' : '16px';
   targetContainer.appendChild(slot);
@@ -201,7 +206,7 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
     }
   };
 
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   if (def.type === 'LineItemGrid') slot.className = 'o-form-section o-form-lines-slot';
   else slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
@@ -246,7 +251,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         cell.dataset.treeDepth = String(depth);
       }
       if (column.type === 'StatusChip') {
-        const chip = document.createElement('span');
+        const chip = createFluentElement('span');
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
         chip.className = `data-grid-status data-grid-status-${tone}`;
         chip.textContent = value == null || value === '' ? '—' : String(value);
@@ -254,22 +259,22 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
-        const entity = document.createElement('div');
+        const entity = createFluentElement('div');
         entity.className = 'data-grid-entity';
         if (column.avatar) {
-          const avatar = document.createElement('span');
+          const avatar = createFluentElement('span');
           avatar.className = 'data-grid-entity-avatar';
           avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V6l8-3 8 3v14"/><path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"/></svg>';
           entity.appendChild(avatar);
         }
-        const copy = document.createElement('span');
+        const copy = createFluentElement('span');
         copy.className = 'data-grid-entity-copy';
-        const primary = document.createElement('div');
+        const primary = createFluentElement('div');
         primary.className = 'data-grid-primary';
         primary.textContent = value == null || value === '' ? '—' : String(value);
         copy.appendChild(primary);
         if (column.secondary) {
-          const secondary = document.createElement('div');
+          const secondary = createFluentElement('div');
           secondary.className = 'data-grid-secondary';
           secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
           copy.appendChild(secondary);
@@ -397,7 +402,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     if (actionDef) await handleAction(actionDef, params?.row || params || {});
   };
 
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -449,7 +454,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     })),
     render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
       if (column.type === 'StatusChip') {
-        const chip = document.createElement('span');
+        const chip = createFluentElement('span');
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
         chip.className = `data-grid-status data-grid-status-${tone}`;
         chip.textContent = value == null || value === '' ? '—' : String(value);
@@ -457,16 +462,16 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
-        const entity = document.createElement('div');
+        const entity = createFluentElement('div');
         entity.className = 'data-grid-entity';
-        const copy = document.createElement('span');
+        const copy = createFluentElement('span');
         copy.className = 'data-grid-entity-copy';
-        const primary = document.createElement('div');
+        const primary = createFluentElement('div');
         primary.className = 'data-grid-primary';
         primary.textContent = value == null || value === '' ? '—' : String(value);
         copy.appendChild(primary);
         if (column.secondary) {
-          const secondary = document.createElement('div');
+          const secondary = createFluentElement('div');
           secondary.className = 'data-grid-secondary';
           secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
           copy.appendChild(secondary);
@@ -939,7 +944,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params?.row || params || {});
   };
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.className = 'o-list-view-slot';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -954,7 +959,7 @@ async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
     { rows: Array.isArray(sourceResult.data) ? sourceResult.data : [] },
     def,
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
   component.mount(slot);

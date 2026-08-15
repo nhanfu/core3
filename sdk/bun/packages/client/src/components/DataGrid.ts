@@ -199,13 +199,11 @@ export class DataGrid extends BaseComponent {
             .dataAttr('grid-action', action.id)
             .getContext();
           if (action.icon) {
-            const icon = document.createElement('span');
-            icon.setAttribute('aria-hidden', 'true');
+            const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
             if (hasIcon(action.icon)) appendIcon(icon, action.icon);
             else icon.textContent = action.icon;
-            button.appendChild(icon);
           }
-          button.appendChild(document.createTextNode(action.label));
+          html.take(button).text(action.label);
           if (action.disabled) button.setAttribute('disabled', '');
           else button.addEventListener('click', () => {
             const context = { selectedIds: this.selectedIds(), action };
@@ -220,19 +218,20 @@ export class DataGrid extends BaseComponent {
         const menu = html.take(chooser).div.className('token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
         for (const column of this.columns) {
           const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
-          const checkbox = html.take(label).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-          checkbox.checked = visibleColumnIds.has(column.id || column.field);
-          checkbox.setAttribute('aria-label', `Hiển thị ${column.label}`);
-          checkbox.addEventListener('change', () => {
-            const next = new Set(visibleColumnIds);
-            checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
-            if (next.size === 0) {
-              checkbox.checked = true;
-              return;
-            }
-            this.setState({ visibleColumns: [...next] });
-          });
-          label.append(document.createTextNode(column.label));
+          const checkbox = html.take(label).input
+            .attr('type', 'checkbox')
+            .prop('checked', visibleColumnIds.has(column.id || column.field))
+            .attr('aria-label', `Hiển thị ${column.label}`)
+            .event('change', () => {
+              const next = new Set(visibleColumnIds);
+              checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
+              if (next.size === 0) {
+                checkbox.checked = true;
+                return;
+              }
+              this.setState({ visibleColumns: [...next] });
+            }).getContext() as HTMLInputElement;
+          html.take(label).text(column.label);
         }
       }
     }
@@ -265,11 +264,9 @@ export class DataGrid extends BaseComponent {
         const active = sort?.field === column.field;
         const button = html.take(th).button.className('sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
         button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
-        const indicator = document.createElement('span');
-        indicator.className = 'sort-indicator text-gray-400';
+        const indicator = html.take(button).span.className('sort-indicator text-gray-400').getContext() as HTMLSpanElement;
         appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
-        button.append(indicator);
-        button.addEventListener('click', () => this.setSort(column.field));
+        html.take(button).event('click', () => this.setSort(column.field));
       } else {
         html.take(th).text(column.label);
       }
@@ -343,14 +340,12 @@ export class DataGrid extends BaseComponent {
                 .dataAttr('grid-row-action', `${action.id}:${id}`)
                 .getContext();
               if (action.icon) {
-                const icon = document.createElement('span');
-                icon.setAttribute('aria-hidden', 'true');
+                const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
                 if (hasIcon(action.icon)) appendIcon(icon, action.icon);
                 else icon.textContent = action.icon;
-                button.appendChild(icon);
               }
-              button.appendChild(document.createTextNode(action.label));
-              button.addEventListener('click', () => this.submit(action.id, { row }));
+              html.take(button).text(action.label);
+              html.take(button).event('click', () => this.submit(action.id, { row }));
             }
           } else if (column.render) {
             column.render(cell, value, row);
@@ -362,19 +357,16 @@ export class DataGrid extends BaseComponent {
             const id = this.rowId(row, index);
             const hasChildren = allRows.some(candidate => String(candidate[treeParentField] ?? '') === id);
             if (hasChildren) {
-              const toggle = document.createElement('button');
               const isCollapsed = collapsed.has(id);
-              toggle.type = 'button';
-              toggle.className = 'mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-100';
-              toggle.setAttribute('aria-label', isCollapsed ? labels.expandRow : labels.collapseRow);
-              toggle.setAttribute('aria-expanded', String(!isCollapsed));
-              toggle.textContent = isCollapsed ? '+' : '-';
-              toggle.addEventListener('click', () => {
+              const toggle = html.take(cell).button.type('button')
+                .className('mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-100')
+                .attr('aria-label', isCollapsed ? labels.expandRow : labels.collapseRow)
+                .attr('aria-expanded', String(!isCollapsed)).text(isCollapsed ? '+' : '-').getContext() as HTMLButtonElement;
+              html.take(toggle).event('click', () => {
                 const next = new Set(collapsed);
                 isCollapsed ? next.delete(id) : next.add(id);
                 this.setState({ collapsedTreeIds: [...next] });
               });
-              cell.prepend(toggle);
             }
           }
         }
@@ -415,11 +407,7 @@ export class DataGrid extends BaseComponent {
           .attr('aria-label', 'Số dòng')
           .getContext() as HTMLSelectElement;
         for (const optionValue of this.options.pageSizeOptions) {
-          const option = document.createElement('option');
-          option.value = String(optionValue);
-          option.textContent = String(optionValue);
-          option.selected = optionValue === pageSize;
-          select.append(option);
+          html.take(select).option.value(String(optionValue)).text(String(optionValue)).prop('selected', optionValue === pageSize);
         }
         select.value = String(pageSize);
         select.addEventListener('change', () => {

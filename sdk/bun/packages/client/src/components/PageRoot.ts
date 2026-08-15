@@ -10,6 +10,11 @@ import { PageDetailRenderers } from '@core3/client/components/PageDetailRenderer
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from '@core3/client/components/Dialog';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
+import { html } from '@core3/client/html';
+
+function createFluentElement(tag: string): HTMLElement {
+  return html.take(null).add(tag).getContext() as HTMLElement;
+}
 
 class PageChild extends BaseComponent {
   constructor(id: string, private readonly definition: any, private readonly renderDefinition: any) {
@@ -41,7 +46,7 @@ class PageRoot extends BaseComponent {
     const { applySourceFilters, handleAction, renderComponentDef } = this.options;
 
     container.innerHTML = '';
-    const pageDiv = document.createElement('div');
+    const pageDiv = createFluentElement('div');
     pageDiv.className = 'page';
     if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) pageDiv.classList.add('o-form-page');
     container.appendChild(pageDiv);
@@ -52,20 +57,20 @@ class PageRoot extends BaseComponent {
     const ownsControlPanel = !(config.components || []).some((component: any) => component.type === 'OdooFormView')
       && (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
     if (config.page?.breadcrumb?.length && !ownsControlPanel) {
-      pageHeader = document.createElement('div');
+      pageHeader = createFluentElement('div');
       pageHeader.className = 'page-header';
-      const heading = document.createElement('div');
-      const breadcrumb = document.createElement('div');
+      const heading = createFluentElement('div');
+      const breadcrumb = createFluentElement('div');
       breadcrumb.className = 'page-breadcrumb';
       for (const [index, item] of config.page.breadcrumb.entries()) {
         if (index) {
-          const separator = document.createElement('span');
+          const separator = createFluentElement('span');
           separator.className = 'page-breadcrumb-separator';
           separator.textContent = '›';
           breadcrumb.append(separator);
         }
         const isCurrent = index === config.page.breadcrumb.length - 1;
-        const crumb = document.createElement(isCurrent ? 'span' : 'a');
+        const crumb = createFluentElement(isCurrent ? 'span' : 'a');
         crumb.className = isCurrent ? 'page-breadcrumb-current' : 'page-breadcrumb-link';
         crumb.textContent = item;
         if (!isCurrent) {
@@ -80,7 +85,7 @@ class PageRoot extends BaseComponent {
               navigate(targetPath);
             });
           } else {
-            const textCrumb = document.createElement('span');
+            const textCrumb = createFluentElement('span');
             textCrumb.className = 'page-breadcrumb-link';
             textCrumb.textContent = item;
             breadcrumb.append(textCrumb);
@@ -93,7 +98,7 @@ class PageRoot extends BaseComponent {
       pageHeader.append(heading);
       pageDiv.appendChild(pageHeader);
       if (config.scope) {
-        const scopePill = document.createElement('span');
+        const scopePill = createFluentElement('span');
         scopePill.className = 'scope-pill';
         scopePill.textContent = `${config.scope.label}: ${config.scope.value}`;
         pageHeader.append(scopePill);
@@ -101,17 +106,17 @@ class PageRoot extends BaseComponent {
     }
 
     if (config.toolbar?.length && !ownsControlPanel) {
-      const toolbarDiv = document.createElement('div');
+      const toolbarDiv = createFluentElement('div');
       toolbarDiv.className = pageHeader ? 'page-header-actions' : 'page-toolbar';
       toolbarDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;';
       for (const btn of config.toolbar) {
         if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
         if (btn.permission && !hasPermission(ctx.user, btn.permission)) continue;
-        const button = document.createElement('button');
+        const button = createFluentElement('button');
         button.type = 'button';
         button.className = `btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`;
         if (btn.icon) {
-          const icon = document.createElement('span');
+          const icon = createFluentElement('span');
           icon.setAttribute('aria-hidden', 'true');
           if (hasIcon(btn.icon)) appendIcon(icon, btn.icon);
           else icon.textContent = btn.icon;
@@ -147,7 +152,7 @@ class PageRoot extends BaseComponent {
             : [],
         };
       });
-      const filterSlot = document.createElement('div');
+      const filterSlot = createFluentElement('div');
       filterSlot.style.marginBottom = '20px';
       pageDiv.appendChild(filterSlot);
       const filterBar = new FilterBar(
@@ -529,7 +534,7 @@ export class PageRuntime extends BaseComponent {
         let uploadFile = row?.file instanceof File ? row.file : null;
         if (!uploadFile) {
           uploadFile = await new Promise<File | null>(resolve => {
-            const input = document.createElement('input');
+            const input = createFluentElement('input') as HTMLInputElement;
             input.type = 'file';
             input.onchange = () => resolve(input.files?.[0] || null);
             input.click();

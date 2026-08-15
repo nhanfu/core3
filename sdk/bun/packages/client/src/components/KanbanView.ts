@@ -158,8 +158,7 @@ export class KanbanView extends BaseComponent {
 
   private openAddStatusDialog() {
     if (!this.options.onAddStatus) return;
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = html.take(document.body).div.getContext() as HTMLDivElement;
     const modal = this.options.stateEditor?.modals?.add || {};
     const dialog = new Dialog(`kanban-add-status-${Date.now()}`, { open: true }, {
       title: modal.title,
@@ -181,8 +180,7 @@ export class KanbanView extends BaseComponent {
       if (transition.to === stateId) fromStates.push(...from);
       if (from.includes(stateId)) toStates.push(transition.to);
     }
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = html.take(document.body).div.getContext() as HTMLDivElement;
     const modal = this.options.stateEditor?.modals?.edit || {};
     const dialog = new Dialog(`kanban-edit-status-${Date.now()}`, { open: true }, {
       title: modal.title,
@@ -202,8 +200,7 @@ export class KanbanView extends BaseComponent {
     const options = (this.options.view.groups || []).filter(group => String(group.value) !== stateId).map(group => ({
       value: String(group.value), label: String(group.label || group.value),
     }));
-    const host = document.createElement('div');
-    document.body.appendChild(host);
+    const host = html.take(document.body).div.getContext() as HTMLDivElement;
     const modal = this.options.stateEditor?.modals?.delete || {};
     const dialog = new Dialog(`kanban-delete-status-${Date.now()}`, { open: true }, {
       title: modal.title,

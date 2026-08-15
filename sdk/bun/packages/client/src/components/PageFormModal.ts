@@ -4,6 +4,7 @@ import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from '@core3/client/components/Dialog';
+import { html } from '@core3/client/html';
 
 export class PageFormModal extends BaseComponent {
   readonly openFormModal: any;
@@ -23,29 +24,29 @@ export class PageFormModal extends BaseComponent {
           : undefined;
         const formRecord = row || sourceRecord || {};
         // Overlay
-        const overlay = document.createElement('div');
+        const overlay = html.take(null).div.getContext() as HTMLDivElement;
         overlay.className = 'form-overlay';
         overlay.setAttribute('aria-hidden', 'false');
 
         // Dialog
-        const dialog = document.createElement('div');
+        const dialog = html.take(null).div.getContext() as HTMLDivElement;
         dialog.className = 'form-dialog';
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.tabIndex = -1;
 
         // Header
-        const header = document.createElement('div');
+        const header = html.take(null).div.getContext() as HTMLDivElement;
         header.className = 'form-header';
 
-        const titleEl = document.createElement('h2');
+        const titleEl = html.take(null).h2.getContext() as HTMLHeadingElement;
         titleEl.className = 'form-title';
         const titleId = `form-dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         titleEl.id = titleId;
         dialog.setAttribute('aria-labelledby', titleId);
         titleEl.textContent = actionDef.title || '';
 
-        const closeBtn = document.createElement('button');
+        const closeBtn = html.take(null).button.getContext() as HTMLButtonElement;
         closeBtn.className = 'form-close';
         appendIcon(closeBtn, 'x');
         closeBtn.type = 'button';
@@ -60,10 +61,10 @@ export class PageFormModal extends BaseComponent {
         const inputs: Record<string, { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any }> = {}; // field -> { el, fieldDef }
         for (const fieldDef of (actionDef.fields || [])) {
           if (fieldDef.show_if && !Boolean(evalExpr(fieldDef.show_if, { ...ctx, row: row || {} }))) continue;
-          const group = document.createElement('div');
+          const group = html.take(null).div.getContext() as HTMLDivElement;
           group.className = 'form-field';
 
-          const label = document.createElement('label');
+          const label = html.take(null).label.getContext() as HTMLLabelElement;
           label.className = 'form-label';
           label.textContent = fieldDef.label + (fieldDef.required ? ' *' : '');
           const fieldId = `form-field-${fieldDef.field}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -118,14 +119,14 @@ export class PageFormModal extends BaseComponent {
             el = money.input;
             usesMoneyInput = true;
           } else if (fieldDef.type === 'select') {
-            el = document.createElement('select');
+            el = html.take(null).select.getContext() as HTMLSelectElement;
             el.className = `form-select form-control${fieldDef.multiple ? ' form-control-multiple' : ''}`;
             if (fieldDef.multiple) {
               el.multiple = true;
             }
 
             if (!fieldDef.multiple) {
-              const emptyOpt = document.createElement('option');
+              const emptyOpt = html.take(null).option.getContext() as HTMLOptionElement;
               emptyOpt.value = '';
               emptyOpt.textContent = 'Chọn…';
               el.appendChild(emptyOpt);
@@ -144,18 +145,18 @@ export class PageFormModal extends BaseComponent {
                 return { value: option, label: option };
               });
             for (const opt of options) {
-              const optEl = document.createElement('option');
+              const optEl = html.take(null).option.getContext() as HTMLOptionElement;
               optEl.value = String(opt.value ?? '');
               optEl.textContent = String(opt.label ?? opt.value ?? '');
               el.appendChild(optEl);
             }
           } else if (fieldDef.type === 'textarea' || fieldDef.type === 'richtext') {
-            el = document.createElement('textarea');
+            el = html.take(null).textarea.getContext() as HTMLTextAreaElement;
             el.className = fieldDef.type === 'richtext'
               ? 'form-input template-richtext form-control form-richtext'
               : 'form-input form-control form-textarea';
           } else {
-            el = document.createElement('input');
+            el = html.take(null).input.getContext() as HTMLInputElement;
             el.type = ['date', 'time', 'datetime'].includes(fieldDef.type) ? 'text' : (fieldDef.type || 'text');
             if (fieldDef.type === 'date' || fieldDef.type === 'time' || fieldDef.type === 'datetime') {
               el.inputMode = 'numeric';
@@ -174,10 +175,10 @@ export class PageFormModal extends BaseComponent {
 
           if (!usesAsyncSelect && !usesMoneyInput) group.appendChild(el);
           if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
-            const tokenBar = document.createElement('div');
+            const tokenBar = html.take(null).div.getContext() as HTMLDivElement;
             tokenBar.className = 'template-token-picker form-token-bar';
             for (const token of fieldDef.tokens) {
-              const tokenButton = document.createElement('button');
+              const tokenButton = html.take(null).button.getContext() as HTMLButtonElement;
               tokenButton.type = 'button';
               tokenButton.className = 'template-token form-token';
               tokenButton.textContent = `{{${token}}}`;
@@ -199,15 +200,15 @@ export class PageFormModal extends BaseComponent {
         }
 
         // Footer
-        const footer = document.createElement('div');
+        const footer = html.take(null).div.getContext() as HTMLDivElement;
         footer.className = 'form-footer';
 
-        const cancelBtn = document.createElement('button');
+        const cancelBtn = html.take(null).button.getContext() as HTMLButtonElement;
         cancelBtn.type = 'button';
         cancelBtn.className = 'btn btn-secondary';
         cancelBtn.textContent = 'Hủy';
 
-        const saveBtn = document.createElement('button');
+        const saveBtn = html.take(null).button.getContext() as HTMLButtonElement;
         saveBtn.type = 'button';
         saveBtn.className = 'btn btn-primary';
         saveBtn.textContent = 'Lưu';
@@ -225,7 +226,7 @@ export class PageFormModal extends BaseComponent {
 
         function showError(msg: string) {
           if (!errorBanner) {
-            errorBanner = document.createElement('div');
+            errorBanner = html.take(null).div.getContext() as HTMLDivElement;
             errorBanner.className = 'form-error';
             footer.insertAdjacentElement('beforebegin', errorBanner);
           }

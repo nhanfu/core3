@@ -1,4 +1,9 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
+
+function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
+  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+}
 
 export type ScheduleGridDefinition = {
   title?: string;
@@ -50,22 +55,22 @@ export class ScheduleGrid extends BaseComponent {
       return [key, row];
     })).values()];
 
-    const root = document.createElement('section');
+    const root = createFluentElement('section');
     root.className = 'schedule-grid';
     root.setAttribute('aria-label', this.def.title || 'Lịch phân công');
     if (this.def.title) {
-      const heading = document.createElement('h3');
+      const heading = createFluentElement('h3');
       heading.className = 'schedule-title';
       heading.textContent = this.def.title;
       root.appendChild(heading);
     }
 
     if (!dates.length || !resources.length) {
-      const empty = document.createElement('div');
+      const empty = createFluentElement('div');
       empty.className = 'schedule-empty';
       empty.textContent = this.def.empty_state?.title || 'Chưa có lịch phân công';
       if (this.def.empty_state?.description) {
-        const description = document.createElement('p');
+        const description = createFluentElement('p');
         description.textContent = this.def.empty_state.description;
         empty.appendChild(description);
       }
@@ -74,20 +79,20 @@ export class ScheduleGrid extends BaseComponent {
       return;
     }
 
-    const scroller = document.createElement('div');
+    const scroller = createFluentElement('div');
     scroller.className = 'schedule-scroll';
-    const table = document.createElement('table');
+    const table = createFluentElement('table');
     table.className = 'schedule-table';
     table.setAttribute('role', 'grid');
 
-    const thead = document.createElement('thead');
-    const header = document.createElement('tr');
-    const resourceHeader = document.createElement('th');
+    const thead = createFluentElement('thead');
+    const header = createFluentElement('tr');
+    const resourceHeader = createFluentElement('th');
     resourceHeader.scope = 'col';
     resourceHeader.textContent = 'Nhân viên';
     header.appendChild(resourceHeader);
     for (const date of dates) {
-      const cell = document.createElement('th');
+      const cell = createFluentElement('th');
       cell.scope = 'col';
       cell.textContent = this.formatDate(date);
       cell.setAttribute('data-schedule-date', date);
@@ -96,25 +101,25 @@ export class ScheduleGrid extends BaseComponent {
     thead.appendChild(header);
     table.appendChild(thead);
 
-    const tbody = document.createElement('tbody');
+    const tbody = createFluentElement('tbody');
     for (const resource of resources) {
       const resourceKey = String(resource[resourceField] ?? '');
-      const row = document.createElement('tr');
-      const label = document.createElement('th');
+      const row = createFluentElement('tr');
+      const label = createFluentElement('th');
       label.scope = 'row';
       label.className = 'schedule-resource';
       label.textContent = String(resource[resourceLabelField] || resourceKey || '—');
       row.appendChild(label);
       for (const date of dates) {
-        const cell = document.createElement('td');
+        const cell = createFluentElement('td');
         const assignment = rows.find(candidate => String(candidate[resourceField] ?? '') === resourceKey && this.dateValue(candidate) === date);
         if (assignment) {
           cell.className = 'schedule-assignment';
-          const title = document.createElement('strong');
+          const title = createFluentElement('strong');
           title.textContent = String(assignment[titleField] || 'Đã phân công');
           cell.appendChild(title);
           if (assignment[subtitleField]) {
-            const subtitle = document.createElement('span');
+            const subtitle = createFluentElement('span');
             subtitle.textContent = String(assignment[subtitleField]);
             cell.appendChild(subtitle);
           }

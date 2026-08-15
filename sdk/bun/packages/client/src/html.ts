@@ -123,6 +123,12 @@ export class HTML {
     get input() {
         return this.add('input');
     }
+    get textarea() {
+        return this.add('textarea');
+    }
+    get label() {
+        return this.add('label');
+    }
     get select() {
         return this.add('select');
     }
@@ -204,9 +210,6 @@ export class HTML {
     }
     get form() {
         return this.add('form');
-    }
-    get label() {
-        return this.add('label');
     }
     get end() {
         this.context = this.context.parentElement;

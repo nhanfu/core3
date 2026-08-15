@@ -1,4 +1,9 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
+
+function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
+  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+}
 
 export type PivotViewDefinition = {
   id: 'pivot'; label: string; icon?: string;
@@ -28,50 +33,50 @@ export class PivotView extends BaseComponent {
   draw(container: HTMLElement) {
     const rows = (Array.isArray(this.state.rows) ? this.state.rows : []) as Record<string, unknown>[];
     const view = { ...this.options.view, pivotColumns: this.options.pivotColumns || this.options.view.pivotColumns };
-    const root = document.createElement('section'); root.className = 'o-pivot-view';
-    const toolbar = document.createElement('header'); toolbar.className = 'o-pivot-toolbar';
-    const configure = document.createElement('button'); configure.type = 'button'; configure.className = 'o-pivot-configure'; configure.textContent = this.state.builderOpen ? 'Close configuration' : (view.configLabel || 'Configure');
+    const root = createFluentElement('section'); root.className = 'o-pivot-view';
+    const toolbar = createFluentElement('header'); toolbar.className = 'o-pivot-toolbar';
+    const configure = createFluentElement('button'); configure.type = 'button'; configure.className = 'o-pivot-configure'; configure.textContent = this.state.builderOpen ? 'Close configuration' : (view.configLabel || 'Configure');
     configure.addEventListener('click', () => this.setState({ builderOpen: this.state.builderOpen !== true }));
-    const title = document.createElement('h2'); title.textContent = view.label; toolbar.append(configure, title); root.appendChild(toolbar);
+    const title = createFluentElement('h2'); title.textContent = view.label; toolbar.append(configure, title); root.appendChild(toolbar);
     if (this.state.builderOpen === true) this.drawBuilder(root);
     if (this.state.pivotError) {
-      const error = document.createElement('p'); error.className = 'o-analytics-error'; error.textContent = String(this.state.pivotError); root.appendChild(error); container.appendChild(root); return;
+      const error = createFluentElement('p'); error.className = 'o-analytics-error'; error.textContent = String(this.state.pivotError); root.appendChild(error); container.appendChild(root); return;
     }
     if (!view.measures?.length) {
-      const empty = document.createElement('p'); empty.className = 'o-analytics-empty'; empty.textContent = 'Configure the pivot to choose rows, columns, and measures.'; root.appendChild(empty); container.appendChild(root); return;
+      const empty = createFluentElement('p'); empty.className = 'o-analytics-empty'; empty.textContent = 'Configure the pivot to choose rows, columns, and measures.'; root.appendChild(empty); container.appendChild(root); return;
     }
     const columns = rows.length ? Object.keys(rows[0]) : [];
     const columnDescriptors = this.pivotColumnDescriptors(columns, view);
     const visibleDataColumns = columnDescriptors.length
       ? [...columns.filter(column => !columnDescriptors.some(descriptor => descriptor.column === column)), ...columnDescriptors.filter(descriptor => !this.isColumnHidden(descriptor.values))].map(column => typeof column === 'string' ? column : column.column)
       : columns;
-    const table = document.createElement('table'); table.className = 'o-pivot-table'; table.setAttribute('aria-label', view.label);
-    const head = document.createElement('thead');
+    const table = createFluentElement('table'); table.className = 'o-pivot-table'; table.setAttribute('aria-label', view.label);
+    const head = createFluentElement('thead');
     if (columnDescriptors.length && view.columnFields?.length) this.drawColumnHeaders(head, columns, columnDescriptors, view);
     else {
-      const headRow = document.createElement('tr');
+      const headRow = createFluentElement('tr');
       for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
       head.appendChild(headRow);
     }
     table.appendChild(head);
-    const body = document.createElement('tbody');
+    const body = createFluentElement('tbody');
     const tree = this.buildPivotTree(rows, view.rowFields || []);
     for (const item of this.visiblePivotRows(tree)) {
-      const tr = document.createElement('tr');
+      const tr = createFluentElement('tr');
       for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);
       body.appendChild(tr);
     }
     table.appendChild(body);
-    if (!rows.length) { const empty = document.createElement('p'); empty.className = 'o-analytics-empty'; empty.textContent = 'No data'; root.appendChild(empty); container.appendChild(root); return; }
-    const tableScroll = document.createElement('div'); tableScroll.className = 'o-pivot-table-scroll'; tableScroll.appendChild(table); root.appendChild(tableScroll); container.appendChild(root);
+    if (!rows.length) { const empty = createFluentElement('p'); empty.className = 'o-analytics-empty'; empty.textContent = 'No data'; root.appendChild(empty); container.appendChild(root); return; }
+    const tableScroll = createFluentElement('div'); tableScroll.className = 'o-pivot-table-scroll'; tableScroll.appendChild(table); root.appendChild(tableScroll); container.appendChild(root);
   }
 
   private addCell(row: HTMLTableRowElement, text: string | number, kind: 'th' | 'td') {
-    const cell = document.createElement(kind); cell.textContent = this.formatPivotValue(text); row.appendChild(cell);
+    const cell = createFluentElement(kind); cell.textContent = this.formatPivotValue(text); row.appendChild(cell);
   }
 
   private addPivotCell(row: HTMLTableRowElement, item: { node: PivotTreeNode; leaf: boolean }, column: string, columnIndex: number, rowFields: string[]) {
-    const cell = document.createElement('td');
+    const cell = createFluentElement('td');
     const node = item.node;
     let value = node.row?.[column];
     if (!item.leaf && rowFields.includes(column)) {
@@ -80,13 +85,13 @@ export class PivotView extends BaseComponent {
       value = this.aggregatePivotValue(node.leaves, column);
     }
     if (!item.leaf && column === node.field && node.children.length) {
-      const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
+      const toggle = createFluentElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
       toggle.textContent = this.isCollapsed(node.key) ? '+' : '−'; toggle.setAttribute('aria-label', `${this.isCollapsed(node.key) ? 'Expand' : 'Collapse'} ${String(node.value ?? '')}`);
       toggle.addEventListener('click', () => this.setState({ collapsed: { ...(this.state.collapsed || {}), [node.key]: !this.isCollapsed(node.key) } }));
       cell.appendChild(toggle);
     }
     if (rowFields.includes(column) && (item.leaf || column === node.field)) cell.style.paddingLeft = `${12 + node.level * 18}px`;
-    if (value !== '') { const text = document.createElement('span'); text.textContent = this.formatPivotValue(value); cell.appendChild(text); }
+    if (value !== '') { const text = createFluentElement('span'); text.textContent = this.formatPivotValue(value); cell.appendChild(text); }
     row.appendChild(cell);
   }
 
@@ -108,18 +113,18 @@ export class PivotView extends BaseComponent {
     const rowFields = new Set(view.rowFields || []);
     const rowColumns = columns.filter(column => rowFields.has(column));
     const depth = (view.columnFields || []).length + 1;
-    const first = document.createElement('tr');
-    rowColumns.forEach(column => { const cell = document.createElement('th'); cell.rowSpan = depth; cell.textContent = this.columnLabel(column); first.appendChild(cell); });
+    const first = createFluentElement('tr');
+    rowColumns.forEach(column => { const cell = createFluentElement('th'); cell.rowSpan = depth; cell.textContent = this.columnLabel(column); first.appendChild(cell); });
     this.drawColumnLevel(first, descriptors, 0, view);
     head.appendChild(first);
     for (let level = 1; level < (view.columnFields || []).length; level++) {
       if (!descriptors.some(descriptor => !this.isColumnHidden(descriptor.values, level - 1))) continue;
-      const row = document.createElement('tr'); this.drawColumnLevel(row, descriptors, level, view); head.appendChild(row);
+      const row = createFluentElement('tr'); this.drawColumnLevel(row, descriptors, level, view); head.appendChild(row);
     }
-    const measures = document.createElement('tr');
+    const measures = createFluentElement('tr');
     const visibleDescriptors = descriptors.filter(descriptor => !this.isColumnHidden(descriptor.values));
     visibleDescriptors.forEach(descriptor => {
-      const cell = document.createElement('th'); cell.textContent = descriptor.measureLabel; measures.appendChild(cell);
+      const cell = createFluentElement('th'); cell.textContent = descriptor.measureLabel; measures.appendChild(cell);
     });
     if (visibleDescriptors.length) head.appendChild(measures);
   }
@@ -132,17 +137,17 @@ export class PivotView extends BaseComponent {
       const prefix = descriptor.values.slice(0, level + 1).join('|');
       let end = index + 1;
       while (end < visible.length && visible[end].values.slice(0, level + 1).join('|') === prefix) end++;
-      const cell = document.createElement('th'); cell.colSpan = end - index;
+      const cell = createFluentElement('th'); cell.colSpan = end - index;
       const field = view.columnFields[level];
       const value = descriptor.values[level] || '';
       if (level < view.columnFields.length - 1) {
-        const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
+        const toggle = createFluentElement('button'); toggle.type = 'button'; toggle.className = 'o-pivot-group-toggle';
         toggle.textContent = this.isColumnCollapsed(descriptor.values, level) ? '+' : '−';
         toggle.setAttribute('aria-label', `${this.isColumnCollapsed(descriptor.values, level) ? 'Expand' : 'Collapse'} ${value}`);
         toggle.addEventListener('click', () => this.setState({ collapsedColumns: { ...(this.state.collapsedColumns || {}), [this.columnCollapseKey(descriptor.values, level)]: !this.isColumnCollapsed(descriptor.values, level) } }));
         cell.appendChild(toggle);
       }
-      const text = document.createElement('span'); text.textContent = `${this.options.view.fieldLabels?.[field] || field}: ${this.readablePivotValue(value)}`; cell.appendChild(text);
+      const text = createFluentElement('span'); text.textContent = `${this.options.view.fieldLabels?.[field] || field}: ${this.readablePivotValue(value)}`; cell.appendChild(text);
       row.appendChild(cell); index = end;
     }
   }
@@ -211,27 +216,27 @@ export class PivotView extends BaseComponent {
   private drawBuilder(container: HTMLElement) {
     const view = this.options.view;
     const fields = view.fields || [];
-    const builder = document.createElement('section');
+    const builder = createFluentElement('section');
     builder.className = 'o-pivot-builder';
-    const title = document.createElement('h3'); title.textContent = 'Pivot configuration'; builder.appendChild(title);
-    const grid = document.createElement('div'); grid.className = 'o-pivot-builder-grid'; builder.appendChild(grid);
+    const title = createFluentElement('h3'); title.textContent = 'Pivot configuration'; builder.appendChild(title);
+    const grid = createFluentElement('div'); grid.className = 'o-pivot-builder-grid'; builder.appendChild(grid);
     const dateRanges: Record<string, string> = { ...(view.dateRanges || {}) };
     const rowsAxis = this.axisEditor(grid, 'Rows', fields, view.rowFields || [], dateRanges);
     const columnsAxis = this.axisEditor(grid, 'Columns', fields, view.columnFields || [], dateRanges);
-    const measureSection = document.createElement('div'); measureSection.className = 'o-pivot-measures';
-    const measureTitle = document.createElement('label'); measureTitle.textContent = 'Measures'; measureSection.appendChild(measureTitle);
-    const measureHost = document.createElement('div'); measureHost.className = 'o-pivot-measure-list'; measureSection.appendChild(measureHost);
+    const measureSection = createFluentElement('div'); measureSection.className = 'o-pivot-measures';
+    const measureTitle = createFluentElement('label'); measureTitle.textContent = 'Measures'; measureSection.appendChild(measureTitle);
+    const measureHost = createFluentElement('div'); measureHost.className = 'o-pivot-measure-list'; measureSection.appendChild(measureHost);
     let measures = (view.measures || []).map(measure => ({ ...measure }));
     const drawMeasures = () => {
       measureHost.innerHTML = '';
       measures.forEach((measure, index) => {
-        const row = document.createElement('div'); row.className = 'o-pivot-measure-row';
-        const field = document.createElement('select'); field.setAttribute('aria-label', `Measure ${index + 1} field`);
+        const row = createFluentElement('div'); row.className = 'o-pivot-measure-row';
+        const field = createFluentElement('select'); field.setAttribute('aria-label', `Measure ${index + 1} field`);
         this.addOptions(field, fields, measure.field || '');
-        const aggregate = document.createElement('select'); aggregate.setAttribute('aria-label', `Measure ${index + 1} aggregation`);
+        const aggregate = createFluentElement('select'); aggregate.setAttribute('aria-label', `Measure ${index + 1} aggregation`);
         this.addOptions(aggregate, ['count', 'sum', 'avg', 'min', 'max'], measure.aggregate || 'sum');
-        const label = document.createElement('input'); label.type = 'text'; label.placeholder = 'Label'; label.value = measure.label || '';
-        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'o-pivot-remove'; remove.textContent = '×'; remove.title = 'Remove measure';
+        const label = createFluentElement('input'); label.type = 'text'; label.placeholder = 'Label'; label.value = measure.label || '';
+        const remove = createFluentElement('button'); remove.type = 'button'; remove.className = 'o-pivot-remove'; remove.textContent = '×'; remove.title = 'Remove measure';
         field.addEventListener('change', () => { measure.field = field.value || undefined; });
         aggregate.addEventListener('change', () => { measure.aggregate = aggregate.value; });
         label.addEventListener('input', () => { measure.label = label.value || undefined; });
@@ -240,11 +245,11 @@ export class PivotView extends BaseComponent {
       });
     };
     drawMeasures();
-    const addMeasure = document.createElement('button'); addMeasure.type = 'button'; addMeasure.className = 'o-pivot-add'; addMeasure.textContent = '+ Add measure';
+    const addMeasure = createFluentElement('button'); addMeasure.type = 'button'; addMeasure.className = 'o-pivot-add'; addMeasure.textContent = '+ Add measure';
     addMeasure.addEventListener('click', () => { measures.push({ field: fields[0], aggregate: 'sum', label: fields[0] }); drawMeasures(); });
     measureSection.appendChild(addMeasure); builder.appendChild(measureSection);
-    const actions = document.createElement('div'); actions.className = 'o-pivot-builder-actions';
-    const apply = document.createElement('button'); apply.type = 'button'; apply.className = 'o-pivot-apply'; apply.textContent = 'Apply';
+    const actions = createFluentElement('div'); actions.className = 'o-pivot-builder-actions';
+    const apply = createFluentElement('button'); apply.type = 'button'; apply.className = 'o-pivot-apply'; apply.textContent = 'Apply';
     apply.addEventListener('click', () => {
       const request = {
         rows: rowsAxis.values(),
@@ -253,7 +258,7 @@ export class PivotView extends BaseComponent {
         ...((Object.keys({ ...rowsAxis.ranges(), ...columnsAxis.ranges() }).length) ? { ranges: { ...rowsAxis.ranges(), ...columnsAxis.ranges() } } : {}),
       };
       if (!request.measures.length) {
-        const error = document.createElement('p'); error.className = 'o-analytics-error'; error.textContent = 'Select at least one measure.';
+        const error = createFluentElement('p'); error.className = 'o-analytics-error'; error.textContent = 'Select at least one measure.';
         builder.appendChild(error); return;
       }
       view.rowFields = request.rows; view.columnFields = request.columns; view.measures = request.measures;
@@ -265,14 +270,14 @@ export class PivotView extends BaseComponent {
   private axisEditor(container: HTMLElement, labelText: string, fields: string[], initial: string[], ranges: Record<string, string>) {
     let values = initial.filter(field => fields.includes(field));
     const dateFields = new Set(this.options.view.dateFields || []);
-    const group = document.createElement('section'); group.className = 'o-pivot-builder-field o-pivot-axis';
-    const title = document.createElement('h4'); title.textContent = labelText; group.appendChild(title);
-    const list = document.createElement('div'); list.className = 'o-pivot-axis-list'; list.setAttribute('aria-label', `${labelText} fields`); group.appendChild(list);
-    const available = document.createElement('div'); available.className = 'o-pivot-axis-available'; group.appendChild(available);
+    const group = createFluentElement('section'); group.className = 'o-pivot-builder-field o-pivot-axis';
+    const title = createFluentElement('h4'); title.textContent = labelText; group.appendChild(title);
+    const list = createFluentElement('div'); list.className = 'o-pivot-axis-list'; list.setAttribute('aria-label', `${labelText} fields`); group.appendChild(list);
+    const available = createFluentElement('div'); available.className = 'o-pivot-axis-available'; group.appendChild(available);
     const render = () => {
       list.innerHTML = '';
       values.forEach((field, index) => {
-        const item = document.createElement('div'); item.className = 'o-pivot-axis-item'; item.draggable = true; item.dataset.index = String(index);
+        const item = createFluentElement('div'); item.className = 'o-pivot-axis-item'; item.draggable = true; item.dataset.index = String(index);
         item.textContent = this.options.view.fieldLabels?.[field] || field;
         item.title = 'Drag to reorder';
         item.addEventListener('dragstart', event => event.dataTransfer?.setData('text/plain', String(index)));
@@ -285,20 +290,20 @@ export class PivotView extends BaseComponent {
           const [moved] = values.splice(from, 1); values.splice(to, 0, moved); render();
         });
         if (dateFields.has(field)) {
-          const range = document.createElement('select'); range.className = 'o-pivot-date-range'; range.setAttribute('aria-label', `${field} date range`);
+          const range = createFluentElement('select'); range.className = 'o-pivot-date-range'; range.setAttribute('aria-label', `${field} date range`);
           this.addOptions(range, ['day', 'week', 'month', 'quarter', 'year'], ranges[field] || 'month');
           range.addEventListener('change', () => { ranges[field] = range.value; }); item.appendChild(range);
         }
-        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'o-pivot-remove'; remove.textContent = '×'; remove.title = `Remove ${field}`;
+        const remove = createFluentElement('button'); remove.type = 'button'; remove.className = 'o-pivot-remove'; remove.textContent = '×'; remove.title = `Remove ${field}`;
         remove.addEventListener('click', () => { values = values.filter((_, current) => current !== index); render(); });
         item.appendChild(remove); list.appendChild(item);
       });
       available.innerHTML = '';
       fields.filter(field => !values.includes(field)).forEach(field => {
-        const add = document.createElement('button'); add.type = 'button'; add.className = 'o-pivot-add-field'; add.textContent = `+ ${this.options.view.fieldLabels?.[field] || field}`; add.title = `Add ${field}`;
+        const add = createFluentElement('button'); add.type = 'button'; add.className = 'o-pivot-add-field'; add.textContent = `+ ${this.options.view.fieldLabels?.[field] || field}`; add.title = `Add ${field}`;
         add.addEventListener('click', () => { values.push(field); render(); }); available.appendChild(add);
       });
-      if (!available.childElementCount) { const hint = document.createElement('span'); hint.className = 'o-pivot-axis-hint'; hint.textContent = 'All fields added'; available.appendChild(hint); }
+      if (!available.childElementCount) { const hint = createFluentElement('span'); hint.className = 'o-pivot-axis-hint'; hint.textContent = 'All fields added'; available.appendChild(hint); }
     };
     render(); container.appendChild(group);
     return { values: () => [...values], ranges: () => ({ ...ranges }) };
@@ -306,7 +311,7 @@ export class PivotView extends BaseComponent {
 
   private addOptions(select: HTMLSelectElement, values: string[], selected: string | string[], labels?: Record<string, string>) {
     const selectedValues = new Set(Array.isArray(selected) ? selected : [selected]);
-    for (const value of values) { const option = document.createElement('option'); option.value = value; option.textContent = labels?.[value] || value; option.selected = selectedValues.has(value); select.appendChild(option); }
+    for (const value of values) { const option = createFluentElement('option'); option.value = value; option.textContent = labels?.[value] || value; option.selected = selectedValues.has(value); select.appendChild(option); }
   }
 
   private columnLabel(column: string) {

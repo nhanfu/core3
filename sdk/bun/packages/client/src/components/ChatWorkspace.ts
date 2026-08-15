@@ -1,15 +1,13 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
+import { html } from '@core3/client/html';
 
-function createElement<K extends keyof HTMLElementTagNameMap>(
+function createFluentElement<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className = '',
   text = '',
 ): HTMLElementTagNameMap[K] {
-  const element = document.createElement(tag);
-  if (className) element.className = className;
-  if (text) element.textContent = text;
-  return element;
+  return html.take(null).add(tag).className(className).text(text).getContext() as HTMLElementTagNameMap[K];
 }
 
 function formatTimestamp(value: unknown) {
@@ -185,7 +183,7 @@ export class ChatWorkspace extends BaseComponent {
     }
 
     const activeThread = threads.find((thread: any) => thread.id === this.state.activeThreadId);
-    const root = createElement(
+    const root = createFluentElement(
       'section',
       'chat-workspace grid min-h-[560px] overflow-hidden rounded-md border',
     );
@@ -193,17 +191,17 @@ export class ChatWorkspace extends BaseComponent {
     root.style.gridTemplateColumns = 'minmax(250px, 320px) minmax(0, 1fr)';
     container.appendChild(root);
 
-    const sidebar = createElement('aside', 'chat-sidebar flex min-w-0 flex-col border-r');
-    const sidebarHeader = createElement('div', 'chat-sidebar-header');
-    sidebarHeader.appendChild(createElement('strong', 'chat-sidebar-title', 'Messages'));
-    const search = createElement('input', 'chat-search form-input w-full');
+    const sidebar = createFluentElement('aside', 'chat-sidebar flex min-w-0 flex-col border-r');
+    const sidebarHeader = createFluentElement('div', 'chat-sidebar-header');
+    sidebarHeader.appendChild(createFluentElement('strong', 'chat-sidebar-title', 'Messages'));
+    const search = createFluentElement('input', 'chat-search form-input w-full');
     search.type = 'search';
     search.value = String(this.state.query || '');
     search.placeholder = String(this.def.search_placeholder || 'Search conversations...');
     search.setAttribute('aria-label', search.placeholder);
     sidebarHeader.appendChild(search);
     sidebar.appendChild(sidebarHeader);
-    const threadList = createElement('div', 'chat-thread-list min-h-0 flex-1 overflow-y-auto');
+    const threadList = createFluentElement('div', 'chat-thread-list min-h-0 flex-1 overflow-y-auto');
     sidebar.appendChild(threadList);
     root.appendChild(sidebar);
 
@@ -217,7 +215,7 @@ export class ChatWorkspace extends BaseComponent {
         || String(thread.preview || '').toLocaleLowerCase().includes(query)
       );
       if (!visibleThreads.length) {
-        threadList.appendChild(createElement(
+        threadList.appendChild(createFluentElement(
           'p',
           'chat-empty px-5 py-10 text-center text-sm',
           String(this.def.empty_threads || 'No conversations'),
@@ -226,7 +224,7 @@ export class ChatWorkspace extends BaseComponent {
       }
 
       for (const thread of visibleThreads) {
-        const button = createElement(
+        const button = createFluentElement(
           'button',
           `chat-thread w-full border-b px-3 py-3 text-left transition-colors ${
             thread.id === this.state.activeThreadId
@@ -237,28 +235,28 @@ export class ChatWorkspace extends BaseComponent {
         button.type = 'button';
         button.setAttribute('aria-label', `Mở cuộc trò chuyện ${thread.title}`);
 
-        const identity = createElement('div', 'chat-thread-identity');
-        identity.appendChild(createElement('span', 'chat-avatar', initials(thread.title)));
-        const heading = createElement('div', 'chat-thread-heading');
-        const headingText = createElement('strong', 'min-w-0 truncate', String(thread.title || 'Conversation'));
+        const identity = createFluentElement('div', 'chat-thread-identity');
+        identity.appendChild(createFluentElement('span', 'chat-avatar', initials(thread.title)));
+        const heading = createFluentElement('div', 'chat-thread-heading');
+        const headingText = createFluentElement('strong', 'min-w-0 truncate', String(thread.title || 'Conversation'));
         heading.appendChild(headingText);
-        heading.appendChild(createElement('span', 'chat-thread-time', formatTimestamp(thread.updated_at)));
+        heading.appendChild(createFluentElement('span', 'chat-thread-time', formatTimestamp(thread.updated_at)));
         identity.appendChild(heading);
         button.appendChild(identity);
-        button.appendChild(createElement(
+        button.appendChild(createFluentElement(
           'div',
           'chat-thread-participants truncate text-xs',
           String(thread.participant_names || ''),
         ));
 
-        const preview = createElement('div', 'chat-thread-preview flex items-center gap-2');
-        preview.appendChild(createElement(
+        const preview = createFluentElement('div', 'chat-thread-preview flex items-center gap-2');
+        preview.appendChild(createFluentElement(
           'span',
           'min-w-0 flex-1 truncate text-xs',
           String(thread.preview || ''),
         ));
         if (Number(thread.unread_count) > 0) {
-          preview.appendChild(createElement(
+          preview.appendChild(createFluentElement(
             'span',
             'chat-unread flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold',
             String(thread.unread_count),
@@ -286,10 +284,10 @@ export class ChatWorkspace extends BaseComponent {
     });
     renderThreads();
 
-    const main = createElement('div', 'chat-main flex min-w-0 flex-col');
+    const main = createFluentElement('div', 'chat-main flex min-w-0 flex-col');
     root.appendChild(main);
     if (!activeThread) {
-      main.appendChild(createElement(
+      main.appendChild(createFluentElement(
         'div',
         'chat-empty flex flex-1 items-center justify-center p-8 text-center text-sm',
         String(this.def.empty_messages || 'Select a conversation'),
@@ -297,48 +295,48 @@ export class ChatWorkspace extends BaseComponent {
       return;
     }
 
-    const mainHeader = createElement('header', 'chat-header');
-    const headerIdentity = createElement('div', 'chat-header-identity');
-    headerIdentity.appendChild(createElement('span', 'chat-avatar chat-avatar-lg', initials(activeThread.title)));
-    const headerCopy = createElement('div', 'min-w-0');
-    headerCopy.appendChild(createElement('h2', 'truncate', String(activeThread.title || '')));
-    headerCopy.appendChild(createElement('p', 'truncate', String(activeThread.participant_names || '')));
+    const mainHeader = createFluentElement('header', 'chat-header');
+    const headerIdentity = createFluentElement('div', 'chat-header-identity');
+    headerIdentity.appendChild(createFluentElement('span', 'chat-avatar chat-avatar-lg', initials(activeThread.title)));
+    const headerCopy = createFluentElement('div', 'min-w-0');
+    headerCopy.appendChild(createFluentElement('h2', 'truncate', String(activeThread.title || '')));
+    headerCopy.appendChild(createFluentElement('p', 'truncate', String(activeThread.participant_names || '')));
     headerIdentity.appendChild(headerCopy);
     mainHeader.appendChild(headerIdentity);
-    mainHeader.appendChild(createElement('span', 'chat-online-status', '● Active conversation'));
+    mainHeader.appendChild(createFluentElement('span', 'chat-online-status', '● Active conversation'));
     main.appendChild(mainHeader);
 
-    const messageList = createElement('div', 'chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5');
+    const messageList = createFluentElement('div', 'chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5');
     const activeMessages = [
       ...messages.filter((message: any) => message.thread_id === activeThread.id),
       ...pendingMessages.filter((message: any) => message.thread_id === activeThread.id),
     ];
     if (!activeMessages.length) {
-      messageList.appendChild(createElement(
+      messageList.appendChild(createFluentElement(
         'p',
         'chat-empty m-auto text-sm',
         'Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.',
       ));
     }
     for (const message of activeMessages) {
-      const row = createElement(
+      const row = createFluentElement(
         'article',
         `chat-message flex flex-col ${message.is_own ? 'is-own items-end' : 'items-start'}`,
       );
-      const messageMeta = createElement('div', 'chat-message-meta');
-      messageMeta.appendChild(createElement('span', 'chat-avatar chat-avatar-sm', initials(message.sender_name)));
-      const messageMetaCopy = createElement('span', 'chat-message-meta-copy');
-      messageMetaCopy.appendChild(createElement('strong', '', String(message.sender_name || 'Unknown')));
-      messageMetaCopy.appendChild(createElement('time', '', formatTimestamp(message.created_at)));
+      const messageMeta = createFluentElement('div', 'chat-message-meta');
+      messageMeta.appendChild(createFluentElement('span', 'chat-avatar chat-avatar-sm', initials(message.sender_name)));
+      const messageMetaCopy = createFluentElement('span', 'chat-message-meta-copy');
+      messageMetaCopy.appendChild(createFluentElement('strong', '', String(message.sender_name || 'Unknown')));
+      messageMetaCopy.appendChild(createFluentElement('time', '', formatTimestamp(message.created_at)));
       messageMeta.appendChild(messageMetaCopy);
       row.appendChild(messageMeta);
-      row.appendChild(createElement(
+      row.appendChild(createFluentElement(
         'div',
         `chat-bubble max-w-[76%] whitespace-pre-wrap break-words px-3 py-2 text-sm ${message.is_own ? 'is-own' : ''}`,
         String(message.body || ''),
       ));
       if (message.pending || message.failed) {
-        const status = createElement(
+        const status = createFluentElement(
           'span',
           `mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`,
           message.failed ? `✕ ${message.error || 'Failed'}` : '⟳ Sending',
@@ -350,13 +348,13 @@ export class ChatWorkspace extends BaseComponent {
         (attachment: any) => attachment.message_id === message.id,
       );
       if (messageAttachments.length) {
-        const attachmentRow = createElement('div', 'mt-1 flex flex-wrap justify-end gap-1');
+        const attachmentRow = createFluentElement('div', 'mt-1 flex flex-wrap justify-end gap-1');
         for (const attachment of messageAttachments) {
           const attachmentId = String(attachment.id || '');
           if (isPreviewableImage(attachment)) {
             const previewUrl = this.attachmentPreviewUrls.get(attachmentId);
             if (previewUrl) {
-              const image = createElement('img', 'chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain');
+              const image = createFluentElement('img', 'chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain');
               image.src = previewUrl;
               image.alt = String(attachment.file_name || 'Image attachment');
               image.loading = 'lazy';
@@ -365,11 +363,11 @@ export class ChatWorkspace extends BaseComponent {
               });
               attachmentRow.appendChild(image);
             } else {
-              attachmentRow.appendChild(createElement('span', 'chat-image-preview-loading text-xs text-slate-400', 'Loading image...'));
+              attachmentRow.appendChild(createFluentElement('span', 'chat-image-preview-loading text-xs text-slate-400', 'Loading image...'));
               void this.loadAttachmentPreview(attachment);
             }
           }
-          const attachmentButton = createElement(
+          const attachmentButton = createFluentElement(
             'button',
             'chat-attachment rounded-full border px-2 py-1 text-[11px]',
             `Tệp: ${attachment.file_name}`,
@@ -393,30 +391,30 @@ export class ChatWorkspace extends BaseComponent {
       messageList.scrollTop = messageList.scrollHeight;
     });
 
-    const composer = createElement('form', 'chat-composer flex items-end gap-2');
-    const fileInput = createElement('input');
+    const composer = createFluentElement('form', 'chat-composer flex items-end gap-2');
+    const fileInput = createFluentElement('input');
     fileInput.type = 'file';
     fileInput.hidden = true;
     fileInput.setAttribute('aria-label', 'Chọn tệp đính kèm');
-    const attachButton = createElement(
+    const attachButton = createFluentElement(
       'button',
       'chat-attach btn btn-secondary flex-none',
       this.state.selectedFile ? 'Đổi tệp' : 'Đính kèm',
     );
     attachButton.type = 'button';
     attachButton.addEventListener('click', () => fileInput.click());
-    const input = createElement('textarea', 'chat-input form-input flex-1 resize-none');
+    const input = createFluentElement('textarea', 'chat-input form-input flex-1 resize-none');
     input.rows = 1;
     input.maxLength = 4000;
     input.placeholder = 'Nhập tin nhắn...';
     input.setAttribute('aria-label', 'Nội dung tin nhắn');
     input.value = String(this.state.inputValue || '');
-    const sendButton = createElement('button', 'chat-send btn btn-primary flex-none', 'Gửi');
+    const sendButton = createFluentElement('button', 'chat-send btn btn-primary flex-none', 'Gửi');
     sendButton.type = 'submit';
     composer.append(fileInput, attachButton, input, sendButton);
     main.appendChild(composer);
     if (this.state.selectedFile) {
-      const selected = createElement(
+      const selected = createFluentElement(
         'div',
         'chat-selected-file border-t px-4 pb-2 text-xs',
         `Tệp đã chọn: ${this.state.selectedFile.name}`,

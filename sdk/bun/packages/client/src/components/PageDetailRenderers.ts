@@ -2,6 +2,11 @@ import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
 import { resolveDatePreset } from '@core3/client/components/ListToolbar';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { html } from '@core3/client/html';
+
+function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
+  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+}
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
@@ -22,7 +27,7 @@ async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
     { record: sourceResult.data || {} },
     def,
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -96,7 +101,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     },
     formDef,
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.className = 'o-form-view-slot';
   targetContainer.appendChild(slot);
   comp._onAction = async (actionId: string, params: any) => {
@@ -138,7 +143,7 @@ async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
     { record: sourceResult.data || {} },
     def,
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.className = 'o-form-section o-form-totals-slot';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -153,7 +158,7 @@ async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
     { events: sourceResult.data || [] },
     def,
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -198,7 +203,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) return handleAction(actionDef, params?.row || params || {});
   };
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -252,7 +257,7 @@ async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
     const next = { ...(filterState[sourceId] || {}), [field]: params?.status };
     await applySourceFilters(sourceId, next);
   };
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '16px';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -324,7 +329,7 @@ async function renderListToolbar(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params || {});
   };
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '16px';
   targetContainer.appendChild(slot);
   comp.mount(slot);
@@ -355,7 +360,7 @@ async function renderChart(def: any, targetContainer: HTMLElement) {
     def
   );
 
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   if (def.layout === 'inline') {
     slot.style.display = 'inline-block';
@@ -377,7 +382,7 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
   // Pre-render each tab's components into detached containers
   const tabContainers = [];
   for (const tab of visibleTabs) {
-    const tabEl = document.createElement('div');
+    const tabEl = createFluentElement('div');
     for (const nestedDef of (tab.components || [])) {
       await renderComponentDef(nestedDef, tabEl);
     }
@@ -385,15 +390,15 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
   }
 
   // Build tab UI with plain DOM
-  const wrap = document.createElement('div');
+  const wrap = createFluentElement('div');
   wrap.className = 'tab-group';
 
-  const tabBar = document.createElement('div');
+  const tabBar = createFluentElement('div');
   tabBar.className = 'tab-bar';
   tabBar.setAttribute('role', 'tablist');
 
   const panels = tabContainers.map((tc, i) => {
-    const panel = document.createElement('div');
+    const panel = createFluentElement('div');
     panel.className = `tab-panel${i === 0 ? '' : ' tab-panel-hidden'}`;
     panel.id = `${config.page.id}-tab-panel-${i}`;
     panel.setAttribute('role', 'tabpanel');
@@ -402,7 +407,7 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
   });
 
   const tabBtns = visibleTabs.map((tab, i) => {
-    const btn = document.createElement('button');
+    const btn = createFluentElement('button');
     btn.type = 'button';
     btn.textContent = tab.label;
     btn.className = `tab-button${i === 0 ? ' is-active' : ''}`;
@@ -439,7 +444,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -454,7 +459,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -466,7 +471,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -478,7 +483,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -490,7 +495,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -498,7 +503,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     case 'PageIntro': {
       const { PageIntro } = await import('./PageIntro.ts');
       const component = new PageIntro(def.id || `${config.page.id}-intro`, def);
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -506,7 +511,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
     case 'ComingSoon': {
       const { ComingSoon } = await import('@core3/client/components/ComingSoon');
       const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);
-      const slot = document.createElement('div');
+      const slot = createFluentElement('div');
       targetContainer.appendChild(slot);
       component.mount(slot);
       break;
@@ -572,7 +577,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
           const actionDef = (config.actions || []).find(a => a.id === actionId);
           if (actionDef) await handleAction(actionDef, row);
         };
-        const slot = document.createElement('div');
+      const slot = createFluentElement('div');
         slot.style.marginBottom = '24px';
         targetContainer.appendChild(slot);
         comp.mount(slot);
@@ -591,7 +596,7 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
       blocks: (dataMap[def.source]?.data || []) as Array<Record<string, unknown>>,
     },
   );
-  const slot = document.createElement('div');
+  const slot = createFluentElement('div');
   slot.style.marginBottom = '24px';
   targetContainer.appendChild(slot);
   component.mount(slot);

@@ -112,19 +112,19 @@ export class OdooFormView extends BaseComponent {
       const current = record[field.field] ?? '';
       let editor: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
       if (field.type === 'textarea' || field.type === 'richtext') {
-        editor = document.createElement('textarea');
+        editor = html.take(null).textarea.getContext() as HTMLTextAreaElement;
         editor.rows = 3;
       } else if (field.type === 'select' || field.type === 'multi-select') {
-        editor = document.createElement('select');
+        editor = html.take(null).select.getContext() as HTMLSelectElement;
         for (const option of field.options || []) {
           const itemOption = typeof option === 'string' ? { id: option, label: option } : option;
-          const optionEl = document.createElement('option');
+          const optionEl = html.take(null).option.getContext() as HTMLOptionElement;
           optionEl.value = String(itemOption.id ?? itemOption.value ?? '');
           optionEl.textContent = String(itemOption.label ?? optionEl.value);
           editor.appendChild(optionEl);
         }
       } else {
-        editor = document.createElement('input');
+        editor = html.take(null).input.getContext() as HTMLInputElement;
         editor.type = field.type === 'number' || field.type === 'money' ? 'number' : 'text';
         if (field.type === 'date' || field.type === 'time' || field.type === 'datetime') {
           editor.inputMode = 'numeric';
@@ -220,7 +220,7 @@ export class OdooFormView extends BaseComponent {
     }, this.def);
     chatter.parent = this;
     this.children.push(chatter);
-    const chatterSlot = document.createElement('div');
+    const chatterSlot = html.take(null).div.getContext() as HTMLDivElement;
     chatterSlot.className = 'o-form-chatter-slot';
     layout.appendChild(chatterSlot);
     chatter.mount(chatterSlot);
@@ -228,7 +228,7 @@ export class OdooFormView extends BaseComponent {
 
   getEmbeddedContent() {
     if (!this.embeddedContent) {
-      this.embeddedContent = document.createElement('div');
+      this.embeddedContent = html.take(null).div.getContext() as HTMLDivElement;
       this.embeddedContent.className = 'o-form-embedded-content';
     }
     return this.embeddedContent;

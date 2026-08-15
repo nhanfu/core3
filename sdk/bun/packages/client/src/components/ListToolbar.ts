@@ -45,6 +45,10 @@ export type ListToolbarDefinition = {
   actions_inline?: boolean;
 };
 
+function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
+  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+}
+
 /**
  * Shared resource-list controls: a keyword search plus optional utility
  * actions such as advanced filters, export, column selection, and help.
@@ -62,22 +66,22 @@ export class ListToolbar extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const root = document.createElement('div');
+    const root = createFluentElement('div');
     root.className = 'token-toolbar flex flex-wrap items-center justify-between gap-3 bg-white';
 
     if (this.def.search !== false) {
       const searchDef = this.def.search || {};
-      const searchControls = document.createElement('div');
+      const searchControls = createFluentElement('div');
       searchControls.className = 'flex min-w-[260px] flex-1 gap-2 sm:max-w-md';
-      const searchWrap = document.createElement('div');
+      const searchWrap = createFluentElement('div');
       searchWrap.className = 'relative min-w-0 flex-1';
 
-      const searchIcon = document.createElement('span');
+      const searchIcon = createFluentElement('span');
       searchIcon.className = 'pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400';
       appendIcon(searchIcon, 'search');
       searchWrap.append(searchIcon);
 
-      const input = document.createElement('input');
+      const input = createFluentElement('input');
       input.type = 'search';
       input.dataset.listSearch = 'true';
       input.className = 'token-input h-10 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
@@ -91,7 +95,7 @@ export class ListToolbar extends BaseComponent {
       searchWrap.append(input);
 
       if (input.value) {
-        const clear = document.createElement('button');
+        const clear = createFluentElement('button');
         clear.type = 'button';
         clear.className = 'absolute inset-y-0 right-2 px-1 text-slate-400 hover:text-slate-700';
         appendIcon(clear, 'x');
@@ -105,13 +109,13 @@ export class ListToolbar extends BaseComponent {
 
       searchControls.append(searchWrap);
       if (this.def.search_button) {
-        const searchButton = document.createElement('button');
+        const searchButton = createFluentElement('button');
         searchButton.type = 'button';
         searchButton.dataset.listSearchSubmit = 'true';
         searchButton.className = 'token-control inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
         searchButton.title = 'Tìm kiếm';
         searchButton.setAttribute('aria-label', searchButton.title);
-        const buttonIcon = document.createElement('span');
+        const buttonIcon = createFluentElement('span');
         appendIcon(buttonIcon, 'search');
         searchButton.append(buttonIcon);
         searchButton.addEventListener('click', () => this.emitSearch(searchDef.action));
@@ -120,7 +124,7 @@ export class ListToolbar extends BaseComponent {
       root.append(searchControls);
     }
 
-    const advancedContent = document.createElement('div');
+    const advancedContent = createFluentElement('div');
     advancedContent.className = `${this.def.actions_inline ? '' : 'basis-full '}flex flex-wrap items-center gap-3`;
     const collapseAdvanced = Boolean(
       this.def.advanced_filter || this.def.filters?.length || (this.def.date_range && this.def.date_range.preset_style !== 'segmented')
@@ -128,7 +132,7 @@ export class ListToolbar extends BaseComponent {
     let advancedOpen = !collapseAdvanced;
 
     if (this.def.date_range) {
-      const range = document.createElement('div');
+      const range = createFluentElement('div');
       range.className = 'flex flex-wrap items-center gap-2';
       const dateRange = this.def.date_range;
       const presets = (dateRange.presets || []).filter((preset) => !(dateRange.deny_unbounded && preset === 'all'));
@@ -145,11 +149,11 @@ export class ListToolbar extends BaseComponent {
           });
         };
         if (dateRange.preset_style === 'segmented') {
-          const segments = document.createElement('div');
+          const segments = createFluentElement('div');
           segments.className = 'token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1';
           segments.setAttribute('aria-label', 'Khoảng thời gian');
           for (const preset of presets) {
-            const button = document.createElement('button');
+            const button = createFluentElement('button');
             button.type = 'button';
             button.dataset.datePreset = preset;
             button.className = `token-preset rounded px-2.5 py-1.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${this.state.preset === preset ? 'bg-blue-600 text-white' : 'text-slate-700'}`;
@@ -159,15 +163,15 @@ export class ListToolbar extends BaseComponent {
           }
           range.append(segments);
         } else {
-          const select = document.createElement('select');
+          const select = createFluentElement('select');
           select.className = 'token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
           select.setAttribute('aria-label', 'Khoảng thời gian');
-          const placeholder = document.createElement('option');
+          const placeholder = createFluentElement('option');
           placeholder.value = '';
           placeholder.textContent = 'Khoảng thời gian';
           select.append(placeholder);
           for (const preset of presets) {
-            const option = document.createElement('option');
+            const option = createFluentElement('option');
             option.value = preset;
             option.textContent = labels[preset] || preset;
             select.append(option);
@@ -185,7 +189,7 @@ export class ListToolbar extends BaseComponent {
         { key: dateRange.to_field || 'to_date', label: dateRange.to_label || 'Đến ngày' },
       ];
       for (const field of fields) {
-        const input = document.createElement('input');
+        const input = createFluentElement('input');
         input.type = 'text';
         input.inputMode = 'numeric';
         input.placeholder = 'YYYY-MM-DD';
@@ -216,18 +220,18 @@ export class ListToolbar extends BaseComponent {
     }
 
     if (this.def.filters?.length) {
-      const filterBar = document.createElement('div');
+      const filterBar = createFluentElement('div');
       filterBar.className = 'flex flex-wrap items-center gap-2';
       for (const filter of this.def.filters) {
-        const select = document.createElement('select');
+        const select = createFluentElement('select');
         select.className = 'token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
         select.setAttribute('aria-label', filter.label);
-        const placeholder = document.createElement('option');
+        const placeholder = createFluentElement('option');
         placeholder.value = '';
         placeholder.textContent = filter.placeholder || filter.label;
         select.append(placeholder);
         for (const optionDef of filter.options || []) {
-          const option = document.createElement('option');
+          const option = createFluentElement('option');
           option.value = typeof optionDef === 'string' ? optionDef : optionDef.id;
           option.textContent = typeof optionDef === 'string' ? optionDef : optionDef.label;
           select.append(option);
@@ -249,16 +253,16 @@ export class ListToolbar extends BaseComponent {
 
     const actions = this.def.actions || [];
     if (actions.length || collapseAdvanced || this.def.help) {
-      const actionBar = document.createElement('div');
+      const actionBar = createFluentElement('div');
       actionBar.className = 'flex flex-wrap items-center justify-end gap-2';
       if (collapseAdvanced) {
-        const advancedButton = document.createElement('button');
+        const advancedButton = createFluentElement('button');
         advancedButton.type = 'button';
         advancedButton.className = 'token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
         advancedButton.title = 'Bộ lọc nâng cao';
         advancedButton.setAttribute('aria-label', advancedButton.title);
         advancedButton.setAttribute('aria-expanded', 'false');
-        const icon = document.createElement('span');
+        const icon = createFluentElement('span');
         appendIcon(icon, 'filter');
         advancedButton.append(icon);
         advancedButton.addEventListener('click', () => {
@@ -272,12 +276,12 @@ export class ListToolbar extends BaseComponent {
       }
       for (const action of actions) this.renderAction(action, actionBar);
       if (this.def.help) {
-        const helpButton = document.createElement('button');
+        const helpButton = createFluentElement('button');
         helpButton.type = 'button';
         helpButton.className = 'token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
         helpButton.title = typeof this.def.help === 'object' && this.def.help.title ? this.def.help.title : 'Trợ giúp';
         helpButton.setAttribute('aria-label', helpButton.title);
-        const icon = document.createElement('span');
+        const icon = createFluentElement('span');
         appendIcon(icon, 'help');
         helpButton.append(icon);
         helpButton.addEventListener('click', () => {
@@ -286,7 +290,7 @@ export class ListToolbar extends BaseComponent {
             : 'Dùng tìm kiếm, bộ lọc nâng cao và các cột để thu hẹp danh sách.';
           const existing = container.querySelector('[data-toolbar-help]');
           if (existing) { existing.remove(); return; }
-          const panel = document.createElement('div');
+          const panel = createFluentElement('div');
           panel.dataset.toolbarHelp = 'true';
           panel.className = 'basis-full rounded-md border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-900';
           panel.textContent = text;
