@@ -1,3 +1,15 @@
+export enum SvgTag {
+    Svg = 'svg',
+    Group = 'g',
+    Path = 'path',
+    Rect = 'rect',
+    Circle = 'circle',
+    Line = 'line',
+    Text = 'text',
+    Polygon = 'polygon',
+    Polyline = 'polyline',
+}
+
 export class HTML {
     /** @type {HTMLElement} */
     context;
@@ -35,7 +47,7 @@ export class HTML {
         }
         return this;
     }
-    svgNode(node) {
+    svg(node: SvgTag | string) {
         const ele = document.createElementNS('http://www.w3.org/2000/svg', node);
         if (this.context) {
             this.context.appendChild(ele);

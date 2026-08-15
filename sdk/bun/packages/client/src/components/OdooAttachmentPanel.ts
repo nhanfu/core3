@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { html } from '@core3/client/html';
 
 function formatSize(value: unknown) {
   const bytes = Number(value || 0);
@@ -22,26 +23,17 @@ export class OdooAttachmentPanel extends BaseComponent {
   draw(container: HTMLElement) {
     const record = this.state.record || {};
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
-    const root = document.createElement('section');
-    root.className = 'o-form-attachment-panel';
-    container.appendChild(root);
+    const root = html.take(container).section.className('o-form-attachment-panel').getContext() as HTMLElement;
 
     if (this.def.attachment_upload_action) {
-      const upload = document.createElement('button');
-      upload.type = 'button';
-      upload.className = 'o-form-chatter-menu-action o-form-attachment-upload';
+      const upload = html.take(root).button.type('button').className('o-form-chatter-menu-action o-form-attachment-upload').getContext() as HTMLButtonElement;
       appendIcon(upload, 'plus');
-      upload.append(String(this.def.add_attachment_label || 'Attach files'));
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.multiple = true;
-      input.hidden = true;
-      if (this.def.attachment_accept) input.accept = String(this.def.attachment_accept);
-      const status = document.createElement('span');
-      status.className = 'o-form-attachment-upload-status';
-      status.setAttribute('aria-live', 'polite');
-      upload.addEventListener('click', () => input.click());
-      input.addEventListener('change', () => {
+      html.take(upload).text(String(this.def.add_attachment_label || 'Attach files'));
+      const input = html.take(root).input.type('file').prop('multiple', true).prop('hidden', true)
+        .attr('accept', this.def.attachment_accept ? String(this.def.attachment_accept) : '').getContext() as HTMLInputElement;
+      const status = html.take(root).span.className('o-form-attachment-upload-status').attr('aria-live', 'polite').getContext() as HTMLSpanElement;
+      html.take(upload).event('click', () => input.click());
+      html.take(input).event('change', () => {
         const files = [...(input.files || [])];
         if (!files.length) return;
         upload.disabled = true;
@@ -56,75 +48,50 @@ export class OdooAttachmentPanel extends BaseComponent {
           status.textContent = error instanceof Error ? error.message : String(this.def.upload_failed_label || 'Upload failed');
         }).finally(() => { upload.disabled = false; });
       });
-      root.append(upload, input, status);
     }
 
     if (!attachments.length) {
-      const empty = document.createElement('p');
-      empty.className = 'o-form-chatter-empty';
-      empty.textContent = String(this.def.no_attachments_label || 'No attachments');
-      root.appendChild(empty);
+      html.take(root).p.className('o-form-chatter-empty').text(String(this.def.no_attachments_label || 'No attachments'));
       return;
     }
 
-    const list = document.createElement('div');
-    list.className = 'o-form-attachment-list';
-    list.setAttribute('role', 'list');
-    for (const attachment of attachments) list.appendChild(this.renderAttachment(attachment));
-    root.appendChild(list);
+    const list = html.take(root).div.className('o-form-attachment-list').attr('role', 'list').getContext() as HTMLDivElement;
+    for (const attachment of attachments) this.renderAttachment(attachment, list);
   }
 
-  private renderAttachment(attachment: any) {
-    const item = document.createElement('article');
-    item.className = 'o-form-attachment-card';
-    item.setAttribute('role', 'listitem');
+  private renderAttachment(attachment: any, parent: HTMLElement) {
+    const item = html.take(parent).article.className('o-form-attachment-card').attr('role', 'listitem').getContext() as HTMLElement;
     const mime = String(attachment.mime_type || 'application/octet-stream');
     const isImage = mime.startsWith('image/');
-    const preview = document.createElement('button');
-    preview.type = 'button';
-    preview.className = `o-form-attachment-preview-button${isImage ? ' is-image' : ''}`;
-    preview.setAttribute('aria-label', `${isImage ? this.def.preview_label || 'Preview' : this.def.download_label || 'Download'} ${attachment.file_name || 'attachment'}`);
+    const preview = html.take(item).button.type('button').className(`o-form-attachment-preview-button${isImage ? ' is-image' : ''}`)
+      .attr('aria-label', `${isImage ? this.def.preview_label || 'Preview' : this.def.download_label || 'Download'} ${attachment.file_name || 'attachment'}`).getContext() as HTMLButtonElement;
     if (isImage && typeof this.def.resolve_attachment_blob === 'function') {
-      const placeholder = document.createElement('span');
-      placeholder.className = 'o-form-attachment-placeholder';
+      const placeholder = html.take(preview).span.className('o-form-attachment-placeholder').getContext() as HTMLSpanElement;
       appendIcon(placeholder, 'image');
-      const image = document.createElement('img');
-      image.alt = String(attachment.file_name || 'Image attachment');
-      image.hidden = true;
-      preview.append(placeholder, image);
+      const image = html.take(preview).img.attr('alt', String(attachment.file_name || 'Image attachment')).prop('hidden', true).getContext() as HTMLImageElement;
       void this.getObjectUrl(attachment).then(url => {
         if (!image.isConnected) return;
         image.src = url;
         image.hidden = false;
         placeholder.hidden = true;
       }).catch(() => {});
-      preview.addEventListener('click', () => void this.openPreview(attachment));
+      html.take(preview).event('click', () => void this.openPreview(attachment));
     } else {
-      const icon = document.createElement('span');
-      icon.className = 'o-form-attachment-file-icon';
+      const icon = html.take(preview).span.className('o-form-attachment-file-icon').getContext() as HTMLSpanElement;
       appendIcon(icon, isImage ? 'image' : 'file');
-      preview.appendChild(icon);
-      if (this.def.attachment_download_action) preview.addEventListener('click', () => void this.download(attachment));
+      if (this.def.attachment_download_action) html.take(preview).event('click', () => void this.download(attachment));
       else preview.disabled = true;
     }
-    const info = document.createElement('div');
-    info.className = 'o-form-attachment-info';
-    const name = document.createElement('strong');
-    name.textContent = String(attachment.file_name || attachment.name || 'Attachment');
-    name.title = name.textContent;
-    const size = document.createElement('small');
-    size.textContent = formatSize(attachment.size_bytes) || mime;
-    info.append(name, size);
-    item.append(preview, info);
+    const info = html.take(item).div.className('o-form-attachment-info').getContext() as HTMLDivElement;
+    const name = html.take(info).strong.text(String(attachment.file_name || attachment.name || 'Attachment')).getContext() as HTMLElement;
+    name.title = name.textContent || '';
+    html.take(info).small.text(formatSize(attachment.size_bytes) || mime);
     if (this.def.attachment_download_action) {
-      const download = document.createElement('button');
-      download.type = 'button';
-      download.className = 'o-form-attachment-download';
-      download.title = String(this.def.download_label || 'Download');
-      download.setAttribute('aria-label', `${download.title}: ${name.textContent}`);
+      const download = html.take(item).button.type('button').className('o-form-attachment-download')
+        .attr('title', String(this.def.download_label || 'Download'))
+        .attr('aria-label', `${this.def.download_label || 'Download'}: ${name.textContent}`).getContext() as HTMLButtonElement;
       appendIcon(download, 'download');
-      download.addEventListener('click', () => void this.download(attachment));
-      item.appendChild(download);
+      html.take(download).event('click', () => void this.download(attachment));
     }
     return item;
   }
@@ -155,43 +122,27 @@ export class OdooAttachmentPanel extends BaseComponent {
   private async openPreview(attachment: any) {
     const url = await this.getObjectUrl(attachment);
     this.closePreview();
-    const overlay = document.createElement('div');
-    overlay.className = 'o-form-attachment-preview-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', String(attachment.file_name || this.def.preview_label || 'Attachment preview'));
-    overlay.tabIndex = -1;
-    const dialog = document.createElement('div');
-    dialog.className = 'o-form-attachment-preview-dialog';
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.className = 'o-form-attachment-preview-close';
-    close.title = String(this.def.close_label || 'Close');
-    close.setAttribute('aria-label', close.title);
+    const overlay = html.take(document.body).div.className('o-form-attachment-preview-overlay')
+      .attr('role', 'dialog').attr('aria-modal', 'true')
+      .attr('aria-label', String(attachment.file_name || this.def.preview_label || 'Attachment preview'))
+      .prop('tabIndex', -1).getContext() as HTMLDivElement;
+    const dialog = html.take(overlay).div.className('o-form-attachment-preview-dialog').getContext() as HTMLDivElement;
+    const close = html.take(dialog).button.type('button').className('o-form-attachment-preview-close')
+      .attr('title', String(this.def.close_label || 'Close'))
+      .attr('aria-label', String(this.def.close_label || 'Close')).getContext() as HTMLButtonElement;
     appendIcon(close, 'x');
-    const image = document.createElement('img');
-    image.src = url;
-    image.alt = String(attachment.file_name || 'Image attachment');
-    const footer = document.createElement('div');
-    footer.className = 'o-form-attachment-preview-footer';
-    const name = document.createElement('strong');
-    name.textContent = String(attachment.file_name || 'Attachment');
-    footer.appendChild(name);
+    html.take(dialog).img.attr('src', url).attr('alt', String(attachment.file_name || 'Image attachment'));
+    const footer = html.take(dialog).div.className('o-form-attachment-preview-footer').getContext() as HTMLDivElement;
+    html.take(footer).strong.text(String(attachment.file_name || 'Attachment'));
     if (this.def.attachment_download_action) {
-      const download = document.createElement('button');
-      download.type = 'button';
-      download.className = 'o-form-chatter-menu-confirm';
-      download.textContent = String(this.def.download_label || 'Download');
-      download.addEventListener('click', () => void this.download(attachment));
-      footer.appendChild(download);
+      html.take(footer).button.type('button').className('o-form-chatter-menu-confirm')
+        .text(String(this.def.download_label || 'Download'))
+        .event('click', () => void this.download(attachment));
     }
-    dialog.append(close, image, footer);
-    overlay.appendChild(dialog);
-    close.addEventListener('click', () => this.closePreview());
-    overlay.addEventListener('click', event => { if (event.target === overlay) this.closePreview(); });
+    html.take(close).event('click', () => this.closePreview());
+    html.take(overlay).event('click', event => { if (event.target === overlay) this.closePreview(); });
     this.previewKeyHandler = event => { if (event.key === 'Escape') this.closePreview(); };
     document.addEventListener('keydown', this.previewKeyHandler);
-    document.body.appendChild(overlay);
     this.previewOverlay = overlay;
     overlay.focus();
   }
