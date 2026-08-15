@@ -144,9 +144,12 @@ describe('Odoo ListView', () => {
     expect(onSelectionChange).toHaveBeenLastCalledWith([]);
 
     const statusColumn = container.querySelector<HTMLInputElement>('[aria-label="Columns: Status"]')!;
+    const columnMenu = container.querySelector<HTMLDetailsElement>('.o-list-cog-menu')!;
+    columnMenu.open = true;
     statusColumn.checked = true;
     statusColumn.dispatchEvent(new Event('change', { bubbles: true }));
     expect(container.querySelector('thead')?.textContent).toContain('Status');
+    expect(container.querySelector<HTMLDetailsElement>('.o-list-cog-menu')?.open).toBe(true);
   });
 
   it('always renders both sort directions and activates the selected direction', () => {

@@ -172,6 +172,28 @@ export class YamlServiceModule implements ModuleLifecycle {
       workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === this.id).map(([id, workflow]) => [id, workflow.config])),
       workflowFiles: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === this.id).map(([id, workflow]) => [id, workflow.file])),
     };
+    const reloadPages = () => {
+      const refreshed = discoverPages(context.appsRoot);
+      const servicePages = [...refreshed.pages].filter(([, page]) => page.module === this.id);
+      const servicePageIds = new Set(servicePages.map(([id]) => id));
+      const serviceSources = [...refreshed.datasources].filter(([, source]) =>
+        servicePages.some(([, page]) => (page.config.datasources || []).some((candidate: any) => candidate.id === source.id)));
+      const replaceMap = (target: Map<string, any>, entries: Array<[string, any]>) => {
+        target.clear();
+        for (const [key, value] of entries) target.set(key, value);
+      };
+      replaceMap(pageMaps.pages, servicePages.map(([id, page]) => [id, page.config]));
+      replaceMap(pageMaps.datasources, serviceSources);
+      replaceMap(pageMaps.catalogs, [...refreshed.catalogs].filter(([key]) => key.startsWith(`${this.id}:`)));
+      replaceMap(pageMaps.menus, [...refreshed.menus].filter(([key]) => key === this.id));
+      replaceMap(pageMaps.workflows, [...refreshed.workflows]
+        .filter(([, workflow]) => workflow.module === this.id)
+        .map(([id, workflow]) => [id, workflow.config]));
+      replaceMap(pageMaps.workflowFiles, [...refreshed.workflows]
+        .filter(([, workflow]) => workflow.module === this.id)
+        .map(([id, workflow]) => [id, workflow.file]));
+      return servicePageIds.size;
+    };
     const actions = [...pageMaps.pages.values()].flatMap((page: any) => page.actions || []);
     const namedActions = new Map(actions.filter((action: any) => typeof action.action === 'string').map((action: any) => [action.action, action]));
     const topicDeclarations = Array.isArray((this.definition.topics as any)?.topics) ? (this.definition.topics as any).topics : [];
@@ -209,6 +231,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       eventStore: context.eventBus,
       topics: this.topics,
       storage: this.definition.storage,
+      reloadPages,
     });
     this.runtime = {
       id: this.id,

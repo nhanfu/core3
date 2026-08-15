@@ -548,7 +548,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     const pageId = String(formView.page).split('/').pop()!.replace(/\.ya?ml$/, '');
     try {
       const detailConfig = await client._fetch(
-        `${client._resolveBase()}/pages/${encodeURIComponent(pageId)}?id=${encodeURIComponent(String(row.id))}`,
+        `${client._resolveBase()}/pages/${encodeURIComponent(pageId)}?id=${encodeURIComponent(String(row.id))}&lc=${encodeURIComponent(i18n.lang)}`,
         { method: 'GET' },
       );
       if (detailConfig.i18n) i18n.hydrate(pageId, detailConfig.i18n);
@@ -720,6 +720,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       doubleClickAction: def.row_double_click_action,
       formView,
       renderForm,
+      columnStorageKey: `core3:columns:${String(config.page?.id || config.title || 'page')}:${sourceId}`,
       onFormStateChange: ({ mode, rowId }: { mode: 'right' | 'hidden'; rowId?: string }) => {
         const nextParams = { ...getPageParams() } as Record<string, unknown>;
         nextParams.form = mode === 'hidden' ? 'hidden' : 'show';

@@ -197,11 +197,11 @@
 .o-x2many-row-action { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 3px; }
 .o-x2many-row-action:hover { background: var(--o-form-hover); text-decoration: none; }
 .o-x2many-row-action .svg-icon { width: 15px; height: 15px; }
-.o-list-form-panel-body { overflow-y: overlay; scrollbar-width: none; scrollbar-gutter: auto; }
-.o-list-form-panel-body:hover { scrollbar-width: thin; }
-.o-list-form-panel-body::-webkit-scrollbar { width: 0; height: 0; }
-.o-list-form-panel-body:hover::-webkit-scrollbar { width: 8px; height: 8px; }
-.o-list-form-panel-body::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--o-form-muted) 55%, transparent); background-clip: padding-box; }
+.o-list-form-panel-body { overflow-y: auto; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.o-list-form-panel-body:hover { scrollbar-color: color-mix(in srgb, var(--o-form-muted) 55%, transparent) transparent; }
+.o-list-form-panel-body::-webkit-scrollbar { width: 8px; height: 8px; }
+.o-list-form-panel-body::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: transparent; background-clip: padding-box; }
+.o-list-form-panel-body:hover::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--o-form-muted) 55%, transparent); background-clip: padding-box; }
 
 @media (max-width: 768px) {
   .o-form-notebook-tabs { margin-right: 20px; margin-left: 20px; }

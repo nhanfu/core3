@@ -96,6 +96,7 @@ export type ListViewOptions = {
   formView?: { page: string; sidePanel?: boolean };
   renderForm?: (row: ListRow, container: HTMLElement) => Promise<void> | void;
   onFormStateChange?: (state: { mode: 'right' | 'hidden'; rowId?: string }) => void;
+  columnStorageKey?: string;
   rowActions?: 'buttons' | 'menu';
   views?: ListViewMode[];
   viewNavigation?: 'icons' | 'tabs';
@@ -192,6 +193,35 @@ export class ListView extends BaseComponent {
     }
   }
 
+  private columnIds() {
+    return this.defs.map(column => String(column.id || column.field));
+  }
+
+  private readStoredColumns(): { visible: string[]; known: string[] } | undefined {
+    const key = this.options.columnStorageKey;
+    if (!key || typeof localStorage === 'undefined') return undefined;
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return undefined;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return { visible: parsed.map(String), known: parsed.map(String) };
+      if (!Array.isArray(parsed?.visible) || !Array.isArray(parsed?.known)) return undefined;
+      return { visible: parsed.visible.map(String), known: parsed.known.map(String) };
+    } catch {
+      return undefined;
+    }
+  }
+
+  private persistColumns(visible: Iterable<string>) {
+    const key = this.options.columnStorageKey;
+    if (!key || typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(key, JSON.stringify({ visible: [...visible], known: this.columnIds() }));
+    } catch {
+      // Storage can be unavailable in private browsing or restricted embeds.
+    }
+  }
+
   private async drawOdoo(container: HTMLElement, version: number) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows as ListRow[] : [];
     const meta = (this.state.meta as Record<string, unknown> | undefined) || {};
@@ -217,11 +247,17 @@ export class ListView extends BaseComponent {
       moreActions: 'More actions',
       ...suppliedLabels,
     };
+    const storedColumns = Array.isArray(this.state.visibleColumns) ? undefined : this.readStoredColumns();
+    const defaultVisible = this.defs.filter(column => column.optional !== 'hide').map(column => String(column.id || column.field));
+    const storedVisible = storedColumns
+      ? new Set([...storedColumns.visible, ...defaultVisible.filter(id => !storedColumns.known.includes(id))])
+      : undefined;
     const visibleColumnIds = new Set<string>(
       Array.isArray(this.state.visibleColumns)
         ? this.state.visibleColumns.map(String)
-        : this.defs.filter(column => column.optional !== 'hide').map(column => column.id || column.field),
+        : storedVisible || defaultVisible,
     );
+    if (storedVisible) this.persistColumns(visibleColumnIds);
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field));
     const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).ele();
 
@@ -630,6 +666,10 @@ export class ListView extends BaseComponent {
 
     if (!this.options.columnChooser && !this.options.actions?.length && !this.options.favorites?.length) return;
     const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').ele() as HTMLDetailsElement;
+    if (this.state.columnMenuOpen === true) html.take(details).prop('open', true);
+    html.take(details).event('toggle', () => {
+      if (!details.open) this.setState({ columnMenuOpen: false }, false);
+    });
     const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).ele();
     appendIcon(summary, 'settings');
     const menu = html.take(details).div.className('o-list-dropdown-menu').ele();
@@ -646,7 +686,8 @@ export class ListView extends BaseComponent {
             html.take(checkbox).prop('checked', true);
             return;
           }
-          this.setState({ visibleColumns: [...nextVisible] });
+          this.persistColumns(nextVisible);
+          this.setState({ visibleColumns: [...nextVisible], columnMenuOpen: true });
         });
         html.take(label).text(column.label);
       }
