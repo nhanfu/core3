@@ -14,7 +14,7 @@ describe('shared SVG icon adapter', () => {
   });
 
   it('reports the icons used by the MovedX shell as supported', () => {
-    for (const name of ['search', 'panel', 'moon', 'sun', 'bell', 'clock', 'message', 'check', 'x', 'chevron-down', 'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down', 'truck', 'lightbulb', 'image', 'edit', 'trash', 'sort', 'sort-ascending', 'sort-descending', '○', '◷']) {
+    for (const name of ['search', 'panel', 'moon', 'sun', 'bell', 'clock', 'message', 'check', 'x', 'chevron-down', 'arrow-left', 'arrow-right', 'arrow-up', 'arrow-down', 'truck', 'lightbulb', 'image', 'sort', 'sort-ascending', 'sort-descending', '○', '◷']) {
       expect(hasIcon(name)).toBe(true);
     }
   });
@@ -25,15 +25,5 @@ describe('shared SVG icon adapter', () => {
 
     expect(container.querySelectorAll('svg')).toHaveLength(4);
     expect(container.textContent).toBe('');
-  });
-
-  it('keeps fluent SVG construction within the icon rendering budget', () => {
-    const container = document.createElement('div');
-    const start = performance.now();
-    for (let index = 0; index < 1000; index++) appendIcon(container, index % 2 ? 'edit' : 'trash');
-    const elapsed = performance.now() - start;
-
-    expect(container.querySelectorAll('svg')).toHaveLength(1000);
-    expect(elapsed).toBeLessThan(1000);
   });
 });

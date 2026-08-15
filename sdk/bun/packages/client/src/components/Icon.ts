@@ -1,5 +1,3 @@
-import { html } from '@core3/client/html';
-
 const ICON_PATHS: Record<string, string> = {
   search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/>',
   download: '<path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/>',
@@ -77,42 +75,15 @@ const ICON_ALIASES: Record<string, string> = {
   '⌂': 'home', '◷': 'activity', '#': 'number', '◉': 'status',
 };
 
-type SvgNode = { tag: string; attrs: Record<string, string> };
-
-function compileSvgNodes(markup: string): SvgNode[] {
-  const nodes: SvgNode[] = [];
-  const nodePattern = /<([a-z]+)\s*([^>]*)\/>/g;
-  const attributePattern = /([:\w-]+)="([^"]*)"/g;
-  for (const match of markup.matchAll(nodePattern)) {
-    const attrs: Record<string, string> = {};
-    for (const attribute of match[2].matchAll(attributePattern)) attrs[attribute[1]] = attribute[2];
-    nodes.push({ tag: match[1], attrs });
-  }
-  return nodes;
-}
-
-const COMPILED_ICON_PATHS: Record<string, SvgNode[]> = Object.fromEntries(
-  Object.entries(ICON_PATHS).map(([name, markup]) => [name, compileSvgNodes(markup)]),
-);
-
-/** Render a small inline SVG through the shared fluent DOM builder. */
+/** Render a small inline SVG without exposing DOM ownership to callers. */
 export function appendIcon(target: HTMLElement, name: string, label?: string) {
+  const icon = document.createElement('span');
+  icon.className = 'svg-icon';
+  icon.setAttribute('aria-hidden', label ? 'false' : 'true');
+  if (label) icon.setAttribute('aria-label', label);
   const key = ICON_ALIASES[name] || name;
-  const icon = html.take(target).span.className('svg-icon').ele() as HTMLElement;
-  html.take(icon).attr('aria-hidden', label ? 'false' : 'true');
-  if (label) html.take(icon).attr('aria-label', label);
-  const svg = html.take(icon).svg('svg')
-    .attr('viewBox', '0 0 24 24')
-    .attr('fill', 'none')
-    .attr('stroke', 'currentColor')
-    .attr('stroke-width', '1.8')
-    .attr('stroke-linecap', 'round')
-    .attr('stroke-linejoin', 'round')
-    .ele() as SVGElement;
-  for (const node of COMPILED_ICON_PATHS[key] || []) {
-    const child = html.take(svg).svg(node.tag).ele() as SVGElement;
-    for (const [attribute, value] of Object.entries(node.attrs)) html.take(child).attr(attribute, value);
-  }
+  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[key] || ''}</svg>`;
+  target.append(icon);
 }
 
 export function hasIcon(name: string) {

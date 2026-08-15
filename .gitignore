@@ -10,7 +10,7 @@ coredb
 apps/services/*/.data/
 .tmp/
 events-parquet/
-
+uploads
 # Build, test, and diagnostic output
 coverage/
 lib/dist/
