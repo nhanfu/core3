@@ -30,7 +30,7 @@
     "@types/node": "^26.1.1",
     "jest-extended": "^4.0.0",
     "jsdom": "^25.0.0",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.0.0",
     "sass": "^1.102.0"
   }

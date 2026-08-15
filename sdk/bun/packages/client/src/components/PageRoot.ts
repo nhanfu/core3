@@ -91,7 +91,7 @@ class PageRoot extends BaseComponent {
       const toolbarParent = pageHeader || pageDiv;
       const toolbarDiv = html.take(toolbarParent).div.className(pageHeader ? 'page-header-actions' : 'page-toolbar').style('display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;').ele() as HTMLDivElement;
       for (const btn of config.toolbar) {
-        if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
+        if (btn.show_if && !evalExpr(btn.show_if, ctx)) continue;
         if (btn.permission && !hasPermission(ctx.user, btn.permission)) continue;
         const button = html.take(toolbarDiv).button.type('button').ele() as HTMLButtonElement;
         html.take(button).className(`btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`);
@@ -396,7 +396,7 @@ export class PageRuntime extends BaseComponent {
         const source = String(actionDef.script || '').trim();
         // YAML client actions must contain a function source, for example:
         // `async ({ row, request }) => { ... }`.
-        // eslint-disable-next-line no-new-func
+
         const fn = new Function(`return (${source})`)();
         if (typeof fn !== 'function') throw new TypeError('Client action script must evaluate to a JavaScript function');
         const token = (await import(/* @vite-ignore */ ['/app.ts'].join(''))).getToken();

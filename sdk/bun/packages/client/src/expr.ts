@@ -10,7 +10,7 @@ const _cache = new Map<string, (...args: any[]) => any>();
 
 function compile(expr: string) {
   if (_cache.has(expr)) return _cache.get(expr);
-  // eslint-disable-next-line no-new-func
+
   const fn: any = new Function('user', 'row', 'state', `"use strict"; return (${expr})`);
   _cache.set(expr, fn);
   return fn;

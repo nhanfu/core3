@@ -28,7 +28,7 @@ export class HTML {
         return this;
     }
 
-    ele(): any {
+    ele(): any {html
         return this.context;
     }
 
@@ -225,12 +225,12 @@ export class HTML {
         return this.add('summary');
     }
     get br(): this {
-        var br = document.createElement("br");
+        const br = document.createElement("br");
         this.context.appendChild(br);
         return this;
     }
     get hr(): this {
-        var hr = document.createElement("hr");
+        const hr = document.createElement("hr");
         this.context.appendChild(hr);
         return this;
     }
@@ -266,7 +266,7 @@ export class HTML {
         return this;
     }
     trigger(type: string): this {
-        var e = new Event(type);
+        const e = new Event(type);
         this.context.dispatchEvent(e);
         return this;
     }
@@ -309,7 +309,7 @@ export class HTML {
     
     text(text: string | number | null | undefined): this {
         if (text === null || text === undefined) return this;
-        var node = new Text(String(text));
+        const node = new Text(String(text));
         this.context.appendChild(node);
         return this;
     }
@@ -401,7 +401,7 @@ export class HTML {
 
     checkbox(value?: boolean): this {
         this.add('input');
-        var checkbox = this.context;
+        const checkbox = this.context;
         if (checkbox instanceof HTMLInputElement) {
             checkbox.setAttribute("type", "checkbox");
             checkbox.checked = value ?? false;

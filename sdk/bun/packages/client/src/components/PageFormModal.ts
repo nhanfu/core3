@@ -48,7 +48,7 @@ export class PageFormModal extends BaseComponent {
         // Fields
         const inputs: Record<string, { el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement; fieldDef: any }> = {}; // field -> { el, fieldDef }
         for (const fieldDef of (actionDef.fields || [])) {
-          if (fieldDef.show_if && !Boolean(evalExpr(fieldDef.show_if, { ...ctx, row: row || {} }))) continue;
+          if (fieldDef.show_if && !evalExpr(fieldDef.show_if, { ...ctx, row: row || {} })) continue;
           const group = html.take(dialog).div.className('form-field').ele() as HTMLDivElement;
 
           const label = html.take(group).label.className('form-label').replaceText(fieldDef.label + (fieldDef.required ? ' *' : '')).ele() as HTMLLabelElement;

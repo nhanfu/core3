@@ -33,7 +33,7 @@ export class Html extends BaseComponent {
     const cached = TEXT_FUNCTIONS.get(source);
     if (cached) return cached;
     // YAML stores a function source, for example: `user => user.name`.
-    // eslint-disable-next-line no-new-func
+
     const fn = new Function(`return (${source.trim()})`)();
     if (typeof fn !== 'function') throw new TypeError('Html.text_expr must evaluate to a JavaScript function');
     TEXT_FUNCTIONS.set(source, fn);

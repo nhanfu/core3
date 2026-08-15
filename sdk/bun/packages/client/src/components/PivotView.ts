@@ -210,7 +210,7 @@ export class PivotView extends BaseComponent {
     const measureSection = html.take(builder).div.className('o-pivot-measures').ele() as HTMLElement;
     html.take(measureSection).label.replaceText('Measures');
     const measureHost = html.take(measureSection).div.className('o-pivot-measure-list').ele() as HTMLElement;
-    let measures = (view.measures || []).map(measure => ({ ...measure }));
+    const measures = (view.measures || []).map(measure => ({ ...measure }));
     const drawMeasures = () => {
       html.take(measureHost).clear();
       measures.forEach((measure, index) => {
