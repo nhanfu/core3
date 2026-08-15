@@ -211,7 +211,7 @@ describe('ChatWorkspace', () => {
     component.mount(container);
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(fetchMock).toHaveBeenCalledWith('/api/chat/attachments/image-1', { headers: {} });
-    expect(container.querySelector('img.tms-chat-image-preview')?.getAttribute('alt')).toBe('photo.png');
+    expect(container.querySelector('img.chat-image-preview')?.getAttribute('alt')).toBe('photo.png');
     component.dispose();
     vi.restoreAllMocks();
   });

@@ -74,12 +74,12 @@ export class GridView extends BaseComponent {
       const active = sort?.field === d.field;
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'core3-sort-button inline-flex items-center gap-1 hover:text-gray-900';
+      button.className = 'sort-button inline-flex items-center gap-1 hover:text-gray-900';
       button.dataset.sortField = d.field;
       button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
       button.textContent = d.label || '';
       const indicator = document.createElement('span');
-      indicator.className = 'core3-sort-indicator text-gray-400';
+      indicator.className = 'sort-indicator text-gray-400';
       appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
       button.append(indicator);
       button.addEventListener('click', () => this.setSort(d.field));

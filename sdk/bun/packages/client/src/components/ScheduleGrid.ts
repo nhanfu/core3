@@ -51,18 +51,18 @@ export class ScheduleGrid extends BaseComponent {
     })).values()];
 
     const root = document.createElement('section');
-    root.className = 'core3-schedule-grid';
+    root.className = 'schedule-grid';
     root.setAttribute('aria-label', this.def.title || 'Lịch phân công');
     if (this.def.title) {
       const heading = document.createElement('h3');
-      heading.className = 'core3-schedule-title';
+      heading.className = 'schedule-title';
       heading.textContent = this.def.title;
       root.appendChild(heading);
     }
 
     if (!dates.length || !resources.length) {
       const empty = document.createElement('div');
-      empty.className = 'core3-schedule-empty';
+      empty.className = 'schedule-empty';
       empty.textContent = this.def.empty_state?.title || 'Chưa có lịch phân công';
       if (this.def.empty_state?.description) {
         const description = document.createElement('p');
@@ -75,9 +75,9 @@ export class ScheduleGrid extends BaseComponent {
     }
 
     const scroller = document.createElement('div');
-    scroller.className = 'core3-schedule-scroll';
+    scroller.className = 'schedule-scroll';
     const table = document.createElement('table');
-    table.className = 'core3-schedule-table';
+    table.className = 'schedule-table';
     table.setAttribute('role', 'grid');
 
     const thead = document.createElement('thead');
@@ -102,14 +102,14 @@ export class ScheduleGrid extends BaseComponent {
       const row = document.createElement('tr');
       const label = document.createElement('th');
       label.scope = 'row';
-      label.className = 'core3-schedule-resource';
+      label.className = 'schedule-resource';
       label.textContent = String(resource[resourceLabelField] || resourceKey || '—');
       row.appendChild(label);
       for (const date of dates) {
         const cell = document.createElement('td');
         const assignment = rows.find(candidate => String(candidate[resourceField] ?? '') === resourceKey && this.dateValue(candidate) === date);
         if (assignment) {
-          cell.className = 'core3-schedule-assignment';
+          cell.className = 'schedule-assignment';
           const title = document.createElement('strong');
           title.textContent = String(assignment[titleField] || 'Đã phân công');
           cell.appendChild(title);
@@ -122,7 +122,7 @@ export class ScheduleGrid extends BaseComponent {
             cell.dataset.status = String(assignment[this.def.status_field]);
           }
         } else {
-          cell.className = 'core3-schedule-empty-cell';
+          cell.className = 'schedule-empty-cell';
           cell.textContent = '—';
         }
         row.appendChild(cell);

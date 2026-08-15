@@ -12,7 +12,7 @@ export class Chart extends BaseComponent {
     const { width = 560, height = 240, color = 'indigo', variant = 'bar' } = this.def;
     const chartColor = this.resolveColor(color, '#6366f1');
 
-    const wrap = html.take(container).div.className('core3-chart flex flex-col items-start gap-2').getContext();
+    const wrap = html.take(container).div.className('chart flex flex-col items-start gap-2').getContext();
 
     if (title) {
       html.take(wrap).h3.className('text-sm font-semibold text-gray-700').text(title);

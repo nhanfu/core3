@@ -62,7 +62,7 @@ describe('YAML form modal', () => {
     expect(dialog?.getAttribute('aria-labelledby')).toBeTruthy();
     const input = dialog?.querySelector('input');
     expect(dialog?.querySelector('label')?.htmlFor).toBe(input?.id);
-    expect(input?.classList.contains('core3-form-control')).toBe(true);
+    expect(input?.classList.contains('form-control')).toBe(true);
     expect(input?.getAttribute('style')).toBeNull();
     expect(document.activeElement).toBe(input);
 
@@ -268,15 +268,15 @@ describe('YAML tab groups', () => {
     }, { container });
 
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
-    const panels = [...container.querySelectorAll<HTMLElement>('.core3-tab-panel')];
+    const panels = [...container.querySelectorAll<HTMLElement>('.tab-panel')];
     expect(tabs[0].classList.contains('is-active')).toBe(true);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
-    expect(panels[1].classList.contains('core3-tab-panel-hidden')).toBe(true);
+    expect(panels[1].classList.contains('tab-panel-hidden')).toBe(true);
 
     tabs[1].click();
     expect(tabs[0].classList.contains('is-active')).toBe(false);
     expect(tabs[1].getAttribute('aria-selected')).toBe('true');
-    expect(panels[0].classList.contains('core3-tab-panel-hidden')).toBe(true);
+    expect(panels[0].classList.contains('tab-panel-hidden')).toBe(true);
     expect(panels[1].getAttribute('style')).toBeNull();
   });
 });

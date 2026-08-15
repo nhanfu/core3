@@ -8,7 +8,7 @@ import { AUTH_USER_LOOKUP } from '../../../../apps/services/auth/topics.ts';
 
 describe('TopicMediator', () => {
   it('routes a request to a registered handler and returns its response', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'core3-topic-'));
+    const root = await mkdtemp(join(tmpdir(), 'topic-'));
     const store = new EventStore({ databasePath: join(root, 'events'), schema: { columns: [] } });
     await store.start();
     const provider = new TopicMediator(store, 'auth-node');
@@ -17,7 +17,7 @@ describe('TopicMediator', () => {
       handle: (payload: { token: string }) => ({ subject: payload.token, permissions: ['orders.read'] }),
     });
     provider.start();
-    const caller = new TopicMediator(store, 'tms-node');
+    const caller = new TopicMediator(store, 'node');
     await expect(caller.request(
       { topic: 'auth.user.resolve', version: 1, kind: 'query' },
       { token: 'user-1' },
@@ -28,7 +28,7 @@ describe('TopicMediator', () => {
   });
 
   it('routes an order-style user lookup through the Auth data topic', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'core3-auth-topic-'));
+    const root = await mkdtemp(join(tmpdir(), 'auth-topic-'));
     const store = new EventStore({ databasePath: join(root, 'events'), schema: { columns: [] } });
     await store.start();
     const auth = new TopicMediator(store, 'auth-node');

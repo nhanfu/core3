@@ -17,7 +17,7 @@ export class SearchEntry extends BaseComponent {
 
     const inp = html.take(wrap)
       .input.type('text')
-      .className('core3-token-form-control w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
+      .className('token-form-control w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
       .value(String(value))
       .getContext();
 

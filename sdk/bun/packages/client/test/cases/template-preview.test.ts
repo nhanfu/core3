@@ -23,10 +23,10 @@ describe('TemplatePreview', () => {
 
     preview.mount(host);
 
-    expect(host.querySelector('.core3-template-preview')?.textContent).toContain('Mẫu vận đơn');
-    expect(host.querySelector('.core3-template-preview')?.textContent).toContain('<b>Không chạy</b>');
-    expect(host.querySelector('.core3-template-preview')?.textContent).toContain('{{order.order_number}}');
-    expect(host.querySelector('.core3-template-preview-paper')?.getAttribute('aria-label')).toBe('Bản xem trước mẫu in');
+    expect(host.querySelector('.template-preview')?.textContent).toContain('Mẫu vận đơn');
+    expect(host.querySelector('.template-preview')?.textContent).toContain('<b>Không chạy</b>');
+    expect(host.querySelector('.template-preview')?.textContent).toContain('{{order.order_number}}');
+    expect(host.querySelector('.template-preview-paper')?.getAttribute('aria-label')).toBe('Bản xem trước mẫu in');
     host.querySelector<HTMLButtonElement>('button')?.click();
     expect(print).toHaveBeenCalledTimes(1);
   });

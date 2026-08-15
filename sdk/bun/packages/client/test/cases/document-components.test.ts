@@ -52,7 +52,7 @@ describe('document detail components', () => {
   it('formats VND for display while keeping a plain numeric submission value', () => {
     const component = new MoneyInput('amount', { value: 1234567 }, { currency: 'VND' });
     const container = mount(component);
-    const display = container.querySelector<HTMLInputElement>('.core3-money-input-display')!;
+    const display = container.querySelector<HTMLInputElement>('.money-input-display')!;
     expect(display.value).toBe('1.234.567');
     display.value = '9.876.543';
     display.dispatchEvent(new Event('input', { bubbles: true }));
@@ -409,7 +409,7 @@ describe('document detail components', () => {
 
     expect(container.querySelector('.o-x2many-grid')).not.toBeNull();
     expect(container.querySelector('.o-x2many-create')?.textContent).toBe('Add a line');
-    expect(container.querySelector('.core3-token-toolbar')).toBeNull();
+    expect(container.querySelector('.token-toolbar')).toBeNull();
   });
 
   it('keeps Odoo x2many row actions visually quiet', () => {

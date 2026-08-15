@@ -55,7 +55,7 @@ async function renderStatRow(def: any, targetContainer: HTMLElement) {
     path => void navigate(path),
   );
   const slot = document.createElement('div');
-  slot.className = def.variant === 'contained' ? 'core3-status-tabs-slot-contained' : '';
+  slot.className = def.variant === 'contained' ? 'status-tabs-slot-contained' : '';
   slot.style.marginBottom = def.variant === 'contained' ? '0' : '16px';
   targetContainer.appendChild(slot);
   comp.mount(slot);

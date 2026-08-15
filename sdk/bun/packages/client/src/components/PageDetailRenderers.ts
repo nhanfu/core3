@@ -386,15 +386,15 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
 
   // Build tab UI with plain DOM
   const wrap = document.createElement('div');
-  wrap.className = 'core3-tab-group';
+  wrap.className = 'tab-group';
 
   const tabBar = document.createElement('div');
-  tabBar.className = 'core3-tab-bar';
+  tabBar.className = 'tab-bar';
   tabBar.setAttribute('role', 'tablist');
 
   const panels = tabContainers.map((tc, i) => {
     const panel = document.createElement('div');
-    panel.className = `core3-tab-panel${i === 0 ? '' : ' core3-tab-panel-hidden'}`;
+    panel.className = `tab-panel${i === 0 ? '' : ' tab-panel-hidden'}`;
     panel.id = `${config.page.id}-tab-panel-${i}`;
     panel.setAttribute('role', 'tabpanel');
     panel.appendChild(tc);
@@ -405,7 +405,7 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.textContent = tab.label;
-    btn.className = `core3-tab-button${i === 0 ? ' is-active' : ''}`;
+    btn.className = `tab-button${i === 0 ? ' is-active' : ''}`;
     btn.setAttribute('aria-selected', String(i === 0));
     btn.setAttribute('role', 'tab');
     btn.id = `${config.page.id}-tab-${i}`;
@@ -419,7 +419,7 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
       tabBtns.forEach((b, j) => {
         b.classList.toggle('is-active', j === i);
         b.setAttribute('aria-selected', String(j === i));
-        panels[j].classList.toggle('core3-tab-panel-hidden', j !== i);
+        panels[j].classList.toggle('tab-panel-hidden', j !== i);
       });
     });
     tabBar.appendChild(btn);

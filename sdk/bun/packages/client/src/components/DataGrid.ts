@@ -181,15 +181,15 @@ export class DataGrid extends BaseComponent {
     let draggedRow: DataGridRow | null = null;
 
     const x2many = this.state.variant === 'odoo_x2many';
-    const root = html.take(container).div.className(`core3-token-panel rounded-lg border border-gray-200 bg-white${x2many ? ' o-x2many-grid' : ''}`).getContext();
+    const root = html.take(container).div.className(`token-panel rounded-lg border border-gray-200 bg-white${x2many ? ' o-x2many-grid' : ''}`).getContext();
     const title = meta.title || this.state.title;
     const description = meta.description || this.state.description;
     if (title || description || (!x2many && actions.length) || this.options.columnChooser) {
-      const toolbar = html.take(root).div.className('core3-token-toolbar flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
+      const toolbar = html.take(root).div.className('token-toolbar flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
       if (title || description) {
         const copy = html.take(toolbar).div.getContext();
-        if (title) html.take(copy).h3.className('core3-token-heading text-sm font-semibold text-gray-900').text(String(title));
-        if (description) html.take(copy).p.className('core3-token-muted mt-1 text-sm text-gray-500').text(String(description));
+        if (title) html.take(copy).h3.className('token-heading text-sm font-semibold text-gray-900').text(String(title));
+        if (description) html.take(copy).p.className('token-muted mt-1 text-sm text-gray-500').text(String(description));
       }
       if (actions.length) {
         const actionBar = html.take(toolbar).div.className('flex flex-wrap items-center gap-2').getContext();
@@ -216,10 +216,10 @@ export class DataGrid extends BaseComponent {
       }
       if (this.options.columnChooser) {
         const chooser = html.take(toolbar).details.className('relative').getContext();
-        html.take(chooser).summary.className('core3-token-control cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Cột');
-        const menu = html.take(chooser).div.className('core3-token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
+        html.take(chooser).summary.className('token-control cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Cột');
+        const menu = html.take(chooser).div.className('token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
         for (const column of this.columns) {
-          const label = html.take(menu).label.className('core3-token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
+          const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
           const checkbox = html.take(label).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
           checkbox.checked = visibleColumnIds.has(column.id || column.field);
           checkbox.setAttribute('aria-label', `Hiển thị ${column.label}`);
@@ -238,8 +238,8 @@ export class DataGrid extends BaseComponent {
     }
 
     const scroll = html.take(root).div.className('overflow-x-auto').getContext();
-    const table = html.take(scroll).table.className('core3-token-table min-w-full divide-y divide-gray-200').getContext();
-    const headerRow = html.take(table).thead.className('core3-token-header').trow.getContext();
+    const table = html.take(scroll).table.className('token-table min-w-full divide-y divide-gray-200').getContext();
+    const headerRow = html.take(table).thead.className('token-header').trow.getContext();
 
     if (selectable) {
       const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
@@ -263,10 +263,10 @@ export class DataGrid extends BaseComponent {
       const sortable = column.sortable === true;
       if (sortable) {
         const active = sort?.field === column.field;
-        const button = html.take(th).button.className('core3-sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
+        const button = html.take(th).button.className('sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
         button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
         const indicator = document.createElement('span');
-        indicator.className = 'core3-sort-indicator text-gray-400';
+        indicator.className = 'sort-indicator text-gray-400';
         appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
         button.append(indicator);
         button.addEventListener('click', () => this.setSort(column.field));
@@ -275,7 +275,7 @@ export class DataGrid extends BaseComponent {
       }
     }
 
-    const tbody = html.take(table).tbody.className('core3-token-body divide-y divide-gray-100 bg-white').getContext();
+    const tbody = html.take(table).tbody.className('token-body divide-y divide-gray-100 bg-white').getContext();
     if (!rows.length) {
       const empty = this.options.emptyState || (this.state.emptyState as DataGridOptions['emptyState']) || {};
       const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0) + (rowNumbers ? 1 : 0))).className('px-4 py-12 text-center').getContext();
@@ -284,7 +284,7 @@ export class DataGrid extends BaseComponent {
     } else {
       rows.forEach((row, index) => {
         const id = this.rowId(row, index);
-        const tr = html.take(tbody).trow.className('core3-token-row transition-colors hover:bg-gray-50').getContext();
+        const tr = html.take(tbody).trow.className('token-row transition-colors hover:bg-gray-50').getContext();
         if (rowReorder) {
           tr.draggable = true;
           tr.dataset.reorderRow = id;
@@ -330,7 +330,7 @@ export class DataGrid extends BaseComponent {
         for (const column of visibleColumns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
-          const cell = html.take(tr).tdata.className(`core3-token-cell core3-grid-cell max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
+          const cell = html.take(tr).tdata.className(`token-cell grid-cell max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
           cell.dataset.column = column.id || column.field;
           if (column.rowActions?.length) {
             const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
@@ -398,7 +398,7 @@ export class DataGrid extends BaseComponent {
     const totalRows = Number(meta.total || 0);
     const effectivePageSize = Number(meta.pageSize || rows.length || 1);
     if (meta.total != null && (!x2many || totalRows > effectivePageSize)) {
-      const summary = html.take(root).div.className('core3-token-summary flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
+      const summary = html.take(root).div.className('token-summary flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
       const total = Number(meta.total);
       const page = Number(meta.page || 1);
       const pageSize = Number(meta.pageSize || rows.length || 1);

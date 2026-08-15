@@ -1229,7 +1229,7 @@ body {
 .login-provider-slate { background: #f5f7fa; border-color: #dce2ea; color: #334155; }
 .login-provider-slate:hover { background: #edf1f5; border-color: #cbd5e1; color: #1e293b; }
 
-.core3-event-overlay {
+.event-overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -1242,7 +1242,7 @@ body {
   animation: modalIn 160ms ease;
 }
 
-.core3-event-dialog {
+.event-dialog {
   width: min(100%, 390px);
   padding: 30px 30px 26px;
   text-align: center;
@@ -1252,7 +1252,7 @@ body {
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
 }
 
-.core3-event-icon {
+.event-icon {
   display: grid;
   place-items: center;
   width: 52px;
@@ -1263,11 +1263,11 @@ body {
   background: #f0efff;
 }
 
-.core3-event-icon .svg-icon,
-.core3-event-icon .svg-icon svg { width: 25px; height: 25px; }
-.core3-event-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--color-text); }
-.core3-event-message { margin: 10px 0 24px; color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.55; }
-.core3-event-close { min-width: 108px; }
+.event-icon .svg-icon,
+.event-icon .svg-icon svg { width: 25px; height: 25px; }
+.event-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--color-text); }
+.event-message { margin: 10px 0 24px; color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.55; }
+.event-close { min-width: 108px; }
 
 /* ── Spinner ── */
 .spinner {

@@ -42,7 +42,7 @@ class PageRoot extends BaseComponent {
 
     container.innerHTML = '';
     const pageDiv = document.createElement('div');
-    pageDiv.className = 'tms-page';
+    pageDiv.className = 'page';
     if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) pageDiv.classList.add('o-form-page');
     container.appendChild(pageDiv);
 

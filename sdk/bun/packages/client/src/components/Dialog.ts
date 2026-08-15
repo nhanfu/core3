@@ -43,25 +43,25 @@ export class Dialog extends BaseComponent {
     if (this.state.open === false) return;
 
     const overlay = document.createElement('div');
-    overlay.className = 'core3-dialog-overlay';
+    overlay.className = 'dialog-overlay';
     overlay.setAttribute('aria-hidden', 'false');
 
     const dialog = document.createElement('div');
-    dialog.className = 'core3-dialog';
+    dialog.className = 'dialog';
     dialog.setAttribute('role', 'dialog');
     dialog.setAttribute('aria-modal', 'true');
 
     const titleId = `dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     dialog.setAttribute('aria-labelledby', titleId);
     const title = document.createElement('h2');
-    title.className = 'core3-dialog-title';
+    title.className = 'dialog-title';
     title.id = titleId;
     title.textContent = this.options.title || 'Dialog';
     dialog.appendChild(title);
 
     if (this.options.message) {
       const message = document.createElement('p');
-      message.className = 'core3-dialog-message';
+      message.className = 'dialog-message';
       message.textContent = this.options.message;
       dialog.appendChild(message);
     }
@@ -69,9 +69,9 @@ export class Dialog extends BaseComponent {
     const input = this.options.input ? document.createElement('input') : null;
     if (input) {
       const field = document.createElement('label');
-      field.className = 'core3-dialog-field';
+      field.className = 'dialog-field';
       field.textContent = this.options.input?.label || '';
-      input.className = 'core3-dialog-input';
+      input.className = 'dialog-input';
       input.type = 'text';
       input.value = this.options.input?.value || '';
       input.placeholder = this.options.input?.placeholder || '';
@@ -83,16 +83,16 @@ export class Dialog extends BaseComponent {
     const tagInputs = new Map<string, HTMLInputElement[]>();
     for (const group of this.options.tagGroups || []) {
       const field = document.createElement('fieldset');
-      field.className = 'core3-dialog-tags';
+      field.className = 'dialog-tags';
       const legend = document.createElement('legend');
       legend.textContent = group.label;
       field.appendChild(legend);
       const choices = document.createElement('div');
-      choices.className = 'core3-dialog-tag-choices';
+      choices.className = 'dialog-tag-choices';
       const inputs: HTMLInputElement[] = [];
       for (const option of group.options) {
         const label = document.createElement('label');
-        label.className = 'core3-dialog-tag';
+        label.className = 'dialog-tag';
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.value = option.value;
@@ -111,7 +111,7 @@ export class Dialog extends BaseComponent {
     }
 
     const footer = document.createElement('div');
-    footer.className = 'core3-dialog-footer';
+    footer.className = 'dialog-footer';
     const close = (notifyCancel = true) => {
       if (this.onKeyDown) document.removeEventListener('keydown', this.onKeyDown);
       this.onKeyDown = null;
@@ -122,7 +122,7 @@ export class Dialog extends BaseComponent {
 
     const cancel = document.createElement('button');
     cancel.type = 'button';
-    cancel.className = 'core3-dialog-cancel';
+    cancel.className = 'dialog-cancel';
     cancel.textContent = this.options.cancelLabel || 'Cancel';
     cancel.addEventListener('click', close);
     if (!this.options.messageOnly) footer.appendChild(cancel);
@@ -130,7 +130,7 @@ export class Dialog extends BaseComponent {
     if (this.options.dangerLabel && this.options.onDanger) {
       const danger = document.createElement('button');
       danger.type = 'button';
-      danger.className = 'core3-dialog-danger';
+      danger.className = 'dialog-danger';
       danger.textContent = this.options.dangerLabel;
       danger.addEventListener('click', () => { close(false); void this.options.onDanger?.(); });
       footer.appendChild(danger);
@@ -138,7 +138,7 @@ export class Dialog extends BaseComponent {
 
     const confirm = document.createElement('button');
     confirm.type = 'button';
-    confirm.className = 'core3-dialog-confirm';
+    confirm.className = 'dialog-confirm';
     confirm.textContent = this.options.confirmLabel || 'Confirm';
     confirm.addEventListener('click', () => {
       const value = input?.value.trim() || '';

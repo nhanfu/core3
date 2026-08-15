@@ -22,7 +22,7 @@ export class TemplatePreview extends BaseComponent {
     const template = this.state.template || {};
     const blocks = Array.isArray(this.state.blocks) ? this.state.blocks : [];
     const root = html.take(container).section
-      .className('core3-template-preview rounded-lg border border-gray-200 bg-white p-5')
+      .className('template-preview rounded-lg border border-gray-200 bg-white p-5')
       .getContext();
 
     const header = html.take(root).div.className('flex items-center justify-between gap-3 border-b border-gray-100 pb-4').getContext();
@@ -39,7 +39,7 @@ export class TemplatePreview extends BaseComponent {
     printButton.addEventListener('click', () => window.print());
 
     const paper = html.take(root).div
-      .className('core3-template-preview-paper mt-4 min-h-[180px] rounded-md border border-dashed border-gray-300 bg-gray-50 p-6')
+      .className('template-preview-paper mt-4 min-h-[180px] rounded-md border border-dashed border-gray-300 bg-gray-50 p-6')
       .attr('aria-label', 'Bản xem trước mẫu in')
       .getContext();
     if (!blocks.length) {
@@ -48,7 +48,7 @@ export class TemplatePreview extends BaseComponent {
     }
     for (const block of blocks) {
       const blockType = String(block.block_type || 'text');
-      const blockEl = html.take(paper).div.className(`core3-template-preview-block core3-template-preview-${blockType}`).getContext();
+      const blockEl = html.take(paper).div.className(`template-preview-block template-preview-${blockType}`).getContext();
       if (blockType === 'spacer') {
         blockEl.style.height = '24px';
         blockEl.setAttribute('aria-label', String(block.label || 'Khoảng cách'));

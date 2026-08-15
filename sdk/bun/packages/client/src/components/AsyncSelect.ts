@@ -53,12 +53,12 @@ export class AsyncSelect extends BaseComponent {
       const option = this.options().find(candidate => candidate.value === value);
       if (!option) continue;
       const chip = document.createElement('span');
-      chip.className = 'core3-async-select-chip';
+      chip.className = 'async-select-chip';
       chip.textContent = option.label;
       if (this.def.multiple) {
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'core3-async-select-chip-remove';
+        remove.className = 'async-select-chip-remove';
         remove.setAttribute('aria-label', `Bỏ chọn ${option.label}`);
         remove.textContent = '×';
         remove.addEventListener('click', () => {
@@ -74,7 +74,7 @@ export class AsyncSelect extends BaseComponent {
     for (const option of options) {
       const item = document.createElement('button');
       item.type = 'button';
-      item.className = `core3-async-select-option${selectedSet.has(option.value) ? ' is-selected' : ''}`;
+      item.className = `async-select-option${selectedSet.has(option.value) ? ' is-selected' : ''}`;
       item.setAttribute('role', 'option');
       item.setAttribute('aria-selected', String(selectedSet.has(option.value)));
       item.textContent = option.label;
@@ -93,7 +93,7 @@ export class AsyncSelect extends BaseComponent {
     }
     if (!options.length) {
       const empty = document.createElement('div');
-      empty.className = 'core3-async-select-empty';
+      empty.className = 'async-select-empty';
       empty.textContent = 'Không tìm thấy lựa chọn';
       this.listElement.appendChild(empty);
     }
@@ -101,7 +101,7 @@ export class AsyncSelect extends BaseComponent {
 
   draw(container: HTMLElement) {
     const root = document.createElement('div');
-    root.className = 'core3-async-select';
+    root.className = 'async-select';
     this.rootElement = root;
     const hidden = document.createElement('input');
     hidden.type = 'hidden';
@@ -110,13 +110,13 @@ export class AsyncSelect extends BaseComponent {
     root.appendChild(hidden);
 
     const selected = document.createElement('div');
-    selected.className = 'core3-async-select-selected';
+    selected.className = 'async-select-selected';
     this.selectedElement = selected;
     root.appendChild(selected);
 
     const search = document.createElement('input');
     search.type = 'search';
-    search.className = 'core3-async-select-search';
+    search.className = 'async-select-search';
     search.placeholder = this.def.search_placeholder || this.def.placeholder || 'Tìm lựa chọn…';
     search.setAttribute('aria-label', search.placeholder);
     search.addEventListener('input', () => {
@@ -126,7 +126,7 @@ export class AsyncSelect extends BaseComponent {
     root.appendChild(search);
 
     const list = document.createElement('div');
-    list.className = 'core3-async-select-options';
+    list.className = 'async-select-options';
     list.setAttribute('role', 'listbox');
     list.setAttribute('aria-multiselectable', String(!!this.def.multiple));
     this.listElement = list;

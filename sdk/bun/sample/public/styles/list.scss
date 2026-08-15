@@ -15,7 +15,7 @@
   overflow-y: auto;
 }
 
-.tms-page:has(> .o-list-view-slot:has(.o-list-view-body-scroll)) {
+.page:has(> .o-list-view-slot:has(.o-list-view-body-scroll)) {
   height: auto;
   min-height: 0;
 }

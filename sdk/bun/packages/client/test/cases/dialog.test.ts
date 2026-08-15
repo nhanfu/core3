@@ -17,7 +17,7 @@ describe('Dialog', () => {
 
     const input = dialog.querySelector('input') as HTMLInputElement;
     input.value = 'In transit';
-    dialog.querySelector<HTMLButtonElement>('.core3-dialog-confirm')!.click();
+    dialog.querySelector<HTMLButtonElement>('.dialog-confirm')!.click();
     expect(onConfirm).toHaveBeenCalledWith('In transit');
     expect(host.querySelector('[role="dialog"]')).toBeNull();
 
@@ -39,7 +39,7 @@ describe('Dialog', () => {
     const dialog = host.querySelector('[role="dialog"]') as HTMLElement;
     (dialog.querySelector('input[type="text"]') as HTMLInputElement).value = 'In transit';
     (dialog.querySelector('input[type="checkbox"]') as HTMLInputElement).checked = true;
-    dialog.querySelector<HTMLButtonElement>('.core3-dialog-confirm')!.click();
+    dialog.querySelector<HTMLButtonElement>('.dialog-confirm')!.click();
 
     expect(onConfirm).toHaveBeenCalledWith('In transit', { from: ['Draft'] });
   });

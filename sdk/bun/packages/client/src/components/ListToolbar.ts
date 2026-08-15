@@ -62,7 +62,7 @@ export class ListToolbar extends BaseComponent {
 
   draw(container: HTMLElement) {
     const root = document.createElement('div');
-    root.className = 'core3-token-toolbar flex flex-wrap items-center justify-between gap-3 bg-white';
+    root.className = 'token-toolbar flex flex-wrap items-center justify-between gap-3 bg-white';
 
     if (this.def.search !== false) {
       const searchDef = this.def.search || {};
@@ -79,7 +79,7 @@ export class ListToolbar extends BaseComponent {
       const input = document.createElement('input');
       input.type = 'search';
       input.dataset.listSearch = 'true';
-      input.className = 'core3-token-input h-10 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
+      input.className = 'token-input h-10 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100';
       input.value = this.state.query || '';
       input.placeholder = searchDef.placeholder || 'Tìm kiếm…';
       input.setAttribute('aria-label', searchDef.label || 'Tìm kiếm danh sách');
@@ -107,7 +107,7 @@ export class ListToolbar extends BaseComponent {
         const searchButton = document.createElement('button');
         searchButton.type = 'button';
         searchButton.dataset.listSearchSubmit = 'true';
-        searchButton.className = 'core3-token-control inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
+        searchButton.className = 'token-control inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
         searchButton.title = 'Tìm kiếm';
         searchButton.setAttribute('aria-label', searchButton.title);
         const buttonIcon = document.createElement('span');
@@ -145,13 +145,13 @@ export class ListToolbar extends BaseComponent {
         };
         if (dateRange.preset_style === 'segmented') {
           const segments = document.createElement('div');
-          segments.className = 'core3-token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1';
+          segments.className = 'token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1';
           segments.setAttribute('aria-label', 'Khoảng thời gian');
           for (const preset of presets) {
             const button = document.createElement('button');
             button.type = 'button';
             button.dataset.datePreset = preset;
-            button.className = `core3-token-preset rounded px-2.5 py-1.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${this.state.preset === preset ? 'bg-blue-600 text-white' : 'text-slate-700'}`;
+            button.className = `token-preset rounded px-2.5 py-1.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${this.state.preset === preset ? 'bg-blue-600 text-white' : 'text-slate-700'}`;
             button.textContent = labels[preset] || preset;
             button.addEventListener('click', () => submitPreset(preset));
             segments.append(button);
@@ -159,7 +159,7 @@ export class ListToolbar extends BaseComponent {
           range.append(segments);
         } else {
           const select = document.createElement('select');
-          select.className = 'core3-token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+          select.className = 'token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
           select.setAttribute('aria-label', 'Khoảng thời gian');
           const placeholder = document.createElement('option');
           placeholder.value = '';
@@ -195,7 +195,7 @@ export class ListToolbar extends BaseComponent {
           input.min = bounds.from;
           input.max = bounds.to;
         }
-        input.className = 'core3-token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+        input.className = 'token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
         input.setAttribute('aria-label', field.label);
         input.addEventListener('change', () => {
           if (dateRange.max_years && input.value) {
@@ -219,7 +219,7 @@ export class ListToolbar extends BaseComponent {
       filterBar.className = 'flex flex-wrap items-center gap-2';
       for (const filter of this.def.filters) {
         const select = document.createElement('select');
-        select.className = 'core3-token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
+        select.className = 'token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700';
         select.setAttribute('aria-label', filter.label);
         const placeholder = document.createElement('option');
         placeholder.value = '';
@@ -253,7 +253,7 @@ export class ListToolbar extends BaseComponent {
       if (collapseAdvanced) {
         const advancedButton = document.createElement('button');
         advancedButton.type = 'button';
-        advancedButton.className = 'core3-token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
+        advancedButton.className = 'token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
         advancedButton.title = 'Bộ lọc nâng cao';
         advancedButton.setAttribute('aria-label', advancedButton.title);
         advancedButton.setAttribute('aria-expanded', 'false');
@@ -273,7 +273,7 @@ export class ListToolbar extends BaseComponent {
       if (this.def.help) {
         const helpButton = document.createElement('button');
         helpButton.type = 'button';
-        helpButton.className = 'core3-token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
+        helpButton.className = 'token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900';
         helpButton.title = typeof this.def.help === 'object' && this.def.help.title ? this.def.help.title : 'Trợ giúp';
         helpButton.setAttribute('aria-label', helpButton.title);
         const icon = document.createElement('span');

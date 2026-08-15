@@ -24,29 +24,29 @@ export class PageFormModal extends BaseComponent {
         const formRecord = row || sourceRecord || {};
         // Overlay
         const overlay = document.createElement('div');
-        overlay.className = 'core3-form-overlay';
+        overlay.className = 'form-overlay';
         overlay.setAttribute('aria-hidden', 'false');
 
         // Dialog
         const dialog = document.createElement('div');
-        dialog.className = 'core3-form-dialog';
+        dialog.className = 'form-dialog';
         dialog.setAttribute('role', 'dialog');
         dialog.setAttribute('aria-modal', 'true');
         dialog.tabIndex = -1;
 
         // Header
         const header = document.createElement('div');
-        header.className = 'core3-form-header';
+        header.className = 'form-header';
 
         const titleEl = document.createElement('h2');
-        titleEl.className = 'core3-form-title';
+        titleEl.className = 'form-title';
         const titleId = `form-dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         titleEl.id = titleId;
         dialog.setAttribute('aria-labelledby', titleId);
         titleEl.textContent = actionDef.title || '';
 
         const closeBtn = document.createElement('button');
-        closeBtn.className = 'core3-form-close';
+        closeBtn.className = 'form-close';
         appendIcon(closeBtn, 'x');
         closeBtn.type = 'button';
         closeBtn.setAttribute('aria-label', 'Đóng');
@@ -61,10 +61,10 @@ export class PageFormModal extends BaseComponent {
         for (const fieldDef of (actionDef.fields || [])) {
           if (fieldDef.show_if && !Boolean(evalExpr(fieldDef.show_if, { ...ctx, row: row || {} }))) continue;
           const group = document.createElement('div');
-          group.className = 'core3-form-field';
+          group.className = 'form-field';
 
           const label = document.createElement('label');
-          label.className = 'core3-form-label';
+          label.className = 'form-label';
           label.textContent = fieldDef.label + (fieldDef.required ? ' *' : '');
           const fieldId = `form-field-${fieldDef.field}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
           label.htmlFor = fieldId;
@@ -119,7 +119,7 @@ export class PageFormModal extends BaseComponent {
             usesMoneyInput = true;
           } else if (fieldDef.type === 'select') {
             el = document.createElement('select');
-            el.className = `form-select core3-form-control${fieldDef.multiple ? ' core3-form-control-multiple' : ''}`;
+            el.className = `form-select form-control${fieldDef.multiple ? ' form-control-multiple' : ''}`;
             if (fieldDef.multiple) {
               el.multiple = true;
             }
@@ -152,8 +152,8 @@ export class PageFormModal extends BaseComponent {
           } else if (fieldDef.type === 'textarea' || fieldDef.type === 'richtext') {
             el = document.createElement('textarea');
             el.className = fieldDef.type === 'richtext'
-              ? 'form-input template-richtext core3-form-control core3-form-richtext'
-              : 'form-input core3-form-control core3-form-textarea';
+              ? 'form-input template-richtext form-control form-richtext'
+              : 'form-input form-control form-textarea';
           } else {
             el = document.createElement('input');
             el.type = ['date', 'time', 'datetime'].includes(fieldDef.type) ? 'text' : (fieldDef.type || 'text');
@@ -161,7 +161,7 @@ export class PageFormModal extends BaseComponent {
               el.inputMode = 'numeric';
               el.placeholder = fieldDef.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm';
             }
-            el.className = 'form-input core3-form-control';
+            el.className = 'form-input form-control';
           }
           el.id = fieldId;
 
@@ -175,11 +175,11 @@ export class PageFormModal extends BaseComponent {
           if (!usesAsyncSelect && !usesMoneyInput) group.appendChild(el);
           if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
             const tokenBar = document.createElement('div');
-            tokenBar.className = 'template-token-picker core3-form-token-bar';
+            tokenBar.className = 'template-token-picker form-token-bar';
             for (const token of fieldDef.tokens) {
               const tokenButton = document.createElement('button');
               tokenButton.type = 'button';
-              tokenButton.className = 'template-token core3-form-token';
+              tokenButton.className = 'template-token form-token';
               tokenButton.textContent = `{{${token}}}`;
               tokenButton.addEventListener('click', () => {
                 const start = el.selectionStart ?? el.value.length;
@@ -200,7 +200,7 @@ export class PageFormModal extends BaseComponent {
 
         // Footer
         const footer = document.createElement('div');
-        footer.className = 'core3-form-footer';
+        footer.className = 'form-footer';
 
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
@@ -226,7 +226,7 @@ export class PageFormModal extends BaseComponent {
         function showError(msg: string) {
           if (!errorBanner) {
             errorBanner = document.createElement('div');
-            errorBanner.className = 'core3-form-error';
+            errorBanner.className = 'form-error';
             footer.insertAdjacentElement('beforebegin', errorBanner);
           }
           errorBanner.textContent = msg;

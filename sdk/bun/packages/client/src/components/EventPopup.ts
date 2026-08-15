@@ -13,29 +13,29 @@ export class EventPopup extends BaseComponent {
 
   draw(container: HTMLElement) {
     const overlay = document.createElement('div');
-    overlay.className = 'core3-event-overlay';
+    overlay.className = 'event-overlay';
     overlay.setAttribute('aria-hidden', 'false');
 
     const dialog = document.createElement('div');
-    dialog.className = 'core3-event-dialog';
+    dialog.className = 'event-dialog';
     dialog.setAttribute('role', 'dialog');
     dialog.setAttribute('aria-modal', 'true');
     const titleId = `event-dialog-title-${Date.now()}`;
     dialog.setAttribute('aria-labelledby', titleId);
 
     const icon = document.createElement('div');
-    icon.className = 'core3-event-icon';
+    icon.className = 'event-icon';
     appendIcon(icon, this.def.icon || 'lightbulb');
     dialog.appendChild(icon);
 
     const title = document.createElement('h2');
-    title.className = 'core3-event-title';
+    title.className = 'event-title';
     title.id = titleId;
     title.textContent = this.def.title || 'Coming soon';
     dialog.appendChild(title);
 
     const message = document.createElement('p');
-    message.className = 'core3-event-message';
+    message.className = 'event-message';
     message.textContent = this.def.message || 'This feature is under construction.';
     dialog.appendChild(message);
 
@@ -49,7 +49,7 @@ export class EventPopup extends BaseComponent {
 
     const closeButton = document.createElement('button');
     closeButton.type = 'button';
-    closeButton.className = 'btn btn-primary core3-event-close';
+    closeButton.className = 'btn btn-primary event-close';
     closeButton.textContent = this.def.close_label || 'Close';
     closeButton.addEventListener('click', close);
     dialog.appendChild(closeButton);

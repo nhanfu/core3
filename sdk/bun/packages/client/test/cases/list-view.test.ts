@@ -661,7 +661,7 @@ describe('Odoo ListView', () => {
     expect(dialog.querySelector('input')?.getAttribute('placeholder')).toBe('Enter a status name');
     const input = dialog.querySelector('input') as HTMLInputElement;
     input.value = 'In transit';
-    dialog.querySelector<HTMLButtonElement>('.core3-dialog-confirm')!.click();
+    dialog.querySelector<HTMLButtonElement>('.dialog-confirm')!.click();
     expect(onKanbanAddStatus).toHaveBeenCalledWith('In transit', [], []);
   });
 });

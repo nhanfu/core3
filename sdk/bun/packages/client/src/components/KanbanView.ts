@@ -87,7 +87,7 @@ export class KanbanView extends BaseComponent {
         cards.addEventListener('drop', (event: DragEvent) => {
           event.preventDefault();
           cards.classList.remove('is-drop-target');
-          const id = event.dataTransfer?.getData('application/x-core3-row-id');
+          const id = event.dataTransfer?.getData('application/x-row-id');
           const row = rows.find((candidate: ListRow) => this.rowId(candidate, rows.indexOf(candidate)) === id);
           if (row && String(row[groupBy] ?? '') !== group.value) void this.options.onMove?.(row, group.value);
         });
@@ -132,7 +132,7 @@ export class KanbanView extends BaseComponent {
     if (this.options.onMove) {
       card.draggable = true;
       card.addEventListener('dragstart', (event: DragEvent) => {
-        event.dataTransfer?.setData('application/x-core3-row-id', this.rowId(row, index));
+        event.dataTransfer?.setData('application/x-row-id', this.rowId(row, index));
         if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
       });
     }

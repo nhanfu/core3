@@ -27,8 +27,8 @@ describe('DataGrid', () => {
 
     const container = mount(grid);
 
-    expect(container.querySelector('.core3-token-panel')).not.toBeNull();
-    expect(container.querySelector('.core3-token-table')).not.toBeNull();
+    expect(container.querySelector('.token-panel')).not.toBeNull();
+    expect(container.querySelector('.token-table')).not.toBeNull();
     expect(container.textContent).toContain('Orders');
     expect(container.textContent).toContain('Current orders');
     expect(container.querySelector('[data-grid-action="create"]')?.textContent).toBe('Add order');
@@ -125,7 +125,7 @@ describe('DataGrid', () => {
     const container = mount(grid);
     const cell = container.querySelector('tbody td') as HTMLElement;
 
-    expect(cell.className).toContain('core3-grid-cell');
+    expect(cell.className).toContain('grid-cell');
     expect(cell.className).toContain('text-ellipsis');
     expect(cell.getAttribute('style')).toBeNull();
   });

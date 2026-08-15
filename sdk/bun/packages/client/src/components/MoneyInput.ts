@@ -61,7 +61,7 @@ export class MoneyInput extends BaseComponent {
 
   draw(container: HTMLElement) {
     const root = document.createElement('div');
-    root.className = 'core3-money-input';
+    root.className = 'money-input';
     this.rootElement = root;
 
     const hidden = document.createElement('input');
@@ -73,7 +73,7 @@ export class MoneyInput extends BaseComponent {
     const display = document.createElement('input');
     display.type = 'text';
     display.inputMode = 'decimal';
-    display.className = 'form-input core3-form-control core3-money-input-display';
+    display.className = 'form-input form-control money-input-display';
     display.placeholder = this.def.placeholder || '0';
     display.setAttribute('aria-label', this.def.currency ? `Số tiền (${this.def.currency})` : 'Số tiền');
     this.displayInput = display;

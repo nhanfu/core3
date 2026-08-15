@@ -62,8 +62,8 @@ describe('ListToolbar', () => {
     const { container } = mount(new ListToolbar('toolbar', {}, definition));
     const input = container.querySelector<HTMLInputElement>('[data-list-search]')!;
 
-    expect(container.querySelector('.core3-token-toolbar')).not.toBeNull();
-    expect(input.className).toContain('core3-token-input');
+    expect(container.querySelector('.token-toolbar')).not.toBeNull();
+    expect(input.className).toContain('token-input');
     expect(input.placeholder).toBe('Search order, customer, cargo…');
     expect(container.querySelectorAll('[data-toolbar-action]')).toHaveLength(3);
     expect(container.querySelector('[data-toolbar-action="advanced"]')?.getAttribute('aria-label'))
