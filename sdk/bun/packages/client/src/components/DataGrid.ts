@@ -201,11 +201,11 @@ export class DataGrid extends BaseComponent {
           if (action.icon) {
             const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
             if (hasIcon(action.icon)) appendIcon(icon, action.icon);
-            else icon.textContent = action.icon;
+            else html.take(icon).text(action.icon);
           }
           html.take(button).text(action.label);
-          if (action.disabled) button.setAttribute('disabled', '');
-          else button.addEventListener('click', () => {
+          if (action.disabled) html.take(button).attr('disabled', '');
+          else html.take(button).event('click', () => {
             const context = { selectedIds: this.selectedIds(), action };
             if (typeof action.onClick === 'function') action.onClick(context);
             else this.submit(action.id, { ...action.params, selectedIds: context.selectedIds });
@@ -226,7 +226,7 @@ export class DataGrid extends BaseComponent {
               const next = new Set(visibleColumnIds);
               checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
               if (next.size === 0) {
-                checkbox.checked = true;
+              html.take(checkbox).prop('checked', true);
                 return;
               }
               this.setState({ visibleColumns: [...next] });
@@ -242,10 +242,11 @@ export class DataGrid extends BaseComponent {
 
     if (selectable) {
       const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-      checkbox.setAttribute('aria-label', 'Chọn tất cả dòng');
-      checkbox.checked = rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index)));
-      checkbox.indeterminate = selected.size > 0 && !checkbox.checked;
-      checkbox.addEventListener('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
+      html.take(checkbox)
+        .attr('aria-label', 'Chọn tất cả dòng')
+        .prop('checked', rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index))));
+      html.take(checkbox).prop('indeterminate', selected.size > 0 && !checkbox.checked);
+      html.take(checkbox).event('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
     }
 
     if (rowNumbers) {
@@ -263,7 +264,7 @@ export class DataGrid extends BaseComponent {
       if (sortable) {
         const active = sort?.field === column.field;
         const button = html.take(th).button.className('sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
-        button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
+        html.take(button).attr('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
         const indicator = html.take(button).span.className('sort-indicator text-gray-400').getContext() as HTMLSpanElement;
         appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
         html.take(button).event('click', () => this.setSort(column.field));
@@ -283,24 +284,24 @@ export class DataGrid extends BaseComponent {
         const id = this.rowId(row, index);
         const tr = html.take(tbody).trow.className('token-row transition-colors hover:bg-gray-50').getContext();
         if (rowReorder) {
-          tr.draggable = true;
+          html.take(tr).prop('draggable', true);
           tr.dataset.reorderRow = id;
-          tr.classList.add('cursor-grab', 'active:cursor-grabbing');
-          tr.addEventListener('dragstart', event => {
+          html.take(tr).className('cursor-grab active:cursor-grabbing');
+          html.take(tr).event('dragstart', event => {
             draggedRow = row;
-            tr.setAttribute('aria-grabbed', 'true');
+            html.take(tr).attr('aria-grabbed', 'true');
             const transfer = (event as DragEvent).dataTransfer;
             if (transfer) {
               transfer.effectAllowed = 'move';
               transfer.setData('text/plain', id);
             }
           });
-          tr.addEventListener('dragend', () => {
+          html.take(tr).event('dragend', () => {
             draggedRow = null;
-            tr.setAttribute('aria-grabbed', 'false');
+            html.take(tr).attr('aria-grabbed', 'false');
           });
-          tr.addEventListener('dragover', event => event.preventDefault());
-          tr.addEventListener('drop', event => {
+          html.take(tr).event('dragover', event => event.preventDefault());
+          html.take(tr).event('drop', event => {
             event.preventDefault();
             if (draggedRow && this.rowId(draggedRow, index) !== id) {
               void rowReorder(draggedRow, row);
@@ -309,9 +310,7 @@ export class DataGrid extends BaseComponent {
         }
         if (selectable) {
           const checkbox = html.take(tr).tdata.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-          checkbox.setAttribute('aria-label', labels.selectRow(id));
-          checkbox.checked = selected.has(id);
-          checkbox.addEventListener('change', () => {
+          html.take(checkbox).attr('aria-label', labels.selectRow(id)).prop('checked', selected.has(id)).event('change', () => {
             const next = new Set(this.selectedIds());
             checkbox.checked ? next.add(id) : next.delete(id);
             this.setSelectedIds([...next]);
@@ -342,7 +341,7 @@ export class DataGrid extends BaseComponent {
               if (action.icon) {
                 const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
                 if (hasIcon(action.icon)) appendIcon(icon, action.icon);
-                else icon.textContent = action.icon;
+                else html.take(icon).text(action.icon);
               }
               html.take(button).text(action.label);
               html.take(button).event('click', () => this.submit(action.id, { row }));
@@ -351,7 +350,7 @@ export class DataGrid extends BaseComponent {
             column.render(cell, value, row);
           } else {
             const text = column.format ? column.format(value, row) : value == null || value === '' ? '—' : String(value);
-            cell.textContent = text;
+            html.take(cell).text(text);
           }
           if (this.options.tree && column === visibleColumns[0]) {
             const id = this.rowId(row, index);
@@ -377,9 +376,8 @@ export class DataGrid extends BaseComponent {
       const controls = html.take(root).div.className('o-x2many-controls').getContext();
       for (const action of actions) {
         const button = html.take(controls).button.className('o-x2many-create').attr('type', 'button').dataAttr('grid-action', action.id).getContext() as HTMLButtonElement;
-        button.textContent = action.label;
-        button.disabled = action.disabled === true;
-        if (!button.disabled) button.addEventListener('click', () => {
+        html.take(button).text(action.label).prop('disabled', action.disabled === true);
+        if (!button.disabled) html.take(button).event('click', () => {
           const context = { selectedIds: this.selectedIds(), action };
           if (typeof action.onClick === 'function') action.onClick(context);
           else this.submit(action.id, { ...action.params, selectedIds: context.selectedIds });
@@ -409,8 +407,7 @@ export class DataGrid extends BaseComponent {
         for (const optionValue of this.options.pageSizeOptions) {
           html.take(select).option.value(String(optionValue)).text(String(optionValue)).prop('selected', optionValue === pageSize);
         }
-        select.value = String(pageSize);
-        select.addEventListener('change', () => {
+        html.take(select).prop('value', String(pageSize)).event('change', () => {
           const next = Number(select.value);
           if (Number.isFinite(next) && next > 0) this.options.onPageSizeChange?.(next);
         });
@@ -421,9 +418,8 @@ export class DataGrid extends BaseComponent {
             .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50')
             .text(label)
             .getContext() as HTMLButtonElement;
-          button.setAttribute('aria-label', ariaLabel);
-          button.disabled = disabled;
-          if (!disabled) button.addEventListener('click', () => this.setPage(targetPage));
+          html.take(button).attr('aria-label', ariaLabel).prop('disabled', disabled);
+          if (!disabled) html.take(button).event('click', () => this.setPage(targetPage));
         };
         addButton('‹', page - 1, page <= 1, labels.previousPage);
         html.take(controls).span.className('px-2 text-xs text-gray-500').text(`${page} / ${pages}`);

@@ -40,13 +40,13 @@ export class AsyncSelect extends BaseComponent {
   private syncValue() {
     if (!this.input) return;
     this.input.value = this.def.multiple ? this.selected.join(',') : (this.selected[0] || '');
-    this.input.dispatchEvent(new Event('change', { bubbles: true }));
+    html.take(this.input).dispatch(new Event('change', { bubbles: true }));
   }
 
   private renderOptions() {
     if (!this.listElement || !this.selectedElement) return;
-    this.listElement.innerHTML = '';
-    this.selectedElement.innerHTML = '';
+    html.take(this.listElement).clear();
+    html.take(this.selectedElement).clear();
     const options = this.options().filter(option => option.label.toLocaleLowerCase().includes(this.query.toLocaleLowerCase()));
     const selectedSet = new Set(this.selected);
 

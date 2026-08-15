@@ -12,7 +12,7 @@ export class GraphView extends BaseComponent {
     for (const row of rows) { const key = String(row[categoryField] ?? '—'); values.set(key, (values.get(key) || 0) + (measureField ? Number(row[measureField]) || 0 : 1)); }
     const entries = [...values.entries()];
     const root = html.take(container).div.className('o-graph-view').getContext() as HTMLDivElement;
-    if (!entries.length) { root.classList.add('o-analytics-empty'); html.take(root).text('No data'); return; }
+    if (!entries.length) { html.take(root).toggleClass('o-analytics-empty', true).text('No data'); return; }
     const max = Math.max(...entries.map(([, value]) => value), 1);
     const svg = html.take(root).svg(SvgTag.Svg).attr('viewBox', `0 0 ${Math.max(560, entries.length * 100)} 300`).attr('role', 'img').attr('aria-label', this.options.view.label).getContext() as SVGSVGElement;
     entries.forEach(([label, value], index) => {

@@ -28,9 +28,9 @@ export class AdvancedSearch extends BaseComponent {
       html.take(fieldSel).option.value('').text('Field');
       for (const f of fields) {
         const opt = html.take(fieldSel).option.value(f).text(f).getContext();
-        if (filter.field === f) opt.setAttribute('selected', '');
+        if (filter.field === f) html.take(opt).attr('selected', '');
       }
-      fieldSel.addEventListener('change', e => {
+      html.take(fieldSel).event('change', e => {
         const newFilters = this.state.filters.map((fil, i) => i === idx ? { ...fil, field: e.target.value } : fil);
         this.setState({ filters: newFilters }, false);
       });
@@ -40,9 +40,9 @@ export class AdvancedSearch extends BaseComponent {
         .getContext();
       for (const op of operators) {
         const opt = html.take(opSel).option.value(op).text(op).getContext();
-        if (filter.operator === op) opt.setAttribute('selected', '');
+        if (filter.operator === op) html.take(opt).attr('selected', '');
       }
-      opSel.addEventListener('change', e => {
+      html.take(opSel).event('change', e => {
         const newFilters = this.state.filters.map((fil, i) => i === idx ? { ...fil, operator: e.target.value } : fil);
         this.setState({ filters: newFilters }, false);
       });
@@ -51,7 +51,7 @@ export class AdvancedSearch extends BaseComponent {
         .className('flex-1 text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
         .value(filter.value || '')
         .getContext();
-      valInp.addEventListener('input', e => {
+      html.take(valInp).event('input', e => {
         const newFilters = this.state.filters.map((fil, i) => i === idx ? { ...fil, value: e.target.value } : fil);
         this.setState({ filters: newFilters }, false);
       });
@@ -60,7 +60,7 @@ export class AdvancedSearch extends BaseComponent {
         .className('text-gray-400 hover:text-red-500 transition-colors text-xl leading-none px-1')
         .getContext();
       appendIcon(removeBtn, 'x');
-      removeBtn.addEventListener('click', () => {
+      html.take(removeBtn).event('click', () => {
         const newFilters = this.state.filters.filter((_, i) => i !== idx);
         this.setState({ filters: newFilters });
       });
@@ -72,7 +72,7 @@ export class AdvancedSearch extends BaseComponent {
       .className('text-sm px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 hover:border-indigo-500 hover:text-indigo-600 rounded-md transition-colors')
       .text('+ Add Filter')
       .getContext();
-    addBtn.addEventListener('click', () => {
+    html.take(addBtn).event('click', () => {
       const newFilters = [...this.state.filters, { field: '', operator: 'equals', value: '' }];
       this.setState({ filters: newFilters });
     });
@@ -81,7 +81,7 @@ export class AdvancedSearch extends BaseComponent {
       .className('ml-auto text-sm px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium')
       .text('Apply')
       .getContext();
-    applyBtn.addEventListener('click', () => {
+    html.take(applyBtn).event('click', () => {
       this.submit('search.filter', { filters: this.state.filters });
     });
   }

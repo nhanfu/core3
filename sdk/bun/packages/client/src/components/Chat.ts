@@ -61,14 +61,14 @@ export class Chat extends BaseComponent {
       if (!text) return;
       this.submit('chat.send', { text });
       this.setState({ inputValue: '' }, false);
-      inp.value = '';
+      html.take(inp).prop('value', '');
     };
 
-    inp.addEventListener('input', e => {
+    html.take(inp).event('input', e => {
       this.setState({ inputValue: e.target.value }, false);
     });
 
-    inp.addEventListener('keydown', e => {
+    html.take(inp).event('keydown', e => {
       if (e.key === 'Enter') sendMessage();
     });
 
@@ -76,6 +76,6 @@ export class Chat extends BaseComponent {
       .className('text-sm px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors font-medium shrink-0')
       .text('Send')
       .getContext();
-    sendBtn.addEventListener('click', sendMessage);
+    html.take(sendBtn).event('click', sendMessage);
   }
 }

@@ -27,15 +27,15 @@ export class ButtonImportExcel extends BaseComponent {
       .getContext();
 
     if (loading) {
-      btn.setAttribute('disabled', '');
+      html.take(btn).attr('disabled', '');
       html.take(btn).span.className('h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent');
     }
 
     html.take(btn).text(label);
 
     if (!loading) {
-      btn.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', () => {
+      html.take(btn).event('click', () => fileInput.click());
+      html.take(fileInput).event('change', () => {
         const file = fileInput.files?.[0];
         if (!file) return;
         this.setState({ filename: file.name });

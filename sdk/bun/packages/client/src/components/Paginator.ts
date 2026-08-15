@@ -22,7 +22,7 @@ export class Paginator extends BaseComponent {
       .button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')
       .text('← Prev')
       .getContext();
-    if (page <= 1) prevBtn.setAttribute('disabled', '');
+    if (page <= 1) html.take(prevBtn).attr('disabled', '');
 
     html.take(ctrl).span.className('text-sm text-gray-500 px-1').text(`${page} / ${totalPages}`);
 
@@ -30,13 +30,13 @@ export class Paginator extends BaseComponent {
       .button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')
       .text('Next →')
       .getContext();
-    if (page >= totalPages) nextBtn.setAttribute('disabled', '');
+    if (page >= totalPages) html.take(nextBtn).attr('disabled', '');
 
-    prevBtn.addEventListener('click', () => {
+    html.take(prevBtn).event('click', () => {
       const p = this.state.page || 1;
       if (p > 1) this.submit('page.change', { page: p - 1 });
     });
-    nextBtn.addEventListener('click', () => {
+    html.take(nextBtn).event('click', () => {
       const p = this.state.page || 1;
       const tot = this.state.total || 0;
       const ps = this.state.pageSize || 25;

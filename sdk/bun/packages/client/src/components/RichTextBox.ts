@@ -36,25 +36,25 @@ export class RichTextBox extends BaseComponent {
       .getContext();
 
     if (value) {
-      editor.innerHTML = value;
+      html.take(editor).innerHTML(value);
     } else if (placeholder) {
-      editor.setAttribute('data-placeholder', placeholder);
+      html.take(editor).attr('data-placeholder', placeholder);
     }
 
-    editor.addEventListener('input', () => {
+    html.take(editor).event('input', () => {
       this.setState({ value: editor.innerHTML }, false);
     });
 
-    boldBtn.addEventListener('mousedown', e => {
+    html.take(boldBtn).event('mousedown', e => {
       e.preventDefault();
-      document.execCommand('bold');
-      editor.focus();
+      html.take(editor).command('bold');
+      html.take(editor).focus();
     });
 
-    italicBtn.addEventListener('mousedown', e => {
+    html.take(italicBtn).event('mousedown', e => {
       e.preventDefault();
-      document.execCommand('italic');
-      editor.focus();
+      html.take(editor).command('italic');
+      html.take(editor).focus();
     });
   }
 }

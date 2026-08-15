@@ -28,7 +28,7 @@ export class HtmlCode extends BaseComponent {
         .className('text-xs px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-colors')
         .text(showSource ? 'View Preview' : 'View Source')
         .getContext();
-      toggleBtn.addEventListener('click', () => {
+      html.take(toggleBtn).event('click', () => {
         this.setState({ showSource: !this.state.showSource });
       });
     }
@@ -37,10 +37,10 @@ export class HtmlCode extends BaseComponent {
       const pre = html.take(wrap).add('pre')
         .className('p-4 text-xs text-gray-700 font-mono overflow-auto bg-gray-50 m-0')
         .getContext();
-      pre.textContent = htmlStr;
+      html.take(pre).replaceText(htmlStr);
     } else {
       const preview = html.take(wrap).div.className('p-4').getContext();
-      preview.innerHTML = htmlStr;
+      html.take(preview).innerHTML(htmlStr);
     }
   }
 }

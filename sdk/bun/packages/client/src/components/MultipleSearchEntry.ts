@@ -32,7 +32,7 @@ export class MultipleSearchEntry extends BaseComponent {
         .className('text-indigo-500 hover:text-indigo-800 leading-none font-bold')
         .getContext();
       appendIcon(rmBtn, 'x');
-      rmBtn.addEventListener('click', e => {
+      html.take(rmBtn).event('click', e => {
         e.stopPropagation();
         this.setState({ value: this.state.value.filter(v => v !== chip) }, false);
         this.redraw();
@@ -45,17 +45,17 @@ export class MultipleSearchEntry extends BaseComponent {
       .value(String(query))
       .getContext();
 
-    if (d.placeholder && value.length === 0) inp.setAttribute('placeholder', d.placeholder);
+    if (d.placeholder && value.length === 0) html.take(inp).attr('placeholder', d.placeholder);
 
-    inp.addEventListener('input', e => {
+    html.take(inp).event('input', e => {
       this.setState({ query: e.target.value, open: true }, false);
       this.redraw();
     });
-    inp.addEventListener('focus', () => {
+    html.take(inp).event('focus', () => {
       this.setState({ open: true }, false);
       this.redraw();
     });
-    inp.addEventListener('blur', () => {
+    html.take(inp).event('blur', () => {
       setTimeout(() => {
         this.setState({ open: false }, false);
         this.redraw();
@@ -73,7 +73,7 @@ export class MultipleSearchEntry extends BaseComponent {
             .className('px-3 py-2 text-sm text-gray-700 hover:bg-indigo-50 cursor-pointer')
             .text(String(opt))
             .getContext();
-          item.addEventListener('mousedown', e => {
+          html.take(item).event('mousedown', e => {
             e.preventDefault();
             this.setState({ value: [...this.state.value, opt], query: '', open: false }, false);
             this.redraw();

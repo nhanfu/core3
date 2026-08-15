@@ -68,7 +68,7 @@ export class GridView extends BaseComponent {
         .getContext();
       const sortable = d.sortable !== false && d.type !== 'ActionCell' && d.field && d.field !== 'actions';
       if (!sortable) {
-        th.textContent = d.label || '';
+        html.take(th).replaceText(d.label || '');
         continue;
       }
       const active = sort?.field === d.field;
@@ -121,18 +121,18 @@ export class GridView extends BaseComponent {
       const ctrlDiv = html.take(pagDiv).div.className('flex items-center gap-2').getContext();
 
       const prevBtn = html.take(ctrlDiv).button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed').text(labels.previousPage).getContext();
-      if (page <= 1) prevBtn.setAttribute('disabled', '');
+      if (page <= 1) html.take(prevBtn).attr('disabled', '');
 
       html.take(ctrlDiv).span.className('text-sm text-gray-500 px-1').text(`${page} / ${totalPages}`);
 
       const nextBtn = html.take(ctrlDiv).button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed').text(labels.nextPage).getContext();
-      if (page >= totalPages) nextBtn.setAttribute('disabled', '');
+      if (page >= totalPages) html.take(nextBtn).attr('disabled', '');
 
-      prevBtn.addEventListener('click', () => {
+      html.take(prevBtn).event('click', () => {
         const { page = 1 } = this.state.meta || {};
         if (page > 1) this.setState({ meta: { ...this.state.meta, page: page - 1 } });
       });
-      nextBtn.addEventListener('click', () => {
+      html.take(nextBtn).event('click', () => {
         const { page = 1, total = 0, pageSize = 25 } = this.state.meta || {};
         const totalPages = Math.ceil(total / pageSize);
         if (page < totalPages) this.setState({ meta: { ...this.state.meta, page: page + 1 } });

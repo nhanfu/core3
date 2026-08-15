@@ -28,12 +28,10 @@ export class Rating extends BaseComponent {
 
       if (!readonly) {
         const idx = i;
-        star.addEventListener('click', () => this.setState({ value: idx }, false));
-        star.addEventListener('mouseover', () => {
-          star.textContent = '★';
-        });
-        star.addEventListener('mouseout', () => {
-          star.textContent = idx <= this.state.value ? '★' : '☆';
+        html.take(star).event('click', () => this.setState({ value: idx }, false)).event('mouseover', () => {
+          html.take(star).replaceText('★');
+        }).event('mouseout', () => {
+          html.take(star).replaceText(idx <= this.state.value ? '★' : '☆');
         });
       }
     }

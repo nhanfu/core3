@@ -60,15 +60,13 @@ export class KanbanView extends BaseComponent {
       const column = html.take(board).section.className('o-kanban-column').dataAttr('kanban-group', group.value).getContext();
       const header = html.take(column).header.className('o-kanban-column-header').getContext();
       const heading = html.take(header).div.className('o-kanban-column-title').getContext();
-      if (group.color) heading.classList.add(`is-${group.color}`);
+      if (group.color) html.take(heading).toggleClass(`is-${group.color}`, true);
       html.take(heading).span.text(group.label);
       if (this.options.onEditStatus) {
         heading.title = this.options.stateEditor?.labels?.edit_status || '';
-        heading.tabIndex = 0;
-        heading.setAttribute('role', 'button');
+        html.take(heading).prop('tabIndex', 0).attr('role', 'button');
         const edit = () => this.openEditStatusDialog(group.value, group.label);
-        heading.addEventListener('click', edit);
-        heading.addEventListener('keydown', event => {
+        html.take(heading).event('click', edit).event('keydown', event => {
           if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); edit(); }
         });
       }
@@ -77,16 +75,14 @@ export class KanbanView extends BaseComponent {
         const addLabel = this.options.stateEditor?.labels?.add_status || '';
         const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', addLabel).attr('title', addLabel).getContext();
         appendIcon(add, 'plus');
-        add.addEventListener('click', () => this.openAddStatusDialog());
+        html.take(add).event('click', () => this.openAddStatusDialog());
       }
 
       const cards = html.take(column).div.className('o-kanban-cards').getContext();
       if (this.options.onMove) {
-        cards.addEventListener('dragover', (event: DragEvent) => { event.preventDefault(); cards.classList.add('is-drop-target'); });
-        cards.addEventListener('dragleave', () => cards.classList.remove('is-drop-target'));
-        cards.addEventListener('drop', (event: DragEvent) => {
+        html.take(cards).event('dragover', (event: DragEvent) => { event.preventDefault(); html.take(cards).toggleClass('is-drop-target', true); }).event('dragleave', () => html.take(cards).toggleClass('is-drop-target', false)).event('drop', (event: DragEvent) => {
           event.preventDefault();
-          cards.classList.remove('is-drop-target');
+          html.take(cards).toggleClass('is-drop-target', false);
           const id = event.dataTransfer?.getData('application/x-row-id');
           const row = rows.find((candidate: ListRow) => this.rowId(candidate, rows.indexOf(candidate)) === id);
           if (row && String(row[groupBy] ?? '') !== group.value) void this.options.onMove?.(row, group.value);
@@ -99,14 +95,13 @@ export class KanbanView extends BaseComponent {
   private drawCard(container: HTMLElement, row: ListRow, index: number) {
     const card = html.take(container).div.className('o-kanban-card').dataAttr('row-id', this.rowId(row, index)).getContext();
     if (this.options.openAction || this.options.doubleClickAction || this.options.onSelect) {
-      card.tabIndex = 0;
-      card.setAttribute('role', this.options.onSelect ? 'button' : 'link');
+      html.take(card).prop('tabIndex', 0).attr('role', this.options.onSelect ? 'button' : 'link');
       let clickTimer: ReturnType<typeof setTimeout> | undefined;
       const selectOrOpen = () => {
         if (this.options.onSelect) this.options.onSelect(row);
         else if (this.options.openAction) void this.submit(this.options.openAction, { row });
       };
-      card.addEventListener('click', () => {
+      html.take(card).event('click', () => {
         if (!this.options.doubleClickAction) {
           selectOrOpen();
           return;
@@ -117,12 +112,12 @@ export class KanbanView extends BaseComponent {
           selectOrOpen();
         }, 250);
       });
-      card.addEventListener('dblclick', () => {
+      html.take(card).event('dblclick', () => {
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = undefined;
         if (this.options.doubleClickAction) void this.submit(this.options.doubleClickAction, { row });
       });
-      card.addEventListener('keydown', (event: KeyboardEvent) => {
+      html.take(card).event('keydown', (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           selectOrOpen();
@@ -130,8 +125,7 @@ export class KanbanView extends BaseComponent {
       });
     }
     if (this.options.onMove) {
-      card.draggable = true;
-      card.addEventListener('dragstart', (event: DragEvent) => {
+      html.take(card).prop('draggable', true).event('dragstart', (event: DragEvent) => {
         event.dataTransfer?.setData('application/x-row-id', this.rowId(row, index));
         if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
       });

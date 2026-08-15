@@ -20,18 +20,16 @@ export class StatCard extends BaseComponent {
 
     const card = html.take(container).div.className(`stat-card bg-white rounded-xl border ${borderCls} p-4 flex flex-col${state.navigate_to ? ' stat-card-clickable' : ''}`).getContext();
     if (state.navigate_to) {
-      card.setAttribute('role', 'link');
-      card.tabIndex = 0;
+      html.take(card).attr('role', 'link').prop('tabIndex', 0);
       const activate = () => state.onNavigate?.(String(state.navigate_to));
-      card.addEventListener('click', activate);
-      card.addEventListener('keydown', event => {
+      html.take(card).event('click', activate).event('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           activate();
         }
       });
     }
-    card.style.minHeight = '88px';
+    html.take(card).css('minHeight', '88px');
     html.take(card).p.className('text-sm font-medium leading-4 text-gray-500').text(String(label ?? ''));
     const valueEl = html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—')).getContext();
     if (state.navigate_to) {

@@ -26,23 +26,20 @@ export class Form extends BaseComponent {
       const values = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
       const validation = this.validate(values);
       if (validation) {
-        error.textContent = validation;
-        error.hidden = false;
+        html.take(error).text(validation).prop('hidden', false);
         return;
       }
-      error.hidden = true;
-      button.disabled = true;
-      button.textContent = this.def.loading_label || 'Saving…';
+      html.take(error).prop('hidden', true);
+      html.take(button).prop('disabled', true).replaceText(this.def.loading_label || 'Saving…');
       try {
         await this.submit(this.def.action, values);
-        Object.values(inputs).forEach(input => { input.value = ''; });
-        button.textContent = this.def.success_label || 'Updated';
+        Object.values(inputs).forEach(input => { html.take(input).prop('value', ''); });
+        html.take(button).replaceText(this.def.success_label || 'Updated');
       } catch (cause) {
-        error.textContent = cause instanceof Error ? cause.message : String(cause);
-        error.hidden = false;
-        button.textContent = this.def.submit_label || 'Submit';
+        html.take(error).text(cause instanceof Error ? cause.message : String(cause)).prop('hidden', false);
+        html.take(button).replaceText(this.def.submit_label || 'Submit');
       } finally {
-        button.disabled = false;
+        html.take(button).prop('disabled', false);
       }
       }).getContext() as HTMLButtonElement;
   }

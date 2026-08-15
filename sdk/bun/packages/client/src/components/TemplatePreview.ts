@@ -36,7 +36,7 @@ export class TemplatePreview extends BaseComponent {
       .getContext();
     appendIcon(printButton, 'printer');
     html.take(printButton).span.text('In mẫu');
-    printButton.addEventListener('click', () => window.print());
+    html.take(printButton).event('click', () => window.print());
 
     const paper = html.take(root).div
       .className('template-preview-paper mt-4 min-h-[180px] rounded-md border border-dashed border-gray-300 bg-gray-50 p-6')
@@ -50,8 +50,7 @@ export class TemplatePreview extends BaseComponent {
       const blockType = String(block.block_type || 'text');
       const blockEl = html.take(paper).div.className(`template-preview-block template-preview-${blockType}`).getContext();
       if (blockType === 'spacer') {
-        blockEl.style.height = '24px';
-        blockEl.setAttribute('aria-label', String(block.label || 'Khoảng cách'));
+        html.take(blockEl).css('height', '24px').attr('aria-label', String(block.label || 'Khoảng cách'));
         continue;
       }
       if (block.label) {

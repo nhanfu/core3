@@ -26,9 +26,9 @@ export class TextInput extends BaseComponent {
       .value(String(value))
       .getContext();
 
-    if (d.readonly)    inp.setAttribute('readonly', '');
-    if (d.placeholder) inp.setAttribute('placeholder', d.placeholder);
-    if (!d.readonly)   inp.addEventListener('input', e => this.setState({ value: e.target.value, error: null }, false));
+    if (d.readonly)    html.take(inp).attr('readonly', '');
+    if (d.placeholder) html.take(inp).attr('placeholder', d.placeholder);
+    if (!d.readonly)   html.take(inp).event('input', e => this.setState({ value: e.target.value, error: null }, false));
 
     if (error) html.take(wrap).span.className('text-xs text-red-600').text(error);
   }

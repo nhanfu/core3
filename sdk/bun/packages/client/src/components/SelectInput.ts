@@ -25,9 +25,9 @@ export class SelectInput extends BaseComponent {
     html.take(sel).option.value('').text('— Select —');
     for (const o of options) {
       const opt = html.take(sel).option.value(String(o)).text(String(o)).getContext();
-      if (o === value) opt.setAttribute('selected', '');
+      if (o === value) html.take(opt).attr('selected', '');
     }
 
-    sel.addEventListener('change', e => this.setState({ value: e.target.value }, false));
+    html.take(sel).event('change', e => this.setState({ value: e.target.value }, false));
   }
 }

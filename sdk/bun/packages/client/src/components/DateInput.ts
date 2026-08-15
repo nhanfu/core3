@@ -20,12 +20,10 @@ export class DateInput extends BaseComponent {
       .value(String(value))
       .getContext();
 
-    inp.inputMode = 'numeric';
-    inp.placeholder = d.placeholder || 'YYYY-MM-DD';
-    inp.pattern = '\\d{4}-\\d{2}-\\d{2}';
+    html.take(inp).prop('inputMode', 'numeric').prop('placeholder', d.placeholder || 'YYYY-MM-DD').prop('pattern', '\\d{4}-\\d{2}-\\d{2}');
 
-    if (d.min) inp.setAttribute('min', d.min);
-    if (d.max) inp.setAttribute('max', d.max);
-    inp.addEventListener('change', e => this.setState({ value: e.target.value }, false));
+    if (d.min) html.take(inp).attr('min', d.min);
+    if (d.max) html.take(inp).attr('max', d.max);
+    html.take(inp).event('change', e => this.setState({ value: e.target.value }, false));
   }
 }

@@ -36,17 +36,17 @@ export class OdooAttachmentPanel extends BaseComponent {
       html.take(input).event('change', () => {
         const files = [...(input.files || [])];
         if (!files.length) return;
-        upload.disabled = true;
-        status.textContent = String(this.def.uploading_label || 'Uploading…');
+        html.take(upload).prop('disabled', true);
+        html.take(status).replaceText(String(this.def.uploading_label || 'Uploading…'));
         void (async () => {
           for (const file of files) {
             await this.submit(String(this.def.attachment_upload_action), { id: record.id, file });
           }
-          status.textContent = '';
-          input.value = '';
+          html.take(status).replaceText('');
+          html.take(input).prop('value', '');
         })().catch(error => {
-          status.textContent = error instanceof Error ? error.message : String(this.def.upload_failed_label || 'Upload failed');
-        }).finally(() => { upload.disabled = false; });
+          html.take(status).replaceText(error instanceof Error ? error.message : String(this.def.upload_failed_label || 'Upload failed'));
+        }).finally(() => { html.take(upload).prop('disabled', false); });
       });
     }
 
@@ -71,20 +71,20 @@ export class OdooAttachmentPanel extends BaseComponent {
       const image = html.take(preview).img.attr('alt', String(attachment.file_name || 'Image attachment')).prop('hidden', true).getContext() as HTMLImageElement;
       void this.getObjectUrl(attachment).then(url => {
         if (!image.isConnected) return;
-        image.src = url;
-        image.hidden = false;
-        placeholder.hidden = true;
+        html.take(image).attr('src', url);
+        html.take(image).prop('hidden', false);
+        html.take(placeholder).prop('hidden', true);
       }).catch(() => {});
       html.take(preview).event('click', () => void this.openPreview(attachment));
     } else {
       const icon = html.take(preview).span.className('o-form-attachment-file-icon').getContext() as HTMLSpanElement;
       appendIcon(icon, isImage ? 'image' : 'file');
       if (this.def.attachment_download_action) html.take(preview).event('click', () => void this.download(attachment));
-      else preview.disabled = true;
+      else html.take(preview).prop('disabled', true);
     }
     const info = html.take(item).div.className('o-form-attachment-info').getContext() as HTMLDivElement;
     const name = html.take(info).strong.text(String(attachment.file_name || attachment.name || 'Attachment')).getContext() as HTMLElement;
-    name.title = name.textContent || '';
+    html.take(name).prop('title', name.textContent || '');
     html.take(info).small.text(formatSize(attachment.size_bytes) || mime);
     if (this.def.attachment_download_action) {
       const download = html.take(item).button.type('button').className('o-form-attachment-download')
@@ -142,9 +142,9 @@ export class OdooAttachmentPanel extends BaseComponent {
     html.take(close).event('click', () => this.closePreview());
     html.take(overlay).event('click', event => { if (event.target === overlay) this.closePreview(); });
     this.previewKeyHandler = event => { if (event.key === 'Escape') this.closePreview(); };
-    document.addEventListener('keydown', this.previewKeyHandler);
+    html.take(document).event('keydown', this.previewKeyHandler);
     this.previewOverlay = overlay;
-    overlay.focus();
+    html.take(overlay).focus();
   }
 
   private download(attachment: any) {
@@ -154,7 +154,7 @@ export class OdooAttachmentPanel extends BaseComponent {
   private closePreview() {
     this.previewOverlay?.remove();
     this.previewOverlay = null;
-    if (this.previewKeyHandler) document.removeEventListener('keydown', this.previewKeyHandler);
+    if (this.previewKeyHandler) html.take(document).off('keydown', this.previewKeyHandler);
     this.previewKeyHandler = null;
   }
 

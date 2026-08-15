@@ -23,13 +23,13 @@ export class Button extends BaseComponent {
       .button.className(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md transition-colors ${variantCls} ${disabledCls}${d.full_width ? ' btn-full' : ''}`)
       .getContext();
 
-    if (loading || disabled) btn.setAttribute('disabled', '');
+    if (loading || disabled) html.take(btn).attr('disabled', '');
     if (loading) html.take(btn).span.className('animate-spin').text('⟳');
     if (d.icon && !loading) appendIcon(btn, d.icon);
     html.take(btn).text(d.label || '');
 
     if (!loading && !disabled) {
-      btn.addEventListener('click', () => this.submit(d.action || 'click', d.params || {}));
+      html.take(btn).event('click', () => this.submit(d.action || 'click', d.params || {}));
     }
   }
 }

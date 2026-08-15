@@ -35,7 +35,7 @@ export class ChromeTab extends BaseComponent {
           .className('ml-1 w-4 h-4 rounded-full inline-flex items-center justify-center text-gray-400 hover:bg-gray-300 hover:text-gray-700 text-sm leading-none transition-colors')
           .getContext();
         appendIcon(closeBtn, 'x');
-        closeBtn.addEventListener('click', e => {
+        html.take(closeBtn).event('click', e => {
           e.stopPropagation();
           const newTabs = this.state.tabs.filter(t => t.id !== tab.id);
           const newActiveId = this.state.activeId === tab.id
@@ -46,7 +46,7 @@ export class ChromeTab extends BaseComponent {
         });
       }
 
-      tabEl.addEventListener('click', () => {
+      html.take(tabEl).event('click', () => {
         this.setState({ activeId: tab.id });
       });
     }

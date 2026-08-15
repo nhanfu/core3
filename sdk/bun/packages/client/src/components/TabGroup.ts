@@ -33,7 +33,7 @@ export class TabGroup extends BaseComponent {
     if (currentTab?.content instanceof BaseComponent) {
       currentTab.content.mount(content);
     } else if (currentTab?.content) {
-      content.innerHTML = currentTab.content;
+      html.take(content).innerHTML(currentTab.content);
     }
   }
 }

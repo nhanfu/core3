@@ -74,7 +74,7 @@ export class Dialog extends BaseComponent {
           .prop('checked', group.values?.includes(option.value) || false).getContext() as HTMLInputElement;
         if (group.multiple === false) html.take(checkbox).event('change', () => {
           if (!checkbox.checked) return;
-          for (const other of inputs) if (other !== checkbox) other.checked = false;
+          for (const other of inputs) if (other !== checkbox) html.take(other).prop('checked', false);
         });
         inputs.push(checkbox);
         html.take(label).text(option.label);
@@ -84,7 +84,7 @@ export class Dialog extends BaseComponent {
 
     const footer = html.take(dialog).div.className('dialog-footer').getContext() as HTMLDivElement;
     const close = (notifyCancel = true) => {
-      if (this.onKeyDown) document.removeEventListener('keydown', this.onKeyDown);
+      if (this.onKeyDown) html.take(document).off('keydown', this.onKeyDown);
       this.onKeyDown = null;
       if (notifyCancel) this.options.onCancel?.();
       this.dispose();
@@ -103,8 +103,8 @@ export class Dialog extends BaseComponent {
       .text(this.options.confirmLabel || 'Confirm').event('click', () => {
       const value = input?.value.trim() || '';
       if (input && !value) {
-        input.focus();
-        input.classList.add('is-invalid');
+        html.take(input).focus();
+        html.take(input).toggleClass('is-invalid', true);
         return;
       }
       const tags = tagInputs.size
@@ -122,13 +122,13 @@ export class Dialog extends BaseComponent {
     this.onKeyDown = event => {
       if (event.key === 'Escape') close();
     };
-    document.addEventListener('keydown', this.onKeyDown);
+    html.take(document).event('keydown', this.onKeyDown);
 
-    (input || cancel).focus();
+    html.take(input || cancel).focus();
   }
 
   dispose() {
-    if (this.onKeyDown) document.removeEventListener('keydown', this.onKeyDown);
+    if (this.onKeyDown) html.take(document).off('keydown', this.onKeyDown);
     this.onKeyDown = null;
     super.dispose();
   }

@@ -26,9 +26,9 @@ export class FilterBar extends BaseComponent {
           const value = typeof o === 'object' ? (o.value ?? o.id ?? '') : o;
           const label = typeof o === 'object' ? (o.label ?? value) : o;
           const opt = html.take(sel).option.value(String(value)).text(String(label)).getContext();
-          if (String(values[f.field] ?? '') === String(value)) opt.setAttribute('selected', '');
+          if (String(values[f.field] ?? '') === String(value)) html.take(opt).attr('selected', '');
         }
-        sel.addEventListener('change', e => {
+        html.take(sel).event('change', e => {
           const newValues = { ...this.state.values, [f.field]: e.target.value };
           this.setState({ values: newValues }, false);
           this.submit('filter.change', { values: newValues });
@@ -46,8 +46,8 @@ export class FilterBar extends BaseComponent {
           .dataAttr('ff', f.field)
           .value(String(values[f.field] || ''))
           .getContext();
-        if (f.placeholder) inp.setAttribute('placeholder', f.placeholder);
-        inp.addEventListener('input', e => {
+        if (f.placeholder) html.take(inp).attr('placeholder', f.placeholder);
+        html.take(inp).event('input', e => {
           const newValues = { ...this.state.values, [f.field]: e.target.value };
           this.setState({ values: newValues }, false);
           this.submit('filter.change', { values: newValues });
@@ -61,16 +61,14 @@ export class FilterBar extends BaseComponent {
         const separator = html.take(rangeWrap).span.className('text-gray-400 text-xs').getContext();
         appendIcon(separator, 'arrow-right');
         const inpTo     = html.take(rangeWrap).input.type('text').className('px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white').dataAttr('ff', f.field + '_to').value(String(values[f.field + '_to'] || '')).getContext();
-        inpFrom.inputMode = 'numeric';
-        inpTo.inputMode = 'numeric';
-        inpFrom.placeholder = 'YYYY-MM-DD';
-        inpTo.placeholder = 'YYYY-MM-DD';
-        inpFrom.addEventListener('change', e => {
+        html.take(inpFrom).prop('inputMode', 'numeric').prop('placeholder', 'YYYY-MM-DD');
+        html.take(inpTo).prop('inputMode', 'numeric').prop('placeholder', 'YYYY-MM-DD');
+        html.take(inpFrom).event('change', e => {
           const newValues = { ...this.state.values, [f.field + '_from']: e.target.value };
           this.setState({ values: newValues }, false);
           this.submit('filter.change', { values: newValues });
         });
-        inpTo.addEventListener('change', e => {
+        html.take(inpTo).event('change', e => {
           const newValues = { ...this.state.values, [f.field + '_to']: e.target.value };
           this.setState({ values: newValues }, false);
           this.submit('filter.change', { values: newValues });
@@ -79,7 +77,7 @@ export class FilterBar extends BaseComponent {
     }
 
     const clearBtn = html.take(bar).button.className('self-end px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors').text(this.labels.clear).getContext();
-    clearBtn.addEventListener('click', () => {
+    html.take(clearBtn).event('click', () => {
       this.setState({ values: {} });
       this.submit('filter.clear', {});
     });

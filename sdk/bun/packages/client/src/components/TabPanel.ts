@@ -26,6 +26,6 @@ export class TabPanel extends BaseComponent {
     const content = html.take(wrap).div.className('pt-4').dataAttr('tab-content', '').getContext();
     const currentTab = this.tabs[active];
     if (currentTab?.render) currentTab.render(content);
-    else if (currentTab?.content) content.innerHTML = currentTab.content;
+    else if (currentTab?.content) html.take(content).innerHTML(currentTab.content);
   }
 }

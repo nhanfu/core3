@@ -24,8 +24,8 @@ export class Kanban extends BaseComponent {
         .className('text-xs bg-gray-300 text-gray-600 rounded-full px-2 py-0.5 font-medium')
         .text(String((col.cards || []).length));
 
-      colEl.addEventListener('dragover', e => e.preventDefault());
-      colEl.addEventListener('drop', e => {
+      html.take(colEl).event('dragover', e => e.preventDefault());
+      html.take(colEl).event('drop', e => {
         e.preventDefault();
         const cardId = e.dataTransfer.getData('cardId');
         const fromColumn = e.dataTransfer.getData('fromColumn');
@@ -41,13 +41,13 @@ export class Kanban extends BaseComponent {
           .attr('draggable', 'true')
           .getContext();
 
-        cardEl.addEventListener('dragstart', e => {
+        html.take(cardEl).event('dragstart', e => {
           e.dataTransfer.setData('cardId', card.id);
           e.dataTransfer.setData('fromColumn', col.id);
           e.dataTransfer.effectAllowed = 'move';
         });
 
-        cardEl.addEventListener('click', () => {
+        html.take(cardEl).event('click', () => {
           this.submit('card.select', { cardId: card.id, columnId: col.id });
         });
 

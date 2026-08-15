@@ -35,15 +35,15 @@ export class CalendarView extends BaseComponent {
     const root = html.take(container).section.className('o-calendar-view').getContext();
     const toolbar = html.take(root).header.className('o-calendar-toolbar').getContext();
     const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Previous month').text('‹').getContext();
-    previous.addEventListener('click', () => this.setMonth(month.getFullYear(), month.getMonth() - 1));
+    html.take(previous).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() - 1));
     html.take(toolbar).h2.className('o-calendar-title').text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(month));
     const today = html.take(toolbar).button.className('o-calendar-today').text('Today').getContext();
-    today.addEventListener('click', () => {
+    html.take(today).event('click', () => {
       const now = new Date();
       this.setMonth(now.getFullYear(), now.getMonth());
     });
     const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Next month').text('›').getContext();
-    next.addEventListener('click', () => this.setMonth(month.getFullYear(), month.getMonth() + 1));
+    html.take(next).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() + 1));
 
     const grid = html.take(root).div.className('o-calendar-grid').attr('role', 'grid').getContext();
     for (const label of this.weekdayLabels()) html.take(grid).div.className('o-calendar-weekday').attr('role', 'columnheader').text(label);
@@ -63,8 +63,8 @@ export class CalendarView extends BaseComponent {
     for (let index = 0; index < 42; index++) {
       const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
       const day = html.take(grid).div.className('o-calendar-day').attr('role', 'gridcell').getContext();
-      if (date.getMonth() !== month.getMonth()) day.classList.add('is-muted');
-      if (this.dateKey(date) === this.dateKey(new Date())) day.classList.add('is-today');
+      if (date.getMonth() !== month.getMonth()) html.take(day).toggleClass('is-muted', true);
+      if (this.dateKey(date) === this.dateKey(new Date())) html.take(day).toggleClass('is-today', true);
       html.take(day).div.className('o-calendar-day-number').text(String(date.getDate()));
       const list = html.take(day).div.className('o-calendar-events').getContext();
       for (const [eventIndex, row] of (events.get(this.dateKey(date)) || []).entries()) this.drawEvent(list, row, eventIndex);
@@ -75,14 +75,14 @@ export class CalendarView extends BaseComponent {
     const card = this.options.view.card;
     const event = html.take(container).button.className('o-calendar-event').dataAttr('row-id', this.rowId(row, index)).getContext() as HTMLButtonElement;
     const title = row[card?.title || 'name'];
-    event.textContent = title == null || title === '' ? '—' : String(title);
+    html.take(event).replaceText(title == null || title === '' ? '—' : String(title));
     if (card?.subtitle && row[card.subtitle] != null) event.title = String(row[card.subtitle]);
     let clickTimer: ReturnType<typeof setTimeout> | undefined;
     const selectOrOpen = () => {
       if (this.options.onSelect) this.options.onSelect(row);
       else if (this.options.openAction) void this.submit(this.options.openAction, { row });
     };
-    event.addEventListener('click', () => {
+    html.take(event).event('click', () => {
       if (!this.options.doubleClickAction) {
         selectOrOpen();
         return;
@@ -93,7 +93,7 @@ export class CalendarView extends BaseComponent {
         selectOrOpen();
       }, 250);
     });
-    event.addEventListener('dblclick', () => {
+    html.take(event).event('dblclick', () => {
       if (clickTimer) clearTimeout(clickTimer);
       clickTimer = undefined;
       if (this.options.doubleClickAction) void this.submit(this.options.doubleClickAction, { row });

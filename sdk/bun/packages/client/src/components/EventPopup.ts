@@ -17,7 +17,7 @@ export class EventPopup extends BaseComponent {
 
     const dialog = html.take(overlay).div.className('event-dialog').attr('role', 'dialog').attr('aria-modal', 'true').getContext() as HTMLDivElement;
     const titleId = `event-dialog-title-${Date.now()}`;
-    dialog.setAttribute('aria-labelledby', titleId);
+    html.take(dialog).attr('aria-labelledby', titleId);
 
     const icon = html.take(dialog).div.className('event-icon').attr('aria-hidden', 'true').getContext() as HTMLDivElement;
     appendIcon(icon, this.def.icon || 'lightbulb');
@@ -28,7 +28,7 @@ export class EventPopup extends BaseComponent {
 
     const close = () => {
       this.dispose();
-      overlay.remove();
+      html.take(overlay).remove();
     };
     this.onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') close();
@@ -40,12 +40,12 @@ export class EventPopup extends BaseComponent {
     html.take(overlay).event('click', event => {
       if (event.target === overlay) close();
     });
-    document.addEventListener('keydown', this.onKeyDown);
-    closeButton.focus();
+    html.take(document).event('keydown', this.onKeyDown);
+    html.take(closeButton).focus();
   }
 
   dispose() {
-    if (this.onKeyDown) document.removeEventListener('keydown', this.onKeyDown);
+    if (this.onKeyDown) html.take(document).off('keydown', this.onKeyDown);
     this.onKeyDown = null;
     super.dispose();
   }

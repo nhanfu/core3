@@ -2,7 +2,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 
 function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+  return html.node(tag) as HTMLElementTagNameMap[K];
 }
 
 export type ScheduleGridDefinition = {
@@ -56,50 +56,45 @@ export class ScheduleGrid extends BaseComponent {
     })).values()];
 
     const root = createFluentElement('section');
-    root.className = 'schedule-grid';
-    root.setAttribute('aria-label', this.def.title || 'Lịch phân công');
+    html.take(root).className('schedule-grid').attr('aria-label', this.def.title || 'Lịch phân công');
     if (this.def.title) {
       const heading = createFluentElement('h3');
-      heading.className = 'schedule-title';
-      heading.textContent = this.def.title;
-      root.appendChild(heading);
+      html.take(heading).className('schedule-title').replaceText(this.def.title);
+      html.take(root).append(heading);
     }
 
     if (!dates.length || !resources.length) {
       const empty = createFluentElement('div');
-      empty.className = 'schedule-empty';
-      empty.textContent = this.def.empty_state?.title || 'Chưa có lịch phân công';
+      html.take(empty).className('schedule-empty').replaceText(this.def.empty_state?.title || 'Chưa có lịch phân công');
       if (this.def.empty_state?.description) {
         const description = createFluentElement('p');
-        description.textContent = this.def.empty_state.description;
-        empty.appendChild(description);
+        html.take(description).replaceText(this.def.empty_state.description);
+        html.take(empty).append(description);
       }
-      root.appendChild(empty);
-      container.appendChild(root);
+      html.take(root).append(empty);
+      html.take(container).append(root);
       return;
     }
 
     const scroller = createFluentElement('div');
-    scroller.className = 'schedule-scroll';
+    html.take(scroller).className('schedule-scroll');
     const table = createFluentElement('table');
-    table.className = 'schedule-table';
-    table.setAttribute('role', 'grid');
+    html.take(table).className('schedule-table').attr('role', 'grid');
 
     const thead = createFluentElement('thead');
     const header = createFluentElement('tr');
     const resourceHeader = createFluentElement('th');
     resourceHeader.scope = 'col';
-    resourceHeader.textContent = 'Nhân viên';
-    header.appendChild(resourceHeader);
+    html.take(resourceHeader).replaceText('Nhân viên');
+    html.take(header).append(resourceHeader);
     for (const date of dates) {
       const cell = createFluentElement('th');
       cell.scope = 'col';
-      cell.textContent = this.formatDate(date);
-      cell.setAttribute('data-schedule-date', date);
-      header.appendChild(cell);
+      html.take(cell).replaceText(this.formatDate(date)).attr('data-schedule-date', date);
+      html.take(header).append(cell);
     }
-    thead.appendChild(header);
-    table.appendChild(thead);
+    html.take(thead).append(header);
+    html.take(table).append(thead);
 
     const tbody = createFluentElement('tbody');
     for (const resource of resources) {
@@ -107,36 +102,34 @@ export class ScheduleGrid extends BaseComponent {
       const row = createFluentElement('tr');
       const label = createFluentElement('th');
       label.scope = 'row';
-      label.className = 'schedule-resource';
-      label.textContent = String(resource[resourceLabelField] || resourceKey || '—');
-      row.appendChild(label);
+      html.take(label).className('schedule-resource').replaceText(String(resource[resourceLabelField] || resourceKey || '—'));
+      html.take(row).append(label);
       for (const date of dates) {
         const cell = createFluentElement('td');
         const assignment = rows.find(candidate => String(candidate[resourceField] ?? '') === resourceKey && this.dateValue(candidate) === date);
         if (assignment) {
-          cell.className = 'schedule-assignment';
+          html.take(cell).className('schedule-assignment');
           const title = createFluentElement('strong');
-          title.textContent = String(assignment[titleField] || 'Đã phân công');
-          cell.appendChild(title);
+          html.take(title).replaceText(String(assignment[titleField] || 'Đã phân công'));
+          html.take(cell).append(title);
           if (assignment[subtitleField]) {
             const subtitle = createFluentElement('span');
-            subtitle.textContent = String(assignment[subtitleField]);
-            cell.appendChild(subtitle);
+            html.take(subtitle).replaceText(String(assignment[subtitleField]));
+            html.take(cell).append(subtitle);
           }
           if (this.def.status_field && assignment[this.def.status_field]) {
             cell.dataset.status = String(assignment[this.def.status_field]);
           }
         } else {
-          cell.className = 'schedule-empty-cell';
-          cell.textContent = '—';
+          html.take(cell).className('schedule-empty-cell').replaceText('—');
         }
-        row.appendChild(cell);
+        html.take(row).append(cell);
       }
-      tbody.appendChild(row);
+      html.take(tbody).append(row);
     }
-    table.appendChild(tbody);
-    scroller.appendChild(table);
-    root.appendChild(scroller);
-    container.appendChild(root);
+    html.take(table).append(tbody);
+    html.take(scroller).append(table);
+    html.take(root).append(scroller);
+    html.take(container).append(root);
   }
 }

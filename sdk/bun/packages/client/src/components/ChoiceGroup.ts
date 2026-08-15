@@ -15,8 +15,8 @@ export class ChoiceGroup extends BaseComponent {
     for (const option of this.def.options || []) {
       const card = html.take(group).div.className(`${this.def.option_class || 'lang-radio'}${String(option.value) === String(current || '') ? ' selected' : ''}`)
         .text(option.label || option.value || '').event('click', () => {
-        group.querySelectorAll(`.${this.def.option_class || 'lang-radio'}`).forEach(item => item.classList.remove('selected'));
-        card.classList.add('selected');
+        group.querySelectorAll(`.${this.def.option_class || 'lang-radio'}`).forEach(item => html.take(item).toggleClass('selected', false));
+        html.take(card).toggleClass('selected', true);
         void this.submit(this.def.action, { [this.def.value]: option.value });
         }).getContext() as HTMLDivElement;
     }

@@ -31,28 +31,24 @@ export class LoginForm extends BaseComponent {
     for (const credential of d.credentials || []) html.take(footer).div.text(credential);
 
     const submit = async () => {
-      errorEl.style.display = 'none';
+      html.take(errorEl).css('display', 'none');
       const email = emailInput.value.trim();
       const password = passwordInput.value;
       if (!email || !password) {
-        errorEl.textContent = d.required_message || 'Email and password are required.';
-        errorEl.style.display = 'block';
+        html.take(errorEl).replaceText(d.required_message || 'Email and password are required.').css('display', 'block');
         return;
       }
-      button.disabled = true;
-      button.innerHTML = `<span class="spinner"></span> ${d.loading_label || ''}`;
+      html.take(button).prop('disabled', true).innerHTML(`<span class="spinner"></span> ${d.loading_label || ''}`);
       try {
         await this.submit(d.action || 'login', { email, password });
       } catch (error) {
-        errorEl.textContent = error instanceof Error ? error.message : String(error);
-        errorEl.style.display = 'block';
-        button.disabled = false;
-        button.textContent = d.submit_label || '';
+        html.take(errorEl).replaceText(error instanceof Error ? error.message : String(error)).css('display', 'block');
+        html.take(button).prop('disabled', false).replaceText(d.submit_label || '');
       }
     };
-    button.addEventListener('click', () => void submit());
+    html.take(button).event('click', () => void submit());
     for (const input of [emailInput, passwordInput]) {
-      input.addEventListener('keydown', (event: KeyboardEvent) => {
+      html.take(input).event('keydown', (event: KeyboardEvent) => {
         if (event.key === 'Enter') void submit();
       });
     }
@@ -72,15 +68,14 @@ export class LoginForm extends BaseComponent {
         appendIcon(providerButton, provider.icon || 'shield');
         html.take(providerButton).span.text(provider.label);
         html.take(providerButton).event('click', () => {
-          providerButton.disabled = true;
+          html.take(providerButton).prop('disabled', true);
           void this.submit(provider.action).catch((error) => {
-            errorEl.textContent = error instanceof Error ? error.message : String(error);
-            errorEl.style.display = 'block';
-          }).finally(() => { providerButton.disabled = false; });
+            html.take(errorEl).replaceText(error instanceof Error ? error.message : String(error)).css('display', 'block');
+          }).finally(() => { html.take(providerButton).prop('disabled', false); });
         });
       }
     }
-    emailInput.focus();
+    html.take(emailInput).focus();
   }
 
   private field(card: HTMLElement, definition: any, type: string) {

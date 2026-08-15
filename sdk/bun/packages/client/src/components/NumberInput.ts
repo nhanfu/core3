@@ -25,10 +25,10 @@ export class NumberInput extends BaseComponent {
       .value(String(value ?? ''))
       .getContext();
 
-    if (d.min  != null) inp.setAttribute('min',  String(d.min));
-    if (d.max  != null) inp.setAttribute('max',  String(d.max));
-    if (d.step != null) inp.setAttribute('step', String(d.step));
-    inp.addEventListener('input', e => this.setState({ value: e.target.valueAsNumber, error: null }, false));
+    if (d.min  != null) html.take(inp).attr('min',  String(d.min));
+    if (d.max  != null) html.take(inp).attr('max',  String(d.max));
+    if (d.step != null) html.take(inp).attr('step', String(d.step));
+    html.take(inp).event('input', e => this.setState({ value: e.target.valueAsNumber, error: null }, false));
 
     if (error) html.take(wrap).span.className('text-xs text-red-600').text(error);
   }

@@ -1,3 +1,5 @@
+import { html } from '@core3/client/html';
+
 /**
  * lib/runtime.js
  *
@@ -53,7 +55,7 @@ export class BaseComponent {
   redraw() {
     if (this._container) {
       this.disposeAdapters();
-      this._container.innerHTML = '';
+      html.take(this._container).clear();
       this.draw(this._container);
     }
   }

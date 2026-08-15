@@ -56,8 +56,8 @@ export class MoneyInput extends BaseComponent {
     const numeric = parseNumber(raw, this.decimals());
     this.input.value = numeric;
     if (format && numeric !== '') this.displayInput.value = this.displayValue(numeric);
-    this.input.dispatchEvent(new Event('input', { bubbles: true }));
-    this.input.dispatchEvent(new Event('change', { bubbles: true }));
+    html.take(this.input).dispatch(new Event('input', { bubbles: true }));
+    html.take(this.input).dispatch(new Event('change', { bubbles: true }));
   }
 
   draw(container: HTMLElement) {
@@ -73,10 +73,10 @@ export class MoneyInput extends BaseComponent {
       .attr('aria-label', this.def.currency ? `Số tiền (${this.def.currency})` : 'Số tiền')
       .getContext() as HTMLInputElement;
     this.displayInput = display;
-    root.appendChild(display);
+    html.take(root).append(display);
 
     const initial = String(this.state.value ?? '');
-    display.value = this.displayValue(initial) || initial;
+    html.take(display).prop('value', this.displayValue(initial) || initial);
     this.sync(initial);
     html.take(display).event('input', () => this.sync(display.value)).event('blur', () => this.sync(display.value, true));
   }

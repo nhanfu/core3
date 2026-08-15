@@ -31,7 +31,7 @@ export class TreeView extends BaseComponent {
     html.take(row).span.text(node.label || '');
 
     if (hasChildren) {
-      row.addEventListener('click', () => {
+      html.take(row).event('click', () => {
         const next = new Set(this.state.expanded || []);
         if (next.has(node.id)) next.delete(node.id);
         else next.add(node.id);
@@ -45,7 +45,7 @@ export class TreeView extends BaseComponent {
         }
       }
     } else {
-      row.addEventListener('click', () => this.submit('node.select', { id: node.id }));
+      html.take(row).event('click', () => this.submit('node.select', { id: node.id }));
     }
   }
 

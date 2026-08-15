@@ -24,7 +24,10 @@ export class HTML {
      * @returns 
      */
     take(ele) {
-        if (ele == null) return this;
+        if (ele == null) {
+            this.context = null;
+            return this;
+        }
         if (typeof (ele) === 'string') this.context = document.querySelector(ele);
         else this.context = ele;
         return this;
@@ -32,6 +35,41 @@ export class HTML {
 
     getContext() {
         return this.context;
+    }
+
+    append(...nodes) {
+        this.context.append(...nodes);
+        return this;
+    }
+
+    remove() {
+        this.context?.remove();
+        return this;
+    }
+
+    prepend(...nodes) {
+        this.context.prepend(...nodes);
+        return this;
+    }
+
+    before(...nodes) {
+        this.context.before(...nodes);
+        return this;
+    }
+
+    focus(options) {
+        this.context.focus(options);
+        return this;
+    }
+
+    click() {
+        this.context.click();
+        return this;
+    }
+
+    dispatch(event) {
+        this.context.dispatchEvent(event);
+        return this;
     }
 
     /**
@@ -46,6 +84,14 @@ export class HTML {
             this.context = ele;
         }
         return this;
+    }
+
+    node(tag) {
+        const parent = this.context;
+        this.context = null;
+        const element = this.add(tag).getContext();
+        this.context = parent;
+        return element;
     }
     svg(node: SvgTag | string) {
         const ele = document.createElementNS('http://www.w3.org/2000/svg', node);
@@ -224,7 +270,12 @@ export class HTML {
      * @param {any[]} args
      */
     event(name, handler, ...args) {
-        this.context.addEventListener(name, (e) => handler(e, ...args));
+        this.context.addEventListener(name, args.length ? (e) => handler(e, ...args) : handler);
+        return this;
+    }
+
+    off(name, handler) {
+        this.context.removeEventListener(name, handler);
         return this;
     }
     /**
@@ -233,6 +284,11 @@ export class HTML {
     trigger(type) {
         var e = new Event(type);
         this.context.dispatchEvent(e);
+        return this;
+    }
+
+    command(name, value = null) {
+        document.execCommand(name, false, value);
         return this;
     }
 
@@ -246,6 +302,11 @@ export class HTML {
         else {
             this.context.className = cls;
         }
+        return this;
+    }
+
+    toggleClass(cls, force) {
+        this.context.classList.toggle(cls, force);
         return this;
     }
 
@@ -265,11 +326,21 @@ export class HTML {
         this.context.style.cssText += style;
         return this;
     }
+
+    css(name, value) {
+        this.context.style[name] = value;
+        return this;
+    }
     
     text(text) {
         if (text === null || text === undefined) return this;
         var node = new Text(text);
         this.context.appendChild(node);
+        return this;
+    }
+
+    replaceText(text) {
+        this.context.textContent = text == null ? '' : String(text);
         return this;
     }
 

@@ -37,7 +37,7 @@ export class ActionButton extends BaseComponent {
           });
       }
 
-      document.addEventListener('click', () => this.setState({ open: false }), { once: true });
+      html.take(document).event('click', () => this.setState({ open: false }), { once: true });
     }
   }
 }

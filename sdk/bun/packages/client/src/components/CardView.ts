@@ -62,7 +62,7 @@ export class CardView extends BaseComponent {
     for (const group of groups) {
       const section = html.take(root).section.className('o-card-view-group').dataAttr('card-group', group.value).getContext();
       const heading = html.take(section).h2.className('o-card-view-group-title').getContext();
-      if (group.color) heading.classList.add(`is-${group.color}`);
+      if (group.color) html.take(heading).toggleClass(`is-${group.color}`, true);
       html.take(heading).span.text(group.label);
       html.take(heading).span.className('o-card-view-group-count').text(String(group.rows.length));
       const list = html.take(section).div.className('o-card-view-group-items').getContext();
@@ -73,14 +73,13 @@ export class CardView extends BaseComponent {
   private drawCard(container: HTMLElement, row: CardRow, index: number) {
     const card = html.take(container).div.className('o-kanban-card o-card-view-item').dataAttr('row-id', this.rowId(row, index)).getContext();
     if (this.options.openAction || this.options.doubleClickAction || this.options.onSelect) {
-      card.tabIndex = 0;
-      card.setAttribute('role', this.options.onSelect ? 'button' : 'link');
+      html.take(card).prop('tabIndex', 0).attr('role', this.options.onSelect ? 'button' : 'link');
       let clickTimer: ReturnType<typeof setTimeout> | undefined;
       const selectOrOpen = () => {
         if (this.options.onSelect) this.options.onSelect(row);
         else if (this.options.openAction) void this.submit(this.options.openAction, { row });
       };
-      card.addEventListener('click', () => {
+      html.take(card).event('click', () => {
         if (!this.options.doubleClickAction) {
           selectOrOpen();
           return;
@@ -91,12 +90,12 @@ export class CardView extends BaseComponent {
           selectOrOpen();
         }, 250);
       });
-      card.addEventListener('dblclick', () => {
+      html.take(card).event('dblclick', () => {
         if (clickTimer) clearTimeout(clickTimer);
         clickTimer = undefined;
         if (this.options.doubleClickAction) void this.submit(this.options.doubleClickAction, { row });
       });
-      card.addEventListener('keydown', (event: KeyboardEvent) => {
+      html.take(card).event('keydown', (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           selectOrOpen();

@@ -31,7 +31,7 @@ export class PopupEditor extends BaseComponent {
       .attr('aria-label', 'Đóng')
       .getContext();
     appendIcon(close, 'x');
-    close.addEventListener('click', () => this.setState({ open: false }));
+    html.take(close).event('click', () => this.setState({ open: false }));
 
     const body = html.take(panel).div.className('overflow-y-auto p-6 grow').getContext();
 

@@ -67,7 +67,7 @@ export class DateRangeFilterTag {
           .dataAttr('date-preset', preset)
           .text(definition.presetLabels?.[preset] || presetLabels[preset] || preset)
           .getContext() as HTMLButtonElement;
-        if (this.isPresetActive(preset, fromField, toField)) button.classList.add('is-active');
+        if (this.isPresetActive(preset, fromField, toField)) html.take(button).toggleClass('is-active', true);
         html.take(button).event('click', () => {
           const dates = resolveDatePreset(preset);
           if (dates.from && dates.from === dates.to) dates.to = nextDate(dates.to);
@@ -86,7 +86,7 @@ export class DateRangeFilterTag {
     let error: HTMLElement | undefined;
     const calendar = html.take(editor).div.className('o-list-date-picker').getContext() as HTMLDivElement;
     const drawCalendar = () => {
-      calendar.innerHTML = '';
+      html.take(calendar).clear();
       const header = html.take(calendar).div.className('o-list-date-picker-header').getContext() as HTMLDivElement;
       html.take(header).button
         .type('button').className('o-list-date-picker-nav').text('‹')
@@ -112,30 +112,30 @@ export class DateRangeFilterTag {
         const button = html.take(grid).button
           .type('button').className('o-list-date-picker-day').text(String(date.getUTCDate()))
           .dataAttr('calendar-date', value).getContext() as HTMLButtonElement;
-        if (!value.startsWith(monthKey)) button.classList.add('is-outside-month');
-        if (!this.isDateAllowed(value, activeField, selectedFrom, definition)) button.disabled = true;
-        if (value === selectedFrom || value === selectedTo) button.classList.add('is-selected');
-        if (selectedFrom && selectedTo && value > selectedFrom && value < selectedTo) button.classList.add('is-in-range');
+        if (!value.startsWith(monthKey)) html.take(button).toggleClass('is-outside-month', true);
+        if (!this.isDateAllowed(value, activeField, selectedFrom, definition)) html.take(button).prop('disabled', true);
+        if (value === selectedFrom || value === selectedTo) html.take(button).toggleClass('is-selected', true);
+        if (selectedFrom && selectedTo && value > selectedFrom && value < selectedTo) html.take(button).toggleClass('is-in-range', true);
         html.take(button).event('click', () => {
-          if (activeField === 'from') { selectedFrom = value; from.value = value; activeField = 'to'; }
-          else { selectedTo = value; to.value = value; }
-          if (error) error.textContent = validateDateRange(selectedFrom, selectedTo, definition) || '';
+          if (activeField === 'from') { selectedFrom = value; html.take(from).prop('value', value); activeField = 'to'; }
+          else { selectedTo = value; html.take(to).prop('value', value); }
+          if (error) html.take(error).replaceText(validateDateRange(selectedFrom, selectedTo, definition) || '');
           drawCalendar();
         });
       }
     };
-    from.addEventListener('focus', () => {
+    html.take(from).event('focus', () => {
       activeField = 'from';
       calendarMonth = monthStart(from.value || selectedFrom || calendarMonth.toISOString().slice(0, 10));
       drawCalendar();
     });
-    to.addEventListener('focus', () => {
+    html.take(to).event('focus', () => {
       activeField = 'to';
       calendarMonth = monthStart(to.value || selectedTo || calendarMonth.toISOString().slice(0, 10));
       drawCalendar();
     });
-    from.addEventListener('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
-    to.addEventListener('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
+    html.take(from).event('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
+    html.take(to).event('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
     drawCalendar();
     error = html.take(editor).div.className('o-list-date-range-error').attr('role', 'alert').getContext() as HTMLDivElement;
     html.take(fields).button
@@ -156,8 +156,7 @@ export class DateRangeFilterTag {
       .getContext() as HTMLInputElement;
     if (definition.maxYears) {
       const bounds = rollingDateBounds(definition.maxYears);
-      input.min = bounds.from;
-      input.max = bounds.to;
+      html.take(input).prop('min', bounds.from).prop('max', bounds.to);
     }
     return input;
   }
@@ -178,12 +177,12 @@ export class DateRangeFilterTag {
     if (from && from === to) to = nextDate(to);
     const message = validateDateRange(from, to, this.options.definition);
     if (message) {
-      if (error) error.textContent = message;
+      if (error) html.take(error).replaceText(message);
       return;
     }
     this.options.onChange({ [fromField]: from, [toField]: to });
     const details = editor.parentElement as HTMLDetailsElement | null;
-    if (details) details.open = false;
+    if (details) html.take(details).prop('open', false);
   }
 
   private isPresetActive(preset: DateRangePreset, fromField: string, toField: string) {

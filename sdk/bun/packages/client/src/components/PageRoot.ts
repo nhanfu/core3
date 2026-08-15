@@ -13,7 +13,7 @@ import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 import { html } from '@core3/client/html';
 
 function createFluentElement(tag: string): HTMLElement {
-  return html.take(null).add(tag).getContext() as HTMLElement;
+  return html.node(tag) as HTMLElement;
 }
 
 class PageChild extends BaseComponent {
@@ -45,95 +45,90 @@ class PageRoot extends BaseComponent {
     const { config, dataMap, ctx } = this.state;
     const { applySourceFilters, handleAction, renderComponentDef } = this.options;
 
-    container.innerHTML = '';
+    html.take(container).clear();
     const pageDiv = createFluentElement('div');
-    pageDiv.className = 'page';
-    if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) pageDiv.classList.add('o-form-page');
-    container.appendChild(pageDiv);
+    html.take(pageDiv).className('page');
+    if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) html.take(pageDiv).toggleClass('o-form-page', true);
+    html.take(container).append(pageDiv);
 
-    if (config.title) document.title = config.title;
+    if (config.title) html.take(document).prop('title', config.title);
 
     let pageHeader: HTMLElement | null = null;
     const ownsControlPanel = !(config.components || []).some((component: any) => component.type === 'OdooFormView')
       && (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
     if (config.page?.breadcrumb?.length && !ownsControlPanel) {
       pageHeader = createFluentElement('div');
-      pageHeader.className = 'page-header';
+      html.take(pageHeader).className('page-header');
       const heading = createFluentElement('div');
       const breadcrumb = createFluentElement('div');
-      breadcrumb.className = 'page-breadcrumb';
+      html.take(breadcrumb).className('page-breadcrumb');
       for (const [index, item] of config.page.breadcrumb.entries()) {
         if (index) {
           const separator = createFluentElement('span');
-          separator.className = 'page-breadcrumb-separator';
-          separator.textContent = '›';
-          breadcrumb.append(separator);
+          html.take(separator).className('page-breadcrumb-separator').replaceText('›');
+          html.take(breadcrumb).append(separator);
         }
         const isCurrent = index === config.page.breadcrumb.length - 1;
         const crumb = createFluentElement(isCurrent ? 'span' : 'a');
-        crumb.className = isCurrent ? 'page-breadcrumb-current' : 'page-breadcrumb-link';
-        crumb.textContent = item;
+        html.take(crumb).className(isCurrent ? 'page-breadcrumb-current' : 'page-breadcrumb-link').replaceText(item);
         if (!isCurrent) {
           const pathSegments = window.location.pathname.split('/').filter(Boolean);
           const routeLength = pathSegments.length - config.page.breadcrumb.length + index + 1;
           const targetPath = routeLength > 0 ? `/${pathSegments.slice(0, routeLength).join('/')}` : '';
           if (targetPath) {
             const link = crumb as HTMLAnchorElement;
-            link.href = targetPath;
-            link.addEventListener('click', event => {
+            html.take(link).attr('href', targetPath);
+            html.take(link).event('click', event => {
               event.preventDefault();
               navigate(targetPath);
             });
           } else {
             const textCrumb = createFluentElement('span');
-            textCrumb.className = 'page-breadcrumb-link';
-            textCrumb.textContent = item;
-            breadcrumb.append(textCrumb);
+            html.take(textCrumb).className('page-breadcrumb-link').replaceText(item);
+            html.take(breadcrumb).append(textCrumb);
             continue;
           }
         }
-        breadcrumb.append(crumb);
+        html.take(breadcrumb).append(crumb);
       }
-      heading.append(breadcrumb);
-      pageHeader.append(heading);
-      pageDiv.appendChild(pageHeader);
+      html.take(heading).append(breadcrumb);
+      html.take(pageHeader).append(heading);
+      html.take(pageDiv).append(pageHeader);
       if (config.scope) {
         const scopePill = createFluentElement('span');
-        scopePill.className = 'scope-pill';
-        scopePill.textContent = `${config.scope.label}: ${config.scope.value}`;
-        pageHeader.append(scopePill);
+        html.take(scopePill).className('scope-pill').replaceText(`${config.scope.label}: ${config.scope.value}`);
+        html.take(pageHeader).append(scopePill);
       }
     }
 
     if (config.toolbar?.length && !ownsControlPanel) {
       const toolbarDiv = createFluentElement('div');
-      toolbarDiv.className = pageHeader ? 'page-header-actions' : 'page-toolbar';
-      toolbarDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;';
+      html.take(toolbarDiv).className(pageHeader ? 'page-header-actions' : 'page-toolbar').style('display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;');
       for (const btn of config.toolbar) {
         if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
         if (btn.permission && !hasPermission(ctx.user, btn.permission)) continue;
         const button = createFluentElement('button');
-        button.type = 'button';
-        button.className = `btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`;
+        html.take(button).type('button');
+        html.take(button).className(`btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`);
         if (btn.icon) {
           const icon = createFluentElement('span');
-          icon.setAttribute('aria-hidden', 'true');
+          html.take(icon).attr('aria-hidden', 'true');
           if (hasIcon(btn.icon)) appendIcon(icon, btn.icon);
-          else icon.textContent = btn.icon;
-          button.appendChild(icon);
+          else html.take(icon).replaceText(btn.icon);
+          html.take(button).append(icon);
         }
-        if (btn.label) button.appendChild(document.createTextNode(btn.label));
-        button.addEventListener('click', async () => {
+        if (btn.label) html.take(button).text(btn.label);
+        html.take(button).event('click', async () => {
           const actionDef = (config.actions || []).find((action: any) => action.id === btn.action);
           if (actionDef) await handleAction(actionDef, null);
           else console.warn(`[page-renderer] Toolbar action not found: ${btn.action}`);
         });
-        toolbarDiv.appendChild(button);
+        html.take(toolbarDiv).append(button);
       }
-      if (pageHeader) pageHeader.appendChild(toolbarDiv);
+      if (pageHeader) html.take(pageHeader).append(toolbarDiv);
       else {
-        toolbarDiv.style.marginBottom = '20px';
-        pageDiv.appendChild(toolbarDiv);
+        html.take(toolbarDiv).css('marginBottom', '20px');
+        html.take(pageDiv).append(toolbarDiv);
       }
     }
 
@@ -153,8 +148,8 @@ class PageRoot extends BaseComponent {
         };
       });
       const filterSlot = createFluentElement('div');
-      filterSlot.style.marginBottom = '20px';
-      pageDiv.appendChild(filterSlot);
+      html.take(filterSlot).css('marginBottom', '20px');
+      html.take(pageDiv).append(filterSlot);
       const filterBar = new FilterBar(
         'page-filter-bar',
         { values: {} },
@@ -401,7 +396,7 @@ export class PageRuntime extends BaseComponent {
       case 'event': {
         const eventName = String(actionDef.event || '').trim();
         if (!eventName) throw new Error('Event action requires an event name');
-        window.dispatchEvent(new CustomEvent(eventName, {
+        html.take(window).dispatch(new CustomEvent(eventName, {
           detail: resolveActionParams(actionDef.params, rowCtx),
         }));
         if (actionDef.message) showEventPopup(actionDef);
@@ -535,9 +530,9 @@ export class PageRuntime extends BaseComponent {
         if (!uploadFile) {
           uploadFile = await new Promise<File | null>(resolve => {
             const input = createFluentElement('input') as HTMLInputElement;
-            input.type = 'file';
+            html.take(input).type('file');
             input.onchange = () => resolve(input.files?.[0] || null);
-            input.click();
+            html.take(input).click();
           });
         }
         if (!uploadFile) break;

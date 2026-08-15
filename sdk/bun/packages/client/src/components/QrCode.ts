@@ -73,7 +73,7 @@ export class QrCode extends BaseComponent {
       .className('text-sm px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium')
       .text('Generate')
       .getContext();
-    genBtn.addEventListener('click', () => {
+    html.take(genBtn).event('click', () => {
       this.submit('qr.generate', { value: this.state.value });
     });
   }

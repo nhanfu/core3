@@ -44,7 +44,7 @@ export class OdooFormView extends BaseComponent {
           .attr('type', 'button')
           .text(String(action.label || action.id || 'Action'))
           .getContext();
-        button.addEventListener('click', () => {
+        html.take(button).event('click', () => {
           if (action.id === this.def.edit_action_id && this.def.editable !== false) this.setState({ editing: true, draft: { ...sourceRecord } });
           else void this.submit(String(action.id), { ...record });
         });
@@ -52,18 +52,18 @@ export class OdooFormView extends BaseComponent {
       if (editing) {
         const save = html.take(actionBar).button.className('o-form-action o-form-action-primary').attr('type', 'button').text('Save').getContext() as HTMLButtonElement;
         const discard = html.take(actionBar).button.className('o-form-action o-form-action-secondary').attr('type', 'button').text('Discard').getContext();
-        save.addEventListener('click', async () => {
-          save.disabled = true;
+        html.take(save).event('click', async () => {
+          html.take(save).prop('disabled', true);
           try {
             await this.state.onInlineSave?.({ ...sourceRecord, ...(this.state.draft || {}), id: sourceRecord.id });
             this.setState({ editing: false, draft: {} });
           } catch (error: any) {
             await showMessageDialog({ title: 'Unable to save', message: error instanceof Error ? error.message : 'Unable to save the order', confirmLabel: 'OK' });
           } finally {
-            save.disabled = false;
+            html.take(save).prop('disabled', false);
           }
         });
-        discard.addEventListener('click', () => this.setState({ editing: false, draft: {} }));
+        html.take(discard).event('click', () => this.setState({ editing: false, draft: {} }));
       }
       if (statusStages.length) {
         const steps = html.take(statusbar).nav.className('o-form-statusbar-steps').attr('aria-label', 'Workflow status').getContext();
@@ -71,8 +71,8 @@ export class OdooFormView extends BaseComponent {
           const stageValue = String(stage.value ?? stage.id ?? stage.label ?? '');
           const stageLabel = String(stage.label ?? stageValue);
           const item = html.take(steps).span.className(`o-form-statusbar-step${stageValue === status ? ' is-current' : ''}`).getContext();
-          item.textContent = stageLabel;
-          if (stageValue === status) item.setAttribute('aria-current', 'step');
+          html.take(item).replaceText(stageLabel);
+          if (stageValue === status) html.take(item).attr('aria-current', 'step');
         }
       }
     }
@@ -106,36 +106,34 @@ export class OdooFormView extends BaseComponent {
       html.take(item).div.className('o-form-field-label').text(String(field.label || ''));
       const value = html.take(item).div.className(`o-form-field-value${field.type === 'money' ? ' is-money' : ''}`).getContext();
       if (!editing) {
-        value.textContent = record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]);
+        html.take(value).replaceText(record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]));
         continue;
       }
       const current = record[field.field] ?? '';
       let editor: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
       if (field.type === 'textarea' || field.type === 'richtext') {
         editor = html.take(null).textarea.getContext() as HTMLTextAreaElement;
-        editor.rows = 3;
+        html.take(editor).prop('rows', 3);
       } else if (field.type === 'select' || field.type === 'multi-select') {
         editor = html.take(null).select.getContext() as HTMLSelectElement;
         for (const option of field.options || []) {
           const itemOption = typeof option === 'string' ? { id: option, label: option } : option;
           const optionEl = html.take(null).option.getContext() as HTMLOptionElement;
-          optionEl.value = String(itemOption.id ?? itemOption.value ?? '');
-          optionEl.textContent = String(itemOption.label ?? optionEl.value);
-          editor.appendChild(optionEl);
+          html.take(optionEl).prop('value', String(itemOption.id ?? itemOption.value ?? '')).text(String(itemOption.label ?? optionEl.value));
+          html.take(editor).append(optionEl);
         }
       } else {
         editor = html.take(null).input.getContext() as HTMLInputElement;
-        editor.type = field.type === 'number' || field.type === 'money' ? 'number' : 'text';
+        html.take(editor).type(field.type === 'number' || field.type === 'money' ? 'number' : 'text');
         if (field.type === 'date' || field.type === 'time' || field.type === 'datetime') {
-          editor.inputMode = 'numeric';
-          editor.placeholder = field.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm';
+          html.take(editor).prop('inputMode', 'numeric');
+          html.take(editor).prop('placeholder', field.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm');
         }
       }
-      editor.className = 'o-form-inline-editor';
-      editor.value = Array.isArray(current) ? current.join(',') : String(current);
+      html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
       editor.dataset.formField = field.field;
-      editor.addEventListener('input', () => { this.state.draft = { ...(this.state.draft || {}), [field.field]: editor.value }; });
-      value.appendChild(editor);
+      html.take(editor).event('input', () => { this.state.draft = { ...(this.state.draft || {}), [field.field]: editor.value }; });
+      html.take(value).append(editor);
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {
@@ -162,12 +160,11 @@ export class OdooFormView extends BaseComponent {
         this.state.activeNotebookTab = id;
         buttons.forEach(button => {
           const selected = button.dataset.notebookTab === id;
-          button.classList.toggle('is-active', selected);
-          button.setAttribute('aria-selected', String(selected));
+          html.take(button).toggleClass('is-active', selected).attr('aria-selected', String(selected));
         });
-        panels.forEach(panel => { panel.hidden = panel.dataset.notebookPanel !== id; });
+        panels.forEach(panel => { html.take(panel).prop('hidden', panel.dataset.notebookPanel !== id); });
       };
-      tablist.addEventListener('keydown', event => {
+      html.take(tablist).event('keydown', event => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         const eventButton = (event.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
         const current = buttons.indexOf(eventButton || document.activeElement as HTMLButtonElement);
@@ -178,7 +175,7 @@ export class OdooFormView extends BaseComponent {
             ? buttons.length - 1
             : (current + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
         const button = buttons[next];
-        button.focus();
+        html.take(button).focus();
         selectTab(String(button.dataset.notebookTab));
         event.preventDefault();
       });
@@ -186,28 +183,30 @@ export class OdooFormView extends BaseComponent {
         const id = String(tab.id || tab.label || `tab-${buttons.length}`);
         const panelId = `${this.id}-notebook-${id}`;
         const button = html.take(tablist).button.className(`o-form-notebook-tab${id === activeTab ? ' is-active' : ''}`).attr('type', 'button').attr('role', 'tab').getContext() as HTMLButtonElement;
-        button.textContent = String(tab.label || id);
+        html.take(button).replaceText(String(tab.label || id));
         button.dataset.notebookTab = id;
-        button.id = `${panelId}-tab`;
-        button.setAttribute('aria-controls', panelId);
-        button.setAttribute('aria-selected', String(id === activeTab));
+        html.take(button).prop('id', `${panelId}-tab`);
+        html.take(button).attr('aria-controls', panelId).attr('aria-selected', String(id === activeTab));
         buttons.push(button);
         const panel = html.take(notebook).div.className(`o-form-notebook-panel${tab.content_slot ? ' o-form-notebook-panel-slot' : ''}`).attr('role', 'tabpanel').getContext();
-        panel.id = panelId;
+        html.take(panel).prop('id', panelId);
         panel.dataset.notebookPanel = id;
-        panel.setAttribute('aria-labelledby', button.id);
-        panel.hidden = id !== activeTab;
+        html.take(panel).attr('aria-labelledby', button.id).prop('hidden', id !== activeTab);
         panels.push(panel);
-        if (tab.content_slot) panel.appendChild(this.getEmbeddedContent());
+        if (tab.content_slot) {
+          const embedded = this.getEmbeddedContent();
+          if (!embedded.contains(panel)) html.take(panel).append(embedded);
+        }
         if (Array.isArray(tab.groups)) {
           for (const group of tab.groups) renderFields(group.fields || [], group.title, panel, group.wide === true);
         } else if (Array.isArray(tab.fields)) {
           renderFields(tab.fields, undefined, panel);
         }
-        button.addEventListener('click', () => selectTab(id));
+        html.take(button).event('click', () => selectTab(id));
       }
     } else if (this.def.content_slot) {
-      sheet.appendChild(this.getEmbeddedContent());
+      const embedded = this.getEmbeddedContent();
+      if (!embedded.contains(sheet)) html.take(sheet).append(embedded);
     }
 
     if (!this.def.message_source && !this.def.follower_source && !this.def.attachment_source) return;
@@ -221,15 +220,15 @@ export class OdooFormView extends BaseComponent {
     chatter.parent = this;
     this.children.push(chatter);
     const chatterSlot = html.take(null).div.getContext() as HTMLDivElement;
-    chatterSlot.className = 'o-form-chatter-slot';
-    layout.appendChild(chatterSlot);
+    html.take(chatterSlot).className('o-form-chatter-slot');
+    html.take(layout).append(chatterSlot);
     chatter.mount(chatterSlot);
   }
 
   getEmbeddedContent() {
     if (!this.embeddedContent) {
       this.embeddedContent = html.take(null).div.getContext() as HTMLDivElement;
-      this.embeddedContent.className = 'o-form-embedded-content';
+      html.take(this.embeddedContent).className('o-form-embedded-content');
     }
     return this.embeddedContent;
   }

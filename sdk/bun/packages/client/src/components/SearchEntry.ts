@@ -21,10 +21,9 @@ export class SearchEntry extends BaseComponent {
       .value(String(value))
       .getContext();
 
-    if (placeholder) inp.setAttribute('placeholder', placeholder);
+    if (placeholder) html.take(inp).attr('placeholder', placeholder);
 
-    inp.addEventListener('input', e => this.setState({ value: e.target.value }, false));
-    inp.addEventListener('keydown', e => {
+    html.take(inp).event('input', e => this.setState({ value: e.target.value }, false)).event('keydown', e => {
       if (e.key === 'Enter') this.submit('search', { value: this.state.value });
     });
 
@@ -33,7 +32,7 @@ export class SearchEntry extends BaseComponent {
         .className('absolute right-2 text-gray-400 hover:text-gray-600 text-sm leading-none')
         .getContext();
       appendIcon(clr, 'x');
-      clr.addEventListener('click', () => this.setState({ value: '' }));
+      html.take(clr).event('click', () => this.setState({ value: '' }));
     }
   }
 }

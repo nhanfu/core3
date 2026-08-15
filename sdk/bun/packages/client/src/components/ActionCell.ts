@@ -27,7 +27,7 @@ export class ActionCell extends BaseComponent {
       if (a.icon) {
         const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
         if (hasIcon(a.icon)) appendIcon(icon, a.icon);
-        else icon.textContent = a.icon;
+        else html.take(icon).replaceText(a.icon);
       }
       html.take(button).text(a.label);
     }

@@ -20,8 +20,7 @@ export class TextareaInput extends BaseComponent {
       .attr('rows', String(d.rows || 3))
       .getContext();
 
-    if (d.placeholder) ta.setAttribute('placeholder', d.placeholder);
-    ta.value = String(value);
-    ta.addEventListener('input', e => this.setState({ value: e.target.value }, false));
+    if (d.placeholder) html.take(ta).attr('placeholder', d.placeholder);
+    html.take(ta).prop('value', String(value)).event('input', e => this.setState({ value: e.target.value }, false));
   }
 }

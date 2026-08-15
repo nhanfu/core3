@@ -345,10 +345,7 @@ export class ListView extends BaseComponent {
     if (this.options.selectable) {
       const cell = html.take(headRow).th.className('o-list-selector').getContext();
       const checkbox = html.take(cell).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-      checkbox.setAttribute('aria-label', labels.selectAll);
-      checkbox.checked = rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index)));
-      checkbox.indeterminate = selected.size > 0 && !checkbox.checked;
-      checkbox.addEventListener('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
+      html.take(checkbox).attr('aria-label', labels.selectAll).prop('checked', rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index)))).prop('indeterminate', selected.size > 0 && !checkbox.checked).event('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
     }
 
     const sort = this.state.sort as { field?: string; direction?: SortDirection } | undefined;
@@ -357,19 +354,18 @@ export class ListView extends BaseComponent {
       const th = html.take(headRow).th.className(`o-list-column ${align}`).getContext();
       th.dataset.column = column.id || column.field;
       if (column.sortable === false || column.rowActions?.length) {
-        th.textContent = column.label;
+        html.take(th).replaceText(column.label);
         continue;
       }
       const active = sort?.field === column.field;
       const button = html.take(th).button.className('o-list-sort').dataAttr('sort-field', column.field).getContext();
-      button.append(document.createTextNode(column.label));
+      html.take(button).text(column.label);
       const indicator = html.take(button).span.className('o-list-sort-indicator').getContext();
       const ascending = html.take(indicator).span.className(`o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`).getContext();
       appendIcon(ascending, 'sort-ascending');
       const descending = html.take(indicator).span.className(`o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`).getContext();
       appendIcon(descending, 'sort-descending');
-      button.setAttribute('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
-      button.addEventListener('click', () => this.setSort(column.field));
+      html.take(button).attr('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none').event('click', () => this.setSort(column.field));
     }
 
     const body = html.take(table).tbody.getContext();
@@ -396,8 +392,8 @@ export class ListView extends BaseComponent {
         const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
         groupCell.dataset.groupBy = groupBy;
         const heading = html.take(groupCell).strong.getContext();
-        heading.textContent = `${groupLabel}: ${value}`;
-        groupCell.append(heading);
+        html.take(heading).replaceText(`${groupLabel}: ${value}`);
+        html.take(groupCell).append(heading);
         html.take(groupCell).span.className('o-list-group-count').text(` (${groupRows.length})`);
         groupRows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
       }
@@ -416,7 +412,7 @@ export class ListView extends BaseComponent {
         for (const [value, items] of groups) {
           const groupRow = html.take(body).trow.className('o-list-group-row').dataAttr('list-group', value).getContext();
           const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
-          groupCell.textContent = `${value} (${items.length})`;
+          html.take(groupCell).replaceText(`${value} (${items.length})`);
           for (const item of items) this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
         }
       }
@@ -435,7 +431,7 @@ export class ListView extends BaseComponent {
     const mode = this.formPanelMode();
     const panel = html.take(content).aside.className(`o-list-form-side-panel is-${mode} is-loading`).getContext();
     const width = Number(this.state.formPanelWidth);
-    if (Number.isFinite(width) && width > 0) panel.style.width = `${Math.min(75, Math.max(25, width))}%`;
+    if (Number.isFinite(width) && width > 0) html.take(panel).css('width', `${Math.min(75, Math.max(25, width))}%`);
     const handle = html.take(panel).div.className('o-list-form-resize-handle').attr('role', 'separator').attr('aria-label', 'Resize form panel').getContext();
     let dragging = false;
     let draggedWidth: number | undefined;
@@ -445,32 +441,31 @@ export class ListView extends BaseComponent {
       if (!bounds.width) return;
       const next = Math.min(75, Math.max(25, ((bounds.right - event.clientX) / bounds.width) * 100));
       draggedWidth = next;
-      panel.style.width = `${next}%`;
+      html.take(panel).css('width', `${next}%`);
     };
-    handle.addEventListener('pointerdown', (event: PointerEvent) => {
+    html.take(handle).event('pointerdown', (event: PointerEvent) => {
       dragging = true;
       draggedWidth = undefined;
-      panel.classList.add('is-resizing');
+      html.take(panel).toggleClass('is-resizing', true);
       handle.setPointerCapture?.(event.pointerId);
       event.preventDefault();
     });
-    handle.addEventListener('pointermove', updateWidth);
-    handle.addEventListener('pointerup', (event: PointerEvent) => {
+    html.take(handle).event('pointermove', updateWidth).event('pointerup', (event: PointerEvent) => {
       dragging = false;
-      panel.classList.remove('is-resizing');
+      html.take(panel).toggleClass('is-resizing', false);
       if (draggedWidth !== undefined) this.setState({ formPanelWidth: draggedWidth }, false);
       handle.releasePointerCapture?.(event.pointerId);
     });
     const body = html.take(panel).div.className('o-list-form-panel-body').getContext();
     await this.options.renderForm(selectedRow, body);
-    if (panel.isConnected) panel.classList.remove('is-loading');
+    if (panel.isConnected) html.take(panel).toggleClass('is-loading', false);
   }
 
   private drawPrimaryControls(container: HTMLElement, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     const primary = html.take(container).div.className('o-list-primary-controls').getContext();
     if (this.options.createAction) {
       const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).getContext();
-      button.addEventListener('click', () => {
+      html.take(button).event('click', () => {
         if (this.options.formView?.sidePanel) {
           this.setFormPanelMode('right');
           this.setState({ formRowId: '__new__', formPanelClosed: false });
@@ -495,10 +490,10 @@ export class ListView extends BaseComponent {
       html.take(selection).span.className('o-list-selection-count').text(String(selectedIds.length));
       html.take(selection).span.text(labels.selected);
       const clear = html.take(selection).button.text(labels.clearSelection).getContext();
-      clear.addEventListener('click', () => this.setSelectedIds([]));
+      html.take(clear).event('click', () => this.setSelectedIds([]));
       for (const action of this.options.bulkActions || []) {
         const button = html.take(selection).button.className('o-list-bulk-action').dataAttr('list-bulk-action', action.id).text(action.label || action.id).getContext();
-        button.addEventListener('click', () => void this.submit(action.id, { ...(action.params || {}), selectedIds }));
+        html.take(button).event('click', () => void this.submit(action.id, { ...(action.params || {}), selectedIds }));
       }
       return;
     }
@@ -508,11 +503,7 @@ export class ListView extends BaseComponent {
     const searchIcon = html.take(search).span.className('o-list-search-icon').getContext();
     appendIcon(searchIcon, 'search');
     const input = html.take(search).input.attr('type', 'search').dataAttr('list-search', 'true').getContext() as HTMLInputElement;
-    input.value = String(this.state.searchDraft || '');
-    input.placeholder = this.options.search?.placeholder || 'Search...';
-    input.setAttribute('aria-label', this.options.search?.label || input.placeholder);
-    input.addEventListener('input', () => this.setState({ searchDraft: input.value }, false));
-    input.addEventListener('keydown', event => {
+    html.take(input).prop('value', String(this.state.searchDraft || '')).prop('placeholder', this.options.search?.placeholder || 'Search...').attr('aria-label', this.options.search?.label || input.placeholder).event('input', () => this.setState({ searchDraft: input.value }, false)).event('keydown', event => {
       if (event.key !== 'Enter') return;
       const query = input.value.trim();
       if (!query) return;
@@ -531,39 +522,40 @@ export class ListView extends BaseComponent {
     const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
     const positionFilterMenu = () => {
       if (!details.open) return;
-      menu.style.top = '155px';
+      html.take(menu).css('top', '155px');
     };
-    details.addEventListener('toggle', positionFilterMenu);
-    window.addEventListener('resize', positionFilterMenu);
+    html.take(details).event('toggle', positionFilterMenu);
+    html.take(window).event('resize', positionFilterMenu);
     const onFilterShortcut = (event: KeyboardEvent) => {
       const target = event.target;
       if (target instanceof HTMLElement && target.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (event.key.toLowerCase() !== 'f' || !event.shiftKey || !(event.ctrlKey || event.metaKey)) return;
       event.preventDefault();
-      details.open = !details.open;
+      html.take(details).prop('open', !details.open);
       if (details.open) {
         positionFilterMenu();
-        menu.querySelector<HTMLElement>('button, input')?.focus();
+        const firstFilterControl = menu.querySelector<HTMLElement>('button, input');
+        if (firstFilterControl) html.take(firstFilterControl).focus();
       }
     };
-    window.addEventListener('keydown', onFilterShortcut);
+    html.take(window).event('keydown', onFilterShortcut);
     this.dismissCleanup.push(() => {
-      window.removeEventListener('resize', positionFilterMenu);
-      window.removeEventListener('keydown', onFilterShortcut);
+      html.take(window).off('resize', positionFilterMenu);
+      html.take(window).off('keydown', onFilterShortcut);
     });
 
     for (const filter of this.options.filters || []) {
       const group = html.take(menu).section.className('o-list-filter-group').getContext();
       html.take(group).h4.text(filter.label);
       const clear = html.take(group).button.className(!filters[filter.field] ? 'is-active' : '').text(filter.placeholder || `All ${filter.label.toLowerCase()}`).getContext();
-      clear.addEventListener('click', () => this.setFilters({ ...filters, [filter.field]: null }));
+      html.take(clear).event('click', () => this.setFilters({ ...filters, [filter.field]: null }));
       for (const option of filter.options || []) {
         const id = typeof option === 'string' ? option : option.id;
         const label = typeof option === 'string' ? option : option.label;
         const button = html.take(group).button.className(String(filters[filter.field] ?? '') === id ? 'is-active' : '').text(label).getContext();
         button.dataset.filterField = filter.field;
         button.dataset.filterValue = id;
-        button.addEventListener('click', () => this.setFilters({ ...filters, [filter.field]: id }));
+        html.take(button).event('click', () => this.setFilters({ ...filters, [filter.field]: id }));
       }
     }
 
@@ -572,12 +564,12 @@ export class ListView extends BaseComponent {
       html.take(group).h4.text('Group By');
       const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text('No grouping').getContext();
       clear.dataset.groupBy = '';
-      clear.addEventListener('click', () => this.setGroupBy(null));
+      html.take(clear).event('click', () => this.setGroupBy(null));
       for (const option of this.options.groupBy) {
         const button = html.take(group).button.className(this.state.groupBy === option.field ? 'is-active' : '').text(option.label).getContext();
         button.dataset.groupBy = option.field;
         button.dataset.groupField = option.field;
-        button.addEventListener('click', () => this.setGroupBy(option.field));
+        html.take(button).event('click', () => this.setGroupBy(option.field));
       }
     }
     this.dismissDetails(details);
@@ -594,13 +586,11 @@ export class ListView extends BaseComponent {
       const pager = html.take(navigation).div.className('o-list-pager').getContext();
       html.take(pager).span.className('o-list-pager-range').text(`${start}-${end} / ${total}`);
       const previous = html.take(pager).button.text('‹').getContext() as HTMLButtonElement;
-      previous.setAttribute('aria-label', labels.previousPage);
-      previous.disabled = page <= 1;
-      if (!previous.disabled) previous.addEventListener('click', () => this.options.onPageChange?.(page - 1));
+      html.take(previous).attr('aria-label', labels.previousPage).prop('disabled', page <= 1);
+      if (!previous.disabled) html.take(previous).event('click', () => this.options.onPageChange?.(page - 1));
       const next = html.take(pager).button.text('›').getContext() as HTMLButtonElement;
-      next.setAttribute('aria-label', labels.nextPage);
-      next.disabled = end >= total;
-      if (!next.disabled) next.addEventListener('click', () => this.options.onPageChange?.(page + 1));
+      html.take(next).attr('aria-label', labels.nextPage).prop('disabled', end >= total);
+      if (!next.disabled) html.take(next).event('click', () => this.options.onPageChange?.(page + 1));
     }
 
     if (this.options.formView?.sidePanel) {
@@ -618,7 +608,7 @@ export class ListView extends BaseComponent {
         .dataAttr('form-panel-mode', mode)
         .getContext() as HTMLButtonElement;
       appendIcon(toggle, modeIcons[mode]);
-      toggle.addEventListener('click', () => this.cycleFormPanelMode());
+      html.take(toggle).event('click', () => this.cycleFormPanelMode());
     }
 
     const views = this.options.views || [];
@@ -634,8 +624,7 @@ export class ListView extends BaseComponent {
           .attr('title', view.label)
           .getContext();
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
-        button.setAttribute('aria-pressed', String(this.isViewEnabled(view.id)));
-        button.addEventListener('click', () => this.selectView(view.id));
+        html.take(button).attr('aria-pressed', String(this.isViewEnabled(view.id))).event('click', () => this.selectView(view.id));
       }
     }
 
@@ -650,18 +639,16 @@ export class ListView extends BaseComponent {
       for (const column of this.defs.filter(candidate => !candidate.rowActions?.length)) {
         const label = html.take(group).label.getContext();
         const checkbox = html.take(label).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-        checkbox.checked = visibleColumnIds.has(column.id || column.field);
-        checkbox.setAttribute('aria-label', `${labels.columns}: ${column.label}`);
-        checkbox.addEventListener('change', () => {
+        html.take(checkbox).prop('checked', visibleColumnIds.has(column.id || column.field)).attr('aria-label', `${labels.columns}: ${column.label}`).event('change', () => {
           const nextVisible = new Set(visibleColumnIds);
           checkbox.checked ? nextVisible.add(column.id || column.field) : nextVisible.delete(column.id || column.field);
           if (!nextVisible.size) {
-            checkbox.checked = true;
+            html.take(checkbox).prop('checked', true);
             return;
           }
           this.setState({ visibleColumns: [...nextVisible] });
         });
-        label.append(document.createTextNode(column.label));
+        html.take(label).text(column.label);
       }
     }
     if (this.options.actions?.length) {
@@ -671,11 +658,10 @@ export class ListView extends BaseComponent {
         if (action.icon) {
           const icon = html.take(button).span.getContext();
           appendIcon(icon, action.icon);
-          button.append(icon);
+          html.take(button).append(icon);
         }
-        button.append(document.createTextNode(action.label || action.title || action.id));
-        button.disabled = Boolean(action.disabled);
-        if (!button.disabled) button.addEventListener('click', () => void this.submit(action.id, action.params || {}));
+        html.take(button).text(action.label || action.title || action.id).prop('disabled', Boolean(action.disabled));
+        if (!button.disabled) html.take(button).event('click', () => void this.submit(action.id, action.params || {}));
       }
     }
     if (this.options.favorites?.length) {
@@ -683,7 +669,7 @@ export class ListView extends BaseComponent {
       html.take(group).h4.text('Favorites');
       for (const favorite of this.options.favorites) {
         const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).getContext();
-        button.addEventListener('click', () => {
+        html.take(button).event('click', () => {
           this.setState({ filters: { ...(favorite.filters || {}) }, groupBy: favorite.groupBy || '' });
           this.options.onFilterChange?.({ ...(favorite.filters || {}) });
           this.options.onFavoriteChange?.(favorite);
@@ -708,7 +694,7 @@ export class ListView extends BaseComponent {
         .dataAttr('list-view', view.id)
         .text(view.label)
         .getContext();
-      tab.addEventListener('click', () => this.selectView(view.id));
+      html.take(tab).event('click', () => this.selectView(view.id));
     }
   }
 
@@ -760,7 +746,7 @@ export class ListView extends BaseComponent {
       html.take(item).span.text(facet.label);
       const remove = html.take(item).button.attr('aria-label', `${labels.removeFilter}: ${facet.label}`).getContext();
       appendIcon(remove, 'x');
-      remove.addEventListener('click', facet.clear);
+      html.take(remove).event('click', facet.clear);
     }
   }
 
@@ -769,7 +755,7 @@ export class ListView extends BaseComponent {
     const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).getContext();
     let openClickTimer: ReturnType<typeof setTimeout> | undefined;
     const openRow = (action: string) => void this.submit(action, { row });
-    tr.addEventListener('click', (event: MouseEvent) => {
+    html.take(tr).event('click', (event: MouseEvent) => {
       if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
       if (this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
         this.selectFormRow(row);
@@ -786,7 +772,7 @@ export class ListView extends BaseComponent {
         openRow(this.options.openAction!);
       }, 250);
     });
-    tr.addEventListener('dblclick', (event: MouseEvent) => {
+    html.take(tr).event('dblclick', (event: MouseEvent) => {
       if (!this.options.doubleClickAction || (event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
       if (openClickTimer) clearTimeout(openClickTimer);
       openClickTimer = undefined;
@@ -795,9 +781,7 @@ export class ListView extends BaseComponent {
     if (this.options.selectable) {
       const cell = html.take(tr).tdata.className('o-list-selector').getContext();
       const checkbox = html.take(cell).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
-      checkbox.checked = selected.has(id);
-      checkbox.setAttribute('aria-label', labels.selectRow(id));
-      checkbox.addEventListener('change', () => {
+      html.take(checkbox).prop('checked', selected.has(id)).attr('aria-label', labels.selectRow(id)).event('change', () => {
         const next = new Set<string>(this.selectedIds());
         checkbox.checked ? next.add(id) : next.delete(id);
         this.setSelectedIds([...next]);
@@ -808,10 +792,8 @@ export class ListView extends BaseComponent {
       const cell = html.take(tr).tdata.className(`o-list-cell ${align}`).getContext();
       cell.dataset.column = column.id || column.field;
       if (columnIndex === 0 && this.options.openAction) {
-        cell.classList.add('o-list-open-cell');
-        cell.tabIndex = 0;
-        cell.setAttribute('role', 'link');
-        cell.addEventListener('keydown', (event: KeyboardEvent) => {
+        html.take(cell).toggleClass('o-list-open-cell', true);
+        html.take(cell).prop('tabIndex', 0).attr('role', 'link').event('keydown', (event: KeyboardEvent) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             void this.submit(this.options.openAction!, { row });
@@ -819,15 +801,13 @@ export class ListView extends BaseComponent {
         });
       }
       if (columnIndex === 0 && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden') {
-        cell.classList.add('o-list-open-cell');
-        cell.tabIndex = 0;
-        cell.setAttribute('role', 'button');
-        cell.addEventListener('click', (event: MouseEvent) => {
+        html.take(cell).toggleClass('o-list-open-cell', true);
+        html.take(cell).prop('tabIndex', 0).attr('role', 'button').event('click', (event: MouseEvent) => {
           if ((event.target as Element | null)?.closest('button,input,a,summary,details,select')) return;
           event.stopPropagation();
           this.selectFormRow(row);
         });
-        cell.addEventListener('keydown', (event: KeyboardEvent) => {
+        html.take(cell).event('keydown', (event: KeyboardEvent) => {
           if (event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
           this.selectFormRow(row);
@@ -839,25 +819,21 @@ export class ListView extends BaseComponent {
         column.render(cell, row[column.field], row);
       } else {
         const value = row[column.field];
-        cell.textContent = value == null || value === '' ? '—' : String(value);
+        html.take(cell).replaceText(value == null || value === '' ? '—' : String(value));
       }
       if (this.options.tree && columnIndex === 0) {
-        cell.style.paddingLeft = `${16 + depth * 20}px`;
+        html.take(cell).css('paddingLeft', `${16 + depth * 20}px`);
         cell.dataset.treeDepth = String(depth);
         if (hasChildren) {
           const collapsed = this.collapsedTreeIds().has(id);
           const toggle = html.take(cell).button.getContext();
-          toggle.type = 'button';
-          toggle.className = 'o-list-tree-toggle';
-          toggle.textContent = collapsed ? '▸' : '▾';
-          toggle.setAttribute('aria-label', collapsed ? 'Expand row' : 'Collapse row');
-          toggle.addEventListener('click', event => {
+          html.take(toggle).type('button').className('o-list-tree-toggle').replaceText(collapsed ? '▸' : '▾').attr('aria-label', collapsed ? 'Expand row' : 'Collapse row').event('click', event => {
             event.stopPropagation();
             const next = this.collapsedTreeIds();
             collapsed ? next.delete(id) : next.add(id);
             this.setState({ collapsedTreeIds: [...next] });
           });
-          cell.prepend(toggle);
+          html.take(cell).prepend(toggle);
         }
       }
     });
@@ -903,7 +879,7 @@ export class ListView extends BaseComponent {
     if (this.options.rowActions !== 'menu') {
       for (const action of visibleActions) {
         const button = html.take(container).button.dataAttr('list-row-action', `${action.id}:${rowId}`).text(action.label).getContext();
-        button.addEventListener('click', (event: MouseEvent) => {
+        html.take(button).event('click', (event: MouseEvent) => {
           event.stopPropagation();
           void this.submit(action.id, { row });
         });
@@ -919,12 +895,11 @@ export class ListView extends BaseComponent {
       if (action.icon) {
           const icon = html.take(button).span.getContext();
         appendIcon(icon, action.icon);
-        button.append(icon);
+        html.take(button).append(icon);
       }
-      button.append(document.createTextNode(action.label));
-      button.addEventListener('click', (event: MouseEvent) => {
+      html.take(button).text(action.label).event('click', (event: MouseEvent) => {
         event.stopPropagation();
-        details.open = false;
+        html.take(details).prop('open', false);
         void this.submit(action.id, { row });
       });
     }
@@ -932,21 +907,22 @@ export class ListView extends BaseComponent {
   }
 
   private dismissDetails(details: HTMLDetailsElement) {
-    details.addEventListener('keydown', (event: KeyboardEvent) => {
+    html.take(details).event('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        details.open = false;
-        (details.querySelector('summary') as HTMLElement | null)?.focus();
+        html.take(details).prop('open', false);
+        const summary = details.querySelector('summary') as HTMLElement | null;
+        if (summary) html.take(summary).focus();
       }
     });
-    details.addEventListener('focusout', (event: FocusEvent) => {
+    html.take(details).event('focusout', (event: FocusEvent) => {
       const next = event.relatedTarget as Node | null;
-      if (next && !details.contains(next)) details.open = false;
+      if (next && !details.contains(next)) html.take(details).prop('open', false);
     });
     const closeOnOutsideClick = (event: MouseEvent) => {
-      if (details.open && !details.contains(event.target as Node)) details.open = false;
+      if (details.open && !details.contains(event.target as Node)) html.take(details).prop('open', false);
     };
-    document.addEventListener('click', closeOnOutsideClick);
-    this.dismissCleanup.push(() => document.removeEventListener('click', closeOnOutsideClick));
+    html.take(document).event('click', closeOnOutsideClick);
+    this.dismissCleanup.push(() => html.take(document).off('click', closeOnOutsideClick));
   }
 
   private rowId(row: ListRow, index: number) {

@@ -18,14 +18,14 @@ export class ButtonPdf extends BaseComponent {
       .getContext();
 
     if (loading) {
-      btn.setAttribute('disabled', '');
+      html.take(btn).attr('disabled', '');
       html.take(btn).span.className('h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent');
     }
 
     html.take(btn).text(label);
 
     if (!loading) {
-      btn.addEventListener('click', () => this.submit('export.pdf', { filename }));
+      html.take(btn).event('click', () => this.submit('export.pdf', { filename }));
     }
   }
 }

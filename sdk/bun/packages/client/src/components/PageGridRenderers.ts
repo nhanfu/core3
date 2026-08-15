@@ -7,7 +7,7 @@ import { PageFormModal } from './PageFormModal.ts';
 import { html } from '@core3/client/html';
 
 function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.take(null).add(tag).getContext() as HTMLElementTagNameMap[K];
+  return html.node(tag) as HTMLElementTagNameMap[K];
 }
 
 function pivotRequestFromUrl(params: Record<string, string>, view: any) {
@@ -60,9 +60,8 @@ async function renderStatRow(def: any, targetContainer: HTMLElement) {
     path => void navigate(path),
   );
   const slot = createFluentElement('div');
-  slot.className = def.variant === 'contained' ? 'status-tabs-slot-contained' : '';
-  slot.style.marginBottom = def.variant === 'contained' ? '0' : '16px';
-  targetContainer.appendChild(slot);
+  html.take(slot).className(def.variant === 'contained' ? 'status-tabs-slot-contained' : '').css('marginBottom', def.variant === 'contained' ? '0' : '16px');
+  html.take(targetContainer).append(slot);
   comp.mount(slot);
 
   bindSource(def.source, data => {
@@ -207,9 +206,9 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
   };
 
   const slot = createFluentElement('div');
-  if (def.type === 'LineItemGrid') slot.className = 'o-form-section o-form-lines-slot';
-  else slot.style.marginBottom = '24px';
-  targetContainer.appendChild(slot);
+  if (def.type === 'LineItemGrid') html.take(slot).className('o-form-section o-form-lines-slot');
+  else html.take(slot).css('marginBottom', '24px');
+  html.take(targetContainer).append(slot);
   comp.mount(slot);
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
@@ -247,61 +246,57 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     render: column.type ? (cell: HTMLElement, value: unknown, row: any) => {
       if (def.tree && index === 0) {
         const depth = treeDepth(row);
-        cell.style.paddingLeft = `${16 + depth * 20}px`;
+        html.take(cell).css('paddingLeft', `${16 + depth * 20}px`);
         cell.dataset.treeDepth = String(depth);
       }
       if (column.type === 'StatusChip') {
         const chip = createFluentElement('span');
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
-        chip.className = `data-grid-status data-grid-status-${tone}`;
-        chip.textContent = value == null || value === '' ? '—' : String(value);
-        cell.appendChild(chip);
+        html.take(chip).className(`data-grid-status data-grid-status-${tone}`).replaceText(value == null || value === '' ? '—' : String(value));
+        html.take(cell).append(chip);
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
         const entity = createFluentElement('div');
-        entity.className = 'data-grid-entity';
+        html.take(entity).className('data-grid-entity');
         if (column.avatar) {
           const avatar = createFluentElement('span');
-          avatar.className = 'data-grid-entity-avatar';
-          avatar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V6l8-3 8 3v14"/><path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"/></svg>';
-          entity.appendChild(avatar);
+          html.take(avatar).className('data-grid-entity-avatar').innerHTML('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V6l8-3 8 3v14"/><path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"/></svg>');
+          html.take(entity).append(avatar);
         }
         const copy = createFluentElement('span');
-        copy.className = 'data-grid-entity-copy';
+        html.take(copy).className('data-grid-entity-copy');
         const primary = createFluentElement('div');
-        primary.className = 'data-grid-primary';
-        primary.textContent = value == null || value === '' ? '—' : String(value);
-        copy.appendChild(primary);
+        html.take(primary).className('data-grid-primary').replaceText(value == null || value === '' ? '—' : String(value));
+        html.take(copy).append(primary);
         if (column.secondary) {
           const secondary = createFluentElement('div');
-          secondary.className = 'data-grid-secondary';
-          secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
-          copy.appendChild(secondary);
+          html.take(secondary).className('data-grid-secondary').replaceText(row[column.secondary] == null ? '' : String(row[column.secondary]));
+          html.take(copy).append(secondary);
         }
-        entity.appendChild(copy);
-        cell.appendChild(entity);
+        html.take(entity).append(copy);
+        html.take(cell).append(entity);
         return;
       }
       if (column.type === 'WeightCell') {
-        cell.textContent = value == null || value === '' ? '—' : `${Number(value).toLocaleString()} ${column.unit || 'kg'}`;
+        html.take(cell).replaceText(value == null || value === '' ? '—' : `${Number(value).toLocaleString()} ${column.unit || 'kg'}`);
         return;
       }
       if (column.type === 'DateCell') {
         if (value == null || value === '') {
-          cell.textContent = '—';
+          html.take(cell).replaceText('—');
           return;
         }
         const date = new Date(String(value));
-        cell.textContent = Number.isNaN(date.valueOf())
+        html.take(cell).replaceText(Number.isNaN(date.valueOf())
           ? String(value)
           : new Intl.DateTimeFormat(column.locale || 'vi-VN', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             ...(String(value).includes('T') ? { hour: '2-digit', minute: '2-digit' } : {}),
-          }).format(date);
+          }).format(date));
         return;
       }
-      cell.textContent = value == null || value === '' ? '—' : String(value);
+      html.take(cell).replaceText(value == null || value === '' ? '—' : String(value));
     } : undefined,
   }));
   const componentActions = (def.actions || []).filter((action: any) => {
@@ -403,8 +398,8 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
   };
 
   const slot = createFluentElement('div');
-  slot.style.marginBottom = '24px';
-  targetContainer.appendChild(slot);
+  html.take(slot).css('marginBottom', '24px');
+  html.take(targetContainer).append(slot);
   comp.mount(slot);
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
@@ -456,45 +451,43 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       if (column.type === 'StatusChip') {
         const chip = createFluentElement('span');
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
-        chip.className = `data-grid-status data-grid-status-${tone}`;
-        chip.textContent = value == null || value === '' ? '—' : String(value);
-        cell.appendChild(chip);
+        html.take(chip).className(`data-grid-status data-grid-status-${tone}`);
+        html.take(chip).replaceText(value == null || value === '' ? '—' : String(value));
+        html.take(cell).append(chip);
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
         const entity = createFluentElement('div');
-        entity.className = 'data-grid-entity';
+        html.take(entity).className('data-grid-entity');
         const copy = createFluentElement('span');
-        copy.className = 'data-grid-entity-copy';
+        html.take(copy).className('data-grid-entity-copy');
         const primary = createFluentElement('div');
-        primary.className = 'data-grid-primary';
-        primary.textContent = value == null || value === '' ? '—' : String(value);
-        copy.appendChild(primary);
+        html.take(primary).className('data-grid-primary').replaceText(value == null || value === '' ? '—' : String(value));
+        html.take(copy).append(primary);
         if (column.secondary) {
           const secondary = createFluentElement('div');
-          secondary.className = 'data-grid-secondary';
-          secondary.textContent = row[column.secondary] == null ? '' : String(row[column.secondary]);
-          copy.appendChild(secondary);
+          html.take(secondary).className('data-grid-secondary').replaceText(row[column.secondary] == null ? '' : String(row[column.secondary]));
+          html.take(copy).append(secondary);
         }
-        entity.appendChild(copy);
-        cell.appendChild(entity);
+        html.take(entity).append(copy);
+        html.take(cell).append(entity);
         return;
       }
       if (column.type === 'DateCell') {
         if (value == null || value === '') {
-          cell.textContent = '—';
+          html.take(cell).replaceText('—');
           return;
         }
         const date = new Date(String(value));
-        cell.textContent = Number.isNaN(date.valueOf())
+        html.take(cell).replaceText(Number.isNaN(date.valueOf())
           ? String(value)
           : new Intl.DateTimeFormat(column.locale || 'vi-VN', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             ...(String(value).includes('T') ? { hour: '2-digit', minute: '2-digit' } : {}),
-          }).format(date);
+          }).format(date));
         return;
       }
-      cell.textContent = value == null || value === '' ? '—' : String(value);
+      html.take(cell).replaceText(value == null || value === '' ? '—' : String(value));
     } : undefined,
   }));
   const views = (def.views || []).map((view: any) => ({
@@ -575,7 +568,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   } : undefined;
   const renderForm = formView ? async (row: any, target: HTMLElement) => {
     const newRecord = row?.__new_record === true;
-    target.innerHTML = '<div class="o-list-form-loading">Loading form...</div>';
+    html.take(target).innerHTML('<div class="o-list-form-loading">Loading form...</div>');
     const pageId = String(formView.page).split('/').pop()!.replace(/\.ya?ml$/, '');
     try {
       const detailConfig = await client._fetch(
@@ -681,7 +674,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         registry,
         ...detailGridRenderer.renderers,
       });
-      target.innerHTML = '';
+      html.take(target).clear();
       let previousPanelContent: HTMLElement | undefined;
       for (const [index, componentDef] of (detailConfig.components || []).entries()) {
         const destination = componentDef.mount_in === 'previous-panel' && previousPanelContent ? previousPanelContent : target;
@@ -690,7 +683,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         if (!previousPanelContent && index === 0) previousPanelContent = undefined;
       }
     } catch (error) {
-      target.innerHTML = `<div class="o-list-form-error">${error instanceof Error ? error.message : 'Failed to load form'}</div>`;
+      html.take(target).innerHTML(`<div class="o-list-form-error">${error instanceof Error ? error.message : 'Failed to load form'}</div>`);
     }
   } : undefined;
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
@@ -945,8 +938,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     if (actionDef) await handleAction(actionDef, params?.row || params || {});
   };
   const slot = createFluentElement('div');
-  slot.className = 'o-list-view-slot';
-  targetContainer.appendChild(slot);
+  html.take(slot).className('o-list-view-slot');
+  html.take(targetContainer).append(slot);
   comp.mount(slot);
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
 }
@@ -960,8 +953,8 @@ async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
     def,
   );
   const slot = createFluentElement('div');
-  slot.style.marginBottom = '24px';
-  targetContainer.appendChild(slot);
+  html.take(slot).css('marginBottom', '24px');
+  html.take(targetContainer).append(slot);
   component.mount(slot);
   bindSource(def.source, data => component.setState({ rows: data.data || [], meta: data.meta }, true));
 }

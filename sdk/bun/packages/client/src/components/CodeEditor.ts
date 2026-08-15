@@ -34,18 +34,18 @@ export class CodeEditor extends BaseComponent {
       .value(value)
       .getContext();
 
-    if (readonly) ta.setAttribute('readonly', '');
+    if (readonly) html.take(ta).attr('readonly', '');
 
-    ta.addEventListener('input', e => {
+    html.take(ta).event('input', e => {
       this.setState({ value: e.target.value }, false);
     });
 
-    ta.addEventListener('keydown', e => {
+    html.take(ta).event('keydown', e => {
       if (e.key === 'Tab') {
         e.preventDefault();
         const start = ta.selectionStart;
         const end = ta.selectionEnd;
-        ta.value = ta.value.slice(0, start) + '  ' + ta.value.slice(end);
+      html.take(ta).prop('value', ta.value.slice(0, start) + '  ' + ta.value.slice(end));
         ta.selectionStart = ta.selectionEnd = start + 2;
         this.setState({ value: ta.value }, false);
       }

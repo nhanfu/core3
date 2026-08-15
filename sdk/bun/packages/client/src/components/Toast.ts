@@ -25,6 +25,6 @@ export class Toast extends BaseComponent {
       .attr('aria-label', 'Đóng')
       .getContext();
     appendIcon(close, 'x');
-    close.addEventListener('click', () => this.setState({ visible: false }));
+    html.take(close).event('click', () => this.setState({ visible: false }));
   }
 }

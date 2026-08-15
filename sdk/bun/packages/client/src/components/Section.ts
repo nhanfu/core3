@@ -19,7 +19,7 @@ export class Section extends BaseComponent {
       html.take(header).span.className('text-sm font-semibold text-gray-800').text(d.title || '');
       if (d.collapsible) {
         html.take(header).span.className('text-gray-400 text-xs').text(collapsed ? '▶' : '▼');
-        header.addEventListener('click', () => this.setState({ collapsed: !this.state.collapsed }));
+        html.take(header).event('click', () => this.setState({ collapsed: !this.state.collapsed }));
       }
     }
 

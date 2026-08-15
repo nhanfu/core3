@@ -12,7 +12,7 @@ export class ContextMenu extends BaseComponent {
     const { open = false, x = 0, y = 0 } = this.state;
 
     if (this._outsideHandler) {
-      document.removeEventListener('click', this._outsideHandler);
+      html.take(document).off('click', this._outsideHandler);
       this._outsideHandler = null;
     }
 
@@ -22,8 +22,7 @@ export class ContextMenu extends BaseComponent {
       .div.className('fixed z-50 min-w-max bg-white border border-gray-200 rounded-lg shadow-lg py-1')
       .getContext();
 
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
+    html.take(menu).css('left', `${x}px`).css('top', `${y}px`);
 
     for (const item of this.items) {
       const row = html.take(menu)
@@ -33,7 +32,7 @@ export class ContextMenu extends BaseComponent {
       if (item.icon) html.take(row).span.className('text-base leading-none').text(item.icon);
       html.take(row).text(item.label);
 
-      row.addEventListener('click', (e) => {
+      html.take(row).event('click', (e) => {
         e.stopPropagation();
         this.setState({ open: false });
         this.submit(item.id, {});
@@ -41,6 +40,6 @@ export class ContextMenu extends BaseComponent {
     }
 
     this._outsideHandler = () => this.setState({ open: false });
-    document.addEventListener('click', this._outsideHandler, { once: true });
+    html.take(document).event('click', this._outsideHandler, { once: true });
   }
 }

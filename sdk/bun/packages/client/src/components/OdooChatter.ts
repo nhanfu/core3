@@ -82,7 +82,7 @@ export class OdooChatter extends BaseComponent {
       this.children.push(manager);
       manager.mount(followerTool.content);
     }
-    if (!tools.childElementCount) tools.remove();
+    if (!tools.childElementCount) html.take(tools).remove();
 
     const activeAction = actions.find(item => item.mode === composerMode);
     if (activeAction) this.renderComposer(activeAction, record, top);
@@ -115,7 +115,7 @@ export class OdooChatter extends BaseComponent {
         ? this.def.note_placeholder || 'Log an internal note…'
         : this.def.activity_placeholder || 'Describe the activity…');
     const input = html.take(composer).textArea.attr('placeholder', placeholder).getContext() as HTMLTextAreaElement;
-    input.setAttribute('aria-label', input.placeholder); input.required = true;
+    html.take(input).attr('aria-label', input.placeholder).prop('required', true);
     const actions = html.take(composer).div.className('o-form-composer-actions').getContext() as HTMLDivElement;
     const submit = html.take(actions).button.type('submit').className('o-form-composer-submit').text(String(item.mode === 'message'
       ? this.def.send_label || 'Send'
@@ -128,12 +128,12 @@ export class OdooChatter extends BaseComponent {
       event.preventDefault();
       const content = input.value.trim();
       if (!content) return;
-      submit.disabled = true;
+      html.take(submit).prop('disabled', true);
       void Promise.resolve(this.submit(String(item.action), { id: record.id, content }))
         .then(() => this.setState({ composerMode: '' }))
-        .finally(() => { submit.disabled = false; });
+        .finally(() => { html.take(submit).prop('disabled', false); });
     });
-    queueMicrotask(() => input.focus());
+    queueMicrotask(() => html.take(input).focus());
     return composer;
   }
 
@@ -148,7 +148,7 @@ export class OdooChatter extends BaseComponent {
     html.take(meta).strong.text(String(actor || 'System'));
     const timestamp = html.take(meta).time.getContext() as HTMLTimeElement;
     const timestampValue = message[this.def.message_timestamp_field || 'created_at'];
-    timestamp.textContent = formatTimestamp(timestampValue, this.def.locale);
+    html.take(timestamp).replaceText(formatTimestamp(timestampValue, this.def.locale));
     if (timestampValue) timestamp.dateTime = String(timestampValue);
     const actionLabel = this.def.message_action_labels?.[action]
       || message[this.def.message_action_field || 'action_label']

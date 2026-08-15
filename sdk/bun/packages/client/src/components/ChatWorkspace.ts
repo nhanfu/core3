@@ -7,7 +7,11 @@ function createFluentElement<K extends keyof HTMLElementTagNameMap>(
   className = '',
   text = '',
 ): HTMLElementTagNameMap[K] {
-  return html.take(null).add(tag).className(className).text(text).getContext() as HTMLElementTagNameMap[K];
+  const parent = html.getContext();
+  const element = html.node(tag) as HTMLElementTagNameMap[K];
+  html.take(element).className(className).text(text);
+  html.take(parent);
+  return element;
 }
 
 function formatTimestamp(value: unknown) {
@@ -187,26 +191,24 @@ export class ChatWorkspace extends BaseComponent {
       'section',
       'chat-workspace grid min-h-[560px] overflow-hidden rounded-md border',
     );
-    root.style.height = 'calc(100vh - 204px)';
-    root.style.gridTemplateColumns = 'minmax(250px, 320px) minmax(0, 1fr)';
-    container.appendChild(root);
+    html.take(root).css('height', 'calc(100vh - 204px)').css('gridTemplateColumns', 'minmax(250px, 320px) minmax(0, 1fr)');
+    html.take(container).append(root);
 
     const sidebar = createFluentElement('aside', 'chat-sidebar flex min-w-0 flex-col border-r');
     const sidebarHeader = createFluentElement('div', 'chat-sidebar-header');
-    sidebarHeader.appendChild(createFluentElement('strong', 'chat-sidebar-title', 'Messages'));
+    html.take(sidebarHeader).append(createFluentElement('strong', 'chat-sidebar-title', 'Messages'));
     const search = createFluentElement('input', 'chat-search form-input w-full');
-    search.type = 'search';
-    search.value = String(this.state.query || '');
-    search.placeholder = String(this.def.search_placeholder || 'Search conversations...');
-    search.setAttribute('aria-label', search.placeholder);
-    sidebarHeader.appendChild(search);
-    sidebar.appendChild(sidebarHeader);
+    html.take(search).type('search').prop('value', String(this.state.query || ''));
+    const searchPlaceholder = String(this.def.search_placeholder || 'Search conversations...');
+    html.take(search).prop('placeholder', searchPlaceholder).attr('aria-label', searchPlaceholder);
+    html.take(sidebarHeader).append(search);
+    html.take(sidebar).append(sidebarHeader);
     const threadList = createFluentElement('div', 'chat-thread-list min-h-0 flex-1 overflow-y-auto');
-    sidebar.appendChild(threadList);
-    root.appendChild(sidebar);
+    html.take(sidebar).append(threadList);
+    html.take(root).append(sidebar);
 
     const renderThreads = () => {
-      threadList.innerHTML = '';
+      html.take(threadList).clear();
       const query = String(this.state.query || '').trim().toLocaleLowerCase();
       const visibleThreads = threads.filter((thread: any) =>
         !query
@@ -215,7 +217,7 @@ export class ChatWorkspace extends BaseComponent {
         || String(thread.preview || '').toLocaleLowerCase().includes(query)
       );
       if (!visibleThreads.length) {
-        threadList.appendChild(createFluentElement(
+        html.take(threadList).append(createFluentElement(
           'p',
           'chat-empty px-5 py-10 text-center text-sm',
           String(this.def.empty_threads || 'No conversations'),
@@ -232,38 +234,34 @@ export class ChatWorkspace extends BaseComponent {
               : ''
           }`,
         );
-        button.type = 'button';
-        button.setAttribute('aria-label', `Mở cuộc trò chuyện ${thread.title}`);
+        html.take(button).type('button').attr('aria-label', `Mở cuộc trò chuyện ${thread.title}`);
 
         const identity = createFluentElement('div', 'chat-thread-identity');
-        identity.appendChild(createFluentElement('span', 'chat-avatar', initials(thread.title)));
+        html.take(identity).append(createFluentElement('span', 'chat-avatar', initials(thread.title)));
         const heading = createFluentElement('div', 'chat-thread-heading');
         const headingText = createFluentElement('strong', 'min-w-0 truncate', String(thread.title || 'Conversation'));
-        heading.appendChild(headingText);
-        heading.appendChild(createFluentElement('span', 'chat-thread-time', formatTimestamp(thread.updated_at)));
-        identity.appendChild(heading);
-        button.appendChild(identity);
-        button.appendChild(createFluentElement(
+        html.take(heading).append(headingText, createFluentElement('span', 'chat-thread-time', formatTimestamp(thread.updated_at)));
+        html.take(identity).append(heading);
+        html.take(button).append(identity, createFluentElement(
           'div',
           'chat-thread-participants truncate text-xs',
           String(thread.participant_names || ''),
         ));
 
         const preview = createFluentElement('div', 'chat-thread-preview flex items-center gap-2');
-        preview.appendChild(createFluentElement(
+        html.take(preview).append(createFluentElement(
           'span',
           'min-w-0 flex-1 truncate text-xs',
           String(thread.preview || ''),
         ));
         if (Number(thread.unread_count) > 0) {
-          preview.appendChild(createFluentElement(
+          html.take(preview).append(createFluentElement(
             'span',
             'chat-unread flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold',
             String(thread.unread_count),
           ));
         }
-        button.appendChild(preview);
-        button.addEventListener('click', async () => {
+        html.take(button).append(preview).event('click', async () => {
           this.state.activeThreadId = thread.id;
           this.state.messages = [];
           this.redraw();
@@ -274,20 +272,20 @@ export class ChatWorkspace extends BaseComponent {
             await this.submit(this.def.mark_read_action, { row: { id: thread.id } });
           }
         });
-        threadList.appendChild(button);
+        html.take(threadList).append(button);
       }
     };
 
-    search.addEventListener('input', () => {
+    html.take(search).event('input', () => {
       this.state.query = search.value;
       renderThreads();
     });
     renderThreads();
 
     const main = createFluentElement('div', 'chat-main flex min-w-0 flex-col');
-    root.appendChild(main);
+    html.take(root).append(main);
     if (!activeThread) {
-      main.appendChild(createFluentElement(
+      html.take(main).append(createFluentElement(
         'div',
         'chat-empty flex flex-1 items-center justify-center p-8 text-center text-sm',
         String(this.def.empty_messages || 'Select a conversation'),
@@ -297,14 +295,12 @@ export class ChatWorkspace extends BaseComponent {
 
     const mainHeader = createFluentElement('header', 'chat-header');
     const headerIdentity = createFluentElement('div', 'chat-header-identity');
-    headerIdentity.appendChild(createFluentElement('span', 'chat-avatar chat-avatar-lg', initials(activeThread.title)));
+    html.take(headerIdentity).append(createFluentElement('span', 'chat-avatar chat-avatar-lg', initials(activeThread.title)));
     const headerCopy = createFluentElement('div', 'min-w-0');
-    headerCopy.appendChild(createFluentElement('h2', 'truncate', String(activeThread.title || '')));
-    headerCopy.appendChild(createFluentElement('p', 'truncate', String(activeThread.participant_names || '')));
-    headerIdentity.appendChild(headerCopy);
-    mainHeader.appendChild(headerIdentity);
-    mainHeader.appendChild(createFluentElement('span', 'chat-online-status', '● Active conversation'));
-    main.appendChild(mainHeader);
+    html.take(headerCopy).append(createFluentElement('h2', 'truncate', String(activeThread.title || '')), createFluentElement('p', 'truncate', String(activeThread.participant_names || '')));
+    html.take(headerIdentity).append(headerCopy);
+    html.take(mainHeader).append(headerIdentity, createFluentElement('span', 'chat-online-status', '● Active conversation'));
+    html.take(main).append(mainHeader);
 
     const messageList = createFluentElement('div', 'chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5');
     const activeMessages = [
@@ -312,7 +308,7 @@ export class ChatWorkspace extends BaseComponent {
       ...pendingMessages.filter((message: any) => message.thread_id === activeThread.id),
     ];
     if (!activeMessages.length) {
-      messageList.appendChild(createFluentElement(
+      html.take(messageList).append(createFluentElement(
         'p',
         'chat-empty m-auto text-sm',
         'Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.',
@@ -324,13 +320,11 @@ export class ChatWorkspace extends BaseComponent {
         `chat-message flex flex-col ${message.is_own ? 'is-own items-end' : 'items-start'}`,
       );
       const messageMeta = createFluentElement('div', 'chat-message-meta');
-      messageMeta.appendChild(createFluentElement('span', 'chat-avatar chat-avatar-sm', initials(message.sender_name)));
+      html.take(messageMeta).append(createFluentElement('span', 'chat-avatar chat-avatar-sm', initials(message.sender_name)));
       const messageMetaCopy = createFluentElement('span', 'chat-message-meta-copy');
-      messageMetaCopy.appendChild(createFluentElement('strong', '', String(message.sender_name || 'Unknown')));
-      messageMetaCopy.appendChild(createFluentElement('time', '', formatTimestamp(message.created_at)));
-      messageMeta.appendChild(messageMetaCopy);
-      row.appendChild(messageMeta);
-      row.appendChild(createFluentElement(
+      html.take(messageMetaCopy).append(createFluentElement('strong', '', String(message.sender_name || 'Unknown')), createFluentElement('time', '', formatTimestamp(message.created_at)));
+      html.take(messageMeta).append(messageMetaCopy);
+      html.take(row).append(messageMeta, createFluentElement(
         'div',
         `chat-bubble max-w-[76%] whitespace-pre-wrap break-words px-3 py-2 text-sm ${message.is_own ? 'is-own' : ''}`,
         String(message.body || ''),
@@ -341,8 +335,8 @@ export class ChatWorkspace extends BaseComponent {
           `mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`,
           message.failed ? `✕ ${message.error || 'Failed'}` : '⟳ Sending',
         );
-        if (message.pending) status.classList.add('animate-pulse');
-        row.appendChild(status);
+        if (message.pending) html.take(status).toggleClass('animate-pulse', true);
+        html.take(row).append(status);
       }
       const messageAttachments = attachments.filter(
         (attachment: any) => attachment.message_id === message.id,
@@ -355,15 +349,13 @@ export class ChatWorkspace extends BaseComponent {
             const previewUrl = this.attachmentPreviewUrls.get(attachmentId);
             if (previewUrl) {
               const image = createFluentElement('img', 'chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain');
-              image.src = previewUrl;
-              image.alt = String(attachment.file_name || 'Image attachment');
-              image.loading = 'lazy';
-              image.addEventListener('click', () => {
+              html.take(image).attr('src', previewUrl).attr('alt', String(attachment.file_name || 'Image attachment')).attr('loading', 'lazy');
+              html.take(image).event('click', () => {
                 if (this.def.download_action) void this.submit(this.def.download_action, { row: { id: attachment.id, file_name: attachment.file_name } });
               });
-              attachmentRow.appendChild(image);
+              html.take(attachmentRow).append(image);
             } else {
-              attachmentRow.appendChild(createFluentElement('span', 'chat-image-preview-loading text-xs text-slate-400', 'Loading image...'));
+              html.take(attachmentRow).append(createFluentElement('span', 'chat-image-preview-loading text-xs text-slate-400', 'Loading image...'));
               void this.loadAttachmentPreview(attachment);
             }
           }
@@ -372,70 +364,63 @@ export class ChatWorkspace extends BaseComponent {
             'chat-attachment rounded-full border px-2 py-1 text-[11px]',
             `Tệp: ${attachment.file_name}`,
           );
-          attachmentButton.type = 'button';
-          attachmentButton.addEventListener('click', () => {
+          html.take(attachmentButton).type('button').event('click', () => {
             if (this.def.download_action) {
               void this.submit(this.def.download_action, {
                 row: { id: attachment.id, file_name: attachment.file_name },
               });
             }
           });
-          attachmentRow.appendChild(attachmentButton);
+          html.take(attachmentRow).append(attachmentButton);
         }
-        row.appendChild(attachmentRow);
+        html.take(row).append(attachmentRow);
       }
-      messageList.appendChild(row);
+      html.take(messageList).append(row);
     }
-    main.appendChild(messageList);
+    html.take(main).append(messageList);
     requestAnimationFrame(() => {
       messageList.scrollTop = messageList.scrollHeight;
     });
 
     const composer = createFluentElement('form', 'chat-composer flex items-end gap-2');
     const fileInput = createFluentElement('input');
-    fileInput.type = 'file';
-    fileInput.hidden = true;
-    fileInput.setAttribute('aria-label', 'Chọn tệp đính kèm');
+    html.take(fileInput).type('file').prop('hidden', true).attr('aria-label', 'Chọn tệp đính kèm');
     const attachButton = createFluentElement(
       'button',
       'chat-attach btn btn-secondary flex-none',
       this.state.selectedFile ? 'Đổi tệp' : 'Đính kèm',
     );
-    attachButton.type = 'button';
-    attachButton.addEventListener('click', () => fileInput.click());
+    html.take(attachButton).type('button').event('click', () => html.take(fileInput).click());
     const input = createFluentElement('textarea', 'chat-input form-input flex-1 resize-none');
-    input.rows = 1;
-    input.maxLength = 4000;
-    input.placeholder = 'Nhập tin nhắn...';
-    input.setAttribute('aria-label', 'Nội dung tin nhắn');
-    input.value = String(this.state.inputValue || '');
+    html.take(input).prop('rows', 1).prop('maxLength', 4000).prop('placeholder', 'Nhập tin nhắn...')
+      .attr('aria-label', 'Nội dung tin nhắn').prop('value', String(this.state.inputValue || ''));
     const sendButton = createFluentElement('button', 'chat-send btn btn-primary flex-none', 'Gửi');
-    sendButton.type = 'submit';
-    composer.append(fileInput, attachButton, input, sendButton);
-    main.appendChild(composer);
+    html.take(sendButton).type('submit');
+    html.take(composer).append(fileInput, attachButton, input, sendButton);
+    html.take(main).append(composer);
     if (this.state.selectedFile) {
       const selected = createFluentElement(
         'div',
         'chat-selected-file border-t px-4 pb-2 text-xs',
         `Tệp đã chọn: ${this.state.selectedFile.name}`,
       );
-      main.insertBefore(selected, composer);
+      html.take(composer).before(selected);
     }
 
-    fileInput.addEventListener('change', () => {
+    html.take(fileInput).event('change', () => {
       const file = fileInput.files?.[0] || null;
       if (file && file.size > 5 * 1024 * 1024) {
         alert('Tệp đính kèm không được vượt quá 5 MB');
-        fileInput.value = '';
+        html.take(fileInput).prop('value', '');
         return;
       }
       this.state.selectedFile = file;
       this.redraw();
     });
-    input.addEventListener('input', () => {
+    html.take(input).event('input', () => {
       this.state.inputValue = input.value;
     });
-    input.addEventListener('keydown', (event) => {
+    html.take(input).event('keydown', (event) => {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
         composer.requestSubmit();
@@ -444,12 +429,12 @@ export class ChatWorkspace extends BaseComponent {
     const refocusInput = () => {
       const focusCurrentInput = () => {
         const currentInput = this._container?.querySelector<HTMLTextAreaElement>('.chat-input');
-        currentInput?.focus();
+        if (currentInput) html.take(currentInput).focus();
       };
       focusCurrentInput();
       requestAnimationFrame(focusCurrentInput);
     };
-    composer.addEventListener('submit', async (event) => {
+    html.take(composer).event('submit', async (event) => {
       event.preventDefault();
       const content = input.value.trim();
       const file = this.state.selectedFile;
