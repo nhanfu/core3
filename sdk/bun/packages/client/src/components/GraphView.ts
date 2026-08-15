@@ -11,10 +11,10 @@ export class GraphView extends BaseComponent {
     const values = new Map<string, number>();
     for (const row of rows) { const key = String(row[categoryField] ?? '—'); values.set(key, (values.get(key) || 0) + (measureField ? Number(row[measureField]) || 0 : 1)); }
     const entries = [...values.entries()];
-    const root = html.take(container).div.className('o-graph-view').getContext() as HTMLDivElement;
+    const root = html.take(container).div.className('o-graph-view').ele() as HTMLDivElement;
     if (!entries.length) { html.take(root).toggleClass('o-analytics-empty', true).text('No data'); return; }
     const max = Math.max(...entries.map(([, value]) => value), 1);
-    const svg = html.take(root).svg(SvgTag.Svg).attr('viewBox', `0 0 ${Math.max(560, entries.length * 100)} 300`).attr('role', 'img').attr('aria-label', this.options.view.label).getContext() as SVGSVGElement;
+    const svg = html.take(root).svg(SvgTag.Svg).attr('viewBox', `0 0 ${Math.max(560, entries.length * 100)} 300`).attr('role', 'img').attr('aria-label', this.options.view.label).ele() as SVGSVGElement;
     entries.forEach(([label, value], index) => {
       const x = 40 + index * 100; const height = (value / max) * 220;
       const shape = html.take(svg).svg(type === 'line' ? SvgTag.Circle : SvgTag.Rect)

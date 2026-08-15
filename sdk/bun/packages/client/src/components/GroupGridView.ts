@@ -33,9 +33,9 @@ export class GroupGridView extends BaseComponent {
     this.children = [];
     const { rows = [], meta = {}, loading = false, groupBy = '' } = this.state;
 
-    const outerDiv = html.take(container).div.className('overflow-x-auto rounded-lg border border-gray-200').getContext();
-    const table    = html.take(outerDiv).table.className('min-w-full divide-y divide-gray-200').getContext();
-    const theadRow = html.take(table).thead.className('bg-gray-50').trow.getContext();
+    const outerDiv = html.take(container).div.className('overflow-x-auto rounded-lg border border-gray-200').ele();
+    const table    = html.take(outerDiv).table.className('min-w-full divide-y divide-gray-200').ele();
+    const theadRow = html.take(table).thead.className('bg-gray-50').trow.ele();
 
     for (const d of this.defs) {
       const align = d.align === 'right' ? 'text-right' : d.align === 'center' ? 'text-center' : 'text-left';
@@ -44,11 +44,11 @@ export class GroupGridView extends BaseComponent {
         .text(d.label || '');
     }
 
-    const tbody = html.take(table).tbody.className('bg-white divide-y divide-gray-100').getContext();
+    const tbody = html.take(table).tbody.className('bg-white divide-y divide-gray-100').ele();
 
     if (loading) {
       for (let i = 0; i < 5; i++) {
-        const tr = html.take(tbody).trow.getContext();
+        const tr = html.take(tbody).trow.ele();
         for (const d of this.defs) {
           html.take(tr).tdata.className('px-4 py-3').div.className('h-4 bg-gray-100 rounded animate-pulse skeleton');
         }
@@ -73,7 +73,7 @@ export class GroupGridView extends BaseComponent {
             .text(groupKey);
 
         for (const row of groupRows) {
-          const tr = html.take(tbody).trow.className('hover:bg-gray-50 transition-colors').getContext();
+          const tr = html.take(tbody).trow.className('hover:bg-gray-50 transition-colors').ele();
           for (const d of this.defs) {
             const cellAttr = `${this.id}-${String(row.id ?? '')}-${d.id}`;
             html.take(tr).tdata.className('px-4 py-3').dataAttr('cell', cellAttr);

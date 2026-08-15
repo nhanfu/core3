@@ -48,7 +48,7 @@ export class QrCode extends BaseComponent {
 
     const wrap = html.take(container).div
       .className('inline-flex flex-col items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl')
-      .getContext();
+      .ele();
 
     if (label) {
       html.take(wrap).div.className('text-sm font-medium text-gray-700').text(label);
@@ -58,7 +58,7 @@ export class QrCode extends BaseComponent {
       .attr('width', String(size))
       .attr('height', String(size))
       .className('border border-gray-200 rounded')
-      .getContext();
+      .ele();
 
     drawPlaceholder(canvasEl, size);
 
@@ -72,7 +72,7 @@ export class QrCode extends BaseComponent {
     const genBtn = html.take(wrap).button
       .className('text-sm px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium')
       .text('Generate')
-      .getContext();
+      .ele();
     html.take(genBtn).event('click', () => {
       this.submit('qr.generate', { value: this.state.value });
     });

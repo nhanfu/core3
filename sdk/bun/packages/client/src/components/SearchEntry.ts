@@ -10,16 +10,16 @@ export class SearchEntry extends BaseComponent {
 
   draw(container) {
     const { value = '', placeholder = '' } = this.state;
-    const wrap = html.take(container).div.className('relative flex items-center').getContext();
+    const wrap = html.take(container).div.className('relative flex items-center').ele();
 
-    const searchIcon = html.take(wrap).span.className('absolute left-2.5 text-gray-400 text-sm pointer-events-none select-none').getContext();
+    const searchIcon = html.take(wrap).span.className('absolute left-2.5 text-gray-400 text-sm pointer-events-none select-none').ele();
     appendIcon(searchIcon, 'search');
 
     const inp = html.take(wrap)
       .input.type('text')
       .className('token-form-control w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
       .value(String(value))
-      .getContext();
+      .ele();
 
     if (placeholder) html.take(inp).attr('placeholder', placeholder);
 
@@ -30,7 +30,7 @@ export class SearchEntry extends BaseComponent {
     if (value) {
       const clr = html.take(wrap).button
         .className('absolute right-2 text-gray-400 hover:text-gray-600 text-sm leading-none')
-        .getContext();
+        .ele();
       appendIcon(clr, 'x');
       html.take(clr).event('click', () => this.setState({ value: '' }));
     }

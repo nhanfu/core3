@@ -55,36 +55,36 @@ export class ScheduleGrid extends BaseComponent {
       return [key, row];
     })).values()];
 
-    const root = html.take(container).section.className('schedule-grid').attr('aria-label', this.def.title || 'Lịch phân công').getContext() as HTMLElement;
+    const root = html.take(container).section.className('schedule-grid').attr('aria-label', this.def.title || 'Lịch phân công').ele() as HTMLElement;
     if (this.def.title) {
       html.take(root).h3.className('schedule-title').replaceText(this.def.title);
     }
 
     if (!dates.length || !resources.length) {
-      const empty = html.take(root).div.className('schedule-empty').replaceText(this.def.empty_state?.title || 'Chưa có lịch phân công').getContext() as HTMLDivElement;
+      const empty = html.take(root).div.className('schedule-empty').replaceText(this.def.empty_state?.title || 'Chưa có lịch phân công').ele() as HTMLDivElement;
       if (this.def.empty_state?.description) {
         html.take(empty).p.replaceText(this.def.empty_state.description);
       }
       return;
     }
 
-    const scroller = html.take(root).div.className('schedule-scroll').getContext() as HTMLDivElement;
-    const table = html.take(scroller).table.className('schedule-table').attr('role', 'grid').getContext() as HTMLTableElement;
+    const scroller = html.take(root).div.className('schedule-scroll').ele() as HTMLDivElement;
+    const table = html.take(scroller).table.className('schedule-table').attr('role', 'grid').ele() as HTMLTableElement;
 
-    const thead = html.take(table).thead.getContext() as HTMLTableSectionElement;
-    const header = html.take(thead).trow.getContext() as HTMLTableRowElement;
+    const thead = html.take(table).thead.ele() as HTMLTableSectionElement;
+    const header = html.take(thead).trow.ele() as HTMLTableRowElement;
     html.take(header).th.prop('scope', 'col').replaceText('Nhân viên');
     for (const date of dates) {
       html.take(header).th.prop('scope', 'col').replaceText(this.formatDate(date)).attr('data-schedule-date', date);
     }
 
-    const tbody = html.take(table).tbody.getContext() as HTMLTableSectionElement;
+    const tbody = html.take(table).tbody.ele() as HTMLTableSectionElement;
     for (const resource of resources) {
       const resourceKey = String(resource[resourceField] ?? '');
-      const row = html.take(tbody).trow.getContext() as HTMLTableRowElement;
+      const row = html.take(tbody).trow.ele() as HTMLTableRowElement;
       html.take(row).th.prop('scope', 'row').className('schedule-resource').replaceText(String(resource[resourceLabelField] || resourceKey || '—'));
       for (const date of dates) {
-        const cell = html.take(row).tdata.getContext() as HTMLTableCellElement;
+        const cell = html.take(row).tdata.ele() as HTMLTableCellElement;
         const assignment = rows.find(candidate => String(candidate[resourceField] ?? '') === resourceKey && this.dateValue(candidate) === date);
         if (assignment) {
           html.take(cell).className('schedule-assignment');

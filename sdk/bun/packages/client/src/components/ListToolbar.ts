@@ -66,17 +66,17 @@ export class ListToolbar extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const root = html.take(container).div.className('token-toolbar flex flex-wrap items-center justify-between gap-3 bg-white').getContext() as HTMLDivElement;
+    const root = html.take(container).div.className('token-toolbar flex flex-wrap items-center justify-between gap-3 bg-white').ele() as HTMLDivElement;
 
     if (this.def.search !== false) {
       const searchDef = this.def.search || {};
-      const searchControls = html.take(root).div.className('flex min-w-[260px] flex-1 gap-2 sm:max-w-md').getContext() as HTMLDivElement;
-      const searchWrap = html.take(searchControls).div.className('relative min-w-0 flex-1').getContext() as HTMLDivElement;
+      const searchControls = html.take(root).div.className('flex min-w-[260px] flex-1 gap-2 sm:max-w-md').ele() as HTMLDivElement;
+      const searchWrap = html.take(searchControls).div.className('relative min-w-0 flex-1').ele() as HTMLDivElement;
 
-      const searchIcon = html.take(searchWrap).span.className('pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400').getContext() as HTMLSpanElement;
+      const searchIcon = html.take(searchWrap).span.className('pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400').ele() as HTMLSpanElement;
       appendIcon(searchIcon, 'search');
 
-      const input = html.take(searchWrap).input.type('search').getContext() as HTMLInputElement;
+      const input = html.take(searchWrap).input.type('search').ele() as HTMLInputElement;
       input.dataset.listSearch = 'true';
       html.take(input).className('token-input h-10 w-full rounded-md border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100').prop('value', this.state.query || '');
       html.take(input).prop('placeholder', searchDef.placeholder || 'Tìm kiếm…').attr('aria-label', searchDef.label || 'Tìm kiếm danh sách').event('input', () => this.setState({ query: input.value }, false)).event('keydown', event => {
@@ -84,7 +84,7 @@ export class ListToolbar extends BaseComponent {
       });
 
       if (input.value) {
-        const clear = html.take(searchWrap).button.type('button').className('absolute inset-y-0 right-2 px-1 text-slate-400 hover:text-slate-700').getContext() as HTMLButtonElement;
+        const clear = html.take(searchWrap).button.type('button').className('absolute inset-y-0 right-2 px-1 text-slate-400 hover:text-slate-700').ele() as HTMLButtonElement;
         appendIcon(clear, 'x');
         html.take(clear).attr('aria-label', 'Xóa tìm kiếm').event('click', () => {
           this.setState({ query: '' });
@@ -93,24 +93,24 @@ export class ListToolbar extends BaseComponent {
       }
 
       if (this.def.search_button) {
-        const searchButton = html.take(searchControls).button.type('button').getContext() as HTMLButtonElement;
+        const searchButton = html.take(searchControls).button.type('button').ele() as HTMLButtonElement;
         searchButton.dataset.listSearchSubmit = 'true';
         html.take(searchButton).className('token-control inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900');
         html.take(searchButton).prop('title', 'Tìm kiếm').attr('aria-label', 'Tìm kiếm');
-        const buttonIcon = html.take(searchButton).span.getContext() as HTMLSpanElement;
+        const buttonIcon = html.take(searchButton).span.ele() as HTMLSpanElement;
         appendIcon(buttonIcon, 'search');
         html.take(searchButton).event('click', () => this.emitSearch(searchDef.action));
       }
     }
 
-    const advancedContent = html.take(root).div.className(`${this.def.actions_inline ? '' : 'basis-full '}flex flex-wrap items-center gap-3`).getContext() as HTMLDivElement;
+    const advancedContent = html.take(root).div.className(`${this.def.actions_inline ? '' : 'basis-full '}flex flex-wrap items-center gap-3`).ele() as HTMLDivElement;
     const collapseAdvanced = Boolean(
       this.def.advanced_filter || this.def.filters?.length || (this.def.date_range && this.def.date_range.preset_style !== 'segmented')
     );
     let advancedOpen = !collapseAdvanced;
 
     if (this.def.date_range) {
-      const range = html.take(advancedContent).div.className('flex flex-wrap items-center gap-2').getContext() as HTMLDivElement;
+      const range = html.take(advancedContent).div.className('flex flex-wrap items-center gap-2').ele() as HTMLDivElement;
       const dateRange = this.def.date_range;
       const presets = (dateRange.presets || []).filter((preset) => !(dateRange.deny_unbounded && preset === 'all'));
       if (presets.length) {
@@ -126,14 +126,14 @@ export class ListToolbar extends BaseComponent {
           });
         };
         if (dateRange.preset_style === 'segmented') {
-          const segments = html.take(range).div.className('token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1').attr('aria-label', 'Khoảng thời gian').getContext() as HTMLDivElement;
+          const segments = html.take(range).div.className('token-control-group flex flex-wrap items-center gap-1 rounded-md border border-slate-300 bg-white p-1').attr('aria-label', 'Khoảng thời gian').ele() as HTMLDivElement;
           for (const preset of presets) {
-            const button = html.take(segments).button.type('button').getContext() as HTMLButtonElement;
+            const button = html.take(segments).button.type('button').ele() as HTMLButtonElement;
             button.dataset.datePreset = preset;
             html.take(button).className(`token-preset rounded px-2.5 py-1.5 text-sm transition-colors hover:bg-blue-50 hover:text-blue-700 ${this.state.preset === preset ? 'bg-blue-600 text-white' : 'text-slate-700'}`).text(labels[preset] || preset).event('click', () => submitPreset(preset));
           }
         } else {
-          const select = html.take(range).select.className('token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700').attr('aria-label', 'Khoảng thời gian').getContext() as HTMLSelectElement;
+          const select = html.take(range).select.className('token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700').attr('aria-label', 'Khoảng thời gian').ele() as HTMLSelectElement;
           html.take(select).option.prop('value', '').text('Khoảng thời gian');
           for (const preset of presets) {
             html.take(select).option.prop('value', preset).text(labels[preset] || preset);
@@ -150,7 +150,7 @@ export class ListToolbar extends BaseComponent {
       ];
       for (const field of fields) {
         const input = html.take(range).input.type('text').prop('inputMode', 'numeric').prop('placeholder', 'YYYY-MM-DD').prop('pattern', '\\d{4}-\\d{2}-\\d{2}')
-          .prop('value', String((this.state as any)[field.key] || ''));
+          .prop('value', String((this.state as any)[field.key] || '')).ele() as HTMLInputElement;
         if (dateRange.max_years) {
           const bounds = rollingDateBounds(dateRange.max_years);
           input.min = bounds.from;
@@ -172,9 +172,9 @@ export class ListToolbar extends BaseComponent {
     }
 
     if (this.def.filters?.length) {
-      const filterBar = html.take(advancedContent).div.className('flex flex-wrap items-center gap-2').getContext() as HTMLDivElement;
+      const filterBar = html.take(advancedContent).div.className('flex flex-wrap items-center gap-2').ele() as HTMLDivElement;
       for (const filter of this.def.filters) {
-        const select = html.take(filterBar).select.className('token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700').attr('aria-label', filter.label).getContext() as HTMLSelectElement;
+        const select = html.take(filterBar).select.className('token-input h-10 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700').attr('aria-label', filter.label).ele() as HTMLSelectElement;
         html.take(select).option.prop('value', '').text(filter.placeholder || filter.label);
         for (const optionDef of filter.options || []) {
           html.take(select).option.prop('value', typeof optionDef === 'string' ? optionDef : optionDef.id).text(typeof optionDef === 'string' ? optionDef : optionDef.label);
@@ -192,13 +192,13 @@ export class ListToolbar extends BaseComponent {
 
     const actions = this.def.actions || [];
     if (actions.length || collapseAdvanced || this.def.help) {
-      const actionBar = html.take(root).div.className('flex flex-wrap items-center justify-end gap-2').getContext() as HTMLDivElement;
+      const actionBar = html.take(root).div.className('flex flex-wrap items-center justify-end gap-2').ele() as HTMLDivElement;
       if (collapseAdvanced) {
-        const advancedButton = html.take(actionBar).button.type('button').getContext() as HTMLButtonElement;
+        const advancedButton = html.take(actionBar).button.type('button').ele() as HTMLButtonElement;
         html.take(advancedButton).className('token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900');
         html.take(advancedButton).prop('title', 'Bộ lọc nâng cao');
         html.take(advancedButton).attr('aria-label', advancedButton.title).attr('aria-expanded', 'false');
-        const icon = html.take(advancedButton).span.getContext() as HTMLSpanElement;
+        const icon = html.take(advancedButton).span.ele() as HTMLSpanElement;
         appendIcon(icon, 'filter');
         html.take(advancedButton).event('click', () => {
           advancedOpen = !advancedOpen;
@@ -209,11 +209,11 @@ export class ListToolbar extends BaseComponent {
       }
       for (const action of actions) this.renderAction(action, actionBar);
       if (this.def.help) {
-        const helpButton = html.take(actionBar).button.type('button').getContext() as HTMLButtonElement;
+        const helpButton = html.take(actionBar).button.type('button').ele() as HTMLButtonElement;
         html.take(helpButton).className('token-control inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900');
         helpButton.title = typeof this.def.help === 'object' && this.def.help.title ? this.def.help.title : 'Trợ giúp';
         html.take(helpButton).attr('aria-label', helpButton.title);
-        const icon = html.take(helpButton).span.getContext() as HTMLSpanElement;
+        const icon = html.take(helpButton).span.ele() as HTMLSpanElement;
         appendIcon(icon, 'help');
         html.take(helpButton).event('click', () => {
           const text = typeof this.def.help === 'object' && this.def.help.text
@@ -242,26 +242,26 @@ export class ListToolbar extends BaseComponent {
       this.actionClass(action.variant),
       action.disabled ? 'cursor-not-allowed opacity-50' : '',
       !action.label ? 'w-10 px-0' : '',
-    ].filter(Boolean).join(' '));
+    ].filter(Boolean).join(' ')).ele() as HTMLButtonElement;
     const label = action.id.endsWith('.export') && action.label === 'Xuất CSV' ? 'Xuất Excel' : action.label;
-    button.attr('title', action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id))
+    html.take(button).attr('title', action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id))
       .attr('aria-label', action.title === 'Xuất CSV' ? 'Xuất Excel' : (action.title || label || action.id))
       .prop('disabled', Boolean(action.disabled));
 
     if (action.icon) {
-      const icon = html.take(button.getContext()).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
+      const icon = html.take(button).span.attr('aria-hidden', 'true').ele() as HTMLSpanElement;
       if (hasIcon(action.icon)) appendIcon(icon, action.icon);
       else html.take(icon).text(action.icon);
     }
-    if (label) html.take(button.getContext()).text(label);
+    if (label) html.take(button).text(label);
 
     if (!action.disabled) {
-      button.event('click', () => {
+      html.take(button).event('click', () => {
         this.submit(action.action || action.id, { id: action.id, ...(action.params || {}) });
       });
     }
 
-    return button.getContext() as HTMLButtonElement;
+    return button;
   }
 
   private actionClass(variant: ListToolbarAction['variant']) {

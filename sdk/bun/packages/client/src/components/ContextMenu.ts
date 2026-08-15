@@ -20,14 +20,14 @@ export class ContextMenu extends BaseComponent {
 
     const menu = html.take(container)
       .div.className('fixed z-50 min-w-max bg-white border border-gray-200 rounded-lg shadow-lg py-1')
-      .getContext();
+      .ele();
 
     html.take(menu).css('left', `${x}px`).css('top', `${y}px`);
 
     for (const item of this.items) {
       const row = html.take(menu)
         .button.className('w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100')
-        .getContext();
+        .ele();
 
       if (item.icon) html.take(row).span.className('text-base leading-none').text(item.icon);
       html.take(row).text(item.label);

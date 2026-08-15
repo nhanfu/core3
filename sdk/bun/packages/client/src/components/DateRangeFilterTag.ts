@@ -51,22 +51,22 @@ export class DateRangeFilterTag {
     const definition = this.options.definition;
     const fromField = definition.fromField || 'from_date';
     const toField = definition.toField || 'to_date';
-    const details = html.take(container).details.className('o-list-date-range-tag').getContext() as HTMLDetailsElement;
+    const details = html.take(container).details.className('o-list-date-range-tag').ele() as HTMLDetailsElement;
     html.take(details).summary
       .className('o-list-facet o-list-date-range-summary')
       .text(`${definition.label || 'Date'}: ${this.displayValue(fromField)} - ${this.displayValue(toField)}`)
       .attr('aria-label', `${definition.label || 'Date'} filter`);
 
-    const editor = html.take(details).div.className('o-list-date-range-editor').getContext() as HTMLDivElement;
+    const editor = html.take(details).div.className('o-list-date-range-editor').ele() as HTMLDivElement;
     const presets = (definition.presets || []).filter(preset => !(definition.denyUnbounded && preset === 'all'));
     if (presets.length) {
-      const presetRow = html.take(editor).div.className('o-list-date-range-presets').getContext() as HTMLDivElement;
+      const presetRow = html.take(editor).div.className('o-list-date-range-presets').ele() as HTMLDivElement;
       for (const preset of presets) {
         const button = html.take(presetRow).button
           .type('button')
           .dataAttr('date-preset', preset)
           .text(definition.presetLabels?.[preset] || presetLabels[preset] || preset)
-          .getContext() as HTMLButtonElement;
+          .ele() as HTMLButtonElement;
         if (this.isPresetActive(preset, fromField, toField)) html.take(button).toggleClass('is-active', true);
         html.take(button).event('click', () => {
           const dates = resolveDatePreset(preset);
@@ -76,7 +76,7 @@ export class DateRangeFilterTag {
       }
     }
 
-    const fields = html.take(editor).div.className('o-list-date-range-fields').getContext() as HTMLDivElement;
+    const fields = html.take(editor).div.className('o-list-date-range-fields').ele() as HTMLDivElement;
     const from = this.dateInput(fields, definition.fromLabel || 'From date', String(this.options.values[fromField] || ''), definition);
     const to = this.dateInput(fields, definition.toLabel || 'To date', String(this.options.values[toField] || ''), definition);
     let selectedFrom = from.value;
@@ -84,10 +84,10 @@ export class DateRangeFilterTag {
     let activeField: 'from' | 'to' = 'from';
     let calendarMonth = monthStart(selectedFrom || new Date().toISOString().slice(0, 10));
     let error: HTMLElement | undefined;
-    const calendar = html.take(editor).div.className('o-list-date-picker').getContext() as HTMLDivElement;
+    const calendar = html.take(editor).div.className('o-list-date-picker').ele() as HTMLDivElement;
     const drawCalendar = () => {
       html.take(calendar).clear();
-      const header = html.take(calendar).div.className('o-list-date-picker-header').getContext() as HTMLDivElement;
+      const header = html.take(calendar).div.className('o-list-date-picker-header').ele() as HTMLDivElement;
       html.take(header).button
         .type('button').className('o-list-date-picker-nav').text('‹')
         .attr('aria-label', definition.calendarPreviousLabel || 'Previous date picker month')
@@ -98,7 +98,7 @@ export class DateRangeFilterTag {
         .type('button').className('o-list-date-picker-nav').text('›')
         .attr('aria-label', definition.calendarNextLabel || 'Next date picker month')
         .event('click', () => { calendarMonth = shiftMonth(calendarMonth, 1); drawCalendar(); });
-      const grid = html.take(calendar).div.className('o-list-date-picker-grid').getContext() as HTMLDivElement;
+      const grid = html.take(calendar).div.className('o-list-date-picker-grid').ele() as HTMLDivElement;
       for (const weekday of definition.weekdayLabels || ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']) {
         html.take(grid).span.className('o-list-date-picker-weekday').text(weekday);
       }
@@ -111,7 +111,7 @@ export class DateRangeFilterTag {
         const value = isoDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
         const button = html.take(grid).button
           .type('button').className('o-list-date-picker-day').text(String(date.getUTCDate()))
-          .dataAttr('calendar-date', value).getContext() as HTMLButtonElement;
+          .dataAttr('calendar-date', value).ele() as HTMLButtonElement;
         if (!value.startsWith(monthKey)) html.take(button).toggleClass('is-outside-month', true);
         if (!this.isDateAllowed(value, activeField, selectedFrom, definition)) html.take(button).prop('disabled', true);
         if (value === selectedFrom || value === selectedTo) html.take(button).toggleClass('is-selected', true);
@@ -137,7 +137,7 @@ export class DateRangeFilterTag {
     html.take(from).event('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
     html.take(to).event('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
     drawCalendar();
-    error = html.take(editor).div.className('o-list-date-range-error').attr('role', 'alert').getContext() as HTMLDivElement;
+    error = html.take(editor).div.className('o-list-date-range-error').attr('role', 'alert').ele() as HTMLDivElement;
     html.take(fields).button
       .type('button')
       .className('o-list-date-range-apply')
@@ -153,7 +153,7 @@ export class DateRangeFilterTag {
       .attr('pattern', '\\d{4}-\\d{2}-\\d{2}')
       .value(value)
       .attr('aria-label', label)
-      .getContext() as HTMLInputElement;
+      .ele() as HTMLInputElement;
     if (definition.maxYears) {
       const bounds = rollingDateBounds(definition.maxYears);
       html.take(input).prop('min', bounds.from).prop('max', bounds.to);

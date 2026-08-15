@@ -12,11 +12,11 @@ export class TreeView extends BaseComponent {
     const isExpanded  = expanded.has(node.id);
     const paddingLeft = `${level * 16 + 8}px`;
 
-    const li  = html.take(ul).li.className('select-none').getContext();
+    const li  = html.take(ul).li.className('select-none').ele();
     const row = html.take(li)
       .div.className('flex items-center gap-1.5 py-1.5 px-2 rounded-md hover:bg-gray-100 cursor-pointer text-sm text-gray-800 transition-colors')
       .style(`padding-left: ${paddingLeft}`)
-      .getContext();
+      .ele();
 
     if (hasChildren) {
       html.take(row).span.className('text-gray-400 text-xs w-3 text-center flex-shrink-0').text(isExpanded ? '▼' : '▶');
@@ -39,7 +39,7 @@ export class TreeView extends BaseComponent {
       });
 
       if (isExpanded) {
-        const childUl = html.take(li).ul.getContext();
+        const childUl = html.take(li).ul.ele();
         for (const child of node.children) {
           this.renderNode(childUl, child, level + 1);
         }
@@ -51,7 +51,7 @@ export class TreeView extends BaseComponent {
 
   draw(container) {
     const { nodes = [] } = this.state;
-    const root = html.take(container).ul.className('py-1').getContext();
+    const root = html.take(container).ul.className('py-1').ele();
     for (const node of nodes) {
       this.renderNode(root, node, 0);
     }

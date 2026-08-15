@@ -57,28 +57,28 @@ export class RightModal extends BaseComponent {
       .className('right-modal-overlay')
       .style('display:none')
       .event('click', () => this.close())
-      .getContext();
+      .ele();
     this._el = html.take(container).div
       .className('right-modal')
       .style('display:none')
-      .getContext();
+      .ele();
 
     this._escapeHandler = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && this.state.open) this.close();
     };
     document.addEventListener('keydown', this._escapeHandler);
 
-    const header = html.take(this._el).div.className('right-modal-header').getContext();
-    this._titleEl = html.take(header).span.className('drawer-title').text(t(this.state.title || this.state.page_id || '')).getContext();
+    const header = html.take(this._el).div.className('right-modal-header').ele();
+    this._titleEl = html.take(header).span.className('drawer-title').text(t(this.state.title || this.state.page_id || '')).ele();
     const closeButton = html.take(header).button
       .className('right-modal-close')
       .attr('type', 'button')
       .attr('aria-label', t('Close'))
       .event('click', () => this.close())
-      .getContext();
+      .ele();
     appendIcon(closeButton, 'x');
 
-    this._pageSlot = html.take(this._el).div.className('drawer-body right-modal-page').getContext();
+    this._pageSlot = html.take(this._el).div.className('drawer-body right-modal-page').ele();
     void this.renderYamlPage();
     if (this.state.open) this.open();
   }

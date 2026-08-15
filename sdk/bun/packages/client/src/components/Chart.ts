@@ -12,7 +12,7 @@ export class Chart extends BaseComponent {
     const { width = 560, height = 240, color = 'indigo', variant = 'bar' } = this.def;
     const chartColor = this.resolveColor(color, '#6366f1');
 
-    const wrap = html.take(container).div.className('chart flex flex-col items-start gap-2').getContext();
+    const wrap = html.take(container).div.className('chart flex flex-col items-start gap-2').ele();
 
     if (title) {
       html.take(wrap).h3.className('text-sm font-semibold text-gray-700').text(title);
@@ -25,7 +25,7 @@ export class Chart extends BaseComponent {
       .attr('role', 'img')
       .attr('aria-label', title || 'Biểu đồ')
       .className('rounded border border-gray-200 bg-white')
-      .getContext();
+      .ele();
 
     if (!data.length) {
       html.take(wrap).p.className('text-sm text-gray-400 py-8 w-full text-center').text('Không có dữ liệu biểu đồ');

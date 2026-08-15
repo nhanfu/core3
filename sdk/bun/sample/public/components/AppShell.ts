@@ -132,16 +132,16 @@ export class AppShell extends BaseComponent {
       .toUpperCase();
 
     // Root layout
-    const layout = html.take(container).div.className('app-layout').getContext();
+    const layout = html.take(container).div.className('app-layout').ele();
     this._appLayout = layout;
 
     // ── MAIN ──
-    const main = html.take(layout).div.className('app-main').getContext();
+    const main = html.take(layout).div.className('app-main').ele();
 
     // Header
-    const header = html.take(main).header.className('app-header').getContext();
+    const header = html.take(main).header.className('app-header').ele();
 
-    const headerLeft = html.take(header).div.className('app-header-left').getContext();
+    const headerLeft = html.take(header).div.className('app-header-left').ele();
 
     // The launcher owns its full-screen UI and interaction lifecycle.
     const apps = (this.state.apps || []) as LauncherApp[];
@@ -155,7 +155,7 @@ export class AppShell extends BaseComponent {
 
     // Primary navigation is horizontal in the header, with each group opening
     // an Odoo-style menu. Nested declarations remain nested as flyout menus.
-    const headerNav = html.take(headerLeft).nav.className('header-nav').attr('aria-label', 'Main navigation').getContext();
+    const headerNav = html.take(headerLeft).nav.className('header-nav').attr('aria-label', 'Main navigation').ele();
     const closeMenuElement = (element: Element) => {
       element.classList.remove('open');
       const trigger = element.querySelector(':scope > button') as HTMLButtonElement | null;
@@ -174,15 +174,15 @@ export class AppShell extends BaseComponent {
       if (!canSeeNavItem(item, user)) return;
       const children = (item.children || []).filter(child => canSeeNavItem(child, user));
       if (children.length) {
-        const submenu = html.take(target).div.className(`header-nav-submenu${nested ? ' nested' : ''}`).getContext();
+        const submenu = html.take(target).div.className(`header-nav-submenu${nested ? ' nested' : ''}`).ele();
         const trigger = html.take(submenu).button
           .className('header-nav-submenu-trigger')
           .attr('type', 'button')
-          .getContext();
+          .ele();
         html.take(trigger).span.className('header-nav-item-label').text(formatNavLabel(i18n.t('*', null, item.label)));
-        const triggerChevron = html.take(trigger).span.className('header-nav-chevron').getContext();
+        const triggerChevron = html.take(trigger).span.className('header-nav-chevron').ele();
         appendIcon(triggerChevron, 'chevron-right');
-        const childMenu = html.take(submenu).div.className('header-nav-submenu-menu').getContext();
+        const childMenu = html.take(submenu).div.className('header-nav-submenu-menu').ele();
         children.forEach(child => createHeaderItem(childMenu, child, true));
         trigger.setAttribute('aria-expanded', 'false');
         const setSubmenuOpen = (open: boolean) => {
@@ -211,12 +211,12 @@ export class AppShell extends BaseComponent {
           closeAllMenus();
           this.go(item.path);
         })
-        .getContext();
+        .ele();
       if (nested) link.classList.add('header-nav-menu-item');
       const translated = i18n.t('*', null, item.label);
       link.dataset.search = translated.toLocaleLowerCase(i18n.lang);
       if (item.icon) {
-        const icon = html.take(link).span.className('header-nav-item-icon').getContext();
+        const icon = html.take(link).span.className('header-nav-item-icon').ele();
         appendIcon(icon, item.icon);
       }
       html.take(link).span.className('header-nav-item-label').text(translated);
@@ -231,15 +231,15 @@ export class AppShell extends BaseComponent {
       if (!visibleItems.length) continue;
       const group = html.take(headerNav).div
         .className(`header-nav-group${this.state.openGroups[groupDef.id] ? ' open' : ''}`)
-        .getContext();
+        .ele();
       this._groupEls.set(groupDef.id, group);
       const trigger = html.take(group).button
         .className('header-nav-trigger')
         .attr('type', 'button')
         .attr('aria-expanded', this.state.openGroups[groupDef.id] ? 'true' : 'false')
-        .getContext();
+        .ele();
       html.take(trigger).span.className('header-nav-label').text(formatNavLabel(i18n.t('*', null, groupDef.label)));
-      const menu = html.take(group).div.className('header-nav-menu').getContext();
+      const menu = html.take(group).div.className('header-nav-menu').ele();
       visibleItems.forEach(item => createHeaderItem(menu, item));
       const setGroupOpen = (open: boolean) => {
         closeOtherTopMenus(group);
@@ -266,14 +266,14 @@ export class AppShell extends BaseComponent {
     });
 
     // Header right — actions
-    const actions = html.take(header).div.className('header-actions').getContext();
+    const actions = html.take(header).div.className('header-actions').ele();
 
     // Theme toggle mirrors the reference shell and persists the preference per browser.
     const themeButton = html.take(actions).button
       .className('header-icon-btn theme-toggle')
       .attr('type', 'button')
-      .getContext();
-    const themeIcon = html.take(themeButton).span.getContext();
+      .ele();
+    const themeIcon = html.take(themeButton).span.ele();
     const applyTheme = (theme: 'light' | 'dim') => {
       document.documentElement.dataset.theme = theme;
       localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -294,8 +294,8 @@ export class AppShell extends BaseComponent {
       .attr('title', 'Messages')
       .attr('aria-label', 'Messages')
       .event('click', () => this.go('/chat'))
-      .getContext();
-    const chatIcon = html.take(chatBtn).span.getContext();
+      .ele();
+    const chatIcon = html.take(chatBtn).span.ele();
     appendIcon(chatIcon, 'message');
 
     // Notification bell button — rendered as a container so we can add badge inside
@@ -303,21 +303,21 @@ export class AppShell extends BaseComponent {
       .className('header-icon-btn')
       .attr('title', i18n.t('*', null, 'Notifications'))
       .attr('aria-label', i18n.t('*', null, 'Notifications'))
-      .getContext();
-    const bellIcon = html.take(bellBtn).span.getContext();
+      .ele();
+    const bellIcon = html.take(bellBtn).span.ele();
     appendIcon(bellIcon, 'bell', i18n.t('*', null, 'Notifications'));
 
     // Notification badge (hidden until unread count > 0)
     const badge = html.take(bellBtn).span
       .className('notif-badge')
       .style('display:none')
-      .getContext();
+      .ele();
 
     // Keep the theme switch beside notification controls, as in the reference header.
     actions.append(themeButton);
 
     // User identity and profile button
-    const userIdentity = html.take(actions).div.className('header-user-identity').getContext();
+    const userIdentity = html.take(actions).div.className('header-user-identity').ele();
     html.take(userIdentity).div.className('header-user-name').text(user?.name || 'User');
     html.take(userIdentity).div.className('header-user-role').text((user?.roles || []).join(', '));
     html.take(actions).button
@@ -361,15 +361,15 @@ export class AppShell extends BaseComponent {
       .className('shell-toast')
       .attr('role', 'status')
       .attr('aria-live', 'polite')
-      .getContext();
-    const toastIcon = html.take(toast).span.className('shell-toast-icon').getContext();
+      .ele();
+    const toastIcon = html.take(toast).span.className('shell-toast-icon').ele();
     appendIcon(toastIcon, 'check');
     html.take(toast).span.className('shell-toast-message').text(`Xin chào, ${user?.name || 'bạn'}`);
     const toastClose = html.take(toast).button
       .className('shell-toast-close')
       .attr('type', 'button')
       .attr('aria-label', 'Close thông báo')
-      .getContext();
+      .ele();
     appendIcon(toastClose, 'x');
     const dismissToast = () => {
       if (this._shellToastTimer) clearTimeout(this._shellToastTimer);

@@ -21,7 +21,7 @@ export class Button extends BaseComponent {
 
     const btn = html.take(container)
       .button.className(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium border rounded-md transition-colors ${variantCls} ${disabledCls}${d.full_width ? ' btn-full' : ''}`)
-      .getContext();
+      .ele();
 
     if (loading || disabled) html.take(btn).attr('disabled', '');
     if (loading) html.take(btn).span.className('animate-spin').text('⟳');

@@ -13,13 +13,13 @@ export class EventPopup extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const overlay = html.take(container).div.className('event-overlay').attr('aria-hidden', 'false').getContext() as HTMLDivElement;
+    const overlay = html.take(container).div.className('event-overlay').attr('aria-hidden', 'false').ele() as HTMLDivElement;
 
-    const dialog = html.take(overlay).div.className('event-dialog').attr('role', 'dialog').attr('aria-modal', 'true').getContext() as HTMLDivElement;
+    const dialog = html.take(overlay).div.className('event-dialog').attr('role', 'dialog').attr('aria-modal', 'true').ele() as HTMLDivElement;
     const titleId = `event-dialog-title-${Date.now()}`;
     html.take(dialog).attr('aria-labelledby', titleId);
 
-    const icon = html.take(dialog).div.className('event-icon').attr('aria-hidden', 'true').getContext() as HTMLDivElement;
+    const icon = html.take(dialog).div.className('event-icon').attr('aria-hidden', 'true').ele() as HTMLDivElement;
     appendIcon(icon, this.def.icon || 'lightbulb');
 
     html.take(dialog).h2.className('event-title').id(titleId).text(this.def.title || 'Coming soon');
@@ -35,7 +35,7 @@ export class EventPopup extends BaseComponent {
     };
 
     const closeButton = html.take(dialog).button.type('button').className('btn btn-primary event-close')
-      .text(this.def.close_label || 'Close').event('click', close).getContext() as HTMLButtonElement;
+      .text(this.def.close_label || 'Close').event('click', close).ele() as HTMLButtonElement;
 
     html.take(overlay).event('click', event => {
       if (event.target === overlay) close();

@@ -10,15 +10,15 @@ export class Kanban extends BaseComponent {
   draw(container) {
     const { columns = [] } = this.state;
     const { cardColor = 'white' } = this.def;
-    const board = html.take(container).div.className('flex gap-4 overflow-x-auto pb-4').getContext();
+    const board = html.take(container).div.className('flex gap-4 overflow-x-auto pb-4').ele();
 
     for (const col of columns) {
       const colEl = html.take(board).div
         .className('flex flex-col gap-3 min-w-[260px] bg-gray-100 rounded-xl p-3')
         .attr('data-col-id', col.id)
-        .getContext();
+        .ele();
 
-      const colHeader = html.take(colEl).div.className('flex items-center justify-between mb-1').getContext();
+      const colHeader = html.take(colEl).div.className('flex items-center justify-between mb-1').ele();
       html.take(colHeader).span.className('font-semibold text-gray-700 text-sm').text(col.title);
       html.take(colHeader).span
         .className('text-xs bg-gray-300 text-gray-600 rounded-full px-2 py-0.5 font-medium')
@@ -39,7 +39,7 @@ export class Kanban extends BaseComponent {
           .className('rounded-lg p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow')
           .style(`background: ${cardColor};`)
           .attr('draggable', 'true')
-          .getContext();
+          .ele();
 
         html.take(cardEl).event('dragstart', e => {
           e.dataTransfer.setData('cardId', card.id);
@@ -51,7 +51,7 @@ export class Kanban extends BaseComponent {
           this.submit('card.select', { cardId: card.id, columnId: col.id });
         });
 
-        const cardTop = html.take(cardEl).div.className('flex items-start justify-between gap-2').getContext();
+        const cardTop = html.take(cardEl).div.className('flex items-start justify-between gap-2').ele();
         html.take(cardTop).span.className('text-sm font-medium text-gray-800').text(card.title);
         if (card.badge != null) {
           html.take(cardTop).span

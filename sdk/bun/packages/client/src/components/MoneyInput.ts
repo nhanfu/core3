@@ -61,17 +61,17 @@ export class MoneyInput extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const root = html.take(container).div.className('money-input').getContext() as HTMLDivElement;
+    const root = html.take(container).div.className('money-input').ele() as HTMLDivElement;
     this.rootElement = root;
 
-    const hidden = html.take(root).input.type('hidden').attr('name', this.id).getContext() as HTMLInputElement;
+    const hidden = html.take(root).input.type('hidden').attr('name', this.id).ele() as HTMLInputElement;
     this.input = hidden;
 
     const display = html.take(root).input.type('text').attr('inputmode', 'decimal')
       .className('form-input form-control money-input-display')
       .attr('placeholder', this.def.placeholder || '0')
       .attr('aria-label', this.def.currency ? `Số tiền (${this.def.currency})` : 'Số tiền')
-      .getContext() as HTMLInputElement;
+      .ele() as HTMLInputElement;
     this.displayInput = display;
 
     const initial = String(this.state.value ?? '');

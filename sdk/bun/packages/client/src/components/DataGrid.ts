@@ -181,25 +181,25 @@ export class DataGrid extends BaseComponent {
     let draggedRow: DataGridRow | null = null;
 
     const x2many = this.state.variant === 'odoo_x2many';
-    const root = html.take(container).div.className(`token-panel rounded-lg border border-gray-200 bg-white${x2many ? ' o-x2many-grid' : ''}`).getContext();
+    const root = html.take(container).div.className(`token-panel rounded-lg border border-gray-200 bg-white${x2many ? ' o-x2many-grid' : ''}`).ele();
     const title = meta.title || this.state.title;
     const description = meta.description || this.state.description;
     if (title || description || (!x2many && actions.length) || this.options.columnChooser) {
-      const toolbar = html.take(root).div.className('token-toolbar flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').getContext();
+      const toolbar = html.take(root).div.className('token-toolbar flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 px-4 py-3').ele();
       if (title || description) {
-        const copy = html.take(toolbar).div.getContext();
+        const copy = html.take(toolbar).div.ele();
         if (title) html.take(copy).h3.className('token-heading text-sm font-semibold text-gray-900').text(String(title));
         if (description) html.take(copy).p.className('token-muted mt-1 text-sm text-gray-500').text(String(description));
       }
       if (actions.length) {
-        const actionBar = html.take(toolbar).div.className('flex flex-wrap items-center gap-2').getContext();
+        const actionBar = html.take(toolbar).div.className('flex flex-wrap items-center gap-2').ele();
         for (const action of actions) {
           const button = html.take(actionBar).button
             .className(`inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${this.actionClass(action.variant)}`)
             .dataAttr('grid-action', action.id)
-            .getContext();
+            .ele();
           if (action.icon) {
-            const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
+            const icon = html.take(button).span.attr('aria-hidden', 'true').ele() as HTMLSpanElement;
             if (hasIcon(action.icon)) appendIcon(icon, action.icon);
             else html.take(icon).text(action.icon);
           }
@@ -213,11 +213,11 @@ export class DataGrid extends BaseComponent {
         }
       }
       if (this.options.columnChooser) {
-        const chooser = html.take(toolbar).details.className('relative').getContext();
+        const chooser = html.take(toolbar).details.className('relative').ele();
         html.take(chooser).summary.className('token-control cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700').text('Cột');
-        const menu = html.take(chooser).div.className('token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').getContext();
+        const menu = html.take(chooser).div.className('token-menu absolute right-0 z-10 mt-2 min-w-[180px] rounded-md border border-gray-200 bg-white p-2 shadow-lg').ele();
         for (const column of this.columns) {
-          const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').getContext();
+          const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm text-gray-700').ele();
           const checkbox = html.take(label).input
             .attr('type', 'checkbox')
             .prop('checked', visibleColumnIds.has(column.id || column.field))
@@ -230,18 +230,18 @@ export class DataGrid extends BaseComponent {
                 return;
               }
               this.setState({ visibleColumns: [...next] });
-            }).getContext() as HTMLInputElement;
+            }).ele() as HTMLInputElement;
           html.take(label).text(column.label);
         }
       }
     }
 
-    const scroll = html.take(root).div.className('overflow-x-auto').getContext();
-    const table = html.take(scroll).table.className('token-table min-w-full divide-y divide-gray-200').getContext();
-    const headerRow = html.take(table).thead.className('token-header').trow.getContext();
+    const scroll = html.take(root).div.className('overflow-x-auto').ele();
+    const table = html.take(scroll).table.className('token-table min-w-full divide-y divide-gray-200').ele();
+    const headerRow = html.take(table).thead.className('token-header').trow.ele();
 
     if (selectable) {
-      const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
+      const checkbox = html.take(headerRow).th.className('w-10 px-4 py-3').input.attr('type', 'checkbox').ele() as HTMLInputElement;
       html.take(checkbox)
         .attr('aria-label', 'Chọn tất cả dòng')
         .prop('checked', rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index))));
@@ -258,14 +258,14 @@ export class DataGrid extends BaseComponent {
     const sort = this.state.sort as { field?: string; direction?: SortDirection } | undefined;
     for (const column of visibleColumns) {
       const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
-      const th = html.take(headerRow).th.className(`px-4 py-3 ${align} text-xs font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap`).getContext();
+      const th = html.take(headerRow).th.className(`px-4 py-3 ${align} text-xs font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap`).ele();
       th.dataset.column = column.id || column.field;
       const sortable = column.sortable === true;
       if (sortable) {
         const active = sort?.field === column.field;
-        const button = html.take(th).button.className('sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).getContext();
+        const button = html.take(th).button.className('sort-button inline-flex items-center gap-1 hover:text-gray-900').dataAttr('sort-field', column.field).text(column.label).ele();
         html.take(button).attr('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none');
-        const indicator = html.take(button).span.className('sort-indicator text-gray-400').getContext() as HTMLSpanElement;
+        const indicator = html.take(button).span.className('sort-indicator text-gray-400').ele() as HTMLSpanElement;
         appendIcon(indicator, active ? (sort?.direction === 'desc' ? 'sort-descending' : 'sort-ascending') : 'sort');
         html.take(button).event('click', () => this.setSort(column.field));
       } else {
@@ -273,16 +273,16 @@ export class DataGrid extends BaseComponent {
       }
     }
 
-    const tbody = html.take(table).tbody.className('token-body divide-y divide-gray-100 bg-white').getContext();
+    const tbody = html.take(table).tbody.className('token-body divide-y divide-gray-100 bg-white').ele();
     if (!rows.length) {
       const empty = this.options.emptyState || (this.state.emptyState as DataGridOptions['emptyState']) || {};
-      const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0) + (rowNumbers ? 1 : 0))).className('px-4 py-12 text-center').getContext();
+      const cell = html.take(tbody).trow.tdata.attr('colspan', String(visibleColumns.length + (selectable ? 1 : 0) + (rowNumbers ? 1 : 0))).className('px-4 py-12 text-center').ele();
       html.take(cell).p.className('text-sm font-medium text-gray-900').text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.className('mt-1 text-sm text-gray-500').text(empty.description);
     } else {
       rows.forEach((row, index) => {
         const id = this.rowId(row, index);
-        const tr = html.take(tbody).trow.className('token-row transition-colors hover:bg-gray-50').getContext();
+        const tr = html.take(tbody).trow.className('token-row transition-colors hover:bg-gray-50').ele();
         if (rowReorder) {
           html.take(tr).prop('draggable', true);
           tr.dataset.reorderRow = id;
@@ -309,7 +309,7 @@ export class DataGrid extends BaseComponent {
           });
         }
         if (selectable) {
-          const checkbox = html.take(tr).tdata.className('w-10 px-4 py-3').input.attr('type', 'checkbox').getContext() as HTMLInputElement;
+          const checkbox = html.take(tr).tdata.className('w-10 px-4 py-3').input.attr('type', 'checkbox').ele() as HTMLInputElement;
           html.take(checkbox).attr('aria-label', labels.selectRow(id)).prop('checked', selected.has(id)).event('change', () => {
             const next = new Set(this.selectedIds());
             checkbox.checked ? next.add(id) : next.delete(id);
@@ -326,10 +326,10 @@ export class DataGrid extends BaseComponent {
         for (const column of visibleColumns) {
           const align = column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left';
           const value = row[column.field];
-          const cell = html.take(tr).tdata.className(`token-cell grid-cell max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).getContext();
+          const cell = html.take(tr).tdata.className(`token-cell grid-cell max-w-[240px] overflow-hidden text-ellipsis whitespace-nowrap px-4 py-3 text-sm text-gray-700 ${align}`).ele();
           cell.dataset.column = column.id || column.field;
           if (column.rowActions?.length) {
-            const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').getContext();
+            const actionBar = html.take(cell).div.className('flex items-center justify-end gap-1').ele();
             for (const action of column.rowActions) {
               if (action.visible && !action.visible(row)) continue;
               const button = html.take(actionBar).button
@@ -337,9 +337,9 @@ export class DataGrid extends BaseComponent {
                   ? `o-x2many-row-action${action.variant === 'danger' ? ' is-danger' : ''}`
                   : `rounded px-2 py-1 text-xs font-medium ${this.actionClass(action.variant)}`)
                 .dataAttr('grid-row-action', `${action.id}:${id}`)
-                .getContext();
+                .ele();
               if (action.icon) {
-                const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
+                const icon = html.take(button).span.attr('aria-hidden', 'true').ele() as HTMLSpanElement;
                 if (hasIcon(action.icon)) appendIcon(icon, action.icon);
                 else html.take(icon).text(action.icon);
               }
@@ -360,7 +360,7 @@ export class DataGrid extends BaseComponent {
               const toggle = html.take(cell).button.type('button')
                 .className('mr-1 inline-flex h-5 w-5 items-center justify-center rounded text-xs text-gray-500 hover:bg-gray-100')
                 .attr('aria-label', isCollapsed ? labels.expandRow : labels.collapseRow)
-                .attr('aria-expanded', String(!isCollapsed)).text(isCollapsed ? '+' : '-').getContext() as HTMLButtonElement;
+                .attr('aria-expanded', String(!isCollapsed)).text(isCollapsed ? '+' : '-').ele() as HTMLButtonElement;
               html.take(toggle).event('click', () => {
                 const next = new Set(collapsed);
                 isCollapsed ? next.delete(id) : next.add(id);
@@ -373,9 +373,9 @@ export class DataGrid extends BaseComponent {
     }
 
     if (x2many && actions.length) {
-      const controls = html.take(root).div.className('o-x2many-controls').getContext();
+      const controls = html.take(root).div.className('o-x2many-controls').ele();
       for (const action of actions) {
-        const button = html.take(controls).button.className('o-x2many-create').attr('type', 'button').dataAttr('grid-action', action.id).getContext() as HTMLButtonElement;
+        const button = html.take(controls).button.className('o-x2many-create').attr('type', 'button').dataAttr('grid-action', action.id).ele() as HTMLButtonElement;
         html.take(button).text(action.label).prop('disabled', action.disabled === true);
         if (!button.disabled) html.take(button).event('click', () => {
           const context = { selectedIds: this.selectedIds(), action };
@@ -388,7 +388,7 @@ export class DataGrid extends BaseComponent {
     const totalRows = Number(meta.total || 0);
     const effectivePageSize = Number(meta.pageSize || rows.length || 1);
     if (meta.total != null && (!x2many || totalRows > effectivePageSize)) {
-      const summary = html.take(root).div.className('token-summary flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').getContext();
+      const summary = html.take(root).div.className('token-summary flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3 text-sm text-gray-500').ele();
       const total = Number(meta.total);
       const page = Number(meta.page || 1);
       const pageSize = Number(meta.pageSize || rows.length || 1);
@@ -397,13 +397,13 @@ export class DataGrid extends BaseComponent {
       html.take(summary).span.text(`${start}–${end} ${labels.summaryOf} ${total}`);
 
       const pages = Math.max(1, Math.ceil(total / pageSize));
-      const controls = html.take(summary).div.className('inline-flex items-center gap-2').getContext();
+      const controls = html.take(summary).div.className('inline-flex items-center gap-2').ele();
       if (this.options.pageSizeOptions?.length) {
         html.take(controls).span.className('text-xs text-gray-500').text('Số dòng');
         const select = html.take(controls).select
           .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700')
           .attr('aria-label', 'Số dòng')
-          .getContext() as HTMLSelectElement;
+          .ele() as HTMLSelectElement;
         for (const optionValue of this.options.pageSizeOptions) {
           html.take(select).option.value(String(optionValue)).text(String(optionValue)).prop('selected', optionValue === pageSize);
         }
@@ -417,7 +417,7 @@ export class DataGrid extends BaseComponent {
           const button = html.take(controls).button
             .className('rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50')
             .text(label)
-            .getContext() as HTMLButtonElement;
+            .ele() as HTMLButtonElement;
           html.take(button).attr('aria-label', ariaLabel).prop('disabled', disabled);
           if (!disabled) html.take(button).event('click', () => this.setPage(targetPage));
         };
@@ -430,10 +430,10 @@ export class DataGrid extends BaseComponent {
     const footerStats = Array.isArray(this.state.footerStats) ? this.state.footerStats : [];
     const footerRecord = this.state.footerRecord || {};
     if (footerStats.length) {
-      const footer = html.take(root).section.className('o-document-totals').getContext();
-      const list = html.take(footer).div.className('o-document-totals-list').getContext();
+      const footer = html.take(root).section.className('o-document-totals').ele();
+      const list = html.take(footer).div.className('o-document-totals-list').ele();
       for (const stat of footerStats) {
-        const item = html.take(list).div.className('o-document-total').getContext();
+        const item = html.take(list).div.className('o-document-total').ele();
         html.take(item).div.className('o-document-total-label').text(String(stat.label || 'Total'));
         html.take(item).div.className('o-document-total-value').text(footerRecord[stat.field] == null || footerRecord[stat.field] === ''
           ? '0'

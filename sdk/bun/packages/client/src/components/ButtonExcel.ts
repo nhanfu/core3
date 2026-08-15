@@ -15,7 +15,7 @@ export class ButtonExcel extends BaseComponent {
     const btn = html.take(container)
       .button
       .className(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors border-transparent shadow-sm ${disabledCls}`)
-      .getContext();
+      .ele();
 
     if (loading) {
       html.take(btn).attr('disabled', '');

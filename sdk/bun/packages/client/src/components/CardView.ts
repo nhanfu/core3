@@ -32,7 +32,7 @@ export class CardView extends BaseComponent {
 
   draw(container: HTMLElement) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
-    const root = html.take(container).section.className('o-card-view').getContext();
+    const root = html.take(container).section.className('o-card-view').ele();
     // Grouping is a searchbar concern. The view definition may provide the
     // available group metadata, but must not enable grouping by itself.
     const groupBy = typeof this.state.groupBy === 'string' ? this.state.groupBy : '';
@@ -60,18 +60,18 @@ export class CardView extends BaseComponent {
       group.rows.push(row);
     }
     for (const group of groups) {
-      const section = html.take(root).section.className('o-card-view-group').dataAttr('card-group', group.value).getContext();
-      const heading = html.take(section).h2.className('o-card-view-group-title').getContext();
+      const section = html.take(root).section.className('o-card-view-group').dataAttr('card-group', group.value).ele();
+      const heading = html.take(section).h2.className('o-card-view-group-title').ele();
       if (group.color) html.take(heading).toggleClass(`is-${group.color}`, true);
       html.take(heading).span.text(group.label);
       html.take(heading).span.className('o-card-view-group-count').text(String(group.rows.length));
-      const list = html.take(section).div.className('o-card-view-group-items').getContext();
+      const list = html.take(section).div.className('o-card-view-group-items').ele();
       for (const [index, row] of group.rows.entries()) this.drawCard(list, row, index);
     }
   }
 
   private drawCard(container: HTMLElement, row: CardRow, index: number) {
-    const card = html.take(container).div.className('o-kanban-card o-card-view-item').dataAttr('row-id', this.rowId(row, index)).getContext();
+    const card = html.take(container).div.className('o-kanban-card o-card-view-item').dataAttr('row-id', this.rowId(row, index)).ele();
     if (this.options.openAction || this.options.doubleClickAction || this.options.onSelect) {
       html.take(card).prop('tabIndex', 0).attr('role', this.options.onSelect ? 'button' : 'link');
       let clickTimer: ReturnType<typeof setTimeout> | undefined;
@@ -112,11 +112,11 @@ export class CardView extends BaseComponent {
     }
     const fields = cardDef?.fields || [];
     if (!fields.length) return;
-    const details = html.take(card).div.className('o-kanban-card-fields').getContext();
+    const details = html.take(card).div.className('o-kanban-card-fields').ele();
     for (const field of fields) {
       const value = row[field.field];
       if (value == null || value === '') continue;
-      const line = html.take(details).div.getContext();
+      const line = html.take(details).div.ele();
       if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
       html.take(line).span.className('o-kanban-card-field-value').text(String(value));
     }

@@ -33,8 +33,8 @@ export class PivotView extends BaseComponent {
   draw(container: HTMLElement) {
     const rows = (Array.isArray(this.state.rows) ? this.state.rows : []) as Record<string, unknown>[];
     const view = { ...this.options.view, pivotColumns: this.options.pivotColumns || this.options.view.pivotColumns };
-    const root = html.take(container).section.className('o-pivot-view').getContext() as HTMLElement;
-    const toolbar = html.take(root).header.className('o-pivot-toolbar').getContext() as HTMLElement;
+    const root = html.take(container).section.className('o-pivot-view').ele() as HTMLElement;
+    const toolbar = html.take(root).header.className('o-pivot-toolbar').ele() as HTMLElement;
     html.take(toolbar).button.type('button').className('o-pivot-configure').replaceText(this.state.builderOpen ? 'Close configuration' : (view.configLabel || 'Configure')).event('click', () => this.setState({ builderOpen: this.state.builderOpen !== true }));
     html.take(toolbar).h2.replaceText(view.label);
     if (this.state.builderOpen === true) this.drawBuilder(root);
@@ -49,18 +49,18 @@ export class PivotView extends BaseComponent {
     const visibleDataColumns = columnDescriptors.length
       ? [...columns.filter(column => !columnDescriptors.some(descriptor => descriptor.column === column)), ...columnDescriptors.filter(descriptor => !this.isColumnHidden(descriptor.values))].map(column => typeof column === 'string' ? column : column.column)
       : columns;
-    const tableScroll = html.take(root).div.className('o-pivot-table-scroll').getContext() as HTMLElement;
-    const table = html.take(tableScroll).table.className('o-pivot-table').attr('aria-label', view.label).getContext() as HTMLTableElement;
-    const head = html.take(table).thead.getContext() as HTMLTableSectionElement;
+    const tableScroll = html.take(root).div.className('o-pivot-table-scroll').ele() as HTMLElement;
+    const table = html.take(tableScroll).table.className('o-pivot-table').attr('aria-label', view.label).ele() as HTMLTableElement;
+    const head = html.take(table).thead.ele() as HTMLTableSectionElement;
     if (columnDescriptors.length && view.columnFields?.length) this.drawColumnHeaders(head, columns, columnDescriptors, view);
     else {
-      const headRow = html.take(head).trow.getContext() as HTMLTableRowElement;
+      const headRow = html.take(head).trow.ele() as HTMLTableRowElement;
       for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
     }
-    const body = html.take(table).tbody.getContext() as HTMLTableSectionElement;
+    const body = html.take(table).tbody.ele() as HTMLTableSectionElement;
     const tree = this.buildPivotTree(rows, view.rowFields || []);
     for (const item of this.visiblePivotRows(tree)) {
-      const tr = html.take(body).trow.getContext() as HTMLTableRowElement;
+      const tr = html.take(body).trow.ele() as HTMLTableRowElement;
       for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);
     }
     if (!rows.length) { html.take(root).p.className('o-analytics-empty').replaceText('No data'); return; }
@@ -71,7 +71,7 @@ export class PivotView extends BaseComponent {
   }
 
   private addPivotCell(row: HTMLTableRowElement, item: { node: PivotTreeNode; leaf: boolean }, column: string, columnIndex: number, rowFields: string[]) {
-    const cell = html.take(row).tdata.getContext() as HTMLTableCellElement;
+    const cell = html.take(row).tdata.ele() as HTMLTableCellElement;
     const node = item.node;
     let value = node.row?.[column];
     if (!item.leaf && rowFields.includes(column)) {
@@ -104,14 +104,14 @@ export class PivotView extends BaseComponent {
     const rowFields = new Set(view.rowFields || []);
     const rowColumns = columns.filter(column => rowFields.has(column));
     const depth = (view.columnFields || []).length + 1;
-    const first = html.take(head).trow.getContext() as HTMLTableRowElement;
+    const first = html.take(head).trow.ele() as HTMLTableRowElement;
     rowColumns.forEach(column => html.take(first).th.prop('rowSpan', depth).replaceText(this.columnLabel(column)));
     this.drawColumnLevel(first, descriptors, 0, view);
     for (let level = 1; level < (view.columnFields || []).length; level++) {
       if (!descriptors.some(descriptor => !this.isColumnHidden(descriptor.values, level - 1))) continue;
-      const row = html.take(head).trow.getContext() as HTMLTableRowElement; this.drawColumnLevel(row, descriptors, level, view);
+      const row = html.take(head).trow.ele() as HTMLTableRowElement; this.drawColumnLevel(row, descriptors, level, view);
     }
-    const measures = html.take(head).trow.getContext() as HTMLTableRowElement;
+    const measures = html.take(head).trow.ele() as HTMLTableRowElement;
     const visibleDescriptors = descriptors.filter(descriptor => !this.isColumnHidden(descriptor.values));
     visibleDescriptors.forEach(descriptor => {
       html.take(measures).th.replaceText(descriptor.measureLabel);
@@ -127,7 +127,7 @@ export class PivotView extends BaseComponent {
       const prefix = descriptor.values.slice(0, level + 1).join('|');
       let end = index + 1;
       while (end < visible.length && visible[end].values.slice(0, level + 1).join('|') === prefix) end++;
-      const cell = html.take(row).th.prop('colSpan', end - index).getContext() as HTMLTableCellElement;
+      const cell = html.take(row).th.prop('colSpan', end - index).ele() as HTMLTableCellElement;
       const field = view.columnFields[level];
       const value = descriptor.values[level] || '';
       if (level < view.columnFields.length - 1) {
@@ -201,26 +201,26 @@ export class PivotView extends BaseComponent {
   private drawBuilder(container: HTMLElement) {
     const view = this.options.view;
     const fields = view.fields || [];
-    const builder = html.take(container).section.className('o-pivot-builder').getContext() as HTMLElement;
+    const builder = html.take(container).section.className('o-pivot-builder').ele() as HTMLElement;
     html.take(builder).h3.replaceText('Pivot configuration');
-    const grid = html.take(builder).div.className('o-pivot-builder-grid').getContext() as HTMLElement;
+    const grid = html.take(builder).div.className('o-pivot-builder-grid').ele() as HTMLElement;
     const dateRanges: Record<string, string> = { ...(view.dateRanges || {}) };
     const rowsAxis = this.axisEditor(grid, 'Rows', fields, view.rowFields || [], dateRanges);
     const columnsAxis = this.axisEditor(grid, 'Columns', fields, view.columnFields || [], dateRanges);
-    const measureSection = html.take(builder).div.className('o-pivot-measures').getContext() as HTMLElement;
+    const measureSection = html.take(builder).div.className('o-pivot-measures').ele() as HTMLElement;
     html.take(measureSection).label.replaceText('Measures');
-    const measureHost = html.take(measureSection).div.className('o-pivot-measure-list').getContext() as HTMLElement;
+    const measureHost = html.take(measureSection).div.className('o-pivot-measure-list').ele() as HTMLElement;
     let measures = (view.measures || []).map(measure => ({ ...measure }));
     const drawMeasures = () => {
       html.take(measureHost).clear();
       measures.forEach((measure, index) => {
-        const row = html.take(measureHost).div.className('o-pivot-measure-row').getContext() as HTMLElement;
-        const field = html.take(row).select.attr('aria-label', `Measure ${index + 1} field`).getContext() as HTMLSelectElement;
+        const row = html.take(measureHost).div.className('o-pivot-measure-row').ele() as HTMLElement;
+        const field = html.take(row).select.attr('aria-label', `Measure ${index + 1} field`).ele() as HTMLSelectElement;
         this.addOptions(field, fields, measure.field || '');
-        const aggregate = html.take(row).select.attr('aria-label', `Measure ${index + 1} aggregation`).getContext() as HTMLSelectElement;
+        const aggregate = html.take(row).select.attr('aria-label', `Measure ${index + 1} aggregation`).ele() as HTMLSelectElement;
         this.addOptions(aggregate, ['count', 'sum', 'avg', 'min', 'max'], measure.aggregate || 'sum');
-        const label = html.take(row).input.type('text').prop('placeholder', 'Label').prop('value', measure.label || '').getContext() as HTMLInputElement;
-        const remove = html.take(row).button.type('button').className('o-pivot-remove').replaceText('×').prop('title', 'Remove measure').getContext() as HTMLButtonElement;
+        const label = html.take(row).input.type('text').prop('placeholder', 'Label').prop('value', measure.label || '').ele() as HTMLInputElement;
+        const remove = html.take(row).button.type('button').className('o-pivot-remove').replaceText('×').prop('title', 'Remove measure').ele() as HTMLButtonElement;
         html.take(field).event('change', () => { measure.field = field.value || undefined; });
         html.take(aggregate).event('change', () => { measure.aggregate = aggregate.value; });
         html.take(label).event('input', () => { measure.label = label.value || undefined; });
@@ -229,7 +229,7 @@ export class PivotView extends BaseComponent {
     };
     drawMeasures();
     html.take(measureSection).button.type('button').className('o-pivot-add').replaceText('+ Add measure').event('click', () => { measures.push({ field: fields[0], aggregate: 'sum', label: fields[0] }); drawMeasures(); });
-    const actions = html.take(builder).div.className('o-pivot-builder-actions').getContext() as HTMLElement;
+    const actions = html.take(builder).div.className('o-pivot-builder-actions').ele() as HTMLElement;
     html.take(actions).button.type('button').className('o-pivot-apply').replaceText('Apply').event('click', () => {
       const request = {
         rows: rowsAxis.values(),
@@ -248,14 +248,14 @@ export class PivotView extends BaseComponent {
   private axisEditor(container: HTMLElement, labelText: string, fields: string[], initial: string[], ranges: Record<string, string>) {
     let values = initial.filter(field => fields.includes(field));
     const dateFields = new Set(this.options.view.dateFields || []);
-    const group = html.take(container).section.className('o-pivot-builder-field o-pivot-axis').getContext() as HTMLElement;
+    const group = html.take(container).section.className('o-pivot-builder-field o-pivot-axis').ele() as HTMLElement;
     html.take(group).h4.replaceText(labelText);
-    const list = html.take(group).div.className('o-pivot-axis-list').attr('aria-label', `${labelText} fields`).getContext() as HTMLElement;
-    const available = html.take(group).div.className('o-pivot-axis-available').getContext() as HTMLElement;
+    const list = html.take(group).div.className('o-pivot-axis-list').attr('aria-label', `${labelText} fields`).ele() as HTMLElement;
+    const available = html.take(group).div.className('o-pivot-axis-available').ele() as HTMLElement;
     const render = () => {
       html.take(list).clear();
       values.forEach((field, index) => {
-        const item = html.take(list).div.className('o-pivot-axis-item').prop('draggable', true).dataAttr('index', String(index)).replaceText(this.options.view.fieldLabels?.[field] || field).prop('title', 'Drag to reorder').getContext() as HTMLElement;
+        const item = html.take(list).div.className('o-pivot-axis-item').prop('draggable', true).dataAttr('index', String(index)).replaceText(this.options.view.fieldLabels?.[field] || field).prop('title', 'Drag to reorder').ele() as HTMLElement;
         html.take(item).event('dragstart', event => event.dataTransfer?.setData('text/plain', String(index)));
         html.take(item).event('dragover', event => event.preventDefault());
         html.take(item).event('drop', event => {
@@ -266,7 +266,7 @@ export class PivotView extends BaseComponent {
           const [moved] = values.splice(from, 1); values.splice(to, 0, moved); render();
         });
         if (dateFields.has(field)) {
-          const range = html.take(item).select.className('o-pivot-date-range').attr('aria-label', `${field} date range`).getContext() as HTMLSelectElement;
+          const range = html.take(item).select.className('o-pivot-date-range').attr('aria-label', `${field} date range`).ele() as HTMLSelectElement;
           this.addOptions(range, ['day', 'week', 'month', 'quarter', 'year'], ranges[field] || 'month');
           html.take(range).event('change', () => { ranges[field] = range.value; });
         }

@@ -8,9 +8,9 @@ export class ChoiceGroup extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const section = html.take(container).section.className(this.def.class || 'drawer-section').getContext() as HTMLElement;
+    const section = html.take(container).section.className(this.def.class || 'drawer-section').ele() as HTMLElement;
     html.take(section).div.className('drawer-section-title').text(this.def.title || '');
-    const group = html.take(section).div.className(this.def.group_class || 'lang-radio-group').getContext() as HTMLDivElement;
+    const group = html.take(section).div.className(this.def.group_class || 'lang-radio-group').ele() as HTMLDivElement;
     const current = this.state.record?.[this.def.value];
     for (const option of this.def.options || []) {
       const card = html.take(group).div.className(`${this.def.option_class || 'lang-radio'}${String(option.value) === String(current || '') ? ' selected' : ''}`)
@@ -18,7 +18,7 @@ export class ChoiceGroup extends BaseComponent {
         group.querySelectorAll(`.${this.def.option_class || 'lang-radio'}`).forEach(item => html.take(item).toggleClass('selected', false));
         html.take(card).toggleClass('selected', true);
         void this.submit(this.def.action, { [this.def.value]: option.value });
-        }).getContext() as HTMLDivElement;
+        }).ele() as HTMLDivElement;
     }
   }
 }

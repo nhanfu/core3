@@ -32,20 +32,20 @@ export class CalendarView extends BaseComponent {
   draw(container: HTMLElement) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
     const month = this.monthFromState();
-    const root = html.take(container).section.className('o-calendar-view').getContext();
-    const toolbar = html.take(root).header.className('o-calendar-toolbar').getContext();
-    const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Previous month').text('‹').getContext();
+    const root = html.take(container).section.className('o-calendar-view').ele();
+    const toolbar = html.take(root).header.className('o-calendar-toolbar').ele();
+    const previous = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Previous month').text('‹').ele();
     html.take(previous).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() - 1));
     html.take(toolbar).h2.className('o-calendar-title').text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(month));
-    const today = html.take(toolbar).button.className('o-calendar-today').text('Today').getContext();
+    const today = html.take(toolbar).button.className('o-calendar-today').text('Today').ele();
     html.take(today).event('click', () => {
       const now = new Date();
       this.setMonth(now.getFullYear(), now.getMonth());
     });
-    const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Next month').text('›').getContext();
+    const next = html.take(toolbar).button.className('o-calendar-nav').attr('aria-label', 'Next month').text('›').ele();
     html.take(next).event('click', () => this.setMonth(month.getFullYear(), month.getMonth() + 1));
 
-    const grid = html.take(root).div.className('o-calendar-grid').attr('role', 'grid').getContext();
+    const grid = html.take(root).div.className('o-calendar-grid').attr('role', 'grid').ele();
     for (const label of this.weekdayLabels()) html.take(grid).div.className('o-calendar-weekday').attr('role', 'columnheader').text(label);
 
     const first = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -62,18 +62,18 @@ export class CalendarView extends BaseComponent {
 
     for (let index = 0; index < 42; index++) {
       const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + index);
-      const day = html.take(grid).div.className('o-calendar-day').attr('role', 'gridcell').getContext();
+      const day = html.take(grid).div.className('o-calendar-day').attr('role', 'gridcell').ele();
       if (date.getMonth() !== month.getMonth()) html.take(day).toggleClass('is-muted', true);
       if (this.dateKey(date) === this.dateKey(new Date())) html.take(day).toggleClass('is-today', true);
       html.take(day).div.className('o-calendar-day-number').text(String(date.getDate()));
-      const list = html.take(day).div.className('o-calendar-events').getContext();
+      const list = html.take(day).div.className('o-calendar-events').ele();
       for (const [eventIndex, row] of (events.get(this.dateKey(date)) || []).entries()) this.drawEvent(list, row, eventIndex);
     }
   }
 
   private drawEvent(container: HTMLElement, row: CalendarRow, index: number) {
     const card = this.options.view.card;
-    const event = html.take(container).button.className('o-calendar-event').dataAttr('row-id', this.rowId(row, index)).getContext() as HTMLButtonElement;
+    const event = html.take(container).button.className('o-calendar-event').dataAttr('row-id', this.rowId(row, index)).ele() as HTMLButtonElement;
     const title = row[card?.title || 'name'];
     html.take(event).replaceText(title == null || title === '' ? '—' : String(title));
     if (card?.subtitle && row[card.subtitle] != null) event.title = String(row[card.subtitle]);

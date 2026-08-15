@@ -5,7 +5,7 @@ import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 export class ActionCell extends BaseComponent {
   draw(container) {
     const { actions = [], row = {} } = this.state;
-    const wrap = html.take(container).div.className('flex gap-3').getContext();
+    const wrap = html.take(container).div.className('flex gap-3').ele();
     for (const a of actions) {
       const cls = {
         primary: 'text-indigo-600 hover:text-indigo-900',
@@ -23,9 +23,9 @@ export class ActionCell extends BaseComponent {
             this.submit(a.id, { row: r });
           }
         })
-        .getContext();
+        .ele();
       if (a.icon) {
-        const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
+        const icon = html.take(button).span.attr('aria-hidden', 'true').ele() as HTMLSpanElement;
         if (hasIcon(a.icon)) appendIcon(icon, a.icon);
         else html.take(icon).replaceText(a.icon);
       }

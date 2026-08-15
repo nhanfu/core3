@@ -24,10 +24,10 @@ export class StatRow extends BaseComponent {
     if (this.title) {
       html.take(container).h3.className('mb-3 text-sm font-semibold text-slate-900').text(this.title);
     }
-    const grid = html.take(container).div.className(`grid ${gridCls} gap-3`).getContext();
+    const grid = html.take(container).div.className(`grid ${gridCls} gap-3`).ele();
 
     this.stats.forEach((stat, i) => {
-      const slot = html.take(grid).div.getContext();
+      const slot = html.take(grid).div.ele();
       const card = new StatCard(`${this.id}-${i}`, { ...stat, onNavigate: this.onNavigate });
       card.parent = this;
       this.children.push(card);

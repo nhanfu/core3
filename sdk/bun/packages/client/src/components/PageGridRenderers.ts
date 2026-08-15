@@ -59,7 +59,7 @@ async function renderStatRow(def: any, targetContainer: HTMLElement) {
     def.title || '',
     path => void navigate(path),
   );
-  const slot = html.take(targetContainer).div.className(def.variant === 'contained' ? 'status-tabs-slot-contained' : '').css('marginBottom', def.variant === 'contained' ? '0' : '16px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.className(def.variant === 'contained' ? 'status-tabs-slot-contained' : '').css('marginBottom', def.variant === 'contained' ? '0' : '16px').ele() as HTMLElement;
   comp.mount(slot);
 
   bindSource(def.source, data => {
@@ -199,11 +199,11 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
     if (actionDef) {
       await handleAction(actionDef, row);
     } else {
-      console.warn(`[page-renderer] No action def found for: ${actionId}`);
+      console.error(`[page-renderer] No action def found for: ${actionId}`);
     }
   };
 
-  const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.ele() as HTMLElement;
   if (def.type === 'LineItemGrid') html.take(slot).className('o-form-section o-form-lines-slot');
   else html.take(slot).css('marginBottom', '24px');
   comp.mount(slot);
@@ -252,11 +252,11 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
-        const entity = html.take(cell).div.className('data-grid-entity').getContext() as HTMLElement;
+        const entity = html.take(cell).div.className('data-grid-entity').ele() as HTMLElement;
         if (column.avatar) {
           html.take(entity).span.className('data-grid-entity-avatar').innerHTML('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V6l8-3 8 3v14"/><path d="M8 20v-5h8v5M8 9h.01M12 9h.01M16 9h.01"/></svg>');
         }
-        const copy = html.take(entity).span.className('data-grid-entity-copy').getContext() as HTMLElement;
+        const copy = html.take(entity).span.className('data-grid-entity-copy').ele() as HTMLElement;
         html.take(copy).div.className('data-grid-primary').replaceText(value == null || value === '' ? '—' : String(value));
         if (column.secondary) {
           html.take(copy).div.className('data-grid-secondary').replaceText(row[column.secondary] == null ? '' : String(row[column.secondary]));
@@ -382,7 +382,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     if (actionDef) await handleAction(actionDef, params?.row || params || {});
   };
 
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   comp.mount(slot);
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
@@ -437,8 +437,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         return;
       }
       if (column.type === 'PrimaryEntityCell') {
-        const entity = html.take(cell).div.className('data-grid-entity').getContext() as HTMLElement;
-        const copy = html.take(entity).span.className('data-grid-entity-copy').getContext() as HTMLElement;
+        const entity = html.take(cell).div.className('data-grid-entity').ele() as HTMLElement;
+        const copy = html.take(entity).span.className('data-grid-entity-copy').ele() as HTMLElement;
         html.take(copy).div.className('data-grid-primary').replaceText(value == null || value === '' ? '—' : String(value));
         if (column.secondary) {
           html.take(copy).div.className('data-grid-secondary').replaceText(row[column.secondary] == null ? '' : String(row[column.secondary]));
@@ -909,7 +909,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params?.row || params || {});
   };
-  const slot = html.take(targetContainer).div.className('o-list-view-slot').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.className('o-list-view-slot').ele() as HTMLElement;
   comp.mount(slot);
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
 }
@@ -922,7 +922,7 @@ async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
     { rows: Array.isArray(sourceResult.data) ? sourceResult.data : [] },
     def,
   );
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   component.mount(slot);
   bindSource(def.source, data => component.setState({ rows: data.data || [], meta: data.meta }, true));
 }

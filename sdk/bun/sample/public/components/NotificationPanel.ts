@@ -192,7 +192,7 @@ export class NotificationPanel extends BaseComponent {
         .className('notif-item' + (!n.read ? ' unread' : ''))
         .attr('type', 'button')
         .attr('aria-label', `${n.read ? '' : 'Chưa đọc: '}${n.title}`)
-        .getContext();
+        .ele();
       item.addEventListener('click', () => {
         if (!n.read) void this.markRead(String(n.id));
         const target = notificationTarget(n);
@@ -201,9 +201,9 @@ export class NotificationPanel extends BaseComponent {
           void navigate(target);
         }
       });
-      const iconTarget = html.take(item).span.className('notif-item-icon').getContext();
+      const iconTarget = html.take(item).span.className('notif-item-icon').ele();
       appendIcon(iconTarget, icon, n.title || '');
-      const body = html.take(item).div.className('notif-item-body').getContext();
+      const body = html.take(item).div.className('notif-item-body').ele();
       html.take(body).div.className('notif-item-title').text(n.title);
       if (n.body) html.take(body).div.className('notif-item-text').text(n.body);
       html.take(body).div.className('notif-item-time').text(timeAgo(n.created_at));
@@ -214,9 +214,9 @@ export class NotificationPanel extends BaseComponent {
     this._el = html.take(container).div
       .className('notif-panel')
       .style('display:none')
-      .getContext();
+      .ele();
 
-    const header = html.take(this._el).div.className('notif-panel-header').getContext();
+    const header = html.take(this._el).div.className('notif-panel-header').ele();
     html.take(header).span.className('notif-panel-title').text(i18n.t('*', null, 'Notifications'));
     html.take(header).button
       .className('notif-mark-all')
@@ -226,7 +226,7 @@ export class NotificationPanel extends BaseComponent {
         this.markAllRead();
       });
 
-    this._listEl = html.take(this._el).div.className('notif-list').getContext();
+    this._listEl = html.take(this._el).div.className('notif-list').ele();
     this._renderList();
 
     this.startPolling();

@@ -11,7 +11,7 @@ export class CodeEditor extends BaseComponent {
     const { value = '', language = 'javascript' } = this.state;
     const { label = '', rows = 12, readonly = false } = this.def;
 
-    const wrap = html.take(container).div.className('flex flex-col gap-1').getContext();
+    const wrap = html.take(container).div.className('flex flex-col gap-1').ele();
 
     if (label) {
       html.take(wrap).label.className('text-sm font-medium text-gray-700').text(label);
@@ -19,7 +19,7 @@ export class CodeEditor extends BaseComponent {
 
     const editorWrap = html.take(wrap).div
       .className('relative rounded-md overflow-hidden border border-gray-700')
-      .getContext();
+      .ele();
 
     html.take(editorWrap).div
       .className('absolute top-2 right-2 z-10 text-xs bg-gray-700 text-gray-300 rounded px-2 py-0.5 select-none pointer-events-none')
@@ -32,7 +32,7 @@ export class CodeEditor extends BaseComponent {
       .attr('autocorrect', 'off')
       .attr('autocapitalize', 'off')
       .value(value)
-      .getContext();
+      .ele();
 
     if (readonly) html.take(ta).attr('readonly', '');
 

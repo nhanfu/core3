@@ -7,7 +7,7 @@ function createFluentElement<K extends keyof HTMLElementTagNameMap>(
   className = '',
   text = '',
 ): HTMLElementTagNameMap[K] {
-  const parent = html.getContext();
+  const parent = html.ele();
   const element = html.node(tag) as HTMLElementTagNameMap[K];
   html.take(element).className(className).text(text);
   html.take(parent);
@@ -187,16 +187,16 @@ export class ChatWorkspace extends BaseComponent {
     }
 
     const activeThread = threads.find((thread: any) => thread.id === this.state.activeThreadId);
-    const root = html.take(container).section.className('chat-workspace grid min-h-[560px] overflow-hidden rounded-md border').css('height', 'calc(100vh - 204px)').css('gridTemplateColumns', 'minmax(250px, 320px) minmax(0, 1fr)').getContext() as HTMLElement;
+    const root = html.take(container).section.className('chat-workspace grid min-h-[560px] overflow-hidden rounded-md border').css('height', 'calc(100vh - 204px)').css('gridTemplateColumns', 'minmax(250px, 320px) minmax(0, 1fr)').ele() as HTMLElement;
 
-    const sidebar = html.take(root).aside.className('chat-sidebar flex min-w-0 flex-col border-r').getContext() as HTMLElement;
-    const sidebarHeader = html.take(sidebar).div.className('chat-sidebar-header').getContext() as HTMLElement;
+    const sidebar = html.take(root).aside.className('chat-sidebar flex min-w-0 flex-col border-r').ele() as HTMLElement;
+    const sidebarHeader = html.take(sidebar).div.className('chat-sidebar-header').ele() as HTMLElement;
     html.take(sidebarHeader).strong.className('chat-sidebar-title').text('Messages');
-    const search = html.take(sidebarHeader).input.className('chat-search form-input w-full').getContext() as HTMLInputElement;
+    const search = html.take(sidebarHeader).input.className('chat-search form-input w-full').ele() as HTMLInputElement;
     html.take(search).type('search').prop('value', String(this.state.query || ''));
     const searchPlaceholder = String(this.def.search_placeholder || 'Search conversations...');
     html.take(search).prop('placeholder', searchPlaceholder).attr('aria-label', searchPlaceholder);
-    const threadList = html.take(sidebar).div.className('chat-thread-list min-h-0 flex-1 overflow-y-auto').getContext() as HTMLElement;
+    const threadList = html.take(sidebar).div.className('chat-thread-list min-h-0 flex-1 overflow-y-auto').ele() as HTMLElement;
 
     const renderThreads = () => {
       html.take(threadList).clear();
@@ -217,16 +217,16 @@ export class ChatWorkspace extends BaseComponent {
             thread.id === this.state.activeThreadId
               ? 'is-active'
               : ''
-          }`).type('button').attr('aria-label', `Mở cuộc trò chuyện ${thread.title}`).getContext() as HTMLButtonElement;
+          }`).type('button').attr('aria-label', `Mở cuộc trò chuyện ${thread.title}`).ele() as HTMLButtonElement;
 
-        const identity = html.take(button).div.className('chat-thread-identity').getContext() as HTMLElement;
+        const identity = html.take(button).div.className('chat-thread-identity').ele() as HTMLElement;
         html.take(identity).span.className('chat-avatar').text(initials(thread.title));
-        const heading = html.take(identity).div.className('chat-thread-heading').getContext() as HTMLElement;
+        const heading = html.take(identity).div.className('chat-thread-heading').ele() as HTMLElement;
         html.take(heading).strong.className('min-w-0 truncate').text(String(thread.title || 'Conversation'));
         html.take(heading).span.className('chat-thread-time').text(formatTimestamp(thread.updated_at));
         html.take(button).div.className('chat-thread-participants truncate text-xs').text(String(thread.participant_names || ''));
 
-        const preview = html.take(button).div.className('chat-thread-preview flex items-center gap-2').getContext() as HTMLElement;
+        const preview = html.take(button).div.className('chat-thread-preview flex items-center gap-2').ele() as HTMLElement;
         html.take(preview).span.className('min-w-0 flex-1 truncate text-xs').text(String(thread.preview || ''));
         if (Number(thread.unread_count) > 0) {
           html.take(preview).span.className('chat-unread flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold').text(String(thread.unread_count));
@@ -251,21 +251,21 @@ export class ChatWorkspace extends BaseComponent {
     });
     renderThreads();
 
-    const main = html.take(root).div.className('chat-main flex min-w-0 flex-col').getContext() as HTMLElement;
+    const main = html.take(root).div.className('chat-main flex min-w-0 flex-col').ele() as HTMLElement;
     if (!activeThread) {
       html.take(main).div.className('chat-empty flex flex-1 items-center justify-center p-8 text-center text-sm').text(String(this.def.empty_messages || 'Select a conversation'));
       return;
     }
 
-    const mainHeader = html.take(main).header.className('chat-header').getContext() as HTMLElement;
-    const headerIdentity = html.take(mainHeader).div.className('chat-header-identity').getContext() as HTMLElement;
+    const mainHeader = html.take(main).header.className('chat-header').ele() as HTMLElement;
+    const headerIdentity = html.take(mainHeader).div.className('chat-header-identity').ele() as HTMLElement;
     html.take(headerIdentity).span.className('chat-avatar chat-avatar-lg').text(initials(activeThread.title));
-    const headerCopy = html.take(headerIdentity).div.className('min-w-0').getContext() as HTMLElement;
+    const headerCopy = html.take(headerIdentity).div.className('min-w-0').ele() as HTMLElement;
     html.take(headerCopy).h2.className('truncate').text(String(activeThread.title || ''));
     html.take(headerCopy).p.className('truncate').text(String(activeThread.participant_names || ''));
     html.take(mainHeader).span.className('chat-online-status').text('● Active conversation');
 
-    const messageList = html.take(main).div.className('chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5').getContext() as HTMLElement;
+    const messageList = html.take(main).div.className('chat-message-list flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5').ele() as HTMLElement;
     const activeMessages = [
       ...messages.filter((message: any) => message.thread_id === activeThread.id),
       ...pendingMessages.filter((message: any) => message.thread_id === activeThread.id),
@@ -274,28 +274,28 @@ export class ChatWorkspace extends BaseComponent {
       html.take(messageList).p.className('chat-empty m-auto text-sm').text('Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.');
     }
     for (const message of activeMessages) {
-      const row = html.take(messageList).article.className(`chat-message flex flex-col ${message.is_own ? 'is-own items-end' : 'items-start'}`).getContext() as HTMLElement;
-      const messageMeta = html.take(row).div.className('chat-message-meta').getContext() as HTMLElement;
+      const row = html.take(messageList).article.className(`chat-message flex flex-col ${message.is_own ? 'is-own items-end' : 'items-start'}`).ele() as HTMLElement;
+      const messageMeta = html.take(row).div.className('chat-message-meta').ele() as HTMLElement;
       html.take(messageMeta).span.className('chat-avatar chat-avatar-sm').text(initials(message.sender_name));
-      const messageMetaCopy = html.take(messageMeta).span.className('chat-message-meta-copy').getContext() as HTMLElement;
+      const messageMetaCopy = html.take(messageMeta).span.className('chat-message-meta-copy').ele() as HTMLElement;
       html.take(messageMetaCopy).strong.text(String(message.sender_name || 'Unknown'));
       html.take(messageMetaCopy).time.text(formatTimestamp(message.created_at));
       html.take(row).div.className(`chat-bubble max-w-[76%] whitespace-pre-wrap break-words px-3 py-2 text-sm ${message.is_own ? 'is-own' : ''}`).text(String(message.body || ''));
       if (message.pending || message.failed) {
-        const status = html.take(row).span.className(`mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`).text(message.failed ? `✕ ${message.error || 'Failed'}` : '⟳ Sending').getContext() as HTMLElement;
+        const status = html.take(row).span.className(`mt-1 text-[11px] ${message.failed ? 'text-red-500' : 'text-slate-400'}`).text(message.failed ? `✕ ${message.error || 'Failed'}` : '⟳ Sending').ele() as HTMLElement;
         if (message.pending) html.take(status).toggleClass('animate-pulse', true);
       }
       const messageAttachments = attachments.filter(
         (attachment: any) => attachment.message_id === message.id,
       );
       if (messageAttachments.length) {
-        const attachmentRow = html.take(row).div.className('mt-1 flex flex-wrap justify-end gap-1').getContext() as HTMLElement;
+        const attachmentRow = html.take(row).div.className('mt-1 flex flex-wrap justify-end gap-1').ele() as HTMLElement;
         for (const attachment of messageAttachments) {
           const attachmentId = String(attachment.id || '');
           if (isPreviewableImage(attachment)) {
             const previewUrl = this.attachmentPreviewUrls.get(attachmentId);
             if (previewUrl) {
-              const image = html.take(attachmentRow).img.className('chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain').attr('src', previewUrl).attr('alt', String(attachment.file_name || 'Image attachment')).attr('loading', 'lazy').getContext() as HTMLImageElement;
+              const image = html.take(attachmentRow).img.className('chat-image-preview max-h-48 max-w-[280px] rounded-md border object-contain').attr('src', previewUrl).attr('alt', String(attachment.file_name || 'Image attachment')).attr('loading', 'lazy').ele() as HTMLImageElement;
               html.take(image).event('click', () => {
                 if (this.def.download_action) void this.submit(this.def.download_action, { row: { id: attachment.id, file_name: attachment.file_name } });
               });
@@ -305,7 +305,7 @@ export class ChatWorkspace extends BaseComponent {
               void this.loadAttachmentPreview(attachment);
             }
           }
-          const attachmentButton = html.take(attachmentRow).button.className('chat-attachment rounded-full border px-2 py-1 text-[11px]').text(`Tệp: ${attachment.file_name}`).getContext() as HTMLButtonElement;
+          const attachmentButton = html.take(attachmentRow).button.className('chat-attachment rounded-full border px-2 py-1 text-[11px]').text(`Tệp: ${attachment.file_name}`).ele() as HTMLButtonElement;
           html.take(attachmentButton).type('button').event('click', () => {
             if (this.def.download_action) {
               void this.submit(this.def.download_action, {
@@ -322,11 +322,11 @@ export class ChatWorkspace extends BaseComponent {
     });
 
     if (this.state.selectedFile) html.take(main).div.className('chat-selected-file border-t px-4 pb-2 text-xs').text(`Tệp đã chọn: ${this.state.selectedFile.name}`);
-    const composer = html.take(main).form.className('chat-composer flex items-end gap-2').getContext() as HTMLElement;
-    const fileInput = html.take(composer).input.type('file').prop('hidden', true).attr('aria-label', 'Chọn tệp đính kèm').getContext() as HTMLInputElement;
-    const attachButton = html.take(composer).button.className('chat-attach btn btn-secondary flex-none').text(this.state.selectedFile ? 'Đổi tệp' : 'Đính kèm').getContext() as HTMLButtonElement;
+    const composer = html.take(main).form.className('chat-composer flex items-end gap-2').ele() as HTMLElement;
+    const fileInput = html.take(composer).input.type('file').prop('hidden', true).attr('aria-label', 'Chọn tệp đính kèm').ele() as HTMLInputElement;
+    const attachButton = html.take(composer).button.className('chat-attach btn btn-secondary flex-none').text(this.state.selectedFile ? 'Đổi tệp' : 'Đính kèm').ele() as HTMLButtonElement;
     html.take(attachButton).type('button').event('click', () => html.take(fileInput).click());
-    const input = html.take(composer).textarea.className('chat-input form-input flex-1 resize-none').getContext() as HTMLTextAreaElement;
+    const input = html.take(composer).textarea.className('chat-input form-input flex-1 resize-none').ele() as HTMLTextAreaElement;
     html.take(input).prop('rows', 1).prop('maxLength', 4000).prop('placeholder', 'Nhập tin nhắn...')
       .attr('aria-label', 'Nội dung tin nhắn').prop('value', String(this.state.inputValue || ''));
     html.take(composer).button.type('submit').className('chat-send btn btn-primary flex-none').text('Gửi');

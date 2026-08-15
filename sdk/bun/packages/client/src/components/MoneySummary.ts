@@ -13,7 +13,7 @@ export class MoneySummary extends BaseComponent {
     const record = this.state.record || {};
     const root = html.take(container).section
       .className('o-document-totals')
-      .getContext();
+      .ele();
     if (this.def.title) {
       html.take(root).h3
         .className('o-document-totals-title')
@@ -21,11 +21,11 @@ export class MoneySummary extends BaseComponent {
     }
     const grid = html.take(root).div
       .className('o-document-totals-list')
-      .getContext();
+      .ele();
     for (const stat of this.def.stats || []) {
       const card = html.take(grid).div
         .className('o-document-total')
-        .getContext();
+        .ele();
       html.take(card).div
         .className('o-document-total-label')
         .text(String(stat.label || ''));

@@ -13,11 +13,11 @@ export class DocumentSummary extends BaseComponent {
     const record = this.state.record || {};
     const root = html.take(container).section
       .className('rounded-lg border border-gray-200 bg-white p-5')
-      .getContext();
+      .ele();
     const heading = html.take(root).div
       .className('flex flex-wrap items-start justify-between gap-4 border-b border-gray-100 pb-4')
-      .getContext();
-    const copy = html.take(heading).div.getContext();
+      .ele();
+    const copy = html.take(heading).div.ele();
     html.take(copy).h2
       .className('text-lg font-semibold text-gray-900')
       .text(String(record[this.def.title_field] || '—'));
@@ -37,9 +37,9 @@ export class DocumentSummary extends BaseComponent {
 
     const grid = html.take(root).div
       .className('mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 xl:grid-cols-4')
-      .getContext();
+      .ele();
     for (const field of this.def.columns || []) {
-      const item = html.take(grid).div.getContext();
+      const item = html.take(grid).div.ele();
       html.take(item).div
         .className('text-xs font-semibold uppercase tracking-wide text-gray-400')
         .text(String(field.label || ''));

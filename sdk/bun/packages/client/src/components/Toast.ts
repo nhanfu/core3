@@ -17,13 +17,13 @@ export class Toast extends BaseComponent {
 
     const wrap = html.take(container)
       .div.className(`flex items-center justify-between gap-3 px-4 py-3 rounded-lg border text-sm font-medium ${cls}`)
-      .getContext();
+      .ele();
 
     html.take(wrap).span.text(String(message));
     const close = html.take(wrap)
       .button.className('ml-auto text-current opacity-60 hover:opacity-100 transition-opacity font-bold')
       .attr('aria-label', 'Đóng')
-      .getContext();
+      .ele();
     appendIcon(close, 'x');
     html.take(close).event('click', () => this.setState({ visible: false }));
   }

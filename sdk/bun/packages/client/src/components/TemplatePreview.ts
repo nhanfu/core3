@@ -23,17 +23,17 @@ export class TemplatePreview extends BaseComponent {
     const blocks = Array.isArray(this.state.blocks) ? this.state.blocks : [];
     const root = html.take(container).section
       .className('template-preview rounded-lg border border-gray-200 bg-white p-5')
-      .getContext();
+      .ele();
 
-    const header = html.take(root).div.className('flex items-center justify-between gap-3 border-b border-gray-100 pb-4').getContext();
-    const heading = html.take(header).div.getContext();
+    const header = html.take(root).div.className('flex items-center justify-between gap-3 border-b border-gray-100 pb-4').ele();
+    const heading = html.take(header).div.ele();
     html.take(heading).h2.className('text-base font-semibold text-gray-900').text(String(template.name || 'Mẫu in'));
     html.take(heading).p.className('mt-1 text-xs text-gray-500').text(String(template.code || ''));
     const printButton = html.take(header).button
       .className('inline-flex items-center gap-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50')
       .attr('type', 'button')
       .attr('aria-label', 'In mẫu')
-      .getContext();
+      .ele();
     appendIcon(printButton, 'printer');
     html.take(printButton).span.text('In mẫu');
     html.take(printButton).event('click', () => window.print());
@@ -41,14 +41,14 @@ export class TemplatePreview extends BaseComponent {
     const paper = html.take(root).div
       .className('template-preview-paper mt-4 min-h-[180px] rounded-md border border-dashed border-gray-300 bg-gray-50 p-6')
       .attr('aria-label', 'Bản xem trước mẫu in')
-      .getContext();
+      .ele();
     if (!blocks.length) {
       html.take(paper).p.className('text-sm text-gray-500').text('Chưa có khối nội dung.');
       return;
     }
     for (const block of blocks) {
       const blockType = String(block.block_type || 'text');
-      const blockEl = html.take(paper).div.className(`template-preview-block template-preview-${blockType}`).getContext();
+      const blockEl = html.take(paper).div.className(`template-preview-block template-preview-${blockType}`).ele();
       if (blockType === 'spacer') {
         html.take(blockEl).css('height', '24px').attr('aria-label', String(block.label || 'Khoảng cách'));
         continue;

@@ -18,7 +18,7 @@ export class StatCard extends BaseComponent {
       indigo: 'border-indigo-200', blue: 'border-blue-200',
     }[color] || 'border-gray-200';
 
-    const card = html.take(container).div.className(`stat-card bg-white rounded-xl border ${borderCls} p-4 flex flex-col${state.navigate_to ? ' stat-card-clickable' : ''}`).getContext();
+    const card = html.take(container).div.className(`stat-card bg-white rounded-xl border ${borderCls} p-4 flex flex-col${state.navigate_to ? ' stat-card-clickable' : ''}`).ele();
     if (state.navigate_to) {
       html.take(card).attr('role', 'link').prop('tabIndex', 0);
       const activate = () => state.onNavigate?.(String(state.navigate_to));
@@ -31,15 +31,15 @@ export class StatCard extends BaseComponent {
     }
     html.take(card).css('minHeight', '88px');
     html.take(card).p.className('text-sm font-medium leading-4 text-gray-500').text(String(label ?? ''));
-    const valueEl = html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—')).getContext();
+    const valueEl = html.take(card).p.className('mt-1 text-2xl font-bold leading-7 text-gray-900 tabular-nums').text(String(displayValue ?? '—')).ele();
     if (state.navigate_to) {
-      const arrow = html.take(valueEl).span.className('stat-card-arrow').getContext() as HTMLSpanElement;
+      const arrow = html.take(valueEl).span.className('stat-card-arrow').ele() as HTMLSpanElement;
       appendIcon(arrow, 'arrow-right');
     }
 
     if (trend) {
-      const trendDiv = html.take(card).div.className(`flex items-center gap-1 mt-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`).getContext();
-      const trendIcon = html.take(trendDiv).span.getContext();
+      const trendDiv = html.take(card).div.className(`flex items-center gap-1 mt-1 ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`).ele();
+      const trendIcon = html.take(trendDiv).span.ele();
       appendIcon(trendIcon, trend === 'up' ? 'arrow-up' : 'arrow-down');
       html.take(trendDiv).span.className('text-xs font-medium').text(String(delta ?? ''));
     }

@@ -12,19 +12,19 @@ export class ButtonImportExcel extends BaseComponent {
     const { label = 'Import Excel', accept = '.xlsx,.xls,.csv' } = this.def;
     const disabledCls = loading ? 'opacity-60 cursor-not-allowed pointer-events-none' : '';
 
-    const wrap = html.take(container).div.className('inline-flex').getContext();
+    const wrap = html.take(container).div.className('inline-flex').ele();
 
     const fileInput = html.take(wrap)
       .input
       .type('file')
       .attr('accept', accept)
       .style('display:none;')
-      .getContext();
+      .ele();
 
     const btn = html.take(wrap)
       .button
       .className(`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors border-transparent shadow-sm ${disabledCls}`)
-      .getContext();
+      .ele();
 
     if (loading) {
       html.take(btn).attr('disabled', '');

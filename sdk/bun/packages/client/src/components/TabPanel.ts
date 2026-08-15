@@ -9,8 +9,8 @@ export class TabPanel extends BaseComponent {
 
   draw(container) {
     const { active = 0 } = this.state;
-    const wrap   = html.take(container).div.getContext();
-    const tabBar = html.take(wrap).div.className('flex border-b border-gray-200 -mb-px').getContext();
+    const wrap   = html.take(container).div.ele();
+    const tabBar = html.take(wrap).div.className('flex border-b border-gray-200 -mb-px').ele();
 
     this.tabs.forEach((tab, i) => {
       const cls = i === active
@@ -23,7 +23,7 @@ export class TabPanel extends BaseComponent {
         .event('click', () => this.setState({ active: i }));
     });
 
-    const content = html.take(wrap).div.className('pt-4').dataAttr('tab-content', '').getContext();
+    const content = html.take(wrap).div.className('pt-4').dataAttr('tab-content', '').ele();
     const currentTab = this.tabs[active];
     if (currentTab?.render) currentTab.render(content);
     else if (currentTab?.content) html.take(content).innerHTML(currentTab.content);

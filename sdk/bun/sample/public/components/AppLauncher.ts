@@ -73,18 +73,18 @@ export class AppLauncher extends BaseComponent {
   draw(container: HTMLElement) {
     const apps = this.state.apps as LauncherApp[];
     const currentApp = this.state.currentApp as LauncherApp | null;
-    const switcher = html.take(container).div.className('app-switcher').getContext();
+    const switcher = html.take(container).div.className('app-switcher').ele();
     const button = html.take(switcher).button
       .className('app-switcher-button')
       .attr('type', 'button')
       .attr('aria-label', 'Switch application')
       .attr('title', 'Switch application')
-      .getContext();
-    const icon = html.take(button).span.className('app-switcher-icon').getContext();
+      .ele();
+    const icon = html.take(button).span.className('app-switcher-icon').ele();
     appendIcon(icon, 'grid');
     this._icon = icon;
 
-    const menu = html.take(switcher).div.className('app-switcher-menu').getContext();
+    const menu = html.take(switcher).div.className('app-switcher-menu').ele();
     this._menu = menu;
     menu.addEventListener('click', (event: MouseEvent) => event.stopPropagation());
 
@@ -93,7 +93,7 @@ export class AppLauncher extends BaseComponent {
       .attr('type', 'button')
       .attr('aria-label', 'Close application launcher')
       .event('click', () => this.close())
-      .getContext();
+      .ele();
 
     const close = html.take(menu).button
       .className('launcher-close-button')
@@ -101,17 +101,17 @@ export class AppLauncher extends BaseComponent {
       .attr('aria-label', 'Close application launcher')
       .attr('title', 'Close')
       .event('click', () => this.close())
-      .getContext();
+      .ele();
     appendIcon(close, 'x');
 
-    const search = html.take(menu).div.className('launcher-search').getContext();
-    const searchIcon = html.take(search).span.className('launcher-search-icon').getContext();
+    const search = html.take(menu).div.className('launcher-search').ele();
+    const searchIcon = html.take(search).span.className('launcher-search-icon').ele();
     appendIcon(searchIcon, 'search');
     const searchInput = html.take(search).input
       .type('search')
       .attr('placeholder', 'Search applications...')
       .attr('aria-label', 'Search applications')
-      .getContext() as HTMLInputElement;
+      .ele() as HTMLInputElement;
     this._searchInput = searchInput;
     searchInput.addEventListener('input', () => this._filterApps(searchInput.value));
 
@@ -121,11 +121,11 @@ export class AppLauncher extends BaseComponent {
         .className(`app-switcher-item${app.available ? '' : ' disabled'}${currentApp?.id === app.id ? ' active' : ''}`)
         .attr('type', 'button')
         .dataAttr('launcher-app', app.id)
-        .getContext();
+        .ele();
       item.dataset.launcherSearch = searchText;
-      const itemIcon = html.take(item).span.className('app-switcher-item-icon').getContext();
+      const itemIcon = html.take(item).span.className('app-switcher-item-icon').ele();
       appendIcon(itemIcon, app.icon || 'grid');
-      const copy = html.take(item).span.className('app-switcher-item-copy').getContext();
+      const copy = html.take(item).span.className('app-switcher-item-copy').ele();
       html.take(copy).span.className('app-switcher-item-label').text(app.label || app.id);
       if (!app.available) html.take(copy).span.className('app-switcher-item-status').text('Soon');
       if (app.available) item.addEventListener('click', () => {

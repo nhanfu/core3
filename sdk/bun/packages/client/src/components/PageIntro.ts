@@ -11,8 +11,8 @@ export class PageIntro extends BaseComponent {
     const compact = Boolean(this.state.compact);
     const root = html.take(container).div
       .className(`page-intro flex items-center justify-between gap-3${compact ? ' page-intro-compact' : ''}`)
-      .getContext();
-    const copy = html.take(root).div.getContext();
+      .ele();
+    const copy = html.take(root).div.ele();
     if (!rightGreeting) {
       html.take(copy).p.className('text-sm text-slate-500').text(name ? `${greeting}, ${name}` : greeting);
     }
@@ -28,7 +28,7 @@ export class PageIntro extends BaseComponent {
     if (this.state.action_label) {
       const action = html.take(root).span.className('page-intro-action text-amber-500')
         .attr('title', String(this.state.action_label))
-        .attr('aria-label', String(this.state.action_label)).getContext() as HTMLSpanElement;
+        .attr('aria-label', String(this.state.action_label)).ele() as HTMLSpanElement;
       appendIcon(action, 'lightbulb', String(this.state.action_label));
     }
   }

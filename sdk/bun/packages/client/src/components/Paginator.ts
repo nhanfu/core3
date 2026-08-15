@@ -13,15 +13,15 @@ export class Paginator extends BaseComponent {
     const startN = total === 0 ? 0 : (page - 1) * pageSize + 1;
     const endN = Math.min(page * pageSize, total);
 
-    const wrap = html.take(container).div.className('flex items-center justify-between px-4 py-3 border border-gray-200 rounded-lg bg-white').getContext();
+    const wrap = html.take(container).div.className('flex items-center justify-between px-4 py-3 border border-gray-200 rounded-lg bg-white').ele();
     html.take(wrap).span.className('text-sm text-gray-600').text(`${startN}–${endN} of ${total}`);
 
-    const ctrl = html.take(wrap).div.className('flex items-center gap-2').getContext();
+    const ctrl = html.take(wrap).div.className('flex items-center gap-2').ele();
 
     const prevBtn = html.take(ctrl)
       .button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')
       .text('← Prev')
-      .getContext();
+      .ele();
     if (page <= 1) html.take(prevBtn).attr('disabled', '');
 
     html.take(ctrl).span.className('text-sm text-gray-500 px-1').text(`${page} / ${totalPages}`);
@@ -29,7 +29,7 @@ export class Paginator extends BaseComponent {
     const nextBtn = html.take(ctrl)
       .button.className('px-3 py-1 text-sm border rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed')
       .text('Next →')
-      .getContext();
+      .ele();
     if (page >= totalPages) html.take(nextBtn).attr('disabled', '');
 
     html.take(prevBtn).event('click', () => {

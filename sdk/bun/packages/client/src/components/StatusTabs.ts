@@ -39,7 +39,7 @@ export class StatusTabs extends BaseComponent {
       : this.variant === 'contained'
         ? 'status-tabs-contained flex min-w-max items-end gap-5 rounded-t-lg border-x border-t border-slate-200 bg-white px-4 pt-1'
       : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4'}`)
-      .attr('role', 'tablist').attr('aria-label', 'Bộ lọc trạng thái').getContext() as HTMLDivElement;
+      .attr('role', 'tablist').attr('aria-label', 'Bộ lọc trạng thái').ele() as HTMLDivElement;
 
     for (const tab of this.tabs) {
       const selected = tab.id === active;
@@ -64,7 +64,7 @@ export class StatusTabs extends BaseComponent {
             : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900',
         tab.disabled ? 'cursor-not-allowed opacity-50' : '',
       ].filter(Boolean).join(' ')).text(tab.label).attr('role', 'tab').attr('aria-selected', String(selected))
-        .getContext() as HTMLButtonElement;
+        .ele() as HTMLButtonElement;
       if (tab.disabled) html.take(button).prop('disabled', true);
 
       if (this.showCounts && tab.count !== undefined) {

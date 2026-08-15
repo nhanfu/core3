@@ -15,7 +15,7 @@ export class Image extends BaseComponent {
     const roundedCls = d.rounded ? 'rounded-full' : 'rounded-md';
     const borderCls = d.border ? 'border border-gray-200' : '';
 
-    const wrap = html.take(container).div.className('inline-block').getContext();
+    const wrap = html.take(container).div.className('inline-block').ele();
 
     const styleStr = [
       width ? `width:${typeof width === 'number' ? width + 'px' : width};` : '',
@@ -26,7 +26,7 @@ export class Image extends BaseComponent {
       const placeholder = html.take(wrap).div
         .className(`flex items-center justify-center bg-gray-100 text-gray-400 text-2xl ${roundedCls} ${borderCls}`)
         .style(styleStr || 'width:100px;height:100px;')
-        .getContext();
+        .ele();
       appendIcon(placeholder, 'image');
       return;
     }
@@ -36,6 +36,6 @@ export class Image extends BaseComponent {
       .attr('src', src)
       .attr('alt', alt || '')
       .style(`object-fit:${objectFit};${styleStr}`)
-      .getContext();
+      .ele();
   }
 }

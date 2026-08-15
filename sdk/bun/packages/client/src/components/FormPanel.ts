@@ -66,12 +66,12 @@ export class FormPanel extends BaseComponent {
 
   draw(container) {
     const { saving = false } = this.state;
-    const panel = html.take(container).div.className('token-form-panel bg-white rounded-xl border border-gray-200 p-6').getContext();
+    const panel = html.take(container).div.className('token-form-panel bg-white rounded-xl border border-gray-200 p-6').ele();
 
     if (this.def.title) html.take(panel).h3.className('token-form-heading text-lg font-semibold text-gray-900 mb-5').text(this.def.title);
 
     if (saving) {
-      const savDiv = html.take(panel).div.className('mb-3 text-sm text-indigo-600 flex items-center gap-2').getContext();
+      const savDiv = html.take(panel).div.className('mb-3 text-sm text-indigo-600 flex items-center gap-2').ele();
       html.take(savDiv).span.className('animate-spin inline-block').text('⟳');
       html.take(savDiv).text(' Saving…');
     }

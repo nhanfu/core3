@@ -10,7 +10,7 @@ export class TextareaInput extends BaseComponent {
   draw(container) {
     const { value = '' } = this.state;
     const d = this.def;
-    const wrap = html.take(container).div.className('flex flex-col gap-1').getContext();
+    const wrap = html.take(container).div.className('flex flex-col gap-1').ele();
 
     if (d.label) html.take(wrap).label.className('token-form-label text-sm font-medium text-gray-700').text(d.label);
 
@@ -18,7 +18,7 @@ export class TextareaInput extends BaseComponent {
       .textArea
       .className('token-form-control w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-y')
       .attr('rows', String(d.rows || 3))
-      .getContext();
+      .ele();
 
     if (d.placeholder) html.take(ta).attr('placeholder', d.placeholder);
     html.take(ta).prop('value', String(value)).event('input', e => this.setState({ value: e.target.value }, false));

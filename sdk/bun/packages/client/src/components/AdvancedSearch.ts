@@ -15,19 +15,19 @@ export class AdvancedSearch extends BaseComponent {
 
     const wrap = html.take(container).div
       .className('flex flex-col gap-3 p-4 bg-white border border-gray-200 rounded-xl')
-      .getContext();
+      .ele();
 
-    const rowsEl = html.take(wrap).div.className('flex flex-col gap-2').getContext();
+    const rowsEl = html.take(wrap).div.className('flex flex-col gap-2').ele();
 
     filters.forEach((filter, idx) => {
-      const row = html.take(rowsEl).div.className('flex gap-2 items-center').getContext();
+      const row = html.take(rowsEl).div.className('flex gap-2 items-center').ele();
 
       const fieldSel = html.take(row)
         .select.className('text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
-        .getContext();
+        .ele();
       html.take(fieldSel).option.value('').text('Field');
       for (const f of fields) {
-        const opt = html.take(fieldSel).option.value(f).text(f).getContext();
+        const opt = html.take(fieldSel).option.value(f).text(f).ele();
         if (filter.field === f) html.take(opt).attr('selected', '');
       }
       html.take(fieldSel).event('change', e => {
@@ -37,9 +37,9 @@ export class AdvancedSearch extends BaseComponent {
 
       const opSel = html.take(row)
         .select.className('text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
-        .getContext();
+        .ele();
       for (const op of operators) {
-        const opt = html.take(opSel).option.value(op).text(op).getContext();
+        const opt = html.take(opSel).option.value(op).text(op).ele();
         if (filter.operator === op) html.take(opt).attr('selected', '');
       }
       html.take(opSel).event('change', e => {
@@ -50,7 +50,7 @@ export class AdvancedSearch extends BaseComponent {
       const valInp = html.take(row).input.type('text')
         .className('flex-1 text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
         .value(filter.value || '')
-        .getContext();
+        .ele();
       html.take(valInp).event('input', e => {
         const newFilters = this.state.filters.map((fil, i) => i === idx ? { ...fil, value: e.target.value } : fil);
         this.setState({ filters: newFilters }, false);
@@ -58,7 +58,7 @@ export class AdvancedSearch extends BaseComponent {
 
       const removeBtn = html.take(row).button
         .className('text-gray-400 hover:text-red-500 transition-colors text-xl leading-none px-1')
-        .getContext();
+        .ele();
       appendIcon(removeBtn, 'x');
       html.take(removeBtn).event('click', () => {
         const newFilters = this.state.filters.filter((_, i) => i !== idx);
@@ -66,12 +66,12 @@ export class AdvancedSearch extends BaseComponent {
       });
     });
 
-    const actions = html.take(wrap).div.className('flex gap-2 pt-1').getContext();
+    const actions = html.take(wrap).div.className('flex gap-2 pt-1').ele();
 
     const addBtn = html.take(actions).button
       .className('text-sm px-3 py-1.5 border border-dashed border-gray-300 text-gray-500 hover:border-indigo-500 hover:text-indigo-600 rounded-md transition-colors')
       .text('+ Add Filter')
-      .getContext();
+      .ele();
     html.take(addBtn).event('click', () => {
       const newFilters = [...this.state.filters, { field: '', operator: 'equals', value: '' }];
       this.setState({ filters: newFilters });
@@ -80,7 +80,7 @@ export class AdvancedSearch extends BaseComponent {
     const applyBtn = html.take(actions).button
       .className('ml-auto text-sm px-4 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors font-medium')
       .text('Apply')
-      .getContext();
+      .ele();
     html.take(applyBtn).event('click', () => {
       this.submit('search.filter', { filters: this.state.filters });
     });

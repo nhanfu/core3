@@ -43,9 +43,9 @@ export class Dialog extends BaseComponent {
   draw(container: HTMLElement) {
     if (this.state.open === false) return;
 
-    const overlay = html.take(container).div.className('dialog-overlay').attr('aria-hidden', 'false').getContext() as HTMLDivElement;
+    const overlay = html.take(container).div.className('dialog-overlay').attr('aria-hidden', 'false').ele() as HTMLDivElement;
 
-    const dialog = html.take(overlay).div.className('dialog').attr('role', 'dialog').attr('aria-modal', 'true').getContext() as HTMLDivElement;
+    const dialog = html.take(overlay).div.className('dialog').attr('role', 'dialog').attr('aria-modal', 'true').ele() as HTMLDivElement;
 
     const titleId = `dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     html.take(dialog).h2.className('dialog-title').id(titleId).text(this.options.title || 'Dialog');
@@ -57,21 +57,21 @@ export class Dialog extends BaseComponent {
     const input = this.options.input
       ? html.take(dialog).label.className('dialog-field').text(this.options.input.label || '').input
         .className('dialog-input').type('text').value(this.options.input.value || '')
-        .attr('placeholder', this.options.input.placeholder || '').prop('required', true).getContext() as HTMLInputElement
+        .attr('placeholder', this.options.input.placeholder || '').prop('required', true).ele() as HTMLInputElement
       : null;
     if (input) {
     }
 
     const tagInputs = new Map<string, HTMLInputElement[]>();
     for (const group of this.options.tagGroups || []) {
-      const field = html.take(dialog).fieldset.className('dialog-tags').getContext() as HTMLFieldSetElement;
+      const field = html.take(dialog).fieldset.className('dialog-tags').ele() as HTMLFieldSetElement;
       html.take(field).legend.text(group.label);
-      const choices = html.take(field).div.className('dialog-tag-choices').getContext() as HTMLDivElement;
+      const choices = html.take(field).div.className('dialog-tag-choices').ele() as HTMLDivElement;
       const inputs: HTMLInputElement[] = [];
       for (const option of group.options) {
-        const label = html.take(choices).label.className('dialog-tag').getContext() as HTMLLabelElement;
+        const label = html.take(choices).label.className('dialog-tag').ele() as HTMLLabelElement;
         const checkbox = html.take(label).input.type('checkbox').value(option.value)
-          .prop('checked', group.values?.includes(option.value) || false).getContext() as HTMLInputElement;
+          .prop('checked', group.values?.includes(option.value) || false).ele() as HTMLInputElement;
         if (group.multiple === false) html.take(checkbox).event('change', () => {
           if (!checkbox.checked) return;
           for (const other of inputs) if (other !== checkbox) html.take(other).prop('checked', false);
@@ -82,7 +82,7 @@ export class Dialog extends BaseComponent {
       tagInputs.set(group.id, inputs);
     }
 
-    const footer = html.take(dialog).div.className('dialog-footer').getContext() as HTMLDivElement;
+    const footer = html.take(dialog).div.className('dialog-footer').ele() as HTMLDivElement;
     const close = (notifyCancel = true) => {
       if (this.onKeyDown) html.take(document).off('keydown', this.onKeyDown);
       this.onKeyDown = null;
@@ -92,7 +92,7 @@ export class Dialog extends BaseComponent {
     };
 
     const cancel = html.take(footer).button.type('button').className('dialog-cancel')
-      .text(this.options.cancelLabel || 'Cancel').event('click', close).getContext() as HTMLButtonElement;
+      .text(this.options.cancelLabel || 'Cancel').event('click', close).ele() as HTMLButtonElement;
 
     if (this.options.dangerLabel && this.options.onDanger) {
       html.take(footer).button.type('button').className('dialog-danger').text(this.options.dangerLabel)

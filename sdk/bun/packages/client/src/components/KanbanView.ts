@@ -55,11 +55,11 @@ export class KanbanView extends BaseComponent {
       group.rows.push(row);
     }
 
-    const board = html.take(container).div.className('o-kanban-board').getContext();
+    const board = html.take(container).div.className('o-kanban-board').ele();
     for (const group of groups) {
-      const column = html.take(board).section.className('o-kanban-column').dataAttr('kanban-group', group.value).getContext();
-      const header = html.take(column).header.className('o-kanban-column-header').getContext();
-      const heading = html.take(header).div.className('o-kanban-column-title').getContext();
+      const column = html.take(board).section.className('o-kanban-column').dataAttr('kanban-group', group.value).ele();
+      const header = html.take(column).header.className('o-kanban-column-header').ele();
+      const heading = html.take(header).div.className('o-kanban-column-title').ele();
       if (group.color) html.take(heading).toggleClass(`is-${group.color}`, true);
       html.take(heading).span.text(group.label);
       if (this.options.onEditStatus) {
@@ -73,12 +73,12 @@ export class KanbanView extends BaseComponent {
       html.take(header).span.className('o-kanban-count').text(String(group.rows.length));
       if (this.options.onAddStatus && group === groups[groups.length - 1]) {
         const addLabel = this.options.stateEditor?.labels?.add_status || '';
-        const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', addLabel).attr('title', addLabel).getContext();
+        const add = html.take(header).button.className('o-kanban-add-status').attr('aria-label', addLabel).attr('title', addLabel).ele();
         appendIcon(add, 'plus');
         html.take(add).event('click', () => this.openAddStatusDialog());
       }
 
-      const cards = html.take(column).div.className('o-kanban-cards').getContext();
+      const cards = html.take(column).div.className('o-kanban-cards').ele();
       if (this.options.onMove) {
         html.take(cards).event('dragover', (event: DragEvent) => { event.preventDefault(); html.take(cards).toggleClass('is-drop-target', true); }).event('dragleave', () => html.take(cards).toggleClass('is-drop-target', false)).event('drop', (event: DragEvent) => {
           event.preventDefault();
@@ -93,7 +93,7 @@ export class KanbanView extends BaseComponent {
   }
 
   private drawCard(container: HTMLElement, row: ListRow, index: number) {
-    const card = html.take(container).div.className('o-kanban-card').dataAttr('row-id', this.rowId(row, index)).getContext();
+    const card = html.take(container).div.className('o-kanban-card').dataAttr('row-id', this.rowId(row, index)).ele();
     if (this.options.openAction || this.options.doubleClickAction || this.options.onSelect) {
       html.take(card).prop('tabIndex', 0).attr('role', this.options.onSelect ? 'button' : 'link');
       let clickTimer: ReturnType<typeof setTimeout> | undefined;
@@ -140,11 +140,11 @@ export class KanbanView extends BaseComponent {
     }
     const fields = cardDef?.fields || [];
     if (!fields.length) return;
-    const details = html.take(card).div.className('o-kanban-card-fields').getContext();
+    const details = html.take(card).div.className('o-kanban-card-fields').ele();
     for (const field of fields) {
       const value = row[field.field];
       if (value == null || value === '') continue;
-      const line = html.take(details).div.getContext();
+      const line = html.take(details).div.ele();
       if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
       html.take(line).span.className('o-kanban-card-field-value').text(String(value));
     }
@@ -152,7 +152,7 @@ export class KanbanView extends BaseComponent {
 
   private openAddStatusDialog() {
     if (!this.options.onAddStatus) return;
-    const host = html.take(document.body).div.getContext() as HTMLDivElement;
+    const host = html.take(document.body).div.ele() as HTMLDivElement;
     const modal = this.options.stateEditor?.modals?.add || {};
     const dialog = new Dialog(`kanban-add-status-${Date.now()}`, { open: true }, {
       title: modal.title,
@@ -174,7 +174,7 @@ export class KanbanView extends BaseComponent {
       if (transition.to === stateId) fromStates.push(...from);
       if (from.includes(stateId)) toStates.push(transition.to);
     }
-    const host = html.take(document.body).div.getContext() as HTMLDivElement;
+    const host = html.take(document.body).div.ele() as HTMLDivElement;
     const modal = this.options.stateEditor?.modals?.edit || {};
     const dialog = new Dialog(`kanban-edit-status-${Date.now()}`, { open: true }, {
       title: modal.title,
@@ -194,7 +194,7 @@ export class KanbanView extends BaseComponent {
     const options = (this.options.view.groups || []).filter(group => String(group.value) !== stateId).map(group => ({
       value: String(group.value), label: String(group.label || group.value),
     }));
-    const host = html.take(document.body).div.getContext() as HTMLDivElement;
+    const host = html.take(document.body).div.ele() as HTMLDivElement;
     const modal = this.options.stateEditor?.modals?.delete || {};
     const dialog = new Dialog(`kanban-delete-status-${Date.now()}`, { open: true }, {
       title: modal.title,

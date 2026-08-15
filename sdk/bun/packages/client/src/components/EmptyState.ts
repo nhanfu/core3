@@ -7,9 +7,9 @@ export class EmptyState extends BaseComponent {
     const { title = 'No records', description = '', action = null } = this.state;
     const wrap = html.take(container).div
       .className('flex flex-col items-center justify-center py-12 px-4 w-full text-center')
-      .getContext();
+      .ele();
 
-    const icon = html.take(wrap).div.className('text-5xl mb-4').getContext();
+    const icon = html.take(wrap).div.className('text-5xl mb-4').ele();
     appendIcon(icon, 'file');
     html.take(wrap).p.className('text-base font-semibold text-gray-900').text(String(title));
 

@@ -10,10 +10,10 @@ export class TextInput extends BaseComponent {
   draw(container) {
     const { value = '', error = null } = this.state;
     const d = this.def;
-    const wrap = html.take(container).div.className('flex flex-col gap-1').getContext();
+    const wrap = html.take(container).div.className('flex flex-col gap-1').ele();
 
     if (d.label) {
-      const lbl = html.take(wrap).label.className('token-form-label text-sm font-medium text-gray-700').getContext();
+      const lbl = html.take(wrap).label.className('token-form-label text-sm font-medium text-gray-700').ele();
       html.take(lbl).text(d.label);
       if (d.required) html.take(lbl).span.className('text-red-500').text(' *');
     }
@@ -24,7 +24,7 @@ export class TextInput extends BaseComponent {
       .input.type('text')
       .className(`token-form-control w-full px-3 py-2 text-sm border ${borderCls} rounded-md focus:outline-none focus:ring-2 ${bgCls}`)
       .value(String(value))
-      .getContext();
+      .ele();
 
     if (d.readonly)    html.take(inp).attr('readonly', '');
     if (d.placeholder) html.take(inp).attr('placeholder', d.placeholder);

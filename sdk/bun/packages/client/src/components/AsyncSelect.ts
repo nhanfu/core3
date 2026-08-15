@@ -53,7 +53,7 @@ export class AsyncSelect extends BaseComponent {
     for (const value of this.selected) {
       const option = this.options().find(candidate => candidate.value === value);
       if (!option) continue;
-      const chip = html.take(this.selectedElement).span.className('async-select-chip').text(option.label).getContext() as HTMLSpanElement;
+      const chip = html.take(this.selectedElement).span.className('async-select-chip').text(option.label).ele() as HTMLSpanElement;
       if (this.def.multiple) {
         html.take(chip).button.type('button').className('async-select-chip-remove')
           .attr('aria-label', `Bỏ chọn ${option.label}`).text('×').event('click', () => {
@@ -86,12 +86,12 @@ export class AsyncSelect extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const root = html.take(container).div.className('async-select').getContext() as HTMLDivElement;
+    const root = html.take(container).div.className('async-select').ele() as HTMLDivElement;
     this.rootElement = root;
-    const hidden = html.take(root).input.type('hidden').attr('name', this.id).getContext() as HTMLInputElement;
+    const hidden = html.take(root).input.type('hidden').attr('name', this.id).ele() as HTMLInputElement;
     this.input = hidden;
 
-    const selected = html.take(root).div.className('async-select-selected').getContext() as HTMLDivElement;
+    const selected = html.take(root).div.className('async-select-selected').ele() as HTMLDivElement;
     this.selectedElement = selected;
 
     const search = html.take(root).input.type('search').className('async-select-search')
@@ -100,10 +100,10 @@ export class AsyncSelect extends BaseComponent {
       .event('input', () => {
       this.query = search.value;
       this.renderOptions();
-      }).getContext() as HTMLInputElement;
+      }).ele() as HTMLInputElement;
 
     const list = html.take(root).div.className('async-select-options').attr('role', 'listbox')
-      .attr('aria-multiselectable', String(!!this.def.multiple)).getContext() as HTMLDivElement;
+      .attr('aria-multiselectable', String(!!this.def.multiple)).ele() as HTMLDivElement;
     this.listElement = list;
     this.syncValue();
     this.renderOptions();

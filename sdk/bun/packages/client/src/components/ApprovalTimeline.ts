@@ -13,7 +13,7 @@ export class ApprovalTimeline extends BaseComponent {
     const events = Array.isArray(this.state.events) ? this.state.events : [];
     const root = html.take(container).section
       .className('rounded-lg border border-gray-200 bg-white p-5')
-      .getContext();
+      .ele();
     html.take(root).h3
       .className('mb-4 text-sm font-semibold text-gray-900')
       .text(String(this.def.title || 'Approval history'));
@@ -25,16 +25,16 @@ export class ApprovalTimeline extends BaseComponent {
       return;
     }
 
-    const list = html.take(root).ul.className('space-y-0').getContext();
+    const list = html.take(root).ul.className('space-y-0').ele();
     events.forEach((event: any, index: number) => {
-      const row = html.take(list).li.className('relative flex gap-3 pb-5 last:pb-0').getContext();
-      const rail = html.take(row).div.className('relative flex w-5 flex-none justify-center').getContext();
+      const row = html.take(list).li.className('relative flex gap-3 pb-5 last:pb-0').ele();
+      const rail = html.take(row).div.className('relative flex w-5 flex-none justify-center').ele();
       html.take(rail).span.className('mt-1.5 h-2.5 w-2.5 rounded-full bg-indigo-500 ring-4 ring-indigo-50');
       if (index < events.length - 1) {
         html.take(rail).span.className('absolute left-1/2 top-4 h-full w-px -translate-x-1/2 bg-gray-200');
       }
-      const content = html.take(row).div.className('min-w-0 flex-1').getContext();
-      const header = html.take(content).div.className('flex flex-wrap items-center justify-between gap-2').getContext();
+      const content = html.take(row).div.className('min-w-0 flex-1').ele();
+      const header = html.take(content).div.className('flex flex-wrap items-center justify-between gap-2').ele();
       const configuredAction = event[this.def.action_field || 'action_label'];
       const rawAction = event.action;
       const actionLabel = (rawAction && this.def.action_labels?.[rawAction]) || configuredAction || rawAction || 'Activity';

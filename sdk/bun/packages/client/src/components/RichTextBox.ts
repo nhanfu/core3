@@ -11,29 +11,29 @@ export class RichTextBox extends BaseComponent {
     const { value = '', placeholder = '' } = this.state;
     const d = this.def;
     const rows = d.rows || 6;
-    const wrap = html.take(container).div.className('flex flex-col gap-1').getContext();
+    const wrap = html.take(container).div.className('flex flex-col gap-1').ele();
 
     if (d.label) {
       html.take(wrap).label.className('token-form-label text-sm font-medium text-gray-700').text(d.label);
     }
 
-    const toolbar = html.take(wrap).div.className('token-form-toolbar flex gap-1 px-2 py-1 border border-b-0 border-gray-300 rounded-t-md bg-gray-50').getContext();
+    const toolbar = html.take(wrap).div.className('token-form-toolbar flex gap-1 px-2 py-1 border border-b-0 border-gray-300 rounded-t-md bg-gray-50').ele();
 
     const boldBtn = html.take(toolbar).button
       .className('px-2 py-0.5 text-sm font-bold text-gray-600 hover:bg-gray-200 rounded')
       .text('B')
-      .getContext();
+      .ele();
 
     const italicBtn = html.take(toolbar).button
       .className('px-2 py-0.5 text-sm italic text-gray-600 hover:bg-gray-200 rounded')
       .text('I')
-      .getContext();
+      .ele();
 
     const editor = html.take(wrap).div
       .className('token-form-control w-full px-3 py-2 text-sm border border-gray-300 rounded-b-md bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 overflow-y-auto')
       .attr('contenteditable', 'true')
       .style(`min-height: ${rows * 1.5}rem;`)
-      .getContext();
+      .ele();
 
     if (value) {
       html.take(editor).innerHTML(value);

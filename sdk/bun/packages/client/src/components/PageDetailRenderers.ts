@@ -27,7 +27,7 @@ async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
     { record: sourceResult.data || {} },
     def,
   );
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
 }
@@ -99,7 +99,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     },
     formDef,
   );
-  const slot = html.take(targetContainer).div.className('o-form-view-slot').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.className('o-form-view-slot').ele() as HTMLElement;
   comp._onAction = async (actionId: string, params: any) => {
     const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
     if (!actionDef) return;
@@ -139,7 +139,7 @@ async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
     { record: sourceResult.data || {} },
     def,
   );
-  const slot = html.take(targetContainer).div.className('o-form-section o-form-totals-slot').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.className('o-form-section o-form-totals-slot').ele() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
 }
@@ -152,7 +152,7 @@ async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
     { events: sourceResult.data || [] },
     def,
   );
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, data => comp.setState({ events: data.data || [] }, true));
 }
@@ -195,7 +195,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) return handleAction(actionDef, params?.row || params || {});
   };
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   comp.mount(slot);
 
   bindSource(threadSource, data => _origSetState({ threads: data.data || [] }, true));
@@ -247,7 +247,7 @@ async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
     const next = { ...(filterState[sourceId] || {}), [field]: params?.status };
     await applySourceFilters(sourceId, next);
   };
-  const slot = html.take(targetContainer).div.css('marginBottom', '16px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '16px').ele() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, () => { if (def.show_counts !== false) void refreshStatusTabCounts(def.source, comp, def); });
 }
@@ -317,7 +317,7 @@ async function renderListToolbar(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params || {});
   };
-  const slot = html.take(targetContainer).div.css('marginBottom', '16px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '16px').ele() as HTMLElement;
   comp.mount(slot);
 }
 
@@ -346,7 +346,7 @@ async function renderChart(def: any, targetContainer: HTMLElement) {
     def
   );
 
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   if (def.layout === 'inline') {
     html.take(slot).css('display', 'inline-block').css('verticalAlign', 'top').css('marginRight', '16px');
   }
@@ -361,17 +361,17 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
   );
   if (!visibleTabs.length) return;
 
-  const wrap = html.take(targetContainer).div.className('tab-group').getContext() as HTMLElement;
-  const tabBar = html.take(wrap).div.className('tab-bar').attr('role', 'tablist').getContext() as HTMLElement;
+  const wrap = html.take(targetContainer).div.className('tab-group').ele() as HTMLElement;
+  const tabBar = html.take(wrap).div.className('tab-bar').attr('role', 'tablist').ele() as HTMLElement;
   const panels: HTMLElement[] = [];
   for (const [i, tab] of visibleTabs.entries()) {
-    const panel = html.take(wrap).div.className(`tab-panel${i === 0 ? '' : ' tab-panel-hidden'}`).id(`${config.page.id}-tab-panel-${i}`).attr('role', 'tabpanel').getContext() as HTMLElement;
+    const panel = html.take(wrap).div.className(`tab-panel${i === 0 ? '' : ' tab-panel-hidden'}`).id(`${config.page.id}-tab-panel-${i}`).attr('role', 'tabpanel').ele() as HTMLElement;
     panels.push(panel);
     for (const nestedDef of (tab.components || [])) await renderComponentDef(nestedDef, panel);
   }
 
   const tabBtns = visibleTabs.map((tab, i) => {
-    const btn = html.take(tabBar).button.type('button').replaceText(tab.label).className(`tab-button${i === 0 ? ' is-active' : ''}`).attr('aria-selected', String(i === 0)).attr('role', 'tab').id(`${config.page.id}-tab-${i}`).attr('aria-controls', panels[i].id).getContext() as HTMLButtonElement;
+    const btn = html.take(tabBar).button.type('button').replaceText(tab.label).className(`tab-button${i === 0 ? ' is-active' : ''}`).attr('aria-selected', String(i === 0)).attr('role', 'tab').id(`${config.page.id}-tab-${i}`).attr('aria-controls', panels[i].id).ele() as HTMLButtonElement;
     html.take(panels[i]).attr('aria-labelledby', btn.id);
     return btn;
   });
@@ -395,7 +395,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -409,7 +409,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -420,7 +420,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -431,7 +431,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -442,21 +442,21 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
     case 'PageIntro': {
       const { PageIntro } = await import('./PageIntro.ts');
       const component = new PageIntro(def.id || `${config.page.id}-intro`, def);
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
     case 'ComingSoon': {
       const { ComingSoon } = await import('@core3/client/components/ComingSoon');
       const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);
-      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -521,10 +521,10 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
           const actionDef = (config.actions || []).find(a => a.id === actionId);
           if (actionDef) await handleAction(actionDef, row);
         };
-      const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+      const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
         comp.mount(slot);
       } else {
-        console.warn(`[page-renderer] Unknown component type: ${def.type}`);
+        console.error(`[page-renderer] Unknown component type: ${def.type}`);
       }
   }
 }
@@ -538,7 +538,7 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
       blocks: (dataMap[def.source]?.data || []) as Array<Record<string, unknown>>,
     },
   );
-  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
   component.mount(slot);
   bindSource(def.source, data => component.setState({
     blocks: Array.isArray(data.data) ? data.data : [],

@@ -8,17 +8,17 @@ export class Form extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const section = html.take(container).section.className(this.def.class || 'drawer-section').getContext() as HTMLElement;
+    const section = html.take(container).section.className(this.def.class || 'drawer-section').ele() as HTMLElement;
     if (this.def.title) {
       html.take(section).div.className('drawer-section-title').text(this.def.title);
     }
-    const form = html.take(section).div.getContext() as HTMLDivElement;
-    const error = html.take(form).div.className('alert alert-error').prop('hidden', true).getContext() as HTMLDivElement;
+    const form = html.take(section).div.ele() as HTMLDivElement;
+    const error = html.take(form).div.className('alert alert-error').prop('hidden', true).ele() as HTMLDivElement;
     const inputs: Record<string, HTMLInputElement> = {};
     for (const field of this.def.fields || []) {
-      const group = html.take(form).div.className('form-group').getContext() as HTMLDivElement;
+      const group = html.take(form).div.className('form-group').ele() as HTMLDivElement;
       html.take(group).label.className('form-label').text(`${field.label || field.field}${field.required ? ' *' : ''}`);
-      const input = html.take(group).input.type(field.type || 'text').className('form-input').attr('placeholder', field.placeholder || '').getContext() as HTMLInputElement;
+      const input = html.take(group).input.type(field.type || 'text').className('form-input').attr('placeholder', field.placeholder || '').ele() as HTMLInputElement;
       inputs[field.field] = input;
     }
     const button = html.take(form).button.type('button').className(`btn btn-${this.def.submit_variant || 'primary'} btn-sm`)
@@ -41,7 +41,7 @@ export class Form extends BaseComponent {
       } finally {
         html.take(button).prop('disabled', false);
       }
-      }).getContext() as HTMLButtonElement;
+      }).ele() as HTMLButtonElement;
   }
 
   private validate(values: Record<string, string>) {

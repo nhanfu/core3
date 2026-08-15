@@ -37,10 +37,10 @@ export class OdooChatter extends BaseComponent {
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
     const followerCandidates = Array.isArray(this.state.followerCandidates) ? this.state.followerCandidates : [];
     const chatter = html.take(container).aside.className('o-form-chatter')
-      .attr('aria-label', String(this.def.chatter_label || 'Chatter')).getContext() as HTMLElement;
+      .attr('aria-label', String(this.def.chatter_label || 'Chatter')).ele() as HTMLElement;
 
-    const top = html.take(chatter).div.className('o-form-chatter-top').getContext() as HTMLDivElement;
-    const topbar = html.take(top).div.className('o-form-chatter-topbar').getContext() as HTMLDivElement;
+    const top = html.take(chatter).div.className('o-form-chatter-top').ele() as HTMLDivElement;
+    const topbar = html.take(top).div.className('o-form-chatter-topbar').ele() as HTMLDivElement;
 
     const composerMode = String(this.state.composerMode || '');
     const actions = [
@@ -55,7 +55,7 @@ export class OdooChatter extends BaseComponent {
         .event('click', () => this.setState({ composerMode: composerMode === item.mode ? '' : item.mode }));
     }
 
-    const tools = html.take(topbar).div.className('o-form-chatter-tools').getContext() as HTMLDivElement;
+    const tools = html.take(topbar).div.className('o-form-chatter-tools').ele() as HTMLDivElement;
     if (this.def.attachment_source) {
       const attachmentTool = this.renderToolMenu(tools, {
         icon: 'file',
@@ -87,7 +87,7 @@ export class OdooChatter extends BaseComponent {
     const activeAction = actions.find(item => item.mode === composerMode);
     if (activeAction) this.renderComposer(activeAction, record, top);
 
-    const stream = html.take(chatter).section.className('o-form-chatter-stream').getContext() as HTMLElement;
+    const stream = html.take(chatter).section.className('o-form-chatter-stream').ele() as HTMLElement;
     html.take(stream).h2.text(String(this.def.chatter_label || 'Messages and activities'));
     if (!messages.length) {
       html.take(stream).p.className('o-form-chatter-empty').text(String(this.def.chatter_empty || 'No messages or activities yet'));
@@ -96,32 +96,32 @@ export class OdooChatter extends BaseComponent {
   }
 
   private renderToolMenu(parent: HTMLElement, options: { icon: string; count: number; label: string }) {
-    const details = html.take(parent).details.className('o-form-chatter-tool-menu').getContext() as HTMLDetailsElement;
+    const details = html.take(parent).details.className('o-form-chatter-tool-menu').ele() as HTMLDetailsElement;
     const summary = html.take(details).summary.className('o-form-chatter-tool')
-      .attr('aria-label', `${options.count} ${options.label.toLocaleLowerCase()}`).attr('title', `${options.count} ${options.label.toLocaleLowerCase()}`).getContext() as HTMLElement;
+      .attr('aria-label', `${options.count} ${options.label.toLocaleLowerCase()}`).attr('title', `${options.count} ${options.label.toLocaleLowerCase()}`).ele() as HTMLElement;
     appendIcon(summary, options.icon);
     html.take(summary).sup.text(String(options.count));
-    const menu = html.take(details).div.className('o-form-chatter-tool-dropdown').getContext() as HTMLDivElement;
+    const menu = html.take(details).div.className('o-form-chatter-tool-dropdown').ele() as HTMLDivElement;
     html.take(menu).h3.text(options.label);
-    const content = html.take(menu).div.className('o-form-chatter-tool-content').getContext() as HTMLDivElement;
+    const content = html.take(menu).div.className('o-form-chatter-tool-content').ele() as HTMLDivElement;
     return { details, content };
   }
 
   private renderComposer(item: { action: unknown; mode: string }, record: any, parent: HTMLElement) {
-    const composer = html.take(parent).form.className(`o-form-composer is-${item.mode}`).getContext() as HTMLFormElement;
+    const composer = html.take(parent).form.className(`o-form-composer is-${item.mode}`).ele() as HTMLFormElement;
     const placeholder = String(item.mode === 'message'
       ? this.def.message_placeholder || 'Write a message…'
       : item.mode === 'note'
         ? this.def.note_placeholder || 'Log an internal note…'
         : this.def.activity_placeholder || 'Describe the activity…');
-    const input = html.take(composer).textArea.attr('placeholder', placeholder).getContext() as HTMLTextAreaElement;
+    const input = html.take(composer).textArea.attr('placeholder', placeholder).ele() as HTMLTextAreaElement;
     html.take(input).attr('aria-label', input.placeholder).prop('required', true);
-    const actions = html.take(composer).div.className('o-form-composer-actions').getContext() as HTMLDivElement;
+    const actions = html.take(composer).div.className('o-form-composer-actions').ele() as HTMLDivElement;
     const submit = html.take(actions).button.type('submit').className('o-form-composer-submit').text(String(item.mode === 'message'
       ? this.def.send_label || 'Send'
       : item.mode === 'note'
         ? this.def.log_label || 'Log note'
-        : this.def.schedule_label || 'Schedule')).getContext() as HTMLButtonElement;
+        : this.def.schedule_label || 'Schedule')).ele() as HTMLButtonElement;
     html.take(actions).button.type('button').className('o-form-composer-cancel').text(String(this.def.cancel_label || 'Cancel'))
       .event('click', () => this.setState({ composerMode: '' }));
     html.take(composer).event('submit', event => {
@@ -140,13 +140,13 @@ export class OdooChatter extends BaseComponent {
   private renderMessage(message: any, parent: HTMLElement) {
     const action = String(message.action || '');
     const type = action.endsWith('.note') ? 'note' : action.endsWith('.message') ? 'message' : 'activity';
-    const entry = html.take(parent).article.className(`o-form-chatter-message is-${type}`).getContext() as HTMLElement;
+    const entry = html.take(parent).article.className(`o-form-chatter-message is-${type}`).ele() as HTMLElement;
     const actor = message[this.def.message_actor_field || 'actor_name'];
     html.take(entry).span.className('o-form-chatter-avatar').text(initials(actor)).attr('aria-hidden', 'true');
-    const content = html.take(entry).div.className('o-form-chatter-message-content').getContext() as HTMLDivElement;
-    const meta = html.take(content).div.className('o-form-chatter-message-meta').getContext() as HTMLDivElement;
+    const content = html.take(entry).div.className('o-form-chatter-message-content').ele() as HTMLDivElement;
+    const meta = html.take(content).div.className('o-form-chatter-message-meta').ele() as HTMLDivElement;
     html.take(meta).strong.text(String(actor || 'System'));
-    const timestamp = html.take(meta).time.getContext() as HTMLTimeElement;
+    const timestamp = html.take(meta).time.ele() as HTMLTimeElement;
     const timestampValue = message[this.def.message_timestamp_field || 'created_at'];
     html.take(timestamp).replaceText(formatTimestamp(timestampValue, this.def.locale));
     if (timestampValue) timestamp.dateTime = String(timestampValue);

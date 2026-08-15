@@ -25,13 +25,13 @@ export class ComingSoon extends BaseComponent {
     } = this.state;
 
     const section = html.take(container).section.className('coming-soon')
-      .attr('aria-labelledby', `${this.id}-title`).getContext() as HTMLElement;
+      .attr('aria-labelledby', `${this.id}-title`).ele() as HTMLElement;
 
     const artwork = html.take(section).div.className('coming-soon-artwork')
-      .attr('aria-hidden', 'true').dataAttr('icon', icon).getContext() as HTMLDivElement;
+      .attr('aria-hidden', 'true').dataAttr('icon', icon).ele() as HTMLDivElement;
     appendIcon(artwork, icon);
 
-    const copy = html.take(section).div.className('coming-soon-copy').getContext() as HTMLDivElement;
+    const copy = html.take(section).div.className('coming-soon-copy').ele() as HTMLDivElement;
 
     html.take(copy).p.className('coming-soon-eyebrow').text(eyebrow);
 

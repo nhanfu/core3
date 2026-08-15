@@ -46,7 +46,7 @@ class PageRoot extends BaseComponent {
     const { applySourceFilters, handleAction, renderComponentDef } = this.options;
 
     html.take(container).clear();
-    const pageDiv = html.take(container).div.className('page').getContext() as HTMLDivElement;
+    const pageDiv = html.take(container).div.className('page').ele() as HTMLDivElement;
     if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) html.take(pageDiv).toggleClass('o-form-page', true);
 
     if (config.title) html.take(document).prop('title', config.title);
@@ -55,15 +55,15 @@ class PageRoot extends BaseComponent {
     const ownsControlPanel = !(config.components || []).some((component: any) => component.type === 'OdooFormView')
       && (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
     if (config.page?.breadcrumb?.length && !ownsControlPanel) {
-      pageHeader = html.take(pageDiv).div.className('page-header').getContext() as HTMLDivElement;
-      const heading = html.take(pageHeader).div.getContext() as HTMLDivElement;
-      const breadcrumb = html.take(heading).div.className('page-breadcrumb').getContext() as HTMLDivElement;
+      pageHeader = html.take(pageDiv).div.className('page-header').ele() as HTMLDivElement;
+      const heading = html.take(pageHeader).div.ele() as HTMLDivElement;
+      const breadcrumb = html.take(heading).div.className('page-breadcrumb').ele() as HTMLDivElement;
       for (const [index, item] of config.page.breadcrumb.entries()) {
         if (index) {
           html.take(breadcrumb).span.className('page-breadcrumb-separator').replaceText('›');
         }
         const isCurrent = index === config.page.breadcrumb.length - 1;
-        const crumb = html.take(breadcrumb).add(isCurrent ? 'span' : 'a').getContext() as HTMLElement;
+        const crumb = html.take(breadcrumb).add(isCurrent ? 'span' : 'a').ele() as HTMLElement;
         html.take(crumb).className(isCurrent ? 'page-breadcrumb-current' : 'page-breadcrumb-link').replaceText(item);
         if (!isCurrent) {
           const pathSegments = window.location.pathname.split('/').filter(Boolean);
@@ -89,14 +89,14 @@ class PageRoot extends BaseComponent {
 
     if (config.toolbar?.length && !ownsControlPanel) {
       const toolbarParent = pageHeader || pageDiv;
-      const toolbarDiv = html.take(toolbarParent).div.className(pageHeader ? 'page-header-actions' : 'page-toolbar').style('display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;').getContext() as HTMLDivElement;
+      const toolbarDiv = html.take(toolbarParent).div.className(pageHeader ? 'page-header-actions' : 'page-toolbar').style('display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;').ele() as HTMLDivElement;
       for (const btn of config.toolbar) {
         if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
         if (btn.permission && !hasPermission(ctx.user, btn.permission)) continue;
-        const button = html.take(toolbarDiv).button.type('button').getContext() as HTMLButtonElement;
+        const button = html.take(toolbarDiv).button.type('button').ele() as HTMLButtonElement;
         html.take(button).className(`btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`);
         if (btn.icon) {
-          const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
+          const icon = html.take(button).span.attr('aria-hidden', 'true').ele() as HTMLSpanElement;
           if (hasIcon(btn.icon)) appendIcon(icon, btn.icon);
           else html.take(icon).replaceText(btn.icon);
         }
@@ -104,7 +104,7 @@ class PageRoot extends BaseComponent {
         html.take(button).event('click', async () => {
           const actionDef = (config.actions || []).find((action: any) => action.id === btn.action);
           if (actionDef) await handleAction(actionDef, null);
-          else console.warn(`[page-renderer] Toolbar action not found: ${btn.action}`);
+          else console.error(`[page-renderer] Toolbar action not found: ${btn.action}`);
         });
       }
       if (!pageHeader) {
@@ -127,7 +127,7 @@ class PageRoot extends BaseComponent {
             : [],
         };
       });
-      const filterSlot = html.take(pageDiv).div.css('marginBottom', '20px').getContext() as HTMLDivElement;
+      const filterSlot = html.take(pageDiv).div.css('marginBottom', '20px').ele() as HTMLDivElement;
       const filterBar = new FilterBar(
         'page-filter-bar',
         { values: {} },
@@ -364,7 +364,8 @@ export class PageRuntime extends BaseComponent {
         });
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || 'Invalid credentials');
-        const { setAuth, getDefaultRoute, navigate: appNavigate } = await import('/app.ts');
+        const appModulePath = ['/app.ts'].join('');
+        const { setAuth, getDefaultRoute, navigate: appNavigate } = await import(/* @vite-ignore */ appModulePath);
         await setAuth(result.token, result.user);
         const redirectParam = String(actionDef.redirect_param || 'redirect');
         const redirect = safeRedirect(new URLSearchParams(window.location.search).get(redirectParam));
@@ -381,7 +382,7 @@ export class PageRuntime extends BaseComponent {
         break;
       }
       case 'request': {
-        const token = (await import('/app.ts')).getToken();
+        const token = (await import(/* @vite-ignore */ ['/app.ts'].join(''))).getToken();
         const response = await fetch(actionDef.endpoint, {
           method: actionDef.method || 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -398,7 +399,7 @@ export class PageRuntime extends BaseComponent {
         // eslint-disable-next-line no-new-func
         const fn = new Function(`return (${source})`)();
         if (typeof fn !== 'function') throw new TypeError('Client action script must evaluate to a JavaScript function');
-        const token = (await import('/app.ts')).getToken();
+        const token = (await import(/* @vite-ignore */ ['/app.ts'].join(''))).getToken();
         const request = async (endpoint: string, options: RequestInit = {}) => {
           const response = await fetch(endpoint, {
             ...options,
@@ -414,7 +415,7 @@ export class PageRuntime extends BaseComponent {
           return result;
         };
         const { i18n } = await import('@core3/client/i18n');
-        const { navigate: appNavigate } = await import('/app.ts');
+        const { navigate: appNavigate } = await import(/* @vite-ignore */ ['/app.ts'].join(''));
         await fn({
           user: ctx.user,
           row: row || {},
@@ -428,7 +429,7 @@ export class PageRuntime extends BaseComponent {
         break;
       }
       case 'logout': {
-        await (await import('/app.ts')).logout();
+        await (await import(/* @vite-ignore */ ['/app.ts'].join(''))).logout();
         break;
       }
       case 'form':
@@ -567,7 +568,7 @@ export class PageRuntime extends BaseComponent {
       }
 
       default:
-        console.warn(`[page-renderer] Unknown action type: ${actionDef.type}`);
+        console.error(`[page-renderer] Unknown action type: ${actionDef.type}`);
     }
   }
 

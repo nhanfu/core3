@@ -165,7 +165,7 @@ export class ListView extends BaseComponent {
 
     if (loading) {
       for (let i = 0; i < 3; i++) {
-        const card = html.take(container).div.className('bg-white rounded-lg border border-gray-200 p-4 space-y-2 animate-pulse').getContext();
+        const card = html.take(container).div.className('bg-white rounded-lg border border-gray-200 p-4 space-y-2 animate-pulse').ele();
         html.take(card).div.className('h-4 bg-gray-100 rounded w-1/3');
         html.take(card).div.className('h-3 bg-gray-100 rounded w-2/3');
       }
@@ -180,11 +180,11 @@ export class ListView extends BaseComponent {
     const primaryDef = this.defs[0];
     const secondaryDef = this.defs.find(def => (def as any).secondary);
     const badgeDef = this.defs.find(def => (def as any).type === 'BadgeCell');
-    const list = html.take(container).div.className('flex flex-col gap-2').getContext();
+    const list = html.take(container).div.className('flex flex-col gap-2').ele();
 
     for (const item of items) {
-      const row = html.take(list).div.className('bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 transition-colors cursor-pointer').div.className('flex items-start justify-between gap-3').getContext();
-      const textCol = html.take(row).div.getContext();
+      const row = html.take(list).div.className('bg-white rounded-lg border border-gray-200 p-4 hover:border-indigo-300 transition-colors cursor-pointer').div.className('flex items-start justify-between gap-3').ele();
+      const textCol = html.take(row).div.ele();
       if (primaryDef) html.take(textCol).p.className('text-sm font-medium text-gray-900').text(String(item[primaryDef.field] ?? ''));
       if (secondaryDef) html.take(textCol).p.className('text-xs text-gray-500 mt-0.5').text(String(item[secondaryDef.field] ?? ''));
       if (badgeDef) appendBadge(row, item[badgeDef.field], null);
@@ -222,12 +222,12 @@ export class ListView extends BaseComponent {
         : this.defs.filter(column => column.optional !== 'hide').map(column => column.id || column.field),
     );
     const visibleColumns = this.defs.filter(column => visibleColumnIds.has(column.id || column.field));
-    const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).getContext();
+    const root = html.take(container).section.className(`o-list-view${this.options.scroll === 'body' ? ' o-list-view-body-scroll' : ''}`).ele();
 
     if (this.options.viewNavigation === 'tabs') this.drawViewTabs(root);
 
-    const controlPanel = html.take(root).div.className('o-list-control-panel').getContext();
-    const main = html.take(controlPanel).div.className('o-list-control-main').getContext();
+    const controlPanel = html.take(root).div.className('o-list-control-panel').ele();
+    const main = html.take(controlPanel).div.className('o-list-control-main').ele();
     const activeView = this.activeView();
     this.drawPrimaryControls(main, labels);
     this.drawSearch(main, filters, selectedIds, labels);
@@ -240,7 +240,7 @@ export class ListView extends BaseComponent {
       && Boolean(this.options.formView)
       && (!hasFormMode || this.isViewEnabled('form'));
     if (['list', 'form'].includes(activeView.id) && hasFormMode && !listEnabled && formEnabled) {
-      const content = html.take(root).div.className('o-list-content is-form-only').getContext();
+      const content = html.take(root).div.className('o-list-content is-form-only').ele();
       await this.drawFormPanel(content, rows, true);
       if (version !== this.drawVersion) return;
       return;
@@ -258,8 +258,8 @@ export class ListView extends BaseComponent {
       card.parent = this;
       card._transport = this._transport;
       this.children.push(card);
-      const content = html.take(root).div.className('o-list-content').getContext();
-      const cardHost = html.take(content).div.className('o-list-card-host').getContext();
+      const content = html.take(root).div.className('o-list-content').ele();
+      const cardHost = html.take(content).div.className('o-list-card-host').ele();
       card.mount(cardHost);
       return;
     }
@@ -285,8 +285,8 @@ export class ListView extends BaseComponent {
       kanban.parent = this;
       kanban._transport = this._transport;
       this.children.push(kanban);
-      const content = html.take(root).div.className('o-list-content').getContext();
-      const kanbanHost = html.take(content).div.className('o-list-kanban-host').getContext();
+      const content = html.take(root).div.className('o-list-content').ele();
+      const kanbanHost = html.take(content).div.className('o-list-kanban-host').ele();
       kanban.mount(kanbanHost);
       if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
@@ -310,8 +310,8 @@ export class ListView extends BaseComponent {
       calendar.parent = this;
       calendar._transport = this._transport;
       this.children.push(calendar);
-      const content = html.take(root).div.className('o-list-content').getContext();
-      const calendarHost = html.take(content).div.className('o-list-calendar-host').getContext();
+      const content = html.take(root).div.className('o-list-content').ele();
+      const calendarHost = html.take(content).div.className('o-list-calendar-host').ele();
       calendar.mount(calendarHost);
       if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
         await this.drawFormPanel(content, rows, false);
@@ -320,8 +320,8 @@ export class ListView extends BaseComponent {
       return;
     }
     if (activeView.id === 'pivot' || activeView.id === 'graph' || activeView.id === 'map') {
-      const content = html.take(root).div.className('o-list-content').getContext();
-      const host = html.take(content).div.className(`o-list-${activeView.id}-host`).getContext();
+      const content = html.take(root).div.className('o-list-content').ele();
+      const host = html.take(content).div.className(`o-list-${activeView.id}-host`).ele();
       const options = {
         view: activeView as AnalyticsViewMode,
         openAction: this.options.openAction,
@@ -337,45 +337,45 @@ export class ListView extends BaseComponent {
       return;
     }
 
-    const content = html.take(root).div.className('o-list-content').getContext();
-    const viewport = html.take(content).div.className('o-list-table-viewport').getContext();
-    const table = html.take(viewport).table.className('o-list-table').getContext();
-    const headRow = html.take(table).thead.trow.getContext();
+    const content = html.take(root).div.className('o-list-content').ele();
+    const viewport = html.take(content).div.className('o-list-table-viewport').ele();
+    const table = html.take(viewport).table.className('o-list-table').ele();
+    const headRow = html.take(table).thead.trow.ele();
 
     if (this.options.selectable) {
-      const cell = html.take(headRow).th.className('o-list-selector').getContext();
-      const checkbox = html.take(cell).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
+      const cell = html.take(headRow).th.className('o-list-selector').ele();
+      const checkbox = html.take(cell).input.attr('type', 'checkbox').ele() as HTMLInputElement;
       html.take(checkbox).attr('aria-label', labels.selectAll).prop('checked', rows.length > 0 && rows.every((row, index) => selected.has(this.rowId(row, index)))).prop('indeterminate', selected.size > 0 && !checkbox.checked).event('change', () => this.setSelectedIds(checkbox.checked ? rows.map((row, index) => this.rowId(row, index)) : []));
     }
 
     const sort = this.state.sort as { field?: string; direction?: SortDirection } | undefined;
     for (const column of visibleColumns) {
       const align = column.align === 'right' ? 'is-right' : column.align === 'center' ? 'is-center' : '';
-      const th = html.take(headRow).th.className(`o-list-column ${align}`).getContext();
+      const th = html.take(headRow).th.className(`o-list-column ${align}`).ele();
       th.dataset.column = column.id || column.field;
       if (column.sortable === false || column.rowActions?.length) {
         html.take(th).replaceText(column.label);
         continue;
       }
       const active = sort?.field === column.field;
-      const button = html.take(th).button.className('o-list-sort').dataAttr('sort-field', column.field).getContext();
+      const button = html.take(th).button.className('o-list-sort').dataAttr('sort-field', column.field).ele();
       html.take(button).text(column.label);
-      const indicator = html.take(button).span.className('o-list-sort-indicator').getContext();
-      const ascending = html.take(indicator).span.className(`o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`).getContext();
+      const indicator = html.take(button).span.className('o-list-sort-indicator').ele();
+      const ascending = html.take(indicator).span.className(`o-list-sort-ascending${active && sort?.direction === 'asc' ? ' is-active' : ''}`).ele();
       appendIcon(ascending, 'sort-ascending');
-      const descending = html.take(indicator).span.className(`o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`).getContext();
+      const descending = html.take(indicator).span.className(`o-list-sort-descending${active && sort?.direction === 'desc' ? ' is-active' : ''}`).ele();
       appendIcon(descending, 'sort-descending');
       html.take(button).attr('aria-sort', active ? (sort?.direction === 'desc' ? 'descending' : 'ascending') : 'none').event('click', () => this.setSort(column.field));
     }
 
-    const body = html.take(table).tbody.getContext();
+    const body = html.take(table).tbody.ele();
     const groupBy = typeof this.state.groupBy === 'string' ? this.state.groupBy : '';
     if (!rows.length) {
       const empty = this.options.emptyState || {};
       const cell = html.take(body).trow.tdata
         .attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0)))
         .className('o-list-empty')
-        .getContext();
+        .ele();
       html.take(cell).h3.text(empty.title || 'No records found');
       if (empty.description) html.take(cell).p.text(empty.description);
     } else if (groupBy) {
@@ -388,8 +388,8 @@ export class ListView extends BaseComponent {
       }
       const groupLabel = this.options.groupBy?.find(group => group.field === groupBy)?.label || groupBy;
       for (const [value, groupRows] of groups) {
-        const groupRow = html.take(body).trow.className('o-list-group-header o-list-group-row').dataAttr('list-group', value).getContext();
-        const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
+        const groupRow = html.take(body).trow.className('o-list-group-header o-list-group-row').dataAttr('list-group', value).ele();
+        const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).ele();
         groupCell.dataset.groupBy = groupBy;
         html.take(groupCell).strong.replaceText(`${groupLabel}: ${value}`);
         html.take(groupCell).span.className('o-list-group-count').text(` (${groupRows.length})`);
@@ -408,8 +408,8 @@ export class ListView extends BaseComponent {
           groups.get(value)!.push(item);
         }
         for (const [value, items] of groups) {
-          const groupRow = html.take(body).trow.className('o-list-group-row').dataAttr('list-group', value).getContext();
-          const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
+          const groupRow = html.take(body).trow.className('o-list-group-row').dataAttr('list-group', value).ele();
+          const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).ele();
           html.take(groupCell).replaceText(`${value} (${items.length})`);
           for (const item of items) this.drawRow(body, item.row, item.index, visibleColumns, selected, labels, item.depth, item.hasChildren);
         }
@@ -427,10 +427,10 @@ export class ListView extends BaseComponent {
       : this.formRow(rows) || (rows.length ? rows[0] : undefined);
     if (!selectedRow || !this.options.renderForm) return;
     const mode = this.formPanelMode();
-    const panel = html.take(content).aside.className(`o-list-form-side-panel is-${mode} is-loading`).getContext();
+    const panel = html.take(content).aside.className(`o-list-form-side-panel is-${mode} is-loading`).ele();
     const width = Number(this.state.formPanelWidth);
     if (Number.isFinite(width) && width > 0) html.take(panel).css('width', `${Math.min(75, Math.max(25, width))}%`);
-    const handle = html.take(panel).div.className('o-list-form-resize-handle').attr('role', 'separator').attr('aria-label', 'Resize form panel').getContext();
+    const handle = html.take(panel).div.className('o-list-form-resize-handle').attr('role', 'separator').attr('aria-label', 'Resize form panel').ele();
     let dragging = false;
     let draggedWidth: number | undefined;
     const updateWidth = (event: PointerEvent) => {
@@ -454,15 +454,15 @@ export class ListView extends BaseComponent {
       if (draggedWidth !== undefined) this.setState({ formPanelWidth: draggedWidth }, false);
       handle.releasePointerCapture?.(event.pointerId);
     });
-    const body = html.take(panel).div.className('o-list-form-panel-body').getContext();
+    const body = html.take(panel).div.className('o-list-form-panel-body').ele();
     await this.options.renderForm(selectedRow, body);
     if (panel.isConnected) html.take(panel).toggleClass('is-loading', false);
   }
 
   private drawPrimaryControls(container: HTMLElement, labels: Required<NonNullable<ListViewOptions['labels']>>) {
-    const primary = html.take(container).div.className('o-list-primary-controls').getContext();
+    const primary = html.take(container).div.className('o-list-primary-controls').ele();
     if (this.options.createAction) {
-      const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).getContext();
+      const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).ele();
       html.take(button).event('click', () => {
         if (this.options.formView?.sidePanel) {
           this.setFormPanelMode('right');
@@ -473,7 +473,7 @@ export class ListView extends BaseComponent {
       });
     }
     if (this.options.breadcrumbs?.length) {
-      const breadcrumbs = html.take(primary).nav.className('o-list-breadcrumbs').attr('aria-label', 'Breadcrumb').getContext();
+      const breadcrumbs = html.take(primary).nav.className('o-list-breadcrumbs').attr('aria-label', 'Breadcrumb').ele();
       this.options.breadcrumbs.forEach((item, index) => {
         html.take(breadcrumbs).span.className(index === this.options.breadcrumbs!.length - 1 ? 'is-current' : '').text(item);
         if (index < this.options.breadcrumbs!.length - 1) html.take(breadcrumbs).span.className('o-list-breadcrumb-separator').text(' / ');
@@ -482,25 +482,25 @@ export class ListView extends BaseComponent {
   }
 
   private drawSearch(container: HTMLElement, filters: Record<string, unknown>, selectedIds: string[], labels: Required<NonNullable<ListViewOptions['labels']>>) {
-    const center = html.take(container).div.className('o-list-center').getContext();
+    const center = html.take(container).div.className('o-list-center').ele();
     if (selectedIds.length) {
-      const selection = html.take(center).div.className('o-list-selection').getContext();
+      const selection = html.take(center).div.className('o-list-selection').ele();
       html.take(selection).span.className('o-list-selection-count').text(String(selectedIds.length));
       html.take(selection).span.text(labels.selected);
-      const clear = html.take(selection).button.text(labels.clearSelection).getContext();
+      const clear = html.take(selection).button.text(labels.clearSelection).ele();
       html.take(clear).event('click', () => this.setSelectedIds([]));
       for (const action of this.options.bulkActions || []) {
-        const button = html.take(selection).button.className('o-list-bulk-action').dataAttr('list-bulk-action', action.id).text(action.label || action.id).getContext();
+        const button = html.take(selection).button.className('o-list-bulk-action').dataAttr('list-bulk-action', action.id).text(action.label || action.id).ele();
         html.take(button).event('click', () => void this.submit(action.id, { ...(action.params || {}), selectedIds }));
       }
       return;
     }
 
     if (this.options.search === false) return;
-    const search = html.take(center).div.className('o-list-search').getContext();
-    const searchIcon = html.take(search).span.className('o-list-search-icon').getContext();
+    const search = html.take(center).div.className('o-list-search').ele();
+    const searchIcon = html.take(search).span.className('o-list-search-icon').ele();
     appendIcon(searchIcon, 'search');
-    const input = html.take(search).input.attr('type', 'search').dataAttr('list-search', 'true').getContext() as HTMLInputElement;
+    const input = html.take(search).input.attr('type', 'search').dataAttr('list-search', 'true').ele() as HTMLInputElement;
     html.take(input).prop('value', String(this.state.searchDraft || '')).prop('placeholder', this.options.search?.placeholder || 'Search...').attr('aria-label', this.options.search?.label || input.placeholder).event('input', () => this.setState({ searchDraft: input.value }, false)).event('keydown', event => {
       if (event.key !== 'Enter') return;
       const query = input.value.trim();
@@ -513,11 +513,11 @@ export class ListView extends BaseComponent {
 
   private drawFilterMenu(container: HTMLElement, filters: Record<string, unknown>, labels: Required<NonNullable<ListViewOptions['labels']>>) {
     if (!this.options.filters?.length && !this.options.groupBy?.length) return;
-    const details = html.take(container).details.className('o-list-dropdown o-list-filter-menu').getContext() as HTMLDetailsElement;
+    const details = html.take(container).details.className('o-list-dropdown o-list-filter-menu').ele() as HTMLDetailsElement;
     const shortcutLabel = `${labels.filters} (Ctrl+Shift+F)`;
-    const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', shortcutLabel).attr('aria-keyshortcuts', 'Control+Shift+F').getContext();
+    const summary = html.take(details).summary.className('o-list-filter-toggle').attr('aria-label', labels.filters).attr('title', shortcutLabel).attr('aria-keyshortcuts', 'Control+Shift+F').ele();
     appendIcon(summary, 'chevron-down');
-    const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
+    const menu = html.take(details).div.className('o-list-dropdown-menu').ele();
     const positionFilterMenu = () => {
       if (!details.open) return;
       html.take(menu).css('top', '155px');
@@ -543,14 +543,14 @@ export class ListView extends BaseComponent {
     });
 
     for (const filter of this.options.filters || []) {
-      const group = html.take(menu).section.className('o-list-filter-group').getContext();
+      const group = html.take(menu).section.className('o-list-filter-group').ele();
       html.take(group).h4.text(filter.label);
-      const clear = html.take(group).button.className(!filters[filter.field] ? 'is-active' : '').text(filter.placeholder || `All ${filter.label.toLowerCase()}`).getContext();
+      const clear = html.take(group).button.className(!filters[filter.field] ? 'is-active' : '').text(filter.placeholder || `All ${filter.label.toLowerCase()}`).ele();
       html.take(clear).event('click', () => this.setFilters({ ...filters, [filter.field]: null }));
       for (const option of filter.options || []) {
         const id = typeof option === 'string' ? option : option.id;
         const label = typeof option === 'string' ? option : option.label;
-        const button = html.take(group).button.className(String(filters[filter.field] ?? '') === id ? 'is-active' : '').text(label).getContext();
+        const button = html.take(group).button.className(String(filters[filter.field] ?? '') === id ? 'is-active' : '').text(label).ele();
         button.dataset.filterField = filter.field;
         button.dataset.filterValue = id;
         html.take(button).event('click', () => this.setFilters({ ...filters, [filter.field]: id }));
@@ -558,13 +558,13 @@ export class ListView extends BaseComponent {
     }
 
     if (this.options.groupBy?.length) {
-      const group = html.take(menu).section.className('o-list-filter-group').getContext();
+      const group = html.take(menu).section.className('o-list-filter-group').ele();
       html.take(group).h4.text('Group By');
-      const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text('No grouping').getContext();
+      const clear = html.take(group).button.className(!this.state.groupBy ? 'is-active' : '').text('No grouping').ele();
       clear.dataset.groupBy = '';
       html.take(clear).event('click', () => this.setGroupBy(null));
       for (const option of this.options.groupBy) {
-        const button = html.take(group).button.className(this.state.groupBy === option.field ? 'is-active' : '').text(option.label).getContext();
+        const button = html.take(group).button.className(this.state.groupBy === option.field ? 'is-active' : '').text(option.label).ele();
         button.dataset.groupBy = option.field;
         button.dataset.groupField = option.field;
         html.take(button).event('click', () => this.setGroupBy(option.field));
@@ -574,19 +574,19 @@ export class ListView extends BaseComponent {
   }
 
   private drawNavigation(container: HTMLElement, meta: Record<string, unknown>, visibleColumnIds: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, showPager = true) {
-    const navigation = html.take(container).div.className('o-list-navigation').getContext();
+    const navigation = html.take(container).div.className('o-list-navigation').ele();
     if (showPager) {
       const total = Number(meta.total || 0);
       const page = Math.max(1, Number(meta.page || 1));
       const pageSize = Math.max(1, Number(meta.pageSize || this.state.pageSize || 1));
       const start = total ? (page - 1) * pageSize + 1 : 0;
       const end = Math.min(page * pageSize, total);
-      const pager = html.take(navigation).div.className('o-list-pager').getContext();
+      const pager = html.take(navigation).div.className('o-list-pager').ele();
       html.take(pager).span.className('o-list-pager-range').text(`${start}-${end} / ${total}`);
-      const previous = html.take(pager).button.text('‹').getContext() as HTMLButtonElement;
+      const previous = html.take(pager).button.text('‹').ele() as HTMLButtonElement;
       html.take(previous).attr('aria-label', labels.previousPage).prop('disabled', page <= 1);
       if (!previous.disabled) html.take(previous).event('click', () => this.options.onPageChange?.(page - 1));
-      const next = html.take(pager).button.text('›').getContext() as HTMLButtonElement;
+      const next = html.take(pager).button.text('›').ele() as HTMLButtonElement;
       html.take(next).attr('aria-label', labels.nextPage).prop('disabled', end >= total);
       if (!next.disabled) html.take(next).event('click', () => this.options.onPageChange?.(page + 1));
     }
@@ -604,14 +604,14 @@ export class ListView extends BaseComponent {
         .attr('aria-label', modeLabels[mode])
         .attr('title', `${modeLabels[mode]} (click to change)`)
         .dataAttr('form-panel-mode', mode)
-        .getContext() as HTMLButtonElement;
+        .ele() as HTMLButtonElement;
       appendIcon(toggle, modeIcons[mode]);
       html.take(toggle).event('click', () => this.cycleFormPanelMode());
     }
 
     const views = this.options.views || [];
     if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
-      const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').getContext();
+      const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', 'View').ele();
       const activeView = this.activeView();
       for (const view of views) {
         const mobileCardView = views.some(candidate => candidate.id === 'card');
@@ -620,23 +620,23 @@ export class ListView extends BaseComponent {
           .dataAttr('list-view', view.id)
           .attr('aria-label', view.label)
           .attr('title', view.label)
-          .getContext();
+          .ele();
         appendIcon(button, view.icon || (view.id === 'kanban' ? 'dashboard' : view.id === 'calendar' ? 'calendar' : 'table'));
         html.take(button).attr('aria-pressed', String(this.isViewEnabled(view.id))).event('click', () => this.selectView(view.id));
       }
     }
 
     if (!this.options.columnChooser && !this.options.actions?.length && !this.options.favorites?.length) return;
-    const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').getContext() as HTMLDetailsElement;
-    const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).getContext();
+    const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').ele() as HTMLDetailsElement;
+    const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).ele();
     appendIcon(summary, 'settings');
-    const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
+    const menu = html.take(details).div.className('o-list-dropdown-menu').ele();
     if (this.options.columnChooser) {
-      const group = html.take(menu).section.className('o-list-column-menu').getContext();
+      const group = html.take(menu).section.className('o-list-column-menu').ele();
       html.take(group).h4.text(labels.columns);
       for (const column of this.defs.filter(candidate => !candidate.rowActions?.length)) {
-        const label = html.take(group).label.getContext();
-        const checkbox = html.take(label).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
+        const label = html.take(group).label.ele();
+        const checkbox = html.take(label).input.attr('type', 'checkbox').ele() as HTMLInputElement;
         html.take(checkbox).prop('checked', visibleColumnIds.has(column.id || column.field)).attr('aria-label', `${labels.columns}: ${column.label}`).event('change', () => {
           const nextVisible = new Set(visibleColumnIds);
           checkbox.checked ? nextVisible.add(column.id || column.field) : nextVisible.delete(column.id || column.field);
@@ -650,11 +650,11 @@ export class ListView extends BaseComponent {
       }
     }
     if (this.options.actions?.length) {
-      const group = html.take(menu).section.className('o-list-utility-menu').getContext();
+      const group = html.take(menu).section.className('o-list-utility-menu').ele();
       for (const action of this.options.actions) {
-        const button = html.take(group).button.dataAttr('list-action', action.id).getContext() as HTMLButtonElement;
+        const button = html.take(group).button.dataAttr('list-action', action.id).ele() as HTMLButtonElement;
         if (action.icon) {
-          const icon = html.take(button).span.getContext();
+          const icon = html.take(button).span.ele();
           appendIcon(icon, action.icon);
         }
         html.take(button).text(action.label || action.title || action.id).prop('disabled', Boolean(action.disabled));
@@ -662,10 +662,10 @@ export class ListView extends BaseComponent {
       }
     }
     if (this.options.favorites?.length) {
-      const group = html.take(menu).section.className('o-list-favorites-menu').getContext();
+      const group = html.take(menu).section.className('o-list-favorites-menu').ele();
       html.take(group).h4.text('Favorites');
       for (const favorite of this.options.favorites) {
-        const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).getContext();
+        const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).ele();
         html.take(button).event('click', () => {
           this.setState({ filters: { ...(favorite.filters || {}) }, groupBy: favorite.groupBy || '' });
           this.options.onFilterChange?.({ ...(favorite.filters || {}) });
@@ -680,7 +680,7 @@ export class ListView extends BaseComponent {
     // FormView is an inline/detail presentation, not a collection view tab.
     const views = (this.options.views || []).filter(view => view.id !== 'form');
     if (views.length <= 1) return;
-    const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', 'View').getContext();
+    const tabList = html.take(container).nav.className('o-list-view-tabs').attr('role', 'tablist').attr('aria-label', 'View').ele();
     for (const view of views) {
       const tab = html.take(tabList).button
         .className(this.isViewEnabled(view.id) ? 'is-active' : '')
@@ -690,7 +690,7 @@ export class ListView extends BaseComponent {
         .attr('aria-selected', String(this.isViewEnabled(view.id)))
         .dataAttr('list-view', view.id)
         .text(view.label)
-        .getContext();
+        .ele();
       html.take(tab).event('click', () => this.selectView(view.id));
     }
   }
@@ -730,7 +730,7 @@ export class ListView extends BaseComponent {
       if (group) facets.push({ key: 'groupBy', label: `Group By: ${group.label}`, clear: () => this.setGroupBy(null) });
     }
     if (!facets.length && !this.options.dateRange) return;
-    const bar = html.take(container).div.className('o-list-facets').getContext();
+    const bar = html.take(container).div.className('o-list-facets').ele();
     if (this.options.dateRange) {
       new DateRangeFilterTag({
         values: filters,
@@ -739,9 +739,9 @@ export class ListView extends BaseComponent {
       }).render(bar);
     }
     for (const facet of facets) {
-      const item = html.take(bar).div.className('o-list-facet').dataAttr('filter-facet', facet.key).getContext();
+      const item = html.take(bar).div.className('o-list-facet').dataAttr('filter-facet', facet.key).ele();
       html.take(item).span.text(facet.label);
-      const remove = html.take(item).button.attr('aria-label', `${labels.removeFilter}: ${facet.label}`).getContext();
+      const remove = html.take(item).button.attr('aria-label', `${labels.removeFilter}: ${facet.label}`).ele();
       appendIcon(remove, 'x');
       html.take(remove).event('click', facet.clear);
     }
@@ -749,7 +749,7 @@ export class ListView extends BaseComponent {
 
   private drawRow(container: HTMLElement, row: ListRow, index: number, columns: ListViewColumn[], selected: Set<string>, labels: Required<NonNullable<ListViewOptions['labels']>>, depth = 0, hasChildren = false) {
     const id = this.rowId(row, index);
-    const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).getContext();
+    const tr = html.take(container).trow.className('o-list-data-row').dataAttr('row-id', id).ele();
     let openClickTimer: ReturnType<typeof setTimeout> | undefined;
     const openRow = (action: string) => void this.submit(action, { row });
     html.take(tr).event('click', (event: MouseEvent) => {
@@ -776,8 +776,8 @@ export class ListView extends BaseComponent {
       openRow(this.options.doubleClickAction);
     });
     if (this.options.selectable) {
-      const cell = html.take(tr).tdata.className('o-list-selector').getContext();
-      const checkbox = html.take(cell).input.attr('type', 'checkbox').getContext() as HTMLInputElement;
+      const cell = html.take(tr).tdata.className('o-list-selector').ele();
+      const checkbox = html.take(cell).input.attr('type', 'checkbox').ele() as HTMLInputElement;
       html.take(checkbox).prop('checked', selected.has(id)).attr('aria-label', labels.selectRow(id)).event('change', () => {
         const next = new Set<string>(this.selectedIds());
         checkbox.checked ? next.add(id) : next.delete(id);
@@ -786,7 +786,7 @@ export class ListView extends BaseComponent {
     }
     columns.forEach((column, columnIndex) => {
       const align = column.align === 'right' ? 'is-right' : column.align === 'center' ? 'is-center' : '';
-      const cell = html.take(tr).tdata.className(`o-list-cell ${align}`).getContext();
+      const cell = html.take(tr).tdata.className(`o-list-cell ${align}`).ele();
       cell.dataset.column = column.id || column.field;
       if (columnIndex === 0 && this.options.openAction) {
         html.take(cell).toggleClass('o-list-open-cell', true);
@@ -823,7 +823,7 @@ export class ListView extends BaseComponent {
         cell.dataset.treeDepth = String(depth);
         if (hasChildren) {
           const collapsed = this.collapsedTreeIds().has(id);
-          const toggle = html.take(cell).button.getContext();
+          const toggle = html.take(cell).button.ele();
           html.take(toggle).type('button').className('o-list-tree-toggle').replaceText(collapsed ? '▸' : '▾').attr('aria-label', collapsed ? 'Expand row' : 'Collapse row').event('click', event => {
             event.stopPropagation();
             const next = this.collapsedTreeIds();
@@ -875,7 +875,7 @@ export class ListView extends BaseComponent {
     if (!visibleActions.length) return;
     if (this.options.rowActions !== 'menu') {
       for (const action of visibleActions) {
-        const button = html.take(container).button.dataAttr('list-row-action', `${action.id}:${rowId}`).text(action.label).getContext();
+        const button = html.take(container).button.dataAttr('list-row-action', `${action.id}:${rowId}`).text(action.label).ele();
         html.take(button).event('click', (event: MouseEvent) => {
           event.stopPropagation();
           void this.submit(action.id, { row });
@@ -883,14 +883,14 @@ export class ListView extends BaseComponent {
       }
       return;
     }
-    const details = html.take(container).details.className('o-list-dropdown o-list-row-menu').attr('name', `${this.id}-row-actions`).getContext() as HTMLDetailsElement;
-    const summary = html.take(details).summary.attr('aria-label', labels.moreActions).attr('title', labels.moreActions).getContext();
+    const details = html.take(container).details.className('o-list-dropdown o-list-row-menu').attr('name', `${this.id}-row-actions`).ele() as HTMLDetailsElement;
+    const summary = html.take(details).summary.attr('aria-label', labels.moreActions).attr('title', labels.moreActions).ele();
     appendIcon(summary, 'more-vertical');
-    const menu = html.take(details).div.className('o-list-dropdown-menu').getContext();
+    const menu = html.take(details).div.className('o-list-dropdown-menu').ele();
     for (const action of visibleActions) {
-      const button = html.take(menu).button.className(action.variant === 'danger' ? 'is-danger' : '').dataAttr('list-row-action', `${action.id}:${rowId}`).getContext();
+      const button = html.take(menu).button.className(action.variant === 'danger' ? 'is-danger' : '').dataAttr('list-row-action', `${action.id}:${rowId}`).ele();
       if (action.icon) {
-        const icon = html.take(button).span.getContext();
+        const icon = html.take(button).span.ele();
         appendIcon(icon, action.icon);
       }
       html.take(button).text(action.label).event('click', (event: MouseEvent) => {

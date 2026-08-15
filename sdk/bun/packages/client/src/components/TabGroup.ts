@@ -15,8 +15,8 @@ export class TabGroup extends BaseComponent {
 
   draw(container) {
     const { active = 0 } = this.state;
-    const wrap = html.take(container).div.getContext();
-    const tabBar = html.take(wrap).div.className('flex border-b border-gray-200 -mb-px').getContext();
+    const wrap = html.take(container).div.ele();
+    const tabBar = html.take(wrap).div.className('flex border-b border-gray-200 -mb-px').ele();
 
     this.tabs.forEach((tab, i) => {
       const cls = i === active
@@ -28,7 +28,7 @@ export class TabGroup extends BaseComponent {
         .event('click', () => this.setState({ active: i }));
     });
 
-    const content = html.take(wrap).div.className('pt-4').getContext();
+    const content = html.take(wrap).div.className('pt-4').ele();
     const currentTab = this.tabs[active];
     if (currentTab?.content instanceof BaseComponent) {
       currentTab.content.mount(content);

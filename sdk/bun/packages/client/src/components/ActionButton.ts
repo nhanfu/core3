@@ -10,7 +10,7 @@ export class ActionButton extends BaseComponent {
 
   draw(container) {
     const { open = false } = this.state;
-    const wrap = html.take(container).div.className('relative inline-block').getContext();
+    const wrap = html.take(container).div.className('relative inline-block').ele();
 
     html.take(wrap)
       .button.className('inline-flex items-center gap-1 px-3 py-2 text-sm font-medium border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-700 shadow-sm')
@@ -23,7 +23,7 @@ export class ActionButton extends BaseComponent {
     if (open) {
       const dropdown = html.take(wrap)
         .div.className('absolute right-0 mt-1 z-30 min-w-max bg-white border border-gray-200 rounded-lg shadow-lg py-1')
-        .getContext();
+        .ele();
 
       for (const action of this.actions) {
         const variantCls = action.variant === 'danger' ? 'text-red-600 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-100';
