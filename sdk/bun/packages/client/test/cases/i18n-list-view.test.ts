@@ -20,6 +20,34 @@ describe('declarative i18n maps', () => {
     expect(translated.components[0].date_range.preset_labels.today).toBe('Hôm nay');
   });
 
+  it('translates date range validation messages', () => {
+    i18n.hydrate('orders-validation', {
+      lang: 'vi',
+      page: {
+        Apply: 'Áp dụng',
+        'Last 12 months': '12 tháng qua',
+        'The date range cannot be longer than {max_years} years.': 'Khoảng ngày không được dài hơn {max_years} năm.',
+      },
+    });
+    const translated = i18n.translatePageConfig('orders-validation', {
+      components: [{
+        type: 'ListView',
+        date_range: {
+          validation_messages: {
+            max_years: 'The date range cannot be longer than {max_years} years.',
+          },
+          apply_label: 'Apply',
+          preset_labels: { last_12_months: 'Last 12 months' },
+        },
+      }],
+    });
+
+    expect(translated.components[0].date_range.validation_messages.max_years)
+      .toBe('Khoảng ngày không được dài hơn {max_years} năm.');
+    expect(translated.components[0].date_range.apply_label).toBe('Áp dụng');
+    expect(translated.components[0].date_range.preset_labels.last_12_months).toBe('12 tháng qua');
+  });
+
   it('translates chatter action and detail label maps', () => {
     i18n.hydrate('order-detail', {
       lang: 'vi',

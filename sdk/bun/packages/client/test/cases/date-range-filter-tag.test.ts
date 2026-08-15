@@ -22,8 +22,15 @@ describe('DateRangeFilterTag', () => {
   it('rejects reversed and overlong ranges', () => {
     const definition = { maxYears: 2, denyUnbounded: true };
     expect(validateDateRange('2026-08-15', '2026-08-01', definition)).toContain('start date');
-    expect(validateDateRange('2020-01-01', '2026-01-01', definition)).toContain('between');
+    expect(validateDateRange('2020-01-01', '2026-01-01', definition)).toContain('longer than 2 years');
     expect(validateDateRange('', '2026-01-01', definition)).toContain('bounded');
+  });
+
+  it('uses page-configured validation messages', () => {
+    expect(validateDateRange('2020-01-01', '2026-01-01', {
+      maxYears: 2,
+      validationMessages: { maxYears: 'Date range cannot exceed {max_years} years.' },
+    })).toBe('Date range cannot exceed 2 years.');
   });
 
   it('marks the active preset and supports calendar range selection', () => {

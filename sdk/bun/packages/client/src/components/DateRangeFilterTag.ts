@@ -10,6 +10,16 @@ export type DateRangeFilterTagDefinition = {
   presetLabels?: Partial<Record<DateRangePreset, string>>;
   maxYears?: number;
   denyUnbounded?: boolean;
+  applyLabel?: string;
+  calendarPreviousLabel?: string;
+  calendarNextLabel?: string;
+  weekdayLabels?: string[];
+  validationMessages?: {
+    required?: string;
+    invalid?: string;
+    startBeforeEnd?: string;
+    maxYears?: string;
+  };
 };
 
 export type DateRangeFilterTagOptions = {
@@ -77,7 +87,9 @@ export class DateRangeFilterTag {
     fields.append(from, to);
     let selectedFrom = from.value;
     let selectedTo = to.value;
+    let activeField: 'from' | 'to' = 'from';
     let calendarMonth = monthStart(selectedFrom || new Date().toISOString().slice(0, 10));
+    let error: HTMLElement | undefined;
     const calendar = document.createElement('div');
     calendar.className = 'o-list-date-picker';
     const drawCalendar = () => {
@@ -86,17 +98,17 @@ export class DateRangeFilterTag {
       header.className = 'o-list-date-picker-header';
       const previous = document.createElement('button');
       previous.type = 'button'; previous.className = 'o-list-date-picker-nav'; previous.textContent = '‹';
-      previous.setAttribute('aria-label', 'Previous date picker month');
+      previous.setAttribute('aria-label', definition.calendarPreviousLabel || 'Previous date picker month');
       previous.addEventListener('click', () => { calendarMonth = shiftMonth(calendarMonth, -1); drawCalendar(); });
       const title = document.createElement('strong');
       title.textContent = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(calendarMonth);
       const next = document.createElement('button');
       next.type = 'button'; next.className = 'o-list-date-picker-nav'; next.textContent = '›';
-      next.setAttribute('aria-label', 'Next date picker month');
+      next.setAttribute('aria-label', definition.calendarNextLabel || 'Next date picker month');
       next.addEventListener('click', () => { calendarMonth = shiftMonth(calendarMonth, 1); drawCalendar(); });
       header.append(previous, title, next); calendar.append(header);
       const grid = document.createElement('div'); grid.className = 'o-list-date-picker-grid';
-      for (const weekday of ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']) {
+      for (const weekday of definition.weekdayLabels || ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']) {
         const label = document.createElement('span'); label.className = 'o-list-date-picker-weekday'; label.textContent = weekday; grid.append(label);
       }
       const first = calendarMonth.getUTCDay() || 7;
@@ -106,27 +118,31 @@ export class DateRangeFilterTag {
         const value = isoDate(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth(), day);
         const button = document.createElement('button');
         button.type = 'button'; button.className = 'o-list-date-picker-day'; button.textContent = String(day); button.dataset.calendarDate = value;
+        if (!this.isDateAllowed(value, activeField, selectedFrom, definition)) button.disabled = true;
         if (value === selectedFrom || value === selectedTo) button.classList.add('is-selected');
         if (selectedFrom && selectedTo && value > selectedFrom && value < selectedTo) button.classList.add('is-in-range');
         button.addEventListener('click', () => {
-          if (!selectedFrom || selectedTo || value < selectedFrom) { selectedFrom = value; selectedTo = ''; from.value = value; to.value = ''; }
+          if (activeField === 'from') { selectedFrom = value; from.value = value; activeField = 'to'; }
           else { selectedTo = value; to.value = value; }
+          if (error) error.textContent = validateDateRange(selectedFrom, selectedTo, definition) || '';
           drawCalendar();
         });
         grid.append(button);
       }
       calendar.append(grid);
     };
+    from.addEventListener('focus', () => { activeField = 'from'; drawCalendar(); });
+    to.addEventListener('focus', () => { activeField = 'to'; drawCalendar(); });
     from.addEventListener('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
     to.addEventListener('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
     drawCalendar();
-    const error = document.createElement('div');
+    error = document.createElement('div');
     error.className = 'o-list-date-range-error';
     error.setAttribute('role', 'alert');
     const apply = document.createElement('button');
     apply.type = 'button';
     apply.className = 'o-list-date-range-apply';
-    apply.textContent = 'Apply';
+    apply.textContent = definition.applyLabel || 'Apply';
     apply.addEventListener('click', () => this.apply(editor, fromField, toField, from.value, to.value, error));
     fields.append(apply);
     editor.append(calendar, fields, error);
@@ -148,6 +164,18 @@ export class DateRangeFilterTag {
       input.max = bounds.to;
     }
     return input;
+  }
+
+  private isDateAllowed(value: string, activeField: 'from' | 'to', selectedFrom: string, definition: DateRangeFilterTagDefinition) {
+    if (definition.maxYears) {
+      const bounds = rollingDateBounds(definition.maxYears);
+      if (value < bounds.from || value > bounds.to) return false;
+      if (activeField === 'to' && selectedFrom) {
+        const latest = addYears(selectedFrom, definition.maxYears);
+        if (value > latest) return false;
+      }
+    }
+    return activeField !== 'to' || !selectedFrom || value >= selectedFrom;
   }
 
   private apply(editor: HTMLElement, fromField: string, toField: string, from: string, to: string, error?: HTMLElement) {
@@ -184,14 +212,25 @@ export function rollingDateBounds(years: number): { from: string; to: string } {
 }
 
 export function validateDateRange(from: string, to: string, definition: DateRangeFilterTagDefinition): string | undefined {
-  if (!from || !to) return 'A bounded date range is required.';
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return 'Use valid dates.';
-  if (from >= to) return 'The start date must be before the end date.';
+  if (!from || !to) return validationMessage(definition, 'required', 'A bounded date range is required.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return validationMessage(definition, 'invalid', 'Use valid dates.');
+  if (from >= to) return validationMessage(definition, 'startBeforeEnd', 'The start date must be before the end date.');
   if (definition.maxYears) {
     const bounds = rollingDateBounds(definition.maxYears);
-    if (from < bounds.from || to > bounds.to) return `Choose dates between ${bounds.from} and ${bounds.to}.`;
+    if (from < bounds.from || to > bounds.to || to > addYears(from, definition.maxYears)) {
+      return validationMessage(definition, 'maxYears', `The date range cannot be longer than ${definition.maxYears} years.`)
+        .replaceAll('{max_years}', String(definition.maxYears));
+    }
   }
   return undefined;
+}
+
+function validationMessage(
+  definition: DateRangeFilterTagDefinition,
+  key: 'required' | 'invalid' | 'startBeforeEnd' | 'maxYears',
+  fallback: string,
+) {
+  return definition.validationMessages?.[key] || fallback;
 }
 
 function nextDate(value: string) {
@@ -209,6 +248,12 @@ function monthStart(value: string) {
 
 function shiftMonth(value: Date, offset: number) {
   return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth() + offset, 1));
+}
+
+function addYears(value: string, years: number) {
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCFullYear(date.getUTCFullYear() + years);
+  return date.toISOString().slice(0, 10);
 }
 
 function isoDate(year: number, month: number, day: number) {

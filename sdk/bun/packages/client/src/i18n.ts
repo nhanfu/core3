@@ -91,6 +91,8 @@ class I18n {
             || childKey === 'breadcrumb'
             || key === 'labels'
             || key === 'preset_labels'
+            || key === 'weekday_labels'
+            || key === 'validation_messages'
             || key === 'message_action_labels'
             || key === 'message_detail_labels',
         );

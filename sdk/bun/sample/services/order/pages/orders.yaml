@@ -81,6 +81,15 @@ components:
       default_preset: last_12_months
       max_years: 2
       deny_unbounded: true
+      apply_label: Apply
+      calendar_previous_label: Previous date picker month
+      calendar_next_label: Next date picker month
+      weekday_labels: [Mo, Tu, We, Th, Fr, Sa, Su]
+      validation_messages:
+        required: A bounded date range is required.
+        invalid: Enter valid dates in YYYY-MM-DD format.
+        start_before_end: The start date must be before the end date.
+        max_years: The date range cannot be longer than {max_years} years.
       preset_labels:
         today: Today
         week: This week

@@ -114,7 +114,7 @@ const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission',
 const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
-const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'label', 'presets', 'preset_labels', 'preset_style', 'default_preset', 'max_years', 'deny_unbounded']);
+const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'label', 'presets', 'preset_labels', 'preset_style', 'default_preset', 'max_years', 'deny_unbounded', 'apply_label', 'calendar_previous_label', 'calendar_next_label', 'weekday_labels', 'validation_messages']);
 const TOOLBAR_FILTER_KEYS = new Set(['field', 'label', 'options', 'options_source', 'placeholder']);
 const COMPONENT_ACTION_KEYS = new Set([
   'id',
@@ -820,6 +820,13 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
   for (const key of ['from_field', 'to_field', 'from_label', 'to_label', 'label']) {
     if (value[key] !== undefined) requireString(value[key], `${path}.${key}`, issues);
   }
+  for (const key of ['apply_label', 'calendar_previous_label', 'calendar_next_label']) {
+    if (value[key] !== undefined) requireString(value[key], `${path}.${key}`, issues);
+  }
+  if (value.weekday_labels !== undefined) {
+    if (!Array.isArray(value.weekday_labels)) issues.push(`${path}.weekday_labels must be an array`);
+    else value.weekday_labels.forEach((label, index) => requireString(label, `${path}.weekday_labels[${index}]`, issues));
+  }
   if (value.presets !== undefined) {
     if (!Array.isArray(value.presets)) {
       issues.push(`${path}.presets must be an array`);
@@ -839,6 +846,16 @@ function validateDateRange(value: unknown, path: string, issues: string[]) {
       for (const [key, label] of Object.entries(value.preset_labels)) {
         if (!allowed.has(key)) issues.push(`${path}.preset_labels.${key} is not a supported preset`);
         requireString(label, `${path}.preset_labels.${key}`, issues);
+      }
+    }
+  }
+  if (value.validation_messages !== undefined) {
+    requireRecord(value.validation_messages, `${path}.validation_messages`, issues);
+    if (isRecord(value.validation_messages)) {
+      const allowed = new Set(['required', 'invalid', 'start_before_end', 'max_years']);
+      for (const [key, message] of Object.entries(value.validation_messages)) {
+        if (!allowed.has(key)) issues.push(`${path}.validation_messages.${key} is not supported`);
+        requireString(message, `${path}.validation_messages.${key}`, issues);
       }
     }
   }
