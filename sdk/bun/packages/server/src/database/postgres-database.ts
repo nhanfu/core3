@@ -80,9 +80,10 @@ export class PostgresDatabase implements DatabaseAdapter {
       run: async (sql: string, ...args: any[]) => {
         const callback = typeof args.at(-1) === 'function' ? args.pop() : undefined;
         const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
-        const promise = reserved.then((connection) => this.executeOn(connection, sql, params)).then(() => {
+        const promise = reserved.then((connection) => this.executeOn(connection, sql, params)).then((result) => {
           if (/^BEGIN\b/i.test(sql.trim())) inTransaction = true;
           if (/^(COMMIT|ROLLBACK)\b/i.test(sql.trim())) inTransaction = false;
+          return result;
         });
         if (callback) promise.then(() => callback(null), callback);
         return promise;
@@ -101,8 +102,8 @@ export class PostgresDatabase implements DatabaseAdapter {
     };
   }
 
-  private async executeOn(connection: PostgresExecutor, sql: string, params: unknown[]): Promise<void> {
-    await connection.unsafe(postgresSql(sql), params);
+  private async executeOn(connection: PostgresExecutor, sql: string, params: unknown[]): Promise<any> {
+    return connection.unsafe(postgresSql(sql), params);
   }
 
   private async queryOn(connection: PostgresExecutor, sql: string, params: unknown[]): Promise<any[]> {

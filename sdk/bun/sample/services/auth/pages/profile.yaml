@@ -86,9 +86,10 @@ actions:
     script: |
       // js
       async ({ row, request, setLanguage }) => {
+        const profile = await request('/api/v1/profile')
         await request('/api/v1/profile', {
           method: 'PATCH',
-          body: { preferred_lang: row.preferred_lang },
+          body: { preferred_lang: row.preferred_lang, expected_row_version: profile.row_version },
         })
         await setLanguage(row.preferred_lang)
       }

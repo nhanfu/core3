@@ -18,7 +18,7 @@ export class AuthRepository {
     return this.withConnection((connection) => queryOnConnection(connection, sql, params));
   }
 
-  run(sql: string, params: any[] = []): Promise<void> {
+  run(sql: string, params: any[] = []): Promise<any> {
     return this.withConnection((connection) => runOnConnection(connection, sql, params));
   }
 
@@ -65,8 +65,31 @@ export class AuthRepository {
     return row || null;
   }
 
-  updateProfile(userId: string, fields: Record<string, unknown>): Promise<void> {
-    return this.execute('update_profile', { user_id: userId, ...fields }).then(() => undefined);
+  async updateProfile(userId: string, fields: Record<string, unknown>): Promise<void> {
+    const params = { user_id: userId, ...fields };
+    const query = this.queries.update_profile;
+    if (!query) throw new Error('Auth data query is not declared: update_profile');
+    const bound = bindNamedParams(query, params);
+    const result = await this.run(bound.statement, bound.values);
+    const changed = typeof result?.rowsChanged === 'number' ? result.rowsChanged
+      : typeof result?.affectedRows === 'number' ? result.affectedRows
+      : typeof result?.rowCount === 'number' ? result.rowCount
+      : Array.isArray(result?.rowsAffected) ? Number(result.rowsAffected[0] || 0)
+      : typeof result?.rowsAffected === 'number' ? result.rowsAffected
+      : typeof result?.count === 'number' ? result.count : undefined;
+    if (changed === undefined) {
+      const current = await this.profile(userId);
+      if (!current) throw { status: 404, message: 'User not found' };
+      if (String(current.row_version) === String(params.expected_row_version)) {
+        throw { status: 409, code: 'STALE_RECORD', message: 'Profile was changed by another user. Reload it before saving.' };
+      }
+      return;
+    }
+    if (changed === 0) {
+      const current = await this.profile(userId);
+      if (!current) throw { status: 404, message: 'User not found' };
+      throw { status: 409, code: 'STALE_RECORD', message: 'Profile was changed by another user. Reload it before saving.' };
+    }
   }
 
   userSummariesByIds(userIds: string[]): Promise<any[]> {

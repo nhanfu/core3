@@ -49,6 +49,7 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
       const result: any = await (topics as TopicMediator).request(topicDefinition(action.topic, Number(action.topic_version || 1)), {
         threadId: meta.thread_id,
         content: meta.content,
+        expected_row_version: meta.expected_row_version,
         attachment: fileMeta,
         actor: activityActor,
       });

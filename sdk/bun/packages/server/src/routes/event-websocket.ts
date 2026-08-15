@@ -69,6 +69,7 @@ export async function handleEventRoutes(ctx: Record<string, any>, server?: Modul
             id: payload.thread_id,
             content: payload.content,
             client_message_id: payload.client_message_id,
+            expected_row_version: payload.expected_row_version,
           });
         } catch (error: any) {
           socket.send(encodeChatFrame({ type: 'chat_error', error: String(error?.message || 'Message failed') }));

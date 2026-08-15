@@ -29,7 +29,7 @@ function json(data: unknown, status = 200): Response {
 }
 
 function errorResponse(error: any): Response {
-  return json({ error: error?.message || 'Authentication failed' }, error?.status || 401);
+  return json({ error: error?.message || 'Authentication failed', ...(error?.code ? { code: error.code } : {}) }, error?.status || 401);
 }
 
 export default class AuthModule {
@@ -150,7 +150,12 @@ export default class AuthModule {
           const fields = Object.fromEntries([...profileFields]
             .filter((field) => body[field] !== undefined)
             .map((field) => [field, body[field]]));
-          if (Object.keys(fields).length) await repository.updateProfile(String(user.sub), fields);
+          if (Object.keys(fields).length) {
+            if (body.expected_row_version === undefined || body.expected_row_version === null || body.expected_row_version === '') {
+              return json({ error: 'expected_row_version is required' }, 400);
+            }
+            await repository.updateProfile(String(user.sub), { ...fields, expected_row_version: body.expected_row_version });
+          }
           return json({ ok: true });
         } catch (error) { return errorResponse(error); }
       }

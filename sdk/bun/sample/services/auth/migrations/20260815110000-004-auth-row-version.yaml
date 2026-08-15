@@ -1,0 +1,15 @@
+version: 0.0.4
+kind: schema
+description: Add optimistic concurrency versions to mutable auth records
+type:
+  postgres:
+    up: |
+      ALTER TABLE users ADD COLUMN row_version BIGINT NOT NULL DEFAULT 1;
+    down: |
+      ALTER TABLE users DROP COLUMN row_version;
+  duckdb:
+    up: ALTER TABLE users ADD COLUMN row_version BIGINT DEFAULT 1;
+    down: ALTER TABLE users DROP COLUMN row_version;
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

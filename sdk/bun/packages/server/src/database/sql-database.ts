@@ -4,7 +4,7 @@ import type { DatabaseAdapter, DatabaseConnection, DatabaseDriver } from './type
 
 type SqlExecutor = {
   query(sql: string, params: any[]): Promise<any[]>;
-  execute(sql: string, params: any[]): Promise<void>;
+  execute(sql: string, params: any[]): Promise<any>;
   close(): Promise<void>;
 };
 
@@ -37,6 +37,7 @@ export function translateSql(sql: string, driver: DatabaseDriver): string {
       .replace(/printf\('\%.2f%%',\s*([^()]+)\)/gi, "CONCAT(FORMAT($1, 2), '%')");
   } else if (driver === 'oracle') {
     result = result.replace(/\bgen_random_uuid\(\)/gi, 'RAWTOHEX(SYS_GUID())')
+      .replace(/\bADD\s+COLUMN\b/gi, 'ADD')
       .replace(/\bVARCHAR\b/gi, 'VARCHAR2').replace(/\bBIGINT\b/gi, 'NUMBER(19)')
       .replace(/CAST\(([^()]+) AS VARCHAR2\)/gi, 'CAST($1 AS VARCHAR2(4000))')
       .replace(/\bCURRENT_TIMESTAMP\b/gi, 'SYSTIMESTAMP')
@@ -44,6 +45,7 @@ export function translateSql(sql: string, driver: DatabaseDriver): string {
       .replace(/^BEGIN\s+TRANSACTION$/i, '');
   } else if (driver === 'sqlserver') {
     result = result.replace(/\bgen_random_uuid\(\)/gi, 'CONVERT(VARCHAR(36), NEWID())')
+      .replace(/\bADD\s+COLUMN\b/gi, 'ADD')
       .replace(/\bCURRENT_TIMESTAMP\b/gi, 'SYSUTCDATETIME()')
       .replace(/\bVARCHAR\b/gi, 'NVARCHAR').replace(/\bBIGINT\b/gi, 'BIGINT');
   }
@@ -64,9 +66,10 @@ export class SqlDatabase implements DatabaseAdapter {
         const callback = typeof args.at(-1) === 'function' ? args.pop() : undefined;
         const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
         const translated = translateSql(sql, this.driver);
-        const promise = (translated ? this.executor.execute(translated, params) : Promise.resolve()).then(() => {
+        const promise = (translated ? this.executor.execute(translated, params) : Promise.resolve()).then((result) => {
           if (/^BEGIN\b/i.test(sql.trim())) inTransaction = true;
           if (/^(COMMIT|ROLLBACK)\b/i.test(sql.trim())) inTransaction = false;
+          return result;
         });
         if (callback) promise.then(() => callback(null), callback);
         return promise;
@@ -95,7 +98,7 @@ export async function openSqlDatabase(driver: Exclude<DatabaseDriver, 'postgres'
         const rows = (await pool.query(sql, params))[0] as any;
         return Array.isArray(rows) ? rows : [];
       },
-      execute: async (sql, params) => { await pool.query(sql, params); },
+      execute: async (sql, params) => (await pool.query(sql, params))[0],
       close: async () => { await pool.end(); },
     });
   }
@@ -113,7 +116,7 @@ export async function openSqlDatabase(driver: Exclude<DatabaseDriver, 'postgres'
     const execute = async (sql: string, params: any[]) => {
       const request = pool.request();
       params.forEach((value, index) => request.input(`p${index + 1}`, value));
-      await request.query(sql);
+      return request.query(sql);
     };
     return new SqlDatabase(driver, {
       query: async (sql, params) => { const request = pool.request(); params.forEach((value, index) => request.input(`p${index + 1}`, value)); return (await request.query(sql)).recordset; },
@@ -133,7 +136,7 @@ export async function openSqlDatabase(driver: Exclude<DatabaseDriver, 'postgres'
       const rows = (await connection.execute(sql, params, { outFormat: oracledb.default.OUT_FORMAT_OBJECT })).rows || [];
       return rows.map((row: any) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key.toLowerCase(), value])));
     },
-    execute: async (sql, params) => { await connection.execute(sql, params, { autoCommit: true }); },
+      execute: async (sql, params) => connection.execute(sql, params, { autoCommit: true }),
     close: async () => { await connection.close(); },
   });
 }

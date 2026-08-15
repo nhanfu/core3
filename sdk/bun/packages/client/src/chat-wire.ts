@@ -21,6 +21,7 @@ export type ChatWireMessage = {
   message_id?: string;
   thread_id?: string;
   content?: string;
+  expected_row_version?: number | string;
   error?: string;
   message?: Record<string, unknown>;
 };
@@ -30,7 +31,7 @@ const MAGIC_B = 0x33;
 const VERSION = 1;
 const MAX_STRING_BYTES = 16 * 1024 * 1024;
 const fields = [
-  'type', 'status', 'operation', 'client_message_id', 'message_id', 'thread_id', 'content', 'error',
+  'type', 'status', 'operation', 'client_message_id', 'message_id', 'thread_id', 'content', 'error', 'expected_row_version',
   'message_message_id', 'message_thread_id', 'message_sender_id', 'message_sender_name',
   'message_body', 'message_created_at', 'message_attachment_id',
   'message_attachment_file_name', 'message_attachment_mime_type', 'message_attachment_size_bytes',
@@ -41,6 +42,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 function fieldValue(message: ChatWireMessage, field: string, index: number): unknown {
+  if (field === 'expected_row_version') return message.expected_row_version;
   if (index >= 8) {
     const key = field === 'message_message_id' ? 'id' : field.slice('message_'.length);
     return message.message?.[key];
@@ -126,6 +128,7 @@ export function decodeChatFrame(raw: ArrayBuffer | Uint8Array): ChatWireMessage 
     type: String(row.type || ''), status: row.status as string | undefined, operation: row.operation as string | undefined,
     client_message_id: row.client_message_id as string | undefined, message_id: row.message_id as string | undefined,
     thread_id: row.thread_id as string | undefined, content: row.content as string | undefined, error: row.error as string | undefined,
+    expected_row_version: row.expected_row_version as number | undefined,
   };
   if (Object.keys(message).length) result.message = message;
   return result;

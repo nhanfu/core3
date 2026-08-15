@@ -35,4 +35,10 @@ describe('database dialect contract', () => {
     expect(translated).not.toContain('printf(');
   });
 
+  it('translates row-version column additions for Oracle and SQL Server', () => {
+    const sql = 'ALTER TABLE orders ADD COLUMN row_version BIGINT NOT NULL DEFAULT 1';
+    expect(translateSql(sql, 'oracle')).toContain('ADD row_version NUMBER(19)');
+    expect(translateSql(sql, 'sqlserver')).toContain('ADD row_version BIGINT');
+  });
+
 });

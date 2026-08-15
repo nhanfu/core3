@@ -834,7 +834,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         }
       },
       onKanbanMove: sourceWorkflow ? async (row: any, status: string) => {
-        await client.workflow(sourceId, 'move', { id: String(row[def.row_key || 'id']), status });
+        await client.workflow(sourceId, 'move', { id: String(row[def.row_key || 'id']), status, expected_row_version: row.row_version });
         await refreshSources([sourceId]);
       } : undefined,
       onKanbanAddStatus: sourceWorkflow?.allow_add ? async (label: string, fromStates: string[], toStates: string[]) => {

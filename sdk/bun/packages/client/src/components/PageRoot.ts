@@ -9,6 +9,7 @@ import { PageGridRenderers } from '@core3/client/components/PageGridRenderers';
 import { PageDetailRenderers } from '@core3/client/components/PageDetailRenderers';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from '@core3/client/components/Dialog';
+import { showToast } from '@core3/client/components/Toast';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 import { html } from '@core3/client/html';
 
@@ -450,6 +451,7 @@ export class PageRuntime extends BaseComponent {
           table: actionDef.table,
           action: 'delete',
           id: row?.id ?? null,
+          expected_row_version: row?.row_version,
           scope: actionDef.scope,
           changes: [],
         });
@@ -467,6 +469,7 @@ export class PageRuntime extends BaseComponent {
           table: actionDef.table,
           action: 'update',
           id: row?.id ?? null,
+          expected_row_version: row?.row_version,
           scope: actionDef.scope,
           changes,
         });
@@ -482,17 +485,18 @@ export class PageRuntime extends BaseComponent {
         try {
           const result = await client.action(actionDef.action, {
             id: row?.id ?? null,
+            expected_row_version: row?.row_version,
             ...resolveActionParams(actionDef.params, rowCtx),
           });
           if (actionDef.result === 'alert') {
             const field = actionDef.result_field || 'message';
             const value = result && typeof result === 'object' ? result[field] : result;
-            await showMessageDialog({ title: 'Success', message: String(value ?? 'Success'), confirmLabel: 'OK' });
+            showToast(String(value ?? 'Success'), 'success');
           }
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Action failed';
-          await showMessageDialog({ title: 'Action failed', message, confirmLabel: 'OK' });
+          showToast(message, 'error');
         }
         break;
       }
@@ -520,6 +524,7 @@ export class PageRuntime extends BaseComponent {
           if (actionDef.kind === 'chat_attachment') {
             uploadMeta.thread_id = row.id;
             uploadMeta.content = row.content;
+            uploadMeta.expected_row_version = row.expected_row_version ?? row.row_version;
           } else if (actionDef.kind === 'order_attachment') {
             uploadMeta.order_id = resolveActionParams(
               actionDef.params || { order_id: '{row.id}' },
@@ -599,7 +604,7 @@ export class PageRuntime extends BaseComponent {
       const changes = (actionDef.fields || [])
         .filter((field: any) => field.field !== 'id' && values[field.field] !== undefined)
         .map((field: any) => ({ field: field.field, value: values[field.field] }));
-      await client.patch({ table: actionDef.table, action: actionDef.operation, id: actionDef.operation === 'insert' ? null : id, scope: actionDef.scope, changes });
+      await client.patch({ table: actionDef.table, action: actionDef.operation, id: actionDef.operation === 'insert' ? null : id, expected_row_version: values.row_version, scope: actionDef.scope, changes });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;
     }
@@ -607,9 +612,11 @@ export class PageRuntime extends BaseComponent {
       await client.action(actionDef.action, {
         ...resolveActionParams(actionDef.params, { ...ctx, row: values }),
         id: values.id ?? pageParams.id ?? ctx.state.id ?? null,
+        expected_row_version: values.row_version,
+        parent_expected_row_version: dataMap.order_detail?.data?.row_version,
         values,
       });
-      if (actionDef.success_message) await showMessageDialog({ title: 'Success', message: actionDef.success_message, confirmLabel: 'OK' });
+      if (actionDef.success_message) showToast(actionDef.success_message, 'success');
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
     }
   }

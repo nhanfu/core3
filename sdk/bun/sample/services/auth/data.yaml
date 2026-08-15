@@ -16,7 +16,7 @@ queries:
     WHERE lower(u.email) = lower(:email)
     GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
       u.preferred_lang, u.enabled, u.branch_id, u.department_id,
-      u.last_login, u.created_at, u.updated_at
+      u.last_login, u.created_at, u.updated_at, u.row_version
   permissions: |
     SELECT DISTINCT p.permission_key
     FROM permissions p
@@ -26,15 +26,16 @@ queries:
   update_password: UPDATE users SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP WHERE id = :user_id
   record_login: UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :user_id
   profile: |
-    SELECT id, email, name, avatar_url, preferred_lang, branch_id, department_id
+    SELECT id, email, name, avatar_url, preferred_lang, branch_id, department_id, row_version
     FROM users WHERE id = :user_id
   update_profile: |
     UPDATE users
     SET name = COALESCE(:name, name),
         preferred_lang = COALESCE(:preferred_lang, preferred_lang),
         avatar_url = COALESCE(:avatar_url, avatar_url),
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = :user_id
+        updated_at = CURRENT_TIMESTAMP,
+        row_version = row_version + 1
+    WHERE id = :user_id AND row_version = :expected_row_version
   user_summaries_by_ids: |
     SELECT id, email, name, avatar_url, enabled, branch_id
     FROM users

@@ -156,6 +156,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
     const result = await runtime.move(workflow, {
       id: body.id,
       status: body.status,
+      expected_row_version: body.expected_row_version,
       current_user_id: activityActor.id || null,
       current_user_name: activityActor.name,
       current_branch_id: String(authUser.branch_id || ''),

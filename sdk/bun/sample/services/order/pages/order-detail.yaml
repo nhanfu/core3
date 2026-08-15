@@ -6,7 +6,7 @@ datasources:
     single: true
     permission: orders.read
     query: |
-      SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Draft'
@@ -26,7 +26,7 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT l.id, l.order_id AS document_id, l.sequence, l.description,
+      SELECT l.id, l.row_version, l.order_id AS document_id, l.sequence, l.description,
         CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
         CAST(l.unit_price AS DOUBLE) AS unit_price,
         CAST(l.tax_rate AS DOUBLE) AS tax_rate,
@@ -484,13 +484,16 @@ actions:
       scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
       generated: [line_id]
       guards:
-        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
-          message: Order lines cannot be changed while the order is not Draft
+          code: STALE_RECORD
+          message: Order changed or is not Draft; reload it before editing lines
       steps:
         - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
         - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2))"
-        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, :description)"
       result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
   - id: edit_order_line
@@ -513,15 +516,21 @@ actions:
     mutation:
       scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
       guards:
-        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
-          message: Order lines cannot be changed while the order is not Draft
-        - query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id"
-          status: 404
-          message: Line item not found
+          code: STALE_RECORD
+          message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Line item changed or no longer exists; reload it before saving
       steps:
-        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2), updated_at = CURRENT_TIMESTAMP WHERE id = :line_id AND order_id = :id"
-        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.update', 'orders', :id, :description)"
       result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
   - id: delete_order_line
@@ -537,15 +546,21 @@ actions:
     mutation:
       scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
       guards:
-        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
-          message: Order lines cannot be changed while the order is not Draft
-        - query: "SELECT id, description FROM order_lines WHERE id = :line_id AND order_id = :id"
-          status: 404
-          message: Line item not found
+          code: STALE_RECORD
+          message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT id, description FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Line item changed or no longer exists; reload it before deleting
           assign: true
       steps:
-        - query: "DELETE FROM order_lines WHERE id = :line_id AND order_id = :id"
-        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        - query: "DELETE FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.delete', 'orders', :id, :description)"
       result: { query: "SELECT true AS deleted, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount" }

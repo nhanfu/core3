@@ -3,7 +3,7 @@ import { appendIcon } from '@core3/client/components/Icon';
 import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { showMessageDialog } from '@core3/client/components/Dialog';
+import { showToast } from '@core3/client/components/Toast';
 import { html } from '@core3/client/html';
 
 export class PageFormModal extends BaseComponent {
@@ -182,17 +182,7 @@ export class PageFormModal extends BaseComponent {
 
 
         // Error banner (created lazily)
-        let errorBanner: HTMLElement | null = null;
         let closed = false;
-
-        function showError(msg: string) {
-          if (!errorBanner) {
-            errorBanner = html.take(null).div.ele() as HTMLDivElement;
-            html.take(errorBanner).className('form-error');
-            html.take(footer).before(errorBanner);
-          }
-          html.take(errorBanner).replaceText(msg).css('display', '');
-        }
 
         function closeModal() {
           if (closed) return;
@@ -214,8 +204,6 @@ export class PageFormModal extends BaseComponent {
 
         html.take(saveBtn).event('click', async () => {
           // Reset error
-          if (errorBanner) html.take(errorBanner).css('display', 'none');
-
           // Validate required fields
           let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
           for (const { el, fieldDef } of Object.values(inputs)) {
@@ -252,6 +240,8 @@ export class PageFormModal extends BaseComponent {
               await client.action(actionDef.action, {
                 ...resolveActionParams(actionDef.params, actionContext),
                 id: formRecord.id ?? null,
+                expected_row_version: formRecord.row_version,
+                parent_expected_row_version: dataMap.order_detail?.data?.row_version,
                 values: Object.fromEntries(changes.map(change => [change.field, change.value])),
               });
             } else {
@@ -259,16 +249,17 @@ export class PageFormModal extends BaseComponent {
                 table: actionDef.table,
                 action: actionDef.operation,
                 id: formRecord.id ?? null,
+                expected_row_version: formRecord.row_version,
                 scope: actionDef.scope,
                 changes,
               });
             }
-            if (actionDef.success_message) await showMessageDialog({ title: 'Success', message: actionDef.success_message, confirmLabel: 'OK' });
+            if (actionDef.success_message) showToast(actionDef.success_message, 'success');
             closeModal();
             if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
           } catch (err: any) {
             console.error('[page-renderer] patch error:', err);
-            showError(err.message || 'Lưu thất bại. Vui lòng thử lại.');
+            showToast(err.message || 'Lưu thất bại. Vui lòng thử lại.', 'error');
             html.take(saveBtn).prop('disabled', false).replaceText('Lưu');
           }
         });

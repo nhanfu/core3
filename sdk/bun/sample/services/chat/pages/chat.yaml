@@ -6,7 +6,7 @@ datasources:
     single: false
     permission: chat.read
     query: |
-      SELECT t.id, t.title, t.thread_type,
+      SELECT t.id, t.row_version, t.title, t.thread_type,
         COALESCE((
           SELECT string_agg(other.user_id, ',' ORDER BY other.user_id)
           FROM chat_participants other
@@ -149,6 +149,10 @@ actions:
     params: { content: '{row.content}', client_message_id: '{row.client_message_id}' }
     mutation:
       guards:
+        - query: "SELECT id FROM chat_threads WHERE id = :thread_id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Conversation changed; reload it before sending
         - query: "SELECT 1 AS ok WHERE length(trim(CAST(:content AS VARCHAR))) BETWEEN 1 AND 4000"
           status: 400
           message: message content must be between 1 and 4000 characters
@@ -160,7 +164,9 @@ actions:
         - query: "SELECT CAST(gen_random_uuid() AS VARCHAR) AS message_id"
           assign: message_id
         - query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, trim(CAST(:content AS VARCHAR)))"
-        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = :thread_id"
+        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :thread_id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
         - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.messages.send', 'chat_threads', :thread_id, 'Sent message in ' || CAST(:thread_title AS VARCHAR))"
       result:
@@ -191,6 +197,10 @@ actions:
     mutation:
       generated: [message_id, attachment_id]
       guards:
+        - query: "SELECT id FROM chat_threads WHERE id = :thread_id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Conversation changed; reload it before uploading
         - query: "SELECT t.title FROM chat_threads t JOIN chat_participants p ON p.thread_id = t.id WHERE t.id = :thread_id AND p.user_id = :current_user_id"
           status: 404
           message: Chat thread not found
@@ -198,7 +208,9 @@ actions:
       steps:
         - query: "INSERT INTO chat_messages(id, thread_id, sender_id, body) VALUES(:message_id, :thread_id, :current_user_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'Đã gửi tệp ' || CAST(:fileName AS VARCHAR)))"
         - query: "INSERT INTO chat_attachments(id, message_id, file_name, mime_type, size_bytes, storage_key) VALUES(:attachment_id, :message_id, :fileName, :mimeType, :sizeBytes, :storageKey)"
-        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP WHERE id = :thread_id"
+        - query: "UPDATE chat_threads SET updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :thread_id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
         - query: "UPDATE chat_participants SET last_read_at = CURRENT_TIMESTAMP WHERE thread_id = :thread_id AND user_id = :current_user_id"
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'chat.attachments.upload', 'chat_threads', :thread_id, 'Uploaded ' || CAST(:fileName AS VARCHAR))"
       result: { query: "SELECT :message_id AS id, :thread_id AS thread_id, :current_user_id AS sender_id, COALESCE(NULLIF(trim(CAST(:content AS VARCHAR)), ''), 'Đã gửi tệp ' || CAST(:fileName AS VARCHAR)) AS body" }

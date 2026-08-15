@@ -16,7 +16,7 @@ export class Toast extends BaseComponent {
     const cls = colorMap[type] || colorMap.info;
 
     const wrap = html.take(container)
-      .div.className(`flex items-center justify-between gap-3 px-4 py-3 rounded-lg border text-sm font-medium ${cls}`)
+      .div.className(`core3-toast core3-toast-${type} flex items-center justify-between gap-3 px-4 py-3 rounded-lg border text-sm font-medium ${cls}`)
       .ele();
 
     html.take(wrap).span.text(String(message));
@@ -27,4 +27,22 @@ export class Toast extends BaseComponent {
     appendIcon(close, 'x');
     html.take(close).event('click', () => this.setState({ visible: false }));
   }
+}
+
+export function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration = 4500): void {
+  if (typeof document === 'undefined' || !document.body) return;
+  const host = document.createElement('div');
+  host.className = 'core3-toast-host';
+  document.body.appendChild(host);
+  const toast = new Toast(`toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, { message, type });
+  toast.mount(host);
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    toast.dispose();
+    host.remove();
+  };
+  host.querySelector('button')?.addEventListener('click', close, { once: true });
+  window.setTimeout(close, duration);
 }

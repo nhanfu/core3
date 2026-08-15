@@ -365,8 +365,8 @@ export class ChatWorkspace extends BaseComponent {
       this.state.inputValue = '';
       this.state.selectedFile = null;
       if (file && this.def.upload_action) {
-        const result = await this.submit(this.def.upload_action, {
-          row: { id: activeThread.id, content, file },
+          const result = await this.submit(this.def.upload_action, {
+          row: { id: activeThread.id, content, file, expected_row_version: activeThread.row_version },
         });
         if (result?.id) {
           const message = {
@@ -394,7 +394,7 @@ export class ChatWorkspace extends BaseComponent {
         refocusInput();
       } else if (this.def.send_action) {
         if (!this.def.websocket?.endpoint) {
-          await this.submit(this.def.send_action, { row: { id: activeThread.id, content } });
+          await this.submit(this.def.send_action, { row: { id: activeThread.id, content, expected_row_version: activeThread.row_version } });
           refocusInput();
           return;
         }
@@ -423,10 +423,11 @@ export class ChatWorkspace extends BaseComponent {
             thread_id: activeThread.id,
             content,
             client_message_id: clientMessageId,
+            expected_row_version: activeThread.row_version,
           }));
         } else {
           void this.submit(this.def.send_action, {
-            row: { id: activeThread.id, content, client_message_id: clientMessageId },
+            row: { id: activeThread.id, content, client_message_id: clientMessageId, expected_row_version: activeThread.row_version },
           }).then((result: any) => {
             this.handleChatAck({
               status: 'success',

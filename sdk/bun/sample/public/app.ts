@@ -122,6 +122,11 @@ function routeWithModule(path: string) {
   return `/${moduleId}${routePath}`;
 }
 
+function normalizePagePath(path: string): string {
+  const normalized = path.replace(/\/+$/, '') || '/';
+  return normalized.replace(/\.html$/i, '') || '/';
+}
+
 function resolveModuleRootPath(path: string): string {
   const normalizedPath = path.replace(/\/$/, '') || '/';
   const module = _manifest.find((entry) => normalizedPath.toLowerCase() === `/${entry.id}`);
@@ -171,7 +176,8 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 }
 
 function currentLocation() {
-  const path = window.location.pathname === '/' ? getDefaultRoute(_user) : window.location.pathname;
+  const rawPath = window.location.pathname === '/' ? getDefaultRoute(_user) : window.location.pathname;
+  const path = normalizePagePath(rawPath);
   const normalizedPath = path.toLowerCase();
   const module = _manifest.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
   if (module) _activeModuleId = module.id;
@@ -182,7 +188,7 @@ function currentLocation() {
 async function renderRoute(path: string, langCode?: string) {
   if (langCode && langCode !== i18n.lang) await i18n.setLang(langCode);
   // Normalize: strip trailing slash
-  const cleanPath = path === '/' ? '/dashboard' : path.replace(/\/$/, '');
+  const cleanPath = normalizePagePath(path === '/' ? '/dashboard' : path);
   const normalizedPath = cleanPath.toLowerCase();
   const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path.toLowerCase() === normalizedPath);
   const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route.toLowerCase() === normalizedPath);

@@ -5,10 +5,8 @@ export function convertRow(row: Record<string, any>): Record<string, any> {
   ]));
 }
 
-export function runOnConnection(conn: any, sql: string, params: any[] = []): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    conn.run(sql, ...params, (err: any) => (err ? reject(err) : resolve()));
-  });
+export function runOnConnection(conn: any, sql: string, params: any[] = []): Promise<any> {
+  return Promise.resolve(conn.run(sql, ...params));
 }
 
 export function queryOnConnection(conn: any, sql: string, params: any[] = []): Promise<any[]> {
@@ -51,7 +49,9 @@ export function bindNamedParams(sql: string, params: Record<string, any> = {}) {
       return `(${value.map(() => 'CAST(? AS VARCHAR)').join(', ')})`;
     }
     values.push(value);
-    return 'CAST(? AS VARCHAR)';
+    return typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean'
+      ? '?'
+      : 'CAST(? AS VARCHAR)';
   });
   return { statement, values };
 }

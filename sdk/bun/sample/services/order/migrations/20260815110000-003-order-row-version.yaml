@@ -1,0 +1,25 @@
+version: 0.0.3
+kind: schema
+description: Add optimistic concurrency versions to mutable order records
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN row_version BIGINT NOT NULL DEFAULT 1;
+      ALTER TABLE order_lines ADD COLUMN row_version BIGINT NOT NULL DEFAULT 1;
+      ALTER TABLE order_workflow_states ADD COLUMN row_version BIGINT NOT NULL DEFAULT 1;
+    down: |
+      ALTER TABLE order_workflow_states DROP COLUMN row_version;
+      ALTER TABLE order_lines DROP COLUMN row_version;
+      ALTER TABLE orders DROP COLUMN row_version;
+  duckdb:
+    up: |
+      ALTER TABLE orders ADD COLUMN row_version BIGINT DEFAULT 1;
+      ALTER TABLE order_lines ADD COLUMN row_version BIGINT DEFAULT 1;
+      ALTER TABLE order_workflow_states ADD COLUMN row_version BIGINT DEFAULT 1;
+    down: |
+      ALTER TABLE order_workflow_states DROP COLUMN row_version;
+      ALTER TABLE order_lines DROP COLUMN row_version;
+      ALTER TABLE orders DROP COLUMN row_version;
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

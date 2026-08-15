@@ -18,7 +18,7 @@ datasources:
       max_years: 2
       deny_unbounded: true
     query: |
-      SELECT o.id, o.order_number, o.customer_name, o.customer_legal_name,
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
