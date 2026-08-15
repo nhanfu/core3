@@ -1,9 +1,10 @@
 import type { AuthClaims, AuthIdentity, AuthServiceProtocol, SecurityContext, User } from './interfaces.ts';
-import { AUTH_PASSWORD_CHANGE, AUTH_USER_RESOLVE } from './topics.ts';
+import { AUTH_PASSWORD_CHANGE } from './topics.ts';
 import { TopicMediator } from '@core3/server/topics/mediator';
+import { verifyAuthJwt } from '@core3/server/auth/jwt';
 
 export class MediatorAuthAdapter implements AuthServiceProtocol {
-  constructor(private readonly topics: TopicMediator) {}
+  constructor(private readonly topics: TopicMediator, private readonly secret: Uint8Array) {}
 
   async login(): Promise<never> {
     throw new Error('Login must be handled by the Auth module HTTP endpoint');
@@ -16,13 +17,13 @@ export class MediatorAuthAdapter implements AuthServiceProtocol {
   async getCurrentUser(request: Request | unknown): Promise<AuthClaims> {
     const header = request instanceof Request ? request.headers.get('Authorization') || '' : '';
     if (!header.startsWith('Bearer ')) throw { status: 401, message: 'Unauthorized' };
-    const user = await this.topics.request(AUTH_USER_RESOLVE, { token: header.slice(7) });
+    const user = await verifyAuthJwt<AuthClaims>(header.slice(7), this.secret);
     if (!user) throw { status: 401, message: 'Invalid or expired token' };
     return user;
   }
 
   async introspect(token: string): Promise<AuthClaims | null> {
-    return this.topics.request(AUTH_USER_RESOLVE, { token });
+    return verifyAuthJwt<AuthClaims>(token, this.secret);
   }
 
   hasPermission(user: AuthClaims | User, permission: string): boolean {
