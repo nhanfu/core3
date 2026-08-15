@@ -1,7 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
-import { showToast } from '@core3/client/components/Toast';
+import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only
@@ -65,7 +65,7 @@ export class OdooFormView extends BaseComponent {
             await this.state.onInlineSave?.({ ...sourceRecord, ...(this.state.draft || {}), id: sourceRecord.id });
             this.setState({ editing: false, draft: {} });
           } catch (error: any) {
-            showToast(error instanceof Error ? error.message : 'Unable to save the order', 'error');
+            showToast(error instanceof Error ? error.message : 'Unable to save the order', toastTypeForError(error));
           } finally {
             html.take(save).prop('disabled', false);
           }

@@ -3,7 +3,7 @@ import { appendIcon } from '@core3/client/components/Icon';
 import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { showToast } from '@core3/client/components/Toast';
+import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { html } from '@core3/client/html';
 
 export class PageFormModal extends BaseComponent {
@@ -259,7 +259,7 @@ export class PageFormModal extends BaseComponent {
             if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
           } catch (err: any) {
             console.error('[page-renderer] patch error:', err);
-            showToast(err.message || 'Lưu thất bại. Vui lòng thử lại.', 'error');
+            showToast(err.message || 'Lưu thất bại. Vui lòng thử lại.', toastTypeForError(err));
             html.take(saveBtn).prop('disabled', false).replaceText('Lưu');
           }
         });

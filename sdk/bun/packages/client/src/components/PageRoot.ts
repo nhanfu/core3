@@ -9,7 +9,7 @@ import { PageGridRenderers } from '@core3/client/components/PageGridRenderers';
 import { PageDetailRenderers } from '@core3/client/components/PageDetailRenderers';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showMessageDialog } from '@core3/client/components/Dialog';
-import { showToast } from '@core3/client/components/Toast';
+import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
 import { html } from '@core3/client/html';
 
@@ -496,7 +496,7 @@ export class PageRuntime extends BaseComponent {
           if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Action failed';
-          showToast(message, 'error');
+          showToast(message, toastTypeForError(error));
         }
         break;
       }

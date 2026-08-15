@@ -15,18 +15,32 @@ export class Toast extends BaseComponent {
     };
     const cls = colorMap[type] || colorMap.info;
 
+    const iconMap = { success: 'check', error: 'x', warning: 'warning', info: 'info' };
+    const titleMap = { success: 'Saved', error: 'Unable to complete', warning: 'Not saved', info: 'Notice' };
     const wrap = html.take(container)
-      .div.className(`core3-toast core3-toast-${type} flex items-center justify-between gap-3 px-4 py-3 rounded-lg border text-sm font-medium ${cls}`)
+      .div.className(`core3-toast core3-toast-${type} ${cls}`)
+      .attr('role', 'status')
+      .attr('aria-live', type === 'error' ? 'assertive' : 'polite')
       .ele();
 
-    html.take(wrap).span.text(String(message));
+    const icon = html.take(wrap).span.className('core3-toast-icon').ele();
+    appendIcon(icon, iconMap[type] || iconMap.info);
+    const content = html.take(wrap).div.className('core3-toast-content').ele();
+    html.take(content).strong.className('core3-toast-title').text(titleMap[type] || titleMap.info);
+    html.take(content).span.className('core3-toast-message').text(String(message));
     const close = html.take(wrap)
-      .button.className('ml-auto text-current opacity-60 hover:opacity-100 transition-opacity font-bold')
+      .button.className('core3-toast-close')
       .attr('aria-label', 'Đóng')
       .ele();
     appendIcon(close, 'x');
     html.take(close).event('click', () => this.setState({ visible: false }));
   }
+}
+
+export function toastTypeForError(error: unknown): 'error' | 'warning' {
+  return error && typeof error === 'object' && (error as { code?: string }).code === 'STALE_RECORD'
+    ? 'warning'
+    : 'error';
 }
 
 export function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration = 4500): void {

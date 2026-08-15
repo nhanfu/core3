@@ -1285,17 +1285,74 @@ body {
 /* ── Alert / toast ── */
 .core3-toast-host {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 18px;
+  right: 18px;
   z-index: 10000;
-  width: min(420px, calc(100vw - 40px));
+  width: min(440px, calc(100vw - 32px));
   pointer-events: none;
 }
 
 .core3-toast {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  align-items: start;
+  gap: 12px;
+  overflow: hidden;
+  padding: 14px 12px 15px 14px;
+  border: 1px solid;
+  border-radius: 14px;
   pointer-events: auto;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
-  animation: core3-toast-in 180ms ease-out;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(15, 23, 42, 0.08);
+  animation: core3-toast-in 220ms cubic-bezier(.2,.8,.2,1);
+}
+
+.core3-toast::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  content: '';
+  opacity: .65;
+  background: currentColor;
+}
+
+.core3-toast-success { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.core3-toast-error { background: #fff7f7; border-color: #fecaca; color: #991b1b; }
+.core3-toast-warning { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.core3-toast-info { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.core3-toast-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .72);
+}
+.core3-toast-icon svg { width: 18px; height: 18px; stroke-width: 2.4; }
+.core3-toast-content { min-width: 0; padding-top: 1px; }
+.core3-toast-title { display: block; margin-bottom: 2px; font-size: .84rem; font-weight: 700; }
+.core3-toast-message { display: block; font-size: .82rem; line-height: 1.45; overflow-wrap: anywhere; }
+.core3-toast-close {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  color: currentColor;
+  background: transparent;
+  cursor: pointer;
+  opacity: .58;
+}
+.core3-toast-close:hover { opacity: 1; background: rgba(15, 23, 42, .08); }
+.core3-toast-close svg { width: 16px; height: 16px; }
+
+@media (max-width: 560px) {
+  .core3-toast-host { top: 12px; right: 12px; width: calc(100vw - 24px); }
 }
 
 @keyframes core3-toast-in {
