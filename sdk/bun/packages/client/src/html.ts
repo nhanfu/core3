@@ -80,6 +80,9 @@ export class HTML {
     get h6() {
         return this.add('h6');
     }
+    get strong() {
+        return this.add('strong');
+    }
     get nav() {
         return this.add('nav');
     }

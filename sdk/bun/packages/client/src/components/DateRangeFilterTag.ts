@@ -1,4 +1,5 @@
 import { resolveDatePreset, type DateRangePreset } from '@core3/client/components/ListToolbar';
+import { html } from '@core3/client/html';
 
 export type DateRangeFilterTagDefinition = {
   fromField?: string;
@@ -50,66 +51,56 @@ export class DateRangeFilterTag {
     const definition = this.options.definition;
     const fromField = definition.fromField || 'from_date';
     const toField = definition.toField || 'to_date';
-    const details = document.createElement('details');
-    details.className = 'o-list-date-range-tag';
-    const summary = document.createElement('summary');
-    summary.className = 'o-list-facet o-list-date-range-summary';
-    summary.textContent = `${definition.label || 'Date'}: ${this.displayValue(fromField)} - ${this.displayValue(toField)}`;
-    summary.setAttribute('aria-label', `${definition.label || 'Date'} filter`);
-    details.append(summary);
+    const details = html.take(container).details.className('o-list-date-range-tag').getContext() as HTMLDetailsElement;
+    html.take(details).summary
+      .className('o-list-facet o-list-date-range-summary')
+      .text(`${definition.label || 'Date'}: ${this.displayValue(fromField)} - ${this.displayValue(toField)}`)
+      .attr('aria-label', `${definition.label || 'Date'} filter`);
 
-    const editor = document.createElement('div');
-    editor.className = 'o-list-date-range-editor';
+    const editor = html.take(details).div.className('o-list-date-range-editor').getContext() as HTMLDivElement;
     const presets = (definition.presets || []).filter(preset => !(definition.denyUnbounded && preset === 'all'));
     if (presets.length) {
-      const presetRow = document.createElement('div');
-      presetRow.className = 'o-list-date-range-presets';
+      const presetRow = html.take(editor).div.className('o-list-date-range-presets').getContext() as HTMLDivElement;
       for (const preset of presets) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.datePreset = preset;
-        button.textContent = definition.presetLabels?.[preset] || presetLabels[preset] || preset;
+        const button = html.take(presetRow).button
+          .type('button')
+          .dataAttr('date-preset', preset)
+          .text(definition.presetLabels?.[preset] || presetLabels[preset] || preset)
+          .getContext() as HTMLButtonElement;
         if (this.isPresetActive(preset, fromField, toField)) button.classList.add('is-active');
-        button.addEventListener('click', () => {
+        html.take(button).event('click', () => {
           const dates = resolveDatePreset(preset);
           if (dates.from && dates.from === dates.to) dates.to = nextDate(dates.to);
           this.apply(editor, fromField, toField, dates.from, dates.to);
         });
-        presetRow.append(button);
       }
-      editor.append(presetRow);
     }
 
-    const fields = document.createElement('div');
-    fields.className = 'o-list-date-range-fields';
-    const from = this.dateInput(definition.fromLabel || 'From date', String(this.options.values[fromField] || ''), definition);
-    const to = this.dateInput(definition.toLabel || 'To date', String(this.options.values[toField] || ''), definition);
-    fields.append(from, to);
+    const fields = html.take(editor).div.className('o-list-date-range-fields').getContext() as HTMLDivElement;
+    const from = this.dateInput(fields, definition.fromLabel || 'From date', String(this.options.values[fromField] || ''), definition);
+    const to = this.dateInput(fields, definition.toLabel || 'To date', String(this.options.values[toField] || ''), definition);
     let selectedFrom = from.value;
     let selectedTo = to.value;
     let activeField: 'from' | 'to' = 'from';
     let calendarMonth = monthStart(selectedFrom || new Date().toISOString().slice(0, 10));
     let error: HTMLElement | undefined;
-    const calendar = document.createElement('div');
-    calendar.className = 'o-list-date-picker';
+    const calendar = html.take(editor).div.className('o-list-date-picker').getContext() as HTMLDivElement;
     const drawCalendar = () => {
       calendar.innerHTML = '';
-      const header = document.createElement('div');
-      header.className = 'o-list-date-picker-header';
-      const previous = document.createElement('button');
-      previous.type = 'button'; previous.className = 'o-list-date-picker-nav'; previous.textContent = '‹';
-      previous.setAttribute('aria-label', definition.calendarPreviousLabel || 'Previous date picker month');
-      previous.addEventListener('click', () => { calendarMonth = shiftMonth(calendarMonth, -1); drawCalendar(); });
-      const title = document.createElement('strong');
-      title.textContent = new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(calendarMonth);
-      const next = document.createElement('button');
-      next.type = 'button'; next.className = 'o-list-date-picker-nav'; next.textContent = '›';
-      next.setAttribute('aria-label', definition.calendarNextLabel || 'Next date picker month');
-      next.addEventListener('click', () => { calendarMonth = shiftMonth(calendarMonth, 1); drawCalendar(); });
-      header.append(previous, title, next); calendar.append(header);
-      const grid = document.createElement('div'); grid.className = 'o-list-date-picker-grid';
+      const header = html.take(calendar).div.className('o-list-date-picker-header').getContext() as HTMLDivElement;
+      html.take(header).button
+        .type('button').className('o-list-date-picker-nav').text('‹')
+        .attr('aria-label', definition.calendarPreviousLabel || 'Previous date picker month')
+        .event('click', () => { calendarMonth = shiftMonth(calendarMonth, -1); drawCalendar(); });
+      html.take(header).strong
+        .text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(calendarMonth));
+      html.take(header).button
+        .type('button').className('o-list-date-picker-nav').text('›')
+        .attr('aria-label', definition.calendarNextLabel || 'Next date picker month')
+        .event('click', () => { calendarMonth = shiftMonth(calendarMonth, 1); drawCalendar(); });
+      const grid = html.take(calendar).div.className('o-list-date-picker-grid').getContext() as HTMLDivElement;
       for (const weekday of definition.weekdayLabels || ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']) {
-        const label = document.createElement('span'); label.className = 'o-list-date-picker-weekday'; label.textContent = weekday; grid.append(label);
+        html.take(grid).span.className('o-list-date-picker-weekday').text(weekday);
       }
       const first = calendarMonth.getUTCDay() || 7;
       const firstVisibleDate = new Date(Date.UTC(calendarMonth.getUTCFullYear(), calendarMonth.getUTCMonth(), 1 - (first - 1)));
@@ -118,21 +109,20 @@ export class DateRangeFilterTag {
         const date = new Date(firstVisibleDate);
         date.setUTCDate(date.getUTCDate() + index);
         const value = isoDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'o-list-date-picker-day'; button.textContent = String(date.getUTCDate()); button.dataset.calendarDate = value;
+        const button = html.take(grid).button
+          .type('button').className('o-list-date-picker-day').text(String(date.getUTCDate()))
+          .dataAttr('calendar-date', value).getContext() as HTMLButtonElement;
         if (!value.startsWith(monthKey)) button.classList.add('is-outside-month');
         if (!this.isDateAllowed(value, activeField, selectedFrom, definition)) button.disabled = true;
         if (value === selectedFrom || value === selectedTo) button.classList.add('is-selected');
         if (selectedFrom && selectedTo && value > selectedFrom && value < selectedTo) button.classList.add('is-in-range');
-        button.addEventListener('click', () => {
+        html.take(button).event('click', () => {
           if (activeField === 'from') { selectedFrom = value; from.value = value; activeField = 'to'; }
           else { selectedTo = value; to.value = value; }
           if (error) error.textContent = validateDateRange(selectedFrom, selectedTo, definition) || '';
           drawCalendar();
         });
-        grid.append(button);
       }
-      calendar.append(grid);
     };
     from.addEventListener('focus', () => {
       activeField = 'from';
@@ -147,28 +137,23 @@ export class DateRangeFilterTag {
     from.addEventListener('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
     to.addEventListener('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
     drawCalendar();
-    error = document.createElement('div');
-    error.className = 'o-list-date-range-error';
-    error.setAttribute('role', 'alert');
-    const apply = document.createElement('button');
-    apply.type = 'button';
-    apply.className = 'o-list-date-range-apply';
-    apply.textContent = definition.applyLabel || 'Apply';
-    apply.addEventListener('click', () => this.apply(editor, fromField, toField, from.value, to.value, error));
-    fields.append(apply);
-    editor.append(calendar, fields, error);
-    details.append(editor);
-    container.append(details);
+    error = html.take(editor).div.className('o-list-date-range-error').attr('role', 'alert').getContext() as HTMLDivElement;
+    html.take(fields).button
+      .type('button')
+      .className('o-list-date-range-apply')
+      .text(definition.applyLabel || 'Apply')
+      .event('click', () => this.apply(editor, fromField, toField, from.value, to.value, error));
   }
 
-  private dateInput(label: string, value: string, definition: DateRangeFilterTagDefinition) {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.inputMode = 'numeric';
-    input.placeholder = 'YYYY-MM-DD';
-    input.pattern = '\\d{4}-\\d{2}-\\d{2}';
-    input.value = value;
-    input.setAttribute('aria-label', label);
+  private dateInput(parent: HTMLElement, label: string, value: string, definition: DateRangeFilterTagDefinition) {
+    const input = html.take(parent).input
+      .type('text')
+      .attr('inputmode', 'numeric')
+      .attr('placeholder', 'YYYY-MM-DD')
+      .attr('pattern', '\\d{4}-\\d{2}-\\d{2}')
+      .value(value)
+      .attr('aria-label', label)
+      .getContext() as HTMLInputElement;
     if (definition.maxYears) {
       const bounds = rollingDateBounds(definition.maxYears);
       input.min = bounds.from;
