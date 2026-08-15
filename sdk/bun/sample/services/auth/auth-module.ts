@@ -6,6 +6,7 @@ import { migrateDatabase } from '@core3/server/migrations';
 import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { DuckDbDatabase, HybridDuckDbDatabase, PostgresDatabase } from '@core3/server';
+import { openSqlDatabase } from '@core3/server/database/sql-database';
 import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
 import { TopicMediator } from '@core3/server/topics/mediator';
 import { MediatorAuthAdapter } from './auth-adapter.ts';
@@ -51,6 +52,10 @@ export default class AuthModule {
       const url = storage.url || credentials.url || (storage.url_env ? context.env[String(storage.url_env)] : undefined) || (credentials.url_env ? context.env[String(credentials.url_env)] : undefined);
       if (!url) throw new Error(`Auth Postgres storage requires ${storage.url_env || credentials.url_env || 'database.storage.url'}`);
       this.db = PostgresDatabase.open(String(url));
+    } else if (driver === 'mysql' || driver === 'oracle' || driver === 'sqlserver') {
+      const url = storage.url || credentials.url || (storage.url_env ? context.env[String(storage.url_env)] : undefined) || (credentials.url_env ? context.env[String(credentials.url_env)] : undefined);
+      if (!url) throw new Error(`Auth ${driver} storage requires a database URL`);
+      this.db = await openSqlDatabase(driver, String(url));
     } else {
       const memoryOnly = configuredDriver === 'duckdb-memory';
       const dbPath = storage.path || credentials.path || context.env.CORE3_AUTH_DB_PATH || context.env.AUTH_DB_PATH || join(context.moduleRoot, '..', '..', 'coredb', 'auth.duckdb');

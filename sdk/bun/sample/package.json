@@ -11,6 +11,10 @@
     "dev:ddb": "bun scripts/dev.ts --db=ddb",
     "dev:memory": "bun scripts/dev.ts --db=ddb --memory",
     "dev:pg": "bun scripts/dev.ts --db=pg",
+    "dev:mysql": "bun scripts/dev.ts --db=mysql",
+    "dev:oracle": "bun scripts/dev.ts --db=oracle",
+    "dev:sqlserver": "bun scripts/dev.ts --db=sqlserver",
+    "db:smoke": "bun scripts/adapter-smoke.ts",
     "event-mediator": "bun ../med/src/event-mediator-server.ts",
     "test": "vitest run --environment jsdom --config ../packages/client/vitest.config.ts",
     "audit": "bun scripts/audit-order-ui.ts"

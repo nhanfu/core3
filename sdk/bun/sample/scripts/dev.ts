@@ -25,11 +25,12 @@ if (import.meta.main) {
   const memoryDb = process.env.CORE3_DB_DRIVER === 'duckdb-memory'
     || legacyMemoryFlag
     || argumentsList.some((argument) => argument === '--memory' || argument === '--memory=true');
-  const requestedDbValue = dbArgument?.slice('--db='.length) || (process.env.CORE3_DB_DRIVER === 'duckdb' || process.env.CORE3_DB_DRIVER === 'duckdb-memory' ? 'ddb' : 'pg');
-  const requestedDb = requestedDbValue === 'postgres' ? 'pg' : requestedDbValue;
-  if (requestedDb !== 'pg' && requestedDb !== 'ddb') throw new Error(`Unsupported database mode: ${requestedDb}. Use --db=pg or --db=ddb`);
-  if (memoryDb && requestedDb !== 'ddb') throw new Error('--memory can only be used with --db=ddb');
-  const defaultDriver = requestedDb === 'pg' ? 'postgres' : memoryDb ? 'duckdb-memory' : 'duckdb';
+  const requestedDbValue = dbArgument?.slice('--db='.length) || process.env.CORE3_DB_DRIVER || 'postgres';
+  const requestedDb = requestedDbValue === 'pg' ? 'postgres' : requestedDbValue === 'ddb' ? 'duckdb' : requestedDbValue;
+  const supported = new Set(['postgres', 'duckdb', 'duckdb-memory', 'mysql', 'oracle', 'sqlserver']);
+  if (!supported.has(requestedDb)) throw new Error(`Unsupported database mode: ${requestedDb}. Use --db=postgres|duckdb|mysql|oracle|sqlserver`);
+  if (memoryDb && requestedDb !== 'duckdb') throw new Error('--memory can only be used with --db=duckdb');
+  const defaultDriver = memoryDb ? 'duckdb-memory' : requestedDb;
   const serviceIds = ['auth', 'order', 'chat'] as const;
   const databaseEnv: Record<string, string> = {
     CORE3_DB_DRIVER: defaultDriver,
@@ -48,9 +49,16 @@ if (import.meta.main) {
     databaseEnv.CORE3_ORDER_DB_PATH = process.env.CORE3_ORDER_DB_PATH || '../coredb/order.duckdb';
     databaseEnv.CORE3_CHAT_DB_PATH = process.env.CORE3_CHAT_DB_PATH || '../coredb/chat.duckdb';
   } else {
-    databaseEnv.CORE3_AUTH_DATABASE_URL = process.env.CORE3_AUTH_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3';
-    databaseEnv.CORE3_ORDER_DATABASE_URL = process.env.CORE3_ORDER_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3';
-    databaseEnv.CORE3_CHAT_DATABASE_URL = process.env.CORE3_CHAT_DATABASE_URL || 'postgres://postgres:postgres@127.0.0.1:55433/core3';
+    const defaults: Record<string, string> = {
+      postgres: 'postgres://postgres:postgres@127.0.0.1:55433/core3',
+      mysql: 'mysql://root:root@127.0.0.1:3306/core3',
+      oracle: 'oracle://system:oracle@127.0.0.1:1521/XE',
+      sqlserver: 'sqlserver://sa:YourStrong!Passw0rd@127.0.0.1:1433/core3',
+    };
+    const url = defaults[defaultDriver];
+    databaseEnv.CORE3_AUTH_DATABASE_URL = process.env.CORE3_AUTH_DATABASE_URL || url;
+    databaseEnv.CORE3_ORDER_DATABASE_URL = process.env.CORE3_ORDER_DATABASE_URL || url;
+    databaseEnv.CORE3_CHAT_DATABASE_URL = process.env.CORE3_CHAT_DATABASE_URL || url;
   }
   console.log(`Starting Core3 with service databases: ${serviceIds.map((serviceId) => `${serviceId}=${databaseEnv[`CORE3_${serviceId.toUpperCase()}_DB_DRIVER`]}`).join(', ')}`);
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);

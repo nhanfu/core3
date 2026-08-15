@@ -2,7 +2,7 @@ import { queryOnConnection, runOnConnection } from '@core3/server/database/sql';
 import { YamlMutationRuntime, type MutationDefinition } from '../yaml-mutation-runtime.ts';
 import { splitSQL } from '@core3/server/database/sql';
 import type { QueryWindowBounds, QueryWindowDefinition } from './query-window.ts';
-import type { DatabaseAdapter } from './types.ts';
+import type { DatabaseAdapter, DatabaseDriver } from './types.ts';
 
 export class DuckDbRepository {
 db: any;
@@ -13,6 +13,10 @@ private readonly resolveService?: (name: string) => any;
     this.db = db;
     this.resolveService = resolveService;
     this.mutationRuntime = new YamlMutationRuntime(resolveService);
+  }
+
+  get driver(): DatabaseDriver | undefined {
+    return this.db.driver;
   }
 
   async callService(serviceName: string, operation: string, request: Record<string, any>): Promise<any> {

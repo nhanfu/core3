@@ -7,6 +7,7 @@ import { discoverPages } from './discovery.ts';
 import { DuckDbDatabase } from './database/duckdb-database.ts';
 import { HybridDuckDbDatabase } from './database/hybrid-duckdb-database.ts';
 import { PostgresDatabase } from './database/postgres-database.ts';
+import { openSqlDatabase } from './database/sql-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { migrateDatabase } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
@@ -149,6 +150,10 @@ export class YamlServiceModule implements ModuleLifecycle {
       this.db = configuredDriver === 'duckdb-memory'
         ? await DuckDbDatabase.open(':memory:')
         : await HybridDuckDbDatabase.open(String(path));
+    } else if (storageDriver === 'mysql' || storageDriver === 'oracle' || storageDriver === 'sqlserver') {
+      const url = resolveDatabaseUrl(databaseConfig, context.env);
+      if (!url) throw new Error(`${storageDriver} storage requires ${databaseConfig?.storage?.url_env || databaseConfig?.url_env || 'database.storage.url'}`);
+      this.db = await openSqlDatabase(storageDriver, url);
     } else {
       throw new Error(`Durable storage driver is not implemented yet: ${storageDriver}`);
     }

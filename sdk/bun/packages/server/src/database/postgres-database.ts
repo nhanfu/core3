@@ -1,5 +1,6 @@
 import { convertRow } from './sql.ts';
 import type { DatabaseAdapter } from './types.ts';
+import { createDialect } from './dialects.ts';
 
 export type PostgresExecutor = {
   unsafe(sql: string, params?: unknown[]): Promise<any>;
@@ -53,6 +54,8 @@ function postgresSql(sql: string): string {
  * repository's positional `?` parameters to PostgreSQL `$n` parameters.
  */
 export class PostgresDatabase implements DatabaseAdapter {
+  readonly driver = 'postgres' as const;
+  readonly dialect = createDialect(this.driver);
   private constructor(private readonly executor: PostgresExecutor) {}
 
   static open(url: string): PostgresDatabase {
