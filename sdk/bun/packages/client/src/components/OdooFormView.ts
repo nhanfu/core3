@@ -112,18 +112,17 @@ export class OdooFormView extends BaseComponent {
       const current = record[field.field] ?? '';
       let editor: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
       if (field.type === 'textarea' || field.type === 'richtext') {
-        editor = html.take(null).textarea.getContext() as HTMLTextAreaElement;
+        editor = html.take(value).textarea.getContext() as HTMLTextAreaElement;
         html.take(editor).prop('rows', 3);
       } else if (field.type === 'select' || field.type === 'multi-select') {
-        editor = html.take(null).select.getContext() as HTMLSelectElement;
+        editor = html.take(value).select.getContext() as HTMLSelectElement;
         for (const option of field.options || []) {
           const itemOption = typeof option === 'string' ? { id: option, label: option } : option;
-          const optionEl = html.take(null).option.getContext() as HTMLOptionElement;
-          html.take(optionEl).prop('value', String(itemOption.id ?? itemOption.value ?? '')).text(String(itemOption.label ?? optionEl.value));
-          html.take(editor).append(optionEl);
+          const optionValue = String(itemOption.id ?? itemOption.value ?? '');
+          html.take(editor).option.prop('value', optionValue).text(String(itemOption.label ?? optionValue));
         }
       } else {
-        editor = html.take(null).input.getContext() as HTMLInputElement;
+        editor = html.take(value).input.getContext() as HTMLInputElement;
         html.take(editor).type(field.type === 'number' || field.type === 'money' ? 'number' : 'text');
         if (field.type === 'date' || field.type === 'time' || field.type === 'datetime') {
           html.take(editor).prop('inputMode', 'numeric');
@@ -133,7 +132,6 @@ export class OdooFormView extends BaseComponent {
       html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
       editor.dataset.formField = field.field;
       html.take(editor).event('input', () => { this.state.draft = { ...(this.state.draft || {}), [field.field]: editor.value }; });
-      html.take(value).append(editor);
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {
@@ -195,7 +193,7 @@ export class OdooFormView extends BaseComponent {
         panels.push(panel);
         if (tab.content_slot) {
           const embedded = this.getEmbeddedContent();
-          if (!embedded.contains(panel)) html.take(panel).append(embedded);
+          if (!embedded.contains(panel)) html.take(panel).attach(embedded);
         }
         if (Array.isArray(tab.groups)) {
           for (const group of tab.groups) renderFields(group.fields || [], group.title, panel, group.wide === true);
@@ -206,7 +204,7 @@ export class OdooFormView extends BaseComponent {
       }
     } else if (this.def.content_slot) {
       const embedded = this.getEmbeddedContent();
-      if (!embedded.contains(sheet)) html.take(sheet).append(embedded);
+      if (!embedded.contains(sheet)) html.take(sheet).attach(embedded);
     }
 
     if (!this.def.message_source && !this.def.follower_source && !this.def.attachment_source) return;
@@ -219,9 +217,7 @@ export class OdooFormView extends BaseComponent {
     }, this.def);
     chatter.parent = this;
     this.children.push(chatter);
-    const chatterSlot = html.take(null).div.getContext() as HTMLDivElement;
-    html.take(chatterSlot).className('o-form-chatter-slot');
-    html.take(layout).append(chatterSlot);
+    const chatterSlot = html.take(layout).div.className('o-form-chatter-slot').getContext() as HTMLDivElement;
     chatter.mount(chatterSlot);
   }
 

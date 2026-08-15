@@ -27,9 +27,7 @@ async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
     { record: sourceResult.data || {} },
     def,
   );
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '24px');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
 }
@@ -101,9 +99,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     },
     formDef,
   );
-  const slot = createFluentElement('div');
-  html.take(slot).className('o-form-view-slot');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.className('o-form-view-slot').getContext() as HTMLElement;
   comp._onAction = async (actionId: string, params: any) => {
     const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
     if (!actionDef) return;
@@ -143,9 +139,7 @@ async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
     { record: sourceResult.data || {} },
     def,
   );
-  const slot = createFluentElement('div');
-  html.take(slot).className('o-form-section o-form-totals-slot');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.className('o-form-section o-form-totals-slot').getContext() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
 }
@@ -158,9 +152,7 @@ async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
     { events: sourceResult.data || [] },
     def,
   );
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '24px');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, data => comp.setState({ events: data.data || [] }, true));
 }
@@ -203,9 +195,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) return handleAction(actionDef, params?.row || params || {});
   };
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '24px');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
   comp.mount(slot);
 
   bindSource(threadSource, data => _origSetState({ threads: data.data || [] }, true));
@@ -257,9 +247,7 @@ async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
     const next = { ...(filterState[sourceId] || {}), [field]: params?.status };
     await applySourceFilters(sourceId, next);
   };
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '16px');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.css('marginBottom', '16px').getContext() as HTMLElement;
   comp.mount(slot);
   bindSource(def.source, () => { if (def.show_counts !== false) void refreshStatusTabCounts(def.source, comp, def); });
 }
@@ -329,9 +317,7 @@ async function renderListToolbar(def: any, targetContainer: HTMLElement) {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
     if (actionDef) await handleAction(actionDef, params || {});
   };
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '16px');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.css('marginBottom', '16px').getContext() as HTMLElement;
   comp.mount(slot);
 }
 
@@ -360,12 +346,10 @@ async function renderChart(def: any, targetContainer: HTMLElement) {
     def
   );
 
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '24px');
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
   if (def.layout === 'inline') {
     html.take(slot).css('display', 'inline-block').css('verticalAlign', 'top').css('marginRight', '16px');
   }
-  html.take(targetContainer).append(slot);
   comp.mount(slot);
 
   bindSource(def.source, data => comp.setState(chartState(def, data), true));
@@ -377,32 +361,17 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
   );
   if (!visibleTabs.length) return;
 
-  // Pre-render each tab's components into detached containers
-  const tabContainers = [];
-  for (const tab of visibleTabs) {
-    const tabEl = createFluentElement('div');
-    for (const nestedDef of (tab.components || [])) {
-      await renderComponentDef(nestedDef, tabEl);
-    }
-    tabContainers.push(tabEl);
+  const wrap = html.take(targetContainer).div.className('tab-group').getContext() as HTMLElement;
+  const tabBar = html.take(wrap).div.className('tab-bar').attr('role', 'tablist').getContext() as HTMLElement;
+  const panels: HTMLElement[] = [];
+  for (const [i, tab] of visibleTabs.entries()) {
+    const panel = html.take(wrap).div.className(`tab-panel${i === 0 ? '' : ' tab-panel-hidden'}`).id(`${config.page.id}-tab-panel-${i}`).attr('role', 'tabpanel').getContext() as HTMLElement;
+    panels.push(panel);
+    for (const nestedDef of (tab.components || [])) await renderComponentDef(nestedDef, panel);
   }
 
-  // Build tab UI with plain DOM
-  const wrap = createFluentElement('div');
-  html.take(wrap).className('tab-group');
-
-  const tabBar = createFluentElement('div');
-  html.take(tabBar).className('tab-bar').attr('role', 'tablist');
-
-  const panels = tabContainers.map((tc, i) => {
-    const panel = createFluentElement('div');
-    html.take(panel).className(`tab-panel${i === 0 ? '' : ' tab-panel-hidden'}`).id(`${config.page.id}-tab-panel-${i}`).attr('role', 'tabpanel').append(tc);
-    return panel;
-  });
-
   const tabBtns = visibleTabs.map((tab, i) => {
-    const btn = createFluentElement('button');
-    html.take(btn).type('button').replaceText(tab.label).className(`tab-button${i === 0 ? ' is-active' : ''}`).attr('aria-selected', String(i === 0)).attr('role', 'tab').id(`${config.page.id}-tab-${i}`).attr('aria-controls', panels[i].id);
+    const btn = html.take(tabBar).button.type('button').replaceText(tab.label).className(`tab-button${i === 0 ? ' is-active' : ''}`).attr('aria-selected', String(i === 0)).attr('role', 'tab').id(`${config.page.id}-tab-${i}`).attr('aria-controls', panels[i].id).getContext() as HTMLButtonElement;
     html.take(panels[i]).attr('aria-labelledby', btn.id);
     return btn;
   });
@@ -414,11 +383,7 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
         html.take(panels[j]).toggleClass('tab-panel-hidden', j !== i);
       });
     });
-    html.take(tabBar).append(btn);
   });
-
-  html.take(wrap).append(tabBar, ...panels);
-  html.take(targetContainer).append(wrap);
 }
 
 async function renderComponentDef(def: any, targetContainer: HTMLElement) {
@@ -430,8 +395,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -445,8 +409,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -457,8 +420,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -469,8 +431,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -481,24 +442,21 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);
       };
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
     case 'PageIntro': {
       const { PageIntro } = await import('./PageIntro.ts');
       const component = new PageIntro(def.id || `${config.page.id}-intro`, def);
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
     case 'ComingSoon': {
       const { ComingSoon } = await import('@core3/client/components/ComingSoon');
       const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);
-      const slot = createFluentElement('div');
-      html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.getContext() as HTMLElement;
       component.mount(slot);
       break;
     }
@@ -563,9 +521,7 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
           const actionDef = (config.actions || []).find(a => a.id === actionId);
           if (actionDef) await handleAction(actionDef, row);
         };
-      const slot = createFluentElement('div');
-        html.take(slot).css('marginBottom', '24px');
-        html.take(targetContainer).append(slot);
+      const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
         comp.mount(slot);
       } else {
         console.warn(`[page-renderer] Unknown component type: ${def.type}`);
@@ -582,9 +538,7 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
       blocks: (dataMap[def.source]?.data || []) as Array<Record<string, unknown>>,
     },
   );
-  const slot = createFluentElement('div');
-  html.take(slot).css('marginBottom', '24px');
-  html.take(targetContainer).append(slot);
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').getContext() as HTMLElement;
   component.mount(slot);
   bindSource(def.source, data => component.setState({
     blocks: Array.isArray(data.data) ? data.data : [],

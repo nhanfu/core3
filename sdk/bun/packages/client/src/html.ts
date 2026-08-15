@@ -37,8 +37,9 @@ export class HTML {
         return this.context;
     }
 
-    append(...nodes) {
-        this.context.append(...nodes);
+    /** Attach an already-created component node to the current mount point. */
+    attach(...nodes) {
+        for (const node of nodes) this.context.appendChild(node);
         return this;
     }
 

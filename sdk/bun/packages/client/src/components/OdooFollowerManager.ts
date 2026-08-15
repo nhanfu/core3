@@ -22,42 +22,23 @@ export class OdooFollowerManager extends BaseComponent {
     const candidates = Array.isArray(this.state.candidates) ? this.state.candidates : [];
     const followerIds = new Set(followers.map((row: any) => String(row.user_id || row.id || '')));
     const available = candidates.filter((row: any) => !followerIds.has(String(row.user_id || row.id || '')));
-    const root = createFluentElement('section');
-    html.take(root).className('o-form-follower-manager');
-    html.take(container).append(root);
+    const root = html.take(container).section.className('o-form-follower-manager').getContext() as HTMLElement;
 
     if (this.def.follower_add_action && available.length) {
-      const toggle = createFluentElement('button');
-      html.take(toggle).type('button');
-      html.take(toggle).className('o-form-chatter-menu-action o-form-follower-add-toggle');
+      const toggle = html.take(root).button.type('button').className('o-form-chatter-menu-action o-form-follower-add-toggle').getContext() as HTMLButtonElement;
       appendIcon(toggle, 'plus');
       html.take(toggle).text(String(this.def.add_follower_label || 'Add Followers')).attr('aria-expanded', 'false');
-      html.take(root).append(toggle);
 
-      const form = createFluentElement('form');
-      html.take(form).className('o-form-follower-add-form').prop('hidden', true);
-      const select = createFluentElement('select');
-      select.required = true;
-      html.take(select).attr('aria-label', String(this.def.follower_search_placeholder || 'Select a follower'));
-      const placeholder = createFluentElement('option');
-      html.take(placeholder).prop('value', '').replaceText(String(this.def.follower_search_placeholder || 'Select a follower'));
-      html.take(select).append(placeholder);
+      const form = html.take(root).form.className('o-form-follower-add-form').prop('hidden', true).getContext() as HTMLFormElement;
+      const select = html.take(form).select.prop('required', true).attr('aria-label', String(this.def.follower_search_placeholder || 'Select a follower')).getContext() as HTMLSelectElement;
+      html.take(select).option.prop('value', '').replaceText(String(this.def.follower_search_placeholder || 'Select a follower'));
       for (const candidate of available) {
-        const option = createFluentElement('option');
-        html.take(option).prop('value', String(candidate.user_id || candidate.id || '')).replaceText(String(candidate.name || candidate.email || option.value));
-        html.take(select).append(option);
+        const value = String(candidate.user_id || candidate.id || '');
+        html.take(select).option.prop('value', value).replaceText(String(candidate.name || candidate.email || value));
       }
-      const actions = createFluentElement('div');
-      html.take(actions).className('o-form-follower-add-actions');
-      const submit = createFluentElement('button');
-      html.take(submit).type('submit');
-      html.take(submit).className('o-form-chatter-menu-confirm').replaceText(String(this.def.add_label || 'Add'));
-      const cancel = createFluentElement('button');
-      html.take(cancel).type('button');
-      html.take(cancel).className('o-form-chatter-menu-cancel').replaceText(String(this.def.cancel_label || 'Cancel'));
-      html.take(actions).append(submit, cancel);
-      html.take(form).append(select, actions);
-      html.take(root).append(form);
+      const actions = html.take(form).div.className('o-form-follower-add-actions').getContext() as HTMLDivElement;
+      const submit = html.take(actions).button.type('submit').className('o-form-chatter-menu-confirm').replaceText(String(this.def.add_label || 'Add')).getContext() as HTMLButtonElement;
+      const cancel = html.take(actions).button.type('button').className('o-form-chatter-menu-cancel').replaceText(String(this.def.cancel_label || 'Cancel')).getContext() as HTMLButtonElement;
       const setOpen = (open: boolean) => {
         html.take(form).prop('hidden', !open);
         html.take(toggle).attr('aria-expanded', String(open));
@@ -77,32 +58,21 @@ export class OdooFollowerManager extends BaseComponent {
     }
 
     if (!followers.length) {
-      const empty = createFluentElement('p');
-      html.take(empty).className('o-form-chatter-empty').replaceText(String(this.def.no_followers_label || 'No followers'));
-      html.take(root).append(empty);
+      html.take(root).p.className('o-form-chatter-empty').replaceText(String(this.def.no_followers_label || 'No followers'));
       return;
     }
 
-    const list = createFluentElement('ul');
-    html.take(list).className('o-form-follower-list');
+    const list = html.take(root).ul.className('o-form-follower-list').getContext() as HTMLUListElement;
     for (const follower of followers) {
-      const item = createFluentElement('li');
-      const avatar = createFluentElement('span');
-      html.take(avatar).className('o-form-follower-avatar').replaceText(initials(follower.name || follower.actor_name || follower.created_by)).attr('aria-hidden', 'true');
-      const identity = createFluentElement('span');
-      html.take(identity).className('o-form-follower-identity');
-      const name = createFluentElement('strong');
-      html.take(name).replaceText(String(follower.name || follower.actor_name || follower.created_by || '—'));
-      html.take(identity).append(name);
+      const item = html.take(list).li.getContext() as HTMLLIElement;
+      html.take(item).span.className('o-form-follower-avatar').replaceText(initials(follower.name || follower.actor_name || follower.created_by)).attr('aria-hidden', 'true');
+      const identity = html.take(item).span.className('o-form-follower-identity').getContext() as HTMLSpanElement;
+      const name = html.take(identity).strong.replaceText(String(follower.name || follower.actor_name || follower.created_by || '—')).getContext() as HTMLElement;
       if (follower.email) {
-        const email = createFluentElement('small');
-        html.take(email).replaceText(String(follower.email));
-        html.take(identity).append(email);
+        html.take(identity).small.replaceText(String(follower.email));
       }
-      html.take(item).append(avatar, identity);
       if (this.def.follower_remove_action) {
-        const remove = createFluentElement('button');
-        html.take(remove).type('button').className('o-form-follower-remove').prop('title', String(this.def.remove_follower_label || 'Remove follower'));
+        const remove = html.take(item).button.type('button').className('o-form-follower-remove').prop('title', String(this.def.remove_follower_label || 'Remove follower')).getContext() as HTMLButtonElement;
         html.take(remove).attr('aria-label', `${remove.title}: ${name.textContent}`);
         appendIcon(remove, 'x');
         html.take(remove).event('click', () => {
@@ -112,10 +82,7 @@ export class OdooFollowerManager extends BaseComponent {
             user_id: follower.user_id || follower.id,
         })).finally(() => { html.take(remove).prop('disabled', false); });
         });
-        html.take(item).append(remove);
       }
-      html.take(list).append(item);
     }
-    html.take(root).append(list);
   }
 }

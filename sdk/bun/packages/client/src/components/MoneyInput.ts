@@ -73,7 +73,6 @@ export class MoneyInput extends BaseComponent {
       .attr('aria-label', this.def.currency ? `Số tiền (${this.def.currency})` : 'Số tiền')
       .getContext() as HTMLInputElement;
     this.displayInput = display;
-    html.take(root).append(display);
 
     const initial = String(this.state.value ?? '');
     html.take(display).prop('value', this.displayValue(initial) || initial);

@@ -391,9 +391,7 @@ export class ListView extends BaseComponent {
         const groupRow = html.take(body).trow.className('o-list-group-header o-list-group-row').dataAttr('list-group', value).getContext();
         const groupCell = html.take(groupRow).tdata.attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0))).getContext();
         groupCell.dataset.groupBy = groupBy;
-        const heading = html.take(groupCell).strong.getContext();
-        html.take(heading).replaceText(`${groupLabel}: ${value}`);
-        html.take(groupCell).append(heading);
+        html.take(groupCell).strong.replaceText(`${groupLabel}: ${value}`);
         html.take(groupCell).span.className('o-list-group-count').text(` (${groupRows.length})`);
         groupRows.forEach((row, index) => this.drawRow(body, row, index, visibleColumns, selected, labels));
       }
@@ -658,7 +656,6 @@ export class ListView extends BaseComponent {
         if (action.icon) {
           const icon = html.take(button).span.getContext();
           appendIcon(icon, action.icon);
-          html.take(button).append(icon);
         }
         html.take(button).text(action.label || action.title || action.id).prop('disabled', Boolean(action.disabled));
         if (!button.disabled) html.take(button).event('click', () => void this.submit(action.id, action.params || {}));
@@ -893,9 +890,8 @@ export class ListView extends BaseComponent {
     for (const action of visibleActions) {
       const button = html.take(menu).button.className(action.variant === 'danger' ? 'is-danger' : '').dataAttr('list-row-action', `${action.id}:${rowId}`).getContext();
       if (action.icon) {
-          const icon = html.take(button).span.getContext();
+        const icon = html.take(button).span.getContext();
         appendIcon(icon, action.icon);
-        html.take(button).append(icon);
       }
       html.take(button).text(action.label).event('click', (event: MouseEvent) => {
         event.stopPropagation();

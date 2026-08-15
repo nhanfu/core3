@@ -46,10 +46,8 @@ class PageRoot extends BaseComponent {
     const { applySourceFilters, handleAction, renderComponentDef } = this.options;
 
     html.take(container).clear();
-    const pageDiv = createFluentElement('div');
-    html.take(pageDiv).className('page');
+    const pageDiv = html.take(container).div.className('page').getContext() as HTMLDivElement;
     if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) html.take(pageDiv).toggleClass('o-form-page', true);
-    html.take(container).append(pageDiv);
 
     if (config.title) html.take(document).prop('title', config.title);
 
@@ -57,19 +55,15 @@ class PageRoot extends BaseComponent {
     const ownsControlPanel = !(config.components || []).some((component: any) => component.type === 'OdooFormView')
       && (config.components || []).some((component: any) => component.type === 'ListView' && component.variant === 'odoo');
     if (config.page?.breadcrumb?.length && !ownsControlPanel) {
-      pageHeader = createFluentElement('div');
-      html.take(pageHeader).className('page-header');
-      const heading = createFluentElement('div');
-      const breadcrumb = createFluentElement('div');
-      html.take(breadcrumb).className('page-breadcrumb');
+      pageHeader = html.take(pageDiv).div.className('page-header').getContext() as HTMLDivElement;
+      const heading = html.take(pageHeader).div.getContext() as HTMLDivElement;
+      const breadcrumb = html.take(heading).div.className('page-breadcrumb').getContext() as HTMLDivElement;
       for (const [index, item] of config.page.breadcrumb.entries()) {
         if (index) {
-          const separator = createFluentElement('span');
-          html.take(separator).className('page-breadcrumb-separator').replaceText('›');
-          html.take(breadcrumb).append(separator);
+          html.take(breadcrumb).span.className('page-breadcrumb-separator').replaceText('›');
         }
         const isCurrent = index === config.page.breadcrumb.length - 1;
-        const crumb = createFluentElement(isCurrent ? 'span' : 'a');
+        const crumb = html.take(breadcrumb).add(isCurrent ? 'span' : 'a').getContext() as HTMLElement;
         html.take(crumb).className(isCurrent ? 'page-breadcrumb-current' : 'page-breadcrumb-link').replaceText(item);
         if (!isCurrent) {
           const pathSegments = window.location.pathname.split('/').filter(Boolean);
@@ -83,39 +77,28 @@ class PageRoot extends BaseComponent {
               navigate(targetPath);
             });
           } else {
-            const textCrumb = createFluentElement('span');
-            html.take(textCrumb).className('page-breadcrumb-link').replaceText(item);
-            html.take(breadcrumb).append(textCrumb);
+            html.take(breadcrumb).span.className('page-breadcrumb-link').replaceText(item);
             continue;
           }
         }
-        html.take(breadcrumb).append(crumb);
       }
-      html.take(heading).append(breadcrumb);
-      html.take(pageHeader).append(heading);
-      html.take(pageDiv).append(pageHeader);
       if (config.scope) {
-        const scopePill = createFluentElement('span');
-        html.take(scopePill).className('scope-pill').replaceText(`${config.scope.label}: ${config.scope.value}`);
-        html.take(pageHeader).append(scopePill);
+        html.take(pageHeader).span.className('scope-pill').replaceText(`${config.scope.label}: ${config.scope.value}`);
       }
     }
 
     if (config.toolbar?.length && !ownsControlPanel) {
-      const toolbarDiv = createFluentElement('div');
-      html.take(toolbarDiv).className(pageHeader ? 'page-header-actions' : 'page-toolbar').style('display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;');
+      const toolbarParent = pageHeader || pageDiv;
+      const toolbarDiv = html.take(toolbarParent).div.className(pageHeader ? 'page-header-actions' : 'page-toolbar').style('display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;').getContext() as HTMLDivElement;
       for (const btn of config.toolbar) {
         if (btn.show_if && !Boolean(evalExpr(btn.show_if, ctx))) continue;
         if (btn.permission && !hasPermission(ctx.user, btn.permission)) continue;
-        const button = createFluentElement('button');
-        html.take(button).type('button');
+        const button = html.take(toolbarDiv).button.type('button').getContext() as HTMLButtonElement;
         html.take(button).className(`btn btn-${btn.variant || 'secondary'} inline-flex items-center gap-1.5`);
         if (btn.icon) {
-          const icon = createFluentElement('span');
-          html.take(icon).attr('aria-hidden', 'true');
+          const icon = html.take(button).span.attr('aria-hidden', 'true').getContext() as HTMLSpanElement;
           if (hasIcon(btn.icon)) appendIcon(icon, btn.icon);
           else html.take(icon).replaceText(btn.icon);
-          html.take(button).append(icon);
         }
         if (btn.label) html.take(button).text(btn.label);
         html.take(button).event('click', async () => {
@@ -123,12 +106,9 @@ class PageRoot extends BaseComponent {
           if (actionDef) await handleAction(actionDef, null);
           else console.warn(`[page-renderer] Toolbar action not found: ${btn.action}`);
         });
-        html.take(toolbarDiv).append(button);
       }
-      if (pageHeader) html.take(pageHeader).append(toolbarDiv);
-      else {
+      if (!pageHeader) {
         html.take(toolbarDiv).css('marginBottom', '20px');
-        html.take(pageDiv).append(toolbarDiv);
       }
     }
 
@@ -147,9 +127,7 @@ class PageRoot extends BaseComponent {
             : [],
         };
       });
-      const filterSlot = createFluentElement('div');
-      html.take(filterSlot).css('marginBottom', '20px');
-      html.take(pageDiv).append(filterSlot);
+      const filterSlot = html.take(pageDiv).div.css('marginBottom', '20px').getContext() as HTMLDivElement;
       const filterBar = new FilterBar(
         'page-filter-bar',
         { values: {} },
