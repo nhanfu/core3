@@ -1,0 +1,17 @@
+{
+  "name": "@core3/spec",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "PORT=3002 bun server.ts",
+    "dev": "PORT=3002 bun --watch server.ts"
+  },
+  "dependencies": {
+    "@core3/client": "workspace:*",
+    "@core3/server": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^5.9.3"
+  }
+}

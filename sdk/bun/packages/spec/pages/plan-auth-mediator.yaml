@@ -1,0 +1,181 @@
+title: Core3 — Auth & Mediator Refactor
+page:
+  id: plan-auth-mediator
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      eyebrow: Plan · sdk/bun/sample/plan
+      title: Detailed auth and mediator refactor
+      subtitle: >-
+        Concurrency and consistency verification for Auth (JWKS, sessions, refresh rotation) and
+        the event mediator (durable partitions, forwarding, delivery). Condensed from
+        sdk/bun/sample/plan/Auth and Mediator Refactor.md.
+    sections:
+      - id: invariants
+        kicker: '1 — Correctness model'
+        title: Non-negotiable invariants
+        blocks:
+          - type: callout
+            tone: warning
+            title: Fail closed, not open
+            text: >-
+              No service may trust cached security state beyond 30 seconds, regardless of
+              mediator/invalidation delivery health. Healthy propagation targets p99 ≤ 2s, but the
+              30-second bound is what correctness actually depends on.
+          - type: list
+            items:
+              - 'Auth: resource services hold public signing keys only — compromising a verifier must never permit token issuance'
+              - 'Auth: cache versions are monotonic; a delayed response must never overwrite a newer invalidation or resolution'
+              - 'Auth: only one refresh-token generation is current per session — concurrent refreshes cannot fork valid descendants'
+              - 'Auth: a committed mutation and its invalidation outbox record are atomic'
+              - 'Mediator: a durable publish is acknowledged only after the WAL record and commit marker are fsynced on 2 of 3 replicas'
+              - 'Mediator: at most one unfenced writer commits to a partition; followers reject any older fencing token'
+              - 'Mediator: single/multiple delivery is at-least-once — exactly-once business effects come from a transactional consumer inbox, not transport claims'
+              - 'Mediator: consumer checkpoints only advance across a contiguous acknowledged prefix'
+              - 'Distributed: cross-service permission/device state is bounded-stale (30s fail-closed); cross-service workflows use outbox/inbox/idempotency/versioned events — no distributed transactions'
+              - 'Distributed: shared coordination uses compare-and-swap versions, leases, and fencing — no advisory locks or driver-specific locking'
+
+      - id: auth-impl
+        kicker: '2 — Auth & JWKS'
+        title: Implementation shape
+        blocks:
+          - type: p
+            text: >-
+              PostgreSQL is the first production Auth adapter behind the existing generic
+              repository boundary. User-owned records shard by hash(user_id); the normalized-email
+              directory shards independently and carries its own directory_epoch and row_version.
+          - type: table
+            headers: [New table, Purpose]
+            rows:
+              - [auth_signing_keys, Envelope-encrypted private keys; JWKS exposes public parameters only]
+              - [auth_devices, Per-device session/trust state]
+              - [auth_sessions, Session records, one refresh-token generation each]
+              - [auth_refresh_history, Refresh rotation audit and reuse detection]
+              - [auth_security_revisions, Monotonic version driving cache invalidation]
+              - [auth_outbox, Atomic invalidation record alongside each committed mutation]
+              - [auth_idempotency, Dedup for concurrent refresh / mutation retries]
+          - type: p
+            text: >-
+              Every mutable record carries row_version; conditional mutation is
+              "UPDATE ... WHERE id = ? AND row_version = ?" — zero changed rows is a conflict.
+          - type: list
+            items:
+              - 'ES256 access tokens expire after 15 minutes: typ=at+jwt, iss, aud, sub, jti, sid, did, iat, nbf, exp, plus security revision claims'
+              - 'Effective permissions come from auth.session.resolve, never trusted from the JWT alone'
+              - 'Refresh tokens are opaque, stored only as hashes, rotated via a session-generation CAS'
+              - 'A different request racing within 5s gets 409 REFRESH_CONFLICT; reuse outside that window revokes the whole session family'
+          - type: panel
+            title: Key rotation sequence
+            language: text
+            code: |
+              create next key
+                -> publish it
+                  -> wait one JWKS cache interval
+                    -> begin signing with it
+                      -> retain the old verification key through the overlap
+                        -> retire the old key
+
+      - id: mediator
+        kicker: '3 — Mediator protocol'
+        title: Message contract and durable partitions
+        lead: >-
+          Every YAML message declaration is a contract: stable ID and schema version, a delivery
+          mode, source/destination services, timeout and retry policy, and idempotency requirements.
+        blocks:
+          - type: table
+            headers: [Mode, Delivery]
+            rows:
+              - [forward, Direct relay through the mesh to the node owning the target connection; non-idempotent calls never auto-replay]
+              - [single, One consumer group, at-least-once, scales from 1 to N instances]
+              - [multiple, Every declared subscriber group receives every committed message]
+              - [stream, Continuous delivery, ordered per partition]
+              - [scheduled, Deadline-driven delivery]
+              - [control, Cluster/lease/fencing coordination, not business payloads]
+          - type: list
+            items:
+              - '256 virtual partitions, three replicas each, assigned by rendezvous hashing'
+              - 'Leader appends checksummed WAL records, replicates, acknowledges after quorum-two fsync'
+              - '6-second lease, renewed every 2 seconds; promotion only after lease expiry and a successful fencing-token CAS'
+              - 'Committed WAL ranges compact into immutable per-partition Parquet files: write temp -> fsync -> checksum -> atomic rename -> publish manifest CAS -> release WAL'
+              - 'A transactional service inbox records message ID before committing business effects — duplicate attempts return the stored outcome'
+
+      - id: testability
+        kicker: '4 — Test architecture (built before feature work)'
+        title: Deterministic seams and reference models
+        blocks:
+          - type: callout
+            title: Why this comes first
+            text: >-
+              Clock, Scheduler, RandomSource, NetworkTransport, WalDevice, ControlStore,
+              ReplicaTransport, TraceSink, and AuthStateClient/JwksFetcher are all injectable
+              before any cluster logic is implemented. Every race test records its seed, scheduler
+              decisions, and virtual timestamps so a failing run replays from one command.
+          - type: list
+            items:
+              - 'A small in-memory Auth model: sessions, devices, revisions, refresh generations, valid authorization outcomes'
+              - 'A mediator partition model: leader epoch, committed log, replica logs, inflight deliveries, ack gaps, consumer checkpoints'
+              - 'Generated operation sequences (publish, replicate, elect, crash/recover, compact, deliver/ack/nack/timeout, revoke/resolve/invalidate, refresh, advance time) assert every invariant after every step'
+              - 'Property-testing (e.g. fast-check) with minimized counterexamples persisted as regression fixtures'
+
+      - id: race-matrix
+        kicker: '5 — Race & inconsistency test matrix'
+        title: What gets stress-tested
+        lead: A representative slice of the full matrix — see the source plan for every case.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Auth cache
+                title: Invalidation vs. resolve races
+                body: 100 concurrent requests on an expired entry trigger exactly one resolution call; reverse-order invalidations must let the highest version win.
+              - tag: Refresh tokens
+                title: Concurrent refresh
+                body: 100 concurrent uses of the same generation produce exactly one descendant; reuse outside the race window revokes the whole family once.
+              - tag: JWKS
+                title: Key rotation timing
+                body: Unknown kid triggers exactly one network refresh; old and new keys both validate during the overlap window.
+              - tag: Mediator publish
+                title: Quorum failure injection
+                body: Failure injected at 8 distinct points from before leader append through post-ack — no message may ever appear as two logical records.
+              - tag: Election
+                title: Fencing races
+                body: Two candidates attempt promotion simultaneously — exactly one fencing-token CAS succeeds; stale leaders are rejected by every follower.
+              - tag: Consumers
+                title: Ack ordering
+                body: Offsets 10 and 12 acknowledge before 11 — the checkpoint stays at 10 until 11 settles.
+
+      - id: gates
+        kicker: '6 — Timing, load, and chaos gates'
+        title: Acceptance thresholds
+        blocks:
+          - type: table
+            headers: [Threshold, Target]
+            rows:
+              - [Acknowledged-message loss, Zero]
+              - [Unauthorized acceptance past the 30s bound, Zero]
+              - [Duplicate business effects under the inbox contract, Zero]
+              - [Healthy invalidation propagation, p99 ≤ 2 seconds]
+              - [Leader failure recovery, New commitments resume within 10 seconds]
+              - [Forward mediator overhead (reference LAN), p99 ≤ 15 ms excluding service time]
+              - [Quorum durable publish ack, 1 KiB payload — p99 ≤ 40 ms]
+              - [24-hour soak memory growth, Less than 5% sustained]
+          - type: list
+            items:
+              - 'Every PR: unit/schema/CAS/protocol/deterministic-scheduler/property tests, 200+ generated seeds, multi-process smoke with forced leader loss (≤ 15 min)'
+              - 'Nightly: 2-hour chaos, 10,000+ generated histories, continuous process kills/network faults/clock skew'
+              - 'Release candidate: 24-hour soak at full certified load with random failure every 5–15 minutes'
+
+      - id: phases
+        kicker: '8 — Phased delivery'
+        title: Exit gates
+        blocks:
+          - type: table
+            headers: [Phase, Exit criteria]
+            rows:
+              - ['1. Testability foundation', 'Existing single-node behavior passes through the new injectable seams']
+              - ['2. Auth security', 'All Auth race tests plus a med/Auth outage test prove the 30-second bound']
+              - ['3. Message protocol', 'Deterministic delivery/acknowledgement and compatibility tests pass on one mediator node']
+              - ['4. Process extraction', 'Rolling restarts, scale-out, discovery churn, and end-to-end permission/device tests pass']
+              - ['5. Replicated mediator', 'Nightly chaos produces zero invariant violations for 7 consecutive runs']
+              - ['6. Scale certification', 'Full medium profile + 24h soak reconcile to zero loss, skipped offsets, or unauthorized decisions']

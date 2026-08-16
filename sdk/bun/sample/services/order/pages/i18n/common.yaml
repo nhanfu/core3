@@ -105,6 +105,7 @@ en:
   notifications.empty: No notifications
   notifications.unread: Unread
   modal.not_configured: Modal page is not configured
+  Analytics: Analytics
 vi:
   errors.stale_record: Dữ liệu đã được người dùng khác thay đổi. Hãy tải lại trước khi lưu.
   errors.unauthorized: Bạn không có quyền thực hiện thao tác này.
@@ -277,3 +278,4 @@ vi:
   pagination.next_page: Trang sau
   status.filter: Bộ lọc trạng thái
   validation.field_required: Trường này là bắt buộc
+  Analytics: Phân tích

@@ -1,0 +1,26 @@
+nav:
+  brand: Core3
+  eyebrow: YAML-driven ERP framework
+  items:
+    - label: Overview
+      href: /
+    - label: Components
+      items:
+        - label: Frontend
+          href: /frontend
+        - label: Backend
+          href: /backend
+        - label: Scripting
+          href: /scripting
+        - label: Reference
+          href: /reference
+        - label: Component Library
+          href: /component-library
+        - label: Extension Points
+          href: /extensions
+    - label: Plan
+      items:
+        - label: Roadmap
+          href: /plan
+        - label: Auth & Mediator Refactor
+          href: /plan/auth-mediator

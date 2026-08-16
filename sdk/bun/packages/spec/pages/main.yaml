@@ -1,0 +1,93 @@
+title: Core3 — Overview
+page:
+  id: main
+
+components:
+  - type: DocPage
+    hero:
+      variant: home
+      eyebrow: Specification
+      title: A YAML-driven ERP framework
+      subtitle: >-
+        Core3 processes client YAML and renders ERP pages with a shared TypeScript
+        framework: YAML-driven components, embedded SQL, OOP rendering, CRUD, and
+        controlled extension points.
+      stats:
+        - value: '5'
+          label: databases supported
+        - value: '1'
+          label: shared client package
+        - value: '0'
+          label: business logic in the framework
+    sections:
+      - id: vision
+        kicker: Vision
+        title: YAML throughout development
+        lead: >-
+          Client projects should progressively describe their complete systems
+          declaratively, with as little handwritten client code as possible.
+        blocks:
+          - type: list
+            items:
+              - Page layout and composition
+              - Design-system and UI decisions
+              - Business logic and workflows
+              - Database management, including partitioning and sharding
+              - Deployment and operational configuration
+          - type: p
+            text: >-
+              This spec project is itself an example: every page here — including
+              this one — is a YAML file rendered by the DocPage component below.
+              No hand-written HTML describes the content.
+
+      - id: how-it-works
+        kicker: Runtime
+        title: How a page becomes a screen
+        lead: A client YAML page file is parsed and walked into a live component tree.
+        blocks:
+          - type: flowstrip
+            steps:
+              - label: YAML
+                sub: page file
+              - label: JSON
+                sub: parsed at runtime
+              - label: Component tree
+                sub: BaseComponent nodes
+              - label: draw()
+                sub: top-down render
+              - label: DOM
+                sub: html.js + CSS
+
+      - id: concepts
+        kicker: Core concepts
+        title: What every page is built from
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Data
+                title: Server-first data
+                body: The server performs joins and lookups; the browser never resolves references.
+              - tag: Components
+                title: Components, not columns
+                body: Grid children are real component instances with state, traversal, and submit().
+              - tag: Events
+                title: Page-level event handler
+                body: One class per page handles interactions; after a mutation it redraws the affected component.
+              - tag: CRUD
+                title: Full CRUD
+                body: "crud: true generates mutations automatically, or mix in custom functions per operation."
+
+      - id: stack
+        kicker: Tech stack
+        title: What it runs on
+        blocks:
+          - type: table
+            headers: [Layer, Technology]
+            rows:
+              - [Language, TypeScript]
+              - [DOM, 'html.js, wrapped in an OOP component model']
+              - [CSS, 'Tailwind by default, YAML-overridable']
+              - [Config, 'YAML parsed to JSON at runtime']
+              - [Server, Node.js / Bun]
+              - [Databases, 'PostgreSQL, SQL Server, DuckDB, MySQL, Oracle']
+              - [Protocols, 'HTTP, WebSocket, SSE, gRPC']

@@ -1,0 +1,367 @@
+title: Core3 — Frontend
+page:
+  id: frontend
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      eyebrow: UI layer
+      title: Frontend rendering model
+      subtitle: >-
+        Every component is a class in a tree, with pure JSON state and full
+        traversal. html.js handles the DOM underneath.
+    sections:
+      - id: base-component
+        kicker: Runtime
+        title: BaseComponent
+        lead: >-
+          Every component — built-in or custom — extends the same small base
+          class. State is a plain object, the tree is walkable in every
+          direction, and draw() is the only method a subclass must override.
+        blocks:
+          - type: panel
+            title: '@core3/client/components/BaseComponent'
+            language: ts
+            code: |
+              class BaseComponent {
+                id: string;
+                state: any;
+                parent: BaseComponent | null;
+                children: BaseComponent[];
+                get root() { /* walks up to the top-level component */ }
+
+                setState(partial, redraw = true) { ... }
+                redraw() { ... }                 // clears the container and calls draw() again
+                mount(container: HTMLElement) { ... }
+                find(id: string): BaseComponent | null { ... }
+                async submit(action: string, params = {}) { ... }
+
+                draw(container: HTMLElement) { /* override in subclasses */ }
+              }
+          - type: callout
+            title: Why submit() has three resolution steps
+            text: >-
+              submit() first checks the component's own _transport (used by unit tests), then the
+              root component's _transport (used when a page runs under a real backend), then the
+              root's _onAction handler. Anything else throws — there is no silent no-op fallback.
+
+      - id: page-render
+        kicker: Runtime
+        title: How a page becomes a tree
+        lead: >-
+          PageRuntime is the only thing that turns page.yaml JSON into DOM. It never
+          special-cases a service — the same class renders every service's pages.
+        blocks:
+          - type: list
+            items:
+              - 'PageRuntime.render() checks page.auth.require against the current user'
+              - 'It fetches every datasource once, in parallel, before the first draw()'
+              - 'PageRoot walks config.components and renders each one through renderComponentDef()'
+              - 'Built-in types (GridView, ListView, OdooFormView, Chart, ...) have dedicated renderers'
+              - 'Everything else falls back to the registry Map<string, Ctor> passed into PageRuntime'
+          - type: flowstrip
+            steps:
+              - label: auth check
+                sub: page.auth.require
+              - label: fetch sources
+                sub: parallel, once
+              - label: PageRoot.draw
+                sub: per component
+              - label: registry
+                sub: custom types
+
+      - id: actions
+        kicker: Contract
+        title: Action types a page can declare
+        lead: >-
+          Components never call the server directly — they submit a named action, and the
+          page's actions[] array decides what actually happens.
+        blocks:
+          - type: table
+            headers: [Type, Effect]
+            rows:
+              - [form / server_form, Opens a modal that inserts, updates, or calls a server action]
+              - [patch / delete, Applies a scoped mutation to a table row]
+              - [server, Calls a named server action with resolved params]
+              - [navigate, Pushes a new page route, optionally with params]
+              - [upload / download, Moves a file through the configured attachment kind]
+              - [event, Dispatches a browser CustomEvent other components can listen for]
+              - [client, Runs an inline YAML-declared script function against a small ctx object]
+              - [login / logout, Drives the auth session]
+          - type: panel
+            title: A client action script
+            language: yaml
+            code: |
+              actions:
+                - id: set_language
+                  type: client
+                  script: |
+                    async ({ setLanguage }) => { await setLanguage('vi'); }
+
+      - id: dom
+        kicker: Rendering
+        title: html.js — the fluent DOM builder
+        lead: >-
+          Components never touch innerHTML directly. html.take(node) returns a chainable builder;
+          each getter (.div, .span, .h2, ...) appends a child and moves the cursor onto it.
+        blocks:
+          - type: panel
+            title: A minimal component
+            language: ts
+            code: |
+              class Section extends BaseComponent {
+                draw(container) {
+                  const panel = html.take(container).div.className('panel').ele();
+                  html.take(panel).span.className('panel-title').text(this.def.title);
+                }
+              }
+
+      - id: tree-traversal
+        kicker: Runtime
+        title: Component tree & state traversal
+        lead: >-
+          Every component lives in an explicit tree. Any node can walk up to its parent, down to
+          its children, or straight to the root via a single getter. State is always a plain object
+          — no class instances, no hidden getters, no observables.
+        blocks:
+          - type: p
+            text: >-
+              BaseComponent exposes four traversal properties. parent and children are set during
+              mount; root walks upward until it finds a component with no parent and returns self
+              if already at the root; find() performs a depth-first search across the whole subtree.
+          - type: table
+            headers: [Property / method, Type, Purpose]
+            rows:
+              - [parent, "BaseComponent | null", Immediate parent in the tree; null at the root]
+              - [children, "BaseComponent[]", Components registered by this node during draw()]
+              - [root, BaseComponent, Walks up to the component with no parent]
+              - ["find(id)", "BaseComponent | null", Depth-first search starting from this node]
+              - ["createChild(Ctor, id, state)", BaseComponent, Allocates a child and links it into the tree]
+          - type: panel
+            title: Reading tree state from a child component
+            language: ts
+            code: |
+              class LineItemEditor extends BaseComponent {
+                draw(container: HTMLElement) {
+                  // read the direct parent's state (e.g. the PO header)
+                  const headerState = this.parent?.state;     // { vendor, ship_to }
+
+                  // read global context from the page root
+                  const { user } = this.root.state;           // { user, permissions }
+
+                  // find a sibling registered under the same parent
+                  const summary = this.parent?.children
+                    .find(c => c.id === 'po-summary')?.state; // { total, itemCount }
+
+                  // find any component anywhere in the page tree
+                  const sidebar = this.root.find('page-sidebar');
+                  sidebar?.setState({ highlight: 'line-items' });
+                }
+              }
+
+              // Tree structure:
+              //   PageRoot  (root.state = global context)
+              //   └── POHeader  (parent of LineItemEditor)
+              //       ├── LineItemEditor
+              //       │   ├── Row1  (child.state = { qty: 5, price: 100 })
+              //       │   └── Row2  (child.state = { qty: 3, price: 250 })
+              //       └── POSummary  (id = 'po-summary')
+          - type: callout
+            title: setState batching
+            text: >-
+              setState(partial, false) merges state without triggering a redraw. Use it to accumulate
+              several changes across sibling components, then call redraw() once on the relevant
+              ancestor. The default (redraw = true) is safe for simple cases.
+
+      - id: server-first
+        kicker: Data contract
+        title: Server-first data
+        lead: >-
+          The server sends a flat, fully resolved array. The browser never builds lookup maps or
+          resolves IDs — every JOIN, display label, and status colour arrives ready-to-use as a
+          field in the row.
+        blocks:
+          - type: p
+            text: >-
+              Datasources return a standard DataResponse shape. The data array is one-dimensional:
+              each row already contains every field the page needs for display, filtering, and
+              actions. Reference sets, nested objects, and client-side lookups are not part of the
+              contract.
+          - type: panel
+            title: DataResponse shape
+            language: ts
+            code: |
+              interface DataResponse {
+                data: Record<string, any>[];  // flat 1D array — every field pre-resolved
+                meta: {
+                  total: number;
+                  page: number;
+                  pageSize: number;
+                };
+              }
+          - type: panel
+            title: A datasource that resolves everything server-side
+            language: yaml
+            code: |
+              datasources:
+                - id: purchase_orders
+                  permission: po.read
+                  query: |
+                    SELECT
+                      po.id,
+                      po.po_number,
+                      v.name    AS vendor_name,
+                      v.code    AS vendor_code,
+                      s.label   AS status_label,
+                      s.color   AS status_color,
+                      b.name    AS branch_name,
+                      po.total,
+                      po.created_at
+                    FROM purchase_orders po
+                    JOIN vendors v ON v.id = po.vendor_id
+                    JOIN po_status_codes s ON s.code = po.status
+                    JOIN branches b ON b.id = po.branch_id
+                    ORDER BY po.created_at DESC
+          - type: callout
+            title: Note
+            text: >-
+              This principle applies to every view type — GridView, ListView, PDF report. The server
+              owns all query complexity. The browser receives display-ready data and renders it.
+
+      - id: value-text
+        kicker: Data contract
+        title: Value / text contract
+        lead: >-
+          Reference-like fields carry two explicit values in the row: a stable identity (val) and
+          a persisted display snapshot (text). The page never reconstructs display text by resolving
+          IDs in the browser.
+        blocks:
+          - type: table
+            headers: [Field, Purpose]
+            rows:
+              - [val, "Stable identity — ID or code. Used for filtering, form submission, authorization, and mutations."]
+              - [text, "Display snapshot — label persisted at write time. Used for rendering, searching, and sorting."]
+          - type: panel
+            title: Datasource returns both fields; the page binds them separately
+            language: yaml
+            code: |
+              # The datasource query returns both fields on the row:
+              #   SELECT o.customer_id, o.customer_text, o.status_id, o.status_text FROM orders o
+
+              components:
+                - type: GridView
+                  source: orders
+                  columns:
+                    - val: customer_id
+                      text: customer_text
+                      label: Customer
+                    - val: status_id
+                      text: status_text
+                      label: Status
+          - type: list
+            items:
+              - 'text is a persisted snapshot — it reflects the label at the time of write, not a live JOIN'
+              - 'When a referenced record is renamed, the owning service updates text snapshots on its schedule'
+              - 'Simple scalar fields use val alone when no separate display value exists'
+              - 'Filtering and sorting use text; form submission and relationships use val'
+
+      - id: lego-assembly
+        kicker: Composition
+        title: LEGO assembly from YAML
+        lead: >-
+          A page can be assembled entirely from YAML — no hand-written UI code per page. Declare
+          which built-in component types to use, bind them to datasources, and wire up actions.
+          PageRuntime handles the rest.
+        blocks:
+          - type: p
+            text: >-
+              The example below builds a complete employee-list page using three built-in component
+              types: StatRow (KPI tiles), ListToolbar (search and filter tabs), and ListView (the
+              scrollable table). All data flows from two datasources declared in the same file.
+          - type: panel
+            title: employee-list.yaml — assembled entirely from built-in types
+            language: yaml
+            code: |
+              title: Employees
+              page:
+                id: employee-list
+                auth:
+                  require: [hr.read]
+
+              datasources:
+                - id: employees
+                  permission: hr.read
+                  query: |
+                    SELECT
+                      e.id,
+                      e.full_name,
+                      e.job_title,
+                      d.name   AS department_name,
+                      e.status,
+                      e.hire_date
+                    FROM employees e
+                    JOIN departments d ON d.id = e.department_id
+                    ORDER BY e.full_name
+
+                - id: employee_stats
+                  single: true
+                  permission: hr.read
+                  query: |
+                    SELECT
+                      COUNT(*) FILTER (WHERE status = 'active')   AS active_count,
+                      COUNT(*) FILTER (WHERE status = 'on_leave') AS on_leave_count,
+                      COUNT(*) FILTER (WHERE hire_date >= NOW() - INTERVAL '30 days')
+                        AS new_hires
+                    FROM employees
+
+              components:
+                - type: StatRow
+                  source: employee_stats
+                  stats:
+                    - { field: active_count,  label: Active,        icon: users }
+                    - { field: on_leave_count, label: On leave,      icon: calendar }
+                    - { field: new_hires,      label: New this month, icon: user-plus }
+
+                - type: ListToolbar
+                  source: employees
+                  search_field: full_name
+                  tabs:
+                    - { id: '',       label: All }
+                    - { id: active,   label: Active }
+                    - { id: on_leave, label: On leave }
+
+                - type: ListView
+                  source: employees
+                  variant: odoo
+                  columns:
+                    - { field: full_name,       label: Name }
+                    - { field: job_title,        label: Title }
+                    - { field: department_name,  label: Department }
+                    - { field: status,           label: Status }
+                    - { field: hire_date,        label: Hire date }
+
+              actions:
+                - id: add_employee
+                  type: form
+                  label: Add employee
+                  table: employees
+                  operation: insert
+                  refresh: [employees, employee_stats]
+                  fields:
+                    - { field: full_name,    label: Name,       required: true }
+                    - { field: job_title,    label: Job title }
+                    - { field: department_id, label: Department }
+
+                - id: delete_employee
+                  type: delete
+                  table: employees
+                  confirm: Delete this employee record?
+                  refresh: [employees, employee_stats]
+          - type: callout
+            title: No JavaScript per page
+            text: >-
+              Built-in component types (StatRow, ListToolbar, ListView, GridView, OdooFormView,
+              Chart, and others) handle all rendering and interaction. A new page is a YAML file
+              that wires them together — no TypeScript is required unless a truly custom component
+              type is needed.

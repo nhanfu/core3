@@ -4,3 +4,8 @@ menu:
     label: Orders
     icon: logo
     permission: orders.read
+  analytics:
+    path: /analytics
+    label: Analytics
+    icon: chart
+    permission: orders.read

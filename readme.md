@@ -119,6 +119,8 @@ datasources:
 
 Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with architecture diagrams, code samples, and API details.
 
+[`sdk/bun/packages/spec`](sdk/bun/packages/spec) is a runnable Bun app that renders spec content the same way a client project would: pages are plain YAML files (no per-page HTML/CSS/JS), rendered through `@core3/client`'s `DocPage`/`DocHero`/`DocTopNav` components (see [`sdk/bun/packages/client/src/doc`](sdk/bun/packages/client/src/doc)). Run it with `bun run start` from that directory.
+
 ## Local Development
 
 - Install the Bun workspace from [`sdk/bun`](sdk/bun): `bun install`.

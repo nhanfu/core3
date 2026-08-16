@@ -1,0 +1,169 @@
+title: Core3 — Plan
+page:
+  id: plan
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      eyebrow: Roadmap
+      title: Plan & next steps
+      subtitle: Where the framework is today, and what pattern-extraction feeds back into it next.
+    sections:
+      - id: status
+        kicker: Status
+        title: Phase status
+        blocks:
+          - type: table
+            headers: [Phase, Status, Notes]
+            rows:
+              - ['Shared client library', Complete, '@core3/client — BaseComponent, html.js, the full component set, YAML-driven PageRuntime']
+              - ['Server YAML pipeline', Complete, 'Discovery, schema validation, multi-database adapters (Postgres, DuckDB, MySQL, SQL Server, Oracle)']
+              - ['Auth & event mediator', 'In progress', 'Typed JWT claims and a hardened mediator auth adapter landed most recently']
+              - ['Sample services', Complete, 'order and chat services in sdk/bun/sample demonstrate CRUD, workflow, chatter, and attachments']
+              - ['Doc/spec project', 'In progress', 'This project — spec pages are being migrated from static HTML to YAML + DocPage']
+              - ['Full spec migration', Planned, 'Remaining static pages: backend, reference, scripting']
+              - ['Package publishing', Future, '@core3/client and @core3/server as installable packages outside this monorepo']
+
+      - id: pattern-rule
+        kicker: Working principle
+        title: Pattern extraction
+        blocks:
+          - type: callout
+            title: Pattern-extraction rule
+            text: >-
+              When the same structure appears in two pages, write a YAML shorthand for it. When it
+              appears in three, it becomes a first-class framework concept — a new component, a new
+              schema key, or a new registerPageComponentSchema-backed extension point.
+          - type: p
+            text: >-
+              This spec project is itself an example of the rule: DocHero, DocPage, and DocTopNav
+              exist because "hero + sidebar-linked sections + global nav" is a shape every doc-style
+              project needs, not something worth re-describing per page.
+
+      - id: next
+        kicker: Next up
+        title: What's next
+        blocks:
+          - type: list
+            items:
+              - Migrate spec/backend.html, spec/reference.html, and spec/scripting.html into pages/*.yaml
+              - Grow the sample order service with more read-focused example pages (analytics, reports)
+              - Keep extracting repeated DocPage block shapes into the schema as the doc set grows
+              - Continue hardening auth and the event mediator per the current auth-and-mediator plan
+
+      - id: tms-example
+        kicker: Historical reference
+        title: "Original planning example: TMS modules"
+        lead: >-
+          The framework was initially designed around a Truck Management System (TMS) with fleet,
+          driver, trip, maintenance, reports, and settings modules. The sample app that shipped
+          covers order management and chat instead (sdk/bun/sample/services/). The TMS breakdown
+          is preserved here as an illustration of the planning methodology: for each page, which
+          components it needs, and which YAML concepts it was meant to exercise.
+        blocks:
+          - type: callout
+            tone: note
+            title: What shipped instead
+            text: >-
+              The real sample app demonstrates CRUD (order list, detail, create/edit), workflow
+              state transitions, a chatter/messaging panel, and file attachments — all driven by
+              YAML page configs with no per-page UI code. The TMS module pages below were never
+              built; they illustrate the planning method.
+          - type: table
+            headers: [Page, Components used, YAML concepts exercised]
+            rows:
+              - ['fleet-list', 'StatRow, FilterBar, GridView (BadgeCell, DateCell, ActionCell)', 'datasource, pagination, filters[], column defs, navigate_to']
+              - ['truck-detail', 'SplitPanel, FormPanel, GridView (maintenance log), TimelinePanel', 'master-detail layout, related datasource, readonly fields, tabs']
+              - ['truck-add', 'FormPanel, Button', 'create CRUD action, required validation, navigate_to on success']
+              - ['driver-list', 'StatRow, FilterBar, GridView (AvatarCell, BadgeCell, ActionCell)', 'visible_if on row actions, search filter']
+              - ['driver-detail', 'FormPanel, TabPanel (active trips, history)', 'tabs with nested datasources, on_after_save lifecycle']
+              - ['assign-driver', 'SearchEntry (truck picker), Button, GridView', 'depends_on cascading — branch to available trucks']
+              - ['trip-list', 'FilterBar (date-range, select), GridView (DateCell, CurrencyCell)', 'multi-field sort, export: csv']
+              - ['trip-detail', 'StatRow, FormPanel (readonly), ProgressBar', 'compute: expression on fields, readonly form mode']
+              - ['maintenance-list', 'FilterBar, TabPanel (All / Overdue / Scheduled / Done), GridView', 'tab-scoped datasource, overdue_field on DateCell']
+              - ['fleet-utilization', 'StatRow, Chart (bar), GridView (PercentCell), ButtonExcel', 'group_by datasource, export: xlsx, compute: percent']
+              - ['cost-analysis', 'FilterBar (date-range), GridView (grouped, summary_row), StatRow', 'group_by, summary_row: true, export: pdf']
+              - ['roles-permissions', 'SplitPanel, ListView (roles), CheckboxInput grid', 'permission matrix, can_read / can_write / can_delete flags per row']
+
+      - id: meta-model
+        kicker: Design reference
+        title: Component meta model and backend comms
+        lead: >-
+          The original spec described two core design contracts: a ComponentDef config object
+          driving every component, and two data-transfer objects (SqlViewModel / PatchVM) for
+          reads and writes. Both influenced what shipped, though in evolved forms.
+        blocks:
+          - type: p
+            text: >-
+              ComponentDef shipped as a per-component key-set registry in
+              packages/server/src/yaml/schema.ts. Each component type declares its allowed YAML
+              keys via registerPageComponentSchema; the validator enforces the surface at server
+              startup rather than at page-load time. The aspirational shape from the original spec
+              is shown below for historical reference.
+          - type: panel
+            title: Aspirational ComponentDef shape (original spec)
+            language: typescript
+            code: |
+              {
+                type, id, field, label, align, column, row,
+                // Declarative expressions — new Function({ user, row, state })
+                show_if, disabled_if, default, compute, validation,
+                // Lifecycle events
+                events: { on_dom_ready, on_user_input, on_before_save, on_after_save, on_disposed },
+                // Permissions resolved from SecurityContext at render time
+                can_read, can_write, can_delete,
+                // Data binding
+                source, query, pre_query, is_realtime, group_by, group_format,
+                // Linked selects
+                cascade_field, populate_field,
+                // Actions and nested components
+                actions: ActionDef[], components: ComponentDef[],
+              }
+          - type: p
+            text: >-
+              The backend comms spec described SqlViewModel (read DTO) and PatchVM (write DTO)
+              flowing through a single Client singleton with JWT-aware fetch. The real server
+              YAML surface uses action types instead — type: form / server_form / delete / patch /
+              server for writes, and datasource service entries for reads. The DTO shapes are
+              internal to the server pipeline; page YAML only declares action and datasource keys.
+
+      - id: what-shipped
+        kicker: Reconciliation
+        title: What shipped vs. what was planned
+        lead: >-
+          Every component anticipated in the original TMS spec shipped. The real component set has
+          grown to over 70 entries, well beyond the original 13-item wishlist.
+        blocks:
+          - type: table
+            headers: [Anticipated component, Status]
+            rows:
+              - [SearchEntry, 'Shipped — SearchEntry.ts; MultipleSearchEntry also added']
+              - [ConfirmDialog, 'Shipped — ConfirmDialog.ts']
+              - [Chart, 'Shipped — Chart.ts; extended with series and layout variants']
+              - [Kanban, 'Shipped — Kanban.ts and KanbanView.ts']
+              - [ButtonExcel, 'Shipped — ButtonExcel.ts; ButtonImportExcel also added']
+              - [ButtonPdf, 'Shipped — ButtonPdf.ts']
+              - [Section, 'Shipped — Section.ts']
+              - [TimelinePanel, 'Shipped — TimelinePanel.ts']
+              - [AvatarCell, 'Shipped — AvatarCell.ts']
+              - [PercentCell, 'Shipped — PercentCell.ts']
+              - [RankCell, 'Shipped — RankCell.ts']
+              - [LinkCell, 'Shipped — LinkCell.ts']
+              - [EmptyState, 'Shipped — EmptyState.ts']
+          - type: p
+            text: >-
+              Components not on the original list but now shipped include OdooFormView,
+              OdooChatter, OdooFollowerManager, OdooAttachmentPanel, ChatWorkspace, LineItemGrid,
+              GroupGridView, TreeView, PivotView, CalendarView, GraphView, MapView, ScheduleGrid,
+              and more — each driven by real product requirements in the order and chat sample
+              services rather than the TMS example.
+          - type: callout
+            tone: note
+            title: YAML props wishlist
+            text: >-
+              Most anticipated YAML props (show_if, disabled_if, compute, depends_on,
+              empty_state, is_realtime, group_by, export) are now first-class keys in the
+              per-component schemas in schema.ts. A few (inline_edit, summary_row, threshold)
+              are present in component implementations but live as internal conventions rather
+              than top-level validated YAML keys.

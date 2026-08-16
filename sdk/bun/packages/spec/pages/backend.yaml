@@ -1,0 +1,296 @@
+title: Core3 — Backend
+page:
+  id: backend
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      eyebrow: Data layer
+      title: Backend data pipeline
+      subtitle: >-
+        Repository abstraction over multiple databases, server-side permission gates on every
+        datasource and action, SQL embedded directly in YAML, and optimistic-concurrency
+        mutations with row_version conflict detection.
+    sections:
+      - id: repository
+        kicker: '1 — Data layer'
+        title: Repository & database adapters
+        lead: >-
+          All database access goes through DuckDbRepository, which wraps a DatabaseAdapter and
+          provides a driver-agnostic surface for queries, mutations, and partitioned windows.
+          Switching databases is a change to the adapter injected at service startup — pages
+          and YAML datasources require no changes.
+        blocks:
+          - type: panel
+            title: 'packages/server/src/database/types.ts — DatabaseAdapter'
+            language: ts
+            code: |
+              type DatabaseConnection = {
+                run(sql: string, ...args: any[]): Promise<any>;
+                all(sql: string, ...args: any[]): Promise<any[]>;
+                close(callback?: () => void): void;
+                inTransaction?: boolean;
+              };
+
+              type DatabaseAdapter = {
+                driver?: DatabaseDriver;
+                dialect?: DatabaseDialect;
+                connect(): DatabaseConnection;
+                close(callback?: () => void): void;
+                partition?(definition: any): Promise<void>;
+                unpartition?(table: string): Promise<void>;
+                prepareQueryWindow?(definition: any, bounds: any): Promise<() => Promise<void>>;
+              };
+          - type: cardgrid
+            cards:
+              - tag: query
+                title: Read rows
+                body: Opens a connection, runs an all() SELECT, and closes it. Returns typed rows.
+              - tag: run
+                title: Write / DDL
+                body: Opens a connection, executes a non-SELECT statement, and closes it.
+              - tag: executeMutation
+                title: YAML mutations
+                body: Delegates to YamlMutationRuntime for insert/update/delete with guard checks and row_version concurrency.
+              - tag: prepareQueryWindow
+                title: Date-range safety
+                body: Coordinates with the adapter to enforce max_years and deny_unbounded bounds before a query runs.
+
+      - id: databases
+        kicker: '2 — Drivers'
+        title: Supported databases
+        lead: >-
+          Five drivers are registered in packages/server/src/database/dialects.ts.
+          Each driver maps to a DatabaseDialect that controls placeholder syntax, identifier
+          quoting, and which migration features the engine supports.
+        blocks:
+          - type: table
+            headers: [Driver, Placeholder, Identifier quoting, partitioning, columnstore, transactional DDL, generated UUID]
+            rows:
+              - [postgres, '$1 $2 …', '"identifier"', 'yes', 'yes', 'yes', 'yes']
+              - [duckdb, '?', '"identifier"', 'yes', 'no', 'yes', 'yes']
+              - [mysql, '?', '`identifier`', 'yes', 'no', 'no', 'yes']
+              - [oracle, ':1 :2 …', '"IDENTIFIER"', 'yes', 'no', 'yes', 'yes']
+              - [sqlserver, '?', '[identifier]', 'yes', 'no', 'yes', 'no']
+          - type: callout
+            title: SQLite is not in the driver list
+            text: >-
+              The current implementation supports postgres, duckdb, mysql, oracle, and sqlserver.
+              Earlier drafts of this spec mentioned SQLite — it is not present in the actual
+              codebase and should not be used as a target driver value.
+
+      - id: permissions
+        kicker: '3 — Security'
+        title: Permission gates
+        lead: >-
+          Every datasource must declare a permission string. The server enforces that permission
+          against the authenticated user's resolved claims before executing any SQL. Mutation
+          action types (form, server_form, delete, patch, server, upload, download) also require
+          a permission declaration — the schema validator rejects any page definition that omits one.
+        blocks:
+          - type: callout
+            tone: warning
+            title: Enforcement is server-side and unconditional
+            text: >-
+              The permission check runs before the datasource query or action handler is invoked.
+              A missing or failing permission returns an error response; no data or mutation
+              reaches the client.
+          - type: panel
+            title: Datasource with a permission gate
+            language: yaml
+            code: |
+              datasources:
+                - id: orders
+                  permission: orders.read
+                  query_window:
+                    table: orders
+                    date_field: order_date
+                    from_param: from_date
+                    to_param: to_date
+                    max_years: 2
+                    deny_unbounded: true
+                  query: |
+                    SELECT o.id, o.row_version, o.order_number, o.customer_name,
+                      CAST(o.order_date AS VARCHAR) AS order_date,
+                      o.status
+                    FROM orders o
+                    WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+                      AND (:status IS NULL OR o.status = :status)
+                      AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
+                      AND (:to_date IS NULL OR o.order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+                    ORDER BY o.order_date DESC
+          - type: table
+            headers: [Action type, permission required by schema]
+            rows:
+              - [form, yes]
+              - [server_form, yes]
+              - [delete, yes]
+              - [patch, yes]
+              - [server, yes]
+              - [upload, yes]
+              - [download, yes]
+              - [navigate, no — optional]
+              - [event, no — optional]
+              - [client, no — optional]
+              - [login / logout, no — optional]
+              - [request, no — optional]
+
+      - id: embedded-sql
+        kicker: '4 — Queries'
+        title: Embedded SQL & bound parameters
+        lead: >-
+          SQL is written inline in the YAML datasource definition. The server binds named
+          parameters before the statement reaches the database driver, so user-supplied values
+          never interpolate into SQL text. Session-injected bindings such as :current_branch_id
+          and :view_scope are resolved from the authenticated session, not from the client request.
+        blocks:
+          - type: list
+            items:
+              - ':current_branch_id — the branch the authenticated user is operating in'
+              - ':current_user_id — the authenticated user primary key'
+              - ':current_user_name — the authenticated user display name'
+              - ':view_scope — "all", "branch", or "own"; used for row-level scoping decisions'
+              - 'Filter params such as :status, :q, :from_date, :to_date come from the client request'
+          - type: panel
+            title: 'query_window — enforcing a bounded date range (from orders.yaml)'
+            language: yaml
+            code: |
+              datasources:
+                - id: orders
+                  permission: orders.read
+                  query_window:
+                    table: orders
+                    date_field: order_date
+                    from_param: from_date
+                    to_param: to_date
+                    max_years: 2
+                    deny_unbounded: true
+                  query: |
+                    SELECT o.id, o.order_number, o.customer_name,
+                      CAST(o.order_date AS VARCHAR) AS order_date,
+                      o.status
+                    FROM orders o
+                    WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+                      AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
+                      AND (:to_date IS NULL OR o.order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+                    ORDER BY o.order_date DESC
+          - type: callout
+            title: How query_window works
+            text: >-
+              Before the query runs, prepareQueryWindow validates the from_date and to_date
+              parameters against the max_years limit. When deny_unbounded is true a missing
+              date bound is rejected rather than treated as no filter. This prevents accidentally
+              scanning an entire multi-year table through an open-ended request.
+
+      - id: mutations
+        kicker: '5 — Mutations'
+        title: CRUD operations & optimistic concurrency
+        lead: >-
+          Mutations are declared as actions alongside the datasource. The yaml_mutation handler
+          supports insert, update, and delete with guard queries, multi-step writes, scope checks,
+          and automatic row_version optimistic concurrency on every update and delete.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: patch
+                title: Inline field update
+                body: Sets one or more columns on a single row without a form modal.
+                items:
+                  - 'Required: table, body (field map), permission'
+                  - 'Optional: confirm message, refresh list, scope check'
+              - tag: delete
+                title: Row deletion
+                body: Removes a row. Add a mutation block for guards, before_steps, or scope checks.
+                items:
+                  - 'Required: table, permission'
+                  - 'Optional: confirm message, mutation block with guards and steps'
+              - tag: server_form
+                title: Modal insert / update
+                body: Opens a form modal backed by a yaml_mutation handler.
+                items:
+                  - 'Set handler: yaml_mutation and provide a mutation block'
+                  - 'mutation.operation: insert or update'
+                  - 'Supports guards, scope, defaults, timestamps, before_steps, result'
+              - tag: server
+                title: Named server action
+                body: Calls a server-side handler by action name for complex multi-step writes.
+                items:
+                  - 'Set handler: yaml_mutation and provide a mutation block'
+                  - 'Used for workflow transitions and side-effecting operations'
+          - type: panel
+            title: 'patch action — toggle a status field'
+            language: yaml
+            code: |
+              actions:
+                - id: mark_shipped
+                  type: patch
+                  permission: orders.write
+                  table: orders
+                  body: { status: Shipped }
+                  confirm: 'Mark order {{row.order_number}} as shipped?'
+                  refresh: [orders]
+          - type: panel
+            title: 'server_form with yaml_mutation — insert with guards'
+            language: yaml
+            code: |
+              actions:
+                - id: add_order
+                  type: server_form
+                  permission: orders.write
+                  title: Add order
+                  action: orders.create
+                  handler: yaml_mutation
+                  operation: create
+                  refresh: [orders]
+                  mutation:
+                    operation: insert
+                    table: orders
+                    fields: [order_number, customer_name, order_date, status]
+                    required: [order_number, customer_name, order_date]
+                    defaults: { status: Draft }
+                    scope: { field: branch_id }
+                    guards:
+                      - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
+                        status: 409
+                        message: Order number already exists
+                    result: { query: "SELECT * FROM orders WHERE id = :id" }
+                  fields:
+                    - { field: order_number, label: Order number, type: text, required: true }
+                    - { field: customer_name, label: Customer, type: text, required: true }
+                    - { field: order_date, label: Order date, type: date, required: true }
+          - type: callout
+            title: row_version optimistic concurrency
+            text: >-
+              Every update and delete mutation automatically checks row_version unless
+              concurrency is explicitly disabled. The client submits expected_row_version; the
+              server runs UPDATE ... WHERE id = ? AND row_version = ?. Zero changed rows triggers
+              a re-read: if the record is gone the response is 404; if it exists with a different
+              version the response is 409 STALE_RECORD. The client must reload the record before
+              retrying.
+
+      - id: value-text
+        kicker: '6 — Data model'
+        title: Value/text storage contract
+        lead: >-
+          Reference-like fields are stored as a pair on the main record. The value column holds
+          the stable ID or code used by the data model. The text column holds the display
+          snapshot returned to pages, reports, and exports without a client-side join.
+        blocks:
+          - type: list
+            items:
+              - 'customer_id (UUID) — the stable foreign key used in WHERE clauses and mutations'
+              - 'customer_name (VARCHAR) — the display snapshot returned directly by the datasource query'
+              - 'shipment_type (VARCHAR) — a code or short name used as the value key'
+          - type: p
+            text: >-
+              A mutation that accepts customer_name as a lookup value persists it alongside any
+              stable key in the same INSERT or UPDATE. The client must never treat the text column
+              as the relationship key — it is a snapshot that may become stale if the referenced
+              record is renamed, but the value column remains stable.
+          - type: callout
+            title: No client-side lookup joins
+            text: >-
+              The datasource query returns both the value and the display text in a single SELECT.
+              Components render text directly from the row; they do not resolve IDs through
+              separate lookup requests at render time.
