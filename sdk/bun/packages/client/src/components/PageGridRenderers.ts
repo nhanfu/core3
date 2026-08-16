@@ -376,6 +376,55 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     }
   );
 
+  if (def.type === 'LineItemGrid' && typeof comp.configureInline === 'function') {
+    const fieldChildren = (def.children || []).filter((child: any) => child.type === 'LineItemField');
+    const actionChild = (def.children || []).find((child: any) => child.type === 'LineItemActions');
+    const inlineFields = fieldChildren.length
+      ? fieldChildren.map((field: any) => ({
+        ...field,
+        options: field.options_source
+          ? (Array.isArray(dataMap[field.options_source]?.data) ? dataMap[field.options_source].data : [])
+            .map((option: any) => ({ value: String(option.value ?? option.id ?? ''), label: String(option.label ?? option.name ?? option.value ?? '') }))
+          : field.options,
+      }))
+      : (def.columns || []).filter((column: any) => column.field && column.field !== 'actions')
+        .map((column: any) => ({ type: 'LineItemField', field: column.field, label: column.label, readonly: column.field.endsWith('_display') }));
+    const inlineActions = actionChild?.actions || (def.columns || []).flatMap((column: any) => column.actions || []);
+    const editAction = actionChild?.edit_action || inlineActions.find((action: any) => action.id.startsWith('edit_'))?.id;
+    const createAction = actionChild?.create_action || (def.actions || [])[0]?.id;
+    comp.configureInline({
+      fields: inlineFields,
+      actions: inlineActions,
+      editAction,
+      createAction,
+      visible: (action: any, row: any) => hasPermission(ctx.user, action.permission)
+        && (!action.show_if || Boolean(evalExpr(action.show_if, { ...ctx, row }))),
+      onSave: async (actionId: string, row: any, values: any) => {
+        const actionDef = (config.actions || []).find((candidate: any) => candidate.id === actionId);
+        if (!actionDef) return;
+        const parentSourceId = def.parent_source || def.footer?.source;
+        let parentExpectedRowVersion = parentSourceId ? dataMap[parentSourceId]?.data?.row_version : undefined;
+        if (parentSourceId) {
+          const freshParent = await client.query(createQuery({
+            sourceId: parentSourceId,
+            params: pageParams,
+            skip: 0,
+            top: 1,
+          }));
+          dataMap[parentSourceId] = freshParent;
+          parentExpectedRowVersion = freshParent?.data?.row_version;
+        }
+        await handleInlineForm(actionDef, {
+          ...values,
+          id: row.id === '__new__' ? undefined : row.id,
+          row_version: row.row_version,
+          parent_expected_row_version: parentExpectedRowVersion,
+        });
+        comp.setState({ editingId: null });
+      },
+    });
+  }
+
   const _origSetState = comp.setState.bind(comp);
   comp._onAction = async (actionId: string, params: any) => {
     const actionDef = (config.actions || []).find(action => action.id === actionId);
@@ -601,7 +650,10 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         await detailRefreshSources(actionDef.refresh || []);
       };
       const detailHandleInlineForm = async (actionDef: any, values: Record<string, unknown>) => {
-        await handleInlineForm({ ...actionDef, refresh: [] }, values);
+        await handleInlineForm({ ...actionDef, refresh: [] }, {
+          ...values,
+          parent_expected_row_version: detailData.order_detail?.data?.row_version,
+        });
         await detailRefreshSources(actionDef.refresh || []);
         if (newRecord) {
           await refreshSources([sourceId]);

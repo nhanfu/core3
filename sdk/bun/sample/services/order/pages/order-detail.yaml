@@ -227,6 +227,7 @@ components:
   - type: LineItemGrid
     mount_in: previous-panel
     source: order_detail_lines
+    parent_source: order_detail
     variant: odoo_x2many
     page_size: 50
     row_key: id
@@ -237,6 +238,21 @@ components:
       source: order_detail
       stats:
         - { label: Total amount, field: total_amount_display }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: description, field: description, label: Description, input_type: text }
+      - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number }
+      - { type: LineItemField, id: unit, field: unit, label: Unit, input_type: select, options_source: order_unit_lookup }
+      - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit price, input_type: money }
+      - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Tax, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: line_total, field: line_total, display_field: line_total_display, label: Amount, readonly: true }
+      - type: LineItemActions
+        id: line_actions
+        edit_action: edit_order_line
+        create_action: add_order_line
+        actions:
+          - { id: edit_order_line, label: Edit, icon: edit, variant: ghost, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: delete_order_line, label: Delete, icon: trash, variant: danger, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
     columns:
       - { field: sequence, label: '#', align: right }
       - { field: description, label: Description }

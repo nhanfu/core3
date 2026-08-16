@@ -617,7 +617,7 @@ export class PageRuntime extends BaseComponent {
         ...resolveActionParams(actionDef.params, { ...ctx, row: values }),
         id: values.id ?? pageParams.id ?? ctx.state.id ?? null,
         expected_row_version: values.row_version,
-        parent_expected_row_version: dataMap.order_detail?.data?.row_version,
+        parent_expected_row_version: values.parent_expected_row_version ?? dataMap.order_detail?.data?.row_version,
         values,
       });
       if (actionDef.success_message) showToast(actionDef.success_message, 'success');
