@@ -45,17 +45,6 @@
         "uuid": "^14.0.1",
       },
     },
-    "packages/spec": {
-      "name": "@core3/spec",
-      "dependencies": {
-        "@core3/client": "workspace:*",
-        "@core3/server": "workspace:*",
-      },
-      "devDependencies": {
-        "@types/node": "^26.1.1",
-        "typescript": "^5.9.3",
-      },
-    },
     "sample": {
       "name": "@core3/services",
       "dependencies": {
@@ -76,6 +65,17 @@
         "sass": "^1.102.0",
         "typescript": "^5.9.3",
         "vitest": "^3.0.0",
+      },
+    },
+    "spec": {
+      "name": "@core3/spec",
+      "dependencies": {
+        "@core3/client": "workspace:*",
+        "@core3/server": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^26.1.1",
+        "typescript": "^5.9.3",
       },
     },
   },
@@ -122,7 +122,7 @@
 
     "@core3/services": ["@core3/services@workspace:sample"],
 
-    "@core3/spec": ["@core3/spec@workspace:packages/spec"],
+    "@core3/spec": ["@core3/spec@workspace:spec"],
 
     "@csstools/color-helpers": ["@csstools/color-helpers@5.1.0", "", {}, "sha512-S11EXWJyy0Mz5SYvRmY8nJYTFFd1LCNV+7cXyAgQtOOuzb4EsgfqDufL+9esx72/eLhsRdGZwaldu/h+E4t4BA=="],
 

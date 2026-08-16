@@ -1,7 +1,7 @@
 {
   "name": "core3",
   "private": true,
-  "workspaces": ["sample", "packages/*", "med"],
+  "workspaces": ["sample", "packages/*", "med", "spec"],
   "scripts": {
     "lint": "eslint ."
   },

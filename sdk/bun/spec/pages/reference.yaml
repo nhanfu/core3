@@ -31,7 +31,7 @@ components:
           - type: callout
             title: This spec project is the alternative example
             text: >-
-              packages/spec/public/styles/doc.css defines named semantic classes
+              spec/public/styles/doc.css defines named semantic classes
               (doc-layout, doc-section, doc-callout, doc-panel, doc-flowstrip, ...) driven by
               CSS custom properties (--bg, --text, --teal, --amber, --font-mono, ...).
               The DocPage renderer applies them directly — no Tailwind build step in this
@@ -40,7 +40,7 @@ components:
             headers: [Layer, Approach, Where]
             rows:
               - [ERP pages, Tailwind utility classes in draw() and YAML class keys, All service pages under apps/]
-              - [Spec / doc pages, doc.css semantic class names, packages/spec and DocPage renderer]
+              - [Spec / doc pages, doc.css semantic class names, spec and DocPage renderer]
               - [Escape hatch, .style() for inline CSS or a scoped style block, Either layer]
           - type: p
             text: >-

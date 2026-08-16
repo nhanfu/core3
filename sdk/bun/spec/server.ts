@@ -2,9 +2,9 @@ import { join } from 'node:path';
 import { readFileSync, readdirSync } from 'node:fs';
 import { registerPageComponentSchema, validatePageDefinition } from '@core3/server/yaml/schema';
 
-const PORT = parseInt(process.env.PORT || '3002');
+const PORT = parseInt(process.env.PORT || '3003');
 const APPS_ROOT = import.meta.dir;
-const REPO_ROOT = join(APPS_ROOT, '..', '..');
+const REPO_ROOT = join(APPS_ROOT, '..');
 const PUBLIC_ROOT = join(APPS_ROOT, 'public');
 const PAGES_ROOT = join(APPS_ROOT, 'pages');
 
