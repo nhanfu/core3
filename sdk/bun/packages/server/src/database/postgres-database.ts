@@ -40,10 +40,10 @@ function postgresSql(sql: string): string {
     .replace(/\bINSERT\s+OR\s+IGNORE\s+INTO\b/gi, 'INSERT INTO')
     .replace(/\bINTERVAL\s+(\d+)\s+(DAY|WEEK|MONTH|QUARTER|YEAR)\b/gi, "INTERVAL '$1 $2'")
     .replace(/\bDOUBLE\b/gi, 'DOUBLE PRECISION')
-    .replace(/printf\('\%,\.0f ₫',\s*(COALESCE\([^\n]+?\))\)/gi, "to_char($1, 'FM999G999G999G990') || ' ₫'")
-    .replace(/printf\('\%,\.3f',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990.000')")
-    .replace(/printf\('\%,\.0f ₫',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990') || ' ₫'")
-    .replace(/printf\('\%\.2f%%',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990.00') || '%'")
+    .replace(/printf\('%,\.0f ₫',\s*(COALESCE\([^\n]+?\))\)/gi, "to_char($1, 'FM999G999G999G990') || ' ₫'")
+    .replace(/printf\('%,\.3f',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990.000')")
+    .replace(/printf\('%,\.0f ₫',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990') || ' ₫'")
+    .replace(/printf\('%.2f%%',\s*([^()\s]+)\)/gi, "to_char($1, 'FM999G999G999G990.00') || '%'")
     .replace(/;\s*$/, '')
     .concat(insertIgnore ? ' ON CONFLICT DO NOTHING' : '');
 }

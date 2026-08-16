@@ -28,13 +28,6 @@ function decode(raw: string | ArrayBuffer): WireMessage {
   return JSON.parse(typeof raw === 'string' ? raw : new TextDecoder().decode(raw));
 }
 
-function decodeBinary(raw: ArrayBuffer | Uint8Array): WireMessage {
-  const bytes = new Uint8Array(raw);
-  const headerLength = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);
-  const header = JSON.parse(new TextDecoder().decode(bytes.slice(4, 4 + headerLength)));
-  return { ...header, events: decodeEventBatch(bytes.slice(4 + headerLength)) };
-}
-
 function splitBinary(raw: ArrayBuffer | Uint8Array): { header: WireMessage; body: Uint8Array } {
   const bytes = raw instanceof Uint8Array ? raw : new Uint8Array(raw);
   const headerLength = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0);

@@ -111,7 +111,7 @@ export class AppLauncher extends BaseComponent {
     this._menu = menu;
     menu.addEventListener('click', (event: MouseEvent) => event.stopPropagation());
 
-    const backdrop = html.take(menu).button
+    html.take(menu).button
       .className('launcher-backdrop')
       .attr('type', 'button')
       .attr('aria-label', i18n.tKey('shell.close_launcher', {}, 'Close application launcher'))

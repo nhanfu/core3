@@ -2,10 +2,6 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
 
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.node(tag) as HTMLElementTagNameMap[K];
-}
-
 export type PivotViewDefinition = {
   id: 'pivot'; label: string; icon?: string;
   fields?: string[];

@@ -4,8 +4,6 @@ import { handleFileRoutes } from './file-routes.ts';
 import { handleDataRoutes } from './yaml-data.ts';
 import { handleActionRoutes } from './yaml-actions.ts';
 import { handleEventRoutes } from '@core3/server/routes/event-websocket';
-import { join } from 'node:path';
-import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import type { ModuleServer } from '../module.ts';
 import type { TopicMediator } from '../topics/mediator.ts';
 
@@ -79,7 +77,8 @@ export function createYamlApi(ctx: YamlApiContext) {
   }
 
   function publicPageConfig(page: any) {
-    const { datasources, ...config } = page;
+    const config = { ...page };
+    delete config.datasources;
     return config;
   }
 
@@ -127,7 +126,10 @@ export function createYamlApi(ctx: YamlApiContext) {
       if (source.permission && !authProvider.hasPermission(user, source.permission)) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
       }
-      const { query, workflow_states, ...publicSource } = source;
+      const publicSource = { ...source };
+      delete publicSource.query;
+      const workflow_states = publicSource.workflow_states;
+      delete publicSource.workflow_states;
       const workflow = typeof source.workflow === 'string' ? WORKFLOWS.get(source.workflow) : undefined;
       const stateWorkflow = typeof workflow_states === 'string' ? WORKFLOWS.get(workflow_states) : undefined;
       if (workflow_states && !stateWorkflow) throw { status: 500, message: `Unknown workflow: ${workflow_states}` };

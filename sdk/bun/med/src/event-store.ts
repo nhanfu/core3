@@ -40,7 +40,7 @@ function normalizeRow(row: any, schema?: EventStoreSchema): EventEnvelope {
   // Older segments may contain the JSON envelope. Keep reading them while new
   // segments use only the declarative columns from the configured schema.
   if (typeof row.event_json === 'string') {
-    try { envelope = JSON.parse(row.event_json); } catch {}
+    try { envelope = JSON.parse(row.event_json); } catch { /* preserve an empty envelope for malformed legacy rows */ }
   }
   if (!Object.keys(envelope).length && schema) {
     for (const column of schema.columns) {
@@ -204,12 +204,10 @@ export class EventStore {
   }
 
   private async pruneSegments(): Promise<void> {
-    let rows = this.segments.reduce((sum, segment) => sum + segment.rows, 0);
     const cutoff = Date.now() - this.retentionMs;
     while (this.segments.length > 1 && this.segments[0].lastAt > 0 && this.segments[0].lastAt < cutoff) {
       const segment = this.segments.shift()!;
-      rows -= segment.rows;
-      await unlink(join(this.dataPath, segment.file)).catch(() => {});
+      await unlink(join(this.dataPath, segment.file)).catch(() => { /* retention cleanup is best effort */ });
     }
   }
 
@@ -226,7 +224,7 @@ export class EventStore {
     this.hotSegments.push({ firstSequence: items[0].sequence, lastSequence: items.at(-1)!.sequence, bytes, events: items });
     this.hotRows += items.length; this.hotBytes += bytes.byteLength;
     this.trimHot();
-    for (const item of items) for (const listener of this.listeners) { try { listener(item); } catch {} }
+    for (const item of items) for (const listener of this.listeners) { try { listener(item); } catch { /* listener failures must not stop publishing */ } }
     this.pending.push(...items);
     if (this.pending.length >= this.bufferMaxRows) await this.flush();
     else if (this.writeMode === 'durable' && this.pending.length >= this.segmentMaxRows) await this.flush();
@@ -351,7 +349,7 @@ export class EventStore {
     try {
       for await (const chunk of writer) yield chunk;
       await produce;
-    } finally { await produce.catch(() => {}); }
+    } finally { await produce.catch(() => { /* iterator cleanup is best effort */ }); }
   }
   async history(options: { afterSequence?: number; limit?: number } = {}): Promise<Uint8Array> { const chunks: Uint8Array[] = []; for await (const chunk of this.historyStream(options)) chunks.push(chunk); const bytes = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0)); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; } return bytes; }
 
@@ -382,5 +380,5 @@ export class EventStore {
   }
   async count(): Promise<number> { await this.flush(); return this.segments.reduce((sum, segment) => sum + segment.rows, 0); }
   async cacheCount(): Promise<number> { return this.hotRows; }
-  async stop(): Promise<void> { if (this.workerTimer) { clearTimeout(this.workerTimer); this.workerTimer = null; } if (!this.segments.length && !this.pending.length && !this.workerRunning) { this.listeners.clear(); this.hotRows = 0; this.hotBytes = 0; if (this.temporaryDataPath) await rm(this.dataPath, { recursive: true, force: true }).catch(() => {}); return; } await this.flush(); if (this.manifestDirty) await this.writeManifest(); this.listeners.clear(); this.hotSegments.length = 0; this.hotRows = 0; this.hotBytes = 0; this.activeCursors.clear(); if (this.temporaryDataPath) await rm(this.dataPath, { recursive: true, force: true }).catch(() => {}); }
+  async stop(): Promise<void> { if (this.workerTimer) { clearTimeout(this.workerTimer); this.workerTimer = null; } if (!this.segments.length && !this.pending.length && !this.workerRunning) { this.listeners.clear(); this.hotRows = 0; this.hotBytes = 0; if (this.temporaryDataPath) await rm(this.dataPath, { recursive: true, force: true }).catch(() => { /* temporary cleanup is best effort */ }); return; } await this.flush(); if (this.manifestDirty) await this.writeManifest(); this.listeners.clear(); this.hotSegments.length = 0; this.hotRows = 0; this.hotBytes = 0; this.activeCursors.clear(); if (this.temporaryDataPath) await rm(this.dataPath, { recursive: true, force: true }).catch(() => { /* temporary cleanup is best effort */ }); }
 }

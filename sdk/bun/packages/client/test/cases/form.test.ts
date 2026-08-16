@@ -5,14 +5,13 @@
  * Run: npx vitest run cases/form.test.ts
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   FormPanel,
   TextInput,
   NumberInput,
   SelectInput,
   DateInput,
-  TextareaInput,
   CheckboxInput,
 } from '@core3/client';
 

@@ -3,18 +3,6 @@ import { i18n } from '@core3/client/i18n';
 import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
 import { html } from '@core3/client/html';
 
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className = '',
-  text = '',
-): HTMLElementTagNameMap[K] {
-  const parent = html.ele();
-  const element = html.node(tag) as HTMLElementTagNameMap[K];
-  html.take(element).className(className).text(text);
-  html.take(parent);
-  return element;
-}
-
 function formatTimestamp(value: unknown) {
   if (!value) return '';
   const date = new Date(String(value));

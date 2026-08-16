@@ -199,7 +199,7 @@ function parseMigrationSql(value: unknown, file: string): Partial<Record<Databas
     return resolved;
   };
 
-  for (const [driver, definition] of Object.entries(value as Record<string, unknown>)) {
+  for (const [driver] of Object.entries(value as Record<string, unknown>)) {
     if (!['postgres', 'duckdb', 'mysql', 'oracle', 'sqlserver'].includes(driver)) {
       throw new Error(`Migration ${file} has unsupported database type: ${driver}`);
     }

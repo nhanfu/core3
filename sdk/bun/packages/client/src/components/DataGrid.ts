@@ -239,7 +239,8 @@ export class DataGrid extends BaseComponent {
               : String(labels.columnVisibility).replace('{label}', column.label))
             .event('change', () => {
               const next = new Set(visibleColumnIds);
-              checkbox.checked ? next.add(column.id || column.field) : next.delete(column.id || column.field);
+              if (checkbox.checked) next.add(column.id || column.field);
+              else next.delete(column.id || column.field);
               if (next.size === 0) {
               html.take(checkbox).prop('checked', true);
                 return;
@@ -327,7 +328,8 @@ export class DataGrid extends BaseComponent {
           const checkbox = html.take(tr).tdata.className('w-10 px-4 py-3').input.attr('type', 'checkbox').ele() as HTMLInputElement;
           html.take(checkbox).attr('aria-label', labels.selectRow(id)).prop('checked', selected.has(id)).event('change', () => {
             const next = new Set(this.selectedIds());
-            checkbox.checked ? next.add(id) : next.delete(id);
+            if (checkbox.checked) next.add(id);
+            else next.delete(id);
             this.setSelectedIds([...next]);
           });
         }
@@ -381,7 +383,8 @@ export class DataGrid extends BaseComponent {
                 .attr('aria-expanded', String(!isCollapsed)).text(isCollapsed ? '+' : '-').ele() as HTMLButtonElement;
               html.take(toggle).event('click', () => {
                 const next = new Set(collapsed);
-                isCollapsed ? next.delete(id) : next.add(id);
+                if (isCollapsed) next.delete(id);
+                else next.add(id);
                 this.setState({ collapsedTreeIds: [...next] });
               });
             }

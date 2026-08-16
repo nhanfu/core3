@@ -31,7 +31,7 @@ export class Image extends BaseComponent {
       return;
     }
 
-    const img = html.take(wrap).img
+    html.take(wrap).img
       .className(`block ${roundedCls} ${borderCls}`)
       .attr('src', src)
       .attr('alt', alt || '')

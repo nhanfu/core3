@@ -69,7 +69,7 @@ export abstract class BaseComponent<S extends ComponentState = ComponentState> {
    * Merge partial state. Triggers redraw by default.
    * Pass redraw=false to batch multiple updates.
    */
-  setState(partial: Partial<S>, redraw?: boolean): void { throw new Error('abstract'); }
+  setState(partial: Partial<S>, redraw?: boolean): void { void partial; void redraw; throw new Error('abstract'); }
 
   /**
    * Create a child component, register it in the tree, and return it.
@@ -78,16 +78,18 @@ export abstract class BaseComponent<S extends ComponentState = ComponentState> {
   createChild<C extends BaseComponent>(
     ctor: new (...args: unknown[]) => C,
     state: unknown,
-  ): C { throw new Error('abstract'); }
+  ): C { void ctor; void state; throw new Error('abstract'); }
 
   /** Find any component by id anywhere in the subtree (depth-first). */
-  find(id: string): BaseComponent | null { throw new Error('abstract'); }
+  find(id: string): BaseComponent | null { void id; throw new Error('abstract'); }
 
   /**
    * Submit a named action to the backend.
    * The name maps to an `actions:` entry in the YAML page definition.
    */
   submit(action: string, params?: Record<string, unknown>): Promise<unknown> {
+    void action;
+    void params;
     throw new Error('abstract');
   }
 }

@@ -2,7 +2,7 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import type { DatabaseAdapter, DatabaseConnection } from './types.ts';
 import type { DuckDbEncryptionOptions } from './duckdb-encryption.ts';
 
-function normalizeArgs(args: any[]): { params: any[]; callback?: Function } {
+function normalizeArgs(args: any[]): { params: any[]; callback?: (...args: any[]) => any } {
   const callback = typeof args.at(-1) === 'function' ? args.pop() : undefined;
   const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
   return { params, callback };

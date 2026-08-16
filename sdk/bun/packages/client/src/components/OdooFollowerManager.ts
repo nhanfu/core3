@@ -3,10 +3,6 @@ import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
 
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.node(tag) as HTMLElementTagNameMap[K];
-}
-
 function initials(value: unknown) {
   const words = String(value || '?').trim().split(/\s+/).filter(Boolean);
   return words.slice(0, 2).map(word => word[0]?.toUpperCase()).join('') || '?';

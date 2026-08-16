@@ -87,7 +87,7 @@ export class GridView extends BaseComponent {
     if (loading) {
       for (let i = 0; i < 5; i++) {
         const tr = html.take(tbody).trow.ele();
-        for (const d of this.defs) {
+        for (let column = 0; column < this.defs.length; column += 1) {
           html.take(tr).tdata.className('px-4 py-3').div.className('h-4 bg-gray-100 rounded animate-pulse skeleton');
         }
       }

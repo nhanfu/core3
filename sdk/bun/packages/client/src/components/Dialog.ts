@@ -60,9 +60,6 @@ export class Dialog extends BaseComponent {
         .className('dialog-input').type('text').value(this.options.input.value || '')
         .attr('placeholder', this.options.input.placeholder || '').prop('required', true).ele() as HTMLInputElement
       : null;
-    if (input) {
-    }
-
     const tagInputs = new Map<string, HTMLInputElement[]>();
     for (const group of this.options.tagGroups || []) {
       const field = html.take(dialog).fieldset.className('dialog-tags').ele() as HTMLFieldSetElement;
@@ -100,7 +97,7 @@ export class Dialog extends BaseComponent {
         .event('click', () => { close(false); void this.options.onDanger?.(); });
     }
 
-    const confirm = html.take(footer).button.type('button').className('dialog-confirm')
+    html.take(footer).button.type('button').className('dialog-confirm')
       .text(this.options.confirmLabel || i18n.tKey('labels.confirm', {}, 'Confirm')).event('click', () => {
       const value = input?.value.trim() || '';
       if (input && !value) {

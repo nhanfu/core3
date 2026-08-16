@@ -1,12 +1,7 @@
 import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
-import { resolveDatePreset } from '@core3/client/components/ListToolbar';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
-
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.node(tag) as HTMLElementTagNameMap[K];
-}
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
@@ -17,7 +12,7 @@ export class PageDetailRenderers extends BaseComponent {
   }
 
   private createRenderers(deps: any) {
-  const { config, dataMap, ctx, bindSource, filterState, paginationState, sortState, pageParams, client, createQuery, refreshSources, refetchSource, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
+  const { config, dataMap, ctx, bindSource, filterState, pageParams, client, createQuery, refreshSources, refetchSource, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
   const { DocumentSummary } = await import('@core3/client/components/DocumentSummary');

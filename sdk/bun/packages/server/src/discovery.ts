@@ -132,10 +132,10 @@ function assertUnique(map: Map<string, unknown>, key: string, file: string, kind
 export function discoverPages(appsRoot: string) {
   const pageRoots = new Set<string>();
   const topPages = join(appsRoot, 'pages');
-  try { if (statSync(topPages).isDirectory()) pageRoots.add(topPages); } catch {}
+  try { if (statSync(topPages).isDirectory()) pageRoots.add(topPages); } catch { /* top-level pages are optional */ }
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
     const pages = join(moduleRoot, 'pages');
-    try { if (statSync(pages).isDirectory()) pageRoots.add(pages); } catch {}
+    try { if (statSync(pages).isDirectory()) pageRoots.add(pages); } catch { /* module may not define pages */ }
   }
 
   const pages = new Map<string, DiscoveredPage>();
@@ -151,14 +151,14 @@ export function discoverPages(appsRoot: string) {
     try {
       const manifest = loadYamlServiceManifest(moduleRoot).manifest;
       if (manifest.permissions) file = join(moduleRoot, manifest.permissions);
-    } catch {}
+    } catch { /* default permission path is optional */ }
     try {
       if (statSync(file).isFile()) permissions.set(moduleName, {
         module: moduleName,
         file,
         config: parseYaml(file) || {},
       });
-    } catch {}
+    } catch { /* unreadable permission files are ignored during discovery */ }
   }
 
   for (const pagesRoot of pageRoots) {

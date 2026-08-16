@@ -55,7 +55,7 @@ function readOptionalYaml(root: string, file: string | undefined): unknown {
 }
 
 export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlServiceDefinition {
-  const { root, manifestFile, manifest } = service;
+  const { root, manifest } = service;
   return {
     ...service,
     pages: (manifest.pages || []).map((file) => ({ file: join(root, file), config: Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) })),
@@ -135,7 +135,7 @@ export class YamlServiceModule implements ModuleLifecycle {
     this.definition = loadYamlServiceDefinition(service);
   }
 
-  install(_context: ModuleContext): void {}
+  install(context: ModuleContext): void { void context; }
 
   async load(context: ModuleContext): Promise<void> {
     context.registerService(`yaml.service.${this.id}`, this.definition);
@@ -264,7 +264,8 @@ export class YamlServiceModule implements ModuleLifecycle {
     return this.runtime;
   }
 
-  async unload(_context: ModuleContext): Promise<void> {
+  async unload(context: ModuleContext): Promise<void> {
+    void context;
     this.topics?.stop();
     this.topics = null;
     this.repository = null;
@@ -273,5 +274,5 @@ export class YamlServiceModule implements ModuleLifecycle {
     this.db = null;
   }
 
-  uninstall(_context: ModuleContext): void {}
+  uninstall(context: ModuleContext): void { void context; }
 }

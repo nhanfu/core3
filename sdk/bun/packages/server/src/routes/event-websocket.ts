@@ -65,7 +65,7 @@ export async function handleEventRoutes(ctx: Record<string, any>, server?: Modul
           return;
         }
         try {
-          const response = await executeAction({
+          await executeAction({
             id: payload.thread_id,
             content: payload.content,
             client_message_id: payload.client_message_id,

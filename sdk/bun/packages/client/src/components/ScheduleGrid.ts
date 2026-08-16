@@ -2,10 +2,6 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
 
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.node(tag) as HTMLElementTagNameMap[K];
-}
-
 export type ScheduleGridDefinition = {
   title?: string;
   date_field?: string;
@@ -45,7 +41,6 @@ export class ScheduleGrid extends BaseComponent {
 
   draw(container: HTMLElement) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
-    const dateField = this.def.date_field || 'date';
     const resourceField = this.def.resource_field || 'resource';
     const resourceLabelField = this.def.resource_label_field || resourceField;
     const titleField = this.def.title_field || 'title';

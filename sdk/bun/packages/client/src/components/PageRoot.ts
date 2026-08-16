@@ -675,7 +675,7 @@ export class PageRuntime extends BaseComponent {
     refreshStatusTabCounts,
   });
 
-  const { chartState, renderComponentDef } = detailRenderer.renderers;
+  const { renderComponentDef } = detailRenderer.renderers;
   const openFormModal = formModal.openFormModal;
   const root = new PageRoot('page-root', { config, dataMap, ctx }, {
     applySourceFilters,

@@ -46,10 +46,6 @@ export type ListToolbarDefinition = {
   actions_inline?: boolean;
 };
 
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.node(tag) as HTMLElementTagNameMap[K];
-}
-
 /**
  * Shared resource-list controls: a keyword search plus optional utility
  * actions such as advanced filters, export, column selection, and help.

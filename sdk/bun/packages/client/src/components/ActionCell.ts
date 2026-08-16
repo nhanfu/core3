@@ -4,7 +4,7 @@ import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 
 export class ActionCell extends BaseComponent {
   draw(container) {
-    const { actions = [], row = {} } = this.state;
+    const { actions = [] } = this.state;
     const wrap = html.take(container).div.className('flex gap-3').ele();
     for (const a of actions) {
       const cls = {

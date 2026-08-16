@@ -71,7 +71,6 @@ export class PageFormModal extends BaseComponent {
 
           let el;
           let usesAsyncSelect = false;
-          let usesMoneyInput = false;
           if (fieldDef.type === 'async-select' || fieldDef.type === 'multi-select') {
             const optionRows = fieldDef.options_source
               ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
@@ -102,7 +101,6 @@ export class PageFormModal extends BaseComponent {
             });
             money.mount(group);
             el = money.input;
-            usesMoneyInput = true;
           } else if (fieldDef.type === 'select') {
             el = html.take(group).select.ele() as HTMLSelectElement;
             html.take(el).className(`form-select form-control${fieldDef.multiple ? ' form-control-multiple' : ''}`);

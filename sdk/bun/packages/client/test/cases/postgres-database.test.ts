@@ -13,7 +13,7 @@ describe('Postgres durable database adapter', () => {
   });
 
   it('provides the repository callback connection over a Postgres executor', async () => {
-    const unsafe = vi.fn(async (sql: string, params: unknown[]) => {
+    const unsafe = vi.fn(async (sql: string) => {
       if (sql.startsWith('SELECT')) return [{ id: 1n, created_at: new Date('2026-01-01T00:00:00Z') }];
       return [];
     });

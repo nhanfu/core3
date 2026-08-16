@@ -279,7 +279,7 @@ export class ListView extends BaseComponent {
       && (!hasFormMode || this.isViewEnabled('form'));
     if (['list', 'form'].includes(activeView.id) && hasFormMode && !listEnabled && formEnabled) {
       const content = html.take(root).div.className('o-list-content is-form-only').ele();
-      await this.drawFormPanel(content, rows, true);
+      await this.drawFormPanel(content, rows);
       if (version !== this.drawVersion) return;
       return;
     }
@@ -327,7 +327,7 @@ export class ListView extends BaseComponent {
       const kanbanHost = html.take(content).div.className('o-list-kanban-host').ele();
       kanban.mount(kanbanHost);
       if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
-        await this.drawFormPanel(content, rows, false);
+        await this.drawFormPanel(content, rows);
         if (version !== this.drawVersion) return;
       }
       return;
@@ -352,7 +352,7 @@ export class ListView extends BaseComponent {
       const calendarHost = html.take(content).div.className('o-list-calendar-host').ele();
       calendar.mount(calendarHost);
       if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (this.formRow(rows) || this.state.formRowId === '__new__')) {
-        await this.drawFormPanel(content, rows, false);
+        await this.drawFormPanel(content, rows);
         if (version !== this.drawVersion) return;
       }
       return;
@@ -454,12 +454,12 @@ export class ListView extends BaseComponent {
       }
     }
     if (formEnabled && this.options.formView?.sidePanel && this.formPanelMode() !== 'hidden' && (rows.length || this.state.formRowId === '__new__')) {
-      await this.drawFormPanel(content, rows, false);
+      await this.drawFormPanel(content, rows);
       if (version !== this.drawVersion) return;
     }
   }
 
-  private async drawFormPanel(content: HTMLElement, rows: ListRow[], formOnly: boolean) {
+  private async drawFormPanel(content: HTMLElement, rows: ListRow[]) {
     const selectedRow = this.state.formRowId === '__new__'
       ? { id: '', __new_record: true }
       : this.formRow(rows) || (rows.length ? rows[0] : undefined);
@@ -651,7 +651,6 @@ export class ListView extends BaseComponent {
     const views = this.options.views || [];
     if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
-      const activeView = this.activeView();
       for (const view of views) {
         const mobileCardView = views.some(candidate => candidate.id === 'card');
         const button = html.take(switcher).button
@@ -682,7 +681,8 @@ export class ListView extends BaseComponent {
         const checkbox = html.take(label).input.attr('type', 'checkbox').ele() as HTMLInputElement;
         html.take(checkbox).prop('checked', visibleColumnIds.has(column.id || column.field)).attr('aria-label', `${labels.columns}: ${column.label}`).event('change', () => {
           const nextVisible = new Set(visibleColumnIds);
-          checkbox.checked ? nextVisible.add(column.id || column.field) : nextVisible.delete(column.id || column.field);
+          if (checkbox.checked) nextVisible.add(column.id || column.field);
+          else nextVisible.delete(column.id || column.field);
           if (!nextVisible.size) {
             html.take(checkbox).prop('checked', true);
             return;
@@ -824,7 +824,8 @@ export class ListView extends BaseComponent {
       const checkbox = html.take(cell).input.attr('type', 'checkbox').ele() as HTMLInputElement;
       html.take(checkbox).prop('checked', selected.has(id)).attr('aria-label', labels.selectRow(id)).event('change', () => {
         const next = new Set<string>(this.selectedIds());
-        checkbox.checked ? next.add(id) : next.delete(id);
+        if (checkbox.checked) next.add(id);
+        else next.delete(id);
         this.setSelectedIds([...next]);
       });
     }
@@ -871,7 +872,8 @@ export class ListView extends BaseComponent {
           html.take(toggle).type('button').className('o-list-tree-toggle').replaceText(collapsed ? '▸' : '▾').attr('aria-label', collapsed ? 'Expand row' : 'Collapse row').event('click', event => {
             event.stopPropagation();
             const next = this.collapsedTreeIds();
-            collapsed ? next.delete(id) : next.add(id);
+            if (collapsed) next.delete(id);
+            else next.add(id);
             this.setState({ collapsedTreeIds: [...next] });
           });
           html.take(cell).prepend(toggle);

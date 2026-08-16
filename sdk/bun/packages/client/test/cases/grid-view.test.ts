@@ -5,15 +5,13 @@
  * Run: npx vitest run cases/grid-view.test.ts
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   GridView,
   TextCell,
   BadgeCell,
   CurrencyCell,
-  NumberCell,
   DateCell,
-  BooleanCell,
   ActionCell,
 } from '@core3/client';
 

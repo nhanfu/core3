@@ -66,7 +66,7 @@ export class AsyncSelect extends BaseComponent {
     }
 
     for (const option of options) {
-      const item = html.take(this.listElement).button.type('button')
+      html.take(this.listElement).button.type('button')
         .className(`async-select-option${selectedSet.has(option.value) ? ' is-selected' : ''}`)
         .attr('role', 'option').attr('aria-selected', String(selectedSet.has(option.value))).text(option.label)
         .event('click', () => {

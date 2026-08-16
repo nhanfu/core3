@@ -7,10 +7,6 @@ import { PageFormModal } from './PageFormModal.ts';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
 
-function createFluentElement<K extends keyof HTMLElementTagNameMap>(tag: K): HTMLElementTagNameMap[K] {
-  return html.node(tag) as HTMLElementTagNameMap[K];
-}
-
 function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   const defaults = view?.pivot?.default || {};
   const hasRows = Object.prototype.hasOwnProperty.call(params, 'pivot_rows');
@@ -75,22 +71,6 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
   const { GridView } = await import('@core3/client/components/GridView');
   const sourceId = def.source;
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
-  const treeRows = sourceResult.data || [];
-  const treeById = new Map<string, any>(treeRows.map((row: any) => [String(row.id), row]));
-  const treeDepth = (row: any) => {
-    if (!def.tree) return 0;
-    let depth = 0;
-    let parentId = row.parent_id ? String(row.parent_id) : '';
-    const seen = new Set<string>();
-    while (parentId && !seen.has(parentId) && depth < 20) {
-      seen.add(parentId);
-      const parent = treeById.get(parentId);
-      if (!parent) break;
-      depth += 1;
-      parentId = parent.parent_id ? String(parent.parent_id) : '';
-    }
-    return depth;
-  };
   const pageSize = def.page_size || 25;
 
   // Add an `id` to each column def for GridView's cell lookup key
@@ -220,6 +200,22 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       : (await import('@core3/client/components/DataGrid')).DataGrid;
   const sourceId = def.source;
   const sourceResult = dataMap[sourceId] || { data: [], meta: {} };
+  const treeRows = sourceResult.data || [];
+  const treeById = new Map<string, any>(treeRows.map((row: any) => [String(row.id), row]));
+  const treeDepth = (row: any) => {
+    if (!def.tree) return 0;
+    let depth = 0;
+    let parentId = row.parent_id ? String(row.parent_id) : '';
+    const seen = new Set<string>();
+    while (parentId && !seen.has(parentId) && depth < 20) {
+      seen.add(parentId);
+      const parent = treeById.get(parentId);
+      if (!parent) break;
+      depth += 1;
+      parentId = parent.parent_id ? String(parent.parent_id) : '';
+    }
+    return depth;
+  };
   const footerSourceId = def.type === 'LineItemGrid' ? def.footer?.source : undefined;
   const footerRecord = footerSourceId ? (dataMap[footerSourceId]?.data || {}) : {};
   const pageSize = def.page_size || 25;

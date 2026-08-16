@@ -31,10 +31,11 @@ export function translateSql(sql: string, driver: DatabaseDriver): string {
       .replace(/CAST\(([^()]+) AS VARCHAR\(255\)\)/gi, '$1')
       .replace(/CAST\(([^()]+) AS VARCHAR\)/gi, '$1')
       .replace(/CAST\(([^()]+) AS CHAR\)/gi, '$1')
-      .replace(/printf\('\%,\.0f ₫',\s*(COALESCE\([^)]*\))\)/gi, "CONCAT(FORMAT($1, 0), ' ₫')")
-      .replace(/printf\('\%,\.0f ₫',\s*([^()]+)\)/gi, "CONCAT(FORMAT($1, 0), ' ₫')")
-      .replace(/printf\('\%,\.3f',\s*([^()]+)\)/gi, 'FORMAT($1, 3)')
-      .replace(/printf\('\%.2f%%',\s*([^()]+)\)/gi, "CONCAT(FORMAT($1, 2), '%')");
+      .replace(/printf\('%,\.0f ₫',\s*(COALESCE\([^)]*\))\)/gi, "CONCAT(FORMAT($1, 0), ' ₫')")
+      .replace(/printf\('%,\.0f ₫',\s*([^()]+)\)/gi, "CONCAT(FORMAT($1, 0), ' ₫')")
+      .replace(/printf\('%,\.3f',\s*([^()]+)\)/gi, 'FORMAT($1, 3)')
+      .replace(/printf\('%.2f%%',\s*([^()]+)\)/gi, "CONCAT(FORMAT($1, 2), '%')")
+      .replace(/printf\('%.2f%%',\s*([^()]+)\)/gi, "CONCAT(FORMAT($1, 2), '%')");
   } else if (driver === 'oracle') {
     result = result.replace(/\bgen_random_uuid\(\)/gi, 'RAWTOHEX(SYS_GUID())')
       .replace(/\bADD\s+COLUMN\b/gi, 'ADD')

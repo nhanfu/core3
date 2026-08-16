@@ -83,7 +83,7 @@ export class DateRangeFilterTag {
     let selectedTo = to.value;
     let activeField: 'from' | 'to' = 'from';
     let calendarMonth = monthStart(selectedFrom || new Date().toISOString().slice(0, 10));
-    let error: HTMLElement | undefined;
+    const error = html.take(editor).div.className('o-list-date-range-error').attr('role', 'alert').ele() as HTMLDivElement;
     const calendar = html.take(editor).div.className('o-list-date-picker').ele() as HTMLDivElement;
     const drawCalendar = () => {
       html.take(calendar).clear();
@@ -137,7 +137,6 @@ export class DateRangeFilterTag {
     html.take(from).event('input', () => { selectedFrom = from.value; calendarMonth = monthStart(selectedFrom || calendarMonth); drawCalendar(); });
     html.take(to).event('input', () => { selectedTo = to.value; calendarMonth = monthStart(selectedTo || calendarMonth); drawCalendar(); });
     drawCalendar();
-    error = html.take(editor).div.className('o-list-date-range-error').attr('role', 'alert').ele() as HTMLDivElement;
     html.take(fields).button
       .type('button')
       .className('o-list-date-range-apply')

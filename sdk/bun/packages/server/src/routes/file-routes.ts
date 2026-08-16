@@ -8,7 +8,7 @@ import { bindNamedParams } from '@core3/server/database/sql';
 
 export async function handleFileRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const {
-    req, url, pathname, method, repository, NAMED_ACTIONS, topics, UPLOAD_ROOT, authUser, activityActor,
+    req, pathname, method, repository, NAMED_ACTIONS, topics, UPLOAD_ROOT, authUser, activityActor,
     requirePerm, permissionForEndpoint, recordInCurrentBranch, json, apiError,
     CORS_HEADERS, eventStore, STORAGE,
   } = ctx;
@@ -56,7 +56,7 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
       await eventStore?.publish({ operation: 'send_attachment', status: 'success', actorId: String(activityActor.id || ''), threadId: result.thread_id, messageId: result.id, message: result });
       return json(result);
     } catch (error) {
-      try { unlinkSync(targetPath); } catch {}
+      try { unlinkSync(targetPath); } catch { /* cleanup is best effort */ }
       throw error;
     }
   }

@@ -28,7 +28,7 @@ export class HTML {
         return this;
     }
 
-    ele(): any {html
+    ele(): any {
         return this.context;
     }
 

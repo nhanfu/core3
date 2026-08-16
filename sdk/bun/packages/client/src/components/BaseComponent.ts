@@ -37,9 +37,9 @@ export class BaseComponent {
 
   /** Walk up to the root component (no parent). */
   get root() {
-    let n: BaseComponent | null = this;
-    while (n?.parent) n = n.parent;
-    return n ?? this;
+    let current = this.parent;
+    while (current?.parent) current = current.parent;
+    return current ?? this;
   }
 
   /**
@@ -178,5 +178,5 @@ export class BaseComponent {
    * Override in subclasses — render into container.
    * @param {HTMLElement} container
    */
-  draw(container: HTMLElement) {}
+  draw(container: HTMLElement) { void container; }
 }
