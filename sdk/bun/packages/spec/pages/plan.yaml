@@ -21,8 +21,8 @@ components:
               - ['Server YAML pipeline', Complete, 'Discovery, schema validation, multi-database adapters (Postgres, DuckDB, MySQL, SQL Server, Oracle)']
               - ['Auth & event mediator', 'In progress', 'Typed JWT claims and a hardened mediator auth adapter landed most recently']
               - ['Sample services', Complete, 'order and chat services in sdk/bun/sample demonstrate CRUD, workflow, chatter, and attachments']
-              - ['Doc/spec project', 'In progress', 'This project — spec pages are being migrated from static HTML to YAML + DocPage']
-              - ['Full spec migration', Planned, 'Remaining static pages: backend, reference, scripting']
+              - ['Doc/spec project', Complete, 'All original static pages (frontend, backend, scripting, reference, component library) migrated to YAML + DocPage']
+              - ['Component library accuracy pass', Complete, 'component-library.yaml corrected against real component source and expanded to cover the full export set']
               - ['Package publishing', Future, '@core3/client and @core3/server as installable packages outside this monorepo']
 
       - id: pattern-rule
@@ -47,7 +47,7 @@ components:
         blocks:
           - type: list
             items:
-              - Migrate spec/backend.html, spec/reference.html, and spec/scripting.html into pages/*.yaml
+              - Keep the component-library reference in sync as real components change
               - Grow the sample order service with more read-focused example pages (analytics, reports)
               - Keep extracting repeated DocPage block shapes into the schema as the doc set grows
               - Continue hardening auth and the event mediator per the current auth-and-mediator plan

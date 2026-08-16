@@ -59,8 +59,8 @@ components:
               registerPageComponentSchema('DocPage', ['hero', 'sections']);
           - type: p
             text: >-
-              Both pages in this spec project — this one included — are plain
-              YAML files under pages/ that only ever declare a single DocPage
+              Every page in this spec project — this one included — is a plain
+              YAML file under pages/ that only ever declares a single DocPage
               component. There is no per-page HTML, CSS, or JS.
 
       - id: blocks
@@ -88,6 +88,8 @@ components:
             tone: warning
             title: Keep block schemas shallow
             text: >-
-              validatePageDefinition only checks a component's top-level keys against its
-              registered schema. Nested block content (like this one) isn't deep-validated, so keep
-              block authors honest with TypeScript types in DocPage.ts rather than server validation.
+              For custom registry-backed types like DocPage, validatePageDefinition only checks
+              top-level keys against the registered schema — nested block content (like this one)
+              isn't deep-validated, so keep block authors honest with TypeScript types in
+              DocPage.ts rather than server validation. Built-in types (ListView, OdooFormView, ...)
+              do get deeper nested validation in schema.ts.

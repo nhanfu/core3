@@ -1,6 +1,8 @@
 node_modules/
 *.css
 *.css.map
+# doc.css is hand-authored source for the spec project, not compiled Sass output
+!sdk/bun/packages/spec/public/styles/doc.css
 
 # Local databases and DuckDB runtime files
 coredb

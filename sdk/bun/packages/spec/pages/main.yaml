@@ -1,4 +1,4 @@
-title: Core3 — Overview
+title: Core3 — Proposal
 page:
   id: main
 
@@ -6,44 +6,51 @@ components:
   - type: DocPage
     hero:
       variant: home
-      eyebrow: Specification
-      title: A YAML-driven ERP framework
+      eyebrow: Proposal
+      title: Adopt a YAML-driven framework for ERP pages
       subtitle: >-
-        Core3 processes client YAML and renders ERP pages with a shared TypeScript
-        framework: YAML-driven components, embedded SQL, OOP rendering, CRUD, and
-        controlled extension points.
+        Every new service currently hand-builds its own page rendering, CRUD wiring, and
+        permission checks. Core3 is a shared client + server framework, already proven on two
+        real services, that replaces that per-service UI code with YAML. This proposes adopting
+        it as the standard for new ERP services and continuing the remaining hardening work.
       stats:
+        - value: '2'
+          label: services already shipped on it
+        - value: '90'
+          label: shared components available
         - value: '5'
-          label: databases supported
-        - value: '1'
-          label: shared client package
-        - value: '0'
-          label: business logic in the framework
+          label: databases supported through one adapter interface
+
     sections:
-      - id: vision
-        kicker: Vision
-        title: YAML throughout development
+      - id: problem
+        kicker: Problem
+        title: Every new service re-solves the same problems
         lead: >-
-          Client projects should progressively describe their complete systems
-          declaratively, with as little handwritten client code as possible.
+          Without a shared framework, each ERP service ends up hand-writing its own version of
+          the same plumbing — with no guarantee any two services do it the same way.
         blocks:
           - type: list
             items:
-              - Page layout and composition
-              - Design-system and UI decisions
-              - Business logic and workflows
-              - Database management, including partitioning and sharding
-              - Deployment and operational configuration
-          - type: p
+              - Page rendering, form validation, and grid pagination re-implemented per service
+              - Permission checks scattered across handlers instead of enforced at one boundary
+              - Each service picks its own database access pattern, making engine changes expensive
+              - CRUD mutations (insert/update/delete, optimistic concurrency) hand-written per table
+              - No shared extension point, so one-off UI patterns don't compose with the rest of the system
+          - type: callout
+            tone: warning
+            title: The cost compounds
             text: >-
-              This spec project is itself an example: every page here — including
-              this one — is a YAML file rendered by the DocPage component below.
-              No hand-written HTML describes the content.
+              None of this is hypothetical — it's the default outcome of building services
+              independently. Every additional service without a shared framework adds another
+              copy of the same rendering and CRUD logic to maintain.
 
-      - id: how-it-works
-        kicker: Runtime
-        title: How a page becomes a screen
-        lead: A client YAML page file is parsed and walked into a live component tree.
+      - id: proposal
+        kicker: Proposed approach
+        title: One shared framework, YAML-driven pages
+        lead: >-
+          Core3 is a TypeScript framework split into a service-agnostic client (@core3/client)
+          and server (@core3/server) package. A service supplies YAML page files and SQL; the
+          framework supplies rendering, permission gates, CRUD, and database portability.
         blocks:
           - type: flowstrip
             steps:
@@ -57,28 +64,82 @@ components:
                 sub: top-down render
               - label: DOM
                 sub: html.js + CSS
-
-      - id: concepts
-        kicker: Core concepts
-        title: What every page is built from
-        blocks:
           - type: cardgrid
             cards:
               - tag: Data
                 title: Server-first data
                 body: The server performs joins and lookups; the browser never resolves references.
               - tag: Components
-                title: Components, not columns
-                body: Grid children are real component instances with state, traversal, and submit().
-              - tag: Events
-                title: Page-level event handler
-                body: One class per page handles interactions; after a mutation it redraws the affected component.
+                title: 90 shared components
+                body: GridView, ListView, forms, KPIs, and Odoo-style document views — see the Component Library page.
               - tag: CRUD
-                title: Full CRUD
-                body: "crud: true generates mutations automatically, or mix in custom functions per operation."
+                title: Declarative mutations
+                body: "crud: true generates insert/update/delete with row_version optimistic concurrency, or mix in custom functions per operation."
+              - tag: Extension
+                title: Escape hatch when YAML isn't enough
+                body: A per-project registry (Map<string, Ctor>) plugs in custom components without forking the framework — this spec project itself uses that pattern.
+
+      - id: evidence
+        kicker: Evidence
+        title: This isn't a proposal for unproven work
+        lead: >-
+          The core pattern is already running, not speculative. Two real sample services and this
+          documentation site itself are built entirely on it.
+        blocks:
+          - type: table
+            headers: [Proof point, Detail]
+            rows:
+              - ['order service', 'CRUD, workflow state transitions, chatter/messaging, file attachments — sdk/bun/sample/services/order']
+              - ['chat service', 'Real-time messaging service on the same page-YAML pattern — sdk/bun/sample/services/chat']
+              - ['This spec site', 'Every page — including this one — is a YAML file with zero hand-written HTML/CSS/JS per page']
+              - ['Multi-database', 'PostgreSQL, DuckDB, MySQL, Oracle, and SQL Server all sit behind one DatabaseAdapter interface']
+          - type: p
+            text: >-
+              See the Plan page for the full phase-by-phase status: the shared client library,
+              server YAML pipeline, and sample services are complete; auth/event-mediator hardening
+              is in progress.
+
+      - id: alternatives
+        kicker: Alternatives considered
+        title: Why not something else
+        blocks:
+          - type: table
+            headers: [Option, Trade-off]
+            rows:
+              - ['Keep hand-coding each service', 'No new dependency to learn, but every service repeats the same rendering/CRUD/permission work with no shared fixes or improvements']
+              - ['Adopt a third-party low-code platform', 'Faster initial setup, but hands database access and business logic to a vendor-owned runtime and format we cannot extend or audit']
+              - ['Build and own this framework (proposed)', 'Upfront investment in shared code, paid back by every service after the first one; full control over the extension points and database layer']
+
+      - id: risks
+        kicker: Risks
+        title: Risks and how they're addressed
+        blocks:
+          - type: table
+            headers: [Risk, Mitigation]
+            rows:
+              - ['YAML sprawl becomes as hard to read as code', 'registerPageComponentSchema enforces a validated schema per component type — pages fail fast on unknown or malformed keys']
+              - ['A page needs something YAML genuinely cannot express', 'The custom-component registry and client action type are the documented escape hatches; both are already in use']
+              - ['Team unfamiliarity with the framework', 'This spec site is the onboarding path — every documented pattern is backed by a real, running example']
+              - ['Framework accumulates service-specific logic over time', 'Architectural rule: @core3/client and @core3/server stay service-agnostic; service-specific code lives in the service, not the framework — see agent.md']
+
+      - id: ask
+        kicker: Decision needed
+        title: What this proposal asks for
+        blocks:
+          - type: list
+            items:
+              - Adopt Core3 as the standard framework for new ERP services rather than hand-rolled per-service UI
+              - Continue the in-progress auth and event-mediator hardening work (see the Auth & Mediator Refactor plan)
+              - Keep this spec site as the source of truth, updated alongside the framework rather than left to drift
+          - type: callout
+            title: What adopting this does not require
+            text: >-
+              No migration of the order or chat services — they already run on this pattern. No
+              vendor contract or new infrastructure. The ask is to build new services on the
+              existing framework instead of re-implementing its equivalent per service.
 
       - id: stack
-        kicker: Tech stack
+        kicker: Reference
         title: What it runs on
         blocks:
           - type: table

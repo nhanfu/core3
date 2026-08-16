@@ -122,8 +122,11 @@ export class DocPage extends BaseComponent {
     const nav = html.take(sidebar).nav.ele() as HTMLElement;
     const main = html.take(layout).div.className('doc-main').ele() as HTMLElement;
 
+    const usedAnchors = new Set<string>();
     sections.forEach((section, index) => {
-      const anchor = section.id || slug(section.title, index);
+      let anchor = section.id || slug(section.title, index);
+      while (usedAnchors.has(anchor)) anchor = `${anchor}-${index}`;
+      usedAnchors.add(anchor);
       this.link(nav, anchor, section.title);
 
       const el = html.take(main).section.attr('id', anchor).className('doc-section').ele() as HTMLElement;

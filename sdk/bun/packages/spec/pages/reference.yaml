@@ -117,6 +117,10 @@ components:
               // Gates a column or field: checks show_if and disabled_if, resolves value
               resolveMeta(def: any, ctx: { user?, row?, state? }):
                 { visible: boolean, disabled: boolean, value: any }
+
+              // Evaluates def.validation as an expression against { row: { [field]: value } };
+              // a string result is the error message, true/null means valid
+              validateField(def: any, value: any, ctx: any): string | null
           - type: callout
             title: Permission strings are plain dot-separated names
             text: >-
@@ -141,9 +145,10 @@ components:
               - [gRPC, High-throughput microservice-to-microservice calls; not declared in page YAML]
           - type: p
             text: >-
-              All database access is engine-agnostic through the DatabaseAdapter interface.
-              Supported engines: PostgreSQL, SQL Server, DuckDB, and SQLite. Repositories
-              and YAML services never open engine-specific connections directly.
+              Database access is a separate, engine-agnostic layer through the DatabaseAdapter
+              interface — see the Backend page's "Supported databases" section for the real
+              five-driver list (PostgreSQL, DuckDB, MySQL, Oracle, SQL Server; there is no SQLite
+              driver).
 
       - id: full-example
         kicker: End to end

@@ -1,4 +1,4 @@
-import { html } from '@core3/client/html';
+import { html, SvgTag } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 
 export type DocNavItem = {
@@ -16,7 +16,12 @@ export type DocTopNavDef = {
 export type DocTopNavState = {
   active?: string;
   onNavigate?: (href: string) => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 };
+
+const SUN_PATH = 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z';
+const MOON_PATH = 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z';
 
 function containsActive(item: DocNavItem, active: string): boolean {
   if (item.href === active) return true;
@@ -82,9 +87,21 @@ export class DocTopNav extends BaseComponent {
     });
   }
 
+  private themeToggle(container: HTMLElement) {
+    const theme = this.state.theme || 'light';
+    const button = html.take(container).button.type('button')
+      .className('doc-theme-toggle')
+      .attr('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme')
+      .ele() as HTMLButtonElement;
+    const svg = html.take(button).svg(SvgTag.Svg).attr('viewBox', '0 0 24 24').ele() as unknown as SVGElement;
+    html.take(svg).svg(SvgTag.Path).attr('d', theme === 'dark' ? SUN_PATH : MOON_PATH);
+    html.take(button).event('click', () => this.state.onToggleTheme?.());
+  }
+
   draw(container: HTMLElement) {
     const { brand = 'Core3', eyebrow, items = [] } = this.def;
     const active = this.state.active || '';
+    this.closeOpenDropdown?.();
     this.closeOpenDropdown = null;
 
     const bar = html.take(container).div.className('doc-topbar').ele() as HTMLElement;
@@ -100,6 +117,7 @@ export class DocTopNav extends BaseComponent {
       if (item.items?.length) this.dropdown(nav, item, active);
       else this.link(nav, `doc-topbar-link${item.href === active ? ' is-active' : ''}`, item.href || '#', item.label);
     }
+    this.themeToggle(nav);
   }
 
   dispose() {

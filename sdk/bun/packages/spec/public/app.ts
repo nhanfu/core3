@@ -16,7 +16,7 @@ const ROUTES: Record<string, string> = {
   '/scripting': 'scripting',
   '/reference': 'reference',
   '/component-library': 'component-library',
-  '/extensions': 'doc-extensions',
+  '/extensions': 'extensions',
   '/plan': 'plan',
   '/plan/auth-mediator': 'plan-auth-mediator',
 };
@@ -33,6 +33,34 @@ let topNav: DocTopNav | null = null;
 function normalizePath(pathname: string): string {
   return pathname.replace(/\/+$/, '') || '/';
 }
+
+const THEME_KEY = 'core3-spec-theme';
+const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+function systemTheme(): 'light' | 'dark' {
+  return darkMediaQuery.matches ? 'dark' : 'light';
+}
+
+function currentTheme(): 'light' | 'dark' {
+  const stored = localStorage.getItem(THEME_KEY);
+  return stored === 'light' || stored === 'dark' ? stored : systemTheme();
+}
+
+function applyTheme(theme: 'light' | 'dark') {
+  document.documentElement.dataset.theme = theme;
+  topNav?.setState({ theme });
+}
+
+function toggleTheme() {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+// If the user hasn't explicitly picked a theme, keep following the OS setting live.
+darkMediaQuery.addEventListener('change', () => {
+  if (!localStorage.getItem(THEME_KEY)) applyTheme(systemTheme());
+});
 
 async function renderRoute(pathname: string) {
   const path = normalizePath(pathname);
@@ -70,7 +98,12 @@ window.addEventListener('popstate', () => {
 
 async function bootstrap() {
   const nav = await (await fetch('/api/nav')).json();
-  topNav = new DocTopNav('doc-top-nav', { active: normalizePath(window.location.pathname), onNavigate: navigate }, nav.nav || {});
+  topNav = new DocTopNav('doc-top-nav', {
+    active: normalizePath(window.location.pathname),
+    onNavigate: navigate,
+    theme: currentTheme(),
+    onToggleTheme: toggleTheme,
+  }, nav.nav || {});
   topNav.mount(navSlot);
   await renderRoute(window.location.pathname);
 }

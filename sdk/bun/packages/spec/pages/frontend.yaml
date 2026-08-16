@@ -56,7 +56,7 @@ components:
           - type: list
             items:
               - 'PageRuntime.render() checks page.auth.require against the current user'
-              - 'It fetches every datasource once, in parallel, before the first draw()'
+              - 'It fetches every datasource once, sequentially, before the first draw()'
               - 'PageRoot walks config.components and renders each one through renderComponentDef()'
               - 'Built-in types (GridView, ListView, OdooFormView, Chart, ...) have dedicated renderers'
               - 'Everything else falls back to the registry Map<string, Ctor> passed into PageRuntime'
@@ -65,7 +65,7 @@ components:
               - label: auth check
                 sub: page.auth.require
               - label: fetch sources
-                sub: parallel, once
+                sub: sequential, once
               - label: PageRoot.draw
                 sub: per component
               - label: registry
@@ -88,6 +88,7 @@ components:
               - [upload / download, Moves a file through the configured attachment kind]
               - [event, Dispatches a browser CustomEvent other components can listen for]
               - [client, Runs an inline YAML-declared script function against a small ctx object]
+              - [request, Makes an authenticated fetch to an arbitrary endpoint with a JSON body]
               - [login / logout, Drives the auth session]
           - type: panel
             title: A client action script
@@ -276,9 +277,10 @@ components:
         blocks:
           - type: p
             text: >-
-              The example below builds a complete employee-list page using three built-in component
-              types: StatRow (KPI tiles), ListToolbar (search and filter tabs), and ListView (the
-              scrollable table). All data flows from two datasources declared in the same file.
+              The example below builds a complete employee-list page using four built-in component
+              types: StatRow (KPI tiles), StatusTabs (filter tabs), ListToolbar (search), and
+              ListView (the scrollable table). All data flows from two datasources declared in the
+              same file.
           - type: panel
             title: employee-list.yaml — assembled entirely from built-in types
             language: yaml
@@ -319,17 +321,23 @@ components:
                 - type: StatRow
                   source: employee_stats
                   stats:
-                    - { field: active_count,  label: Active,        icon: users }
-                    - { field: on_leave_count, label: On leave,      icon: calendar }
-                    - { field: new_hires,      label: New this month, icon: user-plus }
+                    - { field: active_count,   label: Active }
+                    - { field: on_leave_count, label: On leave }
+                    - { field: new_hires,      label: New this month }
+
+                - type: StatusTabs
+                  source: employees
+                  filter_field: status
+                  tabs:
+                    - { id: '',        label: All }
+                    - { id: active,    label: Active }
+                    - { id: on_leave,  label: On leave }
 
                 - type: ListToolbar
                   source: employees
-                  search_field: full_name
-                  tabs:
-                    - { id: '',       label: All }
-                    - { id: active,   label: Active }
-                    - { id: on_leave, label: On leave }
+                  search:
+                    label: Search employees
+                    placeholder: Search name or title...
 
                 - type: ListView
                   source: employees
@@ -344,17 +352,19 @@ components:
               actions:
                 - id: add_employee
                   type: form
-                  label: Add employee
+                  title: Add employee
+                  permission: hr.write
                   table: employees
                   operation: insert
                   refresh: [employees, employee_stats]
                   fields:
-                    - { field: full_name,    label: Name,       required: true }
-                    - { field: job_title,    label: Job title }
-                    - { field: department_id, label: Department }
+                    - { field: full_name,    label: Name,       type: text, required: true }
+                    - { field: job_title,    label: Job title,  type: text }
+                    - { field: department_id, label: Department, type: text }
 
                 - id: delete_employee
                   type: delete
+                  permission: hr.write
                   table: employees
                   confirm: Delete this employee record?
                   refresh: [employees, employee_stats]

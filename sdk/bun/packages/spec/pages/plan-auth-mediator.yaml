@@ -27,6 +27,7 @@ components:
           - type: list
             items:
               - 'Auth: resource services hold public signing keys only — compromising a verifier must never permit token issuance'
+              - 'Auth: a protected request is accepted only when its ES256/issuer/audience/type/time claims are valid, its local session/device/permission entry is no more than 30 seconds old, AND cached security revisions are at least as new as the token and invalidation stream carry'
               - 'Auth: cache versions are monotonic; a delayed response must never overwrite a newer invalidation or resolution'
               - 'Auth: only one refresh-token generation is current per session — concurrent refreshes cannot fork valid descendants'
               - 'Auth: a committed mutation and its invalidation outbox record are atomic'
@@ -35,7 +36,7 @@ components:
               - 'Mediator: single/multiple delivery is at-least-once — exactly-once business effects come from a transactional consumer inbox, not transport claims'
               - 'Mediator: consumer checkpoints only advance across a contiguous acknowledged prefix'
               - 'Distributed: cross-service permission/device state is bounded-stale (30s fail-closed); cross-service workflows use outbox/inbox/idempotency/versioned events — no distributed transactions'
-              - 'Distributed: shared coordination uses compare-and-swap versions, leases, and fencing — no advisory locks or driver-specific locking'
+              - 'Distributed: shared coordination uses compare-and-swap versions, leases, and fencing — no advisory locks, FOR UPDATE, or other driver-specific locking'
 
       - id: auth-impl
         kicker: '2 — Auth & JWKS'
@@ -63,6 +64,7 @@ components:
           - type: list
             items:
               - 'ES256 access tokens expire after 15 minutes: typ=at+jwt, iss, aud, sub, jti, sid, did, iat, nbf, exp, plus security revision claims'
+              - '60 seconds of clock skew is permitted; missing audience, unexpected algorithm, unknown issuer, malformed kid, or a token without session/device claims is rejected'
               - 'Effective permissions come from auth.session.resolve, never trusted from the JWT alone'
               - 'Refresh tokens are opaque, stored only as hashes, rotated via a session-generation CAS'
               - 'A different request racing within 5s gets 409 REFRESH_CONFLICT; reuse outside that window revokes the whole session family'
@@ -155,6 +157,8 @@ components:
               - [Acknowledged-message loss, Zero]
               - [Unauthorized acceptance past the 30s bound, Zero]
               - [Duplicate business effects under the inbox contract, Zero]
+              - [Partition-order violations, Zero]
+              - [Stale-leader commits, Zero]
               - [Healthy invalidation propagation, p99 ≤ 2 seconds]
               - [Leader failure recovery, New commitments resume within 10 seconds]
               - [Forward mediator overhead (reference LAN), p99 ≤ 15 ms excluding service time]
@@ -163,7 +167,7 @@ components:
           - type: list
             items:
               - 'Every PR: unit/schema/CAS/protocol/deterministic-scheduler/property tests, 200+ generated seeds, multi-process smoke with forced leader loss (≤ 15 min)'
-              - 'Nightly: 2-hour chaos, 10,000+ generated histories, continuous process kills/network faults/clock skew'
+              - 'Nightly: 2-hour chaos, 10,000+ generated histories, continuous process kills, network delay/drop/reorder, control-shard outages, disk latency, clock skew, and compaction'
               - 'Release candidate: 24-hour soak at full certified load with random failure every 5–15 minutes'
 
       - id: phases

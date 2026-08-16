@@ -34,19 +34,15 @@ components:
             code: |
               components:
                 - type: GridView
-                  datasource: orders
+                  source: orders
                   columns:
-                    - key: status
-                    - key: total
-                  buttons:
-                    - id: approve
-                      label: Approve
-                      action: approve_order
-                      show_if: "row.status === 'Pending Approval'"
-                    - id: cancel
-                      label: Cancel
-                      action: cancel_order
-                      show_if: "row.status !== 'Cancelled'"
+                    - { field: status, label: Status }
+                    - { field: total,  label: Total }
+                    - field: actions
+                      label: ''
+                      actions:
+                        - { id: approve_order, label: Approve, variant: primary, show_if: "row.status === 'Pending Approval'" }
+                        - { id: cancel_order,  label: Cancel,  variant: danger,  show_if: "row.status !== 'Cancelled'" }
           - type: callout
             title: Expression scope is intentionally narrow
             text: >-
@@ -73,6 +69,7 @@ components:
 
                 - id: delete_order
                   type: delete
+                  permission: orders.write
                   table: orders
                   confirm: "Delete order {row.reference}? This cannot be undone."
           - type: p
@@ -131,7 +128,7 @@ components:
               - "The script value must evaluate to a function — async arrow functions are idiomatic"
               - "request() attaches the current Bearer token automatically and throws on non-OK responses"
               - "setLanguage(code) updates i18n and reloads the page at the new locale"
-              - "No access to window, document, or server internals — only the four named context keys"
+              - "No access to window, document, or server internals — only the five named context keys (user, row, state, request, setLanguage)"
 
       - id: workflow-guards
         kicker: Server-side
@@ -153,17 +150,18 @@ components:
                     from: [Pending Approval]
                     to: Approved
                     permission: orders.approve
-                    guard:
+                    conditions:
                       all:
                         - field: total_amount
                           operator: greater_than
                           value: 0
                         - field: customer_id
                           operator: present
-                    audit: Approve order
+                    condition_message: Order must have a positive total and a customer before approval
           - type: p
             text: >-
-              Guard operators (greater_than, present, equals, ...) are evaluated server-side
+              Condition operators (present, equals, not_equals, greater_than,
+              greater_than_or_equal, less_than, less_than_or_equal, in) are evaluated server-side
               against the live row — the client cannot influence the source state or bypass
               the permission check.
 

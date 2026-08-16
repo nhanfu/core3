@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Core3 — Spec</title>
+  <script>
+    // Applied before first paint so an explicit saved theme never flashes the
+    // opposite theme for a frame. No saved preference means no attribute is
+    // set here at all — the CSS prefers-color-scheme media query then governs.
+    (function () {
+      var saved = localStorage.getItem('core3-spec-theme');
+      if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
