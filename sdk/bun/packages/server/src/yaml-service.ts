@@ -23,6 +23,7 @@ export type YamlRuntimeContext = {
   pages: Map<string, any>;
   datasources: Map<string, any>;
   menus: Map<string, any>;
+  catalogs?: Map<string, any>;
   actions: Map<string, any>;
   storage: any;
 };
@@ -253,6 +254,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       pages: pageMaps.pages,
       datasources: pageMaps.datasources,
       menus: pageMaps.menus,
+      catalogs: pageMaps.catalogs,
       actions: namedActions,
       storage: this.definition.storage,
     };

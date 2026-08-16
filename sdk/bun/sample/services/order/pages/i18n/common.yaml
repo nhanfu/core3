@@ -89,6 +89,22 @@ en:
   errors.invalid_message: Invalid message.
   errors.action_unavailable: The message action is unavailable.
   errors.message_failed: Message failed.
+  chatter.empty: No messages or activities yet.
+  shell.main_navigation: Main navigation
+  shell.switch_application: Switch application
+  shell.close_launcher: Close application launcher
+  shell.search_applications: Search applications…
+  shell.soon: Soon
+  shell.messages: Messages
+  shell.notifications: Notifications
+  shell.profile: Profile
+  shell.welcome: Hello, {name}
+  theme.use_light: Use light theme
+  theme.use_dark: Use dark theme
+  notifications.mark_all_read: Mark all read
+  notifications.empty: No notifications
+  notifications.unread: Unread
+  modal.not_configured: Modal page is not configured
 vi:
   errors.stale_record: Dữ liệu đã được người dùng khác thay đổi. Hãy tải lại trước khi lưu.
   errors.unauthorized: Bạn không có quyền thực hiện thao tác này.
@@ -117,6 +133,10 @@ vi:
   toast.warning: Chưa lưu
   toast.info: Thông báo
   auth.credentials_required: Vui lòng nhập email và mật khẩu.
+  auth.user_not_found: Không tìm thấy người dùng.
+  auth.current_password_required: Vui lòng nhập mật khẩu hiện tại.
+  errors.row_version_required: Thiếu phiên bản bản ghi mới nhất.
+  errors.page_not_found: Không tìm thấy trang {page}.
   auth.or_continue_with: Hoặc tiếp tục với
   chat.select_conversation: Chọn một cuộc trò chuyện
   chat.empty_messages: Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện.
@@ -179,3 +199,81 @@ vi:
   errors.invalid_message: Tin nhắn không hợp lệ.
   errors.action_unavailable: Thao tác tin nhắn hiện không khả dụng.
   errors.message_failed: Gửi tin nhắn thất bại.
+  chatter.empty: Chưa có tin nhắn hoặc hoạt động nào.
+  shell.main_navigation: Điều hướng chính
+  shell.switch_application: Chuyển ứng dụng
+  shell.close_launcher: Đóng trình chọn ứng dụng
+  shell.search_applications: Tìm kiếm ứng dụng…
+  shell.soon: Sắp ra mắt
+  shell.messages: Tin nhắn
+  shell.notifications: Thông báo
+  shell.profile: Hồ sơ
+  shell.welcome: Xin chào, {name}
+  theme.use_light: Dùng giao diện sáng
+  theme.use_dark: Dùng giao diện tối
+  notifications.mark_all_read: Đánh dấu tất cả đã đọc
+  notifications.empty: Không có thông báo
+  notifications.unread: Chưa đọc
+  modal.not_configured: Chưa cấu hình trang modal
+  confirm.title: Xác nhận
+  confirm.message: Bạn có chắc chắn không?
+  labels.confirm: Xác nhận
+  validation.required: Vui lòng nhập đầy đủ các trường.
+  labels.add: Thêm
+  labels.uploading: Đang tải lên…
+  labels.system: Hệ thống
+  followers.add: Thêm người theo dõi
+  followers.select: Chọn người theo dõi
+  followers.empty: Chưa có người theo dõi
+  followers.remove: Bỏ người theo dõi
+  files.empty: Chưa có tệp đính kèm
+  files.download: Tải xuống
+  files.preview: Xem trước
+  files.attachment: tệp đính kèm
+  export.pdf: Xuất PDF
+  export.excel: Xuất Excel
+  coming_soon.title: Tính năng này đang được phát triển
+  chatter.title: Trao đổi
+  chatter.send_message: Gửi tin nhắn
+  chatter.log_note: Ghi chú
+  chatter.activity: Hoạt động
+  chatter.attachments: Tệp đính kèm
+  chatter.followers: Người theo dõi
+  chatter.messages_activities: Tin nhắn và hoạt động
+  chatter.message_placeholder: Viết tin nhắn…
+  chatter.note_placeholder: Ghi chú nội bộ…
+  chatter.activity_placeholder: Mô tả hoạt động…
+  chatter.schedule: Lên lịch
+  shell.choose_application: Chọn ứng dụng
+  shell.choose_application_hint: Chọn ứng dụng để tiếp tục. Bạn có thể đổi ứng dụng từ menu trên cùng bất cứ lúc nào.
+  time.just_now: Vừa xong
+  time.minutes_ago: '{count} phút trước'
+  time.hours_ago: '{count} giờ trước'
+  time.days_ago: '{count} ngày trước'
+  schedule.title: Lịch phân công
+  schedule.empty: Chưa có lịch phân công
+  schedule.assigned: Đã phân công
+  coming_soon.message: Tính năng này đang được xây dựng.
+  code.source: Mã nguồn
+  code.view_preview: Xem bản xem trước
+  code.view_source: Xem mã nguồn
+  labels.dialog: Hộp thoại
+  grid.row_number: Số dòng
+  grid.select_all: Chọn tất cả các dòng
+  grid.select_row: Chọn dòng {id}
+  grid.show_column: Hiển thị {label}
+  grid.rows_per_page: Số dòng mỗi trang
+  grid.total: Tổng cộng
+  grid.expand_row: Mở rộng dòng
+  grid.collapse_row: Thu gọn dòng
+  grid.of: trên tổng số
+  labels.new: Mới
+  search.filters: Bộ lọc
+  list.columns: Cột
+  list.selected: đã chọn
+  list.clear_selection: Bỏ chọn
+  search.remove_filter: Xóa bộ lọc
+  pagination.previous_page: Trang trước
+  pagination.next_page: Trang sau
+  status.filter: Bộ lọc trạng thái
+  validation.field_required: Trường này là bắt buộc

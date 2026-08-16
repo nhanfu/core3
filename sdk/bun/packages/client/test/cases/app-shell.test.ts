@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { AppShell } from '../../../../sample/public/components/AppShell.ts';
+import { i18n } from '@core3/client/i18n';
 
 afterEach(() => {
   document.body.innerHTML = '';
   localStorage.clear();
   delete document.documentElement.dataset.theme;
+  i18n.lang = 'en';
+  i18n._cache.clear();
 });
 
 describe('Odoo application shell', () => {
@@ -58,5 +61,30 @@ describe('Odoo application shell', () => {
     expect(container.querySelector('.header-nav-submenu.open')).toBeNull();
     expect(container.querySelector('.header-nav-submenu-menu .header-nav-menu-item')).not.toBeNull();
     expect(submenuTrigger.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('localizes shell tooltips after the language changes', () => {
+    i18n.hydrate('*', {
+      lang: 'vi',
+      global: {
+        'shell.switch_application': 'Chuyển ứng dụng',
+        'shell.messages': 'Tin nhắn',
+        'shell.notifications': 'Thông báo',
+        'theme.use_dark': 'Dùng giao diện tối',
+      },
+    });
+    const container = document.createElement('div');
+    const shell = new AppShell('shell-i18n', {
+      user: { name: 'Admin', roles: [], permissions: [] },
+      apps: [{ id: 'order', label: 'Orders', route: '/order', available: true }],
+      navigate: () => undefined,
+    });
+    shell.mount(container);
+
+    expect(container.querySelector('.app-switcher-button')?.getAttribute('aria-label')).toBe('Chuyển ứng dụng');
+    expect(container.querySelector('.header-chat-button')?.getAttribute('aria-label')).toBe('Tin nhắn');
+    expect(container.querySelector('.header-notifications-button')?.getAttribute('aria-label')).toBe('Thông báo');
+    expect(container.querySelector('.theme-toggle')?.getAttribute('aria-label')).toBe('Dùng giao diện tối');
+    shell.dispose();
   });
 });

@@ -12,6 +12,7 @@ import { OdooChatter } from '@core3/client/components/OdooChatter';
 import { OdooFollowerManager } from '@core3/client/components/OdooFollowerManager';
 import { OdooAttachmentPanel } from '@core3/client/components/OdooAttachmentPanel';
 import { ScheduleGrid } from '@core3/client/components/ScheduleGrid';
+import { i18n } from '@core3/client/i18n';
 
 function mount(component: { mount(container: HTMLElement): void }) {
   const container = document.createElement('div');
@@ -20,6 +21,15 @@ function mount(component: { mount(container: HTMLElement): void }) {
 }
 
 describe('document detail components', () => {
+  it('localizes the empty chatter state', () => {
+    i18n._cache.clear();
+    i18n.hydrate('*', { lang: 'vi', global: { 'chatter.empty': 'Chưa có tin nhắn hoặc hoạt động nào.' } });
+    const container = mount(new OdooChatter('empty-chatter', { messages: [] }, {}));
+    expect(container.querySelector('.o-form-chatter-empty')?.textContent).toBe('Chưa có tin nhắn hoặc hoạt động nào.');
+    i18n.lang = 'en';
+    i18n._cache.clear();
+  });
+
   it('filters searchable lookup options and preserves selected values', () => {
     const component = new AsyncSelect('customer', { value: '' }, {
       options: [{ value: 'acme', label: 'Acme Logistics' }, { value: 'beta', label: 'Beta Transport' }],

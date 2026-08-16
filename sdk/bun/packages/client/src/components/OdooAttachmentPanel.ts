@@ -1,6 +1,7 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 function formatSize(value: unknown) {
   const bytes = Number(value || 0);
@@ -28,7 +29,7 @@ export class OdooAttachmentPanel extends BaseComponent {
     if (this.def.attachment_upload_action) {
       const upload = html.take(root).button.type('button').className('o-form-chatter-menu-action o-form-attachment-upload').ele() as HTMLButtonElement;
       appendIcon(upload, 'plus');
-      html.take(upload).text(String(this.def.add_attachment_label || 'Attach files'));
+      html.take(upload).text(String(this.def.add_attachment_label || i18n.tKey('files.attach', {}, 'Attach files')));
       const input = html.take(root).input.type('file').prop('multiple', true).prop('hidden', true)
         .attr('accept', this.def.attachment_accept ? String(this.def.attachment_accept) : '').ele() as HTMLInputElement;
       const status = html.take(root).span.className('o-form-attachment-upload-status').attr('aria-live', 'polite').ele() as HTMLSpanElement;
@@ -37,7 +38,7 @@ export class OdooAttachmentPanel extends BaseComponent {
         const files = [...(input.files || [])];
         if (!files.length) return;
         html.take(upload).prop('disabled', true);
-        html.take(status).replaceText(String(this.def.uploading_label || 'Uploading…'));
+        html.take(status).replaceText(String(this.def.uploading_label || i18n.tKey('labels.uploading', {}, 'Uploading…')));
         void (async () => {
           for (const file of files) {
             await this.submit(String(this.def.attachment_upload_action), { id: record.id, file });
@@ -45,13 +46,13 @@ export class OdooAttachmentPanel extends BaseComponent {
           html.take(status).replaceText('');
           html.take(input).prop('value', '');
         })().catch(error => {
-          html.take(status).replaceText(error instanceof Error ? error.message : String(this.def.upload_failed_label || 'Upload failed'));
+          html.take(status).replaceText(error instanceof Error ? error.message : String(this.def.upload_failed_label || i18n.tKey('files.upload_failed', {}, 'Upload failed')));
         }).finally(() => { html.take(upload).prop('disabled', false); });
       });
     }
 
     if (!attachments.length) {
-      html.take(root).p.className('o-form-chatter-empty').text(String(this.def.no_attachments_label || 'No attachments'));
+      html.take(root).p.className('o-form-chatter-empty').text(String(this.def.no_attachments_label || i18n.tKey('files.empty', {}, 'No attachments')));
       return;
     }
 
@@ -64,7 +65,7 @@ export class OdooAttachmentPanel extends BaseComponent {
     const mime = String(attachment.mime_type || 'application/octet-stream');
     const isImage = mime.startsWith('image/');
     const preview = html.take(item).button.type('button').className(`o-form-attachment-preview-button${isImage ? ' is-image' : ''}`)
-      .attr('aria-label', `${isImage ? this.def.preview_label || 'Preview' : this.def.download_label || 'Download'} ${attachment.file_name || 'attachment'}`).ele() as HTMLButtonElement;
+      .attr('aria-label', `${isImage ? this.def.preview_label || i18n.tKey('files.preview', {}, 'Preview') : this.def.download_label || i18n.tKey('files.download', {}, 'Download')} ${attachment.file_name || i18n.tKey('files.attachment', {}, 'attachment')}`).ele() as HTMLButtonElement;
     if (isImage && typeof this.def.resolve_attachment_blob === 'function') {
       const placeholder = html.take(preview).span.className('o-form-attachment-placeholder').ele() as HTMLSpanElement;
       appendIcon(placeholder, 'image');
@@ -88,8 +89,8 @@ export class OdooAttachmentPanel extends BaseComponent {
     html.take(info).small.text(formatSize(attachment.size_bytes) || mime);
     if (this.def.attachment_download_action) {
       const download = html.take(item).button.type('button').className('o-form-attachment-download')
-        .attr('title', String(this.def.download_label || 'Download'))
-        .attr('aria-label', `${this.def.download_label || 'Download'}: ${name.textContent}`).ele() as HTMLButtonElement;
+        .attr('title', String(this.def.download_label || i18n.tKey('files.download', {}, 'Download')))
+        .attr('aria-label', `${this.def.download_label || i18n.tKey('files.download', {}, 'Download')}: ${name.textContent}`).ele() as HTMLButtonElement;
       appendIcon(download, 'download');
       html.take(download).event('click', () => void this.download(attachment));
     }
@@ -124,19 +125,19 @@ export class OdooAttachmentPanel extends BaseComponent {
     this.closePreview();
     const overlay = html.take(document.body).div.className('o-form-attachment-preview-overlay')
       .attr('role', 'dialog').attr('aria-modal', 'true')
-      .attr('aria-label', String(attachment.file_name || this.def.preview_label || 'Attachment preview'))
+      .attr('aria-label', String(attachment.file_name || this.def.preview_label || i18n.tKey('files.preview', {}, 'Attachment preview')))
       .prop('tabIndex', -1).ele() as HTMLDivElement;
     const dialog = html.take(overlay).div.className('o-form-attachment-preview-dialog').ele() as HTMLDivElement;
     const close = html.take(dialog).button.type('button').className('o-form-attachment-preview-close')
-      .attr('title', String(this.def.close_label || 'Close'))
-      .attr('aria-label', String(this.def.close_label || 'Close')).ele() as HTMLButtonElement;
+      .attr('title', String(this.def.close_label || i18n.tKey('labels.close', {}, 'Close')))
+      .attr('aria-label', String(this.def.close_label || i18n.tKey('labels.close', {}, 'Close'))).ele() as HTMLButtonElement;
     appendIcon(close, 'x');
     html.take(dialog).img.attr('src', url).attr('alt', String(attachment.file_name || 'Image attachment'));
     const footer = html.take(dialog).div.className('o-form-attachment-preview-footer').ele() as HTMLDivElement;
     html.take(footer).strong.text(String(attachment.file_name || 'Attachment'));
     if (this.def.attachment_download_action) {
       html.take(footer).button.type('button').className('o-form-chatter-menu-confirm')
-        .text(String(this.def.download_label || 'Download'))
+        .text(String(this.def.download_label || i18n.tKey('files.download', {}, 'Download')))
         .event('click', () => void this.download(attachment));
     }
     html.take(close).event('click', () => this.closePreview());

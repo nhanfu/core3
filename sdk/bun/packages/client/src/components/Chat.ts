@@ -5,11 +5,11 @@ import { i18n } from '@core3/client/i18n';
 function relativeTime(ts) {
   const diff = Date.now() - new Date(ts).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return i18n.tKey('time.just_now', {}, 'Just now');
+  if (mins < 60) return i18n.tKey('time.minutes_ago', { count: mins }, '{count}m ago');
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return i18n.tKey('time.hours_ago', { count: hrs }, '{count}h ago');
+  return i18n.tKey('time.days_ago', { count: Math.floor(hrs / 24) }, '{count}d ago');
 }
 
 export class Chat extends BaseComponent {
@@ -53,7 +53,7 @@ export class Chat extends BaseComponent {
 
     const inp = html.take(inputRow).input.type('text')
       .className('flex-1 text-sm border border-gray-300 rounded-full px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
-      .attr('placeholder', 'Type a message…')
+      .attr('placeholder', i18n.tKey('chat.message_placeholder', {}, 'Type a message…'))
       .value(inputValue)
       .ele();
 

@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class HtmlCode extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -21,12 +22,12 @@ export class HtmlCode extends BaseComponent {
 
     html.take(header).span
       .className('text-sm font-medium text-gray-700')
-      .text(label || (showSource ? 'Source' : 'Preview'));
+      .text(label || (showSource ? i18n.tKey('code.source', {}, 'Source') : i18n.tKey('files.preview', {}, 'Preview')));
 
     if (allowToggle) {
       const toggleBtn = html.take(header).button
         .className('text-xs px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-100 transition-colors')
-        .text(showSource ? 'View Preview' : 'View Source')
+        .text(showSource ? i18n.tKey('code.view_preview', {}, 'View preview') : i18n.tKey('code.view_source', {}, 'View source'))
         .ele();
       html.take(toggleBtn).event('click', () => {
         this.setState({ showSource: !this.state.showSource });

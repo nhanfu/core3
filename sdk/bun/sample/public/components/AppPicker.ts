@@ -2,14 +2,15 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { appendIcon } from '@core3/client/components/Icon';
 import { getApps, selectApp, setDefaultApp } from '../app.ts';
+import { i18n } from '@core3/client/i18n';
 
 export class AppPicker extends BaseComponent {
   draw(container: HTMLElement) {
     const apps = getApps();
     const root = html.take(container).div.className('app-picker-page').ele();
     html.take(root).div.className('app-picker-kicker').text('CORE3 WORKSPACE');
-    html.take(root).h1.className('app-picker-title').text('Choose an application');
-    html.take(root).p.className('app-picker-subtitle').text('Select an application to continue. You can change it from the top menu at any time.');
+    html.take(root).h1.className('app-picker-title').text(i18n.tKey('shell.choose_application', {}, 'Choose an application'));
+    html.take(root).p.className('app-picker-subtitle').text(i18n.tKey('shell.choose_application_hint', {}, 'Select an application to continue. You can change it from the top menu at any time.'));
     const grid = html.take(root).div.className('app-picker-grid').ele();
     for (const app of apps) {
       const card = html.take(grid).button.className(`app-picker-card${app.available ? '' : ' disabled'}`)
@@ -19,7 +20,7 @@ export class AppPicker extends BaseComponent {
       const copy = html.take(card).div.className('app-picker-copy').ele();
       html.take(copy).div.className('app-picker-name').text(app.label || app.id);
       html.take(copy).div.className('app-picker-description').text(app.description || '');
-      if (!app.available) html.take(card).span.className('app-picker-status').text('Coming soon');
+      if (!app.available) html.take(card).span.className('app-picker-status').text(i18n.tKey('shell.soon', {}, 'Coming soon'));
       if (app.available) {
         card.addEventListener('click', () => {
           setDefaultApp(String(app.id));

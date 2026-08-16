@@ -15,7 +15,7 @@ export type MutationDefinition = {
   concurrency?: false | { field?: string; input?: string; required?: boolean };
   scope?: { table?: string; field: string; message?: string };
   message_key?: string;
-  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; assign?: boolean }>;
+  guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; message_key?: string; message_params?: Record<string, unknown>; assign?: boolean }>;
   before_steps?: MutationStep[];
   steps?: MutationStep[];
   result?: { query?: string };
@@ -55,13 +55,13 @@ export class YamlMutationRuntime {
       for (const guard of definition.guards || []) {
         if (guard.type === 'service') {
           const response = await this.executeServiceGuard(guard, params);
-          if (!response) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}) };
+          if (!response) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}), ...(guard.message_key ? { message_key: guard.message_key } : {}), ...(guard.message_params ? { message_params: guard.message_params } : {}) };
           if (guard.assign) Object.assign(params, response);
           continue;
         }
         const { statement, values } = bindNamedParams(String(guard.query || ''), params);
         const rows = await queryOnConnection(connection, statement, values);
-        if (!rows[0]) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}) };
+        if (!rows[0]) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}), ...(guard.message_key ? { message_key: guard.message_key } : {}), ...(guard.message_params ? { message_params: guard.message_params } : {}) };
         if (guard.assign) Object.assign(params, rows[0]);
       }
       for (const step of definition.before_steps || []) await this.executeStep(connection, step, params);

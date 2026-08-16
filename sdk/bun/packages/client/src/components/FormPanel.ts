@@ -35,7 +35,7 @@ export class FormPanel extends BaseComponent {
     let valid = true;
     for (const f of this._fields) {
       if (f.def?.required && (f.state.value === '' || f.state.value == null)) {
-        f.setState({ error: 'This field is required' }, false);
+        f.setState({ error: i18n.tKey('validation.field_required', {}, 'This field is required') }, false);
         f.redraw();
         valid = false;
       }

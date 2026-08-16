@@ -28,6 +28,10 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
 }
 
+function structuredError(message: string, messageKey: string, status: number, params?: Record<string, unknown>): Response {
+  return json({ error: message, message_key: messageKey, ...(params ? { message_params: params } : {}) }, status);
+}
+
 function errorResponse(error: any): Response {
   return json({
     error: error?.message || 'Authentication failed',
@@ -113,7 +117,7 @@ export default class AuthModule {
       if (url.pathname === '/api/auth/login' && request.method === 'POST') {
         try {
           const body = await request.json() as any;
-          if (!body.email || !body.password) return json({ error: 'email and password required' }, 400);
+          if (!body.email || !body.password) return structuredError('email and password required', 'auth.credentials_required', 400);
           return json(await this.service.login({ email: String(body.email), password: String(body.password), ip: request.headers.get('x-forwarded-for') || undefined, user_agent: request.headers.get('user-agent') || undefined }));
         } catch (error) { return errorResponse(error); }
       }
@@ -145,11 +149,11 @@ export default class AuthModule {
           const user = await this.service.getCurrentUser(request);
           if (request.method === 'GET') {
             const profile = await repository.profile(String(user.sub));
-            return profile ? json(profile) : json({ error: 'User not found' }, 404);
+            return profile ? json(profile) : structuredError('User not found', 'auth.user_not_found', 404);
           }
           const body = await request.json() as Record<string, unknown>;
           if (body.new_password) {
-            if (!body.current_password) return json({ error: 'current_password required' }, 400);
+            if (!body.current_password) return structuredError('current_password required', 'auth.current_password_required', 400);
             await this.service.changePassword(String(user.sub), String(body.current_password), String(body.new_password));
           }
           const fields = Object.fromEntries([...profileFields]
@@ -157,7 +161,7 @@ export default class AuthModule {
             .map((field) => [field, body[field]]));
           if (Object.keys(fields).length) {
             if (body.expected_row_version === undefined || body.expected_row_version === null || body.expected_row_version === '') {
-              return json({ error: 'expected_row_version is required' }, 400);
+              return structuredError('expected_row_version is required', 'errors.row_version_required', 400);
             }
             await repository.updateProfile(String(user.sub), { ...fields, expected_row_version: body.expected_row_version });
           }
@@ -167,14 +171,14 @@ export default class AuthModule {
       if (url.pathname === '/api/pages/login' && request.method === 'GET') {
         pages = discoverPages(context.appsRoot);
         const page = pages.pages.get('login');
-        if (!page || page.module !== 'auth') return json({ error: 'Unknown page: login' }, 404);
+        if (!page || page.module !== 'auth') return structuredError('Unknown page: login', 'errors.page_not_found', 404, { page: 'login' });
         const lang = requestLanguage(url);
         return json({ ...page.config, i18n: { lang, page: translationMap(pages.catalogs, lang, 'login'), global: translationMap(pages.catalogs, lang, '*') } });
       }
       if (url.pathname === '/api/pages/profile' && request.method === 'GET') {
         pages = discoverPages(context.appsRoot);
         const page = pages.pages.get('profile');
-        if (!page || page.module !== 'auth') return json({ error: 'Unknown page: profile' }, 404);
+        if (!page || page.module !== 'auth') return structuredError('Unknown page: profile', 'errors.page_not_found', 404, { page: 'profile' });
         const lang = requestLanguage(url);
         return json({ ...page.config, i18n: { lang, page: translationMap(pages.catalogs, lang, 'profile'), global: translationMap(pages.catalogs, lang, '*') } });
       }

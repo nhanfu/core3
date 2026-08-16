@@ -3,6 +3,7 @@ import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
 import { OdooAttachmentPanel } from './OdooAttachmentPanel.ts';
 import { OdooFollowerManager } from './OdooFollowerManager.ts';
+import { i18n } from '@core3/client/i18n';
 
 function initials(value: unknown) {
   const words = String(value || '?').trim().split(/\s+/).filter(Boolean);
@@ -37,16 +38,16 @@ export class OdooChatter extends BaseComponent {
     const attachments = Array.isArray(this.state.attachments) ? this.state.attachments : [];
     const followerCandidates = Array.isArray(this.state.followerCandidates) ? this.state.followerCandidates : [];
     const chatter = html.take(container).aside.className('o-form-chatter')
-      .attr('aria-label', String(this.def.chatter_label || 'Chatter')).ele() as HTMLElement;
+      .attr('aria-label', String(this.def.chatter_label || i18n.tKey('chatter.title', {}, 'Chatter'))).ele() as HTMLElement;
 
     const top = html.take(chatter).div.className('o-form-chatter-top').ele() as HTMLDivElement;
     const topbar = html.take(top).div.className('o-form-chatter-topbar').ele() as HTMLDivElement;
 
     const composerMode = String(this.state.composerMode || '');
     const actions = [
-      { label: this.def.message_label || 'Send message', action: this.def.message_action, mode: 'message' },
-      { label: this.def.note_label || 'Log note', action: this.def.note_action, mode: 'note' },
-      { label: this.def.activity_label || 'Activity', action: this.def.activity_action, mode: 'activity' },
+      { label: this.def.message_label || i18n.tKey('chatter.send_message', {}, 'Send message'), action: this.def.message_action, mode: 'message' },
+      { label: this.def.note_label || i18n.tKey('chatter.log_note', {}, 'Log note'), action: this.def.note_action, mode: 'note' },
+      { label: this.def.activity_label || i18n.tKey('chatter.activity', {}, 'Activity'), action: this.def.activity_action, mode: 'activity' },
     ].filter(item => Boolean(item.action));
     for (const item of actions) {
       html.take(topbar).button.type('button')
@@ -60,7 +61,7 @@ export class OdooChatter extends BaseComponent {
       const attachmentTool = this.renderToolMenu(tools, {
         icon: 'file',
         count: attachments.length,
-        label: this.def.attachment_label || 'Attachments',
+        label: this.def.attachment_label || i18n.tKey('chatter.attachments', {}, 'Attachments'),
       });
       const panel = new OdooAttachmentPanel(`${this.id}-attachments`, { record, attachments }, this.def);
       panel.parent = this;
@@ -71,7 +72,7 @@ export class OdooChatter extends BaseComponent {
       const followerTool = this.renderToolMenu(tools, {
         icon: 'users',
         count: followers.length,
-        label: this.def.follower_label || 'Followers',
+        label: this.def.follower_label || i18n.tKey('chatter.followers', {}, 'Followers'),
       });
       const manager = new OdooFollowerManager(`${this.id}-followers`, {
         record,
@@ -88,9 +89,9 @@ export class OdooChatter extends BaseComponent {
     if (activeAction) this.renderComposer(activeAction, record, top);
 
     const stream = html.take(chatter).section.className('o-form-chatter-stream').ele() as HTMLElement;
-    html.take(stream).h2.text(String(this.def.chatter_label || 'Messages and activities'));
+    html.take(stream).h2.text(String(this.def.chatter_label || i18n.tKey('chatter.messages_activities', {}, 'Messages and activities')));
     if (!messages.length) {
-      html.take(stream).p.className('o-form-chatter-empty').text(String(this.def.chatter_empty || 'No messages or activities yet'));
+      html.take(stream).p.className('o-form-chatter-empty').text(String(this.def.chatter_empty || i18n.tKey('chatter.empty', {}, 'No messages or activities yet')));
     }
     for (const message of messages) this.renderMessage(message, stream);
   }
@@ -110,19 +111,19 @@ export class OdooChatter extends BaseComponent {
   private renderComposer(item: { action: unknown; mode: string }, record: any, parent: HTMLElement) {
     const composer = html.take(parent).form.className(`o-form-composer is-${item.mode}`).ele() as HTMLFormElement;
     const placeholder = String(item.mode === 'message'
-      ? this.def.message_placeholder || 'Write a message…'
+      ? this.def.message_placeholder || i18n.tKey('chatter.message_placeholder', {}, 'Write a message…')
       : item.mode === 'note'
-        ? this.def.note_placeholder || 'Log an internal note…'
-        : this.def.activity_placeholder || 'Describe the activity…');
+        ? this.def.note_placeholder || i18n.tKey('chatter.note_placeholder', {}, 'Log an internal note…')
+        : this.def.activity_placeholder || i18n.tKey('chatter.activity_placeholder', {}, 'Describe the activity…'));
     const input = html.take(composer).textArea.attr('placeholder', placeholder).ele() as HTMLTextAreaElement;
     html.take(input).attr('aria-label', input.placeholder).prop('required', true);
     const actions = html.take(composer).div.className('o-form-composer-actions').ele() as HTMLDivElement;
     const submit = html.take(actions).button.type('submit').className('o-form-composer-submit').text(String(item.mode === 'message'
-      ? this.def.send_label || 'Send'
+      ? this.def.send_label || i18n.tKey('labels.send', {}, 'Send')
       : item.mode === 'note'
-        ? this.def.log_label || 'Log note'
-        : this.def.schedule_label || 'Schedule')).ele() as HTMLButtonElement;
-    html.take(actions).button.type('button').className('o-form-composer-cancel').text(String(this.def.cancel_label || 'Cancel'))
+        ? this.def.log_label || i18n.tKey('chatter.log_note', {}, 'Log note')
+        : this.def.schedule_label || i18n.tKey('chatter.schedule', {}, 'Schedule'))).ele() as HTMLButtonElement;
+    html.take(actions).button.type('button').className('o-form-composer-cancel').text(String(this.def.cancel_label || i18n.tKey('labels.cancel', {}, 'Cancel')))
       .event('click', () => this.setState({ composerMode: '' }));
     html.take(composer).event('submit', event => {
       event.preventDefault();
@@ -145,7 +146,7 @@ export class OdooChatter extends BaseComponent {
     html.take(entry).span.className('o-form-chatter-avatar').text(initials(actor)).attr('aria-hidden', 'true');
     const content = html.take(entry).div.className('o-form-chatter-message-content').ele() as HTMLDivElement;
     const meta = html.take(content).div.className('o-form-chatter-message-meta').ele() as HTMLDivElement;
-    html.take(meta).strong.text(String(actor || 'System'));
+    html.take(meta).strong.text(String(actor || i18n.tKey('labels.system', {}, 'System')));
     const timestamp = html.take(meta).time.ele() as HTMLTimeElement;
     const timestampValue = message[this.def.message_timestamp_field || 'created_at'];
     html.take(timestamp).replaceText(formatTimestamp(timestampValue, this.def.locale));
@@ -153,7 +154,7 @@ export class OdooChatter extends BaseComponent {
     const actionLabel = this.def.message_action_labels?.[action]
       || message[this.def.message_action_field || 'action_label']
       || message.action
-      || 'Activity';
+      || i18n.tKey('chatter.activity', {}, 'Activity');
     html.take(content).p.text(String(actionLabel));
     const detailValue = message[this.def.message_detail_field || 'detail'] || '';
     html.take(content).span.text(String(this.def.message_detail_labels?.[detailValue] || detailValue));

@@ -82,6 +82,7 @@ export class AppShell extends BaseComponent {
   refreshLanguage() {
     this._notifPanel?.refreshLanguage();
     this._profileModal?.refreshLanguage();
+    this._appLauncher?.refreshLanguage();
     this._groupEls.forEach((group, groupId) => {
       const groupDef = (this.menu.groups || []).find(candidate => candidate.id === groupId);
       const label = group.querySelector('.sidebar-group-label, .header-nav-label');
@@ -97,6 +98,26 @@ export class AppShell extends BaseComponent {
         element.dataset.search = translated.toLocaleLowerCase(i18n.lang);
       }
     });
+    const themeButton = this._appLayout?.querySelector<HTMLButtonElement>('.theme-toggle');
+    if (themeButton) {
+      const label = document.documentElement.dataset.theme === 'dim'
+        ? i18n.tKey('theme.use_light', {}, 'Use light theme')
+        : i18n.tKey('theme.use_dark', {}, 'Use dark theme');
+      themeButton.title = label;
+      themeButton.setAttribute('aria-label', label);
+    }
+    const chatButton = this._appLayout?.querySelector<HTMLButtonElement>('.header-chat-button');
+    if (chatButton) {
+      const label = i18n.tKey('shell.messages', {}, 'Messages');
+      chatButton.title = label;
+      chatButton.setAttribute('aria-label', label);
+    }
+    const notificationButton = this._appLayout?.querySelector<HTMLButtonElement>('.header-notifications-button');
+    if (notificationButton) {
+      const label = i18n.tKey('shell.notifications', {}, 'Notifications');
+      notificationButton.title = label;
+      notificationButton.setAttribute('aria-label', label);
+    }
   }
 
   setActivePath(path: string) {
@@ -155,7 +176,7 @@ export class AppShell extends BaseComponent {
 
     // Primary navigation is horizontal in the header, with each group opening
     // an Odoo-style menu. Nested declarations remain nested as flyout menus.
-    const headerNav = html.take(headerLeft).nav.className('header-nav').attr('aria-label', 'Main navigation').ele();
+    const headerNav = html.take(headerLeft).nav.className('header-nav').attr('aria-label', i18n.tKey('shell.main_navigation', {}, 'Main navigation')).ele();
     const closeMenuElement = (element: Element) => {
       element.classList.remove('open');
       const trigger = element.querySelector(':scope > button') as HTMLButtonElement | null;
@@ -277,7 +298,9 @@ export class AppShell extends BaseComponent {
     const applyTheme = (theme: 'light' | 'dim') => {
       document.documentElement.dataset.theme = theme;
       localStorage.setItem(THEME_STORAGE_KEY, theme);
-      themeButton.title = theme === 'dim' ? 'Use light theme' : 'Use dim theme';
+      themeButton.title = theme === 'dim'
+        ? i18n.tKey('theme.use_light', {}, 'Use light theme')
+        : i18n.tKey('theme.use_dark', {}, 'Use dark theme');
       themeButton.setAttribute('aria-label', themeButton.title);
       themeIcon.innerHTML = '';
       appendIcon(themeIcon, theme === 'dim' ? 'sun' : 'moon');
@@ -289,10 +312,10 @@ export class AppShell extends BaseComponent {
     });
 
     const chatBtn = html.take(actions).button
-      .className('header-icon-btn')
+      .className('header-icon-btn header-chat-button')
       .attr('type', 'button')
-      .attr('title', 'Messages')
-      .attr('aria-label', 'Messages')
+      .attr('title', i18n.tKey('shell.messages', {}, 'Messages'))
+      .attr('aria-label', i18n.tKey('shell.messages', {}, 'Messages'))
       .event('click', () => this.go('/chat'))
       .ele();
     const chatIcon = html.take(chatBtn).span.ele();
@@ -300,12 +323,12 @@ export class AppShell extends BaseComponent {
 
     // Notification bell button — rendered as a container so we can add badge inside
     const bellBtn = html.take(actions).button
-      .className('header-icon-btn')
-      .attr('title', i18n.t('*', null, 'Notifications'))
-      .attr('aria-label', i18n.t('*', null, 'Notifications'))
+      .className('header-icon-btn header-notifications-button')
+      .attr('title', i18n.tKey('shell.notifications', {}, 'Notifications'))
+      .attr('aria-label', i18n.tKey('shell.notifications', {}, 'Notifications'))
       .ele();
     const bellIcon = html.take(bellBtn).span.ele();
-    appendIcon(bellIcon, 'bell', i18n.t('*', null, 'Notifications'));
+    appendIcon(bellIcon, 'bell', i18n.tKey('shell.notifications', {}, 'Notifications'));
 
     // Notification badge (hidden until unread count > 0)
     const badge = html.take(bellBtn).span
@@ -323,8 +346,8 @@ export class AppShell extends BaseComponent {
     html.take(actions).button
       .className('avatar-btn')
       .text(initials)
-      .attr('title', user?.name || i18n.t('*', null, 'Profile'))
-      .attr('aria-label', user?.name || i18n.t('*', null, 'Profile'))
+      .attr('title', user?.name || i18n.tKey('shell.profile', {}, 'Profile'))
+      .attr('aria-label', user?.name || i18n.tKey('shell.profile', {}, 'Profile'))
       .event('click', () => this._profileModal?.open());
 
     // Content outlet
@@ -348,7 +371,7 @@ export class AppShell extends BaseComponent {
     // Mount the profile YAML page inside a generic right-side modal.
     this._profileModal = new RightModal('profile-modal', {
       page_id: 'profile',
-      title: 'Profile',
+      title: i18n.tKey('shell.profile', {}, 'Profile'),
       context: { user, company: this.state.company },
       open: false,
     });
@@ -364,11 +387,11 @@ export class AppShell extends BaseComponent {
       .ele();
     const toastIcon = html.take(toast).span.className('shell-toast-icon').ele();
     appendIcon(toastIcon, 'check');
-    html.take(toast).span.className('shell-toast-message').text(`Xin chào, ${user?.name || 'bạn'}`);
+    html.take(toast).span.className('shell-toast-message').text(i18n.tKey('shell.welcome', { name: user?.name || '' }, 'Hello, {name}'));
     const toastClose = html.take(toast).button
       .className('shell-toast-close')
       .attr('type', 'button')
-      .attr('aria-label', 'Close thông báo')
+      .attr('aria-label', i18n.tKey('labels.close', {}, 'Close'))
       .ele();
     appendIcon(toastClose, 'x');
     const dismissToast = () => {

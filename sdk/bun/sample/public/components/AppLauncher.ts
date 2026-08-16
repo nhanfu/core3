@@ -53,6 +53,29 @@ export class AppLauncher extends BaseComponent {
     this._filterApps(this._searchInput?.value || '');
   }
 
+  refreshLanguage() {
+    const switchLabel = i18n.tKey('shell.switch_application', {}, 'Switch application');
+    const closeLabel = i18n.tKey('shell.close_launcher', {}, 'Close application launcher');
+    const searchLabel = i18n.tKey('shell.search_applications', {}, 'Search applications');
+    const button = this._menu?.parentElement?.querySelector<HTMLButtonElement>('.app-switcher-button');
+    if (button) {
+      button.title = switchLabel;
+      button.setAttribute('aria-label', switchLabel);
+    }
+    this._menu?.querySelectorAll<HTMLElement>('.launcher-backdrop, .launcher-close-button').forEach((element) => {
+      element.setAttribute('aria-label', closeLabel);
+    });
+    const close = this._menu?.querySelector<HTMLButtonElement>('.launcher-close-button');
+    if (close) close.title = i18n.tKey('labels.close', {}, 'Close');
+    if (this._searchInput) {
+      this._searchInput.placeholder = searchLabel;
+      this._searchInput.setAttribute('aria-label', searchLabel);
+    }
+    this._menu?.querySelectorAll<HTMLElement>('.app-switcher-item-status').forEach((element) => {
+      element.textContent = i18n.tKey('shell.soon', {}, 'Soon');
+    });
+  }
+
   _setOpen(open: boolean) {
     this.state.open = open;
     this._menu?.classList.toggle('open', open);
@@ -77,8 +100,8 @@ export class AppLauncher extends BaseComponent {
     const button = html.take(switcher).button
       .className('app-switcher-button')
       .attr('type', 'button')
-      .attr('aria-label', 'Switch application')
-      .attr('title', 'Switch application')
+      .attr('aria-label', i18n.tKey('shell.switch_application', {}, 'Switch application'))
+      .attr('title', i18n.tKey('shell.switch_application', {}, 'Switch application'))
       .ele();
     const icon = html.take(button).span.className('app-switcher-icon').ele();
     appendIcon(icon, 'grid');
@@ -91,15 +114,15 @@ export class AppLauncher extends BaseComponent {
     const backdrop = html.take(menu).button
       .className('launcher-backdrop')
       .attr('type', 'button')
-      .attr('aria-label', 'Close application launcher')
+      .attr('aria-label', i18n.tKey('shell.close_launcher', {}, 'Close application launcher'))
       .event('click', () => this.close())
       .ele();
 
     const close = html.take(menu).button
       .className('launcher-close-button')
       .attr('type', 'button')
-      .attr('aria-label', 'Close application launcher')
-      .attr('title', 'Close')
+      .attr('aria-label', i18n.tKey('shell.close_launcher', {}, 'Close application launcher'))
+      .attr('title', i18n.tKey('labels.close', {}, 'Close'))
       .event('click', () => this.close())
       .ele();
     appendIcon(close, 'x');
@@ -109,8 +132,8 @@ export class AppLauncher extends BaseComponent {
     appendIcon(searchIcon, 'search');
     const searchInput = html.take(search).input
       .type('search')
-      .attr('placeholder', 'Search applications...')
-      .attr('aria-label', 'Search applications')
+      .attr('placeholder', i18n.tKey('shell.search_applications', {}, 'Search applications…'))
+      .attr('aria-label', i18n.tKey('shell.search_applications', {}, 'Search applications'))
       .ele() as HTMLInputElement;
     this._searchInput = searchInput;
     searchInput.addEventListener('input', () => this._filterApps(searchInput.value));
@@ -127,7 +150,7 @@ export class AppLauncher extends BaseComponent {
       appendIcon(itemIcon, app.icon || 'grid');
       const copy = html.take(item).span.className('app-switcher-item-copy').ele();
       html.take(copy).span.className('app-switcher-item-label').text(app.label || app.id);
-      if (!app.available) html.take(copy).span.className('app-switcher-item-status').text('Soon');
+      if (!app.available) html.take(copy).span.className('app-switcher-item-status').text(i18n.tKey('shell.soon', {}, 'Soon'));
       if (app.available) item.addEventListener('click', () => {
         this.close();
         if (currentApp?.id === app.id) return;

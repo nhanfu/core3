@@ -1,6 +1,7 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 /** Shared modal for YAML event actions that need to notify the user. */
 export class EventPopup extends BaseComponent {
@@ -22,9 +23,9 @@ export class EventPopup extends BaseComponent {
     const icon = html.take(dialog).div.className('event-icon').attr('aria-hidden', 'true').ele() as HTMLDivElement;
     appendIcon(icon, this.def.icon || 'lightbulb');
 
-    html.take(dialog).h2.className('event-title').id(titleId).text(this.def.title || 'Coming soon');
+    html.take(dialog).h2.className('event-title').id(titleId).text(this.def.title || i18n.tKey('shell.soon', {}, 'Coming soon'));
 
-    html.take(dialog).p.className('event-message').text(this.def.message || 'This feature is under construction.');
+    html.take(dialog).p.className('event-message').text(this.def.message || i18n.tKey('coming_soon.message', {}, 'This feature is under construction.'));
 
     const close = () => {
       this.dispose();
@@ -35,7 +36,7 @@ export class EventPopup extends BaseComponent {
     };
 
     const closeButton = html.take(dialog).button.type('button').className('btn btn-primary event-close')
-      .text(this.def.close_label || 'Close').event('click', close).ele() as HTMLButtonElement;
+      .text(this.def.close_label || i18n.tKey('labels.close', {}, 'Close')).event('click', close).ele() as HTMLButtonElement;
 
     html.take(overlay).event('click', event => {
       if (event.target === overlay) close();

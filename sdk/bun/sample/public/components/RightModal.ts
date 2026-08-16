@@ -52,7 +52,6 @@ export class RightModal extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const t = (text: string) => i18n.t('*', null, text);
     this._overlay = html.take(container).div
       .className('right-modal-overlay')
       .style('display:none')
@@ -69,11 +68,11 @@ export class RightModal extends BaseComponent {
     document.addEventListener('keydown', this._escapeHandler);
 
     const header = html.take(this._el).div.className('right-modal-header').ele();
-    this._titleEl = html.take(header).span.className('drawer-title').text(t(this.state.title || this.state.page_id || '')).ele();
+    this._titleEl = html.take(header).span.className('drawer-title').text(i18n.tKey('shell.profile', {}, this.state.title || this.state.page_id || '')).ele();
     const closeButton = html.take(header).button
       .className('right-modal-close')
       .attr('type', 'button')
-      .attr('aria-label', t('Close'))
+      .attr('aria-label', i18n.tKey('labels.close', {}, 'Close'))
       .event('click', () => this.close())
       .ele();
     appendIcon(closeButton, 'x');
@@ -87,7 +86,7 @@ export class RightModal extends BaseComponent {
     if (!this._pageSlot) return;
     const pageId = String(this.state.page_id || '').trim();
     if (!pageId) {
-      this._pageSlot.textContent = 'Modal page is not configured';
+      this._pageSlot.textContent = i18n.tKey('modal.not_configured', {}, 'Modal page is not configured');
       return;
     }
     try {
@@ -106,7 +105,7 @@ export class RightModal extends BaseComponent {
       const translatedConfig = i18n.translatePageConfig(pageId, config);
       await new PageRuntime(translatedConfig, new Map(), this.state.context || {}).render(this._pageSlot);
     } catch (error) {
-      this._pageSlot.textContent = error instanceof Error ? error.message : String(error);
+      if (this._pageSlot) this._pageSlot.textContent = error instanceof Error ? error.message : String(error);
     }
   }
 }

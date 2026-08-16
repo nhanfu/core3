@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
+import { i18n } from '@core3/client/i18n';
 
 type DataGridRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';
@@ -173,20 +174,20 @@ export class DataGrid extends BaseComponent {
     const selectedIds = this.selectedIds();
     const selected = new Set(selectedIds);
     const labels = {
-      rowNumber: 'Row number',
-      selectAll: 'Select all rows',
-      selectRow: (id: string) => `Select row ${id}`,
-      columnChooser: 'Columns',
-      columnVisibility: 'Show {label}',
-      pageSize: 'Rows per page',
-      pageSizeAria: 'Rows per page',
-      noRecords: 'No records found',
-      total: 'Total',
-      expandRow: 'Expand row',
-      collapseRow: 'Collapse row',
-      summaryOf: 'of',
-      previousPage: 'Previous page',
-      nextPage: 'Next page',
+      rowNumber: i18n.tKey('grid.row_number', {}, 'Row number'),
+      selectAll: i18n.tKey('grid.select_all', {}, 'Select all rows'),
+      selectRow: (id: string) => i18n.tKey('grid.select_row', { id }, 'Select row {id}'),
+      columnChooser: i18n.tKey('list.columns', {}, 'Columns'),
+      columnVisibility: i18n.tKey('grid.show_column', { label: '{label}' }, 'Show {label}'),
+      pageSize: i18n.tKey('grid.rows_per_page', {}, 'Rows per page'),
+      pageSizeAria: i18n.tKey('grid.rows_per_page', {}, 'Rows per page'),
+      noRecords: i18n.tKey('list.no_records', {}, 'No records found'),
+      total: i18n.tKey('grid.total', {}, 'Total'),
+      expandRow: i18n.tKey('grid.expand_row', {}, 'Expand row'),
+      collapseRow: i18n.tKey('grid.collapse_row', {}, 'Collapse row'),
+      summaryOf: i18n.tKey('grid.of', {}, 'of'),
+      previousPage: i18n.tKey('pagination.previous_page', {}, 'Previous page'),
+      nextPage: i18n.tKey('pagination.next_page', {}, 'Next page'),
       ...this.options.labels,
     };
     const rowReorder = this.options.onRowReorder;

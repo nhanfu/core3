@@ -1,9 +1,10 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class ConfirmDialog extends BaseComponent {
   draw(container) {
-    const { open = false, title = 'Xác nhận', message = 'Bạn có chắc chắn không?', confirmLabel = 'Xác nhận', cancelLabel = 'Hủy', variant = 'danger' } = this.state;
+    const { open = false, title = i18n.tKey('confirm.title', {}, 'Confirmation'), message = i18n.tKey('confirm.message', {}, 'Are you sure?'), confirmLabel = i18n.tKey('labels.confirm', {}, 'Confirm'), cancelLabel = i18n.tKey('labels.cancel', {}, 'Cancel'), variant = 'danger' } = this.state;
     if (!open) return;
 
     const overlay = html.take(container)

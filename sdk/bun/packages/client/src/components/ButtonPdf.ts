@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 
 export class ButtonPdf extends BaseComponent {
   constructor(id, state, def = {}) {
@@ -9,7 +10,7 @@ export class ButtonPdf extends BaseComponent {
 
   draw(container) {
     const { loading = false } = this.state;
-    const { label = 'Export PDF', filename = 'report' } = this.def;
+    const { label = i18n.tKey('export.pdf', {}, 'Export PDF'), filename = 'report' } = this.def;
     const disabledCls = loading ? 'opacity-60 cursor-not-allowed pointer-events-none' : '';
 
     const btn = html.take(container)

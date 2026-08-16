@@ -36,18 +36,11 @@ function notificationTarget(notification: any): string | null {
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (i18n.lang === 'vi') {
-    if (mins < 1) return 'Vừa xong';
-    if (mins < 60) return `${mins} phút trước`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} giờ trước`;
-    return `${Math.floor(hours / 24)} ngày trước`;
-  }
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return i18n.tKey('time.just_now', {}, 'Just now');
+  if (mins < 60) return i18n.tKey('time.minutes_ago', { count: mins }, '{count}m ago');
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  if (hrs < 24) return i18n.tKey('time.hours_ago', { count: hrs }, '{count}h ago');
+  return i18n.tKey('time.days_ago', { count: Math.floor(hrs / 24) }, '{count}d ago');
 }
 
 export class NotificationPanel extends BaseComponent {
@@ -172,9 +165,9 @@ export class NotificationPanel extends BaseComponent {
   refreshLanguage() {
     if (!this._el) return;
     const title = this._el.querySelector('.notif-panel-title');
-    if (title) title.textContent = i18n.t('*', null, 'Notifications');
+    if (title) title.textContent = i18n.tKey('shell.notifications', {}, 'Notifications');
     const markAll = this._el.querySelector('.notif-mark-all');
-    if (markAll) markAll.textContent = i18n.t('*', null, 'Mark all read');
+    if (markAll) markAll.textContent = i18n.tKey('notifications.mark_all_read', {}, 'Mark all read');
     this._renderList();
   }
 
@@ -183,7 +176,7 @@ export class NotificationPanel extends BaseComponent {
     this._listEl.innerHTML = '';
     const notifs: any[] = this.state.notifications || [];
     if (!notifs.length) {
-      html.take(this._listEl).div.className('notif-empty').text(i18n.t('*', null, 'No notifications'));
+      html.take(this._listEl).div.className('notif-empty').text(i18n.tKey('notifications.empty', {}, 'No notifications'));
       return;
     }
     for (const n of notifs) {
@@ -191,7 +184,7 @@ export class NotificationPanel extends BaseComponent {
       const item = html.take(this._listEl).button
         .className('notif-item' + (!n.read ? ' unread' : ''))
         .attr('type', 'button')
-        .attr('aria-label', `${n.read ? '' : 'Chưa đọc: '}${n.title}`)
+        .attr('aria-label', `${n.read ? '' : `${i18n.tKey('notifications.unread', {}, 'Unread')}: `}${n.title}`)
         .ele();
       item.addEventListener('click', () => {
         if (!n.read) void this.markRead(String(n.id));
@@ -217,10 +210,10 @@ export class NotificationPanel extends BaseComponent {
       .ele();
 
     const header = html.take(this._el).div.className('notif-panel-header').ele();
-    html.take(header).span.className('notif-panel-title').text(i18n.t('*', null, 'Notifications'));
+    html.take(header).span.className('notif-panel-title').text(i18n.tKey('shell.notifications', {}, 'Notifications'));
     html.take(header).button
       .className('notif-mark-all')
-      .text(i18n.t('*', null, 'Mark all read'))
+      .text(i18n.tKey('notifications.mark_all_read', {}, 'Mark all read'))
       .event('click', (e: MouseEvent) => {
         e.stopPropagation();
         this.markAllRead();

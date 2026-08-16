@@ -1,6 +1,7 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 export type ComingSoonState = {
   eyebrow?: string;
@@ -18,8 +19,8 @@ export class ComingSoon extends BaseComponent {
 
   draw(container: HTMLElement) {
     const {
-      eyebrow = 'Coming soon',
-      title = 'This feature is in development',
+      eyebrow = i18n.tKey('shell.soon', {}, 'Coming soon'),
+      title = i18n.tKey('coming_soon.title', {}, 'This feature is in development'),
       description = '',
       icon = 'calendar',
     } = this.state;

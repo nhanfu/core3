@@ -1,4 +1,5 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
 
 /** Generic inline form. Field definitions and validation remain in YAML. */
@@ -46,7 +47,7 @@ export class Form extends BaseComponent {
 
   private validate(values: Record<string, string>) {
     for (const rule of this.def.validation || []) {
-      if (rule.type === 'required' && (rule.fields || []).some((field: string) => !values[field])) return rule.message || 'Required fields are missing';
+      if (rule.type === 'required' && (rule.fields || []).some((field: string) => !values[field])) return rule.message || i18n.tKey('validation.required', {}, 'Required fields are missing');
       if (rule.type === 'match' && values[rule.field] !== values[rule.other_field]) return rule.message || 'Values do not match';
       if (rule.type === 'min_length' && String(values[rule.field] || '').length < Number(rule.value || 0)) return rule.message || 'Value is too short';
     }

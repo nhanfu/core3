@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 export type DialogInput = {
   label?: string;
@@ -48,7 +49,7 @@ export class Dialog extends BaseComponent {
     const dialog = html.take(overlay).div.className('dialog').attr('role', 'dialog').attr('aria-modal', 'true').ele() as HTMLDivElement;
 
     const titleId = `dialog-title-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    html.take(dialog).h2.className('dialog-title').id(titleId).text(this.options.title || 'Dialog');
+    html.take(dialog).h2.className('dialog-title').id(titleId).text(this.options.title || i18n.tKey('labels.dialog', {}, 'Dialog'));
 
     if (this.options.message) {
       html.take(dialog).p.className('dialog-message').text(this.options.message);
@@ -92,7 +93,7 @@ export class Dialog extends BaseComponent {
     };
 
     const cancel = html.take(footer).button.type('button').className('dialog-cancel')
-      .text(this.options.cancelLabel || 'Cancel').event('click', close).ele() as HTMLButtonElement;
+      .text(this.options.cancelLabel || i18n.tKey('labels.cancel', {}, 'Cancel')).event('click', close).ele() as HTMLButtonElement;
 
     if (this.options.dangerLabel && this.options.onDanger) {
       html.take(footer).button.type('button').className('dialog-danger').text(this.options.dangerLabel)
@@ -100,7 +101,7 @@ export class Dialog extends BaseComponent {
     }
 
     const confirm = html.take(footer).button.type('button').className('dialog-confirm')
-      .text(this.options.confirmLabel || 'Confirm').event('click', () => {
+      .text(this.options.confirmLabel || i18n.tKey('labels.confirm', {}, 'Confirm')).event('click', () => {
       const value = input?.value.trim() || '';
       if (input && !value) {
         html.take(input).focus();

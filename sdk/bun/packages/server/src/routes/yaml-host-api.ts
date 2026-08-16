@@ -1,5 +1,7 @@
 import type { ModuleServer } from '../module.ts';
 import type { YamlRuntimeContext } from '@core3/server/yaml-service';
+import { translationMap } from '@core3/server/discovery';
+import { requestLanguage } from '@core3/server/locale';
 
 function json(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), {
@@ -45,7 +47,7 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
       return json(menuServices.flatMap((service) => [...service.menus.values()].map((entry: any) => ({
         module: entry.module,
         ...entry.config,
-        i18n: {},
+        i18n: translationMap(service.catalogs || new Map(), requestLanguage(url), '*'),
       }))));
     }
 

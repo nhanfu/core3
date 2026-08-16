@@ -1,10 +1,11 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon } from '@core3/client/components/Icon';
+import { i18n } from '@core3/client/i18n';
 
 export class EmptyState extends BaseComponent {
   draw(container: HTMLElement) {
-    const { title = 'No records', description = '', action = null } = this.state;
+    const { title = i18n.tKey('list.no_records', {}, 'No records'), description = '', action = null } = this.state;
     const wrap = html.take(container).div
       .className('flex flex-col items-center justify-center py-12 px-4 w-full text-center')
       .ele();

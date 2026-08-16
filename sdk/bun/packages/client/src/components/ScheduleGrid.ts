@@ -56,13 +56,13 @@ export class ScheduleGrid extends BaseComponent {
       return [key, row];
     })).values()];
 
-    const root = html.take(container).section.className('schedule-grid').attr('aria-label', this.def.title || 'Lịch phân công').ele() as HTMLElement;
+    const root = html.take(container).section.className('schedule-grid').attr('aria-label', this.def.title || i18n.tKey('schedule.title', {}, 'Assignment schedule')).ele() as HTMLElement;
     if (this.def.title) {
       html.take(root).h3.className('schedule-title').replaceText(this.def.title);
     }
 
     if (!dates.length || !resources.length) {
-      const empty = html.take(root).div.className('schedule-empty').replaceText(this.def.empty_state?.title || 'Chưa có lịch phân công').ele() as HTMLDivElement;
+      const empty = html.take(root).div.className('schedule-empty').replaceText(this.def.empty_state?.title || i18n.tKey('schedule.empty', {}, 'No assignments scheduled')).ele() as HTMLDivElement;
       if (this.def.empty_state?.description) {
         html.take(empty).p.replaceText(this.def.empty_state.description);
       }
@@ -89,7 +89,7 @@ export class ScheduleGrid extends BaseComponent {
         const assignment = rows.find(candidate => String(candidate[resourceField] ?? '') === resourceKey && this.dateValue(candidate) === date);
         if (assignment) {
           html.take(cell).className('schedule-assignment');
-          html.take(cell).strong.replaceText(String(assignment[titleField] || 'Đã phân công'));
+          html.take(cell).strong.replaceText(String(assignment[titleField] || i18n.tKey('schedule.assigned', {}, 'Assigned')));
           if (assignment[subtitleField]) {
             html.take(cell).span.replaceText(String(assignment[subtitleField]));
           }

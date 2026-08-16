@@ -233,15 +233,15 @@ export class ListView extends BaseComponent {
       Object.entries(this.options.labels || {}).filter(([, value]) => value !== undefined),
     );
     const labels = {
-      new: 'New',
-      filters: 'Filters',
-      columns: 'Columns',
-      selected: 'selected',
-      clearSelection: 'Clear selection',
-      removeFilter: 'Remove filter',
-      previousPage: 'Previous page',
-      nextPage: 'Next page',
-      selectAll: 'Select all rows',
+      new: i18n.tKey('labels.new', {}, 'New'),
+      filters: i18n.tKey('search.filters', {}, 'Filters'),
+      columns: i18n.tKey('list.columns', {}, 'Columns'),
+      selected: i18n.tKey('list.selected', {}, 'selected'),
+      clearSelection: i18n.tKey('list.clear_selection', {}, 'Clear selection'),
+      removeFilter: i18n.tKey('search.remove_filter', {}, 'Remove filter'),
+      previousPage: i18n.tKey('pagination.previous_page', {}, 'Previous page'),
+      nextPage: i18n.tKey('pagination.next_page', {}, 'Next page'),
+      selectAll: i18n.tKey('grid.select_all', {}, 'Select all rows'),
       selectRow: (id: string) => `Select row ${id}`,
       searchFacet: 'Search',
       apply: 'Apply',
@@ -414,7 +414,7 @@ export class ListView extends BaseComponent {
         .attr('colspan', String(visibleColumns.length + (this.options.selectable ? 1 : 0)))
         .className('o-list-empty')
         .ele();
-      html.take(cell).h3.text(empty.title || 'No records found');
+      html.take(cell).h3.text(empty.title || i18n.tKey('list.no_records', {}, 'No records found'));
       if (empty.description) html.take(cell).p.text(empty.description);
     } else if (groupBy) {
       const groups = new Map<string, ListRow[]>();

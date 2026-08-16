@@ -57,7 +57,7 @@ export class AsyncSelect extends BaseComponent {
       const chip = html.take(this.selectedElement).span.className('async-select-chip').text(option.label).ele() as HTMLSpanElement;
       if (this.def.multiple) {
         html.take(chip).button.type('button').className('async-select-chip-remove')
-          .attr('aria-label', `${i18n.tKey('labels.remove', {}, 'Remove')} ${option.label}`).text('×').event('click', () => {
+          .attr('aria-label', `${i18n.tKey('labels.remove', {}, 'Bỏ chọn')} ${option.label}`).text('×').event('click', () => {
           this.selected = this.selected.filter(selected => selected !== option.value);
           this.syncValue();
           this.renderOptions();

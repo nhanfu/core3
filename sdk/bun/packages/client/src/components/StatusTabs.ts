@@ -1,5 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
 
 export type StatusTab = {
   id: string;
@@ -39,7 +40,7 @@ export class StatusTabs extends BaseComponent {
       : this.variant === 'contained'
         ? 'status-tabs-contained flex min-w-max items-end gap-5 rounded-t-lg border-x border-t border-slate-200 bg-white px-4 pt-1'
       : 'flex min-w-max items-end gap-5 border-b border-slate-200 bg-white px-4'}`)
-      .attr('role', 'tablist').attr('aria-label', 'Bộ lọc trạng thái').ele() as HTMLDivElement;
+      .attr('role', 'tablist').attr('aria-label', i18n.tKey('status.filter', {}, 'Status filters')).ele() as HTMLDivElement;
 
     for (const tab of this.tabs) {
       const selected = tab.id === active;

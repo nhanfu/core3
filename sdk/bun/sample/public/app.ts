@@ -229,6 +229,10 @@ async function renderRoute(path: string, langCode?: string) {
       if (!res.ok) throw new Error(`Failed to load page (${res.status})`);
       const config = await res.json();
       i18n.hydrate(pageId, config.i18n);
+      // Page responses also carry the global catalog. The shell is mounted
+      // before the page request completes, so refresh its existing controls
+      // after hydration instead of leaving header labels in the old locale.
+      _shell?.refreshLanguage();
       delete config.i18n;
       const translatedConfig = i18n.translatePageConfig(pageId, config);
       translatedConfig.locale = i18n.lang;

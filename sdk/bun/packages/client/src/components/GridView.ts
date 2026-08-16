@@ -1,5 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
 import { TextCell } from '@core3/client/components/TextCell';
 import { BadgeCell } from '@core3/client/components/BadgeCell';
 import { CurrencyCell } from '@core3/client/components/CurrencyCell';
@@ -96,7 +97,7 @@ export class GridView extends BaseComponent {
         .tdata.attr('colspan', String(this.defs.length))
           .className('px-4 py-10 text-center text-sm text-gray-400')
           .ele();
-      html.take(emptyCell).div.text(empty.title || 'No records found');
+      html.take(emptyCell).div.text(empty.title || i18n.tKey('list.no_records', {}, 'No records found'));
       if (empty.description) {
         html.take(emptyCell).div.className('mt-1').text(empty.description);
       }
