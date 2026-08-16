@@ -15,7 +15,7 @@ export class MediatorAuthAdapter implements AuthServiceProtocol {
   }
 
   async getCurrentUser(request: Request | unknown): Promise<AuthClaims> {
-    const header = request instanceof Request ? request.headers.get('Authorization') || '' : '';
+    const header = authorizationHeader(request);
     if (!header.startsWith('Bearer ')) throw { status: 401, code: 'UNAUTHORIZED', message_key: 'errors.unauthorized', message: 'Unauthorized' };
     const user = await verifyAuthJwt<AuthClaims>(header.slice(7), this.secret);
     if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
@@ -27,12 +27,17 @@ export class MediatorAuthAdapter implements AuthServiceProtocol {
   }
 
   hasPermission(user: AuthClaims | User, permission: string): boolean {
-    return user.roles.includes('admin') || ('permissions' in user && user.permissions.includes(permission))
-      || user.attributes?.permissions?.includes(permission) === true;
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    const permissions = 'permissions' in user && Array.isArray(user.permissions) ? user.permissions : [];
+    const attributePermissions = Array.isArray(user.attributes?.permissions) ? user.attributes.permissions : [];
+    return roles.includes('admin') || permissions.includes(permission) || attributePermissions.includes(permission);
   }
 
   getSecurityContext(user: AuthClaims | User): SecurityContext {
-    return { allowedBranches: 'branches' in user ? user.branches : [], permissions: 'permissions' in user ? user.permissions : [] };
+    return {
+      allowedBranches: Array.isArray(user.branches) ? user.branches : [],
+      permissions: 'permissions' in user && Array.isArray(user.permissions) ? user.permissions : [],
+    };
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
@@ -43,3 +48,10 @@ export class MediatorAuthAdapter implements AuthServiceProtocol {
 export type AuthAdapter = AuthServiceProtocol & {
   getCurrentUser(request: Request): Promise<AuthIdentity>;
 };
+
+function authorizationHeader(request: Request | unknown): string {
+  if (!request || typeof request !== 'object' || !('headers' in request)) return '';
+  const headers = request.headers;
+  if (!headers || typeof headers !== 'object' || !('get' in headers) || typeof headers.get !== 'function') return '';
+  return headers.get('Authorization') || '';
+}
