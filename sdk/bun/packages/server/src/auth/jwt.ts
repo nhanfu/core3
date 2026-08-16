@@ -14,7 +14,7 @@ export async function signAuthJwt(claims: Record<string, unknown>, secret: Uint8
     .sign(secret);
 }
 
-export async function verifyAuthJwt<T extends Record<string, unknown>>(token: string, secret: Uint8Array): Promise<T | null> {
+export async function verifyAuthJwt<T extends object>(token: string, secret: Uint8Array): Promise<T | null> {
   try {
     const result = await jwtVerify(token, secret, { algorithms: ['HS256'] });
     return result.payload as T;
