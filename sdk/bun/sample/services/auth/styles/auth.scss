@@ -163,7 +163,7 @@
 
 .profile-header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(220px, .8fr);
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 24px;
   padding: 28px 32px;
@@ -194,9 +194,15 @@
 }
 
 .profile-user-email {
+  grid-column: 2;
   margin-top: 5px;
   color: var(--color-text-muted);
   font-size: .88rem;
+}
+
+.profile-company,
+.profile-roles {
+  grid-column: 1 / -1;
 }
 
 .profile-company {
@@ -212,7 +218,8 @@
   text-transform: uppercase;
 }
 
-.profile-company-card {
+.profile-company-card,
+.profile-role-list {
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -233,7 +240,21 @@
   line-height: 1.4;
 }
 
-.profile-preferences,
+.profile-role-list {
+  color: var(--color-text-secondary);
+  font-size: .84rem;
+  font-weight: 600;
+}
+
+.profile-preferences {
+  margin-top: 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+}
+
 .profile-security {
   margin-top: 24px;
   padding: 24px 28px;
@@ -282,20 +303,12 @@
   margin-top: 4px;
 }
 
-.page:has(.profile-header) > .btn {
-  margin-top: 20px;
-}
-
 @media (max-width: 760px) {
   .page:has(.profile-header) { padding-top: 0; }
 
   .profile-header {
     grid-template-columns: auto minmax(0, 1fr);
     padding: 24px;
-  }
-
-  .profile-company {
-    grid-column: 1 / -1;
   }
 
   .profile-preferences,
@@ -311,6 +324,8 @@
     text-align: center;
   }
 
-  .profile-company { width: 100%; text-align: left; }
+  .profile-user-email { grid-column: auto; }
+  .profile-company,
+  .profile-roles { grid-column: auto; width: 100%; text-align: left; }
   .profile-language-options { grid-template-columns: 1fr; }
 }

@@ -1,6 +1,7 @@
 declare global {
   interface Window {
     __CORE3_USER__?: any;
+    __CORE3_COMPANY__?: any;
     __CORE3_API_BASE__?: string;
   }
 

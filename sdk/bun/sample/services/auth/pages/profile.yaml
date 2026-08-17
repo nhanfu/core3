@@ -37,17 +37,26 @@ components:
                 class: profile-company-name
                 text_expr: |
                   // js
-                  user => user.company?.short_name
+                  user => user.company?.short_name || 'TMS'
               - tag: div
                 class: profile-company-legal-name
                 text_expr: |
                   // js
-                  user => user.company?.name
+                  user => user.company?.name || 'Transport Management System'
               - tag: div
                 class: profile-company-detail
                 text_expr: |
                   // js
-                  user => user.company?.address
+                  user => user.company?.address || (user.branch_id ? 'Branch ' + user.branch_id : 'Organization profile')
+      - tag: section
+        class: profile-section profile-roles
+        children:
+          - { tag: div, class: profile-section-title, text: Roles }
+          - tag: div
+            class: profile-role-list
+            text_expr: |
+              // js
+              user => Array.isArray(user.roles) && user.roles.length ? user.roles.join(', ') : 'No roles assigned'
   - type: ChoiceGroup
     id: profile-language
     title: Language
@@ -76,14 +85,6 @@ components:
       - { type: required, fields: [current_password, new_password, confirm_password], message: All fields required }
       - { type: match, field: new_password, other_field: confirm_password, message: Passwords do not match }
       - { type: min_length, field: new_password, value: 8, message: Password must be at least 8 characters }
-  - type: Button
-    id: profile-logout
-    action: logout
-    label: Sign out
-    icon: log-out
-    variant: danger
-    full_width: true
-
 actions:
   - id: save-language
     type: client
@@ -102,5 +103,3 @@ actions:
     method: PATCH
     endpoint: /api/v1/profile
     body: { current_password: '{row.current_password}', new_password: '{row.new_password}' }
-  - id: logout
-    type: logout

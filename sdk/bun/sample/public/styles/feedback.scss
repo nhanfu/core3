@@ -99,6 +99,10 @@
   border: 1px solid transparent;
 }
 
+.alert[hidden] {
+  display: none !important;
+}
+
 .alert-success { background: var(--color-success-light); border-color: #bbf7d0; color: #15803d; }
 .alert-error   { background: var(--color-danger-light);  border-color: #fecaca; color: #dc2626; }
 .alert-warning { background: var(--color-warning-light); border-color: #fde68a; color: #d97706; }

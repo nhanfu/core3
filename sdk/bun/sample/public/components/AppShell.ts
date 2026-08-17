@@ -126,6 +126,12 @@ export class AppShell extends BaseComponent {
     });
   }
 
+  setNavigationVisible(visible: boolean) {
+    const navigation = this._appLayout?.querySelector<HTMLElement>('.header-nav');
+    if (!navigation) return;
+    navigation.hidden = !visible;
+  }
+
   setTitle(title: string) {
     if (this._headerTitle) this._headerTitle.textContent = title;
   }

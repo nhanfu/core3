@@ -90,8 +90,8 @@ export class ProfileMenu extends BaseComponent {
         .ele();
     };
     addAction(i18n.tKey('shell.my_profile', {}, 'My profile'), () => this.state.onNavigate?.('/auth/profile'));
-    addAction(i18n.tKey('shell.preferences', {}, 'Preferences'), () => this.state.onNavigate?.('/auth/profile#preferences'));
-    addAction(i18n.tKey('shell.change_password', {}, 'Change password'), () => this.state.onNavigate?.('/auth/profile#security'));
+    addAction(i18n.tKey('shell.preferences', {}, 'Preferences'), () => this.state.onNavigate?.('/auth/profile'));
+    addAction(i18n.tKey('shell.change_password', {}, 'Change password'), () => this.state.onNavigate?.('/auth/profile'));
     const separator = html.take(this._menu).div.className('profile-menu-separator').ele();
     separator.setAttribute('role', 'separator');
     addAction(i18n.tKey('shell.sign_out', {}, 'Sign out'), () => this.state.onLogout?.(), 'is-danger');

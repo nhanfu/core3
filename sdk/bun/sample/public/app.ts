@@ -39,7 +39,7 @@ async function loadServiceStyles(moduleId: string | undefined) {
 
 export async function renderPage(config: any, { container = document.body }: { container?: HTMLElement } = {}) {
   validatePageDefinition(config, { allowExternalSources: true });
-  return new PageRuntime(config, registry).render(container);
+  return new PageRuntime(config, registry, { company: window.__CORE3_COMPANY__ }).render(container);
 }
 
 export function getToken() {
@@ -228,6 +228,7 @@ async function renderRoute(path: string, langCode?: string) {
 
   // Update shell active nav + header title
   if (_shell) {
+    _shell.setNavigationVisible(moduleId !== 'auth');
     const activePath = route ? cleanPath.slice(`/${_activeModuleId}`.length) || '/' : cleanPath;
     _shell.setActivePath(activePath);
     _shell.setTitle(i18n.t(pageName, null, page?.title || 'Core3'));
@@ -344,6 +345,7 @@ async function bootstrap() {
   } catch {
     // The shell can still render if a deployment has no company profile yet.
   }
+  window.__CORE3_COMPANY__ = company;
   _shell = new AppShell('app-shell', {
     user: _user,
     company,
