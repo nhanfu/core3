@@ -252,6 +252,160 @@
   .o-list-row-menu .o-list-dropdown-menu > button { min-height: 42px; }
 }
 
+/* Mobile order details use a touch-first Material-style surface rather than a
+ * compressed desktop sheet. Desktop keeps the denser Odoo-inspired layout. */
+@media (max-width: 768px) {
+  .o-form-page {
+    --o-form-bg: #f7f7fb;
+    --o-form-surface: #fff;
+    --o-form-border: #e3e1e9;
+    --o-form-action: #6750a4;
+    padding-bottom: 32px;
+  }
+
+  .o-form-view-slot { padding: 0; }
+  .o-form-view { margin: 0; }
+  .o-form-layout { gap: 20px; }
+  .o-form-sheet-bg { background: var(--o-form-bg); }
+  .o-form-page > .page-header { display: none; }
+  .o-form-sheet {
+    padding: 20px 16px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .o-form-statusbar {
+    position: sticky;
+    z-index: 8;
+    top: 0;
+    min-height: 56px;
+    margin: -20px -16px 16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--o-form-border);
+    background: var(--o-form-surface);
+    box-shadow: 0 2px 6px rgb(28 27 31 / 10%);
+  }
+
+  .o-form-statusbar-steps { gap: 6px; overflow-x: auto; }
+  .o-form-statusbar-step,
+  .o-form-statusbar-step:first-child {
+    min-width: max-content;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 7px 12px;
+    border: 1px solid var(--o-form-border);
+    border-radius: 999px;
+    clip-path: none;
+    background: var(--o-form-surface);
+    font-size: 12px;
+  }
+
+  .o-form-statusbar-step::after { display: none; }
+  .o-form-statusbar-step.is-current {
+    border-color: var(--o-form-action);
+    background: var(--o-form-action);
+  }
+
+  .o-form-header { gap: 12px; padding: 4px 0 20px; }
+  .o-form-title { font-size: 24px; font-weight: 600; letter-spacing: -.01em; }
+  .o-form-status { margin-top: 0; padding: 6px 10px; border-radius: 999px; }
+  .o-form-actionbar {
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .o-form-actionbar::-webkit-scrollbar { display: none; }
+  .o-form-action {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+  }
+
+  .o-form-groups { display: grid; gap: 12px; padding-top: 0; }
+  .o-form-groups .o-form-field-group {
+    padding: 16px;
+    border: 1px solid var(--o-form-border);
+    border-radius: 16px;
+    background: var(--o-form-surface);
+    box-shadow: 0 1px 2px rgb(28 27 31 / 7%);
+  }
+
+  .o-form-groups .o-form-group-title {
+    padding-bottom: 12px;
+    border-bottom: 0;
+    font-size: 15px;
+  }
+
+  .o-form-groups .o-form-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; }
+  .o-form-groups .o-form-field-label { margin-top: 16px; padding: 0; font-size: 12px; }
+  .o-form-groups .o-form-field-label:first-child { margin-top: 0; }
+  .o-form-groups .o-form-field-value {
+    min-height: 32px;
+    margin-top: 2px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--o-form-border);
+    font-size: 15px;
+  }
+  .o-form-groups .o-form-field-value:last-child { padding-bottom: 0; border-bottom: 0; }
+
+  .o-form-notebook { margin: 20px -16px 0; }
+  .o-form-notebook-tabs { gap: 0; margin: 0; padding: 0 12px; background: var(--o-form-surface); }
+  .o-form-notebook-tab { min-height: 48px; padding: 10px 12px; font-size: 14px; }
+  .o-form-notebook-panel.o-form-notebook-panel-slot { padding: 12px 16px 0; }
+  .o-form-notebook-panel:not(.o-form-notebook-panel-slot) { padding: 16px; }
+
+  .o-line-grid-cards { gap: 12px !important; padding: 0 !important; }
+  .o-line-card {
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgb(28 27 31 / 8%);
+  }
+  .o-line-card-title { margin-bottom: 12px; font-size: 16px; }
+  .o-line-card-field { min-height: 40px; align-items: center; padding: 8px 0; border-top: 1px solid var(--o-form-border); }
+  .o-line-card-value { font-size: 14px; font-weight: 500; }
+  .o-line-card-actions { gap: 8px; margin-top: 12px; }
+  .o-x2many-row-action,
+  .o-x2many-row-action.is-icon-only {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+  }
+  .o-x2many-create {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: rgb(103 80 164 / 10%);
+    font-size: 14px;
+    text-align: left;
+  }
+  .o-x2many-controls { padding: 12px 0 0; border-top: 0; }
+  .o-document-totals {
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid var(--o-form-border);
+    border-radius: 16px;
+    background: var(--o-form-surface);
+  }
+
+  .o-form-chatter { min-height: 0; padding: 0 16px; background: transparent; }
+  .o-form-chatter-topbar,
+  .o-form-chatter-stream {
+    border: 1px solid var(--o-form-border);
+    background: var(--o-form-surface);
+  }
+  .o-form-chatter-topbar { min-height: 52px; padding: 8px 12px; border-radius: 16px 16px 0 0; }
+  .o-form-chatter-stream { padding: 12px; border-top: 0; border-radius: 0 0 16px 16px; }
+  .o-form-chatter-primary,
+  .o-form-chatter-secondary,
+  .o-form-chatter-tool { min-width: 40px; min-height: 40px; border-radius: 999px; }
+}
+
 .token-toolbar,
 .token-control,
 .token-control-group,
