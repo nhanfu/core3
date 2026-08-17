@@ -1,0 +1,34 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_sessions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        config VARCHAR NOT NULL DEFAULT 'Main Shop', user_name VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Opening Control', balance_start DECIMAL(18,2) NOT NULL DEFAULT 0,
+        balance_end DECIMAL(18,2), opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, closed_at TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS pos_orders (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, session_id VARCHAR NOT NULL,
+        partner_name VARCHAR, state VARCHAR NOT NULL DEFAULT 'New',
+        amount_total DECIMAL(18,2) NOT NULL DEFAULT 0, amount_paid DECIMAL(18,2) NOT NULL DEFAULT 0,
+        payment_method VARCHAR, date_order TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS pos_order_lines (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), order_id VARCHAR NOT NULL,
+        product_name VARCHAR NOT NULL, quantity DECIMAL(18,3) NOT NULL DEFAULT 1,
+        price_unit DECIMAL(18,2) NOT NULL DEFAULT 0, price_subtotal DECIMAL(18,2) NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_sessions_state ON pos_sessions(state);
+      CREATE INDEX IF NOT EXISTS idx_pos_orders_session ON pos_orders(session_id);
+      CREATE INDEX IF NOT EXISTS idx_pos_orders_state ON pos_orders(state);
+    down: |
+      DROP TABLE IF EXISTS pos_order_lines;
+      DROP TABLE IF EXISTS pos_orders;
+      DROP TABLE IF EXISTS pos_sessions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

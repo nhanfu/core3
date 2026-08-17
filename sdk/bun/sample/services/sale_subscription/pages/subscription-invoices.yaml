@@ -1,0 +1,41 @@
+title: Recurring Invoices
+page: { id: subscription-invoices, breadcrumb: [Sales, Subscriptions, Invoices], auth: { require: [subscriptions.read] } }
+datasources:
+  - id: subscription_invoices
+    single: false
+    permission: subscriptions.read
+    query: "SELECT i.id, i.invoice_number, i.subscription_id, s.name AS subscription_name, s.partner_name, CAST(i.invoice_date AS VARCHAR) AS invoice_date, CAST(i.due_date AS VARCHAR) AS due_date, i.amount, i.state FROM sale_subscription_invoices i JOIN sale_subscriptions s ON s.id = i.subscription_id ORDER BY i.invoice_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: subscription_invoices
+    columns:
+      - { field: invoice_number, label: Invoice, type: PrimaryEntityCell }
+      - { field: subscription_name, label: Subscription }
+      - { field: partner_name, label: Customer }
+      - { field: invoice_date, label: Invoice date }
+      - { field: due_date, label: Due date }
+      - { field: amount, label: Amount, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: post_subscription_invoice, label: Post invoice, permission: subscriptions.write, variant: primary, show_if: "row.state === 'Draft'" }
+actions:
+  - id: post_subscription_invoice
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.invoices.post
+    handler: subscription_invoice
+    operation: post
+    params: { id: '{row.id}' }
+    refresh: [subscription_invoices]
+    mutation:
+      guards:
+        - query: "SELECT id FROM sale_subscription_invoices WHERE id = :id AND state = 'Draft'"
+          status: 409
+          message: Only draft subscription invoices can be posted
+      steps:
+        - query: "UPDATE sale_subscription_invoices SET state = 'Posted' WHERE id = :id"
+      result: { query: "SELECT * FROM sale_subscription_invoices WHERE id = :id" }

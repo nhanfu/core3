@@ -134,7 +134,7 @@ const CHART_COLORS = new Set(['blue', 'indigo', 'green', 'amber', 'red', 'teal']
 
 const ACTION_KEYS: Record<ActionDefinition['type'], Set<string>> = {
   form: new Set(['id', 'type', 'title', 'table', 'operation', 'prefill', 'prefill_source', 'refresh', 'fields', 'scope', 'permission', 'action', 'handler', 'mutation', 'success_message']),
-  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'operation', 'domain', 'kind', 'topic', 'topic_version', 'event', 'mutation', 'success_message']),
+  server_form: new Set(['id', 'type', 'title', 'action', 'prefill', 'prefill_source', 'refresh', 'fields', 'params', 'permission', 'handler', 'workflow', 'operation', 'domain', 'kind', 'topic', 'topic_version', 'event', 'mutation', 'success_message']),
   delete: new Set(['id', 'type', 'confirm', 'table', 'refresh', 'scope', 'permission', 'action', 'handler', 'mutation']),
   patch: new Set(['id', 'type', 'confirm', 'table', 'body', 'refresh', 'scope', 'permission']),
   navigate: new Set(['id', 'type', 'navigate_to', 'params', 'permission']),
@@ -374,6 +374,7 @@ function validateActions(
     } else if (type === 'server_form') {
       requireString(action.title, `${path}.title`, issues);
       requireString(action.action, `${path}.action`, issues);
+      if (action.handler === 'order_transition') requireString(action.workflow, `${path}.workflow`, issues);
       validateFields(action.fields, `${path}.fields`, issues);
       if (action.params !== undefined && !isRecord(action.params)) {
         issues.push(`${path}.params must be an object`);

@@ -13,7 +13,7 @@ datasources:
           WHEN 'Pending Approval' THEN 'Pending approval'
           WHEN 'Approved' THEN 'Approved'
           WHEN 'Cancelled' THEN 'Cancelled' ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) END AS status_label,
-        o.shipment_type, o.route, o.transport_method, o.trip_count,
+        o.shipment_type, o.route, o.transport_method, o.trip_count, o.payment_term_name,
         printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
         o.created_by, o.notes
       FROM orders o
@@ -27,17 +27,31 @@ datasources:
     permission: orders.read
     query: |
       SELECT l.id, l.row_version, l.order_id AS document_id, l.sequence, l.description,
+        l.product_id, p.name AS product_name,
         CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
         CAST(l.unit_price AS DOUBLE) AS unit_price,
         CAST(l.tax_rate AS DOUBLE) AS tax_rate,
-        CAST(l.line_total AS DOUBLE) AS line_total,
+        CAST(COALESCE(l.discount, 0) AS DOUBLE) AS discount,
+        CAST(COALESCE(l.qty_delivered, 0) AS DOUBLE) AS qty_delivered,
+        CAST(COALESCE(l.qty_invoiced, 0) AS DOUBLE) AS qty_invoiced,
+        CAST(COALESCE(l.qty_to_invoice, l.quantity) AS DOUBLE) AS qty_to_invoice,
+        CAST(COALESCE(l.price_subtotal, l.line_total / NULLIF(1 + l.tax_rate / 100, 0)) AS DOUBLE) AS price_subtotal,
+        CAST(COALESCE(l.price_tax, l.line_total - l.line_total / NULLIF(1 + l.tax_rate / 100, 0)) AS DOUBLE) AS price_tax,
+        CAST(COALESCE(l.price_total, l.line_total) AS DOUBLE) AS line_total,
         printf('%,.3f', l.quantity) AS quantity_display,
         printf('%,.0f ₫', l.unit_price) AS unit_price_display,
         printf('%.2f%%', l.tax_rate) AS tax_rate_display,
-        printf('%,.0f ₫', l.line_total) AS line_total_display,
+        printf('%.2f%%', COALESCE(l.discount, 0)) AS discount_display,
+        printf('%,.3f', COALESCE(l.qty_delivered, 0)) AS qty_delivered_display,
+        printf('%,.3f', COALESCE(l.qty_invoiced, 0)) AS qty_invoiced_display,
+        printf('%,.3f', COALESCE(l.qty_to_invoice, l.quantity)) AS qty_to_invoice_display,
+        printf('%,.0f ₫', COALESCE(l.price_subtotal, l.line_total / NULLIF(1 + l.tax_rate / 100, 0))) AS price_subtotal_display,
+        printf('%,.0f ₫', COALESCE(l.price_tax, l.line_total - l.line_total / NULLIF(1 + l.tax_rate / 100, 0))) AS price_tax_display,
+        printf('%,.0f ₫', COALESCE(l.price_total, l.line_total)) AS line_total_display,
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS parent_status
       FROM order_lines l
       JOIN orders o ON o.id = l.order_id
+      LEFT JOIN sale_products p ON p.id = l.product_id
       WHERE l.order_id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
       ORDER BY l.sequence
   - id: order_detail_timeline
@@ -117,6 +131,10 @@ datasources:
     single: false
     permission: orders.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM order_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
+  - id: sale_product_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT id AS value, default_code || ' - ' || name AS label FROM sale_products WHERE active = true AND sale_ok = true ORDER BY name"
   - id: order_customer_lookup_detail
     single: false
     permission: orders.read
@@ -125,6 +143,10 @@ datasources:
     single: false
     permission: orders.read
     query: "SELECT code AS value, code || ' - ' || name AS label FROM system_configs WHERE kind = 'shipment_type' AND status = 'Active' UNION SELECT DISTINCT shipment_type AS value, shipment_type AS label FROM orders WHERE shipment_type IS NOT NULL AND shipment_type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+  - id: sale_payment_terms_lookup_detail
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, name AS label FROM sale_payment_terms WHERE active = true ORDER BY due_days, name"
 
 components:
   - type: OdooFormView
@@ -213,6 +235,7 @@ components:
           - { field: route, label: Route }
           - { field: transport_method, label: Transport method }
           - { field: trip_count, label: Trip count }
+          - { field: payment_term_name, label: Payment terms }
     notebook:
       active: order_lines
       tabs:
@@ -240,11 +263,18 @@ components:
         - { label: Total amount, field: total_amount_display }
     children:
       - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: product_id, field: product_id, display_field: product_name, label: Product, input_type: select, options_source: sale_product_lookup }
       - { type: LineItemField, id: description, field: description, label: Description, input_type: text }
       - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number }
       - { type: LineItemField, id: unit, field: unit, label: Unit, input_type: select, options_source: order_unit_lookup }
       - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit price, input_type: money }
       - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Tax, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: discount, field: discount, display_field: discount_display, label: Discount, input_type: number, decimals: 2 }
+      - { type: LineItemField, id: qty_delivered, field: qty_delivered, display_field: qty_delivered_display, label: Delivered, readonly: true }
+      - { type: LineItemField, id: qty_invoiced, field: qty_invoiced, display_field: qty_invoiced_display, label: Invoiced, readonly: true }
+      - { type: LineItemField, id: qty_to_invoice, field: qty_to_invoice, display_field: qty_to_invoice_display, label: To invoice, readonly: true }
+      - { type: LineItemField, id: price_subtotal, field: price_subtotal, display_field: price_subtotal_display, label: Untaxed, readonly: true }
+      - { type: LineItemField, id: price_tax, field: price_tax, display_field: price_tax_display, label: Tax amount, readonly: true }
       - { type: LineItemField, id: line_total, field: line_total, display_field: line_total_display, label: Amount, readonly: true }
       - type: LineItemActions
         id: line_actions
@@ -422,7 +452,7 @@ actions:
     mutation:
       operation: update
       table: orders
-      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, payment_term_name, notes]
       required: [order_number, customer_name, order_date]
       timestamps: true
       scope: { field: branch_id }
@@ -443,6 +473,7 @@ actions:
       - { field: route, label: Route, type: text }
       - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air] }
       - { field: trip_count, label: Trip count, type: number }
+      - { field: payment_term_name, label: Payment terms, type: select, options_source: sale_payment_terms_lookup_detail }
       - { field: notes, label: Notes, type: textarea }
   - id: submit_order_detail
     type: server
@@ -492,10 +523,12 @@ actions:
     refresh: [order_detail_lines, order_detail, order_detail_timeline]
     fields:
       - { field: description, label: Content, type: text, required: true }
+      - { field: product_id, label: Product, type: select, options_source: sale_product_lookup }
       - { field: quantity, label: Quantity, type: number, default: 1, required: true }
       - { field: unit, label: Unit, type: select, options_source: order_unit_lookup, default: Chuyến, required: true }
       - { field: unit_price, label: Unit price, type: money, currency: VND, default: 0, required: true }
       - { field: tax_rate, label: Tax rate (%), type: number, default: 0, required: true }
+      - { field: discount, label: Discount (%), type: number, default: 0, required: true }
     mutation:
       scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
       generated: [line_id]
@@ -504,10 +537,13 @@ actions:
           status: 409
           code: STALE_RECORD
           message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
+          status: 400
+          message: Selected product is not available for sale
       steps:
         - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
-        - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2))"
-        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+        - query: "INSERT INTO order_lines(id, order_id, sequence, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) VALUES(:line_id, :id, :next_sequence, :description, :product_id, :quantity, :unit, :unit_price, :tax_rate, :discount, 0, 0, :quantity, ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2))"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, :description)"
@@ -525,10 +561,12 @@ actions:
     refresh: [order_detail_lines, order_detail, order_detail_timeline]
     fields:
       - { field: description, label: Content, type: text, required: true }
+      - { field: product_id, label: Product, type: select, options_source: sale_product_lookup }
       - { field: quantity, label: Quantity, type: number, required: true }
       - { field: unit, label: Unit, type: select, options_source: order_unit_lookup, required: true }
       - { field: unit_price, label: Unit price, type: money, currency: VND, required: true }
       - { field: tax_rate, label: Tax rate (%), type: number, required: true }
+      - { field: discount, label: Discount (%), type: number, required: true }
     mutation:
       scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
       guards:
@@ -536,15 +574,19 @@ actions:
           status: 409
           code: STALE_RECORD
           message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
+          status: 400
+          message: Selected product is not available for sale
         - query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           status: 409
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before saving
       steps:
-        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE order_lines SET description = :description, product_id = :product_id, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, discount = :discount, qty_to_invoice = CASE WHEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) > 0 THEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) ELSE 0 END, price_subtotal = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), price_tax = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), price_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
-        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.update', 'orders', :id, :description)"

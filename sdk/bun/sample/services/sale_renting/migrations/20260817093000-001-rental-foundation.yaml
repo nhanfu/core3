@@ -1,0 +1,26 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sale_rentals (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        partner_name VARCHAR, product_name VARCHAR NOT NULL, quantity DECIMAL(18,3) NOT NULL DEFAULT 1,
+        rental_period VARCHAR NOT NULL DEFAULT 'Days', state VARCHAR NOT NULL DEFAULT 'Quotation',
+        start_date DATE, return_date DATE, price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        salesperson VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS sale_rental_events (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), rental_id VARCHAR NOT NULL,
+        event_type VARCHAR NOT NULL, event_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        notes VARCHAR, actor_name VARCHAR
+      );
+      CREATE INDEX IF NOT EXISTS idx_sale_rentals_state ON sale_rentals(state);
+      CREATE INDEX IF NOT EXISTS idx_sale_rental_events_rental ON sale_rental_events(rental_id);
+    down: |
+      DROP TABLE IF EXISTS sale_rental_events;
+      DROP TABLE IF EXISTS sale_rentals;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

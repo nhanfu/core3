@@ -1,0 +1,122 @@
+title: Rental Order
+page: { id: rental-detail, breadcrumb: [Sales, Rental, Detail], auth: { require: [rental.read] } }
+datasources:
+  - id: rental_detail
+    single: true
+    permission: rental.read
+    query: "SELECT id, row_version, name, partner_name, product_name, quantity, rental_period, state, CAST(start_date AS VARCHAR) AS start_date, CAST(return_date AS VARCHAR) AS return_date, price, salesperson FROM sale_rentals WHERE id = :id"
+  - id: rental_detail_events
+    single: false
+    permission: rental.read
+    query: "SELECT id, event_type, CAST(event_date AS VARCHAR) AS event_date, notes, actor_name FROM sale_rental_events WHERE rental_id = :id ORDER BY event_date DESC"
+components:
+  - type: OdooFormView
+    source: rental_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Quotation, label: Quotation }
+      - { value: Reserved, label: Reserved }
+      - { value: Picked Up, label: Picked Up }
+      - { value: Returned, label: Returned }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { Quotation: neutral, Reserved: blue, Picked Up: amber, Returned: green, Cancelled: red }
+    header_actions:
+      - { id: edit_rental_detail, label: Edit, permission: rental.write, show_if: "state.rental_detail.state === 'Quotation'" }
+      - { id: reserve_rental_detail, label: Reserve, permission: rental.write, show_if: "state.rental_detail.state === 'Quotation'" }
+      - { id: pickup_rental_detail, label: Pick up, permission: rental.write, show_if: "state.rental_detail.state === 'Reserved'" }
+      - { id: return_rental_detail, label: Return, permission: rental.write, show_if: "state.rental_detail.state === 'Picked Up'" }
+      - { id: cancel_rental_detail, label: Cancel, permission: rental.write, show_if: "state.rental_detail.state === 'Quotation' || state.rental_detail.state === 'Reserved'" }
+    group_columns: 2
+    groups:
+      - title: Rental order
+        fields:
+          - { field: name, label: Rental order }
+          - { field: state, label: Status }
+          - { field: product_name, label: Product }
+          - { field: quantity, label: Quantity }
+          - { field: rental_period, label: Rental period }
+      - title: Customer and dates
+        fields:
+          - { field: partner_name, label: Customer }
+          - { field: start_date, label: Start date }
+          - { field: return_date, label: Return date }
+          - { field: price, label: Price }
+          - { field: salesperson, label: Salesperson }
+  - type: ContactGrid
+    source: rental_detail_events
+    row_key: id
+    columns:
+      - { field: event_type, label: Event }
+      - { field: event_date, label: Date }
+      - { field: actor_name, label: Responsible }
+      - { field: notes, label: Notes }
+actions:
+  - id: edit_rental_detail
+    type: server_form
+    permission: rental.write
+    title: Edit rental order
+    action: rental.update
+    handler: yaml_mutation
+    operation: update
+    prefill: source
+    prefill_source: rental_detail
+    refresh: [rental_detail, rental_detail_events]
+    mutation:
+      operation: update
+      table: sale_rentals
+      fields: [name, partner_name, product_name, quantity, rental_period, start_date, return_date, price, salesperson]
+      required: [name, product_name]
+      guards:
+        - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = 'Quotation'"
+          status: 409
+          message: Only quotation rentals can be edited
+        - query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:price AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Quantity must be positive and price cannot be negative
+        - query: "SELECT 1 AS ok WHERE :start_date IS NULL OR :return_date IS NULL OR CAST(:return_date AS DATE) >= CAST(:start_date AS DATE)"
+          status: 400
+          message: Return date must be on or after the rental start
+      result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
+    fields:
+      - { field: name, label: Rental order, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: rental_period, label: Rental period, type: select, options: [Hours, Days, Weeks, Months] }
+      - { field: start_date, label: Start date, type: date }
+      - { field: return_date, label: Return date, type: date }
+      - { field: price, label: Price, type: money, required: true }
+      - { field: salesperson, label: Salesperson, type: text }
+  - id: reserve_rental_detail
+    type: server
+    permission: rental.write
+    action: rental.reserve
+    handler: order_transition
+    workflow: rentals
+    operation: reserve
+    refresh: [rental_detail, rental_detail_events]
+  - id: pickup_rental_detail
+    type: server
+    permission: rental.write
+    action: rental.pickup
+    handler: order_transition
+    workflow: rentals
+    operation: pickup
+    refresh: [rental_detail, rental_detail_events]
+  - id: return_rental_detail
+    type: server
+    permission: rental.write
+    action: rental.return
+    handler: order_transition
+    workflow: rentals
+    operation: return
+    refresh: [rental_detail, rental_detail_events]
+  - id: cancel_rental_detail
+    type: server
+    permission: rental.write
+    action: rental.cancel
+    handler: order_transition
+    workflow: rentals
+    operation: cancel
+    refresh: [rental_detail, rental_detail_events]

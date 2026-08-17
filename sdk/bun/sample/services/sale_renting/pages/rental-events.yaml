@@ -1,0 +1,20 @@
+title: Rental Events
+page: { id: rental-events, breadcrumb: [Sales, Rental, Events], auth: { require: [rental.read] } }
+datasources:
+  - id: rental_events
+    single: false
+    permission: rental.read
+    query: "SELECT e.id, e.rental_id, r.name AS rental_name, r.partner_name, e.event_type, CAST(e.event_date AS VARCHAR) AS event_date, e.notes, e.actor_name FROM sale_rental_events e JOIN sale_rentals r ON r.id = e.rental_id ORDER BY e.event_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: rental_events
+    columns:
+      - { field: rental_name, label: Rental order, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: event_type, label: Event }
+      - { field: event_date, label: Event date }
+      - { field: actor_name, label: Responsible }
+      - { field: notes, label: Notes }
+    page_size: 50
+    row_key: id

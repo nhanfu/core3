@@ -1,0 +1,23 @@
+title: Rental Availability
+page: { id: rental-availability, breadcrumb: [Sales, Rental, Availability], auth: { require: [rental.read] } }
+datasources:
+  - id: rental_availability
+    single: false
+    permission: rental.read
+    query: |
+      SELECT product_name, SUM(quantity) AS rented_quantity,
+        SUM(CASE WHEN state IN ('Returned', 'Cancelled') THEN 0 ELSE quantity END) AS reserved_quantity,
+        MIN(start_date) AS next_start, MAX(return_date) AS last_return
+      FROM sale_rentals GROUP BY product_name ORDER BY product_name
+components:
+  - type: ListView
+    variant: odoo
+    source: rental_availability
+    columns:
+      - { field: product_name, label: Rental product, type: PrimaryEntityCell }
+      - { field: rented_quantity, label: Total units, align: right }
+      - { field: reserved_quantity, label: Reserved units, align: right }
+      - { field: next_start, label: Next rental }
+      - { field: last_return, label: Last return }
+    page_size: 50
+    row_key: product_name

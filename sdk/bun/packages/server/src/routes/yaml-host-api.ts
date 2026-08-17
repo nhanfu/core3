@@ -57,7 +57,8 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
     const datasourceMatch = pathname.match(/^\/api\/datasources\/([A-Za-z0-9_-]+)\/workflow$/);
     const attachmentMatch = services.find((service) => Object.values(service.storage?.attachments || {}).some((entry: any) => typeof entry?.download?.route === 'string' && pathname.startsWith(`${entry.download.route}/`)));
     if (pageMatch) candidates = services.filter((service) => service.pages.has(pageMatch[1]));
-    else if (actionMatch) candidates = services.filter((service) => service.actions.has(actionMatch[1]));
+    else if (actionMatch) candidates = services.filter((service) => service.actions.has(actionMatch[1])
+      || [...service.pages.values()].some((page: any) => (page.actions || []).some((action: any) => action.action === actionMatch[1])));
     else if (datasourceMatch) candidates = services.filter((service) => service.datasources.has(datasourceMatch[1]));
     else if (attachmentMatch) candidates = [attachmentMatch];
     else if (pathname.startsWith('/api/events/')) {

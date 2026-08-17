@@ -1,0 +1,16 @@
+menu:
+  rentals:
+    path: /rentals
+    label: Rental
+    icon: calendar
+    permission: rental.read
+  events:
+    path: /events
+    label: Rental Events
+    icon: history
+    permission: rental.read
+  availability:
+    path: /availability
+    label: Availability
+    icon: calendar
+    permission: rental.read

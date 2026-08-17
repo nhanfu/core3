@@ -1,0 +1,107 @@
+title: Quotations
+page: { id: sale-quotations, breadcrumb: [Sales, Quotations], auth: { require: [orders.read] } }
+datasources:
+  - id: sale_quotations
+    single: false
+    permission: orders.read
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_reference,
+        CAST(o.order_date AS VARCHAR) AS order_date, CAST(o.validity_date AS VARCHAR) AS validity_date,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        o.pricelist_name, o.payment_term_name, CAST(o.total_amount AS DOUBLE) AS total_amount,
+        CASE WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id AND i.state = 'Posted') THEN 'Invoiced'
+          WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id) THEN 'To invoice' ELSE COALESCE(o.invoice_status, 'To invoice') END AS invoice_status,
+        o.require_signature, o.require_payment
+      FROM orders o
+      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Draft', 'Pending Approval')
+        AND (:q IS NULL OR o.order_number ILIKE '%' || :q || '%' OR o.customer_name ILIKE '%' || :q || '%')
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY o.order_date DESC
+  - id: sale_quotation_pricelists
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, name AS label FROM sale_pricelists WHERE active = true ORDER BY name"
+  - id: sale_quotation_customers
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) ORDER BY name"
+  - id: sale_quotation_payment_terms
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, name AS label FROM sale_payment_terms WHERE active = true ORDER BY due_days, name"
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_quotations
+    create_action: create_quotation
+    create_label: New quotation
+    search: { label: Search quotations, placeholder: Search quotations and customers... }
+    row_open_action: view_quotation
+    row_double_click_action: view_quotation
+    form_view: { page: apps/services/order/pages/order-detail.yaml, side_panel: true }
+    columns:
+      - { field: order_number, label: Quotation, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: order_date, label: Quotation date }
+      - { field: validity_date, label: Expiration }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: pricelist_name, label: Pricelist }
+      - { field: total_amount, label: Total, align: right }
+      - { field: invoice_status, label: Invoice status }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_actions: menu
+actions:
+  - id: create_quotation
+    type: server_form
+    permission: orders.write
+    title: New quotation
+    action: orders.quotation.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sale_quotations]
+    mutation:
+      operation: insert
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, validity_date, customer_reference, pricelist_name, payment_term_name, require_signature, require_payment, notes]
+      required: [order_number, customer_name, order_date]
+      defaults: { status: Draft, pricelist_name: Public Pricelist, payment_term_name: Immediate Payment, require_signature: false, require_payment: false }
+      scope: { field: branch_id, message: Quotation branch is invalid }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
+          status: 409
+          message: Quotation number already exists
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: order_number, label: Quotation, type: text, required: true }
+      - { field: customer_name, label: Customer, type: select, options_source: sale_quotation_customers, required: true }
+      - { field: customer_reference, label: Customer reference, type: text }
+      - { field: order_date, label: Quotation date, type: date, required: true }
+      - { field: validity_date, label: Expiration, type: date }
+      - { field: pricelist_name, label: Pricelist, type: select, options_source: sale_quotation_pricelists, default: Public Pricelist }
+      - { field: payment_term_name, label: Payment terms, type: select, options_source: sale_quotation_payment_terms, default: Immediate Payment }
+      - { field: require_signature, label: Online signature, type: checkbox }
+      - { field: require_payment, label: Online payment, type: checkbox }
+      - { field: notes, label: Terms and conditions, type: textarea }
+  - id: view_quotation
+    type: navigate
+    permission: orders.read
+    navigate_to: /detail
+    params: { id: '{row.id}' }
+  - id: send_quotation
+    type: server
+    permission: orders.write
+    action: orders.submit_for_approval
+    handler: order_transition
+    workflow: orders
+    operation: submit_for_approval
+    refresh: [sale_quotations]
+  - id: confirm_sale_order
+    type: server
+    permission: orders.approve
+    action: orders.approve
+    handler: order_transition
+    workflow: orders
+    operation: approve
+    refresh: [sale_quotations]

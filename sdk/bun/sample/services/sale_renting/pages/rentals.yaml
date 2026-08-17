@@ -1,0 +1,109 @@
+title: Rental
+page: { id: rentals, breadcrumb: [Sales, Rental], auth: { require: [rental.read] } }
+datasources:
+  - id: rental_states
+    single: false
+    permission: rental.read
+    query: "SELECT value, label FROM (VALUES ('Quotation','Quotation'), ('Reserved','Reserved'), ('Picked Up','Picked Up'), ('Returned','Returned'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: sale_rentals
+    single: false
+    permission: rental.read
+    workflow: rentals
+    query: "SELECT id, name, partner_name, product_name, quantity, rental_period, state, CAST(start_date AS VARCHAR) AS start_date, CAST(return_date AS VARCHAR) AS return_date, price, salesperson FROM sale_rentals WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR product_name ILIKE '%' || :q || '%') ORDER BY created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_rentals
+    create_action: create_rental
+    create_label: New rental
+    search: { label: Search rentals, placeholder: Search rental orders and products... }
+    filters: [{ field: state, label: Status, options_source: rental_states }]
+    columns:
+      - { field: name, label: Rental order, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: start_date, label: Rental start }
+      - { field: return_date, label: Return date }
+      - { field: price, label: Price, align: right }
+    page_size: 50
+    row_key: id
+    row_open_action: view_rental
+    row_double_click_action: view_rental
+    form_view: { page: apps/services/sale_renting/pages/rental-detail.yaml, side_panel: true }
+    row_actions: menu
+    actions:
+      - { id: reserve_rental, label: Reserve, permission: rental.write, variant: primary }
+      - { id: pickup_rental, label: Pick up, permission: rental.write, variant: secondary }
+      - { id: return_rental, label: Return, permission: rental.write, variant: secondary }
+      - { id: cancel_rental, label: Cancel, permission: rental.write, variant: danger }
+actions:
+  - id: view_rental
+    type: navigate
+    permission: rental.read
+    navigate_to: /rental-detail
+    params: { id: '{row.id}' }
+  - id: create_rental
+    type: server_form
+    permission: rental.write
+    title: New rental order
+    action: rental.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: sale_rentals
+      fields: [name, partner_name, product_name, quantity, rental_period, state, start_date, return_date, price, salesperson]
+      required: [name, product_name]
+      defaults: { quantity: 1, rental_period: Days, state: Quotation, price: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE (:quantity IS NULL OR CAST(:quantity AS DECIMAL(18,3)) > 0) AND (:price IS NULL OR CAST(:price AS DECIMAL(18,2)) >= 0)"
+          status: 400
+          message: Quantity must be positive and price cannot be negative
+        - query: "SELECT 1 AS ok WHERE :start_date IS NULL OR :return_date IS NULL OR CAST(:return_date AS DATE) >= CAST(:start_date AS DATE)"
+          status: 400
+          message: Return date must be on or after the rental start
+      result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
+    fields:
+      - { field: name, label: Rental order, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, default: 1 }
+      - { field: start_date, label: Rental start, type: date }
+      - { field: return_date, label: Return date, type: date }
+      - { field: rental_period, label: Rental period, type: select, options: [Hours, Days, Weeks, Months], default: Days }
+      - { field: price, label: Price, type: money, default: 0 }
+      - { field: salesperson, label: Salesperson, type: text }
+  - id: reserve_rental
+    type: server
+    permission: rental.write
+    action: rental.reserve
+    handler: order_transition
+    workflow: rentals
+    operation: reserve
+    refresh: [sale_rentals]
+  - id: pickup_rental
+    type: server
+    permission: rental.write
+    action: rental.pickup
+    handler: order_transition
+    workflow: rentals
+    operation: pickup
+    refresh: [sale_rentals]
+  - id: return_rental
+    type: server
+    permission: rental.write
+    action: rental.return
+    handler: order_transition
+    workflow: rentals
+    operation: return
+    refresh: [sale_rentals]
+  - id: cancel_rental
+    type: server
+    permission: rental.write
+    action: rental.cancel
+    handler: order_transition
+    workflow: rentals
+    operation: cancel
+    refresh: [sale_rentals]

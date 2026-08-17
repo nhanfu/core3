@@ -131,10 +131,14 @@ function assertUnique(map: Map<string, unknown>, key: string, file: string, kind
 
 export function discoverPages(appsRoot: string) {
   const pageRoots = new Set<string>();
+  const moduleNames = new Map<string, string>();
   const topPages = join(appsRoot, 'pages');
   try { if (statSync(topPages).isDirectory()) pageRoots.add(topPages); } catch { /* top-level pages are optional */ }
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
     const pages = join(moduleRoot, 'pages');
+    let moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
+    try { moduleName = loadYamlServiceManifest(moduleRoot).manifest.id; } catch { /* directory name is the fallback */ }
+    moduleNames.set(pages, moduleName);
     try { if (statSync(pages).isDirectory()) pageRoots.add(pages); } catch { /* module may not define pages */ }
   }
 
@@ -146,10 +150,11 @@ export function discoverPages(appsRoot: string) {
   const workflows = new Map<string, DiscoveredWorkflow>();
 
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
-    const moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
+    let moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
     let file = join(moduleRoot, 'permission.yaml');
     try {
       const manifest = loadYamlServiceManifest(moduleRoot).manifest;
+      moduleName = manifest.id;
       if (manifest.permissions) file = join(moduleRoot, manifest.permissions);
     } catch { /* default permission path is optional */ }
     try {
@@ -162,7 +167,9 @@ export function discoverPages(appsRoot: string) {
   }
 
   for (const pagesRoot of pageRoots) {
-    const moduleName = relative(appsRoot, pagesRoot).split(sep).slice(-2, -1)[0] || 'root';
+    const moduleName = moduleNames.get(pagesRoot)
+      || relative(appsRoot, pagesRoot).split(sep).slice(-2, -1)[0]
+      || 'root';
     for (const file of walk(pagesRoot).filter((name) => /\.ya?ml$/i.test(name)).sort()) {
       const value = parseYaml(file);
       const relativeFile = relative(pagesRoot, file).split(sep);

@@ -1,0 +1,18 @@
+version: 0.0.3
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sale_subscription_plans (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        recurring_period VARCHAR NOT NULL DEFAULT 'Monthly', recurring_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        trial_days INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO sale_subscription_plans(id, name, recurring_period, recurring_price, trial_days)
+      VALUES ('plan-demo-monthly', 'Premium Support', 'Monthly', 1200, 14),
+             ('plan-demo-yearly', 'Enterprise Platform', 'Yearly', 5000, 30)
+      ON CONFLICT(name) DO NOTHING;
+    down: DROP TABLE IF EXISTS sale_subscription_plans;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

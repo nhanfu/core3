@@ -1,0 +1,65 @@
+workflow:
+  id: crm_leads
+  entity: crm_leads
+  handler: crm_lead_status
+  initial: New
+  permission: crm.write
+  mutable: true
+  status_source: crm_lead_stages
+  status_query: SELECT stage AS status FROM crm_leads WHERE id = ?
+  default_mutation:
+    guards:
+      - query: "SELECT id FROM crm_leads WHERE id = :id AND stage = :current_status"
+        status: 409
+        message: Lead stage has changed; refresh and try again
+    steps:
+      - query: "UPDATE crm_leads SET stage = :target_status, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+      - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', CAST(:current_status AS VARCHAR) || ' -> ' || CAST(:target_status AS VARCHAR), 'done', CURRENT_TIMESTAMP)"
+    result: { query: "SELECT *, :current_status AS previous_status FROM crm_leads WHERE id = :id" }
+  states:
+    - { id: New, label: New, color: neutral }
+    - { id: Qualified, label: Qualified, color: blue }
+    - { id: Proposition, label: Proposition, color: amber }
+    - { id: Won, label: Won, color: green, terminal: true }
+    - { id: Lost, label: Lost, color: red, terminal: true }
+  transitions:
+    - id: qualify
+      from: [New]
+      to: Qualified
+      permission: crm.write
+      mutation:
+        guards:
+          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage = 'New'"
+            status: 409
+            message: Only new leads can be qualified
+        steps:
+          - query: "UPDATE crm_leads SET stage = 'Qualified', probability = GREATEST(probability, 25), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    - id: propose
+      from: [Qualified]
+      to: Proposition
+      permission: crm.write
+    - id: won
+      from: [Proposition, Qualified]
+      to: Won
+      permission: crm.write
+      mutation:
+        guards:
+          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage IN ('Qualified', 'Proposition')"
+            status: 409
+            message: Lead must be qualified before it is won
+        steps:
+          - query: "UPDATE crm_leads SET stage = 'Won', probability = 100, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    - id: lost
+      from: [New, Qualified, Proposition]
+      to: Lost
+      permission: crm.write
+      mutation:
+        guards:
+          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage IN ('New', 'Qualified', 'Proposition')"
+            status: 409
+            message: Lead is already closed
+        steps:
+          - query: "UPDATE crm_leads SET stage = 'Lost', lost_reason = :lost_reason, probability = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+        result: { query: "SELECT * FROM crm_leads WHERE id = :id" }

@@ -1,0 +1,145 @@
+title: Subscription
+page: { id: subscription-detail, breadcrumb: [Sales, Subscriptions, Detail], auth: { require: [subscriptions.read] } }
+datasources:
+  - id: subscription_detail
+    single: true
+    permission: subscriptions.read
+    query: "SELECT id, row_version, name, partner_name, recurring_revenue, plan, recurring_period, state, CAST(start_date AS VARCHAR) AS start_date, CAST(next_invoice_date AS VARCHAR) AS next_invoice_date, salesperson FROM sale_subscriptions WHERE id = :id"
+  - id: subscription_detail_invoices
+    single: false
+    permission: subscriptions.read
+    query: "SELECT id, invoice_number, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount, state FROM sale_subscription_invoices WHERE subscription_id = :id ORDER BY invoice_date DESC"
+  - id: subscription_detail_plan_lookup
+    single: false
+    permission: subscriptions.read
+    query: "SELECT name AS value, name AS label FROM sale_subscription_plans WHERE active = true ORDER BY name"
+components:
+  - type: OdooFormView
+    source: subscription_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Quotation, label: Quotation }
+      - { value: In Progress, label: In progress }
+      - { value: Paused, label: Paused }
+      - { value: Closed, label: Closed }
+      - { value: Churned, label: Churned }
+    status_colors: { Quotation: neutral, In Progress: green, Paused: amber, Closed: blue, Churned: red }
+    header_actions:
+      - { id: edit_subscription_detail, label: Edit, variant: secondary, permission: subscriptions.write, show_if: "state.subscription_detail.state === 'Quotation' || state.subscription_detail.state === 'Paused'" }
+      - { id: activate_subscription_detail, label: Confirm, variant: primary, permission: subscriptions.write, show_if: "state.subscription_detail.state === 'Quotation' || state.subscription_detail.state === 'Paused'" }
+      - { id: pause_subscription_detail, label: Pause, variant: secondary, permission: subscriptions.write, show_if: "state.subscription_detail.state === 'In Progress'" }
+      - { id: close_subscription_detail, label: Close, variant: danger, permission: subscriptions.write, show_if: "state.subscription_detail.state === 'In Progress' || state.subscription_detail.state === 'Paused'" }
+      - { id: churn_subscription_detail, label: Churn, variant: danger, permission: subscriptions.write, show_if: "state.subscription_detail.state === 'In Progress' || state.subscription_detail.state === 'Paused'" }
+      - { id: generate_subscription_invoice, label: Generate invoice, variant: secondary, permission: subscriptions.write, show_if: "state.subscription_detail.state === 'In Progress'" }
+    group_columns: 2
+    groups:
+      - title: Subscription
+        fields:
+          - { field: name, label: Subscription }
+          - { field: state, label: Status }
+          - { field: plan, label: Plan }
+          - { field: recurring_period, label: Recurrence }
+          - { field: recurring_revenue, label: Recurring revenue }
+      - title: Customer and dates
+        fields:
+          - { field: partner_name, label: Customer }
+          - { field: start_date, label: Start date }
+          - { field: next_invoice_date, label: Next invoice }
+          - { field: salesperson, label: Salesperson }
+  - type: ContactGrid
+    source: subscription_detail_invoices
+    row_key: id
+    columns:
+      - { field: invoice_number, label: Invoice, type: PrimaryEntityCell }
+      - { field: invoice_date, label: Invoice date }
+      - { field: due_date, label: Due date }
+      - { field: amount, label: Amount, align: right }
+      - { field: state, label: Status, type: StatusChip }
+actions:
+  - id: edit_subscription_detail
+    type: server_form
+    permission: subscriptions.write
+    title: Edit subscription
+    action: subscriptions.update
+    handler: yaml_mutation
+    operation: update
+    prefill: source
+    prefill_source: subscription_detail
+    refresh: [subscription_detail, subscription_detail_invoices]
+    mutation:
+      operation: update
+      table: sale_subscriptions
+      fields: [name, partner_name, recurring_revenue, plan, recurring_period, start_date, next_invoice_date, salesperson]
+      required: [name]
+      guards:
+        - query: "SELECT id FROM sale_subscriptions WHERE id = :id AND state IN ('Quotation', 'Paused')"
+          status: 409
+          message: Only quotation or paused subscriptions can be edited
+        - query: "SELECT 1 AS ok WHERE CAST(:recurring_revenue AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Recurring revenue cannot be negative
+        - query: "SELECT 1 AS ok WHERE :start_date IS NULL OR :next_invoice_date IS NULL OR CAST(:next_invoice_date AS DATE) >= CAST(:start_date AS DATE)"
+          status: 400
+          message: Next invoice date must be on or after the start date
+      result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+    fields:
+      - { field: name, label: Subscription, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: recurring_revenue, label: Recurring revenue, type: money, required: true }
+      - { field: plan, label: Plan, type: select, options_source: subscription_detail_plan_lookup }
+      - { field: recurring_period, label: Recurrence, type: select, options: [Daily, Weekly, Monthly, Yearly] }
+      - { field: start_date, label: Start date, type: date }
+      - { field: next_invoice_date, label: Next invoice, type: date }
+      - { field: salesperson, label: Salesperson, type: text }
+  - id: activate_subscription_detail
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.activate
+    handler: order_transition
+    workflow: subscriptions
+    operation: activate
+    refresh: [subscription_detail, subscription_detail_invoices]
+  - id: pause_subscription_detail
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.pause
+    handler: order_transition
+    workflow: subscriptions
+    operation: pause
+    refresh: [subscription_detail, subscription_detail_invoices]
+  - id: close_subscription_detail
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.close
+    handler: order_transition
+    workflow: subscriptions
+    operation: close
+    refresh: [subscription_detail, subscription_detail_invoices]
+  - id: churn_subscription_detail
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.churn
+    handler: order_transition
+    workflow: subscriptions
+    operation: churn
+    refresh: [subscription_detail, subscription_detail_invoices]
+  - id: generate_subscription_invoice
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.invoices.generate
+    handler: subscription_billing
+    operation: generate
+    params: { id: '{state.id}' }
+    refresh: [subscription_detail, subscription_detail_invoices]
+    mutation:
+      generated: [invoice_id]
+      guards:
+        - query: "SELECT id FROM sale_subscriptions WHERE id = :id AND state = 'In Progress'"
+          status: 409
+          message: Only active subscriptions can generate recurring invoices
+      steps:
+        - { query: "SELECT id, name, recurring_revenue, recurring_period, COALESCE(next_invoice_date, CURRENT_DATE) AS billing_date FROM sale_subscriptions WHERE id = :id", assign: true }
+        - query: "INSERT INTO sale_subscription_invoices(id, subscription_id, invoice_number, invoice_date, due_date, amount, state) VALUES(:invoice_id, :id, 'SUB-' || :id || '-' || CAST((SELECT COUNT(*) + 1 FROM sale_subscription_invoices WHERE subscription_id = :id) AS VARCHAR), CAST(:billing_date AS DATE), CAST(:billing_date AS DATE) + INTERVAL '30 days', :recurring_revenue, 'Draft')"
+        - query: "UPDATE sale_subscriptions SET next_invoice_date = (SELECT COALESCE(next_invoice_date, CURRENT_DATE) FROM sale_subscriptions WHERE id = :id) + CASE recurring_period WHEN 'Daily' THEN INTERVAL '1 day' WHEN 'Weekly' THEN INTERVAL '7 days' WHEN 'Yearly' THEN INTERVAL '1 year' ELSE INTERVAL '1 month' END, row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT * FROM sale_subscription_invoices WHERE id = :invoice_id" }

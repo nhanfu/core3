@@ -1,0 +1,15 @@
+id: point-of-sale
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/sessions.yaml
+  - pages/pos-orders.yaml
+  - pages/pos-configs.yaml
+  - pages/pos-payments.yaml
+  - pages/pos-invoices.yaml
+  - pages/pos-analysis.yaml
+  - pages/pos-order-detail.yaml
+permissions: permissions.yaml
+storage: storage.yaml

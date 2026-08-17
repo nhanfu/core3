@@ -33,14 +33,14 @@ if (import.meta.main) {
   if (!supported.has(requestedDb)) throw new Error(`Unsupported database mode: ${requestedDb}. Use --db=postgres|duckdb|mysql|oracle|sqlserver`);
   if (memoryDb && requestedDb !== 'duckdb') throw new Error('--memory can only be used with --db=duckdb');
   const defaultDriver = memoryDb ? 'duckdb-memory' : requestedDb;
-  const serviceIds = ['auth', 'order', 'chat'] as const;
+  const serviceIds = ['auth', 'order', 'chat', 'crm', 'point-of-sale', 'sale-subscription', 'sale-renting'] as const;
   const databaseEnv: Record<string, string> = {
     CORE3_DB_DRIVER: defaultDriver,
   };
   if (demoData || schemaOnly) databaseEnv.CORE3_CLEAN_DB = 'true';
   if (schemaOnly) databaseEnv.CORE3_SCHEMA_ONLY = 'true';
   for (const serviceId of serviceIds) {
-    const prefix = serviceId.toUpperCase();
+    const prefix = serviceId.toUpperCase().replaceAll('-', '_');
     databaseEnv[`CORE3_${prefix}_DB_DRIVER`] = process.env[`CORE3_${prefix}_DB_DRIVER`] || defaultDriver;
   }
   if (memoryDb) {

@@ -1,0 +1,109 @@
+title: Subscriptions
+page: { id: subscriptions, breadcrumb: [Sales, Subscriptions], auth: { require: [subscriptions.read] } }
+datasources:
+  - id: subscription_states
+    single: false
+    permission: subscriptions.read
+    query: "SELECT value, label FROM (VALUES ('Quotation','Quotation'), ('In Progress','In Progress'), ('Paused','Paused'), ('Closed','Closed'), ('Churned','Churned')) states(value, label)"
+  - id: sale_subscriptions
+    single: false
+    permission: subscriptions.read
+    workflow: subscriptions
+    query: "SELECT id, name, partner_name, recurring_revenue, plan, recurring_period, state, salesperson, CAST(start_date AS VARCHAR) AS start_date, CAST(next_invoice_date AS VARCHAR) AS next_invoice_date FROM sale_subscriptions WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%') ORDER BY created_at DESC"
+  - id: subscription_plan_lookup
+    single: false
+    permission: subscriptions.read
+    query: "SELECT name AS value, name AS label FROM sale_subscription_plans WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_subscriptions
+    create_action: create_subscription
+    create_label: New subscription
+    search: { label: Search subscriptions, placeholder: Search subscriptions and customers... }
+    filters: [{ field: state, label: Status, options_source: subscription_states }]
+    columns:
+      - { field: name, label: Subscription, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: plan, label: Plan }
+      - { field: recurring_revenue, label: Recurring revenue, align: right }
+      - { field: recurring_period, label: Period }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: next_invoice_date, label: Next invoice }
+    page_size: 50
+    row_key: id
+    row_open_action: view_subscription
+    row_double_click_action: view_subscription
+    form_view: { page: apps/services/sale_subscription/pages/subscription-detail.yaml, side_panel: true }
+    row_actions: menu
+    actions:
+      - { id: activate_subscription, label: Confirm, permission: subscriptions.write, variant: primary }
+      - { id: pause_subscription, label: Pause, permission: subscriptions.write, variant: secondary }
+      - { id: close_subscription, label: Close, permission: subscriptions.write, variant: danger }
+      - { id: churn_subscription, label: Churn, permission: subscriptions.write, variant: danger }
+actions:
+  - id: view_subscription
+    type: navigate
+    permission: subscriptions.read
+    navigate_to: /subscription-detail
+    params: { id: '{row.id}' }
+  - id: create_subscription
+    type: server_form
+    permission: subscriptions.write
+    title: New subscription
+    action: subscriptions.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: sale_subscriptions
+      fields: [name, partner_name, recurring_revenue, plan, recurring_period, state, start_date, next_invoice_date, salesperson]
+      required: [name]
+      defaults: { state: Quotation, recurring_period: Monthly, recurring_revenue: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE :recurring_revenue IS NULL OR CAST(:recurring_revenue AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Recurring revenue cannot be negative
+        - query: "SELECT 1 AS ok WHERE :start_date IS NULL OR :next_invoice_date IS NULL OR CAST(:next_invoice_date AS DATE) >= CAST(:start_date AS DATE)"
+          status: 400
+          message: Next invoice date must be on or after the start date
+      result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+    fields:
+      - { field: name, label: Subscription, type: text, required: true }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: plan, label: Plan, type: select, options_source: subscription_plan_lookup }
+      - { field: recurring_revenue, label: Recurring revenue, type: number }
+      - { field: start_date, label: Start date, type: date }
+      - { field: next_invoice_date, label: Next invoice, type: date }
+  - id: activate_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.activate
+    handler: order_transition
+    workflow: subscriptions
+    operation: activate
+    refresh: [sale_subscriptions]
+  - id: pause_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.pause
+    handler: order_transition
+    workflow: subscriptions
+    operation: pause
+    refresh: [sale_subscriptions]
+  - id: close_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.close
+    handler: order_transition
+    workflow: subscriptions
+    operation: close
+    refresh: [sale_subscriptions]
+  - id: churn_subscription
+    type: server
+    permission: subscriptions.write
+    action: subscriptions.churn
+    handler: order_transition
+    workflow: subscriptions
+    operation: churn
+    refresh: [sale_subscriptions]

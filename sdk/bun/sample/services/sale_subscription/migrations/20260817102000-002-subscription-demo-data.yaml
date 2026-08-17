@@ -1,0 +1,20 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO sale_subscriptions(id, name, partner_name, recurring_revenue, plan, recurring_period, state, start_date, next_invoice_date, salesperson)
+      VALUES
+        ('subscription-demo-001', 'SUB/2026/0001', 'Acme Corporation', 1200, 'Premium Support', 'Monthly', 'In Progress', DATE '2026-07-01', DATE '2026-09-01', 'Admin User'),
+        ('subscription-demo-002', 'SUB/2026/0002', 'Globex Industries', 5000, 'Enterprise Platform', 'Yearly', 'Quotation', DATE '2026-09-01', DATE '2027-09-01', 'Dispatcher User')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO sale_subscription_invoices(id, subscription_id, invoice_number, invoice_date, due_date, amount, state)
+      VALUES ('subscription-invoice-demo-001', 'subscription-demo-001', 'INV/2026/0001', DATE '2026-08-01', DATE '2026-08-15', 1200, 'Posted')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_subscription_invoices WHERE id = 'subscription-invoice-demo-001';
+      DELETE FROM sale_subscriptions WHERE id IN ('subscription-demo-001', 'subscription-demo-002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

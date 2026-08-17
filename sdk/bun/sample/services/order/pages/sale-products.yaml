@@ -1,0 +1,85 @@
+title: Products
+page: { id: sale-products, breadcrumb: [Sales, Products], auth: { require: [orders.read] } }
+datasources:
+  - id: sale_products
+    single: false
+    permission: orders.read
+    query: |
+      SELECT id, row_version, default_code, name, product_type, list_price, cost_price,
+        uom, category, sale_ok, active, description, CAST(created_at AS VARCHAR) AS created_at
+      FROM sale_products
+      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR default_code ILIKE '%' || :q || '%')
+        AND (:active IS NULL OR active = :active)
+      ORDER BY name
+  - id: sale_product_active
+    single: false
+    permission: orders.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_products
+    create_action: create_sale_product
+    create_label: New product
+    search: { label: Search products, placeholder: Search products by name or internal reference... }
+    filters: [{ field: active, label: Status, options_source: sale_product_active }]
+    columns:
+      - { field: default_code, label: Internal reference }
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: product_type, label: Product type }
+      - { field: category, label: Category }
+      - { field: list_price, label: Sales price, align: right }
+      - { field: uom, label: Unit of Measure }
+      - { field: sale_ok, label: Can be sold }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_actions: menu
+    actions:
+      - { id: archive_sale_product, label: Archive, permission: orders.write, variant: danger, show_if: "row.active === true" }
+actions:
+  - id: create_sale_product
+    type: server_form
+    permission: orders.write
+    title: New product
+    action: sales.products.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sale_products]
+    mutation:
+      operation: insert
+      table: sale_products
+      fields: [default_code, name, product_type, list_price, cost_price, uom, category, sale_ok, active, description]
+      required: [name]
+      defaults: { product_type: Goods, list_price: 0, cost_price: 0, uom: Units, sale_ok: true, active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE :default_code IS NULL OR NOT EXISTS (SELECT 1 FROM sale_products WHERE default_code = :default_code)"
+          status: 409
+          message: Internal reference already exists
+      result: { query: "SELECT * FROM sale_products WHERE id = :id" }
+    fields:
+      - { field: default_code, label: Internal reference, type: text }
+      - { field: name, label: Product name, type: text, required: true }
+      - { field: product_type, label: Product type, type: select, options: [Goods, Service, Combo], default: Goods }
+      - { field: list_price, label: Sales price, type: number }
+      - { field: cost_price, label: Cost, type: number }
+      - { field: uom, label: Unit of Measure, type: text, default: Units }
+      - { field: category, label: Category, type: text }
+      - { field: description, label: Sales description, type: textarea }
+  - id: archive_sale_product
+    type: server
+    permission: orders.write
+    action: sales.products.archive
+    handler: product_status
+    operation: archive
+    params: { id: '{row.id}' }
+    refresh: [sale_products]
+    mutation:
+      guards:
+        - query: "SELECT id FROM sale_products WHERE id = :id AND active = true"
+          status: 409
+          message: Product is already archived
+      steps:
+        - query: "UPDATE sale_products SET active = false, sale_ok = false, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+      result: { query: "SELECT * FROM sale_products WHERE id = :id" }

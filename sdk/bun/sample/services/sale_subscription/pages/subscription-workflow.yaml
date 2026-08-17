@@ -1,0 +1,57 @@
+workflow:
+  id: subscriptions
+  entity: sale_subscriptions
+  handler: subscription_status
+  initial: Quotation
+  permission: subscriptions.write
+  mutable: true
+  status_source: subscription_states
+  status_query: SELECT state AS status FROM sale_subscriptions WHERE id = ?
+  default_mutation:
+    guards:
+      - query: "SELECT id FROM sale_subscriptions WHERE id = :id AND state = :current_status"
+        status: 409
+        message: Subscription state has changed; refresh and try again
+    steps:
+      - query: "UPDATE sale_subscriptions SET state = :target_status, row_version = row_version + 1 WHERE id = :id"
+    result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+  states:
+    - { id: Quotation, label: Quotation, color: neutral }
+    - { id: In Progress, label: In Progress, color: green }
+    - { id: Paused, label: Paused, color: amber }
+    - { id: Closed, label: Closed, color: blue, terminal: true }
+    - { id: Churned, label: Churned, color: red, terminal: true }
+  transitions:
+    - id: activate
+      from: [Quotation, Paused]
+      to: In Progress
+      permission: subscriptions.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_subscriptions SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id"
+          - query: "INSERT INTO sale_subscription_invoices(id, subscription_id, invoice_number, invoice_date, due_date, amount, state) SELECT gen_random_uuid(), id, 'SUB-' || id || '-001', CURRENT_DATE, CURRENT_DATE + 30, recurring_revenue, 'Draft' FROM sale_subscriptions s WHERE s.id = :id AND NOT EXISTS (SELECT 1 FROM sale_subscription_invoices i WHERE i.subscription_id = s.id)"
+        result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+    - id: pause
+      from: [In Progress]
+      to: Paused
+      permission: subscriptions.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_subscriptions SET state = 'Paused', row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+    - id: close
+      from: [In Progress, Paused]
+      to: Closed
+      permission: subscriptions.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_subscriptions SET state = 'Closed', row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }
+    - id: churn
+      from: [In Progress, Paused]
+      to: Churned
+      permission: subscriptions.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_subscriptions SET state = 'Churned', row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM sale_subscriptions WHERE id = :id" }

@@ -1,0 +1,12 @@
+id: sale-subscription
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/subscriptions.yaml
+  - pages/subscription-detail.yaml
+  - pages/subscription-invoices.yaml
+  - pages/subscription-plans.yaml
+permissions: permissions.yaml
+storage: storage.yaml

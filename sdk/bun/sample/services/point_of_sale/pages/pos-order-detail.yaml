@@ -1,0 +1,155 @@
+title: POS Order
+page: { id: pos-order-detail, breadcrumb: [Sales, Point of Sale, Order], auth: { require: [pos.read] } }
+datasources:
+  - id: pos_order_detail
+    single: true
+    permission: pos.read
+    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :id"
+  - id: pos_order_detail_lines
+    single: false
+    permission: pos.read
+    query: "SELECT id, order_id, product_name, quantity, price_unit, COALESCE(tax_rate, 0) AS tax_rate, COALESCE(discount, 0) AS discount, price_subtotal, COALESCE(price_tax, 0) AS price_tax, COALESCE(price_total, price_subtotal) AS price_total FROM pos_order_lines WHERE order_id = :id ORDER BY id"
+  - id: pos_order_detail_payments
+    single: false
+    permission: pos.read
+    query: "SELECT id, method, amount, state, CAST(payment_date AS VARCHAR) AS payment_date FROM pos_payments WHERE order_id = :id ORDER BY payment_date DESC"
+components:
+  - type: OdooFormView
+    source: pos_order_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: New, label: New }
+      - { value: Paid, label: Paid }
+      - { value: Invoiced, label: Invoiced }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { New: neutral, Paid: green, Invoiced: blue, Cancelled: red }
+    header_actions:
+      - { id: pay_pos_order_detail, label: Register payment, variant: primary, permission: pos.write, show_if: "state.pos_order_detail.state === 'New' || state.pos_order_detail.state === 'Paid'" }
+      - { id: invoice_pos_order_detail, label: Create invoice, variant: secondary, permission: pos.write, show_if: "state.pos_order_detail.state === 'Paid' && state.pos_order_detail.to_invoice === true && !state.pos_order_detail.invoice_id" }
+      - { id: cancel_pos_order_detail, label: Cancel, variant: danger, permission: pos.write, show_if: "state.pos_order_detail.state === 'New' || state.pos_order_detail.state === 'Paid'" }
+    group_columns: 2
+    groups:
+      - title: Order
+        fields:
+          - { field: name, label: Order }
+          - { field: state, label: Status }
+          - { field: session_name, label: Session }
+          - { field: date_order, label: Order date }
+      - title: Customer and payment
+        fields:
+          - { field: partner_name, label: Customer }
+          - { field: payment_method, label: Payment method }
+          - { field: amount_total, label: Total }
+          - { field: amount_tax, label: Tax }
+          - { field: amount_paid, label: Paid }
+          - { field: to_invoice, label: To invoice }
+          - { field: invoice_id, label: Invoice }
+  - type: LineItemGrid
+    source: pos_order_detail_lines
+    parent_source: pos_order_detail
+    row_key: id
+    variant: odoo_x2many
+    actions:
+      - { id: add_pos_order_line, label: Add line, variant: primary, permission: pos.write, show_if: "state.pos_order_detail.state === 'New'" }
+    columns:
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: price_unit, label: Unit price, align: right }
+      - { field: tax_rate, label: Tax, align: right }
+      - { field: discount, label: Discount, align: right }
+      - { field: price_subtotal, label: Untaxed, align: right }
+      - { field: price_tax, label: Tax amount, align: right }
+      - { field: price_total, label: Total, align: right }
+    empty_state: { title: No order lines, description: This order has no registered lines. }
+  - type: ContactGrid
+    source: pos_order_detail_payments
+    row_key: id
+    columns:
+      - { field: method, label: Payment method }
+      - { field: amount, label: Amount, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: payment_date, label: Payment date }
+actions:
+  - id: invoice_pos_order_detail
+    type: server
+    permission: pos.write
+    action: pos.orders.invoice
+    handler: pos_invoice
+    operation: invoice
+    params: { id: '{state.id}' }
+    refresh: [pos_order_detail, pos_order_detail_payments]
+    mutation:
+      generated: [invoice_id]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND state = 'Paid' AND to_invoice = true AND invoice_id IS NULL"
+          status: 409
+          message: Only paid POS orders marked for invoicing can be invoiced
+      steps:
+        - query: "INSERT INTO pos_invoices(id, order_id, invoice_number, amount) VALUES(:invoice_id, :id, 'POS-' || :id, (SELECT amount_total FROM pos_orders WHERE id = :id))"
+        - query: "UPDATE pos_orders SET state = 'Invoiced', invoice_id = :invoice_id, row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
+  - id: add_pos_order_line
+    type: server_form
+    permission: pos.write
+    title: Add POS order line
+    action: pos.orders.lines.create
+    handler: pos_order_line
+    operation: create
+    domain: pos_order
+    params: { id: '{state.id}' }
+    refresh: [pos_order_detail, pos_order_detail_lines]
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, default: 1, required: true }
+      - { field: price_unit, label: Unit price, type: money, required: true }
+      - { field: tax_rate, label: Tax rate (%), type: number, default: 0, required: true }
+      - { field: discount, label: Discount (%), type: number, default: 0, required: true }
+    mutation:
+      generated: [line_id]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND state = 'New'"
+          status: 409
+          message: Only new POS orders can receive lines
+        - query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:price_unit AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Quantity must be positive and price cannot be negative
+        - query: "SELECT 1 AS ok WHERE CAST(:tax_rate AS DECIMAL(9,4)) BETWEEN 0 AND 100 AND CAST(:discount AS DECIMAL(9,4)) BETWEEN 0 AND 100"
+          status: 400
+          message: Tax and discount must be between 0 and 100 percent
+      steps:
+        - query: "INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total) VALUES(:line_id, :id, :product_name, :quantity, :price_unit, :tax_rate, :discount, ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:price_unit AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:price_unit AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * CAST(:tax_rate AS DECIMAL(9,4)) / 100, 2), ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(:price_unit AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9,4)) / 100), 2))"
+        - query: "UPDATE pos_orders SET amount_tax = (SELECT COALESCE(SUM(price_tax), 0) FROM pos_order_lines WHERE order_id = :id), amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :id), row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT l.*, (SELECT amount_total FROM pos_orders WHERE id = :id) AS amount_total FROM pos_order_lines l WHERE l.id = :line_id" }
+  - id: pay_pos_order_detail
+    type: server_form
+    permission: pos.write
+    title: Register POS payment
+    action: pos.orders.pay
+    handler: yaml_mutation
+    operation: pay
+    refresh: [pos_order_detail, pos_order_detail_payments]
+    mutation:
+      generated: [payment_id]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('New', 'Paid')"
+          status: 409
+          message: This POS order cannot receive a payment
+        - query: "SELECT 1 AS ok WHERE CAST(:payment_amount AS DECIMAL(18,2)) > 0 AND CAST(:payment_amount AS DECIMAL(18,2)) <= (SELECT amount_total - amount_paid FROM pos_orders WHERE id = :id)"
+          status: 400
+          message: Payment must be positive and cannot exceed the remaining balance
+      steps:
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :id, COALESCE(:payment_method, 'Cash'), :payment_amount)"
+        - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
+    fields:
+      - { field: payment_amount, label: Payment amount, type: money, required: true }
+      - { field: payment_method, label: Payment method, type: select, options: [Cash, Bank, Card, Other], required: true }
+  - id: cancel_pos_order_detail
+    type: server
+    permission: pos.write
+    action: pos.orders.cancel
+    handler: order_transition
+    workflow: pos_orders
+    operation: cancel
+    refresh: [pos_order_detail, pos_order_detail_payments]

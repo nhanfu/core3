@@ -1,0 +1,26 @@
+version: 0.0.4
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS amount_tax DECIMAL(18,2);
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS to_invoice BOOLEAN;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS invoice_id VARCHAR;
+      ALTER TABLE pos_order_lines ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(9,4);
+      ALTER TABLE pos_order_lines ADD COLUMN IF NOT EXISTS discount DECIMAL(9,4);
+      ALTER TABLE pos_order_lines ADD COLUMN IF NOT EXISTS price_tax DECIMAL(18,2);
+      ALTER TABLE pos_order_lines ADD COLUMN IF NOT EXISTS price_total DECIMAL(18,2);
+      UPDATE pos_orders SET amount_tax = COALESCE(amount_tax, 0), to_invoice = COALESCE(to_invoice, false);
+      UPDATE pos_order_lines SET tax_rate = COALESCE(tax_rate, 0), discount = COALESCE(discount, 0),
+        price_tax = COALESCE(price_tax, 0), price_total = COALESCE(price_total, price_subtotal);
+    down: |
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS invoice_id;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS to_invoice;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS amount_tax;
+      ALTER TABLE pos_order_lines DROP COLUMN IF EXISTS price_total;
+      ALTER TABLE pos_order_lines DROP COLUMN IF EXISTS price_tax;
+      ALTER TABLE pos_order_lines DROP COLUMN IF EXISTS discount;
+      ALTER TABLE pos_order_lines DROP COLUMN IF EXISTS tax_rate;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

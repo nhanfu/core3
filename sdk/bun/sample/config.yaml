@@ -18,3 +18,31 @@ apps:
     route: /chat/
     module: chat
     enabled: true
+  - id: crm
+    label: CRM
+    description: Lead and opportunity management
+    icon: users
+    route: /leads
+    module: crm
+    enabled: true
+  - id: point-of-sale
+    label: Point of Sale
+    description: Retail sessions and payments
+    icon: cart
+    route: /sessions
+    module: point-of-sale
+    enabled: true
+  - id: sale-subscription
+    label: Subscriptions
+    description: Recurring sales contracts
+    icon: repeat
+    route: /subscriptions
+    module: sale-subscription
+    enabled: true
+  - id: sale-renting
+    label: Rental
+    description: Rental orders and returns
+    icon: calendar
+    route: /rentals
+    module: sale-renting
+    enabled: true

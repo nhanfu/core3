@@ -1,0 +1,20 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO sale_rentals(id, name, partner_name, product_name, quantity, rental_period, state, start_date, return_date, price, salesperson)
+      VALUES
+        ('rental-demo-001', 'RENT/2026/0001', 'Acme Corporation', 'Forklift 2.5T', 1, 'Days', 'Picked Up', DATE '2026-08-15', DATE '2026-08-22', 850, 'Admin User'),
+        ('rental-demo-002', 'RENT/2026/0002', 'Globex Industries', 'Mobile crane', 2, 'Weeks', 'Quotation', NULL, NULL, 4200, 'Dispatcher User')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO sale_rental_events(id, rental_id, event_type, notes, actor_name)
+      VALUES ('rental-event-demo-001', 'rental-demo-001', 'pickup', 'Equipment handed over', 'Admin User')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_rental_events WHERE id = 'rental-event-demo-001';
+      DELETE FROM sale_rentals WHERE id IN ('rental-demo-001', 'rental-demo-002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

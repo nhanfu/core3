@@ -142,7 +142,12 @@ export class YamlServiceModule implements ModuleLifecycle {
     const declaredStorage = this.definition.storage as any;
     const databaseConfig = declaredStorage?.database || resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
     const migrationsRoot = this.manifest.migrations ? join(context.moduleRoot, this.manifest.migrations) : undefined;
-    const configuredDriver = String(databaseConfig?.storage?.driver || databaseConfig?.driver || 'duckdb');
+    const configuredDriver = String(
+      context.env[`CORE3_${this.id.toUpperCase().replace(/-/g, '_')}_DB_DRIVER`]
+        || databaseConfig?.storage?.driver
+        || databaseConfig?.driver
+        || 'duckdb',
+    );
     const storageDriver = configuredDriver === 'duckdb-memory' ? 'duckdb' : configuredDriver;
     if (storageDriver === 'postgres') {
       const url = resolveDatabaseUrl(databaseConfig, context.env);
@@ -170,9 +175,11 @@ export class YamlServiceModule implements ModuleLifecycle {
       const schemaOnly = context.env.CORE3_SCHEMA_ONLY === 'true';
       const migrationKinds: MigrationKind[] = schemaOnly ? ['schema'] : ['schema', 'data'];
       if (context.env.CORE3_CLEAN_DB === 'true' || schemaOnly) {
-        await cleanDatabase(this.repository, migrationsRoot!, `${this.id}_schema_migrations`, ['schema', 'data']);
+        const migrationTable = `${this.id}_schema_migrations`.replace(/[^a-zA-Z0-9_]/g, '_');
+        await cleanDatabase(this.repository, migrationsRoot!, migrationTable, ['schema', 'data']);
       }
-      await migrateDatabase(this.repository, migrationsRoot!, undefined, `${this.id}_schema_migrations`, migrationKinds, { columnstoreTables });
+      const migrationTable = `${this.id}_schema_migrations`.replace(/[^a-zA-Z0-9_]/g, '_');
+      await migrateDatabase(this.repository, migrationsRoot!, undefined, migrationTable, migrationKinds, { columnstoreTables });
     }
     this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
 

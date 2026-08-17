@@ -1,0 +1,4 @@
+permissions:
+  - crm.read
+  - crm.write
+  - crm.manage

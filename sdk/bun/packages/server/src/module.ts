@@ -59,7 +59,15 @@ export function discoverModuleRoots(appsRoot: string): string[] {
 }
 
 function moduleRoot(appsRoot: string, moduleId: string): string {
-  const root = discoverModuleRoots(appsRoot).find((candidate) => basename(candidate) === moduleId);
+  const root = discoverModuleRoots(appsRoot).find((candidate) => {
+    if (basename(candidate) === moduleId) return true;
+    try {
+      const manifest = loadYamlServiceManifest(candidate).manifest;
+      return manifest.id === moduleId;
+    } catch {
+      return false;
+    }
+  });
   if (!root) throw new Error(`Module root is not discoverable: ${moduleId}`);
   return root;
 }
