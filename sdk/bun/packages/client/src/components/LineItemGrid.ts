@@ -42,7 +42,10 @@ export class LineItemGrid extends DataGrid {
     const body = html.take(table).tbody.className('token-body divide-y divide-gray-100').ele();
     for (const row of rows) this.drawRow(body, root, row, editingId === String(row.id));
 
-    const cards = html.take(root).div.className('o-line-grid-cards').ele();
+    // Keep the mobile representation out of the rendered layout until its
+    // responsive stylesheet explicitly enables it. This prevents a stale or
+    // missing generated stylesheet from showing each line twice.
+    const cards = html.take(root).div.className('o-line-grid-cards').css('display', 'none').ele();
     for (const row of rows) this.drawCard(cards, row, editingId === String(row.id));
 
     if (Array.isArray(this.state.footerStats) && this.state.footerStats.length) {

@@ -213,7 +213,7 @@
 .token-panel button.is-icon-only:hover { background: var(--o-form-hover); }
 @media (max-width: 768px) {
   .o-line-grid-table { display: none; }
-  .o-line-grid-cards { display: grid; gap: 8px; padding: 10px; }
+  .o-line-grid-cards { display: grid !important; gap: 8px; padding: 10px; }
 }
 .o-list-form-panel-body { overflow-y: auto; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .o-list-form-panel-body:hover { scrollbar-color: color-mix(in srgb, var(--o-form-muted) 55%, transparent) transparent; }

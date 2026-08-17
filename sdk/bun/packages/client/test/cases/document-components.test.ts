@@ -467,7 +467,7 @@ describe('document detail components', () => {
     });
     const container = mount(grid);
 
-    expect(container.querySelector('.o-line-grid-cards')).not.toBeNull();
+    expect(container.querySelector<HTMLElement>('.o-line-grid-cards')?.style.display).toBe('none');
     container.querySelector<HTMLButtonElement>('[aria-label="Edit"]')!.click();
     const input = container.querySelector<HTMLInputElement>('.o-line-grid-table input[aria-label="Description"]')!;
     input.value = 'Updated freight';
