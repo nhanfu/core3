@@ -148,6 +148,130 @@ components:
               - text: Continue hardening auth and the event mediator per the Gate Service Plan (gateway refactor)
                 href: /plan/auth-mediator
 
+      - id: ai-app-builder
+        kicker: Product thesis
+        title: Build YShip Studio — the AI app builder
+        lead: >-
+          The most valuable application to build first is the builder itself: a visual and
+          conversational environment where a user describes a product and YShip composes a real,
+          deployable application from the framework's typed components, YAML schemas, data sources,
+          workflows, and permissions.
+        blocks:
+          - type: callout
+            tone: important
+            title: This is the product boundary
+            text: >-
+              YShip should be closer to v0.dev, Lovable, and Manus than to a single ERP. Odoo parity,
+              logistics, CRM, dashboards, internal tools, portals, and lightweight SaaS products are
+              generated applications on top of the same runtime. The user should be able to say
+              “Build a clinic booking app with staff roles, availability, reminders, payments, and an
+              admin dashboard” and receive a working first version that can be refined in conversation.
+          - type: p
+            text: >-
+              The key distinction is that the AI does not generate an opaque pile of frontend code.
+              It plans against a component and capability registry, emits validated YAML, previews
+              the result, runs focused checks, and keeps every decision editable. Custom code remains
+              an escape hatch; the default path is composable, inspectable, upgradeable application
+              configuration.
+          - type: table
+            headers: [Builder surface, What the user experiences, What YShip must provide]
+            rows:
+              - [Prompt to app, 'Describe the audience, data, screens, and behavior in plain language', 'Structured app plan, clarification loop, YAML generation, dependency-aware component selection']
+              - [Visual canvas, 'See pages, responsive layouts, forms, tables, charts, and states immediately', 'Live PageRuntime preview, drag/reorder overrides, responsive preview, undoable patches']
+              - [Data and actions, 'Connect a datasource or ask for a new model and CRUD flow', 'Schema-aware datasource builder, generic repositories, guarded mutations, migrations']
+              - [Behavior and access, 'Add roles, approvals, notifications, and automations by describing them', 'Workflow/topic/permission registries, testable transitions, event-driven actions']
+              - [Publish and share, 'Deploy a private tool, public portal, or multi-user application', 'Environment promotion, tenant isolation, auth, observability, version history, export']
+          - type: table
+            headers: [Phase, Builder milestone, Exit evidence]
+            rows:
+              - [0 — Registry, 'Make components, YAML keys, datasource fields, actions, workflows, and permissions machine-readable', 'The model can retrieve valid capabilities and cannot emit unknown component props or unsafe actions']
+              - [1 — Generator, 'Generate a complete app manifest from a prompt and a small set of structured answers', 'Prompt produces a runnable multi-page app with valid YAML, seeded data, navigation, and role-aware CRUD']
+              - [2 — Live refinement, 'Add chat-driven edits, visual selection, diffs, undo, snapshots, and targeted regeneration', 'User can select a screen or component, request a change, inspect the YAML diff, and roll it back']
+              - [3 — Full-stack composition, 'Generate models, migrations, datasources, workflows, events, and integrations alongside UI', 'A non-trivial app ships without hand-written page code and passes schema, permission, and focused runtime checks']
+              - [4 — Quality and trust, 'Add preview fixtures, browser checks, accessibility checks, security policy checks, and explainable errors', 'Every generated app has a reproducible validation report and actionable repair loop']
+              - [5 — Marketplace, 'Let developers publish components, templates, connectors, and domain packs', 'Versioned packages install into the registry with compatibility metadata and safe upgrade paths']
+          - type: list
+            items:
+              - Make the generated YAML the source of truth; the chat transcript is an interaction layer, not the application
+              - Prefer deterministic planning plus constrained generation over unrestricted code generation
+              - Show the user the app tree, data model, permissions, workflow graph, and YAML diff as first-class artifacts
+              - Give AI read access only through permissioned queries and require approval for mutations, deployments, and secrets
+              - Measure time-to-first-working-app, successful prompt-to-publish rate, repair rate, rollback rate, and generated-app reuse
+
+      - id: flagship-product
+        kicker: First generated product
+        title: Build YShip OS — the operations graph
+        lead: >-
+          YShip OS becomes the first showcase application generated by YShip Studio: one YAML-native
+          operating system where work, data, approvals, conversations, automations, and audit events
+          are connected instead of trapped inside separate application silos.
+        blocks:
+          - type: callout
+            tone: important
+            title: Recommended app — YShip OS
+            text: >-
+              Use the operations graph as the first world-class showcase for teams that run repeatable, high-stakes
+              processes: logistics, field service, procurement, finance operations, customer support,
+              and internal approvals. Its differentiator is not a larger menu of modules; it is a
+              shared operational graph. A record, task, message, approval, file, metric, and event
+              should be different views of the same traceable business activity.
+          - type: p
+            text: >-
+              YAML remains the product language: routes, menus, permissions, forms, workflows,
+              datasources, mutations, notifications, and dashboards are declarative. The runtime
+              supplies the hard guarantees—typed data access, local JWT verification, durable events,
+              optimistic concurrency, auditability, and cross-service enrichment—so every new domain
+              gets enterprise behavior without another bespoke application shell.
+          - type: table
+            headers: [Product pillar, User promise, Framework capability it forces]
+            rows:
+              - [Operational graph, 'Every task, record, conversation, and event is connected', 'Typed relations, cross-service enrichment, global search, event lineage']
+              - [Process studio, 'Adapt a process without waiting for a full product release', 'YAML workflow editor, guarded mutations, approvals, versioned definitions']
+              - [Command center, 'See what needs attention across every team and service', 'Realtime topics, saved views, alerts, KPIs, timeline and workload components']
+              - [Trust layer, 'Know who changed what, why, and what happened next', 'Local JWT reads, permission scopes, immutable audit events, replayable history']
+              - [AI with evidence, 'Get recommendations that can be inspected and approved', 'Tool/action registry, provenance, human approval gates, bounded queries']
+          - type: table
+            headers: [Phase, Product milestone, Exit evidence]
+            rows:
+              - [0 — Foundation, 'Define the universal work-item, relation, event, approval, and evidence contracts', 'YAML schemas, migration rules, permission model, event envelope, representative seeded dataset']
+              - [1 — Control center, 'Ship a cross-service inbox, timeline, search, saved views, and operational dashboards', 'One user can discover and act on orders, chats, tasks, alerts, and audit history from one shell']
+              - [2 — Process studio, 'Make workflows, forms, approval chains, SLAs, and notifications editable in YAML and UI', 'A new process ships from YAML without page-specific client code and survives a definition version change']
+              - [3 — First vertical, 'Turn logistics into the reference vertical: order-to-delivery control tower', 'Live order, shipment, exception, document, conversation, and transition trace with role-based actions']
+              - [4 — Evidence AI, 'Add explainable copilots for triage, next action, anomaly detection, and reporting', 'Every suggestion cites source records/events, is permission-scoped, and requires approval for mutations']
+              - [5 — Platform, 'Let customers compose their own operations apps from the same primitives', 'Tenant-safe extension registry, packageable YAML modules, upgrade/migration tooling, usage telemetry']
+          - type: list
+            items:
+              - Keep Odoo Sales and Discuss as compatibility and pattern-extraction tracks, not the product boundary
+              - Prioritize one exceptional control-center experience before adding many vertical modules
+              - Treat event history and evidence links as first-class data, not an after-the-fact audit screen
+              - Make every AI capability consume the same permissioned query and mutation contracts as the UI
+              - Measure success by time-to-model a new process, time-to-detect an exception, and audit completeness
+
+      - id: delivery-timeline
+        kicker: Delivery sequence
+        title: Four milestones to YShip Studio
+        lead: >-
+          This is a relative sequence, not a promise of fixed calendar dates. Each stage earns the
+          next one by proving that generated applications are useful, editable, safe, and repeatable.
+        blocks:
+          - type: flowstrip
+            steps:
+              - label: 0–3 months
+                sub: 'Foundation: registry, YAML contracts, preview shell, and validation loop'
+              - label: 3–6 months
+                sub: 'Builder MVP: prompt → validated YAML → live, editable app'
+              - label: 6–12 months
+                sub: 'Full-stack generation: data, workflows, permissions, and the logistics showcase'
+              - label: 12–18 months
+                sub: 'Ecosystem: templates, connectors, components, and domain packs'
+          - type: table
+            headers: [Window, Outcome]
+            rows:
+              - [0–3 months, 'The framework can describe and validate every capability the AI is allowed to use']
+              - [3–6 months, 'A user can create and refine a useful multi-page app without hand-written page code']
+              - [6–12 months, 'Generated apps include real data, guarded behavior, permissions, and a production-grade showcase']
+              - [12–18 months, 'Other developers can extend YShip safely with reusable packages']
+
       - id: meta-model
         kicker: Design reference
         title: Component meta model and backend comms

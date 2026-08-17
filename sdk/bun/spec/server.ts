@@ -70,17 +70,31 @@ async function serveStatic(pathname: string) {
   const rel = pathname.startsWith('/') ? pathname.slice(1) : pathname;
   if (rel.includes('..')) return null;
   try {
-    const publicFile = Bun.file(join(PUBLIC_ROOT, rel));
-    const repoFile = Bun.file(join(REPO_ROOT, rel));
-    const file = await publicFile.exists() ? publicFile : repoFile;
-    if (!(await file.exists())) return null;
-    if (rel.endsWith('.ts')) {
+    const candidates = [rel, ...(rel.includes('.') ? [] : [`${rel}.ts`])];
+    let resolvedRel = '';
+    let file: ReturnType<typeof Bun.file> | null = null;
+    for (const candidate of candidates) {
+      const publicFile = Bun.file(join(PUBLIC_ROOT, candidate));
+      const repoFile = Bun.file(join(REPO_ROOT, candidate));
+      if (await publicFile.exists()) {
+        resolvedRel = candidate;
+        file = publicFile;
+        break;
+      }
+      if (await repoFile.exists()) {
+        resolvedRel = candidate;
+        file = repoFile;
+        break;
+      }
+    }
+    if (!file) return null;
+    if (resolvedRel.endsWith('.ts')) {
       const transpiler = new Bun.Transpiler({ loader: 'ts' });
       return new Response(transpiler.transformSync(await file.text()), {
         headers: { 'Content-Type': 'application/javascript', ...CORS_HEADERS },
       });
     }
-    return new Response(file, { headers: { 'Content-Type': mimeFor(rel), ...CORS_HEADERS } });
+    return new Response(file, { headers: { 'Content-Type': mimeFor(resolvedRel), ...CORS_HEADERS } });
   } catch {
     return null;
   }
