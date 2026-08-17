@@ -4,13 +4,18 @@ menu:
     label: Rental
     icon: calendar
     permission: rental.read
-  events:
-    path: /events
-    label: Rental Events
-    icon: history
-    permission: rental.read
-  availability:
-    path: /availability
-    label: Availability
-    icon: calendar
-    permission: rental.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - path: /events
+          label: Rental Events
+          icon: history
+          permission: rental.read
+    - id: planning
+      label: Planning
+      items:
+        - path: /availability
+          label: Availability
+          icon: calendar
+          permission: rental.read

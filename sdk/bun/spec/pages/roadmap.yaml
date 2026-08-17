@@ -135,6 +135,74 @@ components:
               exist because "hero + sidebar-linked sections + global nav" is a shape every doc-style
               project needs, not something worth re-describing per page.
 
+      - id: module-organization
+        kicker: Product organization
+        title: Odoo-style module ownership and flows
+        lead: >-
+          The sample services are organized around business ownership rather than around screens.
+          The current order service is the transitional Sales module; shared master data and finance
+          boundaries are explicit targets for the next extraction steps.
+        blocks:
+          - type: table
+            headers: [Module, Current service, Owns, Next boundary]
+            rows:
+              - [CRM, crm, 'Leads, opportunities, activities, teams, stages', 'Keep CRM-owned pipeline state and enrich it with Contacts and Sales records']
+              - [Sales, order, 'Quotations, sales orders, order lines, products, pricelists, payment terms', 'Extract Contacts, Products, and Invoicing when their contracts stabilize']
+              - [Point of Sale, point-of-sale, 'Sessions, POS orders, payments, receipts, configuration', 'Consume Sales products and Invoicing contracts without duplicating ownership']
+              - [Subscriptions, sale-subscription, 'Subscription contracts, plans, recurring billing inputs', 'Publish recurring invoice requests to Invoicing']
+              - [Rental, sale-renting, 'Rental orders, reservations, pickup, return, availability', 'Consume Sales products and connect delivery/inventory later']
+              - [Contacts, future shared service, 'Customers, companies, addresses, contacts', 'Replace duplicated customer fields through shared IDs and enrichment']
+              - [Invoicing, future finance service, 'Invoices, taxes, payments, reconciliation', 'Become the owner of invoice lifecycle for Sales, POS, Subscriptions, and Rental']
+              - [Auth, auth, 'Users, roles, permissions, companies', 'Remain infrastructure-owned and shared by every domain service']
+              - [Discuss, chat, 'Messages, activities, notifications, chatter', 'Remain cross-service collaboration infrastructure']
+          - type: callout
+            tone: note
+            title: Implementation status
+            text: >-
+              The current sample implements the grouped Odoo-style navigation for CRM, Sales, Point
+              of Sale, Subscriptions, and Rental. Service IDs remain stable for compatibility while
+              ownership is clarified in menus, page routes, permissions, and this roadmap.
+          - type: flowstrip
+            steps:
+              - label: CRM lead
+                sub: Qualify into an opportunity
+              - label: Quotation
+                sub: Prepare products, prices, and terms
+              - label: Sales order
+                sub: Confirm the commercial commitment
+              - label: Delivery / invoice
+                sub: Fulfill and collect payment
+          - type: flowstrip
+            steps:
+              - label: POS session
+                sub: Open the register
+              - label: POS order
+                sub: Sell products to the customer
+              - label: Payment
+                sub: Register cash, bank, or card
+              - label: Receipt / invoice
+                sub: Close the sale and document it
+          - type: flowstrip
+            steps:
+              - label: Subscription plan
+                sub: Select recurring terms
+              - label: Subscription
+                sub: Confirm the contract
+              - label: Recurring invoice
+                sub: Generate the billing obligation
+              - label: Payment
+                sub: Settle the recurring charge
+          - type: flowstrip
+            steps:
+              - label: Rental quotation
+                sub: Choose product and dates
+              - label: Reservation
+                sub: Hold the inventory
+              - label: Pickup
+                sub: Start the rental
+              - label: Return / invoice
+                sub: Complete and charge the rental
+
       - id: next
         kicker: Next up
         title: What's next

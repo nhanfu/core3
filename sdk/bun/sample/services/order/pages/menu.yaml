@@ -4,43 +4,45 @@ menu:
     label: Orders
     icon: logo
     permission: orders.read
-  analytics:
-    path: /analytics
-    label: Analytics
-    icon: chart
-    permission: orders.read
-  quotations:
-    path: /quotations
-    label: Quotations
-    icon: document
-    permission: orders.read
-  customers:
-    path: /customers
-    label: Customers
-    icon: users
-    permission: orders.read
-  products:
-    path: /products
-    label: Products
-    icon: cube
-    permission: orders.read
-  pricelists:
-    path: /pricelists
-    label: Pricelists
-    icon: tag
-    permission: orders.read
-  invoices:
-    path: /invoices
-    label: Invoices
-    icon: document
-    permission: orders.read
-  pricelist_rules:
-    path: /pricelist-rules
-    label: Pricelist Rules
-    icon: sliders
-    permission: orders.read
-  payment_terms:
-    path: /payment-terms
-    label: Payment Terms
-    icon: calendar
-    permission: orders.read
+  groups:
+    - id: sales
+      label: Sales
+      items:
+        - path: /quotations
+          label: Quotations
+          icon: document
+          permission: orders.read
+    - id: products-pricing
+      label: Products & Pricing
+      items:
+        - path: /customers
+          label: Customers
+          icon: users
+          permission: orders.read
+        - path: /products
+          label: Products
+          icon: cube
+          permission: orders.read
+        - path: /pricelists
+          label: Pricelists
+          icon: tag
+          permission: orders.read
+        - path: /pricelist-rules
+          label: Pricelist Rules
+          icon: sliders
+          permission: orders.read
+        - path: /payment-terms
+          label: Payment Terms
+          icon: calendar
+          permission: orders.read
+    - id: reporting-billing
+      label: Reporting & Billing
+      items:
+        - path: /analytics
+          label: Analytics
+          icon: chart
+          permission: orders.read
+        - path: /invoices
+          label: Invoices
+          icon: document
+          permission: orders.read

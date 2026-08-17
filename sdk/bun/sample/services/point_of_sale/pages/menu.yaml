@@ -4,28 +4,30 @@ menu:
     label: Point of Sale
     icon: cart
     permission: pos.read
-  orders:
-    path: /orders
-    label: Orders
-    icon: cart
-    permission: pos.read
-  configuration:
-    path: /configs
-    label: Configuration
-    icon: settings
-    permission: pos.read
-  payments:
-    path: /payments
-    label: Payments
-    icon: bank
-    permission: pos.read
-  invoices:
-    path: /invoices
-    label: POS Invoices
-    icon: invoice
-    permission: pos.read
-  analysis:
-    path: /analysis
-    label: Sales Analysis
-    icon: chart
-    permission: pos.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - path: /orders
+          label: Orders
+          icon: cart
+          permission: pos.read
+        - path: /payments
+          label: Payments
+          icon: bank
+          permission: pos.read
+        - path: /invoices
+          label: POS Invoices
+          icon: invoice
+          permission: pos.read
+    - id: configuration-reporting
+      label: Configuration & Reporting
+      items:
+        - path: /configs
+          label: Configuration
+          icon: settings
+          permission: pos.read
+        - path: /analysis
+          label: Sales Analysis
+          icon: chart
+          permission: pos.read
