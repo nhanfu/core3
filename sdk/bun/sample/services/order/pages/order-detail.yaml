@@ -506,7 +506,7 @@ actions:
           message: Order changed or is not Draft; reload it before editing lines
       steps:
         - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
-        - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2))"
+        - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2))"
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
@@ -541,7 +541,7 @@ actions:
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before saving
       steps:
-        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           expect_changed: true
           code: STALE_RECORD
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"

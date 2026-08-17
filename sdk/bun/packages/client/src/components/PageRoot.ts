@@ -428,7 +428,7 @@ export class PageRuntime extends BaseComponent {
           request,
           setLanguage: async (language: string) => {
             await i18n.setLang(String(language));
-            await appNavigate(window.location.pathname, { lc: String(language) });
+            await appNavigate(window.location.pathname, { ...getPageParams(), lc: String(language) });
           },
         });
         break;
@@ -613,9 +613,10 @@ export class PageRuntime extends BaseComponent {
       return;
     }
     if (actionDef.type === 'server_form') {
+      const actionParams = resolveActionParams(actionDef.params, { ...ctx, row: values });
       await client.action(actionDef.action, {
-        ...resolveActionParams(actionDef.params, { ...ctx, row: values }),
-        id: values.id ?? pageParams.id ?? ctx.state.id ?? null,
+        ...actionParams,
+        id: actionParams.id ?? values.id ?? pageParams.id ?? ctx.state.id ?? null,
         expected_row_version: values.row_version,
         parent_expected_row_version: values.parent_expected_row_version ?? dataMap.order_detail?.data?.row_version,
         values,
