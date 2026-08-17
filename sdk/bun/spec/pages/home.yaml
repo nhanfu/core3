@@ -17,7 +17,7 @@ components:
           href: /overview
           variant: primary
         - label: See the roadmap
-          href: /plan
+          href: /roadmap
           variant: secondary
       stats:
         - value: '90'
@@ -309,7 +309,7 @@ components:
           - type: list
             items:
               - text: See the full module-by-module tracker on the Roadmap
-                href: /plan
+                href: /roadmap
 
       - id: waitlist
         kicker: Get notified
@@ -334,4 +334,4 @@ components:
               - text: See the Gate Service Plan
                 href: /plan/auth-mediator
               - text: View the full roadmap and Odoo module tracker
-                href: /plan
+                href: /roadmap

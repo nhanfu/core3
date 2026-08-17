@@ -18,7 +18,7 @@ const ROUTES: Record<string, string> = {
   '/reference': 'reference',
   '/component-library': 'component-library',
   '/extensions': 'extensions',
-  '/plan': 'plan',
+  '/roadmap': 'roadmap',
   '/plan/auth-mediator': 'plan-auth-mediator',
 };
 

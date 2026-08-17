@@ -2,14 +2,10 @@ nav:
   brand: Core3
   eyebrow: YAML-driven ERP framework
   items:
+    - label: Roadmap
+      href: /roadmap
     - label: Overview
-      items:
-        - label: Home
-          href: /
-        - label: Proposal
-          href: /overview
-        - label: Roadmap
-          href: /plan
+      href: /overview
     - label: Concepts
       items:
         - label: Frontend rendering model
