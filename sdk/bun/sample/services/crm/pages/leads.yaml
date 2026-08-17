@@ -31,8 +31,20 @@ components:
     search: { label: Search leads, placeholder: Search opportunities and customers... }
     filters:
       - { field: stage, label: Stage, options_source: crm_lead_stages }
+    view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        groups_source: crm_lead_stages
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: probability, label: Probability }
       - id: kanban
         label: Kanban
         icon: dashboard
@@ -44,6 +56,43 @@ components:
           fields:
             - { field: expected_revenue, label: Expected revenue }
             - { field: probability, label: Probability }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: expected_closing
+        card:
+          title: name
+          subtitle: partner_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: stage, column: Stage }
+            - { field: type, column: Type }
+            - { field: source, column: Source }
+            - { field: team, column: Sales team }
+            - { field: expected_closing, column: Expected closing, type: date }
+            - { field: salesperson, column: Salesperson }
+            - { field: probability, column: Probability }
+            - { field: expected_revenue, column: Expected revenue }
+          default:
+            rows: [stage]
+            columns: [team]
+            measures:
+              - { field: expected_revenue, aggregate: sum, column: Expected revenue }
+              - { field: probability, aggregate: average, column: Probability }
+          date_ranges: { expected_closing: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: stage
+        measure_field: expected_revenue
+      - id: map
+        label: Map
+        icon: map
+        label_field: name
+        subtitle_field: partner_name
     columns:
       - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
       - { field: partner_name, label: Customer }

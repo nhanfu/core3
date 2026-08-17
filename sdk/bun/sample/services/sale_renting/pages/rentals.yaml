@@ -18,6 +18,70 @@ components:
     create_label: New rental
     search: { label: Search rentals, placeholder: Search rental orders and products... }
     filters: [{ field: state, label: Status, options_source: rental_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: state
+        groups_source: rental_states
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: product_name, label: Product }
+            - { field: return_date, label: Return date }
+            - { field: price, label: Price }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: rental_states
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: product_name, label: Product }
+            - { field: rental_period, label: Rental period }
+            - { field: price, label: Price }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: start_date
+        card:
+          title: name
+          subtitle: product_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: state, column: Status }
+            - { field: product_name, column: Product }
+            - { field: rental_period, column: Rental period }
+            - { field: salesperson, column: Salesperson }
+            - { field: start_date, column: Rental start, type: date }
+            - { field: return_date, column: Return date, type: date }
+            - { field: quantity, column: Quantity }
+            - { field: price, column: Price }
+          default:
+            rows: [state]
+            columns: [rental_period]
+            measures:
+              - { field: quantity, aggregate: sum, column: Quantity }
+              - { field: price, aggregate: sum, column: Price }
+          date_ranges: { start_date: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: state
+        measure_field: price
+      - id: map
+        label: Map
+        icon: map
+        label_field: name
+        subtitle_field: partner_name
     columns:
       - { field: name, label: Rental order, type: PrimaryEntityCell }
       - { field: partner_name, label: Customer }

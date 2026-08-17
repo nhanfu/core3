@@ -26,6 +26,69 @@ components:
     create_label: New order
     search: { label: Search POS orders, placeholder: Search order number or customer... }
     filters: [{ field: state, label: Status, options_source: pos_order_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: state
+        groups_source: pos_order_states
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: session_name, label: Session }
+            - { field: amount_total, label: Total }
+            - { field: state, label: Status }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: pos_order_states
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: session_name, label: Session }
+            - { field: amount_total, label: Total }
+            - { field: payment_method, label: Payment method }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_order
+        card:
+          title: name
+          subtitle: partner_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: state, column: Status }
+            - { field: session_name, column: Session }
+            - { field: payment_method, column: Payment method }
+            - { field: date_order, column: Order date, type: date }
+            - { field: amount_total, column: Total }
+            - { field: amount_tax, column: Tax }
+            - { field: amount_paid, column: Paid }
+          default:
+            rows: [state]
+            columns: [payment_method]
+            measures:
+              - { field: amount_total, aggregate: sum, column: Total }
+              - { field: amount_paid, aggregate: sum, column: Paid }
+          date_ranges: { date_order: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: state
+        measure_field: amount_total
+      - id: map
+        label: Map
+        icon: map
+        label_field: name
+        subtitle_field: partner_name
     columns:
       - { field: name, label: Order, type: PrimaryEntityCell }
       - { field: session_name, label: Session }

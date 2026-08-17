@@ -22,6 +22,68 @@ components:
     create_label: New subscription
     search: { label: Search subscriptions, placeholder: Search subscriptions and customers... }
     filters: [{ field: state, label: Status, options_source: subscription_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: state
+        groups_source: subscription_states
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: plan, label: Plan }
+            - { field: recurring_revenue, label: Recurring revenue }
+            - { field: next_invoice_date, label: Next invoice }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: subscription_states
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: plan, label: Plan }
+            - { field: recurring_period, label: Period }
+            - { field: recurring_revenue, label: Recurring revenue }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: next_invoice_date
+        card:
+          title: name
+          subtitle: partner_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: state, column: Status }
+            - { field: plan, column: Plan }
+            - { field: recurring_period, column: Period }
+            - { field: salesperson, column: Salesperson }
+            - { field: start_date, column: Start date, type: date }
+            - { field: next_invoice_date, column: Next invoice, type: date }
+            - { field: recurring_revenue, column: Recurring revenue }
+          default:
+            rows: [state]
+            columns: [plan]
+            measures:
+              - { field: recurring_revenue, aggregate: sum, column: Recurring revenue }
+          date_ranges: { next_invoice_date: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: state
+        measure_field: recurring_revenue
+      - id: map
+        label: Map
+        icon: map
+        label_field: name
+        subtitle_field: partner_name
     columns:
       - { field: name, label: Subscription, type: PrimaryEntityCell }
       - { field: partner_name, label: Customer }
