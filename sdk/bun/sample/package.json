@@ -3,7 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "css:build": "sass --no-source-map public/styles/index.scss public/styles/index.css",
+    "css:build": "bun run css:build:global && bun run css:build:auth && bun run css:build:chat && bun run css:build:order",
+    "css:build:global": "sass --no-source-map public/styles/global.scss public/styles/global.css",
+    "css:build:auth": "sass --no-source-map services/auth/styles/index.scss services/auth/styles/index.css",
+    "css:build:chat": "sass --no-source-map services/chat/styles/index.scss services/chat/styles/index.css",
+    "css:build:order": "sass --no-source-map services/order/styles/index.scss services/order/styles/index.css",
     "prestart": "bun run css:build",
     "start": "PORT=3001 bun server.ts",
     "predev": "bun run css:build",

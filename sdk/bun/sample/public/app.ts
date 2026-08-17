@@ -17,6 +17,25 @@ type ManifestPage = { id: string; route: string | null; title: string };
 type ManifestModule = { id: string; pages: ManifestPage[]; routes?: Array<{ path: string; page: string }> };
 let _manifest: ManifestModule[] = [];
 const registry = new Map<string, any>();
+let _serviceStylesheet: HTMLLinkElement | null = null;
+
+async function loadServiceStyles(moduleId: string | undefined) {
+  const safeModuleId = String(moduleId || '').toLowerCase();
+  if (!safeModuleId || !/^[a-z0-9_-]+$/.test(safeModuleId)) return;
+  if (_serviceStylesheet?.dataset.module === safeModuleId) return;
+  const previous = _serviceStylesheet;
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/services/' + encodeURIComponent(safeModuleId) + '/styles/index.css';
+  link.dataset.module = safeModuleId;
+  await new Promise<void>((resolve, reject) => {
+    link.addEventListener('load', () => resolve(), { once: true });
+    link.addEventListener('error', () => reject(new Error('Failed to load ' + safeModuleId + ' styles')), { once: true });
+    document.head.append(link);
+  });
+  previous?.remove();
+  _serviceStylesheet = link;
+}
 
 export async function renderPage(config: any, { container = document.body }: { container?: HTMLElement } = {}) {
   validatePageDefinition(config, { allowExternalSources: true });
@@ -193,6 +212,8 @@ async function renderRoute(path: string, langCode?: string) {
   const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path.toLowerCase() === normalizedPath);
   const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route.toLowerCase() === normalizedPath);
   const pageId = page?.id || 'dashboard';
+  const moduleId = _manifest.find((module) => module.pages.includes(page as ManifestPage) || module.routes?.some((entry) => entry.path === route?.path))?.id;
+  await loadServiceStyles(moduleId);
 
   const outlet = document.getElementById('outlet');
   if (!outlet) return;
