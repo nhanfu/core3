@@ -397,6 +397,42 @@ may use direct local transport for the POC, but the transport interface must
 preserve deadlines, cancellation, identity, and target audience exactly as a
 network transport would.
 
+### Storage backends: Parquet is fixed, relational state is adapter-agnostic
+
+The gate must not be locked to one database product. Three storage
+categories exist, each with a different portability rule:
+
+- **Event/audit store — Parquet, fixed.** Event history, service-token audit
+  records, and dispatch history (§4) are always Parquet segments, regardless
+  of which relational database is configured elsewhere. This is a deliberate
+  choice for high-throughput append/read and zero-copy access, not a
+  database-portability concern — Parquet is the format, not "a database."
+- **KV deny list — in-process memory, fixed.** As already scoped in §2, this
+  is not a database at all; it never goes through a database driver.
+- **Everything else — behind the existing generic repository/adapter
+  boundary, driver-agnostic.** Signing keys, `user_device_sessions`,
+  `refresh_token_history`, the service communication policy, `operations`,
+  `saga_instances`, and `saga_steps` are all ordinary durable records. They
+  must be written through the same `DatabaseAdapter`/`DatabaseDriver`
+  abstraction already used elsewhere in this codebase (Postgres, DuckDB,
+  MySQL, Oracle, SQL Server), not a gate-specific schema tied to one
+  product's SQL dialect or locking model.
+
+Consequences for every row-version/CAS pattern used in this plan (device
+session rotation, deny-list revision bump, `operations` state transition,
+`saga_instances`/`saga_steps` transition): it must be expressible as a
+plain conditional update — `UPDATE ... WHERE id = ? AND row_version = ?`,
+zero rows changed is a conflict — using only what `DatabaseDialect.supports()`
+already exposes. Do not introduce advisory locks, `FOR UPDATE`, or other
+driver-specific locking to make a gate feature work; if a CAS pattern only
+works on one driver, redesign the pattern, not the storage promise.
+
+For the single-node POC, pick whichever configured adapter is already
+running for the sample services (e.g. DuckDB or Postgres) — the POC is not
+where cross-driver compatibility gets exercised, but the schema and access
+pattern must not assume anything that driver-agnostic access doesn't
+guarantee.
+
 Explicitly defer:
 
 - multiple gate nodes and leader election;
@@ -405,6 +441,31 @@ Explicitly defer:
 - cross-node service discovery and load balancing;
 - distributed cache invalidation; and
 - global ordering or exactly-once transport claims.
+
+### Implementation language
+
+Phase 1 (this POC) is implemented in Bun/TypeScript, matching the rest of
+the `sdk/bun` codebase, so the contracts here can be proven quickly against
+real domain services without a second toolchain.
+
+Phase 2 (multi-node: KV deny-list sync, replicated event/operation/saga
+state, gate-node routing/fencing) is deliberately out of scope for this
+phase, but the correctness burden there is materially different — genuine
+multi-threaded concurrency, lock-free or CAS-based data structures, and
+race conditions that must be reasoned about at the memory-model level. The
+gate service is re-implemented in Zig for phase 2 for that reason: explicit
+control over memory layout, no GC pauses in the hot dispatch/cancellation
+path, and precise control over concurrency primitives that a single-node
+POC does not need to exercise.
+
+This is a reimplementation behind the same contracts, not a rewrite of the
+contracts themselves — the wire formats and durable schemas fixed in this
+document (client JWT/dispatch-token claims, event envelope §4, `operations`
+§6, `saga_instances`/`saga_steps` §11) are the interface phase 2 must keep
+so that domain services (still Bun/TypeScript) do not need to change how
+they talk to the gate. Phase 2 planning should treat this document's
+invariants (§8) as the acceptance bar for the Zig implementation, not
+re-derive them.
 
 ## 8. Non-negotiable invariants
 
@@ -435,6 +496,12 @@ Explicitly defer:
 - Saga compensation always walks completed steps in strict reverse order;
   a failed compensation stops automatic rollback rather than retrying
   indefinitely or skipping ahead.
+- No relational gate schema or CAS pattern depends on a feature specific to
+  one database product; every conditional-update pattern is expressible
+  through the existing `DatabaseAdapter`/`DatabaseDriver` abstraction on any
+  supported driver.
+- The event/audit store is always Parquet and the deny list is always
+  in-process memory, independent of which relational driver is configured.
 
 ## 9. Verification plan
 
@@ -494,6 +561,11 @@ Explicitly defer:
   cancelled.
 - Prove a compensation failure halts automatic rollback and leaves the saga
   in `failed` rather than retrying indefinitely or silently completing.
+- Run the same CAS contract suite (device-session rotation, deny-list
+  revision bump, `operations` and `saga_instances`/`saga_steps`
+  transitions) against at least two configured drivers (e.g. DuckDB and
+  Postgres) and prove identical outcomes — no test relies on a
+  driver-specific locking feature.
 
 ### POC acceptance gates
 
@@ -514,6 +586,10 @@ Explicitly defer:
    modules pass.
 
 ## 10. Later scale-out decisions
+
+This phase is also where the gate is re-implemented in Zig (see
+"Implementation language" in §7) because of the concurrency and race-safety
+demands below — not merely for performance.
 
 Do not implement these in the POC, but keep the protocol fields and seams so
 they can be added without changing domain handlers:

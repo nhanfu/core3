@@ -22,5 +22,5 @@ nav:
       items:
         - label: Roadmap
           href: /plan
-        - label: Auth & Mediator Refactor
+        - label: Gate Service Plan
           href: /plan/auth-mediator

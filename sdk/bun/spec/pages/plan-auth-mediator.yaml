@@ -1,4 +1,4 @@
-title: Core3 — Auth & Mediator Refactor
+title: Core3 — Gate Service Plan
 page:
   id: plan-auth-mediator
 
@@ -7,179 +7,247 @@ components:
     hero:
       variant: page
       eyebrow: Plan · sdk/bun/sample/plan
-      title: Detailed auth and mediator refactor
+      title: Gate service — auth, event storage, and mediator POC
       subtitle: >-
-        Concurrency and consistency verification for Auth (JWKS, sessions, refresh rotation) and
-        the event mediator (durable partitions, forwarding, delivery). Condensed from
-        sdk/bun/sample/plan/Auth and Mediator Refactor.md.
+        Auth and Med are merged into one process, the gate service. It signs identity-only client
+        JWTs, injects permissions only into short-lived dispatch tokens right before a service call,
+        owns event storage/dispatch, and owns the cancellation and saga-compensation chains.
+        Condensed from sdk/bun/sample/plan/Auth and Mediator Refactor.md.
     sections:
-      - id: invariants
-        kicker: '1 — Correctness model'
-        title: Non-negotiable invariants
+      - id: scope
+        kicker: '1 — Goal and scope'
+        title: One gate process, single node first
+        blocks:
+          - type: callout
+            tone: note
+            title: Single-node POC, scale-out deferred
+            text: >-
+              This plan targets one node and one gate process. Leader election, replication,
+              sharding, and service-mesh routing are explicitly deferred to phase 2 — see
+              "Later scale-out decisions" below.
+          - type: list
+            items:
+              - 'Authenticates client JWTs and loads current user/device state and permissions'
+              - 'Authenticates service-to-service callers against a declarative communication policy'
+              - 'Adds an authorization snapshot only right before dispatching to a concrete service'
+              - 'Stores and dispatches events; owns the durable event/audit history'
+              - 'Owns the cancellation chain for every call that passes through it'
+              - 'Runs a generic multi-step saga/compensation state machine for cross-service business flows (e.g. Order → Inventory → Payment); domain services own what each step and compensation does'
+          - type: p
+            text: >-
+              Domain services keep owning business data and business mutations; the gate owns
+              identity, authorization, routing, event delivery, cancellation, and security/audit
+              metadata.
+
+      - id: security-model
+        kicker: '2 — Security model'
+        title: Permission-free client tokens, dispatch-time authorization
         blocks:
           - type: callout
             tone: warning
-            title: Fail closed, not open
+            title: No permissions in the client JWT
             text: >-
-              No service may trust cached security state beyond 30 seconds, regardless of
-              mediator/invalidation delivery health. Healthy propagation targets p99 ≤ 2s, but the
-              30-second bound is what correctness actually depends on.
-          - type: list
-            items:
-              - 'Auth: resource services hold public signing keys only — compromising a verifier must never permit token issuance'
-              - 'Auth: a protected request is accepted only when its ES256/issuer/audience/type/time claims are valid, its local session/device/permission entry is no more than 30 seconds old, AND cached security revisions are at least as new as the token and invalidation stream carry'
-              - 'Auth: cache versions are monotonic; a delayed response must never overwrite a newer invalidation or resolution'
-              - 'Auth: only one refresh-token generation is current per session — concurrent refreshes cannot fork valid descendants'
-              - 'Auth: a committed mutation and its invalidation outbox record are atomic'
-              - 'Mediator: a durable publish is acknowledged only after the WAL record and commit marker are fsynced on 2 of 3 replicas'
-              - 'Mediator: at most one unfenced writer commits to a partition; followers reject any older fencing token'
-              - 'Mediator: single/multiple delivery is at-least-once — exactly-once business effects come from a transactional consumer inbox, not transport claims'
-              - 'Mediator: consumer checkpoints only advance across a contiguous acknowledged prefix'
-              - 'Distributed: cross-service permission/device state is bounded-stale (30s fail-closed); cross-service workflows use outbox/inbox/idempotency/versioned events — no distributed transactions'
-              - 'Distributed: shared coordination uses compare-and-swap versions, leases, and fencing — no advisory locks, FOR UPDATE, or other driver-specific locking'
-
-      - id: auth-impl
-        kicker: '2 — Auth & JWKS'
-        title: Implementation shape
-        blocks:
-          - type: p
-            text: >-
-              PostgreSQL is the first production Auth adapter behind the existing generic
-              repository boundary. User-owned records shard by hash(user_id); the normalized-email
-              directory shards independently and carries its own directory_epoch and row_version.
+              The client token is a pure identity/session JWT (iss, aud, sub, jti, sid, did, iat,
+              nbf, exp, user_security_revision, session_revision). It can remain cryptographically
+              valid after logout or revocation — validity alone never grants access. The gate is
+              the only authorization decision point, for every client and service dispatch.
           - type: table
-            headers: [New table, Purpose]
+            headers: [Durable record, Purpose]
             rows:
-              - [auth_signing_keys, Envelope-encrypted private keys; JWKS exposes public parameters only]
-              - [auth_devices, Per-device session/trust state]
-              - [auth_sessions, Session records, one refresh-token generation each]
-              - [auth_refresh_history, Refresh rotation audit and reuse detection]
-              - [auth_security_revisions, Monotonic version driving cache invalidation]
-              - [auth_outbox, Atomic invalidation record alongside each committed mutation]
-              - [auth_idempotency, Dedup for concurrent refresh / mutation retries]
+              - [user_device_sessions, 'Authority for active/revoked device+session state, refresh-token family/generation, and a keyed hash of the current refresh token — never the raw JWT or raw refresh token']
+              - [refresh_token_history, 'Rotated refresh generations for replay detection; reuse of an old generation revokes the whole session family']
+              - [Cached user-device token, 'Disposable authorization snapshot (state, revision, permissions, resolved time) rebuilt from the durable session row on a cache miss or stale revision — a cache miss fails closed, never open']
+              - [KV deny list, 'Phase 1: in-process only. deny:jti / deny:session / deny:user markers reject a token immediately after signature checks, before any permission lookup — the durable revision remains authoritative if the marker is lost']
           - type: p
             text: >-
-              Every mutable record carries row_version; conditional mutation is
-              "UPDATE ... WHERE id = ? AND row_version = ?" — zero changed rows is a conflict.
-          - type: list
-            items:
-              - 'ES256 access tokens expire after 15 minutes: typ=at+jwt, iss, aud, sub, jti, sid, did, iat, nbf, exp, plus security revision claims'
-              - '60 seconds of clock skew is permitted; missing audience, unexpected algorithm, unknown issuer, malformed kid, or a token without session/device claims is rejected'
-              - 'Effective permissions come from auth.session.resolve, never trusted from the JWT alone'
-              - 'Refresh tokens are opaque, stored only as hashes, rotated via a session-generation CAS'
-              - 'A different request racing within 5s gets 409 REFRESH_CONFLICT; reuse outside that window revokes the whole session family'
+              Immediately before a gate-to-service dispatch, the gate resolves the newest
+              permissions and signs a short-lived internal dispatch token (iss=gate,
+              aud=<target-service>, token_type=gate_dispatch, authz_version, correlation/causation/
+              cancellation ids, parent_jti). The target trusts this token's claims directly and does
+              not call the gate again for a second permission decision.
           - type: panel
-            title: Key rotation sequence
+            title: Signing-key rotation (separate kid namespace per token purpose)
             language: text
             code: |
-              create next key
-                -> publish it
-                  -> wait one JWKS cache interval
-                    -> begin signing with it
-                      -> retain the old verification key through the overlap
-                        -> retire the old key
+              generate + register key as "published"
+                -> publish public key, wait for verifier refresh
+                  -> mark "active", start signing with it
+                    -> keep old key verifiable until every token it signed has expired
+                      -> mark "retired", remove after retention window
 
-      - id: mediator
-        kicker: '3 — Mediator protocol'
-        title: Message contract and durable partitions
-        lead: >-
-          Every YAML message declaration is a contract: stable ID and schema version, a delivery
-          mode, source/destination services, timeout and retry policy, and idempotency requirements.
+              compromise path: stop signing immediately, drop kid from verification,
+              bump security revision/epoch, force verifiers to refresh the key ring.
+
+      - id: service-to-service
+        kicker: '3 — Service-to-service authorization'
+        title: Delegated calls get the newest permissions, not the caller's snapshot
         blocks:
-          - type: table
-            headers: [Mode, Delivery]
-            rows:
-              - [forward, Direct relay through the mesh to the node owning the target connection; non-idempotent calls never auto-replay]
-              - [single, One consumer group, at-least-once, scales from 1 to N instances]
-              - [multiple, Every declared subscriber group receives every committed message]
-              - [stream, Continuous delivery, ordered per partition]
-              - [scheduled, Deadline-driven delivery]
-              - [control, Cluster/lease/fencing coordination, not business payloads]
           - type: list
             items:
-              - '256 virtual partitions, three replicas each, assigned by rendezvous hashing'
-              - 'Leader appends checksummed WAL records, replicates, acknowledges after quorum-two fsync'
-              - '6-second lease, renewed every 2 seconds; promotion only after lease expiry and a successful fencing-token CAS'
-              - 'Committed WAL ranges compact into immutable per-partition Parquet files: write temp -> fsync -> checksum -> atomic rename -> publish manifest CAS -> release WAL'
-              - 'A transactional service inbox records message ID before committing business effects — duplicate attempts return the stored outcome'
+              - 'Every service has a gate-recognized workload identity (configured credential/local key pair for the POC, mTLS-ready later)'
+              - 'The gate checks a declarative communication policy before forwarding: source identity, allowed command/event type, target service, on-behalf-of-user flag, required permission, timeout, cancellation policy, idempotency requirements'
+              - "The target receives the source's authenticated context AND the current user authorization snapshot — it may reject a command if the newer permission version makes it unsafe, even though the source started with an older snapshot"
+              - 'Raw reusable bearer tokens are never written to ordinary Parquet columns — store a hash, jti, source/target, and audit claims unless replay/audit specifically requires the encrypted envelope'
 
-      - id: testability
-        kicker: '4 — Test architecture (built before feature work)'
-        title: Deterministic seams and reference models
+      - id: event-storage
+        kicker: '4 — Gate event storage and dispatch'
+        title: Durable envelope, Parquet as audit history (not the live queue)
+        blocks:
+          - type: list
+            items:
+              - 'Append events durably before acknowledging publication; one local writer, bounded in-memory delivery queue'
+              - 'Envelope carries event_id/type/version, source/target service, deadline/attempt/idempotency key, correlation/causation/cancellation ids, authz_version at creation and at dispatch, and a redacted service-token audit envelope'
+              - 'Parquet segments: write temp -> flush/close -> validate -> atomic manifest publish; Parquet is audit/history, the live queue tracks delivery state separately'
+              - 'Recovery replays valid durable segments and any recoverable append log, truncating only an incomplete tail — a corrupt committed segment stops startup rather than being silently skipped'
+              - 'Duplicate delivery cannot duplicate a domain mutation when the target uses its inbox/idempotency contract'
+
+      - id: cancellation
+        kicker: '6 — Cancellation and long-running work'
+        title: Operation-based cancellation, not an HTTP-disconnect hack
         blocks:
           - type: callout
-            title: Why this comes first
+            title: The Order → Report case
             text: >-
-              Clock, Scheduler, RandomSource, NetworkTransport, WalDevice, ControlStore,
-              ReplicaTransport, TraceSink, and AuthStateClient/JwksFetcher are all injectable
-              before any cluster logic is implemented. Every race test records its seed, scheduler
-              decisions, and virtual timestamps so a failing run replays from one command.
+              A long-running report triggered by Order is not an uncancellable child of the
+              original HTTP request. It gets its own operation_id/cancellation_id, its status is
+              persisted, and that id is returned to the caller — so Order isn't stuck holding
+              resources for the full report duration, and the browser connection doesn't matter.
+          - type: table
+            headers: [operations table field, Purpose]
+            rows:
+              - [operation_id / cancellation_id / correlation_id, Identity of the tracked long-running call and its causation chain]
+              - [state, 'pending | running | cancel_requested | cancelled | completed | failed']
+              - [row_version, Atomic CAS for state transitions — first terminal write wins]
           - type: list
             items:
-              - 'A small in-memory Auth model: sessions, devices, revisions, refresh generations, valid authorization outcomes'
-              - 'A mediator partition model: leader epoch, committed log, replica logs, inflight deliveries, ack gaps, consumer checkpoints'
-              - 'Generated operation sequences (publish, replicate, elect, crash/recover, compact, deliver/ack/nack/timeout, revoke/resolve/invalidate, refresh, advance time) assert every invariant after every step'
-              - 'Property-testing (e.g. fast-check) with minimized counterexamples persisted as regression fixtures'
+              - 'The in-memory cancellation registry is a fast-path index rebuilt from the durable operations table on startup — it is not the source of truth'
+              - 'On restart: pending/running rows with no confirmation are marked failed or re-queried; cancel_requested rows re-send the cancellation before being considered reconciled; no row is silently dropped'
+              - 'Cancellation must stop queue delivery, cancel in-flight DB queries/streams/timers, stop retries, and be idempotent under a race with completion'
+              - 'A late response can never revive a cancelled or expired request'
 
-      - id: race-matrix
-        kicker: '5 — Race & inconsistency test matrix'
-        title: What gets stress-tested
-        lead: A representative slice of the full matrix — see the source plan for every case.
+      - id: saga
+        kicker: '11 — Saga-based cross-service consistency'
+        title: Multi-step compensation, not 2PC or consensus
+        blocks:
+          - type: p
+            text: >-
+              Cross-service business flows (Order → Inventory → Payment, and longer chains) are
+              not atomic transactions. Each step is a local ACID transaction inside its own
+              service; consistency comes from an ordered sequence of steps plus compensations,
+              driven by a generic saga state machine the gate owns. The gate never decides
+              business outcomes — it sequences dispatch, tracks state durably, and invokes
+              compensation when a step reports failure.
+          - type: panel
+            title: Forward and compensation flow
+            language: text
+            code: |
+              step N command -> target's local transaction -> outcome event (success | failed)
+
+              success -> mark step success, dispatch step N+1 (last step -> saga completed)
+              failed  -> saga state = compensating
+                         -> walk completed steps in strict reverse order
+                         -> dispatch each step's compensation (idempotency key = saga_id:step:compensation)
+                         -> all compensations succeed -> compensated
+                         -> a compensation fails -> saga = failed (manual resolution, no infinite retry)
+          - type: table
+            headers: [Table, Purpose]
+            rows:
+              - [saga_instances, 'Overall state (running/compensating/completed/compensated/failed), current_step_index, row_version CAS']
+              - [saga_steps, 'One row per step — service, command_event_id, outcome, compensation_event_id/outcome — lets a saga fan out to any number of services without changing the state-machine shape']
+          - type: callout
+            tone: note
+            title: Why no 2PC / consensus
+            text: >-
+              Correctness needs (a) idempotent step commands, (b) each step's local commit being
+              authoritative the moment it lands, and (c) failure after step N resolved by
+              compensating 0..N-1. The only real race — a redelivered step and its original both
+              recording an outcome — is resolved by row-version CAS, the same first-write-wins
+              pattern used for the operations table, not a distributed consensus algorithm. A
+              cancelled saga step is just one more path into the failed/compensating state.
+
+      - id: architecture
+        kicker: '7 — Single-node architecture and implementation language'
+        title: 'Phase 1: Bun/TypeScript. Phase 2: Zig.'
+        blocks:
+          - type: list
+            items:
+              - 'One gate process: JWT signer/verifier, user/device/session resolver+cache, service-policy checker, dispatch-token issuer, route registry, durable operations + saga stores with an in-memory index rebuilt on startup, durable event store + Parquet writer/recovery, inbox/idempotency store, structured audit logging'
+              - 'The gate may use direct local transport for the POC, but the transport interface must preserve deadlines, cancellation, identity, and target audience exactly as a network transport would'
+          - type: callout
+            tone: warning
+            title: Phase 2 is a reimplementation behind the same contracts, in Zig
+            text: >-
+              Phase 1 stays in Bun/TypeScript to prove the contracts quickly against real domain
+              services. Phase 2 — multi-node KV deny-list sync, replicated event/operation/saga
+              state, gate-node routing and fencing — carries a materially different correctness
+              burden: genuine multi-threaded concurrency, CAS/lock-free structures, and races that
+              have to be reasoned about at the memory-model level. The gate is re-implemented in
+              Zig for that phase for explicit memory control, no GC pauses on the hot
+              dispatch/cancellation path, and precise concurrency primitives — but the wire
+              formats and durable schemas fixed in this plan (client JWT/dispatch-token claims,
+              event envelope, operations, saga_instances/saga_steps) do not change, so
+              TypeScript domain services don't need to change how they talk to the gate.
+
+      - id: storage-boundaries
+        kicker: '7 — Storage backends'
+        title: 'Parquet is fixed. Relational state is database-agnostic.'
+        blocks:
+          - type: callout
+            tone: warning
+            title: No vendor lock-in on the relational side
+            text: >-
+              The gate must not be locked to one database product. Three storage categories, three
+              different portability rules.
+          - type: table
+            headers: [Storage category, Rule]
+            rows:
+              - ['Event/audit store', 'Always Parquet segments, regardless of which relational database is configured — chosen for high-throughput append/read and zero-copy access, not a database-portability concern']
+              - ['KV deny list', "In-process memory only, as scoped in phase 1 — it isn't a database and never goes through a database driver"]
+              - ['Everything else (signing keys, user_device_sessions, refresh_token_history, service communication policy, operations, saga_instances, saga_steps)', 'Written through the existing generic DatabaseAdapter/DatabaseDriver abstraction already used elsewhere in this codebase (Postgres, DuckDB, MySQL, Oracle, SQL Server) — no gate-specific schema tied to one product']
+          - type: p
+            text: >-
+              Every row-version/CAS pattern in this plan (session rotation, deny-list revision
+              bump, operations transitions, saga_instances/saga_steps transitions) must be a plain
+              conditional update — "UPDATE ... WHERE id = ? AND row_version = ?", zero rows changed
+              is a conflict — expressible on any supported driver. No advisory locks, FOR UPDATE, or
+              other driver-specific locking: if a CAS pattern only works on one driver, the pattern
+              gets redesigned, not the storage promise. The POC itself runs on a single configured
+              adapter (e.g. DuckDB or Postgres); cross-driver compatibility is verified by running
+              the same CAS contract suite against at least two drivers, not by the POC's own runtime
+              choice.
+
+      - id: scale-out
+        kicker: '10 — Later scale-out decisions (phase 2)'
+        title: Deferred until the single-node contracts are proven
+        blocks:
+          - type: list
+            items:
+              - 'Multiple gate nodes, leader election, replicated event/operation/saga state, gate-node routing and fencing, cross-node service discovery'
+              - 'Multi-node KV deny-list sync: each node keeps its own in-memory list (no shared/consensus KV store); a writer best-effort broadcasts new deny markers to sibling nodes with no ack/quorum required'
+              - "A node that misses a broadcast is still correct — its authorization-cache entries expire on their existing bounded TTL and re-resolve against the durable user_device_sessions revision, which reflects the revocation. Missing a broadcast only widens the rejection window to that existing bound, it never produces an incorrect accept"
+              - 'This deliberately avoids building distributed-KV consistency for a dataset that is small and explicitly non-authoritative — the durable revision is, and remains, the source of truth'
+
+      - id: gates
+        kicker: '9 — Verification and acceptance gates'
+        title: What must pass before phase 1 is done
         blocks:
           - type: cardgrid
             cards:
-              - tag: Auth cache
-                title: Invalidation vs. resolve races
-                body: 100 concurrent requests on an expired entry trigger exactly one resolution call; reverse-order invalidations must let the highest version win.
-              - tag: Refresh tokens
-                title: Concurrent refresh
-                body: 100 concurrent uses of the same generation produce exactly one descendant; reuse outside the race window revokes the whole family once.
-              - tag: JWKS
-                title: Key rotation timing
-                body: Unknown kid triggers exactly one network refresh; old and new keys both validate during the overlap window.
-              - tag: Mediator publish
-                title: Quorum failure injection
-                body: Failure injected at 8 distinct points from before leader append through post-ack — no message may ever appear as two logical records.
-              - tag: Election
-                title: Fencing races
-                body: Two candidates attempt promotion simultaneously — exactly one fencing-token CAS succeeds; stale leaders are rejected by every follower.
-              - tag: Consumers
-                title: Ack ordering
-                body: Offsets 10 and 12 acknowledge before 11 — the checkpoint stays at 10 until 11 settles.
-
-      - id: gates
-        kicker: '6 — Timing, load, and chaos gates'
-        title: Acceptance thresholds
-        blocks:
-          - type: table
-            headers: [Threshold, Target]
-            rows:
-              - [Acknowledged-message loss, Zero]
-              - [Unauthorized acceptance past the 30s bound, Zero]
-              - [Duplicate business effects under the inbox contract, Zero]
-              - [Partition-order violations, Zero]
-              - [Stale-leader commits, Zero]
-              - [Healthy invalidation propagation, p99 ≤ 2 seconds]
-              - [Leader failure recovery, New commitments resume within 10 seconds]
-              - [Forward mediator overhead (reference LAN), p99 ≤ 15 ms excluding service time]
-              - [Quorum durable publish ack, 1 KiB payload — p99 ≤ 40 ms]
-              - [24-hour soak memory growth, Less than 5% sustained]
-          - type: list
-            items:
-              - 'Every PR: unit/schema/CAS/protocol/deterministic-scheduler/property tests, 200+ generated seeds, multi-process smoke with forced leader loss (≤ 15 min)'
-              - 'Nightly: 2-hour chaos, 10,000+ generated histories, continuous process kills, network delay/drop/reorder, control-shard outages, disk latency, clock skew, and compaction'
-              - 'Release candidate: 24-hour soak at full certified load with random failure every 5–15 minutes'
-
-      - id: phases
-        kicker: '8 — Phased delivery'
-        title: Exit gates
-        blocks:
-          - type: table
-            headers: [Phase, Exit criteria]
-            rows:
-              - ['1. Testability foundation', 'Existing single-node behavior passes through the new injectable seams']
-              - ['2. Auth security', 'All Auth race tests plus a med/Auth outage test prove the 30-second bound']
-              - ['3. Message protocol', 'Deterministic delivery/acknowledgement and compatibility tests pass on one mediator node']
-              - ['4. Process extraction', 'Rolling restarts, scale-out, discovery churn, and end-to-end permission/device tests pass']
-              - ['5. Replicated mediator', 'Nightly chaos produces zero invariant violations for 7 consecutive runs']
-              - ['6. Scale certification', 'Full medium profile + 24h soak reconcile to zero loss, skipped offsets, or unauthorized decisions']
+              - tag: Auth
+                title: No permissions in the client JWT
+                body: Logout, device revocation, and permission changes are rejected once the gate cache is cleared; a cache miss rebuilds from the durable session row and never resurrects a revoked token.
+              - tag: Dispatch
+                title: Target-specific gate tokens
+                body: Internal tokens are rejected for the wrong target, issuer, type, signature, or expiry; a delegated service command receives newer permissions than the source's original snapshot.
+              - tag: Events
+                title: Idempotent, restart-safe
+                body: Event publication survives restart/recovery; Parquet writes recover from an incomplete tail and reject committed corruption.
+              - tag: Cancellation
+                title: Order → Report end to end
+                body: A long-running report can be cancelled from the client through Order to Report, and its database/worker resources are released — including races with successful completion.
+              - tag: Saga
+                title: Order → Inventory → Payment
+                body: A multi-step saga completes on the happy path; a mid-chain failure compensates every prior step in strict reverse order with no duplicated business effect, including across a forced gate restart mid-saga.
+              - tag: Restart
+                title: No orphaned state
+                body: A forced gate restart recovers acknowledged events and reconciles every non-terminal operations/saga_instances row — nothing is left running/compensating without an active redelivery.
