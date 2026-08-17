@@ -39,7 +39,10 @@ export class AuthService implements AuthServiceProtocol {
       roles, branches: user.branch_id ? [String(user.branch_id)] : [], permissions,
       attributes: { department_id: user.department_id }, token_type: 'user',
     };
-    const token = await signAuthJwt(claims as any, this.secret);
+    // Keep profile media out of the JWT. Data URLs can be large and make the
+    // Authorization header unreliable; avatar_url is loaded from Auth storage.
+    const { avatar_url: _avatarUrl, ...tokenClaims } = claims;
+    const token = await signAuthJwt(tokenClaims as any, this.secret);
     await this.emit({ type: 'auth.login', user: claims, at: new Date().toISOString() });
     return { token, user: claims, token_type: 'Bearer', expires_in: 8 * 60 * 60 };
   }
@@ -53,7 +56,8 @@ export class AuthService implements AuthServiceProtocol {
     if (!header.startsWith('Bearer ')) throw { status: 401, code: 'UNAUTHORIZED', message_key: 'errors.unauthorized', message: 'Unauthorized' };
     const user = await this.introspect(header.slice(7));
     if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
-    return user;
+    const profile = await this.repository.profile(String(user.sub));
+    return profile ? { ...user, avatar_url: profile.avatar_url || null } : user;
   }
 
   async introspect(token: string): Promise<AuthClaims | null> {

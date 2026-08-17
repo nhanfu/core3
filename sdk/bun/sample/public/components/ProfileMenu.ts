@@ -20,6 +20,32 @@ export class ProfileMenu extends BaseComponent {
       .toUpperCase();
   }
 
+  private avatarUrl() {
+    const value = String(this.state.user?.avatar_url || '').trim();
+    return /^(?:data:image\/[a-z0-9.+-]+;base64,|https?:\/\/|\/)/i.test(value) ? value : '';
+  }
+
+  private renderAvatar(parent: HTMLElement, className: string) {
+    const url = this.avatarUrl();
+    if (url) {
+      html.take(parent).img
+        .className(className)
+        .attr('src', url)
+        .attr('alt', this.state.user?.name || i18n.tKey('shell.profile', {}, 'Profile'));
+      return;
+    }
+    html.take(parent).text(this.initials());
+  }
+
+  setUser(user: any) {
+    this.state.user = user;
+    if (this._outsideHandler) document.removeEventListener('click', this._outsideHandler);
+    if (this._escapeHandler) document.removeEventListener('keydown', this._escapeHandler);
+    this._outsideHandler = null;
+    this._escapeHandler = null;
+    this.redraw();
+  }
+
   open() {
     this.state.open = true;
     this._menu?.classList.add('open');
@@ -61,9 +87,8 @@ export class ProfileMenu extends BaseComponent {
       .event('click', (event: MouseEvent) => {
         event.stopPropagation();
         this.toggle();
-      })
-      .text(this.initials())
-      .ele();
+      }).ele();
+    this.renderAvatar(trigger, 'avatar-image');
 
     this._menu = html.take(wrapper).div
       .className('profile-menu-panel')
@@ -71,7 +96,8 @@ export class ProfileMenu extends BaseComponent {
       .attr('hidden', '')
       .ele();
     const summary = html.take(this._menu).div.className('profile-menu-summary').ele();
-    html.take(summary).div.className('profile-menu-avatar').text(this.initials());
+    const summaryAvatar = html.take(summary).div.className('profile-menu-avatar').ele();
+    this.renderAvatar(summaryAvatar, 'profile-menu-avatar-image');
     const identity = html.take(summary).div.className('profile-menu-identity').ele();
     html.take(identity).div.className('profile-menu-name').text(user.name || 'User');
     html.take(identity).div.className('profile-menu-email').text(user.email || '');

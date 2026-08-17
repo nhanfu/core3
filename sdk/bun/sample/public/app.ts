@@ -50,6 +50,12 @@ export function getUser() {
   return _user;
 }
 
+export function updateUser(patch: Record<string, unknown>) {
+  _user = { ..._user, ...patch };
+  window.__CORE3_USER__ = _user;
+  _shell?.setUser(_user);
+}
+
 function defaultAppStorageKey(user: any = _user) {
   return `${DEFAULT_APP_KEY}:${String(user?.sub || user?.id || 'anonymous')}`;
 }
@@ -297,8 +303,15 @@ async function bootstrap() {
   const token = getToken();
   if (!app) return;
 
+  // Older sessions may contain an avatar data URL inside the JWT. Discard
+  // those sessions so the user can receive a compact token after logging in.
+  if (token && token.length > 8192) {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(WELCOME_TOAST_KEY);
+  }
+
   // No token → login
-  if (!token) {
+  if (!token || token.length > 8192) {
     app.innerHTML = '<div id="outlet"></div>';
     const location = currentLocation();
     await showLogin(location);

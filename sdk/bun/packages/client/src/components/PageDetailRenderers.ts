@@ -2,6 +2,7 @@ import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
+import { AvatarPicker } from '@core3/client/components/AvatarPicker';
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
@@ -400,6 +401,16 @@ async function renderComponentDef(def: any, targetContainer: HTMLElement) {
       const runtimeUser = { ...ctx.user, ...(runtimeContext.user || {}) };
       if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
       const component = new Html(def.id || `${config.page.id}-html`, { context: { ...ctx, ...runtimeContext, user: runtimeUser } }, def);
+      component._onAction = async (actionId: string, params: any) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (actionDef) await handleAction(actionDef, params);
+      };
+      const slot = html.take(targetContainer).div.ele() as HTMLElement;
+      component.mount(slot);
+      break;
+    }
+    case 'AvatarPicker': {
+      const component = new AvatarPicker(def.id || `${config.page.id}-avatar`, { user: ctx.user }, def);
       component._onAction = async (actionId: string, params: any) => {
         const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
         if (actionDef) await handleAction(actionDef, params);

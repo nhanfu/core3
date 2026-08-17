@@ -16,15 +16,38 @@ export class Form extends BaseComponent {
     const form = html.take(section).div.ele() as HTMLDivElement;
     const error = html.take(form).div.className('alert alert-error').prop('hidden', true).ele() as HTMLDivElement;
     const inputs: Record<string, HTMLInputElement> = {};
+    const values: Record<string, string> = {};
     for (const field of this.def.fields || []) {
       const group = html.take(form).div.className('form-group').ele() as HTMLDivElement;
       html.take(group).label.className('form-label').text(`${field.label || field.field}${field.required ? ' *' : ''}`);
       const input = html.take(group).input.type(field.type || 'text').className('form-input').attr('placeholder', field.placeholder || '').ele() as HTMLInputElement;
+      if (field.type === 'file') {
+        input.accept = field.accept || 'image/*';
+        input.addEventListener('change', () => {
+          const file = input.files?.[0];
+          if (!file) {
+            values[field.field] = '';
+            return;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            values[field.field] = '';
+            html.take(error).text('Image must be 5 MB or smaller').prop('hidden', false);
+            input.value = '';
+            return;
+          }
+          const reader = new FileReader();
+          reader.addEventListener('load', () => {
+            values[field.field] = typeof reader.result === 'string' ? reader.result : '';
+          }, { once: true });
+          reader.readAsDataURL(file);
+        });
+      } else {
+        input.addEventListener('input', () => { values[field.field] = input.value; });
+      }
       inputs[field.field] = input;
     }
     const button = html.take(form).button.type('button').className(`btn btn-${this.def.submit_variant || 'primary'} btn-sm`)
       .text(this.def.submit_label || 'Submit').event('click', async () => {
-      const values = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
       const validation = this.validate(values);
       if (validation) {
         html.take(error).text(validation).prop('hidden', false);
@@ -34,6 +57,7 @@ export class Form extends BaseComponent {
       html.take(button).prop('disabled', true).replaceText(this.def.loading_label || 'Saving…');
       try {
         await this.submit(this.def.action, values);
+        Object.keys(values).forEach(key => { values[key] = ''; });
         Object.values(inputs).forEach(input => { html.take(input).prop('value', ''); });
         html.take(button).replaceText(this.def.success_label || 'Updated');
       } catch (cause) {

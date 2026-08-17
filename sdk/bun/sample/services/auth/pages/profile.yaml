@@ -6,26 +6,14 @@ api:
   fields: [name, preferred_lang, avatar_url]
 
 components:
-  - type: Html
+  - type: AvatarPicker
     id: profile-summary
+    action: update-avatar
+  - type: Html
+    id: profile-details
     tag: div
-    class: profile-header
+    class: profile-details
     children:
-      - tag: div
-        class: profile-avatar
-        text_expr: |
-          // js
-          user => user.name ? user.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase() : 'U'
-      - tag: div
-        class: profile-user-name
-        text_expr: |
-          // js
-          user => user.name
-      - tag: div
-        class: profile-user-email
-        text_expr: |
-          // js
-          user => user.email
       - tag: section
         class: profile-section profile-company
         children:
@@ -103,3 +91,16 @@ actions:
     method: PATCH
     endpoint: /api/v1/profile
     body: { current_password: '{row.current_password}', new_password: '{row.new_password}' }
+  - id: update-avatar
+    type: client
+    script: |
+      // js
+      async ({ row, request }) => {
+        const profile = await request('/api/v1/profile')
+        await request('/api/v1/profile', {
+          method: 'PATCH',
+          body: { avatar_url: row.avatar_url, expected_row_version: profile.row_version },
+        })
+        const app = await import('/app.ts')
+        app.updateUser({ avatar_url: row.avatar_url })
+      }

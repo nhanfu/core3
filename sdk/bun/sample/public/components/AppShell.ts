@@ -132,6 +132,11 @@ export class AppShell extends BaseComponent {
     navigation.hidden = !visible;
   }
 
+  setUser(user: any) {
+    this.state.user = user;
+    this._profileMenu?.setUser(user);
+  }
+
   setTitle(title: string) {
     if (this._headerTitle) this._headerTitle.textContent = title;
   }
@@ -338,10 +343,7 @@ export class AppShell extends BaseComponent {
     // Keep the theme switch beside notification controls, as in the reference header.
     actions.append(themeButton);
 
-    // User identity and profile button
-    const userIdentity = html.take(actions).div.className('header-user-identity').ele();
-    html.take(userIdentity).div.className('header-user-name').text(user?.name || 'User');
-    html.take(userIdentity).div.className('header-user-role').text((user?.roles || []).join(', '));
+    // Keep the header compact; identity details belong in the profile menu.
     this._profileMenu = new ProfileMenu('profile-menu', {
       user,
       onNavigate: (path: string) => this.go(path),
