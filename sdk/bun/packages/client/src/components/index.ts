@@ -56,6 +56,8 @@ export { RankCell }             from '@core3/client/components/RankCell';
 export { EmptyState }           from '@core3/client/components/EmptyState';
 export { TimelinePanel }        from '@core3/client/components/TimelinePanel';
 export { LineItemGrid }         from '@core3/client/components/LineItemGrid';
+export { LineItemField }        from '@core3/client/components/LineItemField';
+export { LineItemActions }      from '@core3/client/components/LineItemActions';
 export { DocumentSummary }      from '@core3/client/components/DocumentSummary';
 export { OdooFormView }         from '@core3/client/components/OdooFormView';
 export { OdooChatter }          from '@core3/client/components/OdooChatter';

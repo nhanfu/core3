@@ -45,7 +45,11 @@ export class YamlMutationRuntime {
 
   async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
     const params = { ...input };
-    if (params.values && typeof params.values === 'object') Object.assign(params, params.values);
+    if (params.values && typeof params.values === 'object') {
+      for (const [field, value] of Object.entries(params.values)) {
+        if (!Object.prototype.hasOwnProperty.call(params, field)) params[field] = value;
+      }
+    }
     for (const field of definition.generated || []) {
       if (!IDENTIFIER.test(field)) throw { status: 500, message: 'Generated mutation field is invalid' };
       if (!params[field]) params[field] = crypto.randomUUID();

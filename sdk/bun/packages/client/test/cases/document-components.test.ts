@@ -449,6 +449,37 @@ describe('document detail components', () => {
     expect(container.querySelector('td[data-column="line_total_display"]')?.textContent).toBe('1,000 ₫');
   });
 
+  it('uses child fields and actions for inline line editing and mobile cards', async () => {
+    const saves: any[] = [];
+    const grid = new LineItemGrid('inline-lines', {
+      rows: [{ id: 'line-1', row_version: 3, description: 'Freight', quantity: 1, quantity_display: '1.000', parent_status: 'Draft' }],
+      variant: 'odoo_x2many',
+      actions: [{ id: 'add_line', label: 'Add line' }],
+    }, []);
+    grid.configureInline({
+      fields: [
+        { type: 'LineItemField', field: 'description', label: 'Description' },
+        { type: 'LineItemField', field: 'quantity', label: 'Quantity', input_type: 'number', display_field: 'quantity_display' },
+      ],
+      actions: [{ id: 'edit_line', label: 'Edit' }],
+      editAction: 'edit_line',
+      onSave: async (action, row, values) => { saves.push({ action, row, values }); },
+    });
+    const container = mount(grid);
+
+    expect(container.querySelector('.o-line-grid-cards')).not.toBeNull();
+    container.querySelector<HTMLButtonElement>('[aria-label="Edit"]')!.click();
+    const input = container.querySelector<HTMLInputElement>('.o-line-grid-table input[aria-label="Description"]')!;
+    input.value = 'Updated freight';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    container.querySelector<HTMLButtonElement>('.o-line-grid-table button')!.click();
+
+    await Promise.resolve();
+    expect(saves[0].action).toBe('edit_line');
+    expect(saves[0].values.description).toBe('Updated freight');
+    expect(grid.find('line-field-line-1-description')).not.toBeNull();
+  });
+
   it('renders resource rows across assignment dates', () => {
     const container = mount(new ScheduleGrid('schedule', {
       rows: [

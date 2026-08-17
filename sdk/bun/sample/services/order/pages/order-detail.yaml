@@ -227,6 +227,7 @@ components:
   - type: LineItemGrid
     mount_in: previous-panel
     source: order_detail_lines
+    parent_source: order_detail
     variant: odoo_x2many
     page_size: 50
     row_key: id
@@ -237,6 +238,21 @@ components:
       source: order_detail
       stats:
         - { label: Total amount, field: total_amount_display }
+    children:
+      - { type: LineItemField, id: sequence, field: sequence, label: '#', readonly: true }
+      - { type: LineItemField, id: description, field: description, label: Description, input_type: text }
+      - { type: LineItemField, id: quantity, field: quantity, display_field: quantity_display, label: Quantity, input_type: number }
+      - { type: LineItemField, id: unit, field: unit, label: Unit, input_type: select, options_source: order_unit_lookup }
+      - { type: LineItemField, id: unit_price, field: unit_price, display_field: unit_price_display, label: Unit price, input_type: money }
+      - { type: LineItemField, id: tax_rate, field: tax_rate, display_field: tax_rate_display, label: Tax, input_type: money, decimals: 2 }
+      - { type: LineItemField, id: line_total, field: line_total, display_field: line_total_display, label: Amount, readonly: true }
+      - type: LineItemActions
+        id: line_actions
+        edit_action: edit_order_line
+        create_action: add_order_line
+        actions:
+          - { id: edit_order_line, label: Edit, icon: edit, variant: ghost, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
+          - { id: delete_order_line, label: Delete, icon: trash, variant: danger, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
     columns:
       - { field: sequence, label: '#', align: right }
       - { field: description, label: Description }
@@ -490,7 +506,7 @@ actions:
           message: Order changed or is not Draft; reload it before editing lines
       steps:
         - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
-        - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2))"
+        - query: "INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total) VALUES(:line_id, :id, :next_sequence, :description, :quantity, :unit, :unit_price, :tax_rate, ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2))"
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
@@ -525,7 +541,7 @@ actions:
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before saving
       steps:
-        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(:quantity * :unit_price * (1 + :tax_rate / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE order_lines SET description = :description, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           expect_changed: true
           code: STALE_RECORD
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"

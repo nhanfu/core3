@@ -77,6 +77,8 @@ export { MapView } from './components/MapView.ts';
 export { ApprovalTimeline } from './components/ApprovalTimeline.ts';
 export { ContactGrid } from './components/ContactGrid.ts';
 export { LineItemGrid } from './components/LineItemGrid.ts';
+export { LineItemField } from './components/LineItemField.ts';
+export { LineItemActions } from './components/LineItemActions.ts';
 export { MoneySummary } from './components/MoneySummary.ts';
 export { ScheduleGrid } from './components/ScheduleGrid.ts';
 export { Chat } from './components/Chat.ts';

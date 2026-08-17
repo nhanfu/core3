@@ -236,9 +236,10 @@ export class PageFormModal extends BaseComponent {
           try {
             if (actionDef.type === 'server_form') {
               const actionContext = { ...ctx, row: row || {} };
+              const actionParams = resolveActionParams(actionDef.params, actionContext);
               await client.action(actionDef.action, {
-                ...resolveActionParams(actionDef.params, actionContext),
-                id: formRecord.id ?? null,
+                ...actionParams,
+                id: actionParams.id ?? formRecord.id ?? null,
                 expected_row_version: formRecord.row_version,
                 parent_expected_row_version: dataMap.order_detail?.data?.row_version,
                 values: Object.fromEntries(changes.map(change => [change.field, change.value])),

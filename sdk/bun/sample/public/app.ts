@@ -333,7 +333,7 @@ async function bootstrap() {
     navigate,
     onLanguageChange: async (langCode: string) => {
       const location = currentLocation();
-      await navigate(location.path, { lc: langCode });
+      await navigate(location.path, { ...getPageParams(), lc: langCode });
     },
     onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
   });
