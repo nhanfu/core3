@@ -6,6 +6,12 @@ components:
   - type: DocPage
     hero:
       variant: page
+      articleType: Concept
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Concepts
+        - label: Backend data pipeline
       eyebrow: Data layer
       title: Backend data pipeline
       subtitle: >-

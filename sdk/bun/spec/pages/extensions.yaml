@@ -6,6 +6,12 @@ components:
   - type: DocPage
     hero:
       variant: page
+      articleType: How-to guide
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: How-to guides
+        - label: Extension points
       eyebrow: Extension points
       title: Custom components in the spec project
     sections:

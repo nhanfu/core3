@@ -6,6 +6,12 @@ components:
   - type: DocPage
     hero:
       variant: page
+      articleType: Reference
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Reference
+        - label: Component library
       eyebrow: Reference
       title: Component library
       subtitle: >-

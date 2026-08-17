@@ -6,6 +6,12 @@ components:
   - type: DocPage
     hero:
       variant: page
+      articleType: Concept
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Concepts
+        - label: Frontend rendering model
       eyebrow: UI layer
       title: Frontend rendering model
       subtitle: >-

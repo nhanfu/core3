@@ -2,25 +2,29 @@ nav:
   brand: Core3
   eyebrow: YAML-driven ERP framework
   items:
-    - label: Proposal
-      href: /
-    - label: Components
+    - label: Overview
       items:
-        - label: Frontend
-          href: /frontend
-        - label: Backend
-          href: /backend
-        - label: Scripting
-          href: /scripting
-        - label: Reference
-          href: /reference
-        - label: Component Library
-          href: /component-library
-        - label: Extension Points
-          href: /extensions
-    - label: Plan
-      items:
+        - label: Proposal
+          href: /
         - label: Roadmap
           href: /plan
-        - label: Gate Service Plan
+    - label: Concepts
+      items:
+        - label: Frontend rendering model
+          href: /frontend
+        - label: Backend data pipeline
+          href: /backend
+        - label: Scripting engine
+          href: /scripting
+        - label: Gate service architecture
           href: /plan/auth-mediator
+    - label: How-to guides
+      items:
+        - label: Extension points
+          href: /extensions
+    - label: Reference
+      items:
+        - label: CSS, auth & protocols
+          href: /reference
+        - label: Component library
+          href: /component-library

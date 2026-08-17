@@ -6,6 +6,12 @@ components:
   - type: DocPage
     hero:
       variant: page
+      articleType: Overview
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Overview
+        - label: Roadmap
       eyebrow: Roadmap
       title: Plan & next steps
       subtitle: Where the framework is today, and what pattern-extraction feeds back into it next.
@@ -20,10 +26,35 @@ components:
               - ['Shared client library', Complete, '@core3/client — BaseComponent, html.js, the full component set, YAML-driven PageRuntime']
               - ['Server YAML pipeline', Complete, 'Discovery, schema validation, multi-database adapters (Postgres, DuckDB, MySQL, SQL Server, Oracle)']
               - ['Auth & event mediator', 'In progress', 'Typed JWT claims and a hardened mediator auth adapter landed most recently']
-              - ['Sample services', Complete, 'order and chat services in sdk/bun/sample demonstrate CRUD, workflow, chatter, and attachments']
+              - ['Sample services', Complete, 'order and chat services in sdk/bun/sample are the canonical reference implementation — every new Odoo-parity module should follow their CRUD/workflow/chatter/attachment patterns']
               - ['Doc/spec project', Complete, 'All original static pages (frontend, backend, scripting, reference, component library) migrated to YAML + DocPage']
               - ['Component library accuracy pass', Complete, 'component-library.yaml corrected against real component source and expanded to cover the full export set']
               - ['Package publishing', Future, '@core3/client and @core3/server as installable packages outside this monorepo']
+
+      - id: direction
+        kicker: Direction
+        title: Target — a full Odoo clone
+        lead: >-
+          The framework's direction is to reproduce Odoo's ERP surface end to end on Core3, not to
+          work from a hypothetical module list. Every new module should be modeled directly against
+          Odoo's real behavior.
+        blocks:
+          - type: callout
+            tone: important
+            title: The sample code is the reference, not a demo
+            text: >-
+              sdk/bun/sample/services/order and sdk/bun/sample/services/chat are the canonical
+              reference implementation for this direction — CRUD, workflow state transitions,
+              chatter/messaging, and file attachments, all driven by YAML page configs with no
+              per-page UI code. New Odoo-parity modules should follow these two services' patterns
+              directly, the same way OdooFormView, OdooChatter, OdooFollowerManager, and
+              OdooAttachmentPanel already exist because the sample services needed them.
+          - type: p
+            text: >-
+              This replaces the project's original planning approach (a hypothetical module
+              breakdown used only to validate the framework's YAML concepts before any real service
+              existed). That approach is now retired — the order and chat services are real,
+              running proof, and Odoo itself is the specification for what comes next.
 
       - id: pattern-rule
         kicker: Working principle
@@ -47,44 +78,11 @@ components:
         blocks:
           - type: list
             items:
+              - Model new modules directly against Odoo's real feature set, using the order and chat services as the pattern to follow
               - Keep the component-library reference in sync as real components change
               - Grow the sample order service with more read-focused example pages (analytics, reports)
               - Keep extracting repeated DocPage block shapes into the schema as the doc set grows
               - Continue hardening auth and the event mediator per the current auth-and-mediator plan
-
-      - id: tms-example
-        kicker: Historical reference
-        title: "Original planning example: TMS modules"
-        lead: >-
-          The framework was initially designed around a Truck Management System (TMS) with fleet,
-          driver, trip, maintenance, reports, and settings modules. The sample app that shipped
-          covers order management and chat instead (sdk/bun/sample/services/). The TMS breakdown
-          is preserved here as an illustration of the planning methodology: for each page, which
-          components it needs, and which YAML concepts it was meant to exercise.
-        blocks:
-          - type: callout
-            tone: note
-            title: What shipped instead
-            text: >-
-              The real sample app demonstrates CRUD (order list, detail, create/edit), workflow
-              state transitions, a chatter/messaging panel, and file attachments — all driven by
-              YAML page configs with no per-page UI code. The TMS module pages below were never
-              built; they illustrate the planning method.
-          - type: table
-            headers: [Page, Components used, YAML concepts exercised]
-            rows:
-              - ['fleet-list', 'StatRow, FilterBar, GridView (BadgeCell, DateCell, ActionCell)', 'datasource, pagination, filters[], column defs, navigate_to']
-              - ['truck-detail', 'SplitPanel, FormPanel, GridView (maintenance log), TimelinePanel', 'master-detail layout, related datasource, readonly fields, tabs']
-              - ['truck-add', 'FormPanel, Button', 'create CRUD action, required validation, navigate_to on success']
-              - ['driver-list', 'StatRow, FilterBar, GridView (AvatarCell, BadgeCell, ActionCell)', 'visible_if on row actions, search filter']
-              - ['driver-detail', 'FormPanel, TabPanel (active trips, history)', 'tabs with nested datasources, on_after_save lifecycle']
-              - ['assign-driver', 'SearchEntry (truck picker), Button, GridView', 'depends_on cascading — branch to available trucks']
-              - ['trip-list', 'FilterBar (date-range, select), GridView (DateCell, CurrencyCell)', 'multi-field sort, export: csv']
-              - ['trip-detail', 'StatRow, FormPanel (readonly), ProgressBar', 'compute: expression on fields, readonly form mode']
-              - ['maintenance-list', 'FilterBar, TabPanel (All / Overdue / Scheduled / Done), GridView', 'tab-scoped datasource, overdue_field on DateCell']
-              - ['fleet-utilization', 'StatRow, Chart (bar), GridView (PercentCell), ButtonExcel', 'group_by datasource, export: xlsx, compute: percent']
-              - ['cost-analysis', 'FilterBar (date-range), GridView (grouped, summary_row), StatRow', 'group_by, summary_row: true, export: pdf']
-              - ['roles-permissions', 'SplitPanel, ListView (roles), CheckboxInput grid', 'permission matrix, can_read / can_write / can_delete flags per row']
 
       - id: meta-model
         kicker: Design reference
@@ -132,7 +130,7 @@ components:
         kicker: Reconciliation
         title: What shipped vs. what was planned
         lead: >-
-          Every component anticipated in the original TMS spec shipped. The real component set has
+          Every component anticipated in the original wishlist shipped. The real component set has
           grown to over 70 entries, well beyond the original 13-item wishlist.
         blocks:
           - type: table
@@ -157,7 +155,7 @@ components:
               OdooChatter, OdooFollowerManager, OdooAttachmentPanel, ChatWorkspace, LineItemGrid,
               GroupGridView, TreeView, PivotView, CalendarView, GraphView, MapView, ScheduleGrid,
               and more — each driven by real product requirements in the order and chat sample
-              services rather than the TMS example.
+              services, not a hypothetical planning list.
           - type: callout
             tone: note
             title: YAML props wishlist
