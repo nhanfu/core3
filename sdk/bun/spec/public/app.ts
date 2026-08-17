@@ -10,7 +10,8 @@ import { DocPage } from '@core3/client/doc/DocPage';
 registerPageComponentSchema('DocPage', ['hero', 'sections']);
 
 const ROUTES: Record<string, string> = {
-  '/': 'main',
+  '/': 'home',
+  '/overview': 'overview',
   '/frontend': 'frontend',
   '/backend': 'backend',
   '/scripting': 'scripting',

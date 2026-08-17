@@ -1,11 +1,16 @@
 title: Core3 — Proposal
 page:
-  id: main
+  id: overview
 
 components:
   - type: DocPage
     hero:
       variant: home
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Overview
+        - label: Proposal
       articleType: Overview
       eyebrow: Proposal
       title: 'YAML is spec, YAML is code'

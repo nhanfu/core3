@@ -1,0 +1,337 @@
+title: Core3 — Build by talking to it
+page:
+  id: home
+
+components:
+  - type: DocPage
+    hero:
+      variant: home
+      eyebrow: 'Homepage concept'
+      title: 'Build your ERP by talking to it.'
+      subtitle: >-
+        Because business logic in Core3 is nothing but YAML, an AI assistant can read it, edit it,
+        and show you the result live — chat on one side, the YAML it just changed on the other,
+        and the page updating in front of you. This page is a concept mockup for that experience.
+      ctas:
+        - label: Read the full proposal
+          href: /overview
+          variant: primary
+        - label: See the roadmap
+          href: /plan
+          variant: secondary
+      stats:
+        - value: '90'
+          label: shared components available
+          visual: units
+        - value: '5'
+          label: databases supported through one adapter interface
+          visual: chips
+          items: [PostgreSQL, DuckDB, MySQL, Oracle, SQL Server]
+
+    sections:
+      - id: live-build
+        kicker: Live chat, live build
+        title: "Talk is cheap. Let's build."
+        lead: >-
+          No requirements doc, no ticket, no sprint to wait on — say what you want changed, and
+          watch the YAML update and the page change while you're still talking. Chat replaces the
+          back-and-forth, not the spec.
+        blocks:
+          - type: callout
+            tone: note
+            title: Concept mockup — not wired up yet
+            text: >-
+              This panel is a static illustration of the intended experience, not a working
+              feature. It exists to communicate the direction before any of it is built.
+          - type: mockup
+            caption: 'Static mockup — chat, live YAML, and live preview stay in sync because they are the same spec.'
+            html: |
+              <div class="doc-chatbar">
+                <span class="doc-chatbar-icon">✦</span>
+                <span class="doc-chatbar-placeholder">Add a "Cancel order" button with a confirm dialog…</span>
+                <span class="doc-chatbar-send">↵ Send</span>
+              </div>
+              <div class="doc-chatbar-panes">
+                <div class="doc-chatbar-pane">
+                  <span class="doc-chatbar-pane-title">Chat</span>
+                  <div class="doc-chatbar-msg doc-chatbar-msg-user">Add a "Cancel order" button with a confirm dialog</div>
+                  <div class="doc-chatbar-msg doc-chatbar-msg-ai">Added an action to orders-detail.yaml — type: confirm, then delete on confirm. Preview updated.</div>
+                </div>
+                <div class="doc-chatbar-pane">
+                  <span class="doc-chatbar-pane-title">Live YAML</span>
+                  <pre class="doc-chatbar-code"><code class="language-yaml">actions:
+                - id: cancel_order
+                  type: confirm
+                  label: Cancel order
+                  message: "Cancel this order?"
+                  then:
+                    type: delete
+                    table: orders</code></pre>
+                </div>
+                <div class="doc-chatbar-pane">
+                  <span class="doc-chatbar-pane-title">Live preview</span>
+                  <div class="doc-chatbar-preview-row"><span>#1042 · Acme Co.</span><button>Cancel order</button></div>
+                  <div class="doc-chatbar-preview-row"><span>#1043 · Globex</span><button>Cancel order</button></div>
+                  <div class="doc-chatbar-preview-row"><span>#1044 · Initech</span><button>Cancel order</button></div>
+                </div>
+              </div>
+          - type: p
+            text: >-
+              Why this is plausible, not vaporware — a "server_form"/"delete" action is already a
+              handful of validated YAML keys (see the Scripting and Backend pages), small and
+              structured enough for an assistant to edit reliably. Nothing about it requires
+              generating or reviewing arbitrary application code.
+
+      - id: platform
+        kicker: Platform
+        title: This isn't a mockup of the framework — this site is running proof
+        lead: >-
+          Every panel below is real content pulled from this same spec project, dropped into a
+          window frame — not a rendering of what the product might look like.
+        blocks:
+          - type: p
+            text: 'The proposal page ends its pitch with four load-bearing properties, rendered as an ordinary cardgrid:'
+          - type: mockup
+            reveal: left
+            caption: 'Real content — the Proposal page, "One shared framework" section.'
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">core3.dev/overview#proposal</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <div class="doc-cardgrid">
+                    <div class="doc-card"><span class="doc-card-tag">Data</span><h4>Server-first data</h4><p>The server performs joins and lookups; the browser never resolves references.</p></div>
+                    <div class="doc-card"><span class="doc-card-tag">Components</span><h4>90 shared components</h4><p>GridView, ListView, forms, KPIs, and Odoo-style document views.</p></div>
+                    <div class="doc-card"><span class="doc-card-tag">CRUD</span><h4>Declarative mutations</h4><p>crud: true generates insert/update/delete with row_version optimistic concurrency.</p></div>
+                    <div class="doc-card"><span class="doc-card-tag">Extension</span><h4>Escape hatch when YAML isn't enough</h4><p>A per-project registry plugs in custom components without forking the framework.</p></div>
+                  </div>
+                </div>
+              </div>
+          - type: p
+            text: 'The Backend page shows a real permission-gated datasource, SQL and all — not an abstracted example:'
+          - type: mockup
+            reveal: right
+            caption: 'Real content — the Backend page, "Datasource with a permission gate" panel.'
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">core3.dev/backend#permissions</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <pre><code class="language-yaml">datasources:
+                - id: orders
+                  permission: orders.read
+                  query_window:
+                    table: orders
+                    date_field: order_date
+                  query: |
+                    SELECT o.id, o.order_number, o.customer_name, o.status
+                    FROM orders o
+                    WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+                    ORDER BY o.order_date DESC</code></pre>
+                </div>
+              </div>
+          - type: p
+            text: 'The Gate Service Plan is a real architecture diagram, not an illustration drawn for this pitch:'
+          - type: mockup
+            reveal: left
+            caption: 'Real content — the Gate Service Plan, "Request and dispatch topology" diagram.'
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">core3.dev/plan/auth-mediator#topology</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <svg viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg">
+                    <style>
+                      .hb-box{fill:var(--bg);stroke:var(--border);stroke-width:1.5;}
+                      .hb-lbl{font-family:var(--font-display);font-weight:600;font-size:13px;fill:var(--heading);}
+                      .hb-sub{font-family:var(--font-mono);font-size:10px;fill:var(--text-faint);}
+                      .hb-edge{stroke:var(--text-faint);stroke-width:1.5;fill:none;}
+                      .hb-edge-dashed{stroke:var(--text-faint);stroke-width:1.5;stroke-dasharray:5 4;fill:none;}
+                      .hb-edge-teal{stroke:var(--primary);stroke-width:1.8;fill:none;}
+                      .hb-boundary{fill:none;stroke:var(--text-faint);stroke-width:1.2;stroke-dasharray:4 3;}
+                      .hb-boundary-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;fill:var(--text-faint);text-transform:uppercase;}
+                      .hb-tile-client{fill:var(--text-faint);}
+                      .hb-tile-gate{fill:var(--primary);}
+                      .hb-tile-service{fill:var(--tip-color);}
+                      .hb-tile-store{fill:var(--important-color);}
+                      .hb-icon{fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;}
+                      .hb-badge{fill:var(--primary);}
+                      .hb-badge-text{font-family:var(--font-mono);font-weight:700;font-size:10px;fill:#fff;}
+                    </style>
+                    <defs>
+                      <marker id="hb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--text-faint)"/></marker>
+                      <marker id="hb-arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--primary)"/></marker>
+                    </defs>
+                    <text x="345" y="122" class="hb-boundary-label">Gate service — trust boundary</text>
+                    <rect x="333" y="128" width="254" height="182" rx="10" class="hb-boundary"/>
+                    <rect x="40" y="40" width="200" height="64" rx="6" class="hb-box"/>
+                    <rect x="50" y="50" width="26" height="26" rx="5" class="hb-tile-client"/>
+                    <g transform="translate(63,63)" class="hb-icon"><rect x="-8" y="-6" width="16" height="11" rx="1"/><line x1="-4" y1="7" x2="4" y2="7"/><line x1="0" y1="5" x2="0" y2="7"/></g>
+                    <text x="150" y="78" text-anchor="middle" class="hb-lbl">Client (browser)</text>
+                    <rect x="40" y="320" width="200" height="64" rx="6" class="hb-box"/>
+                    <rect x="50" y="330" width="26" height="26" rx="5" class="hb-tile-service"/>
+                    <g transform="translate(63,343)" class="hb-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                    <text x="150" y="350" text-anchor="middle" class="hb-lbl">Source service</text>
+                    <rect x="350" y="140" width="220" height="150" rx="6" class="hb-box" style="stroke:var(--primary);"/>
+                    <rect x="360" y="150" width="26" height="26" rx="5" class="hb-tile-gate"/>
+                    <g transform="translate(373,163)" class="hb-icon"><path d="M0,-9 L7,-6.5 V1 C7,5.5 3.5,8 0,9.5 C-3.5,8 -7,5.5 -7,1 V-6.5 Z"/></g>
+                    <text x="460" y="168" text-anchor="middle" class="hb-lbl">Gate service</text>
+                    <text x="460" y="194" text-anchor="middle" class="hb-sub">validates JWT / service token</text>
+                    <text x="460" y="212" text-anchor="middle" class="hb-sub">checks deny-list + durable revision</text>
+                    <text x="460" y="230" text-anchor="middle" class="hb-sub">resolves newest permissions</text>
+                    <text x="460" y="248" text-anchor="middle" class="hb-sub">issues short-lived dispatch token</text>
+                    <rect x="660" y="183" width="200" height="64" rx="6" class="hb-box"/>
+                    <rect x="670" y="193" width="26" height="26" rx="5" class="hb-tile-service"/>
+                    <g transform="translate(683,206)" class="hb-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                    <text x="760" y="211" text-anchor="middle" class="hb-lbl">Target service</text>
+                    <text x="760" y="227" text-anchor="middle" class="hb-sub">trusts the dispatch token only</text>
+                    <rect x="350" y="350" width="220" height="64" rx="6" class="hb-box"/>
+                    <rect x="360" y="360" width="26" height="26" rx="5" class="hb-tile-store"/>
+                    <g transform="translate(373,373)" class="hb-icon"><path d="M-7,-5 a7,2.5 0 0 1 14,0 v10 a7,2.5 0 0 1 -14,0 Z"/><ellipse cx="0" cy="-5" rx="7" ry="2.5"/></g>
+                    <text x="470" y="378" text-anchor="middle" class="hb-lbl">Event + audit store</text>
+                    <text x="470" y="394" text-anchor="middle" class="hb-sub">Parquet segments</text>
+                    <line x1="240" y1="72" x2="350" y2="180" class="hb-edge" marker-end="url(#hb-arrow)"/>
+                    <circle cx="278" cy="107" r="9" class="hb-badge"/><text x="278" y="110" text-anchor="middle" class="hb-badge-text">1</text>
+                    <line x1="240" y1="352" x2="350" y2="250" class="hb-edge" marker-end="url(#hb-arrow)"/>
+                    <circle cx="278" cy="308" r="9" class="hb-badge"/><text x="278" y="311" text-anchor="middle" class="hb-badge-text">2</text>
+                    <line x1="587" y1="215" x2="660" y2="215" class="hb-edge-teal" marker-end="url(#hb-arrowTeal)"/>
+                    <circle cx="612" cy="215" r="9" class="hb-badge"/><text x="612" y="218" text-anchor="middle" class="hb-badge-text">3</text>
+                    <line x1="460" y1="290" x2="460" y2="350" class="hb-edge-dashed" marker-end="url(#hb-arrow)"/>
+                    <circle cx="460" cy="320" r="9" fill="var(--text-faint)"/><text x="460" y="323" text-anchor="middle" class="hb-badge-text">4</text>
+                  </svg>
+                </div>
+              </div>
+          - type: p
+            text: 'And the Roadmap tracks real progress against real Odoo modules — including the honest "Not started" rows:'
+          - type: mockup
+            reveal: right
+            caption: 'Real content — the Roadmap page, Odoo parity tracker (5 of 43 rows).'
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">core3.dev/plan#odoo-modules</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <div class="doc-table-wrap">
+                    <table class="doc-table">
+                      <thead><tr><th>Category</th><th>Module</th><th>Status</th></tr></thead>
+                      <tbody>
+                        <tr><td>Sales</td><td>Sales</td><td>In progress — order service proves the CRUD/workflow pattern</td></tr>
+                        <tr><td>Sales</td><td>CRM</td><td>Not started</td></tr>
+                        <tr><td>Productivity</td><td>Discuss</td><td>In progress — chat service proves the messaging/chatter pattern</td></tr>
+                        <tr><td>Finance</td><td>Accounting</td><td>Not started</td></tr>
+                        <tr><td>Supply Chain</td><td>Inventory</td><td>Not started</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+          - type: p
+            text: 'And the Frontend page shows what a whole custom component looks like — this is the complete, real example, not a snippet trimmed for slides:'
+          - type: mockup
+            reveal: left
+            caption: 'Real content — the Frontend page, "A minimal component" panel.'
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">core3.dev/frontend#page-render</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <pre><code class="language-typescript">class Section extends BaseComponent {
+                draw(container) {
+                  const panel = html.take(container).div.className('panel').ele();
+                  html.take(panel).span.className('panel-title').text(this.def.title);
+                }
+              }</code></pre>
+                </div>
+              </div>
+
+      - id: differentiators
+        kicker: Why it holds up under real ERP load
+        title: Four properties, not four features
+        lead: >-
+          These aren't bullet points bolted on for marketing — each one is a concrete, load-bearing
+          design decision made in the gate service plan, not an aspiration.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Declarative
+                title: It's the spec, not a hint
+                body: Business intent lives only in YAML. A bug is either a spec problem (fix the business definition) or a runtime problem (fix the engine once) — never both at once.
+              - tag: Portable
+                title: No database lock-in
+                body: PostgreSQL, DuckDB, MySQL, Oracle, and SQL Server all sit behind one DatabaseAdapter interface. Every CAS pattern is provably driver-agnostic, not just untested on the others.
+              - tag: Auditable
+                title: Every dispatch is on the record
+                body: The gate durably writes an event/audit envelope for every client and service call to Parquet — not a logging afterthought bolted onto services individually.
+              - tag: Consistent
+                title: Cancellation and sagas are protocol, not convention
+                body: Long-running operations and multi-step cross-service flows carry operation_id/cancellation_id end to end, with compensation as a first-class state, not a try/catch someone forgot.
+
+      - id: quote
+        kicker: Working principle
+        title: The rule this whole framework runs on
+        blocks:
+          - type: quote
+            text: >-
+              When the same structure appears in two pages, write a YAML shorthand for it. When it
+              appears in three, it becomes a first-class framework concept.
+            attribution: 'Core3 working principle — see Roadmap: Pattern extraction'
+
+      - id: scale
+        kicker: Scale of the ambition
+        title: 'Tracked against real Odoo, not a wish list'
+        lead: >-
+          The roadmap's module tracker uses Odoo's own app categories as the literal checklist —
+          reported honestly against what has actually shipped.
+        blocks:
+          - type: stats
+            items:
+              - value: '8'
+                label: Odoo app categories mapped
+                visual: chips
+                items: [Sales, Finance, Supply Chain, HR, Marketing, Services, Productivity, Website]
+              - value: '43'
+                label: modules and sub-modules tracked
+                visual: units
+              - value: '2'
+                label: in progress today
+                visual: chips
+                items: [Sales, Discuss]
+          - type: list
+            items:
+              - text: See the full module-by-module tracker on the Roadmap
+                href: /plan
+
+      - id: waitlist
+        kicker: Get notified
+        title: Chat-driven building isn't live yet — get in line for early access
+        lead: >-
+          We're building the live chat/YAML/preview loop shown above next. Leave an email and
+          we'll reach out when there's something real to try.
+        blocks:
+          - type: email-capture
+            placeholder: you@company.com
+            buttonLabel: Join the waitlist
+            note: 'No spam — one email when early access opens, nothing else.'
+
+      - id: cta
+        kicker: Decision needed
+        title: Read the case for adopting Core3
+        blocks:
+          - type: list
+            items:
+              - text: Read the full Proposal
+                href: /overview
+              - text: See the Gate Service Plan
+                href: /plan/auth-mediator
+              - text: View the full roadmap and Odoo module tracker
+                href: /plan

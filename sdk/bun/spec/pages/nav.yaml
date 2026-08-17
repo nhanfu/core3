@@ -4,8 +4,10 @@ nav:
   items:
     - label: Overview
       items:
-        - label: Proposal
+        - label: Home
           href: /
+        - label: Proposal
+          href: /overview
         - label: Roadmap
           href: /plan
     - label: Concepts

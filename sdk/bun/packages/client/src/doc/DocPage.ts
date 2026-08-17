@@ -1,6 +1,6 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { DocHero, type DocHeroDef } from '@core3/client/doc/DocHero';
+import { DocHero, type DocHeroDef, type DocHeroStat, renderDocStat } from '@core3/client/doc/DocHero';
 import { navigate } from '@core3/client/navigate';
 import hljs from 'highlight.js';
 
@@ -17,7 +17,11 @@ export type DocBlock =
   | { type: 'table'; headers: string[]; rows: string[][] }
   | { type: 'flowstrip'; steps: Array<{ label: string; sub?: string }> }
   | { type: 'callout'; tone?: 'note' | 'tip' | 'important' | 'warning' | 'caution'; title?: string; text: string }
-  | { type: 'diagram'; svg: string; caption?: string };
+  | { type: 'diagram'; svg: string; caption?: string }
+  | { type: 'quote'; text: string; attribution?: string }
+  | { type: 'stats'; items: DocHeroStat[] }
+  | { type: 'mockup'; html: string; caption?: string; reveal?: 'left' | 'right' }
+  | { type: 'email-capture'; placeholder?: string; buttonLabel?: string; note?: string };
 
 export type DocSection = {
   id?: string;
@@ -113,6 +117,7 @@ export class DocPage extends BaseComponent {
   private sectionIntersecting = new Map<string, boolean>();
   private activeAnchor: string | null = null;
   private sectionObserver: IntersectionObserver | null = null;
+  private revealObserver: IntersectionObserver | null = null;
 
   constructor(id: string, state: any = {}, private readonly def: DocPageDef = {}) {
     super(id, state);
@@ -202,6 +207,49 @@ export class DocPage extends BaseComponent {
         if (block.caption) html.take(wrap).div.className('doc-diagram-caption').text(block.caption);
         break;
       }
+      case 'quote': {
+        const fig = html.take(container).add('figure').className('doc-quote').ele() as HTMLElement;
+        html.take(fig).add('blockquote').text(block.text);
+        if (block.attribution) html.take(fig).add('figcaption').text(block.attribution);
+        break;
+      }
+      case 'stats': {
+        const row = html.take(container).div.className('doc-stats-row').ele() as HTMLElement;
+        for (const stat of block.items || []) renderDocStat(row, stat);
+        break;
+      }
+      case 'mockup': {
+        // A static, non-functional illustration of a UI concept — e.g. a
+        // product mockup for a not-yet-built feature. Never wire up real
+        // behavior here; it exists purely to show what something would look
+        // like.
+        const wrap = html.take(container).div.className(`doc-mockup${block.reveal ? ` doc-reveal-${block.reveal}` : ''}`).ele() as HTMLElement;
+        wrap.innerHTML = block.html || '';
+        // Any real code embedded in a mockup (e.g. inside a browser-frame
+        // capture) still gets real syntax highlighting — mark it with
+        // class="language-xxx" on the <code> tag to opt in.
+        wrap.querySelectorAll('pre code[class*="language-"]').forEach((codeEl) => {
+          const match = codeEl.className.match(/language-([\w-]+)/);
+          const lang = match?.[1];
+          const highlighted = lang ? highlightCode(codeEl.textContent || '', lang) : null;
+          if (highlighted != null) {
+            codeEl.innerHTML = highlighted;
+            codeEl.classList.add('hljs');
+          }
+        });
+        if (block.caption) html.take(wrap).div.className('doc-mockup-caption').text(block.caption);
+        break;
+      }
+      case 'email-capture': {
+        // Presentational only — no submit handler, no fake "you're on the
+        // list" confirmation. Wire this up for real before it ships.
+        const wrap = html.take(container).div.className('doc-email-capture').ele() as HTMLElement;
+        const row = html.take(wrap).div.className('doc-email-capture-row').ele() as HTMLElement;
+        html.take(row).add('input').attr('type', 'email').attr('placeholder', block.placeholder || 'you@company.com').className('doc-email-capture-input').ele();
+        html.take(row).button.type('button').className('doc-btn doc-btn-primary').text(block.buttonLabel || 'Join the waitlist').ele();
+        if (block.note) html.take(wrap).p.className('doc-email-capture-note').text(block.note);
+        break;
+      }
       default:
         console.error(`[DocPage] Unknown block type: ${(block as any).type}`);
     }
@@ -211,6 +259,7 @@ export class DocPage extends BaseComponent {
     const { hero, sections = [] } = this.def;
     this.children = [];
     this.sectionObserver?.disconnect();
+    this.revealObserver?.disconnect();
     this.tocLinks = new Map();
     this.sectionIntersecting = new Map();
     this.activeAnchor = null;
@@ -239,7 +288,7 @@ export class DocPage extends BaseComponent {
       usedAnchors.add(anchor);
       this.tocLinks.set(anchor, this.link(nav, anchor, section.title));
 
-      const el = html.take(main).section.attr('id', anchor).className('doc-section').ele() as HTMLElement;
+      const el = html.take(main).section.attr('id', anchor).className('doc-section doc-section-reveal').ele() as HTMLElement;
       if (section.kicker) html.take(el).span.className('doc-kicker').text(section.kicker);
       html.take(el).h2.text(section.title);
       if (section.lead) html.take(el).p.className('doc-lead').text(section.lead);
@@ -248,6 +297,7 @@ export class DocPage extends BaseComponent {
     });
 
     this.observeSections(sectionEls);
+    this.observeReveal(main, sectionEls);
   }
 
   /**
@@ -287,6 +337,30 @@ export class DocPage extends BaseComponent {
     setActive();
   }
 
+  /**
+   * One-shot reveal as content first scrolls into view — real animation, not
+   * decorative CSS-only guesswork. Sections fade/slide up; individual
+   * elements opted into `.doc-reveal-left`/`.doc-reveal-right` (e.g. a
+   * mockup's `reveal` field) slide in horizontally instead.
+   */
+  private observeReveal(main: HTMLElement, sectionEls: HTMLElement[]) {
+    const horizontal = Array.from(main.querySelectorAll('.doc-reveal-left, .doc-reveal-right')) as HTMLElement[];
+    const targets = [...sectionEls, ...horizontal];
+    if (!targets.length || typeof IntersectionObserver === 'undefined') return;
+    this.revealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const target = entry.target as HTMLElement;
+          target.classList.add(target.classList.contains('doc-section-reveal') ? 'doc-section-visible' : 'doc-visible');
+          observer.unobserve(target);
+        }
+      },
+      { rootMargin: '0px 0px -10% 0px', threshold: 0.1 },
+    );
+    for (const el of targets) this.revealObserver.observe(el);
+  }
+
   private link(container: HTMLElement, anchor: string, label: string): HTMLAnchorElement {
     const item = html.take(container).a.className('doc-toc-link').attr('href', `#${anchor}`).text(label).ele() as HTMLAnchorElement;
     html.take(item).event('click', (event: MouseEvent) => {
@@ -299,6 +373,8 @@ export class DocPage extends BaseComponent {
   dispose() {
     this.sectionObserver?.disconnect();
     this.sectionObserver = null;
+    this.revealObserver?.disconnect();
+    this.revealObserver = null;
     super.dispose();
   }
 }
