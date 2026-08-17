@@ -1,386 +1,665 @@
-# Detailed Auth and Mediator Refactor with Concurrency and Consistency Verification
-
-## 1. Correctness Model and Non-Negotiable Invariants
-
-### Auth invariants
-
-- Resource services possess public signing keys only; compromising a verifier must not permit token issuance.
-- A protected request is accepted only when:
-  1. The ES256 signature, issuer, audience, token type, and time claims are valid.
-  2. The local session/device/permission entry is no more than 30 seconds old.
-  3. Cached security revisions are equal to or newer than those carried by the token and invalidation stream.
-- Cache versions are monotonic. A delayed Auth response must never overwrite a newer invalidation or resolution.
-- Under healthy mediation, revocation and permission changes must reach every service instance within two seconds at p99. Regardless of delivery health, no service may trust cached state beyond 30 seconds.
-- Requests authorized before a revocation transaction commits may finish. Any authorization performed after the service observes the new revision must use the new state.
-- Only one refresh-token generation is current for a session. Concurrent refreshes cannot create multiple valid descendants.
-- A committed Auth mutation and its invalidation outbox record are atomic.
-- Auth shards are authoritative; process-local KV caches are disposable and reconstructable.
-
-### Mediator invariants
-
-- A durable publish is acknowledged only after the WAL record and commit marker are fsynced on at least two of three replicas.
-- At most one unfenced writer can commit to a partition. Followers reject every operation carrying an older fencing token.
-- Each partition has strictly increasing, unique offsets. No global ordering is promised across partitions.
-- An acknowledged message is never lost after any single mediator-node failure.
-- `single` and `multiple` provide at-least-once delivery. Exactly-once business effects come from a transactional consumer inbox, not from transport claims.
-- Consumer checkpoints advance only across a contiguous acknowledged prefix. Acknowledging offset 12 while 11 is incomplete must not skip 11.
-- Compaction never changes message identity, partition, offset, checksum, or committed status.
-- `forward` traffic is not written into the business event stream. Only redacted trace records are retained.
-- Non-idempotent `forward` calls are never automatically replayed. Idempotent calls may retry only with the original idempotency key.
-- Expired deadlines are terminal: queued, retrying, or late response frames cannot revive an expired request.
-
-### Distributed consistency model
-
-- Strong consistency exists inside one Auth-shard transaction and inside one mediator partition’s quorum-committed log.
-- Cross-service permission and device state is bounded-stale, with a hard 30-second fail-closed limit.
-- Cross-service business workflows use outbox, inbox, idempotency, versioned events, and compensation. No distributed transaction is introduced.
-- All shared coordination uses compare-and-swap versions, leases, and fencing. No advisory locks, `FOR UPDATE`, or driver-specific database locking.
-
-## 2. Auth and JWKS Implementation
-
-### Persistent model
-
-- Use PostgreSQL as the first production Auth adapter while preserving the existing generic repository boundary.
-- Shard user-owned records by `hash(user_id)`.
-- Shard the normalized-email directory independently. Its record contains `normalized_email`, `user_id`, `user_shard`, `directory_epoch`, and `row_version`.
-- Add:
-  - `auth_signing_keys`
-  - `auth_devices`
-  - `auth_sessions`
-  - `auth_refresh_history`
-  - `auth_security_revisions`
-  - `auth_outbox`
-  - `auth_idempotency`
-- Every mutable record carries `row_version`. Conditional mutation is `UPDATE ... WHERE id = ? AND row_version = ?`; zero changed rows is a conflict.
-- Signing private keys are envelope-encrypted. Only Auth loads the decryption key. JWKS contains public parameters only.
-
-### Token profile
-
-- ES256 access tokens expire after 15 minutes and include `typ=at+jwt`, `iss`, `aud`, `sub`, `jti`, `sid`, `did`, `iat`, `nbf`, `exp`, and security revision claims.
-- Permit 60 seconds of clock skew. Reject missing audience, unexpected algorithm, unknown issuer, malformed `kid`, and tokens without session/device claims.
-- Effective permissions are returned by `auth.session.resolve`, not trusted from the final JWT format.
-- Refresh tokens are opaque random values stored only as hashes and rotated using a session-generation CAS.
-- Concurrent refresh rules:
-  - The first request for a generation succeeds.
-  - An identical idempotency key returns the original result.
-  - A different request racing within five seconds receives `409 REFRESH_CONFLICT`; it does not create another token.
-  - Reuse outside that window revokes the session family, increments its revision, and emits an invalidation.
-
-### JWKS and local verifier
-
-- Publish `/.well-known/openid-configuration` and `/.well-known/jwks.json`.
-- Use `ETag` and `Cache-Control: public, max-age=300`.
-- Cache keys by `(issuer, kid)`. Collapse concurrent cache misses into one fetch per issuer.
-- An unknown `kid` triggers one forced refresh; failure or continued absence rejects the token.
-- Keep retired public keys visible for at least 30 minutes.
-- Rotate signing keys using: create next key → publish it → wait one JWKS cache interval → begin signing → retain old verification key through the overlap → retire.
-- Services use a bounded LRU-style in-memory KV for security state. Entries contain snapshot version, session/device state, effective permissions, resolution time, and expiry.
-- Cache refresh is single-flight per `(user_id, session_id, device_id)`.
-- An invalidation with version `N` atomically marks any cache entry below `N` unusable.
-- A resolution response with version below the cache’s observed version is discarded.
-
-## 3. Mediator Protocol and Storage
-
-### Declarative message contract
-
-Each YAML message declaration defines:
-
-- Stable message ID and schema version.
-- Mode: `forward`, `single`, `multiple`, `stream`, `scheduled`, or `control`.
-- Source and permitted destination services.
-- Request/event and response schemas.
-- Partition-key expression.
-- Timeout, maximum causation depth, retry policy, and dead-letter policy.
-- Idempotency requirements.
-- Subscribers and consumer-group identities.
-- Logging metadata, redaction paths, body size limit, and retention.
-- Intentional route re-entry allowance, defaulting to none.
-
-The wire envelope contains:
-
-- `protocol_version`
-- `mode`
-- `message_id` and `message_version`
-- `source_service`, `source_instance`, and `destination_service`
-- `partition_id` and optional affinity/partition key
-- `idempotency_key`
-- `created_at`, `deadline_at`, and `attempt`
-- `traceparent`, `tracestate`, `correlation_id`, and `causation_id`
-- Mediator-managed `route_path` and causation depth
-- Typed headers and payload
-
-### Forwarding behavior
-
-- Med maintains a live routing registry from authenticated service heartbeats.
-- Any ingress node can accept a call and relay it through the mediator mesh to the node owning the selected service connection.
-- Target selection uses two healthy candidates and chooses the lower inflight/latency score. Affinity routes use rendezvous hashing.
-- If the target disconnects:
-  - Non-idempotent calls fail with `MED_TARGET_LOST`.
-  - Idempotent calls retry while the propagated deadline and retry budget permit.
-- Caller cancellation propagates to the target. A late response is traced and discarded.
-- Require at least one eligible target before accepting the forward request.
-
-### Durable partition behavior
-
-- Use 256 virtual partitions initially; map message keys to partitions with a stable hash.
-- Assign three replicas with rendezvous hashing.
-- The partition leader appends checksummed WAL records, replicates them, and acknowledges after quorum-two fsync.
-- Lease defaults:
-  - Six-second lease.
-  - Renewal every two seconds.
-  - Promotion permitted only after lease expiry and successful fencing-token CAS.
-  - Duration uses monotonic clocks; lease authority uses control-store time.
-- The control store is sharded by partition ID and contains only leases, fencing tokens, committed high-watermarks, replica state, consumer offsets, and deduplication metadata.
-- WAL records include length, version, partition, offset, message ID, payload checksum, and record checksum.
-- Recovery truncates only an incomplete or invalid tail. Corruption inside the committed range quarantines the replica and prevents leadership.
-- Compact committed WAL ranges into immutable per-partition Parquet files. Write temporary file → fsync → checksum → atomic rename → publish manifest CAS → release obsolete WAL.
-- Consumer acknowledgement state tracks gaps. The committed consumer offset advances only when all earlier offsets are settled.
-- A redelivered attempt carries a new delivery-attempt ID and the same message ID/idempotency key.
-- A transactional service inbox records message ID before committing business effects. Duplicate attempts return the stored outcome or acknowledge without replaying the mutation.
-
-## 4. Test Architecture Required Before Feature Work
-
-### Deterministic test seams
-
-Introduce injectable interfaces before implementing cluster logic:
-
-- `Clock`: wall time and monotonic time.
-- `Scheduler`: controlled task/yield ordering.
-- `RandomSource`: IDs, retry jitter, and routing choices.
-- `NetworkTransport`: send, receive, disconnect, delay, duplicate, reorder, and drop.
-- `WalDevice`: append, fsync, truncate, partial write, corruption, disk-full, and delayed completion.
-- `ControlStore`: CAS, shard availability, stale read simulation, and database time.
-- `ReplicaTransport`: append, commit, snapshot, and recovery messages.
-- `TraceSink`: normal, slow, unavailable, and backpressured.
-- `AuthStateClient` and `JwksFetcher`: controllable responses and delays.
-
-Every race test records seed, scheduler decisions, node state, and virtual timestamps. A failing run must be replayable from one command and one seed.
-
-### Reference models
-
-- Build a small in-memory Auth model defining sessions, devices, revisions, refresh generations, and valid authorization outcomes.
-- Build a mediator partition model defining leader epoch, committed log, replica logs, inflight deliveries, acknowledgement gaps, and consumer checkpoints.
-- Run generated operation sequences against the model and implementation:
-  - Publish
-  - Replicate
-  - Elect
-  - Crash/recover
-  - Compact
-  - Deliver/ack/nack/timeout
-  - Revoke/resolve/invalidate
-  - Refresh token
-  - Advance time
-- After every generated step, assert all invariants rather than checking only final output.
-- Add a property-testing dependency such as `fast-check`; persist minimized counterexamples as regression fixtures.
-
-## 5. Detailed Race and Inconsistency Test Matrix
-
-### Auth cache and invalidation races
-
-- Invalidation arrives before an older `auth.session.resolve` response: older response must be rejected.
-- Resolution begins before permission commit and returns afterward: version comparison must prevent stale overwrite.
-- Two permission changes commit rapidly and invalidations arrive in reverse order: highest version wins.
-- Cache expiry and request authorization occur at the same virtual timestamp: `age >= 30s` fails closed.
-- One hundred requests hit an expired cache entry simultaneously: exactly one resolution call occurs; all requests share its result or failure.
-- Auth becomes unavailable during refresh: no stale extension occurs.
-- Med reconnect replays old invalidations: processing remains idempotent.
-- Logout, password change, device revocation, and permission removal race with active reads and mutations. Validate the documented commit/observation boundary.
-- Cache eviction during inflight resolution must not resurrect an entry.
-- A service restart with an empty cache must fail closed until successful resolution.
-
-### Refresh-token races
-
-- One hundred concurrent uses of the same refresh generation produce exactly one new generation.
-- Repeated same-idempotency-key calls return one stable result.
-- Different keys inside the five-second race window return conflict without multiple descendants.
-- Reuse after the race window revokes the family once and emits one logical invalidation despite retries.
-- Database timeout after commit but before response: retry retrieves the committed idempotent result.
-- Outbox publisher crash after publishing but before marking sent: duplicate invalidation is harmless.
-- Device revocation concurrent with refresh: no new active token may survive a higher committed device revision.
-
-### JWKS and token timing
-
-- One hundred unknown-`kid` validations trigger one network refresh.
-- Old and new keys validate during overlap; the old key fails only after its token lifetime and overlap expire.
-- JWKS refresh completes after a newer refresh: older document cannot replace newer key state.
-- Validate exact `nbf`, `iat`, `exp`, cache-max-age, and clock-skew boundaries at `-1ms`, exact boundary, and `+1ms`.
-- Simulate service clocks at ±60 seconds and beyond tolerance.
-- Reject algorithm-confusion attempts, duplicate `kid`, malformed EC points, wrong curve, wrong issuer, and wrong audience.
-- A slow or malicious JWKS endpoint cannot block unrelated cached-key validations.
-
-### Mediator publish and quorum races
-
-Inject failure at every publish transition:
-
-1. Before leader append.
-2. During partial WAL write.
-3. After leader append but before fsync.
-4. After leader fsync but before replication.
-5. After one follower append but before follower fsync.
-6. After quorum fsync but before commit marker.
-7. After commit marker but before client acknowledgement.
-8. After acknowledgement is sent but before client receives it.
-
-For each point, verify:
-
-- Unacknowledged messages may be retried but cannot appear as two logical records.
-- Acknowledged messages survive leader loss.
-- Recovery agrees with the quorum-committed high-watermark.
-- Retrying the same message ID returns the original partition/offset.
-- No offset is reused for a different message.
-
-### Election, fencing, and partition races
-
-- Two candidates attempt promotion simultaneously: one fencing-token CAS succeeds.
-- Old leader resumes after network partition: every follower rejects its stale fencing token.
-- Lease renewal and takeover happen at the same database timestamp.
-- Control-store response is delayed beyond lease expiry.
-- One replica has a longer uncommitted tail than quorum; promotion truncates it safely.
-- One replica is behind the committed watermark; it cannot become leader until repaired.
-- Membership changes during publish, replication, and compaction preserve the active replica set for the current epoch.
-- Rebalance 256 partitions while publishing at target rate; preserve per-partition ordering and acknowledged durability.
-- Database shard failure affects only its partitions and must stop new commitments rather than permit split-brain.
-
-### Delivery, acknowledgement, and consumer races
-
-- Offsets 10 and 12 acknowledge before 11: checkpoint stays at 10 until 11 settles.
-- Ack arrives exactly as visibility timeout expires.
-- Consumer disconnects after business commit but before ack: redelivery occurs, inbox prevents duplicate effect.
-- Old consumer finishes after reassignment: stale delivery-attempt fencing prevents settlement.
-- Scale a `single` group from one to 32 instances and back while processing.
-- For `multiple`, verify every declared service group receives every committed message while replicas inside a group do not all process it.
-- Subscriber added after publication starts from its declared policy: latest, timestamp, or beginning.
-- Poison messages exhaust retry policy, enter the dead-letter stream once, and do not block later partition records unless strict ordering is declared.
-- Retry delay uses jitter but never exceeds message deadline.
-
-### Forward-proxy races
-
-- Target disconnect before receiving, during processing, and while returning response.
-- Caller cancels while route selection, relay, or response is in progress.
-- Deadline expires one millisecond before and after target response.
-- Target sends duplicate or contradictory responses; only the first valid response settles the call.
-- Idempotent retry reaches a different instance and returns the stored result.
-- Non-idempotent forward is never replayed.
-- Service deregisters and re-registers with the same instance ID but a newer connection epoch; old frames are rejected.
-- Route ancestry repeats concurrently through multiple mediator nodes; cycle rejection remains deterministic.
-
-### WAL, Parquet, and recovery races
-
-- SIGKILL during WAL append, fsync, segment conversion, manifest update, and WAL deletion.
-- Disk-full before and after quorum. Never acknowledge without the required durable replicas.
-- Corrupt WAL tail, committed WAL body, Parquet footer, checksum, and manifest.
-- Reader opens a segment while compaction publishes it.
-- Retention races with active history readers and trace-dashboard queries.
-- Two compactions for the same range: manifest CAS permits one result.
-- Restart all three nodes in every order and compare recovered logs byte-for-byte with the committed reference model.
-- Verify Parquet segment boundaries independently from delivery throughput; compaction success must not mask consumer backlog.
-
-### Sharding and directory consistency
-
-- Concurrent user creation with the same normalized email on different directory replicas yields one winner.
-- Directory mapping commits but user-shard creation fails, and the inverse failure order.
-- Repair jobs converge incomplete mappings idempotently.
-- Reshard using directory epochs and dual-read routing; stale epochs redirect rather than create duplicate users.
-- Requests during shard movement resolve either the old or new authoritative copy, never a partially copied security state.
-- Run the CAS contract suite against DuckDB and PostgreSQL on every PR, MySQL nightly, and Oracle/SQL Server in release validation.
-
-## 6. Timing, Load, and Chaos Gates
-
-### Certified medium-cluster profile
-
-Reference environment:
-
-- Three mediator nodes, each at least 4 vCPU, 8 GB RAM, and local NVMe-class storage.
-- Three replicas each for Auth, gateway, and representative domain services.
-- At least three logical Auth/control-store shards.
-- 256 mediator partitions.
-- Typical payload: 1 KiB; test mixes also include empty, 16 KiB, 256 KiB, and maximum-size messages.
-
-Required load:
-
-- 10,000 concurrent service/client connections.
-- 2,000 `forward` requests/second.
-- 5,000 durable messages/second.
-- 100 million retained event/trace rows.
-- `single` plus at least four `multiple` subscriber groups.
-- Continuous key rotation, permission mutation, cache refresh, compaction, and dashboard queries during load.
-
-### Acceptance thresholds
-
-- Zero acknowledged-message loss.
-- Zero unauthorized acceptances after the 30-second security-state bound.
-- Zero duplicate business effects when the inbox contract is used.
-- Zero partition-order violations.
-- Zero stale-leader commits.
-- Healthy invalidation propagation: p99 ≤ 2 seconds.
-- Leader failure recovery: new commitments resume within 10 seconds.
-- Forward mediator overhead on the reference LAN: p99 ≤ 15 ms excluding service time.
-- Quorum durable publish acknowledgement for 1 KiB payloads: p99 ≤ 40 ms.
-- Backlog recovery rate: at least twice the sustained ingress rate after a 10-minute consumer outage.
-- Trace collection enabled must reduce throughput by less than 10% and must never block routing.
-- After warm-up, process memory must not show sustained growth greater than 5% over the 24-hour soak.
-- No open socket, timer, cursor, pending-request, file-handle, or temporary-segment growth after clients disconnect.
-
-### Test cadence
-
-- Every PR:
-  - Unit, schema, CAS, protocol, deterministic scheduler, and property tests.
-  - At least 200 generated seeds per state machine.
-  - Multi-process smoke with three med nodes and forced leader loss.
-  - Maximum duration target: 15 minutes.
-- Nightly two-hour chaos:
-  - At least 10,000 generated state-machine histories.
-  - Continuous process kills, network delay/drop/reorder, control-shard outages, disk latency, clock skew, and compaction.
-  - Medium load ramp followed by recovery verification.
-- Release candidate 24-hour soak:
-  - Full certified medium-cluster load.
-  - Random failure every 5–15 minutes.
-  - Auth key rotations, reshard simulation, rolling deployments, partition rebalances, disk pressure, and trace queries.
-  - Final offline reconciliation of published IDs, quorum logs, Parquet rows, consumer inboxes, offsets, dead letters, and trace records.
-- Preserve all failure seeds, event histories, node logs, and timing decisions as CI artifacts.
-
-## 7. Trace Dashboard Validation
-
-- Use W3C `traceparent` and `tracestate` across HTTP, mediator, retries, and consumers.
-- Dashboard must expose waterfall, routing graph, causation chain, retries, cycles, partition ownership, replica lag, consumer lag, cache refresh failures, and DLQ state.
-- Test trace completeness by comparing expected spans from the reference operation history with stored and OTLP-exported spans.
-- Delay or disable the trace sink under full load; message routing must remain within its correctness guarantees.
-- Fuzz redaction rules with nested passwords, tokens, authorization headers, cookies, malformed JSON, binary bodies, and oversized payloads.
-- Captured bodies remain opt-in, redacted, truncated, and retained for 24 hours; trace metadata defaults to seven days.
-- Dashboard queries over 100 million rows must remain bounded by time range and pagination and must not scan unrestricted history.
-
-## 8. Phased Delivery and Exit Gates
-
-1. **Testability foundation**
-   - Add injectable clock, scheduler, storage, control-store, network, and trace interfaces.
-   - Add reference models, property tests, failure-seed replay, and invariant checker.
-   - Exit only when existing single-node behavior passes through the new seams.
-
-2. **Auth security**
-   - Add ES256/JWKS, persistent sessions/devices/revisions, refresh rotation, local KV, outbox, and fail-closed resolution.
-   - Exit after all Auth race tests and a med/Auth outage test prove the 30-second bound.
-
-3. **Message protocol**
-   - Add declarative modes, direct forward relay, deadlines, cycle detection, redaction, inbox/outbox, and partition offsets on one mediator node.
-   - Exit after deterministic delivery/acknowledgement tests and compatibility tests pass.
-
-4. **Process extraction**
-   - Split gateway, Auth, Order, and Chat into independent processes with mTLS workload identities.
-   - Exit after rolling restarts, scale-out, service discovery churn, and end-to-end permission/device tests.
-
-5. **Replicated mediator**
-   - Add WAL, replica protocol, quorum commits, lease/fencing CAS, partition rebalancing, and Parquet compaction.
-   - Exit after nightly chaos produces no invariant violations for seven consecutive runs.
-
-6. **Scale certification and dashboard**
-   - Run the full medium profile, dashboard, OTLP export, and 24-hour release soak.
-   - Remove HS256, global sequence, monolithic-host, and legacy RPC compatibility only after reconciliation reports zero loss, skipped offsets, or unauthorized decisions.
-
-## Assumptions
-
-- PostgreSQL is the first durable adapter, but correctness relies only on transactions, unique constraints, conditional row-version updates, and database time—not database locks.
-- Auth shards use user-ID hashing plus a separately sharded email directory.
-- Mediator durability is three replicas with quorum two.
-- The security cache hard expiry is 30 seconds; healthy invalidation target is two seconds p99.
-- The initial certified scale is 10,000 connections, 2,000 forward requests/second, 5,000 durable messages/second, and 100 million retained rows.
-- PR deterministic tests, nightly two-hour chaos, and a 24-hour release soak are mandatory gates.
+# Gate Service: Auth, Event Storage, and Mediator POC
+
+## 1. Goal and scope
+
+Merge Auth and Med into one process called the **gate service**.
+
+The gate is the only component that:
+
+- authenticates client JWTs;
+- loads current user/device state and permissions;
+- authenticates service-to-service callers;
+- adds an authorization snapshot before dispatching to a concrete service;
+- stores and dispatches events;
+- owns the cancellation chain for calls that pass through it; and
+- runs the generic multi-step saga/compensation state machine for
+  cross-service business flows (e.g. Order → Inventory → Payment), while
+  domain services own what each step and compensation actually does.
+
+This plan targets one node and one gate process first. It does not design
+leader election, replication, sharding, service mesh routing, or scale-out.
+Those are later extensions after the single-node contracts are proven.
+
+The POC should preserve the existing service boundaries. Domain services own
+business data and business mutations; the gate owns identity, authorization,
+routing, event delivery, and security/audit metadata.
+
+## 2. Security model
+
+### Trust boundaries
+
+- The client token is a pure identity/session JWT. It contains no permissions.
+- The gate is the authorization decision point for every client and service
+  dispatch.
+- Concrete services trust only gate-issued internal dispatch tokens, and only
+  for their own audience.
+- A concrete service must still verify the internal token's signature, issuer,
+  audience, type, and expiry. It does not perform another permission lookup.
+- A service must never accept a client JWT directly for a protected operation.
+
+### Client JWT
+
+The gate signs an access token containing only stable identity and session
+claims:
+
+- `iss`, `aud`, `sub`, `jti`, `sid`, `did`;
+- `iat`, `nbf`, and `exp`; and
+- `user_security_revision` and `session_revision`; and
+- `token_type=client_access`.
+
+Do not put permissions, roles, branch access, or a permission snapshot in this
+token. The token can remain cryptographically valid after logout or permission
+revocation; validity alone does not grant access.
+
+The gate validates the signature and pure JWT claims, then checks the cached
+user-device token state before accepting a client request.
+
+### Signing-key ring and rotation
+
+The gate uses a durable signing-key ring rather than one permanent signing
+key. Keep separate key purposes and `kid` namespaces for:
+
+- client access JWTs; and
+- gate-to-service dispatch tokens.
+
+Use asymmetric signing. The gate alone can access private keys; clients and
+concrete services receive only the public verification keys through the gate's
+configured JWKS or an equivalent local key endpoint. A key record contains
+`kid`, algorithm, purpose, public key, encrypted private-key reference, status,
+created time, activation time, and retirement time.
+
+Normal rotation is:
+
+1. Generate and durably register a new key as `published`.
+2. Publish its public key and wait for verifiers to refresh it.
+3. Mark it `active` and use it for new tokens.
+4. Keep the previous key available for verification until every token it
+   signed has expired, including clock-skew allowance.
+5. Mark the old key `retired`, then remove it only after the retention window.
+
+Every verifier caches keys by `(issuer, purpose, kid)`. An unknown `kid` causes
+one forced key refresh; continued absence rejects the token. Services must
+reject a dispatch token with the wrong purpose, issuer, or audience.
+
+If a private key may be leaked, do not wait for normal expiry. Immediately
+stop signing with it, remove it from the accepted verification set, publish a
+key-ring update, and invalidate the affected token class. For client tokens,
+also bump the relevant user/session security revisions or use a global
+client-token security epoch. For dispatch tokens, the short lifetime and
+removal of the compromised `kid` should stop new acceptance; in-flight work
+must still obey its deadline and cancellation policy. Record the incident and
+force all gate/service verifiers to refresh their key ring.
+
+Key rotation must be atomic from the gate's perspective: a request sees either
+the old active key or the new active key, never a missing private key or a
+partially published key record. Private keys must not appear in logs, Parquet,
+JWT payloads, or ordinary configuration snapshots.
+
+### Durable user-device session
+
+The cache must be rebuildable from a durable `user_device_sessions` record.
+This is the authority for whether a device/session is active, even though the
+gate normally reads it through the cache. At minimum, store:
+
+- `user_id`, `device_id`, and `session_id`;
+- active/revoked state and revocation reason;
+- device/session security revision;
+- client access-token `jti` metadata where needed for audit, but not the raw
+  access JWT;
+- refresh-token family ID and current refresh generation;
+- a keyed hash of the current refresh token, or a hash of its token ID;
+- refresh-token expiry, last-used time, and rotation time;
+- created time, last-seen time, and absolute session expiry; and
+- a row version for atomic logout, revocation, and refresh rotation.
+
+The raw client access JWT and raw refresh token are never stored in this table.
+The access JWT is intentionally self-contained and short-lived; the durable
+row supplies the gate's revocation/session check. A refresh token is an opaque
+random credential held by the client. Store only a keyed cryptographic hash or
+token-ID hash so a database read cannot be used as a bearer credential.
+
+Keep the current refresh state in this row for a fast atomic check, but store
+rotated generations in a separate `refresh_token_history` table when replay
+detection, audit, or concurrent-refresh diagnostics are required. Rotation
+must update the device row and refresh history in one transaction. Reuse of an
+old generation revokes the session family and clears the cached entry.
+
+### KV deny list
+
+For phase 1 (this single-node POC), the KV deny list is in-process memory
+only — no separate KV/cache server. The gate may maintain this process-local
+deny list for immediate rejection of otherwise valid client JWTs. Check it
+after JWT signature/claim validation and before the authorization cache or
+user-permission lookup. Moving it to an external KV store is a scale-out
+decision (see §10), not part of this POC.
+
+Use compact deny markers rather than storing complete tokens:
+
+- `deny:jti:<jti>` for one access token;
+- `deny:session:<session_id>` for one session/device login; and
+- `deny:user:<user_id>` with a user revocation revision or `revoked_before`
+  value for logout-all-devices.
+
+Each marker expires after the latest token it can reject, plus clock-skew
+allowance. A deny hit rejects immediately and must not trigger a permission
+lookup. The KV store is bounded and observable. An active deny marker must not
+be silently evicted: use capacity alarms, or have eviction invalidate the
+related authorization-cache entries and force a durable revision check before
+the next request.
+
+Logout-all-devices must first commit a user-level security revision or
+`revoked_before` value in the database, then update the KV marker and clear
+the user's device/session cache entries before returning success. New tokens
+must carry the relevant user/session revision or `iat` needed to compare with
+the marker. The gate rejects a token whose revision is older than the durable
+or KV deny marker. This gives immediate rejection in the normal process while
+preserving correctness after KV loss or gate restart.
+
+On a single node, update the durable revision and KV marker through one gate
+operation and do not report logout success until both steps complete. If the
+KV update fails, fail closed for the affected user and keep the durable
+revision; do not issue new tokens until the deny marker can be rebuilt.
+
+### Cached user-device token
+
+The gate stores a disposable authorization snapshot keyed by
+`(user_id, device_id, session_id)` containing:
+
+- active/revoked state;
+- the current device/session revision;
+- the effective permissions and their version;
+- the time resolved; and
+- a short expiry and the client token `jti` where useful for audit.
+
+Logout, device revocation, password/session invalidation, and permission
+changes clear or version-bump the relevant cached entries. A cache miss or an
+entry below the current security revision must load the durable user-device
+session and current permissions. The loaded row repopulates the cache. If the
+database cannot establish current state, the gate fails closed.
+
+The cache is an optimization, not the authority. The POC may use an in-memory
+cache backed by the durable user-device session and permission store. It must
+have bounded expiry and single-flight resolution so a burst of requests does
+not perform the same lookup repeatedly.
+
+### Internal dispatch token
+
+Immediately before a gate-to-service dispatch, the gate resolves the newest
+permissions and signs a short-lived internal token containing:
+
+- the original subject/session/device identity;
+- `iss=gate`, `aud=<target-service>`, `token_type=gate_dispatch`;
+- `jti`, `iat`, `exp`, and a unique `dispatch_id`;
+- `authz_version` and the permission snapshot;
+- `source_service` and `source_dispatch_id` for service-originated calls;
+- `correlation_id`, `causation_id`, and `cancellation_id`; and
+- a reference to the original client token, such as `parent_jti`, not the raw
+  client bearer token.
+
+The internal token is a capability for one target and one short dispatch
+window. It must not be returned to the browser. The target service uses its
+claims directly and does not call Auth or the gate for a second permission
+decision.
+
+If the permission snapshot changes while the request is in flight, the
+documented POC boundary is: authorization is decided when the gate creates the
+dispatch token. A later dispatch must resolve again and receive the newer
+version. Long-running operations must also re-check cancellation and any
+operation-specific policy at safe checkpoints.
+
+## 3. Service-to-service authorization
+
+Every service has a gate-recognized workload identity. For the POC this may be
+a configured service credential or local key pair; keep the interface ready
+for mTLS later.
+
+The gate checks a declarative service communication policy before forwarding a
+service command:
+
+- source service identity;
+- allowed command/event type;
+- target service;
+- whether the call may act on behalf of a user;
+- required user permission, if any;
+- timeout and cancellation policy; and
+- idempotency requirements.
+
+A service-originated command must carry a service token or equivalent
+authenticated envelope. The gate authenticates the source service, verifies
+the communication policy, resolves the newest user permissions when the call
+is on behalf of a user, and creates a target-audience dispatch token.
+
+The target receives both the authenticated source context and the current user
+authorization snapshot. It may reject the command if its own business rules
+or the newer permission version make the command unsafe. This supports the
+case where the source service started with an older permission snapshot.
+
+Do not put raw reusable bearer tokens in ordinary Parquet columns. For the
+POC, store an encrypted service-token envelope only if replay/audit requires
+the token itself; otherwise store its hash, `jti`, source, target, claims
+needed for audit, and encryption/key metadata. Access to token material must
+be restricted and test data must use synthetic credentials.
+
+## 4. Gate event storage and dispatch
+
+The gate owns an event store separate from domain tables. The event envelope
+must include:
+
+- `event_id`, `event_type`, `event_version`;
+- `source_service`, `target_service`, and authenticated source identity;
+- `created_at`, `deadline_at`, `attempt`, and idempotency key;
+- `correlation_id`, `causation_id`, `cancellation_id`, and route path;
+- user/device/session identity when acting on behalf of a user;
+- `authz_version` at creation and the newest authorization snapshot used at
+  dispatch;
+- a redacted or encrypted service-token audit envelope; and
+- the typed payload.
+
+For the single-node POC:
+
+- append events durably before acknowledging publication;
+- use one local writer and a bounded in-memory delivery queue;
+- persist event history and service-token audit records as Parquet segments;
+- write a temporary segment, flush/close it, validate it, then atomically
+  publish the segment manifest;
+- use event IDs and idempotency keys for duplicate publication and delivery;
+- retry only idempotent commands; and
+- record failed deliveries in a dead-letter stream with the failure reason.
+
+Parquet is an audit/history format, not the live queue. The live queue should
+track delivery state, attempts, deadlines, and acknowledgements without
+scanning all historical Parquet data.
+
+The event store must not silently lose an acknowledged event on process
+restart. Recovery replays valid durable segments and any recoverable append
+log, truncating only an incomplete tail. A corrupt committed segment stops
+startup or isolates that segment; it must not be silently skipped.
+
+## 5. Request and dispatch flow
+
+### Client request
+
+1. The client sends its pure JWT to the gate.
+2. The gate validates JWT cryptography and standard claims.
+3. The gate loads the user-device cache entry or performs one authoritative
+   resolution.
+4. The gate rejects revoked, signed-out, expired, or unresolved state.
+5. The gate resolves the operation's permission and creates a short-lived
+   target-specific dispatch token.
+6. The gate forwards the request with the dispatch token and cancellation
+   context.
+7. The target validates the gate token and executes the domain operation.
+
+### Service command or event
+
+1. The source authenticates to the gate with its service credential.
+2. The gate validates the source-to-target communication policy.
+3. The gate preserves the user/session context if the command is delegated.
+4. The gate resolves current user permissions, not merely the source's old
+   snapshot.
+5. The gate stores the event envelope and service-token audit metadata.
+6. The gate dispatches a new target-audience token and current permissions.
+7. The target decides whether the command remains valid under that newest
+   context and acknowledges or rejects it idempotently.
+
+## 6. Cancellation and long-running work
+
+Cancellation is part of the protocol, not just an HTTP disconnect.
+
+Every request/event has a `cancellation_id`, deadline, and parent causation
+identity. The gate keeps an in-memory cancellation registry for fast abort
+propagation, backed by a durable `operations` record so that state survives a
+gate restart. A cancellation must:
+
+- stop queue delivery when the event has not started;
+- send a cancellation control message to the target when work has started;
+- cause the target to cancel database queries, streams, timers, and child
+  tasks where the runtime supports it;
+- stop retries and prevent a late response from settling the cancelled call;
+- be idempotent and safe if it races with completion; and
+- be recorded with the chain, actor, reason, and timestamp.
+
+For a long-running report called by Order, do not make the report an
+uncancellable child of the original HTTP request. Create a report operation
+with its own `operation_id` and `cancellation_id`, persist its status, and
+return that ID to the caller. The gate should then:
+
+- accept `cancel(operation_id)` from the original authorized user or an
+  authorized owning service;
+- mark the operation cancelled before sending the cancellation downstream;
+- propagate cancellation to the Order-to-Report chain;
+- have Report check cancellation between pages/chunks and cancel its query or
+  worker;
+- make completion after cancellation a no-op or a clearly marked late result;
+  and
+- retain the event/audit record even though the compute work is cancelled.
+
+This avoids relying on a browser connection staying open and prevents Order
+from holding resources for the full report duration. A cancellation arriving
+after the report commits its final result is a normal race: the result is
+complete, cancellation is recorded as too late, and no compensating deletion
+is implied unless the domain explicitly requires one.
+
+### Durable operation record
+
+Even in this single-node POC, operation/cancellation state must survive a gate
+restart — it is not purely in-memory. A durable `operations` table holds one
+row per tracked long-running operation:
+
+- `operation_id`, `cancellation_id`, `correlation_id`, and root causation
+  identity (e.g. the originating Order request);
+- owning user/device/session and/or owning service identity;
+- `source_service` and `target_service` (Order → Report for the report case);
+- state: `pending`, `running`, `cancel_requested`, `cancelled`, `completed`,
+  or `failed`;
+- `created_at`, `deadline_at`, `cancelled_at`, and `terminal_at`; and
+- a row version for atomic state transitions.
+
+Write the row before dispatching the operation to its target, and transition
+it in the same durable step as any cancellation request or terminal outcome
+— do not rely only on the in-memory registry to remember that an operation
+exists. The in-memory cancellation registry is a fast-path index over this
+table, rebuilt from it on startup.
+
+On gate restart, recovery must reconcile every non-terminal `operations` row:
+
+- rows still `pending`/`running` whose owning target cannot confirm the
+  operation is still active are marked `failed` (or re-queried from the
+  target if the target itself exposes operation status) rather than left
+  open indefinitely;
+- rows `cancel_requested` at restart re-send the cancellation downstream
+  before the row is considered reconciled; and
+- no operation row is silently dropped — every row reaches a terminal state
+  or is explicitly re-armed for cancellation delivery.
+
+This keeps the acceptance requirement in §9 (no orphaned cancellation or
+pending-request records after a forced restart) honest without introducing
+the distributed operation-state design deferred in §10.
+
+## 7. Single-node POC architecture
+
+Run one gate process with these modules:
+
+- JWT signer/verifier and key configuration;
+- user/device/session resolver and bounded cache;
+- service identity and communication-policy checker;
+- dispatch-token issuer;
+- route registry and request dispatcher;
+- durable operations store and in-memory cancellation registry rebuilt from
+  it on startup;
+- durable event store and bounded delivery queue;
+- Parquet segment writer/recovery;
+- inbox/idempotency store; and
+- structured security and dispatch audit logging.
+
+Concrete services remain separate processes or local test services. The gate
+may use direct local transport for the POC, but the transport interface must
+preserve deadlines, cancellation, identity, and target audience exactly as a
+network transport would.
+
+Explicitly defer:
+
+- multiple gate nodes and leader election;
+- quorum replication and distributed WAL;
+- partition ownership and rebalancing;
+- cross-node service discovery and load balancing;
+- distributed cache invalidation; and
+- global ordering or exactly-once transport claims.
+
+## 8. Non-negotiable invariants
+
+- No client JWT contains permissions.
+- No target service accepts a client JWT for a protected operation.
+- Every dispatch has a gate-issued target audience and a bounded expiry.
+- Logout/revocation clears or invalidates the cached user-device token.
+- A cache miss, stale revision, or unavailable authorization source fails
+  closed.
+- A service command cannot bypass the source-to-target communication policy.
+- Delegated service commands receive the newest permissions resolved by gate.
+- Raw bearer tokens are never written to ordinary logs or unencrypted Parquet.
+- Acknowledged events survive a single gate restart in the POC.
+- Operation/cancellation state for a tracked long-running operation is
+  durable: a gate restart reconciles every non-terminal `operations` row
+  rather than losing or silently orphaning it.
+- Duplicate event delivery cannot duplicate a domain mutation when the target
+  uses its inbox/idempotency contract.
+- Cancellation propagates through the complete causation chain and is safe to
+  race with success, failure, timeout, or retry.
+- A late response cannot revive a cancelled or expired request.
+- A saga reaches exactly one terminal state (`completed`, `compensated`, or
+  `failed`); it is never left `running`/`compensating` without an active
+  redelivery, across gate restarts.
+- A saga step or its compensation is never applied twice as a business
+  effect, regardless of redelivery, because the target's inbox/idempotency
+  contract (§4) governs it exactly as any other dispatched command.
+- Saga compensation always walks completed steps in strict reverse order;
+  a failed compensation stops automatic rollback rather than retrying
+  indefinitely or skipping ahead.
+
+## 9. Verification plan
+
+### Focused tests
+
+- Issue a client token and prove its decoded claims contain no permissions.
+- Prove a valid client token is rejected after logout or device revocation
+  when the gate cache is cleared.
+- Prove a deny-list hit rejects a token before authorization lookup.
+- Prove logout-all-devices rejects all existing device/session tokens while
+  leaving unrelated users unaffected.
+- Prove deny-list expiry, KV eviction, and gate restart fall back to the
+  durable user/session revision without resurrecting a revoked token.
+- Prove a cache miss rebuilds state from the durable user-device session row.
+- Prove refresh rotation stores only a token hash, rejects an old generation,
+  and revokes the session family on refresh-token reuse.
+- Prove permission changes affect the next dispatch and increment
+  `authz_version`.
+- Prove concurrent cache misses share one authorization resolution.
+- Prove an internal token is rejected for the wrong target service, issuer,
+  type, signature, or expiry.
+- Prove normal key rotation accepts old and new tokens during the overlap,
+  then rejects the old key after its retention window.
+- Prove an emergency key compromise stops new signing, removes the compromised
+  `kid` from verification, and invalidates the affected client-token class.
+- Prove service A cannot send a command to service B without an allowed policy
+  entry.
+- Prove a delegated service command receives newer permissions than the
+  source's original snapshot.
+- Prove event publication is idempotent and survives restart/recovery.
+- Prove Parquet writes recover from an incomplete tail and reject committed
+  corruption.
+- Prove cancellation before dispatch, during dispatch, during a database
+  query, during retry, and at completion.
+- Prove a cancelled report releases its query/worker resources and does not
+  publish a successful completion after cancellation.
+- Prove cancellation and successful completion racing together produce one
+  stable terminal operation state.
+- Prove a gate restart with in-flight operations reconciles every
+  non-terminal `operations` row: re-sends pending cancellations, marks
+  unconfirmed running operations as `failed`, and rebuilds the in-memory
+  cancellation registry from the durable table with no row left open.
+- Prove a 3+ step saga (e.g. Order → Inventory → Payment) completes when
+  every step succeeds, and each `saga_steps` row records the correct
+  `command_event_id` and `success` outcome in order.
+- Prove a mid-chain step failure (e.g. Payment fails) triggers compensation
+  of every prior successful step in strict reverse order, and the saga ends
+  `compensated`.
+- Prove a redelivered step command and a redelivered compensation command
+  do not duplicate their business effect, using the same idempotency key
+  twice.
+- Prove a gate restart mid-saga (command dispatched, no outcome recorded)
+  redelivers exactly that step/compensation on recovery rather than
+  skipping it or restarting the saga from step 0.
+- Prove a saga step that is itself a long-running cancellable operation
+  correctly transitions to a failed/compensating saga when its operation is
+  cancelled.
+- Prove a compensation failure halts automatic rollback and leaves the saga
+  in `failed` rather than retrying indefinitely or silently completing.
+
+### POC acceptance gates
+
+1. Client authentication, logout, revocation, and permission-change tests
+   pass with no permission claims in client JWTs.
+2. Client and service dispatch tests prove target-specific gate tokens and
+   source-to-target policy enforcement.
+3. Event replay, idempotency, Parquet recovery, and dead-letter tests pass.
+4. A long-running report can be cancelled from the client through Order to
+   Report, and its database/worker resources are released.
+5. A forced gate restart recovers acknowledged events and leaves no orphaned
+   cancellation or pending-request records.
+6. A multi-step saga (Order → Inventory → Payment) completes on the happy
+   path, and a mid-chain failure compensates all prior steps in reverse
+   order with no duplicated business effect, including across a forced gate
+   restart mid-saga.
+7. `git diff --check` and the focused Bun tests/builds for the changed gate
+   modules pass.
+
+## 10. Later scale-out decisions
+
+Do not implement these in the POC, but keep the protocol fields and seams so
+they can be added without changing domain handlers:
+
+- replicate event segments and delivery state;
+- add gate-node routing and fencing;
+- publish permission invalidations between gate nodes; and
+- define retry and ownership behavior when a target service moves nodes.
+
+(The cancellation registry is already backed by the durable `operations`
+table from §6, so multi-node cancellation only needs gate-node routing above
+— no separate durable-state migration is required for it.)
+
+### Multi-node KV deny list (phase 2)
+
+Each gate node keeps its own in-memory KV deny list, as in the POC — do not
+introduce a shared/consensus KV store just to make deny markers consistent
+across nodes. The deny list is a latency optimization, not the authority: the
+durable `user_device_sessions` revision (and the bounded-expiry authorization
+cache, §2) is already the fallback whenever the deny list doesn't have an
+answer, so a missed sync only widens the rejection window up to the cache's
+existing bounded expiry — it never produces an incorrect accept beyond that
+bound.
+
+Given that, keep the sync mechanism simple:
+
+- when a node writes a deny marker (`deny:jti`, `deny:session`, or
+  `deny:user`), it best-effort broadcasts the same marker to every other
+  known gate node (e.g. fan-out call or a message on the existing event bus);
+  no acknowledgement or quorum is required;
+- a node that misses the broadcast (crash, restart, network blip, new node
+  joining) is still correct: its own authorization-cache entries expire on
+  their existing bounded TTL and re-resolve against the durable revision,
+  which reflects the revocation;
+- do not attempt to reconcile or replay historical deny markers to a newly
+  joined node — its cache starts empty and every entry it serves is either a
+  fresh resolution (already correct) or expires into one; and
+- keep marker TTLs and cache TTLs from §2 as the only correctness mechanism;
+  the broadcast is purely a latency optimization on top of them.
+
+This avoids building distributed-KV consistency for a dataset explicitly
+called out as small and non-authoritative, while preserving the same
+fail-closed guarantee the POC already has.
+
+The single-node result is successful only when its security and cancellation
+contracts are explicit and testable. Scale-out should extend those contracts,
+not change what a client token or a target service means.
+
+## 11. Saga-based cross-service consistency
+
+Cross-service business flows (e.g. Order → Inventory → Payment) are not
+atomic transactions and do not use 2PC or a consensus protocol. Each step is
+a local ACID transaction inside its own service. Consistency across services
+comes from an ordered sequence of steps plus compensations, driven by a
+generic saga state machine that the gate owns. The gate does not decide
+business outcomes; it only sequences dispatch, tracks state durably, and
+invokes compensations when a domain service reports failure.
+
+### Saga definition (declarative, per saga type)
+
+A saga type is configured, not hard-coded into the gate, and declares:
+
+- an ordered list of steps; each step has a `target_service`, a command
+  event type, an optional compensation event type, a timeout, and whether
+  the step is itself a cancellable long-running operation (§6);
+- whether the saga overall may be cancelled by the user/owning service, and
+  what "cancel" means once it is past a given step (e.g. cancelling after
+  payment may require a refund compensation rather than a no-op); and
+- retry policy for a step command and for its compensation, reusing the
+  idempotency contract from §4 (a step or compensation may be redelivered
+  safely).
+
+### Durable saga state
+
+- `saga_instances`: `saga_id`, `saga_type`, `state`
+  (`running | compensating | completed | compensated | failed`),
+  `current_step_index`, root `correlation_id`/`causation_id`, `created_at`,
+  `terminal_at`, and `row_version` for atomic transitions.
+- `saga_steps`: `saga_id`, `step_index`, `service`, `command_event_id`,
+  `outcome` (`pending | success | failed`), `compensation_event_id`,
+  `compensation_outcome`, and timestamps. One row per step, appended as the
+  saga advances — this is what lets a saga fan out to more than two services
+  without changing the state-machine shape.
+
+Write the `saga_steps` row and advance `saga_instances.current_step_index`
+in the same durable step as dispatching the command, exactly like the
+`operations` pattern in §6 — a restart must be able to tell exactly which
+step was in flight and re-dispatch it idempotently rather than guessing from
+the event log.
+
+### Forward and compensation flow
+
+1. Gate dispatches step N's command to its target service (normal dispatch
+   path, §3/§4 — dispatch token, current permissions, idempotency key
+   `saga_id:step_index`).
+2. The target executes its local transaction and returns an outcome event
+   (`success` or `failed`), the same outcome-event pattern used for
+   cancellation in §6.
+3. On `success`, gate marks the step `success` and dispatches step N+1. On
+   the last step, the saga is marked `completed`.
+4. On `failed`, gate marks the saga `compensating` and walks completed steps
+   in reverse order (`current_step_index` down to 0), dispatching each
+   step's compensation command with idempotency key
+   `saga_id:step_index:compensation`.
+5. A step with no compensation event type is treated as naturally
+   compensating (nothing to undo). A compensation itself reports `success`
+   or `failed`; a failed compensation stops automatic rollback and marks the
+   saga `failed` for manual/operator resolution rather than looping retries
+   indefinitely.
+6. The saga reaches exactly one terminal state: `completed` or
+   `compensated` (all compensations succeeded) or `failed` (compensation
+   could not complete automatically). No saga is left in `running` or
+   `compensating` indefinitely without an active redelivery in flight.
+
+### Interaction with cancellation (§6)
+
+If a step is itself a long-running operation, it uses the `operation_id`
+mechanism from §6 unchanged — the saga step just carries that
+`operation_id` alongside `command_event_id`. Cancelling a saga while step N
+is in flight means: cancel step N's operation (if it is cancellable) or wait
+for its outcome, then treat it as a `failed` step and compensate steps
+`0..N-1` exactly as in the failure path above. There is no separate
+cancellation protocol for sagas — cancellation is just one more way a step
+ends up needing compensation.
+
+### Restart recovery
+
+On gate restart, reconcile every non-terminal `saga_instances` row the same
+way as `operations` in §6:
+
+- if the current step's command/compensation was dispatched but no outcome
+  was recorded, redeliver it using its existing idempotency key — the
+  target's inbox contract (§4) guarantees this does not re-run the business
+  effect; and
+- no `saga_instances` row is left `running`/`compensating` without an active
+  redelivery — recovery either confirms the outcome (query the target if it
+  exposes status) or redispatches.
+
+### Why no consensus/2PC is needed
+
+Correctness here does not require both services to agree at the same
+instant. It requires: (a) each step command is idempotent, (b) each step's
+local commit is authoritative for that service the moment it commits, and
+(c) failure anywhere after step N is resolved by compensating steps
+`0..N-1`, not by rolling back a distributed transaction. Row-version CAS on
+`saga_instances`/`saga_steps` resolves the only real race (a redelivered
+step and its original both trying to record an outcome) — the same
+first-write-wins pattern already used for `operations` in §6, not a
+distributed consensus algorithm.
