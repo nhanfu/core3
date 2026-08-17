@@ -35,6 +35,7 @@ export function renderDocStat(container: HTMLElement, stat: DocHeroStat) {
 export type DocArticleType = 'Overview' | 'Concept' | 'Quickstart' | 'Tutorial' | 'How-to guide' | 'Reference';
 
 export type DocHeroCta = { label: string; href: string; variant?: 'primary' | 'secondary' };
+export type DocHeroPanel = { tabs?: string[]; activeTab?: string; command?: string; note?: string };
 
 export type DocHeroDef = {
   variant?: 'home' | 'page';
@@ -46,6 +47,7 @@ export type DocHeroDef = {
   subtitle?: string;
   ctas?: DocHeroCta[];
   stats?: DocHeroStat[];
+  panel?: DocHeroPanel;
 };
 
 /** Page-top hero: breadcrumb + article-type badge, a large title + subtitle, with an optional stat rail on the home variant. */
@@ -95,10 +97,16 @@ export class DocHero extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const { variant = 'page', announcement, eyebrow, breadcrumb, articleType, title = '', subtitle, ctas = [], stats = [] } = this.def;
+    const { variant = 'page', announcement, eyebrow, breadcrumb, articleType, title = '', subtitle, ctas = [], stats = [], panel } = this.def;
     const isHome = variant === 'home';
 
-    const hero = html.take(container).div.className(isHome ? 'doc-hero' : 'doc-page-hero').ele() as HTMLElement;
+    const hero = html.take(container).div.className(isHome ? 'doc-hero doc-hero-home' : 'doc-page-hero').ele() as HTMLElement;
+    if (isHome) {
+      const ambient = html.take(hero).div.className('doc-hero-ambient').ele() as HTMLElement;
+      html.take(ambient).span.className('doc-hero-orb doc-hero-orb-a').ele();
+      html.take(ambient).span.className('doc-hero-orb doc-hero-orb-b').ele();
+      html.take(ambient).span.className('doc-hero-signal').ele();
+    }
     const copy = html.take(hero).div.className('doc-hero-copy').ele() as HTMLElement;
     if (announcement) this.renderAnnouncement(copy, announcement);
     if (breadcrumb?.length) this.renderBreadcrumb(copy, breadcrumb);
@@ -112,6 +120,18 @@ export class DocHero extends BaseComponent {
     if (isHome && stats.length) {
       const rail = html.take(hero).div.className('doc-stat-rail').ele() as HTMLElement;
       for (const stat of stats) renderDocStat(rail, stat);
+    }
+    if (isHome && panel) {
+      const panelEl = html.take(hero).div.className('doc-hero-panel').ele() as HTMLElement;
+      const tabs = panel.tabs?.length ? panel.tabs : ['Quick start'];
+      const tabRow = html.take(panelEl).div.className('doc-hero-panel-tabs').ele() as HTMLElement;
+      for (const tab of tabs) html.take(tabRow).span.className(`doc-hero-panel-tab${tab === (panel.activeTab || tabs[0]) ? ' is-active' : ''}`).text(tab);
+      const terminal = html.take(panelEl).div.className('doc-hero-terminal').ele() as HTMLElement;
+      const chrome = html.take(terminal).div.className('doc-hero-terminal-chrome').ele() as HTMLElement;
+      html.take(chrome).span.className('doc-hero-terminal-dots').text('● ● ●');
+      html.take(chrome).span.className('doc-hero-terminal-copy').text('COPY');
+      html.take(terminal).add('pre').text(panel.command || 'bun run start');
+      if (panel.note) html.take(panelEl).p.className('doc-hero-panel-note').text(panel.note);
     }
   }
 }

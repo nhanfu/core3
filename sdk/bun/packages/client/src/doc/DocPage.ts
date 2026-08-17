@@ -32,6 +32,7 @@ export type DocSection = {
 };
 
 export type DocPageDef = {
+  layout?: 'document' | 'landing';
   hero?: DocHeroDef;
   sections?: DocSection[];
 };
@@ -256,7 +257,8 @@ export class DocPage extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const { hero, sections = [] } = this.def;
+    const { layout: pageLayout = 'document', hero, sections = [] } = this.def;
+    const isLanding = pageLayout === 'landing';
     this.children = [];
     this.sectionObserver?.disconnect();
     this.revealObserver?.disconnect();
@@ -271,14 +273,11 @@ export class DocPage extends BaseComponent {
       heroComponent.mount(html.take(container).div.ele() as HTMLElement);
     }
 
-    // Content precedes the "In this article" nav in DOM order (Microsoft Docs
-    // convention: readable content first, supplementary nav second) — the
-    // right-rail placement is purely a CSS layout concern (see .doc-toc).
-    const layout = html.take(container).div.className('doc-layout').ele() as HTMLElement;
+    const layout = html.take(container).div.className(`doc-layout${isLanding ? ' doc-layout-landing' : ''}`).ele() as HTMLElement;
     const main = html.take(layout).div.className('doc-main').ele() as HTMLElement;
-    const toc = html.take(layout).aside.className('doc-toc').ele() as HTMLElement;
-    html.take(toc).div.className('doc-toc-heading').text('In this article');
-    const nav = html.take(toc).nav.ele() as HTMLElement;
+    const nav = isLanding ? null : html.take(layout).aside.className('doc-toc').ele() as HTMLElement;
+    const tocNav = nav ? html.take(nav).nav.ele() as HTMLElement : null;
+    if (nav) html.take(nav).div.className('doc-toc-heading').text('In this article');
 
     const usedAnchors = new Set<string>();
     const sectionEls: HTMLElement[] = [];
@@ -286,9 +285,12 @@ export class DocPage extends BaseComponent {
       let anchor = section.id || slug(section.title, index);
       while (usedAnchors.has(anchor)) anchor = `${anchor}-${index}`;
       usedAnchors.add(anchor);
-      this.tocLinks.set(anchor, this.link(nav, anchor, section.title));
+      if (tocNav) this.tocLinks.set(anchor, this.link(tocNav, anchor, section.title));
 
-      const el = html.take(main).section.attr('id', anchor).className('doc-section doc-section-reveal').ele() as HTMLElement;
+      const sectionClass = isLanding
+        ? `doc-section doc-section-reveal doc-landing-section doc-landing-section-${index % 2 ? 'alternate' : 'default'}`
+        : 'doc-section doc-section-reveal';
+      const el = html.take(main).section.attr('id', anchor).className(sectionClass).ele() as HTMLElement;
       if (section.kicker) html.take(el).span.className('doc-kicker').text(section.kicker);
       html.take(el).h2.text(section.title);
       if (section.lead) html.take(el).p.className('doc-lead').text(section.lead);

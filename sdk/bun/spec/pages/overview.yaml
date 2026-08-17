@@ -1,4 +1,4 @@
-title: Core3 — Proposal
+title: YShip — Proposal
 page:
   id: overview
 
@@ -15,7 +15,7 @@ components:
       eyebrow: Proposal
       title: 'YAML is spec, YAML is code'
       subtitle: >-
-        Every other line of code in Core3 — client, server, gate, database adapters — is runtime
+        Every other line of code in YShip — client, server, gate, database adapters — is runtime
         or compiler for the YAML. All business intent lives in YAML; nothing else is allowed to
         carry it. That split is what makes failures diagnosable: a bug is either a YAML spec
         problem (fix the business definition) or a runtime/compiler problem (fix once, every
@@ -165,7 +165,7 @@ components:
         kicker: Proposed approach
         title: One shared framework, YAML-driven pages
         lead: >-
-          Core3 is a TypeScript framework split into a service-agnostic client (@core3/client)
+          YShip is a TypeScript framework split into a service-agnostic client (@core3/client)
           and server (@core3/server) package. A service supplies YAML page files and SQL; the
           framework supplies rendering, permission gates, CRUD, and database portability.
         blocks:
@@ -245,7 +245,7 @@ components:
         blocks:
           - type: list
             items:
-              - Adopt Core3 as the standard framework for new ERP services rather than hand-rolled per-service UI
+              - Adopt YShip as the standard framework for new ERP services rather than hand-rolled per-service UI
               - Continue the in-progress auth and event-mediator hardening work (see the Auth & Mediator Refactor plan)
               - Keep this spec site as the source of truth, updated alongside the framework rather than left to drift
           - type: callout

@@ -1,4 +1,4 @@
-title: Core3 — Roadmap
+title: YShip — Roadmap
 page:
   id: roadmap
 
@@ -35,7 +35,7 @@ components:
         kicker: Direction
         title: Target — a full Odoo clone
         lead: >-
-          The framework's direction is to reproduce Odoo's ERP surface end to end on Core3, not to
+          The framework's direction is to reproduce Odoo's ERP surface end to end on YShip, not to
           work from a hypothetical module list. Every new module should be modeled directly against
           Odoo's real behavior.
         blocks:

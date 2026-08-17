@@ -1,6 +1,6 @@
 nav:
-  brand: Core3
-  eyebrow: YAML-driven ERP framework
+  brand: YShip
+  eyebrow: YAML spec, YAML shipping
   items:
     - label: Roadmap
       href: /roadmap
