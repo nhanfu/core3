@@ -56,6 +56,69 @@ components:
               existed). That approach is now retired — the order and chat services are real,
               running proof, and Odoo itself is the specification for what comes next.
 
+      - id: odoo-modules
+        kicker: Odoo parity tracker
+        title: Module / sub-module checklist
+        lead: >-
+          Odoo's own app grouping, used as the literal tracking list for this direction. Status is
+          reported honestly against what has actually shipped, not what the pattern could
+          theoretically support.
+        blocks:
+          - type: callout
+            tone: note
+            title: How to read "In progress"
+            text: >-
+              Only Sales and Discuss are marked in progress, and only because the order and chat
+              sample services already prove the CRUD/workflow/chatter pattern those apps need —
+              not because either app is feature-complete against real Odoo. Everything else is
+              Not started until a real service exists for it.
+          - type: table
+            headers: [Category, Module, Status]
+            rows:
+              - [Sales, Sales, 'In progress — order service proves the CRUD/workflow pattern']
+              - [Sales, CRM, Not started]
+              - [Sales, Point of Sale, Not started]
+              - [Sales, Subscriptions, Not started]
+              - [Sales, Rental, Not started]
+              - [Finance, Accounting, Not started]
+              - [Finance, Invoicing, Not started]
+              - [Finance, Expenses, Not started]
+              - [Finance, Documents, Not started]
+              - [Finance, Spreadsheet / Dashboards, Not started]
+              - [Supply Chain, Inventory, Not started]
+              - [Supply Chain, Manufacturing, Not started]
+              - [Supply Chain, Purchase, Not started]
+              - [Supply Chain, Maintenance, Not started]
+              - [Supply Chain, Quality, Not started]
+              - [Supply Chain, PLM, Not started]
+              - [Human Resources, Employees, Not started]
+              - [Human Resources, Recruitment, Not started]
+              - [Human Resources, Time Off, Not started]
+              - [Human Resources, Appraisals, Not started]
+              - [Human Resources, Referrals, Not started]
+              - [Human Resources, Fleet, Not started]
+              - [Marketing, Email Marketing, Not started]
+              - [Marketing, SMS Marketing, Not started]
+              - [Marketing, Events, Not started]
+              - [Marketing, Surveys, Not started]
+              - [Marketing, Marketing Automation, Not started]
+              - [Services, Project, Not started]
+              - [Services, Timesheets, Not started]
+              - [Services, Field Service, Not started]
+              - [Services, Helpdesk, Not started]
+              - [Services, Appointments, Not started]
+              - [Services, Planning, Not started]
+              - [Productivity, Discuss, 'In progress — chat service proves the messaging/chatter pattern']
+              - [Productivity, Approvals, Not started]
+              - [Productivity, Knowledge, Not started]
+              - [Productivity, Sign, Not started]
+              - [Productivity, VoIP, Not started]
+              - [Website, Website, Not started]
+              - [Website, eCommerce, Not started]
+              - [Website, Blog, Not started]
+              - [Website, Forum, Not started]
+              - [Website, Live Chat, Not started]
+
       - id: pattern-rule
         kicker: Working principle
         title: Pattern extraction
@@ -82,7 +145,8 @@ components:
               - Keep the component-library reference in sync as real components change
               - Grow the sample order service with more read-focused example pages (analytics, reports)
               - Keep extracting repeated DocPage block shapes into the schema as the doc set grows
-              - Continue hardening auth and the event mediator per the current auth-and-mediator plan
+              - text: Continue hardening auth and the event mediator per the Gate Service Plan (gateway refactor)
+                href: /plan/auth-mediator
 
       - id: meta-model
         kicker: Design reference

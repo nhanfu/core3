@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { DocHero, type DocHeroDef } from '@core3/client/doc/DocHero';
+import { navigate } from '@core3/client/navigate';
 import hljs from 'highlight.js';
 
 // highlight.js's default bundle already registers the "common" language set —
@@ -10,7 +11,7 @@ const LANGUAGE_ALIAS: Record<string, string> = { yml: 'yaml', ts: 'typescript', 
 
 export type DocBlock =
   | { type: 'p'; text: string }
-  | { type: 'list'; items: string[] }
+  | { type: 'list'; items: Array<string | { text: string; href: string }> }
   | { type: 'cardgrid'; cards: Array<{ tag?: string; title: string; body?: string; items?: string[] }> }
   | { type: 'panel'; title?: string; language?: string; code: string }
   | { type: 'table'; headers: string[]; rows: string[][] }
@@ -124,7 +125,18 @@ export class DocPage extends BaseComponent {
         break;
       case 'list': {
         const list = html.take(container).ul.ele() as HTMLElement;
-        for (const item of block.items || []) html.take(list).li.text(item);
+        for (const item of block.items || []) {
+          if (typeof item === 'string') {
+            html.take(list).li.text(item);
+            continue;
+          }
+          const li = html.take(list).li.ele() as HTMLElement;
+          const link = html.take(li).a.attr('href', item.href).text(item.text).ele() as HTMLAnchorElement;
+          html.take(link).event('click', (event: MouseEvent) => {
+            event.preventDefault();
+            navigate(item.href);
+          });
+        }
         break;
       }
       case 'cardgrid': {
