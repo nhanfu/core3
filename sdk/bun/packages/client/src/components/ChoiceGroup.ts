@@ -8,8 +8,8 @@ export class ChoiceGroup extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const section = html.take(container).section.className(this.def.class || 'drawer-section').ele() as HTMLElement;
-    html.take(section).div.className('drawer-section-title').text(this.def.title || '');
+    const section = html.take(container).section.className(this.def.class || this.def.section_class || 'drawer-section').ele() as HTMLElement;
+    html.take(section).div.className(this.def.title_class || 'drawer-section-title').text(this.def.title || '');
     const group = html.take(section).div.className(this.def.group_class || 'lang-radio-group').ele() as HTMLDivElement;
     const current = this.state.record?.[this.def.value];
     for (const option of this.def.options || []) {

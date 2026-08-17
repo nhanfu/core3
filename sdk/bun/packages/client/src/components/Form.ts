@@ -9,9 +9,9 @@ export class Form extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const section = html.take(container).section.className(this.def.class || 'drawer-section').ele() as HTMLElement;
+    const section = html.take(container).section.className(this.def.class || this.def.section_class || 'drawer-section').ele() as HTMLElement;
     if (this.def.title) {
-      html.take(section).div.className('drawer-section-title').text(this.def.title);
+      html.take(section).div.className(this.def.title_class || 'drawer-section-title').text(this.def.title);
     }
     const form = html.take(section).div.ele() as HTMLDivElement;
     const error = html.take(form).div.className('alert alert-error').prop('hidden', true).ele() as HTMLDivElement;

@@ -2,7 +2,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
 import { NotificationPanel } from './NotificationPanel.ts';
-import { RightModal } from './RightModal.ts';
+import { ProfileMenu } from './ProfileMenu.ts';
 import { AppLauncher, type LauncherApp } from './AppLauncher.ts';
 import { appendIcon } from '@core3/client/components/Icon';
 import { hasPermission } from '@core3/client/meta';
@@ -31,7 +31,7 @@ export class AppShell extends BaseComponent {
   _groupEls: Map<string, HTMLElement>;
   _headerTitle: HTMLElement | null;
   _notifPanel: NotificationPanel | null;
-  _profileModal: RightModal | null;
+  _profileMenu: ProfileMenu | null;
   _shellToast: HTMLElement | null;
   _shellToastTimer: ReturnType<typeof setTimeout> | null;
   _languageUnsubscribe: (() => void) | null;
@@ -67,7 +67,7 @@ export class AppShell extends BaseComponent {
     this._groupEls = new Map();
     this._headerTitle = null;
     this._notifPanel = null;
-    this._profileModal = null;
+    this._profileMenu = null;
     this._shellToast = null;
     this._shellToastTimer = null;
     this._languageUnsubscribe = i18n.onChange((lang: string) => {
@@ -81,7 +81,7 @@ export class AppShell extends BaseComponent {
 
   refreshLanguage() {
     this._notifPanel?.refreshLanguage();
-    this._profileModal?.refreshLanguage();
+    this._profileMenu?.refreshLanguage();
     this._appLauncher?.refreshLanguage();
     this._groupEls.forEach((group, groupId) => {
       const groupDef = (this.menu.groups || []).find(candidate => candidate.id === groupId);
@@ -145,13 +145,6 @@ export class AppShell extends BaseComponent {
 
   draw(container: HTMLElement) {
     const user: any = this.state.user;
-    const initials = (user?.name || 'U')
-      .split(' ')
-      .map((w: string) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-
     // Root layout
     const layout = html.take(container).div.className('app-layout').ele();
     this._appLayout = layout;
@@ -343,12 +336,13 @@ export class AppShell extends BaseComponent {
     const userIdentity = html.take(actions).div.className('header-user-identity').ele();
     html.take(userIdentity).div.className('header-user-name').text(user?.name || 'User');
     html.take(userIdentity).div.className('header-user-role').text((user?.roles || []).join(', '));
-    html.take(actions).button
-      .className('avatar-btn')
-      .text(initials)
-      .attr('title', user?.name || i18n.tKey('shell.profile', {}, 'Profile'))
-      .attr('aria-label', user?.name || i18n.tKey('shell.profile', {}, 'Profile'))
-      .event('click', () => this._profileModal?.open());
+    this._profileMenu = new ProfileMenu('profile-menu', {
+      user,
+      onNavigate: (path: string) => this.go(path),
+      onLogout: () => this.state.onLogout?.(),
+    });
+    const profileMenuHost = html.take(actions).div.className('profile-menu-host').ele();
+    this._profileMenu.mount(profileMenuHost);
 
     // Content outlet
     html.take(main).div.id('outlet').className('app-content');
@@ -367,15 +361,6 @@ export class AppShell extends BaseComponent {
     });
 
     this._notifPanel.mount(document.body);
-
-    // Mount the profile YAML page inside a generic right-side modal.
-    this._profileModal = new RightModal('profile-modal', {
-      page_id: 'profile',
-      title: i18n.tKey('shell.profile', {}, 'Profile'),
-      context: { user, company: this.state.company },
-      open: false,
-    });
-    this._profileModal.mount(document.body);
 
     // The welcome toast is only requested for the first shell mount after login.
     if (!this.state.showWelcomeToast) return;
@@ -409,10 +394,10 @@ export class AppShell extends BaseComponent {
     if (this._shellToastTimer) clearTimeout(this._shellToastTimer);
     this._shellToastTimer = null;
     this._notifPanel?.dispose();
-    this._profileModal?.dispose();
+    this._profileMenu?.dispose();
     this._appLauncher?.dispose();
     this._notifPanel = null;
-    this._profileModal = null;
+    this._profileMenu = null;
     this._appLauncher = null;
     this._shellToast?.remove();
     this._shellToast = null;

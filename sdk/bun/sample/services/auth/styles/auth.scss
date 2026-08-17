@@ -152,3 +152,165 @@
 .event-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--color-text); }
 .event-message { margin: 10px 0 24px; color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.55; }
 .event-close { min-width: 108px; }
+
+/* Profile settings page. The shell only exposes a compact profile menu;
+ * editing belongs to this Auth-owned full-page form. */
+.page:has(.profile-header) {
+  width: min(100%, 960px);
+  margin: 0 auto;
+  padding: 8px 0 48px;
+}
+
+.profile-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(220px, .8fr);
+  align-items: center;
+  gap: 24px;
+  padding: 28px 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-avatar {
+  display: inline-flex;
+  width: 76px;
+  height: 76px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.profile-user-name {
+  color: var(--color-text);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.profile-user-email {
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: .88rem;
+}
+
+.profile-company {
+  margin: 0;
+}
+
+.profile-section-title {
+  margin-bottom: 10px;
+  color: var(--color-text-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.profile-company-card {
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.profile-company-name {
+  color: var(--color-text);
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.profile-company-legal-name,
+.profile-company-detail {
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: .75rem;
+  line-height: 1.4;
+}
+
+.profile-preferences,
+.profile-security {
+  margin-top: 24px;
+  padding: 24px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.profile-language-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.profile-language-option {
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: .88rem;
+  text-align: center;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.profile-language-option:hover,
+.profile-language-option.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.profile-security .form-group {
+  max-width: 560px;
+}
+
+.profile-security .form-input {
+  min-height: 40px;
+}
+
+.profile-security .btn {
+  margin-top: 4px;
+}
+
+.page:has(.profile-header) > .btn {
+  margin-top: 20px;
+}
+
+@media (max-width: 760px) {
+  .page:has(.profile-header) { padding-top: 0; }
+
+  .profile-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 24px;
+  }
+
+  .profile-company {
+    grid-column: 1 / -1;
+  }
+
+  .profile-preferences,
+  .profile-security {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .profile-company { width: 100%; text-align: left; }
+  .profile-language-options { grid-template-columns: 1fr; }
+}

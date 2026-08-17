@@ -80,6 +80,7 @@ describe('Odoo application shell', () => {
       navigate: () => undefined,
     });
     shell.mount(container);
+    shell.refreshLanguage();
 
     expect(container.querySelector('.app-switcher-button')?.getAttribute('aria-label')).toBe('Chuyển ứng dụng');
     expect(container.querySelector('.header-chat-button')?.getAttribute('aria-label')).toBe('Tin nhắn');

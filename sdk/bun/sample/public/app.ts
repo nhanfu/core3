@@ -356,6 +356,7 @@ async function bootstrap() {
       const location = currentLocation();
       await navigate(location.path, { ...getPageParams(), lc: langCode });
     },
+    onLogout: logout,
     onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
   });
   _shell.mount(app);

@@ -199,8 +199,8 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ])],
   ['LoginForm', new Set(['type', 'id', 'action', 'logo_title', 'logo_subtitle', 'title', 'email', 'password', 'submit_label', 'loading_label', 'required_message', 'provider_divider', 'credentials_label', 'credentials', 'providers'])],
   ['Html', new Set(['type', 'id', 'tag', 'class', 'text', 'text_expr', 'children'])],
-  ['ChoiceGroup', new Set(['type', 'id', 'title', 'value', 'group_class', 'option_class', 'options', 'action'])],
-  ['Form', new Set(['type', 'id', 'title', 'class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
+  ['ChoiceGroup', new Set(['type', 'id', 'title', 'value', 'class', 'section_class', 'title_class', 'group_class', 'option_class', 'options', 'action'])],
+  ['Form', new Set(['type', 'id', 'title', 'class', 'section_class', 'title_class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
   ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
 ]);
 

@@ -9,42 +9,42 @@ components:
   - type: Html
     id: profile-summary
     tag: div
-    class: profile-summary
+    class: profile-header
     children:
       - tag: div
-        class: drawer-avatar
+        class: profile-avatar
         text_expr: |
           // js
           user => user.name ? user.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase() : 'U'
       - tag: div
-        class: drawer-user-name
+        class: profile-user-name
         text_expr: |
           // js
           user => user.name
       - tag: div
-        class: drawer-user-email
+        class: profile-user-email
         text_expr: |
           // js
           user => user.email
       - tag: section
-        class: drawer-section
+        class: profile-section profile-company
         children:
-          - { tag: div, class: drawer-section-title, text: Company }
+          - { tag: div, class: profile-section-title, text: Company }
           - tag: div
-            class: drawer-company-card
+            class: profile-company-card
             children:
               - tag: div
-                class: drawer-company-name
+                class: profile-company-name
                 text_expr: |
                   // js
                   user => user.company?.short_name
               - tag: div
-                class: drawer-company-legal-name
+                class: profile-company-legal-name
                 text_expr: |
                   // js
                   user => user.company?.name
               - tag: div
-                class: drawer-company-detail
+                class: profile-company-detail
                 text_expr: |
                   // js
                   user => user.company?.address
@@ -52,15 +52,19 @@ components:
     id: profile-language
     title: Language
     value: preferred_lang
-    group_class: lang-radio-group
-    option_class: lang-radio
+    section_class: profile-section profile-preferences
+    title_class: profile-section-title
+    group_class: profile-language-options
+    option_class: profile-language-option
     options:
       - { value: en, label: '🇺🇸 English' }
       - { value: vi, label: '🇻🇳 Tiếng Việt' }
     action: save-language
   - type: Form
     id: profile-password
-    title: Change Password
+    title: Security
+    section_class: profile-section profile-security
+    title_class: profile-section-title
     action: change-password
     submit_label: Update password
     loading_label: Updating…
