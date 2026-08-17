@@ -18,6 +18,7 @@ type ManifestModule = { id: string; pages: ManifestPage[]; routes?: Array<{ path
 let _manifest: ManifestModule[] = [];
 const registry = new Map<string, any>();
 let _serviceStylesheet: HTMLLinkElement | null = null;
+let _shellMenuModuleId = '';
 
 async function loadServiceStyles(moduleId: string | undefined) {
   const safeModuleId = String(moduleId || '').toLowerCase();
@@ -80,7 +81,7 @@ export function selectApp(app: any, makeDefault = false) {
   if (makeDefault) setDefaultApp(String(app.id));
   _activeModuleId = String(app.module || app.id || '');
   _shell?.setCurrentApp(app);
-  navigate(String(app.route || '/dashboard'));
+  void navigate(String(app.route || `/${_activeModuleId}`));
 }
 
 export function getDefaultRoute(user: any = _user) {
@@ -219,6 +220,12 @@ async function renderRoute(path: string, langCode?: string) {
   const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route.toLowerCase() === normalizedPath);
   const pageId = page?.id || 'dashboard';
   const moduleId = _manifest.find((module) => module.pages.includes(page as ManifestPage) || module.routes?.some((entry) => entry.path === route?.path))?.id;
+  if (_shell && moduleId && moduleId !== _shellMenuModuleId) {
+    await i18n.refreshMenu();
+    const activeMenuModule = i18n.menuModules.find((entry) => String(entry.module || '') === moduleId);
+    _shell.setMenu(activeMenuModule?.menu || {});
+    _shellMenuModuleId = moduleId;
+  }
   await loadServiceStyles(moduleId);
 
   const outlet = document.getElementById('outlet');
@@ -375,6 +382,7 @@ async function bootstrap() {
     onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
   });
   _shell.mount(app);
+  _shellMenuModuleId = _activeModuleId;
 
   // Register navigator so page-renderer navigate() calls use SPA pushState
   registerNavigator((path: string, params: Record<string, unknown> = {}) => {

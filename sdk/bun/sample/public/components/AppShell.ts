@@ -154,6 +154,17 @@ export class AppShell extends BaseComponent {
     this._appLauncher?.setCurrentApp(app);
   }
 
+  setMenu(menu: ShellMenu) {
+    this.state.menu = menu || {};
+    this._appLauncher?.dispose();
+    this._profileMenu?.dispose();
+    this._notifPanel?.dispose();
+    this._appLauncher = null;
+    this._profileMenu = null;
+    this._notifPanel = null;
+    this.redraw();
+  }
+
   draw(container: HTMLElement) {
     const user: any = this.state.user;
     // Root layout

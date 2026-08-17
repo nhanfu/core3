@@ -63,6 +63,26 @@ describe('Odoo application shell', () => {
     expect(submenuTrigger.getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('refreshes the main item and groups when the active app menu changes', () => {
+    const container = document.createElement('div');
+    const shell = new AppShell('shell-menu-refresh', {
+      user: { name: 'Admin', roles: [], permissions: [] },
+      menu: { dashboard: { path: '/orders', label: 'Orders', icon: 'cart' } },
+      navigate: () => undefined,
+    });
+    shell.mount(container);
+
+    shell.setMenu({
+      dashboard: { path: '/subscriptions', label: 'Subscriptions', icon: 'repeat' },
+      groups: [{ id: 'operations', label: 'Operations', items: [{ path: '/invoices', label: 'Invoices', icon: 'invoice' }] }],
+    });
+
+    expect(container.querySelector('.header-nav-link')?.textContent).toContain('Subscriptions');
+    expect(container.querySelector('.header-nav-trigger')?.textContent).toContain('Operations');
+    expect(container.querySelector('.header-nav-menu .header-nav-link')?.textContent).toContain('Invoices');
+    shell.dispose();
+  });
+
   it('localizes shell tooltips after the language changes', () => {
     i18n.hydrate('*', {
       lang: 'vi',

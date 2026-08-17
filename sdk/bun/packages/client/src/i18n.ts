@@ -24,6 +24,11 @@ class I18n {
     this._listeners.forEach((fn) => fn(lang));
   }
 
+  async refreshMenu() {
+    this._cache.delete(`${this.lang}:*`);
+    await this.prefetch('*');
+  }
+
   async prefetch(page: string) {
     const key = `${this.lang}:${page}`;
     if (this._cache.has(key)) return;
