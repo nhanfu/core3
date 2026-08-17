@@ -7,12 +7,10 @@
 
 .app-content:has(.o-list-view) {
   padding: 0;
-  overflow: hidden;
 }
 
 .app-content:has(.o-list-view-body-scroll) {
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .page:has(> .o-list-view-slot:has(.o-list-view-body-scroll)) {

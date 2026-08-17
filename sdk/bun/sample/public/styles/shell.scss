@@ -1,8 +1,7 @@
 /* ── App shell layout ── */
 .app-layout {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .app-sidebar {
@@ -11,12 +10,11 @@
   flex-shrink: 0;
   background: #0f172a;
   border-right: 0;
-  height: 100vh;
+  min-height: 100vh;
   position: sticky;
   top: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   z-index: 20;
 }
 
@@ -25,8 +23,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 100vh;
 }
 
 .app-header {
@@ -102,10 +99,8 @@
 .app-picker-status { position: absolute; top: 14px; right: 14px; color: var(--color-text-muted); font-size: .68rem; }
 
 .app-content {
-  flex: 1;
   width: 100%;
   padding: clamp(24px, 4vw, 48px) clamp(20px, 5vw, 96px);
-  overflow-y: auto;
 }
 
 .app-content > #outlet {
@@ -184,7 +179,6 @@
 .sidebar-nav {
   flex: 1;
   padding: 10px 12px 20px;
-  overflow-y: auto;
 }
 
 .sidebar-section-title {
