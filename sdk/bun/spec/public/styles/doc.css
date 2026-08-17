@@ -118,6 +118,7 @@ p{margin:0 0 1rem; color:var(--text-dim);}
   display:flex; align-items:center; gap:0.6rem;
   font-family:var(--font-display); font-weight:600; font-size:1rem; color:var(--heading);
 }
+.doc-topbar-logo{width:1.55rem; height:1.55rem; display:block; border-radius:0.4rem;}
 .doc-topbar-dot{width:8px; height:8px; border-radius:2px; background:var(--primary); display:inline-block;}
 .doc-topbar-meta{font-family:var(--font-mono); font-size:0.72rem; color:var(--text-faint); flex:1;}
 .doc-topbar-nav{display:flex; align-items:center; gap:0.2rem;}

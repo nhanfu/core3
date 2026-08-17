@@ -107,7 +107,7 @@ export class DocTopNav extends BaseComponent {
     const bar = html.take(container).div.className('doc-topbar').ele() as HTMLElement;
 
     const brandLink = this.link(bar, 'doc-topbar-brand', '/', '');
-    html.take(brandLink).span.className('doc-topbar-dot').ele();
+    html.take(brandLink).img.className('doc-topbar-logo').attr('src', '/favicon.svg').attr('alt', 'YShip').ele();
     html.take(brandLink).span.text(brand);
 
     if (eyebrow) html.take(bar).span.className('doc-topbar-meta').text(eyebrow);
