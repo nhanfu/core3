@@ -1,0 +1,26 @@
+title: Inventory Analysis
+page: { id: inventory-analysis, breadcrumb: [Supply Chain, Inventory, Analysis], auth: { require: [inventory.read] } }
+datasources:
+  - id: inventory_analysis_totals
+    single: true
+    permission: inventory.read
+    query: "SELECT COUNT(*) AS product_locations, COALESCE(SUM(quantity), 0) AS units_on_hand, COALESCE(SUM(quantity - reserved_quantity), 0) AS units_available, COALESCE(SUM(quantity * unit_cost), 0) AS stock_value FROM inventory_quants"
+  - id: inventory_analysis_locations
+    single: false
+    permission: inventory.read
+    query: "SELECT l.name AS category, COALESCE(SUM(q.quantity), 0) AS units FROM inventory_locations l LEFT JOIN inventory_quants q ON q.location_id = l.id GROUP BY l.name ORDER BY units DESC"
+components:
+  - type: StatRow
+    source: inventory_analysis_totals
+    title: Inventory performance
+    stats:
+      - { label: Product locations, field: product_locations }
+      - { label: Units on hand, field: units_on_hand }
+      - { label: Units available, field: units_available }
+      - { label: Stock value, field: stock_value }
+  - type: Chart
+    source: inventory_analysis_locations
+    title: Units by location
+    label_field: category
+    value_field: units
+    variant: bar

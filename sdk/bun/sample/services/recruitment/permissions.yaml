@@ -1,0 +1,4 @@
+permissions:
+  - recruitment.read
+  - recruitment.write
+  - recruitment.manage

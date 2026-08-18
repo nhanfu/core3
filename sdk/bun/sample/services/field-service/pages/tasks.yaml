@@ -1,0 +1,63 @@
+title: Field Service
+page: { id: field-service, breadcrumb: [Services, Field Service], auth: { require: [field-service.read] } }
+datasources:
+  - id: field_service_states
+    permission: field-service.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('Assigned','Assigned'), ('In Progress','In Progress'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: field_service_tasks
+    permission: field-service.read
+    workflow: field_service_tasks
+    query: "SELECT id, row_version, name, customer_name, address, assigned_to, description, priority, CAST(scheduled_date AS VARCHAR) AS scheduled_date, duration_hours, state, CAST(started_at AS VARCHAR) AS started_at, CAST(completed_at AS VARCHAR) AS completed_at FROM field_service_tasks WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY scheduled_date NULLS LAST, created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: field_service_tasks
+    create_action: create_field_service_task
+    create_label: New field task
+    search: { label: Search field tasks, placeholder: 'Search customer, task, or description...' }
+    filters: [{ field: state, label: Status, options_source: field_service_states }]
+    columns:
+      - { field: name, label: Task, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: address, label: Address }
+      - { field: assigned_to, label: Technician }
+      - { field: scheduled_date, label: Scheduled }
+      - { field: duration_hours, label: Hours, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: assign_field_service_task, label: Assign, permission: field-service.write, variant: primary, show_if: "row.state === 'New'" }
+      - { id: start_field_service_task, label: Start, permission: field-service.write, variant: secondary, show_if: "row.state === 'Assigned'" }
+      - { id: complete_field_service_task, label: Complete, permission: field-service.write, variant: primary, show_if: "row.state === 'In Progress'" }
+      - { id: cancel_field_service_task, label: Cancel, permission: field-service.manage, variant: danger, show_if: "row.state !== 'Completed' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_field_service_task
+    type: server_form
+    permission: field-service.write
+    title: New field task
+    action: field-service.tasks.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [field_service_tasks]
+    mutation:
+      operation: insert
+      table: field_service_tasks
+      fields: [name, customer_name, address, assigned_to, description, priority, scheduled_date, duration_hours]
+      required: [name, customer_name, description]
+      result: { query: "SELECT * FROM field_service_tasks WHERE id = :id" }
+    fields:
+      - { field: name, label: Task, type: text, required: true }
+      - { field: customer_name, label: Customer, type: text, required: true }
+      - { field: address, label: Address, type: text }
+      - { field: assigned_to, label: Technician, type: text }
+      - { field: description, label: Description, type: text, required: true }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Normal }, { value: High, label: High }] }
+      - { field: scheduled_date, label: Scheduled date, type: text }
+      - { field: duration_hours, label: Duration hours, type: number }
+  - { id: assign_field_service_task, type: server, permission: field-service.write, action: field-service.tasks.assign, handler: order_transition, workflow: field_service_tasks, operation: assign, refresh: [field_service_tasks] }
+  - { id: start_field_service_task, type: server, permission: field-service.write, action: field-service.tasks.start, handler: order_transition, workflow: field_service_tasks, operation: start, refresh: [field_service_tasks] }
+  - { id: complete_field_service_task, type: server, permission: field-service.write, action: field-service.tasks.complete, handler: order_transition, workflow: field_service_tasks, operation: complete, refresh: [field_service_tasks] }
+  - { id: cancel_field_service_task, type: server, permission: field-service.manage, action: field-service.tasks.cancel, handler: order_transition, workflow: field_service_tasks, operation: cancel, refresh: [field_service_tasks] }

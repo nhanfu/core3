@@ -1,0 +1,19 @@
+workflow:
+  id: helpdesk_tickets
+  entity: helpdesk_tickets
+  handler: order_transition
+  initial: New
+  permission: helpdesk.write
+  mutable: true
+  status_source: helpdesk_states
+  states:
+    - { id: New, label: New, color: neutral }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Waiting, label: Waiting, color: amber }
+    - { id: Resolved, label: Resolved, color: green }
+    - { id: Closed, label: Closed, color: violet, terminal: true }
+  transitions:
+    - { id: start, from: [New], to: In Progress, permission: helpdesk.write, mutation: { steps: [{ query: "UPDATE helpdesk_tickets SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }], result: { query: "SELECT * FROM helpdesk_tickets WHERE id = :id" } } }
+    - { id: wait, from: [In Progress], to: Waiting, permission: helpdesk.write, mutation: { steps: [{ query: "UPDATE helpdesk_tickets SET state = 'Waiting', row_version = row_version + 1 WHERE id = :id" }], result: { query: "SELECT * FROM helpdesk_tickets WHERE id = :id" } } }
+    - { id: resolve, from: [In Progress, Waiting], to: Resolved, permission: helpdesk.write, mutation: { steps: [{ query: "UPDATE helpdesk_tickets SET state = 'Resolved', resolved_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }], result: { query: "SELECT * FROM helpdesk_tickets WHERE id = :id" } } }
+    - { id: close, from: [Resolved], to: Closed, permission: helpdesk.manage, mutation: { steps: [{ query: "UPDATE helpdesk_tickets SET state = 'Closed', row_version = row_version + 1 WHERE id = :id" }], result: { query: "SELECT * FROM helpdesk_tickets WHERE id = :id" } } }

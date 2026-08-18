@@ -1,0 +1,18 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO projects(id, name, customer_name, project_manager, description, planned_hours, start_date, end_date, state)
+      VALUES ('project-demo-001', 'Core3 Implementation', 'Core3 Internal', 'Project Team', 'Platform implementation project', 480, CURRENT_DATE, CURRENT_DATE + INTERVAL 90 DAY, 'Active');
+      INSERT OR IGNORE INTO project_milestones(id, project_id, name, due_date) VALUES ('milestone-demo-001', 'project-demo-001', 'Foundation release', CURRENT_DATE + INTERVAL 30 DAY);
+      INSERT OR IGNORE INTO project_tasks(id, project_id, project_name, name, assignee, milestone_name, planned_hours, state, due_date)
+      VALUES ('task-demo-001', 'project-demo-001', 'Core3 Implementation', 'Complete module migration', 'Project Team', 'Foundation release', 40, 'In Progress', CURRENT_DATE + INTERVAL 14 DAY);
+    down: |
+      DELETE FROM project_tasks WHERE project_id = 'project-demo-001';
+      DELETE FROM project_milestones WHERE project_id = 'project-demo-001';
+      DELETE FROM projects WHERE id = 'project-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

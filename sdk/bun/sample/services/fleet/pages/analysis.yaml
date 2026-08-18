@@ -1,0 +1,21 @@
+title: Fleet Analysis
+page: { id: fleet-analysis, breadcrumb: [Human Resources, Fleet, Analysis], auth: { require: [fleet.read] } }
+datasources:
+  - id: fleet_analysis_totals
+    single: true
+    permission: fleet.read
+    query: "SELECT COUNT(*) AS vehicle_count, COUNT(*) FILTER (WHERE state = 'Assigned') AS assigned_count, COUNT(*) FILTER (WHERE state = 'Maintenance') AS maintenance_count, COALESCE(SUM(odometer), 0) AS total_odometer FROM fleet_vehicles"
+  - id: fleet_analysis_states
+    permission: fleet.read
+    query: "SELECT state AS category, COUNT(*) AS vehicle_count FROM fleet_vehicles GROUP BY state ORDER BY vehicle_count DESC"
+components:
+  - type: StatRow
+    source: fleet_analysis_totals
+    title: Fleet overview
+    stats: [{ label: Vehicles, field: vehicle_count }, { label: Assigned, field: assigned_count }, { label: Maintenance, field: maintenance_count }, { label: Total odometer, field: total_odometer }]
+  - type: Chart
+    source: fleet_analysis_states
+    title: Vehicles by status
+    label_field: category
+    value_field: vehicle_count
+    variant: bar

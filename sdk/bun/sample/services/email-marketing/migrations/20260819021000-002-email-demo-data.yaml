@@ -1,0 +1,15 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO mailing_lists(id, name, description, subscriber_count) VALUES ('mailing-list-demo-001', 'Customers', 'Customer newsletter audience', 1250);
+      INSERT OR IGNORE INTO email_campaigns(id, name, subject, sender_name, sender_email, list_id, list_name, body, recipient_count, state)
+      VALUES ('email-campaign-demo-001', 'CAMPAIGN/2026/0001', 'New product update', 'Core3 Team', 'news@example.com', 'mailing-list-demo-001', 'Customers', 'Product news and updates', 1250, 'Draft');
+    down: |
+      DELETE FROM email_campaigns WHERE id = 'email-campaign-demo-001';
+      DELETE FROM mailing_lists WHERE id = 'mailing-list-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

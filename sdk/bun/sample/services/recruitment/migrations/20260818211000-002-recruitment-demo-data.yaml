@@ -1,0 +1,16 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO recruitment_openings(id, name, department_name, job_title, employment_type, target_hires, recruiter, opened_date)
+      VALUES ('opening-demo-001', 'JOB/2026/0001', 'Engineering', 'Operations Engineer', 'Employee', 2, 'Recruitment Team', CURRENT_DATE);
+      INSERT OR IGNORE INTO recruitment_applicants(id, name, opening_id, opening_name, email, source, recruiter, stage, rating)
+      VALUES ('applicant-demo-001', 'Demo Candidate', 'opening-demo-001', 'JOB/2026/0001', 'candidate@example.com', 'Website', 'Recruitment Team', 'New', 'Good');
+    down: |
+      DELETE FROM recruitment_applicants WHERE id = 'applicant-demo-001';
+      DELETE FROM recruitment_openings WHERE id = 'opening-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

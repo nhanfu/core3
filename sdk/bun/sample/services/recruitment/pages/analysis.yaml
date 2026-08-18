@@ -1,0 +1,21 @@
+title: Recruitment Analysis
+page: { id: recruitment-analysis, breadcrumb: [Human Resources, Recruitment, Analysis], auth: { require: [recruitment.read] } }
+datasources:
+  - id: recruitment_analysis_totals
+    single: true
+    permission: recruitment.read
+    query: "SELECT COUNT(*) AS applicant_count, COUNT(*) FILTER (WHERE stage = 'Hired') AS hired_count, COUNT(*) FILTER (WHERE stage NOT IN ('Hired', 'Rejected')) AS open_count, COUNT(DISTINCT opening_id) AS opening_count FROM recruitment_applicants"
+  - id: recruitment_analysis_stages
+    permission: recruitment.read
+    query: "SELECT stage AS category, COUNT(*) AS applicant_count FROM recruitment_applicants GROUP BY stage ORDER BY applicant_count DESC"
+components:
+  - type: StatRow
+    source: recruitment_analysis_totals
+    title: Hiring funnel
+    stats: [{ label: Applicants, field: applicant_count }, { label: Hired, field: hired_count }, { label: Open, field: open_count }, { label: Openings, field: opening_count }]
+  - type: Chart
+    source: recruitment_analysis_stages
+    title: Applicants by stage
+    label_field: category
+    value_field: applicant_count
+    variant: bar

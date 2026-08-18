@@ -1,0 +1,40 @@
+title: Leave Types
+page: { id: leave-types, breadcrumb: [Human Resources, Time Off, Leave Types], auth: { require: [time_off.manage] } }
+datasources:
+  - id: leave_types
+    permission: time_off.read
+    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: leave_types
+    create_action: create_leave_type
+    create_label: New leave type
+    columns:
+      - { field: name, label: Leave type, type: PrimaryEntityCell }
+      - { field: code, label: Code }
+      - { field: allocation_days, label: Allocation days, align: right }
+      - { field: requires_approval, label: Approval required }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_leave_type
+    type: server_form
+    permission: time_off.manage
+    title: New leave type
+    action: time_off.types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [leave_types]
+    mutation:
+      operation: insert
+      table: leave_types
+      fields: [name, code, allocation_days, requires_approval]
+      required: [name, code]
+      result: { query: "SELECT * FROM leave_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Leave type, type: text, required: true }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: allocation_days, label: Allocation days, type: number }
+      - { field: requires_approval, label: Approval required, type: checkbox }

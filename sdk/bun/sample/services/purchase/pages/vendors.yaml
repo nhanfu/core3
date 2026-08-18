@@ -1,0 +1,41 @@
+title: Vendors
+page: { id: vendors, breadcrumb: [Supply Chain, Purchase, Vendors], auth: { require: [purchase.read] } }
+datasources:
+  - id: purchase_vendors
+    permission: purchase.read
+    query: "SELECT id, row_version, name, email, phone, state, payment_terms FROM purchase_vendors WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_vendors
+    create_action: create_purchase_vendor
+    create_label: New vendor
+    search: { label: Search vendors, placeholder: Search vendors... }
+    columns:
+      - { field: name, label: Vendor, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: payment_terms, label: Payment terms }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_purchase_vendor
+    type: server_form
+    permission: purchase.manage
+    title: New vendor
+    action: purchase.vendors.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_vendors]
+    mutation:
+      operation: insert
+      table: purchase_vendors
+      fields: [name, email, phone, payment_terms]
+      required: [name]
+      result: { query: "SELECT * FROM purchase_vendors WHERE id = :id" }
+    fields:
+      - { field: name, label: Vendor, type: text, required: true }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: payment_terms, label: Payment terms, type: text }

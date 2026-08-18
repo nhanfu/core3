@@ -1,0 +1,25 @@
+title: Employee
+page: { id: employee-detail, breadcrumb: [Human Resources, Employees, Detail], auth: { require: [employees.read] } }
+datasources:
+  - id: employee_detail
+    single: true
+    permission: employees.read
+    query: "SELECT id, row_version, employee_number, name, auth_user_id, work_email, phone, department_name, job_title, manager_name, employment_type, state, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date FROM employees WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: employee_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Active, label: Active }, { value: On Leave, label: On Leave }, { value: Terminated, label: Terminated }]
+    status_colors: { Draft: neutral, Active: green, On Leave: amber, Terminated: red }
+    group_columns: 2
+    groups:
+      - title: Profile
+        fields: [{ field: employee_number, label: Employee number }, { field: name, label: Name }, { field: state, label: Status }, { field: work_email, label: Work email }, { field: phone, label: Phone }]
+      - title: Employment
+        fields: [{ field: department_name, label: Department }, { field: job_title, label: Job title }, { field: manager_name, label: Manager }, { field: employment_type, label: Type }, { field: hire_date, label: Hire date }, { field: termination_date, label: Termination date }]
+actions:
+  - { id: activate_employee_detail, type: server, permission: employees.write, action: employees.records.activate, handler: order_transition, workflow: employees, operation: activate, params: { id: '{state.id}' }, refresh: [employee_detail] }
+  - { id: leave_employee_detail, type: server, permission: employees.write, action: employees.records.leave, handler: order_transition, workflow: employees, operation: leave, params: { id: '{state.id}' }, refresh: [employee_detail] }
+  - { id: return_employee_detail, type: server, permission: employees.write, action: employees.records.return, handler: order_transition, workflow: employees, operation: return, params: { id: '{state.id}' }, refresh: [employee_detail] }
+  - { id: terminate_employee_detail, type: server, permission: employees.manage, action: employees.records.terminate, handler: order_transition, workflow: employees, operation: terminate, params: { id: '{state.id}' }, refresh: [employee_detail] }

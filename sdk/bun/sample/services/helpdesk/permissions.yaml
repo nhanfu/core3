@@ -1,0 +1,1 @@
+permissions: [helpdesk.read, helpdesk.write, helpdesk.manage]

@@ -1,0 +1,17 @@
+workflow:
+  id: documents
+  entity: documents
+  handler: order_transition
+  initial: Draft
+  permission: documents.write
+  mutable: true
+  status_source: document_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Approved, label: Approved, color: green }
+    - { id: Archived, label: Archived, color: blue, terminal: true }
+  transitions:
+    - { id: submit, from: [Draft], to: Submitted, permission: documents.write }
+    - { id: approve, from: [Submitted], to: Approved, permission: documents.manage }
+    - { id: archive, from: [Draft, Submitted, Approved], to: Archived, permission: documents.manage }

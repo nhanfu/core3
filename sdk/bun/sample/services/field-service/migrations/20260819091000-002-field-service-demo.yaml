@@ -1,0 +1,13 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO field_service_tasks (id, name, customer_name, address, assigned_to, description, priority, scheduled_date, duration_hours, state)
+      SELECT 'field-task-demo-001', 'Install network gateway', 'Core3 Internal', 'HQ - Floor 2', 'Field Operations', 'Install and verify the new gateway.', 'High', CURRENT_DATE + 1, 2, 'New'
+      WHERE NOT EXISTS (SELECT 1 FROM field_service_tasks WHERE id = 'field-task-demo-001');
+    down: DELETE FROM field_service_tasks WHERE id = 'field-task-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

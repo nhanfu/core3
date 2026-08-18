@@ -1,0 +1,12 @@
+menu:
+  project:
+    path: /projects
+    label: Project
+    icon: project
+    permission: project.read
+  groups:
+    - id: delivery
+      label: Delivery
+      items:
+        - { path: /projects, label: Projects, icon: project, permission: project.read }
+        - { path: /project-analysis, label: Project Analysis, icon: chart, permission: project.read }

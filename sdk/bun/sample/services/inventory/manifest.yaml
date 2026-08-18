@@ -1,0 +1,14 @@
+id: inventory
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/warehouses.yaml
+  - pages/locations.yaml
+  - pages/stock.yaml
+  - pages/moves.yaml
+  - pages/analysis.yaml
+  - pages/inventory-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

@@ -1,0 +1,48 @@
+title: Journal Entries
+page: { id: journal-entries, breadcrumb: [Finance, Accounting, Journal Entries], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_journal_entries
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, name, journal, CAST(entry_date AS VARCHAR) AS entry_date, reference, debit, credit, state FROM accounting_journal_entries WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR journal ILIKE '%' || :q || '%') ORDER BY entry_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_journal_entries
+    create_action: create_journal_entry
+    create_label: New journal entry
+    search: { label: Search journal entries, placeholder: Search entries or journals... }
+    columns:
+      - { field: name, label: Entry, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: entry_date, label: Date }
+      - { field: reference, label: Reference }
+      - { field: debit, label: Debit, align: right }
+      - { field: credit, label: Credit, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+actions:
+  - id: create_journal_entry
+    type: server_form
+    permission: accounting.write
+    title: New journal entry
+    action: accounting.journal_entries.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_journal_entries
+      fields: [name, journal, entry_date, reference, debit, credit]
+      required: [name, journal]
+      defaults: { state: Draft, debit: 0, credit: 0 }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:debit AS DECIMAL(18,2)) >= 0 AND CAST(:credit AS DECIMAL(18,2)) >= 0 AND CAST(:debit AS DECIMAL(18,2)) > 0 OR CAST(:credit AS DECIMAL(18,2)) > 0", status: 400, message: An entry must contain a debit or credit amount }]
+      result: { query: "SELECT * FROM accounting_journal_entries WHERE id = :id" }
+    fields:
+      - { field: name, label: Entry, type: text, required: true }
+      - { field: journal, label: Journal, type: select, options: [Sales, Purchases, Bank, Cash, Miscellaneous] }
+      - { field: entry_date, label: Date, type: text }
+      - { field: reference, label: Reference, type: text }
+      - { field: debit, label: Debit, type: number }
+      - { field: credit, label: Credit, type: number }

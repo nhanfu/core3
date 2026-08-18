@@ -1,0 +1,51 @@
+title: Event
+page: { id: event-detail, breadcrumb: [Marketing, Events, Detail], auth: { require: [events.read] } }
+datasources:
+  - id: event_detail
+    single: true
+    permission: events.read
+    query: "SELECT id, row_version, name, event_type, organizer, venue, description, capacity, registration_count, CAST(start_at AS VARCHAR) AS start_at, CAST(end_at AS VARCHAR) AS end_at, state FROM events WHERE id = :id"
+  - id: event_registrations
+    permission: events.read
+    query: "SELECT id, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE event_id = :id ORDER BY registered_at DESC"
+components:
+  - type: OdooFormView
+    source: event_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Published: blue, In Progress: amber, Completed: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Event
+        fields: [{ field: name, label: Event }, { field: state, label: Status }, { field: event_type, label: Type }, { field: organizer, label: Organizer }, { field: venue, label: Venue }]
+      - title: Schedule and attendance
+        fields: [{ field: start_at, label: Starts at }, { field: end_at, label: Ends at }, { field: capacity, label: Capacity }, { field: registration_count, label: Registered }, { field: description, label: Description }]
+  - type: ContactGrid
+    source: event_registrations
+    row_key: id
+    columns:
+      - { field: attendee_name, label: Attendee, type: PrimaryEntityCell }
+      - { field: attendee_email, label: Email }
+      - { field: ticket_type, label: Ticket type }
+      - { field: registered_at, label: Registered at }
+      - { field: state, label: Status, type: StatusChip }
+    empty_state: { title: No registrations, description: Attendees will appear here after registration. }
+actions:
+  - { id: publish_event_detail, type: server, permission: events.write, action: events.records.publish, handler: order_transition, workflow: events, operation: publish, params: { id: '{state.id}' }, refresh: [event_detail] }
+  - { id: start_event_detail, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, params: { id: '{state.id}' }, refresh: [event_detail] }
+  - { id: complete_event_detail, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, params: { id: '{state.id}' }, refresh: [event_detail] }
+  - { id: cancel_event_detail, type: server, permission: events.manage, action: events.records.cancel, handler: order_transition, workflow: events, operation: cancel, params: { id: '{state.id}' }, refresh: [event_detail] }
+  - id: register_event_attendee_detail
+    type: server_form
+    title: Register attendee
+    permission: events.write
+    action: events.registrations.create
+    handler: yaml_mutation
+    operation: register
+    params: { event_id: '{state.id}', event_name: '{state.name}' }
+    refresh: [event_detail, event_registrations]
+    fields:
+      - { field: attendee_name, label: Attendee, type: text, required: true }
+      - { field: attendee_email, label: Email, type: text }
+      - { field: ticket_type, label: Ticket type, type: text }

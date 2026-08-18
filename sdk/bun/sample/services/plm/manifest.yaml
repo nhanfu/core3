@@ -1,0 +1,12 @@
+id: plm
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/revisions.yaml
+  - pages/revision-detail.yaml
+  - pages/analysis.yaml
+  - pages/plm-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

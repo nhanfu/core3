@@ -1,0 +1,4 @@
+permissions:
+  - project.read
+  - project.write
+  - project.manage

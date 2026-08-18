@@ -1,0 +1,4 @@
+permissions:
+  - fleet.read
+  - fleet.write
+  - fleet.manage

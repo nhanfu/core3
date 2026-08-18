@@ -1,0 +1,21 @@
+title: PLM Analysis
+page: { id: plm-analysis, breadcrumb: [Supply Chain, PLM, Analysis], auth: { require: [plm.read] } }
+datasources:
+  - id: plm_analysis_totals
+    single: true
+    permission: plm.read
+    query: "SELECT COUNT(*) AS revision_count, COUNT(*) FILTER (WHERE state = 'Released') AS released_count, COUNT(*) FILTER (WHERE state IN ('Draft', 'Submitted', 'Approved')) AS open_count, COUNT(DISTINCT product_name) AS product_count FROM plm_revisions"
+  - id: plm_analysis_states
+    permission: plm.read
+    query: "SELECT state AS category, COUNT(*) AS revision_count FROM plm_revisions GROUP BY state ORDER BY revision_count DESC"
+components:
+  - type: StatRow
+    source: plm_analysis_totals
+    title: Engineering change performance
+    stats: [{ label: Revisions, field: revision_count }, { label: Released, field: released_count }, { label: Open, field: open_count }, { label: Products, field: product_count }]
+  - type: Chart
+    source: plm_analysis_states
+    title: Revisions by status
+    label_field: category
+    value_field: revision_count
+    variant: bar

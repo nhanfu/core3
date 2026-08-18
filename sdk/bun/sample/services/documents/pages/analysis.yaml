@@ -1,0 +1,25 @@
+title: Document Analysis
+page: { id: document-analysis, breadcrumb: [Finance, Documents, Analysis], auth: { require: [documents.read] } }
+datasources:
+  - id: document_analysis_totals
+    single: true
+    permission: documents.read
+    query: "SELECT COUNT(*) AS document_count, COALESCE(SUM(file_size), 0) AS total_bytes, COUNT(*) FILTER (WHERE expiry_date IS NOT NULL AND expiry_date <= CURRENT_DATE + INTERVAL '30 days') AS expiring_soon FROM documents WHERE state <> 'Archived'"
+  - id: document_analysis_types
+    single: false
+    permission: documents.read
+    query: "SELECT document_type AS category, COUNT(*) AS document_count FROM documents GROUP BY document_type ORDER BY document_count DESC"
+components:
+  - type: StatRow
+    source: document_analysis_totals
+    title: Document workspace
+    stats:
+      - { label: Documents, field: document_count }
+      - { label: Total bytes, field: total_bytes }
+      - { label: Expiring soon, field: expiring_soon }
+  - type: Chart
+    source: document_analysis_types
+    title: Documents by type
+    label_field: category
+    value_field: document_count
+    variant: bar

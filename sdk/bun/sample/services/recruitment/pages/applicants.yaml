@@ -1,0 +1,71 @@
+title: Applicants
+page: { id: applicants, breadcrumb: [Human Resources, Recruitment, Applicants], auth: { require: [recruitment.read] } }
+datasources:
+  - id: recruitment_applicant_stages
+    permission: recruitment.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('Screening','Screening'), ('Interview','Interview'), ('Offer','Offer'), ('Hired','Hired'), ('Rejected','Rejected')) stages(value, label)"
+  - id: recruitment_opening_lookup
+    permission: recruitment.read
+    single: false
+    query: "SELECT id AS value, name || ' - ' || job_title AS label FROM recruitment_openings WHERE state = 'Open' ORDER BY name"
+  - id: recruitment_applicants
+    permission: recruitment.read
+    workflow: recruitment_applicants
+    query: "SELECT a.id, a.row_version, a.name, a.opening_name, a.email, a.source, a.recruiter, a.stage, a.rating, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date FROM recruitment_applicants a WHERE (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.email ILIKE '%' || :q || '%' OR a.opening_name ILIKE '%' || :q || '%') AND (:stage IS NULL OR a.stage = :stage) ORDER BY a.applied_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_applicants
+    create_action: create_recruitment_applicant
+    create_label: New applicant
+    search: { label: Search applicants, placeholder: 'Search applicants, email, or opening...' }
+    filters: [{ field: stage, label: Stage, options_source: recruitment_applicant_stages }]
+    columns:
+      - { field: name, label: Applicant, type: PrimaryEntityCell }
+      - { field: opening_name, label: Opening }
+      - { field: email, label: Email }
+      - { field: source, label: Source }
+      - { field: recruiter, label: Recruiter }
+      - { field: rating, label: Rating, type: StatusChip }
+      - { field: stage, label: Stage, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: screen_applicant, label: Screen, permission: recruitment.write, variant: primary, show_if: "row.stage === 'New'" }
+      - { id: interview_applicant, label: Interview, permission: recruitment.write, variant: secondary, show_if: "row.stage === 'Screening'" }
+      - { id: offer_applicant, label: Offer, permission: recruitment.write, variant: secondary, show_if: "row.stage === 'Interview'" }
+      - { id: hire_applicant, label: Hire, permission: recruitment.manage, variant: primary, show_if: "row.stage === 'Offer'" }
+      - { id: reject_applicant, label: Reject, permission: recruitment.manage, variant: danger, show_if: "row.stage !== 'Hired' && row.stage !== 'Rejected'" }
+actions:
+  - id: create_recruitment_applicant
+    type: server_form
+    permission: recruitment.write
+    title: New applicant
+    action: recruitment.applicants.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_applicants]
+    mutation:
+      operation: insert
+      table: recruitment_applicants
+      fields: [name, opening_id, opening_name, email, phone, source, recruiter, rating, applied_date, notes]
+      required: [name, opening_id, opening_name, email]
+      result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" }
+    fields:
+      - { field: name, label: Applicant, type: text, required: true }
+      - { field: opening_id, label: Opening, type: select, options_source: recruitment_opening_lookup, required: true }
+      - { field: opening_name, label: Opening name, type: text, required: true }
+      - { field: email, label: Email, type: text, required: true }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: recruiter, label: Recruiter, type: text }
+      - { field: rating, label: Rating, type: select, options: [{ value: Excellent, label: Excellent }, { value: Good, label: Good }, { value: Average, label: Average }] }
+      - { field: applied_date, label: Applied date, type: text }
+      - { field: notes, label: Notes, type: text }
+  - { id: screen_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.screen, handler: order_transition, workflow: recruitment_applicants, operation: screen, refresh: [recruitment_applicants] }
+  - { id: interview_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, refresh: [recruitment_applicants] }
+  - { id: offer_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, refresh: [recruitment_applicants] }
+  - { id: hire_applicant, type: server, permission: recruitment.manage, action: recruitment.applicants.hire, handler: order_transition, workflow: recruitment_applicants, operation: hire, refresh: [recruitment_applicants] }
+  - { id: reject_applicant, type: server, permission: recruitment.manage, action: recruitment.applicants.reject, handler: order_transition, workflow: recruitment_applicants, operation: reject, refresh: [recruitment_applicants] }

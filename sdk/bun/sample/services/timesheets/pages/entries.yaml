@@ -1,0 +1,68 @@
+title: Timesheets
+page: { id: timesheets, breadcrumb: [Services, Timesheets], auth: { require: [timesheets.read] } }
+datasources:
+  - id: timesheet_states
+    permission: timesheets.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Rejected','Rejected'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: timesheet_entries
+    permission: timesheets.read
+    workflow: timesheet_entries
+    query: "SELECT t.id, t.row_version, t.name, t.employee_name, t.project_name, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, t.billable, t.unit_amount, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) ORDER BY t.work_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: timesheet_entries
+    create_action: create_timesheet_entry
+    create_label: New timesheet entry
+    search: { label: Search timesheets, placeholder: 'Search employee, project, or entry...' }
+    filters: [{ field: state, label: Status, options_source: timesheet_states }]
+    columns:
+      - { field: name, label: Entry, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: project_name, label: Project }
+      - { field: task_name, label: Task }
+      - { field: work_date, label: Date }
+      - { field: hours, label: Hours, align: right }
+      - { field: billable, label: Billable }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: submit_timesheet_entry, label: Submit, permission: timesheets.write, variant: primary, show_if: "row.state === 'Draft' || row.state === 'Rejected'" }
+      - { id: approve_timesheet_entry, label: Approve, permission: timesheets.manage, variant: primary, show_if: "row.state === 'Submitted'" }
+      - { id: reject_timesheet_entry, label: Reject, permission: timesheets.manage, variant: danger, show_if: "row.state === 'Submitted'" }
+      - { id: cancel_timesheet_entry, label: Cancel, permission: timesheets.write, variant: danger, show_if: "row.state !== 'Approved' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_timesheet_entry
+    type: server_form
+    permission: timesheets.write
+    title: New timesheet entry
+    action: timesheets.entries.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [timesheet_entries]
+    mutation:
+      operation: insert
+      table: timesheet_entries
+      fields: [name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, unit_amount]
+      required: [name, employee_id, employee_name, work_date, description, hours]
+      result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    fields:
+      - { field: name, label: Entry, type: text, required: true }
+      - { field: employee_id, label: Employee ID, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: project_id, label: Project ID, type: text }
+      - { field: project_name, label: Project, type: text }
+      - { field: task_id, label: Task ID, type: text }
+      - { field: task_name, label: Task, type: text }
+      - { field: work_date, label: Date, type: text, required: true }
+      - { field: description, label: Description, type: text, required: true }
+      - { field: hours, label: Hours, type: number, required: true }
+      - { field: billable, label: Billable, type: checkbox }
+      - { field: unit_amount, label: Unit amount, type: number }
+  - { id: submit_timesheet_entry, type: server, permission: timesheets.write, action: timesheets.entries.submit, handler: order_transition, workflow: timesheet_entries, operation: submit, refresh: [timesheet_entries] }
+  - { id: approve_timesheet_entry, type: server, permission: timesheets.manage, action: timesheets.entries.approve, handler: order_transition, workflow: timesheet_entries, operation: approve, refresh: [timesheet_entries] }
+  - { id: reject_timesheet_entry, type: server, permission: timesheets.manage, action: timesheets.entries.reject, handler: order_transition, workflow: timesheet_entries, operation: reject, refresh: [timesheet_entries] }
+  - { id: cancel_timesheet_entry, type: server, permission: timesheets.write, action: timesheets.entries.cancel, handler: order_transition, workflow: timesheet_entries, operation: cancel, refresh: [timesheet_entries] }

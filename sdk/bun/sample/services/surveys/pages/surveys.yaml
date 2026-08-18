@@ -1,0 +1,99 @@
+title: Surveys
+page: { id: surveys, breadcrumb: [Marketing, Surveys], auth: { require: [surveys.read] } }
+datasources:
+  - id: survey_states
+    permission: surveys.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Closed','Closed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: surveys
+    permission: surveys.read
+    workflow: surveys
+    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: surveys
+    create_action: create_survey
+    create_label: New survey
+    search: { label: Search surveys, placeholder: 'Search survey or title...' }
+    filters: [{ field: state, label: Status, options_source: survey_states }]
+    columns:
+      - { field: name, label: Survey, type: PrimaryEntityCell }
+      - { field: title, label: Title }
+      - { field: owner, label: Owner }
+      - { field: response_count, label: Responses, align: right }
+      - { field: published_at, label: Published at }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: publish_survey, label: Publish, permission: surveys.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: close_survey, label: Close, permission: surveys.manage, variant: secondary, show_if: "row.state === 'Published'" }
+      - { id: cancel_survey, label: Cancel, permission: surveys.manage, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Published'" }
+actions:
+  - id: create_survey
+    type: server_form
+    permission: surveys.write
+    title: New survey
+    action: surveys.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [surveys]
+    mutation:
+      operation: insert
+      table: surveys
+      fields: [name, title, description, owner]
+      required: [name, title]
+      result: { query: "SELECT * FROM surveys WHERE id = :id" }
+    fields:
+      - { field: name, label: Survey, type: text, required: true }
+      - { field: title, label: Title, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: owner, label: Owner, type: text }
+  - id: create_survey_question
+    type: server_form
+    permission: surveys.write
+    title: Add survey question
+    action: surveys.questions.create
+    handler: yaml_mutation
+    operation: create_question
+    refresh: [surveys]
+    mutation:
+      operation: insert
+      table: survey_questions
+      fields: [survey_id, question_text, question_type, sequence, required, answer_options]
+      required: [survey_id, question_text]
+      result: { query: "SELECT * FROM survey_questions WHERE id = :id" }
+    fields:
+      - { field: survey_id, label: Survey ID, type: text, required: true }
+      - { field: question_text, label: Question, type: text, required: true }
+      - { field: question_type, label: Type, type: select, options: [{ value: Text, label: Text }, { value: Rating, label: Rating }, { value: Choice, label: Choice }] }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: required, label: Required, type: checkbox }
+      - { field: answer_options, label: Options, type: text }
+  - id: submit_survey_response
+    type: server_form
+    permission: surveys.write
+    title: Submit response
+    action: surveys.responses.create
+    handler: yaml_mutation
+    operation: submit_response
+    refresh: [surveys]
+    mutation:
+      operation: insert
+      table: survey_responses
+      fields: [survey_id, survey_name, respondent_name, respondent_email, answer_data]
+      required: [survey_id, survey_name, answer_data]
+      guards: [{ query: "SELECT 1 AS ok FROM surveys WHERE id = :survey_id AND state = 'Published'", status: 409, message: Only published surveys accept responses }]
+      steps: [{ query: "UPDATE surveys SET response_count = response_count + 1, row_version = row_version + 1 WHERE id = :survey_id" }]
+      result: { query: "SELECT * FROM survey_responses WHERE id = :id" }
+    fields:
+      - { field: survey_id, label: Survey ID, type: text, required: true }
+      - { field: survey_name, label: Survey, type: text, required: true }
+      - { field: respondent_name, label: Respondent, type: text }
+      - { field: respondent_email, label: Email, type: text }
+      - { field: answer_data, label: Answers, type: text, required: true }
+  - { id: publish_survey, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, refresh: [surveys] }
+  - { id: close_survey, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, refresh: [surveys] }
+  - { id: cancel_survey, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, refresh: [surveys] }

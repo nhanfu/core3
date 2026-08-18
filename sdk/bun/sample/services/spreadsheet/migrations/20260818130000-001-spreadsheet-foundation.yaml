@@ -1,0 +1,29 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS dashboards (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, owner_name VARCHAR, description VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Draft', layout VARCHAR NOT NULL DEFAULT '12-column',
+        shared BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS dashboard_widgets (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        dashboard_id VARCHAR NOT NULL, title VARCHAR NOT NULL, widget_type VARCHAR NOT NULL DEFAULT 'KPI',
+        source_service VARCHAR, source_id VARCHAR, config_json VARCHAR NOT NULL DEFAULT '{}',
+        position_x INTEGER NOT NULL DEFAULT 0, position_y INTEGER NOT NULL DEFAULT 0,
+        width INTEGER NOT NULL DEFAULT 4, height INTEGER NOT NULL DEFAULT 2,
+        active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_dashboards_state ON dashboards(state);
+      CREATE INDEX IF NOT EXISTS idx_dashboard_widgets_dashboard ON dashboard_widgets(dashboard_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_dashboard_widget_position ON dashboard_widgets(dashboard_id, position_x, position_y);
+    down: |
+      DROP TABLE IF EXISTS dashboard_widgets;
+      DROP TABLE IF EXISTS dashboards;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

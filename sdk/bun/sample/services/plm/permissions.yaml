@@ -1,0 +1,4 @@
+permissions:
+  - plm.read
+  - plm.write
+  - plm.manage

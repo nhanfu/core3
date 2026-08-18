@@ -46,3 +46,178 @@ apps:
     route: /rentals
     module: sale-renting
     enabled: true
+  - id: accounting
+    label: Accounting
+    description: Invoices, journal entries, and payments
+    icon: invoice
+    route: /invoices
+    module: accounting
+    enabled: true
+  - id: expenses
+    label: Expenses
+    description: Employee expense reports and reimbursement
+    icon: receipt
+    route: /expenses
+    module: expenses
+    enabled: true
+  - id: documents
+    label: Documents
+    description: Document workspace and approvals
+    icon: folder
+    route: /documents
+    module: documents
+    enabled: true
+  - id: spreadsheet
+    label: Spreadsheet / Dashboards
+    description: Saved dashboards and operational widgets
+    icon: dashboard
+    route: /dashboards
+    module: spreadsheet
+    enabled: true
+  - id: inventory
+    label: Inventory
+    description: Warehouses, stock, and moves
+    icon: warehouse
+    route: /stock
+    module: inventory
+    enabled: true
+  - id: manufacturing
+    label: Manufacturing
+    description: Bills of materials and production orders
+    icon: factory
+    route: /manufacturing-orders
+    module: manufacturing
+    enabled: true
+  - id: purchase
+    label: Purchase
+    description: Vendors and purchase orders
+    icon: purchase
+    route: /purchase-orders
+    module: purchase
+    enabled: true
+  - id: maintenance
+    label: Maintenance
+    description: Equipment and maintenance requests
+    icon: wrench
+    route: /maintenance-requests
+    module: maintenance
+    enabled: true
+  - id: field-service
+    label: Field Service
+    description: On-site tasks and technician dispatch
+    icon: wrench
+    route: /field-service
+    module: field-service
+    enabled: true
+  - id: helpdesk
+    label: Helpdesk
+    description: Support tickets and service-level workflows
+    icon: headset
+    route: /helpdesk
+    module: helpdesk
+    enabled: true
+  - id: quality
+    label: Quality
+    description: Quality checks and inspections
+    icon: quality
+    route: /quality-checks
+    module: quality
+    enabled: true
+  - id: plm
+    label: PLM
+    description: Engineering revisions and change control
+    icon: engineering
+    route: /engineering-revisions
+    module: plm
+    enabled: true
+  - id: employees
+    label: Employees
+    description: Employee profiles and workforce lifecycle
+    icon: users
+    route: /employees
+    module: employees
+    enabled: true
+  - id: recruitment
+    label: Recruitment
+    description: Job openings and applicant pipeline
+    icon: recruitment
+    route: /applicants
+    module: recruitment
+    enabled: true
+  - id: time-off
+    label: Time Off
+    description: Leave types, balances, and requests
+    icon: calendar
+    route: /leave-requests
+    module: time-off
+    enabled: true
+  - id: appraisals
+    label: Appraisals
+    description: Performance cycles and employee reviews
+    icon: review
+    route: /appraisals
+    module: appraisals
+    enabled: true
+  - id: referrals
+    label: Referrals
+    description: Employee referrals and rewards
+    icon: share
+    route: /referrals
+    module: referrals
+    enabled: true
+  - id: fleet
+    label: Fleet
+    description: Vehicles, drivers, and fleet lifecycle
+    icon: car
+    route: /vehicles
+    module: fleet
+    enabled: true
+  - id: email-marketing
+    label: Email Marketing
+    description: Mailing lists and email campaigns
+    icon: mail
+    route: /email-campaigns
+    module: email-marketing
+    enabled: true
+  - id: sms-marketing
+    label: SMS Marketing
+    description: Opt-in lists and SMS campaigns
+    icon: message
+    route: /sms-campaigns
+    module: sms-marketing
+    enabled: true
+  - id: events
+    label: Events
+    description: Events and registrations
+    icon: calendar
+    route: /events
+    module: events
+    enabled: true
+  - id: surveys
+    label: Surveys
+    description: Surveys, questions, and responses
+    icon: survey
+    route: /surveys
+    module: surveys
+    enabled: true
+  - id: marketing-automation
+    label: Marketing Automation
+    description: Automated journeys, triggers, and actions
+    icon: automation
+    route: /automations
+    module: marketing-automation
+    enabled: true
+  - id: project
+    label: Project
+    description: Projects, milestones, and tasks
+    icon: project
+    route: /projects
+    module: project
+    enabled: true
+  - id: timesheets
+    label: Timesheets
+    description: Time entries, approvals, and project rollups
+    icon: clock
+    route: /timesheets
+    module: timesheets
+    enabled: true

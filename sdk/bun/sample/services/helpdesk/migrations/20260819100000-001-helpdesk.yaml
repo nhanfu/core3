@@ -1,0 +1,19 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS helpdesk_tickets (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, customer_name VARCHAR NOT NULL, email VARCHAR, subject VARCHAR NOT NULL,
+        description VARCHAR NOT NULL, team VARCHAR, assigned_to VARCHAR, priority VARCHAR NOT NULL DEFAULT 'Normal',
+        state VARCHAR NOT NULL DEFAULT 'New', due_date DATE, resolved_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO helpdesk_tickets (id,name,customer_name,email,subject,description,team,priority,state)
+      SELECT 'helpdesk-demo-001','TICKET/0001','Core3 Internal','support@core3.local','Need deployment access','Please grant the deployment team access to the staging environment.','Support','High','New'
+      WHERE NOT EXISTS (SELECT 1 FROM helpdesk_tickets WHERE id='helpdesk-demo-001');
+    down: DROP TABLE IF EXISTS helpdesk_tickets;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

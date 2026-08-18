@@ -1,0 +1,78 @@
+title: Dashboards
+page: { id: dashboards, breadcrumb: [Finance, Spreadsheet / Dashboards], auth: { require: [spreadsheet.read] } }
+datasources:
+  - id: dashboard_states
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Archived','Archived')) states(value, label)"
+  - id: dashboard_widget_types
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT value, label FROM (VALUES ('KPI','KPI'), ('Chart','Chart'), ('Table','Table'), ('Pivot','Pivot'), ('Text','Text')) widget_types(value, label)"
+  - id: dashboards
+    single: false
+    permission: spreadsheet.read
+    workflow: dashboards
+    query: "SELECT d.id, d.row_version, d.name, d.owner_name, d.description, d.state, d.layout, d.shared, CAST(d.created_at AS VARCHAR) AS created_at, COUNT(w.id) AS widget_count FROM dashboards d LEFT JOIN dashboard_widgets w ON w.dashboard_id = d.id AND w.active = true WHERE (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.owner_name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) GROUP BY d.id, d.row_version, d.name, d.owner_name, d.description, d.state, d.layout, d.shared, d.created_at, d.updated_at ORDER BY d.updated_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: dashboards
+    create_action: create_dashboard
+    create_label: New dashboard
+    search: { label: Search dashboards, placeholder: Search dashboards and owners... }
+    filters: [{ field: state, label: Status, options_source: dashboard_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Cards
+        icon: dashboard
+        group_by: state
+        groups_source: dashboard_states
+        card: { title: name, subtitle: owner_name, fields: [{ field: widget_count, label: Widgets }, { field: shared, label: Shared }, { field: state, label: Status }] }
+    columns:
+      - { field: name, label: Dashboard, type: PrimaryEntityCell }
+      - { field: owner_name, label: Owner }
+      - { field: widget_count, label: Widgets, align: right }
+      - { field: layout, label: Layout }
+      - { field: shared, label: Shared, type: StatusChip }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: created_at, label: Created }
+    page_size: 50
+    row_key: id
+    row_open_action: view_dashboard
+    row_double_click_action: view_dashboard
+    row_actions: menu
+    actions:
+      - { id: publish_dashboard, label: Publish, permission: spreadsheet.manage, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: archive_dashboard, label: Archive, permission: spreadsheet.manage, variant: danger, show_if: "row.state !== 'Archived'" }
+actions:
+  - id: view_dashboard
+    type: navigate
+    permission: spreadsheet.read
+    navigate_to: /dashboard-detail
+    params: { id: '{row.id}' }
+  - id: create_dashboard
+    type: server_form
+    permission: spreadsheet.write
+    title: New dashboard
+    action: spreadsheet.dashboards.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [dashboards]
+    mutation:
+      operation: insert
+      table: dashboards
+      fields: [name, owner_name, description, layout, shared]
+      required: [name]
+      defaults: { state: Draft, layout: 12-column, shared: false }
+      result: { query: "SELECT * FROM dashboards WHERE id = :id" }
+    fields:
+      - { field: name, label: Dashboard, type: text, required: true }
+      - { field: owner_name, label: Owner, type: text }
+      - { field: description, label: Description, type: textarea }
+      - { field: layout, label: Layout, type: select, options: [12-column, 16-column] }
+      - { field: shared, label: Shared with team, type: checkbox }
+  - { id: publish_dashboard, type: server, permission: spreadsheet.manage, action: spreadsheet.dashboards.publish, handler: order_transition, workflow: dashboards, operation: publish, refresh: [dashboards] }
+  - { id: archive_dashboard, type: server, permission: spreadsheet.manage, action: spreadsheet.dashboards.archive, handler: order_transition, workflow: dashboards, operation: archive, refresh: [dashboards] }

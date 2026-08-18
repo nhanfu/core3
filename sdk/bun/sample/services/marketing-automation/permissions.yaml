@@ -1,0 +1,4 @@
+permissions:
+  - marketing_automation.read
+  - marketing_automation.write
+  - marketing_automation.manage

@@ -1,0 +1,21 @@
+title: Event Analysis
+page: { id: events-analysis, breadcrumb: [Marketing, Events, Analysis], auth: { require: [events.read] } }
+datasources:
+  - id: event_analysis_totals
+    single: true
+    permission: events.read
+    query: "SELECT COUNT(*) AS event_count, COALESCE(SUM(capacity), 0) AS capacity, COALESCE(SUM(registration_count), 0) AS registrations, COUNT(*) FILTER (WHERE state = 'Completed') AS completed_count FROM events"
+  - id: event_analysis_states
+    permission: events.read
+    query: "SELECT state AS category, COUNT(*) AS event_count FROM events GROUP BY state ORDER BY event_count DESC"
+components:
+  - type: StatRow
+    source: event_analysis_totals
+    title: Event performance
+    stats: [{ label: Events, field: event_count }, { label: Capacity, field: capacity }, { label: Registrations, field: registrations }, { label: Completed, field: completed_count }]
+  - type: Chart
+    source: event_analysis_states
+    title: Events by status
+    label_field: category
+    value_field: event_count
+    variant: bar

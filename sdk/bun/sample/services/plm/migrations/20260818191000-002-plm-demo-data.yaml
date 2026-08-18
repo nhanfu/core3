@@ -1,0 +1,13 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO plm_revisions(id, name, product_name, version, change_reason, source_type, source_id, owner, approver, effective_date, state)
+      VALUES ('plm-demo-001', 'ECO/2026/0001', 'Reusable pallet', 'V2.0', 'Increase load rating', 'Manufacturing', 'bom-pallet-kit', 'Engineering Team', 'Engineering Manager', CURRENT_DATE + INTERVAL 14 DAY, 'Draft');
+    down: |
+      DELETE FROM plm_revisions WHERE id = 'plm-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

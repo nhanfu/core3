@@ -1,0 +1,12 @@
+menu:
+  timesheets:
+    path: /timesheets
+    label: Timesheets
+    icon: clock
+    permission: timesheets.read
+  groups:
+    - id: work
+      label: Work
+      items:
+        - { path: /timesheets, label: Timesheets, icon: clock, permission: timesheets.read }
+        - { path: /timesheet-analysis, label: Timesheet Analysis, icon: chart, permission: timesheets.read }

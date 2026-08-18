@@ -1,0 +1,4 @@
+permissions:
+  - quality.read
+  - quality.write
+  - quality.manage

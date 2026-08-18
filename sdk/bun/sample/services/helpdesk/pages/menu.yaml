@@ -1,0 +1,10 @@
+menu:
+  helpdesk:
+    path: /helpdesk
+    label: Helpdesk
+    icon: headset
+    permission: helpdesk.read
+  groups:
+    - id: operations
+      label: Operations
+      items: [{ path: /helpdesk, label: Tickets, icon: headset, permission: helpdesk.read }]

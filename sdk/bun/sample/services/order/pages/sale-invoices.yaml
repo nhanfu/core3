@@ -5,7 +5,7 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT i.id, i.invoice_number, i.order_id, o.order_number, o.customer_name,
+      SELECT i.id, i.invoice_number, i.order_id, i.accounting_invoice_id, o.order_number, o.customer_name,
         i.state, CAST(i.amount AS DOUBLE) AS amount, CAST(i.invoice_date AS VARCHAR) AS invoice_date,
         CAST(i.due_date AS VARCHAR) AS due_date, CAST(i.created_at AS VARCHAR) AS created_at
       FROM sale_invoices i
@@ -33,6 +33,7 @@ components:
     search: { label: Search invoices, placeholder: Search invoice or order... }
     columns:
       - { field: invoice_number, label: Invoice, type: PrimaryEntityCell }
+      - { field: accounting_invoice_id, label: Accounting invoice }
       - { field: order_number, label: Sales order }
       - { field: customer_name, label: Customer }
       - { field: state, label: Status, type: StatusChip }
@@ -75,7 +76,7 @@ actions:
     mutation:
       operation: insert
       table: sale_invoices
-      fields: [order_id, invoice_number, state, amount, invoice_date, due_date]
+      fields: [order_id, invoice_number, accounting_invoice_id, state, amount, invoice_date, due_date]
       required: [order_id, invoice_number, amount, invoice_date]
       defaults: { state: Draft }
       guards:
@@ -91,6 +92,25 @@ actions:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_invoices WHERE invoice_number = :invoice_number OR order_id = :order_id)"
           status: 409
           message: An invoice already exists for this order or invoice number
+        - query: "SELECT o.customer_name, o.order_number FROM orders o WHERE o.id = :order_id"
+          assign: true
+        - type: service
+          service: yaml.service.accounting
+          operation: accounting.invoices.create_from_source
+          request:
+            name: invoice_number
+            partner_name: customer_name
+            invoice_type: Customer Invoice
+            invoice_date: invoice_date
+            due_date: due_date
+            amount_untaxed: amount
+            amount_total: amount
+            amount_residual: amount
+            reference: order_number
+            source_service: order
+            source_type: sale_order
+            source_id: order_id
+          assign: true
       result: { query: "SELECT * FROM sale_invoices WHERE id = :id" }
     fields:
       - { field: order_id, label: Approved sales order, type: select, options_source: sale_invoice_order_lookup, required: true }

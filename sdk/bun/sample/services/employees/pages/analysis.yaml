@@ -1,0 +1,21 @@
+title: Employee Analysis
+page: { id: employee-analysis, breadcrumb: [Human Resources, Employees, Analysis], auth: { require: [employees.read] } }
+datasources:
+  - id: employee_analysis_totals
+    single: true
+    permission: employees.read
+    query: "SELECT COUNT(*) AS employee_count, COUNT(*) FILTER (WHERE state = 'Active') AS active_count, COUNT(*) FILTER (WHERE state = 'On Leave') AS leave_count, COUNT(DISTINCT department_name) AS department_count FROM employees"
+  - id: employee_analysis_states
+    permission: employees.read
+    query: "SELECT state AS category, COUNT(*) AS employee_count FROM employees GROUP BY state ORDER BY employee_count DESC"
+components:
+  - type: StatRow
+    source: employee_analysis_totals
+    title: Workforce overview
+    stats: [{ label: Employees, field: employee_count }, { label: Active, field: active_count }, { label: On leave, field: leave_count }, { label: Departments, field: department_count }]
+  - type: Chart
+    source: employee_analysis_states
+    title: Employees by status
+    label_field: category
+    value_field: employee_count
+    variant: bar

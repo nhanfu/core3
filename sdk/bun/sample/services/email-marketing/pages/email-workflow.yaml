@@ -1,0 +1,47 @@
+workflow:
+  id: email_campaigns
+  entity: email_campaigns
+  handler: order_transition
+  initial: Draft
+  permission: email_marketing.write
+  mutable: true
+  status_source: email_campaign_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Scheduled, label: Scheduled, color: amber }
+    - { id: Sending, label: Sending, color: blue }
+    - { id: Sent, label: Sent, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: schedule
+      from: [Draft]
+      to: Scheduled
+      permission: email_marketing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id AND state = 'Draft' AND subject <> '' AND recipient_count > 0", status: 409, message: A campaign needs a subject and recipients before scheduling }]
+        steps: [{ query: "UPDATE email_campaigns SET state = 'Scheduled', scheduled_at = COALESCE(scheduled_at, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }
+    - id: send
+      from: [Scheduled]
+      to: Sending
+      permission: email_marketing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id AND state = 'Scheduled'", status: 409, message: Only scheduled campaigns can start sending }]
+        steps: [{ query: "UPDATE email_campaigns SET state = 'Sending', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }
+    - id: complete
+      from: [Sending]
+      to: Sent
+      permission: email_marketing.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id AND state = 'Sending'", status: 409, message: Only sending campaigns can be completed }]
+        steps: [{ query: "UPDATE email_campaigns SET state = 'Sent', sent_at = CURRENT_TIMESTAMP, delivered_count = recipient_count, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Scheduled]
+      to: Cancelled
+      permission: email_marketing.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM email_campaigns WHERE id = :id AND state IN ('Draft', 'Scheduled')", status: 409, message: Only open campaigns can be cancelled }]
+        steps: [{ query: "UPDATE email_campaigns SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }

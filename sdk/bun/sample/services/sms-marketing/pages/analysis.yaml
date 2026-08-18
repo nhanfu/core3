@@ -1,0 +1,21 @@
+title: SMS Marketing Analysis
+page: { id: sms-analysis, breadcrumb: [Marketing, SMS Marketing, Analysis], auth: { require: [sms_marketing.read] } }
+datasources:
+  - id: sms_analysis_totals
+    single: true
+    permission: sms_marketing.read
+    query: "SELECT COUNT(*) AS campaign_count, COALESCE(SUM(recipient_count), 0) AS recipients, COALESCE(SUM(delivered_count), 0) AS delivered, COALESCE(SUM(failed_count), 0) AS failed FROM sms_campaigns"
+  - id: sms_analysis_states
+    permission: sms_marketing.read
+    query: "SELECT state AS category, COUNT(*) AS campaign_count FROM sms_campaigns GROUP BY state ORDER BY campaign_count DESC"
+components:
+  - type: StatRow
+    source: sms_analysis_totals
+    title: SMS delivery performance
+    stats: [{ label: Campaigns, field: campaign_count }, { label: Recipients, field: recipients }, { label: Delivered, field: delivered }, { label: Failed, field: failed }]
+  - type: Chart
+    source: sms_analysis_states
+    title: Campaigns by status
+    label_field: category
+    value_field: campaign_count
+    variant: bar

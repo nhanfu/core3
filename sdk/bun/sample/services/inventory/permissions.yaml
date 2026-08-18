@@ -1,0 +1,4 @@
+permissions:
+  - inventory.read
+  - inventory.write
+  - inventory.manage

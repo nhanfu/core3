@@ -1,0 +1,38 @@
+title: Mailing Lists
+page: { id: mailing-lists, breadcrumb: [Marketing, Email Marketing, Mailing Lists], auth: { require: [email_marketing.read] } }
+datasources:
+  - id: mailing_lists
+    permission: email_marketing.read
+    query: "SELECT id, name, description, subscriber_count, state FROM mailing_lists ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: mailing_lists
+    create_action: create_mailing_list
+    create_label: New mailing list
+    columns:
+      - { field: name, label: Mailing list, type: PrimaryEntityCell }
+      - { field: description, label: Description }
+      - { field: subscriber_count, label: Subscribers, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_mailing_list
+    type: server_form
+    permission: email_marketing.manage
+    title: New mailing list
+    action: email_marketing.lists.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mailing_lists]
+    mutation:
+      operation: insert
+      table: mailing_lists
+      fields: [name, description, subscriber_count]
+      required: [name]
+      result: { query: "SELECT * FROM mailing_lists WHERE id = :id" }
+    fields:
+      - { field: name, label: Mailing list, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: subscriber_count, label: Subscribers, type: number }

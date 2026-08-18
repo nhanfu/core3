@@ -1,0 +1,42 @@
+title: Appraisal Cycles
+page: { id: appraisal-cycles, breadcrumb: [Human Resources, Appraisals, Cycles], auth: { require: [appraisals.manage] } }
+datasources:
+  - id: appraisal_cycles
+    permission: appraisals.read
+    query: "SELECT id, name, year, description, state, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date FROM appraisal_cycles ORDER BY year DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: appraisal_cycles
+    create_action: create_appraisal_cycle
+    create_label: New appraisal cycle
+    columns:
+      - { field: name, label: Cycle, type: PrimaryEntityCell }
+      - { field: year, label: Year }
+      - { field: description, label: Description }
+      - { field: start_date, label: Start date }
+      - { field: end_date, label: End date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_appraisal_cycle
+    type: server_form
+    permission: appraisals.manage
+    title: New appraisal cycle
+    action: appraisals.cycles.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [appraisal_cycles]
+    mutation:
+      operation: insert
+      table: appraisal_cycles
+      fields: [name, year, description, start_date, end_date]
+      required: [name, year]
+      result: { query: "SELECT * FROM appraisal_cycles WHERE id = :id" }
+    fields:
+      - { field: name, label: Cycle, type: text, required: true }
+      - { field: year, label: Year, type: number, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: start_date, label: Start date, type: text }
+      - { field: end_date, label: End date, type: text }

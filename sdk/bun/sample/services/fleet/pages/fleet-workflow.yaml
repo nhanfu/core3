@@ -1,0 +1,46 @@
+workflow:
+  id: fleet_vehicles
+  entity: fleet_vehicles
+  handler: order_transition
+  initial: Available
+  permission: fleet.write
+  mutable: true
+  status_source: fleet_vehicle_states
+  states:
+    - { id: Available, label: Available, color: green }
+    - { id: Assigned, label: Assigned, color: blue }
+    - { id: Maintenance, label: Maintenance, color: amber }
+    - { id: Retired, label: Retired, color: red, terminal: true }
+  transitions:
+    - id: assign
+      from: [Available]
+      to: Assigned
+      permission: fleet.write
+      mutation:
+        guards: [{ query: "SELECT id FROM fleet_vehicles WHERE id = :id AND state = 'Available' AND driver_name IS NOT NULL", status: 409, message: A driver is required before assignment }]
+        steps: [{ query: "UPDATE fleet_vehicles SET state = 'Assigned', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+    - id: service
+      from: [Available, Assigned]
+      to: Maintenance
+      permission: fleet.write
+      mutation:
+        guards: [{ query: "SELECT id FROM fleet_vehicles WHERE id = :id AND state IN ('Available', 'Assigned')", status: 409, message: Only active vehicles can enter maintenance }]
+        steps: [{ query: "UPDATE fleet_vehicles SET state = 'Maintenance', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+    - id: release
+      from: [Maintenance]
+      to: Available
+      permission: fleet.write
+      mutation:
+        guards: [{ query: "SELECT id FROM fleet_vehicles WHERE id = :id AND state = 'Maintenance'", status: 409, message: Only vehicles in maintenance can be released }]
+        steps: [{ query: "UPDATE fleet_vehicles SET state = 'Available', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+    - id: retire
+      from: [Available, Assigned, Maintenance]
+      to: Retired
+      permission: fleet.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM fleet_vehicles WHERE id = :id AND state IN ('Available', 'Assigned', 'Maintenance')", status: 409, message: Only active fleet vehicles can be retired }]
+        steps: [{ query: "UPDATE fleet_vehicles SET state = 'Retired', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }

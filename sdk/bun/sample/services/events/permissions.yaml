@@ -1,0 +1,4 @@
+permissions:
+  - events.read
+  - events.write
+  - events.manage

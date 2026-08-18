@@ -1,0 +1,47 @@
+workflow:
+  id: mrp_productions
+  entity: mrp_productions
+  handler: order_transition
+  initial: Draft
+  permission: manufacturing.write
+  mutable: true
+  status_source: mrp_production_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Confirmed, label: Confirmed, color: amber }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Done, label: Done, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: confirm
+      from: [Draft]
+      to: Confirmed
+      permission: manufacturing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft manufacturing orders can be confirmed }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'Confirmed', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    - id: start
+      from: [Confirmed]
+      to: In Progress
+      permission: manufacturing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'Confirmed'", status: 409, message: Only confirmed manufacturing orders can start }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    - id: produce
+      from: [In Progress]
+      to: Done
+      permission: manufacturing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state = 'In Progress' AND quantity > 0", status: 409, message: Only active manufacturing orders with a positive quantity can be produced }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'Done', qty_produced = quantity, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Confirmed, In Progress]
+      to: Cancelled
+      permission: manufacturing.write
+      mutation:
+        guards: [{ query: "SELECT id FROM mrp_productions WHERE id = :id AND state IN ('Draft', 'Confirmed', 'In Progress')", status: 409, message: Only open manufacturing orders can be cancelled }]
+        steps: [{ query: "UPDATE mrp_productions SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }

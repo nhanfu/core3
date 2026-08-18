@@ -1,0 +1,13 @@
+title: Helpdesk Ticket
+page: { id: helpdesk-ticket-detail, breadcrumb: [Services, Helpdesk, Ticket], auth: { require: [helpdesk.read] } }
+datasources:
+  - id: helpdesk_ticket
+    permission: helpdesk.read
+    single: true
+    query: "SELECT * FROM helpdesk_tickets WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: helpdesk_ticket
+    title_field: subject
+    status_field: state
+    fields: [{ field: name, label: Ticket }, { field: subject, label: Subject }, { field: customer_name, label: Customer }, { field: team, label: Team }, { field: assigned_to, label: Assignee }, { field: priority, label: Priority }, { field: state, label: Status }, { field: description, label: Description }]

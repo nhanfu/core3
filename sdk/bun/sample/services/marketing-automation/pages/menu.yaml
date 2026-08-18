@@ -1,0 +1,12 @@
+menu:
+  marketing-automation:
+    path: /automations
+    label: Marketing Automation
+    icon: automation
+    permission: marketing_automation.read
+  groups:
+    - id: journeys
+      label: Journeys
+      items:
+        - { path: /automations, label: Automations, icon: automation, permission: marketing_automation.read }
+        - { path: /automation-analysis, label: Automation Analysis, icon: chart, permission: marketing_automation.read }

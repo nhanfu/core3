@@ -1,0 +1,16 @@
+workflow:
+  id: accounting_invoices
+  entity: accounting_invoices
+  handler: order_transition
+  initial: Draft
+  permission: accounting.write
+  mutable: true
+  status_source: invoice_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Posted, label: Posted, color: blue }
+    - { id: Paid, label: Paid, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - { id: post, from: [Draft], to: Posted, permission: accounting.write }
+    - { id: cancel, from: [Draft, Posted], to: Cancelled, permission: accounting.write }

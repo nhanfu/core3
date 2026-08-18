@@ -1,0 +1,70 @@
+title: Employees
+page: { id: employees, breadcrumb: [Human Resources, Employees], auth: { require: [employees.read] } }
+datasources:
+  - id: employee_states
+    permission: employees.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Active','Active'), ('On Leave','On Leave'), ('Terminated','Terminated')) states(value, label)"
+  - id: employee_departments
+    permission: employees.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM employee_departments WHERE state = 'Active' ORDER BY name"
+  - id: employees
+    permission: employees.read
+    workflow: employees
+    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.work_email, e.department_name, e.job_title, e.manager_name, e.employment_type, e.state, CAST(e.hire_date AS VARCHAR) AS hire_date FROM employees e WHERE (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) ORDER BY e.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: employees
+    create_action: create_employee
+    create_label: New employee
+    search: { label: Search employees, placeholder: 'Search employee number, name, or email...' }
+    filters: [{ field: state, label: Status, options_source: employee_states }]
+    columns:
+      - { field: employee_number, label: Employee number, type: PrimaryEntityCell }
+      - { field: name, label: Name }
+      - { field: department_name, label: Department }
+      - { field: job_title, label: Job title }
+      - { field: work_email, label: Work email }
+      - { field: employment_type, label: Type }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: activate_employee, label: Activate, permission: employees.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: leave_employee, label: Start leave, permission: employees.write, variant: secondary, show_if: "row.state === 'Active'" }
+      - { id: return_employee, label: Return, permission: employees.write, variant: primary, show_if: "row.state === 'On Leave'" }
+      - { id: terminate_employee, label: Terminate, permission: employees.manage, variant: danger, show_if: "row.state !== 'Terminated'" }
+actions:
+  - id: create_employee
+    type: server_form
+    permission: employees.write
+    title: New employee
+    action: employees.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employees]
+    mutation:
+      operation: insert
+      table: employees
+      fields: [auth_user_id, employee_number, name, work_email, phone, department_id, department_name, job_title, manager_name, employment_type, hire_date]
+      required: [employee_number, name, hire_date]
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: auth_user_id, label: Auth user ID, type: text }
+      - { field: employee_number, label: Employee number, type: text, required: true }
+      - { field: name, label: Name, type: text, required: true }
+      - { field: work_email, label: Work email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: department_id, label: Department, type: select, options_source: employee_departments }
+      - { field: department_name, label: Department name, type: text }
+      - { field: job_title, label: Job title, type: text }
+      - { field: manager_name, label: Manager, type: text }
+      - { field: employment_type, label: Employment type, type: select, options: [{ value: Employee, label: Employee }, { value: Contractor, label: Contractor }, { value: Intern, label: Intern }] }
+      - { field: hire_date, label: Hire date, type: text, required: true }
+  - { id: activate_employee, type: server, permission: employees.write, action: employees.records.activate, handler: order_transition, workflow: employees, operation: activate, refresh: [employees] }
+  - { id: leave_employee, type: server, permission: employees.write, action: employees.records.leave, handler: order_transition, workflow: employees, operation: leave, refresh: [employees] }
+  - { id: return_employee, type: server, permission: employees.write, action: employees.records.return, handler: order_transition, workflow: employees, operation: return, refresh: [employees] }
+  - { id: terminate_employee, type: server, permission: employees.manage, action: employees.records.terminate, handler: order_transition, workflow: employees, operation: terminate, refresh: [employees] }

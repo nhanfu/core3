@@ -1,0 +1,16 @@
+menu:
+  recruitment:
+    path: /applicants
+    label: Recruitment
+    icon: recruitment
+    permission: recruitment.read
+  groups:
+    - id: hiring
+      label: Hiring
+      items:
+        - { path: /applicants, label: Applicants, icon: users, permission: recruitment.read }
+        - { path: /openings, label: Job Openings, icon: briefcase, permission: recruitment.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /recruitment-analysis, label: Recruitment Analysis, icon: chart, permission: recruitment.read }

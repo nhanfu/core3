@@ -1,0 +1,21 @@
+title: Survey Analysis
+page: { id: survey-analysis, breadcrumb: [Marketing, Surveys, Analysis], auth: { require: [surveys.read] } }
+datasources:
+  - id: survey_analysis_totals
+    single: true
+    permission: surveys.read
+    query: "SELECT COUNT(*) AS survey_count, COALESCE(SUM(response_count), 0) AS responses, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, COUNT(*) FILTER (WHERE state = 'Closed') AS closed_count FROM surveys"
+  - id: survey_analysis_states
+    permission: surveys.read
+    query: "SELECT state AS category, COUNT(*) AS survey_count FROM surveys GROUP BY state ORDER BY survey_count DESC"
+components:
+  - type: StatRow
+    source: survey_analysis_totals
+    title: Survey performance
+    stats: [{ label: Surveys, field: survey_count }, { label: Responses, field: responses }, { label: Published, field: published_count }, { label: Closed, field: closed_count }]
+  - type: Chart
+    source: survey_analysis_states
+    title: Surveys by status
+    label_field: category
+    value_field: survey_count
+    variant: bar

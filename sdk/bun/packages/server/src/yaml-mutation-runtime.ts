@@ -60,7 +60,13 @@ export class YamlMutationRuntime {
         if (guard.type === 'service') {
           const response = await this.executeServiceGuard(guard, params);
           if (!response) throw { status: Number(guard.status || 400), message: String(guard.message || 'Mutation rejected'), ...(guard.code ? { code: guard.code } : {}), ...(guard.message_key ? { message_key: guard.message_key } : {}), ...(guard.message_params ? { message_params: guard.message_params } : {}) };
-          if (guard.assign) Object.assign(params, response);
+          if (guard.assign) {
+            Object.assign(params, response);
+            // Server-form callers keep submitted fields under `values`. Make
+            // guard-derived values available to the record mutation as well,
+            // so a service/query guard can enrich a local insert or update.
+            if (params.values && typeof params.values === 'object') Object.assign(params.values, response);
+          }
           continue;
         }
         const { statement, values } = bindNamedParams(String(guard.query || ''), params);

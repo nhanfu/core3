@@ -1,0 +1,25 @@
+title: Timesheet Entry
+page: { id: timesheet-detail, breadcrumb: [Services, Timesheets, Detail], auth: { require: [timesheets.read] } }
+datasources:
+  - id: timesheet_detail
+    single: true
+    permission: timesheets.read
+    query: "SELECT id, row_version, name, employee_name, project_name, task_name, CAST(work_date AS VARCHAR) AS work_date, description, hours, billable, unit_amount, state, approver, CAST(approved_at AS VARCHAR) AS approved_at FROM timesheet_entries WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: timesheet_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Rejected, label: Rejected }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Submitted: amber, Approved: green, Rejected: red, Cancelled: violet }
+    group_columns: 2
+    groups:
+      - title: Work
+        fields: [{ field: name, label: Entry }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: project_name, label: Project }, { field: task_name, label: Task }]
+      - title: Time and approval
+        fields: [{ field: work_date, label: Date }, { field: hours, label: Hours }, { field: billable, label: Billable }, { field: unit_amount, label: Unit amount }, { field: description, label: Description }, { field: approver, label: Approver }, { field: approved_at, label: Approved at }]
+actions:
+  - { id: submit_timesheet_detail, type: server, permission: timesheets.write, action: timesheets.entries.submit, handler: order_transition, workflow: timesheet_entries, operation: submit, params: { id: '{state.id}' }, refresh: [timesheet_detail] }
+  - { id: approve_timesheet_detail, type: server, permission: timesheets.manage, action: timesheets.entries.approve, handler: order_transition, workflow: timesheet_entries, operation: approve, params: { id: '{state.id}' }, refresh: [timesheet_detail] }
+  - { id: reject_timesheet_detail, type: server, permission: timesheets.manage, action: timesheets.entries.reject, handler: order_transition, workflow: timesheet_entries, operation: reject, params: { id: '{state.id}' }, refresh: [timesheet_detail] }
+  - { id: cancel_timesheet_detail, type: server, permission: timesheets.write, action: timesheets.entries.cancel, handler: order_transition, workflow: timesheet_entries, operation: cancel, params: { id: '{state.id}' }, refresh: [timesheet_detail] }

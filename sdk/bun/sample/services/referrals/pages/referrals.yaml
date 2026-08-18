@@ -1,0 +1,68 @@
+title: Referrals
+page: { id: referrals, breadcrumb: [Human Resources, Referrals], auth: { require: [referrals.read] } }
+datasources:
+  - id: referral_states
+    permission: referrals.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Hired','Hired'), ('Rewarded','Rewarded'), ('Rejected','Rejected')) states(value, label)"
+  - id: referrals
+    permission: referrals.read
+    workflow: referrals
+    query: "SELECT r.id, r.row_version, r.name, r.referrer_name, r.candidate_name, r.candidate_email, r.opening_name, r.relationship, r.reward_amount, r.reward_currency, r.state, CAST(r.submitted_date AS VARCHAR) AS submitted_date, CAST(r.hired_date AS VARCHAR) AS hired_date, CAST(r.rewarded_date AS VARCHAR) AS rewarded_date FROM referrals r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.referrer_name ILIKE '%' || :q || '%' OR r.candidate_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: referrals
+    create_action: create_referral
+    create_label: New referral
+    search: { label: Search referrals, placeholder: 'Search referrer or candidate...' }
+    filters: [{ field: state, label: Status, options_source: referral_states }]
+    columns:
+      - { field: name, label: Referral, type: PrimaryEntityCell }
+      - { field: referrer_name, label: Referrer }
+      - { field: candidate_name, label: Candidate }
+      - { field: opening_name, label: Opening }
+      - { field: relationship, label: Relationship }
+      - { field: reward_amount, label: Reward, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: submit_referral, label: Submit, permission: referrals.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: hire_referral, label: Mark hired, permission: referrals.manage, variant: secondary, show_if: "row.state === 'Submitted'" }
+      - { id: reward_referral, label: Issue reward, permission: referrals.manage, variant: primary, show_if: "row.state === 'Hired'" }
+      - { id: reject_referral, label: Reject, permission: referrals.manage, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
+actions:
+  - id: create_referral
+    type: server_form
+    permission: referrals.write
+    title: New referral
+    action: referrals.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [referrals]
+    mutation:
+      operation: insert
+      table: referrals
+      fields: [name, referrer_employee_id, referrer_name, candidate_name, candidate_email, candidate_phone, opening_id, opening_name, relationship, source, reward_amount, reward_currency, notes]
+      required: [name, referrer_employee_id, referrer_name, candidate_name]
+      result: { query: "SELECT * FROM referrals WHERE id = :id" }
+    fields:
+      - { field: name, label: Referral, type: text, required: true }
+      - { field: referrer_employee_id, label: Referrer employee ID, type: text, required: true }
+      - { field: referrer_name, label: Referrer, type: text, required: true }
+      - { field: candidate_name, label: Candidate, type: text, required: true }
+      - { field: candidate_email, label: Candidate email, type: text }
+      - { field: candidate_phone, label: Candidate phone, type: text }
+      - { field: opening_id, label: Opening ID, type: text }
+      - { field: opening_name, label: Opening, type: text }
+      - { field: relationship, label: Relationship, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: reward_amount, label: Reward amount, type: number }
+      - { field: reward_currency, label: Currency, type: text }
+      - { field: notes, label: Notes, type: text }
+  - { id: submit_referral, type: server, permission: referrals.write, action: referrals.records.submit, handler: order_transition, workflow: referrals, operation: submit, refresh: [referrals] }
+  - { id: hire_referral, type: server, permission: referrals.manage, action: referrals.records.hire, handler: order_transition, workflow: referrals, operation: hire, refresh: [referrals] }
+  - { id: reward_referral, type: server, permission: referrals.manage, action: referrals.records.reward, handler: order_transition, workflow: referrals, operation: reward, refresh: [referrals] }
+  - { id: reject_referral, type: server, permission: referrals.manage, action: referrals.records.reject, handler: order_transition, workflow: referrals, operation: reject, refresh: [referrals] }

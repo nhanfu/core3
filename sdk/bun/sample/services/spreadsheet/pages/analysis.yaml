@@ -1,0 +1,26 @@
+title: Dashboard Analysis
+page: { id: spreadsheet-analysis, breadcrumb: [Finance, Spreadsheet / Dashboards, Analysis], auth: { require: [spreadsheet.read] } }
+datasources:
+  - id: dashboard_analysis_totals
+    single: true
+    permission: spreadsheet.read
+    query: "SELECT COUNT(*) AS dashboard_count, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, (SELECT COUNT(*) FROM dashboard_widgets WHERE active = true) AS widget_count, COUNT(*) FILTER (WHERE shared = true) AS shared_count FROM dashboards"
+  - id: dashboard_analysis_widgets
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT widget_type AS category, COUNT(*) AS widget_count FROM dashboard_widgets WHERE active = true GROUP BY widget_type ORDER BY widget_count DESC"
+components:
+  - type: StatRow
+    source: dashboard_analysis_totals
+    title: Dashboard workspace
+    stats:
+      - { label: Dashboards, field: dashboard_count }
+      - { label: Published, field: published_count }
+      - { label: Widgets, field: widget_count }
+      - { label: Shared, field: shared_count }
+  - type: Chart
+    source: dashboard_analysis_widgets
+    title: Widgets by type
+    label_field: category
+    value_field: widget_count
+    variant: bar

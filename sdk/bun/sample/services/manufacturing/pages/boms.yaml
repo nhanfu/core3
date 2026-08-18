@@ -1,0 +1,48 @@
+title: Bills of Materials
+page: { id: boms, breadcrumb: [Supply Chain, Manufacturing, Bills of Materials], auth: { require: [manufacturing.read] } }
+datasources:
+  - id: mrp_boms
+    single: false
+    permission: manufacturing.read
+    query: "SELECT b.id, b.row_version, b.name, b.product_id, b.product_name, b.product_quantity, b.uom, b.version, b.state, COUNT(l.id) AS component_count FROM mrp_boms b LEFT JOIN mrp_bom_lines l ON l.bom_id = b.id WHERE (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.product_name ILIKE '%' || :q || '%') GROUP BY b.id, b.row_version, b.name, b.product_id, b.product_name, b.product_quantity, b.uom, b.version, b.state ORDER BY b.product_name, b.version"
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_boms
+    create_action: create_mrp_bom
+    create_label: New bill of materials
+    search: { label: Search bills of materials, placeholder: Search BOMs or products... }
+    columns:
+      - { field: name, label: BOM, type: PrimaryEntityCell }
+      - { field: product_name, label: Product }
+      - { field: product_quantity, label: Quantity, align: right }
+      - { field: uom, label: Unit }
+      - { field: version, label: Version }
+      - { field: component_count, label: Components, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_mrp_bom
+    type: server_form
+    permission: manufacturing.manage
+    title: New bill of materials
+    action: manufacturing.boms.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_boms]
+    mutation:
+      operation: insert
+      table: mrp_boms
+      fields: [name, product_id, product_name, product_quantity, uom, version]
+      required: [name, product_name]
+      defaults: { product_quantity: 1, uom: Units, version: '1.0', state: Active }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:product_quantity AS DECIMAL(18,3)) > 0", status: 400, message: BOM quantity must be positive }]
+      result: { query: "SELECT * FROM mrp_boms WHERE id = :id" }
+    fields:
+      - { field: name, label: BOM, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: product_quantity, label: Quantity, type: number, required: true }
+      - { field: uom, label: Unit, type: text }
+      - { field: version, label: Version, type: text }

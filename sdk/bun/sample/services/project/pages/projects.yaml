@@ -1,0 +1,101 @@
+title: Projects
+page: { id: projects, breadcrumb: [Services, Project], auth: { require: [project.read] } }
+datasources:
+  - id: project_task_states
+    permission: project.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Todo','Todo'), ('In Progress','In Progress'), ('Done','Done'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: projects
+    permission: project.read
+    query: "SELECT p.id, p.row_version, p.name, p.customer_name, p.project_manager, p.planned_hours, p.spent_hours, p.state, CAST(p.start_date AS VARCHAR) AS start_date, CAST(p.end_date AS VARCHAR) AS end_date, COUNT(t.id) AS task_count, COUNT(t.id) FILTER (WHERE t.state = 'Done') AS done_task_count FROM projects p LEFT JOIN project_tasks t ON t.project_id = p.id WHERE (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.customer_name ILIKE '%' || :q || '%') GROUP BY p.id, p.row_version, p.name, p.customer_name, p.project_manager, p.planned_hours, p.spent_hours, p.state, p.start_date, p.end_date ORDER BY p.start_date DESC"
+  - id: project_tasks
+    permission: project.read
+    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.assignee, t.milestone_name, t.priority, t.planned_hours, t.spent_hours, t.state, CAST(t.due_date AS VARCHAR) AS due_date FROM project_tasks t WHERE t.project_id = :id AND (:state IS NULL OR t.state = :state) ORDER BY t.due_date"
+components:
+  - type: ListView
+    variant: odoo
+    source: projects
+    create_action: create_project
+    create_label: New project
+    search: { label: Search projects, placeholder: 'Search project or customer...' }
+    columns:
+      - { field: name, label: Project, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: project_manager, label: Manager }
+      - { field: task_count, label: Tasks, align: right }
+      - { field: done_task_count, label: Done, align: right }
+      - { field: planned_hours, label: Planned hours, align: right }
+      - { field: spent_hours, label: Spent hours, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+  - type: ContactGrid
+    source: project_tasks
+    row_key: id
+    columns:
+      - { field: name, label: Task, type: PrimaryEntityCell }
+      - { field: project_name, label: Project }
+      - { field: assignee, label: Assignee }
+      - { field: milestone_name, label: Milestone }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: due_date, label: Due date }
+    empty_state: { title: No tasks, description: Tasks will appear here for the selected project. }
+actions:
+  - id: create_project
+    type: server_form
+    permission: project.write
+    title: New project
+    action: project.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [projects]
+    mutation:
+      operation: insert
+      table: projects
+      fields: [name, customer_name, project_manager, description, planned_hours, start_date, end_date]
+      required: [name]
+      result: { query: "SELECT * FROM projects WHERE id = :id" }
+    fields:
+      - { field: name, label: Project, type: text, required: true }
+      - { field: customer_name, label: Customer, type: text }
+      - { field: project_manager, label: Project manager, type: text }
+      - { field: description, label: Description, type: text }
+      - { field: planned_hours, label: Planned hours, type: number }
+      - { field: start_date, label: Start date, type: text }
+      - { field: end_date, label: End date, type: text }
+  - id: create_project_task
+    type: server_form
+    permission: project.write
+    title: New project task
+    action: project.tasks.create
+    handler: yaml_mutation
+    operation: create_task
+    refresh: [project_tasks, projects]
+    mutation:
+      operation: insert
+      table: project_tasks
+      fields: [project_id, project_name, name, assignee, milestone_name, priority, planned_hours, due_date]
+      required: [project_id, project_name, name]
+      result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
+    fields:
+      - { field: project_id, label: Project ID, type: text, required: true }
+      - { field: project_name, label: Project, type: text, required: true }
+      - { field: name, label: Task, type: text, required: true }
+      - { field: assignee, label: Assignee, type: text }
+      - { field: milestone_name, label: Milestone, type: text }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Normal }, { value: High, label: High }] }
+      - { field: planned_hours, label: Planned hours, type: number }
+      - { field: due_date, label: Due date, type: text }
+  - { id: start_project_task, type: server, permission: project.write, action: project.tasks.start, handler: order_transition, workflow: project_tasks, operation: start, refresh: [project_tasks, projects] }
+  - { id: complete_project_task, type: server, permission: project.write, action: project.tasks.complete, handler: order_transition, workflow: project_tasks, operation: complete, refresh: [project_tasks, projects] }
+  - { id: cancel_project_task, type: server, permission: project.manage, action: project.tasks.cancel, handler: order_transition, workflow: project_tasks, operation: cancel, refresh: [project_tasks, projects] }
+  - id: add_project_hours
+    type: server
+    permission: project.write
+    action: project.projects.add_hours
+    handler: yaml_mutation
+    operation: add_hours
+    mutation:
+      steps: [{ query: "UPDATE projects SET spent_hours = spent_hours + CAST(:hours AS DECIMAL(18,3)), updated_at = CURRENT_TIMESTAMP WHERE id = :project_id" }]
+      result: { query: "SELECT * FROM projects WHERE id = :project_id" }

@@ -1,0 +1,25 @@
+title: Expense Analysis
+page: { id: expense-analysis, breadcrumb: [Finance, Expenses, Analysis], auth: { require: [expenses.read] } }
+datasources:
+  - id: expense_analysis_totals
+    single: true
+    permission: expenses.read
+    query: "SELECT COUNT(*) AS report_count, COALESCE(SUM(amount_total), 0) AS submitted_total, COALESCE(SUM(amount_reimbursed), 0) AS reimbursed_total FROM expense_sheets WHERE state <> 'Refused'"
+  - id: expense_analysis_categories
+    single: false
+    permission: expenses.read
+    query: "SELECT e.category, COUNT(*) AS expense_count, COALESCE(SUM(e.amount), 0) AS total FROM expenses e JOIN expense_sheets s ON s.id = e.sheet_id WHERE s.state <> 'Refused' GROUP BY e.category ORDER BY total DESC"
+components:
+  - type: StatRow
+    source: expense_analysis_totals
+    title: Expense performance
+    stats:
+      - { label: Reports, field: report_count }
+      - { label: Submitted, field: submitted_total }
+      - { label: Reimbursed, field: reimbursed_total }
+  - type: Chart
+    source: expense_analysis_categories
+    title: Expenses by category
+    label_field: category
+    value_field: total
+    variant: bar

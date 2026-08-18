@@ -1,0 +1,12 @@
+menu:
+  surveys:
+    path: /surveys
+    label: Surveys
+    icon: survey
+    permission: surveys.read
+  groups:
+    - id: surveys
+      label: Surveys
+      items:
+        - { path: /surveys, label: Surveys, icon: survey, permission: surveys.read }
+        - { path: /survey-analysis, label: Survey Analysis, icon: chart, permission: surveys.read }

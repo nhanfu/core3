@@ -1,0 +1,25 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sms_lists (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        description VARCHAR, opt_in_count INTEGER NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS sms_campaigns (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        title VARCHAR NOT NULL, sender_name VARCHAR, list_id VARCHAR NOT NULL, list_name VARCHAR NOT NULL,
+        message VARCHAR NOT NULL, scheduled_at TIMESTAMP, sent_at TIMESTAMP,
+        recipient_count INTEGER NOT NULL DEFAULT 0, delivered_count INTEGER NOT NULL DEFAULT 0,
+        failed_count INTEGER NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Draft', row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS sms_campaigns_state_idx ON sms_campaigns(state);
+    down: |
+      DROP TABLE IF EXISTS sms_campaigns;
+      DROP TABLE IF EXISTS sms_lists;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

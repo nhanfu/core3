@@ -1,0 +1,47 @@
+workflow:
+  id: plm_revisions
+  entity: plm_revisions
+  handler: order_transition
+  initial: Draft
+  permission: plm.write
+  mutable: true
+  status_source: plm_revision_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Approved, label: Approved, color: blue }
+    - { id: Released, label: Released, color: green, terminal: true }
+    - { id: Rejected, label: Rejected, color: red, terminal: true }
+  transitions:
+    - id: submit
+      from: [Draft]
+      to: Submitted
+      permission: plm.write
+      mutation:
+        guards: [{ query: "SELECT id FROM plm_revisions WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft revisions can be submitted }]
+        steps: [{ query: "UPDATE plm_revisions SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM plm_revisions WHERE id = :id" }
+    - id: approve
+      from: [Submitted]
+      to: Approved
+      permission: plm.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM plm_revisions WHERE id = :id AND state = 'Submitted' AND approver IS NOT NULL", status: 409, message: An approver is required before approval }]
+        steps: [{ query: "UPDATE plm_revisions SET state = 'Approved', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM plm_revisions WHERE id = :id" }
+    - id: release
+      from: [Approved]
+      to: Released
+      permission: plm.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM plm_revisions WHERE id = :id AND state = 'Approved'", status: 409, message: Only approved revisions can be released }]
+        steps: [{ query: "UPDATE plm_revisions SET state = 'Released', effective_date = COALESCE(effective_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM plm_revisions WHERE id = :id" }
+    - id: reject
+      from: [Submitted]
+      to: Rejected
+      permission: plm.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM plm_revisions WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted revisions can be rejected }]
+        steps: [{ query: "UPDATE plm_revisions SET state = 'Rejected', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM plm_revisions WHERE id = :id" }

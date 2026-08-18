@@ -1,0 +1,13 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO fleet_vehicles(id, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state)
+      VALUES ('fleet-demo-001', 'Pool Vehicle 01', '51A-000.01', 'Car', 'Model S', 'Core Motors', 'Admin User', 12500, 'Petrol', 'Assigned');
+    down: |
+      DELETE FROM fleet_vehicles WHERE id = 'fleet-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,24 @@
+title: Accounting Analysis
+page: { id: analysis, breadcrumb: [Finance, Accounting, Analysis], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_analysis_totals
+    single: true
+    permission: accounting.read
+    query: "SELECT COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS invoiced, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices WHERE state <> 'Cancelled'"
+  - id: accounting_analysis
+    single: false
+    permission: accounting.read
+    query: "SELECT state AS category, COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices GROUP BY state ORDER BY state"
+components:
+  - type: StatRow
+    source: accounting_analysis_totals
+    title: Finance performance
+    stats:
+      - { label: Invoices, field: invoice_count }
+      - { label: Invoiced, field: invoiced }
+      - { label: Outstanding, field: outstanding }
+  - type: Chart
+    source: accounting_analysis
+    label_field: category
+    value_field: total
+    variant: bar

@@ -1,0 +1,80 @@
+title: Expense Reports
+page: { id: expenses, breadcrumb: [Finance, Expenses], auth: { require: [expenses.read] } }
+datasources:
+  - id: expense_states
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Posted','Posted'), ('Paid','Paid'), ('Refused','Refused')) states(value, label)"
+  - id: expense_sheets
+    single: false
+    permission: expenses.read
+    workflow: expense_sheets
+    query: "SELECT id, row_version, name, employee_name, manager_name, state, CAST(expense_date AS VARCHAR) AS expense_date, amount_total, amount_reimbursed, note FROM expense_sheets WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY expense_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: expense_sheets
+    create_action: create_expense_sheet
+    create_label: New expense report
+    search: { label: Search expense reports, placeholder: Search reports or employees... }
+    filters: [{ field: state, label: Status, options_source: expense_states }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: expense_states
+        card: { title: name, subtitle: employee_name, fields: [{ field: amount_total, label: Total }, { field: state, label: Status }] }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: state, column: Status }, { field: employee_name, column: Employee }, { field: expense_date, column: Date, type: date }, { field: amount_total, column: Total }]
+          default: { rows: [state], columns: [employee_name], measures: [{ field: amount_total, aggregate: sum, column: Total }] }
+          date_ranges: { expense_date: month }
+    columns:
+      - { field: name, label: Report, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: manager_name, label: Manager }
+      - { field: expense_date, label: Date }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_reimbursed, label: Reimbursed, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: submit_expense_sheet, label: Submit, permission: expenses.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: approve_expense_sheet, label: Approve, permission: expenses.manage, variant: secondary, show_if: "row.state === 'Submitted'" }
+      - { id: refuse_expense_sheet, label: Refuse, permission: expenses.manage, variant: danger, show_if: "row.state === 'Submitted' || row.state === 'Approved'" }
+      - { id: post_expense_sheet, label: Post, permission: expenses.manage, variant: secondary, show_if: "row.state === 'Approved'" }
+      - { id: pay_expense_sheet, label: Mark paid, permission: expenses.manage, variant: primary, show_if: "row.state === 'Posted'" }
+actions:
+  - id: create_expense_sheet
+    type: server_form
+    permission: expenses.write
+    title: New expense report
+    action: expenses.sheets.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [expense_sheets]
+    mutation:
+      operation: insert
+      table: expense_sheets
+      fields: [name, employee_name, manager_name, expense_date, note]
+      required: [name, employee_name]
+      defaults: { state: Draft, amount_total: 0, amount_reimbursed: 0 }
+      result: { query: "SELECT * FROM expense_sheets WHERE id = :id" }
+    fields:
+      - { field: name, label: Report, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: manager_name, label: Manager, type: text }
+      - { field: expense_date, label: Date, type: text }
+      - { field: note, label: Note, type: textarea }
+  - { id: submit_expense_sheet, type: server, permission: expenses.write, action: expenses.sheets.submit, handler: order_transition, workflow: expense_sheets, operation: submit, refresh: [expense_sheets] }
+  - { id: approve_expense_sheet, type: server, permission: expenses.manage, action: expenses.sheets.approve, handler: order_transition, workflow: expense_sheets, operation: approve, refresh: [expense_sheets] }
+  - { id: refuse_expense_sheet, type: server, permission: expenses.manage, action: expenses.sheets.refuse, handler: order_transition, workflow: expense_sheets, operation: refuse, refresh: [expense_sheets] }
+  - { id: post_expense_sheet, type: server, permission: expenses.manage, action: expenses.sheets.post, handler: order_transition, workflow: expense_sheets, operation: post, refresh: [expense_sheets] }
+  - { id: pay_expense_sheet, type: server, permission: expenses.manage, action: expenses.sheets.pay, handler: order_transition, workflow: expense_sheets, operation: pay, refresh: [expense_sheets] }

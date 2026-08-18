@@ -1,0 +1,25 @@
+title: Purchase Order
+page: { id: purchase-detail, breadcrumb: [Supply Chain, Purchase, Detail], auth: { require: [purchase.read] } }
+datasources:
+  - id: purchase_order_detail
+    single: true
+    permission: purchase.read
+    query: "SELECT id, row_version, name, vendor_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(expected_date AS VARCHAR) AS expected_date, reference FROM purchase_orders WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: purchase_order_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Sent, label: Sent }, { value: Confirmed, label: Confirmed }, { value: Received, label: Received }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Sent: amber, Confirmed: blue, Received: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Order
+        fields: [{ field: name, label: Purchase order }, { field: state, label: Status }, { field: vendor_name, label: Vendor }, { field: product_name, label: Product }]
+      - title: Quantities and terms
+        fields: [{ field: quantity, label: Ordered }, { field: qty_received, label: Received }, { field: unit_price, label: Unit price }, { field: expected_date, label: Expected date }, { field: reference, label: Reference }]
+actions:
+  - { id: send_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.send, handler: order_transition, workflow: purchase_orders, operation: send, params: { id: '{state.id}' }, refresh: [purchase_order_detail] }
+  - { id: confirm_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.confirm, handler: order_transition, workflow: purchase_orders, operation: confirm, params: { id: '{state.id}' }, refresh: [purchase_order_detail] }
+  - { id: receive_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.receive, handler: order_transition, workflow: purchase_orders, operation: receive, params: { id: '{state.id}' }, refresh: [purchase_order_detail] }
+  - { id: cancel_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.cancel, handler: order_transition, workflow: purchase_orders, operation: cancel, params: { id: '{state.id}' }, refresh: [purchase_order_detail] }

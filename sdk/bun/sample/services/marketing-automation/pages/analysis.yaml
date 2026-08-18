@@ -1,0 +1,21 @@
+title: Automation Analysis
+page: { id: automation-analysis, breadcrumb: [Marketing, Marketing Automation, Analysis], auth: { require: [marketing_automation.read] } }
+datasources:
+  - id: automation_analysis_totals
+    single: true
+    permission: marketing_automation.read
+    query: "SELECT COUNT(*) AS automation_count, COALESCE(SUM(enrollment_count), 0) AS enrollments, COALESCE(SUM(completed_count), 0) AS completed, COUNT(*) FILTER (WHERE state = 'Running') AS running_count FROM marketing_automations"
+  - id: automation_analysis_states
+    permission: marketing_automation.read
+    query: "SELECT state AS category, COUNT(*) AS automation_count FROM marketing_automations GROUP BY state ORDER BY automation_count DESC"
+components:
+  - type: StatRow
+    source: automation_analysis_totals
+    title: Automation performance
+    stats: [{ label: Automations, field: automation_count }, { label: Enrollments, field: enrollments }, { label: Completed, field: completed }, { label: Running, field: running_count }]
+  - type: Chart
+    source: automation_analysis_states
+    title: Automations by status
+    label_field: category
+    value_field: automation_count
+    variant: bar

@@ -1,0 +1,44 @@
+title: Warehouses
+page: { id: warehouses, breadcrumb: [Supply Chain, Inventory, Warehouses], auth: { require: [inventory.read] } }
+datasources:
+  - id: inventory_warehouses
+    single: false
+    permission: inventory.read
+    query: "SELECT w.id, w.row_version, w.name, w.code, w.address, w.state, COUNT(l.id) AS location_count FROM inventory_warehouses w LEFT JOIN inventory_locations l ON l.warehouse_id = w.id AND l.state = 'Active' WHERE (:q IS NULL OR w.name ILIKE '%' || :q || '%' OR w.code ILIKE '%' || :q || '%') GROUP BY w.id, w.row_version, w.name, w.code, w.address, w.state ORDER BY w.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_warehouses
+    create_action: create_inventory_warehouse
+    create_label: New warehouse
+    search: { label: Search warehouses, placeholder: Search warehouses or codes... }
+    columns:
+      - { field: name, label: Warehouse, type: PrimaryEntityCell }
+      - { field: code, label: Code }
+      - { field: address, label: Address }
+      - { field: location_count, label: Locations, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+actions:
+  - id: create_inventory_warehouse
+    type: server_form
+    permission: inventory.manage
+    title: New warehouse
+    action: inventory.warehouses.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_warehouses]
+    mutation:
+      operation: insert
+      table: inventory_warehouses
+      fields: [name, code, address]
+      required: [name, code]
+      defaults: { state: Active }
+      guards: [{ query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM inventory_warehouses WHERE code = :code)", status: 409, message: Warehouse code already exists }]
+      result: { query: "SELECT * FROM inventory_warehouses WHERE id = :id" }
+    fields:
+      - { field: name, label: Warehouse, type: text, required: true }
+      - { field: code, label: Code, type: text, required: true }
+      - { field: address, label: Address, type: text }

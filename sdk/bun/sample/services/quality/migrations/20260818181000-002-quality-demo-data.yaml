@@ -1,0 +1,13 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO quality_checks(id, name, check_type, product_name, source_type, source_id, operation, inspector, specification, uom, priority)
+      VALUES ('quality-demo-001', 'QC/2026/0001', 'Incoming', 'Packaging cartons', 'Purchase', 'po-demo-001', 'Visual inspection', 'Quality Team', 'No damage or moisture', 'units', 'Normal');
+    down: |
+      DELETE FROM quality_checks WHERE id = 'quality-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

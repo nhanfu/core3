@@ -138,7 +138,6 @@ export class YamlServiceModule implements ModuleLifecycle {
   install(context: ModuleContext): void { void context; }
 
   async load(context: ModuleContext): Promise<void> {
-    context.registerService(`yaml.service.${this.id}`, this.definition);
     const declaredStorage = this.definition.storage as any;
     const databaseConfig = declaredStorage?.database || resolveServiceDatabase(this.manifest.database, context.serviceConfigs,);
     const migrationsRoot = this.manifest.migrations ? join(context.moduleRoot, this.manifest.migrations) : undefined;
@@ -265,6 +264,22 @@ export class YamlServiceModule implements ModuleLifecycle {
       actions: namedActions,
       storage: this.definition.storage,
     };
+    // Expose declarative actions as an internal service contract. Domain
+    // services can call another YAML service without importing its database
+    // or growing a service-specific module implementation.
+    context.registerService(`yaml.service.${this.id}`, {
+      call: (operation: string, request: Record<string, unknown> = {}) => this.call(operation, request),
+    });
+  }
+
+  private async call(operation: string, request: Record<string, unknown>): Promise<any> {
+    if (!this.runtime || !this.repository) throw new Error(`YAML service is not ready: ${this.id}`);
+    const action = this.runtime.actions.get(String(operation));
+    if (!action?.mutation) throw new Error(`YAML service operation is unavailable: ${this.id}.${operation}`);
+    return this.repository.executeMutation(action.mutation, {
+      ...request,
+      view_scope: 'all',
+    });
   }
 
   getRuntimeContext(): YamlRuntimeContext | null {

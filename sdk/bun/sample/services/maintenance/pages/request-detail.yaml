@@ -1,0 +1,25 @@
+title: Maintenance Request
+page: { id: maintenance-request-detail, breadcrumb: [Supply Chain, Maintenance, Detail], auth: { require: [maintenance.read] } }
+datasources:
+  - id: maintenance_request_detail
+    single: true
+    permission: maintenance.read
+    query: "SELECT id, row_version, name, equipment_name, request_type, description, priority, assigned_to, state, CAST(request_date AS VARCHAR) AS request_date, CAST(scheduled_date AS VARCHAR) AS scheduled_date, CAST(completed_date AS VARCHAR) AS completed_date FROM maintenance_requests WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: maintenance_request_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: New, label: New }, { value: Assigned, label: Assigned }, { value: In Progress, label: In Progress }, { value: Repaired, label: Repaired }, { value: Cancelled, label: Cancelled }]
+    status_colors: { New: neutral, Assigned: amber, In Progress: blue, Repaired: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Request
+        fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: equipment_name, label: Equipment }, { field: request_type, label: Type }, { field: priority, label: Priority }]
+      - title: Scheduling
+        fields: [{ field: assigned_to, label: Assigned to }, { field: request_date, label: Request date }, { field: scheduled_date, label: Scheduled date }, { field: completed_date, label: Completed date }, { field: description, label: Description }]
+actions:
+  - { id: assign_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.assign, handler: order_transition, workflow: maintenance_requests, operation: assign, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
+  - { id: start_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
+  - { id: repair_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }
+  - { id: cancel_maintenance_request_detail, type: server, permission: maintenance.write, action: maintenance.requests.cancel, handler: order_transition, workflow: maintenance_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [maintenance_request_detail] }

@@ -1,0 +1,13 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO referrals(id, name, referrer_employee_id, referrer_name, candidate_name, candidate_email, opening_name, relationship, source, reward_amount, state)
+      VALUES ('referral-demo-001', 'REF/2026/0001', 'employee-demo-001', 'Admin User', 'Demo Referral Candidate', 'referral@example.com', 'Operations Engineer', 'Former colleague', 'Employee referral', 250, 'Draft');
+    down: |
+      DELETE FROM referrals WHERE id = 'referral-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

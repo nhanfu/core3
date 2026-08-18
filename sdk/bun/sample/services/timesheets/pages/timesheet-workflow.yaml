@@ -1,0 +1,53 @@
+workflow:
+  id: timesheet_entries
+  entity: timesheet_entries
+  handler: order_transition
+  initial: Draft
+  permission: timesheets.write
+  mutable: true
+  status_source: timesheet_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Approved, label: Approved, color: green, terminal: true }
+    - { id: Rejected, label: Rejected, color: red }
+    - { id: Cancelled, label: Cancelled, color: violet, terminal: true }
+  transitions:
+    - id: submit
+      from: [Draft, Rejected]
+      to: Submitted
+      permission: timesheets.write
+      mutation:
+        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND state IN ('Draft', 'Rejected') AND hours > 0 AND description <> ''", status: 409, message: A timesheet needs positive hours and a description }]
+        steps: [{ query: "UPDATE timesheet_entries SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    - id: approve
+      from: [Submitted]
+      to: Approved
+      permission: timesheets.manage
+      mutation:
+        guards:
+          - { query: "SELECT id FROM timesheet_entries WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be approved }
+          - type: service
+            service: yaml.service.project
+            operation: project.projects.add_hours
+            request: { project_id: project_id, hours: hours }
+        steps:
+          - query: "UPDATE timesheet_entries SET state = 'Approved', approver = :current_user_name, approved_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    - id: reject
+      from: [Submitted]
+      to: Rejected
+      permission: timesheets.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted timesheets can be rejected }]
+        steps: [{ query: "UPDATE timesheet_entries SET state = 'Rejected', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Submitted, Rejected]
+      to: Cancelled
+      permission: timesheets.write
+      mutation:
+        guards: [{ query: "SELECT id FROM timesheet_entries WHERE id = :id AND state IN ('Draft', 'Submitted', 'Rejected')", status: 409, message: Only open timesheets can be cancelled }]
+        steps: [{ query: "UPDATE timesheet_entries SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM timesheet_entries WHERE id = :id" }

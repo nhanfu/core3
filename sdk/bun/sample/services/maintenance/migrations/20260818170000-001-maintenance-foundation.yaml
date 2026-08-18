@@ -1,0 +1,28 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS maintenance_equipment (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        serial_number VARCHAR, category VARCHAR, location VARCHAR, technician VARCHAR,
+        preventive_interval_days INTEGER, next_preventive_date DATE, state VARCHAR NOT NULL DEFAULT 'Active',
+        row_version BIGINT NOT NULL DEFAULT 1, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS maintenance_requests (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        equipment_id VARCHAR NOT NULL, equipment_name VARCHAR NOT NULL, request_type VARCHAR NOT NULL DEFAULT 'Corrective',
+        description VARCHAR, priority VARCHAR NOT NULL DEFAULT 'Normal', assigned_to VARCHAR,
+        request_date DATE NOT NULL DEFAULT CURRENT_DATE, scheduled_date DATE, completed_date DATE,
+        state VARCHAR NOT NULL DEFAULT 'New', row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS maintenance_requests_equipment_idx ON maintenance_requests(equipment_id);
+      CREATE INDEX IF NOT EXISTS maintenance_requests_state_idx ON maintenance_requests(state);
+    down: |
+      DROP TABLE IF EXISTS maintenance_requests;
+      DROP TABLE IF EXISTS maintenance_equipment;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,70 @@
+title: Manufacturing Orders
+page: { id: manufacturing-orders, breadcrumb: [Supply Chain, Manufacturing, Manufacturing Orders], auth: { require: [manufacturing.read] } }
+datasources:
+  - id: mrp_production_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Confirmed','Confirmed'), ('In Progress','In Progress'), ('Done','Done'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: mrp_bom_lookup
+    single: false
+    permission: manufacturing.read
+    query: "SELECT id AS value, name || ' - ' || product_name AS label FROM mrp_boms WHERE state = 'Active' ORDER BY product_name, name"
+  - id: mrp_productions
+    single: false
+    permission: manufacturing.read
+    workflow: mrp_productions
+    query: "SELECT p.id, p.row_version, p.name, p.product_id, p.product_name, b.name AS bom_name, p.quantity, p.qty_produced, p.state, CAST(p.planned_date AS VARCHAR) AS planned_date, p.reference, COUNT(w.id) AS workorder_count FROM mrp_productions p LEFT JOIN mrp_boms b ON b.id = p.bom_id LEFT JOIN mrp_workorders w ON w.production_id = p.id WHERE (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) GROUP BY p.id, p.row_version, p.name, p.product_id, p.product_name, b.name, p.quantity, p.qty_produced, p.state, p.planned_date, p.reference, p.created_at ORDER BY p.planned_date DESC, p.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: mrp_productions
+    create_action: create_mrp_production
+    create_label: New manufacturing order
+    search: { label: Search manufacturing orders, placeholder: Search orders or products... }
+    filters: [{ field: state, label: Status, options_source: mrp_production_states }]
+    columns:
+      - { field: name, label: Manufacturing order, type: PrimaryEntityCell }
+      - { field: product_name, label: Product }
+      - { field: bom_name, label: BOM }
+      - { field: quantity, label: To produce, align: right }
+      - { field: qty_produced, label: Produced, align: right }
+      - { field: workorder_count, label: Work orders, align: right }
+      - { field: planned_date, label: Planned date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: confirm_mrp_production, label: Confirm, permission: manufacturing.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: start_mrp_production, label: Start, permission: manufacturing.write, variant: secondary, show_if: "row.state === 'Confirmed'" }
+      - { id: produce_mrp_production, label: Mark produced, permission: manufacturing.write, variant: primary, show_if: "row.state === 'In Progress'" }
+      - { id: cancel_mrp_production, label: Cancel, permission: manufacturing.write, variant: danger, show_if: "row.state !== 'Done' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_mrp_production
+    type: server_form
+    permission: manufacturing.write
+    title: New manufacturing order
+    action: manufacturing.productions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mrp_productions]
+    mutation:
+      operation: insert
+      table: mrp_productions
+      fields: [name, product_id, product_name, bom_id, quantity, planned_date, reference]
+      required: [name, product_name, quantity]
+      defaults: { state: Draft, qty_produced: 0 }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND (:bom_id IS NULL OR EXISTS (SELECT 1 FROM mrp_boms WHERE id = :bom_id AND state = 'Active'))", status: 400, message: Production quantity must be positive and BOM must be active }]
+      result: { query: "SELECT * FROM mrp_productions WHERE id = :id" }
+    fields:
+      - { field: name, label: Manufacturing order, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: bom_id, label: Bill of materials, type: select, options_source: mrp_bom_lookup }
+      - { field: quantity, label: To produce, type: number, required: true }
+      - { field: planned_date, label: Planned date, type: text }
+      - { field: reference, label: Reference, type: text }
+  - { id: confirm_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.confirm, handler: order_transition, workflow: mrp_productions, operation: confirm, refresh: [mrp_productions] }
+  - { id: start_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.start, handler: order_transition, workflow: mrp_productions, operation: start, refresh: [mrp_productions] }
+  - { id: produce_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.produce, handler: order_transition, workflow: mrp_productions, operation: produce, refresh: [mrp_productions] }
+  - { id: cancel_mrp_production, type: server, permission: manufacturing.write, action: manufacturing.productions.cancel, handler: order_transition, workflow: mrp_productions, operation: cancel, refresh: [mrp_productions] }

@@ -129,7 +129,19 @@ export class ModuleManager {
         return service as T;
       },
     };
-    for (const module of this.modules) await module.load({ ...moduleContext, config: context.moduleConfigs[module.id] || {}, moduleRoot: moduleRoot(context.appsRoot, module.id) });
+    // Infrastructure providers must be available before YAML domain services
+    // load. In particular, every YAML service resolves auth.adapter while it
+    // constructs its API, so filesystem ordering cannot be the dependency
+    // graph. Keep the discovery order for peers, but load auth/runtime
+    // providers first.
+    const loadOrder = [...this.modules].sort((left, right) => {
+      const priority = (module: ModuleLifecycle) => {
+        const manifest = (module as any).manifest;
+        return manifest?.runtime === 'auth' || module.id === 'auth' ? 0 : 1;
+      };
+      return priority(left) - priority(right);
+    });
+    for (const module of loadOrder) await module.load({ ...moduleContext, config: context.moduleConfigs[module.id] || {}, moduleRoot: moduleRoot(context.appsRoot, module.id) });
   }
 
   async installAll(context: ModuleHostContext): Promise<void> {

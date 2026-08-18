@@ -1,0 +1,16 @@
+menu:
+  maintenance:
+    path: /maintenance-requests
+    label: Maintenance
+    icon: wrench
+    permission: maintenance.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - { path: /maintenance-requests, label: Maintenance Requests, icon: wrench, permission: maintenance.read }
+        - { path: /equipment, label: Equipment, icon: machine, permission: maintenance.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /maintenance-analysis, label: Maintenance Analysis, icon: chart, permission: maintenance.read }

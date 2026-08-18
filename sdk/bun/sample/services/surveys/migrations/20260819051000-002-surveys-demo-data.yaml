@@ -1,0 +1,15 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO surveys(id, name, title, description, owner, state) VALUES ('survey-demo-001', 'SURVEY/2026/0001', 'Customer satisfaction survey', 'Tell us how we are doing.', 'Customer Success', 'Draft');
+      INSERT OR IGNORE INTO survey_questions(id, survey_id, question_text, question_type, sequence, required, answer_options) VALUES ('question-demo-001', 'survey-demo-001', 'How satisfied are you?', 'Rating', 1, TRUE, '1,2,3,4,5');
+    down: |
+      DELETE FROM survey_responses WHERE survey_id = 'survey-demo-001';
+      DELETE FROM survey_questions WHERE survey_id = 'survey-demo-001';
+      DELETE FROM surveys WHERE id = 'survey-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

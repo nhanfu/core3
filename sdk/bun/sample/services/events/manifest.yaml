@@ -1,0 +1,12 @@
+id: events
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/events.yaml
+  - pages/event-detail.yaml
+  - pages/analysis.yaml
+  - pages/event-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

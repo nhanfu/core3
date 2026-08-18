@@ -1,0 +1,34 @@
+title: Project
+page: { id: project-detail, breadcrumb: [Services, Project, Detail], auth: { require: [project.read] } }
+datasources:
+  - id: project_detail
+    single: true
+    permission: project.read
+    query: "SELECT id, row_version, name, customer_name, project_manager, description, planned_hours, spent_hours, state, CAST(start_date AS VARCHAR) AS start_date, CAST(end_date AS VARCHAR) AS end_date FROM projects WHERE id = :id"
+  - id: project_tasks_detail
+    permission: project.read
+    query: "SELECT id, row_version, project_name, name, assignee, milestone_name, priority, planned_hours, spent_hours, state, CAST(due_date AS VARCHAR) AS due_date FROM project_tasks WHERE project_id = :id ORDER BY due_date"
+components:
+  - type: OdooFormView
+    source: project_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Active, label: Active }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Active: blue, Completed: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Project
+        fields: [{ field: name, label: Project }, { field: state, label: Status }, { field: customer_name, label: Customer }, { field: project_manager, label: Manager }]
+      - title: Schedule and effort
+        fields: [{ field: start_date, label: Start date }, { field: end_date, label: End date }, { field: planned_hours, label: Planned hours }, { field: spent_hours, label: Spent hours }, { field: description, label: Description }]
+  - type: ContactGrid
+    source: project_tasks_detail
+    row_key: id
+    columns:
+      - { field: name, label: Task, type: PrimaryEntityCell }
+      - { field: assignee, label: Assignee }
+      - { field: milestone_name, label: Milestone }
+      - { field: planned_hours, label: Planned hours }
+      - { field: spent_hours, label: Spent hours }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: due_date, label: Due date }

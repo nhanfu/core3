@@ -1,0 +1,21 @@
+title: Email Marketing Analysis
+page: { id: email-analysis, breadcrumb: [Marketing, Email Marketing, Analysis], auth: { require: [email_marketing.read] } }
+datasources:
+  - id: email_analysis_totals
+    single: true
+    permission: email_marketing.read
+    query: "SELECT COUNT(*) AS campaign_count, COALESCE(SUM(recipient_count), 0) AS recipients, COALESCE(SUM(delivered_count), 0) AS delivered, COALESCE(SUM(opened_count), 0) AS opened, COALESCE(SUM(clicked_count), 0) AS clicked FROM email_campaigns"
+  - id: email_analysis_states
+    permission: email_marketing.read
+    query: "SELECT state AS category, COUNT(*) AS campaign_count FROM email_campaigns GROUP BY state ORDER BY campaign_count DESC"
+components:
+  - type: StatRow
+    source: email_analysis_totals
+    title: Email delivery performance
+    stats: [{ label: Campaigns, field: campaign_count }, { label: Recipients, field: recipients }, { label: Delivered, field: delivered }, { label: Opened, field: opened }, { label: Clicked, field: clicked }]
+  - type: Chart
+    source: email_analysis_states
+    title: Campaigns by status
+    label_field: category
+    value_field: campaign_count
+    variant: bar

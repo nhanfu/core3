@@ -1,0 +1,4 @@
+permissions:
+  - documents.read
+  - documents.write
+  - documents.manage

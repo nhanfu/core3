@@ -1,0 +1,14 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO events(id, name, event_type, organizer, venue, description, capacity, start_at, end_at, state)
+      VALUES ('event-demo-001', 'EVT/2026/0001', 'Product Launch', 'Marketing Team', 'Main Hall', 'Core3 product launch', 300, CURRENT_TIMESTAMP + INTERVAL 14 DAY, CURRENT_TIMESTAMP + INTERVAL 14 DAY + INTERVAL 3 HOUR, 'Draft');
+    down: |
+      DELETE FROM event_registrations WHERE event_id = 'event-demo-001';
+      DELETE FROM events WHERE id = 'event-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

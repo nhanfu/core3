@@ -1,0 +1,12 @@
+id: project
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/projects.yaml
+  - pages/project-detail.yaml
+  - pages/analysis.yaml
+  - pages/project-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

@@ -1,0 +1,12 @@
+id: referrals
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/referrals.yaml
+  - pages/referral-detail.yaml
+  - pages/analysis.yaml
+  - pages/referral-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

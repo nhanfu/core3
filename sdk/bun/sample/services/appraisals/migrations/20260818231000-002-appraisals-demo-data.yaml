@@ -1,0 +1,16 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO appraisal_cycles(id, name, year, description, state, start_date, end_date)
+      VALUES ('cycle-demo-001', 'Annual Review 2026', EXTRACT(YEAR FROM CURRENT_DATE), 'Annual performance review', 'Open', CURRENT_DATE, CURRENT_DATE + INTERVAL 60 DAY);
+      INSERT OR IGNORE INTO appraisals(id, name, cycle_id, cycle_name, employee_id, employee_name, manager_name, job_title, due_date, state)
+      VALUES ('appraisal-demo-001', 'APR/2026/0001', 'cycle-demo-001', 'Annual Review 2026', 'employee-demo-001', 'Admin User', 'Engineering Manager', 'Operations Lead', CURRENT_DATE + INTERVAL 30 DAY, 'Draft');
+    down: |
+      DELETE FROM appraisals WHERE id = 'appraisal-demo-001';
+      DELETE FROM appraisal_cycles WHERE id = 'cycle-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,4 @@
+permissions:
+  - email_marketing.read
+  - email_marketing.write
+  - email_marketing.manage

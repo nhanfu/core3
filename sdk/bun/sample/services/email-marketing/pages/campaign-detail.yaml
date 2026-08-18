@@ -1,0 +1,25 @@
+title: Email Campaign
+page: { id: email-campaign-detail, breadcrumb: [Marketing, Email Marketing, Detail], auth: { require: [email_marketing.read] } }
+datasources:
+  - id: email_campaign_detail
+    single: true
+    permission: email_marketing.read
+    query: "SELECT id, row_version, name, subject, sender_name, sender_email, list_name, body, recipient_count, delivered_count, opened_count, clicked_count, state, CAST(scheduled_at AS VARCHAR) AS scheduled_at, CAST(sent_at AS VARCHAR) AS sent_at FROM email_campaigns WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: email_campaign_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Scheduled, label: Scheduled }, { value: Sending, label: Sending }, { value: Sent, label: Sent }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Scheduled: amber, Sending: blue, Sent: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Campaign
+        fields: [{ field: name, label: Campaign }, { field: state, label: Status }, { field: subject, label: Subject }, { field: sender_name, label: Sender }, { field: list_name, label: Audience }]
+      - title: Delivery
+        fields: [{ field: recipient_count, label: Recipients }, { field: delivered_count, label: Delivered }, { field: opened_count, label: Opened }, { field: clicked_count, label: Clicked }, { field: scheduled_at, label: Scheduled at }, { field: sent_at, label: Sent at }, { field: body, label: Body }]
+actions:
+  - { id: schedule_email_campaign_detail, type: server, permission: email_marketing.write, action: email_marketing.campaigns.schedule, handler: order_transition, workflow: email_campaigns, operation: schedule, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
+  - { id: send_email_campaign_detail, type: server, permission: email_marketing.write, action: email_marketing.campaigns.send, handler: order_transition, workflow: email_campaigns, operation: send, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
+  - { id: complete_email_campaign_detail, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.complete, handler: order_transition, workflow: email_campaigns, operation: complete, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
+  - { id: cancel_email_campaign_detail, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.cancel, handler: order_transition, workflow: email_campaigns, operation: cancel, params: { id: '{state.id}' }, refresh: [email_campaign_detail] }
