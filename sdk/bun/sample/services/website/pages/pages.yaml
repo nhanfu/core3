@@ -1,0 +1,62 @@
+title: Website Pages
+page: { id: website-pages, breadcrumb: [Website, Pages], auth: { require: [website.read] } }
+datasources:
+  - id: website_page_states
+    permission: website.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published')) states(value, label)"
+  - id: website_lookup
+    permission: website.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM website_websites ORDER BY name"
+  - id: website_pages
+    permission: website.read
+    workflow: website_pages
+    query: "SELECT id, row_version, website_id, website_name, name, url, is_indexed, is_homepage, CAST(date_publish AS VARCHAR) AS date_publish, state FROM website_pages WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR url ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY website_name, is_homepage DESC, name"
+components:
+  - type: ListView
+    variant: odoo
+    source: website_pages
+    create_action: create_website_page
+    create_label: New page
+    search: { label: Search pages, placeholder: 'Search page name or URL...' }
+    filters: [{ field: state, label: Status, options_source: website_page_states }]
+    columns:
+      - { field: name, label: Page, type: PrimaryEntityCell }
+      - { field: website_name, label: Website }
+      - { field: url, label: URL }
+      - { field: is_homepage, label: Homepage }
+      - { field: is_indexed, label: Indexed }
+      - { field: date_publish, label: Published on }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: publish_website_page, label: Publish, permission: website.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: unpublish_website_page, label: Unpublish, permission: website.manage, variant: secondary, show_if: "row.state === 'Published'" }
+actions:
+  - id: create_website_page
+    type: server_form
+    permission: website.write
+    title: New page
+    action: website.pages.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [website_pages]
+    mutation:
+      operation: insert
+      table: website_pages
+      fields: [website_id, website_name, name, url, is_indexed, is_homepage]
+      required: [website_id, website_name, name, url]
+      guards: [{ query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, message: A valid website is required }]
+      result: { query: "SELECT * FROM website_pages WHERE id = :id" }
+    fields:
+      - { field: website_id, label: Website, type: select, options_source: website_lookup, required: true }
+      - { field: website_name, label: Website name, type: text, required: true }
+      - { field: name, label: Page name, type: text, required: true }
+      - { field: url, label: Page URL, type: text, required: true }
+      - { field: is_indexed, label: Is indexed, type: checkbox }
+      - { field: is_homepage, label: Is homepage, type: checkbox }
+  - { id: publish_website_page, type: server, permission: website.write, action: website.pages.publish, handler: order_transition, workflow: website_pages, operation: publish, refresh: [website_pages] }
+  - { id: unpublish_website_page, type: server, permission: website.manage, action: website.pages.unpublish, handler: order_transition, workflow: website_pages, operation: unpublish, refresh: [website_pages] }

@@ -113,11 +113,11 @@ components:
               - [Productivity, Knowledge, Not started]
               - [Productivity, Sign, Not started]
               - [Productivity, VoIP, Not started]
-              - [Website, Website, Not started]
-              - [Website, eCommerce, Not started]
-              - [Website, Blog, Not started]
-              - [Website, Forum, Not started]
-              - [Website, Live Chat, Not started]
+              - [Website, Website, 'In progress — websites, pages, menus, and guarded publish workflow shipped']
+              - [Website, eCommerce, 'In progress — shop products, public categories, online orders, cart lifecycle workflow, and analysis shipped']
+              - [Website, Blog, 'In progress — blogs, posts, tags, publish/archive workflow, and analysis shipped']
+              - [Website, Forum, 'In progress — forums, questions, tags, moderation workflow, and analysis shipped']
+              - [Website, Live Chat, 'In progress — channels, sessions, satisfaction ratings, close workflow, and analysis shipped']
 
       - id: pattern-rule
         kicker: Working principle
@@ -176,15 +176,21 @@ components:
               - [Marketing Automation, marketing-automation, 'Automated journeys, triggers, actions, enrollments, and execution analysis', 'Connect Email, SMS, Contacts, events, scoring, and branching automation']
               - [Project, project, 'Projects, milestones, tasks, task workflow, and effort analysis', 'Connect Timesheets, Planning, Field Service, and project billing']
               - [Timesheets, timesheets, 'Time entries, approvals, billable hours, and project effort rollups', 'Connect Project, Field Service, Planning, Payroll, and invoicing']
+              - [Website, website, 'Websites, pages, menus, and page publish lifecycle', 'Host Blog, Forum, eCommerce, and Live Chat content and connect SEO and analytics settings']
+              - [eCommerce, ecommerce, 'Shop products, public categories, online carts, and confirmed web orders', 'Consume Website pages and Sales products, then connect payments and Invoicing']
+              - [Blog, blog, 'Blogs, posts, tags, and publish/archive lifecycle', 'Connect Website pages, authors through Contacts, and marketing campaigns']
+              - [Forum, forum, 'Forums, questions, tags, and moderation lifecycle', 'Connect Website, karma-style gamification, and email notifications']
+              - [Live Chat, livechat, 'Livechat channels, sessions, satisfaction ratings, and outcomes', 'Connect Website, Discuss operators, and Helpdesk escalation']
               - [Auth, auth, 'Users, roles, permissions, companies', 'Remain infrastructure-owned and shared by every domain service']
               - [Discuss, chat, 'Messages, activities, notifications, chatter', 'Remain cross-service collaboration infrastructure']
           - type: callout
             tone: note
             title: Implementation status
             text: >-
-              The current sample implements the grouped Odoo-style navigation for CRM, Sales, Point
-              of Sale, Subscriptions, and Rental. Service IDs remain stable for compatibility while
-              ownership is clarified in menus, page routes, permissions, and this roadmap.
+              The current sample implements grouped Odoo-style navigation for every shipped module,
+              most recently the Website group (Website, eCommerce, Blog, Forum, and Live Chat).
+              Service IDs remain stable for compatibility while ownership is clarified in menus,
+              page routes, permissions, and this roadmap.
           - type: flowstrip
             steps:
               - label: CRM lead

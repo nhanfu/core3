@@ -1,0 +1,21 @@
+title: Blog Analysis
+page: { id: blog-analysis, breadcrumb: [Website, Blog, Analysis], auth: { require: [blog.read] } }
+datasources:
+  - id: blog_analysis_totals
+    single: true
+    permission: blog.read
+    query: "SELECT (SELECT COUNT(*) FROM blog_blogs WHERE active) AS blog_count, COUNT(*) AS post_count, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, COALESCE(SUM(visits), 0) AS total_visits FROM blog_posts"
+  - id: blog_analysis_states
+    permission: blog.read
+    query: "SELECT state AS category, COUNT(*) AS post_count FROM blog_posts GROUP BY state ORDER BY post_count DESC"
+components:
+  - type: StatRow
+    source: blog_analysis_totals
+    title: Blog overview
+    stats: [{ label: Blogs, field: blog_count }, { label: Posts, field: post_count }, { label: Published, field: published_count }, { label: Total views, field: total_visits }]
+  - type: Chart
+    source: blog_analysis_states
+    title: Posts by status
+    label_field: category
+    value_field: post_count
+    variant: bar

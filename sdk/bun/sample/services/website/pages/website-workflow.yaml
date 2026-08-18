@@ -1,0 +1,28 @@
+workflow:
+  id: website_pages
+  entity: website_pages
+  handler: order_transition
+  initial: Draft
+  permission: website.write
+  mutable: true
+  status_source: website_page_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Published, label: Published, color: green }
+  transitions:
+    - id: publish
+      from: [Draft]
+      to: Published
+      permission: website.write
+      mutation:
+        guards: [{ query: "SELECT id FROM website_pages WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft pages can be published }]
+        steps: [{ query: "UPDATE website_pages SET state = 'Published', date_publish = COALESCE(date_publish, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM website_pages WHERE id = :id" }
+    - id: unpublish
+      from: [Published]
+      to: Draft
+      permission: website.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM website_pages WHERE id = :id AND state = 'Published'", status: 409, message: Only published pages can be unpublished }]
+        steps: [{ query: "UPDATE website_pages SET state = 'Draft', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM website_pages WHERE id = :id" }

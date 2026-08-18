@@ -1,0 +1,14 @@
+id: website
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/websites.yaml
+  - pages/website-detail.yaml
+  - pages/pages.yaml
+  - pages/menus.yaml
+  - pages/analysis.yaml
+  - pages/website-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

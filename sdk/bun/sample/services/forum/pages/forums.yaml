@@ -1,0 +1,42 @@
+title: Forums
+page: { id: forum, breadcrumb: [Website, Forum, Forums], auth: { require: [forum.read] } }
+datasources:
+  - id: forum_forums
+    permission: forum.read
+    query: "SELECT f.id, f.row_version, f.name, f.description, f.mode, f.privacy, (SELECT COUNT(*) FROM forum_posts p WHERE p.forum_id = f.id) AS question_count, COALESCE((SELECT SUM(p.views) FROM forum_posts p WHERE p.forum_id = f.id), 0) AS view_count FROM forum_forums f WHERE (:q IS NULL OR f.name ILIKE '%' || :q || '%' OR f.description ILIKE '%' || :q || '%') ORDER BY f.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: forum_forums
+    create_action: create_forum
+    create_label: New forum
+    search: { label: Search forums, placeholder: 'Search forum or description...' }
+    columns:
+      - { field: name, label: Forum, type: PrimaryEntityCell }
+      - { field: description, label: Description }
+      - { field: mode, label: Mode }
+      - { field: privacy, label: Privacy }
+      - { field: question_count, label: Questions, align: right }
+      - { field: view_count, label: Views, align: right }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_forum
+    type: server_form
+    permission: forum.write
+    title: New forum
+    action: forum.forums.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [forum_forums]
+    mutation:
+      operation: insert
+      table: forum_forums
+      fields: [name, description, mode, privacy]
+      required: [name]
+      result: { query: "SELECT * FROM forum_forums WHERE id = :id" }
+    fields:
+      - { field: name, label: Forum name, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: mode, label: Mode, type: select, options: [{ value: Questions, label: 'Questions (1 answer)' }, { value: Discussions, label: 'Discussions (multiple answers)' }] }
+      - { field: privacy, label: Privacy, type: select, options: [{ value: Public, label: Public }, { value: Signed In, label: Signed In }, { value: Some users, label: Some users }] }

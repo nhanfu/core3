@@ -1,0 +1,4 @@
+permissions:
+  - website.read
+  - website.write
+  - website.manage

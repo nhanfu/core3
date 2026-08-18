@@ -1,0 +1,45 @@
+title: Forum Tags
+page: { id: forum-tags, breadcrumb: [Website, Forum, Tags], auth: { require: [forum.read] } }
+datasources:
+  - id: forum_tag_lookup
+    permission: forum.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM forum_forums ORDER BY name"
+  - id: forum_tags
+    permission: forum.read
+    query: "SELECT t.id, t.row_version, t.forum_name, t.name, t.color, (SELECT COUNT(*) FROM forum_posts p WHERE p.forum_id = t.forum_id AND p.tags ILIKE '%' || t.name || '%') AS post_count FROM forum_tags t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%') ORDER BY t.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: forum_tags
+    create_action: create_forum_tag
+    create_label: New tag
+    search: { label: Search tags, placeholder: 'Search tag name...' }
+    columns:
+      - { field: name, label: Tag, type: PrimaryEntityCell }
+      - { field: forum_name, label: Forum }
+      - { field: post_count, label: Posts, align: right }
+      - { field: color, label: Color, align: right }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_forum_tag
+    type: server_form
+    permission: forum.write
+    title: New tag
+    action: forum.tags.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [forum_tags]
+    mutation:
+      operation: insert
+      table: forum_tags
+      fields: [forum_id, forum_name, name, color]
+      required: [forum_id, forum_name, name]
+      guards: [{ query: "SELECT 1 AS ok FROM forum_forums WHERE id = :forum_id", status: 400, message: A valid forum is required }]
+      result: { query: "SELECT * FROM forum_tags WHERE id = :id" }
+    fields:
+      - { field: forum_id, label: Forum, type: select, options_source: forum_tag_lookup, required: true }
+      - { field: forum_name, label: Forum name, type: text, required: true }
+      - { field: name, label: Tag name, type: text, required: true }
+      - { field: color, label: Color, type: number }

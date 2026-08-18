@@ -1,0 +1,71 @@
+title: Blog Posts
+page: { id: blog-posts, breadcrumb: [Website, Blog, Posts], auth: { require: [blog.read] } }
+datasources:
+  - id: blog_post_states
+    permission: blog.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Archived','Archived')) states(value, label)"
+  - id: blog_lookup
+    permission: blog.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM blog_blogs WHERE active ORDER BY name"
+  - id: blog_posts
+    permission: blog.read
+    workflow: blog_posts
+    query: "SELECT id, row_version, blog_id, blog_name, name, subtitle, author_name, tags, visits, CAST(published_date AS VARCHAR) AS published_date, state FROM blog_posts WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR subtitle ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY published_date NULLS LAST, created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: blog_posts
+    create_action: create_blog_post
+    create_label: New blog post
+    search: { label: Search blog posts, placeholder: 'Search title, subtitle, or tag...' }
+    filters: [{ field: state, label: Status, options_source: blog_post_states }]
+    columns:
+      - { field: name, label: Post, type: PrimaryEntityCell, secondary: subtitle }
+      - { field: blog_name, label: Blog }
+      - { field: author_name, label: Author }
+      - { field: tags, label: Tags }
+      - { field: visits, label: Views, align: right }
+      - { field: published_date, label: Published on }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_blog_post
+    actions:
+      - { id: publish_blog_post, label: Publish, permission: blog.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: unpublish_blog_post, label: Unpublish, permission: blog.write, variant: secondary, show_if: "row.state === 'Published'" }
+      - { id: archive_blog_post, label: Archive, permission: blog.manage, variant: danger, show_if: "row.state !== 'Archived'" }
+actions:
+  - id: create_blog_post
+    type: server_form
+    permission: blog.write
+    title: New blog post
+    action: blog.posts.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [blog_posts]
+    mutation:
+      operation: insert
+      table: blog_posts
+      fields: [blog_id, blog_name, name, subtitle, author_name, teaser, tags]
+      required: [blog_id, blog_name, name]
+      guards: [{ query: "SELECT 1 AS ok FROM blog_blogs WHERE id = :blog_id AND active", status: 400, message: An active blog is required }]
+      result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
+    fields:
+      - { field: blog_id, label: Blog, type: select, options_source: blog_lookup, required: true }
+      - { field: blog_name, label: Blog name, type: text, required: true }
+      - { field: name, label: Title, type: text, required: true }
+      - { field: subtitle, label: Subtitle, type: text }
+      - { field: author_name, label: Author, type: text }
+      - { field: teaser, label: Teaser, type: textarea }
+      - { field: tags, label: Tags, type: text }
+  - id: view_blog_post
+    type: navigate
+    permission: blog.read
+    navigate_to: /blog-post-detail
+    params: { id: '{row.id}' }
+  - { id: publish_blog_post, type: server, permission: blog.write, action: blog.posts.publish, handler: order_transition, workflow: blog_posts, operation: publish, refresh: [blog_posts] }
+  - { id: unpublish_blog_post, type: server, permission: blog.write, action: blog.posts.unpublish, handler: order_transition, workflow: blog_posts, operation: unpublish, refresh: [blog_posts] }
+  - { id: archive_blog_post, type: server, permission: blog.manage, action: blog.posts.archive, handler: order_transition, workflow: blog_posts, operation: archive, refresh: [blog_posts] }

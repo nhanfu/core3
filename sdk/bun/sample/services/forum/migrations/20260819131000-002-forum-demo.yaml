@@ -1,0 +1,28 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO forum_forums (id, name, description, mode, privacy, total_posts)
+      SELECT 'forum-demo-001', 'Core3 Platform Q&A', 'Ask and answer questions about building on Core3', 'Questions', 'Public', 2
+      WHERE NOT EXISTS (SELECT 1 FROM forum_forums WHERE id = 'forum-demo-001');
+      INSERT INTO forum_posts (id, forum_id, forum_name, title, content, author_name, tags, views, vote_count, answer_count, state)
+      SELECT 'forum-post-demo-001', 'forum-demo-001', 'Core3 Platform Q&A', 'How do I add a new YAML service?', 'I want to add a new domain service following the order and chat patterns. Where do I start?', 'Developer A', 'yaml,services', 42, 5, 2, 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM forum_posts WHERE id = 'forum-post-demo-001');
+      INSERT INTO forum_posts (id, forum_id, forum_name, title, content, author_name, tags, views, vote_count, answer_count, state)
+      SELECT 'forum-post-demo-002', 'forum-demo-001', 'Core3 Platform Q&A', 'Migration ordering across services', 'What naming convention keeps migrations applied in the right order?', 'Developer B', 'migrations', 17, 2, 0, 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM forum_posts WHERE id = 'forum-post-demo-002');
+      INSERT INTO forum_tags (id, forum_id, forum_name, name)
+      SELECT 'forum-tag-demo-001', 'forum-demo-001', 'Core3 Platform Q&A', 'yaml'
+      WHERE NOT EXISTS (SELECT 1 FROM forum_tags WHERE id = 'forum-tag-demo-001');
+      INSERT INTO forum_tags (id, forum_id, forum_name, name)
+      SELECT 'forum-tag-demo-002', 'forum-demo-001', 'Core3 Platform Q&A', 'migrations'
+      WHERE NOT EXISTS (SELECT 1 FROM forum_tags WHERE id = 'forum-tag-demo-002');
+    down: |
+      DELETE FROM forum_tags WHERE id IN ('forum-tag-demo-001', 'forum-tag-demo-002');
+      DELETE FROM forum_posts WHERE id IN ('forum-post-demo-001', 'forum-post-demo-002');
+      DELETE FROM forum_forums WHERE id = 'forum-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

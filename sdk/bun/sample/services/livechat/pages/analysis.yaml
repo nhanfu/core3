@@ -1,0 +1,21 @@
+title: Livechat Analysis
+page: { id: livechat-analysis, breadcrumb: [Website, Live Chat, Analysis], auth: { require: [livechat.read] } }
+datasources:
+  - id: livechat_analysis_totals
+    single: true
+    permission: livechat.read
+    query: "SELECT (SELECT COUNT(*) FROM livechat_channels WHERE active) AS channel_count, COUNT(*) AS session_count, COUNT(*) FILTER (WHERE status = 'Closed') AS closed_count, COALESCE(AVG(duration_minutes) FILTER (WHERE status = 'Closed'), 0) AS avg_duration, COALESCE(AVG(rating) FILTER (WHERE rating IS NOT NULL), 0) AS avg_rating FROM livechat_sessions"
+  - id: livechat_analysis_ratings
+    permission: livechat.read
+    query: "SELECT CASE WHEN rating = 5 THEN 'Satisfied' WHEN rating = 3 THEN 'Okay' WHEN rating = 1 THEN 'Dissatisfied' ELSE 'Not rated' END AS category, COUNT(*) AS session_count FROM livechat_sessions GROUP BY category ORDER BY session_count DESC"
+components:
+  - type: StatRow
+    source: livechat_analysis_totals
+    title: Livechat overview
+    stats: [{ label: Channels, field: channel_count }, { label: Sessions, field: session_count }, { label: Closed, field: closed_count }, { label: Avg duration (min), field: avg_duration }, { label: Avg rating, field: avg_rating }]
+  - type: Chart
+    source: livechat_analysis_ratings
+    title: Sessions by satisfaction
+    label_field: category
+    value_field: session_count
+    variant: bar

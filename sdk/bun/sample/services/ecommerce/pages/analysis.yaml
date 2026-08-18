@@ -1,0 +1,21 @@
+title: eCommerce Analysis
+page: { id: ecommerce-analysis, breadcrumb: [Website, eCommerce, Analysis], auth: { require: [ecommerce.read] } }
+datasources:
+  - id: ecommerce_analysis_totals
+    single: true
+    permission: ecommerce.read
+    query: "SELECT (SELECT COUNT(*) FROM ecommerce_products WHERE state = 'Published') AS published_products, (SELECT COUNT(*) FROM ecommerce_categories) AS category_count, COUNT(*) FILTER (WHERE state IN ('Confirmed', 'Done')) AS confirmed_orders, COALESCE(SUM(amount_total) FILTER (WHERE state IN ('Confirmed', 'Done')), 0) AS confirmed_revenue, COUNT(*) FILTER (WHERE state = 'Abandoned') AS abandoned_carts FROM ecommerce_orders"
+  - id: ecommerce_analysis_states
+    permission: ecommerce.read
+    query: "SELECT state AS category, COUNT(*) AS order_count FROM ecommerce_orders GROUP BY state ORDER BY order_count DESC"
+components:
+  - type: StatRow
+    source: ecommerce_analysis_totals
+    title: Shop overview
+    stats: [{ label: Published products, field: published_products }, { label: Confirmed orders, field: confirmed_orders }, { label: Revenue, field: confirmed_revenue }, { label: Abandoned carts, field: abandoned_carts }]
+  - type: Chart
+    source: ecommerce_analysis_states
+    title: Orders by status
+    label_field: category
+    value_field: order_count
+    variant: bar

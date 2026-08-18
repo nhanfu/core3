@@ -1,0 +1,52 @@
+title: Websites
+page: { id: website, breadcrumb: [Website, Websites], auth: { require: [website.read] } }
+datasources:
+  - id: website_websites
+    permission: website.read
+    query: "SELECT w.id, w.row_version, w.name, w.domain, w.homepage_url, w.default_language, w.google_analytics_key, w.cookies_bar, w.cdn_activated, (SELECT COUNT(*) FROM website_pages p WHERE p.website_id = w.id) AS page_count FROM website_websites w WHERE (:q IS NULL OR w.name ILIKE '%' || :q || '%' OR w.domain ILIKE '%' || :q || '%') ORDER BY w.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: website_websites
+    create_action: create_website
+    create_label: New website
+    search: { label: Search websites, placeholder: 'Search website or domain...' }
+    columns:
+      - { field: name, label: Website, type: PrimaryEntityCell }
+      - { field: domain, label: Domain }
+      - { field: homepage_url, label: Homepage }
+      - { field: default_language, label: Default language }
+      - { field: page_count, label: Pages, align: right }
+      - { field: cdn_activated, label: CDN }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_website
+actions:
+  - id: create_website
+    type: server_form
+    permission: website.write
+    title: New website
+    action: website.websites.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [website_websites]
+    mutation:
+      operation: insert
+      table: website_websites
+      fields: [name, domain, homepage_url, default_language, google_analytics_key, cookies_bar, cdn_activated]
+      required: [name]
+      result: { query: "SELECT * FROM website_websites WHERE id = :id" }
+    fields:
+      - { field: name, label: Website name, type: text, required: true }
+      - { field: domain, label: Domain, type: text }
+      - { field: homepage_url, label: Homepage URL, type: text }
+      - { field: default_language, label: Default language, type: select, options: [{ value: English, label: English }, { value: Vietnamese, label: Vietnamese }, { value: French, label: French }, { value: Spanish, label: Spanish }] }
+      - { field: google_analytics_key, label: Google Analytics key, type: text }
+      - { field: cookies_bar, label: Cookies bar, type: checkbox }
+      - { field: cdn_activated, label: CDN activated, type: checkbox }
+  - id: view_website
+    type: navigate
+    permission: website.read
+    navigate_to: /website-detail
+    params: { id: '{row.id}' }

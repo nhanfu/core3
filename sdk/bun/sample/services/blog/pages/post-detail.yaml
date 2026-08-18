@@ -1,0 +1,21 @@
+title: Blog Post
+page: { id: blog-post-detail, breadcrumb: [Website, Blog, Post], auth: { require: [blog.read] } }
+datasources:
+  - id: blog_post_detail
+    permission: blog.read
+    single: true
+    query: "SELECT * FROM blog_posts WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: blog_post_detail
+    title_field: name
+    fields:
+      - { field: name, label: Title }
+      - { field: subtitle, label: Subtitle }
+      - { field: blog_name, label: Blog }
+      - { field: author_name, label: Author }
+      - { field: teaser, label: Teaser }
+      - { field: tags, label: Tags }
+      - { field: visits, label: Views }
+      - { field: published_date, label: Published on }
+      - { field: state, label: Status, type: StatusChip }

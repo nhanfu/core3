@@ -1,0 +1,13 @@
+id: livechat
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/channels.yaml
+  - pages/sessions.yaml
+  - pages/session-detail.yaml
+  - pages/analysis.yaml
+  - pages/livechat-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

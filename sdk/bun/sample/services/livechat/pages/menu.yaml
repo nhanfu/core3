@@ -1,0 +1,16 @@
+menu:
+  livechat:
+    path: /livechat
+    label: Live Chat
+    icon: message
+    permission: livechat.read
+  groups:
+    - id: conversations
+      label: Conversations
+      items:
+        - { path: /livechat, label: Channels, icon: message, permission: livechat.read }
+        - { path: /livechat-sessions, label: Sessions, icon: users, permission: livechat.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /livechat-analysis, label: Livechat Analysis, icon: chart, permission: livechat.read }

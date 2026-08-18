@@ -221,3 +221,38 @@ apps:
     route: /timesheets
     module: timesheets
     enabled: true
+  - id: website
+    label: Website
+    description: Websites, pages, and menus
+    icon: globe
+    route: /website
+    module: website
+    enabled: true
+  - id: ecommerce
+    label: eCommerce
+    description: Shop products, categories, and online orders
+    icon: cart
+    route: /ecommerce
+    module: ecommerce
+    enabled: true
+  - id: blog
+    label: Blog
+    description: Blogs, posts, and tags
+    icon: edit
+    route: /blog
+    module: blog
+    enabled: true
+  - id: forum
+    label: Forum
+    description: Community forums, questions, and moderation
+    icon: forum
+    route: /forum
+    module: forum
+    enabled: true
+  - id: livechat
+    label: Live Chat
+    description: Livechat channels, sessions, and ratings
+    icon: message
+    route: /livechat
+    module: livechat
+    enabled: true

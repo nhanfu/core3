@@ -1,0 +1,27 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS livechat_channels (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, button_text VARCHAR NOT NULL DEFAULT 'Have a question?',
+        welcome_message VARCHAR, active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS livechat_sessions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        channel_id VARCHAR NOT NULL, channel_name VARCHAR NOT NULL, visitor_name VARCHAR,
+        operator_name VARCHAR, status VARCHAR NOT NULL DEFAULT 'In Progress',
+        outcome VARCHAR, duration_minutes DECIMAL(18,2) NOT NULL DEFAULT 0, rating INTEGER,
+        started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, ended_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS livechat_sessions_channel_idx ON livechat_sessions(channel_id);
+      CREATE INDEX IF NOT EXISTS livechat_sessions_status_idx ON livechat_sessions(status);
+    down: |
+      DROP TABLE IF EXISTS livechat_sessions;
+      DROP TABLE IF EXISTS livechat_channels;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

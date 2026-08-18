@@ -1,0 +1,32 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS blog_blogs (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, subtitle VARCHAR, active BOOLEAN NOT NULL DEFAULT TRUE,
+        sequence INTEGER NOT NULL DEFAULT 10,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        blog_id VARCHAR NOT NULL, blog_name VARCHAR NOT NULL, name VARCHAR NOT NULL, subtitle VARCHAR,
+        author_name VARCHAR, teaser VARCHAR, tags VARCHAR, visits INTEGER NOT NULL DEFAULT 0,
+        published_date TIMESTAMP, state VARCHAR NOT NULL DEFAULT 'Draft',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS blog_posts_blog_idx ON blog_posts(blog_id);
+      CREATE INDEX IF NOT EXISTS blog_posts_state_idx ON blog_posts(state);
+      CREATE TABLE IF NOT EXISTS blog_tags (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, category VARCHAR, color INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    down: |
+      DROP TABLE IF EXISTS blog_tags;
+      DROP TABLE IF EXISTS blog_posts;
+      DROP TABLE IF EXISTS blog_blogs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

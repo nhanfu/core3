@@ -1,0 +1,17 @@
+menu:
+  ecommerce:
+    path: /ecommerce
+    label: eCommerce
+    icon: cart
+    permission: ecommerce.read
+  groups:
+    - id: shop
+      label: Shop
+      items:
+        - { path: /ecommerce, label: Products, icon: cart, permission: ecommerce.read }
+        - { path: /ecommerce-orders, label: Online Orders, icon: invoice, permission: ecommerce.read }
+        - { path: /ecommerce-categories, label: Categories, icon: folder, permission: ecommerce.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /ecommerce-analysis, label: eCommerce Analysis, icon: chart, permission: ecommerce.read }

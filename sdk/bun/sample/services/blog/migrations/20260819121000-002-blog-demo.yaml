@@ -1,0 +1,28 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO blog_blogs (id, name, subtitle)
+      SELECT 'blog-demo-001', 'Core3 Engineering', 'Notes from the team building the core platform'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_blogs WHERE id = 'blog-demo-001');
+      INSERT INTO blog_posts (id, blog_id, blog_name, name, subtitle, author_name, tags, state, published_date)
+      SELECT 'blog-post-demo-001', 'blog-demo-001', 'Core3 Engineering', 'Shipping YAML-first services', 'How page YAML replaced per-page UI code', 'Platform Team', 'yaml,services', 'Published', CURRENT_TIMESTAMP - INTERVAL '3' DAY
+      WHERE NOT EXISTS (SELECT 1 FROM blog_posts WHERE id = 'blog-post-demo-001');
+      INSERT INTO blog_posts (id, blog_id, blog_name, name, subtitle, author_name, tags, state)
+      SELECT 'blog-post-demo-002', 'blog-demo-001', 'Core3 Engineering', 'Inside the migration pipeline', NULL, 'Platform Team', 'migrations', 'Draft'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_posts WHERE id = 'blog-post-demo-002');
+      INSERT INTO blog_tags (id, name, category)
+      SELECT 'blog-tag-demo-001', 'yaml', 'Technology'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_tags WHERE id = 'blog-tag-demo-001');
+      INSERT INTO blog_tags (id, name, category)
+      SELECT 'blog-tag-demo-002', 'services', 'Architecture'
+      WHERE NOT EXISTS (SELECT 1 FROM blog_tags WHERE id = 'blog-tag-demo-002');
+    down: |
+      DELETE FROM blog_tags WHERE id IN ('blog-tag-demo-001', 'blog-tag-demo-002');
+      DELETE FROM blog_posts WHERE id IN ('blog-post-demo-001', 'blog-post-demo-002');
+      DELETE FROM blog_blogs WHERE id = 'blog-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

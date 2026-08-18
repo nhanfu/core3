@@ -1,0 +1,21 @@
+title: Website Analysis
+page: { id: website-analysis, breadcrumb: [Website, Analysis], auth: { require: [website.read] } }
+datasources:
+  - id: website_analysis_totals
+    single: true
+    permission: website.read
+    query: "SELECT (SELECT COUNT(*) FROM website_websites) AS website_count, COUNT(*) AS page_count, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, COUNT(*) FILTER (WHERE is_homepage) AS homepage_count FROM website_pages"
+  - id: website_analysis_states
+    permission: website.read
+    query: "SELECT state AS category, COUNT(*) AS page_count FROM website_pages GROUP BY state ORDER BY page_count DESC"
+components:
+  - type: StatRow
+    source: website_analysis_totals
+    title: Website overview
+    stats: [{ label: Websites, field: website_count }, { label: Pages, field: page_count }, { label: Published, field: published_count }, { label: Homepages, field: homepage_count }]
+  - type: Chart
+    source: website_analysis_states
+    title: Pages by status
+    label_field: category
+    value_field: page_count
+    variant: bar

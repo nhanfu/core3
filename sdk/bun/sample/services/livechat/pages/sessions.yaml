@@ -1,0 +1,89 @@
+title: Livechat Sessions
+page: { id: livechat-sessions, breadcrumb: [Website, Live Chat, Sessions], auth: { require: [livechat.read] } }
+datasources:
+  - id: livechat_session_states
+    permission: livechat.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('In Progress','In Progress'), ('Waiting for Customer','Waiting for Customer'), ('Looking for Help','Looking for Help'), ('Closed','Closed')) states(value, label)"
+  - id: livechat_channel_lookup
+    permission: livechat.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM livechat_channels WHERE active ORDER BY name"
+  - id: livechat_sessions
+    permission: livechat.read
+    workflow: livechat_sessions
+    query: "SELECT id, row_version, channel_id, channel_name, visitor_name, operator_name, status, outcome, duration_minutes, rating, CAST(started_at AS VARCHAR) AS started_at, CAST(ended_at AS VARCHAR) AS ended_at FROM livechat_sessions WHERE (:q IS NULL OR visitor_name ILIKE '%' || :q || '%' OR operator_name ILIKE '%' || :q || '%' OR channel_name ILIKE '%' || :q || '%') AND (:status IS NULL OR status = :status) ORDER BY started_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_sessions
+    create_action: create_livechat_session
+    create_label: New session
+    search: { label: Search sessions, placeholder: 'Search visitor, operator, or channel...' }
+    filters: [{ field: status, label: Status, options_source: livechat_session_states }]
+    columns:
+      - { field: channel_name, label: Channel }
+      - { field: visitor_name, label: Visitor, type: PrimaryEntityCell }
+      - { field: operator_name, label: Operator }
+      - { field: duration_minutes, label: Duration (min), align: right }
+      - { field: rating, label: Rating, align: right }
+      - { field: started_at, label: Started }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_livechat_session
+    actions:
+      - { id: wait_livechat_session, label: Wait for customer, permission: livechat.write, variant: secondary, show_if: "row.status === 'In Progress'" }
+      - { id: resume_livechat_session, label: Resume, permission: livechat.write, variant: primary, show_if: "row.status === 'Waiting for Customer'" }
+      - { id: help_livechat_session, label: Look for help, permission: livechat.write, variant: secondary, show_if: "row.status === 'In Progress'" }
+      - { id: close_livechat_session, label: Close, permission: livechat.write, variant: primary, show_if: "row.status !== 'Closed'" }
+      - { id: rate_livechat_session, label: Rate, permission: livechat.write, variant: secondary, show_if: "row.status === 'Closed'" }
+actions:
+  - id: create_livechat_session
+    type: server_form
+    permission: livechat.write
+    title: New session
+    action: livechat.sessions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [livechat_sessions]
+    mutation:
+      operation: insert
+      table: livechat_sessions
+      fields: [channel_id, channel_name, visitor_name, operator_name]
+      required: [channel_id, channel_name]
+      guards: [{ query: "SELECT 1 AS ok FROM livechat_channels WHERE id = :channel_id AND active", status: 400, message: An active livechat channel is required }]
+      result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }
+    fields:
+      - { field: channel_id, label: Channel, type: select, options_source: livechat_channel_lookup, required: true }
+      - { field: channel_name, label: Channel name, type: text, required: true }
+      - { field: visitor_name, label: Visitor, type: text }
+      - { field: operator_name, label: Operator, type: text }
+  - id: view_livechat_session
+    type: navigate
+    permission: livechat.read
+    navigate_to: /livechat-session-detail
+    params: { id: '{row.id}' }
+  - id: rate_livechat_session
+    type: server_form
+    permission: livechat.write
+    title: Rate session
+    action: livechat.sessions.rate
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [livechat_sessions]
+    mutation:
+      operation: update
+      table: livechat_sessions
+      fields: [rating]
+      required: [rating]
+      guards: [{ query: "SELECT id FROM livechat_sessions WHERE id = :id AND status = 'Closed'", status: 409, message: Only closed sessions can be rated }]
+      result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }
+    fields:
+      - { field: rating, label: Satisfaction, type: select, options: [{ value: 5, label: Satisfied }, { value: 3, label: Okay }, { value: 1, label: Dissatisfied }], required: true }
+  - { id: wait_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.wait, handler: order_transition, workflow: livechat_sessions, operation: wait, refresh: [livechat_sessions] }
+  - { id: resume_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.resume, handler: order_transition, workflow: livechat_sessions, operation: resume, refresh: [livechat_sessions] }
+  - { id: help_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.help, handler: order_transition, workflow: livechat_sessions, operation: help, refresh: [livechat_sessions] }
+  - { id: close_livechat_session, type: server, permission: livechat.write, action: livechat.sessions.close, handler: order_transition, workflow: livechat_sessions, operation: close, refresh: [livechat_sessions] }
