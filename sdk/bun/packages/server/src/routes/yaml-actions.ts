@@ -7,7 +7,7 @@ import { topicDefinition } from '../topics/contracts.ts';
 export async function handleActionRoutes(ctx: Record<string, any>): Promise<Response | null> {
   const {
     req, pathname, method, repository, WORKFLOWS, authUser, activityActor,
-    NAMED_ACTIONS, requirePerm, permissionForAction,
+    NAMED_ACTIONS, requirePerm, permissionForAction, resolveService,
     json, apiError, eventStore, topics,
   } = ctx;
 
@@ -37,6 +37,17 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
   const mutation = actionDefinition.mutation || (transition?.mutation
     ? { ...transition.mutation, ...(transition.scope ? { scope: { ...workflow?.scope, ...transition.scope } } : {}) }
     : undefined);
+
+  if (!mutation && handler === 'service_call') {
+    const service = resolveService?.(String(actionDefinition.service || ''));
+    if (!service?.call) return apiError(500, 'Configured service is unavailable');
+    const values = body?.values && typeof body.values === 'object' ? body.values : {};
+    return json(await service.call(String(actionDefinition.service_operation || actionDefinition.operation || ''), {
+      ...values,
+      id: typeof body?.id === 'string' ? body.id : values.id,
+      expected_row_version: body?.expected_row_version,
+    }));
+  }
 
   if (mutation) {
     if (handler === 'order_transition' && transition?.permission) requirePerm(transition.permission);

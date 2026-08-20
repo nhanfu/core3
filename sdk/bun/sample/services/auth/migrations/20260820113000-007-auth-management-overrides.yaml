@@ -1,0 +1,29 @@
+version: 0.0.7
+kind: schema
+description: Store editable management fields without rewriting FK-referenced auth rows
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS auth_user_management_overrides (
+        user_id VARCHAR PRIMARY KEY,
+        email VARCHAR,
+        name VARCHAR,
+        preferred_lang VARCHAR,
+        enabled BOOLEAN,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS auth_role_management_overrides (
+        role_id VARCHAR PRIMARY KEY,
+        name VARCHAR,
+        description VARCHAR,
+        view_scope VARCHAR,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    down: |
+      DROP TABLE IF EXISTS auth_role_management_overrides;
+      DROP TABLE IF EXISTS auth_user_management_overrides;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

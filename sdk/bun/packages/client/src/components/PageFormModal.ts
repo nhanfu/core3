@@ -71,7 +71,40 @@ export class PageFormModal extends BaseComponent {
 
           let el;
           let usesAsyncSelect = false;
-          if (fieldDef.type === 'async-select' || fieldDef.type === 'multi-select') {
+          if (fieldDef.type === 'permission-grid') {
+            const optionRows = fieldDef.options_source
+              ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
+              : [];
+            const selected = new Set(Array.isArray(initialValue)
+              ? initialValue.map(String)
+              : String(initialValue || '').split(',').map(value => value.trim()).filter(Boolean));
+            const hidden = html.take(group).input.type('hidden').ele() as HTMLInputElement;
+            html.take(hidden).prop('id', fieldId).prop('value', [...selected].join(','));
+            const groups = new Map<string, HTMLDivElement>();
+            for (const option of optionRows) {
+              const key = String(option.value ?? option.permission_key ?? option.id ?? '');
+              if (!key) continue;
+              const groupKey = String(option.group || key.split('.')[0] || 'General');
+              let grid = groups.get(groupKey);
+              if (!grid) {
+                const section = html.take(group).section.className('permission-grid-group').ele() as HTMLElement;
+                html.take(section).h3.className('permission-grid-title').replaceText(groupKey);
+                grid = html.take(section).div.className('permission-grid').ele() as HTMLDivElement;
+                groups.set(groupKey, grid);
+              }
+              const row = html.take(grid).label.className('permission-grid-item').ele() as HTMLLabelElement;
+              const checkbox = html.take(row).input.type('checkbox').ele() as HTMLInputElement;
+              const checked = selected.has(key) || option.enabled === true;
+              html.take(checkbox).prop('checked', checked).attr('aria-label', String(option.label || key));
+              html.take(row).span.className('permission-grid-label').replaceText(String(option.label || key));
+              html.take(checkbox).event('change', () => {
+                if (checkbox.checked) selected.add(key);
+                else selected.delete(key);
+                hidden.value = [...selected].sort().join(',');
+              });
+            }
+            el = hidden;
+          } else if (fieldDef.type === 'async-select' || fieldDef.type === 'multi-select') {
             const optionRows = fieldDef.options_source
               ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
               : [];
@@ -206,7 +239,7 @@ export class PageFormModal extends BaseComponent {
           // Validate required fields
           let firstInvalid: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null = null;
           for (const { el, fieldDef } of Object.values(inputs)) {
-            const v = fieldDef.type === 'multi-select'
+            const v = fieldDef.type === 'multi-select' || fieldDef.type === 'permission-grid'
               ? el.value.split(',').map(value => value.trim()).filter(Boolean)
               : el instanceof HTMLSelectElement && el.multiple
                 ? Array.from(el.selectedOptions).map(option => option.value)
@@ -225,7 +258,7 @@ export class PageFormModal extends BaseComponent {
 
           const changes = Object.entries(inputs).map(([field, { el }]) => ({
             field,
-            value: inputs[field].fieldDef.type === 'multi-select'
+            value: inputs[field].fieldDef.type === 'multi-select' || inputs[field].fieldDef.type === 'permission-grid'
               ? el.value.split(',').map(value => value.trim()).filter(Boolean)
               : el instanceof HTMLSelectElement && el.multiple
                 ? Array.from(el.selectedOptions).map(option => option.value)

@@ -101,6 +101,7 @@ export type ListViewOptions = {
   rowActions?: 'buttons' | 'menu';
   views?: ListViewMode[];
   viewNavigation?: 'icons' | 'tabs';
+  responsiveCard?: boolean;
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
   onKanbanAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
   onKanbanEditStatus?: (stateId: string, label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
@@ -649,7 +650,7 @@ export class ListView extends BaseComponent {
     }
 
     const views = this.options.views || [];
-    if (views.length > 1 && this.options.viewNavigation !== 'tabs') {
+    if (views.length > 1 && this.options.viewNavigation !== 'tabs' && !this.options.responsiveCard) {
       const switcher = html.take(navigation).div.className('o-list-view-switcher').attr('role', 'group').attr('aria-label', i18n.tKey('list.view', {}, 'View')).ele();
       for (const view of views) {
         const mobileCardView = views.some(candidate => candidate.id === 'card');

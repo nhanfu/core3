@@ -113,12 +113,52 @@ export class OdooFormView extends BaseComponent {
       html.take(item).div.className('o-form-field-label').text(String(field.label || ''));
       const value = html.take(item).div.className(`o-form-field-value${field.type === 'money' ? ' is-money' : ''}`).ele();
       if (!editing) {
-        html.take(value).replaceText(record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]));
+        if (field.type === 'permission-grid') {
+          const selected = new Set(String(record[field.field] || '').split(',').map(permission => permission.trim()).filter(Boolean));
+          const options = Array.isArray(this.def.permission_options) ? this.def.permission_options : [];
+          const labelsByValue = new Map(options.map((option: any) => [String(option.value ?? option.permission_key ?? ''), String(option.label || option.value || '')]));
+          const chips = html.take(value).div.className('o-permission-chips').ele();
+          for (const permission of selected) {
+            html.take(chips).span.className('o-permission-chip').text(labelsByValue.get(permission) || permission);
+          }
+          if (!selected.size) html.take(value).replaceText('—');
+        } else {
+          html.take(value).replaceText(record[field.field] == null || record[field.field] === '' ? '—' : String(record[field.field]));
+        }
         continue;
       }
       const current = record[field.field] ?? '';
       let editor: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-      if (field.type === 'textarea' || field.type === 'richtext') {
+      if (field.type === 'permission-grid') {
+        const selected = new Set(Array.isArray(current) ? current.map(String) : String(current || '').split(',').map(permission => permission.trim()).filter(Boolean));
+        const options = Array.isArray(this.def.permission_options) ? this.def.permission_options : [];
+        const hidden = html.take(value).input.type('hidden').ele() as HTMLInputElement;
+        editor = hidden;
+        const groups = new Map<string, HTMLElement>();
+        for (const option of options) {
+          const permission = String(option.value ?? option.permission_key ?? '');
+          if (!permission) continue;
+          const groupKey = String(option.group || permission.split('.')[0] || 'general');
+          let grid = groups.get(groupKey);
+          if (!grid) {
+            const section = html.take(value).section.className('o-permission-grid-group').ele();
+            html.take(section).h3.className('o-permission-grid-title').text(groupKey);
+            grid = html.take(section).div.className('o-permission-grid').ele();
+            groups.set(groupKey, grid);
+          }
+          const label = html.take(grid).label.className('o-permission-grid-item').ele();
+          const checkbox = html.take(label).input.type('checkbox').ele() as HTMLInputElement;
+          html.take(checkbox).prop('checked', selected.has(permission) || option.enabled === true);
+          html.take(label).span.className('o-permission-grid-label').text(String(option.label || permission));
+          html.take(checkbox).event('change', () => {
+            if (checkbox.checked) selected.add(permission); else selected.delete(permission);
+            const next = [...selected].sort();
+            hidden.value = next.join(',');
+            this.state.draft = { ...(this.state.draft || {}), [field.field]: next };
+          });
+        }
+        hidden.value = [...selected].sort().join(',');
+      } else if (field.type === 'textarea' || field.type === 'richtext') {
         editor = html.take(value).textarea.ele() as HTMLTextAreaElement;
         html.take(editor).prop('rows', 3);
       } else if (field.type === 'select' || field.type === 'multi-select') {
@@ -140,7 +180,7 @@ export class OdooFormView extends BaseComponent {
           html.take(editor).prop('placeholder', field.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm');
         }
       }
-      html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
+      if (field.type !== 'permission-grid') html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
       editor.dataset.formField = field.field;
       html.take(editor).event('input', () => {
         this.state.draft = { ...(this.state.draft || {}), [field.field]: field.type === 'checkbox' ? (editor as HTMLInputElement).checked : editor.value };

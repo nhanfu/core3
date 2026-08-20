@@ -12,8 +12,11 @@ import { signAuthJwt, verifyAuthJwt } from '@core3/server/auth/jwt';
 
 export class AuthService implements AuthServiceProtocol {
   private readonly listeners = new Set<(event: AuthEvent) => void | Promise<void>>();
+  private readonly permissionCatalog: string[];
 
-  constructor(private readonly repository: AuthRepository, private readonly secret: Uint8Array) {}
+  constructor(private readonly repository: AuthRepository, private readonly secret: Uint8Array, permissionCatalog: string[] = []) {
+    this.permissionCatalog = [...new Set(permissionCatalog)].sort();
+  }
 
   async login(request: AuthenticationRequest): Promise<AuthenticationResult> {
     const user = await this.repository.findUserByEmail(request.email);
@@ -115,6 +118,24 @@ export class AuthService implements AuthServiceProtocol {
         return { users: await this.repository.usersManage(request.query == null ? null : String(request.query), Number(request.limit || 100)) };
       case 'roles.manage':
         return { data: await this.repository.rolesManage(request.query == null ? null : String(request.query)) };
+      case 'roles.permissions': {
+        const selected = new Set(await this.repository.rolePermissions(String(request.role_id || request.id || '')));
+        return { data: this.permissionCatalog.map((permission) => ({
+          value: permission,
+          label: permission,
+          group: permission.split('.')[0] || 'general',
+          enabled: selected.has(permission),
+        })) };
+      }
+      case 'users.update':
+        return this.repository.updateManagedUser(request);
+      case 'roles.update':
+        return this.repository.updateManagedRole({
+          ...request,
+          ...(Array.isArray(request.permissions)
+            ? { permissions: request.permissions.map(String).filter((permission: string) => this.permissionCatalog.includes(permission)) }
+            : {}),
+        });
       case 'companies.list':
         return { companies: await this.repository.companiesForUser(String(request.user_id || '')) };
       default:

@@ -779,6 +779,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       rowActions: def.row_actions || 'buttons',
       views,
       viewNavigation: def.view_navigation || 'icons',
+      responsiveCard: def.responsive_card === true,
       onViewChange: (view: string) => {
         const params = { ...getPageParams(), view } as Record<string, string | undefined>;
         if (view !== 'pivot') {

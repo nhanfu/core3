@@ -60,6 +60,15 @@
 .o-form-field-label { color: var(--o-form-muted); font-size: 12px; font-weight: 500; }
 .o-form-field-value { min-height: 22px; margin-top: 3px; color: var(--o-form-text); font-size: 14px; }
 .o-form-field-value.is-money { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.o-permission-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.o-permission-chip { padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 999px; background: var(--o-form-muted-bg); color: var(--o-form-text); font-size: 12px; }
+.o-permission-grid-group { margin-top: 10px; padding: 10px; border: 1px solid var(--o-form-border); border-radius: 6px; background: var(--o-form-muted-bg); }
+.o-permission-grid-title { margin: 0 0 8px; color: var(--o-form-text); font-size: 12px; font-weight: 600; text-transform: capitalize; }
+.o-permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; }
+.o-permission-grid-item { display: flex; align-items: flex-start; gap: 7px; padding: 4px; color: var(--o-form-muted); cursor: pointer; font-size: 12px; }
+.o-permission-grid-item:has(input:checked) { color: var(--o-form-text); }
+.o-permission-grid-item input { margin-top: 2px; accent-color: var(--o-form-action); }
+.o-permission-grid-label { overflow-wrap: anywhere; }
 .o-form-chatter { min-height: 380px; background: var(--o-form-bg); }
 .o-form-inline-editor { width: 100%; min-height: 30px; padding: 5px 7px; border: 1px solid var(--o-form-border); border-radius: 3px; background: var(--o-form-surface); color: var(--o-form-text); font: inherit; }
 .o-form-inline-editor:focus { border-color: var(--o-form-action); outline: 1px solid var(--o-form-action); }

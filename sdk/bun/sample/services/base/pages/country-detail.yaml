@@ -6,4 +6,17 @@ components:
   - type: OdooFormView
     source: country_detail
     title_field: name
+    header_actions: [{ id: edit_country_detail, label: Edit, variant: secondary, permission: base.reference.write }]
     groups: [{ title: Country, fields: [{ field: code, label: Code }, { field: name, label: Country }, { field: currency_code, label: Currency }] }]
+actions:
+  - id: edit_country_detail
+    type: server_form
+    permission: base.reference.write
+    title: Edit country
+    action: base.reference.countries.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.country_detail
+    refresh: [country_detail]
+    mutation: { operation: update, table: base_countries, key_field: code, concurrency: false, fields: [name, currency_code], required: [name, currency_code] }
+    fields: [{ field: name, label: Country, type: text, required: true }, { field: currency_code, label: Currency, type: text, required: true }]

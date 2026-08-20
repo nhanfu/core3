@@ -6,4 +6,17 @@ components:
   - type: OdooFormView
     source: currency_detail
     title_field: name
+    header_actions: [{ id: edit_currency_detail, label: Edit, variant: secondary, permission: base.reference.write }]
     groups: [{ title: Currency, fields: [{ field: code, label: Code }, { field: name, label: Currency }, { field: symbol, label: Symbol }, { field: decimal_places, label: Decimals }] }]
+actions:
+  - id: edit_currency_detail
+    type: server_form
+    permission: base.reference.write
+    title: Edit currency
+    action: base.reference.currencies.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.currency_detail
+    refresh: [currency_detail]
+    mutation: { operation: update, table: base_currencies, key_field: code, concurrency: false, fields: [name, symbol, decimal_places], required: [name, symbol, decimal_places] }
+    fields: [{ field: name, label: Currency, type: text, required: true }, { field: symbol, label: Symbol, type: text, required: true }, { field: decimal_places, label: Decimals, type: number, required: true }]

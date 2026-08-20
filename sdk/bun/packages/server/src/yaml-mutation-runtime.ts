@@ -8,6 +8,7 @@ export type MutationConnection = {
 export type MutationDefinition = {
   operation?: 'insert' | 'update' | 'delete';
   table?: string;
+  key_field?: string;
   fields?: string[];
   required?: string[];
   defaults?: Record<string, unknown>;
@@ -160,10 +161,12 @@ export class YamlMutationRuntime {
     }
     if (operation === 'update') {
       if (!requested.length) throw { status: 400, message: 'No fields to update' };
-      const currentRows = await queryOnConnection(connection, `SELECT ${requested.join(', ')} FROM ${table} WHERE id = ?`, [id]);
+      const keyField = this.identifier(definition.key_field || 'id', 'Mutation key field');
+      const currentRows = await queryOnConnection(connection, `SELECT ${requested.join(', ')} FROM ${table} WHERE ${keyField} = ?`, [id]);
       const current = currentRows[0];
       if (!current) throw { status: 404, message: 'Record not found' };
       const changedFields = requested.filter((field) => !sameMutationValue(current[field], values[field]));
+      if (!changedFields.length && !definition.timestamps) return;
       const sets = changedFields.map((field) => `${field} = ?`);
       if (definition.timestamps) sets.push('updated_at = CURRENT_TIMESTAMP');
       const concurrency = definition.concurrency === false ? undefined : (definition.concurrency || {});
@@ -174,15 +177,15 @@ export class YamlMutationRuntime {
         throw { status: 400, message: `${versionInput} is required` };
       }
       if (concurrency) sets.push(`${versionField} = ${versionField} + 1`);
-      const where = concurrency ? ` WHERE id = ? AND ${versionField} = ?` : ' WHERE id = ?';
+      const where = concurrency ? ` WHERE ${keyField} = ? AND ${versionField} = ?` : ` WHERE ${keyField} = ?`;
       const result = await runOnConnection(connection, `UPDATE ${table} SET ${sets.join(', ')}${where}`, concurrency
         ? [...changedFields.map((field) => values[field]), id, expectedVersion]
         : [...changedFields.map((field) => values[field]), id]);
       if (concurrency) {
         const changed = this.changedRows(result);
-        if (changed === 0) await this.throwStaleOrMissing(connection, table, id, versionField);
+        if (changed === 0) await this.throwStaleOrMissing(connection, table, id, versionField, keyField);
         if (changed === undefined) {
-          const [current] = await queryOnConnection(connection, `SELECT id, ${versionField} FROM ${table} WHERE id = ?`, [id]);
+          const [current] = await queryOnConnection(connection, `SELECT ${keyField}, ${versionField} FROM ${table} WHERE ${keyField} = ?`, [id]);
           if (!current) throw { status: 404, message: 'Record not found' };
           if (String(current[versionField]) === String(expectedVersion)) await this.throwStaleOrMissing(connection, table, id, versionField);
         }
@@ -196,9 +199,10 @@ export class YamlMutationRuntime {
     if (concurrency && (concurrency.required !== false) && (expectedVersion === undefined || expectedVersion === null || expectedVersion === '')) {
       throw { status: 400, message: `${versionInput} is required` };
     }
-    const where = concurrency ? ` WHERE id = ? AND ${versionField} = ?` : ' WHERE id = ?';
+    const keyField = this.identifier(definition.key_field || 'id', 'Mutation key field');
+    const where = concurrency ? ` WHERE ${keyField} = ? AND ${versionField} = ?` : ` WHERE ${keyField} = ?`;
     const result = await runOnConnection(connection, `DELETE FROM ${table}${where}`, concurrency ? [id, expectedVersion] : [id]);
-    if (concurrency && this.changedRows(result) === 0) await this.throwStaleOrMissing(connection, table, id, versionField);
+    if (concurrency && this.changedRows(result) === 0) await this.throwStaleOrMissing(connection, table, id, versionField, keyField);
   }
 
   private changedRows(result: any): number | undefined {
@@ -211,8 +215,8 @@ export class YamlMutationRuntime {
     return undefined;
   }
 
-  private async throwStaleOrMissing(connection: MutationConnection, table: string, id: unknown, versionField: string): Promise<never> {
-    const [current] = await queryOnConnection(connection, `SELECT id, ${versionField} FROM ${table} WHERE id = ?`, [id]);
+  private async throwStaleOrMissing(connection: MutationConnection, table: string, id: unknown, versionField: string, keyField = 'id'): Promise<never> {
+    const [current] = await queryOnConnection(connection, `SELECT ${keyField}, ${versionField} FROM ${table} WHERE ${keyField} = ?`, [id]);
     if (!current) throw { status: 404, message: 'Record not found' };
     throw {
       status: 409,

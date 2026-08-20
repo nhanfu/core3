@@ -130,4 +130,35 @@ export class AuthRepository {
   rolesManage(query: string | null = null): Promise<any[]> {
     return this.execute('roles_manage', { query: query || null });
   }
+
+  async updateManagedUser(fields: Record<string, unknown>): Promise<any> {
+    await this.execute('update_managed_user', fields);
+    return (await this.usersManage(String(fields.id), 1))[0] || null;
+  }
+
+  async updateManagedRole(fields: Record<string, unknown>): Promise<any> {
+    await this.execute('update_managed_role', fields);
+    if (Array.isArray(fields.permissions)) await this.replaceRolePermissions(String(fields.id), fields.permissions.map(String));
+    return (await this.rolesManage(String(fields.id)))[0] || null;
+  }
+
+  async rolePermissions(roleId: string): Promise<string[]> {
+    return (await this.execute('role_permissions', { role_id: roleId })).map((row) => String(row.permission_key));
+  }
+
+  private async replaceRolePermissions(roleId: string, permissionKeys: string[]): Promise<void> {
+    await this.withConnection(async (connection) => {
+      await runOnConnection(connection, 'BEGIN TRANSACTION');
+      try {
+        await runOnConnection(connection, 'DELETE FROM permissions WHERE role_id = ?', [roleId]);
+        for (const permissionKey of [...new Set(permissionKeys)].filter(Boolean)) {
+          await runOnConnection(connection, 'INSERT INTO permissions(id, role_id, permission_key) VALUES (?, ?, ?)', [crypto.randomUUID(), roleId, permissionKey]);
+        }
+        await runOnConnection(connection, 'COMMIT');
+      } catch (error) {
+        await runOnConnection(connection, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
 }

@@ -33,6 +33,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   const sourceResult = dataMap[def.source] || { data: {} };
   const formDef = { ...def };
   formDef.locale = config.locale;
+  formDef.permission_options = Array.isArray(dataMap.role_permissions?.data) ? dataMap.role_permissions.data : [];
   if (def.statusbar_source) {
     const statusSource = dataMap[def.statusbar_source]?.data || [];
     formDef.statusbar = statusSource.map((state: any) => ({ value: state.value, label: state.label }));

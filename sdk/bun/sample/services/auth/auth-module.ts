@@ -86,7 +86,9 @@ export default class AuthModule {
     }
     await migrateDatabase(repository, migrationsRoot, undefined, 'auth_schema_migrations', migrationKinds);
     const jwtSecret = authJwtSecret(context.env);
-    this.service = new AuthService(repository, jwtSecret);
+    const permissionCatalog = [...discoverPages(context.appsRoot).permissions.values()]
+      .flatMap((entry: any) => Array.isArray(entry.config?.permissions) ? entry.config.permissions.map(String) : []);
+    this.service = new AuthService(repository, jwtSecret, permissionCatalog);
     context.registerService(AUTH_SERVICE_KEY, this.service);
     this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);
     this.topics.register({

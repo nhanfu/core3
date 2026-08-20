@@ -4,7 +4,7 @@ datasources:
   - id: contact_detail
     single: true
     permission: base.contacts.read
-    query: "SELECT c.*, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories FROM base_contacts c WHERE c.id = :id"
+    query: "SELECT c.*, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories FROM base_contacts c WHERE c.id = :id"
   - id: contact_activities
     permission: base.activities.read
     query: "SELECT id, summary, activity_type, state, due_date, assigned_user_name FROM base_activities WHERE contact_id = :id ORDER BY due_date DESC"
@@ -12,7 +12,11 @@ components:
   - type: OdooFormView
     source: contact_detail
     title_field: name
+    subtitle_field: email
     status_field: active
+    status_label_field: active_label
+    status_colors: { Active: green, Archived: neutral }
+    status_badges: [{ value: true, label: Active, tone: green }, { value: false, label: Archived, tone: neutral }]
     editable: true
     labels: { save: Save, discard: Discard, editDetails: Edit details }
     header_actions:
@@ -28,7 +32,7 @@ components:
     source: contact_activities
     create_action: schedule_activity
     create_label: Schedule activity
-    view_navigation: tabs
+    responsive_card: true
     views:
       - { id: list, label: List, icon: table }
       - id: card
@@ -41,7 +45,6 @@ components:
     columns: [{ field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }]
     row_open_action: view_activity
     row_double_click_action: view_activity
-    form_view: { page: apps/services/base/pages/activity-detail.yaml, side_panel: true }
 actions:
   - id: edit_contact_detail
     type: server_form

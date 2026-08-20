@@ -69,6 +69,12 @@ an icon control, following the Orders page contract in
 when the feature supports editing; placeholders or view tabs without data-backed
 renderers do not satisfy this requirement.
 
+Detail-page responsive rule: detail pages must show one related-record view at a
+time. They must not nest the general List/Card/FormView switcher inside another
+FormView. Related lists use `responsive_card: true`: ListView is the sole desktop
+presentation and CardView is selected automatically on mobile, without a visible
+view-switcher. General collection pages keep the full user-selectable view tabs.
+
 Odoo scope:
 
 - `base`

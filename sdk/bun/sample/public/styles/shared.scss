@@ -73,6 +73,14 @@
   color: var(--color-text);
 }
 
+.permission-grid-group { margin-top: 12px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-surface) 88%, var(--color-primary)); }
+.permission-grid-title { margin: 0 0 9px; color: var(--color-text); font-size: .78rem; font-weight: 700; text-transform: capitalize; }
+.permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 12px; }
+.permission-grid-item { display: flex; align-items: flex-start; gap: 7px; min-width: 0; padding: 5px 6px; border-radius: var(--radius-sm); color: var(--color-text-secondary); cursor: pointer; font-size: .78rem; }
+.permission-grid-item:has(input:checked) { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-text); }
+.permission-grid-item input { margin-top: 2px; accent-color: var(--color-primary); }
+.permission-grid-label { overflow-wrap: anywhere; }
+
 .form-header {
   display: flex;
   align-items: center;
@@ -281,4 +289,3 @@
   color: var(--color-primary-hover) !important;
 }
 .token-status-count { color: var(--color-text-secondary) !important; }
-

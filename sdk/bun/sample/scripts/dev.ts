@@ -1,5 +1,5 @@
 import { createServer } from 'node:net';
-import { existsSync, statSync, watch } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 
 export async function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -106,30 +106,49 @@ if (import.meta.main) {
     'scripts',
     'server.ts',
     'config.yaml',
-    '../packages/client',
-    '../packages/server',
+    '../packages/client/src',
+    '../packages/client/package.json',
+    '../packages/server/src',
+    '../packages/server/package.json',
   ].filter((target) => existsSync(target));
-  const watchers: Array<{ close(): void }> = [];
-  try {
-    for (const target of watchTargets) {
-      watchers.push(watch(target, { recursive: statSync(target).isDirectory() }, (_event, filename) => {
-        if (!sourceChanged(filename) || stopped) return;
-        clearTimeout(restartTimer);
-        restartTimer = setTimeout(() => {
-          restartRequested = true;
-          child?.kill();
-        }, 100);
-      }));
+  const ignoredDirectoryNames = new Set(['.git', '.data', 'node_modules', 'dist', 'build', 'coverage']);
+  const sourceFiles = (target: string): string[] => {
+    if (!statSync(target).isDirectory()) return sourceChanged(target) ? [target] : [];
+    const files: string[] = [];
+    for (const entry of readdirSync(target, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        if (ignoredDirectoryNames.has(entry.name)) continue;
+        files.push(...sourceFiles(`${target}/${entry.name}`));
+      } else if (sourceChanged(entry.name)) {
+        files.push(`${target}/${entry.name}`);
+      }
     }
-  } catch (error: any) {
-    for (const watcher of watchers) watcher.close();
-    watchers.length = 0;
-    console.warn(`File watching disabled: ${error?.code || error?.message || 'unable to open watcher'}`);
-  }
+    return files;
+  };
+  const snapshot = () => new Map(
+    watchTargets.flatMap((target) => sourceFiles(target)).map((file) => {
+      const info = statSync(file);
+      return [file, `${info.mtimeMs}:${info.size}`] as const;
+    }),
+  );
+  let previousSnapshot = snapshot();
+  const watchTimer = setInterval(() => {
+    if (stopped) return;
+    const nextSnapshot = snapshot();
+    const changed = nextSnapshot.size !== previousSnapshot.size
+      || [...nextSnapshot].some(([file, value]) => previousSnapshot.get(file) !== value);
+    previousSnapshot = nextSnapshot;
+    if (!changed) return;
+    clearTimeout(restartTimer);
+    restartTimer = setTimeout(() => {
+      restartRequested = true;
+      child?.kill();
+    }, 100);
+  }, 500);
 
   const stop = () => {
     stopped = true;
-    for (const watcher of watchers) watcher.close();
+    clearInterval(watchTimer);
     clearTimeout(restartTimer);
     child?.kill();
     mediator.kill();

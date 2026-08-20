@@ -28,6 +28,7 @@ type YamlApiContext = {
   topics: TopicMediator;
   storage?: any;
   reloadPages?: () => void;
+  resolveService?: <T>(name: string) => T;
 };
 
 export function createYamlApi(ctx: YamlApiContext) {
@@ -45,6 +46,7 @@ export function createYamlApi(ctx: YamlApiContext) {
     eventStore: EVENT_STORE,
     topics: TOPICS,
     reloadPages,
+    resolveService,
   } = ctx;
 
   function json(data: any, status = 200, extraHeaders: Record<string, string> = {}): Response {
@@ -291,7 +293,7 @@ export function createYamlApi(ctx: YamlApiContext) {
 
 
     const routeContext: Record<string, any> = {
-      req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE, topics: TOPICS,
+      req, url, pathname, method, repository, authProvider, eventStore: EVENT_STORE, topics: TOPICS, resolveService,
       SOURCES, PAGES, CATALOGS, WORKFLOWS, WORKFLOW_FILES, UPLOAD_ROOT, reloadPages,
       STORAGE: ctx.storage || {},
       authUser, activityActor, NAMED_ACTIONS, TABLES,

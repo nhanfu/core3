@@ -13,9 +13,23 @@ components:
     source: user_detail
     title_field: name
     labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions: [{ id: edit_user_detail, label: Edit, variant: secondary, permission: auth.users.manage }]
     group_columns: 2
     groups:
       - title: User
         fields: [{ field: name, label: Name }, { field: email, label: Email }, { field: enabled, label: Active }, { field: preferred_lang, label: Language }, { field: roles, label: Groups }]
       - title: Company
         fields: [{ field: company_name, label: Current company }, { field: current_company_id, label: Company ID }]
+actions:
+  - id: edit_user_detail
+    type: server_form
+    permission: auth.users.manage
+    title: Edit user
+    action: auth.users.update
+    handler: service_call
+    service: auth
+    service_operation: users.update
+    operation: update
+    prefill: state.user_detail
+    refresh: [user_detail]
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: email, label: Email, type: text, required: true }, { field: preferred_lang, label: Language, type: text }, { field: enabled, label: Active, type: checkbox }]

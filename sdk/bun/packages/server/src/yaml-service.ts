@@ -256,6 +256,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       topics: this.topics,
       storage: this.definition.storage,
       reloadPages,
+      resolveService: context.resolveService,
     });
     this.runtime = {
       id: this.id,

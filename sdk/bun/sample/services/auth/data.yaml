@@ -61,22 +61,37 @@ queries:
       AND enabled = true
       AND (:view_scope = 'all' OR branch_id = :branch_id)
   users_manage: |
-    SELECT u.id, u.email, u.name, u.enabled, u.preferred_lang, u.current_company_id,
-      string_agg(r.name, ',') AS roles,
+    SELECT u.id, COALESCE(MAX(uo.row_version), u.row_version) AS row_version,
+      COALESCE(MAX(uo.email), u.email) AS email, COALESCE(MAX(uo.name), u.name) AS name,
+      COALESCE(MAX(uo.enabled), u.enabled) AS enabled, COALESCE(MAX(uo.preferred_lang), u.preferred_lang) AS preferred_lang, u.current_company_id,
+      string_agg(COALESCE(ro.name, r.name), ',') AS roles,
       c.name AS company_name
     FROM users u
+    LEFT JOIN auth_user_management_overrides uo ON uo.user_id = u.id
     LEFT JOIN user_roles ur ON ur.user_id = u.id
     LEFT JOIN roles r ON r.id = ur.role_id
+    LEFT JOIN auth_role_management_overrides ro ON ro.role_id = r.id
     LEFT JOIN auth_companies c ON c.id = u.current_company_id
-    WHERE (:query IS NULL OR lower(u.id) = lower(:query) OR lower(u.name) LIKE '%' || lower(:query) || '%' OR lower(u.email) LIKE '%' || lower(:query) || '%')
-    GROUP BY u.id, u.email, u.name, u.enabled, u.preferred_lang, u.current_company_id, c.name
+    WHERE (:query IS NULL OR lower(u.id) = lower(:query) OR lower(COALESCE(uo.name, u.name)) LIKE '%' || lower(:query) || '%' OR lower(COALESCE(uo.email, u.email)) LIKE '%' || lower(:query) || '%')
+    GROUP BY u.id, u.row_version, u.email, u.name, u.enabled, u.preferred_lang, u.current_company_id, c.name
     ORDER BY lower(u.name)
   roles_manage: |
-    SELECT r.id, r.name, r.description, r.view_scope,
+    SELECT r.id, COALESCE(MAX(ro.name), r.name) AS name, COALESCE(MAX(ro.description), r.description) AS description, COALESCE(MAX(ro.view_scope), r.view_scope) AS view_scope,
       COALESCE(string_agg(p.permission_key, ', '), '') AS permissions
-    FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
-    WHERE (:query IS NULL OR lower(r.id) = lower(:query) OR lower(r.name) LIKE '%' || lower(:query) || '%')
+    FROM roles r LEFT JOIN auth_role_management_overrides ro ON ro.role_id = r.id LEFT JOIN permissions p ON p.role_id = r.id
+    WHERE (:query IS NULL OR lower(r.id) = lower(:query) OR lower(COALESCE(ro.name, r.name)) LIKE '%' || lower(:query) || '%')
     GROUP BY r.id, r.name, r.description, r.view_scope ORDER BY r.name
+  role_permissions: |
+    SELECT permission_key
+    FROM permissions
+    WHERE role_id = :role_id
+    ORDER BY permission_key
+  update_managed_user: |
+    INSERT OR REPLACE INTO auth_user_management_overrides(user_id, email, name, preferred_lang, enabled, row_version, updated_at)
+    VALUES (:id, :email, :name, :preferred_lang, :enabled, COALESCE(:expected_row_version, 1) + 1, CURRENT_TIMESTAMP)
+  update_managed_role: |
+    INSERT OR REPLACE INTO auth_role_management_overrides(role_id, name, description, view_scope, updated_at)
+    VALUES (:id, :name, :description, :view_scope, CURRENT_TIMESTAMP)
   companies_for_user: |
     SELECT c.id, c.name, c.short_name, c.address, c.currency_code, uc.is_default
     FROM auth_companies c JOIN auth_user_companies uc ON uc.company_id = c.id
