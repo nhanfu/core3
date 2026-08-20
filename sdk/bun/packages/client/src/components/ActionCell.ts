@@ -3,6 +3,11 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { appendIcon, hasIcon } from '@core3/client/components/Icon';
 
 export class ActionCell extends BaseComponent {
+  static resolveState(def: any, context: any = {}) {
+    const row = context.row || context;
+    return { actions: (def.actions || []).filter(action => !context.actionFilter || context.actionFilter(action, row)), row };
+  }
+
   draw(container) {
     const { actions = [] } = this.state;
     const wrap = html.take(container).div.className('flex gap-3').ele();

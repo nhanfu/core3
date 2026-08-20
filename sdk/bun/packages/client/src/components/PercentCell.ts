@@ -3,6 +3,11 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { fmtNumber } from '@core3/client/components/helpers';
 
 export class PercentCell extends BaseComponent {
+  static resolveState(def: any, context: any) {
+    const row = context.row || context;
+    return { value: row[def.field || ''] };
+  }
+
   draw(container) {
     const { value = 0 } = this.state;
     const pct = Math.min(100, Math.max(0, Number(value) || 0));

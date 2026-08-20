@@ -3,6 +3,11 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { fmtNumber } from '@core3/client/components/helpers';
 
 export class NumberCell extends BaseComponent {
+  static resolveState(def: any, context: any) {
+    const row = context.row || context;
+    return { value: row[def.field || ''], format: def.format || 'number' };
+  }
+
   draw(container) {
     const { value, format = 'number' } = this.state;
     if (value == null) {

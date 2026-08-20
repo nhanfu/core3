@@ -23,6 +23,11 @@ function getAvatarColor(name) {
 }
 
 export class AvatarCell extends BaseComponent {
+  static resolveState(def: any, context: any) {
+    const row = context.row || context;
+    return { name: row[def.field || ''], src: def.srcField ? row[def.srcField] : null, size: def.size || 'sm' };
+  }
+
   draw(container) {
     const { name = '', src = null, size = 'sm' } = this.state;
     const sizeCls = SIZE_CLASSES[size] || SIZE_CLASSES.sm;

@@ -1,16 +1,17 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { i18n } from '@core3/client/i18n';
-import { CellComponentFactory } from '@core3/client/components/CellComponentFactory';
+import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
 
 export class GroupGridView extends BaseComponent {
+  private readonly componentLoader = new ConventionComponentLoader();
   constructor(id, state, defs = []) {
     super(id, state);
     this.defs = defs;
   }
 
   _cellState(def, row) {
-    return CellComponentFactory.state(def, row);
+    return this.componentLoader.stateSync(def.type || 'TextCell', def, { row });
   }
 
   draw(container) {
@@ -72,9 +73,8 @@ export class GroupGridView extends BaseComponent {
           const cellAttr = `${this.id}-${String(row.id ?? '')}-${def.id}`;
           const td = container.querySelector(`[data-cell="${cellAttr}"]`);
           if (!td) continue;
-          const cell = CellComponentFactory.create(cellAttr, def, row);
-          cell.parent = this;
-          this.children.push(cell);
+          const cell = this.componentLoader.createSync(def.type || 'TextCell', cellAttr, def, { row });
+          this.adoptChild(cell);
           cell.draw(td);
         }
       }
