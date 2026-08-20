@@ -6,10 +6,18 @@ pages:
   - pages/menu.yaml
   - pages/contacts.yaml
   - pages/contact-detail.yaml
+  - pages/activity-detail.yaml
   - pages/companies.yaml
+  - pages/company-detail.yaml
   - pages/users.yaml
+  - pages/user-detail.yaml
   - pages/user-groups.yaml
+  - pages/user-group-detail.yaml
   - pages/reference-data.yaml
+  - pages/country-detail.yaml
+  - pages/currency-detail.yaml
+  - pages/language-detail.yaml
+  - pages/category-detail.yaml
   - pages/activity-workflow.yaml
 permissions: permissions.yaml
 operations: operations.yaml

@@ -128,6 +128,10 @@ export class OdooFormView extends BaseComponent {
           const optionValue = String(itemOption.id ?? itemOption.value ?? '');
           html.take(editor).option.prop('value', optionValue).text(String(itemOption.label ?? optionValue));
         }
+      } else if (field.type === 'checkbox') {
+        editor = html.take(value).input.ele() as HTMLInputElement;
+        html.take(editor).type('checkbox');
+        (editor as HTMLInputElement).checked = Boolean(current);
       } else {
         editor = html.take(value).input.ele() as HTMLInputElement;
         html.take(editor).type(field.type === 'number' || field.type === 'money' ? 'number' : 'text');
@@ -138,7 +142,9 @@ export class OdooFormView extends BaseComponent {
       }
       html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
       editor.dataset.formField = field.field;
-      html.take(editor).event('input', () => { this.state.draft = { ...(this.state.draft || {}), [field.field]: editor.value }; });
+      html.take(editor).event('input', () => {
+        this.state.draft = { ...(this.state.draft || {}), [field.field]: field.type === 'checkbox' ? (editor as HTMLInputElement).checked : editor.value };
+      });
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {

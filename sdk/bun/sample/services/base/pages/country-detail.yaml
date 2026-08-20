@@ -1,0 +1,9 @@
+title: Country
+page: { id: country-detail, breadcrumb: [Contacts, Configuration, Countries], auth: { require: [base.reference.read] } }
+datasources:
+  - { id: country_detail, single: true, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries WHERE code = :id" }
+components:
+  - type: OdooFormView
+    source: country_detail
+    title_field: name
+    groups: [{ title: Country, fields: [{ field: code, label: Code }, { field: name, label: Country }, { field: currency_code, label: Currency }] }]

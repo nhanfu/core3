@@ -114,7 +114,7 @@ export class AuthService implements AuthServiceProtocol {
       case 'users.manage':
         return { users: await this.repository.usersManage(request.query == null ? null : String(request.query), Number(request.limit || 100)) };
       case 'roles.manage':
-        return { data: await this.repository.rolesManage() };
+        return { data: await this.repository.rolesManage(request.query == null ? null : String(request.query)) };
       case 'companies.list':
         return { companies: await this.repository.companiesForUser(String(request.user_id || '')) };
       default:

@@ -1,0 +1,21 @@
+title: User
+page: { id: user-detail, breadcrumb: [Settings, Users, Detail], auth: { require: [auth.users.manage] } }
+datasources:
+  - id: user_detail
+    type: service
+    service: auth
+    operation: users.manage
+    single: true
+    service_params: { query: id, limit: 1 }
+    permission: auth.users.manage
+components:
+  - type: OdooFormView
+    source: user_detail
+    title_field: name
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    group_columns: 2
+    groups:
+      - title: User
+        fields: [{ field: name, label: Name }, { field: email, label: Email }, { field: enabled, label: Active }, { field: preferred_lang, label: Language }, { field: roles, label: Groups }]
+      - title: Company
+        fields: [{ field: company_name, label: Current company }, { field: current_company_id, label: Company ID }]

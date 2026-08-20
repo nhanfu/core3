@@ -120,6 +120,7 @@ async function queryServiceSource(this: any, source: any, params: Record<string,
   if (source.limit_param && request.limit === undefined) request.limit = Math.min(Number(params[source.limit_param] || top || 100), 100);
   const response = await this.callService(String(source.service || ''), String(source.operation || ''), request);
   const rows = Array.isArray(response) ? response : Array.isArray(response?.users) ? response.users : Array.isArray(response?.data) ? response.data : [];
+  if (source.single === true) return { data: rows[0] || {}, meta: response?.meta || { total: rows.length, page: 1, pageSize: 1, pages: rows.length ? 1 : 0 } };
   return { data: rows, meta: response?.meta || { total: rows.length, page: 1, pageSize: rows.length, pages: rows.length ? 1 : 0 } };
 }
 

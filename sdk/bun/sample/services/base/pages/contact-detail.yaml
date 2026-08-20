@@ -13,6 +13,10 @@ components:
     source: contact_detail
     title_field: name
     status_field: active
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: edit_contact_detail, label: Edit, variant: secondary, permission: base.contacts.write }
     group_columns: 2
     groups:
       - title: Contact
@@ -24,8 +28,51 @@ components:
     source: contact_activities
     create_action: schedule_activity
     create_label: Schedule activity
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: summary
+          subtitle: activity_type
+          fields: [{ field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }]
     columns: [{ field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }]
+    row_open_action: view_activity
+    row_double_click_action: view_activity
+    form_view: { page: apps/services/base/pages/activity-detail.yaml, side_panel: true }
 actions:
+  - id: edit_contact_detail
+    type: server_form
+    permission: base.contacts.write
+    title: Edit contact
+    action: base.contacts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.contact_detail
+    refresh: [contact_detail, contact_activities]
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes]
+      required: [name]
+      timestamps: true
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company_type, label: Type, type: select, options: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }] }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: street2, label: Street 2, type: text }
+      - { field: city, label: City, type: text }
+      - { field: state_name, label: State, type: text }
+      - { field: zip, label: ZIP, type: text }
+      - { field: country_name, label: Country, type: text }
+      - { field: currency_code, label: Currency, type: text }
+      - { field: is_company, label: Is a company, type: checkbox }
+      - { field: notes, label: Notes, type: textarea }
   - id: schedule_activity
     type: server_form
     permission: base.activities.write
@@ -48,3 +95,8 @@ actions:
       - { field: assigned_user_id, label: Assigned user ID, type: text }
       - { field: assigned_user_name, label: Assigned to, type: text }
       - { field: note, label: Note, type: textarea }
+  - id: view_activity
+    type: navigate
+    permission: base.activities.read
+    navigate_to: /activity-detail
+    params: { id: '{row.id}' }

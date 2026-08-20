@@ -1,0 +1,12 @@
+title: Activity
+page: { id: activity-detail, breadcrumb: [Contacts, Activity, Detail], auth: { require: [base.activities.read] } }
+datasources:
+  - { id: activity_detail, single: true, permission: base.activities.read, query: "SELECT id, summary, activity_type, state, due_date, assigned_user_name, note FROM base_activities WHERE id = :id" }
+components:
+  - type: OdooFormView
+    source: activity_detail
+    title_field: summary
+    status_field: state
+    groups:
+      - title: Activity
+        fields: [{ field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }, { field: note, label: Note }]

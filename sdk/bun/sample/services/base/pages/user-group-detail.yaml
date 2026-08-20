@@ -1,0 +1,18 @@
+title: User Group
+page: { id: user-group-detail, breadcrumb: [Settings, User Groups, Detail], auth: { require: [auth.roles.manage] } }
+datasources:
+  - id: user_group_detail
+    type: service
+    service: auth
+    operation: roles.manage
+    single: true
+    service_params: { query: id }
+    permission: auth.roles.manage
+components:
+  - type: OdooFormView
+    source: user_group_detail
+    title_field: name
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    groups:
+      - title: Group
+        fields: [{ field: id, label: Group ID }, { field: name, label: Name }, { field: description, label: Description }, { field: view_scope, label: Visibility }, { field: permissions, label: Permissions }]

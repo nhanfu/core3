@@ -127,7 +127,7 @@ export class AuthRepository {
     return rows[0];
   }
 
-  rolesManage(): Promise<any[]> {
-    return this.execute('roles_manage', {});
+  rolesManage(query: string | null = null): Promise<any[]> {
+    return this.execute('roles_manage', { query: query || null });
   }
 }

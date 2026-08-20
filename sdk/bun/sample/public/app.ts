@@ -5,6 +5,7 @@ import { client } from '@core3/client/client';
 import { validatePageDefinition } from '@core3/server/yaml/schema';
 import { PageRuntime } from '@core3/client/components/PageRoot';
 import { loginPath, safeRedirect } from '@core3/client/auth-redirect';
+import { resolveRouteWithModule } from './app-routing.ts';
 
 const TOKEN_KEY = 'core3_token';
 const DEFAULT_APP_KEY = 'core3_default_app';
@@ -160,20 +161,7 @@ export async function logout() {
 }
 
 function routeWithModule(path: string) {
-  const routePath = path.startsWith('/') ? path : `/${path}`;
-  if (routePath === '/apps') return routePath;
-  const normalizedPath = routePath.toLowerCase();
-  const module = _manifest.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
-  if (module) {
-    if (routePath === `/${module.id}`) {
-      const appRoute = _apps.find((app) => String(app.module || app.id) === module.id)?.route;
-      return appRoute && appRoute !== routePath ? String(appRoute) : module.routes?.[0]?.path || routePath;
-    }
-    return routePath;
-  }
-  if (routePath === '/login' || routePath.startsWith('/login/')) return `/auth${routePath}`;
-  const moduleId = _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order');
-  return `/${moduleId}${routePath}`;
+  return resolveRouteWithModule(path, _manifest, _apps, _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order'));
 }
 
 function normalizePagePath(path: string): string {

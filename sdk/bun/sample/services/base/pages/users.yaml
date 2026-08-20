@@ -12,6 +12,20 @@ components:
     variant: odoo
     source: users
     search: { label: Search users, placeholder: 'Search name or email...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: email
+          fields:
+            - { field: roles, label: Groups }
+            - { field: company_name, label: Current company }
+            - { field: preferred_lang, label: Language }
+            - { field: enabled, label: Active }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
       - { field: email, label: Email }
@@ -21,3 +35,12 @@ components:
       - { field: enabled, label: Active }
     page_size: 50
     row_key: id
+    row_open_action: view_user
+    row_double_click_action: view_user
+    form_view: { page: apps/services/base/pages/user-detail.yaml, side_panel: true }
+actions:
+  - id: view_user
+    type: navigate
+    permission: auth.users.manage
+    navigate_to: /user-detail
+    params: { id: '{row.id}' }

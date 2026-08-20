@@ -10,6 +10,19 @@ components:
   - type: ListView
     variant: odoo
     source: user_groups
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: id
+          fields:
+            - { field: description, label: Description }
+            - { field: view_scope, label: Visibility }
+            - { field: permissions, label: Permissions }
     columns:
       - { field: id, label: Group, type: PrimaryEntityCell }
       - { field: name, label: Name }
@@ -18,3 +31,12 @@ components:
       - { field: permissions, label: Permissions }
     page_size: 50
     row_key: id
+    row_open_action: view_user_group
+    row_double_click_action: view_user_group
+    form_view: { page: apps/services/base/pages/user-group-detail.yaml, side_panel: true }
+actions:
+  - id: view_user_group
+    type: navigate
+    permission: auth.roles.manage
+    navigate_to: /user-group-detail
+    params: { id: '{row.id}' }

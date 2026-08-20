@@ -53,6 +53,22 @@ All routes, menus, actions, permissions, datasource metadata, workflows, and see
 
 ## Phase 1 — Base, users, companies, and contacts
 
+Implementation note: Base detail pages must use the same Odoo FormView interaction as
+Orders: direct module-aware routes, an inline Edit action, editable fields, Save and
+Discard controls, optimistic-concurrency saves, and declarative YAML mutations. A
+detail route must never fall back to the Order module when opened without a module
+prefix (for example `/contact-detail?id=...` resolves to `/base/contact-detail`).
+
+Cross-module list/grid UI requirement: every list or grid feature must expose a
+tab-based view switcher using `view_navigation: tabs`, with at minimum ListView and
+CardView definitions. Each feature must also provide an inline FormView definition
+and allow the user to toggle between the collection view and the FormView through
+an icon control, following the Orders page contract in
+`sample/services/order/pages/orders.yaml` (`views`, `view_navigation`, and
+`form_view`). The FormView must use the same edit, Save, and Discard interaction
+when the feature supports editing; placeholders or view tabs without data-backed
+renderers do not satisfy this requirement.
+
 Odoo scope:
 
 - `base`

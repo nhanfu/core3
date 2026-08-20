@@ -1,0 +1,9 @@
+title: Currency
+page: { id: currency-detail, breadcrumb: [Contacts, Configuration, Currencies], auth: { require: [base.reference.read] } }
+datasources:
+  - { id: currency_detail, single: true, permission: base.reference.read, query: "SELECT code, name, symbol, decimal_places FROM base_currencies WHERE code = :id" }
+components:
+  - type: OdooFormView
+    source: currency_detail
+    title_field: name
+    groups: [{ title: Currency, fields: [{ field: code, label: Code }, { field: name, label: Currency }, { field: symbol, label: Symbol }, { field: decimal_places, label: Decimals }] }]

@@ -1,0 +1,19 @@
+version: 0.0.3
+kind: schema
+description: Rebuild contact indexes for durable DuckDB update compatibility
+type:
+  postgres:
+    up: |
+      DROP INDEX IF EXISTS base_contacts_email_idx;
+      DROP INDEX IF EXISTS base_contacts_name_idx;
+      CREATE INDEX base_contacts_email_idx ON base_contacts(email);
+      CREATE INDEX base_contacts_name_idx ON base_contacts(name);
+    down: |
+      DROP INDEX IF EXISTS base_contacts_email_idx;
+      DROP INDEX IF EXISTS base_contacts_name_idx;
+      CREATE INDEX base_contacts_email_idx ON base_contacts(email);
+      CREATE INDEX base_contacts_name_idx ON base_contacts(name);
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
