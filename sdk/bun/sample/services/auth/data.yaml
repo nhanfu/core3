@@ -3,16 +3,18 @@ queries:
     SELECT id, email, name, avatar_url, enabled, branch_id
     FROM users WHERE lower(email) = lower(:email)
   find_user_by_email: |
-    SELECT u.*, string_agg(r.name, ',') AS roles_csv,
+    SELECT u.*, string_agg(COALESCE(ro.name, r.name), ',') AS roles_csv,
       COALESCE((SELECT CASE
-        WHEN bool_or(sr.view_scope = 'all') THEN 'all'
-        WHEN bool_or(sr.view_scope = 'branch') THEN 'branch'
+        WHEN bool_or(COALESCE(sro.view_scope, sr.view_scope) = 'all') THEN 'all'
+        WHEN bool_or(COALESCE(sro.view_scope, sr.view_scope) = 'branch') THEN 'branch'
         ELSE 'own' END
         FROM user_roles sur JOIN roles sr ON sr.id = sur.role_id
+        LEFT JOIN auth_role_management_overrides sro ON sro.role_id = sr.id
         WHERE sur.user_id = u.id), 'all') AS view_scope
     FROM users u
     LEFT JOIN user_roles ur ON ur.user_id = u.id
     LEFT JOIN roles r ON r.id = ur.role_id
+    LEFT JOIN auth_role_management_overrides ro ON ro.role_id = r.id
     WHERE lower(u.email) = lower(:email)
     GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
       u.preferred_lang, u.enabled, u.branch_id, u.department_id,
@@ -65,6 +67,7 @@ queries:
       COALESCE(MAX(uo.email), u.email) AS email, COALESCE(MAX(uo.name), u.name) AS name,
       COALESCE(MAX(uo.enabled), u.enabled) AS enabled, COALESCE(MAX(uo.preferred_lang), u.preferred_lang) AS preferred_lang, u.current_company_id,
       string_agg(COALESCE(ro.name, r.name), ',') AS roles,
+      string_agg(r.id, ',') AS role_ids,
       c.name AS company_name
     FROM users u
     LEFT JOIN auth_user_management_overrides uo ON uo.user_id = u.id

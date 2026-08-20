@@ -2,6 +2,7 @@ import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
+import { AsyncSelect } from '@core3/client/components/AsyncSelect';
 
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only
@@ -161,7 +162,16 @@ export class OdooFormView extends BaseComponent {
       } else if (field.type === 'textarea' || field.type === 'richtext') {
         editor = html.take(value).textarea.ele() as HTMLTextAreaElement;
         html.take(editor).prop('rows', 3);
-      } else if (field.type === 'select' || field.type === 'multi-select') {
+      } else if (field.type === 'async-select' || field.type === 'multi-select') {
+        const select = this.createChild(AsyncSelect, `inline-${field.field}`, {
+          value: Array.isArray(current) ? current : String(current || '').split(',').map(value => value.trim()).filter(Boolean),
+        });
+        select.def.options = (field.options || []).map((option: any) => ({ value: option.value ?? option.id, label: option.label ?? option.name ?? option.value ?? option.id }));
+        select.def.multiple = field.type === 'multi-select';
+        select.def.placeholder = field.placeholder;
+        select.mount(value);
+        editor = select.input as HTMLInputElement;
+      } else if (field.type === 'select') {
         editor = html.take(value).select.ele() as HTMLSelectElement;
         for (const option of field.options || []) {
           const itemOption = typeof option === 'string' ? { id: option, label: option } : option;
@@ -182,9 +192,10 @@ export class OdooFormView extends BaseComponent {
       }
       if (field.type !== 'permission-grid') html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
       editor.dataset.formField = field.field;
-      html.take(editor).event('input', () => {
-        this.state.draft = { ...(this.state.draft || {}), [field.field]: field.type === 'checkbox' ? (editor as HTMLInputElement).checked : editor.value };
-      });
+      const updateDraft = () => {
+        this.state.draft = { ...(this.state.draft || {}), [field.field]: field.type === 'checkbox' ? (editor as HTMLInputElement).checked : field.type === 'multi-select' ? editor.value.split(',').filter(Boolean) : editor.value };
+      };
+      html.take(editor).event('input', updateDraft).event('change', updateDraft);
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {

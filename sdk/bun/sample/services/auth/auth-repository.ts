@@ -133,7 +133,24 @@ export class AuthRepository {
 
   async updateManagedUser(fields: Record<string, unknown>): Promise<any> {
     await this.execute('update_managed_user', fields);
+    if (Array.isArray(fields.role_ids)) await this.replaceUserRoles(String(fields.id), fields.role_ids.map(String));
     return (await this.usersManage(String(fields.id), 1))[0] || null;
+  }
+
+  private async replaceUserRoles(userId: string, roleIds: string[]): Promise<void> {
+    await this.withConnection(async (connection) => {
+      await runOnConnection(connection, 'BEGIN TRANSACTION');
+      try {
+        await runOnConnection(connection, 'DELETE FROM user_roles WHERE user_id = ?', [userId]);
+        for (const roleId of [...new Set(roleIds)].filter(Boolean)) {
+          await runOnConnection(connection, 'INSERT INTO user_roles(user_id, role_id) VALUES (?, ?)', [userId, roleId]);
+        }
+        await runOnConnection(connection, 'COMMIT');
+      } catch (error) {
+        await runOnConnection(connection, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
   }
 
   async updateManagedRole(fields: Record<string, unknown>): Promise<any> {

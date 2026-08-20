@@ -60,6 +60,7 @@
 .o-form-field-label { color: var(--o-form-muted); font-size: 12px; font-weight: 500; }
 .o-form-field-value { min-height: 22px; margin-top: 3px; color: var(--o-form-text); font-size: 14px; }
 .o-form-field-value.is-money { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.o-form-field input[type="checkbox"].o-form-inline-editor { width: 15px; height: 15px; margin: 3px 0 0; accent-color: var(--o-form-action); }
 .o-permission-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .o-permission-chip { padding: 4px 8px; border: 1px solid var(--o-form-border); border-radius: 999px; background: var(--o-form-muted-bg); color: var(--o-form-text); font-size: 12px; }
 .o-permission-grid-group { margin-top: 10px; padding: 10px; border: 1px solid var(--o-form-border); border-radius: 6px; background: var(--o-form-muted-bg); }
@@ -477,7 +478,8 @@
 .async-select-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: var(--radius-full); background: var(--color-primary-light); color: var(--color-primary-hover); font-size: 0.75rem; }
 .async-select-chip-remove { border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; font-size: 0.9rem; line-height: 1; }
 .async-select-search { min-width: 120px; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font-size: 0.875rem; }
-.async-select-options { position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; padding: 4px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-md); }
+.async-select-options { display: none; position: absolute; z-index: 20; top: calc(100% + 4px); left: 0; right: 0; max-height: 220px; overflow-y: auto; padding: 4px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-md); }
+.async-select.is-open .async-select-options { display: block; }
 .async-select-option { display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-text-secondary); cursor: pointer; text-align: left; font-size: 0.8125rem; }
 .async-select-option:hover, .async-select-option.is-selected { background: var(--color-primary-light); color: var(--color-primary-hover); }
 .async-select-empty { padding: 10px; color: var(--color-text-muted); font-size: 0.8125rem; }

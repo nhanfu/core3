@@ -24,6 +24,10 @@ export class AsyncSelect extends BaseComponent {
   private listElement: HTMLElement | null = null;
   private selectedElement: HTMLElement | null = null;
   private query = '';
+  private open = false;
+  private readonly outsideClick = (event: Event) => {
+    if (this.rootElement && !this.rootElement.contains(event.target as Node)) this.setOpen(false);
+  };
 
   constructor(id: string, state: { value?: unknown } = {}, def: AsyncSelectDefinition = {}) {
     super(id, state);
@@ -42,6 +46,11 @@ export class AsyncSelect extends BaseComponent {
     if (!this.input) return;
     this.input.value = this.def.multiple ? this.selected.join(',') : (this.selected[0] || '');
     html.take(this.input).dispatch(new Event('change', { bubbles: true }));
+  }
+
+  private setOpen(open: boolean) {
+    this.open = open;
+    if (this.rootElement) html.take(this.rootElement).toggleClass('is-open', open);
   }
 
   private renderOptions() {
@@ -79,6 +88,7 @@ export class AsyncSelect extends BaseComponent {
         }
         this.syncValue();
         this.renderOptions();
+        if (!this.def.multiple) this.setOpen(false);
         });
     }
     if (!options.length) {
@@ -101,16 +111,19 @@ export class AsyncSelect extends BaseComponent {
       .event('input', () => {
       this.query = search.value;
       this.renderOptions();
-      }).ele() as HTMLInputElement;
+      }).event('focus', () => this.setOpen(true)).event('click', () => this.setOpen(true)).ele() as HTMLInputElement;
 
     const list = html.take(root).div.className('async-select-options').attr('role', 'listbox')
       .attr('aria-multiselectable', String(!!this.def.multiple)).ele() as HTMLDivElement;
     this.listElement = list;
     this.syncValue();
     this.renderOptions();
+    document.addEventListener('click', this.outsideClick);
   }
 
   dispose() {
+    document.removeEventListener('click', this.outsideClick);
+    this.setOpen(false);
     this.rootElement = null;
     this.listElement = null;
     this.selectedElement = null;

@@ -64,10 +64,13 @@ export class AuthService implements AuthServiceProtocol {
     if (!header.startsWith('Bearer ')) throw { status: 401, code: 'UNAUTHORIZED', message_key: 'errors.unauthorized', message: 'Unauthorized' };
     const user = await this.introspect(header.slice(7));
     if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
+    const access = user.email ? await this.repository.findUserByEmail(String(user.email)) : null;
     const profile = await this.repository.profile(String(user.sub));
     if (!profile) return user;
     const company = profile.current_company_id ? await this.repository.companyForUser(String(user.sub), String(profile.current_company_id)) : null;
-    return { ...user, avatar_url: profile.avatar_url || null, company_id: profile.current_company_id || null, company } as any;
+    const roles = access?.roles_csv ? String(access.roles_csv).split(',').filter(Boolean) : user.roles;
+    const permissions = access ? await this.repository.permissions(String(user.sub)) : user.permissions;
+    return { ...user, roles, permissions, view_scope: access?.view_scope || user.view_scope, avatar_url: profile.avatar_url || null, company_id: profile.current_company_id || null, company } as any;
   }
 
   async introspect(token: string): Promise<AuthClaims | null> {
