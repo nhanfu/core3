@@ -4,6 +4,10 @@ import { html } from '@core3/client/html';
 export class AvatarPicker extends BaseComponent {
   private previousAvatarUrl = '';
 
+  static resolveState(_definition: any, context: any) {
+    return { user: context.user || {} };
+  }
+
   constructor(id: string, state: any = {}, private readonly def: any = {}) {
     super(id, state);
     this.previousAvatarUrl = String(state.user?.avatar_url || '');

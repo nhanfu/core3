@@ -6,6 +6,13 @@ const TEXT_FUNCTIONS = new Map<string, (user: any, row: any, state: any) => unkn
 
 /** Safe, text-only HTML tree declared by YAML. */
 export class Html extends BaseComponent {
+  static resolveState(_definition: any, context: any) {
+    const runtimeContext = context.context || {};
+    const runtimeUser = { ...(context.user || {}), ...(runtimeContext.user || {}) };
+    if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
+    return { context: { ...context, ...runtimeContext, user: runtimeUser } };
+  }
+
   constructor(id: string, state: any = {}, private readonly def: any = {}) {
     super(id, state);
   }

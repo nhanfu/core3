@@ -4,6 +4,10 @@ import { i18n } from '@core3/client/i18n';
 
 /** Generic clickable option group with a YAML-defined action. */
 export class ChoiceGroup extends BaseComponent {
+  static resolveState(_definition: any, context: any) {
+    return { record: context.user || {} };
+  }
+
   constructor(id: string, state: any = {}, private readonly def: any = {}) {
     super(id, state);
   }

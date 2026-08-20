@@ -10,6 +10,8 @@ const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
 const REPO_ROOT = join(APPS_ROOT, '..');
 const PUBLIC_ROOT = join(APPS_ROOT, 'public');
+const DIST_ROOT = join(APPS_ROOT, 'dist');
+const USE_FRONTEND_DIST = process.env.CORE3_FRONTEND_DIST === 'true';
 const appConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
 const moduleConfigs: Record<string, Record<string, unknown>> = {};
 const medStoreConfig = await loadMedConfig();
@@ -113,10 +115,13 @@ async function serveStatic(pathname: string) {
   // Page YAML may contain server-only datasource SQL.
   if (/(^|\/)pages\/.+\.ya?ml$/i.test(rel)) return null;
   try {
+    const distFile = Bun.file(join(DIST_ROOT, rel));
     const publicFile = Bun.file(join(PUBLIC_ROOT, rel));
     const appFile = Bun.file(join(APPS_ROOT, rel));
     const packageFile = Bun.file(join(REPO_ROOT, rel));
-    const file = await publicFile.exists() ? publicFile : await appFile.exists() ? appFile : packageFile;
+    const file = USE_FRONTEND_DIST && await distFile.exists()
+      ? distFile
+      : await publicFile.exists() ? publicFile : await appFile.exists() ? appFile : packageFile;
     if (!(await file.exists())) return null;
     if (rel.endsWith('.ts')) {
       const transpiler = new Bun.Transpiler({ loader: 'ts' });
@@ -131,7 +136,9 @@ async function serveStatic(pathname: string) {
 }
 
 async function serveSPA() {
-  const file = Bun.file(join(PUBLIC_ROOT, 'index.html'));
+  const distFile = Bun.file(join(DIST_ROOT, 'index.html'));
+  const publicFile = Bun.file(join(PUBLIC_ROOT, 'index.html'));
+  const file = USE_FRONTEND_DIST && await distFile.exists() ? distFile : publicFile;
   if (await file.exists()) {
     return new Response(file, { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS } });
   }

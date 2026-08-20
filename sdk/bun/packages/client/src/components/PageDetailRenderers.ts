@@ -2,8 +2,8 @@ import { evalExpr } from '@core3/client/expr';
 import { hasPermission } from '@core3/client/meta';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
-import { AvatarPicker } from '@core3/client/components/AvatarPicker';
-import { PageComponentFactory } from '@core3/client/components/PageComponentFactory';
+import { PageRenderHandlerRegistry } from '@core3/client/components/PageRenderHandlerRegistry';
+import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
@@ -15,33 +15,30 @@ export class PageDetailRenderers extends BaseComponent {
 
   private createRenderers(deps: any) {
   const { config, dataMap, ctx, bindSource, filterState, pageParams, client, createQuery, refreshSources, refetchSource, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
-const componentFactory = new PageComponentFactory();
+const renderHandlers = new PageRenderHandlerRegistry({
+  renderStatRow,
+  renderGridView,
+  renderDataGrid,
+  renderListView,
+  renderScheduleGrid,
+  renderLineItemGrid: renderDataGrid,
+  renderContactGrid: renderDataGrid,
+  renderDocumentSummary,
+  renderOdooFormView,
+  renderMoneySummary,
+  renderApprovalTimeline,
+  renderTemplatePreview,
+  renderChatWorkspace,
+  renderStatusTabs,
+  renderListToolbar,
+  renderTabGroup: renderTabGroupDef,
+  renderChart,
+});
+const componentLoader = new ConventionComponentLoader();
 const owner = this;
 
 function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
   return owner.mountChild(component, container);
-}
-
-async function mountComponent(
-  def: any,
-  targetContainer: HTMLElement,
-  load: () => Promise<any>,
-  state: any = {},
-  componentDef = def,
-  actionAware = true,
-) {
-  const Component = await load();
-  const component = new Component(def.id || `${config.page.id}-${String(def.type || 'component').toLowerCase()}`, state, componentDef);
-  if (actionAware) {
-    component._onAction = async (actionId: string, params: any) => {
-      const row = params?.row || params || {};
-      const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-      if (actionDef) await handleAction(actionDef, row);
-    };
-  }
-  const slot = html.take(targetContainer).div.ele() as HTMLElement;
-  mountOwned(component, slot);
-  return component;
 }
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
@@ -413,21 +410,21 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderComponentDef(def: any, targetContainer: HTMLElement) {
-  if (await componentFactory.render(def, targetContainer)) return;
-  if (registry.has(def.type)) {
-    const Ctor: any = registry.get(def.type);
-    const sourceData = def.source ? (dataMap[def.source] || {}) : {};
-    const comp = new Ctor(def.id || def.type, sourceData, def);
-    comp._onAction = async (actionId: string, params: any) => {
-      const row = params?.row || params || {};
-      const actionDef = (config.actions || []).find((a: any) => a.id === actionId);
-      if (actionDef) await handleAction(actionDef, row);
-    };
-    const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-    mountOwned(comp, slot);
-  } else {
-    console.error(`[page-renderer] Unknown component type: ${def.type}`);
+  if (await renderHandlers.render(def, targetContainer)) return;
+  try {
+    await componentLoader.load(String(def.type || ''));
+  } catch (error) {
+    console.error(`[page-renderer] Unknown component type: ${def.type}`, error);
+    return;
   }
+  const comp = await componentLoader.create(String(def.type), def.id || def.type, def, { ...ctx, dataMap, config });
+  comp._onAction = async (actionId: string, params: any) => {
+    const row = params?.row || params || {};
+    const actionDef = (config.actions || []).find((a: any) => a.id === actionId);
+    if (actionDef) await handleAction(actionDef, row);
+  };
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
+  mountOwned(comp, slot);
 }
 
 async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
@@ -446,40 +443,6 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
     template: (dataMap[def.template_source]?.data || {}) as Record<string, unknown>,
   }, true));
 }
-
-componentFactory
-  .register('LoginForm', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/LoginForm')).LoginForm))
-  .register('Html', (def, target) => {
-    const runtimeContext = ctx.context || {};
-    const runtimeUser = { ...ctx.user, ...(runtimeContext.user || {}) };
-    if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
-    return mountComponent(def, target, async () => (await import('@core3/client/components/Html')).Html, {
-      context: { ...ctx, ...runtimeContext, user: runtimeUser },
-    });
-  })
-  .register('AvatarPicker', (def, target) => mountComponent(def, target, async () => AvatarPicker, { user: ctx.user }))
-  .register('ChoiceGroup', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/ChoiceGroup')).ChoiceGroup, { record: ctx.user }))
-  .register('Form', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/Form')).Form))
-  .register('Button', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/Button')).Button))
-  .register('PageIntro', (def, target) => mountComponent(def, target, async () => (await import('./PageIntro.ts')).PageIntro, def, def, false))
-  .register('ComingSoon', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/ComingSoon')).ComingSoon, def, def, false))
-  .register('StatRow', renderStatRow)
-  .register('GridView', renderGridView)
-  .register('DataGrid', renderDataGrid)
-  .register('ListView', renderListView)
-  .register('ScheduleGrid', renderScheduleGrid)
-  .register('LineItemGrid', renderDataGrid)
-  .register('ContactGrid', renderDataGrid)
-  .register('DocumentSummary', renderDocumentSummary)
-  .register('OdooFormView', renderOdooFormView)
-  .register('MoneySummary', renderMoneySummary)
-  .register('ApprovalTimeline', renderApprovalTimeline)
-  .register('TemplatePreview', renderTemplatePreview)
-  .register('ChatWorkspace', renderChatWorkspace)
-  .register('StatusTabs', renderStatusTabs)
-  .register('ListToolbar', renderListToolbar)
-  .register('TabGroup', renderTabGroupDef)
-  .register('Chart', renderChart);
 
   return { chartState, renderComponentDef };
 }

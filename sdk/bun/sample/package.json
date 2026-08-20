@@ -42,10 +42,13 @@
     "css:build:blog": "sass --no-source-map services/blog/styles/index.scss services/blog/styles/index.css",
     "css:build:forum": "sass --no-source-map services/forum/styles/index.scss services/forum/styles/index.css",
     "css:build:livechat": "sass --no-source-map services/livechat/styles/index.scss services/livechat/styles/index.css",
-    "prestart": "bun run css:build",
-    "start": "PORT=3001 bun server.ts",
+    "prestart": "bun run frontend:build",
+    "start": "CORE3_FRONTEND_DIST=true CORE3_DB_DRIVER=duckdb CORE3_AUTH_DB_DRIVER=duckdb CORE3_ORDER_DB_DRIVER=duckdb CORE3_CHAT_DB_DRIVER=duckdb PORT=3001 bun server.ts",
+    "start:built": "CORE3_FRONTEND_DIST=true CORE3_DB_DRIVER=duckdb CORE3_AUTH_DB_DRIVER=duckdb CORE3_ORDER_DB_DRIVER=duckdb CORE3_CHAT_DB_DRIVER=duckdb PORT=3001 bun server.ts",
     "predev": "bun run css:build",
     "dev": "bun scripts/dev.ts",
+    "frontend:dev": "vite --config vite.config.ts",
+    "frontend:build": "bun run css:build && vite build --config vite.config.ts",
     "dev:ddb": "bun scripts/dev.ts --db=ddb",
     "dev:memory": "bun scripts/dev.ts --db=ddb --memory",
     "dev:pg": "bun scripts/dev.ts --db=pg",
@@ -72,8 +75,9 @@
     "@types/node": "^26.1.1",
     "jest-extended": "^4.0.0",
     "jsdom": "^25.0.0",
+    "sass": "^1.102.0",
     "typescript": "^5.9.3",
-    "vitest": "^3.0.0",
-    "sass": "^1.102.0"
+    "vite": "^8.2.2",
+    "vitest": "^3.0.0"
   }
 }
