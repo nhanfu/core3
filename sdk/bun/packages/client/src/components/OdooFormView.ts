@@ -2,7 +2,7 @@ import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
-import { AsyncSelect } from '@core3/client/components/AsyncSelect';
+import { OdooFieldEditorFactory } from '@core3/client/components/OdooFieldEditorFactory';
 
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only
@@ -120,7 +120,7 @@ export class OdooFormView extends BaseComponent {
           const labelsByValue = new Map(options.map((option: any) => [String(option.value ?? option.permission_key ?? ''), String(option.label || option.value || '')]));
           const chips = html.take(value).div.className('o-permission-chips').ele();
           for (const permission of selected) {
-            html.take(chips).span.className('o-permission-chip').text(labelsByValue.get(permission) || permission);
+            html.take(chips).span.className('o-permission-chip').text(String(labelsByValue.get(permission) || permission));
           }
           if (!selected.size) html.take(value).replaceText('—');
         } else {
@@ -129,73 +129,17 @@ export class OdooFormView extends BaseComponent {
         continue;
       }
       const current = record[field.field] ?? '';
-      let editor: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-      if (field.type === 'permission-grid') {
-        const selected = new Set(Array.isArray(current) ? current.map(String) : String(current || '').split(',').map(permission => permission.trim()).filter(Boolean));
-        const options = Array.isArray(this.def.permission_options) ? this.def.permission_options : [];
-        const hidden = html.take(value).input.type('hidden').ele() as HTMLInputElement;
-        editor = hidden;
-        const groups = new Map<string, HTMLElement>();
-        for (const option of options) {
-          const permission = String(option.value ?? option.permission_key ?? '');
-          if (!permission) continue;
-          const groupKey = String(option.group || permission.split('.')[0] || 'general');
-          let grid = groups.get(groupKey);
-          if (!grid) {
-            const section = html.take(value).section.className('o-permission-grid-group').ele();
-            html.take(section).h3.className('o-permission-grid-title').text(groupKey);
-            grid = html.take(section).div.className('o-permission-grid').ele();
-            groups.set(groupKey, grid);
-          }
-          const label = html.take(grid).label.className('o-permission-grid-item').ele();
-          const checkbox = html.take(label).input.type('checkbox').ele() as HTMLInputElement;
-          html.take(checkbox).prop('checked', selected.has(permission) || option.enabled === true);
-          html.take(label).span.className('o-permission-grid-label').text(String(option.label || permission));
-          html.take(checkbox).event('change', () => {
-            if (checkbox.checked) selected.add(permission); else selected.delete(permission);
-            const next = [...selected].sort();
-            hidden.value = next.join(',');
-            this.state.draft = { ...(this.state.draft || {}), [field.field]: next };
-          });
-        }
-        hidden.value = [...selected].sort().join(',');
-      } else if (field.type === 'textarea' || field.type === 'richtext') {
-        editor = html.take(value).textarea.ele() as HTMLTextAreaElement;
-        html.take(editor).prop('rows', 3);
-      } else if (field.type === 'async-select' || field.type === 'multi-select') {
-        const select = this.createChild(AsyncSelect, `inline-${field.field}`, {
-          value: Array.isArray(current) ? current : String(current || '').split(',').map(value => value.trim()).filter(Boolean),
-        });
-        select.def.options = (field.options || []).map((option: any) => ({ value: option.value ?? option.id, label: option.label ?? option.name ?? option.value ?? option.id }));
-        select.def.multiple = field.type === 'multi-select';
-        select.def.placeholder = field.placeholder;
-        select.mount(value);
-        editor = select.input as HTMLInputElement;
-      } else if (field.type === 'select') {
-        editor = html.take(value).select.ele() as HTMLSelectElement;
-        for (const option of field.options || []) {
-          const itemOption = typeof option === 'string' ? { id: option, label: option } : option;
-          const optionValue = String(itemOption.id ?? itemOption.value ?? '');
-          html.take(editor).option.prop('value', optionValue).text(String(itemOption.label ?? optionValue));
-        }
-      } else if (field.type === 'checkbox') {
-        editor = html.take(value).input.ele() as HTMLInputElement;
-        html.take(editor).type('checkbox');
-        (editor as HTMLInputElement).checked = Boolean(current);
-      } else {
-        editor = html.take(value).input.ele() as HTMLInputElement;
-        html.take(editor).type(field.type === 'number' || field.type === 'money' ? 'number' : 'text');
-        if (field.type === 'date' || field.type === 'time' || field.type === 'datetime') {
-          html.take(editor).prop('inputMode', 'numeric');
-          html.take(editor).prop('placeholder', field.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm');
-        }
-      }
-      if (field.type !== 'permission-grid') html.take(editor).className('o-form-inline-editor').prop('value', Array.isArray(current) ? current.join(',') : String(current));
-      editor.dataset.formField = field.field;
-      const updateDraft = () => {
-        this.state.draft = { ...(this.state.draft || {}), [field.field]: field.type === 'checkbox' ? (editor as HTMLInputElement).checked : field.type === 'multi-select' ? editor.value.split(',').filter(Boolean) : editor.value };
-      };
-      html.take(editor).event('input', updateDraft).event('change', updateDraft);
+      const editor = OdooFieldEditorFactory.create(`inline-${field.field}`, {
+        value: current,
+        options: field.options,
+        permission_options: this.def.permission_options,
+        onChange: next => {
+          this.state.draft = { ...(this.state.draft || {}), [field.field]: next };
+        },
+      }, field);
+      editor.parent = this;
+      this.children.push(editor);
+      editor.mount(value);
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {
