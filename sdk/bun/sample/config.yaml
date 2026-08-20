@@ -3,6 +3,13 @@ med:
   token: ${CORE3_EVENT_MEDIATOR_TOKEN:-}
 
 apps:
+  - id: base
+    label: Contacts
+    description: Users, companies, contacts, and shared reference data
+    icon: users
+    route: /contacts
+    module: base
+    enabled: true
   - id: order
     label: Orders
     description: Order management

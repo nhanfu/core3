@@ -16,7 +16,7 @@ queries:
     WHERE lower(u.email) = lower(:email)
     GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
       u.preferred_lang, u.enabled, u.branch_id, u.department_id,
-      u.last_login, u.created_at, u.updated_at, u.row_version
+      u.last_login, u.created_at, u.updated_at, u.row_version, u.current_company_id
   permissions: |
     SELECT DISTINCT p.permission_key
     FROM permissions p
@@ -26,8 +26,11 @@ queries:
   update_password: UPDATE users SET password_hash = :password_hash, updated_at = CURRENT_TIMESTAMP WHERE id = :user_id
   record_login: UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = :user_id
   profile: |
-    SELECT id, email, name, avatar_url, preferred_lang, branch_id, department_id, row_version
-    FROM users WHERE id = :user_id
+    SELECT u.id, u.email, u.name, u.avatar_url, u.preferred_lang, u.branch_id, u.department_id, u.row_version,
+      u.current_company_id, c.name AS company_name, c.short_name AS company_short_name,
+      c.address AS company_address, c.currency_code AS company_currency_code
+    FROM users u LEFT JOIN auth_companies c ON c.id = u.current_company_id
+    WHERE u.id = :user_id
   update_profile: |
     UPDATE users
     SET name = COALESCE(:name, name),
@@ -57,3 +60,30 @@ queries:
     WHERE id = :user_id
       AND enabled = true
       AND (:view_scope = 'all' OR branch_id = :branch_id)
+  users_manage: |
+    SELECT u.id, u.email, u.name, u.enabled, u.preferred_lang, u.current_company_id,
+      string_agg(r.name, ',') AS roles,
+      c.name AS company_name
+    FROM users u
+    LEFT JOIN user_roles ur ON ur.user_id = u.id
+    LEFT JOIN roles r ON r.id = ur.role_id
+    LEFT JOIN auth_companies c ON c.id = u.current_company_id
+    WHERE (:query IS NULL OR lower(u.name) LIKE '%' || lower(:query) || '%' OR lower(u.email) LIKE '%' || lower(:query) || '%')
+    GROUP BY u.id, u.email, u.name, u.enabled, u.preferred_lang, u.current_company_id, c.name
+    ORDER BY lower(u.name)
+  roles_manage: |
+    SELECT r.id, r.name, r.description, r.view_scope,
+      COALESCE(string_agg(p.permission_key, ', '), '') AS permissions
+    FROM roles r LEFT JOIN permissions p ON p.role_id = r.id
+    GROUP BY r.id, r.name, r.description, r.view_scope ORDER BY r.name
+  companies_for_user: |
+    SELECT c.id, c.name, c.short_name, c.address, c.currency_code, uc.is_default
+    FROM auth_companies c JOIN auth_user_companies uc ON uc.company_id = c.id
+    WHERE uc.user_id = :user_id AND c.active = true ORDER BY uc.is_default DESC, c.name
+  company_for_user: |
+    SELECT c.id, c.name, c.short_name, c.address, c.currency_code
+    FROM auth_companies c JOIN auth_user_companies uc ON uc.company_id = c.id
+    WHERE uc.user_id = :user_id AND c.id = :company_id AND c.active = true
+  set_current_company: |
+    UPDATE users SET current_company_id = :company_id, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1
+    WHERE id = :user_id AND EXISTS (SELECT 1 FROM auth_user_companies uc WHERE uc.user_id = users.id AND uc.company_id = :company_id)

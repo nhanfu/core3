@@ -1,0 +1,27 @@
+version: 0.0.2
+type:
+  postgres:
+    up: |
+      INSERT INTO base_currencies(code, name, symbol, decimal_places) VALUES ('USD', 'US Dollar', '$', 2), ('EUR', 'Euro', '€', 2), ('VND', 'Vietnamese Dong', '₫', 0) ON CONFLICT (code) DO NOTHING;
+      INSERT INTO base_countries(code, name, currency_code) VALUES ('US', 'United States', 'USD'), ('VN', 'Vietnam', 'VND'), ('DE', 'Germany', 'EUR') ON CONFLICT (code) DO NOTHING;
+      INSERT INTO base_states(code, country_code, name) VALUES ('US-CA', 'US', 'California'), ('VN-HCM', 'VN', 'Ho Chi Minh City'), ('DE-BE', 'DE', 'Berlin') ON CONFLICT (code) DO NOTHING;
+      INSERT INTO base_languages(code, name, direction) VALUES ('en_US', 'English (US)', 'ltr'), ('vi_VN', 'Vietnamese', 'ltr'), ('de_DE', 'German', 'ltr') ON CONFLICT (code) DO NOTHING;
+      INSERT INTO base_contact_categories(id, name, color) VALUES ('category-customer', 'Customer', 10), ('category-vendor', 'Vendor', 20), ('category-partner', 'Partner', 30) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO base_contacts(id, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company) VALUES ('company-demo', 'Core3 Demo Company', 'company', 'hello@core3.local', '+1 555 0100', '100 Main Street', 'San Francisco', 'California', '94105', 'United States', 'USD', true) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO base_contacts(id, name, company_type, email, phone, city, country_name, currency_code, is_company) VALUES ('contact-demo', 'Demo Contact', 'person', 'demo@core3.local', '+1 555 0101', 'San Francisco', 'United States', 'USD', false) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO base_contacts(id, name, company_type, email, phone, city, country_name, currency_code, is_company) VALUES ('company-vietnam', 'Core3 Vietnam Branch', 'company', 'vn@core3.local', '+84 28 5555 0100', 'Ho Chi Minh City', 'Vietnam', 'VND', true) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO base_contact_categories_rel(contact_id, category_id, category_name) VALUES ('company-demo', 'category-customer', 'Customer'), ('contact-demo', 'category-partner', 'Partner') ON CONFLICT (contact_id, category_id) DO NOTHING;
+      INSERT INTO base_activities(id, contact_id, summary, activity_type, state, due_date, assigned_user_name) VALUES ('activity-demo', 'contact-demo', 'Welcome call', 'call', 'planned', CURRENT_DATE, 'Administrator') ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM base_activities WHERE id = 'activity-demo';
+      DELETE FROM base_contact_categories_rel WHERE contact_id IN ('company-demo', 'contact-demo');
+      DELETE FROM base_contacts WHERE id IN ('company-demo', 'company-vietnam', 'contact-demo');
+      DELETE FROM base_contact_categories WHERE id IN ('category-customer', 'category-vendor', 'category-partner');
+      DELETE FROM base_languages WHERE code IN ('en_US', 'vi_VN', 'de_DE');
+      DELETE FROM base_states WHERE code IN ('US-CA', 'VN-HCM', 'DE-BE');
+      DELETE FROM base_countries WHERE code IN ('US', 'VN', 'DE');
+      DELETE FROM base_currencies WHERE code IN ('USD', 'EUR', 'VND');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

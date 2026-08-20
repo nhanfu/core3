@@ -76,6 +76,20 @@
   white-space: nowrap;
 }
 
+.profile-menu-section-label {
+  padding: 8px 10px 3px;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.profile-company-choice.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
 .profile-menu-item {
   display: flex;
   width: 100%;

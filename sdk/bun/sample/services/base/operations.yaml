@@ -1,0 +1,16 @@
+operations:
+  contacts.search:
+    result_key: contacts
+    query: "SELECT id, name, company_type, email, phone, city, country_name, is_company FROM base_contacts WHERE active = true AND (:query IS NULL OR name ILIKE '%' || :query || '%' OR email ILIKE '%' || :query || '%' OR phone ILIKE '%' || :query || '%') ORDER BY name LIMIT :limit"
+  contacts.resolve:
+    result_key: contacts
+    query: "SELECT id, name, company_type, email, phone, city, country_name, is_company FROM base_contacts WHERE active = true AND id IN :ids ORDER BY name"
+  companies.list:
+    result_key: companies
+    query: "SELECT id, name, email, phone, city, country_name, currency_code FROM base_contacts WHERE active = true AND is_company = true ORDER BY name"
+  reference.countries:
+    result_key: countries
+    query: "SELECT code, name, currency_code FROM base_countries ORDER BY name"
+  reference.currencies:
+    result_key: currencies
+    query: "SELECT code, name, symbol, decimal_places FROM base_currencies ORDER BY code"

@@ -1,0 +1,27 @@
+title: Companies
+page: { id: companies, breadcrumb: [Contacts, Companies], auth: { require: [base.companies.read] } }
+datasources:
+  - id: companies
+    permission: base.companies.read
+    query: "SELECT id, row_version, name, email, phone, city, country_name, currency_code, active FROM base_contacts WHERE is_company = true AND active = true AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: companies
+    create_action: create_company
+    create_label: New company
+    search: { label: Search companies, placeholder: 'Search company or email...' }
+    columns: [{ field: name, label: Company, type: PrimaryEntityCell }, { field: email, label: Email }, { field: phone, label: Phone }, { field: city, label: City }, { field: country_name, label: Country }, { field: currency_code, label: Currency }]
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_company
+    type: server_form
+    permission: base.companies.write
+    title: New company
+    action: base.companies.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [companies]
+    mutation: { operation: insert, table: base_contacts, fields: [name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company], required: [name], defaults: { company_type: company, is_company: true }, result: { query: "SELECT * FROM base_contacts WHERE id = :id" } }
+    fields: [{ field: name, label: Company name, type: text, required: true }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: state_name, label: State, type: text }, { field: zip, label: ZIP, type: text }, { field: country_name, label: Country, type: text }, { field: currency_code, label: Currency, type: text }]

@@ -1,0 +1,24 @@
+title: Base Configuration
+page: { id: base-reference-data, breadcrumb: [Contacts, Configuration], auth: { require: [base.reference.read] } }
+datasources:
+  - { id: countries, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries ORDER BY name" }
+  - { id: currencies, permission: base.reference.read, query: "SELECT code, name, symbol, decimal_places FROM base_currencies ORDER BY code" }
+  - { id: languages, permission: base.reference.read, query: "SELECT code, name, direction FROM base_languages ORDER BY name" }
+  - { id: categories, permission: base.reference.read, query: "SELECT id, name, color FROM base_contact_categories ORDER BY name" }
+components:
+  - type: ListView
+    variant: odoo
+    source: countries
+    columns: [{ field: code, label: Code }, { field: name, label: Country }, { field: currency_code, label: Currency }]
+  - type: ListView
+    variant: odoo
+    source: currencies
+    columns: [{ field: code, label: Code }, { field: name, label: Currency }, { field: symbol, label: Symbol }, { field: decimal_places, label: Decimals }]
+  - type: ListView
+    variant: odoo
+    source: languages
+    columns: [{ field: code, label: Code }, { field: name, label: Language }, { field: direction, label: Direction }]
+  - type: ListView
+    variant: odoo
+    source: categories
+    columns: [{ field: name, label: Category }, { field: color, label: Color }]

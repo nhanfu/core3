@@ -10,6 +10,7 @@ import { PostgresDatabase } from './database/postgres-database.ts';
 import { openSqlDatabase } from './database/sql-database.ts';
 import { YamlRepository } from './database/yaml-repository.ts';
 import { resolveDuckDbEncryption } from './database/duckdb-encryption.ts';
+import { bindNamedParams } from './database/sql.ts';
 import { cleanDatabase, migrateDatabase } from '@core3/server/migrations';
 import type { MigrationKind } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
@@ -39,6 +40,7 @@ export type YamlServiceDefinition = DiscoveredYamlService & {
   permissions: unknown;
   topics: unknown;
   events: unknown;
+  operations: unknown;
   storage: unknown;
   migrations: unknown;
 };
@@ -62,6 +64,7 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
     permissions: readOptionalYaml(root, manifest.permissions),
     topics: readOptionalYaml(root, manifest.topics),
     events: readOptionalYaml(root, manifest.events),
+    operations: readOptionalYaml(root, manifest.operations),
     storage: readOptionalYaml(root, manifest.storage),
     migrations: manifest.migrations,
   };
@@ -275,11 +278,12 @@ export class YamlServiceModule implements ModuleLifecycle {
   private async call(operation: string, request: Record<string, unknown>): Promise<any> {
     if (!this.runtime || !this.repository) throw new Error(`YAML service is not ready: ${this.id}`);
     const action = this.runtime.actions.get(String(operation));
-    if (!action?.mutation) throw new Error(`YAML service operation is unavailable: ${this.id}.${operation}`);
-    return this.repository.executeMutation(action.mutation, {
-      ...request,
-      view_scope: 'all',
-    });
+    if (action?.mutation) return this.repository.executeMutation(action.mutation, { ...request, view_scope: 'all' });
+    const definition = (this.definition.operations as any)?.operations?.[String(operation)];
+    if (!definition?.query) throw new Error(`YAML service operation is unavailable: ${this.id}.${operation}`);
+    const bound = bindNamedParams(String(definition.query), request);
+    const rows = await this.repository.query(bound.statement, bound.values);
+    return { data: rows, ...(definition.result_key ? { [String(definition.result_key)]: rows } : {}) };
   }
 
   getRuntimeContext(): YamlRuntimeContext | null {

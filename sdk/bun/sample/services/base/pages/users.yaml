@@ -1,0 +1,23 @@
+title: Users
+page: { id: users, breadcrumb: [Settings, Users], auth: { require: [auth.users.manage] } }
+datasources:
+  - id: users
+    type: service
+    service: auth
+    operation: users.manage
+    service_params: { query: q, limit: 100 }
+    permission: auth.users.manage
+components:
+  - type: ListView
+    variant: odoo
+    source: users
+    search: { label: Search users, placeholder: 'Search name or email...' }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: roles, label: Groups }
+      - { field: company_name, label: Current company }
+      - { field: preferred_lang, label: Language }
+      - { field: enabled, label: Active }
+    page_size: 50
+    row_key: id

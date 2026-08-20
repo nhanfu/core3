@@ -1,0 +1,20 @@
+title: User Groups
+page: { id: user-groups, breadcrumb: [Settings, User Groups], auth: { require: [auth.roles.manage] } }
+datasources:
+  - id: user_groups
+    type: service
+    service: auth
+    operation: roles.manage
+    permission: auth.roles.manage
+components:
+  - type: ListView
+    variant: odoo
+    source: user_groups
+    columns:
+      - { field: id, label: Group, type: PrimaryEntityCell }
+      - { field: name, label: Name }
+      - { field: description, label: Description }
+      - { field: view_scope, label: Visibility }
+      - { field: permissions, label: Permissions }
+    page_size: 50
+    row_key: id

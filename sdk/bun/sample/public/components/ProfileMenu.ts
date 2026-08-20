@@ -46,6 +46,11 @@ export class ProfileMenu extends BaseComponent {
     this.redraw();
   }
 
+  setCompanies(companies: any[]) {
+    this.state.companies = Array.isArray(companies) ? companies : [];
+    if (this._container) this.redraw();
+  }
+
   open() {
     this.state.open = true;
     this._menu?.classList.add('open');
@@ -101,6 +106,24 @@ export class ProfileMenu extends BaseComponent {
     const identity = html.take(summary).div.className('profile-menu-identity').ele();
     html.take(identity).div.className('profile-menu-name').text(user.name || 'User');
     html.take(identity).div.className('profile-menu-email').text(user.email || '');
+
+    const companies = Array.isArray(this.state.companies) ? this.state.companies : [];
+    if (companies.length) {
+      html.take(this._menu).div.className('profile-menu-section-label').text(i18n.tKey('shell.company', {}, 'Company'));
+      for (const company of companies) {
+        const active = String(company.id) === String(user.company_id || user.company?.id || '');
+        html.take(this._menu).button
+          .className(`profile-menu-item profile-company-choice${active ? ' active' : ''}`)
+          .attr('type', 'button')
+          .attr('role', 'menuitemradio')
+          .attr('aria-checked', active ? 'true' : 'false')
+          .text(String(company.short_name || company.name || company.id))
+          .event('click', () => {
+            this.close();
+            void this.state.onCompanyChange?.(String(company.id));
+          }).ele();
+      }
+    }
 
     const addAction = (label: string, action: () => void, variant = '') => {
       const className = variant ? 'profile-menu-item ' + variant : 'profile-menu-item';

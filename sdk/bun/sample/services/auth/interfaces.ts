@@ -30,6 +30,9 @@ export interface AuthIdentity extends User {
   branch_id?: string | null;
   view_scope?: 'all' | 'branch' | 'own' | string;
   permissions: string[];
+  company_id?: string | null;
+  company?: { id: string; name: string; short_name: string; address?: string | null; currency_code?: string } | null;
+  companies?: Array<{ id: string; name: string; short_name: string; address?: string | null; currency_code?: string; is_default?: boolean }>;
 }
 
 export interface AuthClaims extends AuthIdentity {

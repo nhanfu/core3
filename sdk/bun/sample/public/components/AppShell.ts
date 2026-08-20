@@ -137,6 +137,11 @@ export class AppShell extends BaseComponent {
     this._profileMenu?.setUser(user);
   }
 
+  setCompanies(companies: any[]) {
+    this.state.companies = Array.isArray(companies) ? companies : [];
+    this._profileMenu?.setCompanies(this.state.companies);
+  }
+
   setTitle(title: string) {
     if (this._headerTitle) this._headerTitle.textContent = title;
   }
@@ -357,8 +362,10 @@ export class AppShell extends BaseComponent {
     // Keep the header compact; identity details belong in the profile menu.
     this._profileMenu = new ProfileMenu('profile-menu', {
       user,
+      companies: this.state.companies || [],
       onNavigate: (path: string) => this.go(path),
       onLogout: () => this.state.onLogout?.(),
+      onCompanyChange: (companyId: string) => this.state.onCompanyChange?.(companyId),
     });
     const profileMenuHost = html.take(actions).div.className('profile-menu-host').ele();
     this._profileMenu.mount(profileMenuHost);

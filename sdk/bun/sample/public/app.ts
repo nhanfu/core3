@@ -57,6 +57,34 @@ export function updateUser(patch: Record<string, unknown>) {
   _shell?.setUser(_user);
 }
 
+async function loadCompanies(token: string): Promise<any[]> {
+  try {
+    const response = await fetch('/api/v1/companies', { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) return [];
+    const body = await response.json();
+    return Array.isArray(body?.companies) ? body.companies : [];
+  } catch {
+    return [];
+  }
+}
+
+async function switchCompany(companyId: string) {
+  const token = getToken();
+  if (!token || !companyId) return;
+  const response = await fetch('/api/v1/company/switch', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ company_id: companyId }),
+  });
+  if (!response.ok) return;
+  const body = await response.json();
+  updateUser({ company_id: companyId, company: body.company });
+  window.__CORE3_COMPANY__ = body.company;
+  _shell?.setCompanies(await loadCompanies(token));
+  const location = currentLocation();
+  await renderRoute(location.path, location.langCode);
+}
+
 function defaultAppStorageKey(user: any = _user) {
   return `${DEFAULT_APP_KEY}:${String(user?.sub || user?.id || 'anonymous')}`;
 }
@@ -359,6 +387,7 @@ async function bootstrap() {
   const showWelcomeToast = sessionStorage.getItem(WELCOME_TOAST_KEY) === '1';
   sessionStorage.removeItem(WELCOME_TOAST_KEY);
   let company: any = null;
+  const companies = await loadCompanies(token);
   try {
     const companyRes = await fetch('/api/v1/company', { headers: { Authorization: `Bearer ${token}` } });
     if (companyRes.ok) company = await companyRes.json();
@@ -369,6 +398,7 @@ async function bootstrap() {
   _shell = new AppShell('app-shell', {
     user: _user,
     company,
+    companies,
     menu,
     apps: _apps,
     currentApp: getDefaultApp(_user),
@@ -379,6 +409,7 @@ async function bootstrap() {
       await navigate(location.path, { ...getPageParams(), lc: langCode });
     },
     onLogout: logout,
+    onCompanyChange: switchCompany,
     onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
   });
   _shell.mount(app);

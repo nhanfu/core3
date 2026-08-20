@@ -144,6 +144,30 @@ export default class AuthModule {
           return json({ ok: true });
         } catch (error) { return errorResponse(error); }
       }
+      if (url.pathname === '/api/v1/companies' && request.method === 'GET') {
+        try {
+          const user = await this.service.getCurrentUser(request);
+          return json({ companies: await repository.companiesForUser(String(user.sub)), current_company_id: (user as any).company_id || null });
+        } catch (error) { return errorResponse(error); }
+      }
+      if (url.pathname === '/api/v1/company' && request.method === 'GET') {
+        try {
+          const user = await this.service.getCurrentUser(request);
+          const profile = await repository.profile(String(user.sub));
+          return json(profile?.current_company_id ? await repository.companyForUser(String(user.sub), String(profile.current_company_id)) : null);
+        } catch (error) { return errorResponse(error); }
+      }
+      if (url.pathname === '/api/v1/company/switch' && request.method === 'POST') {
+        try {
+          const user = await this.service.getCurrentUser(request);
+          const body = await request.json() as any;
+          const companyId = String(body.company_id || '');
+          if (!companyId) return structuredError('company_id is required', 'base.company_required', 400);
+          const company = await repository.setCurrentCompany(String(user.sub), companyId);
+          if (!company) return structuredError('You do not have access to this company', 'base.company_forbidden', 403);
+          return json({ ok: true, company });
+        } catch (error) { return errorResponse(error); }
+      }
       if (url.pathname === profileEndpoint && (request.method === 'GET' || request.method === 'PATCH')) {
         try {
           const user = await this.service.getCurrentUser(request);

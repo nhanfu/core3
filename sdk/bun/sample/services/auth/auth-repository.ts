@@ -107,4 +107,27 @@ export class AuthRepository {
   userValidate(userId: string, branchId: string | null, viewScope: string): Promise<any | null> {
     return this.execute('user_validate', { user_id: userId, branch_id: branchId, view_scope: viewScope }).then(rows => rows[0] || null);
   }
+
+  usersManage(query: string | null, limit = 100): Promise<any[]> {
+    return this.execute('users_manage', { query: query || null }).then(rows => rows.slice(0, Math.max(1, Math.min(limit || 100, 500))));
+  }
+
+  companiesForUser(userId: string): Promise<any[]> {
+    return this.execute('companies_for_user', { user_id: userId });
+  }
+
+  companyForUser(userId: string, companyId: string): Promise<any | null> {
+    return this.execute('company_for_user', { user_id: userId, company_id: companyId }).then(rows => rows[0] || null);
+  }
+
+  async setCurrentCompany(userId: string, companyId: string): Promise<any | null> {
+    const rows = await this.execute('company_for_user', { user_id: userId, company_id: companyId });
+    if (!rows[0]) return null;
+    await this.execute('set_current_company', { user_id: userId, company_id: companyId });
+    return rows[0];
+  }
+
+  rolesManage(): Promise<any[]> {
+    return this.execute('roles_manage', {});
+  }
 }

@@ -1,0 +1,50 @@
+title: Contact
+page: { id: contact-detail, breadcrumb: [Contacts, Detail], auth: { require: [base.contacts.read] } }
+datasources:
+  - id: contact_detail
+    single: true
+    permission: base.contacts.read
+    query: "SELECT c.*, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories FROM base_contacts c WHERE c.id = :id"
+  - id: contact_activities
+    permission: base.activities.read
+    query: "SELECT id, summary, activity_type, state, due_date, assigned_user_name FROM base_activities WHERE contact_id = :id ORDER BY due_date DESC"
+components:
+  - type: OdooFormView
+    source: contact_detail
+    title_field: name
+    status_field: active
+    group_columns: 2
+    groups:
+      - title: Contact
+        fields: [{ field: name, label: Name }, { field: company_type, label: Type }, { field: email, label: Email }, { field: phone, label: Phone }, { field: categories, label: Tags }]
+      - title: Address
+        fields: [{ field: street, label: Street }, { field: street2, label: Street 2 }, { field: city, label: City }, { field: state_name, label: State }, { field: zip, label: ZIP }, { field: country_name, label: Country }]
+  - type: ListView
+    variant: odoo
+    source: contact_activities
+    create_action: schedule_activity
+    create_label: Schedule activity
+    columns: [{ field: summary, label: Summary }, { field: activity_type, label: Type }, { field: state, label: Status }, { field: due_date, label: Due date }, { field: assigned_user_name, label: Assigned to }]
+actions:
+  - id: schedule_activity
+    type: server_form
+    permission: base.activities.write
+    title: Schedule activity
+    action: base.activities.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [contact_activities]
+    mutation:
+      operation: insert
+      table: base_activities
+      fields: [contact_id, summary, activity_type, due_date, assigned_user_id, assigned_user_name, note]
+      required: [contact_id, summary, due_date]
+      defaults: { state: planned }
+    fields:
+      - { field: contact_id, label: Contact, type: text, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: activity_type, label: Type, type: select, options: [{ value: todo, label: To-do }, { value: call, label: Call }, { value: meeting, label: Meeting }, { value: email, label: Email }] }
+      - { field: due_date, label: Due date, type: text, required: true }
+      - { field: assigned_user_id, label: Assigned user ID, type: text }
+      - { field: assigned_user_name, label: Assigned to, type: text }
+      - { field: note, label: Note, type: textarea }

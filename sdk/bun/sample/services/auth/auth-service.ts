@@ -39,6 +39,11 @@ export class AuthService implements AuthServiceProtocol {
       roles, branches: user.branch_id ? [String(user.branch_id)] : [], permissions,
       attributes: { department_id: user.department_id }, token_type: 'user',
     };
+    const company = user.current_company_id ? await this.repository.companyForUser(String(user.id), String(user.current_company_id)) : null;
+    const companies = await this.repository.companiesForUser(String(user.id));
+    (claims as any).company_id = user.current_company_id || null;
+    (claims as any).company = company;
+    (claims as any).companies = companies;
     // Keep profile media out of the JWT. Data URLs can be large and make the
     // Authorization header unreliable; avatar_url is loaded from Auth storage.
     const { avatar_url: _avatarUrl, ...tokenClaims } = claims;
@@ -57,7 +62,9 @@ export class AuthService implements AuthServiceProtocol {
     const user = await this.introspect(header.slice(7));
     if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
     const profile = await this.repository.profile(String(user.sub));
-    return profile ? { ...user, avatar_url: profile.avatar_url || null } : user;
+    if (!profile) return user;
+    const company = profile.current_company_id ? await this.repository.companyForUser(String(user.sub), String(profile.current_company_id)) : null;
+    return { ...user, avatar_url: profile.avatar_url || null, company_id: profile.current_company_id || null, company } as any;
   }
 
   async introspect(token: string): Promise<AuthClaims | null> {
@@ -104,6 +111,12 @@ export class AuthService implements AuthServiceProtocol {
         return { users: await this.repository.userSearch(request.query == null ? null : String(request.query), request.branch_id == null ? null : String(request.branch_id), String(request.view_scope || 'all'), Number(request.limit || 100)) };
       case 'users.validate':
         return this.repository.userValidate(String(request.user_id || ''), request.branch_id == null ? null : String(request.branch_id), String(request.view_scope || 'all'));
+      case 'users.manage':
+        return { users: await this.repository.usersManage(request.query == null ? null : String(request.query), Number(request.limit || 100)) };
+      case 'roles.manage':
+        return { data: await this.repository.rolesManage() };
+      case 'companies.list':
+        return { companies: await this.repository.companiesForUser(String(request.user_id || '')) };
       default:
         throw new Error(`Unknown auth service operation: ${operation}`);
     }

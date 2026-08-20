@@ -1,0 +1,16 @@
+id: base
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/contacts.yaml
+  - pages/contact-detail.yaml
+  - pages/companies.yaml
+  - pages/users.yaml
+  - pages/user-groups.yaml
+  - pages/reference-data.yaml
+  - pages/activity-workflow.yaml
+permissions: permissions.yaml
+operations: operations.yaml
+storage: storage.yaml

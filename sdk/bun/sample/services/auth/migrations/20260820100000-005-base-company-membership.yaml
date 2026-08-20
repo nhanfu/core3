@@ -1,0 +1,24 @@
+version: 0.0.5
+kind: schema
+description: Add user company membership and current company selection for the base phase
+type:
+  postgres:
+    up: |
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS current_company_id VARCHAR;
+      CREATE TABLE IF NOT EXISTS auth_companies (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, short_name VARCHAR NOT NULL,
+        address VARCHAR, currency_code VARCHAR NOT NULL DEFAULT 'USD', active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS auth_user_companies (
+        user_id VARCHAR NOT NULL REFERENCES users(id), company_id VARCHAR NOT NULL REFERENCES auth_companies(id),
+        is_default BOOLEAN NOT NULL DEFAULT false, PRIMARY KEY(user_id, company_id)
+      );
+      CREATE INDEX IF NOT EXISTS auth_user_companies_user_idx ON auth_user_companies(user_id);
+    down: |
+      DROP TABLE IF EXISTS auth_user_companies;
+      DROP TABLE IF EXISTS auth_companies;
+      ALTER TABLE users DROP COLUMN IF EXISTS current_company_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
