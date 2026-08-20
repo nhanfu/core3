@@ -4,9 +4,10 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
-import { PageFormFieldFactory } from '@core3/client/components/PageFormFieldFactory';
+import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
 
 export class PageFormModal extends BaseComponent {
+  private readonly componentLoader = new ConventionComponentLoader();
   readonly openFormModal: any;
 
   constructor(deps: any) {
@@ -69,14 +70,25 @@ export class PageFormModal extends BaseComponent {
             initialValue = initialValue.replace('Z', '').slice(0, 16);
           }
 
-          const { element: el, usesAsyncSelect } = PageFormFieldFactory.render({
-            container: group,
+          const conventionPart = String(fieldDef.type || 'native').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+          const requestedFieldType = `Page${conventionPart}Field`;
+          const fieldType = (() => {
+            try {
+              owner.componentLoader.resolveSync(requestedFieldType);
+              return requestedFieldType;
+            } catch {
+              return 'PageNativeField';
+            }
+          })();
+          const fieldComponent = owner.componentLoader.createSync(fieldType, fieldId, {
             field: fieldDef,
             fieldId,
             initialValue,
             dataMap,
-            parent: owner,
           });
+          owner.mountChild(fieldComponent, group);
+          const el = fieldComponent.element!;
+          const usesAsyncSelect = fieldComponent.usesAsyncSelect;
 
           if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
             const textEditor = el as HTMLInputElement | HTMLTextAreaElement;

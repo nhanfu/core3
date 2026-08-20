@@ -13,8 +13,8 @@ type EagerModules = Record<string, ComponentModule>;
 let eagerModules: EagerModules = {};
 let discoveredModules: Record<string, GlobLoader> = {};
 try {
-  eagerModules = (import.meta as any).glob('./*Cell.ts', { eager: true });
-  discoveredModules = (import.meta as any).glob(['./*.ts', '!./*Cell.ts']);
+  eagerModules = (import.meta as any).glob(['./*Cell.ts', './Odoo*Editor.ts', './LineItem*Input.ts', './Page*Field.ts'], { eager: true });
+  discoveredModules = (import.meta as any).glob(['./*.ts', '!./*Cell.ts', '!./Odoo*Editor.ts', '!./LineItem*Input.ts', '!./Page*Field.ts']);
 } catch {
   eagerModules = {};
   discoveredModules = {};
@@ -36,7 +36,7 @@ export class ConventionComponentLoader {
   createSync(type: string, id: string, definition: any, context: any = {}) {
     const Component = this.resolveSync(type);
     const state = this.stateSync(type, definition, context);
-    return new Component(id, state, definition);
+    return new Component(id, state, context.constructorDefinition ?? definition);
   }
 
   stateSync(type: string, definition: any, context: any = {}) {

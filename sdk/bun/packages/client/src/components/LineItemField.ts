@@ -1,6 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
-import { LineItemFieldFactory } from '@core3/client/components/LineItemFieldFactory';
+import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
 
 export type LineItemFieldDefinition = {
   id?: string;
@@ -17,6 +17,7 @@ export type LineItemFieldDefinition = {
 };
 
 export class LineItemField extends BaseComponent {
+  private readonly componentLoader = new ConventionComponentLoader();
   readonly definition: LineItemFieldDefinition;
   readonly onChange?: (value: unknown) => void;
 
@@ -32,7 +33,15 @@ export class LineItemField extends BaseComponent {
     const field = this.definition;
     const value = this.state.value ?? '';
     const host = html.take(container).div.className('o-line-field').ele();
-    const input = LineItemFieldFactory.create({ container: host, field, value, parent: this, id: this.id });
+    const inputType = field.input_type === 'money'
+      ? 'LineItemMoneyInput'
+      : field.input_type === 'select'
+        ? 'LineItemSelectInput'
+        : 'LineItemTextInput';
+    const inputComponent = this.componentLoader.createSync(inputType, `${this.id}-input`, { value, definition: field });
+    this.mountChild(inputComponent, host);
+    const input = inputComponent.input;
+    if (!input) return;
     html.take(input).attr('aria-label', field.label || field.field);
     if (field.readonly) html.take(input).prop('disabled', true);
     html.take(input).event('input', () => {

@@ -2,7 +2,7 @@ import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { OdooChatter } from './OdooChatter.ts';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
-import { OdooFieldEditorFactory } from '@core3/client/components/OdooFieldEditorFactory';
+import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
 
 /**
  * Read-only form sheet for back-office record pages.  It deliberately only
@@ -10,6 +10,7 @@ import { OdooFieldEditorFactory } from '@core3/client/components/OdooFieldEditor
  * data remains YAML-owned sources, matching Odoo's form sheet + chatter split.
  */
 export class OdooFormView extends BaseComponent {
+  private readonly componentLoader = new ConventionComponentLoader();
   def: any;
   private embeddedContent: HTMLElement | null = null;
 
@@ -128,14 +129,15 @@ export class OdooFormView extends BaseComponent {
         continue;
       }
       const current = record[field.field] ?? '';
-      const editor = OdooFieldEditorFactory.create(`inline-${field.field}`, {
+      const editorType = `Odoo${String(field.type || 'text').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('')}Editor`;
+      const editor = this.componentLoader.createSync(editorType, `inline-${field.field}`, {
         value: current,
         options: field.options,
         permission_options: this.def.permission_options,
         onChange: next => {
           this.state.draft = { ...(this.state.draft || {}), [field.field]: next };
         },
-      }, field);
+      }, { constructorDefinition: field });
       this.mountChild(editor, value);
       }
     };
