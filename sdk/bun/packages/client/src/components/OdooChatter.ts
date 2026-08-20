@@ -30,8 +30,7 @@ export class OdooChatter extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    for (const child of this.children) child.dispose();
-    this.children = [];
+    this.disposeChildren();
     const record = this.state.record || {};
     const messages = Array.isArray(this.state.messages) ? this.state.messages : [];
     const followers = Array.isArray(this.state.followers) ? this.state.followers : [];

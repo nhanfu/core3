@@ -3,6 +3,7 @@ import { hasPermission } from '@core3/client/meta';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { AvatarPicker } from '@core3/client/components/AvatarPicker';
+import { PageComponentFactory } from '@core3/client/components/PageComponentFactory';
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
@@ -14,6 +15,34 @@ export class PageDetailRenderers extends BaseComponent {
 
   private createRenderers(deps: any) {
   const { config, dataMap, ctx, bindSource, filterState, pageParams, client, createQuery, refreshSources, refetchSource, applySourceFilters, handleAction, handleInlineForm, resolveActionParams, registry, renderStatRow, renderGridView, renderDataGrid, renderListView, renderScheduleGrid, refreshStatusTabCounts } = deps;
+const componentFactory = new PageComponentFactory();
+const owner = this;
+
+function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
+  return owner.mountChild(component, container);
+}
+
+async function mountComponent(
+  def: any,
+  targetContainer: HTMLElement,
+  load: () => Promise<any>,
+  state: any = {},
+  componentDef = def,
+  actionAware = true,
+) {
+  const Component = await load();
+  const component = new Component(def.id || `${config.page.id}-${String(def.type || 'component').toLowerCase()}`, state, componentDef);
+  if (actionAware) {
+    component._onAction = async (actionId: string, params: any) => {
+      const row = params?.row || params || {};
+      const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+      if (actionDef) await handleAction(actionDef, row);
+    };
+  }
+  const slot = html.take(targetContainer).div.ele() as HTMLElement;
+  mountOwned(component, slot);
+  return component;
+}
 
 async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
   const { DocumentSummary } = await import('@core3/client/components/DocumentSummary');
@@ -24,7 +53,7 @@ async function renderDocumentSummary(def: any, targetContainer: HTMLElement) {
     def,
   );
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
 }
 
@@ -116,7 +145,7 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     if (!editAction) return;
     await handleInlineForm(editAction, values);
   };
-  comp.mount(slot);
+  mountOwned(comp, slot);
   const bind = (sourceId: string | undefined, stateKey: string) => bindSource(sourceId, data => {
     comp.setState({ [stateKey]: data.data || (stateKey === 'record' ? {} : []) }, true);
   });
@@ -137,7 +166,7 @@ async function renderMoneySummary(def: any, targetContainer: HTMLElement) {
     def,
   );
   const slot = html.take(targetContainer).div.className('o-form-section o-form-totals-slot').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
   bindSource(def.source, data => comp.setState({ record: data.data || {} }, true));
 }
 
@@ -150,7 +179,7 @@ async function renderApprovalTimeline(def: any, targetContainer: HTMLElement) {
     def,
   );
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
   bindSource(def.source, data => comp.setState({ events: data.data || [] }, true));
 }
 
@@ -193,7 +222,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
     if (actionDef) return handleAction(actionDef, params?.row || params || {});
   };
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
 
   bindSource(threadSource, data => _origSetState({ threads: data.data || [] }, true));
   bindSource(messageSource, data => _origSetState({ messages: data.data || [] }, true));
@@ -245,7 +274,7 @@ async function renderStatusTabs(def: any, targetContainer: HTMLElement) {
     await applySourceFilters(sourceId, next);
   };
   const slot = html.take(targetContainer).div.css('marginBottom', '16px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
   bindSource(def.source, () => { if (def.show_counts !== false) void refreshStatusTabCounts(def.source, comp, def); });
 }
 
@@ -315,7 +344,7 @@ async function renderListToolbar(def: any, targetContainer: HTMLElement) {
     if (actionDef) await handleAction(actionDef, params || {});
   };
   const slot = html.take(targetContainer).div.css('marginBottom', '16px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
 }
 
 function chartState(def: any, sourceResult: any) {
@@ -347,7 +376,7 @@ async function renderChart(def: any, targetContainer: HTMLElement) {
   if (def.layout === 'inline') {
     html.take(slot).css('display', 'inline-block').css('verticalAlign', 'top').css('marginRight', '16px');
   }
-  comp.mount(slot);
+  mountOwned(comp, slot);
 
   bindSource(def.source, data => comp.setState(chartState(def, data), true));
 }
@@ -384,155 +413,20 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderComponentDef(def: any, targetContainer: HTMLElement) {
-  switch (def.type) {
-    case 'LoginForm': {
-      const { LoginForm } = await import('@core3/client/components/LoginForm');
-      const component = new LoginForm(def.id || `${config.page.id}-login`, {}, def);
-      component._onAction = async (actionId: string, params: any) => {
-        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-        if (actionDef) await handleAction(actionDef, params);
-      };
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'Html': {
-      const { Html } = await import('@core3/client/components/Html');
-      const runtimeContext = ctx.context || {};
-      const runtimeUser = { ...ctx.user, ...(runtimeContext.user || {}) };
-      if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
-      const component = new Html(def.id || `${config.page.id}-html`, { context: { ...ctx, ...runtimeContext, user: runtimeUser } }, def);
-      component._onAction = async (actionId: string, params: any) => {
-        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-        if (actionDef) await handleAction(actionDef, params);
-      };
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'AvatarPicker': {
-      const component = new AvatarPicker(def.id || `${config.page.id}-avatar`, { user: ctx.user }, def);
-      component._onAction = async (actionId: string, params: any) => {
-        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-        if (actionDef) await handleAction(actionDef, params);
-      };
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'ChoiceGroup': {
-      const { ChoiceGroup } = await import('@core3/client/components/ChoiceGroup');
-      const component = new ChoiceGroup(def.id || `${config.page.id}-choices`, { record: ctx.user }, def);
-      component._onAction = async (actionId: string, params: any) => {
-        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-        if (actionDef) await handleAction(actionDef, params);
-      };
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'Form': {
-      const { Form } = await import('@core3/client/components/Form');
-      const component = new Form(def.id || `${config.page.id}-form`, {}, def);
-      component._onAction = async (actionId: string, params: any) => {
-        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-        if (actionDef) await handleAction(actionDef, params);
-      };
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'Button': {
-      const { Button } = await import('@core3/client/components/Button');
-      const component = new Button(def.id || `${config.page.id}-action`, {}, def);
-      component._onAction = async (actionId: string, params: any) => {
-        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
-        if (actionDef) await handleAction(actionDef, params);
-      };
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'PageIntro': {
-      const { PageIntro } = await import('./PageIntro.ts');
-      const component = new PageIntro(def.id || `${config.page.id}-intro`, def);
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'ComingSoon': {
-      const { ComingSoon } = await import('@core3/client/components/ComingSoon');
-      const component = new ComingSoon(def.id || `${config.page.id}-coming-soon`, def);
-      const slot = html.take(targetContainer).div.ele() as HTMLElement;
-      component.mount(slot);
-      break;
-    }
-    case 'StatRow':
-      await renderStatRow(def, targetContainer);
-      break;
-    case 'GridView':
-      await renderGridView(def, targetContainer);
-      break;
-    case 'DataGrid':
-      await renderDataGrid(def, targetContainer);
-      break;
-    case 'ListView':
-      await renderListView(def, targetContainer);
-      break;
-    case 'ScheduleGrid':
-      await renderScheduleGrid(def, targetContainer);
-      break;
-    case 'LineItemGrid':
-      await renderDataGrid(def, targetContainer);
-      break;
-    case 'ContactGrid':
-      await renderDataGrid(def, targetContainer);
-      break;
-    case 'DocumentSummary':
-      await renderDocumentSummary(def, targetContainer);
-      break;
-    case 'OdooFormView':
-      return renderOdooFormView(def, targetContainer);
-    case 'MoneySummary':
-      await renderMoneySummary(def, targetContainer);
-      break;
-    case 'ApprovalTimeline':
-      await renderApprovalTimeline(def, targetContainer);
-      break;
-    case 'TemplatePreview':
-      await renderTemplatePreview(def, targetContainer);
-      break;
-    case 'ChatWorkspace':
-      await renderChatWorkspace(def, targetContainer);
-      break;
-    case 'StatusTabs':
-      await renderStatusTabs(def, targetContainer);
-      break;
-    case 'ListToolbar':
-      await renderListToolbar(def, targetContainer);
-      break;
-    case 'TabGroup':
-      await renderTabGroupDef(def, targetContainer);
-      break;
-    case 'Chart':
-      await renderChart(def, targetContainer);
-      break;
-    default:
-      // Fall back to component registry for any custom types
-      if (registry.has(def.type)) {
-        const Ctor: any = registry.get(def.type);
-        const sourceData = def.source ? (dataMap[def.source] || {}) : {};
-        const comp = new Ctor(def.id || def.type, sourceData, def);
-        comp._onAction = async (actionId: string, params: any) => {
-          const row = params?.row || params || {};
-          const actionDef = (config.actions || []).find(a => a.id === actionId);
-          if (actionDef) await handleAction(actionDef, row);
-        };
-      const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-        comp.mount(slot);
-      } else {
-        console.error(`[page-renderer] Unknown component type: ${def.type}`);
-      }
+  if (await componentFactory.render(def, targetContainer)) return;
+  if (registry.has(def.type)) {
+    const Ctor: any = registry.get(def.type);
+    const sourceData = def.source ? (dataMap[def.source] || {}) : {};
+    const comp = new Ctor(def.id || def.type, sourceData, def);
+    comp._onAction = async (actionId: string, params: any) => {
+      const row = params?.row || params || {};
+      const actionDef = (config.actions || []).find((a: any) => a.id === actionId);
+      if (actionDef) await handleAction(actionDef, row);
+    };
+    const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
+    mountOwned(comp, slot);
+  } else {
+    console.error(`[page-renderer] Unknown component type: ${def.type}`);
   }
 }
 
@@ -546,13 +440,46 @@ async function renderTemplatePreview(def: any, targetContainer: HTMLElement) {
     },
   );
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-  component.mount(slot);
+  mountOwned(component, slot);
   bindSource(def.source, data => component.setState({
     blocks: Array.isArray(data.data) ? data.data : [],
     template: (dataMap[def.template_source]?.data || {}) as Record<string, unknown>,
   }, true));
 }
 
+componentFactory
+  .register('LoginForm', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/LoginForm')).LoginForm))
+  .register('Html', (def, target) => {
+    const runtimeContext = ctx.context || {};
+    const runtimeUser = { ...ctx.user, ...(runtimeContext.user || {}) };
+    if (runtimeContext.company !== undefined) runtimeUser.company = runtimeContext.company;
+    return mountComponent(def, target, async () => (await import('@core3/client/components/Html')).Html, {
+      context: { ...ctx, ...runtimeContext, user: runtimeUser },
+    });
+  })
+  .register('AvatarPicker', (def, target) => mountComponent(def, target, async () => AvatarPicker, { user: ctx.user }))
+  .register('ChoiceGroup', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/ChoiceGroup')).ChoiceGroup, { record: ctx.user }))
+  .register('Form', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/Form')).Form))
+  .register('Button', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/Button')).Button))
+  .register('PageIntro', (def, target) => mountComponent(def, target, async () => (await import('./PageIntro.ts')).PageIntro, def, def, false))
+  .register('ComingSoon', (def, target) => mountComponent(def, target, async () => (await import('@core3/client/components/ComingSoon')).ComingSoon, def, def, false))
+  .register('StatRow', renderStatRow)
+  .register('GridView', renderGridView)
+  .register('DataGrid', renderDataGrid)
+  .register('ListView', renderListView)
+  .register('ScheduleGrid', renderScheduleGrid)
+  .register('LineItemGrid', renderDataGrid)
+  .register('ContactGrid', renderDataGrid)
+  .register('DocumentSummary', renderDocumentSummary)
+  .register('OdooFormView', renderOdooFormView)
+  .register('MoneySummary', renderMoneySummary)
+  .register('ApprovalTimeline', renderApprovalTimeline)
+  .register('TemplatePreview', renderTemplatePreview)
+  .register('ChatWorkspace', renderChatWorkspace)
+  .register('StatusTabs', renderStatusTabs)
+  .register('ListToolbar', renderListToolbar)
+  .register('TabGroup', renderTabGroupDef)
+  .register('Chart', renderChart);
 
   return { chartState, renderComponentDef };
 }

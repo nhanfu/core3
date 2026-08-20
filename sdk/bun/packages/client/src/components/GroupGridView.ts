@@ -1,15 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
-import { TextCell } from '@core3/client/components/TextCell';
-import { BadgeCell } from '@core3/client/components/BadgeCell';
-import { CurrencyCell } from '@core3/client/components/CurrencyCell';
-import { NumberCell } from '@core3/client/components/NumberCell';
-import { DateCell } from '@core3/client/components/DateCell';
-import { BooleanCell } from '@core3/client/components/BooleanCell';
-import { ActionCell } from '@core3/client/components/ActionCell';
 import { i18n } from '@core3/client/i18n';
-
-const CELL_MAP = { TextCell, BadgeCell, CurrencyCell, NumberCell, DateCell, BooleanCell, ActionCell };
+import { CellComponentFactory } from '@core3/client/components/CellComponentFactory';
 
 export class GroupGridView extends BaseComponent {
   constructor(id, state, defs = []) {
@@ -18,20 +10,11 @@ export class GroupGridView extends BaseComponent {
   }
 
   _cellState(def, row) {
-    const value = row[def.field];
-    switch (def.type) {
-      case 'BadgeCell':    return { value, color: def.colorField ? row[def.colorField] : null };
-      case 'CurrencyCell': return { value, currency: def.currency || 'USD' };
-      case 'NumberCell':   return { value, format: def.format || 'number' };
-      case 'DateCell':     return { value, format: def.format || 'short', overdue: def.overdueField ? !!row[def.overdueField] : false };
-      case 'BooleanCell':  return { value: !!value };
-      case 'ActionCell':   return { actions: def.actions || [], row };
-      default:             return { value, secondary: def.secondary ? row[def.secondary] : null };
-    }
+    return CellComponentFactory.state(def, row);
   }
 
   draw(container) {
-    this.children = [];
+    this.disposeChildren();
     const { rows = [], loading = false, groupBy = '' } = this.state;
 
     const outerDiv = html.take(container).div.className('overflow-x-auto rounded-lg border border-gray-200').ele();
@@ -89,8 +72,7 @@ export class GroupGridView extends BaseComponent {
           const cellAttr = `${this.id}-${String(row.id ?? '')}-${def.id}`;
           const td = container.querySelector(`[data-cell="${cellAttr}"]`);
           if (!td) continue;
-          const Cls = CELL_MAP[def.type] || TextCell;
-          const cell = new Cls(cellAttr, this._cellState(def, row));
+          const cell = CellComponentFactory.create(cellAttr, def, row);
           cell.parent = this;
           this.children.push(cell);
           cell.draw(td);

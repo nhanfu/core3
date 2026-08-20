@@ -13,7 +13,7 @@ export class StatRow extends BaseComponent {
   }
 
   draw(container) {
-    this.children = [];
+    this.disposeChildren();
     const cols = this.stats.length;
     const gridCls = cols === 2 ? 'grid-cols-2'
                   : cols === 3 ? 'grid-cols-3'

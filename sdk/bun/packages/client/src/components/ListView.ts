@@ -154,8 +154,7 @@ export class ListView extends BaseComponent {
   draw(container: HTMLElement) {
     for (const cleanup of this.dismissCleanup) cleanup();
     this.dismissCleanup = [];
-    for (const child of this.children) child.dispose();
-    this.children = [];
+    this.disposeChildren();
     if (this.options.variant !== 'odoo') {
       this.drawCards(container);
       return;

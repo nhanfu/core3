@@ -144,7 +144,7 @@ export class DataGrid extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    this.children = [];
+    this.disposeChildren();
     const allRows = this.sortedRows((this.state.rows as DataGridRow[] | undefined) || []);
     const treeParentField = this.options.tree?.parentField || 'parent_id';
     const collapsed = new Set(Array.isArray(this.state.collapsedTreeIds) ? this.state.collapsedTreeIds.map(String) : []);

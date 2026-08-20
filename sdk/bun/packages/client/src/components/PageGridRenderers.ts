@@ -6,6 +6,7 @@ import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
+import { CellComponentFactory } from '@core3/client/components/CellComponentFactory';
 
 function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   const defaults = view?.pivot?.default || {};
@@ -43,6 +44,11 @@ export class PageGridRenderers extends BaseComponent {
 
   private createRenderers(deps: any) {
   const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources, handleInlineForm, resolveActionParams, registry } = deps;
+const owner = this;
+
+function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
+  return owner.mountChild(component, container);
+}
 
 async function renderStatRow(def: any, targetContainer: HTMLElement) {
   const { StatRow } = await import('@core3/client/components/StatRow');
@@ -57,7 +63,7 @@ async function renderStatRow(def: any, targetContainer: HTMLElement) {
     path => void navigate(path),
   );
   const slot = html.take(targetContainer).div.className(def.variant === 'contained' ? 'status-tabs-slot-contained' : '').css('marginBottom', def.variant === 'contained' ? '0' : '16px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
 
   bindSource(def.source, data => {
     const sourceData = data.data || {};
@@ -105,42 +111,10 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
 
   // Override _cellState to support YAML `colors` map and `show_if` on action buttons
   comp._cellState = (colDef: any, row: any) => {
-    const value = row[colDef.field];
-    switch (colDef.type) {
-      case 'BadgeCell':
-        return {
-          value,
-          color: colDef.colors
-            ? (colDef.colors[value] || null)
-            : (colDef.colorField ? row[colDef.colorField] : null),
-        };
-      case 'CurrencyCell':
-        return { value, currency: colDef.currency || 'USD' };
-      case 'NumberCell':
-        return { value, format: colDef.format || 'number' };
-      case 'DateCell':
-        return {
-          value,
-          format: colDef.format || 'short',
-          overdue: colDef.overdueField ? !!row[colDef.overdueField] : false,
-        };
-      case 'BooleanCell':
-        return { value: !!value };
-      case 'ActionCell': {
-        const rowCtx = { ...ctx, row };
-        const visibleActions = (colDef.actions || []).filter((a: any) =>
-          hasPermission(ctx.user, a.permission)
-          && (!a.show_if || evalExpr(a.show_if, rowCtx))
-        );
-        return { actions: visibleActions, row };
-      }
-      case 'AvatarCell':
-        return { name: value, src: colDef.srcField ? row[colDef.srcField] : null, size: colDef.size || 'sm' };
-      case 'PercentCell':
-        return { value };
-      default:
-        return { value, secondary: colDef.secondary ? row[colDef.secondary] : null };
-    }
+    return CellComponentFactory.state(colDef, row, {
+      actionFilter: (action: any) => hasPermission(ctx.user, action.permission)
+        && (!action.show_if || evalExpr(action.show_if, { ...ctx, row })),
+    });
   };
 
   // Keep a reference to the real setState (before override)
@@ -187,7 +161,7 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
   const slot = html.take(targetContainer).div.ele() as HTMLElement;
   if (def.type === 'LineItemGrid') html.take(slot).className('o-form-section o-form-lines-slot');
   else html.take(slot).css('marginBottom', '24px');
-  comp.mount(slot);
+  mountOwned(comp, slot);
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
 }
@@ -432,7 +406,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
   };
 
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
   bindSource(footerSourceId, data => _origSetState({ footerRecord: data.data || {} }, true));
@@ -701,6 +675,9 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         registry,
         ...detailGridRenderer.renderers,
       });
+      owner.adoptChild(detailFormModal);
+      owner.adoptChild(detailGridRenderer);
+      owner.adoptChild(detailRenderer);
       html.take(target).clear();
       let previousPanelContent: HTMLElement | undefined;
       for (const [index, componentDef] of (detailConfig.components || []).entries()) {
@@ -978,7 +955,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     if (actionDef) await handleAction(actionDef, params?.row || params || {});
   };
   const slot = html.take(targetContainer).div.className('o-list-view-slot').ele() as HTMLElement;
-  comp.mount(slot);
+  mountOwned(comp, slot);
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
 }
 
@@ -991,7 +968,7 @@ async function renderScheduleGrid(def: any, targetContainer: HTMLElement) {
     def,
   );
   const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
-  component.mount(slot);
+  mountOwned(component, slot);
   bindSource(def.source, data => component.setState({ rows: data.data || [], meta: data.meta }, true));
 }
 

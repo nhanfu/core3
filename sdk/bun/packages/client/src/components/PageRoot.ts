@@ -48,6 +48,7 @@ class PageRoot extends BaseComponent {
     const { applySourceFilters, handleAction, renderComponentDef } = this.options;
 
     html.take(container).clear();
+    this.disposeChildren();
     const pageDiv = html.take(container).div.className('page').ele() as HTMLDivElement;
     if ((config.components || []).some((component: any) => component.type === 'OdooFormView')) html.take(pageDiv).toggleClass('o-form-page', true);
 
@@ -140,16 +141,14 @@ class PageRoot extends BaseComponent {
         if (actionId === 'filter.change') await applySourceFilters(config.filters.source, params?.values || {});
         else if (actionId === 'filter.clear') await applySourceFilters(config.filters.source, {});
       };
-      filterBar.mount(filterSlot);
+      this.mountChild(filterBar, filterSlot);
     }
 
-    this.children = [];
     let previousPanelContent: HTMLElement | undefined;
     for (const [index, def] of (config.components || []).entries()) {
       const target = def.mount_in === 'previous-panel' && previousPanelContent ? previousPanelContent : pageDiv;
       const child = new PageChild(`${this.id}-child-${index}`, def, renderComponentDef);
-      child.parent = this;
-      this.children.push(child);
+      this.adoptChild(child);
       const contentSlot = await child.render(target);
       previousPanelContent = contentSlot instanceof HTMLElement ? contentSlot : undefined;
     }

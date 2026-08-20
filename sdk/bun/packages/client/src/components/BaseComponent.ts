@@ -83,6 +83,34 @@ export class BaseComponent {
     return child;
   }
 
+  /** Adopt a component before mounting it so ownership, lookup, and disposal stay explicit. */
+  adoptChild<T extends BaseComponent>(child: T): T {
+    const previousParent = child.parent;
+    if (previousParent && previousParent !== this) {
+      previousParent.children = previousParent.children.filter(candidate => candidate !== child);
+    }
+    const existing = this.children.find(candidate => candidate.id === child.id && candidate !== child);
+    if (existing) {
+      existing.dispose();
+      this.children = this.children.filter(candidate => candidate !== existing);
+    }
+    child.parent = this;
+    if (!this.children.includes(child)) this.children.push(child);
+    return child;
+  }
+
+  /** Adopt and mount a child through one lifecycle-aware operation. */
+  mountChild<T extends BaseComponent>(child: T, container: HTMLElement): T {
+    this.adoptChild(child).mount(container);
+    return child;
+  }
+
+  /** Dispose and detach all owned children without disposing this component. */
+  disposeChildren() {
+    for (const child of this.children) child.dispose();
+    this.children = [];
+  }
+
   /**
    * Depth-first search for a component by id.
    * @param {string} id

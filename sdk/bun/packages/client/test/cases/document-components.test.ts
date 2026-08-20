@@ -154,6 +154,7 @@ describe('document detail components', () => {
     component.state.onInlineSave = async (values: any) => { saved.push(values); };
     const container = mount(component);
     container.querySelector<HTMLButtonElement>('.o-form-action')!.click();
+    expect(component.find('inline-name')).not.toBeNull();
     const name = container.querySelector<HTMLInputElement>('[data-form-field="name"]')!;
     name.value = 'Acme Updated';
     name.dispatchEvent(new Event('input', { bubbles: true }));

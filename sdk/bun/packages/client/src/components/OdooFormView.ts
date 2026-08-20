@@ -19,8 +19,7 @@ export class OdooFormView extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    for (const child of this.children) child.dispose();
-    this.children = [];
+    this.disposeChildren();
     const sourceRecord = this.state.record || {};
     const labels = {
       save: 'Save',
@@ -137,9 +136,7 @@ export class OdooFormView extends BaseComponent {
           this.state.draft = { ...(this.state.draft || {}), [field.field]: next };
         },
       }, field);
-      editor.parent = this;
-      this.children.push(editor);
-      editor.mount(value);
+      this.mountChild(editor, value);
       }
     };
     if (editing && Array.isArray(this.def.edit_fields)) {
@@ -223,10 +220,8 @@ export class OdooFormView extends BaseComponent {
       followerCandidates: this.state.followerCandidates || [],
       attachments: this.state.attachments || [],
     }, this.def);
-    chatter.parent = this;
-    this.children.push(chatter);
     const chatterSlot = html.take(layout).div.className('o-form-chatter-slot').ele() as HTMLDivElement;
-    chatter.mount(chatterSlot);
+    this.mountChild(chatter, chatterSlot);
   }
 
   getEmbeddedContent() {

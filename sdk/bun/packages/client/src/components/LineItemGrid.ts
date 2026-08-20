@@ -30,7 +30,7 @@ export class LineItemGrid extends DataGrid {
       super.draw(container);
       return;
     }
-    this.children = [];
+    this.disposeChildren();
     const rows = (this.state.rows as Row[] | undefined) || [];
     const editingId = this.state.editingId == null ? '' : String(this.state.editingId);
     const root = html.take(container).div.className('token-panel o-x2many-grid o-line-grid').ele();

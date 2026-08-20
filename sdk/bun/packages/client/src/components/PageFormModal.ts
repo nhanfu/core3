@@ -1,11 +1,10 @@
 import { evalExpr } from '@core3/client/expr';
 import { appendIcon } from '@core3/client/components/Icon';
-import { AsyncSelect } from '@core3/client/components/AsyncSelect';
-import { MoneyInput } from '@core3/client/components/MoneyInput';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
+import { PageFormFieldFactory } from '@core3/client/components/PageFormFieldFactory';
 
 export class PageFormModal extends BaseComponent {
   readonly openFormModal: any;
@@ -17,6 +16,7 @@ export class PageFormModal extends BaseComponent {
 
   private createRenderer(deps: any) {
     const { dataMap, ctx, client, refreshSources, resolveActionParams } = deps;
+    const owner = this;
 
     async function openFormModal(actionDef: any, row: any) {
       return new Promise<void>(resolve => {
@@ -69,132 +69,28 @@ export class PageFormModal extends BaseComponent {
             initialValue = initialValue.replace('Z', '').slice(0, 16);
           }
 
-          let el;
-          let usesAsyncSelect = false;
-          if (fieldDef.type === 'permission-grid') {
-            const optionRows = fieldDef.options_source
-              ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
-              : [];
-            const selected = new Set(Array.isArray(initialValue)
-              ? initialValue.map(String)
-              : String(initialValue || '').split(',').map(value => value.trim()).filter(Boolean));
-            const hidden = html.take(group).input.type('hidden').ele() as HTMLInputElement;
-            html.take(hidden).prop('id', fieldId).prop('value', [...selected].join(','));
-            const groups = new Map<string, HTMLDivElement>();
-            for (const option of optionRows) {
-              const key = String(option.value ?? option.permission_key ?? option.id ?? '');
-              if (!key) continue;
-              const groupKey = String(option.group || key.split('.')[0] || 'General');
-              let grid = groups.get(groupKey);
-              if (!grid) {
-                const section = html.take(group).section.className('permission-grid-group').ele() as HTMLElement;
-                html.take(section).h3.className('permission-grid-title').replaceText(groupKey);
-                grid = html.take(section).div.className('permission-grid').ele() as HTMLDivElement;
-                groups.set(groupKey, grid);
-              }
-              const row = html.take(grid).label.className('permission-grid-item').ele() as HTMLLabelElement;
-              const checkbox = html.take(row).input.type('checkbox').ele() as HTMLInputElement;
-              const checked = selected.has(key) || option.enabled === true;
-              html.take(checkbox).prop('checked', checked).attr('aria-label', String(option.label || key));
-              html.take(row).span.className('permission-grid-label').replaceText(String(option.label || key));
-              html.take(checkbox).event('change', () => {
-                if (checkbox.checked) selected.add(key);
-                else selected.delete(key);
-                hidden.value = [...selected].sort().join(',');
-              });
-            }
-            el = hidden;
-          } else if (fieldDef.type === 'async-select' || fieldDef.type === 'multi-select') {
-            const optionRows = fieldDef.options_source
-              ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
-              : [];
-            const options = fieldDef.options_source
-              ? optionRows.map((option: any) => ({ value: String(option.value ?? option.id ?? option.code ?? ''), label: String(option.label ?? option.name ?? option.value ?? option.id ?? option.code ?? '') }))
-              : (fieldDef.options || []).map((option: any) => {
-                if (option && typeof option === 'object') {
-                  const value = option.value ?? option.id ?? option.code;
-                  return { value: String(value ?? ''), label: String(option.label ?? option.name ?? value ?? '') };
-                }
-                return { value: String(option ?? ''), label: String(option ?? '') };
-              });
-            const lookup = new AsyncSelect(fieldId, { value: initialValue }, {
-              options,
-              multiple: fieldDef.type === 'multi-select' || fieldDef.multiple === true,
-              placeholder: fieldDef.placeholder,
-              search_placeholder: fieldDef.search_placeholder,
-            });
-            lookup.mount(group);
-            el = lookup.input;
-            usesAsyncSelect = true;
-          } else if (fieldDef.type === 'money') {
-            const money = new MoneyInput(fieldId, { value: initialValue }, {
-              currency: fieldDef.currency,
-              decimals: fieldDef.decimals,
-              placeholder: fieldDef.placeholder,
-            });
-            money.mount(group);
-            el = money.input;
-          } else if (fieldDef.type === 'select') {
-            el = html.take(group).select.ele() as HTMLSelectElement;
-            html.take(el).className(`form-select form-control${fieldDef.multiple ? ' form-control-multiple' : ''}`);
-            if (fieldDef.multiple) {
-              html.take(el).prop('multiple', true);
-            }
-
-            if (!fieldDef.multiple) {
-              html.take(el).option.prop('value', '').replaceText(i18n.tKey('labels.select', {}, 'Chọn…'));
-            }
-
-            const optionRows = fieldDef.options_source
-              ? (Array.isArray(dataMap[fieldDef.options_source]?.data) ? dataMap[fieldDef.options_source].data : [])
-              : [];
-            const options = fieldDef.options_source
-              ? optionRows.map((option: any) => ({ value: option.value ?? option.id ?? option.code, label: option.label ?? option.name ?? option.value ?? option.id ?? option.code }))
-              : (fieldDef.options || []).map((option: any) => {
-                if (option && typeof option === 'object') {
-                  const value = option.value ?? option.id ?? option.code;
-                  return { value, label: option.label ?? option.name ?? value };
-                }
-                return { value: option, label: option };
-              });
-            for (const opt of options) {
-              html.take(el).option.prop('value', String(opt.value ?? '')).replaceText(String(opt.label ?? opt.value ?? ''));
-            }
-          } else if (fieldDef.type === 'textarea' || fieldDef.type === 'richtext') {
-            el = html.take(group).textarea.ele() as HTMLTextAreaElement;
-            html.take(el).className(fieldDef.type === 'richtext'
-              ? 'form-input template-richtext form-control form-richtext'
-              : 'form-input form-control form-textarea');
-          } else {
-            el = html.take(group).input.ele() as HTMLInputElement;
-            html.take(el).type(['date', 'time', 'datetime'].includes(fieldDef.type) ? 'text' : (fieldDef.type || 'text'));
-            if (fieldDef.type === 'date' || fieldDef.type === 'time' || fieldDef.type === 'datetime') {
-              html.take(el).prop('inputMode', 'numeric');
-              html.take(el).prop('placeholder', fieldDef.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm');
-            }
-            html.take(el).className('form-input form-control');
-          }
-          html.take(el).prop('id', fieldId);
-
-          if (fieldDef.type === 'select' && fieldDef.multiple) {
-            const selected = new Set(Array.isArray(initialValue) ? initialValue.map(String) : String(initialValue || '').split(',').map(value => value.trim()).filter(Boolean));
-            for (const option of Array.from((el as HTMLSelectElement).options)) html.take(option).prop('selected', selected.has(option.value));
-          } else if (!usesAsyncSelect) {
-            html.take(el).prop('value', String(initialValue ?? ''));
-          }
+          const { element: el, usesAsyncSelect } = PageFormFieldFactory.render({
+            container: group,
+            field: fieldDef,
+            fieldId,
+            initialValue,
+            dataMap,
+            parent: owner,
+          });
 
           if (fieldDef.type === 'richtext' && Array.isArray(fieldDef.tokens) && fieldDef.tokens.length) {
+            const textEditor = el as HTMLInputElement | HTMLTextAreaElement;
             const tokenBar = html.take(group).div.className('template-token-picker form-token-bar').ele() as HTMLDivElement;
             for (const token of fieldDef.tokens) {
               const tokenButton = html.take(tokenBar).button.ele() as HTMLButtonElement;
               html.take(tokenButton).type('button');
               html.take(tokenButton).className('template-token form-token').replaceText(`{{${token}}}`).event('click', () => {
-                const start = el.selectionStart ?? el.value.length;
-                const end = el.selectionEnd ?? start;
+                const start = textEditor.selectionStart ?? textEditor.value.length;
+                const end = textEditor.selectionEnd ?? start;
                 const insertion = `{{${token}}}`;
-                html.take(el).prop('value', `${el.value.slice(0, start)}${insertion}${el.value.slice(end)}`);
-                el.selectionStart = el.selectionEnd = start + insertion.length;
-                html.take(el).dispatch(new Event('input', { bubbles: true })).focus();
+                html.take(textEditor).prop('value', `${textEditor.value.slice(0, start)}${insertion}${textEditor.value.slice(end)}`);
+                textEditor.selectionStart = textEditor.selectionEnd = start + insertion.length;
+                html.take(textEditor).dispatch(new Event('input', { bubbles: true })).focus();
               });
             }
           }
@@ -219,6 +115,7 @@ export class PageFormModal extends BaseComponent {
         function closeModal() {
           if (closed) return;
           closed = true;
+          owner.disposeChildren();
           html.take(document).off('keydown', onKeyDown);
           if (document.body.contains(overlay)) html.take(overlay).remove();
           resolve();
