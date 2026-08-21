@@ -27,12 +27,18 @@ export class AppPicker extends BaseComponent {
     this._search.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' && this._search?.value.trim()) {
         event.preventDefault();
-        void this.runTask(this._search.value);
+        const value = this._search.value.trim();
+        const appCard = this.firstMatchingApp(value);
+        if (appCard && !/^\/(?:codex|task)\b/i.test(value)) {
+          appCard.focus();
+          appCard.click();
+          return;
+        }
+        void this.runTask(value);
       }
     });
     queueMicrotask(() => this._search?.focus({ preventScroll: true }));
     this._taskHost = html.take(root).div.className('app-picker-task-host').ele();
-    this._workspace = this.mountChild(new AiWorkspace('ai-workspace', {}), this._taskHost);
     const pinnedSection = html.take(root).section.className('app-picker-section app-picker-pinned-section').ele();
     const pinnedHeading = html.take(pinnedSection).div.className('app-picker-section-heading').ele();
     html.take(pinnedHeading).h2.text('Pinned');
@@ -54,6 +60,7 @@ export class AppPicker extends BaseComponent {
       card.dataset.appColor = String(app.color || 'blue').toLowerCase();
       if (pinned) card.classList.add('app-picker-card-pinned');
       card.dataset.appPickerSearch = `${app.label || ''} ${app.id} ${app.description || ''}`.toLocaleLowerCase();
+      card.dataset.appPickerName = `${app.label || ''} ${app.id}`.toLocaleLowerCase();
       const icon = html.take(card).span.className('app-picker-icon').ele();
       appendFilledIcon(icon, app.icon || 'grid');
       const copy = html.take(card).div.className('app-picker-copy').ele();
@@ -68,14 +75,26 @@ export class AppPicker extends BaseComponent {
 
   private filter(value: string) {
     const query = value.trim().toLocaleLowerCase();
+    let firstMatch: HTMLElement | null = null;
     this._container?.querySelectorAll<HTMLElement>('[data-app-picker-search]').forEach((card) => {
       card.hidden = Boolean(query) && !card.dataset.appPickerSearch?.includes(query);
+      card.classList.remove('is-search-match');
+      if (!firstMatch && query && !card.hidden && !card.classList.contains('disabled')) firstMatch = card;
     });
+    firstMatch?.classList.add('is-search-match');
+  }
+
+  private firstMatchingApp(value: string) {
+    const query = value.trim().toLocaleLowerCase();
+    if (!query) return null;
+    return [...(this._container?.querySelectorAll<HTMLElement>('[data-app-picker-name]') || [])]
+      .find((card) => !card.classList.contains('disabled') && card.dataset.appPickerName?.includes(query)) || null;
   }
 
   private async runTask(rawPrompt: string) {
     const prompt = rawPrompt.trim().replace(/^\/(?:codex|task)\s+/i, '');
     if (!prompt || !this._taskHost) return;
+    if (!this._workspace) this._workspace = this.mountChild(new AiWorkspace('ai-workspace', {}), this._taskHost);
     this._workspace?.submitPrompt(prompt);
   }
 

@@ -223,7 +223,7 @@
 .app-picker-pinned-grid .app-picker-icon { width: 46px; height: 46px; }
 .app-picker-pinned-grid .app-picker-icon svg { width: 25px; height: 25px; }
 .app-picker-pinned-grid .app-picker-name { font-size: .82rem; }
-.app-picker-card:hover, .app-picker-card:focus-visible { border-color: var(--color-border); background: var(--color-surface-muted); box-shadow: var(--shadow-sm); outline: 0; }
+.app-picker-card:hover, .app-picker-card:focus-visible, .app-picker-card.is-search-match { border-color: var(--color-primary-mid); background: var(--color-surface-muted); box-shadow: var(--shadow-sm); outline: 0; }
 .app-picker-card[data-app-color="blue"], .workspace-app[data-app-color="blue"] { --app-accent: #2563eb; --app-tint: #e0edff; }
 .app-picker-card[data-app-color="indigo"], .workspace-app[data-app-color="indigo"] { --app-accent: #4f46e5; --app-tint: #e8e7ff; }
 .app-picker-card[data-app-color="violet"], .workspace-app[data-app-color="violet"] { --app-accent: #7c3aed; --app-tint: #f0e9ff; }
