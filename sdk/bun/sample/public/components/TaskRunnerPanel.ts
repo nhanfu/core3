@@ -40,8 +40,8 @@ export class TaskRunnerPanel extends BaseComponent {
   private streamAbort: AbortController | null = null;
   private codexBuffer = '';
 
-  constructor(id: string, state: { prompt: string }) {
-    super(id, { prompt: state.prompt, taskId: '', status: 'starting', output: '', changedFiles: [], error: '' } as TaskState);
+  constructor(id: string, state: { prompt: string; taskId?: string }) {
+    super(id, { prompt: state.prompt, taskId: state.taskId || '', status: state.taskId ? 'queued' : 'starting', output: '', changedFiles: [], error: '' } as TaskState);
   }
 
   draw(container: HTMLElement) {
@@ -101,6 +101,17 @@ export class TaskRunnerPanel extends BaseComponent {
 
   private async start() {
     try {
+      if (this.state.taskId) {
+        const existing = await apiFetch(`/api/tasks/${encodeURIComponent(this.state.taskId)}`);
+        if (!existing.ok) throw new Error('This task is no longer available');
+        const task = await existing.json();
+        this.state.status = String(task.status || this.state.status);
+        this.state.output = String(task.output || '');
+        this.state.changedFiles = Array.isArray(task.changedFiles) ? task.changedFiles : [];
+        this.updateVisualState();
+        await this.stream();
+        return;
+      }
       const response = await apiFetch('/api/tasks', {
         method: 'POST',
         body: JSON.stringify({ prompt: this.state.prompt }),

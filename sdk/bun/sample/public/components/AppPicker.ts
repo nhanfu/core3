@@ -2,12 +2,12 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { appendFilledIcon, appendIcon } from '@core3/client/components/Icon';
 import { getApps, selectApp, setDefaultApp } from '../app.ts';
-import { TaskRunnerPanel } from './TaskRunnerPanel.ts';
+import { AiWorkspace } from './AiWorkspace.ts';
 
 export class AppPicker extends BaseComponent {
   private _search: HTMLInputElement | null = null;
   private _taskHost: HTMLElement | null = null;
-  private _taskPanel: TaskRunnerPanel | null = null;
+  private _workspace: AiWorkspace | null = null;
 
   draw(container: HTMLElement) {
     const apps = getApps().filter((app: any) => app.available);
@@ -32,6 +32,7 @@ export class AppPicker extends BaseComponent {
     });
     queueMicrotask(() => this._search?.focus({ preventScroll: true }));
     this._taskHost = html.take(root).div.className('app-picker-task-host').ele();
+    this._workspace = this.mountChild(new AiWorkspace('ai-workspace', {}), this._taskHost);
     const pinnedSection = html.take(root).section.className('app-picker-section app-picker-pinned-section').ele();
     const pinnedHeading = html.take(pinnedSection).div.className('app-picker-section-heading').ele();
     html.take(pinnedHeading).h2.text('Pinned');
@@ -75,14 +76,12 @@ export class AppPicker extends BaseComponent {
   private async runTask(rawPrompt: string) {
     const prompt = rawPrompt.trim().replace(/^\/(?:codex|task)\s+/i, '');
     if (!prompt || !this._taskHost) return;
-    this._taskPanel?.dispose();
-    this._taskHost.innerHTML = '';
-    this._taskPanel = this.mountChild(new TaskRunnerPanel('app-picker-task', { prompt }), this._taskHost);
+    this._workspace?.submitPrompt(prompt);
   }
 
   dispose() {
-    this._taskPanel?.dispose();
-    this._taskPanel = null;
+    this._workspace?.dispose();
+    this._workspace = null;
     this._taskHost = null;
     this._search = null;
     super.dispose();

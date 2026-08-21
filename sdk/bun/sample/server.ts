@@ -7,6 +7,7 @@ import { loadApplicationConfig } from '@core3/server/application-config';
 import { EventStore, EventMediatorClient, loadMedConfig, type EventBus } from '@core3/med';
 import { CodexTaskRunner } from './task-runner.ts';
 import { createTaskApi } from './task-api.ts';
+import { AiThreadStore } from './ai-thread-store.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
@@ -177,9 +178,11 @@ const taskRunner = new CodexTaskRunner(REPO_ROOT, `http://127.0.0.1:${PORT}`, as
   reloaded_services: yamlServiceContexts.map((context) => ({ id: context.id, pages: context.reloadPages?.() || 0 })),
   restart_required_for_new_services: true,
 }));
+const aiThreadStore = new AiThreadStore(join(APPS_ROOT, '.data', 'ai-threads.json'));
 moduleManager.apiHandlers.unshift(createTaskApi({
   authProvider: moduleManager.resolveService('auth.adapter') as any,
   runner: taskRunner,
+  threadStore: aiThreadStore,
   actionHandlers: yamlServiceContexts.map((context) => context.api),
 }));
 if (yamlServiceContexts.length) moduleManager.apiHandlers.unshift(createYamlHostApi(yamlServiceContexts));

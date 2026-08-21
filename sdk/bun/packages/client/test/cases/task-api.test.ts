@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { mkdtemp } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { createTaskApi } from '../../../../sample/task-api.ts';
+import { AiThreadStore } from '../../../../sample/ai-thread-store.ts';
 
 function request(path: string, init: RequestInit = {}) {
   return new Request(`http://localhost${path}`, {
@@ -79,5 +83,23 @@ describe('Codex task API', () => {
     expect(response?.status).toBe(200);
     expect(await response?.json()).toEqual({ ok: true });
     expect(actionSeen).toBe('project.tasks.start:row-1');
+  });
+
+  it('creates a thread and starts a task from a thread message', async () => {
+    const temp = await mkdtemp(join(tmpdir(), 'core3-ai-thread-'));
+    const store = new AiThreadStore(join(temp, 'threads.json'));
+    const task: any = { id: 'task_thread', actorId: 'u1', actorName: 'Director', prompt: 'create dashboard', status: 'queued', createdAt: '', updatedAt: '', output: '', changedFiles: [] };
+    const runner: any = { create: () => task, get: () => task, canRead: () => true };
+    const api = createTaskApi({
+      authProvider: { getCurrentUser: async () => ({ sub: 'u1', name: 'Director' }), hasPermission: () => true },
+      runner,
+      threadStore: store,
+    });
+    const created = await api(request('/api/ai/threads', { method: 'POST', body: JSON.stringify({ title: 'Dashboard work' }) }), new URL('http://localhost/api/ai/threads'));
+    expect(created?.status).toBe(201);
+    const thread = await created?.json();
+    const message = await api(request(`/api/ai/threads/${thread.id}/messages`, { method: 'POST', body: JSON.stringify({ prompt: 'create dashboard' }) }), new URL(`http://localhost/api/ai/threads/${thread.id}/messages`));
+    expect(message?.status).toBe(202);
+    expect(await message?.json()).toMatchObject({ task: { id: 'task_thread' }, thread: { taskIds: ['task_thread'] } });
   });
 });
