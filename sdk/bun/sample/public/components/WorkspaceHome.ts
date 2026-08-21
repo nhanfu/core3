@@ -80,6 +80,7 @@ export class WorkspaceHome extends BaseComponent {
     const grid = html.take(section).div.className('workspace-home-grid').ele();
     [...pinned, ...remaining].forEach((app) => {
       const item = this.appButton(grid, app);
+      item.dataset.appColor = String(app.color || 'blue').toLowerCase();
       item.dataset.workspaceSearch = `${app.label || ''} ${app.id} ${app.description || ''}`.toLocaleLowerCase();
     });
 

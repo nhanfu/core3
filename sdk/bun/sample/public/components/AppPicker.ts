@@ -40,6 +40,7 @@ export class AppPicker extends BaseComponent {
   private drawCard(grid: HTMLElement, app: any, pinned = false) {
       const card = html.take(grid).button.className(`app-picker-card${app.available ? '' : ' disabled'}`)
         .attr('type', 'button').ele();
+      card.dataset.appColor = String(app.color || 'blue').toLowerCase();
       if (pinned) card.classList.add('app-picker-card-pinned');
       card.dataset.appPickerSearch = `${app.label || ''} ${app.id} ${app.description || ''}`.toLocaleLowerCase();
       const icon = html.take(card).span.className('app-picker-icon').ele();
