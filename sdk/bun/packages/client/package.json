@@ -16,6 +16,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./vite": "./src/vite.ts",
+    "./styles/*": "./src/styles/*",
     "./*": "./src/*.ts"
   },
   "dependencies": {

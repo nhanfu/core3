@@ -1,5 +1,5 @@
-@use '../../../public/styles/tokens';
-@use '../../../public/styles/components';
+@use 'styles/tokens';
+@use 'styles/components';
 
 /* Base records use the shared Odoo sheet, but do not have a chatter column yet. */
 .o-form-layout:not(:has(.o-form-chatter)) {
