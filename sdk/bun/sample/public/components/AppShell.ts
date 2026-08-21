@@ -147,7 +147,8 @@ export class AppShell extends BaseComponent {
   }
 
   openAppPicker() {
-    this._appLauncher?.toggle();
+    if (typeof this.state.navigate === 'function') this.state.navigate('/apps');
+    else this._appLauncher?.toggle();
   }
 
   closeAppPicker() {
@@ -190,6 +191,7 @@ export class AppShell extends BaseComponent {
       apps,
       currentApp: this.state.currentApp || apps.find((app) => app.available),
       onAppChange: (app: LauncherApp, makeDefault = false) => this.state.onAppChange?.(app, makeDefault),
+      onOpen: () => this.state.navigate?.('/apps'),
       onOpenChange: (open: boolean) => layout.classList.toggle('launcher-open', open),
     });
     this._appLauncher.mount(headerLeft);

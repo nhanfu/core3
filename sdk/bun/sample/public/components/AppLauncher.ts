@@ -160,7 +160,8 @@ export class AppLauncher extends BaseComponent {
 
     button.addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation();
-      this.toggle();
+      if (typeof this.state.onOpen === 'function') this.state.onOpen();
+      else this.toggle();
     });
     this._documentClickHandler = () => this.close();
     document.addEventListener('click', this._documentClickHandler);

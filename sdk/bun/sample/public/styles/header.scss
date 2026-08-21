@@ -277,6 +277,13 @@
 }
 
 @media (max-width: 720px) {
+  .workspace-home { padding-top: 28px; }
+  .workspace-home-hero { display: block; padding-bottom: 30px; }
+  .workspace-home-search { width: 100%; margin-top: 22px; }
+  .workspace-home-pinned { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .workspace-home-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workspace-app { min-height: 118px; }
+  .workspace-app-compact { min-height: 92px; }
   .app-layout.launcher-open .app-sidebar { visibility: hidden; pointer-events: none; }
   .app-header { padding-right: 12px; padding-left: 12px; }
   .app-header-left { gap: 8px; }
@@ -295,6 +302,9 @@
 }
 
 @media (max-width: 480px) {
+  .workspace-home { padding-right: 14px; padding-left: 14px; }
+  .workspace-home-pinned { gap: 7px; }
+  .workspace-app { padding: 12px; }
   .theme-toggle { display: none; }
   .header-actions { gap: 3px; }
   .header-icon-btn, .avatar-btn { width: 32px; height: 32px; }

@@ -114,9 +114,7 @@ export function selectApp(app: any, makeDefault = false) {
 }
 
 export function getDefaultRoute(user: any = _user) {
-  const selected = getDefaultApp(user);
-  if (selected?.route) return selected.route;
-  return '/apps';
+  return '/home';
 }
 
 export async function setAuth(token: string, user: any) {
@@ -161,6 +159,10 @@ export async function logout() {
 }
 
 function routeWithModule(path: string) {
+  // These are Core3 shell routes, not module routes. In particular, the
+  // Orders app declares `/` as its own entry point, so allowing the generic
+  // module resolver to handle `/` sends the workspace home to Orders.
+  if (path === '/' || path === '/home') return '/';
   return resolveRouteWithModule(path, _manifest, _apps, _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order'));
 }
 
@@ -219,6 +221,7 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
 
 function currentLocation() {
   const rawPath = window.location.pathname === '/' ? getDefaultRoute(_user) : window.location.pathname;
+  if (rawPath === '/home') return { path: '/home', langCode: new URLSearchParams(window.location.search).get('lc') || undefined };
   const path = normalizePagePath(rawPath);
   const normalizedPath = path.toLowerCase();
   const module = _manifest.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
@@ -230,11 +233,11 @@ function currentLocation() {
 async function renderRoute(path: string, langCode?: string) {
   if (langCode && langCode !== i18n.lang) await i18n.setLang(langCode);
   // Normalize: strip trailing slash
-  const cleanPath = normalizePagePath(path === '/' ? '/dashboard' : path);
+  const cleanPath = normalizePagePath(path);
   const normalizedPath = cleanPath.toLowerCase();
   const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path.toLowerCase() === normalizedPath);
   const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route.toLowerCase() === normalizedPath);
-  const pageId = page?.id || 'dashboard';
+  const pageId = page?.id || (cleanPath === '/home' ? 'home' : 'dashboard');
   const moduleId = _manifest.find((module) => module.pages.includes(page as ManifestPage) || module.routes?.some((entry) => entry.path === route?.path))?.id;
   if (_shell && moduleId && moduleId !== _shellMenuModuleId) {
     await i18n.refreshMenu();
@@ -265,7 +268,10 @@ async function renderRoute(path: string, langCode?: string) {
 
   try {
     outlet.innerHTML = '';
-    if (cleanPath === '/apps') {
+    if (cleanPath === '/home') {
+      const mod = await import('./components/WorkspaceHome.ts');
+      mod.mount(outlet);
+    } else if (cleanPath === '/apps') {
       const mod = await import('./components/AppPicker.ts');
       await mod.mount(outlet);
     } else {
