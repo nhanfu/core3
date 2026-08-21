@@ -60,6 +60,28 @@ const ICON_PATHS: Record<string, string> = {
   'sort-descending': '<path d="m4 14 8 8 8-8"/>',
   edit: '<path d="m4 16.5-.8 3.3 3.3-.8L18.8 6.7a2.3 2.3 0 0 0-3.3-3.3L4 16.5Z"/><path d="m14.3 4.7 3.3 3.3"/>',
   trash: '<path d="M4 7h16M10 11v6m4-6v6M9 7V4h6v3m-9 0 1 14h10l1-14"/>',
+  sparkles: '<path d="m12 2 1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/>',
+  cart: '<path d="M3 4h2l2.1 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L20 8H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>',
+  repeat: '<path d="M17 2l4 4-4 4V7H7a4 4 0 0 0-3.5 2M7 22l-4-4 4-4v3h10a4 4 0 0 0 3.5-2"/>',
+  invoice: '<path d="M5 2h14v20l-3-2-4 2-4-2-3 2V2Z"/><path d="M8 7h8M8 11h8M8 15h5"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  folder: '<path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>',
+  warehouse: '<path d="m3 10 9-6 9 6v10H3V10Z"/><path d="M7 20v-6h3v6m4 0v-6h3v6M3 10h18"/>',
+  factory: '<path d="M3 21V9l6 3V8l6 4V6l6 3v12H3Z"/><path d="M7 17h.01M11 17h.01M15 17h.01M19 17h.01"/>',
+  purchase: '<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 10h16"/><path d="M8 14h3M8 17h6"/>',
+  headset: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3v6H5a1 1 0 0 1-1-1v-5Zm16 0h-3v6h2a1 1 0 0 0 1-1v-5ZM17 20h-3"/>',
+  quality: '<path d="m12 3 7 3v5c0 4.5-2.7 8-7 10-4.3-2-7-5.5-7-10V6l7-3Z"/><path d="m8 12 2.5 2.5L16 9"/>',
+  engineering: '<path d="m14.7 6.3 3-3 3 3-3 3a5 5 0 0 1-6.2 6.2L6 20a2 2 0 1 1-2-2l4.5-5.5A5 5 0 0 1 14.7 6.3Z"/>',
+  recruitment: '<circle cx="9" cy="8" r="4"/><path d="M2 21c.8-4 3.5-6 7-6s6.2 2 7 6M17 5a4 4 0 0 1 0 7M18 15c2 .8 3 2.5 4 5"/>',
+  review: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.5 6.6-4M8.7 13.5l6.6 4"/>',
+  car: '<path d="m5 16-1-5 2-5h12l2 5-1 5H5Z"/><path d="M6 11h12M7 16v2m10-2v2"/><circle cx="7" cy="14" r="1"/><circle cx="17" cy="14" r="1"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',
+  survey: '<path d="M5 3h14v18H5V3Z"/><path d="M8 7h1m3 0h5M8 12h1m3 0h5M8 17h1m3 0h5"/>',
+  automation: '<path d="M12 3v4m0 10v4M3 12h4m10 0h4M5.6 5.6l2.8 2.8m7.2 7.2 2.8 2.8m0-12.8-2.8 2.8m-7.2 7.2-2.8 2.8"/><circle cx="12" cy="12" r="3"/>',
+  project: '<path d="M4 5h16v14H4z"/><path d="M8 5v14M4 10h16M12 10v9"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9S9.5 5.5 12 3Z"/>',
+  forum: '<path d="M4 5h16v11H9l-5 4V5Z"/><path d="M8 9h8M8 12h5"/>',
 };
 
 const ICON_ALIASES: Record<string, string> = {
@@ -73,17 +95,30 @@ const ICON_ALIASES: Record<string, string> = {
   '◌': 'users', '△': 'warning', '▤': 'report', '◈': 'analytics', '▧': 'file',
   '▥': 'table', '⌖': 'pin', '▣': 'grid', '≡': 'menu', '≋': 'menu', '₫': 'money',
   '⌂': 'home', '◷': 'activity', '#': 'number', '◉': 'status',
+  ai: 'sparkles', assistant: 'sparkles',
 };
 
-/** Render a small inline SVG without exposing DOM ownership to callers. */
-export function appendIcon(target: HTMLElement, name: string, label?: string) {
+function appendSvgIcon(target: HTMLElement, name: string, label: string | undefined, filled: boolean) {
   const icon = document.createElement('span');
-  icon.className = 'svg-icon';
+  icon.className = filled ? 'svg-icon svg-icon-filled' : 'svg-icon';
   icon.setAttribute('aria-hidden', label ? 'false' : 'true');
   if (label) icon.setAttribute('aria-label', label);
   const key = ICON_ALIASES[name] || name;
-  icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[key] || ''}</svg>`;
+  const content = ICON_PATHS[key] || ICON_PATHS.grid;
+  icon.innerHTML = filled
+    ? `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none">${content}</svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${content}</svg>`;
   target.append(icon);
+}
+
+/** Render a small inline SVG without exposing DOM ownership to callers. */
+export function appendIcon(target: HTMLElement, name: string, label?: string) {
+  appendSvgIcon(target, name, label, false);
+}
+
+/** Render a compact solid icon for app tiles and launcher surfaces. */
+export function appendFilledIcon(target: HTMLElement, name: string, label?: string) {
+  appendSvgIcon(target, name, label, true);
 }
 
 export function hasIcon(name: string) {
