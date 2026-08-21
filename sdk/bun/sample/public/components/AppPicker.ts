@@ -1,6 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
-import { appendFilledIcon, appendIcon } from '@core3/client/components/Icon';
+import { appendFilledIcon } from '@core3/client/components/Icon';
 import { getApps, selectApp, setDefaultApp } from '../app.ts';
 import { AiWorkspace } from './AiWorkspace.ts';
 
@@ -8,6 +8,7 @@ export class AppPicker extends BaseComponent {
   private _search: HTMLInputElement | null = null;
   private _taskHost: HTMLElement | null = null;
   private _workspace: AiWorkspace | null = null;
+  private _workspaceToggle: HTMLButtonElement | null = null;
 
   draw(container: HTMLElement) {
     const apps = getApps().filter((app: any) => app.available);
@@ -17,7 +18,14 @@ export class AppPicker extends BaseComponent {
     const search = html.take(toolbar).div.className('app-picker-search').ele();
     const searchIcon = html.take(search).span.className('app-picker-search-icon').ele();
     appendFilledIcon(searchIcon, 'ai');
-    html.take(search).span.className('app-picker-command-scope').text('Ask Core3');
+    this._workspaceToggle = html.take(search).button
+      .className('app-picker-command-scope')
+      .attr('type', 'button')
+      .attr('aria-label', 'Toggle Core3 AI workspace')
+      .attr('aria-expanded', 'false')
+      .text('Ask Core3')
+      .ele() as HTMLButtonElement;
+    this._workspaceToggle.addEventListener('click', () => this.toggleWorkspace());
     this._search = html.take(search).input
       .type('search')
       .attr('placeholder', 'Ask anything or search applications…')
@@ -39,6 +47,7 @@ export class AppPicker extends BaseComponent {
     });
     queueMicrotask(() => this._search?.focus({ preventScroll: true }));
     this._taskHost = html.take(root).div.className('app-picker-task-host').ele();
+    this._taskHost.hidden = true;
     const pinnedSection = html.take(root).section.className('app-picker-section app-picker-pinned-section').ele();
     const pinnedHeading = html.take(pinnedSection).div.className('app-picker-section-heading').ele();
     html.take(pinnedHeading).h2.text('Pinned');
@@ -95,7 +104,25 @@ export class AppPicker extends BaseComponent {
     const prompt = rawPrompt.trim().replace(/^\/(?:codex|task)\s+/i, '');
     if (!prompt || !this._taskHost) return;
     if (!this._workspace) this._workspace = this.mountChild(new AiWorkspace('ai-workspace', {}), this._taskHost);
+    this.setWorkspaceVisible(true);
     this._workspace?.submitPrompt(prompt);
+  }
+
+  private toggleWorkspace() {
+    if (!this._taskHost) return;
+    if (!this._workspace) this._workspace = this.mountChild(new AiWorkspace('ai-workspace', {}), this._taskHost);
+    const visible = this._taskHost.hidden;
+    this.setWorkspaceVisible(visible);
+    if (visible) {
+      this._workspace.focusComposer();
+      this._taskHost.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  private setWorkspaceVisible(visible: boolean) {
+    if (this._taskHost) this._taskHost.hidden = !visible;
+    this._workspaceToggle?.setAttribute('aria-expanded', String(visible));
+    this._workspaceToggle?.classList.toggle('is-active', visible);
   }
 
   dispose() {
@@ -103,6 +130,7 @@ export class AppPicker extends BaseComponent {
     this._workspace = null;
     this._taskHost = null;
     this._search = null;
+    this._workspaceToggle = null;
     super.dispose();
   }
 }

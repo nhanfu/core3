@@ -102,4 +102,21 @@ describe('Codex task API', () => {
     expect(message?.status).toBe(202);
     expect(await message?.json()).toMatchObject({ task: { id: 'task_thread' }, thread: { taskIds: ['task_thread'] } });
   });
+
+  it('forwards Codex access, model, and reasoning settings', async () => {
+    const task: any = { id: 'task_configured', actorId: 'u1', actorName: 'Director', prompt: 'inspect', status: 'queued', createdAt: '', updatedAt: '', output: '', changedFiles: [] };
+    let received: any[] = [];
+    const api = createTaskApi({
+      authProvider: { getCurrentUser: async () => ({ sub: 'u1' }), hasPermission: () => true },
+      runner: { create: (...args: any[]) => { received = args; return task; } } as any,
+      threadStore: {} as any,
+    });
+    const response = await api(request('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({ prompt: 'inspect', access_mode: 'full_access', model: 'gpt-5.3-codex', reasoning: 'high' }),
+    }), new URL('http://localhost/api/tasks'));
+    expect(response?.status).toBe(202);
+    expect(received[2]).toBe('live');
+    expect(received[4]).toMatchObject({ accessMode: 'full_access', model: 'gpt-5.3-codex', reasoning: 'high' });
+  });
 });

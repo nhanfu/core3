@@ -5,6 +5,13 @@ import { env } from 'node:process';
 import { discoverPages } from '@core3/server/discovery';
 
 export type TaskMode = 'read' | 'staged' | 'live';
+export type TaskAccessMode = 'ask' | 'full_access';
+export type TaskReasoningLevel = 'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
+export type TaskRunOptions = {
+  accessMode?: TaskAccessMode;
+  model?: string;
+  reasoning?: TaskReasoningLevel;
+};
 export type TaskEvent = {
   type: 'status' | 'output' | 'complete' | 'error' | 'action';
   task_id: string;
@@ -22,6 +29,9 @@ export type TaskRecord = {
   actorName: string;
   prompt: string;
   mode: TaskMode;
+  accessMode: TaskAccessMode;
+  model: string;
+  reasoning: TaskReasoningLevel;
   policy: { sandbox: string; requiresApproval: boolean; permission: string };
   status: TaskStatus;
   createdAt: string;
@@ -62,6 +72,11 @@ export const TASK_POLICIES: Record<TaskMode, { sandbox: 'read-only' | 'workspace
   staged: { sandbox: 'workspace-write', requiresApproval: true, permission: TASK_PERMISSION },
   live: { sandbox: 'workspace-write', requiresApproval: true, permission: PUBLISH_PERMISSION },
 };
+
+export const TASK_MODELS = ['gpt-5.6-luna', 'gpt-5.3-codex', 'gpt-5.2-codex', 'codex-mini-latest'] as const;
+export const TASK_REASONING_LEVELS: TaskReasoningLevel[] = ['none', 'low', 'medium', 'high', 'xhigh', 'max'];
+const DEFAULT_MODEL = 'gpt-5.6-luna';
+const DEFAULT_REASONING: TaskReasoningLevel = 'medium';
 
 function now() { return new Date().toISOString(); }
 function taskId() { return `task_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`; }
@@ -144,21 +159,27 @@ export class CodexTaskRunner {
     };
   }
 
-  create(actor: { id: string; name: string }, prompt: string, mode: TaskMode = 'staged', token = '') {
+  create(actor: { id: string; name: string }, prompt: string, mode: TaskMode = 'staged', token = '', options: TaskRunOptions = {}) {
     const normalized = prompt.trim();
     if (!normalized || normalized.length > MAX_PROMPT) throw { status: 400, message: `Prompt must be between 1 and ${MAX_PROMPT} characters` };
     if (!['read', 'staged', 'live'].includes(mode)) throw { status: 400, message: 'Task mode must be read, staged, or live' };
+    const accessMode = options.accessMode || (mode === 'live' ? 'full_access' : 'ask');
+    const model = options.model || DEFAULT_MODEL;
+    const reasoning = options.reasoning || DEFAULT_REASONING;
+    if (!['ask', 'full_access'].includes(accessMode)) throw { status: 400, message: 'Task access mode must be ask or full_access' };
+    if (!TASK_MODELS.includes(model as typeof TASK_MODELS[number])) throw { status: 400, message: `Unsupported Codex model: ${model}` };
+    if (!TASK_REASONING_LEVELS.includes(reasoning)) throw { status: 400, message: `Unsupported reasoning level: ${reasoning}` };
     if (this.active >= MAX_TASKS) throw { status: 429, message: 'Too many project tasks are running' };
     const id = taskId();
     const timestamp = now();
     const task: TaskRecord = {
-      id, actorId: actor.id, actorName: actor.name, prompt: normalized, mode, policy: TASK_POLICIES[mode],
+      id, actorId: actor.id, actorName: actor.name, prompt: normalized, mode, accessMode, model, reasoning, policy: TASK_POLICIES[mode],
       status: 'queued', createdAt: timestamp, updatedAt: timestamp,
       output: '', changedFiles: [], audit: [],
     };
     (task as TaskRecord & { taskToken?: string }).taskToken = token;
     this.tasks.set(id, task);
-    void this.recordAudit(task, actor, 'task.created', { mode });
+    void this.recordAudit(task, actor, 'task.created', { mode, access_mode: accessMode, model, reasoning });
     void this.run(task);
     return task;
   }
@@ -310,11 +331,14 @@ export class CodexTaskRunner {
       await copyProject(this.projectRoot, stagedRepo);
       task.workspace = stagedRepo;
 
-      const sandbox = TASK_POLICIES[task.mode].sandbox;
+      const sandbox = task.accessMode === 'full_access' ? 'danger-full-access' : TASK_POLICIES[task.mode].sandbox;
       const args = [
         'exec', '--sandbox', sandbox, '--ephemeral', '--json',
         '--skip-git-repo-check', '--cd', stagedRepo,
-        `${task.prompt}\n\nWork only inside this staged Core3 project. Preserve YAML-first architecture. Do not publish, deploy, access secrets, or modify files outside the workspace. Run relevant validation before finishing. The task mode is ${task.mode}. For an approved live business action, use: bun sample/task-action.ts ${task.id} <action> '<json-values>'; never mutate business databases directly.`,
+        '--model', task.model,
+        '--config', `model_reasoning_effort=${JSON.stringify(task.reasoning)}`,
+        ...(task.accessMode === 'full_access' ? ['--dangerously-bypass-approvals-and-sandbox'] : []),
+        `${task.prompt}\n\nWork inside this staged Core3 project. Preserve YAML-first architecture. Do not publish or deploy. Run relevant validation before finishing. The execution mode is ${task.accessMode === 'full_access' ? 'full access' : 'ask for approval'}. For an approved live business action, use: bun sample/task-action.ts ${task.id} <action> '<json-values>'; never mutate business databases directly.`,
       ];
       const child = (Bun as any).spawn([env.CORE3_CODEX_BIN || 'codex', ...args], {
         cwd: stagedRepo,

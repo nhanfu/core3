@@ -26,6 +26,35 @@ function isTerminal(status: string) {
   return ['completed', 'published', 'rolled_back', 'failed', 'cancelled'].includes(status);
 }
 
+function escapeHtml(value: string) {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+
+function inlineMarkdown(value: string) {
+  return value
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+}
+
+function markdownToHtml(markdown: string) {
+  return markdown.split(/(```[\s\S]*?```)/g).map((part) => {
+    if (part.startsWith('```')) {
+      const code = part.replace(/^```[\w-]*\n?/, '').replace(/```$/, '');
+      return `<pre class="app-picker-task-code"><code>${escapeHtml(code)}</code></pre>`;
+    }
+    return part.split('\n').map((line) => {
+      const safe = inlineMarkdown(escapeHtml(line));
+      if (!safe.trim()) return '<div class="app-picker-task-markdown-spacer"></div>';
+      if (/^### /.test(safe)) return `<h5>${safe.slice(4)}</h5>`;
+      if (/^## /.test(safe)) return `<h4>${safe.slice(3)}</h4>`;
+      if (/^# /.test(safe)) return `<h3>${safe.slice(2)}</h3>`;
+      if (/^- /.test(safe) || /^\* /.test(safe)) return `<div class="app-picker-task-bullet">${safe.slice(2)}</div>`;
+      return `<p>${safe}</p>`;
+    }).join('');
+  }).join('');
+}
+
 export class TaskRunnerPanel extends BaseComponent {
   private panelEl: HTMLElement | null = null;
   private statusEl: HTMLElement | null = null;
@@ -89,9 +118,9 @@ export class TaskRunnerPanel extends BaseComponent {
     const summary = html.take(details).add('summary').className('app-picker-task-activity-summary').ele();
     const summaryIcon = html.take(summary).span.className('app-picker-task-activity-icon').ele();
     appendIcon(summaryIcon, 'terminal');
-    html.take(summary).span.className('app-picker-task-activity-label').text('Live activity');
+    html.take(summary).span.className('app-picker-task-activity-label').text('Agent activity');
     html.take(summary).span.className('app-picker-task-activity-hint').text('click to collapse');
-    this.outputEl = html.take(details).add('pre').className('app-picker-task-output').ele();
+    this.outputEl = html.take(details).add('div').className('app-picker-task-output').ele();
 
     this.resultEl = html.take(panel).div.className('app-picker-task-result').ele();
     this.actionsEl = html.take(panel).div.className('app-picker-task-actions').ele();
@@ -204,7 +233,12 @@ export class TaskRunnerPanel extends BaseComponent {
         }
         if (item.type === 'file_change') return 'Updated project files';
       }
-      if (event.type === 'error' || event.error) return String(event.message || event.error);
+      if (event.type === 'error' || event.error) {
+        const detail = typeof event.error === 'string' ? event.error : event.error?.message || event.message || 'Codex rejected the request';
+        const modelHint = /model is not supported|not supported when using codex with a chatgpt account/i.test(String(detail))
+          ? '\n\nTry GPT-5.6 Luna or choose a model available to this Codex account.' : '';
+        return `**Codex request error**\n\n${String(detail)}${modelHint}`;
+      }
       return '';
     } catch {
       return line;
@@ -213,7 +247,7 @@ export class TaskRunnerPanel extends BaseComponent {
 
   private renderOutput() {
     if (!this.outputEl) return;
-    this.outputEl.textContent = this.state.output.trim();
+    this.outputEl.innerHTML = markdownToHtml(this.state.output.trim());
     this.outputEl.scrollTop = this.outputEl.scrollHeight;
     if (this.state.output) this.outputDetails?.classList.add('has-output');
   }

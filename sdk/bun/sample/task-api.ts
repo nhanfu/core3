@@ -1,5 +1,5 @@
 import type { CodexTaskRunner, TaskEvent, TaskRecord } from './task-runner.ts';
-import { PUBLISH_PERMISSION, TASK_PERMISSION, TASK_POLICIES, type TaskMode } from './task-runner.ts';
+import { PUBLISH_PERMISSION, TASK_PERMISSION, TASK_MODELS, TASK_POLICIES, TASK_REASONING_LEVELS, type TaskAccessMode, type TaskMode, type TaskReasoningLevel } from './task-runner.ts';
 import type { AiThreadStore } from './ai-thread-store.ts';
 
 const CORS_HEADERS = {
@@ -20,6 +20,19 @@ function publicTask(task: TaskRecord) {
   return safe;
 }
 
+function taskOptions(body: any) {
+  const accessMode = String(body?.access_mode || body?.accessMode || (body?.mode === 'live' ? 'full_access' : 'ask')) as TaskAccessMode;
+  const mode = (body?.mode === 'read' ? 'read' : accessMode === 'full_access' ? 'live' : 'staged') as TaskMode;
+  return {
+    mode,
+    options: {
+      accessMode,
+      model: body?.model ? String(body.model) : undefined,
+      reasoning: body?.reasoning ? String(body.reasoning) as TaskReasoningLevel : undefined,
+    },
+  };
+}
+
 export function createTaskApi(options: {
   authProvider: { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean };
   runner: CodexTaskRunner;
@@ -34,7 +47,7 @@ export function createTaskApi(options: {
     if (!authProvider.hasPermission(user, TASK_PERMISSION)) return json({ error: `Requires permission: ${TASK_PERMISSION}` }, 403);
     const actor = { id: String(user.sub || user.id || ''), name: String(user.name || user.email || user.sub || 'Unknown user') };
     if (!actor.id) return json({ error: 'Authenticated user identity is required' }, 401);
-    if (url.pathname === '/api/task-policies' && request.method === 'GET') return json(TASK_POLICIES);
+    if (url.pathname === '/api/task-policies' && request.method === 'GET') return json({ ...TASK_POLICIES, models: TASK_MODELS, reasoning_levels: TASK_REASONING_LEVELS });
 
     const threadCollection = url.pathname === '/api/ai/threads';
     const threadMatch = url.pathname.match(/^\/api\/ai\/threads\/([A-Za-z0-9_-]+)(?:\/(messages|events))?$/);
@@ -58,13 +71,21 @@ export function createTaskApi(options: {
         let body: any;
         try { body = await request.json(); } catch { return json({ error: 'JSON request body is required' }, 400); }
         const prompt = String(body?.prompt || '').trim();
-        const mode = (body?.mode || 'staged') as TaskMode;
+        const { mode, options } = taskOptions(body);
         if (!prompt) return json({ error: 'prompt is required' }, 400);
-        if (mode === 'live' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
+        if (options.accessMode === 'full_access' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
         await threadStore.addMessage(threadId, actor.id, { role: 'user', text: prompt });
         try {
-          const task = runner.create(actor, prompt, mode, request.headers.get('Authorization')?.slice(7) || '');
+          const task = runner.create(actor, prompt, mode, request.headers.get('Authorization')?.slice(7) || '', options);
           await threadStore.attachTask(threadId, actor.id, task.id);
+          await threadStore.addMessage(threadId, actor.id, {
+            role: 'assistant',
+            text: options.accessMode === 'full_access'
+              ? 'I’m running with full access inside the authorized project boundary. I’ll inspect the project, make the requested changes, validate them, and prepare the result.'
+              : 'I’m working in a staged workspace and will ask before approval-sensitive actions. I’ll inspect the project, make the requested changes, validate them, and prepare a review.',
+            taskId: task.id,
+            status: task.status,
+          });
           return json({ thread: threadStore.get(threadId, actor.id), task: publicTask(task) }, 202);
         } catch (error) {
           return json({ error: (error as any)?.message || 'Could not start task' }, (error as any)?.status || 400);
@@ -78,9 +99,9 @@ export function createTaskApi(options: {
     if (collection && request.method === 'POST') {
       let body: any;
       try { body = await request.json(); } catch { return json({ error: 'JSON request body is required' }, 400); }
-      const mode = (body?.mode || 'staged') as TaskMode;
-      if (mode === 'live' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
-      const task = runner.create(actor, String(body?.prompt || ''), mode, request.headers.get('Authorization')?.slice(7) || '');
+      const { mode, options } = taskOptions(body);
+      if (options.accessMode === 'full_access' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
+      const task = runner.create(actor, String(body?.prompt || ''), mode, request.headers.get('Authorization')?.slice(7) || '', options);
       return json(publicTask(task), 202);
     }
     if (!match) return json({ error: 'Task route not found' }, 404);
