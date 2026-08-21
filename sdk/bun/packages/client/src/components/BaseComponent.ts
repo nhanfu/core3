@@ -185,12 +185,17 @@ export class BaseComponent {
    * Submit an action.
    * Resolution order:
    *   1. this._transport.submit(action, params)   — set in tests / framework wiring
-   *   2. root._onAction(action, params, source)   — set on page root components
-   *   3. throws Error                              — no handler registered
+   *   2. this._onAction(action, params, source)    — set on convention-loaded components
+   *   3. root._transport.submit(action, params)   — set on an owning root
+   *   4. root._onAction(action, params, source)    — set on page root components
+   *   5. throws Error                              — no handler registered
    */
   async submit(action: string, params: any = {}) {
     if (typeof this._transport?.submit === 'function') {
       return this._transport.submit(action, params);
+    }
+    if (typeof this._onAction === 'function') {
+      return this._onAction(action, params, this);
     }
     const root = this.root;
     if (typeof root._transport?.submit === 'function') {

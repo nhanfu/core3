@@ -3,7 +3,7 @@ import { hasPermission } from '@core3/client/meta';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { PageRenderHandlerRegistry } from '@core3/client/components/PageRenderHandlerRegistry';
-import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
+import { ComLoader } from '@core3/client/components/ComLoader';
 
 export class PageDetailRenderers extends BaseComponent {
   readonly renderers: any;
@@ -34,7 +34,7 @@ const renderHandlers = new PageRenderHandlerRegistry({
   renderTabGroup: renderTabGroupDef,
   renderChart,
 });
-const componentLoader = new ConventionComponentLoader();
+const componentLoader = new ComLoader();
 const owner = this;
 
 function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {

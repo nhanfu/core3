@@ -1,10 +1,10 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { i18n } from '@core3/client/i18n';
-import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
+import { ComLoader } from '@core3/client/components/ComLoader';
 
 export class GroupGridView extends BaseComponent {
-  private readonly componentLoader = new ConventionComponentLoader();
+  private readonly componentLoader = new ComLoader();
   constructor(id, state, defs = []) {
     super(id, state);
     this.defs = defs;

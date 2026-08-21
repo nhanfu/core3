@@ -1,12 +1,16 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'node:path';
+import { core3Components } from '@core3/client/vite';
 
 const sampleRoot = resolve(import.meta.dirname);
 const publicRoot = resolve(sampleRoot, 'public');
 const clientRoot = resolve(sampleRoot, '../packages/client/src');
 const serverRoot = resolve(sampleRoot, '../packages/server/src');
+const backendPort = Number(process.env.CORE3_BACKEND_PORT || '3001');
+const frontendPort = Number(process.env.CORE3_FRONTEND_PORT || '3002');
 
 export default defineConfig({
+  plugins: [core3Components()],
   root: publicRoot,
   publicDir: false,
   resolve: {
@@ -16,12 +20,13 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3002,
+    port: frontendPort,
+    strictPort: true,
     proxy: {
-      '/api': 'http://127.0.0.1:3001',
-      '/services': 'http://127.0.0.1:3001',
-      '/web': 'http://127.0.0.1:3001',
-      '/jsonrpc': 'http://127.0.0.1:3001',
+      '/api': `http://127.0.0.1:${backendPort}`,
+      '/services': `http://127.0.0.1:${backendPort}`,
+      '/web': `http://127.0.0.1:${backendPort}`,
+      '/jsonrpc': `http://127.0.0.1:${backendPort}`,
     },
   },
   build: {

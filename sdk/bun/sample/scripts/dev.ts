@@ -68,14 +68,21 @@ if (import.meta.main) {
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
+  const requestedFrontendPort = Number.parseInt(process.env.FRONTEND_PORT || '3002', 10);
+  const frontendStart = Number.isInteger(requestedFrontendPort) && requestedFrontendPort > 0 ? requestedFrontendPort : 3002;
+  const frontendPort = await findAvailablePort(frontendStart);
   const mediatorPort = await findAvailablePort(Number(process.env.EVENT_MEDIATOR_PORT || '3010'));
   const mediatorUrl = `ws://127.0.0.1:${mediatorPort}/events`;
   if (port !== start) console.log(`Port ${start} is busy; using port ${port}`);
+  if (frontendPort !== frontendStart) console.log(`Frontend port ${frontendStart} is busy; using port ${frontendPort}`);
   if (mediatorPort !== 3010) console.log(`Event mediator port 3010 is busy; using port ${mediatorPort}`);
+  console.log(`Backend: http://127.0.0.1:${port}`);
+  console.log(`Frontend: http://127.0.0.1:${frontendPort}`);
 
   let stopped = false;
   let restartRequested = false;
   let child: ReturnType<typeof Bun.spawn> | null = null;
+  let frontend: ReturnType<typeof Bun.spawn> | null = null;
   const mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts'], {
     env: {
       ...process.env,
@@ -151,12 +158,23 @@ if (import.meta.main) {
     clearInterval(watchTimer);
     clearTimeout(restartTimer);
     child?.kill();
+    frontend?.kill();
     mediator.kill();
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
 
   try {
+    frontend = Bun.spawn(['bun', 'run', 'frontend:dev'], {
+      env: {
+        ...process.env,
+        CORE3_BACKEND_PORT: String(port),
+        CORE3_FRONTEND_PORT: String(frontendPort),
+      },
+      stdin: 'inherit',
+      stdout: 'inherit',
+      stderr: 'inherit',
+    });
     while (!stopped) {
       child = Bun.spawn(['bun', 'server.ts'], {
         env: {

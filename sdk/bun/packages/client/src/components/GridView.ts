@@ -2,7 +2,7 @@ import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { i18n } from '@core3/client/i18n';
 import { appendIcon } from '@core3/client/components/Icon';
-import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
+import { ComLoader } from '@core3/client/components/ComLoader';
 
 export type GridViewOptions = {
   onSort?: (sort: { field: string; direction: 'asc' | 'desc' }) => void;
@@ -11,7 +11,7 @@ export type GridViewOptions = {
 };
 
 export class GridView extends BaseComponent {
-  private readonly componentLoader = new ConventionComponentLoader();
+  private readonly componentLoader = new ComLoader();
   options: GridViewOptions;
 
   constructor(id, state, defs = [], options: GridViewOptions = {}) {

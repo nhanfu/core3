@@ -4,10 +4,10 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { showToast, toastTypeForError } from '@core3/client/components/Toast';
 import { i18n } from '@core3/client/i18n';
 import { html } from '@core3/client/html';
-import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
+import { ComLoader } from '@core3/client/components/ComLoader';
 
 export class PageFormModal extends BaseComponent {
-  private readonly componentLoader = new ConventionComponentLoader();
+  private readonly componentLoader = new ComLoader();
   readonly openFormModal: any;
 
   constructor(deps: any) {

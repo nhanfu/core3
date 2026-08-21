@@ -1,6 +1,6 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
-import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
+import { ComLoader } from '@core3/client/components/ComLoader';
 
 export type LineItemFieldDefinition = {
   id?: string;
@@ -17,7 +17,7 @@ export type LineItemFieldDefinition = {
 };
 
 export class LineItemField extends BaseComponent {
-  private readonly componentLoader = new ConventionComponentLoader();
+  private readonly componentLoader = new ComLoader();
   readonly definition: LineItemFieldDefinition;
   readonly onChange?: (value: unknown) => void;
 

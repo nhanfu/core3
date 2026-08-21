@@ -1,9 +1,11 @@
 import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'url';
+import { core3Components } from './src/vite';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
+  plugins: [core3Components()],
   root: __dirname,
   resolve: {
     alias: {

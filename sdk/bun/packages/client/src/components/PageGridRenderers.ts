@@ -6,7 +6,7 @@ import { PageDetailRenderers } from './PageDetailRenderers.ts';
 import { PageFormModal } from './PageFormModal.ts';
 import { html } from '@core3/client/html';
 import { i18n } from '@core3/client/i18n';
-import { ConventionComponentLoader } from '@core3/client/components/ConventionComponentLoader';
+import { ComLoader } from '@core3/client/components/ComLoader';
 
 function pivotRequestFromUrl(params: Record<string, string>, view: any) {
   const defaults = view?.pivot?.default || {};
@@ -45,7 +45,7 @@ export class PageGridRenderers extends BaseComponent {
   private createRenderers(deps: any) {
   const { config, dataMap, ctx, bindSource, sortState, paginationState, filterState, pageParams, refetchSource, updateBoundComponents, client, createQuery, handleAction, applySourceFilters, refreshSources, handleInlineForm, resolveActionParams, registry } = deps;
 const owner = this;
-const componentLoader = new ConventionComponentLoader();
+const componentLoader = new ComLoader();
 
 function mountOwned<T extends BaseComponent>(component: T, container: HTMLElement): T {
   return owner.mountChild(component, container);

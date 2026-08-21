@@ -8,12 +8,14 @@
   "devDependencies": {
     "@core3/med": "workspace:*",
     "@types/node": "^26.1.1",
-    "jsdom": "^25.0.0",
     "jest-extended": "^4.0.0",
+    "jsdom": "^25.0.0",
+    "vite": "^8.2.2",
     "vitest": "^3.0.0"
   },
   "exports": {
     ".": "./src/index.ts",
+    "./vite": "./src/vite.ts",
     "./*": "./src/*.ts"
   },
   "dependencies": {

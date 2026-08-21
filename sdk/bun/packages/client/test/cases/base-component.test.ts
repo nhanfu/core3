@@ -180,6 +180,16 @@ describe('submit()', () => {
     expect(mockHandler).toHaveBeenCalledWith('delete_item', { id: '99', reason: 'test' });
   });
 
+  it('uses a handler wired directly to the component', async () => {
+    const comp = new TestComponent('c1', { count: 0, label: '' });
+    const mockHandler = vi.fn().mockResolvedValue({ ok: true });
+    comp._onAction = mockHandler;
+
+    await comp.submit('login', { email: 'admin@tms.local' });
+
+    expect(mockHandler).toHaveBeenCalledWith('login', { email: 'admin@tms.local' }, comp);
+  });
+
   it('rejects when the action name does not exist', async () => {
     const comp = new TestComponent('c1', { count: 0, label: '' });
     await expect(comp.submit('nonexistent_action', {})).rejects.toThrow();
