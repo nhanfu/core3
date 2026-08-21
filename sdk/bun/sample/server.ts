@@ -5,6 +5,8 @@ import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { loadApplicationConfig } from '@core3/server/application-config';
 import { EventStore, EventMediatorClient, loadMedConfig, type EventBus } from '@core3/med';
+import { CodexTaskRunner } from './task-runner.ts';
+import { createTaskApi } from './task-api.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
@@ -166,6 +168,11 @@ const moduleManifest = modules.map((module) => ({
     .map((route) => ({ ...route, path: moduleRoute(module.id, route.path) })),
 }));
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
+const taskRunner = new CodexTaskRunner(REPO_ROOT);
+moduleManager.apiHandlers.unshift(createTaskApi({
+  authProvider: moduleManager.resolveService('auth.adapter') as any,
+  runner: taskRunner,
+}));
 const yamlServiceContexts = modules
   .filter((module): module is YamlServiceModule => module instanceof YamlServiceModule)
   .map((module) => module.getRuntimeContext())

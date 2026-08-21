@@ -1,0 +1,300 @@
+Yes. Build the first working version around Codex CLI, but treat Codex as an execution engine—not as the permission system.
+
+OpenAI’s current guidance presents Codex as suitable for composable CLI workflows and verified operations, which fits a controlled Core3 task runner. [OpenAI Codex use cases](https://learn.chatgpt.com/use-cases?category=data&category=engineering&category=integrations&category=macos&category=sciences&search=Workflow&task_type=analysis&task_type=code&task_type=workflow)
+
+## Core model
+
+```text
+AppPicker
+  ↓
+Core3 task API
+  ↓
+Permission/context builder
+  ↓
+Codex CLI in isolated workspace
+  ↓
+Core3 validation and discovery
+  ↓
+Preview / approval / publish
+```
+
+Permissions belong to Core3. Codex only receives the already-authorized context.
+
+A director is not represented by a privileged Codex account. Every operation keeps:
+
+```text
+actor_user       = authenticated director
+initiated_by     = Core3 AI task
+approved_by      = director, when required
+permission_set   = current effective permissions
+company_scope    = current company/tenant
+```
+
+## Phase 0 — Establish the safe execution boundary
+
+Define a generic capability model rather than special-casing `Dashboard.create`.
+
+Each capability should have:
+
+```yaml
+id: service.modify
+permission: service.write
+mode: staged
+requires_approval: true
+```
+
+Examples may include:
+
+- `service.read`
+- `service.modify`
+- `service.publish`
+- `record.query`
+- `record.mutate`
+- `workflow.execute`
+- `project.test`
+- `project.build`
+
+The capability ID is generic. The permission is resolved from the user’s actual roles and scope.
+
+Acceptance criteria:
+
+- no AI request can bypass Core3 permissions
+- no request can select an arbitrary project root
+- no request can directly execute arbitrary database SQL
+- every task has an actor and audit identity
+
+## Phase 1 — Codex CLI task runner
+
+Add a server-side Codex adapter.
+
+The browser submits a task such as:
+
+```text
+Create a management dashboard for sales pipeline and publish it as a new YAML service.
+```
+
+The server creates a task with:
+
+```ts
+{
+  taskId,
+  actorUserId,
+  companyId,
+  prompt,
+  projectId,
+  allowedCapabilities,
+  workspacePath,
+  status
+}
+```
+
+The server then starts Codex CLI with:
+
+- a temporary or staged workspace
+- a generated instruction file
+- the user’s allowed capabilities
+- a restricted environment
+- bounded timeout
+- bounded output
+- non-interactive execution
+- captured stdout/stderr
+- cancellation support
+
+Codex should modify files only inside the staged workspace. It should not receive unrestricted access to the whole machine.
+
+The first task runner should support:
+
+- inspect files
+- edit YAML
+- run YAML validation
+- run discovery
+- run focused tests
+- return a patch/diff
+
+It should not publish changes yet.
+
+Acceptance test:
+
+```text
+Director asks for a new service
+→ Codex creates staged YAML
+→ Core3 validates it
+→ Core3 discovery runs
+→ UI shows diff and validation result
+```
+
+## Phase 2 — AppPicker task experience
+
+Update `AppPicker.ts` to become a task launcher as well as an application picker.
+
+Search behavior:
+
+- application text returns application cards
+- natural-language text returns “Run task”
+- optional explicit syntax: `/task ...`
+- optional tool syntax: `/codex ...`
+
+When submitted:
+
+1. call `POST /api/tasks`
+2. receive `task_id`
+3. stream task events
+4. show progress and output
+5. show generated diff and validation errors
+6. allow cancel or retry
+
+Keep task rendering in a separate component such as:
+
+```text
+TaskRunnerPanel.ts
+```
+
+`AppPicker.ts` should own search and selection, not process execution.
+
+## Phase 3 — Generic YAML change workflow
+
+Introduce a general staged-change lifecycle:
+
+```text
+draft → validate → review → approved → published
+```
+
+Codex may create or modify any supported YAML service, not just dashboards:
+
+```text
+services/<service-id>/
+  manifest.yaml
+  permissions.yaml
+  pages/
+  styles/
+  migrations/
+  topics.yaml
+  events.yaml
+```
+
+The server must:
+
+- reject paths outside the approved services root
+- validate YAML schemas
+- validate service IDs and references
+- run discovery
+- detect duplicate routes/actions/permissions
+- check migration requirements
+- show a file diff
+- store the draft before approval
+
+This makes “create a dashboard” merely one example of the general service-modification capability.
+
+## Phase 4 — Approval and publish
+
+Add explicit approval for operations that change the running application.
+
+The director sees:
+
+- files changed
+- permissions added or changed
+- routes and menus added
+- migrations
+- actions exposed
+- tests and discovery results
+- possible security warnings
+
+Publishing performs:
+
+1. final permission check
+2. final validation
+3. migration planning
+4. migration execution if approved
+5. service discovery refresh
+6. frontend rebuild if required
+7. audit event
+
+For production safety, publish should support rollback to the previous service version.
+
+## Phase 5 — Execute business actions on behalf of the user
+
+Do not let Codex directly manipulate business data through shell commands.
+
+Expose a Core3 capability bridge instead:
+
+```text
+Codex CLI
+  → core3 action bridge
+    → Core3 API/action runtime
+      → permission check
+      → workflow/mutation execution
+      → audit event
+```
+
+The bridge should accept structured input:
+
+```json
+{
+  "capability": "workflow.execute",
+  "action": "sales.order.confirm",
+  "values": {
+    "id": "..."
+  }
+}
+```
+
+The server then resolves:
+
+- whether the capability exists
+- whether the user has permission
+- whether the record is in scope
+- whether confirmation is required
+- whether the action is idempotent
+- whether the expected row version is valid
+
+This allows the AI to execute any authorized action without giving it a universal privileged shell.
+
+## Phase 6 — Add policy levels
+
+Use three execution levels:
+
+| Level | Example | Approval |
+|---|---|---|
+| Read | inspect service, query metadata | none |
+| Staged write | edit YAML, create draft | review |
+| Live mutation | publish service, execute business action | explicit approval or policy |
+
+A director may have permission to publish a service, but that still does not imply permission to delete data, alter accounting records, or perform external side effects.
+
+## Phase 7 — Verification and hardening
+
+Test the full path, not just the CLI process:
+
+- user with permission succeeds
+- user without permission is rejected
+- permission revoked during a task is rechecked
+- company scope cannot be escaped
+- staged files cannot escape `services/`
+- shell injection is impossible
+- Codex cannot access secrets
+- task cancellation terminates the process
+- timeout is enforced
+- output limits are enforced
+- duplicate task submissions are handled
+- migrations are previewed before execution
+- every action produces an audit record
+- restart does not lose task state
+- failed publish leaves the active service unchanged
+
+## Recommended first implementation boundary
+
+Start with this narrow but real slice:
+
+```text
+AppPicker prompt
+→ POST /api/tasks
+→ Codex CLI
+→ staged YAML changes
+→ schema validation
+→ discovery
+→ diff shown in UI
+```
+
+Do not start with unrestricted “execute anything.” Once the staged YAML path is reliable, add the structured Core3 action bridge for live operations.
+
+This preserves the YAML-first architecture while making Codex replaceable later by an API-backed model, another CLI, or an internal agent. The stable boundary is the Core3 capability registry and permission-aware action bridge—not the choice of AI engine.

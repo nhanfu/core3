@@ -2,3 +2,4 @@ permissions:
   - project.read
   - project.write
   - project.manage
+  - project.task.execute

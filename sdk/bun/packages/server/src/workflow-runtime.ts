@@ -27,7 +27,6 @@ export class WorkflowRuntime {
         query: 'SELECT id FROM orders WHERE id = :id AND row_version = :expected_row_version',
         status: 409,
         code: 'STALE_RECORD',
-        code: 'STALE_RECORD',
         message_key: 'errors.stale_record',
         message: 'Order was changed by another user. Reload it before changing status.',
       }, ...(mutation.guards || [])],

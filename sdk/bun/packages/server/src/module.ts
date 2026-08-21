@@ -115,6 +115,12 @@ export class ModuleManager {
     this.modules = modules;
   }
 
+  resolveService<T>(name: string): T {
+    const service = this.services.get(name);
+    if (!service) throw new Error(`Module service is not registered: ${name}`);
+    return service as T;
+  }
+
   async loadAll(context: ModuleHostContext): Promise<void> {
     const moduleContext = {
       ...context,

@@ -2,9 +2,12 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { appendFilledIcon, appendIcon } from '@core3/client/components/Icon';
 import { getApps, selectApp, setDefaultApp } from '../app.ts';
+import { TaskRunnerPanel } from './TaskRunnerPanel.ts';
 
 export class AppPicker extends BaseComponent {
   private _search: HTMLInputElement | null = null;
+  private _taskHost: HTMLElement | null = null;
+  private _taskPanel: TaskRunnerPanel | null = null;
 
   draw(container: HTMLElement) {
     const apps = getApps().filter((app: any) => app.available);
@@ -21,7 +24,14 @@ export class AppPicker extends BaseComponent {
       .attr('aria-label', 'Ask Core3 anything or search applications')
       .ele() as HTMLInputElement;
     this._search.addEventListener('input', () => this.filter(this._search?.value || ''));
+    this._search.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && this._search?.value.trim()) {
+        event.preventDefault();
+        void this.runTask(this._search.value);
+      }
+    });
     queueMicrotask(() => this._search?.focus({ preventScroll: true }));
+    this._taskHost = html.take(root).div.className('app-picker-task-host').ele();
     const pinnedSection = html.take(root).section.className('app-picker-section app-picker-pinned-section').ele();
     const pinnedHeading = html.take(pinnedSection).div.className('app-picker-section-heading').ele();
     html.take(pinnedHeading).h2.text('Pinned');
@@ -62,7 +72,18 @@ export class AppPicker extends BaseComponent {
     });
   }
 
+  private async runTask(rawPrompt: string) {
+    const prompt = rawPrompt.trim().replace(/^\/(?:codex|task)\s+/i, '');
+    if (!prompt || !this._taskHost) return;
+    this._taskPanel?.dispose();
+    this._taskHost.innerHTML = '';
+    this._taskPanel = this.mountChild(new TaskRunnerPanel('app-picker-task', { prompt }), this._taskHost);
+  }
+
   dispose() {
+    this._taskPanel?.dispose();
+    this._taskPanel = null;
+    this._taskHost = null;
     this._search = null;
     super.dispose();
   }
