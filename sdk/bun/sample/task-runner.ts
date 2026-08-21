@@ -1,11 +1,12 @@
-import { cp, mkdtemp, readFile, readdir, stat } from 'node:fs/promises';
-import { basename, join, relative } from 'node:path';
+import { appendFile, cp, copyFile, mkdir, mkdtemp, readFile, readdir, stat, unlink } from 'node:fs/promises';
+import { basename, dirname, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
 import { env } from 'node:process';
 import { discoverPages } from '@core3/server/discovery';
 
+export type TaskMode = 'read' | 'staged' | 'live';
 export type TaskEvent = {
-  type: 'status' | 'output' | 'complete' | 'error';
+  type: 'status' | 'output' | 'complete' | 'error' | 'action';
   task_id: string;
   status: TaskStatus;
   stream?: 'stdout' | 'stderr';
@@ -13,13 +14,15 @@ export type TaskEvent = {
   at: string;
 };
 
-export type TaskStatus = 'queued' | 'running' | 'validating' | 'completed' | 'failed' | 'cancelled';
+export type TaskStatus = 'queued' | 'running' | 'validating' | 'completed' | 'awaiting_approval' | 'approved' | 'published' | 'rolled_back' | 'failed' | 'cancelled';
 
 export type TaskRecord = {
   id: string;
   actorId: string;
   actorName: string;
   prompt: string;
+  mode: TaskMode;
+  policy: { sandbox: string; requiresApproval: boolean; permission: string };
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
@@ -30,6 +33,20 @@ export type TaskRecord = {
   validation?: { ok: boolean; error?: string };
   diff?: string;
   error?: string;
+  approvedAt?: string;
+  publishedAt?: string;
+  rolledBackAt?: string;
+  publishResult?: Record<string, unknown>;
+  audit?: TaskAudit[];
+};
+
+export type TaskAudit = {
+  event: string;
+  task_id: string;
+  actor_id: string;
+  actor_name: string;
+  at: string;
+  detail?: Record<string, unknown>;
 };
 
 type Subscriber = (event: TaskEvent) => void;
@@ -38,6 +55,13 @@ const MAX_PROMPT = 12_000;
 const MAX_OUTPUT = 1_000_000;
 const MAX_TASKS = 2;
 const TASK_PERMISSION = 'project.task.execute';
+const PUBLISH_PERMISSION = 'project.task.publish';
+
+export const TASK_POLICIES: Record<TaskMode, { sandbox: 'read-only' | 'workspace-write'; requiresApproval: boolean; permission: string }> = {
+  read: { sandbox: 'read-only', requiresApproval: false, permission: TASK_PERMISSION },
+  staged: { sandbox: 'workspace-write', requiresApproval: true, permission: TASK_PERMISSION },
+  live: { sandbox: 'workspace-write', requiresApproval: true, permission: PUBLISH_PERMISSION },
+};
 
 function now() { return new Date().toISOString(); }
 function taskId() { return `task_${Date.now().toString(36)}_${crypto.randomUUID().slice(0, 8)}`; }
@@ -102,7 +126,7 @@ export class CodexTaskRunner {
   private readonly subscribers = new Map<string, Set<Subscriber>>();
   private active = 0;
 
-  constructor(private readonly projectRoot: string) {}
+  constructor(private readonly projectRoot: string, private readonly apiUrl = 'http://127.0.0.1:3001', private readonly onPublish?: () => Promise<Record<string, unknown>>) {}
 
   get(id: string) { return this.tasks.get(id) || null; }
 
@@ -120,18 +144,21 @@ export class CodexTaskRunner {
     };
   }
 
-  create(actor: { id: string; name: string }, prompt: string) {
+  create(actor: { id: string; name: string }, prompt: string, mode: TaskMode = 'staged', token = '') {
     const normalized = prompt.trim();
     if (!normalized || normalized.length > MAX_PROMPT) throw { status: 400, message: `Prompt must be between 1 and ${MAX_PROMPT} characters` };
+    if (!['read', 'staged', 'live'].includes(mode)) throw { status: 400, message: 'Task mode must be read, staged, or live' };
     if (this.active >= MAX_TASKS) throw { status: 429, message: 'Too many project tasks are running' };
     const id = taskId();
     const timestamp = now();
     const task: TaskRecord = {
-      id, actorId: actor.id, actorName: actor.name, prompt: normalized,
+      id, actorId: actor.id, actorName: actor.name, prompt: normalized, mode, policy: TASK_POLICIES[mode],
       status: 'queued', createdAt: timestamp, updatedAt: timestamp,
-      output: '', changedFiles: [],
+      output: '', changedFiles: [], audit: [],
     };
+    (task as TaskRecord & { taskToken?: string }).taskToken = token;
     this.tasks.set(id, task);
+    void this.recordAudit(task, actor, 'task.created', { mode });
     void this.run(task);
     return task;
   }
@@ -146,6 +173,103 @@ export class CodexTaskRunner {
     task.updatedAt = now();
     this.emit(task, { type: 'status', status: 'cancelled' });
     return true;
+  }
+
+  approve(id: string, actor: { id: string; name: string }) {
+    const task = this.tasks.get(id);
+    if (!task || !this.canRead(task, actor.id) || task.status !== 'awaiting_approval') return false;
+    task.status = 'approved';
+    task.approvedAt = now();
+    task.updatedAt = now();
+    void this.recordAudit(task, actor, 'task.approved');
+    this.emit(task, { type: 'status' });
+    return true;
+  }
+
+  async publish(id: string, actor: { id: string; name: string }) {
+    const task = this.tasks.get(id);
+    if (!task || !this.canRead(task, actor.id) || task.status !== 'approved' || task.mode === 'read' || !task.workspace) return false;
+    const stagedRepo = task.workspace;
+    const backupRoot = join(dirname(stagedRepo), 'backup');
+    await mkdir(backupRoot, { recursive: true });
+    try {
+      discoverPages(join(stagedRepo, 'sample'));
+      for (const name of task.changedFiles) {
+        const source = join(stagedRepo, name);
+        const target = join(this.projectRoot, name);
+        const backup = join(backupRoot, name);
+        if (await isFile(target)) {
+          await mkdir(dirname(backup), { recursive: true });
+          await copyFile(target, backup);
+        }
+        if (await isFile(source)) {
+          await mkdir(dirname(target), { recursive: true });
+          await copyFile(source, target);
+        } else {
+          await unlink(target).catch(() => {});
+        }
+      }
+      task.publishResult = await this.onPublish?.();
+      task.status = 'published';
+      task.publishedAt = now();
+      task.updatedAt = now();
+      void this.recordAudit(task, actor, 'task.published', { changed_files: task.changedFiles });
+      this.emit(task, { type: 'status' });
+      return true;
+    } catch (error) {
+      await this.restoreBackup(task).catch(() => {});
+      task.error = String((error as Error)?.message || error);
+      task.status = 'failed';
+      task.updatedAt = now();
+      void this.recordAudit(task, actor, 'task.publish_failed', { error: task.error });
+      this.emit(task, { type: 'error', data: task.error });
+      return false;
+    }
+  }
+
+  async rollback(id: string, actor: { id: string; name: string }) {
+    const task = this.tasks.get(id);
+    if (!task || !this.canRead(task, actor.id) || task.status !== 'published' || !task.workspace) return false;
+    await this.restoreBackup(task);
+    task.status = 'rolled_back';
+    task.rolledBackAt = now();
+    task.updatedAt = now();
+    void this.recordAudit(task, actor, 'task.rolled_back');
+    this.emit(task, { type: 'status' });
+    return true;
+  }
+
+  private async restoreBackup(task: TaskRecord) {
+    if (!task.workspace) return;
+    const backupRoot = join(dirname(task.workspace), 'backup');
+    for (const name of task.changedFiles) {
+      const backup = join(backupRoot, name);
+      const target = join(this.projectRoot, name);
+      if (await isFile(backup)) {
+        await mkdir(dirname(target), { recursive: true });
+        await copyFile(backup, target);
+      } else {
+        await unlink(target).catch(() => {});
+      }
+    }
+  }
+
+  async executeAction(id: string, actor: { id: string; name: string }, action: string, values: Record<string, unknown>, execute: (task: TaskRecord, action: string, values: Record<string, unknown>) => Promise<unknown>) {
+    const task = this.tasks.get(id);
+    if (!task || !this.canRead(task, actor.id) || !action || task.status === 'cancelled') throw { status: 404, message: 'Task not found' };
+    if (task.mode !== 'live' || task.status !== 'approved') throw { status: 409, message: 'Live actions require an approved live task' };
+    const result = await execute(task, action, values);
+    void this.recordAudit(task, actor, 'task.action_executed', { action });
+    this.emit(task, { type: 'action', data: { action, result } });
+    return result;
+  }
+
+  private async recordAudit(task: TaskRecord, actor: { id: string; name: string }, event: string, detail?: Record<string, unknown>) {
+    const entry: TaskAudit = { event, task_id: task.id, actor_id: actor.id, actor_name: actor.name, at: now(), detail };
+    task.audit?.push(entry);
+    const auditFile = join(this.projectRoot, 'sample', '.data', 'task-audit.jsonl');
+    await mkdir(dirname(auditFile), { recursive: true });
+    await appendFile(auditFile, `${JSON.stringify(entry)}\n`).catch(() => {});
   }
 
   private emit(task: TaskRecord, event: Omit<TaskEvent, 'task_id' | 'at' | 'status'> & { status?: TaskStatus }) {
@@ -186,10 +310,11 @@ export class CodexTaskRunner {
       await copyProject(this.projectRoot, stagedRepo);
       task.workspace = stagedRepo;
 
+      const sandbox = TASK_POLICIES[task.mode].sandbox;
       const args = [
-        'exec', '--sandbox', 'workspace-write', '--ephemeral', '--json',
+        'exec', '--sandbox', sandbox, '--ephemeral', '--json',
         '--skip-git-repo-check', '--cd', stagedRepo,
-        `${task.prompt}\n\nWork only inside this staged Core3 project. Preserve YAML-first architecture. Do not publish, deploy, access secrets, or modify files outside the workspace. Run relevant validation before finishing.`,
+        `${task.prompt}\n\nWork only inside this staged Core3 project. Preserve YAML-first architecture. Do not publish, deploy, access secrets, or modify files outside the workspace. Run relevant validation before finishing. The task mode is ${task.mode}. For an approved live business action, use: bun sample/task-action.ts ${task.id} <action> '<json-values>'; never mutate business databases directly.`,
       ];
       const child = (Bun as any).spawn([env.CORE3_CODEX_BIN || 'codex', ...args], {
         cwd: stagedRepo,
@@ -197,6 +322,9 @@ export class CodexTaskRunner {
         stderr: 'pipe',
         env: {
           PATH: env.PATH || '',
+          CORE3_TASK_ID: task.id,
+          CORE3_TASK_API_URL: this.apiUrl,
+          CORE3_TASK_TOKEN: (task as TaskRecord & { taskToken?: string }).taskToken || '',
           ...(env.HOME ? { HOME: env.HOME } : {}),
           ...(env.CODEX_HOME ? { CODEX_HOME: env.CODEX_HOME } : {}),
           ...(env.XDG_CONFIG_HOME ? { XDG_CONFIG_HOME: env.XDG_CONFIG_HOME } : {}),
@@ -219,8 +347,9 @@ export class CodexTaskRunner {
       await this.validate(task, stagedRepo);
       task.changedFiles = await changedFiles(this.projectRoot, stagedRepo);
       task.diff = await directoryDiff(this.projectRoot, stagedRepo, task.changedFiles);
-      task.status = 'completed';
+      task.status = task.mode === 'read' ? 'completed' : 'awaiting_approval';
       task.updatedAt = now();
+      void this.recordAudit(task, { id: task.actorId, name: task.actorName }, 'task.validated', { changed_files: task.changedFiles });
       this.emit(task, { type: 'complete', data: { changed_files: task.changedFiles, validation: task.validation } });
     } catch (error) {
       if (task.status !== 'cancelled') {
@@ -238,3 +367,8 @@ export class CodexTaskRunner {
 }
 
 export { TASK_PERMISSION };
+export { PUBLISH_PERMISSION };
+
+async function isFile(path: string) {
+  try { return (await stat(path)).isFile(); } catch { return false; }
+}

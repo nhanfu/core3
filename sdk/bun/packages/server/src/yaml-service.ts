@@ -27,6 +27,7 @@ export type YamlRuntimeContext = {
   catalogs?: Map<string, any>;
   actions: Map<string, any>;
   storage: any;
+  reloadPages?: () => number;
 };
 
 export type DiscoveredYamlService = {

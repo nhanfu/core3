@@ -168,15 +168,20 @@ const moduleManifest = modules.map((module) => ({
     .map((route) => ({ ...route, path: moduleRoute(module.id, route.path) })),
 }));
 await moduleManager.loadAll({ appsRoot: APPS_ROOT, env: process.env, moduleConfigs, serviceConfigs: moduleConfigs, eventBus });
-const taskRunner = new CodexTaskRunner(REPO_ROOT);
-moduleManager.apiHandlers.unshift(createTaskApi({
-  authProvider: moduleManager.resolveService('auth.adapter') as any,
-  runner: taskRunner,
-}));
 const yamlServiceContexts = modules
   .filter((module): module is YamlServiceModule => module instanceof YamlServiceModule)
   .map((module) => module.getRuntimeContext())
   .filter((context): context is NonNullable<typeof context> => Boolean(context));
+const taskRunner = new CodexTaskRunner(REPO_ROOT, `http://127.0.0.1:${PORT}`, async () => ({
+  discovered_pages: discoverPages(APPS_ROOT).pages.size,
+  reloaded_services: yamlServiceContexts.map((context) => ({ id: context.id, pages: context.reloadPages?.() || 0 })),
+  restart_required_for_new_services: true,
+}));
+moduleManager.apiHandlers.unshift(createTaskApi({
+  authProvider: moduleManager.resolveService('auth.adapter') as any,
+  runner: taskRunner,
+  actionHandlers: yamlServiceContexts.map((context) => context.api),
+}));
 if (yamlServiceContexts.length) moduleManager.apiHandlers.unshift(createYamlHostApi(yamlServiceContexts));
 
 async function applicationCatalog() {

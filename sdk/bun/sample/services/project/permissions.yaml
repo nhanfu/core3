@@ -3,3 +3,4 @@ permissions:
   - project.write
   - project.manage
   - project.task.execute
+  - project.task.publish

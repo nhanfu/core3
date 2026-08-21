@@ -37,5 +37,47 @@ describe('Codex task API', () => {
     const changes = await api(request('/api/tasks/task_1/changes'), new URL('http://localhost/api/tasks/task_1/changes'));
     expect(changes?.status).toBe(200);
     expect(await changes?.json()).toMatchObject({ changed_files: ['sample/services/dashboard/manifest.yaml'], diff: 'diff', validation: { ok: true } });
+    const policies = await api(request('/api/task-policies'), new URL('http://localhost/api/task-policies'));
+    expect(await policies?.json()).toMatchObject({
+      read: { sandbox: 'read-only', requiresApproval: false },
+      staged: { sandbox: 'workspace-write', requiresApproval: true },
+      live: { sandbox: 'workspace-write', requiresApproval: true },
+    });
+  });
+
+  it('requires publish permission for live mode and forwards approved actions to Core3 handlers', async () => {
+    const task: any = { id: 'task_live', actorId: 'u1', actorName: 'Director', prompt: 'execute', mode: 'live', status: 'approved', createdAt: '', updatedAt: '', output: '', changedFiles: [] };
+    let actionSeen = '';
+    const runner: any = {
+      create: () => task,
+      get: () => task,
+      canRead: () => true,
+      subscribe: () => () => {},
+      cancel: () => false,
+      approve: () => true,
+      publish: async () => true,
+      rollback: async () => true,
+      executeAction: async (_id, _actor, action, values, execute) => {
+        actionSeen = `${action}:${String(values.id)}`;
+        return execute(task, action, values);
+      },
+    };
+    const api = createTaskApi({
+      authProvider: { getCurrentUser: async () => ({ sub: 'u1' }), hasPermission: (_user, permission) => permission !== 'project.task.publish' },
+      runner,
+      actionHandlers: [async (_request, url) => url.pathname === '/api/actions/project.tasks.start' ? new Response(JSON.stringify({ ok: true }), { status: 200 }) : null],
+    });
+    const denied = await api(request('/api/tasks', { method: 'POST', body: JSON.stringify({ prompt: 'execute', mode: 'live' }) }), new URL('http://localhost/api/tasks'));
+    expect(denied?.status).toBe(403);
+
+    const liveApi = createTaskApi({
+      authProvider: { getCurrentUser: async () => ({ sub: 'u1' }), hasPermission: () => true },
+      runner,
+      actionHandlers: [async (_request, url) => url.pathname === '/api/actions/project.tasks.start' ? new Response(JSON.stringify({ ok: true }), { status: 200 }) : null],
+    });
+    const response = await liveApi(request('/api/tasks/task_live/action', { method: 'POST', body: JSON.stringify({ action: 'project.tasks.start', values: { id: 'row-1' } }) }), new URL('http://localhost/api/tasks/task_live/action'));
+    expect(response?.status).toBe(200);
+    expect(await response?.json()).toEqual({ ok: true });
+    expect(actionSeen).toBe('project.tasks.start:row-1');
   });
 });

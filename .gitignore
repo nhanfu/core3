@@ -20,6 +20,7 @@ lib/dist/
 *.log
 *.pid
 dist
+sdk/bun/sample/.data/
 
 # Local tooling and environment settings
 .env
