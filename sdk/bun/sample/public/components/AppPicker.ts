@@ -2,7 +2,7 @@ import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { appendFilledIcon } from '@core3/client/components/Icon';
 import { getApps, selectApp, setDefaultApp, navigate } from '../app.ts';
-import { stageAiPrompt } from './AiWorkspace.ts';
+import { stageAiPrompt } from '@core3/client/components/AiWorkspace';
 
 export class AppPicker extends BaseComponent {
   private _search: HTMLInputElement | null = null;

@@ -11,7 +11,7 @@ export function resolveRouteWithModule(
   activeModuleId = '',
 ): string {
   const routePath = path.startsWith('/') ? path : `/${path}`;
-  if (routePath === '/apps' || routePath === '/ai') return routePath;
+  if (routePath === '/apps' || routePath === '/home' || routePath === '/ai') return routePath;
   const normalizedPath = routePath.toLowerCase();
   const module = manifests.find((entry) => normalizedPath === `/${entry.id}` || normalizedPath.startsWith(`/${entry.id}/`));
   if (module) {

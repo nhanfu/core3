@@ -1,0 +1,39 @@
+version: 0.0.1
+
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS ai_threads (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        actor_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL,
+        title VARCHAR NOT NULL,
+        status VARCHAR NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS ai_messages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        thread_id VARCHAR NOT NULL REFERENCES ai_threads(id),
+        role VARCHAR NOT NULL,
+        text VARCHAR NOT NULL,
+        task_id VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS ai_thread_tasks (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        thread_id VARCHAR NOT NULL REFERENCES ai_threads(id),
+        task_id VARCHAR NOT NULL,
+        access_mode VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_threads_actor ON ai_threads(actor_id, updated_at);
+      CREATE INDEX IF NOT EXISTS idx_ai_messages_thread ON ai_messages(thread_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS ai_thread_tasks;
+      DROP TABLE IF EXISTS ai_messages;
+      DROP TABLE IF EXISTS ai_threads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

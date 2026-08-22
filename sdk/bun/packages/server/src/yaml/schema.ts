@@ -197,6 +197,26 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'empty_threads',
     'empty_messages',
   ])],
+  ['AiWorkspace', new Set([
+    'type',
+    'id',
+    'source',
+    'message_source',
+    'message_page_size',
+    'create_thread_action',
+    'send_action',
+    'attach_task_action',
+    'eyebrow',
+    'heading',
+    'description',
+    'new_thread_label',
+    'threads_label',
+    'context_value',
+    'composer_placeholder',
+    'welcome_title',
+    'welcome_description',
+    'suggestions',
+  ])],
   ['LoginForm', new Set(['type', 'id', 'action', 'logo_title', 'logo_subtitle', 'title', 'email', 'password', 'submit_label', 'loading_label', 'required_message', 'provider_divider', 'credentials_label', 'credentials', 'providers'])],
   ['Html', new Set(['type', 'id', 'tag', 'class', 'text', 'text_expr', 'children'])],
   ['AvatarPicker', new Set(['type', 'id', 'action'])],
@@ -529,6 +549,15 @@ function validateComponents(
       requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
       requireSource(component.attachment_source, `${path}.attachment_source`, datasourceIds, options, issues);
       for (const key of ['send_action', 'upload_action', 'download_action', 'mark_read_action']) {
+        requireString(component[key], `${path}.${key}`, issues);
+        if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
+          issues.push(`${path}.${key} references unknown action "${component[key]}"`);
+        }
+      }
+    }
+    if (component.type === 'AiWorkspace') {
+      requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
+      for (const key of ['create_thread_action', 'send_action', 'attach_task_action']) {
         requireString(component[key], `${path}.${key}`, issues);
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
           issues.push(`${path}.${key} references unknown action "${component[key]}"`);

@@ -65,7 +65,11 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
         ...scalarBody,
         values,
         id: typeof body?.id === 'string' ? body.id : undefined,
-        thread_id: typeof body?.id === 'string' ? body.id : '',
+        // Preserve domain-specific thread IDs submitted by actions such as
+        // AI/chat. The generic `id` fallback must not erase body.thread_id.
+        thread_id: typeof body?.thread_id === 'string'
+          ? body.thread_id
+          : (typeof body?.id === 'string' ? body.id : ''),
         current_user_id: String(authUser.sub || ''),
         current_user_name: activityActor.name,
         current_branch_id: String(authUser.branch_id || ''),

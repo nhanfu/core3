@@ -1,6 +1,5 @@
 import type { CodexTaskRunner, TaskEvent, TaskRecord } from './task-runner.ts';
 import { PUBLISH_PERMISSION, TASK_PERMISSION, TASK_MODELS, TASK_POLICIES, TASK_REASONING_LEVELS, type TaskAccessMode, type TaskMode, type TaskReasoningLevel } from './task-runner.ts';
-import type { AiThreadStore } from './ai-thread-store.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -33,66 +32,26 @@ function taskOptions(body: any) {
   };
 }
 
+/**
+ * Imperative glue for the codex process lifecycle only. Thread and message
+ * persistence belongs to the declarative `ai` YAML service; this handler
+ * exists because spawning, approving, and publishing sandboxed processes
+ * cannot be expressed through page mutations yet.
+ */
 export function createTaskApi(options: {
   authProvider: { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean };
   runner: CodexTaskRunner;
-  threadStore: AiThreadStore;
   actionHandlers?: Array<(request: Request, url: URL) => Response | null | undefined | Promise<Response | null | undefined>>;
 }) {
-  const { authProvider, runner, threadStore, actionHandlers = [] } = options;
+  const { authProvider, runner, actionHandlers = [] } = options;
   return async (request: Request, url: URL): Promise<Response | null> => {
-    if (url.pathname !== '/api/task-policies' && !/^\/api\/(?:tasks|ai\/threads)(?:\/|$)/.test(url.pathname)) return null;
+    if (url.pathname !== '/api/task-policies' && !/^\/api\/tasks(?:\/|$)/.test(url.pathname)) return null;
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
     const user = await authProvider.getCurrentUser(request);
     if (!authProvider.hasPermission(user, TASK_PERMISSION)) return json({ error: `Requires permission: ${TASK_PERMISSION}` }, 403);
     const actor = { id: String(user.sub || user.id || ''), name: String(user.name || user.email || user.sub || 'Unknown user') };
     if (!actor.id) return json({ error: 'Authenticated user identity is required' }, 401);
     if (url.pathname === '/api/task-policies' && request.method === 'GET') return json({ ...TASK_POLICIES, models: TASK_MODELS, reasoning_levels: TASK_REASONING_LEVELS });
-
-    const threadCollection = url.pathname === '/api/ai/threads';
-    const threadMatch = url.pathname.match(/^\/api\/ai\/threads\/([A-Za-z0-9_-]+)(?:\/(messages|events))?$/);
-    if (threadCollection || threadMatch) await threadStore.ensureReady();
-    if (threadCollection && request.method === 'GET') {
-      return json(threadStore.list(actor.id).map((thread) => ({ ...thread, messages: thread.messages.slice(-1) })));
-    }
-    if (threadCollection && request.method === 'POST') {
-      let body: any;
-      try { body = await request.json(); } catch { body = {}; }
-      return json(await threadStore.create(actor, String(body?.title || body?.prompt || 'New project task')), 201);
-    }
-    if (threadMatch) {
-      const [, threadId, operation] = threadMatch;
-      const thread = threadStore.get(threadId, actor.id);
-      if (!thread) return json({ error: 'Thread not found' }, 404);
-      if (!operation && request.method === 'GET') {
-        return json({ ...thread, tasks: thread.taskIds.map((id) => runner.get(id)).filter(Boolean).map((task) => publicTask(task!)) });
-      }
-      if (operation === 'messages' && request.method === 'POST') {
-        let body: any;
-        try { body = await request.json(); } catch { return json({ error: 'JSON request body is required' }, 400); }
-        const prompt = String(body?.prompt || '').trim();
-        const { mode, options } = taskOptions(body);
-        if (!prompt) return json({ error: 'prompt is required' }, 400);
-        if (options.accessMode === 'full_access' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
-        await threadStore.addMessage(threadId, actor.id, { role: 'user', text: prompt });
-        try {
-          const task = runner.create(actor, prompt, mode, request.headers.get('Authorization')?.slice(7) || '', options);
-          await threadStore.attachTask(threadId, actor.id, task.id);
-          await threadStore.addMessage(threadId, actor.id, {
-            role: 'assistant',
-            text: options.accessMode === 'full_access'
-              ? 'I’m running with full access inside the authorized project boundary. I’ll inspect the project, make the requested changes, validate them, and prepare the result.'
-              : 'I’m working in a staged workspace and will ask before approval-sensitive actions. I’ll inspect the project, make the requested changes, validate them, and prepare a review.',
-            taskId: task.id,
-            status: task.status,
-          });
-          return json({ thread: threadStore.get(threadId, actor.id), task: publicTask(task) }, 202);
-        } catch (error) {
-          return json({ error: (error as any)?.message || 'Could not start task' }, (error as any)?.status || 400);
-        }
-      }
-      return json({ error: 'Unsupported thread operation' }, 405);
-    }
 
     const collection = url.pathname === '/api/tasks';
     const match = url.pathname.match(/^\/api\/tasks\/([A-Za-z0-9_-]+)(?:\/(events|cancel|changes|approve|publish|rollback|action))?$/);
@@ -101,7 +60,12 @@ export function createTaskApi(options: {
       try { body = await request.json(); } catch { return json({ error: 'JSON request body is required' }, 400); }
       const { mode, options } = taskOptions(body);
       if (options.accessMode === 'full_access' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
-      const task = runner.create(actor, String(body?.prompt || ''), mode, request.headers.get('Authorization')?.slice(7) || '', options);
+      let task: TaskRecord;
+      try {
+        task = runner.create(actor, String(body?.prompt || ''), mode, request.headers.get('Authorization')?.slice(7) || '', options);
+      } catch (error) {
+        return json({ error: (error as any)?.message || 'Could not start task' }, (error as any)?.status || 400);
+      }
       return json(publicTask(task), 202);
     }
     if (!match) return json({ error: 'Task route not found' }, 404);

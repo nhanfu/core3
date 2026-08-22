@@ -21,4 +21,10 @@ describe('manifest-driven application routing', () => {
   it('keeps unknown paths relative to the active module', () => {
     expect(resolveRouteWithModule('/unknown', manifests, apps, 'order')).toBe('/order/unknown');
   });
+
+  it('keeps shell routes outside module route resolution', () => {
+    expect(resolveRouteWithModule('/apps', manifests, apps, 'order')).toBe('/apps');
+    expect(resolveRouteWithModule('/home', manifests, apps, 'order')).toBe('/home');
+    expect(resolveRouteWithModule('/ai', manifests, apps, 'order')).toBe('/ai');
+  });
 });

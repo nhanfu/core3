@@ -1,7 +1,14 @@
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { html } from '@core3/client/html';
 import { appendIcon } from '@core3/client/components/Icon';
-import { apiFetch } from '../app.ts';
+import { client } from '@core3/client/client';
+
+export type TaskRunnerStartOptions = {
+  mode?: string;
+  access_mode?: string;
+  model?: string;
+  reasoning?: string;
+};
 
 type TaskState = {
   prompt: string;
@@ -10,7 +17,7 @@ type TaskState = {
   output: string;
   changedFiles: string[];
   error: string;
-};
+} & TaskRunnerStartOptions;
 
 type Stage = 'prepare' | 'think' | 'change' | 'validate' | 'review';
 
@@ -69,8 +76,20 @@ export class TaskRunnerPanel extends BaseComponent {
   private streamAbort: AbortController | null = null;
   private codexBuffer = '';
 
-  constructor(id: string, state: { prompt: string; taskId?: string }) {
-    super(id, { prompt: state.prompt, taskId: state.taskId || '', status: state.taskId ? 'queued' : 'starting', output: '', changedFiles: [], error: '' } as TaskState);
+  constructor(id: string, state: { prompt: string; taskId?: string; onTaskStarted?: (taskId: string) => void } & TaskRunnerStartOptions) {
+    super(id, {
+      prompt: state.prompt,
+      taskId: state.taskId || '',
+      status: state.taskId ? 'queued' : 'starting',
+      output: '',
+      changedFiles: [],
+      error: '',
+      mode: state.mode,
+      access_mode: state.access_mode,
+      model: state.model,
+      reasoning: state.reasoning,
+      onTaskStarted: state.onTaskStarted,
+    } as TaskState & { onTaskStarted?: (taskId: string) => void });
   }
 
   draw(container: HTMLElement) {
@@ -131,7 +150,7 @@ export class TaskRunnerPanel extends BaseComponent {
   private async start() {
     try {
       if (this.state.taskId) {
-        const existing = await apiFetch(`/api/tasks/${encodeURIComponent(this.state.taskId)}`);
+        const existing = await client.request(`/tasks/${encodeURIComponent(this.state.taskId)}`);
         if (!existing.ok) throw new Error('This task is no longer available');
         const task = await existing.json();
         this.state.status = String(task.status || this.state.status);
@@ -141,15 +160,22 @@ export class TaskRunnerPanel extends BaseComponent {
         await this.stream();
         return;
       }
-      const response = await apiFetch('/api/tasks', {
+      const response = await client.request('/tasks', {
         method: 'POST',
-        body: JSON.stringify({ prompt: this.state.prompt }),
+        body: JSON.stringify({
+          prompt: this.state.prompt,
+          ...(this.state.mode ? { mode: this.state.mode } : {}),
+          ...(this.state.access_mode ? { access_mode: this.state.access_mode } : {}),
+          ...(this.state.model ? { model: this.state.model } : {}),
+          ...(this.state.reasoning ? { reasoning: this.state.reasoning } : {}),
+        }),
       });
       if (!response.ok) throw new Error((await response.json().catch(() => ({})))?.error || 'Could not start task');
       const task = await response.json();
       this.state.taskId = String(task.id);
       this.state.status = String(task.status || 'queued');
       this.updateVisualState();
+      await this.state.onTaskStarted?.(String(task.id));
       await this.stream();
     } catch (error) {
       if ((error as Error)?.name !== 'AbortError') this.fail(String((error as Error)?.message || error));
@@ -158,7 +184,7 @@ export class TaskRunnerPanel extends BaseComponent {
 
   private async stream() {
     this.streamAbort = new AbortController();
-    const response = await apiFetch(`/api/tasks/${encodeURIComponent(this.state.taskId)}/events`, { signal: this.streamAbort.signal });
+    const response = await client.request(`/tasks/${encodeURIComponent(this.state.taskId)}/events`, { signal: this.streamAbort.signal });
     if (!response.ok || !response.body) throw new Error('Task event stream is unavailable');
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -228,7 +254,7 @@ export class TaskRunnerPanel extends BaseComponent {
         const item = event.item || {};
         if (item.type === 'agent_message' && item.text) return String(item.text);
         if (item.type === 'command_execution') {
-          const command = item.command ? `$ ${String(item.command).replace(/\\n/g, ' ')}` : '';
+          const command = item.command ? `$ ${String(item.command).replace(/\n/g, ' ')}` : '';
           return [command, item.aggregated_output || ''].filter(Boolean).join('\n');
         }
         if (item.type === 'file_change') return 'Updated project files';
@@ -305,7 +331,7 @@ export class TaskRunnerPanel extends BaseComponent {
   }
 
   private async transition(operation: string) {
-    const response = await apiFetch(`/api/tasks/${encodeURIComponent(this.state.taskId)}/${operation}`, { method: 'POST' });
+    const response = await client.request(`/tasks/${encodeURIComponent(this.state.taskId)}/${operation}`, { method: 'POST' });
     if (!response.ok) {
       this.fail((await response.json().catch(() => ({})))?.error || `Could not ${operation} task`);
       return;
@@ -334,7 +360,7 @@ export class TaskRunnerPanel extends BaseComponent {
 
   private async cancel() {
     this.streamAbort?.abort();
-    if (this.state.taskId) await apiFetch(`/api/tasks/${encodeURIComponent(this.state.taskId)}/cancel`, { method: 'POST' }).catch(() => {});
+    if (this.state.taskId) await client.request(`/tasks/${encodeURIComponent(this.state.taskId)}/cancel`, { method: 'POST' }).catch(() => {});
     this.state.status = 'cancelled';
     this.updateVisualState();
   }

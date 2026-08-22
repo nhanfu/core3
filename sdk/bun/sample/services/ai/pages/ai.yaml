@@ -1,0 +1,131 @@
+title: Core3 Agent
+page: { id: ai, breadcrumb: [Executive, Core3 Agent], auth: { require: [ai.read] } }
+
+datasources:
+  - id: ai_threads
+    single: false
+    permission: ai.read
+    query: |
+      SELECT t.id, t.title, t.status,
+        CAST(t.updated_at AS VARCHAR) AS updated_at,
+        COALESCE((
+          SELECT m.text
+          FROM ai_messages m
+          WHERE m.thread_id = t.id
+          ORDER BY m.created_at DESC
+          LIMIT 1
+        ), '') AS preview,
+        (
+          SELECT tt.task_id
+          FROM ai_thread_tasks tt
+          WHERE tt.thread_id = t.id
+          ORDER BY tt.created_at DESC
+          LIMIT 1
+        ) AS latest_task_id,
+        (
+          SELECT COUNT(*)
+          FROM ai_messages c
+          JOIN ai_threads owner ON owner.id = c.thread_id AND owner.actor_id = :current_user_id
+          WHERE c.thread_id = t.id
+        ) AS message_count
+      FROM ai_threads t
+      WHERE t.actor_id = :current_user_id
+      ORDER BY t.updated_at DESC
+  - id: ai_messages
+    single: false
+    permission: ai.read
+    query: |
+      SELECT *
+      FROM (
+        SELECT m.id, m.thread_id, m.role, m.text, m.task_id,
+          CAST(m.created_at AS VARCHAR) AS created_at
+        FROM ai_messages m
+        JOIN ai_threads t ON t.id = m.thread_id AND t.actor_id = :current_user_id
+        WHERE m.thread_id = COALESCE(
+          CAST(:thread_id AS VARCHAR),
+          (SELECT recent.id
+           FROM ai_threads recent
+           WHERE recent.actor_id = :current_user_id
+           ORDER BY recent.updated_at DESC
+           LIMIT 1)
+        )
+        ORDER BY m.created_at DESC
+        LIMIT 200
+      ) recent_messages
+      ORDER BY created_at
+
+components:
+  - type: AiWorkspace
+    source: ai_threads
+    message_source: ai_messages
+    message_page_size: 200
+    create_thread_action: create_thread
+    send_action: send_message
+    attach_task_action: attach_task
+    eyebrow: CORE3 AGENT
+    heading: Project workspace
+    description: Plan, change, and review your YAML-driven project.
+    new_thread_label: New thread
+    threads_label: Threads
+    context_value: core3 project
+    composer_placeholder: Ask Core3 to change the project…
+    welcome_title: What should we build?
+    welcome_description: Ask Core3 to inspect, create, or improve a service. Changes begin in a staged workspace.
+    suggestions:
+      - Inspect this project
+      - Create a dashboard
+      - Explain the service structure
+
+actions:
+  - id: create_thread
+    type: server
+    permission: ai.write
+    action: ai.threads.create
+    handler: ai
+    operation: create_thread
+    mutation:
+      generated: [thread_id]
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:title AS VARCHAR))) BETWEEN 1 AND 120"
+          status: 400
+          message: A title of at most 120 characters is required
+      steps:
+        - query: "INSERT INTO ai_threads(id, actor_id, actor_name, title) VALUES(:thread_id, :current_user_id, :current_user_name, trim(CAST(:title AS VARCHAR)))"
+      result: { query: "SELECT :thread_id AS id, trim(CAST(:title AS VARCHAR)) AS title" }
+  - id: send_message
+    type: server
+    permission: ai.write
+    action: ai.messages.send
+    handler: ai
+    operation: send_message
+    mutation:
+      generated: [message_id]
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:prompt AS VARCHAR))) BETWEEN 1 AND 12000"
+          status: 400
+          message: Prompt must be between 1 and 12000 characters
+        - query: "SELECT t.id AS thread_id FROM ai_threads t WHERE t.id = :thread_id AND t.actor_id = :current_user_id"
+          status: 404
+          message: AI thread not found
+      steps:
+        - query: "INSERT INTO ai_messages(id, thread_id, role, text) VALUES(:message_id, :thread_id, 'user', trim(CAST(:prompt AS VARCHAR)))"
+      result: { query: "SELECT :message_id AS id, :thread_id AS thread_id" }
+  - id: attach_task
+    type: server
+    permission: ai.write
+    action: ai.tasks.attach
+    handler: ai
+    operation: attach_task
+    mutation:
+      generated: [link_id, ack_id]
+      guards:
+        - query: "SELECT t.id AS thread_id FROM ai_threads t WHERE t.id = :thread_id AND t.actor_id = :current_user_id"
+          status: 404
+          message: AI thread not found
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:task_id AS VARCHAR))) > 0"
+          status: 400
+          message: A running task id is required
+      steps:
+        - query: "INSERT INTO ai_thread_tasks(id, thread_id, task_id, access_mode) VALUES(:link_id, :thread_id, trim(CAST(:task_id AS VARCHAR)), COALESCE(NULLIF(trim(CAST(:access_mode AS VARCHAR)), ''), 'ask'))"
+        - query: "INSERT INTO ai_messages(id, thread_id, role, text, task_id) VALUES(:ack_id, :thread_id, 'assistant', CASE WHEN trim(CAST(:access_mode AS VARCHAR)) = 'full_access' THEN 'I''m running with full access inside the authorized project boundary. I''ll inspect the project, make the requested changes, validate them, and prepare the result.' ELSE 'I''m working in a staged workspace and will ask before approval-sensitive actions. I''ll inspect the project, make the requested changes, validate them, and prepare a review.' END, trim(CAST(:task_id AS VARCHAR)))"
+      result: { query: "SELECT :link_id AS id, :thread_id AS thread_id, trim(CAST(:task_id AS VARCHAR)) AS task_id" }

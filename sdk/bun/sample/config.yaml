@@ -28,6 +28,14 @@ apps:
     route: /chat/
     module: chat
     enabled: true
+  - id: ai
+    label: Core3 Agent
+    description: AI workspace for project tasks and reviews
+    icon: ai
+    color: violet
+    route: /ai
+    module: ai
+    enabled: true
   - id: crm
     label: CRM
     description: Lead and opportunity management

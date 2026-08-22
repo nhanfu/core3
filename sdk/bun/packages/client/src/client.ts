@@ -76,6 +76,14 @@ class Client {
     });
   }
 
+  /** Raw authenticated request that returns the Response untouched (SSE, downloads, manual status checks). */
+  async request(path: string, options: RequestInit = {}) {
+    return fetch(`${this._resolveBase()}${path}`, {
+      ...options,
+      headers: { ...this._headers(), ...(options.headers || {}) },
+    });
+  }
+
   async workflow(sourceId: string, operation: string, params = {}) {
     return this._fetch(`${this._resolveBase()}/datasources/${encodeURIComponent(sourceId)}/workflow`, {
       method: 'POST',

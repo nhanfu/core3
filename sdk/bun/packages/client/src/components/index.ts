@@ -66,6 +66,8 @@ export { OdooAttachmentPanel }  from '@core3/client/components/OdooAttachmentPan
 export { MoneySummary }         from '@core3/client/components/MoneySummary';
 export { ApprovalTimeline }     from '@core3/client/components/ApprovalTimeline';
 export { ChatWorkspace }        from '@core3/client/components/ChatWorkspace';
+export { AiWorkspace, stageAiPrompt } from '@core3/client/components/AiWorkspace';
+export { TaskRunnerPanel }      from '@core3/client/components/TaskRunnerPanel';
 export { ContactGrid }          from '@core3/client/components/ContactGrid';
 export { Kanban }               from '@core3/client/components/Kanban';
 export { KanbanView }           from '@core3/client/components/KanbanView';

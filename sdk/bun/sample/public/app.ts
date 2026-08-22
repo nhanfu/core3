@@ -114,7 +114,7 @@ export function selectApp(app: any, makeDefault = false) {
 }
 
 export function getDefaultRoute(user: any = _user) {
-  return '/home';
+  return '/apps';
 }
 
 export async function setAuth(token: string, user: any) {
@@ -162,7 +162,7 @@ function routeWithModule(path: string) {
   // These are Core3 shell routes, not module routes. In particular, the
   // Orders app declares `/` as its own entry point, so allowing the generic
   // module resolver to handle `/` sends the workspace home to Orders.
-  if (path === '/' || path === '/home') return '/';
+  if (path === '/' || path === '/apps' || path === '/home' || path === '/ai') return path === '/' ? '/apps' : path;
   return resolveRouteWithModule(path, _manifest, _apps, _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order'));
 }
 
@@ -274,10 +274,6 @@ async function renderRoute(path: string, langCode?: string) {
     } else if (cleanPath === '/apps') {
       const mod = await import('./components/AppPicker.ts');
       await mod.mount(outlet);
-    } else if (cleanPath === '/ai') {
-      const mod = await import('./components/AiWorkspace.ts');
-      mod.mount(outlet);
-      _shell?.setTitle('Core3 Agent');
     } else {
       const pageParams = new URLSearchParams({ lc: i18n.lang });
       for (const [key, value] of Object.entries(getPageParams() as Record<string, string>)) {

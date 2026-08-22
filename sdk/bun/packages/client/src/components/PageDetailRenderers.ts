@@ -29,6 +29,7 @@ const renderHandlers = new PageRenderHandlerRegistry({
   renderApprovalTimeline,
   renderTemplatePreview,
   renderChatWorkspace,
+  renderAiWorkspace,
   renderStatusTabs,
   renderListToolbar,
   renderTabGroup: renderTabGroupDef,
@@ -224,6 +225,43 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
   bindSource(threadSource, data => _origSetState({ threads: data.data || [] }, true));
   bindSource(messageSource, data => _origSetState({ messages: data.data || [] }, true));
   bindSource(attachmentSource, data => _origSetState({ attachments: data.data || [] }, true));
+}
+
+async function renderAiWorkspace(def: any, targetContainer: HTMLElement) {
+  const { AiWorkspace } = await import('@core3/client/components/AiWorkspace');
+  const threadSource = def.source;
+  const messageSource = def.message_source;
+  const findAction = (actionId: string) => (config.actions || []).find((action: any) => action.id === actionId);
+  const comp = new AiWorkspace(
+    `ai-workspace-${def.id || threadSource || Date.now()}`,
+    {
+      threads: dataMap[threadSource]?.data || [],
+      messages: dataMap[messageSource]?.data || [],
+    },
+    def,
+  );
+  const _origSetState = comp.setState.bind(comp);
+  def.load_messages = async (threadId: string) => {
+    if (!messageSource) return;
+    const result = await refetchSource(messageSource, { thread_id: threadId }, 0, Number(def.message_page_size || 200));
+    _origSetState({ messages: result.data || [] }, false);
+  };
+  def.refresh = async () => {
+    if (threadSource) await refreshSources([threadSource]);
+  };
+  def.run_action = async (actionId: string, values: Record<string, unknown> = {}) => {
+    const actionDef = findAction(actionId);
+    if (!actionDef?.action) throw new Error(`Unknown AI action: ${actionId}`);
+    return client.action(actionDef.action, values);
+  };
+  comp._onAction = async (actionId: string, params: any) => {
+    const actionDef = findAction(actionId);
+    if (!actionDef) return;
+    return handleAction(actionDef, params?.row || params || {});
+  };
+  const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
+  mountOwned(comp, slot);
+  bindSource(threadSource, data => _origSetState({ threads: data.data || [] }, true));
 }
 
 async function renderStatusTabs(def: any, targetContainer: HTMLElement) {

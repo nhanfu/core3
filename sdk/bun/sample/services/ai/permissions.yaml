@@ -1,0 +1,4 @@
+# Authorization required by the Core3 Agent pages.
+permissions:
+  - ai.read
+  - ai.write
