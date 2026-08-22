@@ -15,17 +15,18 @@ function json(value: unknown, status = 200) {
 }
 
 function publicTask(task: TaskRecord) {
-  const { process: _process, diff: _diff, taskToken: _taskToken, ...safe } = task as TaskRecord & { process?: unknown; taskToken?: string };
+  const { process: _process, diff: _diff, taskToken: _taskToken, workspace: _workspace, ...safe } = task as TaskRecord & { process?: unknown; taskToken?: string };
   return safe;
 }
 
-function taskOptions(body: any) {
+function taskOptions(body: any, user: any) {
   const accessMode = String(body?.access_mode || body?.accessMode || (body?.mode === 'live' ? 'full_access' : 'ask')) as TaskAccessMode;
   const mode = (body?.mode === 'read' ? 'read' : accessMode === 'full_access' ? 'live' : 'staged') as TaskMode;
   return {
     mode,
     options: {
       accessMode,
+      allowedPermissions: Array.isArray(user.permissions) ? user.permissions.map(String) : [],
       model: body?.model ? String(body.model) : undefined,
       reasoning: body?.reasoning ? String(body.reasoning) as TaskReasoningLevel : undefined,
     },
@@ -58,7 +59,7 @@ export function createTaskApi(options: {
     if (collection && request.method === 'POST') {
       let body: any;
       try { body = await request.json(); } catch { return json({ error: 'JSON request body is required' }, 400); }
-      const { mode, options } = taskOptions(body);
+      const { mode, options } = taskOptions(body, user);
       if (options.accessMode === 'full_access' && !authProvider.hasPermission(user, PUBLISH_PERMISSION)) return json({ error: `Requires permission: ${PUBLISH_PERMISSION}` }, 403);
       let task: TaskRecord;
       try {

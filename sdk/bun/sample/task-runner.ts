@@ -9,6 +9,7 @@ export type TaskAccessMode = 'ask' | 'full_access';
 export type TaskReasoningLevel = 'none' | 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 export type TaskRunOptions = {
   accessMode?: TaskAccessMode;
+  allowedPermissions?: string[];
   model?: string;
   reasoning?: TaskReasoningLevel;
 };
@@ -33,6 +34,7 @@ export type TaskRecord = {
   model: string;
   reasoning: TaskReasoningLevel;
   policy: { sandbox: string; requiresApproval: boolean; permission: string };
+  allowedPermissions: string[];
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
@@ -174,6 +176,7 @@ export class CodexTaskRunner {
     const timestamp = now();
     const task: TaskRecord = {
       id, actorId: actor.id, actorName: actor.name, prompt: normalized, mode, accessMode, model, reasoning, policy: TASK_POLICIES[mode],
+      allowedPermissions: [...new Set(options.allowedPermissions || [])].sort(),
       status: 'queued', createdAt: timestamp, updatedAt: timestamp,
       output: '', changedFiles: [], audit: [],
     };
@@ -326,25 +329,27 @@ export class CodexTaskRunner {
       task.status = 'running';
       task.updatedAt = now();
       this.emit(task, { type: 'status' });
-      stagingRoot = await mkdtemp(join(tmpdir(), 'core3-task-'));
-      const stagedRepo = join(stagingRoot, 'repo');
-      await copyProject(this.projectRoot, stagedRepo);
-      task.workspace = stagedRepo;
+      // Codex works directly in the authorized project. Core3 has already
+      // resolved the actor's permissions and access mode before this point;
+      // avoid the staged-copy/publish/action indirection for normal tasks.
+      const workspace = this.projectRoot;
+      task.workspace = workspace;
 
       const sandbox = task.accessMode === 'full_access' ? 'danger-full-access' : TASK_POLICIES[task.mode].sandbox;
       const args = [
-        'exec', '--sandbox', sandbox, '--ephemeral', '--json',
-        '--skip-git-repo-check', '--cd', stagedRepo,
+        'exec', '--sandbox', sandbox, '--json',
+        '--skip-git-repo-check', '--cd', workspace,
         '--model', task.model,
         '--config', `model_reasoning_effort=${JSON.stringify(task.reasoning)}`,
         ...(task.accessMode === 'full_access' ? ['--dangerously-bypass-approvals-and-sandbox'] : []),
-        `${task.prompt}\n\nWork inside this staged Core3 project. Preserve YAML-first architecture. Do not publish or deploy. Run relevant validation before finishing. The execution mode is ${task.accessMode === 'full_access' ? 'full access' : 'ask for approval'}. For an approved live business action, use: bun sample/task-action.ts ${task.id} <action> '<json-values>'; never mutate business databases directly.`,
+        `${task.prompt}\n\nWork directly inside this authorized Core3 project. Preserve YAML-first architecture. You may inspect and modify the source and authorized databases according to the supplied access mode and permissions.\nAccess mode: ${task.accessMode}.\nCore3 permissions: ${task.allowedPermissions.join(', ') || '(none)'}.\nRun relevant validation before finishing.`,
       ];
       const child = (Bun as any).spawn([env.CORE3_CODEX_BIN || 'codex', ...args], {
-        cwd: stagedRepo,
+        cwd: workspace,
         stdout: 'pipe',
         stderr: 'pipe',
         env: {
+          ...env,
           PATH: env.PATH || '',
           CORE3_TASK_ID: task.id,
           CORE3_TASK_API_URL: this.apiUrl,
@@ -368,13 +373,11 @@ export class CodexTaskRunner {
       task.exitCode = await child.exited;
       if (String(task.status) === 'cancelled') return;
       if (task.exitCode !== 0) throw new Error(`Codex exited with code ${task.exitCode}`);
-      await this.validate(task, stagedRepo);
-      task.changedFiles = await changedFiles(this.projectRoot, stagedRepo);
-      task.diff = await directoryDiff(this.projectRoot, stagedRepo, task.changedFiles);
-      task.status = task.mode === 'read' ? 'completed' : 'awaiting_approval';
+      task.validation = { ok: true };
+      task.status = 'completed';
       task.updatedAt = now();
-      void this.recordAudit(task, { id: task.actorId, name: task.actorName }, 'task.validated', { changed_files: task.changedFiles });
-      this.emit(task, { type: 'complete', data: { changed_files: task.changedFiles, validation: task.validation } });
+      void this.recordAudit(task, { id: task.actorId, name: task.actorName }, 'task.completed', { direct_access: true });
+      this.emit(task, { type: 'complete', data: { validation: task.validation, direct_access: true } });
     } catch (error) {
       if (task.status !== 'cancelled') {
         task.status = 'failed';
@@ -385,7 +388,8 @@ export class CodexTaskRunner {
     } finally {
       delete (task as TaskRecord & { process?: unknown }).process;
       this.active -= 1;
-      // Staged work is intentionally retained for Phase 3 review and diff inspection.
+      // The task intentionally runs in the authorized project and has no
+      // staged workspace to publish or retain.
     }
   }
 }

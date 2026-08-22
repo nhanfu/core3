@@ -449,6 +449,24 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
 
 async function renderComponentDef(def: any, targetContainer: HTMLElement) {
   if (await renderHandlers.render(def, targetContainer)) return;
+
+  // Applications can register components that intentionally do not live in
+  // the framework's convention-based component directory (for example the
+  // spec app's DocPage). Resolve those registrations before falling back to
+  // the browser module loader.
+  const Registered = registry?.get(String(def.type || ''));
+  if (Registered) {
+    const comp = new Registered(def.id || def.type, {}, def);
+    comp._onAction = async (actionId: string, params: any) => {
+      const row = params?.row || params || {};
+      const actionDef = (config.actions || []).find((a: any) => a.id === actionId);
+      if (actionDef) await handleAction(actionDef, row);
+    };
+    const slot = html.take(targetContainer).div.css('marginBottom', '24px').ele() as HTMLElement;
+    mountOwned(comp, slot);
+    return;
+  }
+
   try {
     await componentLoader.load(String(def.type || ''));
   } catch (error) {
