@@ -1,0 +1,28 @@
+nav:
+  brand: YShip
+  eyebrow: YAML spec, YAML shipping
+  items:
+    - label: Roadmap
+      href: /roadmap
+    - label: Overview
+      href: /overview
+    - label: Concepts
+      items:
+        - label: Frontend rendering model
+          href: /frontend
+        - label: Backend data pipeline
+          href: /backend
+        - label: Scripting engine
+          href: /scripting
+        - label: Gate service architecture
+          href: /plan/auth-mediator
+    - label: How-to guides
+      items:
+        - label: Extension points
+          href: /extensions
+    - label: Reference
+      items:
+        - label: CSS, auth & protocols
+          href: /reference
+        - label: Component library
+          href: /component-library

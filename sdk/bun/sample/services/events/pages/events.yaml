@@ -1,0 +1,86 @@
+title: Events
+page: { id: events, breadcrumb: [Marketing, Events], auth: { require: [events.read] } }
+datasources:
+  - id: event_states
+    permission: events.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('In Progress','In Progress'), ('Completed','Completed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: events
+    permission: events.read
+    workflow: events
+    query: "SELECT e.id, e.row_version, e.name, e.event_type, e.organizer, e.venue, e.capacity, e.registration_count, CAST(e.start_at AS VARCHAR) AS start_at, CAST(e.end_at AS VARCHAR) AS end_at, e.state FROM events e WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.event_type ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) ORDER BY e.start_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: events
+    create_action: create_event
+    create_label: New event
+    search: { label: Search events, placeholder: 'Search event or event type...' }
+    filters: [{ field: state, label: Status, options_source: event_states }]
+    columns:
+      - { field: name, label: Event, type: PrimaryEntityCell }
+      - { field: event_type, label: Type }
+      - { field: organizer, label: Organizer }
+      - { field: venue, label: Venue }
+      - { field: capacity, label: Capacity, align: right }
+      - { field: registration_count, label: Registered, align: right }
+      - { field: start_at, label: Starts }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: publish_event, label: Publish, permission: events.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: start_event, label: Start, permission: events.write, variant: secondary, show_if: "row.state === 'Published'" }
+      - { id: complete_event, label: Complete, permission: events.manage, variant: primary, show_if: "row.state === 'In Progress'" }
+      - { id: cancel_event, label: Cancel, permission: events.manage, variant: danger, show_if: "row.state !== 'Completed' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_event
+    type: server_form
+    permission: events.write
+    title: New event
+    action: events.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [events]
+    mutation:
+      operation: insert
+      table: events
+      fields: [name, event_type, organizer, venue, description, capacity, start_at, end_at]
+      required: [name, start_at]
+      result: { query: "SELECT * FROM events WHERE id = :id" }
+    fields:
+      - { field: name, label: Event, type: text, required: true }
+      - { field: event_type, label: Type, type: text }
+      - { field: organizer, label: Organizer, type: text }
+      - { field: venue, label: Venue, type: text }
+      - { field: description, label: Description, type: text }
+      - { field: capacity, label: Capacity, type: number }
+      - { field: start_at, label: Starts at, type: text, required: true }
+      - { field: end_at, label: Ends at, type: text }
+  - { id: publish_event, type: server, permission: events.write, action: events.records.publish, handler: order_transition, workflow: events, operation: publish, refresh: [events] }
+  - { id: start_event, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, refresh: [events] }
+  - { id: complete_event, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, refresh: [events] }
+  - { id: cancel_event, type: server, permission: events.manage, action: events.records.cancel, handler: order_transition, workflow: events, operation: cancel, refresh: [events] }
+  - id: register_event_attendee
+    type: server_form
+    permission: events.write
+    title: Register attendee
+    action: events.registrations.create
+    handler: yaml_mutation
+    operation: register
+    refresh: [events]
+    mutation:
+      operation: insert
+      table: event_registrations
+      fields: [event_id, event_name, attendee_name, attendee_email, ticket_type]
+      required: [event_id, event_name, attendee_name]
+      guards: [{ query: "SELECT 1 AS ok FROM events WHERE id = :event_id AND state IN ('Published', 'In Progress') AND (capacity = 0 OR registration_count < capacity)", status: 409, message: The event is not open or has reached capacity }]
+      steps: [{ query: "UPDATE events SET registration_count = registration_count + 1, row_version = row_version + 1 WHERE id = :event_id" }]
+      result: { query: "SELECT * FROM event_registrations WHERE id = :id" }
+    fields:
+      - { field: event_id, label: Event ID, type: text, required: true }
+      - { field: event_name, label: Event, type: text, required: true }
+      - { field: attendee_name, label: Attendee, type: text, required: true }
+      - { field: attendee_email, label: Email, type: text }
+      - { field: ticket_type, label: Ticket type, type: text }

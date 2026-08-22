@@ -1,0 +1,38 @@
+title: SMS Opt-in Lists
+page: { id: sms-lists, breadcrumb: [Marketing, SMS Marketing, Opt-in Lists], auth: { require: [sms_marketing.read] } }
+datasources:
+  - id: sms_lists
+    permission: sms_marketing.read
+    query: "SELECT id, name, description, opt_in_count, state FROM sms_lists ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: sms_lists
+    create_action: create_sms_list
+    create_label: New opt-in list
+    columns:
+      - { field: name, label: Opt-in list, type: PrimaryEntityCell }
+      - { field: description, label: Description }
+      - { field: opt_in_count, label: Opted in, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_sms_list
+    type: server_form
+    permission: sms_marketing.manage
+    title: New SMS opt-in list
+    action: sms_marketing.lists.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_lists]
+    mutation:
+      operation: insert
+      table: sms_lists
+      fields: [name, description, opt_in_count]
+      required: [name]
+      result: { query: "SELECT * FROM sms_lists WHERE id = :id" }
+    fields:
+      - { field: name, label: Opt-in list, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: opt_in_count, label: Opted in, type: number }

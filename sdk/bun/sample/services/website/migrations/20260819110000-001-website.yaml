@@ -1,0 +1,35 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS website_websites (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, domain VARCHAR, homepage_url VARCHAR,
+        default_language VARCHAR NOT NULL DEFAULT 'English', google_analytics_key VARCHAR,
+        cookies_bar BOOLEAN NOT NULL DEFAULT FALSE, cdn_activated BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS website_pages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        website_id VARCHAR NOT NULL, website_name VARCHAR NOT NULL, name VARCHAR NOT NULL, url VARCHAR NOT NULL,
+        is_indexed BOOLEAN NOT NULL DEFAULT TRUE, is_homepage BOOLEAN NOT NULL DEFAULT FALSE,
+        date_publish TIMESTAMP, state VARCHAR NOT NULL DEFAULT 'Draft',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS website_pages_website_idx ON website_pages(website_id);
+      CREATE INDEX IF NOT EXISTS website_pages_state_idx ON website_pages(state);
+      CREATE TABLE IF NOT EXISTS website_menus (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        website_id VARCHAR NOT NULL, website_name VARCHAR NOT NULL, name VARCHAR NOT NULL, url VARCHAR NOT NULL,
+        parent_name VARCHAR, new_window BOOLEAN NOT NULL DEFAULT FALSE, sequence INTEGER NOT NULL DEFAULT 10,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS website_menus_website_idx ON website_menus(website_id);
+    down: |
+      DROP TABLE IF EXISTS website_menus;
+      DROP TABLE IF EXISTS website_pages;
+      DROP TABLE IF EXISTS website_websites;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

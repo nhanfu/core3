@@ -1,0 +1,88 @@
+title: Customers
+page: { id: customers, breadcrumb: [Sales, Customers], auth: { require: [orders.read] } }
+datasources:
+  - id: sales_customers
+    single: false
+    permission: orders.read
+    query: |
+      SELECT id, code, name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type
+      FROM customers
+      WHERE (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%')
+        AND (:status IS NULL OR status = :status)
+        AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name))
+      ORDER BY name
+  - id: customer_statuses
+    single: false
+    permission: orders.read
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Archived','Archived')) statuses(value, label)"
+components:
+  - type: ListView
+    variant: odoo
+    source: sales_customers
+    create_action: create_customer
+    create_label: New customer
+    search: { label: Search customers, placeholder: Search by customer code or name... }
+    filters: [{ field: status, label: Status, options_source: customer_statuses }]
+    columns:
+      - { field: code, label: Code }
+      - { field: name, label: Customer, type: PrimaryEntityCell }
+      - { field: owner_name, label: Owner }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: city, label: City }
+      - { field: vat, label: Tax ID }
+      - { field: visibility, label: Visibility }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: archive_customer, label: Archive, permission: orders.write, variant: danger, show_if: "row.status === 'Active'" }
+actions:
+  - id: create_customer
+    type: server_form
+    permission: orders.write
+    title: New customer
+    action: sales.customers.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sales_customers]
+    mutation:
+      operation: insert
+      table: customers
+      fields: [code, name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type]
+      required: [code, name]
+      defaults: { visibility: Public, status: Active, company_type: Company }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = :code OR name = :name)"
+          status: 409
+          message: Customer code or name already exists
+      result: { query: "SELECT * FROM customers WHERE id = :id" }
+    fields:
+      - { field: code, label: Customer code, type: text, required: true }
+      - { field: name, label: Customer name, type: text, required: true }
+      - { field: owner_name, label: Account owner, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: city, label: City, type: text }
+      - { field: country, label: Country, type: text }
+      - { field: vat, label: Tax ID, type: text }
+      - { field: company_type, label: Company type, type: select, options: [Company, Individual], default: Company }
+      - { field: visibility, label: Visibility, type: select, options: [Public, Private], default: Public }
+  - id: archive_customer
+    type: server
+    permission: orders.write
+    action: sales.customers.archive
+    handler: customer_status
+    operation: archive
+    params: { id: '{row.id}' }
+    refresh: [sales_customers]
+    mutation:
+      guards:
+        - query: "SELECT id FROM customers WHERE id = :id AND status = 'Active'"
+          status: 409
+          message: Customer is already archived
+      steps:
+        - query: "UPDATE customers SET status = 'Archived' WHERE id = :id"
+      result: { query: "SELECT * FROM customers WHERE id = :id" }

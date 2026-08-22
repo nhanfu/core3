@@ -1,0 +1,47 @@
+workflow:
+  id: maintenance_requests
+  entity: maintenance_requests
+  handler: order_transition
+  initial: New
+  permission: maintenance.write
+  mutable: true
+  status_source: maintenance_request_states
+  states:
+    - { id: New, label: New, color: neutral }
+    - { id: Assigned, label: Assigned, color: amber }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Repaired, label: Repaired, color: green }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: assign
+      from: [New]
+      to: Assigned
+      permission: maintenance.write
+      mutation:
+        guards: [{ query: "SELECT id FROM maintenance_requests WHERE id = :id AND state = 'New'", status: 409, message: Only new maintenance requests can be assigned }]
+        steps: [{ query: "UPDATE maintenance_requests SET state = 'Assigned', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+    - id: start
+      from: [Assigned]
+      to: In Progress
+      permission: maintenance.write
+      mutation:
+        guards: [{ query: "SELECT id FROM maintenance_requests WHERE id = :id AND state = 'Assigned'", status: 409, message: Only assigned maintenance requests can start }]
+        steps: [{ query: "UPDATE maintenance_requests SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+    - id: repair
+      from: [In Progress]
+      to: Repaired
+      permission: maintenance.write
+      mutation:
+        guards: [{ query: "SELECT id FROM maintenance_requests WHERE id = :id AND state = 'In Progress'", status: 409, message: Only active maintenance requests can be repaired }]
+        steps: [{ query: "UPDATE maintenance_requests SET state = 'Repaired', completed_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+    - id: cancel
+      from: [New, Assigned, In Progress]
+      to: Cancelled
+      permission: maintenance.write
+      mutation:
+        guards: [{ query: "SELECT id FROM maintenance_requests WHERE id = :id AND state IN ('New', 'Assigned', 'In Progress')", status: 409, message: Only open maintenance requests can be cancelled }]
+        steps: [{ query: "UPDATE maintenance_requests SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }

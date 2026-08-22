@@ -1,0 +1,24 @@
+version: 0.0.6
+type:
+  postgres:
+    up: |
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS product_id VARCHAR;
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS discount DECIMAL(9,4);
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS qty_delivered DECIMAL(18,3);
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS qty_invoiced DECIMAL(18,3);
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS qty_to_invoice DECIMAL(18,3);
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS price_subtotal DECIMAL(18,2);
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS price_tax DECIMAL(18,2);
+      ALTER TABLE order_lines ADD COLUMN IF NOT EXISTS price_total DECIMAL(18,2);
+      UPDATE order_lines SET discount = COALESCE(discount, 0), qty_delivered = COALESCE(qty_delivered, 0),
+        qty_invoiced = COALESCE(qty_invoiced, 0), qty_to_invoice = COALESCE(qty_to_invoice, quantity),
+        price_subtotal = COALESCE(price_subtotal, line_total / NULLIF(1 + tax_rate / 100, 0)),
+        price_tax = COALESCE(price_tax, line_total - line_total / NULLIF(1 + tax_rate / 100, 0)),
+        price_total = COALESCE(price_total, line_total);
+      CREATE INDEX IF NOT EXISTS idx_order_lines_product ON order_lines(product_id);
+    down: |
+      DROP INDEX IF EXISTS idx_order_lines_product;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

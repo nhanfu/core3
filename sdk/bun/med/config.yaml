@@ -1,0 +1,16 @@
+event_store:
+  mode: ${CORE3_EVENT_MODE:-embedded}
+  database:
+    driver: parquet
+    path: ${CORE3_EVENT_DB_PATH:-../coredb/events-parquet}
+  retention_ms: ${CORE3_EVENT_RETENTION_MS:-3600000}
+  max_rows: ${CORE3_EVENT_MAX_ROWS:-1000}
+  hot_max_rows: ${CORE3_EVENT_HOT_MAX_ROWS:-100000}
+  hot_max_bytes: ${CORE3_EVENT_HOT_MAX_BYTES:-134217728}
+  hot_retention_ms: ${CORE3_EVENT_HOT_RETENTION_MS:-3600000}
+  hot_consumer_ttl_ms: ${CORE3_EVENT_HOT_CONSUMER_TTL_MS:-30000}
+  segment_max_rows: ${CORE3_EVENT_SEGMENT_MAX_ROWS:-1000}
+  pull_batch_size: ${CORE3_EVENT_PULL_BATCH_SIZE:-100}
+  reader_connections: ${CORE3_EVENT_READER_CONNECTIONS:-2}
+  buffer_max_rows: ${CORE3_EVENT_BUFFER_MAX_ROWS:-10000}
+  write_mode: ${CORE3_EVENT_WRITE_MODE:-low_latency}

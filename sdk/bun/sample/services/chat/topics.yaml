@@ -1,0 +1,11 @@
+topics:
+  - id: chat.thread.create
+    version: 1
+    kind: command
+    request: { values: object, actor: object }
+    response: object
+  - id: chat.attachment.send
+    version: 1
+    kind: command
+    request: { threadId: string, content: string, attachment: object, actor: object }
+    response: object

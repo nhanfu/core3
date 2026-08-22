@@ -1,0 +1,52 @@
+workflow:
+  id: leave_requests
+  entity: leave_requests
+  handler: order_transition
+  initial: Draft
+  permission: time_off.write
+  mutable: true
+  status_source: leave_request_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Approved, label: Approved, color: green, terminal: true }
+    - { id: Refused, label: Refused, color: red, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: violet, terminal: true }
+  transitions:
+    - id: submit
+      from: [Draft]
+      to: Submitted
+      permission: time_off.write
+      mutation:
+        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND state = 'Draft' AND days > 0 AND date_to >= date_from", status: 409, message: A leave request needs valid dates and positive days }]
+        steps: [{ query: "UPDATE leave_requests SET state = 'Submitted', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    - id: approve
+      from: [Submitted]
+      to: Approved
+      permission: time_off.manage
+      mutation:
+        guards:
+          - query: "SELECT r.id FROM leave_requests r JOIN leave_balances b ON b.employee_id = r.employee_id AND b.leave_type_id = r.leave_type_id AND b.year = EXTRACT(YEAR FROM r.date_from) WHERE r.id = :id AND r.state = 'Submitted' AND b.allocated_days - b.used_days >= r.days"
+            status: 409
+            message: The employee does not have enough leave balance
+        steps:
+          - query: "UPDATE leave_balances SET used_days = used_days + (SELECT days FROM leave_requests WHERE id = :id) WHERE employee_id = (SELECT employee_id FROM leave_requests WHERE id = :id) AND leave_type_id = (SELECT leave_type_id FROM leave_requests WHERE id = :id) AND year = EXTRACT(YEAR FROM (SELECT date_from FROM leave_requests WHERE id = :id))"
+          - query: "UPDATE leave_requests SET state = 'Approved', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    - id: refuse
+      from: [Submitted]
+      to: Refused
+      permission: time_off.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted leave requests can be refused }]
+        steps: [{ query: "UPDATE leave_requests SET state = 'Refused', approver = :current_user_name, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Submitted]
+      to: Cancelled
+      permission: time_off.write
+      mutation:
+        guards: [{ query: "SELECT id FROM leave_requests WHERE id = :id AND state IN ('Draft', 'Submitted')", status: 409, message: Only open leave requests can be cancelled }]
+        steps: [{ query: "UPDATE leave_requests SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM leave_requests WHERE id = :id" }

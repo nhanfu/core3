@@ -1,0 +1,64 @@
+workflow:
+  id: rentals
+  entity: sale_rentals
+  handler: rental_status
+  initial: Quotation
+  permission: rental.write
+  mutable: true
+  status_source: rental_states
+  status_query: SELECT state AS status FROM sale_rentals WHERE id = ?
+  default_mutation:
+    guards:
+      - query: "SELECT id FROM sale_rentals WHERE id = :id AND state = :current_status"
+        status: 409
+        message: Rental state has changed; refresh and try again
+    steps:
+      - query: "UPDATE sale_rentals SET state = :target_status, row_version = row_version + 1 WHERE id = :id"
+    result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
+  states:
+    - { id: Quotation, label: Quotation, color: neutral }
+    - { id: Reserved, label: Reserved, color: blue }
+    - { id: Picked Up, label: Picked Up, color: amber }
+    - { id: Returned, label: Returned, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: reserve
+      from: [Quotation]
+      to: Reserved
+      permission: rental.write
+      mutation:
+        guards:
+          - query: "SELECT 1 AS ok FROM sale_rentals r WHERE r.id = :id AND NOT EXISTS (SELECT 1 FROM sale_rentals other WHERE other.id <> r.id AND other.product_name = r.product_name AND other.state IN ('Reserved', 'Picked Up') AND (r.start_date IS NULL OR other.return_date IS NULL OR other.return_date >= r.start_date) AND (r.return_date IS NULL OR other.start_date IS NULL OR other.start_date <= r.return_date))"
+            status: 409
+            message: The rental period overlaps an active reservation for this product
+        steps:
+          - query: "UPDATE sale_rentals SET state = 'Reserved', row_version = row_version + 1 WHERE id = :id"
+          - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'reservation', :current_user_name)"
+        result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
+    - id: pickup
+      from: [Reserved]
+      to: Picked Up
+      permission: rental.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_rentals SET state = 'Picked Up', start_date = COALESCE(start_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id"
+          - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'pickup', :current_user_name)"
+        result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
+    - id: return
+      from: [Picked Up]
+      to: Returned
+      permission: rental.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_rentals SET state = 'Returned', return_date = COALESCE(return_date, CURRENT_DATE), row_version = row_version + 1 WHERE id = :id"
+          - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'return', :current_user_name)"
+        result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }
+    - id: cancel
+      from: [Quotation, Reserved]
+      to: Cancelled
+      permission: rental.write
+      mutation:
+        steps:
+          - query: "UPDATE sale_rentals SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id"
+          - query: "INSERT INTO sale_rental_events(id, rental_id, event_type, actor_name) VALUES(gen_random_uuid(), :id, 'cancellation', :current_user_name)"
+        result: { query: "SELECT * FROM sale_rentals WHERE id = :id" }

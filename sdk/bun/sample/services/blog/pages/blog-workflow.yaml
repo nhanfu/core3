@@ -1,0 +1,37 @@
+workflow:
+  id: blog_posts
+  entity: blog_posts
+  handler: order_transition
+  initial: Draft
+  permission: blog.write
+  mutable: true
+  status_source: blog_post_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Published, label: Published, color: green }
+    - { id: Archived, label: Archived, color: red, terminal: true }
+  transitions:
+    - id: publish
+      from: [Draft]
+      to: Published
+      permission: blog.write
+      mutation:
+        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft blog posts can be published }]
+        steps: [{ query: "UPDATE blog_posts SET state = 'Published', published_date = COALESCE(published_date, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
+    - id: unpublish
+      from: [Published]
+      to: Draft
+      permission: blog.write
+      mutation:
+        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state = 'Published'", status: 409, message: Only published blog posts can be unpublished }]
+        steps: [{ query: "UPDATE blog_posts SET state = 'Draft', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM blog_posts WHERE id = :id" }
+    - id: archive
+      from: [Draft, Published]
+      to: Archived
+      permission: blog.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM blog_posts WHERE id = :id AND state IN ('Draft', 'Published')", status: 409, message: Only draft or published blog posts can be archived }]
+        steps: [{ query: "UPDATE blog_posts SET state = 'Archived', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM blog_posts WHERE id = :id" }

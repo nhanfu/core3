@@ -1,0 +1,70 @@
+title: Quality Checks
+page: { id: quality-checks, breadcrumb: [Supply Chain, Quality, Quality Checks], auth: { require: [quality.read] } }
+datasources:
+  - id: quality_check_states
+    permission: quality.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('In Progress','In Progress'), ('Passed','Passed'), ('Failed','Failed'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: quality_checks
+    permission: quality.read
+    workflow: quality_checks
+    query: "SELECT q.id, q.row_version, q.name, q.check_type, q.product_name, q.operation, q.inspector, q.specification, q.measured_value, q.uom, q.result, q.priority, q.state, CAST(q.checked_date AS VARCHAR) AS checked_date FROM quality_checks q WHERE (:q IS NULL OR q.name ILIKE '%' || :q || '%' OR q.product_name ILIKE '%' || :q || '%' OR q.specification ILIKE '%' || :q || '%') AND (:state IS NULL OR q.state = :state) ORDER BY q.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: quality_checks
+    create_action: create_quality_check
+    create_label: New quality check
+    search: { label: Search quality checks, placeholder: 'Search checks, products, or specifications...' }
+    filters: [{ field: state, label: Status, options_source: quality_check_states }]
+    columns:
+      - { field: name, label: Check, type: PrimaryEntityCell }
+      - { field: check_type, label: Type }
+      - { field: product_name, label: Product }
+      - { field: operation, label: Operation }
+      - { field: inspector, label: Inspector }
+      - { field: result, label: Result, type: StatusChip }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: start_quality_check, label: Start, permission: quality.write, variant: primary, show_if: "row.state === 'New'" }
+      - { id: pass_quality_check, label: Pass, permission: quality.write, variant: primary, show_if: "row.state === 'In Progress' && row.result === 'Pass'" }
+      - { id: fail_quality_check, label: Fail, permission: quality.write, variant: danger, show_if: "row.state === 'In Progress' && row.result === 'Fail'" }
+      - { id: cancel_quality_check, label: Cancel, permission: quality.write, variant: danger, show_if: "row.state !== 'Passed' && row.state !== 'Failed' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_quality_check
+    type: server_form
+    permission: quality.write
+    title: New quality check
+    action: quality.checks.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [quality_checks]
+    mutation:
+      operation: insert
+      table: quality_checks
+      fields: [name, check_type, product_name, source_type, source_id, operation, inspector, specification, measured_value, uom, result, priority, checked_date, notes]
+      required: [name, product_name, specification]
+      defaults: { state: New, priority: Normal }
+      result: { query: "SELECT * FROM quality_checks WHERE id = :id" }
+    fields:
+      - { field: name, label: Check, type: text, required: true }
+      - { field: check_type, label: Type, type: select, options: [{ value: Incoming, label: Incoming }, { value: In-process, label: In-process }, { value: Final, label: Final }], required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: source_type, label: Source type, type: text }
+      - { field: source_id, label: Source reference, type: text }
+      - { field: operation, label: Operation, type: text }
+      - { field: inspector, label: Inspector, type: text }
+      - { field: specification, label: Specification, type: text, required: true }
+      - { field: measured_value, label: Measured value, type: number }
+      - { field: uom, label: Unit, type: text }
+      - { field: result, label: Result, type: select, options: [{ value: Pass, label: Pass }, { value: Fail, label: Fail }] }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Normal }, { value: High, label: High }] }
+      - { field: notes, label: Notes, type: text }
+  - { id: start_quality_check, type: server, permission: quality.write, action: quality.checks.start, handler: order_transition, workflow: quality_checks, operation: start, refresh: [quality_checks] }
+  - { id: pass_quality_check, type: server, permission: quality.write, action: quality.checks.pass, handler: order_transition, workflow: quality_checks, operation: pass, refresh: [quality_checks] }
+  - { id: fail_quality_check, type: server, permission: quality.write, action: quality.checks.fail, handler: order_transition, workflow: quality_checks, operation: fail, refresh: [quality_checks] }
+  - { id: cancel_quality_check, type: server, permission: quality.write, action: quality.checks.cancel, handler: order_transition, workflow: quality_checks, operation: cancel, refresh: [quality_checks] }

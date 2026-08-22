@@ -1,0 +1,22 @@
+title: Language
+page: { id: language-detail, breadcrumb: [Contacts, Configuration, Languages], auth: { require: [base.reference.read] } }
+datasources:
+  - { id: language_detail, single: true, permission: base.reference.read, query: "SELECT code, name, direction FROM base_languages WHERE code = :id" }
+components:
+  - type: OdooFormView
+    source: language_detail
+    title_field: name
+    header_actions: [{ id: edit_language_detail, label: Edit, variant: secondary, permission: base.reference.write }]
+    groups: [{ title: Language, fields: [{ field: code, label: Code }, { field: name, label: Language }, { field: direction, label: Direction }] }]
+actions:
+  - id: edit_language_detail
+    type: server_form
+    permission: base.reference.write
+    title: Edit language
+    action: base.reference.languages.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.language_detail
+    refresh: [language_detail]
+    mutation: { operation: update, table: base_languages, key_field: code, concurrency: false, fields: [name, direction], required: [name, direction] }
+    fields: [{ field: name, label: Language, type: text, required: true }, { field: direction, label: Direction, type: select, options: [{ value: ltr, label: Left to right }, { value: rtl, label: Right to left }] }]

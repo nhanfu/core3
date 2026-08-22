@@ -1,0 +1,90 @@
+workflow:
+  id: orders
+  entity: orders
+  handler: order_status
+  initial: Draft
+  permission: orders.write
+  mutable: true
+  status_source: order_statuses
+  scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+  status_query: SELECT COALESCE(s.status, o.status) AS status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = ?
+  default_mutation:
+    guards:
+      - query: "SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = :current_status"
+        status: 409
+        message: Order status has changed; refresh and try again
+        assign: true
+    steps:
+      - query: "INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, :target_status, CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at"
+      - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.status_changed', 'orders', :id, CAST(:current_status AS VARCHAR) || ' -> ' || CAST(:target_status AS VARCHAR))"
+    result:
+      query: "SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"
+  allow_add: true
+  state_editor:
+    allow_edit: true
+    allow_delete: true
+    labels:
+      edit_status: Edit status
+      add_status: Add status
+    modals:
+      add:
+        title: Add status
+        input: { label: Status name, placeholder: Enter a status name }
+        from_label: Can move from
+        to_label: Can move to
+        confirm_label: Add status
+        cancel_label: Cancel
+      edit:
+        title: Edit status
+        input: { label: Status name, placeholder: Enter a status name }
+        from_label: Can move from
+        to_label: Can move to
+        confirm_label: Save status
+        cancel_label: Cancel
+        danger_label: Delete status
+      delete:
+        title: Delete status
+        message: Choose the status that should receive these orders.
+        replacement_label: Move orders to
+        confirm_label: Delete and move orders
+        cancel_label: Cancel
+  mutations:
+    add_status:
+      steps:
+        - { append: workflow.states, value: { id: '$input.label', label: '$input.label', color: neutral } }
+        - for_each:
+            input: from
+            steps:
+              - { append: workflow.transitions, value: { id: '${slug(item)}_to_${slug(input.label)}', from: '$item', to: '$input.label', permission: '$input.permission' } }
+        - for_each:
+            input: to
+            steps:
+              - { append: workflow.transitions, value: { id: '${slug(input.label)}_to_${slug(item)}', from: '$input.label', to: '$item', permission: '$input.permission' } }
+    edit_status:
+      steps:
+        - { set: workflow.states, value: '$input.states' }
+        - { set: workflow.transitions, value: '$input.transitions' }
+    delete_status:
+      database:
+        steps:
+          - query: "UPDATE order_workflow_states SET status = :to_status, updated_at = CURRENT_TIMESTAMP WHERE status = :from_status"
+          - query: "UPDATE orders AS o SET status = :to_status WHERE status = :from_status AND NOT EXISTS (SELECT 1 FROM order_workflow_states s WHERE s.order_id = o.id)"
+          - query: "INSERT INTO system_activity(actor_id, actor_name, action, resource, resource_id, detail) VALUES(:current_user_id, :current_user_name, 'orders.workflow_state.delete', 'orders', NULL, 'Moved orders from ' || CAST(:from_status AS VARCHAR) || ' to ' || CAST(:to_status AS VARCHAR))"
+      steps:
+        - { set: workflow.states, value: '$input.states' }
+        - { set: workflow.transitions, value: '$input.transitions' }
+  states:
+    - { id: "Draft", label: "Draft", color: "neutral" }
+    - { id: "Pending Approval", label: "Pending Approval", color: "amber" }
+    - { id: "Approved", label: "Approved", color: "green" }
+    - { id: "Cancelled", label: "Cancelled", color: "red", terminal: true }
+    - { id: "AAAA", label: "AAAA", color: "neutral" }
+  transitions:
+    - { id: "submit_for_approval", from: "Draft", to: "Pending Approval", permission: "orders.write", scope: {"field":"branch_id"}, mutation: {"guards":[{"query":"SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Draft'","status":409,"message":"Order can only be submitted while Draft","assign":true}],"steps":[{"query":"INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, 'Pending Approval', CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at"},{"query":"INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.submit_for_approval', 'orders', :id, :order_number || ': ' || :current_status || ' -> Pending Approval')"}],"result":{"query":"SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"}} }
+    - { id: "approve", from: "Pending Approval", to: "Approved", permission: "orders.approve", scope: {"field":"branch_id"}, mutation: {"guards":[{"query":"SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Pending Approval'","status":409,"message":"Order can only be approved while Pending Approval","assign":true}],"steps":[{"query":"INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, 'Approved', CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at"},{"query":"INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.approve', 'orders', :id, :order_number || ': ' || :current_status || ' -> Approved')"}],"result":{"query":"SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"}} }
+    - { id: "reject", from: "Pending Approval", to: "Draft", permission: "orders.approve", scope: {"field":"branch_id"}, mutation: {"guards":[{"query":"SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Pending Approval'","status":409,"message":"Order can only be rejected while Pending Approval","assign":true}],"steps":[{"query":"INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, 'Draft', CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at"},{"query":"INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.reject', 'orders', :id, :order_number || ': ' || :current_status || ' -> Draft')"}],"result":{"query":"SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"}} }
+    - { id: "cancel", from: ["Draft","Pending Approval","Approved"], to: "Cancelled", permission: "orders.write", scope: {"field":"branch_id"}, mutation: {"guards":[{"query":"SELECT o.order_number, COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS current_status FROM orders o WHERE o.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Draft', 'Pending Approval', 'Approved')","status":409,"message":"Order cannot be cancelled in its current state","assign":true}],"steps":[{"query":"INSERT INTO order_workflow_states(order_id, status, updated_at) VALUES(:id, 'Cancelled', CURRENT_TIMESTAMP) ON CONFLICT(order_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at"},{"query":"INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.cancel', 'orders', :id, :order_number || ': ' || :current_status || ' -> Cancelled')"}],"result":{"query":"SELECT o.*, COALESCE(s.status, o.status) AS status, :current_status AS previous_status FROM orders o LEFT JOIN order_workflow_states s ON s.order_id = o.id WHERE o.id = :id"}} }
+    - { id: "move_approved_to_aaaa", from: "Approved", to: "AAAA", permission: "orders.write" }
+    - { id: "move_cancelled_to_aaaa", from: "Cancelled", to: "AAAA", permission: "orders.write" }
+    - { id: "move_aaaa_to_approved", from: "AAAA", to: "Approved", permission: "orders.write" }
+    - { id: "move_aaaa_to_cancelled", from: "AAAA", to: "Cancelled", permission: "orders.write" }

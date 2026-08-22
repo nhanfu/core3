@@ -1,0 +1,22 @@
+{
+  "name": "@core3/med",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun src/event-mediator-server.ts",
+    "dev": "bun src/event-mediator-server.ts",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "apache-arrow": "^21.2.0",
+    "parquet-wasm": "^0.7.2",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  }
+}

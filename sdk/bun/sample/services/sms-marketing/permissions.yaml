@@ -1,0 +1,4 @@
+permissions:
+  - sms_marketing.read
+  - sms_marketing.write
+  - sms_marketing.manage

@@ -1,0 +1,21 @@
+title: Livechat Session
+page: { id: livechat-session-detail, breadcrumb: [Website, Live Chat, Session], auth: { require: [livechat.read] } }
+datasources:
+  - id: livechat_session_detail
+    permission: livechat.read
+    single: true
+    query: "SELECT * FROM livechat_sessions WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: livechat_session_detail
+    title_field: visitor_name
+    fields:
+      - { field: channel_name, label: Channel }
+      - { field: visitor_name, label: Visitor }
+      - { field: operator_name, label: Operator }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: outcome, label: Outcome }
+      - { field: duration_minutes, label: Duration (min) }
+      - { field: rating, label: Satisfaction rating }
+      - { field: started_at, label: Started }
+      - { field: ended_at, label: Ended }

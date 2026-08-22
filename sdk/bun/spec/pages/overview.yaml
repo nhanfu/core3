@@ -1,0 +1,271 @@
+title: YShip — Proposal
+page:
+  id: overview
+
+components:
+  - type: DocPage
+    hero:
+      variant: home
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Overview
+        - label: Proposal
+      articleType: Overview
+      eyebrow: Proposal
+      title: 'YAML is spec, YAML is code'
+      subtitle: >-
+        Every other line of code in YShip — client, server, gate, database adapters — is runtime
+        or compiler for the YAML. All business intent lives in YAML; nothing else is allowed to
+        carry it. That split is what makes failures diagnosable: a bug is either a YAML spec
+        problem (fix the business definition) or a runtime/compiler problem (fix once, every
+        service running on it benefits). This proposes adopting that architecture as the standard
+        for new ERP services first, since ERP is the easiest domain to verify it against.
+      stats:
+        - value: '90'
+          label: shared components available
+          visual: units
+        - value: '5'
+          label: databases supported through one adapter interface
+          visual: chips
+          items: [PostgreSQL, DuckDB, MySQL, Oracle, SQL Server]
+
+    sections:
+      - id: philosophy
+        kicker: Core idea
+        title: 'YAML is spec, YAML is code'
+        lead: >-
+          Everything that isn't YAML — the client renderer, the server pipeline, the gate service,
+          the database adapters — is runtime or compiler. It exists to execute the YAML, never to
+          hold business intent itself. That boundary is deliberate: it turns "why did this break"
+          into a two-way classification instead of an open-ended investigation.
+        blocks:
+          - type: table
+            headers: [When something breaks, What it means, Blast radius]
+            rows:
+              - ['The YAML spec is wrong', 'A business rule was defined incorrectly — wrong validation, wrong permission, wrong workflow transition', 'One page or one service; fix the business definition']
+              - ['The runtime/compiler is wrong', 'The engine that executes YAML has a bug — parsing, rendering, CRUD generation, dispatch', 'Every service running on that engine version; fix once, everyone benefits']
+          - type: diagram
+            caption: 'Dataflow: YAML spec compiles through interchangeable runtime into a running service. Numbers match the steps below.'
+            svg: |
+              <svg viewBox="0 0 860 380" xmlns="http://www.w3.org/2000/svg">
+                <style>
+                  .pa-box{fill:var(--bg);stroke:var(--border);stroke-width:1.5;}
+                  .pa-lbl{font-family:var(--font-display);font-weight:600;font-size:13px;fill:var(--heading);}
+                  .pa-sub{font-family:var(--font-mono);font-size:10.5px;fill:var(--text-faint);}
+                  .pa-rowlbl{font-family:var(--font-mono);font-size:11px;fill:var(--text-faint);}
+                  .pa-edge{stroke:var(--text-faint);stroke-width:1.5;fill:none;}
+                  .pa-edge-teal{stroke:var(--important-color);stroke-width:1.5;stroke-dasharray:5 4;fill:none;}
+                  .pa-edge-amber{stroke:var(--warning-color);stroke-width:1.5;stroke-dasharray:5 4;fill:none;}
+                  .pa-cap{font-family:var(--font-mono);font-size:10.5px;fill:var(--text-dim);}
+                  .pa-tile-spec{fill:var(--important-color);}
+                  .pa-tile-runtime{fill:var(--primary);}
+                  .pa-tile-service{fill:var(--tip-color);}
+                  .pa-icon{fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;}
+                  .pa-badge{fill:var(--primary);}
+                  .pa-badge-text{font-family:var(--font-mono);font-weight:700;font-size:10px;fill:#fff;}
+                </style>
+                <defs>
+                  <marker id="pa-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--text-faint)"/></marker>
+                  <marker id="pa-arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--important-color)"/></marker>
+                  <marker id="pa-arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--warning-color)"/></marker>
+                </defs>
+
+                <rect x="300" y="24" width="260" height="56" rx="6" class="pa-box"/>
+                <rect x="310" y="34" width="26" height="26" rx="5" class="pa-tile-spec"/>
+                <g transform="translate(323,47)" class="pa-icon"><rect x="-6" y="-8" width="12" height="16" rx="1"/><line x1="-3" y1="-3" x2="3" y2="-3"/><line x1="-3" y1="0" x2="3" y2="0"/><line x1="-3" y1="3" x2="3" y2="3"/></g>
+                <text x="430" y="47" text-anchor="middle" class="pa-lbl">YAML spec</text>
+                <text x="430" y="63" text-anchor="middle" class="pa-sub">all business intent</text>
+
+                <text x="430" y="132" text-anchor="middle" class="pa-rowlbl">runtime / compiler — interchangeable, service-agnostic</text>
+
+                <rect x="40" y="140" width="180" height="64" rx="6" class="pa-box"/>
+                <rect x="50" y="150" width="26" height="26" rx="5" class="pa-tile-runtime"/>
+                <g transform="translate(63,163)" class="pa-icon"><rect x="-6" y="-6" width="12" height="12" rx="1"/><line x1="-6" y1="-2" x2="-9" y2="-2"/><line x1="-6" y1="2" x2="-9" y2="2"/><line x1="6" y1="-2" x2="9" y2="-2"/><line x1="6" y1="2" x2="9" y2="2"/><line x1="-2" y1="-6" x2="-2" y2="-9"/><line x1="2" y1="-6" x2="2" y2="-9"/><line x1="-2" y1="6" x2="-2" y2="9"/><line x1="2" y1="6" x2="2" y2="9"/></g>
+                <text x="130" y="185" text-anchor="middle" class="pa-lbl">Client renderer</text>
+
+                <rect x="240" y="140" width="180" height="64" rx="6" class="pa-box"/>
+                <rect x="250" y="150" width="26" height="26" rx="5" class="pa-tile-runtime"/>
+                <g transform="translate(263,163)" class="pa-icon"><rect x="-6" y="-6" width="12" height="12" rx="1"/><line x1="-6" y1="-2" x2="-9" y2="-2"/><line x1="-6" y1="2" x2="-9" y2="2"/><line x1="6" y1="-2" x2="9" y2="-2"/><line x1="6" y1="2" x2="9" y2="2"/><line x1="-2" y1="-6" x2="-2" y2="-9"/><line x1="2" y1="-6" x2="2" y2="-9"/><line x1="-2" y1="6" x2="-2" y2="9"/><line x1="2" y1="6" x2="2" y2="9"/></g>
+                <text x="330" y="185" text-anchor="middle" class="pa-lbl">Server pipeline</text>
+
+                <rect x="440" y="140" width="180" height="64" rx="6" class="pa-box"/>
+                <rect x="450" y="150" width="26" height="26" rx="5" class="pa-tile-runtime"/>
+                <g transform="translate(463,163)" class="pa-icon"><path d="M0,-9 L7,-6.5 V1 C7,5.5 3.5,8 0,9.5 C-3.5,8 -7,5.5 -7,1 V-6.5 Z"/></g>
+                <text x="530" y="185" text-anchor="middle" class="pa-lbl">Gate service</text>
+
+                <rect x="640" y="140" width="180" height="64" rx="6" class="pa-box"/>
+                <rect x="650" y="150" width="26" height="26" rx="5" class="pa-tile-runtime"/>
+                <g transform="translate(663,163)" class="pa-icon"><path d="M-7,-5 a7,2.5 0 0 1 14,0 v10 a7,2.5 0 0 1 -14,0 Z"/><ellipse cx="0" cy="-5" rx="7" ry="2.5"/></g>
+                <text x="730" y="185" text-anchor="middle" class="pa-lbl">DB adapters</text>
+
+                <rect x="300" y="300" width="260" height="56" rx="6" class="pa-box"/>
+                <rect x="310" y="310" width="26" height="26" rx="5" class="pa-tile-service"/>
+                <g transform="translate(323,323)" class="pa-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="430" y="323" text-anchor="middle" class="pa-lbl">Running ERP service</text>
+                <text x="430" y="339" text-anchor="middle" class="pa-sub">order, chat, and future services</text>
+
+                <line x1="430" y1="80" x2="430" y2="140" class="pa-edge" marker-end="url(#pa-arrow)"/>
+                <circle cx="430" cy="110" r="9" class="pa-badge"/><text x="430" y="113" text-anchor="middle" class="pa-badge-text">1</text>
+                <text x="443" y="113" class="pa-rowlbl">compiles / executes</text>
+
+                <line x1="430" y1="204" x2="430" y2="300" class="pa-edge" marker-end="url(#pa-arrow)"/>
+                <circle cx="430" cy="252" r="9" class="pa-badge"/><text x="430" y="255" text-anchor="middle" class="pa-badge-text">2</text>
+                <text x="443" y="255" class="pa-rowlbl">produces</text>
+
+                <path d="M300,328 L15,328 L15,52 L300,52" class="pa-edge-teal" marker-end="url(#pa-arrowTeal)"/>
+                <circle cx="15" cy="190" r="9" fill="var(--important-color)"/><text x="15" y="193" text-anchor="middle" class="pa-badge-text">3</text>
+                <text x="20" y="308" class="pa-cap">Spec bug →</text>
+                <text x="20" y="320" class="pa-cap">fix business definition (one page/service)</text>
+
+                <path d="M560,328 L845,328 L845,172 L820,172" class="pa-edge-amber" marker-end="url(#pa-arrowAmber)"/>
+                <circle cx="845" cy="250" r="9" fill="var(--warning-color)"/><text x="845" y="253" text-anchor="middle" class="pa-badge-text">4</text>
+                <text x="622" y="308" class="pa-cap">Runtime bug →</text>
+                <text x="622" y="320" class="pa-cap">fix engine once (every service)</text>
+              </svg>
+          - type: list
+            items:
+              - '1. YAML spec compiles/executes through the runtime layer — client renderer, server pipeline, gate, DB adapters.'
+              - '2. That runtime layer produces the running ERP service.'
+              - '3. If the YAML spec itself is wrong: fix the business definition. Blast radius is one page or one service.'
+              - '4. If the runtime/compiler is wrong: fix the engine once. Every service running on it benefits — and is affected until it does.'
+          - type: callout
+            tone: note
+            title: ERP first, not ERP only
+            text: >-
+              Putting all business intent in a declarative spec and treating everything else as
+              interchangeable runtime is not an ERP-specific idea — it generalizes across the
+              software industry. ERP is the starting point because its CRUD/workflow/permission
+              shape is well understood and easy to verify a YAML-is-the-business-logic claim
+              against, not because the architecture stops there.
+
+      - id: problem
+        kicker: Problem
+        title: Every new service re-solves the same problems
+        lead: >-
+          Without a shared framework, each ERP service ends up hand-writing its own version of
+          the same plumbing — with no guarantee any two services do it the same way.
+        blocks:
+          - type: list
+            items:
+              - Page rendering, form validation, and grid pagination re-implemented per service
+              - Permission checks scattered across handlers instead of enforced at one boundary
+              - Each service picks its own database access pattern, making engine changes expensive
+              - CRUD mutations (insert/update/delete, optimistic concurrency) hand-written per table
+              - No shared extension point, so one-off UI patterns don't compose with the rest of the system
+          - type: callout
+            tone: warning
+            title: The cost compounds
+            text: >-
+              None of this is hypothetical — it's the default outcome of building services
+              independently. Every additional service without a shared framework adds another
+              copy of the same rendering and CRUD logic to maintain.
+
+      - id: proposal
+        kicker: Proposed approach
+        title: One shared framework, YAML-driven pages
+        lead: >-
+          YShip is a TypeScript framework split into a service-agnostic client (@core3/client)
+          and server (@core3/server) package. A service supplies YAML page files and SQL; the
+          framework supplies rendering, permission gates, CRUD, and database portability.
+        blocks:
+          - type: flowstrip
+            steps:
+              - label: YAML
+                sub: page file
+              - label: JSON
+                sub: parsed at runtime
+              - label: Component tree
+                sub: BaseComponent nodes
+              - label: draw()
+                sub: top-down render
+              - label: DOM
+                sub: html.js + CSS
+          - type: cardgrid
+            cards:
+              - tag: Data
+                title: Server-first data
+                body: The server performs joins and lookups; the browser never resolves references.
+              - tag: Components
+                title: 90 shared components
+                body: GridView, ListView, forms, KPIs, and Odoo-style document views — see the Component Library page.
+              - tag: CRUD
+                title: Declarative mutations
+                body: "crud: true generates insert/update/delete with row_version optimistic concurrency, or mix in custom functions per operation."
+              - tag: Extension
+                title: Escape hatch when YAML isn't enough
+                body: A per-project registry (Map<string, Ctor>) plugs in custom components without forking the framework — this spec project itself uses that pattern.
+
+      - id: evidence
+        kicker: Evidence
+        title: This isn't a proposal for unproven work
+        lead: >-
+          The core pattern is already running, not speculative. Two real sample services and this
+          documentation site itself are built entirely on it.
+        blocks:
+          - type: table
+            headers: [Proof point, Detail]
+            rows:
+              - ['order service', 'CRUD, workflow state transitions, chatter/messaging, file attachments — sdk/bun/sample/services/order']
+              - ['chat service', 'Real-time messaging service on the same page-YAML pattern — sdk/bun/sample/services/chat']
+              - ['This spec site', 'Every page — including this one — is a YAML file with zero hand-written HTML/CSS/JS per page']
+              - ['Multi-database', 'PostgreSQL, DuckDB, MySQL, Oracle, and SQL Server all sit behind one DatabaseAdapter interface']
+          - type: p
+            text: >-
+              See the Plan page for the full phase-by-phase status: the shared client library,
+              server YAML pipeline, and sample services are complete; auth/event-mediator hardening
+              is in progress.
+
+      - id: alternatives
+        kicker: Alternatives considered
+        title: Why not something else
+        blocks:
+          - type: table
+            headers: [Option, Trade-off]
+            rows:
+              - ['Keep hand-coding each service', 'No new dependency to learn, but every service repeats the same rendering/CRUD/permission work with no shared fixes or improvements']
+              - ['Adopt a third-party low-code platform', 'Faster initial setup, but hands database access and business logic to a vendor-owned runtime and format we cannot extend or audit']
+              - ['Build and own this framework (proposed)', 'Upfront investment in shared code, paid back by every service after the first one; full control over the extension points and database layer']
+
+      - id: risks
+        kicker: Risks
+        title: Risks and how they're addressed
+        blocks:
+          - type: table
+            headers: [Risk, Mitigation]
+            rows:
+              - ['YAML sprawl becomes as hard to read as code', 'registerPageComponentSchema enforces a validated schema per component type — pages fail fast on unknown or malformed keys']
+              - ['A page needs something YAML genuinely cannot express', 'The custom-component registry and client action type are the documented escape hatches; both are already in use']
+              - ['Team unfamiliarity with the framework', 'This spec site is the onboarding path — every documented pattern is backed by a real, running example']
+              - ['Framework accumulates service-specific logic over time', 'Architectural rule: @core3/client and @core3/server stay service-agnostic; service-specific code lives in the service, not the framework — see agent.md']
+
+      - id: ask
+        kicker: Decision needed
+        title: What this proposal asks for
+        blocks:
+          - type: list
+            items:
+              - Adopt YShip as the standard framework for new ERP services rather than hand-rolled per-service UI
+              - Continue the in-progress auth and event-mediator hardening work (see the Auth & Mediator Refactor plan)
+              - Keep this spec site as the source of truth, updated alongside the framework rather than left to drift
+          - type: callout
+            title: What adopting this does not require
+            text: >-
+              No migration of the order or chat services — they already run on this pattern. No
+              vendor contract or new infrastructure. The ask is to build new services on the
+              existing framework instead of re-implementing its equivalent per service.
+
+      - id: stack
+        kicker: Reference
+        title: What it runs on
+        blocks:
+          - type: table
+            headers: [Layer, Technology]
+            rows:
+              - [Language, TypeScript]
+              - [DOM, 'html.js, wrapped in an OOP component model']
+              - [CSS, 'Tailwind by default, YAML-overridable']
+              - [Config, 'YAML parsed to JSON at runtime']
+              - [Server, Node.js / Bun]
+              - [Databases, 'PostgreSQL, SQL Server, DuckDB, MySQL, Oracle']
+              - [Protocols, 'HTTP, WebSocket, SSE, gRPC']

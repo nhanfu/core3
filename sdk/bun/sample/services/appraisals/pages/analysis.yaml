@@ -1,0 +1,21 @@
+title: Appraisal Analysis
+page: { id: appraisal-analysis, breadcrumb: [Human Resources, Appraisals, Analysis], auth: { require: [appraisals.read] } }
+datasources:
+  - id: appraisal_analysis_totals
+    single: true
+    permission: appraisals.read
+    query: "SELECT COUNT(*) AS appraisal_count, COUNT(*) FILTER (WHERE state = 'Completed') AS completed_count, COUNT(*) FILTER (WHERE state IN ('Draft', 'In Progress', 'Manager Review')) AS open_count, COUNT(*) FILTER (WHERE manager_rating IS NOT NULL) AS rated_count FROM appraisals"
+  - id: appraisal_analysis_states
+    permission: appraisals.read
+    query: "SELECT state AS category, COUNT(*) AS appraisal_count FROM appraisals GROUP BY state ORDER BY appraisal_count DESC"
+components:
+  - type: StatRow
+    source: appraisal_analysis_totals
+    title: Performance review overview
+    stats: [{ label: Appraisals, field: appraisal_count }, { label: Completed, field: completed_count }, { label: Open, field: open_count }, { label: Rated, field: rated_count }]
+  - type: Chart
+    source: appraisal_analysis_states
+    title: Appraisals by status
+    label_field: category
+    value_field: appraisal_count
+    variant: bar

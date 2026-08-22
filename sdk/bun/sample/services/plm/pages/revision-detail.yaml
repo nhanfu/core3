@@ -1,0 +1,25 @@
+title: Engineering Revision
+page: { id: engineering-revision-detail, breadcrumb: [Supply Chain, PLM, Detail], auth: { require: [plm.read] } }
+datasources:
+  - id: plm_revision_detail
+    single: true
+    permission: plm.read
+    query: "SELECT id, row_version, name, product_name, version, change_reason, source_type, source_id, owner, approver, state, CAST(effective_date AS VARCHAR) AS effective_date, notes FROM plm_revisions WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: plm_revision_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Released, label: Released }, { value: Rejected, label: Rejected }]
+    status_colors: { Draft: neutral, Submitted: amber, Approved: blue, Released: green, Rejected: red }
+    group_columns: 2
+    groups:
+      - title: Revision
+        fields: [{ field: name, label: Revision }, { field: state, label: Status }, { field: product_name, label: Product }, { field: version, label: Version }, { field: change_reason, label: Change reason }]
+      - title: Governance
+        fields: [{ field: owner, label: Owner }, { field: approver, label: Approver }, { field: effective_date, label: Effective date }, { field: source_type, label: Source type }, { field: source_id, label: Source reference }, { field: notes, label: Notes }]
+actions:
+  - { id: submit_plm_revision_detail, type: server, permission: plm.write, action: plm.revisions.submit, handler: order_transition, workflow: plm_revisions, operation: submit, params: { id: '{state.id}' }, refresh: [plm_revision_detail] }
+  - { id: approve_plm_revision_detail, type: server, permission: plm.manage, action: plm.revisions.approve, handler: order_transition, workflow: plm_revisions, operation: approve, params: { id: '{state.id}' }, refresh: [plm_revision_detail] }
+  - { id: release_plm_revision_detail, type: server, permission: plm.manage, action: plm.revisions.release, handler: order_transition, workflow: plm_revisions, operation: release, params: { id: '{state.id}' }, refresh: [plm_revision_detail] }
+  - { id: reject_plm_revision_detail, type: server, permission: plm.manage, action: plm.revisions.reject, handler: order_transition, workflow: plm_revisions, operation: reject, params: { id: '{state.id}' }, refresh: [plm_revision_detail] }

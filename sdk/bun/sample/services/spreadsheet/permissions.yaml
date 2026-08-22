@@ -1,0 +1,4 @@
+permissions:
+  - spreadsheet.read
+  - spreadsheet.write
+  - spreadsheet.manage

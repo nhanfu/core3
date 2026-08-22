@@ -1,0 +1,14 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO marketing_automations(id, name, trigger_type, trigger_definition, action_type, action_definition, audience_description, state)
+      VALUES ('automation-demo-001', 'Welcome journey', 'Contact created', 'New contact in audience', 'Email', 'Send welcome email', 'New contacts', 'Draft');
+    down: |
+      DELETE FROM automation_enrollments WHERE automation_id = 'automation-demo-001';
+      DELETE FROM marketing_automations WHERE id = 'automation-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

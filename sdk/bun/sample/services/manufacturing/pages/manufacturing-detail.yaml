@@ -1,0 +1,89 @@
+title: Manufacturing Order
+page: { id: manufacturing-detail, breadcrumb: [Supply Chain, Manufacturing, Detail], auth: { require: [manufacturing.read] } }
+datasources:
+  - id: mrp_production_detail
+    single: true
+    permission: manufacturing.read
+    query: "SELECT p.id, p.row_version, p.name, p.product_id, p.product_name, b.name AS bom_name, p.quantity, p.qty_produced, p.state, CAST(p.planned_date AS VARCHAR) AS planned_date, p.reference FROM mrp_productions p LEFT JOIN mrp_boms b ON b.id = p.bom_id WHERE p.id = :id"
+  - id: mrp_production_workorders
+    single: false
+    permission: manufacturing.read
+    query: "SELECT id, row_version, name, workcenter, sequence, expected_duration, state FROM mrp_workorders WHERE production_id = :id ORDER BY sequence"
+components:
+  - type: OdooFormView
+    source: mrp_production_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Confirmed, label: Confirmed }
+      - { value: In Progress, label: In Progress }
+      - { value: Done, label: Done }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { Draft: neutral, Confirmed: amber, In Progress: blue, Done: green, Cancelled: red }
+    header_actions:
+      - { id: confirm_mrp_production_detail, label: Confirm, variant: primary, permission: manufacturing.write, show_if: "state.mrp_production_detail.state === 'Draft'" }
+      - { id: start_mrp_production_detail, label: Start, variant: secondary, permission: manufacturing.write, show_if: "state.mrp_production_detail.state === 'Confirmed'" }
+      - { id: produce_mrp_production_detail, label: Mark produced, variant: primary, permission: manufacturing.write, show_if: "state.mrp_production_detail.state === 'In Progress'" }
+      - { id: cancel_mrp_production_detail, label: Cancel, variant: danger, permission: manufacturing.write, show_if: "state.mrp_production_detail.state !== 'Done' && state.mrp_production_detail.state !== 'Cancelled'" }
+    group_columns: 2
+    groups:
+      - title: Production
+        fields:
+          - { field: name, label: Manufacturing order }
+          - { field: state, label: Status }
+          - { field: product_name, label: Product }
+          - { field: bom_name, label: BOM }
+      - title: Quantities and planning
+        fields:
+          - { field: quantity, label: To produce }
+          - { field: qty_produced, label: Produced }
+          - { field: planned_date, label: Planned date }
+          - { field: reference, label: Reference }
+  - type: ContactGrid
+    source: mrp_production_workorders
+    row_key: id
+    columns:
+      - { field: sequence, label: Sequence, align: right }
+      - { field: name, label: Work order, type: PrimaryEntityCell }
+      - { field: workcenter, label: Work center }
+      - { field: expected_duration, label: Expected minutes, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    empty_state: { title: No work orders, description: This manufacturing order has no work orders yet. }
+actions:
+  - id: confirm_mrp_production_detail
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.productions.confirm
+    handler: order_transition
+    workflow: mrp_productions
+    operation: confirm
+    params: { id: '{state.id}' }
+    refresh: [mrp_production_detail, mrp_production_workorders]
+  - id: start_mrp_production_detail
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.productions.start
+    handler: order_transition
+    workflow: mrp_productions
+    operation: start
+    params: { id: '{state.id}' }
+    refresh: [mrp_production_detail, mrp_production_workorders]
+  - id: produce_mrp_production_detail
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.productions.produce
+    handler: order_transition
+    workflow: mrp_productions
+    operation: produce
+    params: { id: '{state.id}' }
+    refresh: [mrp_production_detail, mrp_production_workorders]
+  - id: cancel_mrp_production_detail
+    type: server
+    permission: manufacturing.write
+    action: manufacturing.productions.cancel
+    handler: order_transition
+    workflow: mrp_productions
+    operation: cancel
+    params: { id: '{state.id}' }
+    refresh: [mrp_production_detail, mrp_production_workorders]

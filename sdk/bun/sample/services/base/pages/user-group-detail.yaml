@@ -1,0 +1,38 @@
+title: User Group
+page: { id: user-group-detail, breadcrumb: [Settings, User Groups, Detail], auth: { require: [auth.roles.manage] } }
+datasources:
+  - id: user_group_detail
+    type: service
+    service: auth
+    operation: roles.manage
+    single: true
+    service_params: { query: id }
+    permission: auth.roles.manage
+  - id: role_permissions
+    type: service
+    service: auth
+    operation: roles.permissions
+    service_params: { role_id: id }
+    permission: auth.roles.manage
+components:
+  - type: OdooFormView
+    source: user_group_detail
+    title_field: name
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions: [{ id: edit_user_group_detail, label: Edit, variant: secondary, permission: auth.roles.manage }]
+    groups:
+      - title: Group
+        fields: [{ field: id, label: Group ID }, { field: name, label: Name }, { field: description, label: Description }, { field: view_scope, label: Visibility }, { field: permissions, label: Permissions, type: permission-grid, wide: true }]
+actions:
+  - id: edit_user_group_detail
+    type: server_form
+    permission: auth.roles.manage
+    title: Edit user group
+    action: auth.roles.update
+    handler: service_call
+    service: auth
+    service_operation: roles.update
+    operation: update
+    prefill: state.user_group_detail
+    refresh: [user_group_detail]
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: description, label: Description, type: textarea }, { field: view_scope, label: Visibility, type: select, options: [{ value: all, label: All }, { value: branch, label: Branch }, { value: own, label: Own }] }, { field: permissions, label: Permissions, type: permission-grid, options_source: role_permissions }]

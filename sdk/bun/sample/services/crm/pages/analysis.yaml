@@ -1,0 +1,35 @@
+title: Pipeline Analysis
+page: { id: crm-analysis, breadcrumb: [Sales, CRM, Pipeline Analysis], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_pipeline_totals
+    single: true
+    permission: crm.read
+    query: "SELECT COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS pipeline_revenue, CAST(COALESCE(AVG(probability), 0) AS DOUBLE) AS average_probability FROM crm_leads WHERE stage NOT IN ('Won', 'Lost')"
+  - id: crm_pipeline_by_stage
+    single: false
+    permission: crm.read
+    query: "SELECT stage, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY stage ORDER BY lead_count DESC"
+  - id: crm_pipeline_by_team
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY team ORDER BY revenue DESC"
+components:
+  - type: StatRow
+    source: crm_pipeline_totals
+    title: Current pipeline
+    stats:
+      - { label: Open opportunities, field: lead_count }
+      - { label: Pipeline revenue, field: pipeline_revenue }
+      - { label: Average probability, field: average_probability }
+  - type: Chart
+    source: crm_pipeline_by_stage
+    title: Pipeline by stage
+    label_field: stage
+    value_field: revenue
+    variant: bar
+  - type: Chart
+    source: crm_pipeline_by_team
+    title: Pipeline by sales team
+    label_field: team
+    value_field: revenue
+    variant: bar

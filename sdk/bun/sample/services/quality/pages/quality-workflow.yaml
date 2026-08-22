@@ -1,0 +1,47 @@
+workflow:
+  id: quality_checks
+  entity: quality_checks
+  handler: order_transition
+  initial: New
+  permission: quality.write
+  mutable: true
+  status_source: quality_check_states
+  states:
+    - { id: New, label: New, color: neutral }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Passed, label: Passed, color: green, terminal: true }
+    - { id: Failed, label: Failed, color: red, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: amber, terminal: true }
+  transitions:
+    - id: start
+      from: [New]
+      to: In Progress
+      permission: quality.write
+      mutation:
+        guards: [{ query: "SELECT id FROM quality_checks WHERE id = :id AND state = 'New'", status: 409, message: Only new quality checks can start }]
+        steps: [{ query: "UPDATE quality_checks SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM quality_checks WHERE id = :id" }
+    - id: pass
+      from: [In Progress]
+      to: Passed
+      permission: quality.write
+      mutation:
+        guards: [{ query: "SELECT id FROM quality_checks WHERE id = :id AND state = 'In Progress' AND result = 'Pass'", status: 409, message: A passing result is required }]
+        steps: [{ query: "UPDATE quality_checks SET state = 'Passed', checked_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM quality_checks WHERE id = :id" }
+    - id: fail
+      from: [In Progress]
+      to: Failed
+      permission: quality.write
+      mutation:
+        guards: [{ query: "SELECT id FROM quality_checks WHERE id = :id AND state = 'In Progress' AND result = 'Fail'", status: 409, message: A failing result is required }]
+        steps: [{ query: "UPDATE quality_checks SET state = 'Failed', checked_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM quality_checks WHERE id = :id" }
+    - id: cancel
+      from: [New, In Progress]
+      to: Cancelled
+      permission: quality.write
+      mutation:
+        guards: [{ query: "SELECT id FROM quality_checks WHERE id = :id AND state IN ('New', 'In Progress')", status: 409, message: Only open quality checks can be cancelled }]
+        steps: [{ query: "UPDATE quality_checks SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM quality_checks WHERE id = :id" }

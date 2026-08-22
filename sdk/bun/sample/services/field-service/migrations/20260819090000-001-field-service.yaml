@@ -1,0 +1,17 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS field_service_tasks (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, customer_name VARCHAR NOT NULL, address VARCHAR, assigned_to VARCHAR,
+        description VARCHAR NOT NULL, priority VARCHAR NOT NULL DEFAULT 'Normal', scheduled_date DATE,
+        duration_hours DECIMAL(18,3) NOT NULL DEFAULT 1, state VARCHAR NOT NULL DEFAULT 'New',
+        started_at TIMESTAMP, completed_at TIMESTAMP, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    down: DROP TABLE IF EXISTS field_service_tasks;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

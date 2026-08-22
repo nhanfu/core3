@@ -1,0 +1,100 @@
+title: Stock Moves
+page: { id: moves, breadcrumb: [Supply Chain, Inventory, Stock Moves], auth: { require: [inventory.read] } }
+datasources:
+  - id: inventory_move_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Waiting','Waiting'), ('Done','Done'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: inventory_move_locations
+    single: false
+    permission: inventory.read
+    query: "SELECT id AS value, name || ' (' || code || ')' AS label FROM inventory_locations WHERE state = 'Active' ORDER BY name"
+  - id: inventory_move_stock
+    single: false
+    permission: inventory.read
+    query: "SELECT q.id, q.product_id, q.product_name, l.name AS location_name, q.quantity, q.reserved_quantity, q.quantity - q.reserved_quantity AS available_quantity FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id WHERE (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') ORDER BY q.product_name, l.name"
+  - id: inventory_moves
+    single: false
+    permission: inventory.read
+    workflow: inventory_moves
+    query: "SELECT m.id, m.row_version, m.name, m.product_id, m.product_name, sl.name AS source_location, dl.name AS destination_location, m.quantity, m.state, m.reference, CAST(m.move_date AS VARCHAR) AS move_date FROM inventory_moves m JOIN inventory_locations sl ON sl.id = m.source_location_id JOIN inventory_locations dl ON dl.id = m.destination_location_id WHERE (:q IS NULL OR m.name ILIKE '%' || :q || '%' OR m.product_name ILIKE '%' || :q || '%') AND (:state IS NULL OR m.state = :state) ORDER BY m.move_date DESC, m.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_moves
+    create_action: create_inventory_move
+    create_label: New stock move
+    search: { label: Search stock moves, placeholder: Search moves or products... }
+    filters: [{ field: state, label: Status, options_source: inventory_move_states }]
+    columns:
+      - { field: name, label: Move, type: PrimaryEntityCell }
+      - { field: product_name, label: Product }
+      - { field: source_location, label: From }
+      - { field: destination_location, label: To }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: move_date, label: Date }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: reference, label: Reference }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: validate_inventory_move, label: Validate, permission: inventory.write, variant: primary, show_if: "row.state === 'Draft' || row.state === 'Waiting'" }
+      - { id: cancel_inventory_move, label: Cancel, permission: inventory.write, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Waiting'" }
+actions:
+  - id: create_inventory_move
+    type: server_form
+    permission: inventory.write
+    title: New stock move
+    action: inventory.moves.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [inventory_moves, inventory_move_stock]
+    mutation:
+      operation: insert
+      table: inventory_moves
+      fields: [name, product_id, product_name, source_location_id, destination_location_id, quantity, reference, move_date]
+      required: [name, product_name, source_location_id, destination_location_id, quantity]
+      defaults: { state: Draft }
+      guards: [{ query: "SELECT 1 AS ok WHERE :source_location_id <> :destination_location_id AND CAST(:quantity AS DECIMAL(18,3)) > 0", status: 400, message: A move needs two different locations and a positive quantity }]
+      result: { query: "SELECT * FROM inventory_moves WHERE id = :id" }
+    fields:
+      - { field: name, label: Move, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: source_location_id, label: From, type: select, options_source: inventory_move_locations, required: true }
+      - { field: destination_location_id, label: To, type: select, options_source: inventory_move_locations, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: reference, label: Reference, type: text }
+      - { field: move_date, label: Date, type: text }
+  - id: validate_inventory_move
+    type: server
+    permission: inventory.write
+    action: inventory.moves.validate
+    handler: yaml_mutation
+    operation: validate
+    refresh: [inventory_moves, inventory_move_stock]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok FROM inventory_moves WHERE id = :id AND state IN ('Draft', 'Waiting') AND source_location_id <> destination_location_id"
+          status: 409
+          message: Only open moves with different locations can be validated
+        - query: "SELECT 1 AS ok FROM inventory_moves m JOIN inventory_quants q ON q.location_id = m.source_location_id AND (q.product_id = m.product_id OR (q.product_id IS NULL AND m.product_id IS NULL AND q.product_name = m.product_name)) WHERE m.id = :id AND q.quantity - q.reserved_quantity >= m.quantity"
+          status: 409
+          message: Not enough available stock at the source location
+      steps:
+        - query: "UPDATE inventory_quants SET quantity = quantity - (SELECT quantity FROM inventory_moves WHERE id = :id), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE location_id = (SELECT source_location_id FROM inventory_moves WHERE id = :id) AND (product_id = (SELECT product_id FROM inventory_moves WHERE id = :id) OR (product_id IS NULL AND (SELECT product_id FROM inventory_moves WHERE id = :id) IS NULL AND product_name = (SELECT product_name FROM inventory_moves WHERE id = :id)))"
+        - query: "INSERT INTO inventory_quants(id, product_id, product_name, location_id, quantity, reserved_quantity, unit_cost) SELECT gen_random_uuid(), m.product_id, m.product_name, m.destination_location_id, m.quantity, 0, COALESCE((SELECT q.unit_cost FROM inventory_quants q WHERE q.location_id = m.source_location_id AND (q.product_id = m.product_id OR (q.product_id IS NULL AND m.product_id IS NULL AND q.product_name = m.product_name)) LIMIT 1), 0) FROM inventory_moves m WHERE m.id = :id ON CONFLICT(product_id, location_id) DO UPDATE SET quantity = inventory_quants.quantity + EXCLUDED.quantity, row_version = inventory_quants.row_version + 1"
+        - query: "UPDATE inventory_moves SET state = 'Done', row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT * FROM inventory_moves WHERE id = :id" }
+  - id: cancel_inventory_move
+    type: server
+    permission: inventory.write
+    action: inventory.moves.cancel
+    handler: yaml_mutation
+    operation: cancel
+    refresh: [inventory_moves]
+    mutation:
+      guards: [{ query: "SELECT 1 AS ok FROM inventory_moves WHERE id = :id AND state IN ('Draft', 'Waiting')", status: 409, message: Only open moves can be cancelled }]
+      steps: ["UPDATE inventory_moves SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id"]
+      result: { query: "SELECT * FROM inventory_moves WHERE id = :id" }

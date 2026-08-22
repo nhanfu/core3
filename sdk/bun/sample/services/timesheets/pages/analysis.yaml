@@ -1,0 +1,21 @@
+title: Timesheet Analysis
+page: { id: timesheet-analysis, breadcrumb: [Services, Timesheets, Analysis], auth: { require: [timesheets.read] } }
+datasources:
+  - id: timesheet_analysis_totals
+    single: true
+    permission: timesheets.read
+    query: "SELECT COUNT(*) AS entry_count, COALESCE(SUM(hours), 0) AS total_hours, COALESCE(SUM(hours) FILTER (WHERE state = 'Approved'), 0) AS approved_hours, COALESCE(SUM(hours) FILTER (WHERE billable), 0) AS billable_hours FROM timesheet_entries"
+  - id: timesheet_analysis_states
+    permission: timesheets.read
+    query: "SELECT state AS category, COUNT(*) AS entry_count FROM timesheet_entries GROUP BY state ORDER BY entry_count DESC"
+components:
+  - type: StatRow
+    source: timesheet_analysis_totals
+    title: Timesheet performance
+    stats: [{ label: Entries, field: entry_count }, { label: Total hours, field: total_hours }, { label: Approved hours, field: approved_hours }, { label: Billable hours, field: billable_hours }]
+  - type: Chart
+    source: timesheet_analysis_states
+    title: Entries by status
+    label_field: category
+    value_field: entry_count
+    variant: bar

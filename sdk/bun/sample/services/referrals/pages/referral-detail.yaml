@@ -1,0 +1,25 @@
+title: Referral
+page: { id: referral-detail, breadcrumb: [Human Resources, Referrals, Detail], auth: { require: [referrals.read] } }
+datasources:
+  - id: referral_detail
+    single: true
+    permission: referrals.read
+    query: "SELECT id, row_version, name, referrer_name, candidate_name, candidate_email, candidate_phone, opening_name, relationship, source, reward_amount, reward_currency, state, CAST(submitted_date AS VARCHAR) AS submitted_date, CAST(hired_date AS VARCHAR) AS hired_date, CAST(rewarded_date AS VARCHAR) AS rewarded_date, notes FROM referrals WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: referral_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Hired, label: Hired }, { value: Rewarded, label: Rewarded }, { value: Rejected, label: Rejected }]
+    status_colors: { Draft: neutral, Submitted: amber, Hired: blue, Rewarded: green, Rejected: red }
+    group_columns: 2
+    groups:
+      - title: Referral
+        fields: [{ field: name, label: Referral }, { field: state, label: Status }, { field: referrer_name, label: Referrer }, { field: candidate_name, label: Candidate }, { field: candidate_email, label: Email }, { field: opening_name, label: Opening }]
+      - title: Reward
+        fields: [{ field: relationship, label: Relationship }, { field: reward_amount, label: Reward amount }, { field: reward_currency, label: Currency }, { field: submitted_date, label: Submitted date }, { field: hired_date, label: Hired date }, { field: rewarded_date, label: Rewarded date }, { field: notes, label: Notes }]
+actions:
+  - { id: submit_referral_detail, type: server, permission: referrals.write, action: referrals.records.submit, handler: order_transition, workflow: referrals, operation: submit, params: { id: '{state.id}' }, refresh: [referral_detail] }
+  - { id: hire_referral_detail, type: server, permission: referrals.manage, action: referrals.records.hire, handler: order_transition, workflow: referrals, operation: hire, params: { id: '{state.id}' }, refresh: [referral_detail] }
+  - { id: reward_referral_detail, type: server, permission: referrals.manage, action: referrals.records.reward, handler: order_transition, workflow: referrals, operation: reward, params: { id: '{state.id}' }, refresh: [referral_detail] }
+  - { id: reject_referral_detail, type: server, permission: referrals.manage, action: referrals.records.reject, handler: order_transition, workflow: referrals, operation: reject, params: { id: '{state.id}' }, refresh: [referral_detail] }

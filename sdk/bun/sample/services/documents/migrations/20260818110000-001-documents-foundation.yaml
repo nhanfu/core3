@@ -1,0 +1,25 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS document_folders (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL,
+        parent_id VARCHAR, owner_name VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS documents (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, folder_id VARCHAR, owner_name VARCHAR, partner_name VARCHAR,
+        document_type VARCHAR NOT NULL DEFAULT 'Other', mime_type VARCHAR, file_size BIGINT NOT NULL DEFAULT 0,
+        checksum VARCHAR, state VARCHAR NOT NULL DEFAULT 'Draft', document_date DATE DEFAULT CURRENT_DATE,
+        expiry_date DATE, description VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_documents_state ON documents(state);
+      CREATE INDEX IF NOT EXISTS idx_documents_folder ON documents(folder_id);
+      CREATE INDEX IF NOT EXISTS idx_documents_expiry ON documents(expiry_date);
+    down: |
+      DROP TABLE IF EXISTS documents;
+      DROP TABLE IF EXISTS document_folders;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

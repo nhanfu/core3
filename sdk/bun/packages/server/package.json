@@ -1,0 +1,20 @@
+{
+  "name": "@core3/server",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@core3/client": "workspace:*",
+    "@core3/med": "workspace:*",
+    "@duckdb/node-api": "^1.5.5-r.3",
+    "mssql": "^12.7.0",
+    "mysql2": "^3.23.3",
+    "oracledb": "^7.0.1",
+    "jose": "^5.9.6",
+    "uuid": "^14.0.1"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts",
+    "./database/*": "./src/database/*.ts"
+  }
+}

@@ -1,0 +1,48 @@
+title: Payments
+page: { id: payments, breadcrumb: [Finance, Accounting, Payments], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_payments
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, payment_type, amount, payment_method, CAST(payment_date AS VARCHAR) AS payment_date, state, reference FROM accounting_payments WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%') ORDER BY payment_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_payments
+    create_action: create_accounting_payment
+    create_label: New payment
+    search: { label: Search payments, placeholder: Search payments or customers... }
+    columns:
+      - { field: name, label: Payment, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: payment_type, label: Type }
+      - { field: amount, label: Amount, align: right }
+      - { field: payment_method, label: Method }
+      - { field: payment_date, label: Date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_accounting_payment
+    type: server_form
+    permission: accounting.write
+    title: New payment
+    action: accounting.payments.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_payments
+      fields: [name, partner_name, payment_type, amount, payment_method, payment_date, reference]
+      required: [name, amount]
+      defaults: { payment_type: Inbound, payment_method: Bank, state: Draft }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0", status: 400, message: Payment amount must be positive }]
+      result: { query: "SELECT * FROM accounting_payments WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment, type: text, required: true }
+      - { field: partner_name, label: Partner, type: text }
+      - { field: payment_type, label: Type, type: select, options: [Inbound, Outbound] }
+      - { field: amount, label: Amount, type: number, required: true }
+      - { field: payment_method, label: Method, type: select, options: [Bank, Cash, Card, Other] }
+      - { field: payment_date, label: Date, type: text }
+      - { field: reference, label: Reference, type: text }

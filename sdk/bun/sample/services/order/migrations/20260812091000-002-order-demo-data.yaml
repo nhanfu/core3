@@ -1,0 +1,112 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      DELETE FROM order_lines WHERE id IN ('order-line-demo-01', 'order-line-demo-02', 'order-line-demo-03', 'order-line-demo-04', 'order-line-demo-05', 'order-line-demo-06', 'order-line-demo-07', 'order-line-demo-09', 'order-line-demo-10a', 'order-line-demo-10b', 'order-line-demo-11');
+      DELETE FROM orders WHERE id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
+      DELETE FROM customers WHERE id IN ('customer-minh-long', 'customer-dai-phat', 'customer-an-binh', 'customer-hung-thinh', 'customer-nam-viet', 'customer-thanh-cong', 'customer-dong-a', 'customer-phu-my');
+
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-minh-long', 'ML', 'Công ty TNHH Minh Long', 'Admin User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'ML');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-dai-phat', 'DP', 'Công ty CP Đại Phát', 'Admin User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'DP');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-an-binh', 'AB', 'Công ty Thực phẩm An Bình', 'Dispatcher User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'AB');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-hung-thinh', 'HT', 'Công ty CP Hưng Thịnh', 'Dispatcher User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'HT');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-nam-viet', 'NV', 'Công ty TNHH Nam Việt', 'Admin User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'NV');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-thanh-cong', 'TC', 'Công ty CP May Thành Công', 'Admin User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'TC');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-dong-a', 'DA', 'Công ty TNHH Điện tử Đông Á', 'Dispatcher User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'DA');
+      INSERT INTO customers(id, code, name, owner_name, visibility, status)
+      SELECT 'customer-phu-my', 'PM', 'Công ty CP Phú Mỹ', 'Admin User', 'Public', 'Active'
+      WHERE NOT EXISTS (SELECT 1 FROM customers WHERE code = 'PM');
+
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-01', 'DH-2026-0101', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', DATE '2026-08-12', 'Draft', 'Hàng lẻ', 'Hồ Chí Minh → Đà Nẵng', 'Đường bộ', 0, 18500000, 'branch-hcm', 'Admin User', 'Chờ xác nhận khối lượng');
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-02', 'DH-2026-0102', 'Công ty CP Đại Phát', 'Dai Phat JSC', DATE '2026-08-11', 'Pending Approval', 'Nguyên chuyến', 'Hà Nội → Hải Phòng', 'Đường bộ', 1, 12600000, 'branch-hn', 'Admin User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-03', 'DH-2026-0103', 'Công ty Thực phẩm An Bình', 'An Binh Foods', DATE '2026-08-10', 'Approved', 'Hàng lạnh', 'Cần Thơ → Hồ Chí Minh', 'Đường bộ', 2, 21800000, 'branch-hcm', 'Dispatcher User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-04', 'DH-2026-0104', 'Công ty CP Hưng Thịnh', 'Hung Thinh Trading JSC', DATE '2026-08-09', 'Draft', 'Container', 'Hồ Chí Minh → Nha Trang', 'Đường bộ', 1, 14200000, 'branch-hcm', 'Admin User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-05', 'DH-2026-0105', 'Công ty TNHH Nam Việt', 'Nam Viet Co., Ltd.', DATE '2026-08-08', 'Pending Approval', 'Nguyên chuyến', 'Hà Nội → Đà Nẵng', 'Đường bộ', 1, 32600000, 'branch-hn', 'Dispatcher User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-06', 'DH-2026-0106', 'Công ty CP May Thành Công', 'Thanh Cong Garment JSC', DATE '2026-08-07', 'Approved', 'Hàng lẻ', 'Đà Nẵng → Huế', 'Đường bộ', 1, 9200000, 'branch-dn', 'Admin User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-07', 'DH-2026-0107', 'Công ty TNHH Điện tử Đông Á', 'Dong A Electronics Co., Ltd.', DATE '2026-08-06', 'Approved', 'Hàng lẻ', 'Hồ Chí Minh → Biên Hòa', 'Đường bộ', 1, 11800000, 'branch-hcm', 'Dispatcher User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-08', 'DH-2026-0108', 'Công ty CP Phú Mỹ', 'Phu My JSC', DATE '2026-08-05', 'Cancelled', 'Nguyên chuyến', 'Đà Nẵng → Quy Nhơn', 'Đường bộ', 0, 16800000, 'branch-dn', 'Admin User', 'Không đủ phương tiện');
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-09', 'DH-2026-0109', 'Công ty TNHH Minh Long', 'Minh Long Logistics Co., Ltd.', DATE '2026-08-04', 'Draft', 'Hàng lạnh', 'Hồ Chí Minh → Cần Thơ', 'Đường bộ', 1, 20400000, 'branch-hcm', 'Admin User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-10', 'DH-2026-0110', 'Công ty CP Đại Phát', 'Dai Phat JSC', DATE '2026-08-03', 'Pending Approval', 'Container', 'Hải Phòng → Hà Nội', 'Đường bộ', 2, 27800000, 'branch-hn', 'Dispatcher User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-11', 'DH-2026-0111', 'Công ty CP Hưng Thịnh', 'Hung Thinh Trading JSC', DATE '2026-08-02', 'Approved', 'Hàng lẻ', 'Hồ Chí Minh → Vũng Tàu', 'Đường bộ', 1, 7600000, 'branch-hcm', 'Admin User', NULL);
+      INSERT INTO orders(id, order_number, customer_name, customer_legal_name, order_date, status, shipment_type, route, transport_method, trip_count, total_amount, branch_id, created_by, notes)
+      VALUES ('order-demo-12', 'DH-2026-0112', 'Công ty Thực phẩm An Bình', 'An Binh Foods', DATE '2026-08-01', 'Cancelled', 'Hàng lạnh', 'Cần Thơ → Hà Nội', 'Đường bộ', 0, 29300000, 'branch-hn', 'Dispatcher User', 'Khách hàng hủy đơn');
+
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-01', 'order-demo-01', 10, 'Vận chuyển hàng lẻ', 1, 'Chuyến', 18500000, 0, 18500000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-01')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-01');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-02', 'order-demo-02', 10, 'Vận chuyển nguyên chuyến', 1, 'Chuyến', 12600000, 0, 12600000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-02')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-02');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-03', 'order-demo-03', 10, 'Vận chuyển hàng lạnh', 2, 'Chuyến', 10900000, 0, 21800000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-03')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-03');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-04', 'order-demo-04', 10, 'Vận chuyển container', 1, 'Chuyến', 14200000, 0, 14200000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-04')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-04');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-05', 'order-demo-05', 10, 'Vận chuyển đường dài', 1, 'Chuyến', 32600000, 0, 32600000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-05')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-05');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-06', 'order-demo-06', 10, 'Vận chuyển hàng may mặc', 1, 'Chuyến', 9200000, 0, 9200000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-06')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-06');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-07', 'order-demo-07', 10, 'Vận chuyển thiết bị điện tử', 1, 'Chuyến', 11800000, 0, 11800000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-07')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-07');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-09', 'order-demo-09', 10, 'Vận chuyển hàng lạnh', 1, 'Chuyến', 20400000, 0, 20400000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-09')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-09');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-10a', 'order-demo-10', 10, 'Vận chuyển container', 1, 'Chuyến', 15000000, 0, 15000000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-10')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-10a');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-10b', 'order-demo-10', 20, 'Phí nâng hạ container', 1, 'Khoản', 12800000, 0, 12800000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-10')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-10b');
+      INSERT INTO order_lines(id, order_id, sequence, description, quantity, unit, unit_price, tax_rate, line_total)
+      SELECT 'order-line-demo-11', 'order-demo-11', 10, 'Vận chuyển hàng lẻ', 1, 'Chuyến', 7600000, 0, 7600000
+      WHERE EXISTS (SELECT 1 FROM orders WHERE id = 'order-demo-11')
+        AND NOT EXISTS (SELECT 1 FROM order_lines WHERE id = 'order-line-demo-11');
+
+    down: |
+      DELETE FROM order_lines WHERE id IN ('order-line-demo-01', 'order-line-demo-02', 'order-line-demo-03', 'order-line-demo-04', 'order-line-demo-05', 'order-line-demo-06', 'order-line-demo-07', 'order-line-demo-09', 'order-line-demo-10a', 'order-line-demo-10b', 'order-line-demo-11');
+      DELETE FROM orders WHERE id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
+      DELETE FROM customers WHERE id IN ('customer-minh-long', 'customer-dai-phat', 'customer-an-binh', 'customer-hung-thinh', 'customer-nam-viet', 'customer-thanh-cong', 'customer-dong-a', 'customer-phu-my');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

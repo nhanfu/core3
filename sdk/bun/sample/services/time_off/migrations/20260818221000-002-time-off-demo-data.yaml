@@ -1,0 +1,15 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO leave_types(id, name, code, allocation_days) VALUES ('leave-type-annual', 'Annual Leave', 'AL', 12);
+      INSERT OR IGNORE INTO leave_balances(id, employee_id, employee_name, leave_type_id, leave_type_name, year, allocated_days, used_days)
+      VALUES ('leave-balance-demo-001', 'employee-demo-001', 'Admin User', 'leave-type-annual', 'Annual Leave', EXTRACT(YEAR FROM CURRENT_DATE), 12, 0);
+    down: |
+      DELETE FROM leave_balances WHERE id = 'leave-balance-demo-001';
+      DELETE FROM leave_types WHERE id = 'leave-type-annual';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

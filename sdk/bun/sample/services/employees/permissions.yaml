@@ -1,0 +1,4 @@
+permissions:
+  - employees.read
+  - employees.write
+  - employees.manage

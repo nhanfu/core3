@@ -1,0 +1,26 @@
+title: Production Analysis
+page: { id: manufacturing-analysis, breadcrumb: [Supply Chain, Manufacturing, Analysis], auth: { require: [manufacturing.read] } }
+datasources:
+  - id: mrp_analysis_totals
+    single: true
+    permission: manufacturing.read
+    query: "SELECT COUNT(*) AS order_count, COALESCE(SUM(quantity), 0) AS planned_units, COALESCE(SUM(qty_produced), 0) AS produced_units, COUNT(*) FILTER (WHERE state = 'Done') AS completed_orders FROM mrp_productions"
+  - id: mrp_analysis_states
+    single: false
+    permission: manufacturing.read
+    query: "SELECT state AS category, COUNT(*) AS order_count FROM mrp_productions GROUP BY state ORDER BY order_count DESC"
+components:
+  - type: StatRow
+    source: mrp_analysis_totals
+    title: Production performance
+    stats:
+      - { label: Orders, field: order_count }
+      - { label: Planned units, field: planned_units }
+      - { label: Produced units, field: produced_units }
+      - { label: Completed, field: completed_orders }
+  - type: Chart
+    source: mrp_analysis_states
+    title: Orders by state
+    label_field: category
+    value_field: order_count
+    variant: bar

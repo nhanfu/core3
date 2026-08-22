@@ -1,0 +1,15 @@
+workflow:
+  id: dashboards
+  entity: dashboards
+  handler: order_transition
+  initial: Draft
+  permission: spreadsheet.write
+  mutable: true
+  status_source: dashboard_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Published, label: Published, color: green }
+    - { id: Archived, label: Archived, color: blue, terminal: true }
+  transitions:
+    - { id: publish, from: [Draft], to: Published, permission: spreadsheet.manage }
+    - { id: archive, from: [Draft, Published], to: Archived, permission: spreadsheet.manage }

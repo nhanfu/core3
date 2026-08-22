@@ -1,0 +1,23 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO inventory_warehouses(id, name, code, address) VALUES
+        ('warehouse-main', 'Main Warehouse', 'WH-MAIN', 'Ho Chi Minh City')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_locations(id, warehouse_id, name, code, usage) VALUES
+        ('location-stock', 'warehouse-main', 'Stock', 'STOCK', 'Internal'),
+        ('location-customer', 'warehouse-main', 'Customers', 'CUSTOMER', 'Customer')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_quants(id, product_id, product_name, location_id, quantity, reserved_quantity, unit_cost) VALUES
+        ('quant-pallet-main', 'product-demo-003', 'Reusable pallet', 'location-stock', 100, 0, 20)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM inventory_quants WHERE id = 'quant-pallet-main';
+      DELETE FROM inventory_locations WHERE id IN ('location-stock', 'location-customer');
+      DELETE FROM inventory_warehouses WHERE id = 'warehouse-main';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

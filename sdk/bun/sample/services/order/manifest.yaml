@@ -1,0 +1,17 @@
+id: order
+kind: domain-service
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/orders.yaml
+  - pages/sale-quotations.yaml
+  - pages/customers.yaml
+  - pages/sale-products.yaml
+  - pages/sale-pricelists.yaml
+  - pages/sale-pricelist-rules.yaml
+  - pages/sale-payment-terms.yaml
+  - pages/sale-invoices.yaml
+  - pages/order-detail.yaml
+  - pages/order-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

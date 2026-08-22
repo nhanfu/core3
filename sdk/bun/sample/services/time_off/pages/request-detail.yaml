@@ -1,0 +1,25 @@
+title: Leave Request
+page: { id: leave-request-detail, breadcrumb: [Human Resources, Time Off, Detail], auth: { require: [time_off.read] } }
+datasources:
+  - id: leave_request_detail
+    single: true
+    permission: time_off.read
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, days, reason, approver, state FROM leave_requests WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: leave_request_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Refused, label: Refused }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
+    group_columns: 2
+    groups:
+      - title: Leave
+        fields: [{ field: name, label: Request }, { field: state, label: Status }, { field: employee_name, label: Employee }, { field: leave_type_name, label: Leave type }]
+      - title: Dates and approval
+        fields: [{ field: date_from, label: From }, { field: date_to, label: To }, { field: days, label: Days }, { field: approver, label: Approver }, { field: reason, label: Reason }]
+actions:
+  - { id: submit_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.submit, handler: order_transition, workflow: leave_requests, operation: submit, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
+  - { id: approve_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
+  - { id: refuse_leave_request_detail, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, params: { id: '{state.id}' }, refresh: [leave_request_detail] }
+  - { id: cancel_leave_request_detail, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [leave_request_detail] }

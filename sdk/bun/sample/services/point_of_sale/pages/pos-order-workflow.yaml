@@ -1,0 +1,27 @@
+workflow:
+  id: pos_orders
+  entity: pos_orders
+  handler: pos_order_status
+  initial: New
+  permission: pos.write
+  mutable: true
+  status_source: pos_order_states
+  status_query: SELECT state AS status FROM pos_orders WHERE id = ?
+  states:
+    - { id: New, label: New, color: neutral }
+    - { id: Paid, label: Paid, color: green }
+    - { id: Invoiced, label: Invoiced, color: blue, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: cancel
+      from: [New, Paid]
+      to: Cancelled
+      permission: pos.write
+      mutation:
+        guards:
+          - query: "SELECT id FROM pos_orders WHERE id = :id AND state IN ('New', 'Paid')"
+            status: 409
+            message: Only open POS orders can be cancelled
+        steps:
+          - query: "UPDATE pos_orders SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM pos_orders WHERE id = :id" }

@@ -1,0 +1,29 @@
+/**
+ * Query and mutation DTOs — mirrors the core2 SqlViewModel / PatchVM pattern.
+ * Used by the client to communicate with the API.
+ */
+
+export function createQuery(options: any = {}) {
+  const {
+    sourceId,
+    action = 'query',
+    params = {},
+    select = [],
+    where = {},
+    orderBy = [],
+    sort = undefined,
+    groupBy = [],
+    skip = 0,
+    top = 25,
+    facetField = null,
+    metaConn = null,
+    dataConn = null,
+    pivot = undefined,
+  } = options;
+  return { sourceId, action, params, select, where, orderBy, groupBy, sort, skip, top, facetField, metaConn, dataConn, pivot };
+}
+
+export function createPatch(options: any = {}) {
+  const { table, changes = [], action = 'update', id = null } = options;
+  return { table, changes, action, id };
+}

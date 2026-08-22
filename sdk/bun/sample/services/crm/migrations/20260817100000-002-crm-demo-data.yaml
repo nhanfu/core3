@@ -1,0 +1,20 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO crm_leads(id, name, type, partner_name, email, source, expected_revenue, stage, probability, salesperson, team, expected_closing)
+      VALUES
+        ('crm-demo-001', 'Website renewal opportunity', 'opportunity', 'Acme Corporation', 'buyer@acme.test', 'Website', 48000, 'Proposition', 60, 'Admin User', 'North America', DATE '2026-09-15'),
+        ('crm-demo-002', 'New warehouse account', 'lead', 'Globex Industries', 'ops@globex.test', 'Email', 125000, 'New', 10, 'Dispatcher User', 'Enterprise', DATE '2026-10-01')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state)
+      VALUES ('crm-activity-001', 'crm-demo-001', 'Call', 'Confirm technical requirements', DATE '2026-08-25', 'Admin User', 'planned')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_activities WHERE id = 'crm-activity-001';
+      DELETE FROM crm_leads WHERE id IN ('crm-demo-001', 'crm-demo-002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

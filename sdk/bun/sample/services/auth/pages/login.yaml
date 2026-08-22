@@ -1,0 +1,73 @@
+title: Sign in to your account
+
+page:
+  id: login
+
+components:
+  - type: LoginForm
+    id: login-form
+    action: login
+    logo_title: MovedX
+    logo_subtitle: Fleet & Transport Management
+    title: Sign in to your account
+    email:
+      label: Email
+      placeholder: you@company.com
+      autocomplete: email
+      default: admin@tms.local
+    password:
+      label: Password
+      placeholder: ••••••••
+      autocomplete: current-password
+      default: admin123
+    submit_label: Sign in
+    loading_label: Signing in...
+    required_message: Email and password are required.
+    provider_divider: Or continue with
+    providers:
+      - label: SSO login
+        icon: key
+        tone: indigo
+        action: login-sso
+      - label: Continue with Google
+        icon: google
+        tone: blue
+        action: login-google
+      - label: Continue with Microsoft
+        icon: microsoft
+        tone: slate
+        action: login-microsoft
+    credentials_label: 'Demo credentials:'
+    credentials:
+      - admin@tms.local / admin123
+      - fleet@tms.local / fleet123
+
+actions:
+  - id: login
+    type: login
+    endpoint: /api/auth/login
+    redirect_param: redirect
+  - id: login-sso
+    type: event
+    event: core3:auth:sso
+    title: Coming soon
+    message: SSO login is under construction.
+    close_label: Close
+    params:
+      provider: sso
+  - id: login-google
+    type: event
+    event: core3:auth:sso
+    title: Coming soon
+    message: Google login is under construction.
+    close_label: Close
+    params:
+      provider: google
+  - id: login-microsoft
+    type: event
+    event: core3:auth:sso
+    title: Coming soon
+    message: Microsoft login is under construction.
+    close_label: Close
+    params:
+      provider: microsoft

@@ -1,0 +1,22 @@
+title: Forum Question
+page: { id: forum-question-detail, breadcrumb: [Website, Forum, Question], auth: { require: [forum.read] } }
+datasources:
+  - id: forum_post_detail
+    permission: forum.read
+    single: true
+    query: "SELECT * FROM forum_posts WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: forum_post_detail
+    title_field: title
+    fields:
+      - { field: title, label: Question }
+      - { field: forum_name, label: Forum }
+      - { field: author_name, label: Author }
+      - { field: content, label: Content }
+      - { field: tags, label: Tags }
+      - { field: views, label: Views }
+      - { field: vote_count, label: Votes }
+      - { field: answer_count, label: Answers }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: closed_reason, label: Closed reason }

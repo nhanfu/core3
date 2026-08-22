@@ -1,0 +1,22 @@
+version: 0.0.6
+kind: data
+description: Seed Phase 1 company membership data
+type:
+  postgres:
+    up: |
+      INSERT INTO auth_companies(id, name, short_name, address, currency_code) VALUES
+        ('company-demo', 'Core3 Demo Company', 'Core3', '100 Main Street, San Francisco', 'USD'),
+        ('company-vietnam', 'Core3 Vietnam Branch', 'Core3 VN', '1 Nguyen Hue, Ho Chi Minh City', 'VND')
+        ON CONFLICT (id) DO NOTHING;
+      INSERT INTO auth_user_companies(user_id, company_id, is_default) VALUES
+        ('user-admin', 'company-demo', true), ('user-admin', 'company-vietnam', false),
+        ('user-disp', 'company-demo', true)
+        ON CONFLICT (user_id, company_id) DO NOTHING;
+      UPDATE users SET current_company_id = 'company-demo' WHERE id IN ('user-admin', 'user-disp') AND current_company_id IS NULL;
+    down: |
+      DELETE FROM auth_user_companies WHERE user_id IN ('user-admin', 'user-disp');
+      DELETE FROM auth_companies WHERE id IN ('company-demo', 'company-vietnam');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

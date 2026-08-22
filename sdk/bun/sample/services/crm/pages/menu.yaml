@@ -1,0 +1,25 @@
+menu:
+  leads:
+    path: /leads
+    label: CRM
+    icon: users
+    permission: crm.read
+  groups:
+    - id: pipeline
+      label: Pipeline
+      items:
+        - path: /teams
+          label: Sales Teams
+          icon: users
+          permission: crm.read
+        - path: /analysis
+          label: Pipeline Analysis
+          icon: chart
+          permission: crm.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /configuration
+          label: Configuration
+          icon: settings
+          permission: crm.manage

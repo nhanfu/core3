@@ -1,0 +1,310 @@
+med:
+  endpoint: ${CORE3_EVENT_MEDIATOR_URL:-ws://127.0.0.1:3010/events}
+  token: ${CORE3_EVENT_MEDIATOR_TOKEN:-}
+
+apps:
+  - id: base
+    label: Contacts
+    description: Users, companies, contacts, and shared reference data
+    icon: users
+    color: blue
+    route: /contacts
+    module: base
+    enabled: true
+  - id: order
+    label: Orders
+    description: Order management
+    icon: truck
+    color: indigo
+    # The module root is the canonical entry point for the Orders app.
+    route: /
+    module: order
+    enabled: true
+  - id: chat
+    label: Chat
+    description: Conversations and collaboration
+    icon: message
+    color: teal
+    route: /chat/
+    module: chat
+    enabled: true
+  - id: ai
+    label: Core3 Agent
+    description: AI workspace for project tasks and reviews
+    icon: ai
+    color: violet
+    route: /ai
+    module: ai
+    enabled: true
+  - id: crm
+    label: CRM
+    description: Lead and opportunity management
+    icon: users
+    color: violet
+    route: /leads
+    module: crm
+    enabled: true
+  - id: point-of-sale
+    label: Point of Sale
+    description: Retail sessions and payments
+    icon: cart
+    color: orange
+    route: /sessions
+    module: point-of-sale
+    enabled: true
+  - id: sale-subscription
+    label: Subscriptions
+    description: Recurring sales contracts
+    icon: repeat
+    color: purple
+    route: /subscriptions
+    module: sale-subscription
+    enabled: true
+  - id: sale-renting
+    label: Rental
+    description: Rental orders and returns
+    icon: calendar
+    color: cyan
+    route: /rentals
+    module: sale-renting
+    enabled: true
+  - id: accounting
+    label: Accounting
+    description: Invoices, journal entries, and payments
+    icon: invoice
+    color: green
+    route: /invoices
+    module: accounting
+    enabled: true
+  - id: expenses
+    label: Expenses
+    description: Employee expense reports and reimbursement
+    icon: receipt
+    color: amber
+    route: /expenses
+    module: expenses
+    enabled: true
+  - id: documents
+    label: Documents
+    description: Document workspace and approvals
+    icon: folder
+    color: blue
+    route: /documents
+    module: documents
+    enabled: true
+  - id: spreadsheet
+    label: Spreadsheet / Dashboards
+    description: Saved dashboards and operational widgets
+    icon: dashboard
+    color: indigo
+    route: /dashboards
+    module: spreadsheet
+    enabled: true
+  - id: inventory
+    label: Inventory
+    description: Warehouses, stock, and moves
+    icon: warehouse
+    color: amber
+    route: /stock
+    module: inventory
+    enabled: true
+  - id: manufacturing
+    label: Manufacturing
+    description: Bills of materials and production orders
+    icon: factory
+    color: orange
+    route: /manufacturing-orders
+    module: manufacturing
+    enabled: true
+  - id: purchase
+    label: Purchase
+    description: Vendors and purchase orders
+    icon: purchase
+    color: teal
+    route: /purchase-orders
+    module: purchase
+    enabled: true
+  - id: maintenance
+    label: Maintenance
+    description: Equipment and maintenance requests
+    icon: wrench
+    color: slate
+    route: /maintenance-requests
+    module: maintenance
+    enabled: true
+  - id: field-service
+    label: Field Service
+    description: On-site tasks and technician dispatch
+    icon: wrench
+    color: cyan
+    route: /field-service
+    module: field-service
+    enabled: true
+  - id: helpdesk
+    label: Helpdesk
+    description: Support tickets and service-level workflows
+    icon: headset
+    color: teal
+    route: /helpdesk
+    module: helpdesk
+    enabled: true
+  - id: quality
+    label: Quality
+    description: Quality checks and inspections
+    icon: quality
+    color: green
+    route: /quality-checks
+    module: quality
+    enabled: true
+  - id: plm
+    label: PLM
+    description: Engineering revisions and change control
+    icon: engineering
+    color: violet
+    route: /engineering-revisions
+    module: plm
+    enabled: true
+  - id: employees
+    label: Employees
+    description: Employee profiles and workforce lifecycle
+    icon: users
+    color: blue
+    route: /employees
+    module: employees
+    enabled: true
+  - id: recruitment
+    label: Recruitment
+    description: Job openings and applicant pipeline
+    icon: recruitment
+    color: pink
+    route: /applicants
+    module: recruitment
+    enabled: true
+  - id: time-off
+    label: Time Off
+    description: Leave types, balances, and requests
+    icon: calendar
+    color: cyan
+    route: /leave-requests
+    module: time-off
+    enabled: true
+  - id: appraisals
+    label: Appraisals
+    description: Performance cycles and employee reviews
+    icon: review
+    color: purple
+    route: /appraisals
+    module: appraisals
+    enabled: true
+  - id: referrals
+    label: Referrals
+    description: Employee referrals and rewards
+    icon: share
+    color: indigo
+    route: /referrals
+    module: referrals
+    enabled: true
+  - id: fleet
+    label: Fleet
+    description: Vehicles, drivers, and fleet lifecycle
+    icon: car
+    color: slate
+    route: /vehicles
+    module: fleet
+    enabled: true
+  - id: email-marketing
+    label: Email Marketing
+    description: Mailing lists and email campaigns
+    icon: mail
+    color: red
+    route: /email-campaigns
+    module: email-marketing
+    enabled: true
+  - id: sms-marketing
+    label: SMS Marketing
+    description: Opt-in lists and SMS campaigns
+    icon: message
+    color: pink
+    route: /sms-campaigns
+    module: sms-marketing
+    enabled: true
+  - id: events
+    label: Events
+    description: Events and registrations
+    icon: calendar
+    color: orange
+    route: /events
+    module: events
+    enabled: true
+  - id: surveys
+    label: Surveys
+    description: Surveys, questions, and responses
+    icon: survey
+    color: violet
+    route: /surveys
+    module: surveys
+    enabled: true
+  - id: marketing-automation
+    label: Marketing Automation
+    description: Automated journeys, triggers, and actions
+    icon: automation
+    color: purple
+    route: /automations
+    module: marketing-automation
+    enabled: true
+  - id: project
+    label: Project
+    description: Projects, milestones, and tasks
+    icon: project
+    color: blue
+    route: /projects
+    module: project
+    enabled: true
+  - id: timesheets
+    label: Timesheets
+    description: Time entries, approvals, and project rollups
+    icon: clock
+    color: teal
+    route: /timesheets
+    module: timesheets
+    enabled: true
+  - id: website
+    label: Website
+    description: Websites, pages, and menus
+    icon: globe
+    color: cyan
+    route: /website
+    module: website
+    enabled: true
+  - id: ecommerce
+    label: eCommerce
+    description: Shop products, categories, and online orders
+    icon: cart
+    color: orange
+    route: /ecommerce
+    module: ecommerce
+    enabled: true
+  - id: blog
+    label: Blog
+    description: Blogs, posts, and tags
+    icon: edit
+    color: amber
+    route: /blog
+    module: blog
+    enabled: true
+  - id: forum
+    label: Forum
+    description: Community forums, questions, and moderation
+    icon: forum
+    color: indigo
+    route: /forum
+    module: forum
+    enabled: true
+  - id: livechat
+    label: Live Chat
+    description: Livechat channels, sessions, and ratings
+    icon: message
+    color: teal
+    route: /livechat
+    module: livechat
+    enabled: true

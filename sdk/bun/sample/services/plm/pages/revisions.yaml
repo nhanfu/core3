@@ -1,0 +1,65 @@
+title: Engineering Revisions
+page: { id: engineering-revisions, breadcrumb: [Supply Chain, PLM, Engineering Revisions], auth: { require: [plm.read] } }
+datasources:
+  - id: plm_revision_states
+    permission: plm.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Released','Released'), ('Rejected','Rejected')) states(value, label)"
+  - id: plm_revisions
+    permission: plm.read
+    workflow: plm_revisions
+    query: "SELECT r.id, r.row_version, r.name, r.product_name, r.version, r.change_reason, r.owner, r.approver, r.state, CAST(r.effective_date AS VARCHAR) AS effective_date FROM plm_revisions r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.product_name ILIKE '%' || :q || '%' OR r.change_reason ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: plm_revisions
+    create_action: create_plm_revision
+    create_label: New engineering revision
+    search: { label: Search revisions, placeholder: 'Search revisions, products, or changes...' }
+    filters: [{ field: state, label: Status, options_source: plm_revision_states }]
+    columns:
+      - { field: name, label: Revision, type: PrimaryEntityCell }
+      - { field: product_name, label: Product }
+      - { field: version, label: Version }
+      - { field: change_reason, label: Change reason }
+      - { field: owner, label: Owner }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: effective_date, label: Effective date }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: submit_plm_revision, label: Submit, permission: plm.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: approve_plm_revision, label: Approve, permission: plm.manage, variant: secondary, show_if: "row.state === 'Submitted'" }
+      - { id: release_plm_revision, label: Release, permission: plm.manage, variant: primary, show_if: "row.state === 'Approved'" }
+      - { id: reject_plm_revision, label: Reject, permission: plm.manage, variant: danger, show_if: "row.state === 'Submitted'" }
+actions:
+  - id: create_plm_revision
+    type: server_form
+    permission: plm.write
+    title: New engineering revision
+    action: plm.revisions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [plm_revisions]
+    mutation:
+      operation: insert
+      table: plm_revisions
+      fields: [name, product_name, version, change_reason, source_type, source_id, owner, approver, effective_date, notes]
+      required: [name, product_name, version, change_reason]
+      result: { query: "SELECT * FROM plm_revisions WHERE id = :id" }
+    fields:
+      - { field: name, label: Revision, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: version, label: Version, type: text, required: true }
+      - { field: change_reason, label: Change reason, type: text, required: true }
+      - { field: source_type, label: Source type, type: text }
+      - { field: source_id, label: Source reference, type: text }
+      - { field: owner, label: Owner, type: text }
+      - { field: approver, label: Approver, type: text }
+      - { field: effective_date, label: Effective date, type: text }
+      - { field: notes, label: Notes, type: text }
+  - { id: submit_plm_revision, type: server, permission: plm.write, action: plm.revisions.submit, handler: order_transition, workflow: plm_revisions, operation: submit, refresh: [plm_revisions] }
+  - { id: approve_plm_revision, type: server, permission: plm.manage, action: plm.revisions.approve, handler: order_transition, workflow: plm_revisions, operation: approve, refresh: [plm_revisions] }
+  - { id: release_plm_revision, type: server, permission: plm.manage, action: plm.revisions.release, handler: order_transition, workflow: plm_revisions, operation: release, refresh: [plm_revisions] }
+  - { id: reject_plm_revision, type: server, permission: plm.manage, action: plm.revisions.reject, handler: order_transition, workflow: plm_revisions, operation: reject, refresh: [plm_revisions] }

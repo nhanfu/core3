@@ -1,0 +1,16 @@
+workflow:
+  id: inventory_moves
+  entity: inventory_moves
+  handler: order_transition
+  initial: Draft
+  permission: inventory.write
+  mutable: true
+  status_source: inventory_move_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Waiting, label: Waiting, color: amber }
+    - { id: Done, label: Done, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - { id: validate, from: [Draft, Waiting], to: Done, permission: inventory.write }
+    - { id: cancel, from: [Draft, Waiting], to: Cancelled, permission: inventory.write }

@@ -1,0 +1,4 @@
+permissions:
+  - rental.read
+  - rental.write
+  - rental.manage

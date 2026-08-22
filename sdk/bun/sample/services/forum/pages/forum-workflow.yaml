@@ -1,0 +1,45 @@
+workflow:
+  id: forum_posts
+  entity: forum_posts
+  handler: order_transition
+  initial: Active
+  permission: forum.write
+  mutable: true
+  status_source: forum_post_states
+  states:
+    - { id: Active, label: Active, color: green }
+    - { id: Closed, label: Closed, color: neutral }
+    - { id: Flagged, label: Flagged, color: red }
+  transitions:
+    - id: close
+      from: [Active]
+      to: Closed
+      permission: forum.write
+      mutation:
+        guards: [{ query: "SELECT id FROM forum_posts WHERE id = :id AND state = 'Active'", status: 409, message: Only active questions can be closed }]
+        steps: [{ query: "UPDATE forum_posts SET state = 'Closed', closed_reason = 'Closed by moderator', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
+    - id: reopen
+      from: [Closed]
+      to: Active
+      permission: forum.write
+      mutation:
+        guards: [{ query: "SELECT id FROM forum_posts WHERE id = :id AND state = 'Closed'", status: 409, message: Only closed questions can be reopened }]
+        steps: [{ query: "UPDATE forum_posts SET state = 'Active', closed_reason = NULL, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
+    - id: flag
+      from: [Active]
+      to: Flagged
+      permission: forum.write
+      mutation:
+        guards: [{ query: "SELECT id FROM forum_posts WHERE id = :id AND state = 'Active'", status: 409, message: Only active questions can be flagged }]
+        steps: [{ query: "UPDATE forum_posts SET state = 'Flagged', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
+    - id: unflag
+      from: [Flagged]
+      to: Active
+      permission: forum.write
+      mutation:
+        guards: [{ query: "SELECT id FROM forum_posts WHERE id = :id AND state = 'Flagged'", status: 409, message: Only flagged questions can be unflagged }]
+        steps: [{ query: "UPDATE forum_posts SET state = 'Active', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM forum_posts WHERE id = :id" }

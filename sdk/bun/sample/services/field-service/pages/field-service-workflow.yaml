@@ -1,0 +1,47 @@
+workflow:
+  id: field_service_tasks
+  entity: field_service_tasks
+  handler: order_transition
+  initial: New
+  permission: field-service.write
+  mutable: true
+  status_source: field_service_states
+  states:
+    - { id: New, label: New, color: neutral }
+    - { id: Assigned, label: Assigned, color: amber }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Completed, label: Completed, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: assign
+      from: [New]
+      to: Assigned
+      permission: field-service.write
+      mutation:
+        guards: [{ query: "SELECT id FROM field_service_tasks WHERE id = :id AND state = 'New'", status: 409, message: Only new field tasks can be assigned }]
+        steps: [{ query: "UPDATE field_service_tasks SET state = 'Assigned', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM field_service_tasks WHERE id = :id" }
+    - id: start
+      from: [Assigned]
+      to: In Progress
+      permission: field-service.write
+      mutation:
+        guards: [{ query: "SELECT id FROM field_service_tasks WHERE id = :id AND state = 'Assigned'", status: 409, message: Only assigned field tasks can start }]
+        steps: [{ query: "UPDATE field_service_tasks SET state = 'In Progress', started_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM field_service_tasks WHERE id = :id" }
+    - id: complete
+      from: [In Progress]
+      to: Completed
+      permission: field-service.write
+      mutation:
+        guards: [{ query: "SELECT id FROM field_service_tasks WHERE id = :id AND state = 'In Progress'", status: 409, message: Only active field tasks can be completed }]
+        steps: [{ query: "UPDATE field_service_tasks SET state = 'Completed', completed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM field_service_tasks WHERE id = :id" }
+    - id: cancel
+      from: [New, Assigned, In Progress]
+      to: Cancelled
+      permission: field-service.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM field_service_tasks WHERE id = :id AND state IN ('New', 'Assigned', 'In Progress')", status: 409, message: Only open field tasks can be cancelled }]
+        steps: [{ query: "UPDATE field_service_tasks SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM field_service_tasks WHERE id = :id" }

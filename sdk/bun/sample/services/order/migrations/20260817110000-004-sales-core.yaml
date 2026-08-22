@@ -1,0 +1,48 @@
+version: 0.0.4
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_reference VARCHAR;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS validity_date DATE;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS commitment_date DATE;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS pricelist_name VARCHAR;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_status VARCHAR;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS locked BOOLEAN;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS require_signature BOOLEAN;
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS require_payment BOOLEAN;
+      CREATE TABLE IF NOT EXISTS sale_products (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR UNIQUE, name VARCHAR NOT NULL, product_type VARCHAR NOT NULL DEFAULT 'Goods',
+        list_price DECIMAL(18,2) NOT NULL DEFAULT 0, cost_price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        uom VARCHAR NOT NULL DEFAULT 'Units', category VARCHAR, sale_ok BOOLEAN NOT NULL DEFAULT true,
+        active BOOLEAN NOT NULL DEFAULT true, description VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS sale_pricelists (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, currency VARCHAR NOT NULL DEFAULT 'USD', discount_policy VARCHAR NOT NULL DEFAULT 'Discount included',
+        active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS sale_pricelist_items (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), pricelist_id VARCHAR NOT NULL,
+        product_id VARCHAR, min_quantity DECIMAL(18,3) NOT NULL DEFAULT 1,
+        fixed_price DECIMAL(18,2), percentage_discount DECIMAL(9,4), date_start DATE, date_end DATE
+      );
+      CREATE TABLE IF NOT EXISTS sale_invoices (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), order_id VARCHAR NOT NULL,
+        invoice_number VARCHAR NOT NULL UNIQUE, state VARCHAR NOT NULL DEFAULT 'Draft',
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0, invoice_date DATE, due_date DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_sale_products_active ON sale_products(active);
+      CREATE INDEX IF NOT EXISTS idx_sale_pricelist_items_product ON sale_pricelist_items(product_id);
+      CREATE INDEX IF NOT EXISTS idx_sale_invoices_order ON sale_invoices(order_id);
+    down: |
+      DROP TABLE IF EXISTS sale_invoices;
+      DROP TABLE IF EXISTS sale_pricelist_items;
+      DROP TABLE IF EXISTS sale_pricelists;
+      DROP TABLE IF EXISTS sale_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

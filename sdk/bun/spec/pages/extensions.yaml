@@ -1,0 +1,101 @@
+title: YShip — Extension Points
+page:
+  id: doc-extensions
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      articleType: How-to guide
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: How-to guides
+        - label: Extension points
+      eyebrow: Extension points
+      title: Custom components in the spec project
+    sections:
+      - id: doc-components
+        kicker: client/src/doc
+        title: Shared document components
+        lead: >-
+          Document-style projects (like this one) get their own small component
+          family under @core3/client/doc, separate from the ERP grid/form
+          components used by services such as the sample order app.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Layout
+                title: DocTopNav
+                body: Sticky global navigation bar. Mounted once by the host shell, outside PageRuntime, so it stays constant across every route.
+              - tag: Layout
+                title: DocHero
+                body: Page-top hero — eyebrow, title, subtitle, and an optional stat rail on the home variant.
+              - tag: Content
+                title: DocPage
+                body: Renders a sidebar-linked list of sections built from small content blocks — paragraph, list, card grid, code panel, table, flow strip.
+
+      - id: registering
+        kicker: Registry
+        title: Registering a project-specific component
+        lead: >-
+          PageRuntime accepts a Map<string, Ctor> of custom component types. Any
+          component type not built into the framework falls back to this
+          registry, so a project can add its own without touching @core3/client.
+        blocks:
+          - type: panel
+            title: public/app.ts
+            language: ts
+            code: |
+              import { PageRuntime } from '@core3/client/components/PageRoot';
+              import { DocPage } from '@core3/client/doc/DocPage';
+
+              const registry = new Map<string, any>();
+              registry.set('DocPage', DocPage);
+
+              await new PageRuntime(pageConfig, registry).render(contentEl);
+          - type: panel
+            title: server.ts
+            language: ts
+            code: |
+              import { registerPageComponentSchema } from '@core3/server/yaml/schema';
+
+              // Declares the top-level keys "DocPage" accepts in YAML so the
+              // shared page schema still validates project-specific content.
+              registerPageComponentSchema('DocPage', ['hero', 'sections']);
+          - type: p
+            text: >-
+              Every page in this spec project — this one included — is a plain
+              YAML file under pages/ that only ever declares a single DocPage
+              component. There is no per-page HTML, CSS, or JS.
+
+      - id: blocks
+        kicker: Reference
+        title: DocPage block types
+        blocks:
+          - type: table
+            headers: [Block type, Fields, Renders as]
+            rows:
+              - [p, 'text', A paragraph]
+              - [list, 'items[]', An unordered list]
+              - [cardgrid, 'cards[] (tag, title, body, items[])', A responsive card grid]
+              - [panel, 'title, language, code', A titled code panel]
+              - [table, 'headers[], rows[][]', A data table]
+              - [flowstrip, 'steps[] (label, sub)', A numbered horizontal flow]
+              - [callout, 'tone, title, text', A highlighted note or warning box]
+          - type: callout
+            tone: note
+            title: This box is a callout block
+            text: >-
+              It's declared the same way as every other block: {type: callout, tone: note, title:
+              ..., text: ...} inside a section's blocks array. No new component was registered for
+              it — it's just a new case in DocPage's own block renderer.
+          - type: callout
+            tone: warning
+            title: Keep block schemas shallow
+            text: >-
+              For custom registry-backed types like DocPage, validatePageDefinition only checks
+              top-level keys against the registered schema — nested block content (like this one)
+              isn't deep-validated, so keep block authors honest with TypeScript types in
+              DocPage.ts rather than server validation. Built-in types (ListView, OdooFormView, ...)
+              do get deeper nested validation in schema.ts.

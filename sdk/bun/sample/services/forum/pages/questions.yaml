@@ -1,0 +1,73 @@
+title: Forum Questions
+page: { id: forum-questions, breadcrumb: [Website, Forum, Questions], auth: { require: [forum.read] } }
+datasources:
+  - id: forum_post_states
+    permission: forum.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Closed','Closed'), ('Flagged','Flagged')) states(value, label)"
+  - id: forum_lookup
+    permission: forum.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM forum_forums ORDER BY name"
+  - id: forum_posts
+    permission: forum.read
+    workflow: forum_posts
+    query: "SELECT id, row_version, forum_id, forum_name, title, author_name, tags, views, vote_count, answer_count, state FROM forum_posts WHERE (:q IS NULL OR title ILIKE '%' || :q || '%' OR author_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: forum_posts
+    create_action: create_forum_post
+    create_label: New question
+    search: { label: Search questions, placeholder: 'Search title, author, or tag...' }
+    filters: [{ field: state, label: Status, options_source: forum_post_states }]
+    columns:
+      - { field: title, label: Question, type: PrimaryEntityCell }
+      - { field: forum_name, label: Forum }
+      - { field: author_name, label: Author }
+      - { field: tags, label: Tags }
+      - { field: views, label: Views, align: right }
+      - { field: vote_count, label: Votes, align: right }
+      - { field: answer_count, label: Answers, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_forum_post
+    actions:
+      - { id: close_forum_post, label: Close, permission: forum.write, variant: secondary, show_if: "row.state === 'Active'" }
+      - { id: reopen_forum_post, label: Reopen, permission: forum.write, variant: primary, show_if: "row.state === 'Closed'" }
+      - { id: flag_forum_post, label: Flag, permission: forum.write, variant: danger, show_if: "row.state === 'Active'" }
+      - { id: unflag_forum_post, label: Unflag, permission: forum.write, variant: secondary, show_if: "row.state === 'Flagged'" }
+actions:
+  - id: create_forum_post
+    type: server_form
+    permission: forum.write
+    title: New question
+    action: forum.posts.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [forum_posts]
+    mutation:
+      operation: insert
+      table: forum_posts
+      fields: [forum_id, forum_name, title, content, author_name, tags]
+      required: [forum_id, forum_name, title]
+      guards: [{ query: "SELECT 1 AS ok FROM forum_forums WHERE id = :forum_id", status: 400, message: A valid forum is required }]
+      result: { query: "SELECT * FROM forum_posts WHERE id = :id" }
+    fields:
+      - { field: forum_id, label: Forum, type: select, options_source: forum_lookup, required: true }
+      - { field: forum_name, label: Forum name, type: text, required: true }
+      - { field: title, label: Title, type: text, required: true }
+      - { field: content, label: Content, type: textarea }
+      - { field: author_name, label: Author, type: text }
+      - { field: tags, label: Tags, type: text }
+  - id: view_forum_post
+    type: navigate
+    permission: forum.read
+    navigate_to: /forum-question-detail
+    params: { id: '{row.id}' }
+  - { id: close_forum_post, type: server, permission: forum.write, action: forum.posts.close, handler: order_transition, workflow: forum_posts, operation: close, refresh: [forum_posts] }
+  - { id: reopen_forum_post, type: server, permission: forum.write, action: forum.posts.reopen, handler: order_transition, workflow: forum_posts, operation: reopen, refresh: [forum_posts] }
+  - { id: flag_forum_post, type: server, permission: forum.write, action: forum.posts.flag, handler: order_transition, workflow: forum_posts, operation: flag, refresh: [forum_posts] }
+  - { id: unflag_forum_post, type: server, permission: forum.write, action: forum.posts.unflag, handler: order_transition, workflow: forum_posts, operation: unflag, refresh: [forum_posts] }

@@ -1,0 +1,41 @@
+title: Blogs
+page: { id: blog, breadcrumb: [Website, Blog, Blogs], auth: { require: [blog.read] } }
+datasources:
+  - id: blog_blogs
+    permission: blog.read
+    query: "SELECT b.id, b.row_version, b.name, b.subtitle, b.active, b.sequence, (SELECT COUNT(*) FROM blog_posts p WHERE p.blog_id = b.id) AS post_count FROM blog_blogs b WHERE (:q IS NULL OR b.name ILIKE '%' || :q || '%' OR b.subtitle ILIKE '%' || :q || '%') ORDER BY b.sequence, b.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: blog_blogs
+    create_action: create_blog
+    create_label: New blog
+    search: { label: Search blogs, placeholder: 'Search blog name or subtitle...' }
+    columns:
+      - { field: name, label: Blog, type: PrimaryEntityCell }
+      - { field: subtitle, label: Subtitle }
+      - { field: post_count, label: Posts, align: right }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: active, label: Active }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_blog
+    type: server_form
+    permission: blog.write
+    title: New blog
+    action: blog.blogs.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [blog_blogs]
+    mutation:
+      operation: insert
+      table: blog_blogs
+      fields: [name, subtitle, active, sequence]
+      required: [name]
+      result: { query: "SELECT * FROM blog_blogs WHERE id = :id" }
+    fields:
+      - { field: name, label: Blog name, type: text, required: true }
+      - { field: subtitle, label: Subtitle, type: text }
+      - { field: active, label: Active, type: checkbox }
+      - { field: sequence, label: Sequence, type: number }

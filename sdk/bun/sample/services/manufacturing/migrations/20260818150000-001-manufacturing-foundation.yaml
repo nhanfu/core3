@@ -1,0 +1,42 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS mrp_boms (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        product_quantity DECIMAL(18,3) NOT NULL DEFAULT 1, uom VARCHAR NOT NULL DEFAULT 'Units',
+        version VARCHAR NOT NULL DEFAULT '1.0', state VARCHAR NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(product_id, version)
+      );
+      CREATE TABLE IF NOT EXISTS mrp_bom_lines (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), bom_id VARCHAR NOT NULL,
+        component_id VARCHAR, component_name VARCHAR NOT NULL, quantity DECIMAL(18,3) NOT NULL DEFAULT 1,
+        uom VARCHAR NOT NULL DEFAULT 'Units', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS mrp_productions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        bom_id VARCHAR, quantity DECIMAL(18,3) NOT NULL DEFAULT 1,
+        qty_produced DECIMAL(18,3) NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Draft',
+        planned_date DATE DEFAULT CURRENT_DATE, reference VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS mrp_workorders (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        production_id VARCHAR NOT NULL, name VARCHAR NOT NULL, workcenter VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10, expected_duration DECIMAL(18,2) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_mrp_boms_product ON mrp_boms(product_id, product_name);
+      CREATE INDEX IF NOT EXISTS idx_mrp_bom_lines_bom ON mrp_bom_lines(bom_id);
+      CREATE INDEX IF NOT EXISTS idx_mrp_productions_state ON mrp_productions(state);
+      CREATE INDEX IF NOT EXISTS idx_mrp_workorders_production ON mrp_workorders(production_id);
+    down: |
+      DROP TABLE IF EXISTS mrp_workorders;
+      DROP TABLE IF EXISTS mrp_productions;
+      DROP TABLE IF EXISTS mrp_bom_lines;
+      DROP TABLE IF EXISTS mrp_boms;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

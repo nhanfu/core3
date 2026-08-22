@@ -1,0 +1,4 @@
+permissions:
+  - livechat.read
+  - livechat.write
+  - livechat.manage

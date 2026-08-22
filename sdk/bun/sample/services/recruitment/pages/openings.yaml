@@ -1,0 +1,48 @@
+title: Job Openings
+page: { id: openings, breadcrumb: [Human Resources, Recruitment, Job Openings], auth: { require: [recruitment.read] } }
+datasources:
+  - id: recruitment_openings
+    permission: recruitment.read
+    query: "SELECT id, row_version, name, department_name, job_title, employment_type, target_hires, hired_count, recruiter, state, CAST(opened_date AS VARCHAR) AS opened_date, CAST(closing_date AS VARCHAR) AS closing_date FROM recruitment_openings WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR job_title ILIKE '%' || :q || '%') ORDER BY opened_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: recruitment_openings
+    create_action: create_recruitment_opening
+    create_label: New job opening
+    search: { label: Search job openings, placeholder: Search openings or roles... }
+    columns:
+      - { field: name, label: Opening, type: PrimaryEntityCell }
+      - { field: job_title, label: Job title }
+      - { field: department_name, label: Department }
+      - { field: employment_type, label: Type }
+      - { field: target_hires, label: Target, align: right }
+      - { field: hired_count, label: Hired, align: right }
+      - { field: recruiter, label: Recruiter }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_recruitment_opening
+    type: server_form
+    permission: recruitment.manage
+    title: New job opening
+    action: recruitment.openings.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_openings]
+    mutation:
+      operation: insert
+      table: recruitment_openings
+      fields: [name, department_name, job_title, employment_type, target_hires, recruiter, opened_date, closing_date]
+      required: [name, job_title]
+      result: { query: "SELECT * FROM recruitment_openings WHERE id = :id" }
+    fields:
+      - { field: name, label: Opening, type: text, required: true }
+      - { field: department_name, label: Department, type: text }
+      - { field: job_title, label: Job title, type: text, required: true }
+      - { field: employment_type, label: Employment type, type: select, options: [{ value: Employee, label: Employee }, { value: Contractor, label: Contractor }] }
+      - { field: target_hires, label: Target hires, type: number }
+      - { field: recruiter, label: Recruiter, type: text }
+      - { field: opened_date, label: Opened date, type: text }
+      - { field: closing_date, label: Closing date, type: text }

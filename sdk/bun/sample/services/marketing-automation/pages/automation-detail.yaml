@@ -1,0 +1,38 @@
+title: Marketing Automation
+page: { id: automation-detail, breadcrumb: [Marketing, Marketing Automation, Detail], auth: { require: [marketing_automation.read] } }
+datasources:
+  - id: automation_detail
+    single: true
+    permission: marketing_automation.read
+    query: "SELECT id, row_version, name, trigger_type, trigger_definition, action_type, action_definition, audience_description, enrollment_count, completed_count, state, CAST(published_at AS VARCHAR) AS published_at FROM marketing_automations WHERE id = :id"
+  - id: automation_enrollments
+    permission: marketing_automation.read
+    query: "SELECT id, contact_name, contact_email, state, result, CAST(enrolled_at AS VARCHAR) AS enrolled_at, CAST(completed_at AS VARCHAR) AS completed_at FROM automation_enrollments WHERE automation_id = :id ORDER BY enrolled_at DESC"
+components:
+  - type: OdooFormView
+    source: automation_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Running, label: Running }, { value: Completed, label: Completed }, { value: Paused, label: Paused }]
+    status_colors: { Draft: neutral, Published: blue, Running: amber, Completed: green, Paused: red }
+    group_columns: 2
+    groups:
+      - title: Journey
+        fields: [{ field: name, label: Automation }, { field: state, label: Status }, { field: trigger_type, label: Trigger }, { field: trigger_definition, label: Trigger definition }, { field: action_type, label: Action }, { field: action_definition, label: Action definition }]
+      - title: Audience
+        fields: [{ field: audience_description, label: Audience }, { field: enrollment_count, label: Enrolled }, { field: completed_count, label: Completed }, { field: published_at, label: Published at }]
+  - type: ContactGrid
+    source: automation_enrollments
+    row_key: id
+    columns:
+      - { field: contact_name, label: Contact, type: PrimaryEntityCell }
+      - { field: contact_email, label: Email }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: result, label: Result }
+      - { field: enrolled_at, label: Enrolled at }
+      - { field: completed_at, label: Completed at }
+actions:
+  - { id: publish_automation_detail, type: server, permission: marketing_automation.write, action: marketing_automation.records.publish, handler: order_transition, workflow: marketing_automations, operation: publish, params: { id: '{state.id}' }, refresh: [automation_detail] }
+  - { id: run_automation_detail, type: server, permission: marketing_automation.write, action: marketing_automation.records.run, handler: order_transition, workflow: marketing_automations, operation: run, params: { id: '{state.id}' }, refresh: [automation_detail] }
+  - { id: complete_automation_detail, type: server, permission: marketing_automation.manage, action: marketing_automation.records.complete, handler: order_transition, workflow: marketing_automations, operation: complete, params: { id: '{state.id}' }, refresh: [automation_detail] }
+  - { id: pause_automation_detail, type: server, permission: marketing_automation.write, action: marketing_automation.records.pause, handler: order_transition, workflow: marketing_automations, operation: pause, params: { id: '{state.id}' }, refresh: [automation_detail] }

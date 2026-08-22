@@ -1,0 +1,83 @@
+title: CRM Configuration
+page: { id: configuration, breadcrumb: [CRM, Configuration], auth: { require: [crm.manage] } }
+datasources:
+  - id: crm_stage_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT id, name, sequence, probability, fold, requirements FROM crm_stages ORDER BY sequence"
+  - id: crm_lost_reason_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT id, name, active FROM crm_lost_reasons ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_stage_configuration
+    create_action: create_crm_stage
+    create_label: New stage
+    columns:
+      - { field: name, label: Stage, type: PrimaryEntityCell }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: probability, label: Probability, align: right }
+      - { field: fold, label: Folded, type: StatusChip }
+      - { field: requirements, label: Requirements }
+    page_size: 50
+    row_key: id
+  - type: ListView
+    variant: odoo
+    source: crm_lost_reason_configuration
+    create_action: create_crm_lost_reason
+    create_label: New lost reason
+    columns:
+      - { field: name, label: Lost reason, type: PrimaryEntityCell }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_crm_stage
+    type: server_form
+    permission: crm.manage
+    title: New CRM stage
+    action: crm.stages.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_stage_configuration]
+    mutation:
+      operation: insert
+      table: crm_stages
+      fields: [name, sequence, probability, fold, requirements]
+      required: [name]
+      defaults: { sequence: 10, probability: 10, fold: false }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_stages WHERE name = :name)"
+          status: 409
+          message: CRM stage already exists
+      result: { query: "SELECT * FROM crm_stages WHERE id = :id" }
+    fields:
+      - { field: name, label: Stage name, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 10 }
+      - { field: probability, label: Probability, type: number, default: 10 }
+      - { field: fold, label: Fold stage, type: checkbox }
+      - { field: requirements, label: Requirements, type: textarea }
+  - id: create_crm_lost_reason
+    type: server_form
+    permission: crm.manage
+    title: New lost reason
+    action: crm.lost_reasons.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_lost_reason_configuration]
+    mutation:
+      operation: insert
+      table: crm_lost_reasons
+      fields: [name, active]
+      required: [name]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_lost_reasons WHERE name = :name)"
+          status: 409
+          message: Lost reason already exists
+      result: { query: "SELECT * FROM crm_lost_reasons WHERE id = :id" }
+    fields:
+      - { field: name, label: Lost reason, type: text, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }

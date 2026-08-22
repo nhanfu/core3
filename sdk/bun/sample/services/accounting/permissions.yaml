@@ -1,0 +1,4 @@
+permissions:
+  - accounting.read
+  - accounting.write
+  - accounting.manage

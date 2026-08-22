@@ -1,0 +1,11 @@
+id: expenses
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/expenses.yaml
+  - pages/analysis.yaml
+  - pages/expense-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

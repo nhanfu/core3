@@ -1,0 +1,54 @@
+workflow:
+  id: pos_sessions
+  entity: pos_sessions
+  handler: pos_session_status
+  initial: Opening Control
+  permission: pos.write
+  mutable: true
+  status_source: pos_session_states
+  status_query: SELECT state AS status FROM pos_sessions WHERE id = ?
+  default_mutation:
+    guards:
+      - query: "SELECT id FROM pos_sessions WHERE id = :id AND state = :current_status"
+        status: 409
+        message: POS session changed; refresh and try again
+    steps:
+      - query: "UPDATE pos_sessions SET state = :target_status, row_version = row_version + 1 WHERE id = :id"
+    result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
+  states:
+    - { id: Opening Control, label: Opening Control, color: neutral }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Closing Control, label: Closing Control, color: amber }
+    - { id: Closed & Posted, label: Closed & Posted, color: green, terminal: true }
+  transitions:
+    - id: open
+      from: [Opening Control]
+      to: In Progress
+      permission: pos.write
+      mutation:
+        steps:
+          - query: "UPDATE pos_sessions SET state = 'In Progress', opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP), row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
+    - id: start_closing
+      from: [In Progress]
+      to: Closing Control
+      permission: pos.write
+      mutation:
+        steps:
+          - query: "UPDATE pos_sessions SET state = 'Closing Control', row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
+    - id: close
+      from: [Closing Control]
+      to: Closed & Posted
+      permission: pos.manage
+      mutation:
+        guards:
+          - query: "SELECT id FROM pos_sessions WHERE id = :id AND state = 'Closing Control'"
+            status: 409
+            message: Only closing sessions can be posted
+          - query: "SELECT 1 AS ok WHERE :balance_end IS NOT NULL AND CAST(:balance_end AS DECIMAL(18,2)) >= 0"
+            status: 400
+            message: Closing balance is required and cannot be negative
+        steps:
+          - query: "UPDATE pos_sessions SET state = 'Closed & Posted', balance_end = :balance_end, closed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }

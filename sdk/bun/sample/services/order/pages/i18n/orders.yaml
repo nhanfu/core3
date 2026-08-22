@@ -1,0 +1,93 @@
+vi:
+  Orders: Đơn hàng
+  Management: Quản lý
+  + Add order: + Thêm đơn hàng
+  New: Mới
+  Search orders: Tìm kiếm đơn hàng
+  "Search order number, customer, item name...": "Tìm mã đơn, khách hàng, tên hàng..."
+  From date: Từ ngày
+  To date: Đến ngày
+  Shipment type: Loại hình
+  All shipment types: Tất cả loại hình
+  Transport method: Hình thức
+  All transport methods: Tất cả hình thức
+  Road: Đường bộ
+  Sea: Đường biển
+  Rail: Đường sắt
+  Air: Hàng không
+  Export CSV: Xuất CSV
+  Export: Xuất Excel
+  Filters: Bộ lọc
+  Columns: Cột
+  selected: đã chọn
+  Clear selection: Bỏ chọn
+  Remove filter: Xóa bộ lọc
+  Previous page: Trang trước
+  Next page: Trang sau
+  Select all rows: Chọn tất cả dòng
+  Select row: Chọn dòng
+  Search: Tìm kiếm
+  Apply: Áp dụng
+  Last 12 months: 12 tháng qua
+  Previous date picker month: Tháng trước
+  Next date picker month: Tháng sau
+  Mo: T2
+  Tu: T3
+  We: T4
+  Th: T5
+  Fr: T6
+  Sa: T7
+  Su: CN
+  More actions: Thao tác khác
+  All statuses: Tất cả trạng thái
+  Today: Hôm nay
+  This week: Tuần này
+  This month: Tháng này
+  This quarter: Quý này
+  This year: Năm nay
+  All dates: Tất cả thời gian
+  All: Tất cả
+  Draft: Nháp
+  Pending approval: Đang duyệt
+  Approved: Đã duyệt
+  Cancelled: Đã hủy
+  No orders: Không có đơn hàng
+  Try changing the filters or create a new order.: Thử thay đổi bộ lọc hoặc tạo đơn hàng mới.
+  Code: Mã
+  Order number: Mã HT
+  Customer: Khách hàng
+  Order date: Ngày đơn
+  Status: Trạng thái
+  Route: Tuyến
+  Trip count: Số chuyến
+  Total amount: Tổng tiền
+  Created by: Người tạo
+  Created at: Ngày giờ tạo
+  Details: Chi tiết
+  Edit: Sửa
+  Submit for approval: Trình duyệt
+  Approve: Duyệt
+  Reject: Từ chối
+  Cancel: Hủy
+  Delete: Xóa
+  Add order: Thêm đơn hàng
+  Legal name: Tên pháp lý
+  Notes: Ghi chú
+  "Search customers...": "Tìm khách hàng..."
+  Update order: Cập nhật đơn hàng
+  "Submit order {{row.order_number}}?": "Trình duyệt đơn hàng {{row.order_number}}?"
+  "Approve order {{row.order_number}}?": "Duyệt đơn hàng {{row.order_number}}?"
+  "Reject and return order {{row.order_number}} to draft?": "Từ chối và trả đơn hàng {{row.order_number}} về trạng thái nháp?"
+  "Cancel order {{row.order_number}}?": "Hủy đơn hàng {{row.order_number}}?"
+  "Delete order {{row.order_number}}?": "Xóa đơn hàng {{row.order_number}}?"
+  Add status: Thêm trạng thái
+  Edit status: Sửa trạng thái
+  Status name: Tên trạng thái
+  Enter a status name: Nhập tên trạng thái
+  Can move from: Có thể chuyển từ
+  Can move to: Có thể chuyển đến
+  Save status: Lưu trạng thái
+  Delete status: Xóa trạng thái
+  Choose the status that should receive these orders.: Chọn trạng thái nhận các đơn hàng này.
+  Move orders to: Chuyển đơn hàng đến
+  Delete and move orders: Xóa và chuyển đơn hàng

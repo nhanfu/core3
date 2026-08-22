@@ -1,0 +1,12 @@
+id: spreadsheet
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/dashboards.yaml
+  - pages/dashboard-detail.yaml
+  - pages/analysis.yaml
+  - pages/dashboard-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

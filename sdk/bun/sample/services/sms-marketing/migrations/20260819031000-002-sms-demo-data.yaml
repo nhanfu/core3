@@ -1,0 +1,15 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO sms_lists(id, name, description, opt_in_count) VALUES ('sms-list-demo-001', 'Opt-in Customers', 'Customers who consented to SMS updates', 840);
+      INSERT OR IGNORE INTO sms_campaigns(id, name, title, sender_name, list_id, list_name, message, recipient_count, state)
+      VALUES ('sms-campaign-demo-001', 'SMS/2026/0001', 'Service update', 'Core3', 'sms-list-demo-001', 'Opt-in Customers', 'Your service update is ready.', 840, 'Draft');
+    down: |
+      DELETE FROM sms_campaigns WHERE id = 'sms-campaign-demo-001';
+      DELETE FROM sms_lists WHERE id = 'sms-list-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

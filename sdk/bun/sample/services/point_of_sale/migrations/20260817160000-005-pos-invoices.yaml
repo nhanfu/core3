@@ -1,0 +1,16 @@
+version: 0.0.5
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_invoices (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), order_id VARCHAR NOT NULL,
+        invoice_number VARCHAR NOT NULL UNIQUE, state VARCHAR NOT NULL DEFAULT 'Posted',
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0, invoice_date DATE DEFAULT CURRENT_DATE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_invoices_order ON pos_invoices(order_id);
+    down: DROP TABLE IF EXISTS pos_invoices;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

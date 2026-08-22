@@ -1,0 +1,43 @@
+title: User
+page: { id: user-detail, breadcrumb: [Settings, Users, Detail], auth: { require: [auth.users.manage] } }
+datasources:
+  - id: user_detail
+    type: service
+    service: auth
+    operation: users.manage
+    single: true
+    service_params: { query: id, limit: 1 }
+    permission: auth.users.manage
+  - id: user_languages
+    permission: base.reference.read
+    query: "SELECT code, name FROM base_languages UNION SELECT 'en' AS code, 'English' AS name ORDER BY name"
+  - id: user_roles
+    type: service
+    service: auth
+    operation: roles.manage
+    permission: auth.users.manage
+components:
+  - type: OdooFormView
+    source: user_detail
+    title_field: name
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions: [{ id: edit_user_detail, label: Edit, variant: secondary, permission: auth.users.manage }]
+    group_columns: 2
+    groups:
+      - title: User
+        fields: [{ field: name, label: Name }, { field: email, label: Email }, { field: enabled, label: Active, type: checkbox }, { field: preferred_lang, label: Language, type: async-select, options_source: user_languages }, { field: role_ids, label: Groups, type: multi-select, options_source: user_roles, wide: true }]
+      - title: Company
+        fields: [{ field: company_name, label: Current company }, { field: current_company_id, label: Company ID }]
+actions:
+  - id: edit_user_detail
+    type: server_form
+    permission: auth.users.manage
+    title: Edit user
+    action: auth.users.update
+    handler: service_call
+    service: auth
+    service_operation: users.update
+    operation: update
+    prefill: state.user_detail
+    refresh: [user_detail]
+    fields: [{ field: name, label: Name, type: text, required: true }, { field: email, label: Email, type: text, required: true }, { field: preferred_lang, label: Language, type: async-select, options_source: user_languages, placeholder: Choose a language }, { field: enabled, label: Active, type: checkbox }, { field: role_ids, label: Groups, type: multi-select, options_source: user_roles, wide: true, placeholder: Choose one or more groups }]

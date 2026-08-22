@@ -1,0 +1,17 @@
+version: 0.0.2
+type:
+  postgres:
+    up: |
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS source_service VARCHAR;
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS source_type VARCHAR;
+      ALTER TABLE accounting_invoices ADD COLUMN IF NOT EXISTS source_id VARCHAR;
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_accounting_invoice_source ON accounting_invoices(source_service, source_type, source_id);
+    down: |
+      DROP INDEX IF EXISTS uq_accounting_invoice_source;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS source_id;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS source_type;
+      ALTER TABLE accounting_invoices DROP COLUMN IF EXISTS source_service;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

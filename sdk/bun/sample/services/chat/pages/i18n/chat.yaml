@@ -1,0 +1,14 @@
+vi:
+  Message: Tin nhắn
+  Executive: Điều hành
+  + Conversations: + Cuộc trò chuyện
+  "Find conversations...": "Tìm cuộc trò chuyện..."
+  Create a conversation: Tạo cuộc trò chuyện
+  Name of the conversation: Tên cuộc trò chuyện
+  Participant email (separated by commas): Email người tham gia (phân cách bằng dấu phẩy)
+  A valid conversation title and participant list are required: Cần có tên cuộc trò chuyện và danh sách người tham gia hợp lệ
+  One or more participants were not found: Không tìm thấy một hoặc nhiều người tham gia
+  Conversation changed; reload it before sending: Cuộc trò chuyện đã thay đổi; hãy tải lại trước khi gửi
+  message content must be between 1 and 4000 characters: Nội dung tin nhắn phải dài từ 1 đến 4000 ký tự
+  Chat thread not found: Không tìm thấy cuộc trò chuyện
+  Conversation changed; reload it before uploading: Cuộc trò chuyện đã thay đổi; hãy tải lại trước khi tải tệp lên

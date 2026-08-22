@@ -1,0 +1,46 @@
+title: Equipment
+page: { id: equipment, breadcrumb: [Supply Chain, Maintenance, Equipment], auth: { require: [maintenance.read] } }
+datasources:
+  - id: maintenance_equipment
+    permission: maintenance.read
+    query: "SELECT id, row_version, name, serial_number, category, location, technician, preventive_interval_days, CAST(next_preventive_date AS VARCHAR) AS next_preventive_date, state FROM maintenance_equipment WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR serial_number ILIKE '%' || :q || '%') ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_equipment
+    create_action: create_maintenance_equipment
+    create_label: New equipment
+    search: { label: Search equipment, placeholder: Search equipment... }
+    columns:
+      - { field: name, label: Equipment, type: PrimaryEntityCell }
+      - { field: serial_number, label: Serial number }
+      - { field: category, label: Category }
+      - { field: location, label: Location }
+      - { field: technician, label: Technician }
+      - { field: next_preventive_date, label: Next preventive date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_maintenance_equipment
+    type: server_form
+    permission: maintenance.manage
+    title: New equipment
+    action: maintenance.equipment.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [maintenance_equipment]
+    mutation:
+      operation: insert
+      table: maintenance_equipment
+      fields: [name, serial_number, category, location, technician, preventive_interval_days, next_preventive_date]
+      required: [name]
+      result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" }
+    fields:
+      - { field: name, label: Equipment, type: text, required: true }
+      - { field: serial_number, label: Serial number, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: location, label: Location, type: text }
+      - { field: technician, label: Technician, type: text }
+      - { field: preventive_interval_days, label: Preventive interval days, type: number }
+      - { field: next_preventive_date, label: Next preventive date, type: text }

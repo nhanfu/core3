@@ -1,0 +1,21 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS fleet_vehicles (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        license_plate VARCHAR NOT NULL UNIQUE, vehicle_type VARCHAR NOT NULL DEFAULT 'Car',
+        model VARCHAR, manufacturer VARCHAR, driver_employee_id VARCHAR, driver_name VARCHAR,
+        odometer DECIMAL(18,3) NOT NULL DEFAULT 0, fuel_type VARCHAR, acquisition_date DATE,
+        contract_end_date DATE, state VARCHAR NOT NULL DEFAULT 'Available',
+        row_version BIGINT NOT NULL DEFAULT 1, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS fleet_vehicles_state_idx ON fleet_vehicles(state);
+      CREATE INDEX IF NOT EXISTS fleet_vehicles_driver_idx ON fleet_vehicles(driver_employee_id);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicles;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

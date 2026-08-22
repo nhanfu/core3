@@ -1,0 +1,21 @@
+title: Forum Analysis
+page: { id: forum-analysis, breadcrumb: [Website, Forum, Analysis], auth: { require: [forum.read] } }
+datasources:
+  - id: forum_analysis_totals
+    single: true
+    permission: forum.read
+    query: "SELECT (SELECT COUNT(*) FROM forum_forums) AS forum_count, COUNT(*) AS question_count, COALESCE(SUM(views), 0) AS total_views, COALESCE(SUM(vote_count), 0) AS total_votes, COALESCE(SUM(answer_count), 0) AS total_answers FROM forum_posts"
+  - id: forum_analysis_states
+    permission: forum.read
+    query: "SELECT state AS category, COUNT(*) AS question_count FROM forum_posts GROUP BY state ORDER BY question_count DESC"
+components:
+  - type: StatRow
+    source: forum_analysis_totals
+    title: Forum overview
+    stats: [{ label: Forums, field: forum_count }, { label: Questions, field: question_count }, { label: Views, field: total_views }, { label: Answers, field: total_answers }]
+  - type: Chart
+    source: forum_analysis_states
+    title: Questions by status
+    label_field: category
+    value_field: question_count
+    variant: bar

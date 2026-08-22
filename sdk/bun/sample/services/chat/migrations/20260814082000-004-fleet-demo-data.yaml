@@ -1,0 +1,24 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO chat_threads(id, title, thread_type, created_by, created_at, updated_at)
+      VALUES ('chat-fleet-thread', 'Fleet Operations', 'Direct', 'user-admin', TIMESTAMP '2026-08-14 08:02:00', TIMESTAMP '2026-08-14 08:03:00');
+      INSERT OR IGNORE INTO chat_participants(thread_id, user_id, joined_at, last_read_at)
+      VALUES
+        ('chat-fleet-thread', 'user-admin', TIMESTAMP '2026-08-14 08:02:00', TIMESTAMP '2026-08-14 08:03:00'),
+        ('chat-fleet-thread', 'user-fleet', TIMESTAMP '2026-08-14 08:02:00', TIMESTAMP '2026-08-14 08:03:00');
+      INSERT OR IGNORE INTO chat_messages(id, thread_id, sender_id, body, created_at)
+      VALUES
+        ('chat-fleet-message-01', 'chat-fleet-thread', 'user-admin', 'Fleet account is ready for testing.', TIMESTAMP '2026-08-14 08:02:00'),
+        ('chat-fleet-message-02', 'chat-fleet-thread', 'user-fleet', 'Thanks, I can now access Fleet Operations.', TIMESTAMP '2026-08-14 08:03:00');
+
+    down: |
+      DELETE FROM chat_messages WHERE id IN ('chat-fleet-message-01', 'chat-fleet-message-02');
+      DELETE FROM chat_participants WHERE thread_id = 'chat-fleet-thread';
+      DELETE FROM chat_threads WHERE id = 'chat-fleet-thread';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

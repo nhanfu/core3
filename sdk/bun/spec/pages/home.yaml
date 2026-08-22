@@ -1,0 +1,304 @@
+title: YShip — Build by talking to it
+page:
+  id: home
+
+components:
+  - type: DocPage
+    layout: landing
+    hero:
+      variant: home
+      eyebrow: YAML-driven ERP framework
+      title: Build your ERP by talking to it.
+      subtitle: >-
+        YShip turns business intent into a running application. Describe the page, workflow, or
+        mutation you need, and the YAML spec becomes the interface, the server contract, and the
+        source an AI assistant can safely change.
+      ctas:
+        - label: Read the proposal
+          href: /overview
+          variant: primary
+        - label: See the roadmap
+          href: /roadmap
+          variant: secondary
+      panel:
+        tabs: [Quick start, The spec]
+        activeTab: Quick start
+        command: |
+          bun dev:ddb --memory
+
+          # sample TMS app
+          # http://localhost:3001/
+        note: Start with YAML. Add custom code only when the framework genuinely needs an extension.
+
+    sections:
+      - id: specification
+        kicker: The core idea
+        title: The specification is the product.
+        lead: >-
+          YShip keeps business intent declarative and puts the runtime underneath it. That makes a
+          change visible, reviewable, and reusable across the browser, server, and data layer.
+        blocks:
+          - type: flowstrip
+            steps:
+              - label: Describe
+                sub: YAML page spec
+              - label: Validate
+                sub: schema + permissions
+              - label: Run
+                sub: rendered application
+          - type: panel
+            title: A page is a contract, not a pile of glue code
+            language: yaml
+            code: |
+              page:
+                id: orders
+              components:
+                - type: ListView
+                  datasource: orders
+                  actions: [create, edit, delete]
+
+      - id: architecture
+        kicker: One framework
+        title: Same intent. Every layer aligned.
+        lead: >-
+          The browser renders. The server validates and executes. Database adapters carry the same
+          contract across the systems your ERP already depends on.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Declarative
+                title: YAML owns the business rule
+                body: Pages, workflows, permissions, and user-visible text stay in a source format people can inspect.
+              - tag: Portable
+                title: No database lock-in
+                body: PostgreSQL, DuckDB, MySQL, Oracle, and SQL Server sit behind one adapter interface.
+              - tag: Extensible
+                title: Add the missing piece cleanly
+                body: A project-level component registry gives the framework an escape hatch without forking it.
+
+      - id: live-build
+        kicker: Talk, change, see
+        title: From conversation to running page.
+        lead: >-
+          The intended workflow is direct: say what should change, review the small YAML edit, and
+          see the preview update against the same spec.
+        blocks:
+          - type: mockup
+            caption: The target experience — chat, YAML, and preview stay in sync because they are one specification.
+            html: |
+              <div class="doc-chatbar">
+                <span class="doc-chatbar-icon">✦</span>
+                <span class="doc-chatbar-placeholder">Add a “Cancel order” button with a confirm dialog…</span>
+                <span class="doc-chatbar-send">↵ Send</span>
+              </div>
+              <div class="doc-chatbar-panes">
+                <div class="doc-chatbar-pane">
+                  <span class="doc-chatbar-pane-title">Chat</span>
+                  <div class="doc-chatbar-msg doc-chatbar-msg-user">Add a “Cancel order” button with a confirm dialog</div>
+                  <div class="doc-chatbar-msg doc-chatbar-msg-ai">Added the action to the order page. Preview updated.</div>
+                </div>
+                <div class="doc-chatbar-pane">
+                  <span class="doc-chatbar-pane-title">Live YAML</span>
+                  <pre class="doc-chatbar-code"><code class="language-yaml">actions:
+                - id: cancel_order
+                  type: confirm
+                  label: Cancel order</code></pre>
+                </div>
+                <div class="doc-chatbar-pane">
+                  <span class="doc-chatbar-pane-title">Live preview</span>
+                  <div class="doc-chatbar-preview-row"><span>#1042 · Acme Co.</span><button>Cancel order</button></div>
+                  <div class="doc-chatbar-preview-row"><span>#1043 · Globex</span><button>Cancel order</button></div>
+                  <div class="doc-chatbar-preview-row"><span>#1044 · Initech</span><button>Cancel order</button></div>
+                </div>
+              </div>
+          - type: callout
+            tone: note
+            title: The loop is the direction, not a shipped feature
+            text: The page above is a static concept for the future chat/YAML/preview workflow. The framework and sample services underneath it are running today.
+
+      - id: browser-proof
+        kicker: Running proof
+        title: Open the browser boxes. See the real pattern.
+        lead: >-
+          These are not decorative screenshots. Each frame points at a real YShip page or design
+          reference, showing how the same YAML-driven system becomes a working interface.
+        blocks:
+          - type: mockup
+            reveal: right
+            caption: Live sample — Orders at http://localhost:3001/order/
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">localhost:3001/order/</span>
+                </div>
+                <div class="doc-browser-frame-body sample-screen">
+                  <div class="sample-screen-tabs"><strong>List</strong><span>Cards</span><span>Kanban</span><span>Calendar</span><span>Pivot</span><span>Graph</span><span>Map</span></div>
+                  <div class="sample-screen-toolbar"><button>New</button><span>Management / Orders</span><span class="sample-screen-search">⌕ Search order number, customer, item name…</span><span>1–50 / 1012</span></div>
+                  <div class="sample-screen-date">Order date: 2025-09-01 – 2026-08-17</div>
+                  <div class="sample-screen-grid">
+                    <div class="sample-screen-list">
+                      <div class="sample-screen-head"><span>Order number</span><span>Customer</span><span>Order date</span><span>Status</span><span>Route</span></div>
+                      <div><span>DH-2026-0101</span><span>Công ty TNHH Minh Long</span><span>2026-08-12</span><b class="sample-status-draft">Nháp</b><span>Hồ Chí Minh → Đà Nẵng</span></div>
+                      <div><span>DH-2026-0102</span><span>Công ty CP Đại Phát</span><span>2026-08-11</span><b class="sample-status-pending">Đang duyệt</b><span>Hà Nội → Hải Phòng</span></div>
+                      <div><span>DH-2026-0103</span><span>Công ty Thực phẩm An Bình</span><span>2026-08-10</span><b class="sample-status-approved">Đã duyệt</b><span>Cần Thơ → Hồ Chí Minh</span></div>
+                      <div><span>DH-2026-0104</span><span>Công ty CP Hưng Thịnh</span><span>2026-08-09</span><b class="sample-status-draft">Nháp</b><span>Hồ Chí Minh → Nha Trang</span></div>
+                    </div>
+                    <div class="sample-screen-detail"><strong>DH-2026-0101</strong><small>Customer</small><span>Công ty TNHH Minh Long</span><small>Order details</small><span>Hàng lẻ · Hồ Chí Minh → Đà Nẵng</span><div class="sample-screen-statusbar"><b>Draft</b><span>Pending Approval</span><span>Approved</span><span>Cancelled</span></div></div>
+                  </div>
+                </div>
+              </div>
+          - type: panel
+            title: The screen is driven by the sample page YAML
+            language: yaml
+            code: |
+              page:
+                id: orders
+              datasources:
+                - id: orders
+                  query_window: { table: orders, date_field: order_date }
+              components:
+                - type: ListView
+                  datasource: orders
+                  workflow_states: orders
+          - type: mockup
+            reveal: left
+            caption: Proposal — one shared framework
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">yship.dev/overview#proposal</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <div class="doc-cardgrid">
+                    <div class="doc-card"><span class="doc-card-tag">Data</span><h4>Server-first data</h4><p>The server performs joins and lookups; the browser never resolves references.</p></div>
+                    <div class="doc-card"><span class="doc-card-tag">Components</span><h4>90 shared components</h4><p>GridView, ListView, forms, KPIs, and document views.</p></div>
+                    <div class="doc-card"><span class="doc-card-tag">CRUD</span><h4>Declarative mutations</h4><p>Validated YAML generates the page actions and server contract.</p></div>
+                  </div>
+                </div>
+              </div>
+          - type: mockup
+            reveal: right
+            caption: Live sample — order detail side panel
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">localhost:3001/order/ · order-detail.yaml</span>
+                </div>
+                <div class="doc-browser-frame-body sample-detail-screen">
+                  <div class="sample-detail-actions"><button>Edit</button><button>Submit for approval</button><button>Cancel</button></div>
+                  <div class="sample-detail-statusbar"><b>Draft</b><span>Pending Approval</span><span>Approved</span><span>Cancelled</span></div>
+                  <h3>DH-2026-0101</h3>
+                  <div class="sample-detail-group"><strong>Customer</strong><span>Customer</span><b>Công ty TNHH Minh Long</b><span>Legal name</span><b>Minh Long Logistics Co., Ltd.</b></div>
+                  <div class="sample-detail-group"><strong>Order details</strong><span>Order date</span><b>2026-08-12</b><span>Shipment type</span><b>Hàng lẻ</b><span>Route</span><b>Hồ Chí Minh → Đà Nẵng</b></div>
+                  </div>
+              </div>
+          - type: panel
+            title: The detail view is also YAML
+            language: yaml
+            code: |
+              page: { id: order-detail }
+              workflow_states: orders
+              statusbar_source: order_detail_statuses
+              components:
+                - type: FormView
+                  datasource: order_detail
+                  chatter: true
+          - type: mockup
+            reveal: left
+            caption: Frontend — a complete custom component
+            html: |
+              <div class="doc-browser-frame">
+                <div class="doc-browser-frame-bar">
+                  <span class="doc-browser-frame-dots"><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span><span class="doc-browser-frame-dot"></span></span>
+                  <span class="doc-browser-frame-url">yship.dev/frontend#page-render</span>
+                </div>
+                <div class="doc-browser-frame-body">
+                  <pre><code class="language-typescript">class Section extends BaseComponent {
+                draw(container) {
+                  const panel = html.take(container).div
+                    .className('panel').ele();
+                  html.take(panel).span
+                    .className('panel-title').text(this.def.title);
+                }
+              }</code></pre>
+                </div>
+              </div>
+
+      - id: proof
+        kicker: Running proof
+        title: The framework is already learning from real services.
+        lead: >-
+          Order and chat are the reference services: CRUD, workflow transitions, chatter, and
+          attachments are real examples rather than a hypothetical module list.
+        blocks:
+          - type: stats
+            items:
+              - value: '90'
+                label: shared components
+                visual: units
+              - value: '5'
+                label: database adapters
+                visual: chips
+                items: [PostgreSQL, DuckDB, MySQL, Oracle, SQL Server]
+              - value: '2'
+                label: reference services
+                visual: chips
+                items: [Order, Chat]
+          - type: list
+            items:
+              - text: Read the architecture proposal
+                href: /overview
+              - text: Inspect the Odoo parity roadmap
+                href: /roadmap
+
+      - id: start
+        kicker: Start here
+        title: See the pattern in context.
+        lead: >-
+          Read the proposal for the design, explore the docs for the runtime, or follow the roadmap
+          as YShip grows toward a full Odoo clone.
+        blocks:
+          - type: panel
+            title: Run the sample project
+            language: bash
+            code: |
+              bun dev:ddb --memory
+              # open the running sample at http://localhost:3001/
+          - type: panel
+            title: The first three pages to open
+            language: text
+            code: |
+              /overview             The case for YShip
+              /frontend             Page rendering and components
+              /roadmap              Real Odoo parity tracker
+          - type: list
+            items:
+              - text: Read the full proposal
+                href: /overview
+              - text: Explore the frontend model
+                href: /frontend
+              - text: View the roadmap
+                href: /roadmap
+
+      - id: principle
+        kicker: Working principle
+        title: Extract the pattern. Then make it a framework concept.
+        blocks:
+          - type: quote
+            text: When the same structure appears in two pages, write a YAML shorthand for it. When it appears in three, it becomes a first-class framework concept.
+            attribution: YShip design rule
+
+      - id: waitlist
+        kicker: Get notified
+        title: Chat-driven building is coming next.
+        lead: >-
+          We are building the live chat/YAML/preview loop shown above. Leave your email and we will
+          reach out when there is something real to try.
+        blocks:
+          - type: email-capture
+            placeholder: you@company.com
+            buttonLabel: Join the waitlist
+            note: No spam — one email when early access opens, nothing else.

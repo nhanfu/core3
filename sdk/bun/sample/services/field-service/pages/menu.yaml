@@ -1,0 +1,11 @@
+menu:
+  field-service:
+    path: /field-service
+    label: Field Service
+    icon: wrench
+    permission: field-service.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - { path: /field-service, label: Field Tasks, icon: wrench, permission: field-service.read }

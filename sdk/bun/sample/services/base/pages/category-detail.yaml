@@ -1,0 +1,22 @@
+title: Contact Category
+page: { id: category-detail, breadcrumb: [Contacts, Configuration, Categories], auth: { require: [base.reference.read] } }
+datasources:
+  - { id: category_detail, single: true, permission: base.reference.read, query: "SELECT id, name, color FROM base_contact_categories WHERE id = :id" }
+components:
+  - type: OdooFormView
+    source: category_detail
+    title_field: name
+    header_actions: [{ id: edit_category_detail, label: Edit, variant: secondary, permission: base.reference.write }]
+    groups: [{ title: Category, fields: [{ field: id, label: ID }, { field: name, label: Category }, { field: color, label: Color }] }]
+actions:
+  - id: edit_category_detail
+    type: server_form
+    permission: base.reference.write
+    title: Edit category
+    action: base.reference.categories.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.category_detail
+    refresh: [category_detail]
+    mutation: { operation: update, table: base_contact_categories, key_field: id, concurrency: false, fields: [name, color], required: [name] }
+    fields: [{ field: name, label: Category, type: text, required: true }, { field: color, label: Color, type: number }]

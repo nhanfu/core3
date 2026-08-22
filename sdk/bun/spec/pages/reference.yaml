@@ -1,0 +1,300 @@
+title: YShip — Reference
+
+page:
+  id: reference
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      articleType: Reference
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Reference
+        - label: CSS, auth & protocols
+      eyebrow: Reference
+      title: Reference
+      subtitle: >-
+        CSS system, authentication & authorization, communication protocols, and a complete
+        annotated YAML page example — all grounded in the current codebase.
+    sections:
+      - id: css-system
+        kicker: Styling
+        title: CSS system
+        lead: >-
+          ERP pages use Tailwind CSS by default. Doc and spec pages in this project use
+          doc.css — a project-owned semantic stylesheet maintained alongside the DocPage
+          renderer.
+        blocks:
+          - type: p
+            text: >-
+              Tailwind's utility-first approach aligns with the framework's philosophy: the
+              component class is the single source of truth for both structure and appearance.
+              Reading draw() shows exactly what a component looks like without jumping to a
+              stylesheet. Components apply utility classes through html.js chaining
+              (.className(...) on each builder step).
+          - type: callout
+            title: This spec project is the alternative example
+            text: >-
+              spec/public/styles/doc.css defines named semantic classes
+              (doc-layout, doc-section, doc-callout, doc-panel, doc-flowstrip, ...) driven by
+              CSS custom properties (--bg, --text, --teal, --amber, --font-mono, ...).
+              The DocPage renderer applies them directly — no Tailwind build step in this
+              project.
+          - type: table
+            headers: [Layer, Approach, Where]
+            rows:
+              - [ERP pages, Tailwind utility classes in draw() and YAML class keys, All service pages under apps/]
+              - [Spec / doc pages, doc.css semantic class names, spec and DocPage renderer]
+              - [Escape hatch, .style() for inline CSS or a scoped style block, Either layer]
+          - type: p
+            text: >-
+              The class key on any YAML component definition merges with or replaces the
+              component's default Tailwind classes, so per-page style overrides require no
+              changes to the component source. This is declared in YAML alongside the
+              component's source, columns, and actions.
+
+      - id: auth
+        kicker: Security
+        title: Auth & authorization
+        lead: >-
+          Auth tokens are HS256-signed JWTs with an 8-hour default expiry. Pages gate access
+          with page.auth.require; individual actions and UI elements gate visibility through
+          hasPermission and resolveAction at runtime.
+        blocks:
+          - type: p
+            text: >-
+              The server signs and verifies tokens through signAuthJwt and verifyAuthJwt
+              (packages/server/src/auth/jwt.ts). The secret is read from AUTH_JWT_SECRET or
+              JWT_SECRET in the environment. verifyAuthJwt returns the typed payload or null
+              on any failure — it never propagates exceptions. Callers can extend JWTPayload
+              with a typed interface to access claims without casting.
+          - type: panel
+            title: packages/server/src/auth/jwt.ts — shapes
+            language: ts
+            code: |
+              // Sign: any Record<string, unknown> payload, HS256, 8 h default expiry
+              signAuthJwt(claims: Record<string, unknown>, secret: Uint8Array): Promise<string>
+
+              // Verify: returns typed payload T, or null on invalid / expired token
+              verifyAuthJwt<T extends object>(token: string, secret: Uint8Array): Promise<T | null>
+
+              // Example typed claim interface
+              interface AppClaims extends JWTPayload {
+                user_id: string;
+                roles: string[];
+                permissions: string[];
+                branch_id?: string;
+              }
+              const claims = await verifyAuthJwt<AppClaims>(token, secret);
+          - type: p
+            text: >-
+              Pages declare required permissions as a string array under page.auth.require.
+              PageRuntime checks every entry against the current user before fetching any
+              datasource. A single failing permission renders an access-denied response.
+          - type: panel
+            title: page.auth.require
+            language: yaml
+            code: |
+              page:
+                id: purchase-orders
+                auth:
+                  require: [po.read]
+          - type: p
+            text: >-
+              Component-level visibility is resolved at render time by hasPermission and
+              resolveAction from packages/client/src/meta.ts. hasPermission grants access when
+              the user has the admin role, a wildcard '*' permission, or the exact named
+              permission string. resolveAction combines that check with an optional show_if
+              expression evaluated against the current row and state.
+          - type: panel
+            title: packages/client/src/meta.ts — runtime guards
+            language: ts
+            code: |
+              // True if user.roles includes 'admin', permissions includes '*',
+              // or permissions includes the exact permission string
+              hasPermission(user: any, permission: string): boolean
+
+              // Gates a button or menu item: checks permission then show_if expression
+              resolveAction(action: any, ctx: { user?, row?, state? }):
+                { visible: boolean, disabled: boolean }
+
+              // Gates a column or field: checks show_if and disabled_if, resolves value
+              resolveMeta(def: any, ctx: { user?, row?, state? }):
+                { visible: boolean, disabled: boolean, value: any }
+
+              // Evaluates def.validation as an expression against { row: { [field]: value } };
+              // a string result is the error message, true/null means valid
+              validateField(def: any, value: any, ctx: any): string | null
+          - type: callout
+            title: Permission strings are plain dot-separated names
+            text: >-
+              There is no built-in permission registry. The host application resolves strings
+              against its own user model. Convention is resource.verb — for example
+              orders.read, orders.write, orders.approve.
+
+      - id: protocols
+        kicker: Transport
+        title: Protocols
+        lead: >-
+          Four transport protocols are supported. HTTP is the default for datasource queries
+          and actions; WebSocket and SSE are opt-in per component; gRPC is for
+          service-to-service calls outside YAML page definitions.
+        blocks:
+          - type: table
+            headers: [Protocol, When to use]
+            rows:
+              - [HTTP, Standard datasource queries, form submissions, CRUD operations, and server actions]
+              - [WebSocket, Real-time components — chat, collaborative editing, and live dashboards (ChatWorkspace websocket key)]
+              - [SSE, Server-push updates — order status, background job progress (ChatWorkspace sse key)]
+              - [gRPC, High-throughput microservice-to-microservice calls; not declared in page YAML]
+          - type: p
+            text: >-
+              Database access is a separate, engine-agnostic layer through the DatabaseAdapter
+              interface — see the Backend page's "Supported databases" section for the real
+              five-driver list (PostgreSQL, DuckDB, MySQL, Oracle, SQL Server; there is no SQLite
+              driver).
+
+      - id: full-example
+        kicker: End to end
+        title: Full YAML page example
+        lead: >-
+          A complete tasks page showing page auth, a datasource with permission and
+          query_window, a ListView component with columns and row actions, and three
+          actions covering create, navigate, and update. Every key validates against the
+          current schema in packages/server/src/yaml/schema.ts.
+        blocks:
+          - type: callout
+            title: Schema-valid starting point
+            text: >-
+              Copy this as a new service page. The outer structure (page, datasources,
+              components, actions) and every key name are validated against the real schema.
+              Swap the SQL, table names, and permission strings for your domain.
+          - type: panel
+            title: pages/tasks.yaml
+            language: yaml
+            code: |
+              title: Tasks
+
+              page:
+                id: tasks
+                breadcrumb: [Management, Tasks]
+                auth:
+                  require: [tasks.read]
+
+              datasources:
+                - id: tasks
+                  permission: tasks.read
+                  query_window:
+                    table: tasks
+                    date_field: due_date
+                    from_param: from_date
+                    to_param: to_date
+                    max_years: 1
+                    deny_unbounded: true
+                  query: |
+                    SELECT t.id, t.row_version, t.title, t.status,
+                           CAST(t.due_date AS VARCHAR) AS due_date,
+                           t.assigned_to,
+                           CAST(t.created_at AS VARCHAR) AS created_at
+                    FROM tasks t
+                    WHERE (:status IS NULL OR t.status = :status)
+                      AND (:from_date IS NULL OR t.due_date >= CAST(:from_date AS DATE))
+                      AND (:to_date IS NULL OR t.due_date <= CAST(:to_date AS DATE))
+                    ORDER BY t.due_date ASC
+
+              components:
+                - type: ListView
+                  variant: odoo
+                  source: tasks
+                  create_action: add_task
+                  create_label: New task
+                  row_open_action: view_task
+                  row_actions: menu
+                  row_key: id
+                  selectable: true
+                  page_size: 50
+                  column_chooser: true
+                  empty_state:
+                    title: No tasks
+                    description: Create a task to get started.
+                  labels:
+                    new: New
+                    filters: Filters
+                    columns: Columns
+                    selected: selected
+                    clear_selection: Clear selection
+                    remove_filter: Remove filter
+                    previous_page: Previous page
+                    next_page: Next page
+                    select_all: Select all rows
+                    select_row: Select row
+                    search_facet: Search
+                    apply: Apply
+                    more_actions: More actions
+                  filters:
+                    - field: status
+                      label: Status
+                      placeholder: All statuses
+                      options:
+                        - { id: Open, label: Open }
+                        - { id: In Progress, label: In progress }
+                        - { id: Done, label: Done }
+                  columns:
+                    - { field: title, label: Title, type: PrimaryEntityCell, sortable: true }
+                    - { field: status, label: Status }
+                    - { field: due_date, label: Due date, sortable: true }
+                    - { field: assigned_to, label: Assigned to }
+                    - field: actions
+                      label: ''
+                      sortable: false
+                      align: right
+                      actions:
+                        - { id: view_task, label: View, permission: tasks.read }
+                        - { id: edit_task, label: Edit, permission: tasks.write }
+
+              actions:
+                - id: add_task
+                  type: server_form
+                  permission: tasks.write
+                  title: Add task
+                  action: tasks.create
+                  handler: yaml_mutation
+                  operation: create
+                  refresh: [tasks]
+                  mutation:
+                    operation: insert
+                    table: tasks
+                    fields: [title, status, due_date, assigned_to]
+                    required: [title]
+                    defaults: { status: Open }
+                  fields:
+                    - { field: title, label: Title, type: text, required: true }
+                    - { field: status, label: Status, type: select, options: [Open, Done] }
+                    - { field: due_date, label: Due date, type: date }
+                    - { field: assigned_to, label: Assigned to, type: text }
+                - id: view_task
+                  type: navigate
+                  permission: tasks.read
+                  navigate_to: /tasks/detail
+                  params: { id: '{row.id}' }
+                - id: edit_task
+                  type: server_form
+                  permission: tasks.write
+                  title: Edit task
+                  action: tasks.update
+                  handler: yaml_mutation
+                  operation: update
+                  prefill: row
+                  refresh: [tasks]
+                  mutation:
+                    operation: update
+                    table: tasks
+                    fields: [title, status, due_date, assigned_to]
+                    required: [title]
+                  fields:
+                    - { field: title, label: Title, type: text, required: true }
+                    - { field: status, label: Status, type: select, options: [Open, Done] }
+                    - { field: due_date, label: Due date, type: date }
+                    - { field: assigned_to, label: Assigned to, type: text }

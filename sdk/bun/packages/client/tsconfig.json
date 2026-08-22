@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "checkJs": false,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": false,
+    "target": "ES2022",
+    "types": ["node"]
+  },
+  "include": ["**/*.ts", "**/*.js", "**/*.d.ts"],
+  "exclude": ["dist"]
+}

@@ -1,0 +1,25 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_departments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        manager_name VARCHAR, state VARCHAR NOT NULL DEFAULT 'Active', created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS employees (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), auth_user_id VARCHAR, employee_number VARCHAR NOT NULL UNIQUE,
+        name VARCHAR NOT NULL, work_email VARCHAR, phone VARCHAR, department_id VARCHAR, department_name VARCHAR,
+        job_title VARCHAR, manager_name VARCHAR, employment_type VARCHAR NOT NULL DEFAULT 'Employee',
+        hire_date DATE, termination_date DATE, state VARCHAR NOT NULL DEFAULT 'Draft',
+        row_version BIGINT NOT NULL DEFAULT 1, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS employees_department_idx ON employees(department_id);
+      CREATE INDEX IF NOT EXISTS employees_state_idx ON employees(state);
+    down: |
+      DROP TABLE IF EXISTS employees;
+      DROP TABLE IF EXISTS employee_departments;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

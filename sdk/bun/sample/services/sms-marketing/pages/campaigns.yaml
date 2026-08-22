@@ -1,0 +1,69 @@
+title: SMS Campaigns
+page: { id: sms-campaigns, breadcrumb: [Marketing, SMS Marketing, Campaigns], auth: { require: [sms_marketing.read] } }
+datasources:
+  - id: sms_campaign_states
+    permission: sms_marketing.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Scheduled','Scheduled'), ('Sending','Sending'), ('Sent','Sent'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: sms_list_lookup
+    permission: sms_marketing.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM sms_lists WHERE state = 'Active' ORDER BY name"
+  - id: sms_campaigns
+    permission: sms_marketing.read
+    workflow: sms_campaigns
+    query: "SELECT c.id, c.row_version, c.name, c.title, c.sender_name, c.list_name, c.message, c.recipient_count, c.delivered_count, c.failed_count, c.state, CAST(c.scheduled_at AS VARCHAR) AS scheduled_at, CAST(c.sent_at AS VARCHAR) AS sent_at FROM sms_campaigns c WHERE (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.title ILIKE '%' || :q || '%') AND (:state IS NULL OR c.state = :state) ORDER BY c.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: sms_campaigns
+    create_action: create_sms_campaign
+    create_label: New SMS campaign
+    search: { label: Search SMS campaigns, placeholder: 'Search campaign or title...' }
+    filters: [{ field: state, label: Status, options_source: sms_campaign_states }]
+    columns:
+      - { field: name, label: Campaign, type: PrimaryEntityCell }
+      - { field: title, label: Title }
+      - { field: sender_name, label: Sender }
+      - { field: list_name, label: Opt-in audience }
+      - { field: recipient_count, label: Recipients, align: right }
+      - { field: delivered_count, label: Delivered, align: right }
+      - { field: failed_count, label: Failed, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: schedule_sms_campaign, label: Schedule, permission: sms_marketing.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: send_sms_campaign, label: Send, permission: sms_marketing.write, variant: secondary, show_if: "row.state === 'Scheduled'" }
+      - { id: complete_sms_campaign, label: Complete send, permission: sms_marketing.manage, variant: primary, show_if: "row.state === 'Sending'" }
+      - { id: cancel_sms_campaign, label: Cancel, permission: sms_marketing.manage, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Scheduled'" }
+actions:
+  - id: create_sms_campaign
+    type: server_form
+    permission: sms_marketing.write
+    title: New SMS campaign
+    action: sms_marketing.campaigns.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sms_campaigns]
+    mutation:
+      operation: insert
+      table: sms_campaigns
+      fields: [name, title, sender_name, list_id, list_name, message, scheduled_at, recipient_count]
+      required: [name, title, list_id, list_name, message, recipient_count]
+      guards: [{ query: "SELECT 1 AS ok FROM sms_lists WHERE id = :list_id AND state = 'Active' AND CAST(:recipient_count AS INTEGER) > 0", status: 400, message: An active opt-in list and positive recipient count are required }]
+      result: { query: "SELECT * FROM sms_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Campaign, type: text, required: true }
+      - { field: title, label: Title, type: text, required: true }
+      - { field: sender_name, label: Sender, type: text }
+      - { field: list_id, label: Opt-in audience, type: select, options_source: sms_list_lookup, required: true }
+      - { field: list_name, label: Audience name, type: text, required: true }
+      - { field: message, label: Message, type: text, required: true }
+      - { field: scheduled_at, label: Scheduled at, type: text }
+      - { field: recipient_count, label: Recipients, type: number, required: true }
+  - { id: schedule_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.campaigns.schedule, handler: order_transition, workflow: sms_campaigns, operation: schedule, refresh: [sms_campaigns] }
+  - { id: send_sms_campaign, type: server, permission: sms_marketing.write, action: sms_marketing.campaigns.send, handler: order_transition, workflow: sms_campaigns, operation: send, refresh: [sms_campaigns] }
+  - { id: complete_sms_campaign, type: server, permission: sms_marketing.manage, action: sms_marketing.campaigns.complete, handler: order_transition, workflow: sms_campaigns, operation: complete, refresh: [sms_campaigns] }
+  - { id: cancel_sms_campaign, type: server, permission: sms_marketing.manage, action: sms_marketing.campaigns.cancel, handler: order_transition, workflow: sms_campaigns, operation: cancel, refresh: [sms_campaigns] }

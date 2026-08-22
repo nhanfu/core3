@@ -1,0 +1,15 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO employee_departments(id, name, manager_name) VALUES ('department-engineering', 'Engineering', 'Engineering Manager');
+      INSERT OR IGNORE INTO employees(id, auth_user_id, employee_number, name, work_email, department_id, department_name, job_title, employment_type, hire_date, state)
+      VALUES ('employee-demo-001', 'user-admin', 'EMP-0001', 'Admin User', 'admin@tms.local', 'department-engineering', 'Engineering', 'Operations Lead', 'Employee', CURRENT_DATE - INTERVAL 365 DAY, 'Active');
+    down: |
+      DELETE FROM employees WHERE id = 'employee-demo-001';
+      DELETE FROM employee_departments WHERE id = 'department-engineering';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

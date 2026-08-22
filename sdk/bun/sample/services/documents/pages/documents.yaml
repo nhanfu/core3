@@ -1,0 +1,92 @@
+title: Documents
+page: { id: documents, breadcrumb: [Finance, Documents], auth: { require: [documents.read] } }
+datasources:
+  - id: document_states
+    single: false
+    permission: documents.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Archived','Archived')) states(value, label)"
+  - id: document_types
+    single: false
+    permission: documents.read
+    query: "SELECT value, label FROM (VALUES ('Invoice','Invoice'), ('Contract','Contract'), ('Receipt','Receipt'), ('Policy','Policy'), ('Other','Other')) types(value, label)"
+  - id: document_folders
+    single: false
+    permission: documents.read
+    query: "SELECT id AS value, name AS label FROM document_folders ORDER BY name"
+  - id: documents
+    single: false
+    permission: documents.read
+    workflow: documents
+    query: "SELECT d.id, d.row_version, d.name, d.folder_id, f.name AS folder_name, d.owner_name, d.partner_name, d.document_type, d.mime_type, d.file_size, d.state, CAST(d.document_date AS VARCHAR) AS document_date, CAST(d.expiry_date AS VARCHAR) AS expiry_date, d.description FROM documents d LEFT JOIN document_folders f ON f.id = d.folder_id WHERE (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR d.owner_name ILIKE '%' || :q || '%' OR d.partner_name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) ORDER BY d.document_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: documents
+    create_action: create_document
+    create_label: New document
+    search: { label: Search documents, placeholder: 'Search documents, owners, or partners...' }
+    filters: [{ field: state, label: Status, options_source: document_states }, { field: document_type, label: Type, options_source: document_types }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        groups_source: document_states
+        card: { title: name, subtitle: owner_name, fields: [{ field: folder_name, label: Folder }, { field: document_type, label: Type }, { field: state, label: Status }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: expiry_date
+        card: { title: name, subtitle: document_type }
+    columns:
+      - { field: name, label: Document, type: PrimaryEntityCell }
+      - { field: folder_name, label: Folder }
+      - { field: owner_name, label: Owner }
+      - { field: partner_name, label: Partner }
+      - { field: document_type, label: Type }
+      - { field: document_date, label: Document date }
+      - { field: expiry_date, label: Expiry }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: submit_document, label: Submit, permission: documents.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: approve_document, label: Approve, permission: documents.manage, variant: secondary, show_if: "row.state === 'Submitted'" }
+      - { id: archive_document, label: Archive, permission: documents.manage, variant: danger, show_if: "row.state !== 'Archived'" }
+actions:
+  - id: create_document
+    type: server_form
+    permission: documents.write
+    title: New document
+    action: documents.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [documents]
+    mutation:
+      operation: insert
+      table: documents
+      fields: [name, folder_id, owner_name, partner_name, document_type, mime_type, file_size, checksum, document_date, expiry_date, description]
+      required: [name]
+      defaults: { state: Draft, document_type: Other, file_size: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE CAST(:file_size AS BIGINT) >= 0"
+          status: 400
+          message: File size cannot be negative
+      result: { query: "SELECT * FROM documents WHERE id = :id" }
+    fields:
+      - { field: name, label: Document, type: text, required: true }
+      - { field: folder_id, label: Folder, type: select, options_source: document_folders }
+      - { field: owner_name, label: Owner, type: text }
+      - { field: partner_name, label: Partner, type: text }
+      - { field: document_type, label: Type, type: select, options_source: document_types }
+      - { field: mime_type, label: MIME type, type: text }
+      - { field: file_size, label: File size, type: number }
+      - { field: document_date, label: Document date, type: text }
+      - { field: expiry_date, label: Expiry date, type: text }
+      - { field: description, label: Description, type: textarea }
+  - { id: submit_document, type: server, permission: documents.write, action: documents.submit, handler: order_transition, workflow: documents, operation: submit, refresh: [documents] }
+  - { id: approve_document, type: server, permission: documents.manage, action: documents.approve, handler: order_transition, workflow: documents, operation: approve, refresh: [documents] }
+  - { id: archive_document, type: server, permission: documents.manage, action: documents.archive, handler: order_transition, workflow: documents, operation: archive, refresh: [documents] }

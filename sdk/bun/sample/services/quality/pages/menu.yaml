@@ -1,0 +1,15 @@
+menu:
+  quality:
+    path: /quality-checks
+    label: Quality
+    icon: quality
+    permission: quality.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - { path: /quality-checks, label: Quality Checks, icon: quality, permission: quality.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /quality-analysis, label: Quality Analysis, icon: chart, permission: quality.read }

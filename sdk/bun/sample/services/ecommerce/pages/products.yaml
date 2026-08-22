@@ -1,0 +1,58 @@
+title: Shop Products
+page: { id: ecommerce, breadcrumb: [Website, eCommerce, Products], auth: { require: [ecommerce.read] } }
+datasources:
+  - id: ecommerce_product_states
+    permission: ecommerce.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Unpublished','Unpublished'), ('Published','Published')) states(value, label)"
+  - id: ecommerce_category_lookup
+    permission: ecommerce.read
+    single: false
+    query: "SELECT name AS value, name AS label FROM ecommerce_categories ORDER BY sequence, name"
+  - id: ecommerce_products
+    permission: ecommerce.read
+    workflow: ecommerce_products
+    query: "SELECT id, row_version, name, category_name, list_price, website_sequence, CAST(publish_date AS VARCHAR) AS publish_date, state FROM ecommerce_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR category_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY website_sequence, name"
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_products
+    create_action: create_ecommerce_product
+    create_label: New product
+    search: { label: Search products, placeholder: 'Search product or category...' }
+    filters: [{ field: state, label: Status, options_source: ecommerce_product_states }]
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: category_name, label: Category }
+      - { field: list_price, label: Price, align: right }
+      - { field: website_sequence, label: Sequence, align: right }
+      - { field: publish_date, label: Published on }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: publish_ecommerce_product, label: Publish, permission: ecommerce.write, variant: primary, show_if: "row.state === 'Unpublished'" }
+      - { id: unpublish_ecommerce_product, label: Unpublish, permission: ecommerce.write, variant: secondary, show_if: "row.state === 'Published'" }
+actions:
+  - id: create_ecommerce_product
+    type: server_form
+    permission: ecommerce.write
+    title: New product
+    action: ecommerce.products.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_products]
+    mutation:
+      operation: insert
+      table: ecommerce_products
+      fields: [name, category_name, list_price, website_sequence]
+      required: [name]
+      result: { query: "SELECT * FROM ecommerce_products WHERE id = :id" }
+    fields:
+      - { field: name, label: Product name, type: text, required: true }
+      - { field: category_name, label: Category, type: select, options_source: ecommerce_category_lookup }
+      - { field: list_price, label: Price, type: number }
+      - { field: website_sequence, label: Sequence, type: number }
+  - { id: publish_ecommerce_product, type: server, permission: ecommerce.write, action: ecommerce.products.publish, handler: order_transition, workflow: ecommerce_products, operation: publish, refresh: [ecommerce_products] }
+  - { id: unpublish_ecommerce_product, type: server, permission: ecommerce.write, action: ecommerce.products.unpublish, handler: order_transition, workflow: ecommerce_products, operation: unpublish, refresh: [ecommerce_products] }

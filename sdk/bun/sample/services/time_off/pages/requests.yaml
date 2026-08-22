@@ -1,0 +1,70 @@
+title: Leave Requests
+page: { id: leave-requests, breadcrumb: [Human Resources, Time Off, Leave Requests], auth: { require: [time_off.read] } }
+datasources:
+  - id: leave_request_states
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: leave_type_lookup
+    permission: time_off.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
+  - id: leave_requests
+    permission: time_off.read
+    workflow: leave_requests
+    query: "SELECT r.id, r.row_version, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.reason, r.approver, r.state FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: leave_requests
+    create_action: create_leave_request
+    create_label: New leave request
+    search: { label: Search leave requests, placeholder: 'Search request or employee...' }
+    filters: [{ field: state, label: Status, options_source: leave_request_states }]
+    columns:
+      - { field: name, label: Request, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: leave_type_name, label: Leave type }
+      - { field: date_from, label: From }
+      - { field: date_to, label: To }
+      - { field: days, label: Days, align: right }
+      - { field: approver, label: Approver }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: submit_leave_request, label: Submit, permission: time_off.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: approve_leave_request, label: Approve, permission: time_off.manage, variant: primary, show_if: "row.state === 'Submitted'" }
+      - { id: refuse_leave_request, label: Refuse, permission: time_off.manage, variant: danger, show_if: "row.state === 'Submitted'" }
+      - { id: cancel_leave_request, label: Cancel, permission: time_off.write, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
+actions:
+  - id: create_leave_request
+    type: server_form
+    permission: time_off.write
+    title: New leave request
+    action: time_off.requests.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [leave_requests]
+    mutation:
+      operation: insert
+      table: leave_requests
+      fields: [name, employee_id, employee_name, leave_type_id, leave_type_name, date_from, date_to, days, reason]
+      required: [name, employee_id, employee_name, leave_type_id, leave_type_name, date_from, date_to, days]
+      guards: [{ query: "SELECT 1 AS ok FROM leave_types WHERE id = :leave_type_id AND state = 'Active' AND CAST(:days AS DECIMAL(18,3)) > 0", status: 400, message: An active leave type and positive days are required }]
+      result: { query: "SELECT * FROM leave_requests WHERE id = :id" }
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: employee_id, label: Employee ID, type: text, required: true }
+      - { field: employee_name, label: Employee, type: text, required: true }
+      - { field: leave_type_id, label: Leave type, type: select, options_source: leave_type_lookup, required: true }
+      - { field: leave_type_name, label: Leave type name, type: text, required: true }
+      - { field: date_from, label: From, type: text, required: true }
+      - { field: date_to, label: To, type: text, required: true }
+      - { field: days, label: Days, type: number, required: true }
+      - { field: reason, label: Reason, type: text }
+  - { id: submit_leave_request, type: server, permission: time_off.write, action: time_off.requests.submit, handler: order_transition, workflow: leave_requests, operation: submit, refresh: [leave_requests] }
+  - { id: approve_leave_request, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, refresh: [leave_requests] }
+  - { id: refuse_leave_request, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, refresh: [leave_requests] }
+  - { id: cancel_leave_request, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, refresh: [leave_requests] }

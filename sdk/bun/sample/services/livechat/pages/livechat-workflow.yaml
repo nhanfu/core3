@@ -1,0 +1,47 @@
+workflow:
+  id: livechat_sessions
+  entity: livechat_sessions
+  handler: order_transition
+  initial: In Progress
+  permission: livechat.write
+  mutable: true
+  status_source: livechat_session_states
+  states:
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Waiting for Customer, label: Waiting for Customer, color: amber }
+    - { id: Looking for Help, label: Looking for Help, color: violet }
+    - { id: Closed, label: Closed, color: green, terminal: true }
+  transitions:
+    - id: wait
+      from: [In Progress]
+      to: Waiting for Customer
+      permission: livechat.write
+      mutation:
+        guards: [{ query: "SELECT id FROM livechat_sessions WHERE id = :id AND status = 'In Progress'", status: 409, message: Only active sessions can wait for the customer }]
+        steps: [{ query: "UPDATE livechat_sessions SET status = 'Waiting for Customer', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }
+    - id: resume
+      from: [Waiting for Customer]
+      to: In Progress
+      permission: livechat.write
+      mutation:
+        guards: [{ query: "SELECT id FROM livechat_sessions WHERE id = :id AND status = 'Waiting for Customer'", status: 409, message: Only waiting sessions can resume }]
+        steps: [{ query: "UPDATE livechat_sessions SET status = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }
+    - id: help
+      from: [In Progress, Waiting for Customer]
+      to: Looking for Help
+      permission: livechat.write
+      mutation:
+        guards: [{ query: "SELECT id FROM livechat_sessions WHERE id = :id AND status IN ('In Progress', 'Waiting for Customer')", status: 409, message: Only open sessions can look for help }]
+        steps: [{ query: "UPDATE livechat_sessions SET status = 'Looking for Help', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }
+    - id: close
+      from: [In Progress, Waiting for Customer, Looking for Help]
+      to: Closed
+      permission: livechat.write
+      mutation:
+        guards: [{ query: "SELECT id FROM livechat_sessions WHERE id = :id AND status <> 'Closed'", status: 409, message: Only open sessions can be closed }]
+        steps:
+          - query: "UPDATE livechat_sessions SET status = 'Closed', ended_at = CURRENT_TIMESTAMP, outcome = CASE WHEN status = 'Looking for Help' THEN 'Escalated' ELSE 'Success' END, duration_minutes = CAST(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - started_at)) / 60 AS DECIMAL(18,2)), row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM livechat_sessions WHERE id = :id" }

@@ -1,0 +1,47 @@
+workflow:
+  id: marketing_automations
+  entity: marketing_automations
+  handler: order_transition
+  initial: Draft
+  permission: marketing_automation.write
+  mutable: true
+  status_source: automation_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Published, label: Published, color: blue }
+    - { id: Running, label: Running, color: amber }
+    - { id: Completed, label: Completed, color: green, terminal: true }
+    - { id: Paused, label: Paused, color: red }
+  transitions:
+    - id: publish
+      from: [Draft]
+      to: Published
+      permission: marketing_automation.write
+      mutation:
+        guards: [{ query: "SELECT id FROM marketing_automations WHERE id = :id AND state = 'Draft' AND trigger_type <> '' AND action_type <> ''", status: 409, message: A trigger and action are required before publishing }]
+        steps: [{ query: "UPDATE marketing_automations SET state = 'Published', published_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }
+    - id: run
+      from: [Published, Paused]
+      to: Running
+      permission: marketing_automation.write
+      mutation:
+        guards: [{ query: "SELECT id FROM marketing_automations WHERE id = :id AND state IN ('Published', 'Paused')", status: 409, message: Only published or paused automations can run }]
+        steps: [{ query: "UPDATE marketing_automations SET state = 'Running', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }
+    - id: complete
+      from: [Running]
+      to: Completed
+      permission: marketing_automation.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM marketing_automations WHERE id = :id AND state = 'Running'", status: 409, message: Only running automations can complete }]
+        steps: [{ query: "UPDATE marketing_automations SET state = 'Completed', completed_count = enrollment_count, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }
+    - id: pause
+      from: [Published, Running]
+      to: Paused
+      permission: marketing_automation.write
+      mutation:
+        guards: [{ query: "SELECT id FROM marketing_automations WHERE id = :id AND state IN ('Published', 'Running')", status: 409, message: Only active automations can be paused }]
+        steps: [{ query: "UPDATE marketing_automations SET state = 'Paused', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }

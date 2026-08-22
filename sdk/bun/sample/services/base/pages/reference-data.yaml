@@ -1,0 +1,69 @@
+title: Base Configuration
+page: { id: base-reference-data, breadcrumb: [Contacts, Configuration], auth: { require: [base.reference.read] } }
+datasources:
+  - { id: countries, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries ORDER BY name" }
+  - { id: currencies, permission: base.reference.read, query: "SELECT code, name, symbol, decimal_places FROM base_currencies ORDER BY code" }
+  - { id: languages, permission: base.reference.read, query: "SELECT code, name, direction FROM base_languages ORDER BY name" }
+  - { id: categories, permission: base.reference.read, query: "SELECT id, name, color FROM base_contact_categories ORDER BY name" }
+components:
+  - type: ListView
+    variant: odoo
+    source: countries
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: code, fields: [{ field: currency_code, label: Currency }] }
+    columns: [{ field: code, label: Code }, { field: name, label: Country }, { field: currency_code, label: Currency }]
+    row_open_action: view_country
+    row_double_click_action: view_country
+    form_view: { page: apps/services/base/pages/country-detail.yaml, side_panel: true }
+  - type: ListView
+    variant: odoo
+    source: currencies
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: code, fields: [{ field: symbol, label: Symbol }, { field: decimal_places, label: Decimals }] }
+    columns: [{ field: code, label: Code }, { field: name, label: Currency }, { field: symbol, label: Symbol }, { field: decimal_places, label: Decimals }]
+    row_open_action: view_currency
+    row_double_click_action: view_currency
+    form_view: { page: apps/services/base/pages/currency-detail.yaml, side_panel: true }
+  - type: ListView
+    variant: odoo
+    source: languages
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: code, fields: [{ field: direction, label: Direction }] }
+    columns: [{ field: code, label: Code }, { field: name, label: Language }, { field: direction, label: Direction }]
+    row_open_action: view_language
+    row_double_click_action: view_language
+    form_view: { page: apps/services/base/pages/language-detail.yaml, side_panel: true }
+  - type: ListView
+    variant: odoo
+    source: categories
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: color, fields: [{ field: color, label: Color }] }
+    columns: [{ field: name, label: Category }, { field: color, label: Color }]
+    row_open_action: view_category
+    row_double_click_action: view_category
+    form_view: { page: apps/services/base/pages/category-detail.yaml, side_panel: true }
+actions:
+  - { id: view_country, type: navigate, permission: base.reference.read, navigate_to: /country-detail, params: { id: '{row.code}' } }
+  - { id: view_currency, type: navigate, permission: base.reference.read, navigate_to: /currency-detail, params: { id: '{row.code}' } }
+  - { id: view_language, type: navigate, permission: base.reference.read, navigate_to: /language-detail, params: { id: '{row.code}' } }
+  - { id: view_category, type: navigate, permission: base.reference.read, navigate_to: /category-detail, params: { id: '{row.id}' } }

@@ -1,0 +1,13 @@
+id: appraisals
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/cycles.yaml
+  - pages/reviews.yaml
+  - pages/review-detail.yaml
+  - pages/analysis.yaml
+  - pages/appraisal-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

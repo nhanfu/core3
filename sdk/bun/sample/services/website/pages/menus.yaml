@@ -1,0 +1,50 @@
+title: Website Menus
+page: { id: website-menus, breadcrumb: [Website, Menus], auth: { require: [website.read] } }
+datasources:
+  - id: website_menu_lookup
+    permission: website.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM website_websites ORDER BY name"
+  - id: website_menus
+    permission: website.read
+    query: "SELECT id, row_version, website_name, name, url, parent_name, new_window, sequence FROM website_menus WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR url ILIKE '%' || :q || '%') ORDER BY website_name, sequence, name"
+components:
+  - type: ListView
+    variant: odoo
+    source: website_menus
+    create_action: create_website_menu
+    create_label: New menu item
+    search: { label: Search menus, placeholder: 'Search menu or URL...' }
+    columns:
+      - { field: name, label: Menu, type: PrimaryEntityCell }
+      - { field: website_name, label: Website }
+      - { field: url, label: URL }
+      - { field: parent_name, label: Parent menu }
+      - { field: new_window, label: New window }
+      - { field: sequence, label: Sequence, align: right }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_website_menu
+    type: server_form
+    permission: website.write
+    title: New menu item
+    action: website.menus.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [website_menus]
+    mutation:
+      operation: insert
+      table: website_menus
+      fields: [website_id, website_name, name, url, parent_name, new_window, sequence]
+      required: [website_id, website_name, name, url]
+      guards: [{ query: "SELECT 1 AS ok FROM website_websites WHERE id = :website_id", status: 400, message: A valid website is required }]
+      result: { query: "SELECT * FROM website_menus WHERE id = :id" }
+    fields:
+      - { field: website_id, label: Website, type: select, options_source: website_menu_lookup, required: true }
+      - { field: website_name, label: Website name, type: text, required: true }
+      - { field: name, label: Menu label, type: text, required: true }
+      - { field: url, label: URL, type: text, required: true }
+      - { field: parent_name, label: Parent menu, type: text }
+      - { field: new_window, label: Open in new window, type: checkbox }
+      - { field: sequence, label: Sequence, type: number }

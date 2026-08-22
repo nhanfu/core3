@@ -1,0 +1,21 @@
+title: Purchase Analysis
+page: { id: purchase-analysis, breadcrumb: [Supply Chain, Purchase, Analysis], auth: { require: [purchase.read] } }
+datasources:
+  - id: purchase_analysis_totals
+    single: true
+    permission: purchase.read
+    query: "SELECT COUNT(*) AS order_count, COALESCE(SUM(quantity), 0) AS ordered_units, COALESCE(SUM(qty_received), 0) AS received_units, COALESCE(SUM(quantity * unit_price), 0) AS committed_value FROM purchase_orders"
+  - id: purchase_analysis_states
+    permission: purchase.read
+    query: "SELECT state AS category, COUNT(*) AS order_count FROM purchase_orders GROUP BY state ORDER BY order_count DESC"
+components:
+  - type: StatRow
+    source: purchase_analysis_totals
+    title: Purchasing performance
+    stats: [{ label: Orders, field: order_count }, { label: Ordered units, field: ordered_units }, { label: Received units, field: received_units }, { label: Committed value, field: committed_value }]
+  - type: Chart
+    source: purchase_analysis_states
+    title: Orders by status
+    label_field: category
+    value_field: order_count
+    variant: bar

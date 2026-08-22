@@ -1,0 +1,71 @@
+event_schema:
+  table: event_log
+  columns:
+    - { name: id, type: varchar, source: id, nullable: false }
+    - { name: sequence, type: bigint, source: sequence, nullable: false }
+    - { name: event_at, type: bigint, source: at, nullable: false }
+    - { name: topic, type: varchar, source: topic }
+    - { name: event_key, type: varchar, source: key }
+    - { name: source_node, type: varchar, source: sourceNode }
+    - { name: operation, type: varchar }
+    - { name: status, type: varchar }
+    - { name: actor_id, type: varchar, source: actorId }
+    - { name: client_message_id, type: varchar, source: clientMessageId }
+    - { name: message_id, type: varchar, source: messageId }
+    - { name: error, type: varchar }
+    - { name: thread_id, type: varchar, source: threadId }
+    - { name: message_thread_id, type: varchar, source: message.thread_id }
+    - { name: message_sender_id, type: varchar, source: message.sender_id }
+    - { name: message_sender_name, type: varchar, source: message.sender_name }
+    - { name: message_body, type: varchar, source: message.body }
+    - { name: message_created_at, type: varchar, source: message.created_at }
+    - { name: message_attachment_id, type: varchar, source: message.attachment.id }
+    - { name: message_attachment_file_name, type: varchar, source: message.attachment.file_name }
+    - { name: message_attachment_mime_type, type: varchar, source: message.attachment.mime_type }
+    - { name: message_attachment_size_bytes, type: bigint, source: message.attachment.size_bytes }
+
+seed_events:
+  - key: chat.seed.message.01
+    topic: chat.message.created
+    source: chat.seed
+    operation: send_message
+    status: success
+    threadId: chat-demo-thread
+    messageId: chat-demo-message-01
+    message:
+      thread_id: chat-demo-thread
+      sender_id: user-admin
+      body: Welcome to the Core3 event store demo.
+      created_at: '2026-08-14T08:00:00.000Z'
+  - key: chat.seed.message.02
+    topic: chat.message.created
+    source: chat.seed
+    operation: send_message
+    status: success
+    threadId: chat-demo-thread
+    messageId: chat-demo-message-02
+    message:
+      thread_id: chat-demo-thread
+      sender_id: user-disp
+      body: This message was seeded through the event bus.
+      created_at: '2026-08-14T08:01:00.000Z'
+  - key: chat.seed.message.03
+    topic: chat.message.created
+    source: chat.seed
+    operation: send_message
+    status: success
+    threadId: chat-fleet-thread
+    messageId: chat-fleet-message-02
+    message:
+      thread_id: chat-fleet-thread
+      sender_id: user-fleet
+      body: Thanks, I can now access Fleet Operations.
+      created_at: '2026-08-14T08:03:00.000Z'
+
+events:
+  - id: chat.message.created
+    payload:
+      thread_id: string
+      message_id: string
+      sender_id: string
+      body: string

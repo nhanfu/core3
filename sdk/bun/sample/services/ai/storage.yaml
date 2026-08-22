@@ -1,0 +1,5 @@
+database:
+  driver: ${CORE3_AI_DB_DRIVER:-duckdb}
+  credentials:
+    url: ${CORE3_AI_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:55433/core3}
+    url_env: CORE3_AI_DATABASE_URL

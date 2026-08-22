@@ -1,0 +1,19 @@
+title: Website
+page: { id: website-detail, breadcrumb: [Website, Websites, Website], auth: { require: [website.read] } }
+datasources:
+  - id: website_detail
+    permission: website.read
+    single: true
+    query: "SELECT * FROM website_websites WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: website_detail
+    title_field: name
+    fields:
+      - { field: name, label: Website name }
+      - { field: domain, label: Domain }
+      - { field: homepage_url, label: Homepage URL }
+      - { field: default_language, label: Default language }
+      - { field: google_analytics_key, label: Google Analytics key }
+      - { field: cookies_bar, label: Cookies bar }
+      - { field: cdn_activated, label: CDN activated }

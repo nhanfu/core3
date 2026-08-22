@@ -1,0 +1,28 @@
+@use 'styles/tokens';
+@use 'styles/components';
+
+/* Base records use the shared Odoo sheet, but do not have a chatter column yet. */
+.o-form-layout:not(:has(.o-form-chatter)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.o-form-view-slot {
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.o-form-embedded-content .o-list-view {
+  height: auto;
+  min-height: 260px;
+  border: 1px solid var(--o-form-border);
+  border-radius: 4px;
+  background: var(--o-form-surface);
+}
+
+.o-form-embedded-content .o-list-control-panel {
+  border-radius: 4px 4px 0 0;
+}
+
+.o-form-embedded-content .o-list-table-viewport {
+  min-height: 180px;
+}

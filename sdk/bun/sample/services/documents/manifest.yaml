@@ -1,0 +1,11 @@
+id: documents
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/documents.yaml
+  - pages/analysis.yaml
+  - pages/document-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

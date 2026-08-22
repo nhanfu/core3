@@ -1,0 +1,47 @@
+workflow:
+  id: purchase_orders
+  entity: purchase_orders
+  handler: order_transition
+  initial: Draft
+  permission: purchase.write
+  mutable: true
+  status_source: purchase_order_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Sent, label: Sent, color: amber }
+    - { id: Confirmed, label: Confirmed, color: blue }
+    - { id: Received, label: Received, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: send
+      from: [Draft]
+      to: Sent
+      permission: purchase.write
+      mutation:
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft purchase orders can be sent }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Sent', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
+    - id: confirm
+      from: [Sent]
+      to: Confirmed
+      permission: purchase.write
+      mutation:
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Sent'", status: 409, message: Only sent purchase orders can be confirmed }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Confirmed', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
+    - id: receive
+      from: [Confirmed]
+      to: Received
+      permission: purchase.write
+      mutation:
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state = 'Confirmed' AND quantity > 0", status: 409, message: Only confirmed orders with a positive quantity can be received }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Received', qty_received = quantity, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Sent, Confirmed]
+      to: Cancelled
+      permission: purchase.write
+      mutation:
+        guards: [{ query: "SELECT id FROM purchase_orders WHERE id = :id AND state IN ('Draft', 'Sent', 'Confirmed')", status: 409, message: Only open purchase orders can be cancelled }]
+        steps: [{ query: "UPDATE purchase_orders SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }

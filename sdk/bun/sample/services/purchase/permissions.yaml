@@ -1,0 +1,4 @@
+permissions:
+  - purchase.read
+  - purchase.write
+  - purchase.manage

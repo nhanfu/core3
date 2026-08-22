@@ -1,0 +1,35 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS forum_forums (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL UNIQUE, description VARCHAR,
+        mode VARCHAR NOT NULL DEFAULT 'Questions', privacy VARCHAR NOT NULL DEFAULT 'Public',
+        total_posts INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS forum_posts (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        forum_id VARCHAR NOT NULL, forum_name VARCHAR NOT NULL, title VARCHAR NOT NULL, content VARCHAR,
+        author_name VARCHAR, tags VARCHAR, views INTEGER NOT NULL DEFAULT 0,
+        vote_count INTEGER NOT NULL DEFAULT 0, answer_count INTEGER NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Active', closed_reason VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS forum_posts_forum_idx ON forum_posts(forum_id);
+      CREATE INDEX IF NOT EXISTS forum_posts_state_idx ON forum_posts(state);
+      CREATE TABLE IF NOT EXISTS forum_tags (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        forum_id VARCHAR NOT NULL, forum_name VARCHAR NOT NULL, name VARCHAR NOT NULL, color INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS forum_tags_forum_idx ON forum_tags(forum_id);
+    down: |
+      DROP TABLE IF EXISTS forum_tags;
+      DROP TABLE IF EXISTS forum_posts;
+      DROP TABLE IF EXISTS forum_forums;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

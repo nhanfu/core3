@@ -1,20 +1,27 @@
 node_modules/
+*.css
+*.css.map
+# doc.css is hand-authored source for the spec project, not compiled Sass output
+!sdk/bun/packages/spec/public/styles/doc.css
 
 # Local databases and DuckDB runtime files
+coredb
 *.duckdb
 *.duckdb.*
 *.duckdb.wal
 *.duckdb.tmp
-apps/crm/db/uploads/
-apps/crm/services/uploads
-
+apps/services/*/.data/
+.tmp/
+events-parquet/
+uploads
 # Build, test, and diagnostic output
 coverage/
 lib/dist/
 *.tsbuildinfo
 *.log
 *.pid
-*.css
+dist
+sdk/bun/sample/.data/
 
 # Local tooling and environment settings
 .env

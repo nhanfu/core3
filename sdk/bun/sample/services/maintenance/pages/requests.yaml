@@ -1,0 +1,69 @@
+title: Maintenance Requests
+page: { id: maintenance-requests, breadcrumb: [Supply Chain, Maintenance, Requests], auth: { require: [maintenance.read] } }
+datasources:
+  - id: maintenance_request_states
+    permission: maintenance.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('Assigned','Assigned'), ('In Progress','In Progress'), ('Repaired','Repaired'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: maintenance_equipment_lookup
+    permission: maintenance.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM maintenance_equipment WHERE state = 'Active' ORDER BY name"
+  - id: maintenance_requests
+    permission: maintenance.read
+    workflow: maintenance_requests
+    query: "SELECT r.id, r.row_version, r.name, r.equipment_name, r.request_type, r.description, r.priority, r.assigned_to, r.state, CAST(r.request_date AS VARCHAR) AS request_date, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.completed_date AS VARCHAR) AS completed_date FROM maintenance_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.equipment_name ILIKE '%' || :q || '%' OR r.description ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.request_date DESC, r.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: maintenance_requests
+    create_action: create_maintenance_request
+    create_label: New request
+    search: { label: Search maintenance requests, placeholder: 'Search requests, equipment, or description...' }
+    filters: [{ field: state, label: Status, options_source: maintenance_request_states }]
+    columns:
+      - { field: name, label: Request, type: PrimaryEntityCell }
+      - { field: equipment_name, label: Equipment }
+      - { field: request_type, label: Type }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: assigned_to, label: Assigned to }
+      - { field: scheduled_date, label: Scheduled date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: assign_maintenance_request, label: Assign, permission: maintenance.write, variant: primary, show_if: "row.state === 'New'" }
+      - { id: start_maintenance_request, label: Start, permission: maintenance.write, variant: secondary, show_if: "row.state === 'Assigned'" }
+      - { id: repair_maintenance_request, label: Mark repaired, permission: maintenance.write, variant: primary, show_if: "row.state === 'In Progress'" }
+      - { id: cancel_maintenance_request, label: Cancel, permission: maintenance.write, variant: danger, show_if: "row.state !== 'Repaired' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_maintenance_request
+    type: server_form
+    permission: maintenance.write
+    title: New maintenance request
+    action: maintenance.requests.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [maintenance_requests]
+    mutation:
+      operation: insert
+      table: maintenance_requests
+      fields: [name, equipment_id, equipment_name, request_type, description, priority, assigned_to, request_date, scheduled_date]
+      required: [name, equipment_id, equipment_name, description]
+      guards: [{ query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM maintenance_equipment WHERE id = :equipment_id AND state = 'Active')", status: 400, message: An active equipment record is required }]
+      result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" }
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: equipment_id, label: Equipment, type: select, options_source: maintenance_equipment_lookup, required: true }
+      - { field: equipment_name, label: Equipment name, type: text, required: true }
+      - { field: request_type, label: Type, type: select, options: [{ value: Corrective, label: Corrective }, { value: Preventive, label: Preventive }], required: true }
+      - { field: description, label: Description, type: text, required: true }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Normal }, { value: High, label: High }], required: true }
+      - { field: assigned_to, label: Assigned to, type: text }
+      - { field: request_date, label: Request date, type: text }
+      - { field: scheduled_date, label: Scheduled date, type: text }
+  - { id: assign_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.assign, handler: order_transition, workflow: maintenance_requests, operation: assign, refresh: [maintenance_requests] }
+  - { id: start_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, refresh: [maintenance_requests] }
+  - { id: repair_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, refresh: [maintenance_requests] }
+  - { id: cancel_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.cancel, handler: order_transition, workflow: maintenance_requests, operation: cancel, refresh: [maintenance_requests] }

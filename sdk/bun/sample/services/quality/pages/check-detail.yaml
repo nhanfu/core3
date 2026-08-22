@@ -1,0 +1,25 @@
+title: Quality Check
+page: { id: quality-check-detail, breadcrumb: [Supply Chain, Quality, Detail], auth: { require: [quality.read] } }
+datasources:
+  - id: quality_check_detail
+    single: true
+    permission: quality.read
+    query: "SELECT id, row_version, name, check_type, product_name, source_type, source_id, operation, inspector, specification, measured_value, uom, result, priority, state, CAST(checked_date AS VARCHAR) AS checked_date, notes FROM quality_checks WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: quality_check_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: New, label: New }, { value: In Progress, label: In Progress }, { value: Passed, label: Passed }, { value: Failed, label: Failed }, { value: Cancelled, label: Cancelled }]
+    status_colors: { New: neutral, In Progress: blue, Passed: green, Failed: red, Cancelled: amber }
+    group_columns: 2
+    groups:
+      - title: Inspection
+        fields: [{ field: name, label: Check }, { field: state, label: Status }, { field: check_type, label: Type }, { field: product_name, label: Product }, { field: operation, label: Operation }]
+      - title: Result
+        fields: [{ field: inspector, label: Inspector }, { field: specification, label: Specification }, { field: measured_value, label: Measured value }, { field: uom, label: Unit }, { field: result, label: Result }, { field: notes, label: Notes }]
+actions:
+  - { id: start_quality_check_detail, type: server, permission: quality.write, action: quality.checks.start, handler: order_transition, workflow: quality_checks, operation: start, params: { id: '{state.id}' }, refresh: [quality_check_detail] }
+  - { id: pass_quality_check_detail, type: server, permission: quality.write, action: quality.checks.pass, handler: order_transition, workflow: quality_checks, operation: pass, params: { id: '{state.id}' }, refresh: [quality_check_detail] }
+  - { id: fail_quality_check_detail, type: server, permission: quality.write, action: quality.checks.fail, handler: order_transition, workflow: quality_checks, operation: fail, params: { id: '{state.id}' }, refresh: [quality_check_detail] }
+  - { id: cancel_quality_check_detail, type: server, permission: quality.write, action: quality.checks.cancel, handler: order_transition, workflow: quality_checks, operation: cancel, params: { id: '{state.id}' }, refresh: [quality_check_detail] }

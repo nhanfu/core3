@@ -1,0 +1,38 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_invoices (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, partner_name VARCHAR, invoice_type VARCHAR NOT NULL DEFAULT 'Customer Invoice',
+        invoice_date DATE DEFAULT CURRENT_DATE, due_date DATE, amount_untaxed DECIMAL(18,2) NOT NULL DEFAULT 0,
+        amount_tax DECIMAL(18,2) NOT NULL DEFAULT 0, amount_total DECIMAL(18,2) NOT NULL DEFAULT 0,
+        amount_residual DECIMAL(18,2) NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Draft',
+        reference VARCHAR, source_service VARCHAR, source_type VARCHAR, source_id VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS accounting_journal_entries (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, journal VARCHAR NOT NULL DEFAULT 'Miscellaneous', entry_date DATE DEFAULT CURRENT_DATE,
+        reference VARCHAR, debit DECIMAL(18,2) NOT NULL DEFAULT 0, credit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Draft', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS accounting_payments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, partner_name VARCHAR, payment_type VARCHAR NOT NULL DEFAULT 'Inbound',
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0, payment_method VARCHAR DEFAULT 'Bank',
+        payment_date DATE DEFAULT CURRENT_DATE, state VARCHAR NOT NULL DEFAULT 'Draft', reference VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_accounting_invoices_state ON accounting_invoices(state);
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_accounting_invoice_source ON accounting_invoices(source_service, source_type, source_id);
+      CREATE INDEX IF NOT EXISTS idx_accounting_entries_date ON accounting_journal_entries(entry_date);
+      CREATE INDEX IF NOT EXISTS idx_accounting_payments_state ON accounting_payments(state);
+    down: |
+      DROP TABLE IF EXISTS accounting_payments;
+      DROP TABLE IF EXISTS accounting_journal_entries;
+      DROP TABLE IF EXISTS accounting_invoices;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

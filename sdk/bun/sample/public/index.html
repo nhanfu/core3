@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TMS — Transport Management System</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/styles/global.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+  <script>
+    // Suppress Tailwind's reset so our CSS vars take precedence on shell elements
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      content: ['./**/*.{html,ts}']
+    };
+  </script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@core3/client/html": "/packages/client/src/html.ts",
+        "@core3/client/expr": "/packages/client/src/expr.ts",
+        "@core3/client/auth-redirect": "/packages/client/src/auth-redirect.ts",
+        "@core3/client/navigate": "/packages/client/src/navigate.ts",
+        "@core3/client/list-utils": "/packages/client/src/list-utils.ts",
+        "@core3/client/meta": "/packages/client/src/meta.ts",
+        "@core3/client/chat-wire": "/packages/client/src/chat-wire.ts",
+        "@core3/client/dtos": "/packages/client/src/dtos.ts",
+        "@core3/client/i18n": "/packages/client/src/i18n.ts",
+        "@core3/client/registry": "/packages/client/src/registry.ts",
+        "@core3/client/workflow": "/packages/client/src/workflow.ts",
+        "@core3/client/xlsx-utils": "/packages/client/src/xlsx-utils.ts"
+        ,"@core3/client/components/BaseComponent": "/packages/client/src/components/BaseComponent.ts"
+        ,"@core3/client/components/helpers": "/packages/client/src/components/helpers.ts"
+        ,"@core3/client/components/Icon": "/packages/client/src/components/Icon.ts"
+        ,"@core3/client/components/TextCell": "/packages/client/src/components/TextCell.ts"
+        ,"@core3/client/components/BadgeCell": "/packages/client/src/components/BadgeCell.ts"
+        ,"@core3/client/components/BooleanCell": "/packages/client/src/components/BooleanCell.ts"
+        ,"@core3/client/components/NumberCell": "/packages/client/src/components/NumberCell.ts"
+        ,"@core3/client/components/DateCell": "/packages/client/src/components/DateCell.ts"
+        ,"@core3/client/components/ActionButton": "/packages/client/src/components/ActionButton.ts"
+        ,"@core3/client/components/ActionCell": "/packages/client/src/components/ActionCell.ts"
+        ,"@core3/client/components/AvatarCell": "/packages/client/src/components/AvatarCell.ts"
+        ,"@core3/client/components/AvatarPicker": "/packages/client/src/components/AvatarPicker.ts"
+        ,"@core3/client/components/CurrencyCell": "/packages/client/src/components/CurrencyCell.ts"
+        ,"@core3/client/components/PercentCell": "/packages/client/src/components/PercentCell.ts"
+        ,"@core3/client/components/Button": "/packages/client/src/components/Button.ts"
+        ,"@core3/client/components/ButtonExcel": "/packages/client/src/components/ButtonExcel.ts"
+        ,"@core3/client/components/ButtonImportExcel": "/packages/client/src/components/ButtonImportExcel.ts"
+        ,"@core3/client/components/ButtonPdf": "/packages/client/src/components/ButtonPdf.ts"
+        ,"@core3/client/components/CheckboxInput": "/packages/client/src/components/CheckboxInput.ts"
+        ,"@core3/client/components/ComingSoon": "/packages/client/src/components/ComingSoon.ts"
+        ,"@core3/client/components/EmptyState": "/packages/client/src/components/EmptyState.ts"
+        ,"@core3/client/components/Label": "/packages/client/src/components/Label.ts"
+        ,"@core3/client/components/Spinner": "/packages/client/src/components/Spinner.ts"
+        ,"@core3/client/components/ProgressBar": "/packages/client/src/components/ProgressBar.ts"
+        ,"@core3/client/components/TextInput": "/packages/client/src/components/TextInput.ts"
+        ,"@core3/client/components/TextareaInput": "/packages/client/src/components/TextareaInput.ts"
+        ,"@core3/client/components/NumberInput": "/packages/client/src/components/NumberInput.ts"
+        ,"@core3/client/components/DateInput": "/packages/client/src/components/DateInput.ts"
+        ,"@core3/client/components/SelectInput": "/packages/client/src/components/SelectInput.ts"
+        ,"@core3/client/components/Dialog": "/packages/client/src/components/Dialog.ts"
+        ,"@core3/client/components/ConfirmDialog": "/packages/client/src/components/ConfirmDialog.ts"
+        ,"@core3/client/components/ContextMenu": "/packages/client/src/components/ContextMenu.ts"
+        ,"@core3/client/components/PopupEditor": "/packages/client/src/components/PopupEditor.ts"
+        ,"@core3/client/components/Toast": "/packages/client/src/components/Toast.ts"
+        ,"@core3/client/components/AsyncSelect": "/packages/client/src/components/AsyncSelect.ts"
+        ,"@core3/client/components/ChoiceGroup": "/packages/client/src/components/ChoiceGroup.ts"
+        ,"@core3/client/components/MoneyInput": "/packages/client/src/components/MoneyInput.ts"
+        ,"@core3/client/components/CodeEditor": "/packages/client/src/components/CodeEditor.ts"
+        ,"@core3/client/components/RichTextBox": "/packages/client/src/components/RichTextBox.ts"
+        ,"@core3/client/components/SearchEntry": "/packages/client/src/components/SearchEntry.ts"
+        ,"@core3/client/components/ListViewSearch": "/packages/client/src/components/ListViewSearch.ts"
+        ,"@core3/client/components/FilterBar": "/packages/client/src/components/FilterBar.ts"
+        ,"@core3/client/components/AdvancedSearch": "/packages/client/src/components/AdvancedSearch.ts"
+        ,"@core3/client/components/MultipleSearchEntry": "/packages/client/src/components/MultipleSearchEntry.ts"
+        ,"@core3/client/components/Image": "/packages/client/src/components/Image.ts"
+        ,"@core3/client/components/DocumentSummary": "/packages/client/src/components/DocumentSummary.ts"
+        ,"@core3/client/components/FormPanel": "/packages/client/src/components/FormPanel.ts"
+        ,"@core3/client/components/Section": "/packages/client/src/components/Section.ts"
+        ,"@core3/client/components/Html": "/packages/client/src/components/Html.ts"
+        ,"@core3/client/components/LinkCell": "/packages/client/src/components/LinkCell.ts"
+        ,"@core3/client/components/RankCell": "/packages/client/src/components/RankCell.ts"
+        ,"@core3/client/components/Rating": "/packages/client/src/components/Rating.ts"
+        ,"@core3/client/components/TemplatePreview": "/packages/client/src/components/TemplatePreview.ts"
+        ,"@core3/client/components/QrCode": "/packages/client/src/components/QrCode.ts"
+        ,"@core3/client/components/Paginator": "/packages/client/src/components/Paginator.ts"
+        ,"@core3/client/components/ListToolbar": "/packages/client/src/components/ListToolbar.ts"
+        ,"@core3/client/components/DateRangeFilterTag": "/packages/client/src/components/DateRangeFilterTag.ts"
+        ,"@core3/client/components/ListViewSection": "/packages/client/src/components/ListViewSection.ts"
+        ,"@core3/client/components/StatRow": "/packages/client/src/components/StatRow.ts"
+        ,"@core3/client/components/StatCard": "/packages/client/src/components/StatCard.ts"
+        ,"@core3/client/components/HtmlCode": "/packages/client/src/components/HtmlCode.ts"
+        ,"@core3/client/components/TreeView": "/packages/client/src/components/TreeView.ts"
+        ,"@core3/client/components/TabGroup": "/packages/client/src/components/TabGroup.ts"
+        ,"@core3/client/components/TabPanel": "/packages/client/src/components/TabPanel.ts"
+        ,"@core3/client/components/StatusTabs": "/packages/client/src/components/StatusTabs.ts"
+        ,"@core3/client/components/DataGrid": "/packages/client/src/components/DataGrid.ts"
+        ,"@core3/client/components/GridView": "/packages/client/src/components/GridView.ts"
+        ,"@core3/client/components/GroupGridView": "/packages/client/src/components/GroupGridView.ts"
+        ,"@core3/client/components/CardView": "/packages/client/src/components/CardView.ts"
+        ,"@core3/client/components/ListView": "/packages/client/src/components/ListView.ts"
+        ,"@core3/client/components/KanbanView": "/packages/client/src/components/KanbanView.ts"
+        ,"@core3/client/components/CalendarView": "/packages/client/src/components/CalendarView.ts"
+        ,"@core3/client/components/PivotView": "/packages/client/src/components/PivotView.ts"
+        ,"@core3/client/components/GraphView": "/packages/client/src/components/GraphView.ts"
+        ,"@core3/client/components/MapView": "/packages/client/src/components/MapView.ts"
+        ,"@core3/client/components/ApprovalTimeline": "/packages/client/src/components/ApprovalTimeline.ts"
+        ,"@core3/client/components/ContactGrid": "/packages/client/src/components/ContactGrid.ts"
+        ,"@core3/client/components/LineItemGrid": "/packages/client/src/components/LineItemGrid.ts"
+        ,"@core3/client/components/LineItemField": "/packages/client/src/components/LineItemField.ts"
+        ,"@core3/client/components/LineItemActions": "/packages/client/src/components/LineItemActions.ts"
+        ,"@core3/client/components/MoneySummary": "/packages/client/src/components/MoneySummary.ts"
+        ,"@core3/client/components/ScheduleGrid": "/packages/client/src/components/ScheduleGrid.ts"
+        ,"@core3/client/components/Chat": "/packages/client/src/components/Chat.ts"
+        ,"@core3/client/components/ChatWorkspace": "/packages/client/src/components/ChatWorkspace.ts"
+        ,"@core3/client/components/AiWorkspace": "/packages/client/src/components/AiWorkspace.ts"
+        ,"@core3/client/components/TaskRunnerPanel": "/packages/client/src/components/TaskRunnerPanel.ts"
+        ,"@core3/client/components/ChromeTab": "/packages/client/src/components/ChromeTab.ts"
+        ,"@core3/client/components/EventPopup": "/packages/client/src/components/EventPopup.ts"
+        ,"@core3/client/components/LoginForm": "/packages/client/src/components/LoginForm.ts"
+        ,"@core3/client/components/Kanban": "/packages/client/src/components/Kanban.ts"
+        ,"@core3/client/components/SplitPanel": "/packages/client/src/components/SplitPanel.ts"
+        ,"@core3/client/components/TimelinePanel": "/packages/client/src/components/TimelinePanel.ts"
+        ,"@core3/client/components/CompareGridView": "/packages/client/src/components/CompareGridView.ts"
+        ,"@core3/client/components/Chart": "/packages/client/src/components/Chart.ts"
+        ,"@core3/client/components/Form": "/packages/client/src/components/Form.ts"
+        ,"@core3/client/components/OdooAttachmentPanel": "/packages/client/src/components/OdooAttachmentPanel.ts"
+        ,"@core3/client/components/OdooChatter": "/packages/client/src/components/OdooChatter.ts"
+        ,"@core3/client/components/OdooFollowerManager": "/packages/client/src/components/OdooFollowerManager.ts"
+        ,"@core3/client/components/OdooFormView": "/packages/client/src/components/OdooFormView.ts"
+        ,"@core3/client/components/PageRenderHandlerRegistry": "/packages/client/src/components/PageRenderHandlerRegistry.ts"
+        ,"@core3/client/components/ComLoader": "/packages/client/src/components/ComLoader.ts"
+        ,"@core3/client/components/PageIntro": "/packages/client/src/components/PageIntro.ts"
+        ,"@core3/client/components/PdfReport": "/packages/client/src/components/PdfReport.ts"
+        ,"@core3/client/components/PageFormModal": "/packages/client/src/components/PageFormModal.ts"
+        ,"@core3/client/components/PageDetailRenderers": "/packages/client/src/components/PageDetailRenderers.ts"
+        ,"@core3/client/components/PageGridRenderers": "/packages/client/src/components/PageGridRenderers.ts"
+        ,"@core3/client/components/PageRoot": "/packages/client/src/components/PageRoot.ts"
+        ,"@core3/client/client": "/packages/client/src/client.ts"
+        ,"@core3/client/duckdb": "/packages/client/src/duckdb.ts"
+        ,"@core3/server/yaml/schema": "/packages/server/src/yaml/schema.ts"
+        ,"@core3/server/yaml/workflow-schema": "/packages/server/src/yaml/workflow-schema.ts"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/app.ts"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+title: On Hand
+page: { id: stock, breadcrumb: [Supply Chain, Inventory, On Hand], auth: { require: [inventory.read] } }
+datasources:
+  - id: inventory_stock
+    single: false
+    permission: inventory.read
+    query: "SELECT q.id, q.product_id, q.product_name, l.name AS location_name, w.name AS warehouse_name, q.quantity, q.reserved_quantity, q.quantity - q.reserved_quantity AS available_quantity, q.unit_cost, (q.quantity * q.unit_cost) AS stock_value FROM inventory_quants q JOIN inventory_locations l ON l.id = q.location_id JOIN inventory_warehouses w ON w.id = l.warehouse_id WHERE (:q IS NULL OR q.product_name ILIKE '%' || :q || '%' OR l.name ILIKE '%' || :q || '%') ORDER BY q.product_name, w.name, l.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_stock
+    search: { label: Search stock, placeholder: Search products or locations... }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell }
+      - { field: warehouse_name, label: Warehouse }
+      - { field: location_name, label: Location }
+      - { field: quantity, label: On hand, align: right }
+      - { field: reserved_quantity, label: Reserved, align: right }
+      - { field: available_quantity, label: Available, align: right }
+      - { field: unit_cost, label: Unit cost, align: right }
+      - { field: stock_value, label: Stock value, align: right }
+    page_size: 50
+    row_key: id

@@ -1,6 +1,6 @@
 # ERP Rendering Framework
 
-A shared TypeScript framework for processing client YAML and rendering ERP pages. The framework provides reusable UI/runtime components and direct source imports from `apps/lib`.
+A shared TypeScript framework for processing client YAML and rendering ERP pages. The framework provides YAML-driven components, embedded SQL, OOP rendering, CRUD, and controlled extension points through direct imports from `apps/lib`.
 
 ## Vision
 
@@ -14,17 +14,17 @@ The intended scope of YAML includes:
 - database management, including partitioning and sharding
 - deployment and operational configuration
 
-The repository’s [`lib`](lib) directory is a shared, client-agnostic library. It should process client YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/tms`](apps/tms) is the sample client project where those declarations and any remaining app-specific code live.
+The repository’s [`apps/lib`](apps/lib) directory is a shared, service-agnostic library. It should process service YAML and provide generic rendering and framework capabilities; it must not become a home for business logic, domain models, or customer-specific behavior. [`apps/services/tms`](apps/services/tms) is the sample service where those declarations and any remaining service-specific code live. Authentication is provided by [`apps/services/auth`](apps/services/auth).
 
 Other code remains possible when YAML cannot yet express a requirement, but it should be minimal transitional glue with a path toward a YAML-based solution.
 
 ## Packages
 
 ```
-apps/lib           — shared UI/runtime components used directly by applications
+apps/lib            — YAML processing, page rendering, components, runtime, backend primitives, and interfaces
 ```
 
-Client projects consume the shared framework and provide their YAML and app-specific integration.
+Client projects import the shared framework source directly and provide their YAML and app-specific integration.
 
 ## How it works
 
@@ -119,7 +119,12 @@ datasources:
 
 Open [`/spec/main.html`](/spec/main.html) for the full interactive spec with architecture diagrams, code samples, and API details.
 
+[`sdk/bun/packages/spec`](sdk/bun/packages/spec) is a runnable Bun app that renders spec content the same way a client project would: pages are plain YAML files (no per-page HTML/CSS/JS), rendered through `@core3/client`'s `DocPage`/`DocHero`/`DocTopNav` components (see [`sdk/bun/packages/client/src/doc`](sdk/bun/packages/client/src/doc)). Run it with `bun run start` from that directory.
+
 ## Local Development
 
-- The shared framework package lives under [`apps/lib`](apps/lib) and is consumed locally by the CRM app.
-- The sample app lives under [`apps/tms`](apps/tms) and uses the shared framework package from `lib`.
+- Install the Bun workspace from [`sdk/bun`](sdk/bun): `bun install`.
+- The sample app uses PostgreSQL by default. Set `CORE3_AUTH_DATABASE_URL`, `CORE3_ORDER_DATABASE_URL`, and `CORE3_CHAT_DATABASE_URL`, then run `bun run dev` from [`sdk/bun/sample`](sdk/bun/sample).
+- For fast disposable development without PostgreSQL, run `bun run dev:memory` from [`sdk/bun/sample`](sdk/bun/sample). This selects the in-memory DuckDB driver and uses no hybrid cache.
+- The application depends on the [`DatabaseAdapter`](sdk/bun/packages/server/src/database/types.ts) interface. PostgreSQL and memory DuckDB are interchangeable drivers; repositories and YAML services do not open engine-specific connections.
+- Optional pg_mooncake development infrastructure is defined in [`sdk/bun/docker-compose.pgmooncake.yml`](sdk/bun/docker-compose.pgmooncake.yml). Start it with `docker compose -f docker-compose.pgmooncake.yml up -d`, set `CORE3_MOONCAKE_ENABLED=true`, and use the mapped PostgreSQL URL.

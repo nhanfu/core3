@@ -1,0 +1,27 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS sale_subscriptions (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        partner_name VARCHAR, recurring_revenue DECIMAL(18,2) NOT NULL DEFAULT 0,
+        plan VARCHAR, recurring_period VARCHAR NOT NULL DEFAULT 'Monthly',
+        state VARCHAR NOT NULL DEFAULT 'Quotation', start_date DATE, next_invoice_date DATE,
+        salesperson VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS sale_subscription_invoices (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), subscription_id VARCHAR NOT NULL,
+        invoice_number VARCHAR NOT NULL, invoice_date DATE, due_date DATE,
+        amount DECIMAL(18,2) NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Draft',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_sale_subscriptions_state ON sale_subscriptions(state);
+      CREATE INDEX IF NOT EXISTS idx_subscription_invoices_subscription ON sale_subscription_invoices(subscription_id);
+    down: |
+      DROP TABLE IF EXISTS sale_subscription_invoices;
+      DROP TABLE IF EXISTS sale_subscriptions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,46 @@
+workflow:
+  id: employees
+  entity: employees
+  handler: order_transition
+  initial: Draft
+  permission: employees.write
+  mutable: true
+  status_source: employee_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Active, label: Active, color: green }
+    - { id: On Leave, label: On Leave, color: amber }
+    - { id: Terminated, label: Terminated, color: red, terminal: true }
+  transitions:
+    - id: activate
+      from: [Draft]
+      to: Active
+      permission: employees.write
+      mutation:
+        guards: [{ query: "SELECT id FROM employees WHERE id = :id AND state = 'Draft' AND hire_date IS NOT NULL", status: 409, message: A hire date is required before activation }]
+        steps: [{ query: "UPDATE employees SET state = 'Active', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM employees WHERE id = :id" }
+    - id: leave
+      from: [Active]
+      to: On Leave
+      permission: employees.write
+      mutation:
+        guards: [{ query: "SELECT id FROM employees WHERE id = :id AND state = 'Active'", status: 409, message: Only active employees can go on leave }]
+        steps: [{ query: "UPDATE employees SET state = 'On Leave', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM employees WHERE id = :id" }
+    - id: return
+      from: [On Leave]
+      to: Active
+      permission: employees.write
+      mutation:
+        guards: [{ query: "SELECT id FROM employees WHERE id = :id AND state = 'On Leave'", status: 409, message: Only employees on leave can return }]
+        steps: [{ query: "UPDATE employees SET state = 'Active', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM employees WHERE id = :id" }
+    - id: terminate
+      from: [Draft, Active, On Leave]
+      to: Terminated
+      permission: employees.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM employees WHERE id = :id AND state IN ('Draft', 'Active', 'On Leave')", status: 409, message: Only current employees can be terminated }]
+        steps: [{ query: "UPDATE employees SET state = 'Terminated', termination_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM employees WHERE id = :id" }

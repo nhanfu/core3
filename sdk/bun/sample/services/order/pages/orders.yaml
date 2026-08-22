@@ -1,0 +1,377 @@
+title: Orders
+
+page:
+  id: orders
+  breadcrumb: [Management, Orders]
+  auth:
+    require: [orders.read]
+
+datasources:
+  - id: orders
+    single: false
+    permission: orders.read
+    query_window:
+      table: orders
+      date_field: order_date
+      from_param: from_date
+      to_param: to_date
+      max_years: 2
+      deny_unbounded: true
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
+          WHEN 'Draft' THEN 'Nháp'
+          WHEN 'Pending Approval' THEN 'Đang duyệt'
+          WHEN 'Approved' THEN 'Đã duyệt'
+          WHEN 'Cancelled' THEN 'Đã hủy'
+          ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
+        END AS status_label,
+        o.shipment_type, o.route, o.transport_method, o.trip_count,
+        CAST(COALESCE(o.total_amount, 0) AS DOUBLE) AS total_amount,
+        printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        o.created_by, CAST(o.created_at AS VARCHAR) AS created_at
+      FROM orders o
+      WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+        AND (:status IS NULL OR COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = :status)
+        AND (:shipment_type IS NULL OR o.shipment_type = :shipment_type)
+        AND (:transport_method IS NULL OR o.transport_method = :transport_method)
+        AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR o.order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:q IS NULL
+          OR o.order_number ILIKE '%' || :q || '%'
+          OR o.customer_name ILIKE '%' || :q || '%'
+          OR o.customer_legal_name ILIKE '%' || :q || '%'
+          OR o.route ILIKE '%' || :q || '%')
+      ORDER BY o.order_date DESC, o.created_at DESC
+    workflow: orders
+    pivot:
+      fields: [status_label, transport_method, shipment_type, order_date, customer_name, route, trip_count, total_amount, created_by]
+  - id: order_statuses
+    single: false
+    permission: orders.read
+    workflow_states: orders
+  - id: order_customer_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+  - id: order_shipment_type_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM system_configs WHERE kind = 'shipment_type' AND status = 'Active' UNION SELECT DISTINCT shipment_type AS value, shipment_type AS label FROM orders WHERE shipment_type IS NOT NULL AND shipment_type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+
+components:
+  - type: ListView
+    variant: odoo
+    scroll: body
+    source: orders
+    create_action: add_order
+    create_label: New
+    search:
+      label: Search orders
+      placeholder: 'Search order number, customer, item name...'
+    date_range:
+      label: Order date
+      from_field: from_date
+      to_field: to_date
+      from_label: From date
+      to_label: To date
+      presets: [today, week, month, quarter, year, last_12_months]
+      default_preset: last_12_months
+      max_years: 2
+      deny_unbounded: true
+      apply_label: Apply
+      calendar_previous_label: Previous date picker month
+      calendar_next_label: Next date picker month
+      weekday_labels: [Mo, Tu, We, Th, Fr, Sa, Su]
+      validation_messages:
+        required: A bounded date range is required.
+        invalid: Enter valid dates in YYYY-MM-DD format.
+        start_before_end: The start date must be before the end date.
+        max_years: The date range cannot be longer than {max_years} years.
+      preset_labels:
+        today: Today
+        week: This week
+        month: This month
+        quarter: This quarter
+        year: This year
+        last_12_months: Last 12 months
+    filters:
+      - field: status
+        label: Status
+        placeholder: All statuses
+        options:
+          - { id: Draft, label: Draft }
+          - { id: Pending Approval, label: Pending approval }
+          - { id: Approved, label: Approved }
+          - { id: Cancelled, label: Cancelled }
+      - field: shipment_type
+        label: Shipment type
+        placeholder: All shipment types
+        options_source: order_shipment_type_lookup
+      - field: transport_method
+        label: Transport method
+        placeholder: All transport methods
+        options: [Road, Sea, Rail, Air]
+    group_by:
+      - { field: status_label, label: Status }
+      - { field: shipment_type, label: Shipment type }
+      - { field: transport_method, label: Transport method }
+    favorites:
+      - { id: draft_orders, label: Draft orders, filters: { status: Draft }, group_by: status_label }
+      - { id: approved_orders, label: Approved orders, filters: { status: Approved }, group_by: status_label }
+    actions:
+      - { id: orders.export, label: Export, title: Export, icon: download }
+    view_navigation: tabs
+    labels:
+      new: New
+      filters: Filters
+      columns: Columns
+      selected: selected
+      clear_selection: Clear selection
+      remove_filter: Remove filter
+      previous_page: Previous page
+      next_page: Next page
+      select_all: Select all rows
+      select_row: Select row
+      search_facet: Search
+      apply: Apply
+      more_actions: More actions
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: status
+        groups_source: order_statuses
+        card:
+          title: order_number
+          subtitle: customer_name
+          fields:
+            - { field: status, label: Status }
+            - { field: order_date, label: Order date }
+            - { field: total_amount_display, label: Total }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: status
+        groups_source: order_statuses
+        card:
+          title: order_number
+          subtitle: customer_name
+          fields:
+            - { field: order_date, label: Order date }
+            - { field: shipment_type, label: Shipment type }
+            - { field: route, label: Route }
+            - { field: total_amount_display, label: Total }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: order_date
+        card:
+          title: order_number
+          subtitle: customer_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: status_label, column: Status }
+            - { field: transport_method, column: Transport method }
+            - { field: shipment_type, column: Shipment type }
+            - { field: order_date, column: Order date, type: date }
+            - { field: customer_name, column: Customer }
+            - { field: route, column: Route }
+            - { field: trip_count, column: Trip count }
+            - { field: total_amount, column: Total amount }
+            - { field: created_by, column: Created by }
+          default:
+            rows: [status_label]
+            columns: [transport_method]
+            measures:
+              - { field: total_amount, aggregate: sum, column: Amount }
+          date_ranges: { order_date: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: status_label
+        measure_field: total_amount
+      - id: map
+        label: Map
+        icon: map
+        label_field: order_number
+        subtitle_field: route
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    selectable: true
+    row_open_action: view_order
+    row_double_click_action: view_order
+    form_view: { page: apps/services/order/pages/order-detail.yaml, side_panel: true }
+    row_actions: menu
+    empty_state:
+      title: No orders
+      description: Try changing the filters or create a new order.
+    columns:
+      - { field: order_number, label: Order number, type: PrimaryEntityCell, sortable: true }
+      - { field: customer_name, label: Customer }
+      - { field: order_date, label: Order date, sortable: true }
+      - field: status_label
+        label: Status
+        type: StatusChip
+        colors:
+          Nháp: neutral
+          Đang duyệt: amber
+          Đã duyệt: green
+          Đã hủy: red
+      - { field: shipment_type, label: Shipment type }
+      - { field: route, label: Route }
+      - { field: transport_method, label: Transport method, optional: hide }
+      - { field: trip_count, label: Trip count, align: right, optional: hide }
+      - { field: total_amount_display, label: Total amount, align: right }
+      - { field: created_by, label: Created by, optional: hide }
+      - { field: created_at, label: Created at, optional: hide }
+      - field: actions
+        label: ''
+        sortable: false
+        align: right
+        actions:
+          - { id: view_order, label: Details, variant: secondary, permission: orders.read }
+          - { id: edit_order, label: Edit, variant: ghost, permission: orders.write, show_if: "row.status === 'Draft'" }
+          - { id: submit_order, label: Submit for approval, variant: primary, permission: orders.write, show_if: "row.status === 'Draft'" }
+          - { id: approve_order, label: Approve, variant: primary, permission: orders.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: reject_order, label: Reject, variant: ghost, permission: orders.approve, show_if: "row.status === 'Pending Approval'" }
+          - { id: cancel_order, label: Cancel, variant: danger, permission: orders.write, show_if: "row.status !== 'Cancelled'" }
+          - { id: delete_order, label: Delete, variant: danger, permission: orders.write, show_if: "row.status === 'Draft'" }
+
+actions:
+  - id: add_order
+    type: server_form
+    permission: orders.write
+    title: Add order
+    action: orders.create
+    handler: yaml_mutation
+    operation: create
+    success_message: Order created successfully.
+    refresh: [orders]
+    mutation:
+      operation: insert
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      required: [order_number, customer_name, order_date]
+      defaults: { status: Draft, trip_count: 0 }
+      scope: { field: branch_id, message: Order branch is invalid }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
+          status: 409
+          message: Order number already exists
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air], default: Road }
+      - { field: trip_count, label: Trip count, type: number, default: 0 }
+      - { field: notes, label: Notes, type: textarea }
+  - id: edit_order
+    type: server_form
+    permission: orders.write
+    title: Update order
+    action: orders.update
+    handler: yaml_mutation
+    operation: update
+    success_message: Order updated successfully.
+    prefill: row
+    refresh: [orders]
+    mutation:
+      operation: update
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      required: [order_number, customer_name, order_date]
+      timestamps: true
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
+          status: 409
+          message: Order number already exists
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be edited while Draft
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air] }
+      - { field: trip_count, label: Trip count, type: number }
+      - { field: notes, label: Notes, type: textarea }
+  - id: view_order
+    type: navigate
+    permission: orders.read
+    navigate_to: /detail
+    params: { id: '{row.id}' }
+  - id: submit_order
+    type: server
+    permission: orders.write
+    action: orders.submit_for_approval
+    handler: order_transition
+    workflow: orders
+    operation: submit_for_approval
+    confirm: 'Submit order {{row.order_number}}?'
+    refresh: [orders]
+  - id: approve_order
+    type: server
+    permission: orders.approve
+    action: orders.approve
+    handler: order_transition
+    workflow: orders
+    operation: approve
+    confirm: 'Approve order {{row.order_number}}?'
+    refresh: [orders]
+  - id: reject_order
+    type: server
+    permission: orders.approve
+    action: orders.reject
+    handler: order_transition
+    workflow: orders
+    operation: reject
+    confirm: 'Reject and return order {{row.order_number}} to draft?'
+    refresh: [orders]
+  - id: cancel_order
+    type: server
+    permission: orders.write
+    action: orders.cancel
+    handler: order_transition
+    workflow: orders
+    operation: cancel
+    confirm: 'Cancel order {{row.order_number}}?'
+    refresh: [orders]
+  - id: delete_order
+    type: server
+    permission: orders.write
+    action: orders.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete order {{row.order_number}}?'
+    refresh: [orders]
+    mutation:
+      operation: delete
+      table: orders
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be deleted while Draft
+      before_steps:
+        - query: "DELETE FROM order_lines WHERE order_id = :id"
+        - query: "DELETE FROM order_workflow_states WHERE order_id = :id"
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.delete', 'orders', :id, 'Deleted order')"
+      result: { query: "SELECT true AS ok" }

@@ -1,0 +1,450 @@
+title: YShip — Roadmap
+page:
+  id: roadmap
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      articleType: Overview
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Overview
+        - label: Roadmap
+      eyebrow: Roadmap
+      title: Plan & next steps
+      subtitle: Where the framework is today, and what pattern-extraction feeds back into it next.
+    sections:
+      - id: status
+        kicker: Status
+        title: Phase status
+        blocks:
+          - type: table
+            headers: [Phase, Status, Notes]
+            rows:
+              - ['Shared client library', Complete, '@core3/client — BaseComponent, html.js, the full component set, YAML-driven PageRuntime']
+              - ['Server YAML pipeline', Complete, 'Discovery, schema validation, multi-database adapters (Postgres, DuckDB, MySQL, SQL Server, Oracle)']
+              - ['Auth & event mediator', 'In progress', 'Typed JWT claims and a hardened mediator auth adapter landed most recently']
+              - ['Sample services', Complete, 'order and chat services in sdk/bun/sample are the canonical reference implementation — every new Odoo-parity module should follow their CRUD/workflow/chatter/attachment patterns']
+              - ['Doc/spec project', Complete, 'All original static pages (frontend, backend, scripting, reference, component library) migrated to YAML + DocPage']
+              - ['Component library accuracy pass', Complete, 'component-library.yaml corrected against real component source and expanded to cover the full export set']
+              - ['Package publishing', Future, '@core3/client and @core3/server as installable packages outside this monorepo']
+
+      - id: direction
+        kicker: Direction
+        title: Target — a full Odoo clone
+        lead: >-
+          The framework's direction is to reproduce Odoo's ERP surface end to end on YShip, not to
+          work from a hypothetical module list. Every new module should be modeled directly against
+          Odoo's real behavior.
+        blocks:
+          - type: callout
+            tone: important
+            title: The sample code is the reference, not a demo
+            text: >-
+              sdk/bun/sample/services/order and sdk/bun/sample/services/chat are the canonical
+              reference implementation for this direction — CRUD, workflow state transitions,
+              chatter/messaging, and file attachments, all driven by YAML page configs with no
+              per-page UI code. New Odoo-parity modules should follow these two services' patterns
+              directly, the same way OdooFormView, OdooChatter, OdooFollowerManager, and
+              OdooAttachmentPanel already exist because the sample services needed them.
+          - type: p
+            text: >-
+              This replaces the project's original planning approach (a hypothetical module
+              breakdown used only to validate the framework's YAML concepts before any real service
+              existed). That approach is now retired — the order and chat services are real,
+              running proof, and Odoo itself is the specification for what comes next.
+
+      - id: odoo-modules
+        kicker: Odoo parity tracker
+        title: Module / sub-module checklist
+        lead: >-
+          Odoo's own app grouping, used as the literal tracking list for this direction. Status is
+          reported honestly against what has actually shipped, not what the pattern could
+          theoretically support.
+        blocks:
+          - type: callout
+            tone: note
+            title: How to read "In progress"
+            text: >-
+              Sales-track modules are marked in progress once a real discovered service exists with
+              its core records, permissions, migration, route, and YAML CRUD surface — not because
+              the app is feature-complete against real Odoo. Everything else is Not started until a
+              real service exists for it.
+          - type: table
+            headers: [Category, Module, Status]
+            rows:
+              - [Sales, Sales, 'In progress — quotations, products, pricelists, order lines, invoicing links, and approval workflow shipped']
+              - [Sales, CRM, 'In progress — pipeline, lead detail, activities, teams, and guarded stage workflow shipped']
+              - [Sales, Point of Sale, 'In progress — sessions, POS orders, payments, configuration, and lifecycle workflow shipped']
+              - [Sales, Subscriptions, 'In progress — recurring contracts, plans, invoices, and lifecycle workflow shipped']
+              - [Sales, Rental, 'In progress — rental orders, event history, and reserve/pickup/return workflow shipped']
+              - [Finance, Accounting, 'In progress — invoices, journal entries, payments, reporting, and guarded posting workflow shipped']
+              - [Finance, Invoicing, 'In progress — Accounting-owned invoice contract now accepts Sales source records and preserves producer links']
+              - [Finance, Expenses, 'In progress — employee expense reports, approval workflow, posting, reimbursement, and analysis shipped']
+              - [Finance, Documents, 'In progress — document folders, metadata, approval workflow, expiry tracking, and analysis shipped']
+              - [Finance, Spreadsheet / Dashboards, 'In progress — saved dashboards, widget registry, publish/archive workflow, layouts, and analysis shipped']
+              - [Supply Chain, Inventory, 'In progress — warehouses, locations, on-hand quantities, stock moves, guarded validation, and analysis shipped']
+              - [Supply Chain, Manufacturing, 'In progress — BOMs, components, production orders, work orders, lifecycle workflow, and analysis shipped']
+              - [Supply Chain, Purchase, 'In progress — vendors, purchase orders, supplier lifecycle workflow, receiving, and analysis shipped']
+              - [Supply Chain, Maintenance, 'In progress — equipment, preventive requests, repair workflow, and analysis shipped']
+              - [Supply Chain, Quality, 'In progress — quality checks, inspection results, pass/fail handling, and analysis shipped']
+              - [Supply Chain, PLM, 'In progress — engineering revisions, change governance, approval, release, and analysis shipped']
+              - [Human Resources, Employees, 'In progress — employee profiles, departments, Auth identity links, lifecycle workflow, and analysis shipped']
+              - [Human Resources, Recruitment, 'In progress — job openings, applicant pipeline, hiring workflow, and analysis shipped']
+              - [Human Resources, Time Off, 'In progress — leave types, employee balances, leave requests, approval workflow, and analysis shipped']
+              - [Human Resources, Appraisals, 'In progress — appraisal cycles, employee reviews, ratings, completion workflow, and analysis shipped']
+              - [Human Resources, Referrals, 'In progress — employee referrals, candidate submissions, hiring linkage, rewards, and analysis shipped']
+              - [Human Resources, Fleet, 'In progress — vehicles, drivers, assignment, maintenance, retirement workflow, and analysis shipped']
+              - [Marketing, Email Marketing, 'In progress — mailing lists, campaigns, scheduling, delivery workflow, and analysis shipped']
+              - [Marketing, SMS Marketing, 'In progress — opt-in lists, SMS campaigns, scheduling, delivery workflow, and analysis shipped']
+              - [Marketing, Events, 'In progress — event records, registrations, publication workflow, attendance counts, and analysis shipped']
+              - [Marketing, Surveys, 'In progress — survey definitions, questions, publication, responses, and analysis shipped']
+              - [Marketing, Marketing Automation, 'In progress — automated journeys, triggers, actions, enrollments, and execution analysis shipped']
+              - [Services, Project, 'In progress — projects, milestones, tasks, task workflow, and effort analysis shipped']
+              - [Services, Timesheets, 'In progress — time entries, approval workflow, project rollups, and analysis shipped']
+              - [Services, Field Service, 'In progress — field tasks, technician dispatch, scheduling, and completion workflow shipped']
+              - [Services, Helpdesk, 'In progress — support tickets, assignment, SLA fields, and resolution workflow shipped']
+              - [Services, Appointments, Not started]
+              - [Services, Planning, Not started]
+              - [Productivity, Discuss, 'In progress — chat service proves the messaging/chatter pattern']
+              - [Productivity, Approvals, Not started]
+              - [Productivity, Knowledge, Not started]
+              - [Productivity, Sign, Not started]
+              - [Productivity, VoIP, Not started]
+              - [Website, Website, 'In progress — websites, pages, menus, and guarded publish workflow shipped']
+              - [Website, eCommerce, 'In progress — shop products, public categories, online orders, cart lifecycle workflow, and analysis shipped']
+              - [Website, Blog, 'In progress — blogs, posts, tags, publish/archive workflow, and analysis shipped']
+              - [Website, Forum, 'In progress — forums, questions, tags, moderation workflow, and analysis shipped']
+              - [Website, Live Chat, 'In progress — channels, sessions, satisfaction ratings, close workflow, and analysis shipped']
+
+      - id: pattern-rule
+        kicker: Working principle
+        title: Pattern extraction
+        blocks:
+          - type: callout
+            title: Pattern-extraction rule
+            text: >-
+              When the same structure appears in two pages, write a YAML shorthand for it. When it
+              appears in three, it becomes a first-class framework concept — a new component, a new
+              schema key, or a new registerPageComponentSchema-backed extension point.
+          - type: p
+            text: >-
+              This spec project is itself an example of the rule: DocHero, DocPage, and DocTopNav
+              exist because "hero + sidebar-linked sections + global nav" is a shape every doc-style
+              project needs, not something worth re-describing per page.
+
+      - id: module-organization
+        kicker: Product organization
+        title: Odoo-style module ownership and flows
+        lead: >-
+          The sample services are organized around business ownership rather than around screens.
+          The current order service is the transitional Sales module; shared master data and finance
+          boundaries are explicit targets for the next extraction steps.
+        blocks:
+          - type: table
+            headers: [Module, Current service, Owns, Next boundary]
+            rows:
+              - [CRM, crm, 'Leads, opportunities, activities, teams, stages', 'Keep CRM-owned pipeline state and enrich it with Contacts and Sales records']
+              - [Sales, order, 'Quotations, sales orders, order lines, products, pricelists, payment terms', 'Extract Contacts, Products, and Invoicing when their contracts stabilize']
+              - [Point of Sale, point-of-sale, 'Sessions, POS orders, payments, receipts, configuration', 'Consume Sales products and Invoicing contracts without duplicating ownership']
+              - [Subscriptions, sale-subscription, 'Subscription contracts, plans, recurring billing inputs', 'Publish recurring invoice requests to Invoicing']
+              - [Rental, sale-renting, 'Rental orders, reservations, pickup, return, availability', 'Consume Sales products and connect delivery/inventory later']
+              - [Contacts, future shared service, 'Customers, companies, addresses, contacts', 'Replace duplicated customer fields through shared IDs and enrichment']
+              - [Invoicing, accounting, 'Accounting-owned invoice lifecycle with source-service and source-record links', 'Route POS, Subscriptions, and Rental invoice generation through the same contract and add taxes/reconciliation']
+              - [Accounting, accounting, 'Invoices, journal entries, payments, and finance reporting', 'Stabilize invoice and payment contracts, then connect Sales, POS, Subscriptions, and Rental invoice flows']
+              - [Expenses, expenses, 'Employee expense reports, approvals, posting, and reimbursement', 'Publish approved expense postings to Accounting and connect employee identities through Contacts/Auth']
+              - [Documents, documents, 'Document folders, metadata, approval state, and expiry tracking', 'Connect attachments, document ownership, and approval evidence to every domain service']
+              - [Spreadsheet / Dashboards, spreadsheet, 'Saved dashboards, widget definitions, layout metadata, and analysis', 'Add formula cells, cross-service datasource bindings, sharing scopes, and versioned dashboard revisions']
+              - [Inventory, inventory, 'Warehouses, locations, on-hand quantities, and validated stock moves', 'Connect Sales, Purchase, Manufacturing, and Rental demand to reservations and replenishment']
+              - [Manufacturing, manufacturing, 'Bills of materials, components, production orders, and work orders', 'Consume Inventory moves and add planning, capacity, quality, and subcontracting flows']
+              - [Purchase, purchase, 'Vendors, purchase orders, receiving, and supplier lifecycle', 'Connect receipts to Inventory and add replenishment, landed costs, and three-way matching']
+              - [Maintenance, maintenance, 'Equipment, preventive requests, assignments, and repair lifecycle', 'Connect work centers, spare parts, meters, and preventive scheduling']
+              - [Quality, quality, 'Quality checks, inspection results, and pass/fail workflow', 'Connect Manufacturing, Purchase, Inventory, and corrective action evidence']
+              - [PLM, plm, 'Engineering revisions, change reasons, approval, and release lifecycle', 'Connect BOM revisions, documents, quality evidence, and released manufacturing definitions']
+              - [Employees, employees, 'Employee profiles, departments, Auth identity links, and employment lifecycle', 'Connect Time Off, Expenses, Appraisals, Fleet, and shared Contacts']
+              - [Recruitment, recruitment, 'Job openings, applicants, hiring pipeline, and conversion analysis', 'Convert hired applicants into Employees and connect interview, offer, and referral evidence']
+              - [Time Off, time-off, 'Leave types, employee balances, requests, approval, and reporting', 'Connect Employees, calendars, attendance, and payroll deductions']
+              - [Appraisals, appraisals, 'Appraisal cycles, employee reviews, goals, ratings, and completion workflow', 'Connect Employees, feedback, competencies, and compensation planning']
+              - [Referrals, referrals, 'Employee referrals, candidate submissions, hiring linkage, and rewards', 'Connect Recruitment, Employees, and payroll reward processing']
+              - [Fleet, fleet, 'Vehicles, drivers, assignment, maintenance, retirement, and utilization analysis', 'Connect Employees, service logs, contracts, fuel, and expenses']
+              - [Email Marketing, email-marketing, 'Mailing lists, email campaigns, scheduling, delivery, and engagement analysis', 'Connect Contacts, templates, automation, unsubscribe preferences, and external delivery providers']
+              - [SMS Marketing, sms-marketing, 'Opt-in lists, SMS campaigns, scheduling, delivery, and failure analysis', 'Connect Contacts, consent preferences, providers, and automation']
+              - [Events, events, 'Events, venues, registrations, publication lifecycle, and attendance analysis', 'Connect Contacts, campaigns, ticketing, check-in, and event automation']
+              - [Surveys, surveys, 'Survey definitions, questions, publication, responses, and response analysis', 'Connect Contacts, campaigns, scoring, anonymity, and automation']
+              - [Marketing Automation, marketing-automation, 'Automated journeys, triggers, actions, enrollments, and execution analysis', 'Connect Email, SMS, Contacts, events, scoring, and branching automation']
+              - [Project, project, 'Projects, milestones, tasks, task workflow, and effort analysis', 'Connect Timesheets, Planning, Field Service, and project billing']
+              - [Timesheets, timesheets, 'Time entries, approvals, billable hours, and project effort rollups', 'Connect Project, Field Service, Planning, Payroll, and invoicing']
+              - [Website, website, 'Websites, pages, menus, and page publish lifecycle', 'Host Blog, Forum, eCommerce, and Live Chat content and connect SEO and analytics settings']
+              - [eCommerce, ecommerce, 'Shop products, public categories, online carts, and confirmed web orders', 'Consume Website pages and Sales products, then connect payments and Invoicing']
+              - [Blog, blog, 'Blogs, posts, tags, and publish/archive lifecycle', 'Connect Website pages, authors through Contacts, and marketing campaigns']
+              - [Forum, forum, 'Forums, questions, tags, and moderation lifecycle', 'Connect Website, karma-style gamification, and email notifications']
+              - [Live Chat, livechat, 'Livechat channels, sessions, satisfaction ratings, and outcomes', 'Connect Website, Discuss operators, and Helpdesk escalation']
+              - [Auth, auth, 'Users, roles, permissions, companies', 'Remain infrastructure-owned and shared by every domain service']
+              - [Discuss, chat, 'Messages, activities, notifications, chatter', 'Remain cross-service collaboration infrastructure']
+          - type: callout
+            tone: note
+            title: Implementation status
+            text: >-
+              The current sample implements grouped Odoo-style navigation for every shipped module,
+              most recently the Website group (Website, eCommerce, Blog, Forum, and Live Chat).
+              Service IDs remain stable for compatibility while ownership is clarified in menus,
+              page routes, permissions, and this roadmap.
+          - type: flowstrip
+            steps:
+              - label: CRM lead
+                sub: Qualify into an opportunity
+              - label: Quotation
+                sub: Prepare products, prices, and terms
+              - label: Sales order
+                sub: Confirm the commercial commitment
+              - label: Delivery / invoice
+                sub: Fulfill and collect payment
+          - type: flowstrip
+            steps:
+              - label: POS session
+                sub: Open the register
+              - label: POS order
+                sub: Sell products to the customer
+              - label: Payment
+                sub: Register cash, bank, or card
+              - label: Receipt / invoice
+                sub: Close the sale and document it
+          - type: flowstrip
+            steps:
+              - label: Subscription plan
+                sub: Select recurring terms
+              - label: Subscription
+                sub: Confirm the contract
+              - label: Recurring invoice
+                sub: Generate the billing obligation
+              - label: Payment
+                sub: Settle the recurring charge
+          - type: flowstrip
+            steps:
+              - label: Rental quotation
+                sub: Choose product and dates
+              - label: Reservation
+                sub: Hold the inventory
+              - label: Pickup
+                sub: Start the rental
+              - label: Return / invoice
+                sub: Complete and charge the rental
+
+      - id: next
+        kicker: Next up
+        title: What's next
+        blocks:
+          - type: list
+            items:
+              - Model new modules directly against Odoo's real feature set, using the order and chat services as the pattern to follow
+              - Keep the component-library reference in sync as real components change
+              - Grow the sample order service with more read-focused example pages (analytics, reports)
+              - Keep extracting repeated DocPage block shapes into the schema as the doc set grows
+              - text: Continue hardening auth and the event mediator per the Gate Service Plan (gateway refactor)
+                href: /plan/auth-mediator
+
+      - id: ai-app-builder
+        kicker: Future platform layer
+        title: Add YShip Studio after Odoo parity
+        lead: >-
+          Once the Odoo clone has a deep, reliable module foundation, YShip Studio can expose that
+          foundation as a visual and conversational app builder. It is an important future layer,
+          but it does not replace the Odoo parity roadmap.
+        blocks:
+          - type: callout
+            tone: important
+            title: Odoo parity is the foundation
+            text: >-
+              YShip Studio should eventually feel closer to v0.dev, Lovable, and Manus, but the first
+              generated applications should be Odoo-parity modules and extensions: Sales, CRM,
+              Inventory, Accounting, Projects, Helpdesk, and their workflows. Later, the same builder
+              can generate portals, internal tools, and lightweight SaaS products.
+          - type: p
+            text: >-
+              The key distinction is that the AI does not generate an opaque pile of frontend code.
+              It plans against a component and capability registry, emits validated YAML, previews
+              the result, runs focused checks, and keeps every decision editable. Custom code remains
+              an escape hatch; the default path is composable, inspectable, upgradeable application
+              configuration.
+          - type: table
+            headers: [Builder surface, What the user experiences, What YShip must provide]
+            rows:
+              - [Prompt to app, 'Describe the audience, data, screens, and behavior in plain language', 'Structured app plan, clarification loop, YAML generation, dependency-aware component selection']
+              - [Visual canvas, 'See pages, responsive layouts, forms, tables, charts, and states immediately', 'Live PageRuntime preview, drag/reorder overrides, responsive preview, undoable patches']
+              - [Data and actions, 'Connect a datasource or ask for a new model and CRUD flow', 'Schema-aware datasource builder, generic repositories, guarded mutations, migrations']
+              - [Behavior and access, 'Add roles, approvals, notifications, and automations by describing them', 'Workflow/topic/permission registries, testable transitions, event-driven actions']
+              - [Publish and share, 'Deploy a private tool, public portal, or multi-user application', 'Environment promotion, tenant isolation, auth, observability, version history, export']
+          - type: table
+            headers: [Phase, Builder milestone, Exit evidence]
+            rows:
+              - [0 — Registry, 'Make components, YAML keys, datasource fields, actions, workflows, and permissions machine-readable', 'The model can retrieve valid capabilities and cannot emit unknown component props or unsafe actions']
+              - [1 — Generator, 'Generate a complete app manifest from a prompt and a small set of structured answers', 'Prompt produces a runnable multi-page app with valid YAML, seeded data, navigation, and role-aware CRUD']
+              - [2 — Live refinement, 'Add chat-driven edits, visual selection, diffs, undo, snapshots, and targeted regeneration', 'User can select a screen or component, request a change, inspect the YAML diff, and roll it back']
+              - [3 — Full-stack composition, 'Generate models, migrations, datasources, workflows, events, and integrations alongside UI', 'A non-trivial app ships without hand-written page code and passes schema, permission, and focused runtime checks']
+              - [4 — Quality and trust, 'Add preview fixtures, browser checks, accessibility checks, security policy checks, and explainable errors', 'Every generated app has a reproducible validation report and actionable repair loop']
+              - [5 — Marketplace, 'Let developers publish components, templates, connectors, and domain packs', 'Versioned packages install into the registry with compatibility metadata and safe upgrade paths']
+          - type: list
+            items:
+              - Make the generated YAML the source of truth; the chat transcript is an interaction layer, not the application
+              - Prefer deterministic planning plus constrained generation over unrestricted code generation
+              - Show the user the app tree, data model, permissions, workflow graph, and YAML diff as first-class artifacts
+              - Give AI read access only through permissioned queries and require approval for mutations, deployments, and secrets
+              - Measure time-to-first-working-app, successful prompt-to-publish rate, repair rate, rollback rate, and generated-app reuse
+
+      - id: flagship-product
+        kicker: Primary product direction
+        title: Build YShip OS — the Odoo operating system
+        lead: >-
+          The Odoo clone remains the primary product roadmap. YShip OS is the YAML-native operating
+          system that brings Odoo's applications together while adding connected work, approvals,
+          conversations, automations, and audit events.
+        blocks:
+          - type: callout
+            tone: important
+            title: Recommended app — YShip OS
+            text: >-
+              Build the Odoo clone as a world-class operations platform for teams that run repeatable, high-stakes
+              processes: logistics, field service, procurement, finance operations, customer support,
+              and internal approvals. Its differentiator is not a larger menu of modules; it is a
+              shared operational graph. A record, task, message, approval, file, metric, and event
+              should be different views of the same traceable business activity.
+          - type: p
+            text: >-
+              YAML remains the product language: routes, menus, permissions, forms, workflows,
+              datasources, mutations, notifications, and dashboards are declarative. The runtime
+              supplies the hard guarantees—typed data access, local JWT verification, durable events,
+              optimistic concurrency, auditability, and cross-service enrichment—so every new domain
+              gets enterprise behavior without another bespoke application shell.
+          - type: table
+            headers: [Product pillar, User promise, Framework capability it forces]
+            rows:
+              - [Operational graph, 'Every task, record, conversation, and event is connected', 'Typed relations, cross-service enrichment, global search, event lineage']
+              - [Process studio, 'Adapt a process without waiting for a full product release', 'YAML workflow editor, guarded mutations, approvals, versioned definitions']
+              - [Command center, 'See what needs attention across every team and service', 'Realtime topics, saved views, alerts, KPIs, timeline and workload components']
+              - [Trust layer, 'Know who changed what, why, and what happened next', 'Local JWT reads, permission scopes, immutable audit events, replayable history']
+              - [AI with evidence, 'Get recommendations that can be inspected and approved', 'Tool/action registry, provenance, human approval gates, bounded queries']
+          - type: table
+            headers: [Phase, Product milestone, Exit evidence]
+            rows:
+              - [0 — Foundation, 'Define the universal work-item, relation, event, approval, and evidence contracts', 'YAML schemas, migration rules, permission model, event envelope, representative seeded dataset']
+              - [1 — Control center, 'Ship a cross-service inbox, timeline, search, saved views, and operational dashboards', 'One user can discover and act on orders, chats, tasks, alerts, and audit history from one shell']
+              - [2 — Process studio, 'Make workflows, forms, approval chains, SLAs, and notifications editable in YAML and UI', 'A new process ships from YAML without page-specific client code and survives a definition version change']
+              - [3 — First vertical, 'Turn logistics into the reference vertical: order-to-delivery control tower', 'Live order, shipment, exception, document, conversation, and transition trace with role-based actions']
+              - [4 — Evidence AI, 'Add explainable copilots for triage, next action, anomaly detection, and reporting', 'Every suggestion cites source records/events, is permission-scoped, and requires approval for mutations']
+              - [5 — Platform, 'Let customers compose their own operations apps from the same primitives', 'Tenant-safe extension registry, packageable YAML modules, upgrade/migration tooling, usage telemetry']
+          - type: list
+            items:
+              - Keep Odoo Sales and Discuss as the first real product tracks, then continue through Odoo's module list
+              - Prioritize complete, coherent Odoo workflows before expanding into unrelated generated applications
+              - Treat event history and evidence links as first-class data, not an after-the-fact audit screen
+              - Make every AI capability consume the same permissioned query and mutation contracts as the UI
+              - Measure success by time-to-model a new process, time-to-detect an exception, and audit completeness
+
+      - id: delivery-timeline
+        kicker: Delivery sequence
+        title: Four milestones to Odoo parity, then Studio
+        lead: >-
+          This is a relative sequence, not a promise of fixed calendar dates. Each stage earns the
+          next one by proving that generated applications are useful, editable, safe, and repeatable.
+        blocks:
+          - type: flowstrip
+            steps:
+              - label: 0–3 months
+                sub: 'Foundation: harden the shared runtime, auth, events, and Odoo reference patterns'
+              - label: 3–6 months
+                sub: 'Core apps: deepen Sales and Discuss, then establish CRM and common master data'
+              - label: 6–12 months
+                sub: 'Odoo breadth: deliver Supply Chain, Finance, Projects, and service workflows'
+              - label: 12–18 months
+                sub: 'Studio layer: expose the proven Odoo components and modules for AI-assisted composition'
+          - type: table
+            headers: [Window, Outcome]
+            rows:
+              - [0–3 months, 'The shared runtime and YAML contracts reliably support Odoo-style CRUD, workflows, permissions, and audit']
+              - [3–6 months, 'Sales and Discuss are deep, coherent reference applications rather than isolated demos']
+              - [6–12 months, 'The highest-value Odoo modules share data, navigation, security, and workflow conventions']
+              - [12–18 months, 'The proven Odoo surface can be composed and extended through an AI-assisted builder']
+
+      - id: meta-model
+        kicker: Design reference
+        title: Component meta model and backend comms
+        lead: >-
+          The original spec described two core design contracts: a ComponentDef config object
+          driving every component, and two data-transfer objects (SqlViewModel / PatchVM) for
+          reads and writes. Both influenced what shipped, though in evolved forms.
+        blocks:
+          - type: p
+            text: >-
+              ComponentDef shipped as a per-component key-set registry in
+              packages/server/src/yaml/schema.ts. Each component type declares its allowed YAML
+              keys via registerPageComponentSchema; the validator enforces the surface at server
+              startup rather than at page-load time. The aspirational shape from the original spec
+              is shown below for historical reference.
+          - type: panel
+            title: Aspirational ComponentDef shape (original spec)
+            language: typescript
+            code: |
+              {
+                type, id, field, label, align, column, row,
+                // Declarative expressions — new Function({ user, row, state })
+                show_if, disabled_if, default, compute, validation,
+                // Lifecycle events
+                events: { on_dom_ready, on_user_input, on_before_save, on_after_save, on_disposed },
+                // Permissions resolved from SecurityContext at render time
+                can_read, can_write, can_delete,
+                // Data binding
+                source, query, pre_query, is_realtime, group_by, group_format,
+                // Linked selects
+                cascade_field, populate_field,
+                // Actions and nested components
+                actions: ActionDef[], components: ComponentDef[],
+              }
+          - type: p
+            text: >-
+              The backend comms spec described SqlViewModel (read DTO) and PatchVM (write DTO)
+              flowing through a single Client singleton with JWT-aware fetch. The real server
+              YAML surface uses action types instead — type: form / server_form / delete / patch /
+              server for writes, and datasource service entries for reads. The DTO shapes are
+              internal to the server pipeline; page YAML only declares action and datasource keys.
+
+      - id: what-shipped
+        kicker: Reconciliation
+        title: What shipped vs. what was planned
+        lead: >-
+          Every component anticipated in the original wishlist shipped. The real component set has
+          grown to over 70 entries, well beyond the original 13-item wishlist.
+        blocks:
+          - type: table
+            headers: [Anticipated component, Status]
+            rows:
+              - [SearchEntry, 'Shipped — SearchEntry.ts; MultipleSearchEntry also added']
+              - [ConfirmDialog, 'Shipped — ConfirmDialog.ts']
+              - [Chart, 'Shipped — Chart.ts; extended with series and layout variants']
+              - [Kanban, 'Shipped — Kanban.ts and KanbanView.ts']
+              - [ButtonExcel, 'Shipped — ButtonExcel.ts; ButtonImportExcel also added']
+              - [ButtonPdf, 'Shipped — ButtonPdf.ts']
+              - [Section, 'Shipped — Section.ts']
+              - [TimelinePanel, 'Shipped — TimelinePanel.ts']
+              - [AvatarCell, 'Shipped — AvatarCell.ts']
+              - [PercentCell, 'Shipped — PercentCell.ts']
+              - [RankCell, 'Shipped — RankCell.ts']
+              - [LinkCell, 'Shipped — LinkCell.ts']
+              - [EmptyState, 'Shipped — EmptyState.ts']
+          - type: p
+            text: >-
+              Components not on the original list but now shipped include OdooFormView,
+              OdooChatter, OdooFollowerManager, OdooAttachmentPanel, ChatWorkspace, LineItemGrid,
+              GroupGridView, TreeView, PivotView, CalendarView, GraphView, MapView, ScheduleGrid,
+              and more — each driven by real product requirements in the order and chat sample
+              services, not a hypothetical planning list.
+          - type: callout
+            tone: note
+            title: YAML props wishlist
+            text: >-
+              Most anticipated YAML props (show_if, disabled_if, compute, depends_on,
+              empty_state, is_realtime, group_by, export) are now first-class keys in the
+              per-component schemas in schema.ts. A few (inline_edit, summary_row, threshold)
+              are present in component implementations but live as internal conventions rather
+              than top-level validated YAML keys.

@@ -1,0 +1,31 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO sale_products(id, default_code, name, product_type, list_price, cost_price, uom, category, description)
+      VALUES
+        ('product-demo-001', 'CONSULT-01', 'Implementation consulting', 'Service', 1500, 600, 'Hours', 'Services', 'Professional implementation services'),
+        ('product-demo-002', 'FREIGHT-01', 'Freight delivery', 'Service', 250, 120, 'Trips', 'Logistics', 'Standard freight delivery charge'),
+        ('product-demo-003', 'PALLET-01', 'Reusable pallet', 'Goods', 45, 20, 'Units', 'Logistics', 'Reusable transport pallet')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO sale_pricelists(id, name, currency, discount_policy)
+      VALUES
+        ('pricelist-demo-001', 'Public Pricelist', 'USD', 'Discount included'),
+        ('pricelist-demo-002', 'Wholesale Pricelist', 'USD', 'Discount shown separately')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO sale_pricelist_items(id, pricelist_id, product_id, min_quantity, fixed_price, percentage_discount)
+      VALUES ('pricelist-item-demo-001', 'pricelist-demo-002', 'product-demo-002', 10, NULL, 12.5)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO sale_invoices(id, order_id, invoice_number, state, amount, invoice_date, due_date)
+      VALUES ('invoice-demo-001', 'order-demo-03', 'INV/2026/0001', 'Posted', 21800, DATE '2026-08-10', DATE '2026-09-09')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_invoices WHERE id = 'invoice-demo-001';
+      DELETE FROM sale_pricelist_items WHERE id = 'pricelist-item-demo-001';
+      DELETE FROM sale_pricelists WHERE id IN ('pricelist-demo-001', 'pricelist-demo-002');
+      DELETE FROM sale_products WHERE id IN ('product-demo-001', 'product-demo-002', 'product-demo-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

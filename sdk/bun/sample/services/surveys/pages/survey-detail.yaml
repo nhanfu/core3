@@ -1,0 +1,49 @@
+title: Survey
+page: { id: survey-detail, breadcrumb: [Marketing, Surveys, Detail], auth: { require: [surveys.read] } }
+datasources:
+  - id: survey_detail
+    single: true
+    permission: surveys.read
+    query: "SELECT id, row_version, name, title, description, owner, response_count, state, CAST(published_at AS VARCHAR) AS published_at, CAST(closed_at AS VARCHAR) AS closed_at FROM surveys WHERE id = :id"
+  - id: survey_questions
+    permission: surveys.read
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :id ORDER BY sequence"
+  - id: survey_responses
+    permission: surveys.read
+    query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC"
+components:
+  - type: OdooFormView
+    source: survey_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Closed, label: Closed }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Published: blue, Closed: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Survey
+        fields: [{ field: name, label: Survey }, { field: state, label: Status }, { field: title, label: Title }, { field: owner, label: Owner }, { field: response_count, label: Responses }]
+      - title: Description
+        fields: [{ field: description, label: Description }, { field: published_at, label: Published at }, { field: closed_at, label: Closed at }]
+  - type: ContactGrid
+    source: survey_questions
+    row_key: id
+    columns:
+      - { field: sequence, label: '#', align: right }
+      - { field: question_text, label: Question, type: PrimaryEntityCell }
+      - { field: question_type, label: Type }
+      - { field: required, label: Required }
+      - { field: answer_options, label: Options }
+  - type: ContactGrid
+    source: survey_responses
+    row_key: id
+    columns:
+      - { field: respondent_name, label: Respondent, type: PrimaryEntityCell }
+      - { field: respondent_email, label: Email }
+      - { field: answer_data, label: Answers }
+      - { field: submitted_at, label: Submitted at }
+      - { field: state, label: Status, type: StatusChip }
+    empty_state: { title: No responses, description: Responses will appear here after publication. }
+actions:
+  - { id: publish_survey_detail, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, params: { id: '{state.id}' }, refresh: [survey_detail] }
+  - { id: close_survey_detail, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, params: { id: '{state.id}' }, refresh: [survey_detail] }
+  - { id: cancel_survey_detail, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, params: { id: '{state.id}' }, refresh: [survey_detail] }

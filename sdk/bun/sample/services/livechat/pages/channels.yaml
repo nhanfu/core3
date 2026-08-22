@@ -1,0 +1,42 @@
+title: Livechat Channels
+page: { id: livechat, breadcrumb: [Website, Live Chat, Channels], auth: { require: [livechat.read] } }
+datasources:
+  - id: livechat_channels
+    permission: livechat.read
+    query: "SELECT c.id, c.row_version, c.name, c.button_text, c.welcome_message, c.active, (SELECT COUNT(*) FROM livechat_sessions s WHERE s.channel_id = c.id) AS session_count, (SELECT COUNT(*) FROM livechat_sessions s WHERE s.channel_id = c.id AND s.status <> 'Closed') AS open_count FROM livechat_channels c WHERE (:q IS NULL OR c.name ILIKE '%' || :q || '%') ORDER BY c.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: livechat_channels
+    create_action: create_livechat_channel
+    create_label: New channel
+    search: { label: Search channels, placeholder: 'Search channel name...' }
+    columns:
+      - { field: name, label: Channel, type: PrimaryEntityCell }
+      - { field: button_text, label: Button text }
+      - { field: welcome_message, label: Welcome message }
+      - { field: session_count, label: Sessions, align: right }
+      - { field: open_count, label: Open, align: right }
+      - { field: active, label: Active }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_livechat_channel
+    type: server_form
+    permission: livechat.write
+    title: New channel
+    action: livechat.channels.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [livechat_channels]
+    mutation:
+      operation: insert
+      table: livechat_channels
+      fields: [name, button_text, welcome_message, active]
+      required: [name]
+      result: { query: "SELECT * FROM livechat_channels WHERE id = :id" }
+    fields:
+      - { field: name, label: Channel name, type: text, required: true }
+      - { field: button_text, label: Button text, type: text }
+      - { field: welcome_message, label: Welcome message, type: textarea }
+      - { field: active, label: Active, type: checkbox }

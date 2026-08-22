@@ -1,0 +1,39 @@
+title: Product Categories
+page: { id: ecommerce-categories, breadcrumb: [Website, eCommerce, Categories], auth: { require: [ecommerce.read] } }
+datasources:
+  - id: ecommerce_categories
+    permission: ecommerce.read
+    query: "SELECT c.id, c.row_version, c.name, c.parent_name, c.sequence, (SELECT COUNT(*) FROM ecommerce_products p WHERE p.category_name = c.name) AS product_count FROM ecommerce_categories c WHERE (:q IS NULL OR c.name ILIKE '%' || :q || '%') ORDER BY c.sequence, c.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_categories
+    create_action: create_ecommerce_category
+    create_label: New category
+    search: { label: Search categories, placeholder: 'Search category name...' }
+    columns:
+      - { field: name, label: Category, type: PrimaryEntityCell }
+      - { field: parent_name, label: Parent }
+      - { field: product_count, label: Products, align: right }
+      - { field: sequence, label: Sequence, align: right }
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_ecommerce_category
+    type: server_form
+    permission: ecommerce.write
+    title: New category
+    action: ecommerce.categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_categories]
+    mutation:
+      operation: insert
+      table: ecommerce_categories
+      fields: [name, parent_name, sequence]
+      required: [name]
+      result: { query: "SELECT * FROM ecommerce_categories WHERE id = :id" }
+    fields:
+      - { field: name, label: Category name, type: text, required: true }
+      - { field: parent_name, label: Parent category, type: text }
+      - { field: sequence, label: Sequence, type: number }

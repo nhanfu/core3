@@ -1,0 +1,92 @@
+title: Point of Sale
+page: { id: sessions, breadcrumb: [Sales, Point of Sale, Sessions], auth: { require: [pos.read] } }
+datasources:
+  - id: pos_session_states
+    single: false
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES ('Opening Control','Opening Control'), ('In Progress','In Progress'), ('Closing Control','Closing Control'), ('Closed & Posted','Closed & Posted')) states(value, label)"
+  - id: pos_sessions
+    single: false
+    permission: pos.read
+    workflow: pos_sessions
+    query: "SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state, s.balance_start, s.balance_end, CAST(s.opened_at AS VARCHAR) AS opened_at, CAST(s.closed_at AS VARCHAR) AS closed_at, (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count FROM pos_sessions s ORDER BY s.opened_at DESC"
+  - id: pos_session_config_lookup
+    single: false
+    permission: pos.read
+    query: "SELECT name AS value, name AS label FROM pos_configs WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_sessions
+    create_action: create_pos_session
+    create_label: New session
+    page_size: 50
+    row_key: id
+    row_open_action: view_pos_session
+    row_actions: menu
+    columns:
+      - { field: name, label: Session, type: PrimaryEntityCell }
+      - { field: config, label: Point of Sale }
+      - { field: user_name, label: Responsible }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: order_count, label: Orders, align: right }
+      - { field: balance_start, label: Opening balance, align: right }
+      - { field: opened_at, label: Opened }
+actions:
+  - id: create_pos_session
+    type: server_form
+    permission: pos.write
+    title: New point of sale session
+    action: pos.sessions.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: pos_sessions
+      fields: [name, config, user_name, state, balance_start]
+      required: [name]
+      defaults: { config: Main Shop, state: Opening Control, balance_start: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE (:balance_start IS NULL OR CAST(:balance_start AS DECIMAL(18,2)) >= 0)"
+          status: 400
+          message: Opening balance cannot be negative
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_sessions WHERE config = :config AND state IN ('Opening Control', 'In Progress', 'Closing Control'))"
+          status: 409
+          message: This POS configuration already has an active session
+      result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
+    fields:
+      - { field: name, label: Session, type: text, required: true }
+      - { field: config, label: Point of Sale, type: select, options_source: pos_session_config_lookup, default: Main Shop }
+      - { field: balance_start, label: Opening balance, type: number, default: 0 }
+  - id: view_pos_session
+    type: navigate
+    permission: pos.read
+    navigate_to: /sessions
+    params: { id: '{row.id}' }
+  - id: open_pos_session
+    type: server
+    permission: pos.write
+    action: pos.sessions.open
+    handler: order_transition
+    workflow: pos_sessions
+    operation: open
+    refresh: [pos_sessions]
+  - id: start_closing_pos_session
+    type: server
+    permission: pos.write
+    action: pos.sessions.start_closing
+    handler: order_transition
+    workflow: pos_sessions
+    operation: start_closing
+    refresh: [pos_sessions]
+  - id: close_pos_session
+    type: server_form
+    permission: pos.manage
+    title: Close point of sale session
+    action: pos.sessions.close
+    handler: order_transition
+    workflow: pos_sessions
+    operation: close
+    refresh: [pos_sessions]
+    fields:
+      - { field: balance_end, label: Closing balance, type: money, required: true }

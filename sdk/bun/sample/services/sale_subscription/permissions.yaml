@@ -1,0 +1,4 @@
+permissions:
+  - subscriptions.read
+  - subscriptions.write
+  - subscriptions.manage

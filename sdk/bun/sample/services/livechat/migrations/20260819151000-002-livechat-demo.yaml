@@ -1,0 +1,21 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO livechat_channels (id, name, button_text, welcome_message)
+      SELECT 'livechat-channel-demo-001', 'Website Support', 'Chat with us', 'Hello, how can we help you today?'
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_channels WHERE id = 'livechat-channel-demo-001');
+      INSERT INTO livechat_sessions (id, channel_id, channel_name, visitor_name, operator_name, status, outcome, duration_minutes, rating, started_at, ended_at)
+      SELECT 'livechat-session-demo-001', 'livechat-channel-demo-001', 'Website Support', 'Visitor A', 'Support Agent', 'Closed', 'Success', 6.5, 5, CURRENT_TIMESTAMP - INTERVAL '2' HOUR, CURRENT_TIMESTAMP - INTERVAL '1' HOUR
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-001');
+      INSERT INTO livechat_sessions (id, channel_id, channel_name, visitor_name, operator_name, status, duration_minutes, started_at)
+      SELECT 'livechat-session-demo-002', 'livechat-channel-demo-001', 'Website Support', 'Visitor B', 'Support Agent', 'In Progress', 0, CURRENT_TIMESTAMP
+      WHERE NOT EXISTS (SELECT 1 FROM livechat_sessions WHERE id = 'livechat-session-demo-002');
+    down: |
+      DELETE FROM livechat_sessions WHERE id IN ('livechat-session-demo-001', 'livechat-session-demo-002');
+      DELETE FROM livechat_channels WHERE id = 'livechat-channel-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

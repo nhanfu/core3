@@ -1,0 +1,4 @@
+permissions:
+  - forum.read
+  - forum.write
+  - forum.manage

@@ -1,0 +1,4 @@
+permissions:
+  - manufacturing.read
+  - manufacturing.write
+  - manufacturing.manage

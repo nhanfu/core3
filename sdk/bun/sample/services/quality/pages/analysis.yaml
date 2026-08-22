@@ -1,0 +1,21 @@
+title: Quality Analysis
+page: { id: quality-analysis, breadcrumb: [Supply Chain, Quality, Analysis], auth: { require: [quality.read] } }
+datasources:
+  - id: quality_analysis_totals
+    single: true
+    permission: quality.read
+    query: "SELECT COUNT(*) AS check_count, COUNT(*) FILTER (WHERE state = 'Passed') AS passed_count, COUNT(*) FILTER (WHERE state = 'Failed') AS failed_count, COUNT(*) FILTER (WHERE state IN ('New', 'In Progress')) AS open_count FROM quality_checks"
+  - id: quality_analysis_states
+    permission: quality.read
+    query: "SELECT state AS category, COUNT(*) AS check_count FROM quality_checks GROUP BY state ORDER BY check_count DESC"
+components:
+  - type: StatRow
+    source: quality_analysis_totals
+    title: Quality performance
+    stats: [{ label: Checks, field: check_count }, { label: Passed, field: passed_count }, { label: Failed, field: failed_count }, { label: Open, field: open_count }]
+  - type: Chart
+    source: quality_analysis_states
+    title: Checks by status
+    label_field: category
+    value_field: check_count
+    variant: bar

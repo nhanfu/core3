@@ -1,0 +1,80 @@
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
+import { html } from '@core3/client/html';
+
+/** Generic inline form. Field definitions and validation remain in YAML. */
+export class Form extends BaseComponent {
+  constructor(id: string, state: any = {}, private readonly def: any = {}) {
+    super(id, state);
+  }
+
+  draw(container: HTMLElement) {
+    const section = html.take(container).section.className(this.def.class || this.def.section_class || 'drawer-section').ele() as HTMLElement;
+    if (this.def.title) {
+      html.take(section).div.className(this.def.title_class || 'drawer-section-title').text(this.def.title);
+    }
+    const form = html.take(section).div.ele() as HTMLDivElement;
+    const error = html.take(form).div.className('alert alert-error').prop('hidden', true).ele() as HTMLDivElement;
+    const inputs: Record<string, HTMLInputElement> = {};
+    const values: Record<string, string> = {};
+    for (const field of this.def.fields || []) {
+      const group = html.take(form).div.className('form-group').ele() as HTMLDivElement;
+      html.take(group).label.className('form-label').text(`${field.label || field.field}${field.required ? ' *' : ''}`);
+      const input = html.take(group).input.type(field.type || 'text').className('form-input').attr('placeholder', field.placeholder || '').ele() as HTMLInputElement;
+      if (field.type === 'file') {
+        input.accept = field.accept || 'image/*';
+        input.addEventListener('change', () => {
+          const file = input.files?.[0];
+          if (!file) {
+            values[field.field] = '';
+            return;
+          }
+          if (file.size > 5 * 1024 * 1024) {
+            values[field.field] = '';
+            html.take(error).text('Image must be 5 MB or smaller').prop('hidden', false);
+            input.value = '';
+            return;
+          }
+          const reader = new FileReader();
+          reader.addEventListener('load', () => {
+            values[field.field] = typeof reader.result === 'string' ? reader.result : '';
+          }, { once: true });
+          reader.readAsDataURL(file);
+        });
+      } else {
+        input.addEventListener('input', () => { values[field.field] = input.value; });
+      }
+      inputs[field.field] = input;
+    }
+    const button = html.take(form).button.type('button').className(`btn btn-${this.def.submit_variant || 'primary'} btn-sm`)
+      .text(this.def.submit_label || 'Submit').event('click', async () => {
+      const validation = this.validate(values);
+      if (validation) {
+        html.take(error).text(validation).prop('hidden', false);
+        return;
+      }
+      html.take(error).prop('hidden', true);
+      html.take(button).prop('disabled', true).replaceText(this.def.loading_label || 'Saving…');
+      try {
+        await this.submit(this.def.action, values);
+        Object.keys(values).forEach(key => { values[key] = ''; });
+        Object.values(inputs).forEach(input => { html.take(input).prop('value', ''); });
+        html.take(button).replaceText(this.def.success_label || 'Updated');
+      } catch (cause) {
+        html.take(error).text(cause instanceof Error ? cause.message : String(cause)).prop('hidden', false);
+        html.take(button).replaceText(this.def.submit_label || 'Submit');
+      } finally {
+        html.take(button).prop('disabled', false);
+      }
+      }).ele() as HTMLButtonElement;
+  }
+
+  private validate(values: Record<string, string>) {
+    for (const rule of this.def.validation || []) {
+      if (rule.type === 'required' && (rule.fields || []).some((field: string) => !values[field])) return rule.message || i18n.tKey('validation.required', {}, 'Required fields are missing');
+      if (rule.type === 'match' && values[rule.field] !== values[rule.other_field]) return rule.message || 'Values do not match';
+      if (rule.type === 'min_length' && String(values[rule.field] || '').length < Number(rule.value || 0)) return rule.message || 'Value is too short';
+    }
+    return '';
+  }
+}

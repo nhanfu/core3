@@ -1,0 +1,18 @@
+menu:
+  dashboards:
+    path: /dashboards
+    label: Spreadsheet / Dashboards
+    icon: dashboard
+    permission: spreadsheet.read
+  groups:
+    - id: workspace
+      label: Workspace
+      items:
+        - path: /dashboards
+          label: Dashboards
+          icon: dashboard
+          permission: spreadsheet.read
+        - path: /spreadsheet-analysis
+          label: Dashboard Analysis
+          icon: chart
+          permission: spreadsheet.read

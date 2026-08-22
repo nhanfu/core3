@@ -1,0 +1,23 @@
+database:
+  driver: ${CORE3_AUTH_DB_DRIVER:-postgres}
+  credentials:
+    url: ${CORE3_AUTH_DATABASE_URL:-postgres://postgres:postgres@127.0.0.1:55433/core3}
+    url_env: CORE3_AUTH_DATABASE_URL
+  encryption:
+    enabled: ${CORE3_AUTH_DB_ENCRYPTION:-false}
+    key_env: CORE3_AUTH_DB_ENCRYPTION_KEY
+    key_id: ${CORE3_AUTH_DB_ENCRYPTION_KEY_ID:-auth-db-key-v1}
+    cipher: ${CORE3_AUTH_DB_ENCRYPTION_CIPHER:-GCM}
+
+files:
+  driver: local
+  path: ${AUTH_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+  s3:
+    driver: s3
+    endpoint: ${AUTH_S3_ENDPOINT:-}
+    region: ${AUTH_S3_REGION:-}
+    bucket: ${AUTH_S3_BUCKET:-}
+    credentials:
+      access_key_id: ${AUTH_S3_ACCESS_KEY_ID:-}
+      secret_access_key: ${AUTH_S3_SECRET_ACCESS_KEY:-}

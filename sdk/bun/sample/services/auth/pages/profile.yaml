@@ -1,0 +1,106 @@
+title: Profile
+page:
+  id: profile
+api:
+  endpoint: /api/v1/profile
+  fields: [name, preferred_lang, avatar_url]
+
+components:
+  - type: AvatarPicker
+    id: profile-summary
+    action: update-avatar
+  - type: Html
+    id: profile-details
+    tag: div
+    class: profile-details
+    children:
+      - tag: section
+        class: profile-section profile-company
+        children:
+          - { tag: div, class: profile-section-title, text: Company }
+          - tag: div
+            class: profile-company-card
+            children:
+              - tag: div
+                class: profile-company-name
+                text_expr: |
+                  // js
+                  user => user.company?.short_name || 'TMS'
+              - tag: div
+                class: profile-company-legal-name
+                text_expr: |
+                  // js
+                  user => user.company?.name || 'Transport Management System'
+              - tag: div
+                class: profile-company-detail
+                text_expr: |
+                  // js
+                  user => user.company?.address || (user.branch_id ? 'Branch ' + user.branch_id : 'Organization profile')
+      - tag: section
+        class: profile-section profile-roles
+        children:
+          - { tag: div, class: profile-section-title, text: Roles }
+          - tag: div
+            class: profile-role-list
+            text_expr: |
+              // js
+              user => Array.isArray(user.roles) && user.roles.length ? user.roles.join(', ') : 'No roles assigned'
+  - type: ChoiceGroup
+    id: profile-language
+    title: Language
+    value: preferred_lang
+    section_class: profile-section profile-preferences
+    title_class: profile-section-title
+    group_class: profile-language-options
+    option_class: profile-language-option
+    options:
+      - { value: en, label: '🇺🇸 English' }
+      - { value: vi, label: '🇻🇳 Tiếng Việt' }
+    action: save-language
+  - type: Form
+    id: profile-password
+    title: Security
+    section_class: profile-section profile-security
+    title_class: profile-section-title
+    action: change-password
+    submit_label: Update password
+    loading_label: Updating…
+    fields:
+      - { field: current_password, label: Current password, type: password, required: true }
+      - { field: new_password, label: New password, type: password, required: true }
+      - { field: confirm_password, label: Confirm new password, type: password, required: true }
+    validation:
+      - { type: required, fields: [current_password, new_password, confirm_password], message: All fields required }
+      - { type: match, field: new_password, other_field: confirm_password, message: Passwords do not match }
+      - { type: min_length, field: new_password, value: 8, message: Password must be at least 8 characters }
+actions:
+  - id: save-language
+    type: client
+    script: |
+      // js
+      async ({ row, request, setLanguage }) => {
+        const profile = await request('/api/v1/profile')
+        await request('/api/v1/profile', {
+          method: 'PATCH',
+          body: { preferred_lang: row.preferred_lang, expected_row_version: profile.row_version },
+        })
+        await setLanguage(row.preferred_lang)
+      }
+  - id: change-password
+    type: request
+    method: PATCH
+    endpoint: /api/v1/profile
+    body: { current_password: '{row.current_password}', new_password: '{row.new_password}' }
+  - id: update-avatar
+    type: client
+    script: |
+      // js
+      async ({ row, request }) => {
+        const profile = await request('/api/v1/profile')
+        await request('/api/v1/profile', {
+          method: 'PATCH',
+          body: { avatar_url: row.avatar_url, expected_row_version: profile.row_version },
+        })
+        const app = await import('/app.ts')
+        app.updateUser({ avatar_url: row.avatar_url })
+      }

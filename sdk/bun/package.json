@@ -1,0 +1,14 @@
+{
+  "name": "core3",
+  "private": true,
+  "workspaces": ["sample", "packages/*", "med", "spec"],
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9",
+    "eslint": "^9",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8"
+  }
+}

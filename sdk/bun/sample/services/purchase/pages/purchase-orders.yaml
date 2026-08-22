@@ -1,0 +1,70 @@
+title: Purchase Orders
+page: { id: purchase-orders, breadcrumb: [Supply Chain, Purchase, Purchase Orders], auth: { require: [purchase.read] } }
+datasources:
+  - id: purchase_order_states
+    permission: purchase.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Sent','Sent'), ('Confirmed','Confirmed'), ('Received','Received'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: purchase_vendor_lookup
+    permission: purchase.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM purchase_vendors WHERE state = 'Active' ORDER BY name"
+  - id: purchase_orders
+    permission: purchase.read
+    workflow: purchase_orders
+    query: "SELECT p.id, p.row_version, p.name, p.vendor_name, p.product_name, p.quantity, p.qty_received, p.unit_price, p.state, CAST(p.order_date AS VARCHAR) AS order_date, CAST(p.expected_date AS VARCHAR) AS expected_date, p.reference FROM purchase_orders p WHERE (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.vendor_name ILIKE '%' || :q || '%' OR p.product_name ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) ORDER BY p.order_date DESC, p.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_orders
+    create_action: create_purchase_order
+    create_label: New purchase order
+    search: { label: Search purchase orders, placeholder: 'Search orders, vendors, or products...' }
+    filters: [{ field: state, label: Status, options_source: purchase_order_states }]
+    columns:
+      - { field: name, label: Purchase order, type: PrimaryEntityCell }
+      - { field: vendor_name, label: Vendor }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Ordered, align: right }
+      - { field: qty_received, label: Received, align: right }
+      - { field: expected_date, label: Expected date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: send_purchase_order, label: Send, permission: purchase.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: confirm_purchase_order, label: Confirm, permission: purchase.write, variant: secondary, show_if: "row.state === 'Sent'" }
+      - { id: receive_purchase_order, label: Receive, permission: purchase.write, variant: primary, show_if: "row.state === 'Confirmed'" }
+      - { id: cancel_purchase_order, label: Cancel, permission: purchase.write, variant: danger, show_if: "row.state !== 'Received' && row.state !== 'Cancelled'" }
+actions:
+  - id: create_purchase_order
+    type: server_form
+    permission: purchase.write
+    title: New purchase order
+    action: purchase.orders.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_orders]
+    mutation:
+      operation: insert
+      table: purchase_orders
+      fields: [name, vendor_id, vendor_name, product_name, quantity, unit_price, order_date, expected_date, reference]
+      required: [name, vendor_id, vendor_name, product_name, quantity]
+      defaults: { state: Draft, qty_received: 0 }
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0 AND EXISTS (SELECT 1 FROM purchase_vendors WHERE id = :vendor_id AND state = 'Active')", status: 400, message: An order needs an active vendor and a positive quantity }]
+      result: { query: "SELECT * FROM purchase_orders WHERE id = :id" }
+    fields:
+      - { field: name, label: Purchase order, type: text, required: true }
+      - { field: vendor_id, label: Vendor, type: select, options_source: purchase_vendor_lookup, required: true }
+      - { field: vendor_name, label: Vendor name, type: text, required: true }
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: unit_price, label: Unit price, type: number }
+      - { field: order_date, label: Order date, type: text }
+      - { field: expected_date, label: Expected date, type: text }
+      - { field: reference, label: Reference, type: text }
+  - { id: send_purchase_order, type: server, permission: purchase.write, action: purchase.orders.send, handler: order_transition, workflow: purchase_orders, operation: send, refresh: [purchase_orders] }
+  - { id: confirm_purchase_order, type: server, permission: purchase.write, action: purchase.orders.confirm, handler: order_transition, workflow: purchase_orders, operation: confirm, refresh: [purchase_orders] }
+  - { id: receive_purchase_order, type: server, permission: purchase.write, action: purchase.orders.receive, handler: order_transition, workflow: purchase_orders, operation: receive, refresh: [purchase_orders] }
+  - { id: cancel_purchase_order, type: server, permission: purchase.write, action: purchase.orders.cancel, handler: order_transition, workflow: purchase_orders, operation: cancel, refresh: [purchase_orders] }

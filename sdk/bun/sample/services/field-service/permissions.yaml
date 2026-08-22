@@ -1,0 +1,4 @@
+permissions:
+  - field-service.read
+  - field-service.write
+  - field-service.manage

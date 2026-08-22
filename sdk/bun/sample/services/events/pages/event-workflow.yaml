@@ -1,0 +1,47 @@
+workflow:
+  id: events
+  entity: events
+  handler: order_transition
+  initial: Draft
+  permission: events.write
+  mutable: true
+  status_source: event_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Published, label: Published, color: blue }
+    - { id: In Progress, label: In Progress, color: amber }
+    - { id: Completed, label: Completed, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: publish
+      from: [Draft]
+      to: Published
+      permission: events.write
+      mutation:
+        guards: [{ query: "SELECT id FROM events WHERE id = :id AND state = 'Draft' AND name <> '' AND start_at IS NOT NULL", status: 409, message: An event needs a name and start time before publishing }]
+        steps: [{ query: "UPDATE events SET state = 'Published', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM events WHERE id = :id" }
+    - id: start
+      from: [Published]
+      to: In Progress
+      permission: events.write
+      mutation:
+        guards: [{ query: "SELECT id FROM events WHERE id = :id AND state = 'Published'", status: 409, message: Only published events can start }]
+        steps: [{ query: "UPDATE events SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM events WHERE id = :id" }
+    - id: complete
+      from: [In Progress]
+      to: Completed
+      permission: events.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM events WHERE id = :id AND state = 'In Progress'", status: 409, message: Only active events can complete }]
+        steps: [{ query: "UPDATE events SET state = 'Completed', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM events WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Published, In Progress]
+      to: Cancelled
+      permission: events.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM events WHERE id = :id AND state IN ('Draft', 'Published', 'In Progress')", status: 409, message: Only open events can be cancelled }]
+        steps: [{ query: "UPDATE events SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM events WHERE id = :id" }

@@ -1,0 +1,24 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO chat_threads(id, title, thread_type, created_by, created_at, updated_at)
+      VALUES ('chat-demo-thread', 'Event Store Demo', 'Direct', 'user-admin', TIMESTAMP '2026-08-14 08:00:00', TIMESTAMP '2026-08-14 08:01:00');
+      INSERT OR IGNORE INTO chat_participants(thread_id, user_id, joined_at, last_read_at)
+      VALUES
+        ('chat-demo-thread', 'user-admin', TIMESTAMP '2026-08-14 08:00:00', TIMESTAMP '2026-08-14 08:01:00'),
+        ('chat-demo-thread', 'user-disp', TIMESTAMP '2026-08-14 08:00:00', TIMESTAMP '2026-08-14 08:01:00');
+      INSERT OR IGNORE INTO chat_messages(id, thread_id, sender_id, body, created_at)
+      VALUES
+        ('chat-demo-message-01', 'chat-demo-thread', 'user-admin', 'Welcome to the Core3 event store demo.', TIMESTAMP '2026-08-14 08:00:00'),
+        ('chat-demo-message-02', 'chat-demo-thread', 'user-disp', 'This message was seeded through the event bus.', TIMESTAMP '2026-08-14 08:01:00');
+
+    down: |
+      DELETE FROM chat_messages WHERE id IN ('chat-demo-message-01', 'chat-demo-message-02');
+      DELETE FROM chat_participants WHERE thread_id = 'chat-demo-thread';
+      DELETE FROM chat_threads WHERE id = 'chat-demo-thread';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

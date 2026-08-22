@@ -1,0 +1,14 @@
+id: blog
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/blogs.yaml
+  - pages/posts.yaml
+  - pages/post-detail.yaml
+  - pages/tags.yaml
+  - pages/analysis.yaml
+  - pages/blog-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

@@ -1,0 +1,21 @@
+title: Referral Analysis
+page: { id: referral-analysis, breadcrumb: [Human Resources, Referrals, Analysis], auth: { require: [referrals.read] } }
+datasources:
+  - id: referral_analysis_totals
+    single: true
+    permission: referrals.read
+    query: "SELECT COUNT(*) AS referral_count, COUNT(*) FILTER (WHERE state = 'Hired') AS hired_count, COUNT(*) FILTER (WHERE state = 'Rewarded') AS rewarded_count, COALESCE(SUM(reward_amount) FILTER (WHERE state = 'Rewarded'), 0) AS rewards_paid FROM referrals"
+  - id: referral_analysis_states
+    permission: referrals.read
+    query: "SELECT state AS category, COUNT(*) AS referral_count FROM referrals GROUP BY state ORDER BY referral_count DESC"
+components:
+  - type: StatRow
+    source: referral_analysis_totals
+    title: Referral program performance
+    stats: [{ label: Referrals, field: referral_count }, { label: Hired, field: hired_count }, { label: Rewarded, field: rewarded_count }, { label: Rewards paid, field: rewards_paid }]
+  - type: Chart
+    source: referral_analysis_states
+    title: Referrals by status
+    label_field: category
+    value_field: referral_count
+    variant: bar

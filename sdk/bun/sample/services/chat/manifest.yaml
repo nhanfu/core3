@@ -1,0 +1,9 @@
+id: chat
+kind: domain-service
+migrations: migrations
+pages:
+  - pages/chat.yaml
+permissions: permissions.yaml
+topics: topics.yaml
+events: events.yaml
+storage: storage.yaml

@@ -1,0 +1,27 @@
+version: 0.0.3
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_configs (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        company VARCHAR, currency VARCHAR NOT NULL DEFAULT 'USD',
+        receipt_header VARCHAR, receipt_footer VARCHAR, active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS pos_payments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), order_id VARCHAR NOT NULL,
+        method VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        state VARCHAR NOT NULL DEFAULT 'Posted', payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO pos_configs(id, name, company, currency, receipt_header, receipt_footer)
+      VALUES ('pos-config-main', 'Main Shop', 'YShip Demo Company', 'USD', 'Thank you for your business', 'Visit again soon')
+      ON CONFLICT(name) DO NOTHING;
+      INSERT INTO pos_payments(id, order_id, method, amount)
+      VALUES ('pos-payment-demo-001', 'pos-order-demo-001', 'Card', 129.50)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_payments;
+      DROP TABLE IF EXISTS pos_configs;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

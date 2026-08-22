@@ -1,0 +1,47 @@
+workflow:
+  id: referrals
+  entity: referrals
+  handler: order_transition
+  initial: Draft
+  permission: referrals.write
+  mutable: true
+  status_source: referral_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Hired, label: Hired, color: blue }
+    - { id: Rewarded, label: Rewarded, color: green, terminal: true }
+    - { id: Rejected, label: Rejected, color: red, terminal: true }
+  transitions:
+    - id: submit
+      from: [Draft]
+      to: Submitted
+      permission: referrals.write
+      mutation:
+        guards: [{ query: "SELECT id FROM referrals WHERE id = :id AND state = 'Draft' AND candidate_name <> ''", status: 409, message: A candidate is required before submission }]
+        steps: [{ query: "UPDATE referrals SET state = 'Submitted', submitted_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM referrals WHERE id = :id" }
+    - id: hire
+      from: [Submitted]
+      to: Hired
+      permission: referrals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM referrals WHERE id = :id AND state = 'Submitted'", status: 409, message: Only submitted referrals can be marked hired }]
+        steps: [{ query: "UPDATE referrals SET state = 'Hired', hired_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM referrals WHERE id = :id" }
+    - id: reward
+      from: [Hired]
+      to: Rewarded
+      permission: referrals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM referrals WHERE id = :id AND state = 'Hired' AND reward_amount > 0", status: 409, message: A positive reward amount is required }]
+        steps: [{ query: "UPDATE referrals SET state = 'Rewarded', rewarded_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM referrals WHERE id = :id" }
+    - id: reject
+      from: [Draft, Submitted]
+      to: Rejected
+      permission: referrals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM referrals WHERE id = :id AND state IN ('Draft', 'Submitted')", status: 409, message: Only open referrals can be rejected }]
+        steps: [{ query: "UPDATE referrals SET state = 'Rejected', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM referrals WHERE id = :id" }

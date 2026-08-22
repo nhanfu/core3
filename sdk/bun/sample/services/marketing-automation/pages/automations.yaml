@@ -1,0 +1,82 @@
+title: Marketing Automations
+page: { id: automations, breadcrumb: [Marketing, Marketing Automation], auth: { require: [marketing_automation.read] } }
+datasources:
+  - id: automation_states
+    permission: marketing_automation.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Running','Running'), ('Completed','Completed'), ('Paused','Paused')) states(value, label)"
+  - id: marketing_automations
+    permission: marketing_automation.read
+    workflow: marketing_automations
+    query: "SELECT a.id, a.row_version, a.name, a.trigger_type, a.action_type, a.audience_description, a.enrollment_count, a.completed_count, a.state, CAST(a.published_at AS VARCHAR) AS published_at FROM marketing_automations a WHERE (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.trigger_type ILIKE '%' || :q || '%') AND (:state IS NULL OR a.state = :state) ORDER BY a.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: marketing_automations
+    create_action: create_automation
+    create_label: New automation
+    search: { label: Search automations, placeholder: 'Search journey or trigger...' }
+    filters: [{ field: state, label: Status, options_source: automation_states }]
+    columns:
+      - { field: name, label: Automation, type: PrimaryEntityCell }
+      - { field: trigger_type, label: Trigger }
+      - { field: action_type, label: Action }
+      - { field: audience_description, label: Audience }
+      - { field: enrollment_count, label: Enrolled, align: right }
+      - { field: completed_count, label: Completed, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: publish_automation, label: Publish, permission: marketing_automation.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: run_automation, label: Run, permission: marketing_automation.write, variant: secondary, show_if: "row.state === 'Published' || row.state === 'Paused'" }
+      - { id: complete_automation, label: Complete, permission: marketing_automation.manage, variant: primary, show_if: "row.state === 'Running'" }
+      - { id: pause_automation, label: Pause, permission: marketing_automation.write, variant: danger, show_if: "row.state === 'Published' || row.state === 'Running'" }
+actions:
+  - id: create_automation
+    type: server_form
+    permission: marketing_automation.write
+    title: New marketing automation
+    action: marketing_automation.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [marketing_automations]
+    mutation:
+      operation: insert
+      table: marketing_automations
+      fields: [name, trigger_type, trigger_definition, action_type, action_definition, audience_description]
+      required: [name, trigger_type, action_type]
+      result: { query: "SELECT * FROM marketing_automations WHERE id = :id" }
+    fields:
+      - { field: name, label: Automation, type: text, required: true }
+      - { field: trigger_type, label: Trigger, type: text, required: true }
+      - { field: trigger_definition, label: Trigger definition, type: text }
+      - { field: action_type, label: Action, type: text, required: true }
+      - { field: action_definition, label: Action definition, type: text }
+      - { field: audience_description, label: Audience, type: text }
+  - id: enroll_contact
+    type: server_form
+    permission: marketing_automation.write
+    title: Enroll contact
+    action: marketing_automation.enrollments.create
+    handler: yaml_mutation
+    operation: enroll
+    refresh: [marketing_automations]
+    mutation:
+      operation: insert
+      table: automation_enrollments
+      fields: [automation_id, automation_name, contact_name, contact_email]
+      required: [automation_id, automation_name, contact_name]
+      guards: [{ query: "SELECT 1 AS ok FROM marketing_automations WHERE id = :automation_id AND state IN ('Published', 'Running')", status: 409, message: Only active automations accept enrollments }]
+      steps: [{ query: "UPDATE marketing_automations SET enrollment_count = enrollment_count + 1, row_version = row_version + 1 WHERE id = :automation_id" }]
+      result: { query: "SELECT * FROM automation_enrollments WHERE id = :id" }
+    fields:
+      - { field: automation_id, label: Automation ID, type: text, required: true }
+      - { field: automation_name, label: Automation, type: text, required: true }
+      - { field: contact_name, label: Contact, type: text, required: true }
+      - { field: contact_email, label: Email, type: text }
+  - { id: publish_automation, type: server, permission: marketing_automation.write, action: marketing_automation.records.publish, handler: order_transition, workflow: marketing_automations, operation: publish, refresh: [marketing_automations] }
+  - { id: run_automation, type: server, permission: marketing_automation.write, action: marketing_automation.records.run, handler: order_transition, workflow: marketing_automations, operation: run, refresh: [marketing_automations] }
+  - { id: complete_automation, type: server, permission: marketing_automation.manage, action: marketing_automation.records.complete, handler: order_transition, workflow: marketing_automations, operation: complete, refresh: [marketing_automations] }
+  - { id: pause_automation, type: server, permission: marketing_automation.write, action: marketing_automation.records.pause, handler: order_transition, workflow: marketing_automations, operation: pause, refresh: [marketing_automations] }

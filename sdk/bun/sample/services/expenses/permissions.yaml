@@ -1,0 +1,4 @@
+permissions:
+  - expenses.read
+  - expenses.write
+  - expenses.manage

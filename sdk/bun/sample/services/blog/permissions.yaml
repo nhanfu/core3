@@ -1,0 +1,4 @@
+permissions:
+  - blog.read
+  - blog.write
+  - blog.manage

@@ -1,0 +1,4 @@
+permissions:
+  - referrals.read
+  - referrals.write
+  - referrals.manage

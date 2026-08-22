@@ -1,0 +1,13 @@
+id: maintenance
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/equipment.yaml
+  - pages/requests.yaml
+  - pages/request-detail.yaml
+  - pages/analysis.yaml
+  - pages/maintenance-workflow.yaml
+permissions: permissions.yaml
+storage: storage.yaml

@@ -1,0 +1,126 @@
+vi:
+  Save: Lưu
+  Discard: Hủy bỏ
+  Edit details: Sửa thông tin
+  Workflow status: Trạng thái quy trình
+  Row number: STT
+  Select all lines: Chọn tất cả dòng
+  Select line: Chọn dòng
+  Expand line: Mở rộng dòng
+  Collapse line: Thu gọn dòng
+  Previous lines page: Trang dòng trước
+  Next lines page: Trang dòng sau
+  Columns: Cột
+  "Show {label}": "Hiển thị {label}"
+  Rows per page: Số dòng mỗi trang
+  No records found: Không tìm thấy dữ liệu
+  Total: Tổng cộng
+  Order details: Chi tiết đơn hàng
+  Manage: Quản lý
+  Order: Đơn hàng
+  Detail: Chi tiết
+  List of orders: Danh sách đơn hàng
+  Edit orders: Sửa đơn hàng
+  Single date: Ngày đơn
+  Type: Loại hình
+  Route: Tuyến
+  Form: Hình thức
+  Number of trips: Số chuyến
+  Creator: Người tạo
+  Note: Ghi chú
+  Fee details: Chi tiết cước
+  The total order amount is calculated directly from the freight lines.: Tổng tiền đơn hàng được tính trực tiếp từ các dòng cước.
+  + Add lines: + Thêm dòng
+  There are no charges yet: Chưa có dòng cước
+  Add at least one line before the browser.: Thêm ít nhất một dòng trước khi trình duyệt.
+  "No": STT
+  Content: Nội dung
+  Quantity: Số lượng
+  Unit: Đơn vị
+  Unit price: Đơn giá
+  Tax: Thuế
+  Make money: Thành tiền
+  Fix: Sửa
+  Erase: Xóa
+  Total: Tổng cộng
+  Total amount: Tổng tiền
+  Order history: Lịch sử đơn hàng
+  No order activity yet: Chưa có hoạt động đơn hàng
+  Update orders: Cập nhật đơn hàng
+  Single code: Mã đơn
+  Client: Khách hàng
+  "Find customers...": "Tìm khách hàng..."
+  Legal name: Tên pháp lý
+  Road: Đường bộ
+  Sea route: Đường biển
+  Railway: Đường sắt
+  Air: Hàng không
+  Add a charge line: Thêm dòng cước
+  Tax rate (%): Thuế suất (%)
+  Update freight lines: Cập nhật dòng cước
+  "Delete charge line {{row.description}}?": "Xóa dòng cước {{row.description}}?"
+  Orders: Đơn hàng
+  Edit: Sửa
+  Order date: Ngày đơn
+  Shipment type: Loại hình
+  Transport method: Hình thức vận chuyển
+  Trip count: Số chuyến
+  Created by: Người tạo
+  Notes: Ghi chú
+  Order Lines: Dòng đơn hàng
+  Other Information: Thông tin khác
+  The total amount is calculated from the order lines.: Tổng tiền được tính từ các dòng đơn hàng.
+  Add a line: Thêm dòng
+  No order lines: Chưa có dòng đơn hàng
+  Add a line to start calculating the order total.: Thêm dòng để bắt đầu tính tổng tiền đơn hàng.
+  "#": STT
+  Description: Nội dung
+  Amount: Thành tiền
+  Totals: Tổng cộng
+  Messages and activities: Tin nhắn và hoạt động
+  Send message: Gửi tin nhắn
+  Log note: Ghi chú
+  Message: Tin nhắn
+  Followers: Người theo dõi
+  Attachments: Tệp đính kèm
+  Add Followers: Thêm người theo dõi
+  Remove follower: Xóa người theo dõi
+  No followers: Chưa có người theo dõi
+  Select a follower: Chọn người theo dõi
+  Add: Thêm
+  Attach files: Đính kèm tệp
+  No attachments: Chưa có tệp đính kèm
+  Uploading…: Đang tải lên…
+  Upload failed: Tải lên thất bại
+  Download: Tải xuống
+  Preview: Xem trước
+  Added follower: Đã thêm người theo dõi
+  Removed follower: Đã xóa người theo dõi
+  Uploaded attachment: Đã tải lên tệp đính kèm
+  Edit Order: Sửa đơn hàng
+  Order number: Mã đơn hàng
+  Customer: Khách hàng
+  "Search customers...": "Tìm khách hàng..."
+  Sea: Đường biển
+  Rail: Đường sắt
+  Shipping details: Thông tin vận chuyển
+  Customer and notes: Khách hàng và ghi chú
+  Draft: Nháp
+  Pending approval: Chờ duyệt
+  Approved: Đã duyệt
+  Cancelled: Đã hủy
+  Submitted for approval: Đã trình duyệt
+  Rejected: Đã từ chối
+  Added order line: Đã thêm dòng chi phí
+  Updated order line: Đã cập nhật dòng chi phí
+  Deleted order line: Đã xóa dòng chi phí
+  Created: Đã tạo
+  Order created: Khởi tạo đơn hàng
+  Submit for approval: Trình duyệt
+  Approve: Duyệt
+  Reject: Từ chối
+  Cancel: Hủy
+  "Submit order {{row.order_number}}?": "Trình duyệt đơn hàng {{row.order_number}}?"
+  "Approve order {{row.order_number}}?": "Duyệt đơn hàng {{row.order_number}}?"
+  "Reject and return order {{row.order_number}} to draft?": "Từ chối và chuyển đơn hàng {{row.order_number}} về nháp?"
+  "Cancel order {{row.order_number}}?": "Hủy đơn hàng {{row.order_number}}?"

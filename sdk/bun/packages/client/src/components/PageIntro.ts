@@ -1,0 +1,35 @@
+import { html } from '@core3/client/html';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
+
+export class PageIntro extends BaseComponent {
+  draw(container: HTMLElement) {
+    const greeting = String(this.state.greeting || 'Xin chào');
+    const user = (globalThis as any).__CORE3_USER__;
+    const name = String(user?.name || '');
+    const rightGreeting = this.state.greeting_side === 'right';
+    const compact = Boolean(this.state.compact);
+    const root = html.take(container).div
+      .className(`page-intro flex items-center justify-between gap-3${compact ? ' page-intro-compact' : ''}`)
+      .ele();
+    const copy = html.take(root).div.ele();
+    if (!rightGreeting) {
+      html.take(copy).p.className('text-sm text-slate-500').text(name ? `${greeting}, ${name}` : greeting);
+    }
+    if (this.state.title) {
+      html.take(copy).h2
+        .className(rightGreeting ? 'text-lg font-semibold text-slate-900' : 'mt-1 text-lg font-semibold text-slate-900')
+        .text(String(this.state.title));
+    }
+    if (this.state.description) html.take(copy).p.className('mt-1 text-sm text-slate-500').text(String(this.state.description));
+    if (rightGreeting) {
+      html.take(root).p.className('page-intro-greeting text-sm text-slate-500').text(name ? `${greeting}, ${name}` : greeting);
+    }
+    if (this.state.action_label) {
+      const action = html.take(root).span.className('page-intro-action text-amber-500')
+        .attr('title', String(this.state.action_label))
+        .attr('aria-label', String(this.state.action_label)).ele() as HTMLSpanElement;
+      appendIcon(action, 'lightbulb', String(this.state.action_label));
+    }
+  }
+}

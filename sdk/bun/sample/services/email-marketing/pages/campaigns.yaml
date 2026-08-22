@@ -1,0 +1,69 @@
+title: Email Campaigns
+page: { id: email-campaigns, breadcrumb: [Marketing, Email Marketing, Campaigns], auth: { require: [email_marketing.read] } }
+datasources:
+  - id: email_campaign_states
+    permission: email_marketing.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Scheduled','Scheduled'), ('Sending','Sending'), ('Sent','Sent'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: mailing_list_lookup
+    permission: email_marketing.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM mailing_lists WHERE state = 'Active' ORDER BY name"
+  - id: email_campaigns
+    permission: email_marketing.read
+    workflow: email_campaigns
+    query: "SELECT c.id, c.row_version, c.name, c.subject, c.sender_name, c.list_name, c.recipient_count, c.delivered_count, c.opened_count, c.clicked_count, c.state, CAST(c.scheduled_at AS VARCHAR) AS scheduled_at, CAST(c.sent_at AS VARCHAR) AS sent_at FROM email_campaigns c WHERE (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.subject ILIKE '%' || :q || '%') AND (:state IS NULL OR c.state = :state) ORDER BY c.created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: email_campaigns
+    create_action: create_email_campaign
+    create_label: New email campaign
+    search: { label: Search campaigns, placeholder: 'Search campaign or subject...' }
+    filters: [{ field: state, label: Status, options_source: email_campaign_states }]
+    columns:
+      - { field: name, label: Campaign, type: PrimaryEntityCell }
+      - { field: subject, label: Subject }
+      - { field: sender_name, label: Sender }
+      - { field: list_name, label: Audience }
+      - { field: recipient_count, label: Recipients, align: right }
+      - { field: delivered_count, label: Delivered, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: schedule_email_campaign, label: Schedule, permission: email_marketing.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: send_email_campaign, label: Send, permission: email_marketing.write, variant: secondary, show_if: "row.state === 'Scheduled'" }
+      - { id: complete_email_campaign, label: Complete send, permission: email_marketing.manage, variant: primary, show_if: "row.state === 'Sending'" }
+      - { id: cancel_email_campaign, label: Cancel, permission: email_marketing.manage, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Scheduled'" }
+actions:
+  - id: create_email_campaign
+    type: server_form
+    permission: email_marketing.write
+    title: New email campaign
+    action: email_marketing.campaigns.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [email_campaigns]
+    mutation:
+      operation: insert
+      table: email_campaigns
+      fields: [name, subject, sender_name, sender_email, list_id, list_name, body, scheduled_at, recipient_count]
+      required: [name, subject, list_id, list_name, recipient_count]
+      guards: [{ query: "SELECT 1 AS ok FROM mailing_lists WHERE id = :list_id AND state = 'Active' AND CAST(:recipient_count AS INTEGER) > 0", status: 400, message: An active audience and positive recipient count are required }]
+      result: { query: "SELECT * FROM email_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Campaign, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: sender_name, label: Sender name, type: text }
+      - { field: sender_email, label: Sender email, type: text }
+      - { field: list_id, label: Audience, type: select, options_source: mailing_list_lookup, required: true }
+      - { field: list_name, label: Audience name, type: text, required: true }
+      - { field: body, label: Body, type: text }
+      - { field: scheduled_at, label: Scheduled at, type: text }
+      - { field: recipient_count, label: Recipients, type: number, required: true }
+  - { id: schedule_email_campaign, type: server, permission: email_marketing.write, action: email_marketing.campaigns.schedule, handler: order_transition, workflow: email_campaigns, operation: schedule, refresh: [email_campaigns] }
+  - { id: send_email_campaign, type: server, permission: email_marketing.write, action: email_marketing.campaigns.send, handler: order_transition, workflow: email_campaigns, operation: send, refresh: [email_campaigns] }
+  - { id: complete_email_campaign, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.complete, handler: order_transition, workflow: email_campaigns, operation: complete, refresh: [email_campaigns] }
+  - { id: cancel_email_campaign, type: server, permission: email_marketing.manage, action: email_marketing.campaigns.cancel, handler: order_transition, workflow: email_campaigns, operation: cancel, refresh: [email_campaigns] }

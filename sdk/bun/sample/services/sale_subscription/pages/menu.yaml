@@ -1,0 +1,21 @@
+menu:
+  subscriptions:
+    path: /subscriptions
+    label: Subscriptions
+    icon: repeat
+    permission: subscriptions.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - path: /invoices
+          label: Recurring Invoices
+          icon: invoice
+          permission: subscriptions.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /plans
+          label: Subscription Plans
+          icon: layers
+          permission: subscriptions.read

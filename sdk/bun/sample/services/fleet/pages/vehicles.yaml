@@ -1,0 +1,67 @@
+title: Fleet Vehicles
+page: { id: vehicles, breadcrumb: [Human Resources, Fleet, Vehicles], auth: { require: [fleet.read] } }
+datasources:
+  - id: fleet_vehicle_states
+    permission: fleet.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Available','Available'), ('Assigned','Assigned'), ('Maintenance','Maintenance'), ('Retired','Retired')) states(value, label)"
+  - id: fleet_vehicles
+    permission: fleet.read
+    workflow: fleet_vehicles
+    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.odometer, v.fuel_type, v.state, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR v.driver_name ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) ORDER BY v.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: fleet_vehicles
+    create_action: create_fleet_vehicle
+    create_label: New vehicle
+    search: { label: Search vehicles, placeholder: 'Search vehicle, plate, or driver...' }
+    filters: [{ field: state, label: Status, options_source: fleet_vehicle_states }]
+    columns:
+      - { field: name, label: Vehicle, type: PrimaryEntityCell }
+      - { field: license_plate, label: License plate }
+      - { field: vehicle_type, label: Type }
+      - { field: model, label: Model }
+      - { field: driver_name, label: Driver }
+      - { field: odometer, label: Odometer, align: right }
+      - { field: fuel_type, label: Fuel }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: assign_fleet_vehicle, label: Assign, permission: fleet.write, variant: primary, show_if: "row.state === 'Available'" }
+      - { id: service_fleet_vehicle, label: Send to maintenance, permission: fleet.write, variant: secondary, show_if: "row.state === 'Available' || row.state === 'Assigned'" }
+      - { id: release_fleet_vehicle, label: Release, permission: fleet.write, variant: primary, show_if: "row.state === 'Maintenance'" }
+      - { id: retire_fleet_vehicle, label: Retire, permission: fleet.manage, variant: danger, show_if: "row.state !== 'Retired'" }
+actions:
+  - id: create_fleet_vehicle
+    type: server_form
+    permission: fleet.write
+    title: New fleet vehicle
+    action: fleet.vehicles.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_vehicles]
+    mutation:
+      operation: insert
+      table: fleet_vehicles
+      fields: [name, license_plate, vehicle_type, model, manufacturer, driver_employee_id, driver_name, odometer, fuel_type, acquisition_date, contract_end_date]
+      required: [name, license_plate]
+      result: { query: "SELECT * FROM fleet_vehicles WHERE id = :id" }
+    fields:
+      - { field: name, label: Vehicle, type: text, required: true }
+      - { field: license_plate, label: License plate, type: text, required: true }
+      - { field: vehicle_type, label: Type, type: select, options: [{ value: Car, label: Car }, { value: Van, label: Van }, { value: Truck, label: Truck }] }
+      - { field: model, label: Model, type: text }
+      - { field: manufacturer, label: Manufacturer, type: text }
+      - { field: driver_employee_id, label: Driver employee ID, type: text }
+      - { field: driver_name, label: Driver, type: text }
+      - { field: odometer, label: Odometer, type: number }
+      - { field: fuel_type, label: Fuel type, type: text }
+      - { field: acquisition_date, label: Acquisition date, type: text }
+      - { field: contract_end_date, label: Contract end date, type: text }
+  - { id: assign_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.assign, handler: order_transition, workflow: fleet_vehicles, operation: assign, refresh: [fleet_vehicles] }
+  - { id: service_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, refresh: [fleet_vehicles] }
+  - { id: release_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, refresh: [fleet_vehicles] }
+  - { id: retire_fleet_vehicle, type: server, permission: fleet.manage, action: fleet.vehicles.retire, handler: order_transition, workflow: fleet_vehicles, operation: retire, refresh: [fleet_vehicles] }

@@ -1,0 +1,45 @@
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { appendIcon } from '@core3/client/components/Icon';
+import { html } from '@core3/client/html';
+import { i18n } from '@core3/client/i18n';
+
+export type ComingSoonState = {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  icon?: string;
+};
+
+/**
+ * Declarative placeholder for routes that exist in product navigation but are
+ * intentionally unavailable in the reference application.
+ */
+export class ComingSoon extends BaseComponent {
+  declare state: ComingSoonState;
+
+  draw(container: HTMLElement) {
+    const {
+      eyebrow = i18n.tKey('shell.soon', {}, 'Coming soon'),
+      title = i18n.tKey('coming_soon.title', {}, 'This feature is in development'),
+      description = '',
+      icon = 'calendar',
+    } = this.state;
+
+    const section = html.take(container).section.className('coming-soon')
+      .attr('aria-labelledby', `${this.id}-title`).ele() as HTMLElement;
+
+    const artwork = html.take(section).div.className('coming-soon-artwork')
+      .attr('aria-hidden', 'true').dataAttr('icon', icon).ele() as HTMLDivElement;
+    appendIcon(artwork, icon);
+
+    const copy = html.take(section).div.className('coming-soon-copy').ele() as HTMLDivElement;
+
+    html.take(copy).p.className('coming-soon-eyebrow').text(eyebrow);
+
+    html.take(copy).h2.id(`${this.id}-title`).className('coming-soon-title').text(title);
+
+    if (description) {
+      html.take(copy).p.className('coming-soon-description').text(description);
+    }
+  }
+}

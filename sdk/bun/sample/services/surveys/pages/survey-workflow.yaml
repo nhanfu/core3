@@ -1,0 +1,38 @@
+workflow:
+  id: surveys
+  entity: surveys
+  handler: order_transition
+  initial: Draft
+  permission: surveys.write
+  mutable: true
+  status_source: survey_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Published, label: Published, color: blue }
+    - { id: Closed, label: Closed, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: publish
+      from: [Draft]
+      to: Published
+      permission: surveys.write
+      mutation:
+        guards: [{ query: "SELECT id FROM surveys WHERE id = :id AND state = 'Draft' AND title <> '' AND EXISTS (SELECT 1 FROM survey_questions WHERE survey_id = :id)", status: 409, message: A survey needs at least one question before publishing }]
+        steps: [{ query: "UPDATE surveys SET state = 'Published', published_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM surveys WHERE id = :id" }
+    - id: close
+      from: [Published]
+      to: Closed
+      permission: surveys.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM surveys WHERE id = :id AND state = 'Published'", status: 409, message: Only published surveys can be closed }]
+        steps: [{ query: "UPDATE surveys SET state = 'Closed', closed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM surveys WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Published]
+      to: Cancelled
+      permission: surveys.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM surveys WHERE id = :id AND state IN ('Draft', 'Published')", status: 409, message: Only open surveys can be cancelled }]
+        steps: [{ query: "UPDATE surveys SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM surveys WHERE id = :id" }

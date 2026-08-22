@@ -1,0 +1,25 @@
+title: Appraisal
+page: { id: appraisal-detail, breadcrumb: [Human Resources, Appraisals, Detail], auth: { require: [appraisals.read] } }
+datasources:
+  - id: appraisal_detail
+    single: true
+    permission: appraisals.read
+    query: "SELECT id, row_version, name, cycle_name, employee_name, manager_name, job_title, goals, self_rating, manager_rating, summary, feedback, state, CAST(due_date AS VARCHAR) AS due_date, CAST(completed_date AS VARCHAR) AS completed_date FROM appraisals WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: appraisal_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: In Progress, label: In Progress }, { value: Manager Review, label: Manager Review }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, In Progress: blue, Manager Review: amber, Completed: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Review
+        fields: [{ field: name, label: Appraisal }, { field: state, label: Status }, { field: cycle_name, label: Cycle }, { field: employee_name, label: Employee }, { field: manager_name, label: Manager }, { field: job_title, label: Job title }]
+      - title: Feedback
+        fields: [{ field: goals, label: Goals }, { field: self_rating, label: Self rating }, { field: manager_rating, label: Manager rating }, { field: summary, label: Summary }, { field: feedback, label: Feedback }, { field: due_date, label: Due date }, { field: completed_date, label: Completed date }]
+actions:
+  - { id: start_appraisal_detail, type: server, permission: appraisals.write, action: appraisals.records.start, handler: order_transition, workflow: appraisals, operation: start, params: { id: '{state.id}' }, refresh: [appraisal_detail] }
+  - { id: submit_appraisal_detail, type: server, permission: appraisals.write, action: appraisals.records.submit, handler: order_transition, workflow: appraisals, operation: submit, params: { id: '{state.id}' }, refresh: [appraisal_detail] }
+  - { id: complete_appraisal_detail, type: server, permission: appraisals.manage, action: appraisals.records.complete, handler: order_transition, workflow: appraisals, operation: complete, params: { id: '{state.id}' }, refresh: [appraisal_detail] }
+  - { id: cancel_appraisal_detail, type: server, permission: appraisals.manage, action: appraisals.records.cancel, handler: order_transition, workflow: appraisals, operation: cancel, params: { id: '{state.id}' }, refresh: [appraisal_detail] }

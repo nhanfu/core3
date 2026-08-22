@@ -1,0 +1,13 @@
+version: 0.0.9
+type:
+  postgres:
+    up: |
+      ALTER TABLE sale_invoices ADD COLUMN IF NOT EXISTS accounting_invoice_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_sale_invoices_accounting ON sale_invoices(accounting_invoice_id);
+    down: |
+      DROP INDEX IF EXISTS idx_sale_invoices_accounting;
+      ALTER TABLE sale_invoices DROP COLUMN IF EXISTS accounting_invoice_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

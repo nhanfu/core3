@@ -1,0 +1,47 @@
+workflow:
+  id: appraisals
+  entity: appraisals
+  handler: order_transition
+  initial: Draft
+  permission: appraisals.write
+  mutable: true
+  status_source: appraisal_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Manager Review, label: Manager Review, color: amber }
+    - { id: Completed, label: Completed, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: start
+      from: [Draft]
+      to: In Progress
+      permission: appraisals.write
+      mutation:
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft appraisals can start }]
+        steps: [{ query: "UPDATE appraisals SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM appraisals WHERE id = :id" }
+    - id: submit
+      from: [In Progress]
+      to: Manager Review
+      permission: appraisals.write
+      mutation:
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'In Progress' AND self_rating IS NOT NULL", status: 409, message: A self rating is required before submission }]
+        steps: [{ query: "UPDATE appraisals SET state = 'Manager Review', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM appraisals WHERE id = :id" }
+    - id: complete
+      from: [Manager Review]
+      to: Completed
+      permission: appraisals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state = 'Manager Review' AND manager_rating IS NOT NULL", status: 409, message: A manager rating is required before completion }]
+        steps: [{ query: "UPDATE appraisals SET state = 'Completed', completed_date = CURRENT_DATE, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM appraisals WHERE id = :id" }
+    - id: cancel
+      from: [Draft, In Progress, Manager Review]
+      to: Cancelled
+      permission: appraisals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM appraisals WHERE id = :id AND state IN ('Draft', 'In Progress', 'Manager Review')", status: 409, message: Only open appraisals can be cancelled }]
+        steps: [{ query: "UPDATE appraisals SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM appraisals WHERE id = :id" }

@@ -1,0 +1,38 @@
+workflow:
+  id: project_tasks
+  entity: project_tasks
+  handler: order_transition
+  initial: Todo
+  permission: project.write
+  mutable: true
+  status_source: project_task_states
+  states:
+    - { id: Todo, label: Todo, color: neutral }
+    - { id: In Progress, label: In Progress, color: blue }
+    - { id: Done, label: Done, color: green, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+  transitions:
+    - id: start
+      from: [Todo]
+      to: In Progress
+      permission: project.write
+      mutation:
+        guards: [{ query: "SELECT id FROM project_tasks WHERE id = :id AND state = 'Todo'", status: 409, message: Only todo tasks can start }]
+        steps: [{ query: "UPDATE project_tasks SET state = 'In Progress', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
+    - id: complete
+      from: [In Progress]
+      to: Done
+      permission: project.write
+      mutation:
+        guards: [{ query: "SELECT id FROM project_tasks WHERE id = :id AND state = 'In Progress'", status: 409, message: Only active tasks can complete }]
+        steps: [{ query: "UPDATE project_tasks SET state = 'Done', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM project_tasks WHERE id = :id" }
+    - id: cancel
+      from: [Todo, In Progress]
+      to: Cancelled
+      permission: project.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM project_tasks WHERE id = :id AND state IN ('Todo', 'In Progress')", status: 409, message: Only open tasks can be cancelled }]
+        steps: [{ query: "UPDATE project_tasks SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM project_tasks WHERE id = :id" }

@@ -1,0 +1,194 @@
+title: CRM
+page: { id: leads, breadcrumb: [Sales, CRM, Leads], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_leads
+    single: false
+    permission: crm.read
+    workflow: crm_leads
+    query: |
+      SELECT id, row_version, name, type, partner_name, email, phone, source, priority,
+        expected_revenue, stage, probability, salesperson, team,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        CAST(created_at AS VARCHAR) AS created_at
+      FROM crm_leads
+      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%')
+        AND (:stage IS NULL OR stage = :stage)
+      ORDER BY created_at DESC
+  - id: crm_lead_stages
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT stage AS value, stage AS label FROM crm_leads ORDER BY stage"
+  - id: crm_lost_reason_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM crm_lost_reasons WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_leads
+    create_action: create_lead
+    create_label: New
+    search: { label: Search leads, placeholder: Search opportunities and customers... }
+    filters:
+      - { field: stage, label: Stage, options_source: crm_lead_stages }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        groups_source: crm_lead_stages
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: probability, label: Probability }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: stage
+        groups_source: crm_lead_stages
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: probability, label: Probability }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: expected_closing
+        card:
+          title: name
+          subtitle: partner_name
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: stage, column: Stage }
+            - { field: type, column: Type }
+            - { field: source, column: Source }
+            - { field: team, column: Sales team }
+            - { field: expected_closing, column: Expected closing, type: date }
+            - { field: salesperson, column: Salesperson }
+            - { field: probability, column: Probability }
+            - { field: expected_revenue, column: Expected revenue }
+          default:
+            rows: [stage]
+            columns: [team]
+            measures:
+              - { field: expected_revenue, aggregate: sum, column: Expected revenue }
+              - { field: probability, aggregate: average, column: Probability }
+          date_ranges: { expected_closing: month }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: stage
+        measure_field: expected_revenue
+      - id: map
+        label: Map
+        icon: map
+        label_field: name
+        subtitle_field: partner_name
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
+      - { field: partner_name, label: Customer }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: probability, label: Probability, align: right }
+      - { field: salesperson, label: Salesperson }
+      - { field: expected_closing, label: Expected closing }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_lead
+    row_double_click_action: view_lead
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+actions:
+  - id: create_lead
+    type: server_form
+    permission: crm.write
+    title: New lead
+    action: crm.leads.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: crm_leads
+      fields: [name, type, partner_name, email, phone, description, source, priority, expected_revenue, stage, probability, salesperson, team, expected_closing]
+      required: [name]
+      defaults: { stage: New, probability: 10, expected_revenue: 0 }
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: name, label: Opportunity, type: text, required: true }
+      - { field: type, label: Type, type: select, options: [lead, opportunity], default: opportunity }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: expected_closing, label: Expected closing, type: date }
+  - id: edit_lead
+    type: server_form
+    permission: crm.write
+    title: Update lead
+    action: crm.leads.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_leads]
+    mutation:
+      operation: update
+      table: crm_leads
+      fields: [name, type, partner_name, email, phone, description, source, priority, expected_revenue, salesperson, team, expected_closing]
+      required: [name]
+      timestamps: true
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Closed opportunities cannot be edited
+    fields:
+      - { field: name, label: Opportunity, type: text, required: true }
+      - { field: type, label: Type, type: select, options: [lead, opportunity] }
+      - { field: partner_name, label: Customer, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: description, label: Notes, type: textarea }
+      - { field: source, label: Source, type: text }
+      - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: expected_closing, label: Expected closing, type: date }
+  - id: view_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
+  - id: qualify_lead
+    type: server
+    permission: crm.write
+    action: crm.leads.qualify
+    handler: order_transition
+    workflow: crm_leads
+    operation: qualify
+    refresh: [crm_leads]
+  - id: mark_lead_won
+    type: server
+    permission: crm.write
+    action: crm.leads.won
+    handler: order_transition
+    workflow: crm_leads
+    operation: won
+    refresh: [crm_leads]
+  - id: mark_lead_lost
+    type: server_form
+    permission: crm.write
+    title: Mark lead lost
+    action: crm.leads.lost
+    handler: order_transition
+    workflow: crm_leads
+    operation: lost
+    refresh: [crm_leads]
+    fields:
+      - { field: lost_reason, label: Lost reason, type: select, options_source: crm_lost_reason_lookup, required: true }

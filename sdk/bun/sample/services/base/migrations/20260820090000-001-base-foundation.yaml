@@ -1,0 +1,29 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS base_countries (code VARCHAR PRIMARY KEY, name VARCHAR NOT NULL UNIQUE, currency_code VARCHAR NOT NULL);
+      CREATE TABLE IF NOT EXISTS base_states (code VARCHAR PRIMARY KEY, country_code VARCHAR NOT NULL, name VARCHAR NOT NULL, UNIQUE(country_code, name));
+      CREATE TABLE IF NOT EXISTS base_currencies (code VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, symbol VARCHAR NOT NULL, decimal_places INTEGER NOT NULL DEFAULT 2);
+      CREATE TABLE IF NOT EXISTS base_languages (code VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, direction VARCHAR NOT NULL DEFAULT 'ltr');
+      CREATE TABLE IF NOT EXISTS base_contact_categories (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL UNIQUE, color INTEGER NOT NULL DEFAULT 0);
+      CREATE TABLE IF NOT EXISTS base_contacts (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, company_type VARCHAR NOT NULL DEFAULT 'person', email VARCHAR, phone VARCHAR, street VARCHAR, street2 VARCHAR, city VARCHAR, state_name VARCHAR, zip VARCHAR, country_name VARCHAR, currency_code VARCHAR, is_company BOOLEAN NOT NULL DEFAULT false, active BOOLEAN NOT NULL DEFAULT true, notes VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+      CREATE INDEX IF NOT EXISTS base_contacts_email_idx ON base_contacts(email);
+      CREATE INDEX IF NOT EXISTS base_contacts_name_idx ON base_contacts(name);
+      CREATE TABLE IF NOT EXISTS base_contact_categories_rel (contact_id VARCHAR NOT NULL, category_id VARCHAR NOT NULL, category_name VARCHAR NOT NULL, PRIMARY KEY(contact_id, category_id));
+      CREATE TABLE IF NOT EXISTS base_activities (id VARCHAR PRIMARY KEY, contact_id VARCHAR, summary VARCHAR NOT NULL, activity_type VARCHAR NOT NULL DEFAULT 'todo', state VARCHAR NOT NULL DEFAULT 'planned', due_date DATE, assigned_user_id VARCHAR, assigned_user_name VARCHAR, note VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
+      CREATE TABLE IF NOT EXISTS base_company_users (company_id VARCHAR NOT NULL, user_id VARCHAR NOT NULL, is_default BOOLEAN NOT NULL DEFAULT false, PRIMARY KEY(company_id, user_id));
+    down: |
+      DROP TABLE IF EXISTS base_company_users;
+      DROP TABLE IF EXISTS base_activities;
+      DROP TABLE IF EXISTS base_contact_categories_rel;
+      DROP TABLE IF EXISTS base_contacts;
+      DROP TABLE IF EXISTS base_contact_categories;
+      DROP TABLE IF EXISTS base_languages;
+      DROP TABLE IF EXISTS base_currencies;
+      DROP TABLE IF EXISTS base_states;
+      DROP TABLE IF EXISTS base_countries;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

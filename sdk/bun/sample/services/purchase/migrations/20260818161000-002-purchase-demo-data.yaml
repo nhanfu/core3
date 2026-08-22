@@ -1,0 +1,16 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO purchase_vendors(id, name, email, phone, payment_terms)
+      VALUES ('vendor-demo-001', 'Lotus Industrial Supply', 'sales@lotus.example', '+84 28 5555 0101', 'Net 30');
+      INSERT OR IGNORE INTO purchase_orders(id, name, vendor_id, vendor_name, product_name, quantity, unit_price, state, order_date, expected_date, reference)
+      VALUES ('po-demo-001', 'PO/2026/0001', 'vendor-demo-001', 'Lotus Industrial Supply', 'Packaging cartons', 500, 1.25, 'Draft', CURRENT_DATE, CURRENT_DATE + INTERVAL 14 DAY, 'Initial replenishment');
+    down: |
+      DELETE FROM purchase_orders WHERE id = 'po-demo-001';
+      DELETE FROM purchase_vendors WHERE id = 'vendor-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

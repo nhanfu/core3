@@ -1,0 +1,28 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO mrp_boms(id, name, product_id, product_name, product_quantity, uom, version) VALUES
+        ('bom-pallet-kit', 'Pallet repair kit', 'product-demo-003', 'Reusable pallet', 1, 'Units', '1.0')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_bom_lines(id, bom_id, component_id, component_name, quantity, uom) VALUES
+        ('bom-line-board', 'bom-pallet-kit', 'component-board', 'Replacement board', 4, 'Units'),
+        ('bom-line-nail', 'bom-pallet-kit', 'component-nail', 'Nail pack', 1, 'Pack')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_productions(id, name, product_id, product_name, bom_id, quantity, state, reference) VALUES
+        ('mo-demo-001', 'MO/2026/0001', 'product-demo-003', 'Reusable pallet', 'bom-pallet-kit', 10, 'Confirmed', 'Warehouse replenishment')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO mrp_workorders(id, production_id, name, workcenter, sequence, expected_duration) VALUES
+        ('wo-demo-001', 'mo-demo-001', 'Assemble pallet', 'Assembly', 10, 45),
+        ('wo-demo-002', 'mo-demo-001', 'Quality check', 'Quality', 20, 15)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM mrp_workorders WHERE production_id = 'mo-demo-001';
+      DELETE FROM mrp_productions WHERE id = 'mo-demo-001';
+      DELETE FROM mrp_bom_lines WHERE bom_id = 'bom-pallet-kit';
+      DELETE FROM mrp_boms WHERE id = 'bom-pallet-kit';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

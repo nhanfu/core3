@@ -1,0 +1,4 @@
+permissions:
+  - time_off.read
+  - time_off.write
+  - time_off.manage

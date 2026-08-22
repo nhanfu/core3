@@ -1,0 +1,15 @@
+version: 0.0.5
+kind: schema
+description: Add optimistic concurrency versions to mutable chat records
+type:
+  postgres:
+    up: |
+      ALTER TABLE chat_threads ADD COLUMN row_version BIGINT NOT NULL DEFAULT 1;
+    down: |
+      ALTER TABLE chat_threads DROP COLUMN row_version;
+  duckdb:
+    up: ALTER TABLE chat_threads ADD COLUMN row_version BIGINT DEFAULT 1;
+    down: ALTER TABLE chat_threads DROP COLUMN row_version;
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

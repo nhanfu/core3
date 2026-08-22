@@ -1,0 +1,478 @@
+title: YShip — Gate Service Plan
+page:
+  id: plan-auth-mediator
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      articleType: Concept
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Concepts
+        - label: Gate service architecture
+      eyebrow: Plan · sdk/bun/sample/plan
+      title: Gate service — auth, event storage, and mediator POC
+      subtitle: >-
+        Auth and Med are merged into one process, the gate service. It signs identity-only client
+        JWTs, injects permissions only into short-lived dispatch tokens right before a service call,
+        owns event storage/dispatch, and owns the cancellation and saga-compensation chains.
+        Condensed from sdk/bun/sample/plan/Auth and Mediator Refactor.md.
+    sections:
+      - id: scope
+        kicker: '1 — Goal and scope'
+        title: One gate process, single node first
+        blocks:
+          - type: callout
+            tone: note
+            title: Single-node POC, scale-out deferred
+            text: >-
+              This plan targets one node and one gate process. Leader election, replication,
+              sharding, and service-mesh routing are explicitly deferred to phase 2 — see
+              "Later scale-out decisions" below.
+          - type: list
+            items:
+              - 'Authenticates client JWTs and loads current user/device state and permissions'
+              - 'Authenticates service-to-service callers against a declarative communication policy'
+              - 'Adds an authorization snapshot only right before dispatching to a concrete service'
+              - 'Stores and dispatches events; owns the durable event/audit history'
+              - 'Owns the cancellation chain for every call that passes through it'
+              - 'Runs a generic multi-step saga/compensation state machine for cross-service business flows (e.g. Order → Inventory → Payment); domain services own what each step and compensation does'
+          - type: p
+            text: >-
+              Domain services keep owning business data and business mutations; the gate owns
+              identity, authorization, routing, event delivery, cancellation, and security/audit
+              metadata.
+
+      - id: topology
+        kicker: 'Overview'
+        title: Request and dispatch topology
+        lead: >-
+          Both a client request and a service-originated call go through the same gate checks
+          before a target service ever sees them — the only difference is which identity is being
+          authenticated.
+        blocks:
+          - type: diagram
+            caption: 'Dataflow: client and service calls both terminate at the gate — only the gate can cross its trust boundary with a dispatch token, and only the gate writes to the durable event/audit store.'
+            svg: |
+              <svg viewBox="0 0 900 450" xmlns="http://www.w3.org/2000/svg">
+                <style>
+                  .gb-box{fill:var(--bg);stroke:var(--border);stroke-width:1.5;}
+                  .gb-lbl{font-family:var(--font-display);font-weight:600;font-size:13px;fill:var(--heading);}
+                  .gb-sub{font-family:var(--font-mono);font-size:10px;fill:var(--text-faint);}
+                  .gb-cap{font-family:var(--font-mono);font-size:10.5px;fill:var(--text-dim);}
+                  .gb-legend{font-family:var(--font-mono);font-size:10.5px;fill:var(--text-faint);}
+                  .gb-edge{stroke:var(--text-faint);stroke-width:1.5;fill:none;}
+                  .gb-edge-dashed{stroke:var(--text-faint);stroke-width:1.5;stroke-dasharray:5 4;fill:none;}
+                  .gb-edge-teal{stroke:var(--primary);stroke-width:1.8;fill:none;}
+                  .gb-boundary{fill:none;stroke:var(--text-faint);stroke-width:1.2;stroke-dasharray:4 3;}
+                  .gb-boundary-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;fill:var(--text-faint);text-transform:uppercase;}
+                  .gb-tile-client{fill:var(--text-faint);}
+                  .gb-tile-gate{fill:var(--primary);}
+                  .gb-tile-service{fill:var(--tip-color);}
+                  .gb-tile-store{fill:var(--important-color);}
+                  .gb-icon{fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;}
+                  .gb-badge{fill:var(--primary);}
+                  .gb-badge-text{font-family:var(--font-mono);font-weight:700;font-size:10px;fill:#fff;}
+                </style>
+                <defs>
+                  <marker id="gb-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--text-faint)"/></marker>
+                  <marker id="gb-arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--primary)"/></marker>
+                </defs>
+
+                <text x="345" y="122" class="gb-boundary-label">Gate service — trust boundary</text>
+                <rect x="333" y="128" width="254" height="182" rx="10" class="gb-boundary"/>
+
+                <rect x="40" y="40" width="200" height="64" rx="6" class="gb-box"/>
+                <rect x="50" y="50" width="26" height="26" rx="5" class="gb-tile-client"/>
+                <g transform="translate(63,63)" class="gb-icon"><rect x="-8" y="-6" width="16" height="11" rx="1"/><line x1="-4" y1="7" x2="4" y2="7"/><line x1="0" y1="5" x2="0" y2="7"/></g>
+                <text x="150" y="78" text-anchor="middle" class="gb-lbl">Client (browser)</text>
+
+                <rect x="40" y="320" width="200" height="64" rx="6" class="gb-box"/>
+                <rect x="50" y="330" width="26" height="26" rx="5" class="gb-tile-service"/>
+                <g transform="translate(63,343)" class="gb-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="150" y="350" text-anchor="middle" class="gb-lbl">Source service</text>
+                <text x="150" y="366" text-anchor="middle" class="gb-sub">another domain service</text>
+
+                <rect x="350" y="140" width="220" height="150" rx="6" class="gb-box" style="stroke:var(--primary);"/>
+                <rect x="360" y="150" width="26" height="26" rx="5" class="gb-tile-gate"/>
+                <g transform="translate(373,163)" class="gb-icon"><path d="M0,-9 L7,-6.5 V1 C7,5.5 3.5,8 0,9.5 C-3.5,8 -7,5.5 -7,1 V-6.5 Z"/></g>
+                <text x="460" y="168" text-anchor="middle" class="gb-lbl">Gate service</text>
+                <text x="460" y="194" text-anchor="middle" class="gb-sub">validates JWT / service token</text>
+                <text x="460" y="212" text-anchor="middle" class="gb-sub">checks deny-list + durable revision</text>
+                <text x="460" y="230" text-anchor="middle" class="gb-sub">resolves newest permissions</text>
+                <text x="460" y="248" text-anchor="middle" class="gb-sub">issues short-lived dispatch token</text>
+
+                <rect x="660" y="183" width="200" height="64" rx="6" class="gb-box"/>
+                <rect x="670" y="193" width="26" height="26" rx="5" class="gb-tile-service"/>
+                <g transform="translate(683,206)" class="gb-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="760" y="211" text-anchor="middle" class="gb-lbl">Target service</text>
+                <text x="760" y="227" text-anchor="middle" class="gb-sub">trusts the dispatch token only</text>
+
+                <rect x="350" y="350" width="220" height="64" rx="6" class="gb-box"/>
+                <rect x="360" y="360" width="26" height="26" rx="5" class="gb-tile-store"/>
+                <g transform="translate(373,373)" class="gb-icon"><path d="M-7,-5 a7,2.5 0 0 1 14,0 v10 a7,2.5 0 0 1 -14,0 Z"/><ellipse cx="0" cy="-5" rx="7" ry="2.5"/></g>
+                <text x="470" y="378" text-anchor="middle" class="gb-lbl">Event + audit store</text>
+                <text x="470" y="394" text-anchor="middle" class="gb-sub">Parquet segments</text>
+
+                <line x1="240" y1="72" x2="350" y2="180" class="gb-edge" marker-end="url(#gb-arrow)"/>
+                <circle cx="278" cy="107" r="9" class="gb-badge"/><text x="278" y="110" text-anchor="middle" class="gb-badge-text">1</text>
+                <text x="252" y="130" class="gb-cap">pure client JWT</text>
+                <text x="252" y="142" class="gb-cap">(no permissions)</text>
+
+                <line x1="240" y1="352" x2="350" y2="250" class="gb-edge" marker-end="url(#gb-arrow)"/>
+                <circle cx="278" cy="308" r="9" class="gb-badge"/><text x="278" y="311" text-anchor="middle" class="gb-badge-text">2</text>
+                <text x="252" y="290" class="gb-cap">service token</text>
+
+                <line x1="587" y1="215" x2="660" y2="215" class="gb-edge-teal" marker-end="url(#gb-arrowTeal)"/>
+                <circle cx="612" cy="215" r="9" class="gb-badge"/><text x="612" y="218" text-anchor="middle" class="gb-badge-text">3</text>
+                <text x="623" y="196" text-anchor="middle" class="gb-cap">dispatch token +</text>
+                <text x="623" y="208" text-anchor="middle" class="gb-cap">current permissions</text>
+
+                <line x1="460" y1="290" x2="460" y2="350" class="gb-edge-dashed" marker-end="url(#gb-arrow)"/>
+                <circle cx="460" cy="320" r="9" fill="var(--text-faint)"/><text x="460" y="323" text-anchor="middle" class="gb-badge-text">4</text>
+                <text x="472" y="313" class="gb-cap">durable event +</text>
+                <text x="472" y="325" class="gb-cap">audit write</text>
+
+                <line x1="660" y1="40" x2="690" y2="40" class="gb-edge"/>
+                <text x="696" y="44" class="gb-legend">request / response</text>
+                <line x1="660" y1="60" x2="690" y2="60" class="gb-edge-teal"/>
+                <text x="696" y="64" class="gb-legend">gate-issued dispatch token</text>
+                <line x1="660" y1="80" x2="690" y2="80" class="gb-edge-dashed"/>
+                <text x="696" y="84" class="gb-legend">durable / audit write (async)</text>
+              </svg>
+          - type: list
+            items:
+              - '1. Client sends its pure JWT (no permissions) to the gate.'
+              - '2. Source service sends its service token to the gate for a delegated call.'
+              - '3. The gate crosses its own trust boundary only with a short-lived dispatch token carrying current permissions — the target never sees the raw client JWT or service token.'
+              - '4. The gate durably writes the event/audit record to Parquet, independent of which relational database backs everything else.'
+
+      - id: security-model
+        kicker: '2 — Security model'
+        title: Permission-free client tokens, dispatch-time authorization
+        blocks:
+          - type: callout
+            tone: warning
+            title: No permissions in the client JWT
+            text: >-
+              The client token is a pure identity/session JWT (iss, aud, sub, jti, sid, did, iat,
+              nbf, exp, user_security_revision, session_revision). It can remain cryptographically
+              valid after logout or revocation — validity alone never grants access. The gate is
+              the only authorization decision point, for every client and service dispatch.
+          - type: table
+            headers: [Durable record, Purpose]
+            rows:
+              - [user_device_sessions, 'Authority for active/revoked device+session state, refresh-token family/generation, and a keyed hash of the current refresh token — never the raw JWT or raw refresh token']
+              - [refresh_token_history, 'Rotated refresh generations for replay detection; reuse of an old generation revokes the whole session family']
+              - [Cached user-device token, 'Disposable authorization snapshot (state, revision, permissions, resolved time) rebuilt from the durable session row on a cache miss or stale revision — a cache miss fails closed, never open']
+              - [KV deny list, 'Phase 1: in-process only. deny:jti / deny:session / deny:user markers reject a token immediately after signature checks, before any permission lookup — the durable revision remains authoritative if the marker is lost']
+          - type: p
+            text: >-
+              Immediately before a gate-to-service dispatch, the gate resolves the newest
+              permissions and signs a short-lived internal dispatch token (iss=gate,
+              aud=<target-service>, token_type=gate_dispatch, authz_version, correlation/causation/
+              cancellation ids, parent_jti). The target trusts this token's claims directly and does
+              not call the gate again for a second permission decision.
+          - type: panel
+            title: Signing-key rotation (separate kid namespace per token purpose)
+            language: text
+            code: |
+              generate + register key as "published"
+                -> publish public key, wait for verifier refresh
+                  -> mark "active", start signing with it
+                    -> keep old key verifiable until every token it signed has expired
+                      -> mark "retired", remove after retention window
+
+              compromise path: stop signing immediately, drop kid from verification,
+              bump security revision/epoch, force verifiers to refresh the key ring.
+
+      - id: service-to-service
+        kicker: '3 — Service-to-service authorization'
+        title: Delegated calls get the newest permissions, not the caller's snapshot
+        blocks:
+          - type: list
+            items:
+              - 'Every service has a gate-recognized workload identity (configured credential/local key pair for the POC, mTLS-ready later)'
+              - 'The gate checks a declarative communication policy before forwarding: source identity, allowed command/event type, target service, on-behalf-of-user flag, required permission, timeout, cancellation policy, idempotency requirements'
+              - "The target receives the source's authenticated context AND the current user authorization snapshot — it may reject a command if the newer permission version makes it unsafe, even though the source started with an older snapshot"
+              - 'Raw reusable bearer tokens are never written to ordinary Parquet columns — store a hash, jti, source/target, and audit claims unless replay/audit specifically requires the encrypted envelope'
+
+      - id: event-storage
+        kicker: '4 — Gate event storage and dispatch'
+        title: Durable envelope, Parquet as audit history (not the live queue)
+        blocks:
+          - type: list
+            items:
+              - 'Append events durably before acknowledging publication; one local writer, bounded in-memory delivery queue'
+              - 'Envelope carries event_id/type/version, source/target service, deadline/attempt/idempotency key, correlation/causation/cancellation ids, authz_version at creation and at dispatch, and a redacted service-token audit envelope'
+              - 'Parquet segments: write temp -> flush/close -> validate -> atomic manifest publish; Parquet is audit/history, the live queue tracks delivery state separately'
+              - 'Recovery replays valid durable segments and any recoverable append log, truncating only an incomplete tail — a corrupt committed segment stops startup rather than being silently skipped'
+              - 'Duplicate delivery cannot duplicate a domain mutation when the target uses its inbox/idempotency contract'
+
+      - id: cancellation
+        kicker: '6 — Cancellation and long-running work'
+        title: Operation-based cancellation, not an HTTP-disconnect hack
+        blocks:
+          - type: callout
+            title: The Order → Report case
+            text: >-
+              A long-running report triggered by Order is not an uncancellable child of the
+              original HTTP request. It gets its own operation_id/cancellation_id, its status is
+              persisted, and that id is returned to the caller — so Order isn't stuck holding
+              resources for the full report duration, and the browser connection doesn't matter.
+          - type: table
+            headers: [operations table field, Purpose]
+            rows:
+              - [operation_id / cancellation_id / correlation_id, Identity of the tracked long-running call and its causation chain]
+              - [state, 'pending | running | cancel_requested | cancelled | completed | failed']
+              - [row_version, Atomic CAS for state transitions — first terminal write wins]
+          - type: list
+            items:
+              - 'The in-memory cancellation registry is a fast-path index rebuilt from the durable operations table on startup — it is not the source of truth'
+              - 'On restart: pending/running rows with no confirmation are marked failed or re-queried; cancel_requested rows re-send the cancellation before being considered reconciled; no row is silently dropped'
+              - 'Cancellation must stop queue delivery, cancel in-flight DB queries/streams/timers, stop retries, and be idempotent under a race with completion'
+              - 'A late response can never revive a cancelled or expired request'
+
+      - id: saga
+        kicker: '11 — Saga-based cross-service consistency'
+        title: Multi-step compensation, not 2PC or consensus
+        blocks:
+          - type: p
+            text: >-
+              Cross-service business flows (Order → Inventory → Payment, and longer chains) are
+              not atomic transactions. Each step is a local ACID transaction inside its own
+              service; consistency comes from an ordered sequence of steps plus compensations,
+              driven by a generic saga state machine the gate owns. The gate never decides
+              business outcomes — it sequences dispatch, tracks state durably, and invokes
+              compensation when a step reports failure.
+          - type: diagram
+            caption: 'Dataflow: cancellation (Order → Report) and a saga (Order → Inventory → Payment) share the same shape — the gate dispatches forward from inside its trust boundary, tracks state durably, and only compensates on failure.'
+            svg: |
+              <svg viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg">
+                <style>
+                  .gc-box{fill:var(--bg);stroke:var(--border);stroke-width:1.5;}
+                  .gc-lbl{font-family:var(--font-display);font-weight:600;font-size:13px;fill:var(--heading);}
+                  .gc-sub{font-family:var(--font-mono);font-size:10px;fill:var(--text-faint);}
+                  .gc-cap{font-family:var(--font-mono);font-size:10px;fill:var(--text-dim);}
+                  .gc-legend{font-family:var(--font-mono);font-size:10.5px;fill:var(--text-faint);}
+                  .gc-edge{stroke:var(--text-faint);stroke-width:1.5;fill:none;}
+                  .gc-edge-dashed{stroke:var(--text-faint);stroke-width:1.5;stroke-dasharray:5 4;fill:none;}
+                  .gc-edge-teal{stroke:var(--primary);stroke-width:1.8;fill:none;}
+                  .gc-edge-amber{stroke:var(--warning-color);stroke-width:1.5;stroke-dasharray:5 4;fill:none;}
+                  .gc-boundary{fill:none;stroke:var(--text-faint);stroke-width:1.2;stroke-dasharray:4 3;}
+                  .gc-boundary-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.04em;fill:var(--text-faint);text-transform:uppercase;}
+                  .gc-tile-gate{fill:var(--primary);}
+                  .gc-tile-service{fill:var(--tip-color);}
+                  .gc-icon{fill:none;stroke:#fff;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;}
+                  .gc-badge{fill:var(--primary);}
+                  .gc-badge-fail{fill:var(--warning-color);}
+                  .gc-badge-text{font-family:var(--font-mono);font-weight:700;font-size:10px;fill:#fff;}
+                </style>
+                <defs>
+                  <marker id="gc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--text-faint)"/></marker>
+                  <marker id="gc-arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--primary)"/></marker>
+                  <marker id="gc-arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="var(--warning-color)"/></marker>
+                </defs>
+
+                <text x="288" y="167" class="gc-boundary-label">Gate — trust boundary</text>
+                <rect x="278" y="173" width="244" height="94" rx="10" class="gc-boundary"/>
+
+                <rect x="40" y="190" width="160" height="64" rx="6" class="gc-box"/>
+                <rect x="50" y="200" width="26" height="26" rx="5" class="gc-tile-service"/>
+                <g transform="translate(63,213)" class="gc-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="120" y="226" text-anchor="middle" class="gc-lbl">Order service</text>
+
+                <rect x="300" y="190" width="220" height="64" rx="6" class="gc-box" style="stroke:var(--primary);"/>
+                <rect x="310" y="200" width="26" height="26" rx="5" class="gc-tile-gate"/>
+                <g transform="translate(323,213)" class="gc-icon"><path d="M0,-9 L7,-6.5 V1 C7,5.5 3.5,8 0,9.5 C-3.5,8 -7,5.5 -7,1 V-6.5 Z"/></g>
+                <text x="420" y="218" text-anchor="middle" class="gc-lbl">Gate service</text>
+                <text x="420" y="236" text-anchor="middle" class="gc-sub">durable operations + saga state</text>
+
+                <rect x="640" y="40" width="200" height="64" rx="6" class="gc-box"/>
+                <rect x="650" y="50" width="26" height="26" rx="5" class="gc-tile-service"/>
+                <g transform="translate(663,63)" class="gc-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="750" y="68" text-anchor="middle" class="gc-lbl">Report service</text>
+                <text x="750" y="84" text-anchor="middle" class="gc-sub">cancellable long-running operation</text>
+
+                <rect x="640" y="190" width="200" height="64" rx="6" class="gc-box"/>
+                <rect x="650" y="200" width="26" height="26" rx="5" class="gc-tile-service"/>
+                <g transform="translate(663,213)" class="gc-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="750" y="218" text-anchor="middle" class="gc-lbl">Inventory service</text>
+                <text x="750" y="234" text-anchor="middle" class="gc-sub">saga step 1</text>
+
+                <rect x="640" y="340" width="200" height="64" rx="6" class="gc-box"/>
+                <rect x="650" y="350" width="26" height="26" rx="5" class="gc-tile-service"/>
+                <g transform="translate(663,363)" class="gc-icon"><rect x="-7" y="-8" width="14" height="16" rx="1"/><line x1="-7" y1="-2" x2="7" y2="-2"/><line x1="-4" y1="-5" x2="-2" y2="-5"/><line x1="-4" y1="1" x2="-2" y2="1"/></g>
+                <text x="750" y="368" text-anchor="middle" class="gc-lbl">Payment service</text>
+                <text x="750" y="384" text-anchor="middle" class="gc-sub">saga step 2</text>
+
+                <line x1="200" y1="222" x2="300" y2="222" class="gc-edge" marker-end="url(#gc-arrow)"/>
+                <circle cx="240" cy="222" r="9" class="gc-badge"/><text x="240" y="225" text-anchor="middle" class="gc-badge-text">1</text>
+                <text x="205" y="205" class="gc-cap">trigger operation / saga</text>
+
+                <line x1="522" y1="205" x2="640" y2="80" class="gc-edge-teal" marker-end="url(#gc-arrowTeal)"/>
+                <circle cx="565" cy="158" r="9" class="gc-badge"/><text x="565" y="161" text-anchor="middle" class="gc-badge-text">2</text>
+                <text x="540" y="130" class="gc-cap">dispatch (operation_id,</text>
+                <text x="540" y="142" class="gc-cap">cancellation_id)</text>
+
+                <line x1="640" y1="96" x2="522" y2="222" class="gc-edge-dashed" marker-end="url(#gc-arrow)"/>
+                <circle cx="565" cy="180" r="9" fill="var(--text-faint)"/><text x="565" y="183" text-anchor="middle" class="gc-badge-text">3</text>
+                <text x="540" y="172" class="gc-cap">outcome / cancel ack</text>
+                <text x="540" y="184" class="gc-cap">(idempotent)</text>
+
+                <line x1="522" y1="215" x2="640" y2="215" class="gc-edge-teal" marker-end="url(#gc-arrowTeal)"/>
+                <circle cx="581" cy="215" r="9" class="gc-badge"/><text x="581" y="218" text-anchor="middle" class="gc-badge-text">4</text>
+                <text x="530" y="203" class="gc-cap">step 1 command</text>
+
+                <line x1="640" y1="236" x2="522" y2="236" class="gc-edge-dashed" marker-end="url(#gc-arrow)"/>
+                <circle cx="581" cy="236" r="9" fill="var(--text-faint)"/><text x="581" y="239" text-anchor="middle" class="gc-badge-text">5</text>
+                <text x="530" y="254" class="gc-cap">outcome: success</text>
+
+                <line x1="522" y1="245" x2="640" y2="352" class="gc-edge-teal" marker-end="url(#gc-arrowTeal)"/>
+                <circle cx="565" cy="285" r="9" class="gc-badge"/><text x="565" y="288" text-anchor="middle" class="gc-badge-text">6</text>
+                <text x="540" y="270" class="gc-cap">step 2 command</text>
+
+                <line x1="640" y1="392" x2="522" y2="258" class="gc-edge-amber" marker-end="url(#gc-arrowAmber)"/>
+                <circle cx="580" cy="325" r="9" class="gc-badge-fail"/><text x="580" y="328" text-anchor="middle" class="gc-badge-text">7</text>
+                <text x="545" y="345" class="gc-cap">outcome: failed</text>
+
+                <line x1="610" y1="372" x2="610" y2="222" class="gc-edge-amber" marker-end="url(#gc-arrowAmber)"/>
+                <circle cx="610" cy="297" r="9" class="gc-badge-fail"/><text x="610" y="300" text-anchor="middle" class="gc-badge-text">8</text>
+                <text x="619" y="270" class="gc-cap">compensate step 1</text>
+                <text x="619" y="282" class="gc-cap">(reverse order, via gate)</text>
+
+                <line x1="40" y1="415" x2="70" y2="415" class="gc-edge"/>
+                <text x="76" y="419" class="gc-legend">trigger / request</text>
+                <line x1="40" y1="435" x2="70" y2="435" class="gc-edge-teal"/>
+                <text x="76" y="439" class="gc-legend">gate dispatch (forward step/operation)</text>
+                <line x1="330" y1="415" x2="360" y2="415" class="gc-edge-dashed"/>
+                <text x="366" y="419" class="gc-legend">normal outcome / ack</text>
+                <line x1="330" y1="435" x2="360" y2="435" class="gc-edge-amber"/>
+                <text x="366" y="439" class="gc-legend">failure / compensation</text>
+              </svg>
+          - type: list
+            items:
+              - '1. Order triggers a cancellable operation (Report) or a saga (Inventory → Payment) at the gate.'
+              - '2. The gate dispatches to Report with operation_id and cancellation_id.'
+              - '3. Report returns an outcome or cancel acknowledgement — idempotent either way.'
+              - '4. The gate dispatches saga step 1 to Inventory.'
+              - '5. Inventory reports success.'
+              - '6. The gate dispatches saga step 2 to Payment.'
+              - '7. Payment reports failure.'
+              - '8. The gate compensates step 1 at Inventory, in strict reverse order — the saga ends compensated, not half-done.'
+          - type: panel
+            title: Forward and compensation flow
+            language: text
+            code: |
+              step N command -> target's local transaction -> outcome event (success | failed)
+
+              success -> mark step success, dispatch step N+1 (last step -> saga completed)
+              failed  -> saga state = compensating
+                         -> walk completed steps in strict reverse order
+                         -> dispatch each step's compensation (idempotency key = saga_id:step:compensation)
+                         -> all compensations succeed -> compensated
+                         -> a compensation fails -> saga = failed (manual resolution, no infinite retry)
+          - type: table
+            headers: [Table, Purpose]
+            rows:
+              - [saga_instances, 'Overall state (running/compensating/completed/compensated/failed), current_step_index, row_version CAS']
+              - [saga_steps, 'One row per step — service, command_event_id, outcome, compensation_event_id/outcome — lets a saga fan out to any number of services without changing the state-machine shape']
+          - type: callout
+            tone: note
+            title: Why no 2PC / consensus
+            text: >-
+              Correctness needs (a) idempotent step commands, (b) each step's local commit being
+              authoritative the moment it lands, and (c) failure after step N resolved by
+              compensating 0..N-1. The only real race — a redelivered step and its original both
+              recording an outcome — is resolved by row-version CAS, the same first-write-wins
+              pattern used for the operations table, not a distributed consensus algorithm. A
+              cancelled saga step is just one more path into the failed/compensating state.
+
+      - id: architecture
+        kicker: '7 — Single-node architecture and implementation language'
+        title: 'Phase 1: Bun/TypeScript. Phase 2: Zig.'
+        blocks:
+          - type: list
+            items:
+              - 'One gate process: JWT signer/verifier, user/device/session resolver+cache, service-policy checker, dispatch-token issuer, route registry, durable operations + saga stores with an in-memory index rebuilt on startup, durable event store + Parquet writer/recovery, inbox/idempotency store, structured audit logging'
+              - 'The gate may use direct local transport for the POC, but the transport interface must preserve deadlines, cancellation, identity, and target audience exactly as a network transport would'
+          - type: callout
+            tone: warning
+            title: Phase 2 is a reimplementation behind the same contracts, in Zig
+            text: >-
+              Phase 1 stays in Bun/TypeScript to prove the contracts quickly against real domain
+              services. Phase 2 — multi-node KV deny-list sync, replicated event/operation/saga
+              state, gate-node routing and fencing — carries a materially different correctness
+              burden: genuine multi-threaded concurrency, CAS/lock-free structures, and races that
+              have to be reasoned about at the memory-model level. The gate is re-implemented in
+              Zig for that phase for explicit memory control, no GC pauses on the hot
+              dispatch/cancellation path, and precise concurrency primitives — but the wire
+              formats and durable schemas fixed in this plan (client JWT/dispatch-token claims,
+              event envelope, operations, saga_instances/saga_steps) do not change, so
+              TypeScript domain services don't need to change how they talk to the gate.
+
+      - id: storage-boundaries
+        kicker: '7 — Storage backends'
+        title: 'Parquet is fixed. Relational state is database-agnostic.'
+        blocks:
+          - type: callout
+            tone: warning
+            title: No vendor lock-in on the relational side
+            text: >-
+              The gate must not be locked to one database product. Three storage categories, three
+              different portability rules.
+          - type: table
+            headers: [Storage category, Rule]
+            rows:
+              - ['Event/audit store', 'Always Parquet segments, regardless of which relational database is configured — chosen for high-throughput append/read and zero-copy access, not a database-portability concern']
+              - ['KV deny list', "In-process memory only, as scoped in phase 1 — it isn't a database and never goes through a database driver"]
+              - ['Everything else (signing keys, user_device_sessions, refresh_token_history, service communication policy, operations, saga_instances, saga_steps)', 'Written through the existing generic DatabaseAdapter/DatabaseDriver abstraction already used elsewhere in this codebase (Postgres, DuckDB, MySQL, Oracle, SQL Server) — no gate-specific schema tied to one product']
+          - type: p
+            text: >-
+              Every row-version/CAS pattern in this plan (session rotation, deny-list revision
+              bump, operations transitions, saga_instances/saga_steps transitions) must be a plain
+              conditional update — "UPDATE ... WHERE id = ? AND row_version = ?", zero rows changed
+              is a conflict — expressible on any supported driver. No advisory locks, FOR UPDATE, or
+              other driver-specific locking: if a CAS pattern only works on one driver, the pattern
+              gets redesigned, not the storage promise. The POC itself runs on a single configured
+              adapter (e.g. DuckDB or Postgres); cross-driver compatibility is verified by running
+              the same CAS contract suite against at least two drivers, not by the POC's own runtime
+              choice.
+
+      - id: scale-out
+        kicker: '10 — Later scale-out decisions (phase 2)'
+        title: Deferred until the single-node contracts are proven
+        blocks:
+          - type: list
+            items:
+              - 'Multiple gate nodes, leader election, replicated event/operation/saga state, gate-node routing and fencing, cross-node service discovery'
+              - 'Multi-node KV deny-list sync: each node keeps its own in-memory list (no shared/consensus KV store); a writer best-effort broadcasts new deny markers to sibling nodes with no ack/quorum required'
+              - "A node that misses a broadcast is still correct — its authorization-cache entries expire on their existing bounded TTL and re-resolve against the durable user_device_sessions revision, which reflects the revocation. Missing a broadcast only widens the rejection window to that existing bound, it never produces an incorrect accept"
+              - 'This deliberately avoids building distributed-KV consistency for a dataset that is small and explicitly non-authoritative — the durable revision is, and remains, the source of truth'
+
+      - id: gates
+        kicker: '9 — Verification and acceptance gates'
+        title: What must pass before phase 1 is done
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Auth
+                title: No permissions in the client JWT
+                body: Logout, device revocation, and permission changes are rejected once the gate cache is cleared; a cache miss rebuilds from the durable session row and never resurrects a revoked token.
+              - tag: Dispatch
+                title: Target-specific gate tokens
+                body: Internal tokens are rejected for the wrong target, issuer, type, signature, or expiry; a delegated service command receives newer permissions than the source's original snapshot.
+              - tag: Events
+                title: Idempotent, restart-safe
+                body: Event publication survives restart/recovery; Parquet writes recover from an incomplete tail and reject committed corruption.
+              - tag: Cancellation
+                title: Order → Report end to end
+                body: A long-running report can be cancelled from the client through Order to Report, and its database/worker resources are released — including races with successful completion.
+              - tag: Saga
+                title: Order → Inventory → Payment
+                body: A multi-step saga completes on the happy path; a mid-chain failure compensates every prior step in strict reverse order with no duplicated business effect, including across a forced gate restart mid-saga.
+              - tag: Restart
+                title: No orphaned state
+                body: A forced gate restart recovers acknowledged events and reconciles every non-terminal operations/saga_instances row — nothing is left running/compensating without an active redelivery.

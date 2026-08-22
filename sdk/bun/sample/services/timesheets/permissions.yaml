@@ -1,0 +1,4 @@
+permissions:
+  - timesheets.read
+  - timesheets.write
+  - timesheets.manage

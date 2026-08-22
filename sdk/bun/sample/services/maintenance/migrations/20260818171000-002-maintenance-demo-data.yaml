@@ -1,0 +1,16 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO maintenance_equipment(id, name, serial_number, category, location, technician, preventive_interval_days, next_preventive_date)
+      VALUES ('equipment-demo-001', 'CNC Mill 01', 'CNC-001', 'Production', 'Workshop A', 'Maintenance Team', 30, CURRENT_DATE + INTERVAL 30 DAY);
+      INSERT OR IGNORE INTO maintenance_requests(id, name, equipment_id, equipment_name, request_type, description, priority, assigned_to, scheduled_date)
+      VALUES ('maintenance-demo-001', 'MNT/2026/0001', 'equipment-demo-001', 'CNC Mill 01', 'Preventive', 'Monthly lubrication and calibration', 'Normal', 'Maintenance Team', CURRENT_DATE + INTERVAL 7 DAY);
+    down: |
+      DELETE FROM maintenance_requests WHERE id = 'maintenance-demo-001';
+      DELETE FROM maintenance_equipment WHERE id = 'equipment-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

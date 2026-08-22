@@ -1,0 +1,64 @@
+title: Helpdesk
+page: { id: helpdesk, breadcrumb: [Services, Helpdesk], auth: { require: [helpdesk.read] } }
+datasources:
+  - id: helpdesk_states
+    permission: helpdesk.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('In Progress','In Progress'), ('Waiting','Waiting'), ('Resolved','Resolved'), ('Closed','Closed')) states(value, label)"
+  - id: helpdesk_tickets
+    permission: helpdesk.read
+    workflow: helpdesk_tickets
+    query: "SELECT id,row_version,name,customer_name,email,subject,team,assigned_to,priority,state,CAST(due_date AS VARCHAR) AS due_date,CAST(resolved_at AS VARCHAR) AS resolved_at FROM helpdesk_tickets WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%' OR subject ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: helpdesk_tickets
+    create_action: create_helpdesk_ticket
+    create_label: New ticket
+    search: { label: Search tickets, placeholder: 'Search customer, subject, or ticket...' }
+    filters: [{ field: state, label: Status, options_source: helpdesk_states }]
+    columns:
+      - { field: name, label: Ticket, type: PrimaryEntityCell }
+      - { field: subject, label: Subject }
+      - { field: customer_name, label: Customer }
+      - { field: team, label: Team }
+      - { field: assigned_to, label: Assignee }
+      - { field: priority, label: Priority, type: StatusChip }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: start_helpdesk_ticket, label: Start, permission: helpdesk.write, variant: primary, show_if: "row.state === 'New'" }
+      - { id: wait_helpdesk_ticket, label: Wait, permission: helpdesk.write, variant: secondary, show_if: "row.state === 'In Progress'" }
+      - { id: resolve_helpdesk_ticket, label: Resolve, permission: helpdesk.write, variant: primary, show_if: "row.state === 'In Progress' || row.state === 'Waiting'" }
+      - { id: close_helpdesk_ticket, label: Close, permission: helpdesk.manage, variant: danger, show_if: "row.state === 'Resolved'" }
+actions:
+  - id: create_helpdesk_ticket
+    type: server_form
+    permission: helpdesk.write
+    title: New helpdesk ticket
+    action: helpdesk.tickets.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [helpdesk_tickets]
+    mutation:
+      operation: insert
+      table: helpdesk_tickets
+      fields: [name, customer_name, email, subject, description, team, assigned_to, priority, due_date]
+      required: [name, customer_name, subject, description]
+      result: { query: "SELECT * FROM helpdesk_tickets WHERE id = :id" }
+    fields:
+      - { field: name, label: Ticket, type: text, required: true }
+      - { field: customer_name, label: Customer, type: text, required: true }
+      - { field: email, label: Email, type: text }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: description, label: Description, type: text, required: true }
+      - { field: team, label: Team, type: text }
+      - { field: assigned_to, label: Assignee, type: text }
+      - { field: priority, label: Priority, type: select, options: [{ value: Low, label: Low }, { value: Normal, label: Normal }, { value: High, label: High }] }
+      - { field: due_date, label: Due date, type: text }
+  - { id: start_helpdesk_ticket, type: server, permission: helpdesk.write, action: helpdesk.tickets.start, handler: order_transition, workflow: helpdesk_tickets, operation: start, refresh: [helpdesk_tickets] }
+  - { id: wait_helpdesk_ticket, type: server, permission: helpdesk.write, action: helpdesk.tickets.wait, handler: order_transition, workflow: helpdesk_tickets, operation: wait, refresh: [helpdesk_tickets] }
+  - { id: resolve_helpdesk_ticket, type: server, permission: helpdesk.write, action: helpdesk.tickets.resolve, handler: order_transition, workflow: helpdesk_tickets, operation: resolve, refresh: [helpdesk_tickets] }
+  - { id: close_helpdesk_ticket, type: server, permission: helpdesk.manage, action: helpdesk.tickets.close, handler: order_transition, workflow: helpdesk_tickets, operation: close, refresh: [helpdesk_tickets] }

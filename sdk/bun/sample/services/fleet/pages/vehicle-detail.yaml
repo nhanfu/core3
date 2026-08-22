@@ -1,0 +1,25 @@
+title: Fleet Vehicle
+page: { id: vehicle-detail, breadcrumb: [Human Resources, Fleet, Detail], auth: { require: [fleet.read] } }
+datasources:
+  - id: fleet_vehicle_detail
+    single: true
+    permission: fleet.read
+    query: "SELECT id, row_version, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state, CAST(acquisition_date AS VARCHAR) AS acquisition_date, CAST(contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: fleet_vehicle_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Available, label: Available }, { value: Assigned, label: Assigned }, { value: Maintenance, label: Maintenance }, { value: Retired, label: Retired }]
+    status_colors: { Available: green, Assigned: blue, Maintenance: amber, Retired: red }
+    group_columns: 2
+    groups:
+      - title: Vehicle
+        fields: [{ field: name, label: Vehicle }, { field: state, label: Status }, { field: license_plate, label: License plate }, { field: vehicle_type, label: Type }, { field: model, label: Model }, { field: manufacturer, label: Manufacturer }]
+      - title: Assignment and records
+        fields: [{ field: driver_name, label: Driver }, { field: odometer, label: Odometer }, { field: fuel_type, label: Fuel }, { field: acquisition_date, label: Acquisition date }, { field: contract_end_date, label: Contract end date }]
+actions:
+  - { id: assign_fleet_vehicle_detail, type: server, permission: fleet.write, action: fleet.vehicles.assign, handler: order_transition, workflow: fleet_vehicles, operation: assign, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }
+  - { id: service_fleet_vehicle_detail, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }
+  - { id: release_fleet_vehicle_detail, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }
+  - { id: retire_fleet_vehicle_detail, type: server, permission: fleet.manage, action: fleet.vehicles.retire, handler: order_transition, workflow: fleet_vehicles, operation: retire, params: { id: '{state.id}' }, refresh: [fleet_vehicle_detail] }

@@ -1,0 +1,64 @@
+title: Online Orders
+page: { id: ecommerce-orders, breadcrumb: [Website, eCommerce, Orders], auth: { require: [ecommerce.read] } }
+datasources:
+  - id: ecommerce_order_states
+    permission: ecommerce.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Cart','Cart'), ('Confirmed','Confirmed'), ('Done','Done'), ('Abandoned','Abandoned')) states(value, label)"
+  - id: ecommerce_orders
+    permission: ecommerce.read
+    workflow: ecommerce_orders
+    query: "SELECT id, row_version, order_ref, customer_name, website_name, cart_quantity, amount_total, CAST(order_date AS VARCHAR) AS order_date, state FROM ecommerce_orders WHERE (:q IS NULL OR order_ref ILIKE '%' || :q || '%' OR customer_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY created_at DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: ecommerce_orders
+    create_action: create_ecommerce_order
+    create_label: New online order
+    search: { label: Search online orders, placeholder: 'Search reference or customer...' }
+    filters: [{ field: state, label: Status, options_source: ecommerce_order_states }]
+    columns:
+      - { field: order_ref, label: Order, type: PrimaryEntityCell }
+      - { field: customer_name, label: Customer }
+      - { field: website_name, label: Website }
+      - { field: cart_quantity, label: Items, align: right }
+      - { field: amount_total, label: Total, align: right }
+      - { field: order_date, label: Order date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_ecommerce_order
+    actions:
+      - { id: confirm_ecommerce_order, label: Confirm payment, permission: ecommerce.write, variant: primary, show_if: "row.state === 'Cart'" }
+      - { id: lock_ecommerce_order, label: Lock, permission: ecommerce.write, variant: secondary, show_if: "row.state === 'Confirmed'" }
+      - { id: abandon_ecommerce_order, label: Mark abandoned, permission: ecommerce.manage, variant: danger, show_if: "row.state === 'Cart'" }
+actions:
+  - id: create_ecommerce_order
+    type: server_form
+    permission: ecommerce.write
+    title: New online order
+    action: ecommerce.orders.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ecommerce_orders]
+    mutation:
+      operation: insert
+      table: ecommerce_orders
+      fields: [order_ref, customer_name, website_name, cart_quantity, amount_total]
+      required: [order_ref, customer_name]
+      result: { query: "SELECT * FROM ecommerce_orders WHERE id = :id" }
+    fields:
+      - { field: order_ref, label: Order reference, type: text, required: true }
+      - { field: customer_name, label: Customer, type: text, required: true }
+      - { field: website_name, label: Website, type: text }
+      - { field: cart_quantity, label: Cart quantity, type: number }
+      - { field: amount_total, label: Total, type: number }
+  - id: view_ecommerce_order
+    type: navigate
+    permission: ecommerce.read
+    navigate_to: /ecommerce-order-detail
+    params: { id: '{row.id}' }
+  - { id: confirm_ecommerce_order, type: server, permission: ecommerce.write, action: ecommerce.orders.confirm, handler: order_transition, workflow: ecommerce_orders, operation: confirm, refresh: [ecommerce_orders] }
+  - { id: lock_ecommerce_order, type: server, permission: ecommerce.write, action: ecommerce.orders.lock, handler: order_transition, workflow: ecommerce_orders, operation: lock, refresh: [ecommerce_orders] }
+  - { id: abandon_ecommerce_order, type: server, permission: ecommerce.manage, action: ecommerce.orders.abandon, handler: order_transition, workflow: ecommerce_orders, operation: abandon, refresh: [ecommerce_orders] }

@@ -1,0 +1,13 @@
+id: crm
+kind: domain-service
+database: duckdb
+migrations: migrations
+pages:
+  - pages/menu.yaml
+  - pages/leads.yaml
+  - pages/lead-detail.yaml
+  - pages/teams.yaml
+  - pages/configuration.yaml
+  - pages/analysis.yaml
+permissions: permissions.yaml
+storage: storage.yaml

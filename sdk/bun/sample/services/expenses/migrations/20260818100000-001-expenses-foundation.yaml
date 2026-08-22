@@ -1,0 +1,28 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS expense_sheets (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, employee_name VARCHAR NOT NULL, manager_name VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Draft', expense_date DATE DEFAULT CURRENT_DATE,
+        amount_total DECIMAL(18,2) NOT NULL DEFAULT 0, amount_reimbursed DECIMAL(18,2) NOT NULL DEFAULT 0,
+        note VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS expenses (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), sheet_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL, category VARCHAR NOT NULL DEFAULT 'Other', expense_date DATE DEFAULT CURRENT_DATE,
+        employee_name VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL DEFAULT 0,
+        payment_method VARCHAR NOT NULL DEFAULT 'Employee', description VARCHAR,
+        receipt_reference VARCHAR, state VARCHAR NOT NULL DEFAULT 'Draft', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_expense_sheets_state ON expense_sheets(state);
+      CREATE INDEX IF NOT EXISTS idx_expenses_sheet ON expenses(sheet_id);
+      CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
+    down: |
+      DROP TABLE IF EXISTS expenses;
+      DROP TABLE IF EXISTS expense_sheets;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

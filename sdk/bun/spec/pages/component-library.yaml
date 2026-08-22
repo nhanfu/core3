@@ -1,0 +1,335 @@
+title: YShip — Component Library
+page:
+  id: component-library
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      articleType: Reference
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Reference
+        - label: Component library
+      eyebrow: Reference
+      title: Component library
+      subtitle: >-
+        90 components across 16 categories. Each extends BaseComponent (or is a
+        compatible render helper) and is available from the barrel at
+        packages/client/src/components/index.ts. Cells, grids, forms, KPIs, layout,
+        controls, utilities, and domain-specific views.
+    sections:
+      - id: about
+        title: About this reference
+        blocks:
+          - type: callout
+            tone: note
+            title: Verified against the current implementation
+            text: >-
+              This reference is maintained against the component source files in
+              packages/client/src/components. Component names, constructor signatures,
+              and key props reflect the real implementations. The Key props column is a
+              curated summary of the most important state/def fields — not an exhaustive
+              API listing.
+
+      - id: importing
+        title: Importing components
+        lead: >-
+          All components are available from a single barrel export or from their individual
+          module. The barrel is the preferred import style for application pages; individual
+          imports are useful when minimising bundle scope in library code.
+        blocks:
+          - type: panel
+            title: packages/client/src/components/index.ts
+            language: ts
+            code: |
+              // Barrel — import any mix
+              import { GridView, FormPanel, StatRow, FilterBar }
+                from '@core3/client/components';
+
+              // Individual module — explicit dependency
+              import { GridView }   from '@core3/client/components/GridView';
+              import { TextInput }  from '@core3/client/components/TextInput';
+
+      - id: cell-components
+        kicker: Category 1 of 16
+        title: Cell components
+        lead: >-
+          Cell components render a single value inside a GridView or ListView column.
+          GridView constructs each cell via CELL_MAP[def.type] and passes the resolved
+          state automatically — you never instantiate cells directly.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["TextCell", "Primary text with optional muted secondary line; default cell type when no CELL_MAP match is found", "field, secondary?, label?, align?"]
+              - ["BadgeCell", "Pill badge whose color resolves from STATUS_COLORS by lowercased value; color is overridden via colorField on the column def — GridView maps it into state.color; the cell itself only sees state.color", "field; color (GridView maps column def colorField into state.color)"]
+              - ["CurrencyCell", "Formats a numeric value as currency using Intl.NumberFormat; right-aligned by default", "field, currency?"]
+              - ["NumberCell", "Locale-aware number formatting supporting integer, float, and percent modes", "field, format?"]
+              - ["DateCell", "Renders a date in short, long, or relative format; turns red when the overdue flag is set — overdueField lives on the column def and GridView maps it into state.overdue; the cell itself only sees state.overdue", "field, format?; overdue (GridView maps column def overdueField into state.overdue)"]
+              - ["BooleanCell", "Green checkmark for true; gray dash for false or null", "field"]
+              - ["ActionCell", "One or more inline buttons per row; clicking calls submit(action.id, { row })", "actions[]{id, label, variant?}"]
+
+      - id: grid-list
+        kicker: Category 2 of 16
+        title: Grid & List
+        lead: >-
+          Primary data-display views. GridView is the main tabular workhorse; DataGrid is
+          a richer grid with server-side sorting, selection, and a column chooser; ListView
+          suits narrower panels and card-oriented layouts. ContactGrid and LineItemGrid are
+          domain-specific DataGrid subclasses.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["GridView", "Tabular data view with pagination, loading skeleton, and per-column cell components", "rows, meta{total,page,pageSize}, loading?, columns[]{type,id,field}"]
+              - ["DataGrid", "State-owned data grid with server-side sorting, row selection, column chooser, pagination, optional drag-reorder, and optional tree-parent expansion", "rows, meta?, actions[], columns[]{field,label,sortable?,format?,render?,rowActions?}, options{selectable?,columnChooser?,rowNumbers?,rowKey?,onSort?,onPageChange?,onRowReorder?,tree?}"]
+              - ["ContactGrid", "DataGrid subclass for CRM contact tables; inherits all DataGrid sorting, pagination, and row-action transport", "rows, meta?, columns[], options (inherits DataGrid)"]
+              - ["LineItemGrid", "DataGrid subclass for document line-item tables; semantically an editable line grid with consistent DataGrid transport", "rows, meta?, columns[], actions[] (inherits DataGrid)"]
+              - ["ListView", "Card-based vertical list showing a primary field, optional subtitle, and optional badge", "items, loading?, field, secondary?, type?"]
+
+      - id: form-inputs
+        kicker: Category 3 of 16
+        title: Form inputs
+        lead: >-
+          All inputs share the same integration pattern: they call setState({ value }, false)
+          on change and are registered with FormPanel.registerField() so the panel can
+          collect and validate. Each has a label, required marker, error message, and
+          readonly mode where applicable.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["TextInput", "Single-line text field with label, required marker, error message, and readonly mode", "field, label?, required?, readonly?, placeholder?"]
+              - ["NumberInput", "Numeric input; state value is valueAsNumber — a JS number not a string", "field, label?, min?, max?, step?"]
+              - ["SelectInput", "Native select dropdown; options from state.options or a datasource", "field, label?, required?, options[]"]
+              - ["DateInput", "Native date picker; value is an ISO date string YYYY-MM-DD", "field, label?, min?, max?"]
+              - ["TextareaInput", "Multi-line textarea for notes, descriptions, and free-text fields", "field, label?, rows?, placeholder?"]
+              - ["CheckboxInput", "Single checkbox with an inline label; state value is a native boolean", "field, label?"]
+
+      - id: form-container
+        kicker: Category 4 of 16
+        title: Form container
+        lead: >-
+          FormPanel owns a group of input components and orchestrates collection, validation,
+          and submission. It renders [data-form-fields] and [data-form-actions] slots that
+          child inputs mount into.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["FormPanel", "Owns input components; provides registerField(), collectValues(), validate(), and async submit", "title?, saving, dirty, values, errors"]
+
+      - id: kpi-summary
+        kicker: Category 5 of 16
+        title: KPI / Summary
+        lead: >-
+          Metric display components for dashboards. StatCard shows a single KPI with trend
+          and color accent; StatRow arranges multiple StatCards in a responsive grid;
+          ProgressBar visualises a value-over-max ratio with a CSS-animated fill.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["StatCard", "Single KPI card with label, large value, optional trend arrow and delta text, and border accent color; card becomes clickable when navigate_to is set", "label, value, format?, trend?, delta?, color?, currency?, navigate_to?, onNavigate?"]
+              - ["StatRow", "Responsive grid of StatCards; column count auto-selects from item count; constructor signature is (id, stats, title, onNavigate)", "stats[]{label, value, color?, trend?, delta?}, title?, onNavigate?"]
+              - ["ProgressBar", "Labeled bar showing value/max as a percentage with CSS transition on width changes", "label, value, max?, color?"]
+
+      - id: layout
+        kicker: Category 6 of 16
+        title: Layout
+        lead: >-
+          Core structural components. TabPanel provides a horizontal tab strip with a content
+          area; SplitPanel gives a two-column CSS grid where both columns host real
+          BaseComponent instances.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["TabPanel", "Horizontal tab strip with a content area; each tab runs render(el) or injects a content HTML string", "active, tabs[]{label, render?, content?}"]
+              - ["SplitPanel", "Two-column CSS grid; left and right children are real BaseComponent instances in the tree", "leftComp, rightComp, leftWidth?, rightWidth?"]
+
+      - id: controls
+        kicker: Category 7 of 16
+        title: Controls
+        lead: >-
+          Interactive trigger and filter components. Button handles single-action clicks;
+          FilterBar manages a horizontal row of filter controls; ListToolbar provides a full
+          list-page control surface with search, date-range, and action buttons; StatusTabs
+          is a compact status-filter strip; DateRangeFilterTag renders an inline date-range
+          picker with preset shortcuts.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["Button", "Action button with four variants, loading spinner, and disabled state; calls submit on click", "label, variant?, action?, params?, loading?, disabled?"]
+              - ["FilterBar", "Horizontal bar of select, search, and date-range filter controls; emits submit('filter.change', {values}) on every change; constructor accepts labels: {all?, clear?}", "values, filters[]{field, label, type('select'|'search'|'date-range'), options?}, labels?{all?,clear?}"]
+              - ["DateRangeFilterTag", "Inline date-range picker widget (not a BaseComponent subclass) with preset buttons and a month calendar; calls onChange({fromField, toField}) on apply", "options{values, definition{fromField?,toField?,label?,presets?,maxYears?,denyUnbounded?}, onChange}"]
+              - ["ListToolbar", "Shared resource-list toolbar with keyword search, date-range picker, dropdown filters, and configurable action buttons; emits submit('search', {query}) on search", "query?, def{search?,filters[],date_range?,actions[]{id,label,icon?,variant?},advanced_filter?,help?}"]
+              - ["StatusTabs", "Compact count-aware status filter strip; emits submit(tab.action || 'status.select', {id, status}) on selection", "active, tabs[]{id, label, count?, action?, disabled?}, options{showCounts?,variant?}"]
+
+      - id: utilities
+        kicker: Category 8 of 16
+        title: Utilities
+        lead: >-
+          Lightweight overlay and feedback components that sit above the normal component
+          tree. Most are singletons or short-lived instances rendered directly into
+          document.body.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["Toast", "Transient notification banner driven by state; the standalone showToast() helper mounts an auto-dismissing instance and accepts a duration parameter — duration is not a component state prop", "message, type?, visible?"]
+              - ["Spinner", "Animated loading indicator used inline or as a full-area overlay", "visible?, size?, overlay?"]
+              - ["ConfirmDialog", "Modal confirmation dialog; on confirm emits submit('confirm', params) and closes (does not return a Promise); button style controlled by variant (default 'danger'), not a boolean danger prop", "open, message, title?, confirmLabel?, cancelLabel?, variant?, params?"]
+              - ["Dialog", "General-purpose modal dialog with optional text input, multi-group tag pickers, and confirm/cancel/danger buttons; calls onConfirm(value, tags) on confirm", "open, options{title?,message?,input?,tagGroups?[],confirmLabel?,dangerLabel?,onConfirm?,onDanger?}"]
+              - ["Label", "Static text label that displays a field name and its read-only value in a consistent style", "value, label?, field?"]
+              - ["ComingSoon", "Declarative full-page placeholder for in-development routes; renders an icon, eyebrow text, title, and optional description", "eyebrow?, title?, description?, icon?"]
+              - ["EventPopup", "Modal notification dialog for YAML event actions; shows an icon, title, and message with a single Close button; Escape and backdrop click also close", "def.title, def.message, def.icon?, def.close_label?"]
+
+      - id: form-enhancements
+        kicker: Category 9 of 16
+        title: Form enhancements
+        lead: >-
+          Richer input widgets that extend beyond the basic HTML input set. All integrate
+          with FormPanel.registerField() and follow the same setState({ value }) pattern.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["SearchEntry", "Plain text search input with a search icon and a clear button; pressing Enter emits submit('search', {value})", "value, placeholder?"]
+              - ["MultipleSearchEntry", "Like SearchEntry but allows selecting multiple records displayed as removable chips", "field, label?, datasource, displayField"]
+              - ["RichTextBox", "WYSIWYG rich-text editor; state value is an HTML string persisted to the field", "field, label?, height?"]
+              - ["Rating", "Star-rating input; state value is a 1-to-N integer representing the selected star count", "field, label?, max?, readonly?"]
+              - ["Image", "Image display and optional upload widget; state value is a URL string pointing to the image resource", "field, label?, uploadAction?, width?, height?"]
+              - ["AsyncSelect", "Searchable single or multi-select adapter for declarative forms; owns selection state and emits a plain hidden value for form submission", "value, def{options[]{value,label}, multiple?, placeholder?, search_placeholder?}"]
+              - ["MoneyInput", "Locale-aware currency input that formats the display via Intl.NumberFormat and submits a plain numeric hidden value", "value, def{currency?, decimals?, placeholder?, min?, max?}"]
+              - ["ChoiceGroup", "Clickable option group driven by def config; highlights the selected option and emits submit(def.action, {value}). Not currently exported from the barrel — import directly from the file path", "record[def.value] (current selection), def{title, value, action, options[]{value,label}, class?, option_class?}"]
+
+      - id: advanced-layout
+        kicker: Category 10 of 16
+        title: Advanced layout
+        lead: >-
+          Higher-order layout components that compose other components or provide navigation
+          paradigms beyond the basic TabPanel and SplitPanel.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["Section", "Collapsible card section with a title bar and a slotted content area for child components", "title, collapsible?, collapsed?"]
+              - ["TabGroup", "Multi-tab container that lazily mounts child component trees only when their tab is first activated", "active, tabs[]{id, label, render}"]
+              - ["Paginator", "Standalone pagination control that emits submit('page.change', { page }) on navigation", "page, total, pageSize?"]
+              - ["PopupEditor", "Modal dialog that wraps a FormPanel and its fields; opens over the current page without a route change", "title, width?, open, record?"]
+              - ["ActionButton", "Button that toggles a dropdown of secondary actions; items use action.id as the submit key; label lives on def.label", "def.label, actions[]{id, label, variant?}, open?"]
+              - ["ContextMenu", "Floating context-menu anchored to a trigger element; items use item.id as the submit key and may carry an icon", "open?, x?, y?, items[]{id, label, icon?, params?, danger?}"]
+
+      - id: advanced-data-display
+        kicker: Category 11 of 16
+        title: Advanced data display
+        lead: >-
+          Specialised views that extend or combine the base GridView and ListView with
+          grouping, hierarchy, comparison, search, or section headers.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["GroupGridView", "Tabular view that groups flat rows by a groupBy field name at render time; state carries rows[] and groupBy (a field name string), not a pre-grouped array", "rows, loading?, groupBy (field name string), defs[]{type,field}"]
+              - ["TreeView", "Collapsible tree navigation widget with labeled nodes; leaf nodes emit submit('node.select', {id}) on click; no column defs, no idField, no loading state; expanded is a Set of node ids", "nodes[]{id, label, icon?, children[]}, expanded? (Set)"]
+              - ["CompareGridView", "Side-by-side comparison table that highlights field differences between two single-object snapshots; constructor takes fields[] (not columns[]), state holds left/right single objects with no loading prop", "left, right, leftLabel?, rightLabel?, fields[]{field, label?}"]
+              - ["ListViewSearch", "ListView augmented with an inline search bar; filtering driven by defs[0].field for the primary match and defs.find(d => d.secondary) for the secondary; constructor takes defs[]", "items, query?, loading?, defs[]{field, secondary?}"]
+              - ["ListViewSection", "ListView with sticky section headers; state carries pre-grouped sections[]{title, items} — not flat items with a groupField", "sections[]{title, items[]}"]
+
+      - id: report-export
+        kicker: Category 12 of 16
+        title: Report / export
+        lead: >-
+          Components that produce file output or visualisations. Export buttons call a
+          backend action that streams the file; the component handles the download
+          handshake.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["Chart", "Canvas data visualisation supporting bar, line, and pie chart types; def uses variant (not chartType) to select the chart; state uses labels[] and series[] for multi-series, data[] for single-series", "data[], labels[], series[]?, title?; def: variant('bar'|'line'|'pie'), height?, color?"]
+              - ["ButtonExcel", "Export-to-Excel button; always emits submit('export.excel', {filename}) — the action name is fixed, not configurable; filename comes from def.filename", "label?, filename?, loading?"]
+              - ["ButtonPdf", "Export-to-PDF button that calls a backend action and triggers a .pdf file download or new-tab open", "action, label?, target?, loading?"]
+              - ["ButtonImportExcel", "File-picker button that accepts an Excel file, parses it client-side, and calls a backend action with parsed rows", "action, label?, sheet?, loading?, error?"]
+              - ["PdfReport", "Printable A4 HTML report generator; renders a title, a column-keyed data table, and a Print button that calls window.print()", "title?, rows[], columns[], showLogo?"]
+              - ["TemplatePreview", "Safe declarative print-template preview that renders content blocks as text (no HTML injection); includes a Print button calling window.print()", "template{name?,code?}, blocks[]{block_type, label?, content?, token_key?}"]
+
+      - id: specialized
+        kicker: Category 13 of 16
+        title: Specialized
+        lead: >-
+          Purpose-built components for specific interaction patterns that do not fit neatly
+          into the generic input, view, or layout categories.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["Kanban", "Simple drag-and-drop Kanban board; state carries columns[]{id, title, cards[{id,title,badge?,subtitle?}]} with cards nested inside columns; dropping a card emits submit('card.move', {cardId, fromColumn, toColumn})", "columns[]{id, title, cards[]}, def.cardColor?"]
+              - ["KanbanView", "Full-featured Kanban board for list-backed pages; groups a flat rows array by a field, supports drag-and-drop reorder, and optional status-editor dialogs with transition guards", "rows, options{view{groupBy?,groups[]{value,label,color?},card?{title,subtitle?,fields?}}, onMove?, onAddStatus?, onEditStatus?, transitions?}"]
+              - ["AdvancedSearch", "Multi-filter query builder; state carries filters[]{field,operator,value}; def.fields is a plain string array (not objects); emits submit('search.filter', {filters}) on apply", "filters[]{field, operator, value}, def.fields[] (plain strings)"]
+              - ["QrCode", "Generates and displays a QR code image from a text or URL value", "value, size?, label?"]
+              - ["CodeEditor", "Syntax-highlighted code editing area; state value is the current source string", "field, language?, height?, value, error?"]
+              - ["Chat", "Threaded chat panel with a scrollable message list and text-input bar; sending calls submit('chat.send', { text })", "messages[]{id,author,text,ts}, sending?, currentUser, placeholder?"]
+              - ["ChatWorkspace", "Two-pane chat workspace with thread list, message stream, file upload, and optional WebSocket or polling transport for real-time delivery", "threads[], messages[], attachments[], activeThreadId, currentUserId, def{send_action, websocket?{endpoint}, load_messages?, on_refresh?}"]
+              - ["HtmlCode", "Renders an arbitrary HTML string as live DOM inside a sandboxed container", "html, sandbox?"]
+              - ["ChromeTab", "Browser-chrome-style tab strip with closeable tabs and a new-tab button suited for multi-document interfaces", "tabs[]{id,label}, active, closeable?, addable?"]
+              - ["LoginForm", "Declarative authentication form with email/password fields, loading state, inline error display, and optional OAuth provider buttons; submits via def.action", "def{title, email{label,placeholder?}, password{label,placeholder?}, submit_label, action, providers?[]{action,label,icon?}}"]
+
+      - id: cell-variants
+        kicker: Category 14 of 16
+        title: Cell variants
+        lead: >-
+          Additional cell components that extend the core cell set. Used inside GridView,
+          GroupGridView, or TreeView columns via CELL_MAP. EmptyState and TimelinePanel
+          are standalone display-only components included in this category.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["PercentCell", "Renders a 0-100 number as a percentage with an optional inline progress bar", "field, showBar?"]
+              - ["LinkCell", "Renders a clickable hyperlink or an internal navigation action inside a grid cell", "field, hrefField?, action?"]
+              - ["AvatarCell", "Shows a circular avatar image or initials fallback alongside an optional name label", "field, avatarField?, showName?"]
+              - ["RankCell", "Displays a numeric rank with optional medal icon for positions 1-3", "field, medals?"]
+              - ["EmptyState", "Centered placeholder illustration and message shown when a list or view has no data to display", "message?, title?, icon?, action?"]
+              - ["TimelinePanel", "Vertical timeline of chronological events each with a timestamp, title, and optional body text", "events[]{ts,title,body?}, loading?, tsField, titleField, bodyField?"]
+
+      - id: specialized-views
+        kicker: Category 15 of 16
+        title: Specialized views
+        lead: >-
+          Declarative view components for non-tabular data presentations. Each accepts a
+          flat rows array from a server datasource and handles its own layout, navigation,
+          and optional selection callbacks.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["CalendarView", "Month calendar that maps rows to dates via a declarative dateField; renders event buttons per cell with previous/next/today navigation", "rows, options{view{dateField, endDateField?, card?{title,subtitle?}}, openAction?, onSelect?, rowKey?}"]
+              - ["CardView", "Flat or optionally grouped card list for compact resource browsing; active grouping is driven by state.groupBy not the view definition", "rows, groupBy?, options{view{groups[]?,card?{title,subtitle?,fields?}}, openAction?, onSelect?}"]
+              - ["PivotView", "Pivot table with collapsible row and column groups, configurable measures, and an interactive configuration builder panel", "rows, options{view{rowFields[], columnFields[], measures[]{aggregate, field?}, fieldLabels?}, onChange?}"]
+              - ["GraphView", "Lightweight SVG bar or line chart grouped by a category field; aggregates rows client-side with no external charting library", "rows, options{view{categoryField, measureField?, type?('bar'|'line')}}"]
+              - ["MapView", "Placeholder map canvas that pins markers by latitude/longitude (or index); clicking a marker calls openAction", "rows, options{view{labelField, latitudeField?, longitudeField?, subtitleField?}, openAction?, rowKey?}"]
+              - ["ScheduleGrid", "Compact assignment schedule table with resources as rows and dates as columns; driven by a server-owned datasource", "rows, def{date_field?, resource_field?, resource_label_field?, title_field?, subtitle_field?, status_field?}"]
+
+      - id: odoo-document-views
+        kicker: Category 16 of 16
+        title: Odoo-style document views
+        lead: >-
+          Higher-level document-form components modelled after Odoo's form sheet + chatter
+          pattern. OdooFormView composes the others; each sub-component can also be used
+          standalone.
+        blocks:
+          - type: table
+            headers: [Component, Purpose, Key props]
+            rows:
+              - ["DocumentSummary", "Read-only document header card showing title, optional subtitle, status badge, and a grid of key metadata fields", "record, def{title_field, subtitle_field?, status_field?, status_colors?, columns[]{field, label}}"]
+              - ["OdooFormView", "Odoo-style form view with a status bar, optional inline editable fields, notebook tabs, and an embedded OdooChatter aside; chatter is opt-in via def config", "record, def{title_field, fields[]|groups[], statusbar[]?, notebook?{tabs[]}, header_actions[], editable?}"]
+              - ["OdooChatter", "Chatter sidebar with Send message / Log note / Activity composer, follower-manager dropdown, and attachment panel; each section is opt-in via def config", "record, messages[], followers[], attachments[], def{message_action?, note_action?, follower_source?, attachment_source?}"]
+              - ["OdooFollowerManager", "Follower list with optional Add follower form driven by a user-candidate select; emits follower add/remove actions", "record, followers[], candidates[], def{follower_add_action?, follower_remove_action?}"]
+              - ["OdooAttachmentPanel", "Attachment list with optional file-upload button, size display, image preview overlay, and download action", "record, attachments[], def{attachment_upload_action?, attachment_download_action?, resolve_attachment_blob?}"]
+              - ["MoneySummary", "Document totals panel that renders label/value stat rows from a record and a declarative stats list", "record, def{title?, stats[]{label, field}}"]
+              - ["ApprovalTimeline", "Vertical event timeline showing labeled actions, timestamps, actors, and detail text from an events array", "events[]{action, created_at?, detail?, actor_name?}, def{title?, action_labels?, timestamp_field?, actor_field?}"]

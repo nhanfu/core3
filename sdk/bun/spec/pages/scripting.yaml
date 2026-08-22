@@ -1,0 +1,196 @@
+title: YShip — Scripting engine
+page:
+  id: scripting
+
+components:
+  - type: DocPage
+    hero:
+      variant: page
+      articleType: Concept
+      breadcrumb:
+        - label: Docs
+          href: /
+        - label: Concepts
+        - label: Scripting engine
+      eyebrow: Scripting engine
+      title: Expressions and inline scripts
+      subtitle: >-
+        YAML covers most ERP logic declaratively. For dynamic visibility, string
+        interpolation, and lightweight client behaviour, expressions and client
+        actions bridge the gap without leaving the YAML definition.
+    sections:
+      - id: expressions
+        kicker: Runtime
+        title: Expressions in YAML
+        lead: >-
+          evalExpr evaluates a JavaScript expression string against a frozen context
+          of three variables — user, row, and state. It is used wherever a component
+          property accepts a boolean condition or a computed value.
+        blocks:
+          - type: table
+            headers: [Property, Purpose, Example expression]
+            rows:
+              - [show_if, Hide a button or field when false, "row.status === 'active'"]
+              - [disabled_if, Disable a control when true, "!user.roles.includes('admin')"]
+              - [compute, Derive a field value, "row.qty * row.unit_price"]
+              - [default, Set an initial field value, "state.selectedWarehouse"]
+          - type: panel
+            title: Conditional button via show_if
+            language: yaml
+            code: |
+              components:
+                - type: GridView
+                  source: orders
+                  columns:
+                    - { field: status, label: Status }
+                    - { field: total,  label: Total }
+                    - field: actions
+                      label: ''
+                      actions:
+                        - { id: approve_order, label: Approve, variant: primary, show_if: "row.status === 'Pending Approval'" }
+                        - { id: cancel_order,  label: Cancel,  variant: danger,  show_if: "row.status !== 'Cancelled'" }
+          - type: callout
+            title: Expression scope is intentionally narrow
+            text: >-
+              Expressions receive only user, row, and state — they cannot access window,
+              document, fetch, or any global. Each expression is compiled once via
+              new Function and cached; errors return undefined rather than throwing.
+
+      - id: interpolation
+        kicker: Runtime
+        title: String interpolation
+        lead: >-
+          interpolate() resolves {row.field} and {state.key} placeholders inside
+          template strings. It is used in navigate_to targets, confirm messages, and
+          anywhere a string must embed a value from the current row or page state.
+        blocks:
+          - type: panel
+            title: Interpolation in navigate_to and confirm
+            language: yaml
+            code: |
+              actions:
+                - id: open_detail
+                  type: navigate
+                  navigate_to: "/orders/{row.id}"
+
+                - id: delete_order
+                  type: delete
+                  permission: orders.write
+                  table: orders
+                  confirm: "Delete order {row.reference}? This cannot be undone."
+          - type: p
+            text: >-
+              Placeholder syntax is {dotted.path}. If a segment is missing the
+              placeholder is replaced with an empty string, never left as literal
+              text or thrown as an error.
+
+      - id: client-action
+        kicker: Runtime
+        title: The client action
+        lead: >-
+          When a button needs logic that evalExpr cannot express — a multi-step
+          fetch, a language switch, computed state writes — declare a client action.
+          The script field contains a JavaScript arrow function; the runtime evaluates
+          it via new Function and calls it with a small context object.
+        blocks:
+          - type: panel
+            title: Client action context
+            language: ts
+            code: |
+              interface ClientActionCtx {
+                user: Record<string, any>;        // current authenticated user (frozen)
+                row: Record<string, any>;         // current row context (frozen)
+                state: Record<string, any>;       // page state (frozen)
+                request(endpoint: string, options?: RequestInit): Promise<any>;
+                setLanguage(language: string): Promise<void>;
+              }
+          - type: panel
+            title: Switching the UI language
+            language: yaml
+            code: |
+              actions:
+                - id: set_language_vi
+                  type: client
+                  script: |
+                    async ({ setLanguage }) => {
+                      await setLanguage('vi');
+                    }
+          - type: panel
+            title: Calling an endpoint with the current row
+            language: yaml
+            code: |
+              actions:
+                - id: notify_customer
+                  type: client
+                  script: |
+                    async ({ row, request }) => {
+                      await request('/api/orders/notify', {
+                        method: 'POST',
+                        body: JSON.stringify({ order_id: row.id }),
+                      });
+                    }
+          - type: list
+            items:
+              - "The script value must evaluate to a function — async arrow functions are idiomatic"
+              - "request() attaches the current Bearer token automatically and throws on non-OK responses"
+              - "setLanguage(code) updates i18n and reloads the page at the new locale"
+              - "No access to window, document, or server internals — only the five named context keys (user, row, state, request, setLanguage)"
+
+      - id: workflow-guards
+        kicker: Server-side
+        title: Workflow transition guards
+        lead: >-
+          Server-side transition guards in workflow YAML are declarative field conditions,
+          not arbitrary scripts. The runtime evaluates them against the persisted record
+          before writing any state change.
+        blocks:
+          - type: panel
+            title: Declarative guard on a workflow transition
+            language: yaml
+            code: |
+              workflow:
+                id: orders
+                entity: orders
+                transitions:
+                  - id: approve
+                    from: [Pending Approval]
+                    to: Approved
+                    permission: orders.approve
+                    conditions:
+                      all:
+                        - field: total_amount
+                          operator: greater_than
+                          value: 0
+                        - field: customer_id
+                          operator: present
+                    condition_message: Order must have a positive total and a customer before approval
+          - type: p
+            text: >-
+              Condition operators (present, equals, not_equals, greater_than,
+              greater_than_or_equal, less_than, less_than_or_equal, in) are evaluated server-side
+              against the live row — the client cannot influence the source state or bypass
+              the permission check.
+
+      - id: planned
+        kicker: Roadmap
+        title: What is planned
+        blocks:
+          - type: callout
+            tone: note
+            title: Not yet implemented
+            text: >-
+              The original spec described a sandboxed scripting engine where custom source code
+              (TypeScript, Rust, Python, Lua) is compiled to WebAssembly, deployed as a checked
+              artifact, and executed through a typed host interface (db, http, log, env) with
+              explicit capability grants and resource limits. That build pipeline and WASM runtime
+              do not exist yet. The datasource script / script_file fields, multi-language
+              runtimes, and the ScriptContext interface are aspirational design — they will be
+              built as a future phase once the core YAML pipeline is fully migrated.
+          - type: table
+            headers: [Planned feature, Status]
+            rows:
+              - [Inline datasource scripts compiled to WASM, Planned]
+              - [External script_file references with capability YAML, Planned]
+              - ['Multi-language runtimes (TypeScript, Rust, Python, Lua)', Planned]
+              - ['ScriptContext with db / http / log / env host functions', Planned]
+              - [Memory, fuel, timeout, and output-size limits per module, Planned]

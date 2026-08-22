@@ -1,0 +1,12 @@
+permissions:
+  - base.contacts.read
+  - base.contacts.write
+  - base.contacts.manage
+  - base.companies.read
+  - base.companies.write
+  - base.reference.read
+  - base.reference.write
+  - auth.users.manage
+  - auth.roles.manage
+  - base.activities.read
+  - base.activities.write

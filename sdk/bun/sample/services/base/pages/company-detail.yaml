@@ -1,0 +1,33 @@
+title: Company
+page: { id: company-detail, breadcrumb: [Contacts, Companies, Detail], auth: { require: [base.companies.read] } }
+datasources:
+  - id: company_detail
+    single: true
+    permission: base.companies.read
+    query: "SELECT * FROM base_contacts WHERE id = :id AND is_company = true"
+components:
+  - type: OdooFormView
+    source: company_detail
+    title_field: name
+    status_field: active
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: edit_company_detail, label: Edit, variant: secondary, permission: base.companies.write }
+    group_columns: 2
+    groups:
+      - title: Company
+        fields: [{ field: name, label: Company name }, { field: email, label: Email }, { field: phone, label: Phone }, { field: currency_code, label: Currency }]
+      - title: Address
+        fields: [{ field: street, label: Street }, { field: city, label: City }, { field: state_name, label: State }, { field: zip, label: ZIP }, { field: country_name, label: Country }]
+actions:
+  - id: edit_company_detail
+    type: server_form
+    permission: base.companies.write
+    title: Edit company
+    action: base.companies.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.company_detail
+    refresh: [company_detail]
+    mutation: { operation: update, table: base_contacts, fields: [name, email, phone, street, city, state_name, zip, country_name, currency_code], required: [name], timestamps: true, guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND is_company = true AND active = true", status: 409, message: Only active companies can be edited }] }
+    fields: [{ field: name, label: Company name, type: text, required: true }, { field: email, label: Email, type: text }, { field: phone, label: Phone, type: text }, { field: street, label: Street, type: text }, { field: city, label: City, type: text }, { field: state_name, label: State, type: text }, { field: zip, label: ZIP, type: text }, { field: country_name, label: Country, type: text }, { field: currency_code, label: Currency, type: text }]

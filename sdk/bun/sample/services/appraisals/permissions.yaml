@@ -1,0 +1,4 @@
+permissions:
+  - appraisals.read
+  - appraisals.write
+  - appraisals.manage

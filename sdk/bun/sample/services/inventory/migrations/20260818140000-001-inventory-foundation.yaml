@@ -1,0 +1,41 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_warehouses (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, code VARCHAR NOT NULL UNIQUE, address VARCHAR,
+        state VARCHAR NOT NULL DEFAULT 'Active', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS inventory_locations (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        warehouse_id VARCHAR NOT NULL, name VARCHAR NOT NULL, code VARCHAR NOT NULL,
+        usage VARCHAR NOT NULL DEFAULT 'Internal', state VARCHAR NOT NULL DEFAULT 'Active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(warehouse_id, code)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_quants (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        product_id VARCHAR, product_name VARCHAR NOT NULL, location_id VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 0, reserved_quantity DECIMAL(18,3) NOT NULL DEFAULT 0,
+        unit_cost DECIMAL(18,2) NOT NULL DEFAULT 0, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(product_id, location_id)
+      );
+      CREATE TABLE IF NOT EXISTS inventory_moves (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL, product_id VARCHAR, product_name VARCHAR NOT NULL,
+        source_location_id VARCHAR NOT NULL, destination_location_id VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL DEFAULT 1, state VARCHAR NOT NULL DEFAULT 'Draft',
+        reference VARCHAR, move_date DATE DEFAULT CURRENT_DATE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_inventory_locations_warehouse ON inventory_locations(warehouse_id);
+      CREATE INDEX IF NOT EXISTS idx_inventory_quants_product ON inventory_quants(product_id, product_name);
+      CREATE INDEX IF NOT EXISTS idx_inventory_moves_state ON inventory_moves(state);
+    down: |
+      DROP TABLE IF EXISTS inventory_moves;
+      DROP TABLE IF EXISTS inventory_quants;
+      DROP TABLE IF EXISTS inventory_locations;
+      DROP TABLE IF EXISTS inventory_warehouses;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

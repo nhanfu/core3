@@ -1,0 +1,16 @@
+menu:
+  appraisals:
+    path: /appraisals
+    label: Appraisals
+    icon: review
+    permission: appraisals.read
+  groups:
+    - id: performance
+      label: Performance
+      items:
+        - { path: /appraisals, label: Appraisals, icon: review, permission: appraisals.read }
+        - { path: /appraisal-cycles, label: Appraisal Cycles, icon: calendar, permission: appraisals.manage }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /appraisal-analysis, label: Appraisal Analysis, icon: chart, permission: appraisals.read }

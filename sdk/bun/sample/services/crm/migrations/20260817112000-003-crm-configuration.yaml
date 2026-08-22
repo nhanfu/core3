@@ -1,0 +1,37 @@
+version: 0.0.3
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_teams (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        leader VARCHAR, email_alias VARCHAR, target_revenue DECIMAL(18,2) NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS crm_stages (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        sequence INTEGER NOT NULL DEFAULT 10, probability INTEGER NOT NULL DEFAULT 10,
+        fold BOOLEAN NOT NULL DEFAULT false, requirements VARCHAR
+      );
+      CREATE TABLE IF NOT EXISTS crm_lost_reasons (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO crm_stages(id, name, sequence, probability) VALUES
+        ('crm-stage-new', 'New', 1, 10), ('crm-stage-qualified', 'Qualified', 2, 25),
+        ('crm-stage-proposition', 'Proposition', 3, 60), ('crm-stage-won', 'Won', 4, 100),
+        ('crm-stage-lost', 'Lost', 5, 0)
+      ON CONFLICT(name) DO NOTHING;
+      INSERT INTO crm_teams(id, name, leader, email_alias, target_revenue)
+      VALUES ('crm-team-enterprise', 'Enterprise', 'Admin User', 'enterprise', 1000000),
+             ('crm-team-north-america', 'North America', 'Dispatcher User', 'north-america', 500000)
+      ON CONFLICT(name) DO NOTHING;
+      INSERT INTO crm_lost_reasons(id, name) VALUES ('crm-lost-budget', 'Not enough budget'), ('crm-lost-timing', 'Bad timing')
+      ON CONFLICT(name) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS crm_lost_reasons;
+      DROP TABLE IF EXISTS crm_stages;
+      DROP TABLE IF EXISTS crm_teams;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

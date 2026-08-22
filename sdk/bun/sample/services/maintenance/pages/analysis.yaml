@@ -1,0 +1,21 @@
+title: Maintenance Analysis
+page: { id: maintenance-analysis, breadcrumb: [Supply Chain, Maintenance, Analysis], auth: { require: [maintenance.read] } }
+datasources:
+  - id: maintenance_analysis_totals
+    single: true
+    permission: maintenance.read
+    query: "SELECT COUNT(*) AS request_count, COUNT(*) FILTER (WHERE state = 'Repaired') AS repaired_count, COUNT(*) FILTER (WHERE state IN ('New', 'Assigned', 'In Progress')) AS open_count, COUNT(*) FILTER (WHERE request_type = 'Preventive') AS preventive_count FROM maintenance_requests"
+  - id: maintenance_analysis_states
+    permission: maintenance.read
+    query: "SELECT state AS category, COUNT(*) AS request_count FROM maintenance_requests GROUP BY state ORDER BY request_count DESC"
+components:
+  - type: StatRow
+    source: maintenance_analysis_totals
+    title: Maintenance performance
+    stats: [{ label: Requests, field: request_count }, { label: Repaired, field: repaired_count }, { label: Open, field: open_count }, { label: Preventive, field: preventive_count }]
+  - type: Chart
+    source: maintenance_analysis_states
+    title: Requests by status
+    label_field: category
+    value_field: request_count
+    variant: bar

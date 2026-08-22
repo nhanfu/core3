@@ -1,0 +1,21 @@
+title: Time Off Analysis
+page: { id: time-off-analysis, breadcrumb: [Human Resources, Time Off, Analysis], auth: { require: [time_off.read] } }
+datasources:
+  - id: time_off_analysis_totals
+    single: true
+    permission: time_off.read
+    query: "SELECT COUNT(*) AS request_count, COALESCE(SUM(days) FILTER (WHERE state = 'Approved'), 0) AS approved_days, COUNT(*) FILTER (WHERE state = 'Submitted') AS pending_count, COUNT(DISTINCT employee_id) AS employee_count FROM leave_requests"
+  - id: time_off_analysis_states
+    permission: time_off.read
+    query: "SELECT state AS category, COUNT(*) AS request_count FROM leave_requests GROUP BY state ORDER BY request_count DESC"
+components:
+  - type: StatRow
+    source: time_off_analysis_totals
+    title: Leave overview
+    stats: [{ label: Requests, field: request_count }, { label: Approved days, field: approved_days }, { label: Pending, field: pending_count }, { label: Employees, field: employee_count }]
+  - type: Chart
+    source: time_off_analysis_states
+    title: Requests by status
+    label_field: category
+    value_field: request_count
+    variant: bar

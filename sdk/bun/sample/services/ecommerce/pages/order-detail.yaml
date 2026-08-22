@@ -1,0 +1,19 @@
+title: Online Order
+page: { id: ecommerce-order-detail, breadcrumb: [Website, eCommerce, Order], auth: { require: [ecommerce.read] } }
+datasources:
+  - id: ecommerce_order_detail
+    permission: ecommerce.read
+    single: true
+    query: "SELECT * FROM ecommerce_orders WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: ecommerce_order_detail
+    title_field: order_ref
+    fields:
+      - { field: order_ref, label: Order reference }
+      - { field: customer_name, label: Customer }
+      - { field: website_name, label: Website }
+      - { field: cart_quantity, label: Cart quantity }
+      - { field: amount_total, label: Total }
+      - { field: order_date, label: Order date }
+      - { field: state, label: Status, type: StatusChip }

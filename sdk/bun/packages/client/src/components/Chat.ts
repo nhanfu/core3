@@ -1,0 +1,82 @@
+import { html } from '@core3/client/html';
+import { BaseComponent } from '@core3/client/components/BaseComponent';
+import { i18n } from '@core3/client/i18n';
+
+function relativeTime(ts) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return i18n.tKey('time.just_now', {}, 'Just now');
+  if (mins < 60) return i18n.tKey('time.minutes_ago', { count: mins }, '{count}m ago');
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return i18n.tKey('time.hours_ago', { count: hrs }, '{count}h ago');
+  return i18n.tKey('time.days_ago', { count: Math.floor(hrs / 24) }, '{count}d ago');
+}
+
+export class Chat extends BaseComponent {
+  constructor(id, state, def = {}) {
+    super(id, state || { messages: [], inputValue: '' });
+    this.def = def;
+  }
+
+  draw(container) {
+    const { messages = [], inputValue = '' } = this.state;
+    const { height = 400 } = this.def;
+
+    const wrap = html.take(container).div
+      .className('flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden')
+      .style(`height: ${height}px;`)
+      .ele();
+
+    const msgList = html.take(wrap).div
+      .className('flex-1 overflow-y-auto p-4 flex flex-col gap-3')
+      .ele();
+
+    for (const msg of messages) {
+      const rowCls = msg.isOwn ? 'flex flex-col items-end' : 'flex flex-col items-start';
+      const row = html.take(msgList).div.className(rowCls).ele();
+
+      html.take(row).span
+        .className('text-xs text-gray-400 mb-1')
+        .text(`${msg.sender} · ${relativeTime(msg.timestamp)}`);
+
+      const bubbleCls = msg.isOwn
+        ? 'bg-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 text-sm break-words'
+        : 'bg-gray-100 text-gray-800 rounded-2xl rounded-tl-sm px-4 py-2 text-sm break-words';
+      html.take(row).div.className(bubbleCls).style('max-width: 72%;').text(msg.text);
+    }
+
+    requestAnimationFrame(() => { msgList.scrollTop = msgList.scrollHeight; });
+
+    const inputRow = html.take(wrap).div
+      .className('flex gap-2 p-3 border-t border-gray-200 bg-gray-50')
+      .ele();
+
+    const inp = html.take(inputRow).input.type('text')
+      .className('flex-1 text-sm border border-gray-300 rounded-full px-4 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500')
+      .attr('placeholder', i18n.tKey('chat.message_placeholder', {}, 'Type a message…'))
+      .value(inputValue)
+      .ele();
+
+    const sendMessage = () => {
+      const text = this.state.inputValue.trim();
+      if (!text) return;
+      this.submit('chat.send', { text });
+      this.setState({ inputValue: '' }, false);
+      html.take(inp).prop('value', '');
+    };
+
+    html.take(inp).event('input', e => {
+      this.setState({ inputValue: e.target.value }, false);
+    });
+
+    html.take(inp).event('keydown', e => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    const sendBtn = html.take(inputRow).button
+      .className('text-sm px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors font-medium shrink-0')
+      .text(i18n.tKey('labels.send', {}, 'Send'))
+      .ele();
+    html.take(sendBtn).event('click', sendMessage);
+  }
+}

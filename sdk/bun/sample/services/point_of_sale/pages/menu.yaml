@@ -1,0 +1,33 @@
+menu:
+  sessions:
+    path: /sessions
+    label: Point of Sale
+    icon: cart
+    permission: pos.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - path: /orders
+          label: Orders
+          icon: cart
+          permission: pos.read
+        - path: /payments
+          label: Payments
+          icon: bank
+          permission: pos.read
+        - path: /invoices
+          label: POS Invoices
+          icon: invoice
+          permission: pos.read
+    - id: configuration-reporting
+      label: Configuration & Reporting
+      items:
+        - path: /configs
+          label: Configuration
+          icon: settings
+          permission: pos.read
+        - path: /analysis
+          label: Sales Analysis
+          icon: chart
+          permission: pos.read
