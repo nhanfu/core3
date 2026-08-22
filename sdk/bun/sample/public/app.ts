@@ -274,6 +274,10 @@ async function renderRoute(path: string, langCode?: string) {
     } else if (cleanPath === '/apps') {
       const mod = await import('./components/AppPicker.ts');
       await mod.mount(outlet);
+    } else if (cleanPath === '/ai') {
+      const mod = await import('./components/AiWorkspace.ts');
+      mod.mount(outlet);
+      _shell?.setTitle('Core3 Agent');
     } else {
       const pageParams = new URLSearchParams({ lc: i18n.lang });
       for (const [key, value] of Object.entries(getPageParams() as Record<string, string>)) {

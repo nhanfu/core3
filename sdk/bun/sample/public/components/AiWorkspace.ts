@@ -8,6 +8,22 @@ type AiMessage = { role: 'user' | 'assistant' | 'system'; text: string; taskId?:
 type AiThread = { id: string; title: string; updatedAt: string; messages: AiMessage[]; taskIds: string[]; tasks?: any[] };
 type AccessMode = 'ask' | 'full_access';
 
+const PENDING_PROMPT_KEY = 'core3_ai_pending_prompt';
+
+export function stageAiPrompt(prompt: string) {
+  const trimmed = prompt.trim();
+  if (trimmed) sessionStorage.setItem(PENDING_PROMPT_KEY, trimmed);
+}
+
+export function mount(container: HTMLElement) {
+  const workspace = new AiWorkspace('ai-workspace', {});
+  workspace.mount(container);
+  const pending = sessionStorage.getItem(PENDING_PROMPT_KEY);
+  if (!pending) return;
+  sessionStorage.removeItem(PENDING_PROMPT_KEY);
+  workspace.submitPrompt(pending);
+}
+
 export class AiWorkspace extends BaseComponent {
   private threadList: HTMLElement | null = null;
   private conversation: HTMLElement | null = null;
