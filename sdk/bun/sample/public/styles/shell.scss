@@ -282,6 +282,9 @@
 .ai-workspace-approval-card { border-color: var(--color-primary-mid); background: var(--color-primary-light); }
 .ai-workspace-approval-card strong, .ai-workspace-result-card strong { display: block; color: var(--color-text); font-size: .75rem; }
 .ai-workspace-approval-card p { margin: 6px 0 0; color: var(--color-text-muted); font-size: .7rem; line-height: 1.45; }
+.ai-workspace-result-table { display: block; max-width: 100%; margin-top: 10px; overflow: auto; border-collapse: collapse; color: var(--color-text); font-size: .66rem; white-space: nowrap; }
+.ai-workspace-result-table th, .ai-workspace-result-table td { padding: 6px 8px; border-bottom: 1px solid var(--color-border); text-align: left; }
+.ai-workspace-result-table th { color: var(--color-text-muted); font-size: .59rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .ai-workspace-technical-details { margin-top: 9px; color: var(--color-text-muted); font-size: .67rem; }
 .ai-workspace-technical-json { max-height: 220px; overflow: auto; padding: 9px; border-radius: 7px; background: var(--color-bg); white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 @media (max-width: 1050px) { .ai-workspace-split { grid-template-columns: minmax(0, 1fr) minmax(350px, 44%); } }

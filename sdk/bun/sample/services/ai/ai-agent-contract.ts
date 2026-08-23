@@ -17,8 +17,9 @@ export type AgentProviderRequest = {
   prompt: string;
   user: { id: string; name: string; roles?: string[]; permissions: string[] };
   yaml_context: Array<{ path: string; content: string }>;
-  operations?: Array<{ id: string; route: string; method?: string; permission: string; preview?: boolean }>;
+  operations?: Array<{ id: string; route: string; method?: string; permission: string; preview?: boolean; read_only?: boolean; datasource?: string }>;
   pages?: Array<{ id: string; title?: string; permissions: string[] }>;
+  datasources?: Array<{ id: string; permission?: string; query?: string; workflow?: string }>;
 };
 
 export type AgentProviderResponse = {

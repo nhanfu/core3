@@ -15,6 +15,8 @@ type AgentOperation = {
   method?: string;
   permission: string;
   preview?: boolean;
+  read_only?: boolean;
+  datasource?: string;
 };
 
 type AgentPage = {
@@ -95,6 +97,18 @@ function operationMap(appsRoot: string): Map<string, AgentOperation> {
         });
       }
     }
+    for (const [datasource, source] of discovered.datasources.entries()) {
+      if (!source?.permission) continue;
+      const id = `datasource.${datasource}.query`;
+      operations.set(id, {
+        id,
+        route: '/api/query',
+        method: 'POST',
+        permission: String(source.permission),
+        read_only: true,
+        datasource: String(datasource),
+      });
+    }
   } catch { /* page discovery errors are reported by normal server startup */ }
   return operations;
 }
@@ -111,6 +125,20 @@ function pageMap(appsRoot: string): Map<string, AgentPage> {
     }]));
   } catch {
     return new Map();
+  }
+}
+
+function datasourceCatalog(appsRoot: string) {
+  try {
+    const discovered = discoverPages(appsRoot);
+    return [...discovered.datasources.entries()].map(([id, source]: [string, any]) => ({
+      id,
+      permission: source.permission ? String(source.permission) : undefined,
+      query: typeof source.query === 'string' ? source.query.slice(0, 20_000) : undefined,
+      workflow: typeof source.workflow === 'string' ? source.workflow : undefined,
+    }));
+  } catch {
+    return [];
   }
 }
 
@@ -142,14 +170,18 @@ export function createAiAgentApi(options: {
   const pending = new Map<string, PendingCall>();
   const operations = operationMap(options.appsRoot);
   const pages = pageMap(options.appsRoot);
+  const datasources = datasourceCatalog(options.appsRoot);
 
   async function execute(request: Request, call: AgentApiCall, operation: AgentOperation, user: any) {
     const token = tokenFrom(request);
     const url = new URL(operation.route, request.url);
+    const values = operation.datasource
+      ? { ...(call.values || {}), sourceId: operation.datasource }
+      : call.values || {};
     const downstream = new Request(url, {
       method: operation.method || 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(call.values || {}),
+      body: JSON.stringify(values),
     });
     const response = await options.invoke(downstream, url);
     if (!response || response.status === 404) throw { status: 404, message: 'Registered Core3 operation was not found', code: 'AI_OPERATION_NOT_FOUND' };
@@ -203,6 +235,7 @@ export function createAiAgentApi(options: {
         yaml_context: context,
         operations: accessibleOperations,
         pages: accessiblePages,
+        datasources: datasources.filter((source) => !source.permission || hasPermission(options.authProvider, user, source.permission)),
       });
     } catch (failure: any) {
       return error(Number(failure?.status) || 502, String(failure?.message || 'AI provider request failed'), String(failure?.code || 'AI_PROVIDER_FAILED'));
@@ -219,6 +252,13 @@ export function createAiAgentApi(options: {
       const operation = operations.get(String(call?.operation || ''));
       if (!operation || !operation.route.startsWith('/api/')) return error(400, 'Agent attempted an undeclared operation', 'AI_OPERATION_NOT_ALLOWED');
       if (!hasPermission(options.authProvider, user, operation.permission)) return error(403, `Requires permission: ${operation.permission}`, 'OPERATION_PERMISSION_REQUIRED');
+      if (operation.read_only) {
+        const result = await execute(request, call, operation, user);
+        if (!result.ok) return error(result.status, 'Datasource query failed', 'AI_QUERY_FAILED');
+        const payload = await result.json().catch(() => ({}));
+        parts.push({ type: 'result', title: `${operation.datasource || 'Datasource'} query result`, summary: payload });
+        continue;
+      }
       const previewId = crypto.randomUUID();
       pending.set(previewId, { actorId: actorId(user), call: { ...call, requires_confirmation: true }, operation, createdAt: Date.now() });
       parts.push({ type: 'approval', preview_id: previewId, action_label: `Confirm ${operation.id}`, warning: `Requires ${operation.permission}` });

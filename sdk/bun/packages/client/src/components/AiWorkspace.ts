@@ -175,7 +175,21 @@ export class AiWorkspace extends BaseComponent {
     } else if (part.type === 'result') {
       const card = html.take(target).section.className('ai-workspace-result-card').ele();
       html.take(card).strong.text(String(part.title || 'Completed'));
-      for (const [key, value] of Object.entries(part.summary || {})) html.take(card).div.text(`${key}: ${String(value)}`);
+      const summary = part.summary || {};
+      const rows = Array.isArray(summary.data) ? summary.data.filter((row: any) => row && typeof row === 'object') : [];
+      if (rows.length) {
+        const columns: string[] = [...new Set<string>(rows.flatMap((row: any) => Object.keys(row)))].slice(0, 12);
+        const table = html.take(card).table.className('ai-workspace-result-table').ele();
+        const head = html.take(table).thead.trow.ele();
+        for (const column of columns) html.take(head).th.text(column);
+        const body = html.take(table).tbody.ele();
+        for (const row of rows.slice(0, 50)) {
+          const tr = html.take(body).trow.ele();
+          for (const column of columns) html.take(tr).tdata.text(String(row[column] ?? ''));
+        }
+      } else {
+        for (const [key, value] of Object.entries(summary)) html.take(card).div.text(`${key}: ${String(value)}`);
+      }
     } else if (part.type === 'technical_details') {
       const details = html.take(target).details.className('ai-workspace-technical-details').ele();
       html.take(details).summary.text('Technical details');

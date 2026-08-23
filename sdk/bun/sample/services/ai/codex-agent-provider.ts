@@ -70,11 +70,12 @@ function contextPrompt(input: AgentProviderRequest) {
     'Do not execute commands, modify files, call APIs, or access anything outside the supplied context.',
     'Return only JSON matching the supplied output schema.',
     'Explain the result in parts. For a page request, return a preview part with the matching page ID from the supplied page catalog. Use a preview part for data that the user should inspect before an import or other mutation.',
-    'Every declared call will be permission-checked by Core3. Treat every call as requiring confirmation; never claim that an operation completed. Encode mutation call values as key/value entries, with each value as a JSON string.',
+    'Every declared call will be permission-checked by Core3. Read-only datasource queries may run immediately and should be used to inspect data. Mutations always require confirmation; never claim that a mutation completed. Encode call values as key/value entries, with each value as a JSON string.',
     `Current user: ${JSON.stringify(input.user)}`,
     `User request:\n${input.prompt}`,
     `Declared operations:\n${operations}`,
     `Accessible page catalog:\n${JSON.stringify(input.pages || [], null, 2)}`,
+    `Accessible YAML datasources:\n${JSON.stringify(input.datasources || [], null, 2)}`,
     `YAML business context:\n${yaml}`,
   ].join('\n\n');
 }
