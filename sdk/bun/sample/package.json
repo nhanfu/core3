@@ -57,6 +57,7 @@
     "db:smoke": "bun scripts/adapter-smoke.ts",
     "event-mediator": "bun ../med/src/event-mediator-server.ts",
     "test": "vitest run --environment jsdom --config ../packages/client/vitest.config.ts",
+    "test:integration": "bun test test/**/*.integration.test.ts",
     "audit": "bun scripts/audit-order-ui.ts"
   },
   "dependencies": {

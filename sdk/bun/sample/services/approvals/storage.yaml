@@ -1,0 +1,23 @@
+database:
+  storage:
+    driver: duckdb
+
+files:
+  driver: local
+  path: ${APPROVALS_UPLOAD_ROOT:-.data/uploads}
+  credentials: {}
+  s3:
+    driver: s3
+    endpoint: ${APPROVALS_S3_ENDPOINT:-}
+    region: ${APPROVALS_S3_REGION:-}
+    bucket: ${APPROVALS_S3_BUCKET:-}
+    credentials:
+      access_key_id: ${APPROVALS_S3_ACCESS_KEY_ID:-}
+      secret_access_key: ${APPROVALS_S3_SECRET_ACCESS_KEY:-}
+
+attachments:
+  approval_attachment:
+    download:
+      route: /api/approvals/attachments
+      permission: approvals.attachment.download
+      query: SELECT * FROM approval_attachments WHERE id = :attachment_id

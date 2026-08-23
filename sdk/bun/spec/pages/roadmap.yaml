@@ -72,6 +72,25 @@ components:
               its core records, permissions, migration, route, and YAML CRUD surface — not because
               the app is feature-complete against real Odoo. Everything else is Not started until a
               real service exists for it.
+          - type: callout
+            tone: important
+            title: Mutation assurance rule
+            text: >-
+              A module is not done when its pages merely discover. Every create, update, delete, and
+              workflow mutation must derive protected values server-side, enforce its permission and
+              record-scope boundary, reject stale or invalid transitions, and have an integration test
+              that exercises the real YAML action against the module database before the roadmap status
+              can move to In progress.
+          - type: callout
+            tone: note
+            title: Inline FormView rule
+            text: >-
+              Every CRUD module should provide an inline FormView from its primary list when the
+              record has a meaningful detail workflow. Follow
+              sdk/bun/sample/services/ecommerce/pages/orders.yaml: configure form_view with the
+              module detail page, side_panel behavior, and row-open navigation so users can inspect
+              and edit records without leaving the list context. A standalone detail route does not
+              replace this inline FormView requirement.
           - type: table
             headers: [Category, Module, Status]
             rows:
@@ -109,7 +128,7 @@ components:
               - [Services, Appointments, Not started]
               - [Services, Planning, Not started]
               - [Productivity, Discuss, 'In progress — chat service proves the messaging/chatter pattern']
-              - [Productivity, Approvals, Not started]
+              - [Productivity, Approvals, 'In progress — approval types, multi-approver requests, guarded workflow, object-storage attachments, analysis, and integration coverage shipped']
               - [Productivity, Knowledge, Not started]
               - [Productivity, Sign, Not started]
               - [Productivity, VoIP, Not started]

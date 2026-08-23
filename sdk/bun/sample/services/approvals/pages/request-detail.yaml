@@ -1,0 +1,85 @@
+title: Approval Request
+page: { id: request-detail, breadcrumb: [Productivity, Approvals, Detail], auth: { require: [approvals.read] } }
+datasources:
+  - id: approval_request_detail
+    single: true
+    permission: approvals.read
+    query: "SELECT id, row_version, name, approval_type_name, requester_name, CAST(date_requested AS VARCHAR) AS date_requested, reason, approvers, approved_count, required_approvals, last_approver, state FROM approval_requests WHERE id = :id"
+  - id: approval_request_attachments
+    single: false
+    permission: approvals.read
+    query: "SELECT id, request_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM approval_attachments WHERE request_id = :id ORDER BY created_at DESC"
+components:
+  - type: OdooFormView
+    source: approval_request_detail
+    title_field: name
+    status_field: state
+    statusbar: [{ value: Draft, label: Draft }, { value: Submitted, label: Submitted }, { value: Approved, label: Approved }, { value: Refused, label: Refused }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Draft: neutral, Submitted: amber, Approved: green, Refused: red, Cancelled: violet }
+    editable: true
+    header_actions:
+      - { id: edit_approval_request_detail, label: Edit, variant: secondary, permission: approvals.write, show_if: "state.approval_request_detail.state === 'Draft'" }
+    group_columns: 2
+    attachment_source: approval_request_attachments
+    attachment_page_size: 100
+    attachment_label: Supporting documents
+    add_attachment_label: Attach files
+    no_attachments_label: No supporting documents
+    uploading_label: Uploading…
+    upload_failed_label: Upload failed
+    download_label: Download
+    attachment_accept: image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip
+    attachment_upload_action: upload_approval_attachment
+    attachment_download_action: download_approval_attachment
+    groups:
+      - title: Request
+        fields: [{ field: name, label: Request }, { field: approval_type_name, label: Approval type }, { field: requester_name, label: Requested by }, { field: date_requested, label: Date }, { field: state, label: Status }]
+      - title: Approval
+        fields: [{ field: approvers, label: Approvers }, { field: approved_count, label: Approvals received }, { field: required_approvals, label: Approvals required }, { field: last_approver, label: Last approver }, { field: reason, label: Description }]
+actions:
+  - { id: submit_approval_request_detail, type: server, permission: approvals.write, action: approvals.requests.submit, handler: order_transition, workflow: approval_requests, operation: submit, params: { id: '{state.id}' }, refresh: [approval_request_detail] }
+  - { id: record_approval_request_detail, type: server, permission: approvals.manage, action: approvals.requests.record_approval, handler: order_transition, workflow: approval_requests, operation: record_approval, params: { id: '{state.id}' }, refresh: [approval_request_detail] }
+  - { id: approve_approval_request_detail, type: server, permission: approvals.manage, action: approvals.requests.approve, handler: order_transition, workflow: approval_requests, operation: approve, params: { id: '{state.id}' }, refresh: [approval_request_detail] }
+  - { id: refuse_approval_request_detail, type: server, permission: approvals.manage, action: approvals.requests.refuse, handler: order_transition, workflow: approval_requests, operation: refuse, params: { id: '{state.id}' }, refresh: [approval_request_detail] }
+  - { id: cancel_approval_request_detail, type: server, permission: approvals.write, action: approvals.requests.cancel, handler: order_transition, workflow: approval_requests, operation: cancel, params: { id: '{state.id}' }, refresh: [approval_request_detail] }
+  - id: upload_approval_attachment
+    type: upload
+    action: approvals.attachments.upload
+    handler: attachment_metadata
+    permission: approvals.write
+    kind: approval_attachment
+    params: { request_id: '{state.id}' }
+    refresh: [approval_request_attachments]
+    mutation:
+      generated: [attachment_id]
+      guards:
+        - query: "SELECT id FROM approval_requests WHERE id = :request_id"
+          status: 404
+          message: Approval request not found
+      steps:
+        - query: "INSERT INTO approval_attachments(id, request_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :request_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
+      result: { query: "SELECT id, request_id, file_name, mime_type, size_bytes, uploaded_by, CAST(created_at AS VARCHAR) AS created_at FROM approval_attachments WHERE id = :attachment_id" }
+  - id: download_approval_attachment
+    type: download
+    permission: approvals.attachment.download
+    kind: approval_attachment
+  - id: edit_approval_request_detail
+    type: server_form
+    permission: approvals.write
+    title: Edit approval request
+    action: approvals.requests.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.approval_request_detail
+    refresh: [approval_request_detail]
+    mutation:
+      operation: update
+      table: approval_requests
+      fields: [name, date_requested, reason]
+      required: [name, reason]
+      timestamps: true
+      guards: [{ query: "SELECT id FROM approval_requests WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft approval requests can be edited }]
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: date_requested, label: Date, type: text }
+      - { field: reason, label: Description, type: text, required: true }

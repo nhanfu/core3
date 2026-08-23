@@ -163,6 +163,11 @@ function routeWithModule(path: string) {
   // Orders app declares `/` as its own entry point, so allowing the generic
   // module resolver to handle `/` sends the workspace home to Orders.
   if (path === '/' || path === '/apps' || path === '/home' || path === '/ai') return path === '/' ? '/apps' : path;
+  // App launcher routes are already module-qualified. Keep them stable even
+  // while an older cached /api/modules response is being replaced; otherwise
+  // the fallback resolver can turn /approvals into /approvals/approvals.
+  const activePrefix = `/${_activeModuleId}`;
+  if (_activeModuleId && (path === activePrefix || path.startsWith(`${activePrefix}/`))) return path;
   return resolveRouteWithModule(path, _manifest, _apps, _activeModuleId || String(getDefaultApp()?.module || getDefaultApp()?.id || 'order'));
 }
 

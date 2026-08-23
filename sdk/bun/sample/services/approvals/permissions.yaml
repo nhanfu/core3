@@ -1,0 +1,5 @@
+permissions:
+  - approvals.read
+  - approvals.write
+  - approvals.manage
+  - approvals.attachment.download

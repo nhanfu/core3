@@ -1,0 +1,62 @@
+workflow:
+  id: approval_requests
+  entity: approval_requests
+  handler: order_transition
+  initial: Draft
+  permission: approvals.write
+  mutable: true
+  status_source: approval_request_states
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Approved, label: Approved, color: green, terminal: true }
+    - { id: Refused, label: Refused, color: red, terminal: true }
+    - { id: Cancelled, label: Cancelled, color: violet, terminal: true }
+  transitions:
+    - id: submit
+      from: [Draft]
+      to: Submitted
+      permission: approvals.write
+      mutation:
+        guards: [{ query: "SELECT id FROM approval_requests WHERE id = :id AND state = 'Draft' AND reason <> '' AND approvers <> '' AND required_approvals > 0", status: 409, message: A request needs a reason and at least one approver }]
+        steps: [{ query: "UPDATE approval_requests SET state = 'Submitted', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM approval_requests WHERE id = :id" }
+    - id: approve
+      from: [Submitted]
+      to: Approved
+      permission: approvals.manage
+      mutation:
+        guards:
+          - query: "SELECT id FROM approval_requests WHERE id = :id AND state = 'Submitted' AND approved_count + 1 >= required_approvals AND (',' || approver_ids || ',') LIKE '%,' || :current_user_id || ',%' AND NOT EXISTS (SELECT 1 FROM approval_votes WHERE request_id = :id AND approver_id = :current_user_id)"
+            status: 403
+            message: Only an assigned approver can approve once
+        steps:
+          - query: "INSERT INTO approval_votes(id, request_id, approver_id, approver_name) VALUES (gen_random_uuid(), :id, :current_user_id, :current_user_name)"
+          - query: "UPDATE approval_requests SET state = 'Approved', approved_count = approved_count + 1, last_approver = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM approval_requests WHERE id = :id" }
+    - id: record_approval
+      from: [Submitted]
+      to: Submitted
+      permission: approvals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM approval_requests WHERE id = :id AND state = 'Submitted' AND approved_count + 1 < required_approvals AND (',' || approver_ids || ',') LIKE '%,' || :current_user_id || ',%' AND NOT EXISTS (SELECT 1 FROM approval_votes WHERE request_id = :id AND approver_id = :current_user_id)", status: 403, message: Only a new assigned approver can record an approval }]
+        steps:
+          - query: "INSERT INTO approval_votes(id, request_id, approver_id, approver_name) VALUES (gen_random_uuid(), :id, :current_user_id, :current_user_name)"
+          - query: "UPDATE approval_requests SET approved_count = approved_count + 1, last_approver = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id"
+        result: { query: "SELECT * FROM approval_requests WHERE id = :id" }
+    - id: refuse
+      from: [Submitted]
+      to: Refused
+      permission: approvals.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM approval_requests WHERE id = :id AND state = 'Submitted' AND (',' || approver_ids || ',') LIKE '%,' || :current_user_id || ',%'", status: 403, message: Only an assigned approver can refuse a request }]
+        steps: [{ query: "UPDATE approval_requests SET state = 'Refused', last_approver = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM approval_requests WHERE id = :id" }
+    - id: cancel
+      from: [Draft, Submitted]
+      to: Cancelled
+      permission: approvals.write
+      mutation:
+        guards: [{ query: "SELECT id FROM approval_requests WHERE id = :id AND state IN ('Draft', 'Submitted')", status: 409, message: Only open requests can be cancelled }]
+        steps: [{ query: "UPDATE approval_requests SET state = 'Cancelled', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM approval_requests WHERE id = :id" }

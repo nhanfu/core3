@@ -1,0 +1,16 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO approval_types(id, name, description, responsible_name, approvers, approver_ids, required_approvals)
+      VALUES ('approval-type-purchase', 'Purchase Request', 'Request approval for an exceptional purchase.', 'Finance Manager', 'Finance Manager, Operations Manager', 'finance-manager,operations-manager', 2);
+      INSERT OR IGNORE INTO approval_requests(id, name, approval_type_id, approval_type_name, requester_name, reason, approvers, approver_ids, required_approvals, approved_count, state)
+      VALUES ('approval-request-demo-001', 'APR-0001', 'approval-type-purchase', 'Purchase Request', 'Admin User', 'Replace the warehouse scanner fleet.', 'Finance Manager, Operations Manager', 'finance-manager,operations-manager', 2, 0, 'Submitted');
+    down: |
+      DELETE FROM approval_requests WHERE id = 'approval-request-demo-001';
+      DELETE FROM approval_types WHERE id = 'approval-type-purchase';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

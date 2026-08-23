@@ -1,0 +1,69 @@
+title: Approval Types
+page: { id: approval-types, breadcrumb: [Productivity, Approvals, Approval Types], auth: { require: [approvals.manage] } }
+datasources:
+  - id: approval_types
+    permission: approvals.manage
+    query: "SELECT id, row_version, name, description, responsible_name, approvers, approver_ids, required_approvals, state FROM approval_types ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: approval_types
+    create_action: create_approval_type
+    create_label: New approval type
+    columns:
+      - { field: name, label: Approval type, type: PrimaryEntityCell }
+      - { field: responsible_name, label: Responsible }
+      - { field: approvers, label: Approvers }
+      - { field: required_approvals, label: Required approvals, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_approval_type, label: Edit, permission: approvals.manage, show_if: "row.state === 'Active'" }
+actions:
+  - id: create_approval_type
+    type: server_form
+    permission: approvals.manage
+    title: New approval type
+    action: approvals.types.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [approval_types]
+    mutation:
+      operation: insert
+      table: approval_types
+      fields: [name, description, responsible_name, approvers, approver_ids, required_approvals]
+      required: [name, responsible_name, required_approvals]
+      guards: [{ query: "SELECT 1 AS ok WHERE CAST(:required_approvals AS INTEGER) > 0 AND :approvers <> '' AND :approver_ids <> ''", status: 400, message: At least one assigned approver and approval is required }]
+      result: { query: "SELECT * FROM approval_types WHERE id = :id" }
+    fields:
+      - { field: name, label: Approval type, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: responsible_name, label: Responsible, type: text, required: true }
+      - { field: approvers, label: Approver names, type: text, required: true }
+      - { field: approver_ids, label: Approver user IDs, type: text, required: true }
+      - { field: required_approvals, label: Required approvals, type: number, required: true }
+  - id: edit_approval_type
+    type: server_form
+    permission: approvals.manage
+    title: Edit approval type
+    action: approvals.types.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [approval_types]
+    mutation:
+      operation: update
+      table: approval_types
+      fields: [name, description, responsible_name, approvers, approver_ids, required_approvals]
+      required: [name, responsible_name, approvers, approver_ids, required_approvals]
+      timestamps: true
+      guards: [{ query: "SELECT id FROM approval_types WHERE id = :id AND state = 'Active' AND CAST(:required_approvals AS INTEGER) > 0 AND :approvers <> '' AND :approver_ids <> ''", status: 409, message: Only active approval types with assigned approvers can be edited }]
+    fields:
+      - { field: name, label: Approval type, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: responsible_name, label: Responsible, type: text, required: true }
+      - { field: approvers, label: Approver names, type: text, required: true }
+      - { field: approver_ids, label: Approver user IDs, type: text, required: true }
+      - { field: required_approvals, label: Required approvals, type: number, required: true }

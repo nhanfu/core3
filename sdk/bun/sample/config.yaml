@@ -106,6 +106,14 @@ apps:
     route: /documents
     module: documents
     enabled: true
+  - id: approvals
+    label: Approvals
+    description: Approval requests, assigned approvers, and supporting documents
+    icon: check
+    color: violet
+    route: /approvals
+    module: approvals
+    enabled: true
   - id: spreadsheet
     label: Spreadsheet / Dashboards
     description: Saved dashboards and operational widgets

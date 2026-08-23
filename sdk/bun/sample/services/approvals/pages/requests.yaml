@@ -1,0 +1,98 @@
+title: Approval Requests
+page: { id: approvals, breadcrumb: [Productivity, Approvals, Requests], auth: { require: [approvals.read] } }
+datasources:
+  - id: approval_request_states
+    permission: approvals.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: approval_type_lookup
+    permission: approvals.read
+    single: false
+    query: "SELECT id AS value, name AS label FROM approval_types WHERE state = 'Active' ORDER BY name"
+  - id: approval_requests
+    permission: approvals.read
+    workflow: approval_requests
+    query: "SELECT id, row_version, name, approval_type_name, requester_name, CAST(date_requested AS VARCHAR) AS date_requested, approvers, approved_count, required_approvals, last_approver, state FROM approval_requests WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR requester_name ILIKE '%' || :q || '%' OR approval_type_name ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY date_requested DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: approval_requests
+    create_action: create_approval_request
+    create_label: New request
+    search: { label: Search requests, placeholder: 'Search request, type, or requester...' }
+    filters: [{ field: state, label: Status, options_source: approval_request_states }]
+    columns:
+      - { field: name, label: Request, type: PrimaryEntityCell }
+      - { field: approval_type_name, label: Approval type }
+      - { field: requester_name, label: Requested by }
+      - { field: date_requested, label: Date }
+      - { field: approvers, label: Approvers }
+      - { field: approved_count, label: Votes, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    row_open_action: view_approval_request
+    form_view: { page: apps/services/approvals/pages/request-detail.yaml, side_panel: true }
+    actions:
+      - { id: edit_approval_request, label: Edit, permission: approvals.write, show_if: "row.state === 'Draft'" }
+      - { id: submit_approval_request, label: Submit, permission: approvals.write, variant: primary, show_if: "row.state === 'Draft'" }
+      - { id: record_approval_request, label: Approve, permission: approvals.manage, variant: primary, show_if: "row.state === 'Submitted' && row.approved_count + 1 < row.required_approvals" }
+      - { id: approve_approval_request, label: Approve final, permission: approvals.manage, variant: primary, show_if: "row.state === 'Submitted' && row.approved_count + 1 >= row.required_approvals" }
+      - { id: refuse_approval_request, label: Refuse, permission: approvals.manage, variant: danger, show_if: "row.state === 'Submitted'" }
+      - { id: cancel_approval_request, label: Cancel, permission: approvals.write, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Submitted'" }
+actions:
+  - id: create_approval_request
+    type: server_form
+    permission: approvals.write
+    title: New approval request
+    action: approvals.requests.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [approval_requests]
+    mutation:
+      operation: insert
+      table: approval_requests
+      fields: [name, approval_type_id, requester_name, date_requested, reason]
+      required: [name, approval_type_id, reason]
+      defaults: { approval_type_name: '', approvers: '', approver_ids: '', required_approvals: 1 }
+      guards: [{ query: "SELECT 1 AS ok FROM approval_types WHERE id = :approval_type_id AND state = 'Active' AND required_approvals > 0 AND approver_ids <> ''", status: 400, message: Choose an active approval type with assigned approvers }]
+      steps:
+        - query: "UPDATE approval_requests SET approval_type_name = (SELECT name FROM approval_types WHERE id = :approval_type_id), approvers = (SELECT approvers FROM approval_types WHERE id = :approval_type_id), approver_ids = (SELECT approver_ids FROM approval_types WHERE id = :approval_type_id), required_approvals = (SELECT required_approvals FROM approval_types WHERE id = :approval_type_id), requester_name = :current_user_name WHERE id = :id"
+      result: { query: "SELECT * FROM approval_requests WHERE id = :id" }
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: approval_type_id, label: Approval type, type: select, options_source: approval_type_lookup, required: true }
+      - { field: requester_name, label: Requested by, type: text }
+      - { field: date_requested, label: Date, type: text }
+      - { field: reason, label: Description, type: text, required: true }
+  - id: view_approval_request
+    type: navigate
+    permission: approvals.read
+    navigate_to: /request-detail
+    params: { id: '{row.id}' }
+  - { id: submit_approval_request, type: server, permission: approvals.write, action: approvals.requests.submit, handler: order_transition, workflow: approval_requests, operation: submit, refresh: [approval_requests] }
+  - { id: record_approval_request, type: server, permission: approvals.manage, action: approvals.requests.record_approval, handler: order_transition, workflow: approval_requests, operation: record_approval, refresh: [approval_requests] }
+  - { id: approve_approval_request, type: server, permission: approvals.manage, action: approvals.requests.approve, handler: order_transition, workflow: approval_requests, operation: approve, refresh: [approval_requests] }
+  - { id: refuse_approval_request, type: server, permission: approvals.manage, action: approvals.requests.refuse, handler: order_transition, workflow: approval_requests, operation: refuse, refresh: [approval_requests] }
+  - { id: cancel_approval_request, type: server, permission: approvals.write, action: approvals.requests.cancel, handler: order_transition, workflow: approval_requests, operation: cancel, refresh: [approval_requests] }
+  - id: edit_approval_request
+    type: server_form
+    permission: approvals.write
+    title: Edit approval request
+    action: approvals.requests.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [approval_requests]
+    mutation:
+      operation: update
+      table: approval_requests
+      fields: [name, date_requested, reason]
+      required: [name, reason]
+      timestamps: true
+      guards: [{ query: "SELECT id FROM approval_requests WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft approval requests can be edited }]
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: date_requested, label: Date, type: text }
+      - { field: reason, label: Description, type: text, required: true }
