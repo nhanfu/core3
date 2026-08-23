@@ -6,8 +6,8 @@ import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { loadApplicationConfig } from '@core3/server/application-config';
 import { FetchObjectStore, GatewayRateLimiter, HybridEventBus, MessageLog, MessageLogEventBus } from '@core3/server';
 import { EventStore, EventMediatorClient, loadMedConfig, type EventBus } from '@core3/med';
-import { CodexTaskRunner } from './task-runner.ts';
-import { createTaskApi } from './task-api.ts';
+import { createAiAgentApi, createHttpAgentProvider } from './services/ai/ai-agent-api.ts';
+import { createCodexCliAgentProvider } from './services/ai/codex-agent-provider.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
@@ -189,15 +189,25 @@ const yamlServiceContexts = modules
   .filter((module): module is YamlServiceModule => module instanceof YamlServiceModule)
   .map((module) => module.getRuntimeContext())
   .filter((context): context is NonNullable<typeof context> => Boolean(context));
-const taskRunner = new CodexTaskRunner(REPO_ROOT, `http://127.0.0.1:${PORT}`, async () => ({
-  discovered_pages: discoverPages(APPS_ROOT).pages.size,
-  reloaded_services: yamlServiceContexts.map((context) => ({ id: context.id, pages: context.reloadPages?.() || 0 })),
-  restart_required_for_new_services: true,
-}));
-moduleManager.apiHandlers.unshift(createTaskApi({
+const yamlApiHandlers = yamlServiceContexts.map((context) => context.api);
+const providerEndpoint = String(process.env.CORE3_AI_AGENT_PROVIDER_URL || '').trim();
+const agentProvider = providerEndpoint
+  ? createHttpAgentProvider(providerEndpoint, String(process.env.CORE3_AI_AGENT_PROVIDER_KEY || ''))
+  : createCodexCliAgentProvider({
+    bin: String(process.env.CORE3_CODEX_BIN || 'codex'),
+    model: String(process.env.CORE3_AI_AGENT_MODEL || '').trim() || undefined,
+  });
+moduleManager.apiHandlers.unshift(createAiAgentApi({
+  appsRoot: APPS_ROOT,
   authProvider: moduleManager.resolveService('auth.adapter') as any,
-  runner: taskRunner,
-  actionHandlers: yamlServiceContexts.map((context) => context.api),
+  provider: agentProvider,
+  invoke: async (request, url) => {
+    for (const handler of yamlApiHandlers) {
+      const response = await handler(request.clone(), url);
+      if (response && response.status !== 404) return response;
+    }
+    return null;
+  },
 }));
 if (yamlServiceContexts.length) moduleManager.apiHandlers.unshift(createYamlHostApi(yamlServiceContexts));
 

@@ -1,0 +1,10 @@
+type:
+  postgres:
+    up: |
+      ALTER TABLE ai_messages ADD COLUMN IF NOT EXISTS parts_json VARCHAR;
+    down: |
+      ALTER TABLE ai_messages DROP COLUMN IF EXISTS parts_json;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
