@@ -1,6 +1,6 @@
 import { html } from '@core3/client/html';
 import { AsyncSelect } from '@core3/client/components/AsyncSelect';
-import { OdooFieldEditor } from './OdooFieldEditor';
+import { OdooFieldEditor } from './OdooFieldEditor.ts';
 
 export class OdooAsyncSelectEditor extends OdooFieldEditor {
   draw(container: HTMLElement) {

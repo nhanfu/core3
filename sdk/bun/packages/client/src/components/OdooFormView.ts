@@ -141,8 +141,13 @@ export class OdooFormView extends BaseComponent {
       this.mountChild(editor, value);
       }
     };
-    if (editing && Array.isArray(this.def.edit_fields)) {
-      renderFields(this.def.edit_fields, labels.editDetails);
+    const editFields = Array.isArray(this.def.edit_fields) && this.def.edit_fields.length
+      ? this.def.edit_fields
+      : Array.isArray(this.def.groups)
+        ? this.def.groups.flatMap((group: any) => group.fields || [])
+        : (this.def.fields || []);
+    if (editing) {
+      renderFields(editFields, labels.editDetails);
     } else if (Array.isArray(this.def.groups) && this.def.groups.length) {
       if (this.def.group_columns) {
         const groups = html.take(sheet).div.className(`o-form-groups o-form-groups-${this.def.group_columns}`).ele();

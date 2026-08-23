@@ -1,5 +1,5 @@
 import { html } from '@core3/client/html';
-import { OdooFieldEditor } from './OdooFieldEditor';
+import { OdooFieldEditor } from './OdooFieldEditor.ts';
 
 export class OdooCheckboxEditor extends OdooFieldEditor {
   draw(container: HTMLElement) {

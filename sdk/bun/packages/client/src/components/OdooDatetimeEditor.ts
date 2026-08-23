@@ -1,1 +1,1 @@
-export { OdooScalarEditor as OdooDatetimeEditor } from './OdooScalarEditor';
+export { OdooScalarEditor as OdooDatetimeEditor } from './OdooScalarEditor.ts';

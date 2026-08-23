@@ -164,6 +164,24 @@ describe('document detail components', () => {
     expect(container.querySelector('[data-form-field="name"]')).toBeNull();
   });
 
+  it('keeps declared form fields visible when edit metadata has no fields', () => {
+    const component = new OdooFormView('order', {
+      record: { id: 'o1', number: 'SO-001', route: 'HCM - Hanoi' },
+    }, {
+      title_field: 'number',
+      editable: true,
+      edit_action_id: 'edit_order',
+      edit_fields: [],
+      header_actions: [{ id: 'edit_order', label: 'Edit' }],
+      groups: [{ title: 'Shipping', fields: [{ field: 'route', label: 'Route', type: 'text' }] }],
+    });
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('.o-form-action')!.click();
+
+    expect(container.querySelector<HTMLInputElement>('[data-form-field="route"]')?.value).toBe('HCM - Hanoi');
+  });
+
   it('preserves embedded panel content when the form redraws', () => {
     const component = new OdooFormView('order', { record: { number: 'SO-001' } }, {
       title_field: 'number',

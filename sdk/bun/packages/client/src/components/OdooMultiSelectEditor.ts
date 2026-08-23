@@ -1,1 +1,1 @@
-export { OdooAsyncSelectEditor as OdooMultiSelectEditor } from './OdooAsyncSelectEditor';
+export { OdooAsyncSelectEditor as OdooMultiSelectEditor } from './OdooAsyncSelectEditor.ts';

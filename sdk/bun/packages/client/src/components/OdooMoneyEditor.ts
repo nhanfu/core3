@@ -1,1 +1,1 @@
-export { OdooScalarEditor as OdooMoneyEditor } from './OdooScalarEditor';
+export { OdooScalarEditor as OdooMoneyEditor } from './OdooScalarEditor.ts';
