@@ -95,6 +95,7 @@ export class AiWorkspace extends BaseComponent {
     const split = html.take(main).div.className('ai-workspace-split').ele();
     this.conversation = html.take(split).div.className('ai-workspace-conversation').ele();
     this.previewPanel = html.take(split).aside.className('ai-workspace-preview').ele();
+    this.renderPreviewEmpty();
     const composerForm = html.take(main).form.className('ai-workspace-composer').ele() as HTMLFormElement;
     const row = html.take(composerForm).div.className('ai-workspace-composer-row').ele();
     this.composer = html.take(row).textarea.attr('rows', '2').attr('placeholder', this.label('composer_placeholder', 'Ask about this project…')).attr('aria-label', 'Message Core3 agent').ele() as HTMLTextAreaElement;
@@ -184,17 +185,44 @@ export class AiWorkspace extends BaseComponent {
 
   private showPreview(part: Part) {
     if (!this.previewPanel) return;
-    this.previewPanel.innerHTML = '';
+    const canvas = this.openPreviewSurface(String(part.title || part.page || 'Preview'));
     const previewPage = part.page || this.def?.preview_page;
     if (previewPage && typeof this.def?.mount_preview_page === 'function') {
-      void this.def.mount_preview_page(String(previewPage), this.previewPanel, part.context || {}).catch((error: any) => {
-        html.take(this.previewPanel!).p.className('ai-workspace-preview-copy').text(String(error?.message || error));
+      void this.def.mount_preview_page(String(previewPage), canvas, part.context || {}).catch((error: any) => {
+        html.take(canvas).p.className('ai-workspace-preview-error').text(String(error?.message || error));
       });
       return;
     }
-    html.take(this.previewPanel).div.className('ai-workspace-preview-heading').text(String(part.title || 'Preview'));
-    html.take(this.previewPanel).p.className('ai-workspace-preview-copy').text('This preview is rendered from the agent result. A YAML page can provide the detailed view without granting automatic mutation access.');
-    for (const [key, value] of Object.entries(part.summary || {})) html.take(this.previewPanel).div.className('ai-workspace-preview-line').text(`${key}: ${String(value)}`);
+    html.take(canvas).p.className('ai-workspace-preview-copy').text('This preview is rendered from the agent result. A YAML page can provide the detailed view without granting automatic mutation access.');
+    for (const [key, value] of Object.entries(part.summary || {})) html.take(canvas).div.className('ai-workspace-preview-line').text(`${key}: ${String(value)}`);
+  }
+
+  private renderPreviewEmpty() {
+    if (!this.previewPanel) return;
+    this.previewPanel.innerHTML = '';
+    const header = html.take(this.previewPanel).div.className('ai-workspace-preview-toolbar').ele();
+    const heading = html.take(header).div.className('ai-workspace-preview-toolbar-heading').ele();
+    html.take(heading).span.className('ai-workspace-preview-kicker').text('PREVIEW');
+    html.take(heading).strong.className('ai-workspace-preview-title').text('No preview selected');
+    html.take(header).span.className('ai-workspace-preview-readonly').text('Read-only');
+    const empty = html.take(this.previewPanel).div.className('ai-workspace-preview-empty').ele();
+    html.take(empty).div.className('ai-workspace-preview-empty-icon').text('◈');
+    html.take(empty).strong.text('Review a result here');
+    html.take(empty).p.text('Ask the agent to open a page or prepare a preview. The full YAML screen will appear in this panel.');
+  }
+
+  private openPreviewSurface(title: string) {
+    if (!this.previewPanel) return document.createElement('div');
+    this.previewPanel.innerHTML = '';
+    const header = html.take(this.previewPanel).div.className('ai-workspace-preview-toolbar').ele();
+    const heading = html.take(header).div.className('ai-workspace-preview-toolbar-heading').ele();
+    html.take(heading).span.className('ai-workspace-preview-kicker').text('PREVIEW');
+    html.take(heading).strong.className('ai-workspace-preview-title').text(title);
+    html.take(header).span.className('ai-workspace-preview-readonly').text('Read-only');
+    const close = html.take(header).button.className('ai-workspace-preview-close').attr('type', 'button').text('Close').ele() as HTMLButtonElement;
+    close.addEventListener('click', () => this.renderPreviewEmpty());
+    const canvas = html.take(this.previewPanel).div.className('ai-workspace-preview-canvas').ele();
+    return canvas;
   }
 
   private async send() {
