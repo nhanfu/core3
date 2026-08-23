@@ -3,6 +3,7 @@ export type TopicKind = 'query' | 'command' | 'event';
 export type TopicRequestEnvelope<T = unknown> = {
   kind: 'topic.request';
   topic: string;
+  topicName?: string;
   version: number;
   correlationId: string;
   replyTo: string;
@@ -13,6 +14,7 @@ export type TopicRequestEnvelope<T = unknown> = {
 export type TopicResponseEnvelope<T = unknown> = {
   kind: 'topic.response';
   topic: string;
+  topicName?: string;
   version: number;
   correlationId: string;
   source: string;

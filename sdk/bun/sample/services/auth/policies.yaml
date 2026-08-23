@@ -1,0 +1,6 @@
+policies:
+  - { source_service: gateway, target_service: auth, command_class: users.resolve }
+  - { source_service: gateway, target_service: order, command_class: orders.read, required_permission: orders.read }
+  - { source_service: gateway, target_service: order, command_class: orders.create, required_permission: orders.write }
+  - { source_service: gateway, target_service: chat, command_class: chat.read, required_permission: chat.read }
+  - { source_service: gateway, target_service: chat, command_class: chat.create, required_permission: chat.write }

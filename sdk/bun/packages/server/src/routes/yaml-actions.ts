@@ -1,6 +1,6 @@
 import { findDeclaredTransition } from '@core3/client/workflow';
 import type { EventStore } from '@core3/med';
-import type { TopicMediator } from '../topics/mediator.ts';
+import type { TopicRouter } from '../topics/direct.ts';
 import { topicDefinition } from '../topics/contracts.ts';
 
 /** Generic action transport. Domain mutations, topics, and events are YAML. */
@@ -22,7 +22,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
   const body = await req.json() as any;
   const handler = actionDefinition.handler;
   if (typeof actionDefinition.topic === 'string') {
-    return json(await (topics as TopicMediator).request(topicDefinition(actionDefinition.topic, Number(actionDefinition.topic_version || 1)), {
+    return json(await (topics as TopicRouter).request(topicDefinition(actionDefinition.topic, Number(actionDefinition.topic_version || 1)), {
       values: valuesFrom(body),
       actor: activityActor,
       ...body,

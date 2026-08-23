@@ -7,5 +7,6 @@ pages:
   - pages/login.yaml
   - pages/profile.yaml
 permissions: permissions.yaml
+policies: policies.yaml
 data: data.yaml
 migrations: migrations

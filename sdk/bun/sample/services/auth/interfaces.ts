@@ -40,7 +40,13 @@ export interface AuthClaims extends AuthIdentity {
   aud?: string | string[];
   iat?: number;
   exp?: number;
-  token_type?: 'user' | 'service';
+  sid?: string;
+  did?: string;
+  jti?: string;
+  user_security_revision?: number;
+  session_revision?: number;
+  authz_version?: number;
+  token_type?: 'user' | 'client_access' | 'service';
 }
 
 export interface AuthenticationRequest {
@@ -56,6 +62,7 @@ export interface AuthenticationResult {
   user: AuthClaims;
   token_type?: 'Bearer';
   expires_in?: number;
+  refresh_token?: string;
 }
 
 export interface AuthServiceProtocol {

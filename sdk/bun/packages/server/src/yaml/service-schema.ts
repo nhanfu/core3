@@ -7,6 +7,8 @@ export type YamlServiceManifest = {
   permissions?: string;
   topics?: string;
   events?: string;
+  messages?: string;
+  policies?: string;
   operations?: string;
   storage?: string;
   migrations?: string;
@@ -49,7 +51,7 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
       throw new Error(`Service manifest ${key} must be a string list: ${file}`);
     }
   }
-  for (const key of ['runtime', 'permissions', 'topics', 'events', 'operations', 'storage', 'migrations'] as const) {
+  for (const key of ['runtime', 'permissions', 'topics', 'events', 'messages', 'policies', 'operations', 'storage', 'migrations'] as const) {
     if (manifest[key] !== undefined && typeof manifest[key] !== 'string') {
       throw new Error(`Service manifest ${key} must be a string: ${file}`);
     }
@@ -101,6 +103,8 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
     permissions: manifest.permissions as string | undefined,
     topics: manifest.topics as string | undefined,
     events: manifest.events as string | undefined,
+    messages: manifest.messages as string | undefined,
+    policies: manifest.policies as string | undefined,
     operations: manifest.operations as string | undefined,
     storage: manifest.storage as string | undefined,
     migrations: manifest.migrations as string | undefined,

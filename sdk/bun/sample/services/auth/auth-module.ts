@@ -8,12 +8,11 @@ import { AuthRepository } from './auth-repository.ts';
 import { AuthService } from './auth-service.ts';
 import { DuckDbDatabase, HybridDuckDbDatabase, PostgresDatabase } from '@core3/server';
 import { openSqlDatabase } from '@core3/server/database/sql-database';
-import { AUTH_PASSWORD_CHANGE, AUTH_PERMISSION_CHECK, AUTH_USER_LOOKUP, AUTH_USER_RESOLVE } from './topics.ts';
-import { TopicMediator } from '@core3/server/topics/mediator';
-import { MediatorAuthAdapter } from './auth-adapter.ts';
+import { DirectAuthAdapter } from './auth-adapter.ts';
 import { interpolateEnvironment } from '@core3/server/application-config';
-import { authJwtSecret } from '@core3/server/auth/jwt';
+import { AuthJwtKeyRing, authJwtSecret } from '@core3/server/auth/jwt';
 import { resolveDuckDbEncryption } from '@core3/server/database/duckdb-encryption';
+import { DispatchAuthority, DispatchSigningKeyRing } from '@core3/server';
 
 export const AUTH_SERVICE_KEY = 'auth';
 export const AUTH_ADAPTER_KEY = 'auth.adapter';
@@ -45,7 +44,8 @@ export default class AuthModule {
   readonly id = 'auth';
   private db: any;
   private service!: AuthService;
-  private topics: TopicMediator | null = null;
+  private authority!: DispatchAuthority;
+  private clientKeyRing!: AuthJwtKeyRing;
 
   install(context: { moduleRoot: string }): void {
     mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
@@ -88,28 +88,23 @@ export default class AuthModule {
     const jwtSecret = authJwtSecret(context.env);
     const permissionCatalog = [...discoverPages(context.appsRoot).permissions.values()]
       .flatMap((entry: any) => Array.isArray(entry.config?.permissions) ? entry.config.permissions.map(String) : []);
-    this.service = new AuthService(repository, jwtSecret, permissionCatalog);
+    mkdirSync(join(context.moduleRoot, '.data'), { recursive: true });
+    this.clientKeyRing = await AuthJwtKeyRing.load(join(context.moduleRoot, '.data', 'client-key.json'));
+    this.service = new AuthService(repository, jwtSecret, permissionCatalog, join(context.moduleRoot, '.data', 'refresh-tokens.json'), this.clientKeyRing);
+    this.authority = new DispatchAuthority(Date.now, DispatchSigningKeyRing.load(join(context.moduleRoot, '.data', 'dispatch-key-ring.json')), (request) => this.servicePermissions(String(request.subject || request.userId || '')), join(context.moduleRoot, '.data', 'auth-authority.json'));
+    this.service.setSessionActivityChecker((sessionId, userId) => this.authority.sessionStatus(sessionId, userId));
+    this.service.setAuthorizationChangeHandler((userId) => { this.authority.bumpAuthorization(userId); });
+    const declaredPolicies = Bun.YAML.parse(await Bun.file(join(context.moduleRoot, 'policies.yaml')).text()) as any;
+    for (const policy of Array.isArray(declaredPolicies?.policies) ? declaredPolicies.policies : []) {
+      if (policy?.source_service && policy?.target_service && policy?.command_class) this.authority.allow(String(policy.source_service), String(policy.target_service), String(policy.command_class), policy.required_permission ? String(policy.required_permission) : undefined);
+    }
+    for (const policy of String(context.env.CORE3_DISPATCH_POLICIES || '').split(',').map((item) => item.trim()).filter(Boolean)) {
+      const [source, target, command] = policy.split(':');
+      if (source && target && command) this.authority.allow(source, target, command);
+    }
     context.registerService(AUTH_SERVICE_KEY, this.service);
-    this.topics = new TopicMediator(context.eventBus, `auth-${process.pid}`);
-    this.topics.register({
-      definition: AUTH_USER_RESOLVE,
-      handle: ({ token }) => this.service.introspect(String(token)),
-    });
-    this.topics.register({
-      definition: AUTH_USER_LOOKUP,
-      handle: ({ email }) => this.serviceUserLookup(repository, email),
-    });
-    this.topics.register({
-      definition: AUTH_PERMISSION_CHECK,
-      handle: ({ user, permission }) => ({ allowed: this.service.hasPermission(user, permission) }),
-    });
-    this.topics.register({
-      definition: AUTH_PASSWORD_CHANGE,
-      handle: ({ userId, currentPassword, newPassword }) => this.service.changePassword(userId, currentPassword, newPassword).then(() => ({ ok: true as const })),
-    });
-    this.topics.start();
-    context.registerService('auth.topic', this.topics);
-    context.registerService(AUTH_ADAPTER_KEY, new MediatorAuthAdapter(this.topics, jwtSecret));
+    context.registerService('auth.authority', this.authority);
+    context.registerService(AUTH_ADAPTER_KEY, new DirectAuthAdapter(this.service));
 
     let pages = discoverPages(context.appsRoot);
     const profileApi = pages.pages.get('profile')?.config?.api || {};
@@ -120,23 +115,44 @@ export default class AuthModule {
         try {
           const body = await request.json() as any;
           if (!body.email || !body.password) return structuredError('email and password required', 'auth.credentials_required', 400);
-          return json(await this.service.login({ email: String(body.email), password: String(body.password), ip: request.headers.get('x-forwarded-for') || undefined, user_agent: request.headers.get('user-agent') || undefined }));
+          const result = await this.service.login({ email: String(body.email), password: String(body.password), client_id: body.client_id ? String(body.client_id) : undefined, ip: request.headers.get('x-forwarded-for') || undefined, user_agent: request.headers.get('user-agent') || undefined });
+          const claims = await this.service.introspect(result.token);
+          if (claims?.sid && claims.jti && claims.did) this.authority.registerSession({ userId: String(claims.sub), deviceId: String(claims.did), sessionId: String(claims.sid), userSecurityRevision: Number(claims.user_security_revision || 0), sessionRevision: Number(claims.session_revision || 0), authzVersion: this.authority.authorizationVersion(String(claims.sub)), expiresAt: Date.now() + 8 * 60 * 60 * 1000 });
+          return json(result);
         } catch (error) { return errorResponse(error); }
       }
       if (url.pathname === '/api/auth/me' && request.method === 'GET') {
-        try { return json(await this.service.getCurrentUser(request)); } catch (error) { return errorResponse(error); }
+          try { const user = await this.service.getCurrentUser(request); return json({ ...user, authz_version: this.authority.authorizationVersion(String(user.sub)) }); } catch (error) { return errorResponse(error); }
       }
       if (url.pathname === '/api/auth/logout' && request.method === 'POST') {
         try {
           const user = await this.service.getCurrentUser(request);
           await this.service.logout(String(user.sub));
+          if (user.sid) this.authority.revokeSession(String(user.sid));
           return json({ ok: true });
         } catch (error) { return errorResponse(error); }
+      }
+      if (url.pathname === '/api/auth/logout-all' && request.method === 'POST') {
+        try { const user = await this.service.getCurrentUser(request); this.authority.revokeUser(String(user.sub)); return json({ ok: true }); } catch (error) { return errorResponse(error); }
       }
       if (url.pathname === '/api/auth/introspect' && request.method === 'POST') {
         const body = await request.json() as any;
         const claims = body.token ? await this.service.introspect(String(body.token)) : null;
         return claims ? json({ active: true, ...claims }) : json({ active: false }, 401);
+      }
+      if (url.pathname === '/api/auth/refresh' && request.method === 'POST') {
+        try { const body = await request.json() as any; if (!body.refresh_token) return structuredError('refresh_token is required', 'auth.refresh_required', 400); const result = await this.service.refresh(String(body.refresh_token)); const claims = await this.service.introspect(result.token); if (claims?.sid && claims.did) this.authority.registerSession({ userId: String(claims.sub), deviceId: String(claims.did), sessionId: String(claims.sid), userSecurityRevision: Number(claims.user_security_revision || 0), sessionRevision: Number(claims.session_revision || 0), authzVersion: this.authority.authorizationVersion(String(claims.sub)), expiresAt: Date.now() + 8 * 60 * 60 * 1000 }); return json(result); } catch (error) { return errorResponse(error); }
+      }
+      if ((url.pathname === '/api/auth/.well-known/jwks.json' || url.pathname === '/api/auth/jwks') && request.method === 'GET') return json({ keys: [...(await this.authority.jwks()).keys, ...(await this.clientKeyRing.jwks())] });
+      if (url.pathname === '/api/auth/dispatch' && request.method === 'POST') {
+        try {
+          const workloadToken = String(context.env.CORE3_AUTH_WORKLOAD_TOKEN || '');
+          const suppliedToken = String(request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+          if ((workloadToken && suppliedToken !== workloadToken) || (!workloadToken && context.env.CORE3_ENV === 'production')) throw { status: 401, code: 'WORKLOAD_UNAUTHORIZED', message: 'Auth workload credential required' };
+          const body = await request.json() as any;
+          const token = await this.authority.issue({ subject: body.subject, userId: body.user_id, deviceId: body.device_id, sessionId: body.session_id, parentJti: body.parent_jti, sourceService: String(body.source_service || 'gateway'), targetService: String(body.target_service || ''), commandClass: String(body.command_class || ''), requiredPermission: body.required_permission ? String(body.required_permission) : undefined, permissions: [], correlationId: body.correlation_id, causationId: body.causation_id });
+          return json({ token, token_type: 'internal_dispatch', expires_in: 60 });
+        } catch (error) { return errorResponse(error); }
       }
       if (url.pathname === '/api/auth/change-password' && request.method === 'POST') {
         try {
@@ -212,13 +228,13 @@ export default class AuthModule {
     });
   }
 
+  private servicePermissions(userId: string): Promise<string[]> { return this.service.permissionsFor(userId); }
+
   private serviceUserLookup(repository: AuthRepository, email: string): Promise<any | null> {
     return repository.lookupUser(String(email));
   }
 
   async unload(): Promise<void> {
-    this.topics?.stop();
-    this.topics = null;
     if (!this.db) return;
     await new Promise<void>((resolve) => this.db.close(() => resolve()));
     this.db = null;

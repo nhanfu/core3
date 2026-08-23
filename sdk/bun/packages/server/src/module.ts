@@ -2,8 +2,11 @@ import { basename, join } from 'node:path';
 import { readdirSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import type { ModuleApplicationConfig } from '@core3/server/application-config';
-import type { EventBus } from './event-store.ts';
+import type { EventBus } from '@core3/med';
 import { loadYamlServiceManifest, YamlServiceModule } from './yaml-service.ts';
+import { ServiceRegistry } from './runtime/registry.ts';
+import { createDirectCaller, type DirectCallOptions } from './runtime/transport.ts';
+import { IdempotencyInbox } from './runtime/idempotency.ts';
 
 export type ModuleServer = { upgrade(request: Request, options?: { data?: unknown }): boolean };
 export type ModuleApiHandler = (request: Request, url: URL, server?: ModuleServer) => Response | null | undefined | Promise<Response | null | undefined>;
@@ -106,6 +109,9 @@ export class ModuleManager {
   readonly modules: ModuleLifecycle[];
   readonly apiHandlers: ModuleApiHandler[] = [];
   readonly services = new Map<string, unknown>();
+  readonly registry = new ServiceRegistry();
+  private readonly inboxes = new Map<string, IdempotencyInbox>();
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   get metadata() {
     return this.modules.map((module) => ({ id: module.id }));
@@ -120,6 +126,21 @@ export class ModuleManager {
     if (!service) throw new Error(`Module service is not registered: ${name}`);
     return service as T;
   }
+
+  async dispatch(serviceId: string, operation: string, request: Record<string, unknown> = {}, options: DirectCallOptions = {}): Promise<unknown> {
+    if (options.deadlineAt && Date.now() >= options.deadlineAt) throw Object.assign(new Error('Deadline exceeded'), { code: 'DEADLINE_EXCEEDED', status: 408 });
+    const service = this.services.get(`yaml.service.${serviceId}`) || this.services.get(serviceId) as any;
+    if (!service || typeof (service as any).call !== 'function') throw new Error(`Service operation is unavailable: ${serviceId}.${operation}`);
+    return (service as any).call(operation, { ...request, transport: { correlation_id: options.correlationId, causation_id: options.causationId, deadline_at: options.deadlineAt, cancelled_after: options.cancelledAfter } });
+  }
+
+  async callService(serviceId: string, operation: string, request: Record<string, unknown> = {}, options: DirectCallOptions = {}): Promise<unknown> {
+    const endpoint = this.registry.resolve(serviceId);
+    if (endpoint.execution === 'inproc') return this.dispatch(serviceId, operation, request, options);
+    return createDirectCaller(new Map())(endpoint, { topic: operation, version: 1 }, request, options);
+  }
+
+  idempotencyInbox(serviceId: string): IdempotencyInbox { let inbox = this.inboxes.get(serviceId); if (!inbox) { inbox = new IdempotencyInbox(); this.inboxes.set(serviceId, inbox); } return inbox; }
 
   async loadAll(context: ModuleHostContext): Promise<void> {
     const moduleContext = {
@@ -147,7 +168,16 @@ export class ModuleManager {
       };
       return priority(left) - priority(right);
     });
-    for (const module of loadOrder) await module.load({ ...moduleContext, config: context.moduleConfigs[module.id] || {}, moduleRoot: moduleRoot(context.appsRoot, module.id) });
+    // Start heartbeats before loading the full module graph. Large YAML
+    // installations can take longer than one registration TTL; waiting until
+    // the final module is loaded would expire the first registrations during
+    // startup and make discovery appear inconsistent.
+    this.heartbeatTimer = setInterval(() => { for (const endpoint of this.registry.list()) this.registry.heartbeat(endpoint.serviceId, endpoint.instanceId); }, 5000);
+    for (const module of loadOrder) {
+      await module.load({ ...moduleContext, config: context.moduleConfigs[module.id] || {}, moduleRoot: moduleRoot(context.appsRoot, module.id) });
+      const execution = context.env.CORE3_SERVICE_EXECUTION === 'http' ? 'http' : 'inproc';
+      this.registry.register({ serviceId: module.id, instanceId: `${module.id}-${process.pid}`, transport: execution, execution, baseUrl: context.env.CORE3_SERVICE_BASE_URL || `http://127.0.0.1:${context.env.PORT || '3001'}`, dispatchPath: `/internal/services/${module.id}`, ttlMs: 15000 });
+    }
   }
 
   async installAll(context: ModuleHostContext): Promise<void> {
@@ -155,9 +185,12 @@ export class ModuleManager {
   }
 
   async unloadAll(context: ModuleHostContext): Promise<void> {
+    if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
     for (const module of [...this.modules].reverse()) await module.unload({ ...context, config: context.moduleConfigs[module.id] || {}, moduleRoot: moduleRoot(context.appsRoot, module.id), registerApi: () => {}, registerService: () => {}, resolveService: <T>(name: string): T => this.services.get(name) as T });
     this.apiHandlers.length = 0;
     this.services.clear();
+    this.inboxes.clear();
+    for (const endpoint of this.registry.list()) this.registry.deregister(endpoint.serviceId, endpoint.instanceId);
   }
 
   async uninstallAll(context: ModuleHostContext): Promise<void> {

@@ -19,6 +19,16 @@ queries:
     GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
       u.preferred_lang, u.enabled, u.branch_id, u.department_id,
       u.last_login, u.created_at, u.updated_at, u.row_version, u.current_company_id
+  find_user_by_id: |
+    SELECT u.*, string_agg(COALESCE(ro.name, r.name), ',') AS roles_csv
+    FROM users u
+    LEFT JOIN user_roles ur ON ur.user_id = u.id
+    LEFT JOIN roles r ON r.id = ur.role_id
+    LEFT JOIN auth_role_management_overrides ro ON ro.role_id = r.id
+    WHERE u.id = :user_id
+    GROUP BY u.id, u.email, u.name, u.password_hash, u.avatar_url,
+      u.preferred_lang, u.enabled, u.branch_id, u.department_id,
+      u.last_login, u.created_at, u.updated_at, u.row_version, u.current_company_id
   permissions: |
     SELECT DISTINCT p.permission_key
     FROM permissions p

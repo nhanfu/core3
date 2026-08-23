@@ -1,0 +1,46 @@
+version: 0.0.8
+kind: schema
+description: Add durable session and authorization revision state
+
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS user_device_sessions (
+        session_id VARCHAR PRIMARY KEY,
+        user_id VARCHAR NOT NULL,
+        device_id VARCHAR NOT NULL,
+        refresh_family_id VARCHAR NOT NULL,
+        refresh_generation BIGINT NOT NULL DEFAULT 0,
+        refresh_token_hash VARCHAR,
+        user_security_revision BIGINT NOT NULL DEFAULT 0,
+        session_revision BIGINT NOT NULL DEFAULT 0,
+        authz_version BIGINT NOT NULL DEFAULT 0,
+        expires_at TIMESTAMP,
+        revoked BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_device_sessions_user ON user_device_sessions(user_id);
+      CREATE TABLE IF NOT EXISTS refresh_token_history (
+        refresh_family_id VARCHAR NOT NULL,
+        generation BIGINT NOT NULL,
+        token_hash VARCHAR NOT NULL,
+        used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (refresh_family_id, generation)
+      );
+      CREATE TABLE IF NOT EXISTS auth_security_revisions (
+        subject_type VARCHAR NOT NULL,
+        subject_id VARCHAR NOT NULL,
+        security_revision BIGINT NOT NULL DEFAULT 0,
+        authz_version BIGINT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (subject_type, subject_id)
+      );
+    down: |
+      DROP TABLE IF EXISTS refresh_token_history;
+      DROP TABLE IF EXISTS user_device_sessions;
+      DROP TABLE IF EXISTS auth_security_revisions;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

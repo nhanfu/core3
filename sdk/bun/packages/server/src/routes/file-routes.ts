@@ -2,7 +2,7 @@
 
 import { join } from 'node:path';
 import { mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import type { TopicMediator } from '../topics/mediator.ts';
+import type { TopicRouter } from '../topics/direct.ts';
 import { topicDefinition } from '../topics/contracts.ts';
 import { bindNamedParams } from '@core3/server/database/sql';
 
@@ -46,7 +46,7 @@ export async function handleFileRoutes(ctx: Record<string, any>): Promise<Respon
         }));
       }
       if (!action?.topic) return apiError(500, 'Chat attachment topic is not configured');
-      const result: any = await (topics as TopicMediator).request(topicDefinition(action.topic, Number(action.topic_version || 1)), {
+      const result: any = await (topics as TopicRouter).request(topicDefinition(action.topic, Number(action.topic_version || 1)), {
         threadId: meta.thread_id,
         content: meta.content,
         expected_row_version: meta.expected_row_version,

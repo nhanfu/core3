@@ -38,6 +38,11 @@ export class AuthRepository {
     return rows[0] || null;
   }
 
+  async findUserById(userId: string): Promise<any | null> {
+    const rows = await this.execute('find_user_by_id', { user_id: userId });
+    return rows[0] || null;
+  }
+
   async lookupUser(email: string): Promise<any | null> {
     const rows = await this.execute('lookup_user', { email: email.trim() });
     return rows[0] || null;

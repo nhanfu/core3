@@ -14,9 +14,11 @@ import { bindNamedParams } from './database/sql.ts';
 import { cleanDatabase, migrateDatabase } from '@core3/server/migrations';
 import type { MigrationKind } from '@core3/server/migrations';
 import { createYamlApi } from './routes/yaml-api.ts';
-import { TopicMediator } from './topics/mediator.ts';
+import { DirectTopicRouter } from './topics/direct.ts';
+import type { TopicRouter } from './topics/direct.ts';
 import { topicDefinition } from './topics/contracts.ts';
 import type { ModuleApiHandler } from './module.ts';
+import { FetchObjectStore, MessageLog } from './message-log.ts';
 
 export type YamlRuntimeContext = {
   id: string;
@@ -41,6 +43,8 @@ export type YamlServiceDefinition = DiscoveredYamlService & {
   permissions: unknown;
   topics: unknown;
   events: unknown;
+  messages: unknown;
+  policies: unknown;
   operations: unknown;
   storage: unknown;
   migrations: unknown;
@@ -65,6 +69,8 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
     permissions: readOptionalYaml(root, manifest.permissions),
     topics: readOptionalYaml(root, manifest.topics),
     events: readOptionalYaml(root, manifest.events),
+    messages: readOptionalYaml(root, manifest.messages),
+    policies: readOptionalYaml(root, manifest.policies),
     operations: readOptionalYaml(root, manifest.operations),
     storage: readOptionalYaml(root, manifest.storage),
     migrations: manifest.migrations,
@@ -130,8 +136,9 @@ export class YamlServiceModule implements ModuleLifecycle {
   readonly definition: YamlServiceDefinition;
   private db: any = null;
   private repository: YamlRepository | null = null;
-  private topics: TopicMediator | null = null;
+  private topics: TopicRouter | null = null;
   private runtime: YamlRuntimeContext | null = null;
+  private readonly messageLogs = new Map<string, MessageLog>();
 
   constructor(private readonly service: DiscoveredYamlService) {
     this.id = service.manifest.id;
@@ -184,7 +191,19 @@ export class YamlServiceModule implements ModuleLifecycle {
       const migrationTable = `${this.id}_schema_migrations`.replace(/[^a-zA-Z0-9_]/g, '_');
       await migrateDatabase(this.repository, migrationsRoot!, undefined, migrationTable, migrationKinds, { columnstoreTables });
     }
-    this.topics = new TopicMediator(context.eventBus, `${this.id}-${process.pid}`);
+    this.topics = new DirectTopicRouter();
+    const messageDeclarations = Array.isArray((this.definition.messages as any)?.messages) ? (this.definition.messages as any).messages : [];
+    for (const declaration of messageDeclarations) {
+      const region = String(declaration.region || context.env.CORE3_S3_REGION || 'us-east-1');
+      const endpoint = String(declaration.endpoint || context.env.CORE3_S3_ENDPOINT || (region === 'us-east-1' ? 'https://s3.amazonaws.com' : `https://s3.${region}.amazonaws.com`));
+      const objectStore = declaration.backend === 's3' && declaration.bucket
+        ? new FetchObjectStore(endpoint, String(declaration.bucket), { accessKeyId: context.env.CORE3_S3_ACCESS_KEY, secretAccessKey: context.env.CORE3_S3_SECRET_KEY, region, token: context.env.CORE3_S3_TOKEN })
+        : undefined;
+      const log = new MessageLog({ ...declaration, name: String(declaration.name) }, { objectStore });
+      await log.start();
+      this.messageLogs.set(String(declaration.name), log);
+      context.registerService(`message.log.${this.id}.${String(declaration.name)}`, log);
+    }
 
     const discovered = discoverPages(context.appsRoot);
     const pageMaps = {
@@ -296,6 +315,8 @@ export class YamlServiceModule implements ModuleLifecycle {
     void context;
     this.topics?.stop();
     this.topics = null;
+    for (const log of this.messageLogs.values()) await log.stop();
+    this.messageLogs.clear();
     this.repository = null;
     this.runtime = null;
     if (this.db) await new Promise<void>((resolve) => this.db.close(() => resolve()));

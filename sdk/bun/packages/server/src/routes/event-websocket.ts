@@ -5,7 +5,7 @@ import { decodeChatFrame, encodeChatFrame } from '@core3/client/chat-wire';
 type Socket = { send(data: string | Uint8Array): void; close(code?: number, reason?: string): void };
 
 function findStream(pages: Map<string, any>, pathname: string): any {
-  const visit = (components: any[] = []) => {
+  const visit = (components: any[] = []): any => {
     for (const component of components) {
       if (component.websocket?.endpoint === pathname) return component.websocket;
       const nested = visit((component.tabs || []).flatMap((tab: any) => tab.components || []));
@@ -35,7 +35,8 @@ export async function handleEventRoutes(ctx: Record<string, any>, server?: Modul
         socket.send(encodeChatFrame({ type: 'connected' }));
         const subscription = store.subscribeStream();
         void (async () => {
-          for await (const event of subscription.events) {
+          for await (const rawEvent of subscription.events) {
+            const event = rawEvent as any;
             if (event.actorId === String(authUser.sub || '')) {
               socket.send(encodeChatFrame({
                 type: 'chat_ack',

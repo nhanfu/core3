@@ -1,57 +1,36 @@
 import type { AuthClaims, AuthIdentity, AuthServiceProtocol, SecurityContext, User } from './interfaces.ts';
-import { AUTH_PASSWORD_CHANGE } from './topics.ts';
-import { TopicMediator } from '@core3/server/topics/mediator';
-import { verifyAuthJwt } from '@core3/server/auth/jwt';
+import { AuthJwtKeyRing, verifyAuthJwt } from '@core3/server/auth/jwt';
 
-export class MediatorAuthAdapter implements AuthServiceProtocol {
-  constructor(private readonly topics: TopicMediator, private readonly secret: Uint8Array) {}
+export class DirectAuthAdapter implements AuthServiceProtocol {
+  constructor(private readonly service: AuthServiceProtocol) {}
 
   async login(): Promise<never> {
     throw new Error('Login must be handled by the Auth module HTTP endpoint');
   }
 
-  async logout(userId: string): Promise<void> {
-    void userId;
-  }
+  async logout(userId: string): Promise<void> { return this.service.logout(userId); }
 
   async getCurrentUser(request: Request | unknown): Promise<AuthClaims> {
-    const header = authorizationHeader(request);
-    if (!header.startsWith('Bearer ')) throw { status: 401, code: 'UNAUTHORIZED', message_key: 'errors.unauthorized', message: 'Unauthorized' };
-    const user = await verifyAuthJwt<AuthClaims>(header.slice(7), this.secret);
-    if (!user) throw { status: 401, code: 'INVALID_TOKEN', message_key: 'auth.invalid_token', message: 'Invalid or expired token' };
-    return user;
+    return this.service.getCurrentUser(request);
   }
 
   async introspect(token: string): Promise<AuthClaims | null> {
-    return verifyAuthJwt<AuthClaims>(token, this.secret);
+    return this.service.introspect(token);
   }
 
   hasPermission(user: AuthClaims | User, permission: string): boolean {
-    const roles = Array.isArray(user.roles) ? user.roles : [];
-    const permissions = 'permissions' in user && Array.isArray(user.permissions) ? user.permissions : [];
-    const attributePermissions = Array.isArray(user.attributes?.permissions) ? user.attributes.permissions : [];
-    return roles.includes('admin') || permissions.includes(permission) || attributePermissions.includes(permission);
+    return this.service.hasPermission(user, permission);
   }
 
   getSecurityContext(user: AuthClaims | User): SecurityContext {
-    return {
-      allowedBranches: Array.isArray(user.branches) ? user.branches : [],
-      permissions: 'permissions' in user && Array.isArray(user.permissions) ? user.permissions : [],
-    };
+    return this.service.getSecurityContext(user);
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
-    await this.topics.request(AUTH_PASSWORD_CHANGE, { userId, currentPassword, newPassword });
+    await this.service.changePassword(userId, currentPassword, newPassword);
   }
 }
 
 export type AuthAdapter = AuthServiceProtocol & {
   getCurrentUser(request: Request): Promise<AuthIdentity>;
 };
-
-function authorizationHeader(request: Request | unknown): string {
-  if (!request || typeof request !== 'object' || !('headers' in request)) return '';
-  const headers = request.headers;
-  if (!headers || typeof headers !== 'object' || !('get' in headers) || typeof headers.get !== 'function') return '';
-  return headers.get('Authorization') || '';
-}

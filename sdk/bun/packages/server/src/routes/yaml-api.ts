@@ -5,7 +5,7 @@ import { handleDataRoutes } from './yaml-data.ts';
 import { handleActionRoutes } from './yaml-actions.ts';
 import { handleEventRoutes } from '@core3/server/routes/event-websocket';
 import type { ModuleServer } from '../module.ts';
-import type { TopicMediator } from '../topics/mediator.ts';
+import type { TopicRouter } from '../topics/direct.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -25,7 +25,7 @@ type YamlApiContext = {
   permissions: any;
   uploadRoot: string;
   eventStore: any;
-  topics: TopicMediator;
+  topics: TopicRouter;
   storage?: any;
   reloadPages?: () => void;
   resolveService?: <T>(name: string) => T;

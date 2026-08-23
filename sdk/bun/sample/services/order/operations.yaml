@@ -1,0 +1,9 @@
+operations:
+  orders.read:
+    result_key: orders
+    query: |
+      SELECT id, order_number, customer_name, order_date, status, total_amount,
+             branch_id, created_by, created_at, updated_at
+      FROM orders
+      ORDER BY updated_at DESC, id
+      LIMIT :limit

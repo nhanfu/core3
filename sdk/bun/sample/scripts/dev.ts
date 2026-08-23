@@ -68,27 +68,33 @@ if (import.meta.main) {
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
-  const requestedFrontendPort = Number.parseInt(process.env.FRONTEND_PORT || '3002', 10);
+  const inProcessTopology = process.env.CORE3_TOPOLOGY === 'dev_inproc';
+  const serviceHostPort = inProcessTopology ? await findAvailablePort(port + 1) : port;
+  const requestedFrontendPort = Number.parseInt(process.env.FRONTEND_PORT || (inProcessTopology ? String(serviceHostPort + 1) : '3002'), 10);
   const frontendStart = Number.isInteger(requestedFrontendPort) && requestedFrontendPort > 0 ? requestedFrontendPort : 3002;
   const frontendPort = await findAvailablePort(frontendStart);
-  const mediatorPort = await findAvailablePort(Number(process.env.EVENT_MEDIATOR_PORT || '3010'));
-  const mediatorUrl = `ws://127.0.0.1:${mediatorPort}/events`;
+  const eventMode = process.env.CORE3_EVENT_MODE || (inProcessTopology ? 'embedded' : 'mediator');
+  const serviceRegistryToken = process.env.CORE3_SERVICE_REGISTRY_TOKEN || process.env.CORE3_AUTH_WORKLOAD_TOKEN || (inProcessTopology ? `dev-registry-${crypto.randomUUID()}` : '');
+  const useMediator = !inProcessTopology && eventMode === 'mediator';
+  const mediatorPort = useMediator ? await findAvailablePort(Number(process.env.EVENT_MEDIATOR_PORT || '3010')) : 0;
+  const mediatorUrl = mediatorPort ? `ws://127.0.0.1:${mediatorPort}/events` : '';
   if (port !== start) console.log(`Port ${start} is busy; using port ${port}`);
   if (frontendPort !== frontendStart) console.log(`Frontend port ${frontendStart} is busy; using port ${frontendPort}`);
-  if (mediatorPort !== 3010) console.log(`Event mediator port 3010 is busy; using port ${mediatorPort}`);
-  console.log(`Backend: http://127.0.0.1:${port}`);
+  if (mediatorPort && mediatorPort !== 3010) console.log(`Event mediator port 3010 is busy; using port ${mediatorPort}`);
+  console.log(`Backend: http://127.0.0.1:${port}${inProcessTopology ? ` via service host ${serviceHostPort}` : ''}`);
   console.log(`Frontend: http://127.0.0.1:${frontendPort}`);
 
   let stopped = false;
   let restartRequested = false;
   let child: ReturnType<typeof Bun.spawn> | null = null;
   let frontend: ReturnType<typeof Bun.spawn> | null = null;
-  const mediator = Bun.spawn(['bun', '../med/src/event-mediator-server.ts'], {
+  let gateway: ReturnType<typeof Bun.spawn> | null = null;
+  const mediator = useMediator ? Bun.spawn(['bun', '../med/src/event-mediator-server.ts'], {
     env: {
       ...process.env,
       ...databaseEnv,
       EVENT_MEDIATOR_PORT: String(mediatorPort),
-      CORE3_EVENT_MODE: 'mediator',
+      CORE3_EVENT_MODE: eventMode,
       CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
       ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),
       ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),
@@ -96,7 +102,7 @@ if (import.meta.main) {
     stdin: 'inherit',
     stdout: 'inherit',
     stderr: 'inherit',
-  });
+  }) : null;
   let restartTimer: ReturnType<typeof setTimeout> | undefined;
 
   const sourceChanged = (filename: string | Buffer | null) => {
@@ -159,12 +165,19 @@ if (import.meta.main) {
     clearTimeout(restartTimer);
     child?.kill();
     frontend?.kill();
-    mediator.kill();
+    gateway?.kill();
+    mediator?.kill();
   };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
 
   try {
+    if (inProcessTopology) {
+      gateway = Bun.spawn(['bun', 'scripts/gateway.ts'], {
+        env: { ...process.env, PORT: String(port), CORE3_SERVICE_HOST_URL: `http://127.0.0.1:${serviceHostPort}`, CORE3_SERVICE_REGISTRY_TOKEN: serviceRegistryToken, CORE3_GATEWAY_RATE_LIMITS: '[]' },
+        stdin: 'inherit', stdout: 'inherit', stderr: 'inherit',
+      });
+    }
     frontend = Bun.spawn(['bun', 'run', 'frontend:dev'], {
       env: {
         ...process.env,
@@ -180,8 +193,13 @@ if (import.meta.main) {
         env: {
           ...process.env,
           ...databaseEnv,
-          PORT: String(port),
-          CORE3_EVENT_MODE: 'mediator',
+          PORT: String(inProcessTopology ? serviceHostPort : port),
+          CORE3_TOPOLOGY: inProcessTopology ? 'dev_inproc' : (process.env.CORE3_TOPOLOGY || 'distributed'),
+          CORE3_SERVICE_HOST_URL: inProcessTopology ? `http://127.0.0.1:${serviceHostPort}` : (process.env.CORE3_SERVICE_HOST_URL || ''),
+           CORE3_SERVICE_BASE_URL: inProcessTopology ? `http://127.0.0.1:${serviceHostPort}` : (process.env.CORE3_SERVICE_BASE_URL || ''),
+           CORE3_SERVICE_REGISTRY_TOKEN: serviceRegistryToken,
+          CORE3_SERVICE_EXECUTION: inProcessTopology ? 'inproc' : (process.env.CORE3_SERVICE_EXECUTION || 'http'),
+          CORE3_EVENT_MODE: eventMode,
           CORE3_EVENT_MEDIATOR_URL: mediatorUrl,
           ...(demoData || schemaOnly ? { CORE3_CLEAN_EVENT_STORE: 'true' } : {}),
           ...(memoryDb ? { CORE3_EVENT_DB_PATH: ':memory:' } : {}),

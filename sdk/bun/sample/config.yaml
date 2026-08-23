@@ -2,6 +2,20 @@ med:
   endpoint: ${CORE3_EVENT_MEDIATOR_URL:-ws://127.0.0.1:3010/events}
   token: ${CORE3_EVENT_MEDIATOR_TOKEN:-}
 
+runtime:
+  topology: ${CORE3_TOPOLOGY:-distributed}
+  service_host_url: ${CORE3_SERVICE_HOST_URL:-}
+  service_execution: ${CORE3_SERVICE_EXECUTION:-http}
+
+gateway:
+  dispatch_mode: ${CORE3_DISPATCH_MODE:-current}
+  dispatch_enforced_commands: []
+  rate_limits: []
+
+events:
+  delivery_mode: ${CORE3_EVENT_MODE:-mediator}
+  message_log_pairs: []
+
 apps:
   - id: base
     label: Contacts

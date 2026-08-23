@@ -1,0 +1,20 @@
+messages:
+  - name: order-events
+    append_only: true
+    format: parquet
+    schema:
+      columns:
+        - { name: id, type: varchar }
+        - { name: sequence, type: bigint }
+        - { name: event_at, type: bigint }
+        - { name: type, type: varchar }
+        - { name: source_service, type: varchar }
+        - { name: correlation_id, type: varchar }
+        - { name: payload, type: varchar }
+    backend: ${CORE3_MESSAGE_BACKEND:-local}
+    bucket: ${CORE3_S3_BUCKET:-core3-messages}
+    endpoint: ${CORE3_S3_ENDPOINT:-}
+    path: ${CORE3_MESSAGE_ROOT:-../coredb/messages}/order-events
+    retention_ms: 604800000
+    segment_max_rows: 200
+    write_mode: durable

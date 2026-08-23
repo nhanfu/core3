@@ -4,6 +4,7 @@ import { YamlServiceModule } from '@core3/server/yaml-service';
 import { createYamlHostApi } from '@core3/server/routes/yaml-host-api';
 import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { loadApplicationConfig } from '@core3/server/application-config';
+import { FetchObjectStore, GatewayRateLimiter, HybridEventBus, MessageLog, MessageLogEventBus } from '@core3/server';
 import { EventStore, EventMediatorClient, loadMedConfig, type EventBus } from '@core3/med';
 import { CodexTaskRunner } from './task-runner.ts';
 import { createTaskApi } from './task-api.ts';
@@ -15,6 +16,7 @@ const PUBLIC_ROOT = join(APPS_ROOT, 'public');
 const DIST_ROOT = join(APPS_ROOT, 'dist');
 const USE_FRONTEND_DIST = process.env.CORE3_FRONTEND_DIST === 'true';
 const appConfig = loadApplicationConfig(join(APPS_ROOT, 'config.yaml'), process.env);
+const gatewayRateLimiter = new GatewayRateLimiter((appConfig.gateway.rate_limits || []) as any);
 const moduleConfigs: Record<string, Record<string, unknown>> = {};
 const medStoreConfig = await loadMedConfig();
 const eventConfig: any = medStoreConfig.event_store || {};
@@ -22,9 +24,19 @@ const eventDatabase = eventConfig.database || {};
 const chatEvents = Bun.YAML.parse(await Bun.file(join(APPS_ROOT, 'services/chat/events.yaml')).text()) as any;
 const eventSchema = chatEvents.event_schema;
 if (!eventSchema) throw new Error('Chat event schema is not configured');
-const eventMode = String(eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
+const eventMode = String(appConfig.events.delivery_mode || eventConfig.mode || process.env.CORE3_EVENT_MODE || 'embedded');
 const medConnectionConfig = appConfig.med || {};
-const eventBus: EventBus = eventMode === 'mediator'
+const messageBackend = process.env.CORE3_MESSAGE_BACKEND === 's3' ? 's3' : 'local';
+const messageBucket = process.env.CORE3_S3_BUCKET || 'core3-messages';
+const messageRegion = process.env.CORE3_S3_REGION || 'us-east-1';
+const messageEndpoint = process.env.CORE3_S3_ENDPOINT || (messageRegion === 'us-east-1' ? 'https://s3.amazonaws.com' : `https://s3.${messageRegion}.amazonaws.com`);
+const messagePath = process.env.CORE3_MESSAGE_ROOT || join(String(eventDatabase.path || process.env.CORE3_EVENT_DB_PATH || '../coredb/events-parquet'), 'message-log');
+const messageLogEventBus = (eventMode === 'message_log' || appConfig.events.message_log_pairs.length > 0)
+  ? new MessageLogEventBus(new MessageLog({ name: 'core3-events', append_only: true, format: 'parquet', backend: messageBackend, path: messagePath, bucket: messageBucket, prefix: process.env.CORE3_S3_PREFIX || 'core3-events', endpoint: process.env.CORE3_S3_ENDPOINT || undefined, write_mode: 'durable' }, messageBackend === 's3'
+    ? { objectStore: new FetchObjectStore(messageEndpoint, messageBucket, { accessKeyId: process.env.CORE3_S3_ACCESS_KEY, secretAccessKey: process.env.CORE3_S3_SECRET_KEY, region: messageRegion, token: process.env.CORE3_S3_TOKEN }) }
+    : undefined))
+  : null;
+const legacyEventBus: EventBus = eventMode === 'mediator'
   ? new EventMediatorClient({
     endpoint: String(medConnectionConfig.endpoint || process.env.CORE3_EVENT_MEDIATOR_URL || 'ws://127.0.0.1:3010/events'),
     token: String(medConnectionConfig.token || process.env.CORE3_EVENT_MEDIATOR_TOKEN || ''),
@@ -48,6 +60,11 @@ const eventBus: EventBus = eventMode === 'mediator'
     bufferMaxRows: Number(eventConfig.buffer_max_rows || 10000),
     writeMode: eventConfig.write_mode || 'low_latency',
   });
+const eventBus: EventBus = eventMode === 'message_log'
+  ? messageLogEventBus!
+  : appConfig.events.message_log_pairs.length
+    ? new HybridEventBus(legacyEventBus, messageLogEventBus!, appConfig.events.message_log_pairs)
+    : legacyEventBus;
 await eventBus.start();
 
 async function seedChatEvents(): Promise<void> {
@@ -232,6 +249,57 @@ Bun.serve({
   async fetch(req: Request, server: any) {
     const url = new URL(req.url);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
+    const deadlineAt = Number(req.headers.get('x-deadline-at') || 0);
+    if (deadlineAt && Date.now() >= deadlineAt) return apiError(408, 'Deadline exceeded', 'DEADLINE_EXCEEDED');
+
+    if (url.pathname.startsWith('/api/')) {
+      const decision = gatewayRateLimiter.check({
+        ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+        routeClass: url.pathname.startsWith('/api/auth/') ? 'auth' : 'api',
+      });
+      if (!decision.allowed) return new Response(JSON.stringify({ error: 'Rate limit exceeded', code: 'RATE_LIMITED' }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(decision.retryAfter / 1000)), 'X-RateLimit-Limit': String(decision.limit), 'X-RateLimit-Remaining': String(decision.remaining), 'X-RateLimit-Reset': String(Math.ceil(decision.resetAt / 1000)), ...CORS_HEADERS } });
+      const hasUserRule = (appConfig.gateway.rate_limits as any[]).some((rule) => rule?.scope === 'user');
+      if (hasUserRule && !url.pathname.startsWith('/api/auth/login')) {
+        try {
+          const user = await (moduleManager.resolveService<any>('auth.adapter')).getCurrentUser(req);
+          const userDecision = gatewayRateLimiter.check({ ip: 'authenticated', userId: String(user.sub), routeClass: 'api', service: url.pathname.split('/')[2] || undefined });
+          if (!userDecision.allowed) return new Response(JSON.stringify({ error: 'Rate limit exceeded', code: 'RATE_LIMITED' }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(userDecision.retryAfter / 1000)), 'X-RateLimit-Limit': String(userDecision.limit), 'X-RateLimit-Remaining': String(userDecision.remaining), 'X-RateLimit-Reset': String(Math.ceil(userDecision.resetAt / 1000)), ...CORS_HEADERS } });
+        } catch { /* the downstream auth handler owns the final 401 response */ }
+      }
+    }
+
+    if (url.pathname === '/internal/registry' && req.method === 'GET') {
+      const registryToken = process.env.CORE3_SERVICE_REGISTRY_TOKEN || process.env.CORE3_AUTH_WORKLOAD_TOKEN || '';
+      const suppliedToken = String(req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+      if (!registryToken || suppliedToken !== registryToken) return apiError(401, 'Registry credential required', 'REGISTRY_UNAUTHORIZED');
+      return new Response(JSON.stringify(moduleManager.registry.list()), { headers: { 'Content-Type': 'application/json' } });
+    }
+    if (url.pathname === '/internal/dispatch' && req.method === 'POST') {
+      try {
+        const deadlineAt = Number(req.headers.get('x-deadline-at') || 0);
+        if (deadlineAt && Date.now() >= deadlineAt) return apiError(408, 'Deadline exceeded', 'DEADLINE_EXCEEDED');
+        const serviceId = String(req.headers.get('x-service-id') || '');
+        const operation = String(req.headers.get('x-topic') || '');
+        const commandClass = String(req.headers.get('x-command-class') || operation);
+        const authz = String(req.headers.get('authorization') || '');
+        const token = authz.startsWith('Bearer ') ? authz.slice(7) : '';
+        const authority: any = moduleManager.resolveService('auth.authority');
+        const claims = await authority.verify(token, serviceId, { source_service: req.headers.get('x-source-service') || undefined, command_class: commandClass });
+        const idempotencyKey = req.headers.get('x-idempotency-key');
+        const inbox = idempotencyKey ? moduleManager.idempotencyInbox(serviceId) : null;
+        const reservation = idempotencyKey ? inbox!.begin(idempotencyKey) : { fresh: true };
+        if (!reservation.fresh) return new Response(JSON.stringify(reservation.response), { headers: { 'Content-Type': 'application/json', 'X-Idempotent-Replay': 'true' } });
+        const body = await req.json().catch(() => ({}));
+        const result = await moduleManager.dispatch(serviceId, operation, { ...(body && typeof body === 'object' ? body : {}), actor: { id: claims.sub, permissions: claims.permissions, session_id: claims.sid, device_id: claims.did }, transport: { correlation_id: req.headers.get('x-correlation-id') || undefined, causation_id: req.headers.get('x-causation-id') || undefined, deadline_at: deadlineAt || undefined, cancelled_after: req.headers.get('x-cancelled-after') || undefined } }, { deadlineAt: deadlineAt || undefined, correlationId: req.headers.get('x-correlation-id') || undefined, causationId: req.headers.get('x-causation-id') || undefined, cancelledAfter: req.headers.get('x-cancelled-after') || undefined, idempotencyKey: idempotencyKey || undefined });
+        if (idempotencyKey) inbox!.complete(idempotencyKey, result);
+        return new Response(JSON.stringify(result), { headers: { 'Content-Type': 'application/json' } });
+      } catch (error) {
+        const failedKey = req.headers.get('x-idempotency-key');
+        if (failedKey) moduleManager.idempotencyInbox(String(req.headers.get('x-service-id') || '')).fail(failedKey);
+        const failure = error as any;
+        return apiError(failure?.status || 403, failure?.message || 'Dispatch rejected', failure?.code || 'DISPATCH_REJECTED');
+      }
+    }
 
     if (url.pathname.startsWith('/api/')) {
       try {

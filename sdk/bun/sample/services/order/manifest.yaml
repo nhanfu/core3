@@ -14,4 +14,6 @@ pages:
   - pages/order-detail.yaml
   - pages/order-workflow.yaml
 permissions: permissions.yaml
+operations: operations.yaml
+messages: messages.yaml
 storage: storage.yaml
