@@ -6,6 +6,7 @@ import { ProfileMenu } from './ProfileMenu.ts';
 import { AppLauncher, type LauncherApp } from './AppLauncher.ts';
 import { appendIcon } from '@core3/client/components/Icon';
 import { hasPermission } from '@core3/client/meta';
+import { stageAiPrompt } from '@core3/client/components/AiWorkspace';
 
 export type NavItem = { path: string; label: string; icon: string; permission?: string; children?: NavItem[] };
 type NavGroup = { id: string; label: string; items: NavItem[] };
@@ -304,6 +305,56 @@ export class AppShell extends BaseComponent {
         setGroupOpen(!group.classList.contains('open'));
       });
     }
+    // Global AI search: page-name matches stay one click away, while
+    // natural-language requests are staged for the Core3 Agent workspace.
+    const globalSearch = html.take(header).div.className('global-ai-search').ele();
+    const globalSearchForm = html.take(globalSearch).form.className('global-ai-search-form').ele() as HTMLFormElement;
+    const globalSearchIcon = html.take(globalSearchForm).span.className('global-ai-search-icon').ele();
+    appendIcon(globalSearchIcon, 'sparkles');
+    const globalSearchInput = html.take(globalSearchForm).input.type('search').attr('placeholder', 'Ask Core3 anything…').attr('aria-label', 'Ask Core3 anything or search pages').ele() as HTMLInputElement;
+    html.take(globalSearchForm).span.className('global-ai-search-shortcut').text('⌘ K');
+    const globalSearchResults = html.take(globalSearch).div.className('global-ai-search-results').ele();
+    const searchableItems = () => flattenNavItems([this.menu.dashboard, ...(this.menu.groups || []).flatMap(group => group.items)].filter(Boolean) as NavItem[]).filter(item => canSeeNavItem(item, user));
+    const closeSearch = () => { globalSearch.classList.remove('is-open'); globalSearchResults.innerHTML = ''; };
+    const submitToAgent = () => {
+      const prompt = globalSearchInput.value.trim();
+      if (!prompt) return;
+      stageAiPrompt(prompt);
+      closeSearch();
+      globalSearchInput.value = '';
+      this.go('/ai');
+    };
+    const renderSearchResults = (query: string) => {
+      globalSearchResults.innerHTML = '';
+      const normalized = query.trim().toLocaleLowerCase(i18n.lang);
+      if (!normalized) { closeSearch(); return; }
+      const matches = searchableItems().filter(item => i18n.t('*', null, item.label).toLocaleLowerCase(i18n.lang).includes(normalized)).slice(0, 5);
+      if (matches.length) {
+        html.take(globalSearchResults).div.className('global-ai-search-section-label').text('Open a page');
+        for (const item of matches) {
+          const result = html.take(globalSearchResults).button.className('global-ai-search-result').attr('type', 'button').ele() as HTMLButtonElement;
+          if (item.icon) { const icon = html.take(result).span.className('global-ai-search-result-icon').ele(); appendIcon(icon, item.icon); }
+          html.take(result).span.className('global-ai-search-result-label').text(formatNavLabel(i18n.t('*', null, item.label)));
+          result.addEventListener('click', () => { closeSearch(); globalSearchInput.value = ''; this.go(item.path); });
+        }
+      }
+      const agentResult = html.take(globalSearchResults).button.className('global-ai-search-agent').attr('type', 'button').ele() as HTMLButtonElement;
+      const agentIcon = html.take(agentResult).span.className('global-ai-search-agent-icon').ele();
+      appendIcon(agentIcon, 'sparkles');
+      const agentCopy = html.take(agentResult).span.className('global-ai-search-agent-copy').ele();
+      html.take(agentCopy).strong.text('Ask Core3 Agent');
+      html.take(agentCopy).small.text('Plan, explain, or take action with your permissions');
+      agentResult.addEventListener('click', submitToAgent);
+      globalSearch.classList.add('is-open');
+    };
+    globalSearchInput.addEventListener('input', () => renderSearchResults(globalSearchInput.value));
+    globalSearchForm.addEventListener('submit', (event) => { event.preventDefault(); submitToAgent(); });
+    globalSearchInput.addEventListener('focus', () => { if (globalSearchInput.value.trim()) renderSearchResults(globalSearchInput.value); });
+    document.addEventListener('keydown', (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); globalSearchInput.focus(); globalSearchInput.select(); }
+      if (event.key === 'Escape') closeSearch();
+    });
+    document.addEventListener('click', (event: MouseEvent) => { if (!globalSearch.contains(event.target as Node)) closeSearch(); });
     document.addEventListener('click', () => {
       closeAllMenus();
     });

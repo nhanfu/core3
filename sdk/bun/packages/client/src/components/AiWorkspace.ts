@@ -176,7 +176,13 @@ export class AiWorkspace extends BaseComponent {
       const card = html.take(target).section.className('ai-workspace-result-card').ele();
       html.take(card).strong.text(String(part.title || 'Completed'));
       const summary = part.summary || {};
-      const rows = Array.isArray(summary.data) ? summary.data.filter((row: any) => row && typeof row === 'object') : [];
+      // Datasources marked `single: true` return one object instead of an
+      // array. Normalize both shapes so structured query results are rendered
+      // as readable data rather than being coerced to "[object Object]".
+      const rawData = summary.data;
+      const rows = Array.isArray(rawData)
+        ? rawData.filter((row: any) => row && typeof row === 'object')
+        : rawData && typeof rawData === 'object' ? [rawData] : [];
       if (rows.length) {
         const columns: string[] = [...new Set<string>(rows.flatMap((row: any) => Object.keys(row)))].slice(0, 12);
         const table = html.take(card).table.className('ai-workspace-result-table').ele();
@@ -185,10 +191,16 @@ export class AiWorkspace extends BaseComponent {
         const body = html.take(table).tbody.ele();
         for (const row of rows.slice(0, 50)) {
           const tr = html.take(body).trow.ele();
-          for (const column of columns) html.take(tr).tdata.text(String(row[column] ?? ''));
+          for (const column of columns) {
+            const value = row[column];
+            html.take(tr).tdata.text(value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? ''));
+          }
         }
       } else {
-        for (const [key, value] of Object.entries(summary)) html.take(card).div.text(`${key}: ${String(value)}`);
+        for (const [key, value] of Object.entries(summary)) {
+          const rendered = value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '');
+          html.take(card).div.text(`${key}: ${rendered}`);
+        }
       }
     } else if (part.type === 'technical_details') {
       const details = html.take(target).details.className('ai-workspace-technical-details').ele();

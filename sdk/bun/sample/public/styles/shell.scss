@@ -73,11 +73,36 @@
 .header-nav-menu-item:hover, .header-nav-submenu-trigger:hover { background: var(--color-surface-muted); color: var(--color-primary); }
 .header-nav-submenu-menu { top: -7px; left: calc(100% - 6px); min-width: 220px; }
 
+.global-ai-search { position: absolute; z-index: 130; top: 50%; left: 50%; width: min(420px, 32vw); min-width: 220px; margin: 0; transform: translate(-50%, -50%); }
+.global-ai-search-form { display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 9px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface-muted); color: var(--color-text-muted); transition: border-color .15s, box-shadow .15s, background .15s; }
+.global-ai-search-form:focus-within { border-color: var(--color-primary-mid); background: var(--color-surface); box-shadow: 0 0 0 3px var(--color-primary-light); }
+.global-ai-search-icon { display: inline-flex; color: var(--color-primary); }
+.global-ai-search-icon svg { width: 16px; height: 16px; }
+.global-ai-search-form input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: .76rem; }
+.global-ai-search-form input::placeholder { color: var(--color-text-muted); }
+.global-ai-search-shortcut { padding: 2px 5px; border: 1px solid var(--color-border); border-radius: 5px; color: var(--color-text-muted); font-family: inherit; font-size: .6rem; white-space: nowrap; }
+.global-ai-search-results { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; padding: 7px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); box-shadow: var(--shadow-panel); }
+.global-ai-search.is-open .global-ai-search-results { display: grid; gap: 3px; }
+.global-ai-search-section-label { padding: 4px 8px 5px; color: var(--color-text-muted); font-size: .62rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.global-ai-search-result, .global-ai-search-agent { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px; border: 0; border-radius: 7px; background: transparent; color: var(--color-text); cursor: pointer; font: inherit; text-align: left; }
+.global-ai-search-result:hover, .global-ai-search-agent:hover { background: var(--color-surface-muted); }
+.global-ai-search-result-icon, .global-ai-search-agent-icon { display: inline-flex; color: var(--color-primary); }
+.global-ai-search-result-icon svg, .global-ai-search-agent-icon svg { width: 15px; height: 15px; }
+.global-ai-search-result-label { font-size: .74rem; font-weight: 600; }
+.global-ai-search-agent { margin-top: 3px; border-top: 1px solid var(--color-border); border-radius: 0 0 7px 7px; }
+.global-ai-search-agent-copy { display: grid; gap: 2px; }
+.global-ai-search-agent-copy strong { font-size: .74rem; }
+.global-ai-search-agent-copy small { color: var(--color-text-muted); font-size: .62rem; }
+
 .launcher-search { position: fixed; z-index: 2; top: clamp(72px, 12vh, 120px); left: 50%; display: flex; align-items: center; gap: 8px; width: min(640px, calc(100vw - 48px)); height: 44px; padding: 0 13px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); color: var(--color-text-muted); box-shadow: var(--shadow-md); transform: translateX(-50%); }
 .launcher-search:focus-within { border-color: var(--color-primary-mid); box-shadow: 0 0 0 3px var(--color-primary-light); }
 .launcher-search-icon { display: inline-flex; }
 .launcher-search-icon svg { width: 16px; height: 16px; }
 .launcher-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--color-text); font: inherit; font-size: .82rem; }
+
+@media (max-width: 1100px) { .global-ai-search { width: min(360px, calc(100% - 300px)); } }
+@media (max-width: 900px) { .global-ai-search { width: min(320px, calc(100% - 250px)); min-width: 0; } .global-ai-search-shortcut { display: none; } }
+@media (max-width: 720px) { .app-header { padding-inline: 12px; } .header-nav { display: none; } .global-ai-search { width: min(280px, calc(100% - 180px)); } .global-ai-search-form input::placeholder { font-size: 0; } }
 
 @media (min-width: 721px) and (max-width: 1000px) {
   .app-switcher-menu { grid-template-columns: repeat(3, minmax(180px, 220px)); }
