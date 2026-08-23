@@ -21,7 +21,10 @@ export default defineConfig({
   },
   server: {
     port: frontendPort,
-    strictPort: true,
+    // The dev orchestrator checks the port before spawning Vite, but another
+    // process can claim it in that small window. Let Vite advance to the next
+    // port instead of terminating the whole dev stack.
+    strictPort: false,
     proxy: {
       '/api': `http://127.0.0.1:${backendPort}`,
       '/services': `http://127.0.0.1:${backendPort}`,

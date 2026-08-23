@@ -18,12 +18,29 @@ export async function findAvailablePort(start: number): Promise<number> {
   throw new Error(`No available development port at or above ${start}`);
 }
 
+async function waitForMediator(port: number, timeoutMs = 10000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
+      if (response.ok) return;
+    } catch (error) {
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Event mediator did not become ready on port ${port}${lastError ? `: ${String((lastError as Error)?.message || lastError)}` : ''}`);
+}
+
 if (import.meta.main) {
   const argumentsList = process.argv.slice(2);
   const dbArgument = argumentsList.find((argument) => argument.startsWith('--db='));
   const demoData = argumentsList.some((argument) => argument === '--demo-data' || argument === '--demo-data=true');
   const schemaOnly = argumentsList.some((argument) => argument === '--schema-only' || argument === '--schema-only=true');
+  const buildCss = argumentsList.some((argument) => argument === '-css' || argument === '--css' || argument === '--css=true');
   const legacyMemoryFlag = argumentsList.some((argument) => argument === '--memory-db' || argument === '--memory-db=true');
+  const gatewayRequested = argumentsList.some((argument) => argument === '--gateway' || argument === '--gateway=true');
   const memoryDb = process.env.CORE3_DB_DRIVER === 'duckdb-memory'
     || legacyMemoryFlag
     || argumentsList.some((argument) => argument === '--memory' || argument === '--memory=true');
@@ -33,7 +50,14 @@ if (import.meta.main) {
   if (!supported.has(requestedDb)) throw new Error(`Unsupported database mode: ${requestedDb}. Use --db=postgres|duckdb|mysql|oracle|sqlserver`);
   if (memoryDb && requestedDb !== 'duckdb') throw new Error('--memory can only be used with --db=duckdb');
   const defaultDriver = memoryDb ? 'duckdb-memory' : requestedDb;
-  const serviceIds = ['auth', 'order', 'chat', 'crm', 'point-of-sale', 'sale-subscription', 'sale-renting'] as const;
+  if (buildCss) {
+    const cssBuild = Bun.spawn(['bun', 'run', 'css:build'], { stdin: 'inherit', stdout: 'inherit', stderr: 'inherit' });
+    const exitCode = await cssBuild.exited;
+    if (exitCode !== 0) throw new Error(`CSS build failed with exit code ${exitCode}`);
+  }
+  const serviceIds = readdirSync('services', { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(`services/${entry.name}/manifest.yaml`))
+    .map((entry) => entry.name);
   const databaseEnv: Record<string, string> = {
     CORE3_DB_DRIVER: defaultDriver,
   };
@@ -68,7 +92,7 @@ if (import.meta.main) {
   const requestedPort = Number.parseInt(process.env.PORT || '3001', 10);
   const start = Number.isInteger(requestedPort) && requestedPort > 0 ? requestedPort : 3001;
   const port = await findAvailablePort(start);
-  const inProcessTopology = process.env.CORE3_TOPOLOGY === 'dev_inproc';
+  const inProcessTopology = gatewayRequested || process.env.CORE3_TOPOLOGY === 'dev_inproc';
   const serviceHostPort = inProcessTopology ? await findAvailablePort(port + 1) : port;
   const requestedFrontendPort = Number.parseInt(process.env.FRONTEND_PORT || (inProcessTopology ? String(serviceHostPort + 1) : '3002'), 10);
   const frontendStart = Number.isInteger(requestedFrontendPort) && requestedFrontendPort > 0 ? requestedFrontendPort : 3002;
@@ -178,6 +202,7 @@ if (import.meta.main) {
         stdin: 'inherit', stdout: 'inherit', stderr: 'inherit',
       });
     }
+    if (mediator) await waitForMediator(mediatorPort);
     frontend = Bun.spawn(['bun', 'run', 'frontend:dev'], {
       env: {
         ...process.env,
