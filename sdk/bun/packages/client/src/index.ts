@@ -84,7 +84,6 @@ export { ScheduleGrid } from './components/ScheduleGrid.ts';
 export { Chat } from './components/Chat.ts';
 export { ChatWorkspace } from './components/ChatWorkspace.ts';
 export { AiWorkspace, stageAiPrompt } from './components/AiWorkspace.ts';
-export { TaskRunnerPanel } from './components/TaskRunnerPanel.ts';
 export { ChromeTab } from './components/ChromeTab.ts';
 export { EventPopup } from './components/EventPopup.ts';
 export { LoginForm } from './components/LoginForm.ts';

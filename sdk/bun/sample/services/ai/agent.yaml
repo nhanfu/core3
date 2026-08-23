@@ -1,0 +1,16 @@
+# The agent may read business YAML and invoke only operations declared here.
+# This file is an allowlist, not a permission grant. The target API still
+# enforces the current user's permission with the forwarded bearer token.
+read:
+  roots:
+    - services/*/pages
+    - services/*/workflows.yaml
+    - services/*/permissions.yaml
+    - services/*/manifest.yaml
+
+operations:
+  - id: ecommerce.orders.confirm
+    route: /api/actions/ecommerce.orders.confirm
+    method: POST
+    permission: ecommerce.write
+    preview: false

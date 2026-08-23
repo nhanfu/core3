@@ -37,7 +37,7 @@ datasources:
     query: |
       SELECT *
       FROM (
-        SELECT m.id, m.thread_id, m.role, m.text, m.task_id,
+        SELECT m.id, m.thread_id, m.role, m.text, m.parts_json, m.task_id,
           CAST(m.created_at AS VARCHAR) AS created_at
         FROM ai_messages m
         JOIN ai_threads t ON t.id = m.thread_id AND t.actor_id = :current_user_id
@@ -61,16 +61,17 @@ components:
     message_page_size: 200
     create_thread_action: create_thread
     send_action: send_message
-    attach_task_action: attach_task
+    save_assistant_action: save_assistant
+    preview_page: ai-preview
     eyebrow: CORE3 AGENT
     heading: Project workspace
     description: Plan, change, and review your YAML-driven project.
     new_thread_label: New thread
     threads_label: Threads
     context_value: core3 project
-    composer_placeholder: Ask Core3 to change the project…
+    composer_placeholder: Ask Core3 about this project…
     welcome_title: What should we build?
-    welcome_description: Ask Core3 to inspect, create, or improve a service. Changes begin in a staged workspace.
+    welcome_description: Ask Core3 to inspect YAML rules, explain behavior, or prepare an API operation.
     suggestions:
       - Inspect this project
       - Create a dashboard
@@ -110,22 +111,18 @@ actions:
       steps:
         - query: "INSERT INTO ai_messages(id, thread_id, role, text) VALUES(:message_id, :thread_id, 'user', trim(CAST(:prompt AS VARCHAR)))"
       result: { query: "SELECT :message_id AS id, :thread_id AS thread_id" }
-  - id: attach_task
+  - id: save_assistant
     type: server
     permission: ai.write
-    action: ai.tasks.attach
+    action: ai.messages.save_assistant
     handler: ai
-    operation: attach_task
+    operation: save_assistant
     mutation:
-      generated: [link_id, ack_id]
+      generated: [message_id]
       guards:
         - query: "SELECT t.id AS thread_id FROM ai_threads t WHERE t.id = :thread_id AND t.actor_id = :current_user_id"
           status: 404
           message: AI thread not found
-        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:task_id AS VARCHAR))) > 0"
-          status: 400
-          message: A running task id is required
       steps:
-        - query: "INSERT INTO ai_thread_tasks(id, thread_id, task_id, access_mode) VALUES(:link_id, :thread_id, trim(CAST(:task_id AS VARCHAR)), COALESCE(NULLIF(trim(CAST(:access_mode AS VARCHAR)), ''), 'ask'))"
-        - query: "INSERT INTO ai_messages(id, thread_id, role, text, task_id) VALUES(:ack_id, :thread_id, 'assistant', CASE WHEN trim(CAST(:access_mode AS VARCHAR)) = 'full_access' THEN 'I''m running with full access inside the authorized project boundary. I''ll inspect the project, make the requested changes, validate them, and prepare the result.' ELSE 'I''m working in a staged workspace and will ask before approval-sensitive actions. I''ll inspect the project, make the requested changes, validate them, and prepare a review.' END, trim(CAST(:task_id AS VARCHAR)))"
-      result: { query: "SELECT :link_id AS id, :thread_id AS thread_id, trim(CAST(:task_id AS VARCHAR)) AS task_id" }
+        - query: "INSERT INTO ai_messages(id, thread_id, role, text, parts_json) VALUES(:message_id, :thread_id, 'assistant', trim(CAST(:text AS VARCHAR)), NULLIF(CAST(:parts_json AS VARCHAR), ''))"
+      result: { query: "SELECT :message_id AS id, :thread_id AS thread_id" }

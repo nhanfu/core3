@@ -1,0 +1,10 @@
+title: Agent Preview
+page: { id: ai-preview, breadcrumb: [Core3 Agent, Preview], auth: { require: [ai.read] } }
+
+components:
+  - type: Html
+    tag: section
+    class: ai-preview-page
+    children:
+      - { type: Html, tag: h2, text: Preview }
+      - { type: Html, tag: p, text: The agent preview page is mounted with a restricted preview context. Mutations require a separate confirmation action. }

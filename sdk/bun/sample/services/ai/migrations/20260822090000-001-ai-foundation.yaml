@@ -17,6 +17,7 @@ type:
         thread_id VARCHAR NOT NULL REFERENCES ai_threads(id),
         role VARCHAR NOT NULL,
         text VARCHAR NOT NULL,
+        parts_json VARCHAR,
         task_id VARCHAR,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );

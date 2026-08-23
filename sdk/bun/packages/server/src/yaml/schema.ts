@@ -205,7 +205,8 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
     'message_page_size',
     'create_thread_action',
     'send_action',
-    'attach_task_action',
+    'save_assistant_action',
+    'preview_page',
     'eyebrow',
     'heading',
     'description',
@@ -557,7 +558,7 @@ function validateComponents(
     }
     if (component.type === 'AiWorkspace') {
       requireSource(component.message_source, `${path}.message_source`, datasourceIds, options, issues);
-      for (const key of ['create_thread_action', 'send_action', 'attach_task_action']) {
+      for (const key of ['create_thread_action', 'send_action', 'save_assistant_action']) {
         requireString(component[key], `${path}.${key}`, issues);
         if (typeof component[key] === 'string' && !actionIds.has(component[key])) {
           issues.push(`${path}.${key} references unknown action "${component[key]}"`);

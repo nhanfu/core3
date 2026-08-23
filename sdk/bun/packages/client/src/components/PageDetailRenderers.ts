@@ -229,6 +229,7 @@ async function renderChatWorkspace(def: any, targetContainer: HTMLElement) {
 
 async function renderAiWorkspace(def: any, targetContainer: HTMLElement) {
   const { AiWorkspace } = await import('@core3/client/components/AiWorkspace');
+  const { PageRuntime } = await import('@core3/client/components/PageRoot');
   const threadSource = def.source;
   const messageSource = def.message_source;
   const findAction = (actionId: string) => (config.actions || []).find((action: any) => action.id === actionId);
@@ -240,6 +241,16 @@ async function renderAiWorkspace(def: any, targetContainer: HTMLElement) {
     },
     def,
   );
+  let previewRuntime: any = null;
+  def.mount_preview_page = async (pageId: string, target: HTMLElement, previewContext: Record<string, unknown> = {}) => {
+    previewRuntime?.dispose();
+    previewRuntime = null;
+    const response = await fetch(`${client._resolveBase()}/pages/${encodeURIComponent(pageId)}`, { headers: client._headers() });
+    if (!response.ok) throw new Error(`Preview page could not be loaded: ${pageId}`);
+    const previewConfig = await response.json();
+    previewRuntime = new PageRuntime(previewConfig, registry, { ...ctx, preview: true, ...previewContext });
+    comp.mountChild(previewRuntime, target);
+  };
   const _origSetState = comp.setState.bind(comp);
   def.load_messages = async (threadId: string) => {
     if (!messageSource) return;
