@@ -146,7 +146,21 @@ components:
             text: >-
               This graph is one example of a bounded repair-loop design. It is not a required
               agent topology: an agent may reorder, omit, or add stages, define different retry
-              rules, or use another workflow that better fits the task.
+              rules, or use another workflow that better fits the task. Every loop must still
+              declare a maximum iteration count, time limit, tool/action budget, and a no-progress
+              stop condition. When a limit is reached, the agent stops and reports the unresolved
+              state or asks the user for direction; it may not retry indefinitely or silently
+              continue after a failed safety check.
+          - type: panel
+            title: Example loop policy
+            language: text
+            code: |
+              max_iterations: 3
+              max_duration: 15m
+              max_actions: 20
+              stop_if_no_score_change_after: 2 iterations
+              stop_on: [safety_failure, permission_failure, repeated_same_error]
+              on_limit: report_and_ask_user
 
       - id: learning-ledger
         kicker: Continuous improvement
@@ -189,6 +203,7 @@ components:
               - start and continue conversations in named threads
               - submit natural-language tasks and show readable agent responses
               - show live activity and arbitrary agent-defined progress
+              - show loop limits, current attempts, remaining budget, and stop reasons
               - present structured results, tables, evidence, and technical details
               - open read-only previews of YAML pages or agent-produced views
               - request and complete explicit mutation approvals
@@ -213,4 +228,6 @@ components:
               to approved evidence, scenarios are reproducible, scores are versioned, repairs are
               evidence-backed, and security failures are handled correctly. Other workflows may
               define different acceptance criteria; each agent must declare its criteria and produce
-              enough evidence for the user to review the result.
+              enough evidence for the user to review the result. Every repair loop must expose its
+              iteration, time, and action limits, stop on no progress or safety failure, and report
+              the limit or stop reason in the workspace.
