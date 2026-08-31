@@ -19,7 +19,7 @@ components:
     sections:
       - id: direction
         kicker: Direction
-        timeline: 0–3 months
+        timing: Q3 2026
         title: Target — a full Odoo clone
         lead: >-
           The framework's direction is to reproduce Odoo's ERP surface end to end on YShip, not to
@@ -44,7 +44,7 @@ components:
 
       - id: odoo-modules
         kicker: Odoo parity tracker
-        timeline: 3–12 months
+        timing: Q4 2026 – Q1 2027
         title: Module / sub-module checklist and implementation status
         lead: >-
           Odoo's own app grouping is the literal tracking list for AI-oriented operations. Status is
@@ -80,12 +80,12 @@ components:
           - type: cardgrid
             cards:
               - tag: In progress
-                tone: tip
+                tone: note
                 title: Sales & CRM
                 body: Leads, sales, POS, subscriptions, and rentals.
                 icons: [{name: users, label: CRM}, {name: cart, label: Sales}, {name: receipt, label: Point of Sale}, {name: repeat, label: Subscriptions}, {name: calendar, label: Rental}]
               - tag: In progress
-                tone: important
+                tone: note
                 title: Finance
                 body: Billing, expenses, documents, and reporting.
                 icons: [{name: money, label: Accounting}, {name: invoice, label: Invoicing}, {name: file, label: Expenses}, {name: folder, label: Documents}, {name: analytics, label: Spreadsheet and Dashboards}]
@@ -95,7 +95,7 @@ components:
                 body: Inventory, production, purchasing, quality, and maintenance.
                 icons: [{name: warehouse, label: Inventory}, {name: factory, label: Manufacturing}, {name: purchase, label: Purchase}, {name: wrench, label: Maintenance}, {name: quality, label: Quality}, {name: engineering, label: PLM}]
               - tag: In progress
-                tone: tip
+                tone: note
                 title: Human Resources
                 body: Employees, hiring, leave, reviews, referrals, and fleet.
                 icons: [{name: users, label: Employees}, {name: recruitment, label: Recruitment}, {name: calendar, label: Time Off}, {name: review, label: Appraisals}, {name: share, label: Referrals}, {name: car, label: Fleet}]
@@ -110,12 +110,67 @@ components:
                 body: Projects, timesheets, field work, and helpdesk.
                 icons: [{name: project, label: Project}, {name: activity, label: Timesheets}, {name: truck, label: Field Service}, {name: headset, label: Helpdesk}]
               - tag: In progress
-                tone: important
+                tone: note
                 title: Productivity
                 body: Guarded approvals with evidence and attachments.
                 icons: [{name: check, label: Approvals}, {name: shield, label: Permission checks}, {name: file, label: Evidence}, {name: folder, label: Attachments}]
               - tag: Not started
-                tone: warning
+                tone: important
                 title: Planned capabilities
                 body: Reserved areas without a discovered service.
                 icons: [{name: calendar, label: Appointments and Planning}, {name: document, label: Knowledge}, {name: edit, label: Sign}, {name: message, label: VoIP}]
+
+      - id: ai-product-parity
+        kicker: AI product parity
+        timing: Q2 2027
+        title: Lovable / Manus parity plan
+        lead: >-
+          Add the AI-native workflow around the Odoo-oriented foundation: describe an application,
+          generate editable YAML, connect real data and tools, execute bounded tasks, and keep every
+          change reviewable, reversible, and permission-aware.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Plan
+                tone: note
+                title: Prompt to app
+                body: Turn a plain-language brief into a runnable YAML application plan.
+                icons: [{name: sparkles, label: Natural-language planning}, {name: document, label: YAML application manifest}, {name: check, label: Schema validation}]
+              - tag: Plan
+                tone: note
+                title: Visual iteration
+                body: Select a page or component, request a change, preview it, and inspect the diff.
+                icons: [{name: panel, label: Visual selection}, {name: edit, label: Targeted edit}, {name: refresh, label: Preview and regenerate}]
+              - tag: Plan
+                tone: note
+                title: Full-stack composition
+                body: Compose pages, models, workflows, permissions, and guarded mutations together.
+                icons: [{name: grid, label: Page composition}, {name: table, label: Data model}, {name: shield, label: Permission boundary}]
+              - tag: Plan
+                tone: note
+                title: Context and integrations
+                body: Connect approved datasources, APIs, MCP tools, and project files as bounded context.
+                icons: [{name: table, label: Datasources}, {name: share, label: External integrations}, {name: folder, label: Project files}]
+              - tag: Plan
+                tone: note
+                title: Agent execution
+                body: Run multi-step research and browser tasks with visible progress and artifacts.
+                icons: [{name: search, label: Research}, {name: globe, label: Browser tasks}, {name: activity, label: Progress and events}]
+              - tag: Plan
+                tone: note
+                title: Human control
+                body: Pause risky work, request approval, take over, or roll back a task safely.
+                icons: [{name: shield, label: Approval gates}, {name: panel, label: User takeover}, {name: repeat, label: Rollback}]
+              - tag: Plan
+                tone: note
+                title: Publish and operate
+                body: Sync, test, deploy, observe, and maintain generated applications with ownership.
+                icons: [{name: share, label: Collaboration and sync}, {name: upload, label: Deployment}, {name: analytics, label: Usage and quality}]
+          - type: callout
+            tone: important
+            title: Parity exit evidence
+            text: >-
+              A user can describe an AI-oriented Odoo workflow, receive a valid editable YAML plan,
+              preview and revise it, connect only approved context, run a permissioned task with
+              visible artifacts, approve or take over risky actions, and publish or roll back the
+              result. Every output remains owned, inspectable, and auditable.

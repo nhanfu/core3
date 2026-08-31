@@ -29,6 +29,11 @@ registry.set('DocPage', DocPage);
 const app = document.getElementById('app')!;
 const navSlot = html.take(app).div.ele() as HTMLElement;
 const contentSlot = html.take(app).div.attr('id', 'doc-content').ele() as HTMLElement;
+const scrollKey = () => `core3-spec-scroll:${window.location.pathname}`;
+
+window.addEventListener('beforeunload', () => {
+  sessionStorage.setItem(scrollKey(), String(window.scrollY));
+});
 
 let topNav: DocTopNav | null = null;
 
@@ -64,7 +69,7 @@ darkMediaQuery.addEventListener('change', () => {
   if (!localStorage.getItem(THEME_KEY)) applyTheme(systemTheme());
 });
 
-async function renderRoute(pathname: string) {
+async function renderRoute(pathname: string, restoreScroll = false) {
   const path = normalizePath(pathname);
   const pageId = ROUTES[path];
   topNav?.setState({ active: path });
@@ -82,6 +87,15 @@ async function renderRoute(pathname: string) {
   }
   const config = validatePageDefinition(await response.json(), { allowExternalSources: true });
   await new PageRuntime(config, registry).render(contentSlot);
+  if (restoreScroll) {
+    const saved = sessionStorage.getItem(scrollKey());
+    if (saved !== null) {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        window.scrollTo(0, Number(saved));
+        sessionStorage.removeItem(scrollKey());
+      }));
+    }
+  }
 }
 
 function navigate(path: string) {
@@ -107,7 +121,7 @@ async function bootstrap() {
     onToggleTheme: toggleTheme,
   }, nav.nav || {});
   topNav.mount(navSlot);
-  await renderRoute(window.location.pathname);
+  await renderRoute(window.location.pathname, true);
 }
 
 void bootstrap();

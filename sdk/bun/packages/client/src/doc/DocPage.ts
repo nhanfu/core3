@@ -27,7 +27,7 @@ export type DocBlock =
 export type DocSection = {
   id?: string;
   kicker?: string;
-  timeline?: string;
+  timing?: string;
   title: string;
   lead?: string;
   blocks?: DocBlock[];
@@ -295,7 +295,7 @@ export class DocPage extends BaseComponent {
       let anchor = section.id || slug(section.title, index);
       while (usedAnchors.has(anchor)) anchor = `${anchor}-${index}`;
       usedAnchors.add(anchor);
-      if (tocNav) this.tocLinks.set(anchor, this.link(tocNav, anchor, section.title, section.timeline));
+      if (tocNav) this.tocLinks.set(anchor, this.link(tocNav, anchor, section.title, section.timing));
 
       const sectionClass = isLanding
         ? `doc-section doc-section-reveal doc-landing-section doc-landing-section-${index % 2 ? 'alternate' : 'default'}`
@@ -373,10 +373,10 @@ export class DocPage extends BaseComponent {
     for (const el of targets) this.revealObserver.observe(el);
   }
 
-  private link(container: HTMLElement, anchor: string, label: string, timeline?: string): HTMLAnchorElement {
+  private link(container: HTMLElement, anchor: string, label: string, timing?: string): HTMLAnchorElement {
     const item = html.take(container).a.className('doc-toc-link').attr('href', `#${anchor}`).ele() as HTMLAnchorElement;
     html.take(item).span.className('doc-toc-link-title').text(label);
-    if (timeline) html.take(item).small.className('doc-toc-link-time').text(timeline);
+    if (timing) html.take(item).small.className('doc-toc-link-time').text(timing);
     html.take(item).event('click', (event: MouseEvent) => {
       event.preventDefault();
       document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
