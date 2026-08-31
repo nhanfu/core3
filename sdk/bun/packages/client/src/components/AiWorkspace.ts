@@ -44,8 +44,10 @@ export class AiWorkspace extends BaseComponent {
   private composer: HTMLTextAreaElement | null = null;
   private sendButton: HTMLButtonElement | null = null;
   private previewPanel: HTMLElement | null = null;
+  private splitEl: HTMLElement | null = null;
   private currentThreadId: string | null = null;
   private selectedProvider: string = '';
+  private providerSelect: HTMLSelectElement | null = null;
 
   constructor(id: string, state: any, def: any = {}) {
     super(id, { threads: [], messages: [], currentUserId: '', ...state });
@@ -93,11 +95,11 @@ export class AiWorkspace extends BaseComponent {
     html.take(context).span.className('ai-workspace-context-divider').text('·');
     html.take(context).span.className('ai-workspace-context-permission').text('Uses your permissions');
 
-    const split = html.take(main).div.className('ai-workspace-split').ele();
-    this.conversation = html.take(split).div.className('ai-workspace-conversation').ele();
-    this.previewPanel = html.take(split).aside.className('ai-workspace-preview').ele();
-    this.renderPreviewEmpty();
-    const composerForm = html.take(main).form.className('ai-workspace-composer').ele() as HTMLFormElement;
+    this.splitEl = html.take(main).div.className('ai-workspace-split').ele();
+    const split = this.splitEl;
+    const chatCol = html.take(split).div.className('ai-workspace-chat').ele();
+    this.conversation = html.take(chatCol).div.className('ai-workspace-conversation').ele();
+    const composerForm = html.take(chatCol).form.className('ai-workspace-composer').ele() as HTMLFormElement;
     const row = html.take(composerForm).div.className('ai-workspace-composer-row').ele();
     this.composer = html.take(row).textarea.attr('rows', '2').attr('placeholder', this.label('composer_placeholder', 'Ask about this project…')).attr('aria-label', 'Message Core3 agent').ele() as HTMLTextAreaElement;
     this.sendButton = html.take(row).button.className('ai-workspace-send').attr('type', 'submit').attr('aria-label', 'Send message').ele() as HTMLButtonElement;
@@ -109,7 +111,8 @@ export class AiWorkspace extends BaseComponent {
       ? this.def.providers
       : [{ value: 'codex', label: 'Codex' }, { value: 'claude', label: 'Claude' }];
     this.selectedProvider = providers[0]?.value || 'codex';
-    const providerSelect = html.take(providerControl).select.attr('aria-label', 'AI agent').ele() as HTMLSelectElement;
+    this.providerSelect = html.take(providerControl).select.attr('aria-label', 'AI agent').ele() as HTMLSelectElement;
+    const providerSelect = this.providerSelect;
     for (const p of providers) {
       const opt = document.createElement('option');
       opt.value = p.value;
@@ -121,6 +124,8 @@ export class AiWorkspace extends BaseComponent {
     html.take(composerForm).div.className('ai-workspace-composer-hint').text('The agent can read approved YAML and call registered Core3 APIs only.');
     composerForm.addEventListener('submit', (event) => { event.preventDefault(); void this.send(); });
     this.composer.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void this.send(); } });
+    this.previewPanel = html.take(split).aside.className('ai-workspace-preview').ele();
+    this.renderPreviewEmpty();
 
     this.renderThreadList();
     this.currentThreadId ||= this.threads()[0]?.id || null;
@@ -253,6 +258,7 @@ export class AiWorkspace extends BaseComponent {
 
   private renderPreviewEmpty() {
     if (!this.previewPanel) return;
+    this.splitEl?.classList.remove('is-preview-open');
     this.previewPanel.innerHTML = '';
     const header = html.take(this.previewPanel).div.className('ai-workspace-preview-toolbar').ele();
     const heading = html.take(header).div.className('ai-workspace-preview-toolbar-heading').ele();
@@ -267,6 +273,7 @@ export class AiWorkspace extends BaseComponent {
 
   private openPreviewSurface(title: string) {
     if (!this.previewPanel) return document.createElement('div');
+    this.splitEl?.classList.add('is-preview-open');
     this.previewPanel.innerHTML = '';
     const header = html.take(this.previewPanel).div.className('ai-workspace-preview-toolbar').ele();
     const heading = html.take(header).div.className('ai-workspace-preview-toolbar-heading').ele();
@@ -282,7 +289,10 @@ export class AiWorkspace extends BaseComponent {
   private async send() {
     const prompt = this.composer?.value.trim() || '';
     if (!prompt || !this.sendButton) return;
+    // Lock controls immediately so the user can't change agent or re-submit mid-flight.
     this.sendButton.disabled = true;
+    if (this.providerSelect) this.providerSelect.disabled = true;
+    if (this.composer) this.composer.value = '';
     try {
       let threadId = this.currentThreadId;
       if (!threadId) {
@@ -291,13 +301,17 @@ export class AiWorkspace extends BaseComponent {
         this.currentThreadId = threadId;
       }
       await this.runAction('send_action', { thread_id: threadId, prompt });
+      // Show the user message immediately before waiting for the agent response.
+      await this.def?.refresh?.();
+      await this.loadMessages();
+      this.renderThreadList();
+      this.renderConversation();
       const response = await fetch(`${apiBase()}/ai/agent`, { method: 'POST', headers: tokenHeaders(), body: JSON.stringify({ thread_id: threadId, prompt, provider: this.selectedProvider || undefined }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(String(result?.error || 'Agent request failed'));
       const parts = Array.isArray(result?.parts) ? result.parts : [{ type: 'text', markdown: 'The agent returned no readable response.' }];
       const text = parts.filter((part: Part) => part.type === 'text').map((part: Part) => part.markdown).join('\n\n') || 'Action prepared.';
       await this.runAction('save_assistant_action', { thread_id: threadId, text, parts_json: JSON.stringify(parts) });
-      if (this.composer) this.composer.value = '';
       await this.def?.refresh?.();
       await this.loadMessages();
       this.renderThreadList();
@@ -306,6 +320,7 @@ export class AiWorkspace extends BaseComponent {
       if (this.conversation) html.take(this.conversation).div.className('ai-workspace-send-error').text(String((error as Error).message || error));
     } finally {
       this.sendButton.disabled = false;
+      if (this.providerSelect) this.providerSelect.disabled = false;
       this.composer?.focus();
     }
   }
@@ -348,9 +363,11 @@ export class AiWorkspace extends BaseComponent {
   dispose() {
     this.threadList = null;
     this.conversation = null;
+    this.splitEl = null;
     this.previewPanel = null;
     this.composer = null;
     this.sendButton = null;
+    this.providerSelect = null;
     super.dispose();
   }
 }
