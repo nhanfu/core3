@@ -1,0 +1,9 @@
+version: 0.0.4
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS ui_saved_views (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), resource VARCHAR NOT NULL, view_key VARCHAR NOT NULL, label VARCHAR NOT NULL, owner_id VARCHAR, owner_name VARCHAR, visibility VARCHAR NOT NULL DEFAULT 'private', team VARCHAR, filter_version INTEGER NOT NULL DEFAULT 1, filters JSON NOT NULL, group_by VARCHAR, last_applied_at TIMESTAMP, usage_count INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, UNIQUE(resource, view_key, owner_id)); CREATE INDEX IF NOT EXISTS idx_ui_saved_views_scope ON ui_saved_views(resource, visibility, team, owner_id);"
+    down: "DROP INDEX IF EXISTS idx_ui_saved_views_scope; DROP TABLE IF EXISTS ui_saved_views;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

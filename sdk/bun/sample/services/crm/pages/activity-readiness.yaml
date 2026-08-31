@@ -1,0 +1,44 @@
+title: CRM Follow-up Readiness
+page: { id: crm-activity-readiness, breadcrumb: [CRM, Follow-up Readiness], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_followup_readiness
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT l.id AS lead_id, l.name AS opportunity, l.team, l.salesperson, a.id AS activity_id, a.activity_type, a.summary, a.outcome_type, CAST(a.completed_at AS VARCHAR) AS completed_at, CASE WHEN EXISTS (SELECT 1 FROM crm_activities n WHERE n.lead_id = a.lead_id AND n.state = 'planned') THEN 'Next activity planned' ELSE 'Needs follow-up' END AS readiness FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND a.state = 'done' AND (NOT EXISTS (SELECT 1 FROM crm_activities n WHERE n.lead_id = a.lead_id AND n.state = 'planned') OR EXISTS (SELECT 1 FROM crm_activities n WHERE n.lead_id = a.lead_id AND n.state = 'planned' AND n.due_date < CURRENT_DATE)) ORDER BY a.completed_at DESC, a.id DESC"
+  - id: crm_activity_execution_outcomes
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT COALESCE(NULLIF(a.outcome_type, ''), 'unspecified') AS outcome_type, a.activity_type, COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS assigned_to, COUNT(*) AS completed_count, COUNT(*) FILTER (WHERE a.next_activity_type IS NOT NULL) AS chained_count FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND a.state = 'done' GROUP BY COALESCE(NULLIF(a.outcome_type, ''), 'unspecified'), a.activity_type, COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') ORDER BY completed_count DESC, outcome_type"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_followup_readiness
+    columns:
+      - { field: readiness, label: Readiness, type: StatusChip }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: activity_type, label: Activity }
+      - { field: outcome_type, label: Outcome }
+      - { field: completed_at, label: Completed }
+      - { field: team, label: Team }
+      - { field: salesperson, label: Salesperson }
+    row_key: activity_id
+    actions: [{ id: open_readiness_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }]
+  - type: ListView
+    variant: odoo
+    source: crm_activity_execution_outcomes
+    columns:
+      - { field: outcome_type, label: Outcome, type: StatusChip }
+      - { field: activity_type, label: Activity }
+      - { field: team, label: Team }
+      - { field: assigned_to, label: Assigned to }
+      - { field: completed_count, label: Completed }
+      - { field: chained_count, label: Chained follow-ups }
+    row_key: outcome_type
+actions:
+  - id: open_readiness_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

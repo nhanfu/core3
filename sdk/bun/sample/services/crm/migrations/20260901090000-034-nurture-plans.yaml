@@ -1,0 +1,9 @@
+version: 0.0.34
+type:
+  postgres:
+    up: "ALTER TABLE crm_activity_plans ADD COLUMN IF NOT EXISTS is_nurture BOOLEAN DEFAULT false; UPDATE crm_activity_plans SET is_nurture = false WHERE is_nurture IS NULL;"
+    down: "ALTER TABLE crm_activity_plans DROP COLUMN IF EXISTS is_nurture;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

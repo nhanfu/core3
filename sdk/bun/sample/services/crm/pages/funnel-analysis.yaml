@@ -1,0 +1,63 @@
+title: CRM Funnel Analysis
+page: { id: crm-funnel-analysis, breadcrumb: [CRM, Funnel Analysis], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_funnel_by_stage
+    single: false
+    permission: crm.read
+    query: "SELECT l.stage, COUNT(*) AS lead_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS expected_value, CAST(COALESCE(SUM(l.expected_revenue * l.probability / 100), 0) AS DOUBLE) AS weighted_value FROM crm_leads l WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS TIMESTAMP)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS TIMESTAMP) + INTERVAL '1 day') GROUP BY l.stage ORDER BY lead_count DESC, l.stage"
+  - id: crm_source_conversion_cohorts
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.source, ''), 'Unattributed') AS source, COUNT(*) AS created_count, COUNT(*) FILTER (WHERE l.stage NOT IN ('New', 'Qualified')) AS qualified_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, CAST(COUNT(*) FILTER (WHERE l.stage = 'Won') * 100.0 / NULLIF(COUNT(*), 0) AS DOUBLE) AS conversion_rate, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.stage = 'Won'), 0) AS DOUBLE) AS realized_value FROM crm_leads l WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS TIMESTAMP)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS TIMESTAMP) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(l.source, ''), 'Unattributed') ORDER BY won_count DESC, source"
+  - id: crm_salesperson_conversion_velocity
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE l.stage = 'Lost') AS lost_count, COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_count, CAST(AVG(CASE WHEN l.stage IN ('Won', 'Lost') THEN EXTRACT(EPOCH FROM (l.updated_at - l.created_at)) / 86400 END) AS DOUBLE) AS average_days_to_outcome, COUNT(a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_followups FROM crm_leads l LEFT JOIN crm_activities a ON a.lead_id = l.id WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:salesperson IS NULL OR l.salesperson = :salesperson) GROUP BY COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY won_count DESC, overdue_followups DESC, salesperson"
+  - id: crm_funnel_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_funnel_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE NULLIF(TRIM(salesperson), '') IS NOT NULL ORDER BY salesperson"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_funnel_by_stage
+    filters:
+      - { field: team, label: Sales team, options_source: crm_funnel_teams }
+      - { field: date_from, label: Created from, options: [] }
+      - { field: date_to, label: Created to, options: [] }
+    columns:
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: lead_count, label: Leads }
+      - { field: expected_value, label: Expected value }
+      - { field: weighted_value, label: Weighted value }
+  - type: ListView
+    variant: odoo
+    source: crm_source_conversion_cohorts
+    filters:
+      - { field: team, label: Sales team, options_source: crm_funnel_teams }
+      - { field: date_from, label: Created from, options: [] }
+      - { field: date_to, label: Created to, options: [] }
+    columns:
+      - { field: source, label: Source, type: PrimaryEntityCell }
+      - { field: created_count, label: Created }
+      - { field: qualified_count, label: Qualified }
+      - { field: won_count, label: Won }
+      - { field: conversion_rate, label: Conversion rate }
+      - { field: realized_value, label: Realized value }
+  - type: ListView
+    variant: odoo
+    source: crm_salesperson_conversion_velocity
+    filters:
+      - { field: team, label: Sales team, options_source: crm_funnel_teams }
+      - { field: salesperson, label: Salesperson, options_source: crm_funnel_salespeople }
+    columns:
+      - { field: salesperson, label: Salesperson, type: PrimaryEntityCell }
+      - { field: won_count, label: Won }
+      - { field: lost_count, label: Lost }
+      - { field: open_count, label: Open }
+      - { field: average_days_to_outcome, label: Average days to outcome }
+      - { field: overdue_followups, label: Overdue follow-ups }

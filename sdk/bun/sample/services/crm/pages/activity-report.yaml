@@ -12,6 +12,7 @@ datasources:
   - id: crm_activity_report_by_team
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COUNT(*) AS total, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned, COUNT(*) FILTER (WHERE a.state = 'done') AS completed, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR a.assigned_to = :assigned_to) GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team') ORDER BY total DESC, team"
   - id: crm_activity_report_by_assignee
     single: false
@@ -28,6 +29,7 @@ datasources:
   - id: crm_assignment_audit_report
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT a.id, a.lead_id, a.activity_type, a.summary, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, CAST(a.completed_at AS VARCHAR) AS occurred_at, l.name AS lead_name, l.team, l.salesperson FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type IN ('assignment', 'merge', 'commercial') AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR l.salesperson = :assigned_to) ORDER BY a.completed_at DESC, a.id DESC"
 components:
   - type: ListToolbar

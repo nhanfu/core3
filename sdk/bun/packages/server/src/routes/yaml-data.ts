@@ -45,6 +45,7 @@ export async function handleDataRoutes(ctx: Record<string, any>): Promise<Respon
         current_user_name: String(authUser.name || ''),
         current_branch_id: String(authUser.branch_id || ''),
         view_scope: String(authUser.view_scope || 'all'),
+        can_manage_crm: Boolean(authUser.permissions?.includes?.('crm.manage')),
       }, vm.skip || 0, vm.top || 25, typeof vm.facetField === 'string' ? vm.facetField : undefined, vm.sort, vm.pivot));
     } catch (error: any) {
       if (error?.code === 'QUERY_RANGE_NOT_ALLOWED') return apiError(400, error.message, error.code, 'errors.query_range_not_allowed');

@@ -1,0 +1,86 @@
+title: Scoring Governance
+page: { id: scoring-governance, breadcrumb: [CRM, Scoring Governance], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_score_audit
+    single: false
+    permission: crm.read
+    query: "SELECT s.id, s.lead_id, l.name AS opportunity, s.rule_version, s.previous_score, s.new_score, s.recalculated_by, CAST(s.recalculated_at AS VARCHAR) AS recalculated_at FROM crm_score_audit s JOIN crm_leads l ON l.id = s.lead_id WHERE (:lead_id IS NULL OR s.lead_id = :lead_id) ORDER BY s.recalculated_at DESC, s.id DESC"
+  - id: crm_scoring_teams
+    single: false
+    permission: crm.read
+    team_scope: true
+    team_scope: true
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_scoring_sources
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_score_explanations
+    single: false
+    permission: crm.read
+    query: "SELECT l.id AS lead_id, l.name AS opportunity, COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.source, ''), 'Unknown') AS source, r.id AS rule_id, r.name AS rule_name, r.points, CASE WHEN (r.field = 'email' AND r.operator = 'present' AND NULLIF(TRIM(l.email), '') IS NOT NULL) OR (r.field = 'phone' AND r.operator = 'present' AND NULLIF(TRIM(l.phone), '') IS NOT NULL) OR (r.field = 'source' AND r.operator = 'equals' AND l.source = r.comparison_value) OR (r.field = 'expected_revenue' AND r.operator = 'gte' AND l.expected_revenue >= CAST(r.comparison_value AS DECIMAL(18,2))) OR (r.field = 'type' AND r.operator = 'equals' AND l.type = r.comparison_value) THEN r.points ELSE 0 END AS contribution FROM crm_leads l CROSS JOIN crm_scoring_rules r WHERE l.active = true AND r.active = true AND (:team IS NULL OR l.team = :team) AND (:source IS NULL OR l.source = :source) ORDER BY l.name, r.sequence, r.name"
+  - id: crm_score_governance
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.source, ''), 'Unknown') AS source, CASE WHEN COALESCE(SUM(CASE WHEN r.active = true AND ((r.field = 'email' AND r.operator = 'present' AND NULLIF(TRIM(l.email), '') IS NOT NULL) OR (r.field = 'phone' AND r.operator = 'present' AND NULLIF(TRIM(l.phone), '') IS NOT NULL) OR (r.field = 'source' AND r.operator = 'equals' AND l.source = r.comparison_value) OR (r.field = 'expected_revenue' AND r.operator = 'gte' AND l.expected_revenue >= CAST(r.comparison_value AS DECIMAL(18,2))) OR (r.field = 'type' AND r.operator = 'equals' AND l.type = r.comparison_value)) THEN r.points ELSE 0 END), 0) >= 70 THEN 'Hot' WHEN COALESCE(SUM(CASE WHEN r.active = true AND ((r.field = 'email' AND r.operator = 'present' AND NULLIF(TRIM(l.email), '') IS NOT NULL) OR (r.field = 'phone' AND r.operator = 'present' AND NULLIF(TRIM(l.phone), '') IS NOT NULL) OR (r.field = 'source' AND r.operator = 'equals' AND l.source = r.comparison_value) OR (r.field = 'expected_revenue' AND r.operator = 'gte' AND l.expected_revenue >= CAST(r.comparison_value AS DECIMAL(18,2))) OR (r.field = 'type' AND r.operator = 'equals' AND l.type = r.comparison_value)) THEN r.points ELSE 0 END), 0) >= 30 THEN 'Warm' ELSE 'Cold' END AS grade, COUNT(DISTINCT l.id) AS lead_count, CAST(AVG(COALESCE((SELECT SUM(x.points) FROM crm_scoring_rules x WHERE x.active = true), 0)) AS DOUBLE) AS configured_points FROM crm_leads l LEFT JOIN crm_scoring_rules r ON r.active = true WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:source IS NULL OR l.source = :source) GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.source, ''), 'Unknown'), grade ORDER BY team, source, grade"
+components:
+  - type: ListToolbar
+    source: crm_score_explanations
+    filter_sources: [crm_score_explanations, crm_score_governance]
+    filters:
+      - { field: team, label: Sales team, options_source: crm_scoring_teams }
+      - { field: source, label: Lead source, options_source: crm_scoring_sources }
+  - type: ListView
+    variant: odoo
+    source: crm_score_explanations
+    columns:
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: team, label: Team }
+      - { field: source, label: Source }
+      - { field: rule_name, label: Rule }
+      - { field: points, label: Rule points }
+      - { field: contribution, label: Contribution }
+    row_key: rule_id
+  - type: ListView
+    variant: odoo
+    source: crm_score_governance
+    columns:
+      - { field: team, label: Team }
+      - { field: source, label: Source }
+      - { field: grade, label: Grade, type: StatusChip }
+      - { field: lead_count, label: Leads }
+      - { field: configured_points, label: Configured points }
+    row_key: grade
+  - type: ListView
+    variant: odoo
+    source: crm_score_audit
+    columns:
+      - { field: recalculated_at, label: Recalculated }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: rule_version, label: Rule version }
+      - { field: previous_score, label: Previous score }
+      - { field: new_score, label: New score }
+      - { field: recalculated_by, label: Actor }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_score_audit_lead, label: Open lead, permission: crm.read, variant: ghost }
+      - { id: recalculate_lead_score, label: Recalculate score, permission: crm.write, variant: secondary }
+actions:
+  - id: recalculate_lead_score
+    type: server
+    permission: crm.write
+    action: crm.scoring.recalculate
+    handler: yaml_mutation
+    operation: recalculate
+    params: { lead_id: '{row.lead_id}' }
+    refresh: [crm_score_audit, crm_score_explanations, crm_score_governance]
+    mutation:
+      steps:
+        - query: "INSERT INTO crm_score_audit(lead_id, rule_version, previous_score, new_score, recalculated_by) SELECT l.id, COALESCE(:rule_version, 'active'), 0, COALESCE((SELECT SUM(r.points) FROM crm_scoring_rules r WHERE r.active = true), 0), :current_user_name FROM crm_leads l WHERE l.id = :lead_id AND l.active = true"
+      result: { query: "SELECT * FROM crm_score_audit WHERE lead_id = :lead_id ORDER BY recalculated_at DESC LIMIT 1" }
+  - id: open_score_audit_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

@@ -1,0 +1,67 @@
+title: CRM Communications
+page: { id: crm-communications, breadcrumb: [CRM, Communications], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_message_delivery
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, l.name AS opportunity, l.team, a.summary, COALESCE(a.delivery_status, 'internal') AS delivery_status, COALESCE(a.delivery_attempts, 0) AS delivery_attempts, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, CAST(a.created_at AS VARCHAR) AS created_at FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type = 'message' AND l.active = true ORDER BY a.created_at DESC, a.id DESC"
+  - id: crm_communication_effectiveness
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COALESCE(NULLIF(l.utm_campaign, ''), 'Unattributed') AS campaign, COUNT(*) FILTER (WHERE COALESCE(a.delivery_status, 'internal') = 'sent') AS sent_count, COUNT(*) FILTER (WHERE a.delivery_status = 'failed') AS failed_count, COUNT(*) FILTER (WHERE a.delivery_status = 'replied') AS replied_count, COUNT(*) FILTER (WHERE a.delivery_status = 'converted') AS converted_count FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type = 'message' AND l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned'), COALESCE(NULLIF(l.utm_campaign, ''), 'Unattributed') ORDER BY failed_count DESC, sent_count DESC, team, salesperson, campaign"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_message_delivery
+    columns:
+      - { field: created_at, label: Sent }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: summary, label: Message }
+      - { field: delivery_status, label: Delivery, type: StatusChip }
+      - { field: delivery_attempts, label: Attempts }
+      - { field: actor_name, label: Actor }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: retry_crm_message, label: Retry failed message, permission: crm.write, variant: primary, show_if: "row.delivery_status === 'failed'" }
+      - { id: open_communication_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_communication_effectiveness
+    columns:
+      - { field: team, label: Team }
+      - { field: salesperson, label: Salesperson }
+      - { field: campaign, label: Campaign }
+      - { field: sent_count, label: Sent }
+      - { field: failed_count, label: Failed }
+      - { field: replied_count, label: Replied }
+      - { field: converted_count, label: Converted }
+    row_key: campaign
+actions:
+  - id: retry_crm_message
+    type: server
+    permission: crm.write
+    action: crm.messages.retry
+    handler: yaml_mutation
+    operation: retry
+    params: { id: '{row.id}' }
+    refresh: [crm_message_delivery]
+    mutation:
+      operation: update
+      table: crm_activities
+      fields: [delivery_status, delivery_attempts]
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.id = :id AND a.activity_type = 'message' AND a.delivery_status = 'failed' AND l.active = true AND l.stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only failed messages on open opportunities can be retried
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_leads l JOIN crm_contact_preferences p ON p.contact_id = l.partner_id JOIN crm_activities a ON a.lead_id = l.id WHERE a.id = :id AND p.allow_email = false)"
+          status: 409
+          message: The linked contact has opted out of email communication
+      defaults: { delivery_status: sent }
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+  - id: open_communication_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

@@ -1,0 +1,9 @@
+version: 0.0.33
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_score_audit (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), lead_id VARCHAR NOT NULL, rule_version VARCHAR NOT NULL, previous_score INTEGER, new_score INTEGER, recalculated_by VARCHAR, recalculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE INDEX IF NOT EXISTS idx_crm_score_audit_lead ON crm_score_audit(lead_id, recalculated_at);"
+    down: "DROP INDEX IF EXISTS idx_crm_score_audit_lead; DROP TABLE IF EXISTS crm_score_audit;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,9 @@
+version: 0.0.40
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_merge_audit (id VARCHAR PRIMARY KEY, survivor_id VARCHAR NOT NULL, merged_id VARCHAR NOT NULL, actor VARCHAR, retained_fields VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP); CREATE INDEX IF NOT EXISTS crm_merge_audit_survivor_idx ON crm_merge_audit(survivor_id, created_at);"
+    down: "DROP TABLE IF EXISTS crm_merge_audit;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

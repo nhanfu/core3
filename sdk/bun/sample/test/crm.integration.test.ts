@@ -7,11 +7,122 @@ import { migrateDatabase } from '@core3/server/migrations';
 import { createAiAgentApi } from '../services/ai/api/ai-agent-api.ts';
 
 const crmRoot = join(import.meta.dir, '../services/crm');
+const baseRoot = join(import.meta.dir, '../services/base');
 const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(crmRoot, file), 'utf8')) as any;
 const aiYaml = (file: string) => Bun.YAML.parse(readFileSync(join(import.meta.dir, '../services/ai', file), 'utf8')) as any;
 const action = (page: any, id: string) => page.actions.find((candidate: any) => candidate.id === id);
 
 describe('CRM YAML lifecycle integration', () => {
+  it('applies and replays the Base saved-view concurrency migration', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    const migrations = join(baseRoot, 'migrations');
+    await migrateDatabase(repository, migrations, undefined, 'base_saved_view_schema_migrations', ['schema', 'data']);
+    await migrateDatabase(repository, migrations, undefined, 'base_saved_view_schema_migrations', ['schema', 'data']);
+    expect((await repository.query("SELECT version FROM base_saved_view_schema_migrations WHERE version = '0.0.5'")).length).toBe(1);
+    expect((await repository.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'ui_saved_views' AND column_name = 'row_version'")).length).toBe(1);
+  });
+
+  it('increments saved-view filter versions and rejects stale edits', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE ui_saved_views(id VARCHAR PRIMARY KEY, label VARCHAR, visibility VARCHAR, team VARCHAR, filters JSON, group_by VARCHAR, filter_version INTEGER DEFAULT 1, row_version INTEGER DEFAULT 1, owner_id VARCHAR, usage_count INTEGER DEFAULT 0)`);
+    await repository.run("INSERT INTO ui_saved_views(id, label, visibility, filters, filter_version, row_version, owner_id) VALUES ('view-1', 'Pipeline', 'private', '{\"stage\":\"New\"}', 1, 1, 'user-1')");
+    const edit = action(Bun.YAML.parse(readFileSync(join(crmRoot, '../../services/base/pages/saved-views.yaml'), 'utf8')) as any, 'edit_saved_view');
+    const apply = (filters: string, expected_row_version: number) => repository.executeMutation(edit.mutation, { id: 'view-1', current_user_id: 'user-1', values: { label: 'Pipeline', visibility: 'private', team: null, filters, group_by: null, expected_row_version } });
+    await apply('{\"stage\":\"Qualified\"}', 1);
+    expect((await repository.query("SELECT filter_version, row_version FROM ui_saved_views WHERE id = 'view-1'"))[0]).toMatchObject({ filter_version: 2, row_version: 2 });
+    await apply('{\"stage\":\"Qualified\"}', 2);
+    expect((await repository.query("SELECT filter_version, row_version FROM ui_saved_views WHERE id = 'view-1'"))[0]).toMatchObject({ filter_version: 2, row_version: 2 });
+    await expect(apply('{\"stage\":\"Won\"}', 1)).rejects.toMatchObject({ code: 'STALE_RECORD' });
+  });
+
+  it('exposes permissioned lead distribution by team and assignment source', () => {
+    const page = yaml('pages/lead-distribution.yaml');
+    const query = String(page.datasources[0].query);
+    expect(query).toContain('assignment_source');
+    expect(query).toContain('crm_activities');
+    expect(query).toContain("stage NOT IN ('Won', 'Lost')");
+    expect(page.components[0].filters[0].options_source).toBe('crm_lead_distribution_teams');
+  });
+
+  it('exposes guarded lead enrichment with audit provenance', () => {
+    const page = yaml('pages/lead-enrichment.yaml');
+    const enrich = action(page, 'edit_lead_enrichment');
+    expect(String(page.datasources[0].query)).toContain("stage NOT IN ('Won', 'Lost')");
+    expect(enrich.action).toBe('crm.leads.enrich');
+    expect(String(enrich.mutation.guards[1].query)).toContain("LIKE '%@%'");
+    expect(String(enrich.mutation.steps[0].query)).toContain("'enrichment'");
+  });
+
+  it('declares guarded referral attribution on opportunity detail', () => {
+    const page = yaml('pages/lead-detail.yaml');
+    const referral = action(page, 'set_lead_referrer');
+    expect(String(page.datasources[0].query)).toContain('referrer_name');
+    expect(referral.action).toBe('crm.leads.set_referrer');
+    expect(String(referral.mutation.guards[1].query)).toContain('base_contacts');
+    expect(String(referral.mutation.steps[0].query)).toContain("'referral'");
+  });
+
+  it('declares review-only lead mining requests and contact candidates', () => {
+    const page = yaml('pages/lead-mining.yaml');
+    const request = action(page, 'create_lead_mining_request');
+    expect(request.action).toBe('crm.lead_mining.request');
+    expect(String(page.datasources[1].query)).toContain('base_contacts');
+    expect(String(page.datasources[1].query)).toContain(':city');
+    expect(request.mutation.table).toBe('crm_lead_mining_requests');
+    expect(request.mutation.defaults.status).toBe('review');
+    const create = action(page, 'create_lead_from_mining_candidate');
+    expect(create.action).toBe('crm.lead_mining.create_lead');
+    expect(String(create.mutation.guards[1].query)).toContain('crm_leads');
+    expect(String(create.mutation.steps[0].query)).toContain('lead_mining');
+  });
+
+  it('creates one lead from an active mining candidate and rejects duplicates', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, active BOOLEAN); CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, name VARCHAR, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, source VARCHAR, stage VARCHAR, probability INTEGER, expected_revenue INTEGER, active BOOLEAN DEFAULT true); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR); INSERT INTO base_contacts VALUES ('candidate-1', true)`);
+    const create = action(yaml('pages/lead-mining.yaml'), 'create_lead_from_mining_candidate');
+    const input = { id: 'candidate-lead-1', current_user_name: 'Seller', values: { name: 'Candidate opportunity', partner_id: 'candidate-1', partner_name: 'Candidate One', email: 'candidate@example.test', phone: '123456789' } };
+    const created = await repository.executeMutation(create.mutation, input);
+    expect(created).toMatchObject({ id: 'candidate-lead-1', partner_id: 'candidate-1', source: 'Lead Mining' });
+    expect((await repository.query("SELECT activity_type FROM crm_activities WHERE lead_id = 'candidate-lead-1'"))[0].activity_type).toBe('lead_mining');
+    await expect(repository.executeMutation(create.mutation, { ...input, id: 'candidate-lead-2' })).rejects.toThrow('active CRM lead already exists');
+  });
+
+  it('applies valid lead enrichment and records one audit activity', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, name VARCHAR, stage VARCHAR, active BOOLEAN, partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, row_version INTEGER DEFAULT 1, updated_at TIMESTAMP); CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, active BOOLEAN); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR); INSERT INTO crm_leads(id, name, stage, active) VALUES ('enrich-1', 'Enrich me', 'New', true); INSERT INTO base_contacts VALUES ('contact-1', 'Acme Contact', true)`);
+    const enrich = action(yaml('pages/lead-enrichment.yaml'), 'edit_lead_enrichment');
+    await repository.executeMutation(enrich.mutation, { id: 'enrich-1', current_user_name: 'Seller', values: { partner_id: 'contact-1', partner_name: '', email: 'buyer@example.test', phone: '123456789', expected_row_version: 1 } });
+    expect((await repository.query("SELECT partner_id, partner_name, email, phone FROM crm_leads WHERE id = 'enrich-1'"))[0]).toMatchObject({ partner_id: 'contact-1', partner_name: 'Acme Contact', email: 'buyer@example.test', phone: '123456789' });
+    expect((await repository.query("SELECT activity_type, created_by FROM crm_activities WHERE lead_id = 'enrich-1'"))[0]).toMatchObject({ activity_type: 'enrichment', created_by: 'Seller' });
+  });
+
+  it('declares bounded nurture sequences over ordered activity plans', () => {
+    const page = yaml('pages/lead-detail.yaml');
+    const nurture = action(page, 'apply_nurture_sequence');
+    expect(page.datasources.map((source: any) => source.id)).toContain('crm_nurture_plans_detail');
+    expect(nurture.action).toBe('crm.activities.apply_nurture');
+    expect(String(nurture.mutation.guards[1].query)).toContain('is_nurture = true');
+    expect(String(nurture.mutation.steps[0].query)).toContain('ORDER BY s.sequence');
+    expect(String(nurture.mutation.steps[1].query)).toContain("'nurture'");
+    const configuration = yaml('pages/configuration.yaml');
+    expect(String(configuration.datasources.find((source: any) => source.id === 'crm_activity_plan_configuration').query)).toContain('p.is_nurture');
+  });
+
+  it('applies an active nurture sequence as ordered future activities', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, stage VARCHAR, active BOOLEAN, salesperson VARCHAR); CREATE TABLE crm_activity_plans(id VARCHAR PRIMARY KEY, active BOOLEAN, is_nurture BOOLEAN); CREATE TABLE crm_activity_plan_steps(id VARCHAR PRIMARY KEY, plan_id VARCHAR, sequence INTEGER, activity_type VARCHAR, summary VARCHAR, delay_days INTEGER, active BOOLEAN); CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, due_date DATE, assigned_to VARCHAR, state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+    await repository.run("INSERT INTO crm_leads VALUES ('nurture-lead', 'New', true, 'Seller'); INSERT INTO crm_activity_plans VALUES ('nurture-1', true, true); INSERT INTO crm_activity_plan_steps VALUES ('step-2', 'nurture-1', 20, 'Email', 'Send follow-up', 4, true), ('step-1', 'nurture-1', 10, 'Call', 'Qualify', 2, true)");
+    const nurture = action(yaml('pages/lead-detail.yaml'), 'apply_nurture_sequence');
+    await repository.executeMutation(nurture.mutation, { lead_id: 'nurture-lead', plan_id: 'nurture-1', current_user_name: 'Seller' });
+    await repository.executeMutation(nurture.mutation, { lead_id: 'nurture-lead', plan_id: 'nurture-1', current_user_name: 'Seller' });
+    expect((await repository.query("SELECT activity_type, summary FROM crm_activities WHERE lead_id = 'nurture-lead' ORDER BY due_date, summary")).map((row: any) => row.activity_type)).toEqual(['Call', 'Email', 'nurture']);
+  });
+
   it('applies the complete CRM migration chain on a fresh DuckDB database', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
@@ -24,6 +135,7 @@ describe('CRM YAML lifecycle integration', () => {
     expect((await repository.query('SELECT COUNT(*) AS count FROM crm_team_members'))[0].count).toBeGreaterThan(0);
     expect((await repository.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'crm_leads' AND column_name IN ('recurring_plan', 'recurring_revenue') ORDER BY column_name")).map((row: any) => row.column_name)).toEqual(['recurring_plan', 'recurring_revenue']);
     expect((await repository.query("SELECT table_name FROM information_schema.tables WHERE table_name = 'crm_assignment_rules'")).length).toBe(1);
+    expect((await repository.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'crm_activity_plans' AND column_name = 'is_nurture'")).length).toBe(1);
   });
 
   it('reruns the CRM migration chain safely as an upgrade', async () => {
@@ -67,9 +179,10 @@ describe('CRM YAML lifecycle integration', () => {
   it('captures inbound leads through an active team alias and records provenance', async () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
-    await repository.run(`CREATE TABLE crm_teams(id VARCHAR, name VARCHAR, email_alias VARCHAR, active BOOLEAN, use_leads BOOLEAN); CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR, type VARCHAR, email VARCHAR, phone VARCHAR, source VARCHAR, team VARCHAR, stage VARCHAR, probability INTEGER, expected_revenue INTEGER); CREATE TABLE crm_activities(id VARCHAR, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR); INSERT INTO crm_teams VALUES ('team-1', 'Inbound', 'sales', true, true);`);
+    await repository.run(`CREATE TABLE crm_teams(id VARCHAR, name VARCHAR, email_alias VARCHAR, active BOOLEAN, use_leads BOOLEAN); CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR, type VARCHAR, email VARCHAR, phone VARCHAR, source VARCHAR, team VARCHAR, origin_team VARCHAR, intake_channel VARCHAR, received_at TIMESTAMP, stage VARCHAR, probability INTEGER, expected_revenue INTEGER); CREATE TABLE crm_activities(id VARCHAR, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR); INSERT INTO crm_teams VALUES ('team-1', 'Inbound', 'sales', true, true);`);
     const result = await repository.executeMutation(action(yaml('pages/leads.yaml'), 'create_lead_from_team_alias').mutation, { team_alias: 'SALES', name: 'Inbound request', email: 'buyer@example.test' });
-    expect(result).toMatchObject({ name: 'Inbound request', source: 'Email', team: 'Inbound', type: 'lead' });
+    expect(result).toMatchObject({ name: 'Inbound request', source: 'Email', team: 'Inbound', origin_team: 'Inbound', intake_channel: 'email_alias', type: 'lead' });
+    expect(result.received_at).toBeTruthy();
     expect((await repository.query("SELECT activity_type, summary FROM crm_activities WHERE lead_id = ?", [result.id]))[0]).toMatchObject({ activity_type: 'message', summary: 'Inbound lead received through team email alias' });
     await expect(repository.executeMutation(action(yaml('pages/leads.yaml'), 'create_lead_from_team_alias').mutation, { team_alias: 'disabled', name: 'Rejected', email: 'buyer@example.test' })).rejects.toThrow('Inbound alias is inactive or unavailable');
   });
@@ -133,6 +246,7 @@ describe('CRM YAML lifecycle integration', () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), lead_id VARCHAR, activity_type VARCHAR,
         summary VARCHAR, state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR);
+      CREATE TABLE crm_merge_audit(id VARCHAR PRIMARY KEY, survivor_id VARCHAR, merged_id VARCHAR, actor VARCHAR, retained_fields VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
       INSERT INTO crm_leads(id, name, type, stage, probability) VALUES ('closed-a', 'Closed', 'opportunity', 'Won', 100);
       INSERT INTO crm_leads(id, name, type, stage, probability, partner_name, email, source, salesperson, team, tags, expected_revenue) VALUES ('lead-z', 'Primary', 'opportunity', 'New', 10, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
       INSERT INTO crm_leads(id, name, type, stage, probability, partner_name, email, source, salesperson, team, tags, utm_campaign, utm_medium, utm_source, expected_revenue) VALUES ('lead-a', 'Duplicate', 'lead', 'Qualified', 20, 'Acme', 'buyer@example.test', 'Website', 'Sales User', 'Enterprise', 'urgent, enterprise', 'spring-launch', 'email', 'newsletter', 4200);
@@ -146,6 +260,7 @@ describe('CRM YAML lifecycle integration', () => {
     expect((await repository.query('SELECT id FROM crm_leads ORDER BY id'))).toEqual([{ id: 'closed-a' }, { id: 'lead-z' }]);
     expect((await repository.query('SELECT lead_id FROM crm_activities WHERE id = ?', ['activity-b']))[0].lead_id).toBe('lead-z');
     expect((await repository.query("SELECT activity_type, summary, state, created_by FROM crm_activities WHERE lead_id = 'lead-z' AND activity_type = 'merge'"))[0]).toMatchObject({ activity_type: 'merge', summary: 'Duplicate CRM records merged', state: 'done' });
+    expect((await repository.query("SELECT survivor_id, merged_id, retained_fields FROM crm_merge_audit"))[0]).toMatchObject({ survivor_id: 'lead-z', merged_id: 'lead-a', retained_fields: 'first_non_empty_declared_fields' });
     expect((await repository.query('SELECT partner_name, email, source, salesperson, team, tags, utm_campaign, utm_medium, utm_source, expected_revenue, row_version FROM crm_leads WHERE id = ?', ['lead-z']))[0]).toMatchObject({ partner_name: 'Acme', email: 'buyer@example.test', source: 'Website', salesperson: 'Sales User', team: 'Enterprise', tags: 'urgent, enterprise', utm_campaign: 'spring-launch', utm_medium: 'email', utm_source: 'newsletter', expected_revenue: 4200, row_version: 2 });
   });
 
@@ -153,7 +268,7 @@ describe('CRM YAML lifecycle integration', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await repository.run(`
-      CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, name VARCHAR, type VARCHAR, partner_id VARCHAR, source VARCHAR, team VARCHAR,
+      CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, name VARCHAR, type VARCHAR, partner_id VARCHAR, partner_name VARCHAR, source VARCHAR, team VARCHAR,
         stage VARCHAR, probability INTEGER, expected_revenue INTEGER, priority VARCHAR);
       CREATE TABLE base_contacts(id VARCHAR PRIMARY KEY, name VARCHAR, active BOOLEAN DEFAULT true);
       CREATE TABLE crm_teams(name VARCHAR PRIMARY KEY, use_leads BOOLEAN, active BOOLEAN DEFAULT true);
@@ -958,7 +1073,7 @@ it('declares the quotation handoff as an orders-permissioned service call', () =
     const repository = new YamlRepository(database);
     await repository.run(`
       CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, name VARCHAR, partner_id VARCHAR, partner_name VARCHAR, salesperson VARCHAR);
-      CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, assigned_to VARCHAR, created_by VARCHAR);
+      CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR, state VARCHAR, assigned_to VARCHAR, created_by VARCHAR, delivery_status VARCHAR, delivery_attempts INTEGER);
       CREATE TABLE crm_email_templates(id VARCHAR PRIMARY KEY, body VARCHAR, active BOOLEAN);
       CREATE TABLE crm_contact_preferences(contact_id VARCHAR PRIMARY KEY, allow_email BOOLEAN, allow_phone BOOLEAN);
       INSERT INTO crm_leads(id, name, partner_name, salesperson) VALUES ('lead-chat', 'Chat lead', 'Customer', 'Sales User');
@@ -1306,7 +1421,7 @@ it('exposes guarded overdue escalation remediation', () => {
 
 it('exposes scoped CRM audit governance with retention and export controls', () => {
   const page = yaml('pages/audit-governance.yaml');
-  const query = String(page.datasources[0].query);
+  const query = String(page.datasources.find((source: any) => source.id === 'crm_opportunity_audit').query);
   expect(query).toContain(':lead_id');
   expect(query).toContain('retention_status');
   expect(query).toContain('actor_name');
@@ -1318,4 +1433,273 @@ it('declares delivery metadata for CRM messages', () => {
   const message = action(yaml('pages/lead-detail.yaml'), 'send_lead_message');
   expect(message.mutation.fields).toEqual(expect.arrayContaining(['delivery_status', 'delivery_attempts']));
   expect(message.mutation.defaults).toMatchObject({ delivery_status: 'sent', delivery_attempts: 1 });
+});
+
+it('exposes guarded CRM message delivery retry and opportunity navigation', () => {
+  const page = yaml('pages/communications.yaml');
+  expect(String(page.datasources[0].query)).toContain('delivery_status');
+  const retry = action(page, 'retry_crm_message');
+  expect(retry).toMatchObject({ permission: 'crm.write', action: 'crm.messages.retry' });
+  expect(String(retry.mutation.guards[0].query)).toContain("a.delivery_status = 'failed'");
+  expect(String(retry.mutation.guards[0].query)).toContain("l.stage NOT IN ('Won', 'Lost')");
+  expect(String(retry.mutation.guards[1].query)).toContain('allow_email');
+  expect(action(page, 'open_communication_opportunity')).toMatchObject({ navigate_to: '/lead-detail', permission: 'crm.read' });
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_communication_effectiveness').query)).toContain('replied_count');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_communication_effectiveness').query)).toContain('utm_campaign');
+});
+
+it('exposes deterministic score explanations with governed filters', () => {
+  const page = yaml('pages/scoring-governance.yaml');
+  const query = String(page.datasources.find((source: any) => source.id === 'crm_score_explanations').query);
+  expect(query).toContain('contribution');
+  expect(query).toContain('r.active = true');
+  expect(query).toContain(':team');
+  expect(query).toContain(':source');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_score_governance').query)).toContain("'Hot'");
+  expect(page.components[0].filter_sources).toEqual(expect.arrayContaining(['crm_score_explanations', 'crm_score_governance']));
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_score_audit').query)).toContain('rule_version');
+  expect(action(page, 'recalculate_lead_score')).toMatchObject({ action: 'crm.scoring.recalculate', permission: 'crm.write' });
+});
+
+it('exposes active-record CRM data quality and guarded normalization navigation', () => {
+  const page = yaml('pages/data-quality.yaml');
+  expect(String(page.datasources[0].query)).toContain('quality_status');
+  expect(String(page.datasources[0].query)).toContain('l.active = true');
+  expect(String(page.datasources[1].query)).toContain('issue_count');
+  expect(action(page, 'edit_quality_lead')).toMatchObject({ type: 'server_form', action: 'crm.leads.normalize_contact', permission: 'crm.write' });
+  expect(String(action(page, 'edit_quality_lead').mutation.guards[0].query)).toContain("stage NOT IN ('Won', 'Lost')");
+  expect(String(action(page, 'edit_quality_lead').mutation.guards[1].query)).toContain("LIKE '%@%'");
+  expect(String(action(page, 'edit_quality_lead').mutation.steps[0].query)).toContain('data_quality');
+  expect(action(page, 'open_quality_lead')).toMatchObject({ navigate_to: '/lead-detail', permission: 'crm.read' });
+});
+
+it('exposes immutable forecast accuracy comparison with low-sample evidence', () => {
+  const page = yaml('pages/forecast-accuracy.yaml');
+  const query = String(page.datasources[0].query);
+  expect(query).toContain('captured_weighted_value');
+  expect(query).toContain('realized_won_value');
+  expect(query).toContain('variance');
+  expect(query).toContain('Low sample');
+  expect(query).toContain(':date_from');
+  expect(query).toContain(':date_to');
+  const causes = String(page.datasources.find((source: any) => source.id === 'crm_forecast_variance_causes').query);
+  expect(causes).toContain('variance_cause');
+  expect(causes).toContain('Stage changed');
+  expect(causes).toContain('current_probability');
+});
+
+it('adds activity-state facet filtering to the shared CRM pipeline source', () => {
+  const page = yaml('pages/leads.yaml');
+  const source = page.datasources.find((candidate: any) => candidate.id === 'crm_leads');
+  expect(String(source.query)).toContain(':activity_state');
+  expect(String(source.query)).toContain('EXISTS (SELECT 1 FROM crm_activities');
+  expect(page.components[0].filters).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'activity_state', options_source: 'crm_activity_state_lookup' })]));
+});
+
+it('declares generic saved-view persistence and scoped CRUD in base', () => {
+  const page = Bun.YAML.parse(readFileSync(join(crmRoot, '../../services/base/pages/saved-views.yaml'), 'utf8')) as any;
+  expect(String(page.datasources[0].query)).toContain("visibility = 'shared'");
+  expect(action(page, 'create_saved_view').mutation.table).toBe('ui_saved_views');
+  expect(action(page, 'edit_saved_view').mutation.fields).toEqual(expect.arrayContaining(['filters', 'group_by']));
+  expect(action(page, 'edit_saved_view').mutation.increment_fields).toEqual(['filter_version']);
+  expect(action(page, 'edit_saved_view').mutation.concurrency).toEqual({ field: 'row_version', input: 'expected_row_version' });
+  expect(page.components[0].columns).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'filter_version' })]));
+  expect(action(page, 'delete_saved_view').mutation.operation).toBe('delete');
+  expect(action(page, 'apply_saved_view').action).toBe('ui.saved_views.apply');
+  expect(String(action(page, 'apply_saved_view').mutation.steps[0].query)).toContain('usage_count = usage_count + 1');
+  expect(String(action(page, 'apply_saved_view').mutation.steps[0].query)).toContain('last_applied_at = CURRENT_TIMESTAMP');
+  expect(String(action(page, 'edit_saved_view').mutation.guards[0].query)).toContain('owner_id');
+  expect(String(action(page, 'delete_saved_view').mutation.guards[0].query)).toContain('current_user_id');
+  expect(action(page, 'create_saved_view').mutation.defaults.owner_id).toBe('{current_user_id}');
+});
+
+it('binds persisted shared CRM pipeline views to the generic ListView contract', () => {
+  const page = yaml('pages/leads.yaml');
+  expect(page.components[0].saved_views_source).toBe('crm_persisted_pipeline_views');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_persisted_pipeline_views').query)).toContain("resource = 'crm_leads'");
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_persisted_pipeline_views').query)).toContain('current_user_id');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_persisted_pipeline_views').query)).toContain('crm_team_members');
+  expect(page.components[0].saved_views_version).toBe(1);
+});
+
+it('declares customer account rollups and guarded contact relationships', () => {
+  const accounts = yaml('pages/customer-accounts.yaml');
+  const detail = yaml('pages/customer-account-detail.yaml');
+  expect(String(accounts.datasources.find((source: any) => source.id === 'crm_customer_accounts').query)).toContain('open_opportunity_count');
+  expect(String(accounts.datasources.find((source: any) => source.id === 'crm_customer_accounts').query)).toContain('is_company = true');
+  const addContact = action(accounts, 'add_crm_account_contact');
+  expect(addContact).toMatchObject({ action: 'crm.accounts.add_contact', permission: 'crm.write' });
+  expect(addContact.mutation.table).toBe('crm_contact_company_relationships');
+  expect(String(addContact.mutation.guards[1].query)).toContain('is_company = false');
+  expect(String(addContact.mutation.guards[2].query)).toContain('NOT EXISTS');
+  expect(String(detail.datasources.find((source: any) => source.id === 'crm_account_contacts').query)).toContain('company_id = :id');
+  expect(String(detail.datasources.find((source: any) => source.id === 'crm_account_opportunities').query)).toContain('partner_id = :id');
+  const removeContact = action(detail, 'remove_crm_account_contact');
+  expect(removeContact).toMatchObject({ action: 'crm.accounts.remove_contact', permission: 'crm.write' });
+  expect(removeContact.mutation.defaults).toMatchObject({ active: false });
+  expect(String(removeContact.mutation.guards[0].query)).toContain('r.active = true');
+  const editContact = action(detail, 'edit_crm_account_contact');
+  expect(editContact).toMatchObject({ action: 'crm.accounts.update_contact', permission: 'crm.write' });
+  expect(editContact.mutation.fields).toEqual(['relationship_type']);
+});
+
+it('declares funnel, source cohort, and salesperson velocity analysis', () => {
+  const page = yaml('pages/funnel-analysis.yaml');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_funnel_by_stage').query)).toContain('weighted_value');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_funnel_by_stage').query)).toContain(':date_from');
+  const cohorts = String(page.datasources.find((source: any) => source.id === 'crm_source_conversion_cohorts').query);
+  expect(cohorts).toContain('Unattributed');
+  expect(cohorts).toContain('conversion_rate');
+  const velocity = String(page.datasources.find((source: any) => source.id === 'crm_salesperson_conversion_velocity').query);
+  expect(velocity).toContain('average_days_to_outcome');
+  expect(velocity).toContain('overdue_followups');
+});
+
+it('declares activity outcomes and follow-up readiness reporting', () => {
+  const activities = yaml('pages/activities.yaml');
+  const edit = action(activities, 'edit_crm_activity');
+  expect(edit.mutation.fields).toContain('outcome_type');
+  expect(edit.fields).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'outcome_type' })]));
+  const readiness = yaml('pages/activity-readiness.yaml');
+  expect(String(readiness.datasources[0].query)).toContain("a.state = 'done'");
+  expect(String(readiness.datasources[0].query)).toContain('Needs follow-up');
+  expect(String(readiness.datasources[1].query)).toContain('chained_count');
+  expect(action(readiness, 'open_readiness_opportunity')).toMatchObject({ navigate_to: '/lead-detail', permission: 'crm.read' });
+});
+
+it('declares partner directory, referral performance, and scoped opportunities', () => {
+  const page = yaml('pages/partner-operations.yaml');
+  const directory = String(page.datasources.find((source: any) => source.id === 'crm_partner_directory').query);
+  expect(directory).toContain('referral_count');
+  expect(directory).toContain('c.active = true');
+  const performance = String(page.datasources.find((source: any) => source.id === 'crm_referral_performance').query);
+  expect(performance).toContain('conversion_rate');
+  expect(performance).toContain('Unattributed');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_partner_opportunities').query)).toContain('referrer_contact_id = :id');
+  expect(action(page, 'open_partner_opportunities')).toMatchObject({ navigate_to: '/customer-opportunities', permission: 'crm.read' });
+});
+
+it('declares transparent salesperson achievement scoring', () => {
+  const page = yaml('pages/achievement.yaml');
+  const leaderboard = String(page.datasources.find((source: any) => source.id === 'crm_achievement_leaderboard').query);
+  expect(leaderboard).toContain('achievement_points');
+  expect(leaderboard).toContain('m.active = true');
+  expect(leaderboard).toContain(':date_from');
+  expect(String(page.datasources.find((source: any) => source.id === 'crm_achievement_detail').query)).toContain('completed_count');
+  expect(page.components[0].filters).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'team', options_source: 'crm_achievement_teams' })]));
+});
+
+it('declares scoped partner search with customer opportunity navigation', () => {
+  const page = yaml('pages/partner-search.yaml');
+  const query = String(page.datasources[0].query);
+  expect(query).toContain('c.active = true');
+  expect(query).toContain('c.email');
+  expect(query).toContain('c.city');
+  expect(query).toContain('active_opportunity_count');
+  expect(action(page, 'open_searched_partner')).toMatchObject({ navigate_to: '/customer-opportunities', permission: 'crm.read' });
+});
+
+it('exposes duplicate conflict fields for merge review', () => {
+  const page = yaml('pages/duplicate-leads.yaml');
+  const query = String(page.datasources[0].query);
+  expect(query).toContain('survivor_name');
+  expect(query).toContain('duplicate_owner');
+  expect(query).toContain('HAVING COUNT(*) > 1');
+  expect(page.components[0].columns).toEqual(expect.arrayContaining([
+    expect.objectContaining({ field: 'survivor_stage' }),
+    expect.objectContaining({ field: 'duplicate_stage' }),
+  ]));
+  const merge = action(yaml('pages/leads.yaml'), 'merge_leads');
+  expect(String(merge.mutation.steps[0].query)).toContain('crm_merge_audit');
+  expect(String(merge.mutation.steps[0].query)).toContain('retained_fields');
+  const pair = action(page, 'merge_duplicate_pair');
+  expect(pair).toMatchObject({ action: 'crm.leads.merge_pair', permission: 'crm.write' });
+  expect(pair.fields).toEqual(expect.arrayContaining([
+    expect.objectContaining({ field: 'survivor_id', required: true }),
+    expect.objectContaining({ field: 'retained_fields', required: true }),
+  ]));
+  expect(String(pair.mutation.guards[1].query)).toContain('id <> :survivor_id');
+  expect(String(pair.mutation.steps[2].query)).toContain('crm_merge_audit');
+});
+
+it('declares campaign workspace and attribution quality review', () => {
+  const page = yaml('pages/campaign-governance.yaml');
+  expect(String(page.datasources[0].query)).toContain('attributed_leads');
+  expect(String(page.datasources[0].query)).toContain('won_leads');
+  const quality = String(page.datasources[1].query);
+  expect(quality).toContain('Unattributed');
+  expect(quality).toContain('Inactive campaign');
+  expect(quality).toContain('Incomplete attribution');
+  const config = yaml('pages/configuration.yaml');
+  const toggle = action(config, 'toggle_crm_campaign');
+  expect(toggle.type).toBe('server_form');
+  expect(toggle.fields).toEqual(expect.arrayContaining([expect.objectContaining({ field: 'status_reason', required: true })]));
+  expect(String(toggle.mutation.steps[0].query)).toContain('status_reason');
+});
+
+it('declares manager-aware team scope on the primary CRM lead read', () => {
+  const query = String(yaml('pages/leads.yaml').datasources.find((source: any) => source.id === 'crm_leads').query);
+  expect(query).toContain('can_manage_crm');
+  expect(query).toContain('crm_team_members');
+  expect(String(yaml('pages/activities.yaml').datasources[0].query)).toContain('can_manage_crm');
+  expect(String(yaml('pages/customer-opportunities.yaml').datasources[0].query)).toContain('can_manage_crm');
+  expect(yaml('pages/analysis.yaml').datasources.find((source: any) => source.id === 'crm_pipeline_by_team').team_scope).toBe(true);
+  expect(yaml('pages/analysis.yaml').datasources.find((source: any) => source.id === 'crm_lead_distribution').team_scope).toBe(true);
+  expect(yaml('pages/forecast-accuracy.yaml').datasources.find((source: any) => source.id === 'crm_forecast_accuracy').team_scope).toBe(true);
+  expect(yaml('pages/team-operations.yaml').datasources.find((source: any) => source.id === 'crm_team_operations').team_scope).toBe(true);
+  expect(yaml('pages/activity-execution.yaml').datasources.find((source: any) => source.id === 'crm_activity_execution_summary').team_scope).toBe(true);
+  expect(yaml('pages/escalations.yaml').datasources.find((source: any) => source.id === 'crm_escalation_summary').team_scope).toBe(true);
+  expect(yaml('pages/communications.yaml').datasources.find((source: any) => source.id === 'crm_communication_effectiveness').team_scope).toBe(true);
+  expect(yaml('pages/lead-distribution.yaml').datasources.find((source: any) => source.id === 'crm_lead_distribution_report').team_scope).toBe(true);
+  expect(yaml('pages/expected-revenue.yaml').datasources.find((source: any) => source.id === 'crm_expected_revenue_teams').team_scope).toBe(true);
+  expect(yaml('pages/quality-leads.yaml').datasources.find((source: any) => source.id === 'crm_quality_teams').team_scope).toBe(true);
+  expect(yaml('pages/scoring-governance.yaml').datasources.find((source: any) => source.id === 'crm_scoring_teams').team_scope).toBe(true);
+  expect(yaml('pages/activity-readiness.yaml').datasources.every((source: any) => source.team_scope === true)).toBe(true);
+  expect(yaml('pages/activity-report.yaml').datasources.find((source: any) => source.id === 'crm_activity_report_by_team').team_scope).toBe(true);
+  expect(yaml('pages/activity-report.yaml').datasources.find((source: any) => source.id === 'crm_assignment_audit_report').team_scope).toBe(true);
+  expect(yaml('pages/archived-leads.yaml').datasources[0].team_scope).toBe(true);
+  expect(yaml('pages/lead-detail.yaml').datasources[0].team_scope).toBe(true);
+  expect(yaml('pages/partner-operations.yaml').datasources.find((source: any) => source.id === 'crm_referral_performance').team_scope).toBe(true);
+  expect(yaml('pages/pipeline-hygiene.yaml').datasources[0].team_scope).toBe(true);
+  expect(yaml('pages/qualification.yaml').datasources.every((source: any) => source.team_scope === true)).toBe(true);
+  expect(yaml('pages/stage-movement.yaml').datasources.every((source: any) => source.team_scope === true)).toBe(true);
+  expect(yaml('pages/achievement.yaml').datasources.filter((source: any) => source.id !== 'crm_achievement_teams').every((source: any) => source.team_scope === true)).toBe(true);
+  expect(yaml('pages/team-target-attainment.yaml').datasources[0].team_scope).toBe(true);
+});
+
+it('requires and persists a reason for campaign status changes', async () => {
+  const database = await DuckDbDatabase.open(':memory:');
+  const repository = new YamlRepository(database);
+  await repository.run("CREATE TABLE crm_campaigns(id VARCHAR PRIMARY KEY, name VARCHAR, active BOOLEAN, status_reason VARCHAR); INSERT INTO crm_campaigns VALUES ('campaign-1', 'Spring', true, NULL)");
+  const toggle = action(yaml('pages/configuration.yaml'), 'toggle_crm_campaign');
+  await expect(repository.executeMutation(toggle.mutation, { id: 'campaign-1', status_reason: 'Campaign ended', current_user_name: 'BA' })).resolves.toMatchObject({ active: false, status_reason: 'Campaign ended' });
+  await expect(repository.executeMutation(toggle.mutation, { id: 'campaign-1', status_reason: '' })).rejects.toMatchObject({ status: 400 });
+});
+
+it('executes pairwise merge with explicit survivor fields and provenance', async () => {
+  const database = await DuckDbDatabase.open(':memory:');
+  const repository = new YamlRepository(database);
+  await repository.run(`
+    CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, row_version BIGINT DEFAULT 1, name VARCHAR, type VARCHAR,
+      partner_id VARCHAR, partner_name VARCHAR, email VARCHAR, phone VARCHAR, source VARCHAR, salesperson VARCHAR,
+      team VARCHAR, tags VARCHAR, expected_revenue INTEGER, stage VARCHAR, probability INTEGER,
+      active BOOLEAN DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY, lead_id VARCHAR, activity_type VARCHAR, summary VARCHAR,
+      state VARCHAR, completed_at TIMESTAMP, created_by VARCHAR);
+    CREATE TABLE crm_merge_audit(id VARCHAR PRIMARY KEY, survivor_id VARCHAR, merged_id VARCHAR, actor VARCHAR,
+      retained_fields VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+    INSERT INTO crm_leads(id, name, type, stage, probability, active) VALUES ('survivor-1', 'Keep', 'opportunity', 'New', 10, true);
+    INSERT INTO crm_leads(id, name, type, stage, probability, active, email) VALUES ('duplicate-1', 'Drop', 'lead', 'Qualified', 20, true, 'chosen@example.test');
+    INSERT INTO crm_activities(id, lead_id, activity_type, summary, state) VALUES ('pair-activity', 'duplicate-1', 'Call', 'Keep history', 'done');
+  `);
+  const pair = action(yaml('pages/duplicate-leads.yaml'), 'merge_duplicate_pair');
+  await repository.executeMutation(pair.mutation, {
+    survivor_id: 'survivor-1', duplicate_id: 'duplicate-1', partner_id: '', partner_name: 'Chosen customer',
+    email: 'chosen@example.test', phone: '', source: 'Referral', salesperson: 'Sales User', team: 'Enterprise',
+    tags: 'priority', expected_revenue: '9000', retained_fields: 'email=duplicate-1;source=manual', current_user_name: 'BA',
+  });
+  expect((await repository.query("SELECT name, email, source, salesperson, team, tags, expected_revenue FROM crm_leads WHERE id = 'survivor-1'"))[0]).toMatchObject({ name: 'Keep', email: 'chosen@example.test', source: 'Referral', salesperson: 'Sales User', team: 'Enterprise', tags: 'priority', expected_revenue: 9000 });
+  expect((await repository.query("SELECT id FROM crm_leads WHERE id = 'duplicate-1'"))).toEqual([]);
+  expect((await repository.query("SELECT lead_id FROM crm_activities WHERE id = 'pair-activity'"))[0].lead_id).toBe('survivor-1');
+  expect((await repository.query("SELECT survivor_id, merged_id, actor, retained_fields FROM crm_merge_audit"))[0]).toMatchObject({ survivor_id: 'survivor-1', merged_id: 'duplicate-1', actor: 'BA', retained_fields: 'email=duplicate-1;source=manual' });
 });

@@ -3,7 +3,7 @@ import { resolveQueryWindow, type QueryWindowDefinition } from './database/query
 
 export const datasourceMethods = {
   querySource: async function(this: any,
-    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any },
+    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any; team_scope?: boolean },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -26,7 +26,7 @@ export const datasourceMethods = {
 };
 
 async function querySourceInternal(this: any,
-    source: { id?: string; query?: string; single?: boolean; pivot?: any },
+    source: { id?: string; query?: string; single?: boolean; pivot?: any; team_scope?: boolean },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -34,7 +34,11 @@ async function querySourceInternal(this: any,
     sort?: { field?: unknown; direction?: unknown },
     pivot?: any,
   ): Promise<any> {
-    const { statement, values } = bindNamedParams(String(source.query || ''), params);
+    const rawQuery = String(source.query || '');
+    const scopedQuery = source.team_scope
+      ? `SELECT * FROM (${rawQuery}) AS scoped_rows WHERE (COALESCE(:can_manage_crm, true) = true OR scoped_rows.team IS NULL OR scoped_rows.team = 'Unassigned' OR scoped_rows.team = 'Unassigned team' OR EXISTS (SELECT 1 FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE t.name = scoped_rows.team AND t.active = true AND m.user_name = :current_user_name AND m.active = true))`
+      : rawQuery;
+    const { statement, values } = bindNamedParams(scopedQuery, params);
     const pivotResult = pivot
       ? await nativePivotStatement(this, statement, values, source.pivot, pivot)
       : { statement, values };

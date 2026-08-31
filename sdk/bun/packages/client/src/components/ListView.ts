@@ -51,7 +51,7 @@ export type ListViewAction = {
   params?: Record<string, unknown>;
 };
 export type ListViewGroup = ListViewGroupBy;
-export type ListViewFavorite = { id: string; label: string; filters?: Record<string, unknown>; groupBy?: string };
+export type ListViewFavorite = { id: string; label: string; filters?: Record<string, unknown>; groupBy?: string; persisted?: boolean };
 
 export type ListViewDefinition = {
   id: 'list';

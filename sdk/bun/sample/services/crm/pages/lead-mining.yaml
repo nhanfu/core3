@@ -1,0 +1,87 @@
+title: Lead Mining
+page: { id: lead-mining, breadcrumb: [Sales, CRM, Lead Mining], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_lead_mining_requests
+    single: false
+    permission: crm.read
+    query: "SELECT id, city, country_name, company_type, requested_by, status, CAST(created_at AS VARCHAR) AS created_at FROM crm_lead_mining_requests ORDER BY created_at DESC"
+  - id: crm_lead_mining_candidates
+    single: false
+    permission: base.contacts.read
+    query: "SELECT c.id, c.name, c.company_type, c.email, c.phone, c.city, c.country_name FROM base_contacts c WHERE c.active = true AND (:city IS NULL OR lower(c.city) = lower(:city)) AND (:country_name IS NULL OR lower(c.country_name) = lower(:country_name)) AND (:company_type IS NULL OR c.company_type = :company_type) ORDER BY c.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_lead_mining_requests
+    create_action: create_lead_mining_request
+    create_label: New mining request
+    columns:
+      - { field: city, label: City }
+      - { field: country_name, label: Country }
+      - { field: company_type, label: Contact type }
+      - { field: requested_by, label: Requested by }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: created_at, label: Created }
+    row_key: id
+  - type: ListView
+    variant: odoo
+    source: crm_lead_mining_candidates
+    columns:
+      - { field: name, label: Contact, type: PrimaryEntityCell }
+      - { field: company_type, label: Type }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: city, label: City }
+      - { field: country_name, label: Country }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: create_lead_from_mining_candidate, label: Create lead, permission: crm.write, variant: secondary }
+actions:
+  - id: create_lead_mining_request
+    type: server_form
+    permission: crm.write
+    title: New lead-mining request
+    action: crm.lead_mining.request
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_lead_mining_requests, crm_lead_mining_candidates]
+    mutation:
+      operation: insert
+      table: crm_lead_mining_requests
+      fields: [city, country_name, company_type, requested_by]
+      required: [requested_by]
+      defaults: { status: review, requested_by: '{current_user_name}' }
+      result: { query: "SELECT * FROM crm_lead_mining_requests WHERE id = :id" }
+    fields:
+      - { field: city, label: City, type: text }
+      - { field: country_name, label: Country, type: text }
+      - { field: company_type, label: Contact type, type: select, options: [person, company, other] }
+      - { field: requested_by, label: Requested by, type: text, required: true }
+  - id: create_lead_from_mining_candidate
+    type: server_form
+    permission: crm.write
+    title: Create lead from candidate
+    action: crm.lead_mining.create_lead
+    handler: yaml_mutation
+    operation: create_from_candidate
+    params: { partner_id: '{row.id}', partner_name: '{row.name}', email: '{row.email}', phone: '{row.phone}' }
+    refresh: [crm_lead_mining_candidates]
+    mutation:
+      operation: insert
+      table: crm_leads
+      fields: [name, type, partner_id, partner_name, email, phone, source, stage, probability, expected_revenue]
+      required: [name, partner_id]
+      defaults: { type: lead, source: Lead Mining, stage: New, probability: 10, expected_revenue: 0 }
+      guards:
+        - query: "SELECT id FROM base_contacts WHERE id = :partner_id AND active = true"
+          status: 400
+          message: Candidate contact is no longer active
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_leads WHERE partner_id = :partner_id AND active = true AND stage NOT IN ('Won', 'Lost'))"
+          status: 409
+          message: An active CRM lead already exists for this candidate
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) VALUES(gen_random_uuid(), :id, 'lead_mining', 'Lead created from reviewed mining candidate', 'done', CURRENT_TIMESTAMP, :current_user_name)"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: name, label: Lead name, type: text, required: true }

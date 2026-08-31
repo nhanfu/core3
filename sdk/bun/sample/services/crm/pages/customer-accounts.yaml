@@ -1,0 +1,65 @@
+title: CRM Customer Accounts
+page: { id: crm-customer-accounts, breadcrumb: [CRM, Customer Accounts], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_contact_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM base_contacts WHERE active = true AND is_company = false ORDER BY name"
+  - id: crm_customer_accounts
+    single: false
+    permission: crm.read
+    query: "SELECT c.id, c.name, c.email, c.phone, c.city, c.country_name, (SELECT COUNT(*) FROM crm_contact_company_relationships r WHERE r.company_id = c.id AND r.active = true) AS contact_count, (SELECT COUNT(*) FROM crm_leads l WHERE l.partner_id = c.id AND l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_opportunity_count, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS open_value, CAST(COALESCE(SUM(l.expected_revenue * l.probability / 100) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS weighted_value FROM base_contacts c LEFT JOIN crm_leads l ON l.partner_id = c.id WHERE c.active = true AND c.is_company = true GROUP BY c.id, c.name, c.email, c.phone, c.city, c.country_name ORDER BY c.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_customer_accounts
+    search: { label: Search customer accounts, placeholder: 'Search company, email, or city...' }
+    columns:
+      - { field: name, label: Company, type: PrimaryEntityCell }
+      - { field: city, label: City }
+      - { field: country_name, label: Country }
+      - { field: contact_count, label: Contacts }
+      - { field: open_opportunity_count, label: Open opportunities }
+      - { field: open_value, label: Open value }
+      - { field: weighted_value, label: Weighted value }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_crm_account, label: Open account, permission: crm.read, variant: primary }
+      - { id: add_crm_account_contact, label: Add contact, permission: crm.write, variant: secondary }
+    row_open_action: open_crm_account
+actions:
+  - id: open_crm_account
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm-customer-account
+    params: { id: '{row.id}' }
+  - id: add_crm_account_contact
+    type: server_form
+    permission: crm.write
+    title: Add account contact
+    action: crm.accounts.add_contact
+    handler: yaml_mutation
+    operation: insert
+    refresh: [crm_customer_accounts]
+    mutation:
+      operation: insert
+      table: crm_contact_company_relationships
+      fields: [contact_id, company_id, relationship_type, active, created_by]
+      required: [contact_id, company_id, relationship_type]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok FROM base_contacts WHERE id = :company_id AND active = true AND is_company = true"
+          status: 400
+          message: Select an active company
+        - query: "SELECT 1 AS ok FROM base_contacts WHERE id = :contact_id AND active = true AND is_company = false AND id <> :company_id"
+          status: 400
+          message: Select an active person contact
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_contact_company_relationships WHERE contact_id = :contact_id AND company_id = :company_id AND relationship_type = :relationship_type AND active = true)"
+          status: 409
+          message: This contact relationship already exists
+      result: { query: "SELECT * FROM crm_contact_company_relationships WHERE id = :id" }
+    fields:
+      - { field: contact_id, label: Contact, type: select, options_source: crm_contact_lookup, required: true }
+      - { field: company_id, label: Company, type: hidden, required: true }
+      - { field: relationship_type, label: Relationship, type: select, options: [{ value: employee, label: Employee }, { value: decision_maker, label: Decision maker }, { value: billing, label: Billing contact }], required: true }

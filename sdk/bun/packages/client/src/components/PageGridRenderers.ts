@@ -557,6 +557,20 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     filters: favorite.filters || {},
     groupBy: favorite.group_by || favorite.groupBy || '',
   }));
+  const persistedFavorites = (def.saved_views_source && dataMap[String(def.saved_views_source)]?.data || []).map((view: any) => {
+    const rawFilters = typeof view.filters === 'string' ? (() => { try { return JSON.parse(view.filters); } catch { return {}; } })() : (view.filters || {});
+    const validFields = new Set(filters.map((filter: any) => String(filter.field)));
+    const filtersToApply = Object.fromEntries(Object.entries(rawFilters).filter(([field]) => validFields.has(field)));
+    const stale = Object.keys(rawFilters).some((field) => !validFields.has(field)) || (Number(view.filter_version || 1) < Number(def.saved_views_version || 1));
+    return {
+      id: String(view.view_key || view.id),
+      label: `${String(view.label || view.view_key || view.id)}${stale ? ' (stale filters)' : ''}`,
+      filters: filtersToApply,
+      groupBy: String(view.group_by || ''),
+      persisted: true,
+      persistedId: String(view.id || ''),
+    };
+  });
   const bulkActions = (def.bulk_actions || []).filter((action: any) => {
     const actionDef = (config.actions || []).find((candidate: any) => candidate.id === action.id);
     if (!hasPermission(ctx.user, action.permission || actionDef?.permission)) return false;
@@ -740,7 +754,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       } : undefined,
       actions: utilityActions,
       groupBy,
-      favorites,
+      favorites: [...favorites, ...persistedFavorites],
       bulkActions,
       rowKey: def.row_key || 'id',
       tree: def.tree ? { parentField: def.parent_field || 'parent_id' } : undefined,
@@ -791,6 +805,12 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           : undefined;
         void refetchSource(sourceId, filterState[sourceId] || {}, 0, paginationState[sourceId]?.top || pageSize, sortState[sourceId], nextPivot)
           .then((data: any) => comp.setState({ rows: data.data || [], meta: data.meta || {} }));
+      },
+      onFavoriteChange: (favorite: any) => {
+        if (!favorite?.persisted || !favorite.persistedId) return;
+        void client.action('ui.saved_views.apply', { id: String(favorite.persistedId) }).catch((error: unknown) => {
+          console.error('[page-renderer] saved-view apply failed:', error);
+        });
       },
       onPivotChange: (request: { rows: string[]; columns: string[]; measures: Array<{ field?: string; aggregate: string; label?: string }>; ranges?: Record<string, string> }) => {
         const params = {

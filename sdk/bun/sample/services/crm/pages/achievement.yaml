@@ -1,0 +1,43 @@
+title: CRM Salesperson Achievement
+page: { id: crm-achievement, breadcrumb: [CRM, Salesperson Achievement], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_achievement_leaderboard
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT m.user_name AS salesperson, t.name AS team, COUNT(DISTINCT l.id) FILTER (WHERE l.stage = 'Won') AS wins, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.stage = 'Won'), 0) AS DOUBLE) AS won_value, COUNT(DISTINCT a.id) FILTER (WHERE a.state = 'done') AS completed_activities, COUNT(DISTINCT a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_followups, (COUNT(DISTINCT l.id) FILTER (WHERE l.stage = 'Won') * 10 + COUNT(DISTINCT a.id) FILTER (WHERE a.state = 'done') * 2 + CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.stage = 'Won'), 0) / 1000 AS INTEGER)) AS achievement_points FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id AND t.active = true LEFT JOIN crm_leads l ON l.salesperson = m.user_name AND l.active = true AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS TIMESTAMP)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS TIMESTAMP) + INTERVAL '1 day') LEFT JOIN crm_activities a ON a.assigned_to = m.user_name AND (:date_from IS NULL OR a.created_at >= CAST(:date_from AS TIMESTAMP)) AND (:date_to IS NULL OR a.created_at < CAST(:date_to AS TIMESTAMP) + INTERVAL '1 day') WHERE m.active = true AND (:team IS NULL OR t.name = :team) GROUP BY m.user_name, t.name ORDER BY achievement_points DESC, won_value DESC, salesperson"
+  - id: crm_achievement_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_achievement_detail
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT m.user_name AS salesperson, t.name AS team, a.activity_type, COUNT(*) AS completed_count FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id AND t.active = true JOIN crm_activities a ON a.assigned_to = m.user_name AND a.state = 'done' WHERE m.active = true AND (:team IS NULL OR t.name = :team) GROUP BY m.user_name, t.name, a.activity_type ORDER BY completed_count DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_achievement_leaderboard
+    filters:
+      - { field: team, label: Sales team, options_source: crm_achievement_teams }
+      - { field: date_from, label: From, options: [] }
+      - { field: date_to, label: To, options: [] }
+    columns:
+      - { field: salesperson, label: Salesperson, type: PrimaryEntityCell }
+      - { field: team, label: Team }
+      - { field: achievement_points, label: Points }
+      - { field: wins, label: Wins }
+      - { field: won_value, label: Won value }
+      - { field: completed_activities, label: Completed activities }
+      - { field: overdue_followups, label: Overdue follow-ups }
+    row_key: salesperson
+  - type: ListView
+    variant: odoo
+    source: crm_achievement_detail
+    columns:
+      - { field: salesperson, label: Salesperson, type: PrimaryEntityCell }
+      - { field: team, label: Team }
+      - { field: activity_type, label: Activity }
+      - { field: completed_count, label: Completed }
+    row_key: activity_type

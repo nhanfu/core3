@@ -1,0 +1,84 @@
+title: CRM Customer Account
+page: { id: crm-customer-account, breadcrumb: [CRM, Customer Accounts], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_account_header
+    single: true
+    permission: crm.read
+    query: "SELECT id, name, email, phone, city, country_name FROM base_contacts WHERE id = :id AND active = true AND is_company = true"
+  - id: crm_account_contacts
+    single: false
+    permission: crm.read
+    query: "SELECT r.id, r.company_id, c.name AS contact_name, c.email, c.phone, r.relationship_type, r.created_by, CAST(r.created_at AS VARCHAR) AS created_at FROM crm_contact_company_relationships r JOIN base_contacts c ON c.id = r.contact_id WHERE r.company_id = :id AND r.active = true AND c.active = true ORDER BY c.name"
+  - id: crm_account_opportunities
+    single: false
+    permission: crm.read
+    query: "SELECT l.id, l.name, l.stage, l.probability, l.expected_revenue, l.salesperson, l.team, CAST(l.expected_closing AS VARCHAR) AS expected_closing FROM crm_leads l WHERE l.partner_id = :id AND l.active = true ORDER BY l.updated_at DESC"
+components:
+  - type: OdooFormView
+    source: crm_account_header
+    title_field: name
+    subtitle_field: email
+  - type: ListView
+    variant: odoo
+    source: crm_account_contacts
+    row_actions: menu
+    actions:
+      - { id: edit_crm_account_contact, label: Edit relationship, permission: crm.write, variant: secondary }
+      - { id: remove_crm_account_contact, label: Remove relationship, permission: crm.write, variant: danger }
+    columns:
+      - { field: contact_name, label: Contact, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: relationship_type, label: Relationship }
+      - { field: created_by, label: Added by }
+  - type: ListView
+    variant: odoo
+    source: crm_account_opportunities
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: expected_revenue, label: Expected revenue }
+      - { field: probability, label: Probability }
+      - { field: salesperson, label: Salesperson }
+      - { field: expected_closing, label: Expected closing }
+actions:
+  - id: edit_crm_account_contact
+    type: server_form
+    permission: crm.write
+    title: Edit account relationship
+    action: crm.accounts.update_contact
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_account_contacts]
+    mutation:
+      operation: update
+      table: crm_contact_company_relationships
+      fields: [relationship_type]
+      required: [relationship_type]
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_contact_company_relationships r JOIN base_contacts c ON c.id = r.company_id WHERE r.id = :id AND r.active = true AND c.active = true AND c.is_company = true"
+          status: 409
+          message: Only active account relationships can be edited
+      result: { query: "SELECT * FROM crm_contact_company_relationships WHERE id = :id" }
+    fields:
+      - { field: relationship_type, label: Relationship, type: select, options: [{ value: employee, label: Employee }, { value: decision_maker, label: Decision maker }, { value: billing, label: Billing contact }], required: true }
+  - id: remove_crm_account_contact
+    type: server_form
+    permission: crm.write
+    title: Remove account relationship
+    action: crm.accounts.remove_contact
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_account_contacts, crm_account_header]
+    fields:
+      - { field: id, label: Relationship, type: hidden }
+    mutation:
+      operation: update
+      table: crm_contact_company_relationships
+      fields: [active]
+      defaults: { active: false }
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_contact_company_relationships r JOIN base_contacts c ON c.id = r.company_id WHERE r.id = :id AND r.active = true AND c.active = true AND c.is_company = true"
+          status: 409
+          message: Only active account relationships can be removed
+      result: { query: "SELECT * FROM crm_contact_company_relationships WHERE id = :id" }

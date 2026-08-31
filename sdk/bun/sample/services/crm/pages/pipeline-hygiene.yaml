@@ -4,6 +4,7 @@ datasources:
   - id: crm_pipeline_hygiene
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND (EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - l.created_at)) / 3600 >= COALESCE(t.response_hours, 24) OR EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE))) AS stale_open, COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(l.salesperson), '') IS NULL) AS unassigned_open, COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)) AS overdue_activity, COUNT(*) FILTER (WHERE l.active = false) AS archived FROM crm_leads l LEFT JOIN crm_teams t ON t.name = l.team GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team') ORDER BY stale_open DESC, unassigned_open DESC, team"
 components:
   - type: ListView

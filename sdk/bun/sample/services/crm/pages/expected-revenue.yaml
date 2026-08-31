@@ -17,6 +17,7 @@ datasources:
   - id: crm_expected_revenue_teams
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
 components:
   - type: ListView

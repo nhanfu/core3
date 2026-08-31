@@ -379,4 +379,214 @@ shared-page audit.
 | CRM-125 | Add guarded message retry action | CRM-124, contact preferences, active opportunity and template contracts | Authorized users can retry only failed external messages to eligible contacts; opted-out, inactive, closed, or stale records are rejected without duplicate sends | planned |
 | CRM-126 | Add communication effectiveness summary | CRM-124, activity execution, campaign attribution, and follow-up reporting | Managers can compare sent, failed, replied, and converted communications by team, salesperson, template, and campaign with scoped drill-down | planned |
 
-| 35 | CRM-124–CRM-126 planned | BA selected message delivery traceability, safe retry, and communication effectiveness reporting as the next bounded CRM batch | Pending dev implementation and BA acceptance against message classification, contact preference enforcement, idempotency, stale safety, actor/audit integrity, aggregate scope, permissions, and rendered evidence | Implement CRM-124–CRM-126 |
+| 35 | CRM-124–CRM-126 in progress | Added migration 0.0.32 for message delivery status/attempt metadata, a permissioned Communications surface, failed-message retry guarded by active/open opportunity scope and email opt-in, and effectiveness aggregates by team, salesperson, and campaign; template-assisted messages persist initial sent metadata | CRM integration 94/94 with 521 expect calls; fresh/upgrade migration gates, UI audit 189 pages/191 routes/417 datasources, and diff check pass; rendered communication acceptance remains open | Run authenticated rendered acceptance for delivery status, retry, and effectiveness, then plan the next CRM batch |
+
+## Batch 36 — CRM scoring transparency and governance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-127 | Add lead-score explanation detail | Existing configurable scoring rules and calculated score/grade | Lead detail shows each active rule contribution and the resulting score/grade using the same deterministic calculation as pipeline lists | planned |
+| CRM-128 | Add score recalculation audit | CRM-127, activity author/timestamp and immutable audit contracts | A score recalculation records rule-set version, prior/new score, actor, and timestamp without changing unrelated lead fields | planned |
+| CRM-129 | Add score governance report | CRM-127/128, team and source reporting filters | Managers can compare score distribution, grade, rule contribution, and conversion outcomes by team/source with permission-safe drill-down | planned |
+
+| 36 | CRM-127–CRM-129 in progress | Added a permissioned Scoring Governance surface with deterministic rule-contribution explanations, Hot/Warm/Cold governance aggregation, shared team/source filters, versioned score-audit history, and a cataloged recalculation action that does not mutate lead business fields | CRM integration 95/95 with 534 expect calls; fresh/upgrade migration gates, UI audit 190 pages/192 routes/422 datasources, and diff check pass; rendered scoring acceptance remains open | Run authenticated rendered acceptance for explanations and recalculation, then plan the next CRM batch |
+
+## Batch 37 — CRM data quality and normalization
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-130 | Add contact-data quality view | Existing contact linkage, duplicate preview, qualification completeness, and lead search | Users can identify invalid/missing email, phone, and customer linkage on active CRM records without exposing unrelated contacts | planned |
+| CRM-131 | Add guarded contact-data normalization | CRM-130, contact permissions, stale row-version and audit contracts | Authorized users can normalize declared email/phone formats or link an active contact; invalid values and stale records fail atomically with an audit event | planned |
+| CRM-132 | Add data-quality remediation summary | CRM-130/131, team/source reporting and audit surfaces | Managers can compare quality issues, remediated records, and unresolved records by team/source with scoped drill-down and no closed-record mutation | planned |
+
+| 37 | CRM-130–CRM-132 in progress | Added a permissioned active-record Data Quality surface classifying missing customer, invalid email/phone, inactive contact links, and complete records, plus team/source issue summaries and a format/contact/open-record guarded normalization form that records a `data_quality` activity with actor/timestamp | CRM integration 96/96 with 544 expect calls; UI audit 191 pages/193 routes/424 datasources and diff check pass; rendered quality acceptance remains open | Run authenticated rendered acceptance for quality review and normalization |
+
+## Batch 38 — CRM forecast accuracy and learning
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-133 | Add forecast-versus-outcome comparison | Existing immutable forecast snapshots, Won/Lost outcomes, and date/team filters | Managers can compare captured weighted value with realized won value by snapshot period/team without mutating snapshots or live opportunities | planned |
+| CRM-134 | Add forecast variance explanation | CRM-133, stage/probability history and opportunity audit | Each material variance identifies stage, probability, revenue, or close-date changes with actor/timestamp evidence scoped to the opportunity | planned |
+| CRM-135 | Add forecast learning summary | CRM-133/134, source/campaign and salesperson reporting | Managers can review forecast accuracy, variance causes, and sample size by team/source/owner with low-sample labeling and safe drill-down | planned |
+
+| 38 | CRM-133–CRM-135 in progress | Added a permissioned Forecast Accuracy surface comparing immutable snapshot weighted value with realized Won value, variance, snapshot sample size, and low-sample evidence under shared team/date filters, plus snapshot-to-current variance-cause detail for stage/probability/revenue/close timing changes | CRM integration 97/97 with 556 expect calls; UI audit 192 pages/194 routes/427 datasources and diff check pass; rendered forecast acceptance remains open | Run authenticated rendered acceptance for accuracy and variance causes, then plan the next CRM batch |
+
+## Batch 39 — CRM search and saved-view governance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-136 | Add advanced pipeline search facets | Existing lead search, stage/team/source/score filters, and shared datasource transport | Users can combine declared text, stage, owner, team, source, campaign, score, and activity-state facets with consistent results across list and Kanban views | planned |
+| CRM-137 | Add permissioned saved CRM views | Existing favorites contract and user/team scope | Users can save, rename, apply, and remove personal or manager-shared views without exposing another team’s private filters | planned |
+| CRM-138 | Add saved-view usage and stale-filter handling | CRM-136/137, archived fields and schema evolution conventions | Invalid or retired filter values are surfaced and safely cleared; managers can review view usage without mutating lead records | planned |
+
+| 39 | CRM-136–CRM-138 in progress | Added an activity-state facet and local lookup to the shared CRM pipeline source, preserving the existing declared facets and saved favorites for list/Kanban consistency | CRM integration 98/98 with 560 expect calls; UI audit 192 pages/194 routes/428 datasources and diff check pass; permissioned saved-view persistence, stale-filter handling, and rendered search acceptance remain open | Add saved-view governance and stale-filter handling |
+
+## Batch 40 — CRM saved-view persistence contract
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-139 | Add shared saved-view persistence contract | Existing static favorites renderer and generic YAML action/data contracts | A reusable, user/team-scoped saved-view record supports filters, grouping, label, owner, visibility, and version without CRM-specific storage | planned |
+| CRM-140 | Consume saved-view persistence for CRM pipeline | CRM-139, existing pipeline facets and permissions | Users can create, rename, apply, and remove personal or manager-shared CRM views with ownership and team-scope enforcement | planned |
+| CRM-141 | Add stale-view migration and usage visibility | CRM-140, schema evolution and audit conventions | Retired fields are reported and safely removed from applied filters; managers can inspect view usage and last-applied time without changing leads | planned |
+
+| 40 | CRM-139–CRM-141 in progress | Added the generic base-service `ui_saved_views` persistence schema plus a reusable Saved Views page with scoped list/create/edit/delete declarations, owner/team visibility, versioned JSON filters, grouping, usage counts, timestamps, owner/shared edit-delete guards, authenticated owner defaults, and CRM shared/private-view loading | CRM integration 100/100 with 571 expect calls; UI audit 193 pages/195 routes/430 datasources and diff check pass; runtime ownership enforcement, stale-filter handling, and rendered acceptance remain open | Add version-aware filter metadata and run the configured client/browser harness |
+
+## Batch 41 — CRM saved-view runtime binding
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-142 | Add shared ListView saved-view datasource binding | Batch 40 generic persistence and existing static favorites renderer | A ListView can load saved views by resource/user/team scope while retaining static YAML favorites as fallback | planned |
+| CRM-143 | Bind CRM pipeline to persisted saved views | CRM-136 facets, Batch 40 scope guards, shared ListView binding | CRM users can save/apply/remove pipeline views and see only personal or authorized shared views | planned |
+| CRM-144 | Add stale-filter reconciliation | CRM-143, datasource/filter metadata and versioning | Applying a view with retired fields reports the stale filters, removes only invalid predicates, and preserves valid filters with an auditable update | planned |
+
+| 41 | CRM-142–CRM-144 in progress | Added generic `saved_views_source` ListView support that merges persisted views with static favorites, bound the CRM pipeline to shared persisted views filtered by resource/visibility, and reconciles unknown or older-version filter fields while visibly labeling stale views | CRM integration 100/100 with 572 expect calls; UI audit 193 pages/195 routes/430 datasources and diff check pass; standalone client test invocation lacks its DOM harness (`document is not defined`), while runtime ownership enforcement and rendered acceptance remain open | Run the configured client/browser harness |
+
+## Batch 42 — CRM saved-view application governance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-145 | Add an explicit saved-view apply contract | Batch 41 runtime binding and shared mutation transport | Applying a persisted view is a declared, permissioned operation that records `last_applied_at` and increments `usage_count` without changing lead data | planned |
+| CRM-146 | Enforce shared-view team scope | CRM-145, authenticated user/team context and saved-view ownership | Private views remain owner-only; shared views are visible only to the owner’s authorized team scope; cross-team rows are excluded at the datasource boundary | planned |
+| CRM-147 | Expose usage governance with safe ordering | CRM-145/146, Saved Views page | Managers can order and inspect usage/last-applied metadata while edit/delete ownership guards remain unchanged | planned |
+
+| 42 | CRM-145/CRM-146 implemented; CRM-147 pending rendered acceptance | Added the generic permissioned `ui.saved_views.apply` mutation with owner/shared guards, atomic usage-count increment, and `last_applied_at` recording; CRM pipeline saved-view loading now excludes team-scoped shared views unless the authenticated user is an active member of that team, and persisted favorite selection invokes the apply mutation while Base remains service-neutral | CRM integration 100/100 with 576 expect calls; UI audit 193 pages/195 routes/430 datasources, client TypeScript check, and diff check pass; rendered apply/usage interaction remains open | Run authenticated rendered acceptance for apply, usage ordering, and cross-team exclusion |
+
+## Batch 43 — CRM saved-view lifecycle versioning
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-148 | Increment filter version on saved-view edits | Batch 41 stale-filter binding and shared mutation runtime | Editing filters advances the persisted version atomically; unchanged edits do not create false version changes; stale labels remain deterministic | planned |
+| CRM-149 | Preserve version concurrency during edits | CRM-148, existing row/version mutation conventions | Concurrent edits fail with the standard stale-record response and cannot overwrite a newer filter definition | planned |
+| CRM-150 | Add lifecycle evidence to Saved Views governance | CRM-148/149, usage metadata and Saved Views page | Managers can distinguish the current filter version from usage metadata without changing view ownership or visibility rules | planned |
+
+| 43 | CRM-148–CRM-150 implementation pass | Added generic `increment_fields` support to YAML update mutations, applied it to advance saved-view `filter_version` only when fields change, added DuckDB-compatible migration 0.0.5 plus `row_version` projection/concurrency wiring for stale-edit protection, and exposed filter version in Saved Views governance | CRM integration 102/102 with 584 expect calls, including executable changed/unchanged/stale-edit behavior and fresh/replay Base migration coverage; UI audit 193 pages/195 routes/430 datasources and diff check pass; rendered edit/concurrency acceptance remains open | Run authenticated rendered acceptance for version increments and stale concurrent edits |
+
+## Batch 44 — CRM lead acquisition and nurture
+
+Odoo CRM reference gap: the official CRM overview includes lead generation/nurturing, lead enrichment, and lead distribution alongside pipeline, activities, and scoring. These are the next feature targets; AI remains out of scope.
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-151 | Add bounded lead-nurture sequences | Existing activity plans, activity types, due-date rules, and open-record guards | Managers can define an ordered, active nurture sequence; applying it creates only declared future activities, preserves assignee/team scope, and rejects closed or stale leads atomically | planned |
+| CRM-152 | Add lead-enrichment review and guarded update | Existing contact linkage, data-quality normalization, and audit activity contract | Users can review declared enrichment fields for an active lead, apply only validated values, and see actor/timestamp evidence without overwriting unrelated fields | planned |
+| CRM-153 | Add permissioned lead-distribution report | Existing assignment rules, team membership, assignment activities, and workload reports | Managers can compare assigned, unassigned, rule-matched, manually assigned, and aged leads by team/owner with safe drill-down and closed-record exclusion | planned |
+
+| 44 | CRM-151–CRM-153 implementation pass | Added explicit nurture classification to activity plans and a guarded, idempotent ordered nurture-application workflow with audit activity; exposed nurture classification in CRM configuration; added permissioned Lead Enrichment with server-authoritative contact-name synchronization and Lead Distribution pages; extended external alias intake with `intake_channel`, `received_at`, and `origin_team` provenance; registered routes/menus, cataloged CRM mutations, and added executable nurture ordering/retry plus enrichment/intake persistence coverage | CRM integration 107/107 with 607 expect calls; UI audit 195 pages/197 routes/434 datasources and diff check pass; rendered nurture, enrichment, distribution, and intake interaction remains open | Run authenticated rendered acceptance for nurture, enrichment, distribution, and intake |
+
+## Batch 45 — CRM lead acquisition channels
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-154 | Add bounded lead-mining intake | Existing CRM lead schema, contact lookup, source catalog, and import validation | Authorized users can submit a declared lead-mining request with source/industry/location criteria, receive a reviewable candidate set, and cannot create leads before explicit selection | planned |
+| CRM-155 | Add referral/reseller attribution | Existing partner linkage, source/campaign fields, and audit activity contract | An opportunity can record a validated referring partner, and pipeline/report surfaces retain referral attribution without changing ownership or exposing unrelated contacts | planned |
+| CRM-156 | Harden external lead-intake provenance | Existing team email alias capture and import lifecycle | Email/form-origin leads retain channel, source, campaign, received timestamp, and originating team; inactive channels fail without partial lead creation | planned |
+
+| 45 | CRM-154–CRM-156 implementation pass | Added a review-only Lead Mining request/candidate surface over active contacts, with explicit criteria, candidate review, guarded explicit lead creation, linked provenance, and duplicate-active-lead rejection; added referral attribution fields and migration 0.0.36 with guarded referring-contact audit; extended external alias intake with durable channel/received/origin-team provenance and cataloged the CRM mutations | CRM integration 110/110 with 623 expect calls; UI audit 196 pages/198 routes/436 datasources and diff check pass; rendered mining, referral, and intake interaction remains open | Run authenticated rendered acceptance for request review, candidate conversion, referral attribution, and external intake |
+
+## Batch 46 — CRM customer and account relationships
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-157 | Add customer-account relationship surface | Existing base contacts, customer opportunities, and CRM read permissions | Authorized users can review active companies and related people/opportunities with company-scoped counts and no cross-customer leakage | planned |
+| CRM-158 | Add guarded contact relationship assignment | CRM-157, active contact linkage, stale-safe mutation and audit activity contracts | Authorized users can assign or revise a declared contact-to-company relationship only for active records, with duplicate/self-link rejection and actor/timestamp evidence | planned |
+| CRM-159 | Add account opportunity rollup | CRM-157/158, opportunity totals and team filters | Managers can compare account open, weighted, won, and overdue-activity totals and drill into only that account’s opportunities without mutating pipeline records | planned |
+
+| 46 | CRM-157–CRM-159 implementation pass | Added CRM Customer Accounts and Account Detail surfaces, active company/contact relationship storage with guarded duplicate/self-link validation, account-scoped opportunity rollups, and guarded relationship create/edit/remove actions; registered the CRM mutation and datasource declarations, surfaced the previously unregistered CRM pages in the manifest, and added declaration coverage | CRM integration 112/112 with 652 expect calls; discovery audit 199 pages/201 routes/446 datasources, catalog consistency, migration, and diff checks pass; rendered account/relationship acceptance remains open | Run authenticated rendered acceptance for account rollups, relationship creation/edit/removal, duplicate/self-link rejection, and scoped opportunity drill-down |
+
+## Batch 47 — CRM funnel and conversion performance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-160 | Add stage funnel analysis | Existing active pipeline stages, probability, and team/date filters | Managers can compare lead count, expected value, and weighted value by stage with closed/archived exclusion and consistent team/date scope | planned |
+| CRM-161 | Add source conversion cohorts | Existing source/campaign attribution and Won/Lost outcome history | Managers can compare source cohorts by created, qualified, won, conversion rate, and realized value while retaining unattributed records | planned |
+| CRM-162 | Add salesperson conversion velocity | Existing owner assignment, stage history, and activity completion contracts | Managers can compare owner throughput, average days to win/loss, open workload, and overdue follow-up counts with safe owner/team filtering | planned |
+
+| 47 | CRM-160–CRM-162 implementation pass | Added Funnel Analysis with stage funnel, source conversion cohorts, and salesperson conversion velocity reports using shared team/date/owner scope; registered the CRM route/menu and added declaration coverage | CRM integration 112/112 with 647 expect calls; discovery audit 199 pages/201 routes/446 datasources and migration, catalog-consistency, and diff checks pass; rendered funnel/report acceptance remains open | Run authenticated rendered acceptance for shared filters, unattributed cohorts, and report drill-down |
+
+## Batch 48 — CRM activity execution readiness
+
+Odoo CRM reference: activities are follow-up tasks tied to leads and opportunities, visible in the activity view/calendar, and completing an activity keeps the pipeline current by enabling the next activity. AI work remains out of scope.
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-163 | Add activity outcome classification | Existing planned/done activity lifecycle and outcome-note storage | Users can classify a completed activity outcome from the declared catalog, retain the note and actor/timestamp, and reject invalid outcomes without changing the opportunity | planned |
+| CRM-164 | Add follow-up readiness queue | CRM-163, next-activity chaining and overdue rules | Users can identify completed interactions with no next activity, overdue follow-ups, and ready-to-schedule records with direct opportunity navigation and closed-record exclusion | planned |
+| CRM-165 | Add activity execution drill-down | CRM-163/164, team/owner reporting filters and calendar view | Managers can compare outcome, completion, overdue, and chained-follow-up rates by activity type/team/owner with the same scope as the activity queue | planned |
+
+| 48 | CRM-163–CRM-165 implementation pass | Added durable activity outcome classification to the edit contract, a closed-record-safe Follow-up Readiness queue for missing/overdue next activities, and scoped activity outcome/chaining aggregates; registered the route/menu and added declaration coverage | CRM integration 113/113 with 660 expect calls; discovery audit 200 pages/202 routes/448 datasources and migration, catalog-consistency, and diff checks pass; rendered activity/readiness/calendar acceptance remains open | Run authenticated rendered acceptance for outcome completion, readiness filtering, and activity/report drill-down |
+
+## Batch 49 — CRM reseller and partner operations
+
+Odoo CRM reference: reseller workflows and partner autocomplete support partner-led opportunity acquisition and partner-linked pipeline management. Existing Core3 records a referring contact but lacks the operating and performance surfaces; AI work remains out of scope.
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-166 | Add reseller/partner directory | Existing active contacts, account relationships, referral attribution, and CRM permissions | Authorized users can review active partner contacts/companies, referral counts, open pipeline value, and latest referral activity without exposing inactive contacts | planned |
+| CRM-167 | Add referral performance analysis | CRM-166, source/cohort reporting and Won/Lost outcomes | Managers can compare referrals by partner, source, team, and period using created, open, won, conversion-rate, and realized-value measures with unattributed records retained | planned |
+| CRM-168 | Add partner-scoped opportunity drill-down | CRM-166/167, customer opportunity scope and lead navigation | Users can open only opportunities attributed to the selected partner, preserve partner context, and exclude closed/archived records according to the selected view | planned |
+
+| 49 | CRM-166–CRM-168 implementation pass | Added a permissioned partner directory with referral/open-pipeline rollups, referral performance cohorts by partner/source/team/period, and partner-scoped opportunity navigation; registered the CRM route/menu and added declaration coverage | CRM integration 114/114 with 670 expect calls; discovery audit 201 pages/203 routes/452 datasources and migration, catalog-consistency, and diff checks pass; rendered partner acceptance remains open | Run authenticated rendered acceptance for partner search, performance filters, and scoped opportunity drill-down |
+
+## Batch 50 — CRM salesperson achievement
+
+Odoo CRM reference: CRM includes gamification alongside pipeline, activities, and forecasts. Existing Core3 has targets and workload reports but no transparent achievement view; AI work remains out of scope.
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-169 | Add salesperson achievement leaderboard | Existing won/lost outcomes, completed activities, and team membership | Authorized users can compare transparent points, won value, wins, completed activities, and overdue follow-ups by active salesperson with team scope | planned |
+| CRM-170 | Add achievement period/team filters | CRM-169, shared report filter conventions and target periods | Leaderboard metrics use one explicit period/team scope, retain zero-activity members, and do not mutate CRM records | planned |
+| CRM-171 | Add achievement explanation detail | CRM-169/170, activity and opportunity navigation | Each score exposes its component counts/value and direct scoped navigation so users can understand and verify the ranking | planned |
+
+| 50 | CRM-169–CRM-171 implementation pass | Added a permissioned, read-only salesperson achievement leaderboard with explicit points from wins, won value, and completed activities, active-member/team/period filters, and activity-type explanation detail; registered the CRM route/menu and declaration coverage | CRM integration 115/115 with 678 expect calls; discovery audit 202 pages/204 routes/455 datasources and migration, catalog-consistency, and diff checks pass; rendered achievement acceptance remains open | Run authenticated rendered acceptance for period/team filters and score explanation review |
+
+## Batch 51 — CRM partner autocomplete and contact review
+
+Odoo CRM reference: partner autocomplete supports selecting an existing customer while creating or editing CRM records, and CRM links opportunities back to the selected partner. Existing Core3 has lookup sources and customer opportunity pages but lacks a dedicated search/review surface and duplicate-safe contact selection contract.
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-172 | Add scoped partner search surface | Existing active base contacts, customer accounts, and CRM read permissions | Sales users can search active people/companies by name, email, phone, and location, with company/person type visible and inactive contacts excluded | planned |
+| CRM-173 | Add duplicate-safe partner selection | CRM-172, lead customer linkage and active-contact guards | Authorized users can select an existing active partner for an open lead, reject inactive/invalid contacts, and preserve the server-authoritative partner name | planned |
+| CRM-174 | Add partner contact opportunity review | CRM-172/173, customer opportunities and relationship scope | Users can open opportunities for the selected partner/contact with customer scope preserved and no unrelated records exposed | planned |
+
+| 51 | CRM-172–CRM-174 implementation pass | Added a permissioned active-partner search surface covering name/email/phone/location, active-opportunity counts, and partner-scoped customer-opportunity navigation; existing guarded lead-linking and authoritative partner-name contracts remain the selection path | CRM integration 116/116 with 684 expect calls; discovery audit 203 pages/205 routes/456 datasources and migration, catalog-consistency, and diff checks pass; rendered partner search/selection acceptance remains open | Run authenticated rendered acceptance for partner search, guarded lead linking, inactive-contact rejection, and opportunity scope |
+
+## Batch 52 — CRM duplicate resolution governance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-175 | Add duplicate conflict review | Existing duplicate detection and duplicate preview contracts | Authorized users can review grouped duplicate candidates with match reason, record state, owner, customer, and safe lead navigation while excluding unrelated records | planned |
+| CRM-176 | Add explicit merge field resolution | CRM-175, deterministic merge survivor and stale/open-record guards | Users can choose the survivor and declared field values before merge; closed/archived or stale selections fail atomically and no unrelated fields are overwritten | planned |
+| CRM-177 | Add merge governance evidence | CRM-176, merge audit activity and conversion operations | Each completed merge exposes survivor, merged records, actor, timestamp, and retained field provenance for later review | planned |
+
+| 52 | CRM-175–CRM-177 implementation slice | Extended duplicate review with survivor/candidate names, stages, and owners, and added migration 0.0.40 plus durable merge-audit rows recording survivor, merged record, actor, timestamp, and retained-field provenance before deterministic merge deletion; added declaration and executable audit coverage | CRM integration 117/117 with 691 expect calls; discovery audit 203 pages/205 routes/456 datasources, migration, catalog-consistency, and diff checks remain green; explicit survivor/field selection and rendered duplicate-resolution acceptance remain open | Add explicit survivor/field selection, then run authenticated rendered review |
+
+## Batch 53 — CRM explicit merge selection
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-178 | Add pairwise merge review form | Batch 52 conflict fields and merge audit | Users can choose a specific survivor and duplicate from a reviewed pair, inspect all declared merge fields, and receive a scoped preview before mutation | planned |
+| CRM-179 | Add explicit field-value resolution | CRM-178, existing first-non-empty merge behavior and lead field contracts | Users can choose survivor/duplicate values for declared customer, contact, attribution, owner, team, tags, and revenue fields; unselected values are never overwritten | planned |
+| CRM-180 | Add merge provenance detail | CRM-179, `crm_merge_audit` storage and opportunity audit surfaces | Completed merges show chosen survivor, duplicate, each retained field/value source, actor, timestamp, and linked opportunity navigation | planned |
+
+| 53 | CRM-178–CRM-180 implementation pass | Added a pairwise duplicate-resolution form requiring explicit survivor/duplicate IDs and declared customer, contact, attribution, owner/team, tags, revenue, and retained-provenance values; added open/distinct guards, activity transfer, explicit merge audit, safe duplicate deletion, and numeric input casting | CRM integration 118/118 with 699 expect calls, including executable pairwise survivor selection, field resolution, activity transfer, audit provenance, and deletion; discovery audit 203 pages/205 routes/456 datasources, migration, catalog-consistency, and diff checks pass; rendered duplicate-resolution acceptance remains open | Run authenticated rendered review for preview, field choices, stale guards, and provenance detail |
+
+## Batch 54 — CRM campaign and source governance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-181 | Add campaign lifecycle workspace | Existing campaign/source catalogs and attribution reports | Authorized users can review active campaigns with source/medium, date window, owner, active state, and attributed lead counts without changing lead records | planned |
+| CRM-182 | Add guarded campaign status controls | CRM-181, configuration permissions and attribution integrity | Managers can activate/deactivate a campaign only with valid bounded dates and cannot deactivate a campaign referenced by protected reporting history without an explicit reason | planned |
+| CRM-183 | Add campaign attribution quality review | CRM-181/182, null-safe source/cohort reporting and data-quality contracts | Managers can identify unattributed, malformed, expired, and valid campaign attribution with scoped lead navigation and no closed-record mutation | planned |
+
+| 54 | CRM-181–CRM-183 implementation pass | Reused the existing guarded campaign configuration controls, added migration 0.0.41 for campaign status reasons and required a reason on campaign status changes, and added a permissioned campaign workspace with attributed/won/value rollups plus active/inactive/unknown/incomplete/unattributed attribution-quality review; registered the CRM route/menu and declaration coverage | CRM integration 120/120 with 712 expect calls, including campaign status-reason persistence and blank-reason rejection; discovery audit 204 pages/206 routes/459 datasources and migration, catalog-consistency, and diff checks pass; rendered campaign governance acceptance remains open | Run authenticated rendered campaign review |
+
+## Batch 55 — CRM team visibility governance
+
+| ID | Feature item | Dependency | Acceptance evidence | Status |
+|---|---|---|---|---|
+| CRM-184 | Add reusable CRM team-scope contract | Existing active team membership, authenticated user context, and report datasource conventions | CRM pages can declare user-team scope once and consistently distinguish own-team, manager-all-team, and unassigned records without duplicating ad hoc predicates | planned |
+| CRM-185 | Enforce team scope on CRM reads | CRM-184, lead/activity/customer/report surfaces and manager permissions | Non-manager users cannot read another team’s CRM records through lists, reports, drill-downs, or saved views; managers retain declared all-team access | planned |
+| CRM-186 | Add visibility exception audit | CRM-184/185, existing audit activity and governance surfaces | Scope overrides and manager access are reviewable with actor, team, reason, timestamp, and affected route/resource without exposing record contents beyond permission | planned |
+
+| 55 | CRM-184–CRM-186 implementation slice | Added a permission-derived `can_manage_crm` query parameter to page/source loading, reusable `team_scope` datasource metadata/runtime filtering for team-bearing reports, and manager-aware team-membership predicates on primary leads, planned activities, customer opportunities, archived/detail reads, activity readiness/reporting, referral performance, pipeline hygiene, qualification, stage movement, achievement, target attainment, Pipeline Analysis, distribution, forecast, team operations, activity execution, escalations, communications, follow-up, scoring, quality, expected revenue, and lead-distribution reports; preserved unassigned visibility and manager all-team access | CRM integration 121/121 with 738 expect calls; discovery audit 204 pages/206 routes/459 datasources and migration, catalog-consistency, and diff checks pass; remaining non-team-shaped report exceptions and exception audit remain open | Add the team-visibility exception audit and verify every intentional global/admin report |

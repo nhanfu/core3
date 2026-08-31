@@ -1,0 +1,9 @@
+version: 0.0.41
+type:
+  postgres:
+    up: "ALTER TABLE crm_campaigns ADD COLUMN IF NOT EXISTS status_reason VARCHAR;"
+    down: "ALTER TABLE crm_campaigns DROP COLUMN IF EXISTS status_reason;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

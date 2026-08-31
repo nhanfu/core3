@@ -1,0 +1,28 @@
+title: CRM Partner Search
+page: { id: crm-partner-search, breadcrumb: [CRM, Partner Search], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_partner_search
+    single: false
+    permission: crm.read
+    query: "SELECT c.id, c.name, c.company_type, c.is_company, c.email, c.phone, c.city, c.country_name, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true) AS active_opportunity_count FROM base_contacts c LEFT JOIN crm_leads l ON l.partner_id = c.id WHERE c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%' OR c.city ILIKE '%' || :q || '%' OR c.country_name ILIKE '%' || :q || '%') GROUP BY c.id, c.name, c.company_type, c.is_company, c.email, c.phone, c.city, c.country_name ORDER BY c.name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_partner_search
+    search: { label: Search partners, placeholder: 'Search name, email, phone, or location...' }
+    columns:
+      - { field: name, label: Partner, type: PrimaryEntityCell }
+      - { field: company_type, label: Type }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: city, label: City }
+      - { field: country_name, label: Country }
+      - { field: active_opportunity_count, label: Active opportunities }
+    row_key: id
+    actions: [{ id: open_searched_partner, label: Open partner opportunities, permission: crm.read, variant: ghost }]
+actions:
+  - id: open_searched_partner
+    type: navigate
+    permission: crm.read
+    navigate_to: /customer-opportunities
+    params: { id: '{row.id}' }

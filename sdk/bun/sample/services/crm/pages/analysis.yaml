@@ -12,6 +12,7 @@ datasources:
   - id: crm_pipeline_by_team
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY team ORDER BY revenue DESC"
   - id: crm_pipeline_by_source
     single: false
@@ -36,6 +37,7 @@ datasources:
   - id: crm_lead_distribution
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') || ':' || COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS distribution_key, COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE l.stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE l.stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads l WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:salesperson IS NULL OR l.salesperson = :salesperson) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY open_count DESC, team, salesperson"
   - id: crm_utm_campaign_performance
     single: false

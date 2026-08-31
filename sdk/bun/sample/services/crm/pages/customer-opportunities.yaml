@@ -4,7 +4,7 @@ datasources:
   - id: crm_customer_opportunities
     single: false
     permission: crm.read
-    query: "SELECT l.id, l.name, l.type, l.stage, l.probability, l.expected_revenue, l.salesperson, l.team, l.active, CAST(l.expected_closing AS VARCHAR) AS expected_closing FROM crm_leads l WHERE l.partner_id = :id ORDER BY l.active DESC, l.updated_at DESC"
+    query: "SELECT l.id, l.name, l.type, l.stage, l.probability, l.expected_revenue, l.salesperson, l.team, l.active, CAST(l.expected_closing AS VARCHAR) AS expected_closing FROM crm_leads l WHERE l.partner_id = :id AND (COALESCE(:can_manage_crm, true) = true OR NULLIF(TRIM(l.team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE t.name = l.team AND t.active = true AND m.user_name = :current_user_name AND m.active = true)) ORDER BY l.active DESC, l.updated_at DESC"
   - id: crm_customer_opportunity_totals
     single: true
     permission: crm.read

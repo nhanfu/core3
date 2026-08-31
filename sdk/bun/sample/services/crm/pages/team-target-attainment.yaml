@@ -4,6 +4,7 @@ datasources:
   - id: crm_team_target_attainment
     single: false
     permission: crm.read
+    team_scope: true
     query: "WITH live AS (SELECT l.team, SUM(CASE WHEN l.stage NOT IN ('Won', 'Lost') THEN COALESCE(l.expected_revenue, 0) * COALESCE(l.probability, 0) / 100 ELSE 0 END) AS weighted_pipeline FROM crm_leads l WHERE l.active = true GROUP BY l.team), latest AS (SELECT s.team, SUM(s.weighted_revenue) AS captured_weighted_pipeline FROM crm_forecast_snapshots s WHERE s.snapshot_date = (SELECT MAX(snapshot_date) FROM crm_forecast_snapshots WHERE team = s.team) GROUP BY s.team) SELECT t.name AS team, t.target_revenue, COALESCE(l.weighted_pipeline, 0) AS weighted_pipeline, COALESCE(latest.captured_weighted_pipeline, 0) AS captured_weighted_pipeline, CASE WHEN t.target_revenue > 0 THEN COALESCE(l.weighted_pipeline, 0) / t.target_revenue * 100 ELSE 0 END AS attainment_percent FROM crm_teams t LEFT JOIN live l ON l.team = t.name LEFT JOIN latest ON latest.team = t.name WHERE t.active = true ORDER BY attainment_percent DESC, t.name"
 components:
   - type: ListView

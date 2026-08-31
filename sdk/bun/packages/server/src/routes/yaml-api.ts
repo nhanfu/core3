@@ -125,6 +125,7 @@ export function createYamlApi(ctx: YamlApiContext) {
       current_user_name: String(user.name || ''),
       current_branch_id: String(user.branch_id || ''),
       view_scope: String(user.view_scope || 'all'),
+      can_manage_crm: Boolean(user.permissions?.includes?.('crm.manage')),
     };
     const lang = requestLanguage(url, user.preferred_lang || 'en');
     const datasources = await Promise.all((page.datasources || []).map(async (source: any) => {

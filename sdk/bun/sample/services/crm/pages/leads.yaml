@@ -39,10 +39,12 @@ datasources:
         AND (:type IS NULL OR type = :type)
         AND (:salesperson IS NULL OR salesperson = :salesperson)
         AND (:team IS NULL OR team = :team)
+        AND (COALESCE(:can_manage_crm, true) = true OR NULLIF(TRIM(team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE t.name = team AND t.active = true AND m.user_name = :current_user_name AND m.active = true))
         AND (:source IS NULL OR source = :source)
         AND (:utm_campaign IS NULL OR utm_campaign = :utm_campaign)
         AND (:score_min IS NULL OR calculated_score >= CAST(:score_min AS INTEGER))
         AND (:score_max IS NULL OR calculated_score <= CAST(:score_max AS INTEGER))
+        AND (:activity_state IS NULL OR EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = scored_leads.id AND a.state = :activity_state))
       ORDER BY created_at DESC
   - id: crm_lead_stages
     single: false
@@ -98,10 +100,20 @@ datasources:
     operation: contacts.search
     service_params: { query: q, limit: 100 }
     permission: base.contacts.read
+  - id: crm_persisted_pipeline_views
+    single: false
+    permission: crm.read
+    query: "SELECT id, view_key, label, filters, group_by, filter_version FROM ui_saved_views v WHERE resource = 'crm_leads' AND (owner_id = :current_user_id OR (visibility = 'shared' AND (v.team IS NULL OR EXISTS (SELECT 1 FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE t.name = v.team AND t.active = true AND m.user_name = :current_user_name AND m.active = true)))) ORDER BY label"
+  - id: crm_activity_state_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT value, label FROM (VALUES ('planned', 'Has planned activity'), ('done', 'Has completed activity')) states(value, label)"
 components:
   - type: ListView
     variant: odoo
     source: crm_leads
+    saved_views_source: crm_persisted_pipeline_views
+    saved_views_version: 1
     create_action: create_lead
     create_label: New
     search: { label: Search leads, placeholder: Search opportunities and customers... }
@@ -114,6 +126,7 @@ components:
       - { field: utm_campaign, label: UTM campaign, options_source: crm_utm_campaign_lookup }
       - { field: score_min, label: Minimum lead score, options: [{ id: '0', label: '0+' }, { id: '30', label: '30+' }, { id: '70', label: '70+' }] }
       - { field: score_max, label: Maximum lead score, options: [{ id: '30', label: '30 or less' }, { id: '70', label: '70 or less' }, { id: '100', label: '100 or less' }] }
+      - { field: activity_state, label: Activity state, options_source: crm_activity_state_lookup }
     favorites:
       - id: my_pipeline
         label: Proposition Pipeline
@@ -324,9 +337,9 @@ actions:
     mutation:
       operation: insert
       table: crm_leads
-      fields: [name, type, email, phone, source, team, stage, probability, expected_revenue]
+      fields: [name, type, email, phone, source, team, stage, probability, expected_revenue, intake_channel]
       required: [name, team_alias]
-      defaults: { type: lead, stage: New, probability: 10, expected_revenue: 0, source: Email }
+      defaults: { type: lead, stage: New, probability: 10, expected_revenue: 0, source: Email, intake_channel: email_alias }
       guards:
         - query: "SELECT 1 AS ok FROM crm_teams WHERE lower(email_alias) = lower(trim(CAST(:team_alias AS VARCHAR))) AND active = true AND use_leads = true"
           status: 409
@@ -335,7 +348,7 @@ actions:
           status: 400
           message: Enter a valid inbound email
       steps:
-        - query: "UPDATE crm_leads SET team = (SELECT name FROM crm_teams WHERE lower(email_alias) = lower(trim(CAST(:team_alias AS VARCHAR))) AND active = true), source = COALESCE(:source, 'Email') WHERE id = :id"
+        - query: "UPDATE crm_leads SET team = (SELECT name FROM crm_teams WHERE lower(email_alias) = lower(trim(CAST(:team_alias AS VARCHAR))) AND active = true), origin_team = (SELECT name FROM crm_teams WHERE lower(email_alias) = lower(trim(CAST(:team_alias AS VARCHAR))) AND active = true), source = COALESCE(:source, 'Email'), intake_channel = 'email_alias', received_at = COALESCE(received_at, CURRENT_TIMESTAMP) WHERE id = :id"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) VALUES(gen_random_uuid(), :id, 'message', 'Inbound lead received through team email alias', 'done', CURRENT_TIMESTAMP, COALESCE(:current_user_name, 'Email Gateway'))"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     fields:
@@ -521,6 +534,7 @@ actions:
           status: 409
           message: Select at least two open leads or opportunities to merge
       steps:
+        - query: "INSERT INTO crm_merge_audit(id, survivor_id, merged_id, actor, retained_fields) SELECT gen_random_uuid(), (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1), id, :current_user_name, 'first_non_empty_declared_fields' FROM crm_leads WHERE id IN :selectedIds AND id <> (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1) AND stage NOT IN ('Won', 'Lost')"
         - query: "UPDATE crm_leads AS survivor SET utm_campaign = COALESCE(NULLIF(survivor.utm_campaign, ''), (SELECT duplicate.utm_campaign FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.utm_campaign, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), utm_medium = COALESCE(NULLIF(survivor.utm_medium, ''), (SELECT duplicate.utm_medium FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.utm_medium, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), utm_source = COALESCE(NULLIF(survivor.utm_source, ''), (SELECT duplicate.utm_source FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.utm_source, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)) WHERE survivor.id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1)"
         - query: "UPDATE crm_leads AS survivor SET partner_id = COALESCE(survivor.partner_id, (SELECT duplicate.partner_id FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND duplicate.partner_id IS NOT NULL ORDER BY duplicate.id LIMIT 1)), partner_name = COALESCE(NULLIF(survivor.partner_name, ''), (SELECT duplicate.partner_name FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.partner_name, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), email = COALESCE(NULLIF(survivor.email, ''), (SELECT duplicate.email FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.email, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), phone = COALESCE(NULLIF(survivor.phone, ''), (SELECT duplicate.phone FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.phone, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), source = COALESCE(NULLIF(survivor.source, ''), (SELECT duplicate.source FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.source, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), salesperson = COALESCE(NULLIF(survivor.salesperson, ''), (SELECT duplicate.salesperson FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.salesperson, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), team = COALESCE(NULLIF(survivor.team, ''), (SELECT duplicate.team FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.team, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), tags = COALESCE(NULLIF(survivor.tags, ''), (SELECT duplicate.tags FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.tags, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), expected_revenue = COALESCE(NULLIF(survivor.expected_revenue, 0), (SELECT duplicate.expected_revenue FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND duplicate.expected_revenue IS NOT NULL ORDER BY duplicate.id LIMIT 1)), row_version = survivor.row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE survivor.id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1)"
         - query: "UPDATE crm_activities SET lead_id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1) WHERE lead_id IN :selectedIds AND lead_id <> (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1) AND lead_id IN (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost'))"

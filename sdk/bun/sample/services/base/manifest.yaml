@@ -18,6 +18,7 @@ pages:
   - pages/currency-detail.yaml
   - pages/language-detail.yaml
   - pages/category-detail.yaml
+  - pages/saved-views.yaml
   - pages/activity-workflow.yaml
 permissions: permissions.yaml
 operations: operations.yaml

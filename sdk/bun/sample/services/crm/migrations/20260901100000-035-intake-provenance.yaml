@@ -1,0 +1,9 @@
+version: 0.0.35
+type:
+  postgres:
+    up: "ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS intake_channel VARCHAR DEFAULT 'manual'; ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS received_at TIMESTAMP; ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS origin_team VARCHAR;"
+    down: "ALTER TABLE crm_leads DROP COLUMN IF EXISTS intake_channel; ALTER TABLE crm_leads DROP COLUMN IF EXISTS received_at; ALTER TABLE crm_leads DROP COLUMN IF EXISTS origin_team;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,35 @@
+title: Lead Distribution
+page: { id: lead-distribution, breadcrumb: [Sales, CRM, Lead Distribution], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_lead_distribution_report
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: |
+      SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team,
+        COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson,
+        CASE WHEN EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.activity_type = 'assignment') THEN 'Rule or manual assignment' ELSE 'Unassigned' END AS assignment_source,
+        COUNT(*) AS lead_count,
+        CAST(AVG(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - l.created_at)) / 86400) AS DOUBLE) AS average_age_days
+      FROM crm_leads l
+      WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')
+        AND (:team IS NULL OR l.team = :team)
+      GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned'), assignment_source
+      ORDER BY lead_count DESC, team, salesperson
+  - id: crm_lead_distribution_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_lead_distribution_report
+    search: { label: Search distribution, placeholder: Search team or salesperson... }
+    filters: [{ field: team, label: Sales team, options_source: crm_lead_distribution_teams }]
+    columns:
+      - { field: team, label: Sales team, type: PrimaryEntityCell }
+      - { field: salesperson, label: Salesperson }
+      - { field: assignment_source, label: Assignment source }
+      - { field: lead_count, label: Leads, align: right }
+      - { field: average_age_days, label: Average age days, align: right }
+    row_key: team

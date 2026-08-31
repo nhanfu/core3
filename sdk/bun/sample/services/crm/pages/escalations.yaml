@@ -8,6 +8,7 @@ datasources:
   - id: crm_escalation_summary
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS assigned_to, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_count, COUNT(*) FILTER (WHERE a.escalation_state = 'escalated') AS escalated_count, COUNT(*) FILTER (WHERE a.escalation_state = 'rescheduled') AS rescheduled_count, COUNT(*) FILTER (WHERE a.state = 'done' AND a.escalation_state = 'cleared') AS cleared_count FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') ORDER BY overdue_count DESC, team, assigned_to"
 components:
   - type: ListView

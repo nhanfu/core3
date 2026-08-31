@@ -1,0 +1,112 @@
+title: Saved Views
+page: { id: saved-views, breadcrumb: [Settings, Saved Views], auth: { require: [base.users.read] } }
+datasources:
+  - id: ui_saved_views
+    single: false
+    permission: base.users.read
+    query: "SELECT id, resource, view_key, label, owner_id, owner_name, visibility, team, filter_version, filters, group_by, usage_count, row_version, CAST(last_applied_at AS VARCHAR) AS last_applied_at FROM ui_saved_views WHERE (:resource IS NULL OR resource = :resource) AND (:owner_id IS NULL OR owner_id = :owner_id OR visibility = 'shared') ORDER BY usage_count DESC, label"
+components:
+  - type: ListView
+    variant: odoo
+    source: ui_saved_views
+    create_action: create_saved_view
+    create_label: Save view
+    columns:
+      - { field: label, label: View }
+      - { field: resource, label: Resource }
+      - { field: visibility, label: Visibility, type: StatusChip }
+      - { field: team, label: Team }
+      - { field: filter_version, label: Filter version, align: right }
+      - { field: usage_count, label: Uses }
+      - { field: last_applied_at, label: Last applied }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: apply_saved_view, label: Apply, permission: base.users.read, variant: secondary }
+      - { id: edit_saved_view, label: Edit, permission: base.users.read, variant: secondary }
+      - { id: delete_saved_view, label: Remove, permission: base.users.read, variant: danger }
+actions:
+  - id: apply_saved_view
+    type: server
+    permission: base.users.read
+    action: ui.saved_views.apply
+    handler: yaml_mutation
+    operation: apply
+    params: { id: '{row.id}' }
+    refresh: [ui_saved_views]
+    mutation:
+      guards:
+        - query: "SELECT id FROM ui_saved_views WHERE id = :id AND (owner_id = :current_user_id OR visibility = 'shared')"
+          status: 403
+          message: You cannot apply this saved view
+      steps:
+        - query: "UPDATE ui_saved_views SET usage_count = usage_count + 1, last_applied_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND (owner_id = :current_user_id OR visibility = 'shared')"
+      result: { query: "SELECT * FROM ui_saved_views WHERE id = :id" }
+  - id: create_saved_view
+    type: server_form
+    permission: base.users.read
+    title: Save view
+    action: ui.saved_views.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [ui_saved_views]
+    mutation:
+      operation: insert
+      table: ui_saved_views
+      fields: [resource, view_key, label, owner_id, owner_name, visibility, team, filter_version, filters, group_by]
+      required: [resource, view_key, label, filters]
+      defaults: { visibility: private, filter_version: 1, owner_id: '{current_user_id}', owner_name: '{current_user_name}' }
+      guards:
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:visibility, 'private') AS VARCHAR) IN ('private', 'shared')"
+          status: 400
+          message: Visibility must be private or shared
+      result: { query: "SELECT * FROM ui_saved_views WHERE id = :id" }
+    fields:
+      - { field: resource, label: Resource, type: text, required: true }
+      - { field: view_key, label: View key, type: text, required: true }
+      - { field: label, label: Label, type: text, required: true }
+      - { field: visibility, label: Visibility, type: select, options: [{ value: private, label: Private }, { value: shared, label: Shared }] }
+      - { field: team, label: Team, type: text }
+      - { field: filters, label: Filters JSON, type: textarea, required: true }
+      - { field: group_by, label: Group by, type: text }
+  - id: edit_saved_view
+    type: server_form
+    permission: base.users.read
+    title: Edit saved view
+    action: ui.saved_views.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [ui_saved_views]
+    mutation:
+      operation: update
+      table: ui_saved_views
+      fields: [label, visibility, team, filters, group_by]
+      increment_fields: [filter_version]
+      concurrency: { field: row_version, input: expected_row_version }
+      required: [label, filters]
+      guards:
+        - query: "SELECT id FROM ui_saved_views WHERE id = :id AND (owner_id = :current_user_id OR visibility = 'shared')"
+          status: 403
+          message: You cannot edit this saved view
+      result: { query: "SELECT * FROM ui_saved_views WHERE id = :id" }
+    fields:
+      - { field: label, label: Label, type: text, required: true }
+      - { field: visibility, label: Visibility, type: select, options: [{ value: private, label: Private }, { value: shared, label: Shared }] }
+      - { field: team, label: Team, type: text }
+      - { field: filters, label: Filters JSON, type: textarea, required: true }
+      - { field: group_by, label: Group by, type: text }
+  - id: delete_saved_view
+    type: server
+    permission: base.users.read
+    action: ui.saved_views.delete
+    handler: yaml_mutation
+    operation: delete
+    refresh: [ui_saved_views]
+    mutation:
+      operation: delete
+      table: ui_saved_views
+      guards:
+        - query: "SELECT id FROM ui_saved_views WHERE id = :id AND owner_id = :current_user_id"
+          status: 403
+          message: Only the saved-view owner can remove it

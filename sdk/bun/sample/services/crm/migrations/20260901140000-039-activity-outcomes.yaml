@@ -1,0 +1,9 @@
+version: 0.0.39
+type:
+  postgres:
+    up: "ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS outcome_type VARCHAR DEFAULT 'unspecified'; UPDATE crm_activities SET outcome_type = 'unspecified' WHERE outcome_type IS NULL;"
+    down: "ALTER TABLE crm_activities DROP COLUMN IF EXISTS outcome_type;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

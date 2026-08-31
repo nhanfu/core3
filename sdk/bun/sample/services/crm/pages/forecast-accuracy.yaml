@@ -1,0 +1,49 @@
+title: Forecast Accuracy
+page: { id: forecast-accuracy, breadcrumb: [CRM, Forecast Accuracy], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_forecast_accuracy
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT s.snapshot_date, COALESCE(NULLIF(s.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(s.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS snapshot_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS realized_won_count, CAST(COALESCE(SUM(s.weighted_revenue), 0) AS DOUBLE) AS captured_weighted_value, CAST(COALESCE(SUM(CASE WHEN l.stage = 'Won' THEN l.expected_revenue ELSE 0 END), 0) AS DOUBLE) AS realized_won_value, CAST(COALESCE(SUM(CASE WHEN l.stage = 'Won' THEN l.expected_revenue ELSE 0 END), 0) - COALESCE(SUM(s.weighted_revenue), 0) AS DOUBLE) AS variance, CASE WHEN COUNT(*) < 5 THEN 'Low sample' ELSE 'Usable sample' END AS evidence_level FROM crm_forecast_snapshots s LEFT JOIN crm_leads l ON l.id = s.lead_id WHERE (:team IS NULL OR s.team = :team) AND (:date_from IS NULL OR s.snapshot_date >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR s.snapshot_date <= CAST(:date_to AS DATE)) GROUP BY s.snapshot_date, COALESCE(NULLIF(s.team, ''), 'Unassigned team'), COALESCE(NULLIF(s.salesperson, ''), 'Unassigned') ORDER BY s.snapshot_date DESC, variance DESC"
+  - id: crm_forecast_variance_causes
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT s.id, s.snapshot_date, s.lead_id, s.name AS opportunity, s.stage AS snapshot_stage, l.stage AS current_stage, s.probability AS snapshot_probability, l.probability AS current_probability, s.expected_revenue AS snapshot_revenue, l.expected_revenue AS current_revenue, CASE WHEN l.stage <> s.stage THEN 'Stage changed' WHEN l.probability <> s.probability THEN 'Probability changed' WHEN l.expected_revenue <> s.expected_revenue THEN 'Revenue changed' WHEN l.expected_closing IS DISTINCT FROM s.snapshot_date THEN 'Close timing changed' ELSE 'No material change' END AS variance_cause FROM crm_forecast_snapshots s JOIN crm_leads l ON l.id = s.lead_id WHERE (:team IS NULL OR s.team = :team) AND (:date_from IS NULL OR s.snapshot_date >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR s.snapshot_date <= CAST(:date_to AS DATE)) ORDER BY s.snapshot_date DESC, opportunity"
+  - id: crm_forecast_accuracy_teams
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+components:
+  - type: ListToolbar
+    source: crm_forecast_accuracy
+    filters:
+      - { field: team, label: Sales team, options_source: crm_forecast_accuracy_teams }
+    date_range: { from_field: date_from, to_field: date_to, from_label: From date, to_label: To date, presets: [all, month, quarter, year], default_preset: all }
+  - type: ListView
+    variant: odoo
+    source: crm_forecast_accuracy
+    columns:
+      - { field: snapshot_date, label: Snapshot date }
+      - { field: team, label: Team }
+      - { field: salesperson, label: Salesperson }
+      - { field: snapshot_count, label: Sample }
+      - { field: captured_weighted_value, label: Captured weighted value }
+      - { field: realized_won_value, label: Realized won value }
+      - { field: variance, label: Variance }
+      - { field: evidence_level, label: Evidence, type: StatusChip }
+    row_key: snapshot_date
+  - type: ListView
+    variant: odoo
+    source: crm_forecast_variance_causes
+    columns:
+      - { field: snapshot_date, label: Snapshot date }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: snapshot_stage, label: Snapshot stage }
+      - { field: current_stage, label: Current stage }
+      - { field: snapshot_probability, label: Snapshot probability }
+      - { field: current_probability, label: Current probability }
+      - { field: variance_cause, label: Variance cause, type: StatusChip }
+    row_key: id

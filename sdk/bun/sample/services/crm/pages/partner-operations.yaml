@@ -1,0 +1,58 @@
+title: CRM Partner Operations
+page: { id: crm-partner-operations, breadcrumb: [CRM, Partners], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_partner_directory
+    single: false
+    permission: crm.read
+    query: "SELECT c.id, c.name, c.email, c.phone, c.is_company, COUNT(DISTINCT l.id) FILTER (WHERE l.referrer_contact_id = c.id) AS referral_count, COUNT(DISTINCT l.id) FILTER (WHERE l.referrer_contact_id = c.id AND l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_referrals, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.referrer_contact_id = c.id AND l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS open_value, CAST(MAX(a.created_at) AS VARCHAR) AS latest_referral_activity FROM base_contacts c LEFT JOIN crm_leads l ON l.referrer_contact_id = c.id LEFT JOIN crm_activities a ON a.lead_id = l.id AND a.activity_type = 'referral' WHERE c.active = true GROUP BY c.id, c.name, c.email, c.phone, c.is_company ORDER BY referral_count DESC, c.name"
+  - id: crm_referral_performance
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT COALESCE(NULLIF(l.referrer_name, ''), 'Unattributed') AS partner, COALESCE(NULLIF(l.source, ''), 'Unattributed') AS source, COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COUNT(*) AS created_count, COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, CAST(COUNT(*) FILTER (WHERE l.stage = 'Won') * 100.0 / NULLIF(COUNT(*), 0) AS DOUBLE) AS conversion_rate, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.stage = 'Won'), 0) AS DOUBLE) AS realized_value FROM crm_leads l WHERE (:team IS NULL OR l.team = :team) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS TIMESTAMP)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS TIMESTAMP) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(l.referrer_name, ''), 'Unattributed'), COALESCE(NULLIF(l.source, ''), 'Unattributed'), COALESCE(NULLIF(l.team, ''), 'Unassigned team') ORDER BY won_count DESC, realized_value DESC, partner"
+  - id: crm_partner_opportunities
+    single: false
+    permission: crm.read
+    query: "SELECT l.id, l.name, l.referrer_name AS partner, l.stage, l.probability, l.expected_revenue, l.team, l.salesperson, CAST(l.expected_closing AS VARCHAR) AS expected_closing FROM crm_leads l WHERE l.referrer_contact_id = :id AND l.active = true AND l.stage NOT IN ('Won', 'Lost') ORDER BY l.updated_at DESC"
+  - id: crm_partner_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_partner_directory
+    search: { label: Search partners, placeholder: 'Search partner, email, or phone...' }
+    columns:
+      - { field: name, label: Partner, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: is_company, label: Company }
+      - { field: referral_count, label: Referrals }
+      - { field: open_referrals, label: Open referrals }
+      - { field: open_value, label: Open value }
+      - { field: latest_referral_activity, label: Latest referral }
+    row_key: id
+    actions: [{ id: open_partner_opportunities, label: Open referred opportunities, permission: crm.read, variant: ghost }]
+  - type: ListView
+    variant: odoo
+    source: crm_referral_performance
+    filters:
+      - { field: team, label: Sales team, options_source: crm_partner_teams }
+      - { field: date_from, label: Created from, options: [] }
+      - { field: date_to, label: Created to, options: [] }
+    columns:
+      - { field: partner, label: Partner, type: PrimaryEntityCell }
+      - { field: source, label: Source }
+      - { field: team, label: Team }
+      - { field: created_count, label: Created }
+      - { field: open_count, label: Open }
+      - { field: won_count, label: Won }
+      - { field: conversion_rate, label: Conversion rate }
+      - { field: realized_value, label: Realized value }
+    row_key: partner
+actions:
+  - id: open_partner_opportunities
+    type: navigate
+    permission: crm.read
+    navigate_to: /customer-opportunities
+    params: { id: '{row.id}' }

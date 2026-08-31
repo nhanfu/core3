@@ -8,7 +8,6 @@ pages:
   - pages/my-pipeline.yaml
   - pages/unassigned-leads.yaml
   - pages/activities.yaml
-  - pages/unattended-leads.yaml
   - pages/quality-leads.yaml
   - pages/expected-revenue.yaml
   - pages/tags.yaml
@@ -19,8 +18,39 @@ pages:
   - pages/analysis.yaml
   - pages/import.yaml
   - pages/import-history.yaml
+  - pages/lead-distribution.yaml
+  - pages/lead-enrichment.yaml
+  - pages/lead-mining.yaml
   - pages/activity-report.yaml
   - pages/customer-opportunities.yaml
+  - pages/customer-accounts.yaml
+  - pages/customer-account-detail.yaml
+  - pages/funnel-analysis.yaml
+  - pages/activity-readiness.yaml
+  - pages/partner-operations.yaml
+  - pages/achievement.yaml
+  - pages/partner-search.yaml
+  - pages/campaign-governance.yaml
+  - pages/archived-leads.yaml
+  - pages/audit-governance.yaml
+  - pages/communications.yaml
+  - pages/conversion-operations.yaml
+  - pages/data-quality.yaml
+  - pages/duplicate-leads.yaml
+  - pages/escalations.yaml
+  - pages/followup-effectiveness.yaml
+  - pages/forecast-accuracy.yaml
+  - pages/forecast-snapshots.yaml
+  - pages/pipeline-hygiene.yaml
+  - pages/qualification.yaml
+  - pages/retention-policies.yaml
+  - pages/retention-review.yaml
+  - pages/salesperson-workload.yaml
+  - pages/scoring-governance.yaml
+  - pages/stage-movement.yaml
+  - pages/team-operations.yaml
+  - pages/team-target-attainment.yaml
+  - pages/unattended-leads.yaml
 permissions: permissions.yaml
 imports: imports.yaml
 storage: storage.yaml

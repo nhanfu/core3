@@ -4,14 +4,17 @@ datasources:
   - id: crm_stage_change_history
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT a.id, a.lead_id, l.name AS opportunity, l.team, l.salesperson, l.stage AS current_stage, a.summary AS transition, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, CAST(COALESCE(a.completed_at, a.created_at) AS VARCHAR) AS occurred_at FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type = 'stage_change' ORDER BY COALESCE(a.completed_at, a.created_at) DESC, a.id DESC"
   - id: crm_current_stage_duration
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT l.stage, COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS open_records, CAST(AVG(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - l.updated_at)) / 86400 AS DOUBLE) AS current_age_days FROM crm_leads l WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') GROUP BY l.stage, COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY current_age_days DESC, l.stage"
   - id: crm_probability_change_audit
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT a.id, a.lead_id, l.name AS opportunity, l.team, l.salesperson, a.summary AS change_source, l.probability AS resulting_probability, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, CAST(COALESCE(a.completed_at, a.created_at) AS VARCHAR) AS occurred_at FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type = 'stage_change' AND (a.summary ILIKE '%probability%' OR a.summary ILIKE '% -> %') ORDER BY COALESCE(a.completed_at, a.created_at) DESC, a.id DESC"
 components:
   - type: ListView

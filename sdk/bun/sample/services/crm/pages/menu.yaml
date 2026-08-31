@@ -12,6 +12,26 @@ menu:
           label: Activities
           icon: calendar
           permission: crm.read
+        - path: /crm-activity-readiness
+          label: Follow-up Readiness
+          icon: alert
+          permission: crm.read
+        - path: /crm-partner-operations
+          label: Partners
+          icon: users
+          permission: crm.read
+        - path: /crm-achievement
+          label: Salesperson Achievement
+          icon: chart
+          permission: crm.read
+        - path: /crm-partner-search
+          label: Partner Search
+          icon: search
+          permission: crm.read
+        - path: /crm-campaign-governance
+          label: Campaign Governance
+          icon: chart
+          permission: crm.read
         - path: /unattended-leads
           label: Unattended Leads
           icon: alert
@@ -24,6 +44,10 @@ menu:
           label: Expected Revenue
         - path: /forecast-snapshots
           label: Forecast Snapshots
+          icon: chart
+          permission: crm.read
+        - path: /forecast-accuracy
+          label: Forecast Accuracy
           icon: chart
           permission: crm.read
         - path: /salesperson-workload
@@ -78,6 +102,18 @@ menu:
           label: Audit Governance
           icon: history
           permission: crm.read
+        - path: /crm-communications
+          label: Communications
+          icon: mail
+          permission: crm.read
+        - path: /scoring-governance
+          label: Scoring Governance
+          icon: chart
+          permission: crm.read
+        - path: /data-quality
+          label: Data Quality
+          icon: check
+          permission: crm.read
         - path: /crm-tags
           label: Tags
           icon: chart
@@ -90,6 +126,18 @@ menu:
           label: Unassigned Leads
           icon: users
           permission: crm.read
+        - path: /lead-distribution
+          label: Lead Distribution
+          icon: chart
+          permission: crm.read
+        - path: /lead-enrichment
+          label: Lead Enrichment
+          icon: users
+          permission: crm.read
+        - path: /lead-mining
+          label: Lead Mining
+          icon: search
+          permission: crm.read
         - path: /teams
           label: Sales Teams
           icon: users
@@ -97,6 +145,10 @@ menu:
         - path: /analysis
           label: Pipeline Analysis
           icon: chart
+        - path: /crm-funnel-analysis
+          label: Funnel Analysis
+          icon: chart
+          permission: crm.read
           permission: crm.read
         - path: /crm-activity-report
           label: Activity Report
@@ -108,6 +160,10 @@ menu:
           permission: crm.read
         - path: /customer-opportunities
           label: Customer Opportunities
+          icon: users
+          permission: crm.read
+        - path: /crm-customer-accounts
+          label: Customer Accounts
           icon: users
           permission: crm.read
         - path: /archived-leads

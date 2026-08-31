@@ -1,0 +1,9 @@
+version: 0.0.38
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_contact_company_relationships (id VARCHAR PRIMARY KEY, contact_id VARCHAR NOT NULL, company_id VARCHAR NOT NULL, relationship_type VARCHAR NOT NULL DEFAULT 'employee', active BOOLEAN NOT NULL DEFAULT true, created_by VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(contact_id, company_id, relationship_type)); CREATE INDEX IF NOT EXISTS crm_contact_company_relationships_company_idx ON crm_contact_company_relationships(company_id, active);"
+    down: "DROP TABLE IF EXISTS crm_contact_company_relationships;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

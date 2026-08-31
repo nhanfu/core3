@@ -1,0 +1,79 @@
+title: CRM Data Quality
+page: { id: data-quality, breadcrumb: [CRM, Data Quality], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_data_quality
+    single: false
+    permission: crm.read
+    query: "SELECT l.id, l.name AS opportunity, l.partner_name, l.email, l.phone, l.team, l.salesperson, CASE WHEN NULLIF(TRIM(COALESCE(l.partner_name, '')), '') IS NULL THEN 'Missing customer' WHEN l.email IS NOT NULL AND l.email NOT LIKE '%@%' THEN 'Invalid email' WHEN l.phone IS NOT NULL AND LENGTH(TRIM(l.phone)) < 7 THEN 'Invalid phone' WHEN l.partner_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM base_contacts c WHERE c.id = l.partner_id AND c.active = true) THEN 'Inactive contact link' ELSE 'Complete' END AS quality_status FROM crm_leads l WHERE l.active = true ORDER BY quality_status, l.name"
+  - id: crm_data_quality_summary
+    single: false
+    permission: crm.read
+    team_scope: true
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.source, ''), 'Unknown') AS source, COUNT(*) AS total_records, COUNT(*) FILTER (WHERE NULLIF(TRIM(COALESCE(l.partner_name, '')), '') IS NULL OR (l.email IS NOT NULL AND l.email NOT LIKE '%@%') OR (l.phone IS NOT NULL AND LENGTH(TRIM(l.phone)) < 7)) AS issue_count, COUNT(*) FILTER (WHERE NULLIF(TRIM(COALESCE(l.partner_name, '')), '') IS NOT NULL AND (l.email IS NULL OR l.email LIKE '%@%') AND (l.phone IS NULL OR LENGTH(TRIM(l.phone)) >= 7)) AS complete_count FROM crm_leads l WHERE l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.source, ''), 'Unknown') ORDER BY issue_count DESC, team, source"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_data_quality
+    columns:
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: team, label: Team }
+      - { field: salesperson, label: Owner }
+      - { field: quality_status, label: Quality, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_quality_lead, label: Open lead, permission: crm.read, variant: ghost }
+      - { id: edit_quality_lead, label: Normalize lead, permission: crm.write, variant: secondary }
+  - type: ListView
+    variant: odoo
+    source: crm_data_quality_summary
+    columns:
+      - { field: team, label: Team }
+      - { field: source, label: Source }
+      - { field: total_records, label: Records }
+      - { field: issue_count, label: Issues }
+      - { field: complete_count, label: Complete }
+    row_key: source
+actions:
+  - id: open_quality_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
+  - id: edit_quality_lead
+    type: server_form
+    permission: crm.write
+    title: Normalize CRM contact data
+    action: crm.leads.normalize_contact
+    handler: yaml_mutation
+    operation: normalize_contact
+    params: { id: '{row.id}' }
+    refresh: [crm_data_quality, crm_data_quality_summary]
+    mutation:
+      operation: update
+      table: crm_leads
+      fields: [email, phone, partner_id]
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only active open opportunities can be normalized
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:email, '') AS VARCHAR)), '') IS NULL OR CAST(:email AS VARCHAR) LIKE '%@%'"
+          status: 400
+          message: Enter a valid email address
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:phone, '') AS VARCHAR)), '') IS NULL OR LENGTH(TRIM(CAST(:phone AS VARCHAR))) >= 7"
+          status: 400
+          message: Enter a valid phone number
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+          status: 400
+          message: Select an active contact
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) VALUES(gen_random_uuid(), :id, 'data_quality', 'CRM contact data normalized', 'done', CURRENT_TIMESTAMP, :current_user_name)"
+      timestamps: true
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: partner_id, label: Active contact ID, type: text }

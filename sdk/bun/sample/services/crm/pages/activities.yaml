@@ -12,6 +12,7 @@ datasources:
              ELSE 'Upcoming' END AS timing
       FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id
       WHERE l.active = true AND a.state = 'planned'
+        AND (COALESCE(:can_manage_crm, true) = true OR NULLIF(TRIM(l.team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id WHERE t.name = l.team AND t.active = true AND m.user_name = :current_user_name AND m.active = true))
         AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR a.summary ILIKE '%' || :q || '%')
         AND (:timing IS NULL OR CASE WHEN a.due_date < CURRENT_DATE THEN 'Overdue' WHEN a.due_date = CURRENT_DATE THEN 'Today' ELSE 'Upcoming' END = :timing)
         AND (:activity_type IS NULL OR a.activity_type = :activity_type)
@@ -87,7 +88,7 @@ actions:
     mutation:
       operation: update
       table: crm_activities
-      fields: [activity_type, summary, due_date, assigned_to]
+      fields: [activity_type, summary, due_date, assigned_to, outcome_type]
       required: [activity_type, summary]
       guards:
         - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"
@@ -105,6 +106,7 @@ actions:
       - { field: summary, label: Summary, type: text, required: true }
       - { field: due_date, label: Due date, type: date }
       - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup }
+      - { field: outcome_type, label: Outcome, type: select, options: [{ value: unspecified, label: Unspecified }, { value: connected, label: Connected }, { value: no_answer, label: No answer }, { value: qualified, label: Qualified }, { value: disqualified, label: Disqualified }], show_if: "state === 'done'" }
   - id: schedule_crm_activity
     type: server_form
     permission: crm.write
@@ -139,6 +141,7 @@ actions:
       - { field: summary, label: Summary, type: text, required: true }
       - { field: due_date, label: Due date, type: date }
       - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup }
+      - { field: outcome_type, label: Outcome, type: select, options: [{ value: unspecified, label: Unspecified }, { value: connected, label: Connected }, { value: no_answer, label: No answer }, { value: qualified, label: Qualified }, { value: disqualified, label: Disqualified }] }
       - { field: next_activity_type, label: Next activity type, type: select, options_source: crm_activity_type_lookup }
       - { field: next_activity_summary, label: Next activity summary, type: text }
       - { field: next_activity_due_date, label: Next activity due date, type: date }

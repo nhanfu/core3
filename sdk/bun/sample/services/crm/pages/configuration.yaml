@@ -20,7 +20,7 @@ datasources:
   - id: crm_activity_plan_configuration
     single: false
     permission: crm.manage
-    query: "SELECT p.id, p.name, p.active, COUNT(s.id) AS step_count FROM crm_activity_plans p LEFT JOIN crm_activity_plan_steps s ON s.plan_id = p.id AND s.active = true GROUP BY p.id, p.name, p.active ORDER BY p.name"
+    query: "SELECT p.id, p.name, p.active, p.is_nurture, COUNT(s.id) AS step_count FROM crm_activity_plans p LEFT JOIN crm_activity_plan_steps s ON s.plan_id = p.id AND s.active = true GROUP BY p.id, p.name, p.active, p.is_nurture ORDER BY p.name"
   - id: crm_activity_plan_steps_configuration
     single: false
     permission: crm.manage
@@ -227,6 +227,7 @@ components:
     columns:
       - { field: name, label: Activity plan, type: PrimaryEntityCell }
       - { field: step_count, label: Steps, align: right }
+      - { field: is_nurture, label: Nurture, type: StatusChip }
       - { field: active, label: Active, type: StatusChip }
     page_size: 50
     row_key: id
@@ -306,7 +307,7 @@ actions:
     mutation:
       operation: insert
       table: crm_campaigns
-      fields: [name, active]
+      fields: [name, active, is_nurture]
       required: [name]
       defaults: { active: true }
       guards:
@@ -342,20 +343,27 @@ actions:
     fields:
       - { field: name, label: Campaign, type: text, required: true }
       - { field: active, label: Active, type: checkbox }
+      - { field: is_nurture, label: Nurture sequence, type: checkbox }
   - id: toggle_crm_campaign
-    type: server
+    type: server_form
+    title: Change campaign status
     permission: crm.manage
     action: crm.campaigns.toggle
     handler: yaml_mutation
     operation: update
     refresh: [crm_campaign_configuration]
+    fields:
+      - { field: status_reason, label: Status reason, type: text, required: true }
     mutation:
       guards:
         - query: "SELECT id FROM crm_campaigns WHERE id = :id"
           status: 404
           message: Campaign no longer exists
+        - query: "SELECT 1 AS ok FROM crm_campaigns WHERE id = :id AND NULLIF(TRIM(CAST(:status_reason AS VARCHAR)), '') IS NOT NULL"
+          status: 400
+          message: A status reason is required
       steps:
-        - query: "UPDATE crm_campaigns SET active = NOT active WHERE id = :id"
+        - query: "UPDATE crm_campaigns SET active = NOT active, status_reason = :status_reason WHERE id = :id"
       result: { query: "SELECT * FROM crm_campaigns WHERE id = :id" }
   - id: create_crm_recurring_plan
     type: server_form
@@ -722,7 +730,7 @@ actions:
     mutation:
       operation: update
       table: crm_activity_plans
-      fields: [name, active]
+      fields: [name, active, is_nurture]
       required: [name]
       guards:
         - query: "SELECT id FROM crm_activity_plans WHERE id = :id"
@@ -763,7 +771,7 @@ actions:
       table: crm_activity_plans
       fields: [name, active]
       required: [name]
-      defaults: { active: true }
+      defaults: { active: true, is_nurture: false }
       guards:
         - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND NOT EXISTS (SELECT 1 FROM crm_activity_plans WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))"
           status: 409
@@ -772,6 +780,7 @@ actions:
     fields:
       - { field: name, label: Activity plan, type: text, required: true }
       - { field: active, label: Active, type: checkbox, default: true }
+      - { field: is_nurture, label: Nurture sequence, type: checkbox, default: false }
   - id: edit_crm_activity_plan_step
     type: server_form
     permission: crm.manage

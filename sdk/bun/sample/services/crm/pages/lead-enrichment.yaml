@@ -1,0 +1,75 @@
+title: Lead Enrichment
+page: { id: lead-enrichment, breadcrumb: [Sales, CRM, Lead Enrichment], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_lead_enrichment
+    single: false
+    permission: crm.read
+    query: |
+      SELECT l.id, l.name, l.partner_id, l.partner_name, l.email, l.phone, l.source,
+        l.team, l.salesperson, l.updated_at,
+        CASE WHEN l.partner_id IS NOT NULL THEN 'Linked contact' ELSE 'Needs contact' END AS enrichment_state
+      FROM crm_leads l
+      WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.partner_name ILIKE '%' || :q || '%' OR l.email ILIKE '%' || :q || '%')
+      ORDER BY enrichment_state, l.updated_at DESC
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_lead_enrichment
+    search: { label: Search leads, placeholder: 'Search opportunity, contact, or email...' }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Contact }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: enrichment_state, label: Enrichment, type: StatusChip }
+      - { field: source, label: Source }
+      - { field: team, label: Sales team }
+      - { field: salesperson, label: Salesperson }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_lead_enrichment, label: Enrich lead, permission: crm.write, variant: secondary }
+      - { id: open_enrichment_lead, label: Open lead, permission: crm.read, variant: ghost }
+    row_open_action: open_enrichment_lead
+actions:
+  - id: open_enrichment_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
+  - id: edit_lead_enrichment
+    type: server_form
+    permission: crm.write
+    title: Enrich lead
+    action: crm.leads.enrich
+    handler: yaml_mutation
+    operation: enrich
+    prefill: row
+    refresh: [crm_lead_enrichment]
+    mutation:
+      operation: update
+      table: crm_leads
+      fields: [partner_id, partner_name, email, phone]
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only active open leads can be enriched
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:email, '') AS VARCHAR)), '') IS NULL OR CAST(:email AS VARCHAR) LIKE '%@%'"
+          status: 400
+          message: Enter a valid email address
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:phone, '') AS VARCHAR)), '') IS NULL OR LENGTH(TRIM(CAST(:phone AS VARCHAR))) >= 7"
+          status: 400
+          message: Enter a valid phone number
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+          status: 400
+          message: Select an active contact
+        - query: "SELECT CASE WHEN NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL THEN :partner_name ELSE (SELECT name FROM base_contacts WHERE id = :partner_id AND active = true) END AS partner_name"
+          assign: true
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) VALUES(gen_random_uuid(), :id, 'enrichment', 'CRM lead enriched', 'done', CURRENT_TIMESTAMP, :current_user_name)"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: partner_id, label: Active contact ID, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }

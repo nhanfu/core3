@@ -1,0 +1,9 @@
+version: 0.0.5
+type:
+  postgres:
+    up: "ALTER TABLE ui_saved_views ADD COLUMN IF NOT EXISTS row_version INTEGER DEFAULT 1; UPDATE ui_saved_views SET row_version = 1 WHERE row_version IS NULL;"
+    down: "ALTER TABLE ui_saved_views DROP COLUMN IF EXISTS row_version;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

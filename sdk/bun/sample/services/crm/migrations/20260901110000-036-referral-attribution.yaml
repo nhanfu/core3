@@ -1,0 +1,9 @@
+version: 0.0.36
+type:
+  postgres:
+    up: "ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS referrer_contact_id VARCHAR; ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS referrer_name VARCHAR;"
+    down: "ALTER TABLE crm_leads DROP COLUMN IF EXISTS referrer_contact_id; ALTER TABLE crm_leads DROP COLUMN IF EXISTS referrer_name;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

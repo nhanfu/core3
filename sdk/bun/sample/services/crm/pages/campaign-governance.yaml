@@ -1,0 +1,35 @@
+title: CRM Campaign Governance
+page: { id: crm-campaign-governance, breadcrumb: [CRM, Campaign Governance], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_campaign_workspace
+    single: false
+    permission: crm.read
+    query: "SELECT c.id, c.name, c.active, COUNT(l.id) AS attributed_leads, COUNT(l.id) FILTER (WHERE l.active = true AND l.stage = 'Won') AS won_leads, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.active = true), 0) AS DOUBLE) AS active_value FROM crm_campaigns c LEFT JOIN crm_leads l ON l.utm_campaign = c.name GROUP BY c.id, c.name, c.active ORDER BY c.active DESC, attributed_leads DESC, c.name"
+  - id: crm_campaign_attribution_quality
+    single: false
+    permission: crm.read
+    query: "SELECT CASE WHEN NULLIF(TRIM(l.utm_campaign), '') IS NULL THEN 'Unattributed' WHEN c.id IS NULL THEN 'Unknown campaign' WHEN c.active = false THEN 'Inactive campaign' WHEN NULLIF(TRIM(l.utm_source), '') IS NULL OR NULLIF(TRIM(l.utm_medium), '') IS NULL THEN 'Incomplete attribution' ELSE 'Valid attribution' END AS quality_status, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS value FROM crm_leads l LEFT JOIN crm_campaigns c ON c.name = l.utm_campaign WHERE l.active = true GROUP BY quality_status ORDER BY lead_count DESC, quality_status"
+  - id: crm_campaign_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_campaign_workspace
+    columns:
+      - { field: name, label: Campaign, type: PrimaryEntityCell }
+      - { field: active, label: Active, type: StatusChip }
+      - { field: attributed_leads, label: Attributed leads }
+      - { field: won_leads, label: Won leads }
+      - { field: active_value, label: Active value }
+    row_key: id
+  - type: ListView
+    variant: odoo
+    source: crm_campaign_attribution_quality
+    columns:
+      - { field: quality_status, label: Quality, type: StatusChip }
+      - { field: lead_count, label: Leads }
+      - { field: won_count, label: Won }
+      - { field: value, label: Value }
+    row_key: quality_status

@@ -4,9 +4,10 @@ datasources:
   - id: crm_lead_detail
     single: true
     permission: crm.read
+    team_scope: true
     query: |
       SELECT l.id, l.row_version, l.name, l.type, l.partner_id, l.partner_name, l.email, l.phone, l.description,
-        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, recurring_revenue, recurring_plan, stage, s.requirements AS stage_requirements, probability, salesperson, team,
+        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, recurring_revenue, recurring_plan, referrer_contact_id, referrer_name, stage, s.requirements AS stage_requirements, probability, salesperson, team,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         l.lost_reason, r.name AS lost_reason_name, CAST(l.created_at AS VARCHAR) AS created_at,
         (SELECT COUNT(*) FROM crm_opportunity_lines x WHERE x.lead_id = l.id) AS line_count,
@@ -97,6 +98,10 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
+  - id: crm_nurture_plans_detail
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true AND is_nurture = true ORDER BY name"
   - id: crm_recurring_plans_detail
     single: false
     permission: crm.read
@@ -116,6 +121,7 @@ components:
     header_actions:
       - { id: edit_lead_detail, label: Edit, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: open_lead_customer, label: Open customer, variant: secondary, permission: base.contacts.read, show_if: "!!state.crm_lead_detail.partner_id" }
+      - { id: set_lead_referrer, label: Set referring partner, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: qualify_lead_detail, label: Qualify, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'New'" }
       - { id: convert_lead_detail, label: Convert to opportunity, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'lead' && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: convert_lead_create_contact_detail, label: Convert and create customer, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'lead' && !state.crm_lead_detail.partner_id && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
@@ -148,6 +154,7 @@ components:
           - { field: phone, label: Phone }
           - { field: salesperson, label: Salesperson }
           - { field: team, label: Sales team }
+          - { field: referrer_name, label: Referring partner }
     notebook:
       tabs:
         - id: notes
@@ -188,6 +195,7 @@ components:
       - { id: schedule_lead_activity, label: Schedule activity, variant: primary, permission: crm.write }
       - { id: schedule_lead_meeting, label: Schedule meeting, variant: secondary, permission: crm.write }
       - { id: apply_activity_plan, label: Apply activity plan, variant: secondary, permission: crm.write }
+      - { id: apply_nurture_sequence, label: Apply nurture sequence, variant: secondary, permission: crm.write }
       - { id: edit_lead_activity, label: Edit activity, variant: secondary, permission: crm.write, show_if: "row.state === 'planned'" }
       - { id: complete_lead_activity, label: Mark done, variant: ghost, permission: crm.write, show_if: "row.state === 'planned'" }
   - type: ContactGrid
@@ -220,6 +228,32 @@ components:
       - { field: actor_name, label: Actor }
       - { field: summary, label: Details }
 actions:
+  - id: set_lead_referrer
+    type: server_form
+    permission: crm.write
+    title: Set referring partner
+    action: crm.leads.set_referrer
+    handler: yaml_mutation
+    operation: set_referrer
+    params: { id: '{state.id}' }
+    refresh: [crm_lead_detail]
+    mutation:
+      operation: update
+      table: crm_leads
+      fields: [referrer_contact_id, referrer_name]
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only active open opportunities can be attributed
+        - query: "SELECT name FROM base_contacts WHERE id = :referrer_contact_id AND active = true"
+          assign: true
+          status: 400
+          message: Select an active referring partner
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) VALUES(gen_random_uuid(), :id, 'referral', 'Referring partner updated', 'done', CURRENT_TIMESTAMP, :current_user_name)"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: referrer_contact_id, label: Referring partner, type: async-select, options_source: crm_contacts_detail, required: true }
   - id: open_lead_quotation
     type: navigate
     permission: orders.read
@@ -686,6 +720,29 @@ actions:
       result: { query: "SELECT * FROM crm_activities WHERE lead_id = :lead_id ORDER BY created_at DESC" }
     fields:
       - { field: plan_id, label: Activity plan, type: select, options_source: crm_activity_plans_detail, required: true }
+  - id: apply_nurture_sequence
+    type: server_form
+    permission: crm.write
+    title: Apply nurture sequence
+    action: crm.activities.apply_nurture
+    handler: yaml_mutation
+    operation: apply_nurture
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_lead_activities]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Nurture sequences can only be applied to active open opportunities
+        - query: "SELECT id FROM crm_activity_plans WHERE id = :plan_id AND active = true AND is_nurture = true"
+          status: 400
+          message: Select an active nurture sequence
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), :lead_id, s.activity_type, s.summary, CURRENT_DATE + s.delay_days, l.salesperson, 'planned' FROM crm_activity_plan_steps s JOIN crm_activity_plans p ON p.id = s.plan_id JOIN crm_leads l ON l.id = :lead_id WHERE s.plan_id = :plan_id AND p.is_nurture = true AND s.active = true AND NOT EXISTS (SELECT 1 FROM crm_activities existing WHERE existing.lead_id = :lead_id AND existing.activity_type = s.activity_type AND existing.summary = s.summary AND existing.state = 'planned') ORDER BY s.sequence"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) SELECT gen_random_uuid(), :lead_id, 'nurture', 'Nurture sequence applied', 'done', CURRENT_TIMESTAMP, :current_user_name WHERE NOT EXISTS (SELECT 1 FROM crm_activities existing WHERE existing.lead_id = :lead_id AND existing.activity_type = 'nurture' AND existing.summary = 'Nurture sequence applied')"
+      result: { query: "SELECT * FROM crm_activities WHERE lead_id = :lead_id ORDER BY created_at DESC" }
+    fields:
+      - { field: plan_id, label: Nurture sequence, type: select, options_source: crm_nurture_plans_detail, required: true }
   - id: edit_lead_activity
     type: server_form
     permission: crm.write

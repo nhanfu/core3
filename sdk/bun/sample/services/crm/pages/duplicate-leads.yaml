@@ -6,6 +6,9 @@ datasources:
     permission: crm.read
     query: |
       SELECT MIN(id) AS survivor_id, MAX(id) AS duplicate_id,
+        MIN(name) AS survivor_name, MAX(name) AS duplicate_name,
+        MIN(stage) AS survivor_stage, MAX(stage) AS duplicate_stage,
+        MIN(salesperson) AS survivor_owner, MAX(salesperson) AS duplicate_owner,
         COALESCE(NULLIF(partner_name, ''), NULLIF(email, ''), 'Unnamed') AS match_key,
         COUNT(*) AS match_count
       FROM crm_leads
@@ -23,11 +26,18 @@ components:
       - { field: match_count, label: Records }
       - { field: survivor_id, label: Oldest record }
       - { field: duplicate_id, label: Candidate duplicate }
+      - { field: survivor_name, label: Survivor name }
+      - { field: duplicate_name, label: Candidate name }
+      - { field: survivor_stage, label: Survivor stage }
+      - { field: duplicate_stage, label: Candidate stage }
+      - { field: survivor_owner, label: Survivor owner }
+      - { field: duplicate_owner, label: Candidate owner }
     row_key: duplicate_id
     row_actions: menu
     actions:
       - { id: open_duplicate_survivor, label: Open oldest, permission: crm.read, variant: ghost }
       - { id: open_duplicate_candidate, label: Open candidate, permission: crm.read, variant: ghost }
+      - { id: merge_duplicate_pair, label: Resolve duplicate pair, permission: crm.write, variant: primary }
 actions:
   - id: open_duplicate_survivor
     type: navigate
@@ -39,3 +49,41 @@ actions:
     permission: crm.read
     navigate_to: /lead-detail
     params: { id: '{row.duplicate_id}' }
+  - id: merge_duplicate_pair
+    type: server_form
+    permission: crm.write
+    title: Resolve duplicate pair
+    action: crm.leads.merge_pair
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_duplicate_leads]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :survivor_id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: The selected survivor must be an open active record
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :duplicate_id AND active = true AND stage NOT IN ('Won', 'Lost') AND id <> :survivor_id"
+          status: 409
+          message: The selected duplicate must be a different open active record
+      steps:
+        - query: "UPDATE crm_leads SET partner_id = NULLIF(:partner_id, ''), partner_name = NULLIF(:partner_name, ''), email = NULLIF(:email, ''), phone = NULLIF(:phone, ''), source = NULLIF(:source, ''), salesperson = NULLIF(:salesperson, ''), team = NULLIF(:team, ''), tags = NULLIF(:tags, ''), expected_revenue = CAST(COALESCE(NULLIF(:expected_revenue, ''), '0') AS INTEGER), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :survivor_id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          expect_changed: true
+        - query: "UPDATE crm_activities SET lead_id = :survivor_id WHERE lead_id = :duplicate_id"
+        - query: "INSERT INTO crm_merge_audit(id, survivor_id, merged_id, actor, retained_fields) VALUES(gen_random_uuid(), :survivor_id, :duplicate_id, :current_user_name, :retained_fields)"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) VALUES(gen_random_uuid(), :survivor_id, 'merge', 'Duplicate CRM pair merged with explicit field resolution', 'done', CURRENT_TIMESTAMP, :current_user_name)"
+        - query: "DELETE FROM crm_leads WHERE id = :duplicate_id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          expect_changed: true
+      result: { query: "SELECT * FROM crm_leads WHERE id = :survivor_id" }
+    fields:
+      - { field: survivor_id, label: Survivor ID, type: text, required: true }
+      - { field: duplicate_id, label: Duplicate ID, type: text, required: true }
+      - { field: partner_id, label: Customer ID, type: text }
+      - { field: partner_name, label: Customer name, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: salesperson, label: Salesperson, type: text }
+      - { field: team, label: Sales team, type: text }
+      - { field: tags, label: Tags, type: text }
+      - { field: expected_revenue, label: Expected revenue, type: text }
+      - { field: retained_fields, label: Retained field provenance, type: text, required: true }

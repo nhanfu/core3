@@ -4,6 +4,7 @@ datasources:
   - id: crm_archived_leads
     single: false
     permission: crm.read
+    team_scope: true
     query: |
       SELECT id, row_version, name, type, partner_name, email, phone, stage,
         salesperson, team, CAST(updated_at AS VARCHAR) AS updated_at

@@ -4,6 +4,7 @@ datasources:
   - id: crm_activity_execution_summary
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS assigned_to, a.activity_type, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned_count, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_count, COUNT(*) FILTER (WHERE a.state = 'done') AS completed_count, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.next_activity_type IS NOT NULL) AS chained_count FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned'), a.activity_type ORDER BY overdue_count DESC, team, assigned_to, a.activity_type"
   - id: crm_activity_execution_detail
     single: false

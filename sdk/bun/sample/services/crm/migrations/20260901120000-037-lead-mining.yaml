@@ -1,0 +1,9 @@
+version: 0.0.37
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_lead_mining_requests(id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), city VARCHAR, country_name VARCHAR, company_type VARCHAR, requested_by VARCHAR, status VARCHAR NOT NULL DEFAULT 'review', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+    down: "DROP TABLE IF EXISTS crm_lead_mining_requests;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

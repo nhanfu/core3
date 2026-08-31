@@ -13,6 +13,666 @@ context_paths:
   - services/ai/permissions.yaml
 
 operations:
+  - id: datasource.crm_followup_effectiveness.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_followup_effectiveness
+  - id: datasource.crm_message_delivery.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_message_delivery
+  - id: datasource.crm_communication_effectiveness.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_communication_effectiveness
+  - id: datasource.crm_opportunity_audit.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_opportunity_audit
+  - id: datasource.crm_team_target_attainment.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_team_target_attainment
+  - id: datasource.crm_forecast_snapshots.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_forecast_snapshots
+  - id: datasource.crm_forecast_snapshot_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_forecast_snapshot_teams
+  - id: datasource.crm_forecast_accuracy.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_forecast_accuracy
+  - id: datasource.crm_forecast_variance_causes.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_forecast_variance_causes
+  - id: datasource.crm_forecast_accuracy_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_forecast_accuracy_teams
+  - id: datasource.crm_my_pipeline.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_my_pipeline
+  - id: datasource.crm_unattended_leads.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_unattended_leads
+  - id: datasource.crm_expected_revenue.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_expected_revenue
+  - id: datasource.crm_expected_revenue_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_expected_revenue_teams
+  - id: datasource.crm_activity_execution_summary.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_execution_summary
+  - id: datasource.crm_activity_execution_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_execution_detail
+  - id: datasource.crm_pipeline_hygiene.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_pipeline_hygiene
+  - id: datasource.crm_team_operations_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_team_operations_teams
+  - id: datasource.crm_team_operations.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_team_operations
+  - id: datasource.crm_team_operations_members.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_team_operations_members
+  - id: datasource.crm_score_audit.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_score_audit
+  - id: datasource.crm_scoring_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_scoring_teams
+  - id: datasource.crm_scoring_sources.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_scoring_sources
+  - id: datasource.crm_score_explanations.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_score_explanations
+  - id: datasource.crm_score_governance.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_score_governance
+  - id: datasource.crm_quality_leads.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_quality_leads
+  - id: datasource.crm_quality_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_quality_teams
+  - id: datasource.crm_quality_by_salesperson.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_quality_by_salesperson
+  - id: datasource.crm_activity_report_totals.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_report_totals
+  - id: datasource.crm_activity_report_by_type.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_report_by_type
+  - id: datasource.crm_activity_report_by_team.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_report_by_team
+  - id: datasource.crm_activity_report_by_assignee.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_report_by_assignee
+  - id: datasource.crm_activity_report_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_report_teams
+  - id: datasource.crm_activity_report_assignees.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_report_assignees
+  - id: datasource.crm_assignment_audit_report.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_assignment_audit_report
+  - id: datasource.crm_tag_values.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_tag_values
+  - id: datasource.crm_tag_configuration.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_tag_configuration
+  - id: datasource.crm_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_teams
+  - id: datasource.crm_stages_config.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_stages_config
+  - id: datasource.crm_lost_reasons.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lost_reasons
+  - id: datasource.crm_team_member_configuration.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_team_member_configuration
+  - id: datasource.crm_overdue_escalations.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_overdue_escalations
+  - id: datasource.crm_escalation_summary.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_escalation_summary
+  - id: datasource.crm_lead_stages.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_stages
+  - id: datasource.crm_lead_types.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_types
+  - id: datasource.crm_salespeople.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_salespeople
+  - id: datasource.crm_active_salespeople.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_active_salespeople
+  - id: datasource.crm_duplicate_preview.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_duplicate_preview
+  - id: datasource.crm_sales_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_sales_teams
+  - id: datasource.crm_lost_reason_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lost_reason_lookup
+  - id: datasource.crm_source_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_source_lookup
+  - id: datasource.crm_tag_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_tag_lookup
+  - id: datasource.crm_utm_campaign_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_utm_campaign_lookup
+  - id: datasource.crm_persisted_pipeline_views.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_persisted_pipeline_views
+  - id: datasource.crm_activity_state_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_state_lookup
+  - id: datasource.crm_duplicate_leads.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_duplicate_leads
+  - id: datasource.crm_pipeline_totals.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_pipeline_totals
+  - id: datasource.crm_pipeline_by_stage.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_pipeline_by_stage
+  - id: datasource.crm_pipeline_by_team.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_pipeline_by_team
+  - id: datasource.crm_pipeline_by_source.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_pipeline_by_source
+  - id: datasource.crm_win_loss.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_win_loss
+  - id: datasource.crm_lost_by_reason.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lost_by_reason
+  - id: datasource.crm_source_performance.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_source_performance
+  - id: datasource.crm_historical_lead_scoring.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_historical_lead_scoring
+  - id: datasource.crm_lead_distribution.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_distribution
+  - id: datasource.crm_utm_campaign_performance.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_utm_campaign_performance
+  - id: datasource.crm_analysis_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_analysis_teams
+  - id: datasource.crm_analysis_salespeople.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_analysis_salespeople
+  - id: datasource.crm_lead_mining_requests.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_mining_requests
+  - id: datasource.crm_lead_enrichment.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_enrichment
+  - id: datasource.crm_lost_opportunities.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lost_opportunities
+  - id: datasource.crm_lost_reason_filter.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lost_reason_filter
+  - id: datasource.crm_conversion_operations.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_conversion_operations
+  - id: datasource.crm_conversion_exceptions.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_conversion_exceptions
+  - id: datasource.crm_conversion_operation_totals.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_conversion_operation_totals
+  - id: datasource.crm_qualification_completeness.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_qualification_completeness
+  - id: datasource.crm_qualification_outcomes.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_qualification_outcomes
+  - id: datasource.crm_activity_queue.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_queue
+  - id: datasource.crm_activity_timing.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_timing
+  - id: datasource.crm_activity_type_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_type_lookup
+  - id: datasource.crm_activity_assignee_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_assignee_lookup
+  - id: datasource.crm_activity_lead_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_lead_lookup
+  - id: datasource.crm_lead_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_detail
+  - id: datasource.crm_lead_activities.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_activities
+  - id: datasource.crm_opportunity_lines.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_opportunity_lines
+  - id: datasource.crm_lead_chatter.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_chatter
+  - id: datasource.crm_engagement_timeline.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_engagement_timeline
+  - id: datasource.crm_lead_followers.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_followers
+  - id: datasource.crm_lead_follower_candidates.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_follower_candidates
+  - id: datasource.crm_lost_reason_lookup_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lost_reason_lookup_detail
+  - id: datasource.crm_source_lookup_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_source_lookup_detail
+  - id: datasource.crm_campaign_lookup_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_campaign_lookup_detail
+  - id: datasource.crm_tag_lookup_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_tag_lookup_detail
+  - id: datasource.crm_sales_teams_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_sales_teams_detail
+  - id: datasource.crm_active_salespeople_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_active_salespeople_detail
+  - id: datasource.crm_activity_assignee_lookup_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_assignee_lookup_detail
+  - id: datasource.crm_activity_types_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_types_detail
+  - id: datasource.crm_activity_plans_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_activity_plans_detail
+  - id: datasource.crm_nurture_plans_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_nurture_plans_detail
+  - id: datasource.crm_recurring_plans_detail.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_recurring_plans_detail
+  - id: datasource.crm_lead_distribution_report.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_distribution_report
+  - id: datasource.crm_lead_distribution_teams.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_lead_distribution_teams
+  - id: datasource.crm_archived_leads.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_archived_leads
+  - id: datasource.crm_unassigned_leads.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_unassigned_leads
+  - id: datasource.crm_salesperson_workload.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_salesperson_workload
+  - id: datasource.crm_data_quality.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_data_quality
+  - id: datasource.crm_data_quality_summary.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_data_quality_summary
+  - id: datasource.crm_stage_change_history.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_stage_change_history
+  - id: datasource.crm_current_stage_duration.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_current_stage_duration
+  - id: datasource.crm_probability_change_audit.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_probability_change_audit
   - id: ecommerce.orders.confirm
     route: /api/actions/ecommerce.orders.confirm
     method: POST
@@ -36,6 +696,68 @@ operations:
     permission: crm.read
     read_only: true
     datasource: crm_customer_opportunity_totals
+  - id: datasource.crm_customer_activity_rollup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_customer_activity_rollup
+  - id: datasource.crm_customer_pipeline_health.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_customer_pipeline_health
+  - id: datasource.crm_customer_accounts.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_customer_accounts
+  - id: datasource.crm_contact_lookup.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_contact_lookup
+  - id: datasource.crm_account_contacts.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_account_contacts
+  - id: datasource.crm_account_opportunities.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_account_opportunities
+  - id: datasource.crm_account_header.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_account_header
+  - id: crm.accounts.add_contact
+    route: /api/actions/crm.accounts.add_contact
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.accounts.remove_contact
+    route: /api/actions/crm.accounts.remove_contact
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.accounts.update_contact
+    route: /api/actions/crm.accounts.update_contact
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.merge_pair
+    route: /api/actions/crm.leads.merge_pair
+    method: POST
+    permission: crm.write
+    preview: false
   - id: crm.leads.convert
     route: /api/actions/crm.leads.convert
     method: POST
@@ -339,6 +1061,46 @@ operations:
     preview: false
   - id: crm.activities.apply_plan
     route: /api/actions/crm.activities.apply_plan
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.messages.retry
+    route: /api/actions/crm.messages.retry
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.scoring.recalculate
+    route: /api/actions/crm.scoring.recalculate
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.normalize_contact
+    route: /api/actions/crm.leads.normalize_contact
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.enrich
+    route: /api/actions/crm.leads.enrich
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.set_referrer
+    route: /api/actions/crm.leads.set_referrer
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.lead_mining.request
+    route: /api/actions/crm.lead_mining.request
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.lead_mining.create_lead
+    route: /api/actions/crm.lead_mining.create_lead
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.apply_nurture
+    route: /api/actions/crm.activities.apply_nurture
     method: POST
     permission: crm.write
     preview: false

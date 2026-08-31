@@ -8,10 +8,12 @@ datasources:
   - id: crm_team_operations
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_opportunities, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS open_value, CAST(COALESCE(SUM(l.expected_revenue * l.probability / 100) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS weighted_value, COUNT(a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_activities, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(l.salesperson), '') IS NULL) AS unassigned_opportunities, COUNT(DISTINCT l.id) FILTER (WHERE l.stage = 'Won') AS won_opportunities FROM crm_leads l LEFT JOIN crm_activities a ON a.lead_id = l.id WHERE (:team IS NULL OR l.team = :team) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team') ORDER BY overdue_activities DESC, team"
   - id: crm_team_operations_members
     single: false
     permission: crm.read
+    team_scope: true
     query: "SELECT COALESCE(NULLIF(m.team_id, ''), 'Unassigned team') AS team, m.user_name AS salesperson, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_opportunities, COUNT(a.id) FILTER (WHERE a.state = 'planned') AS planned_activities, COUNT(a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_activities FROM crm_team_members m LEFT JOIN crm_teams t ON t.id = m.team_id LEFT JOIN crm_leads l ON l.salesperson = m.user_name AND l.team = t.name LEFT JOIN crm_activities a ON a.lead_id = l.id WHERE m.active = true AND (:team IS NULL OR t.name = :team) GROUP BY COALESCE(NULLIF(m.team_id, ''), 'Unassigned team'), m.user_name ORDER BY overdue_activities DESC, team, salesperson"
 components:
   - type: ListToolbar
