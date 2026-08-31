@@ -411,6 +411,7 @@ async function bootstrap() {
     onCompanyChange: switchCompany,
     onAppChange: (app: any, makeDefault = false) => selectApp(app, makeDefault),
   });
+  while (app.firstChild) app.removeChild(app.firstChild);
   _shell.mount(app);
   _shellMenuModuleId = _activeModuleId;
 

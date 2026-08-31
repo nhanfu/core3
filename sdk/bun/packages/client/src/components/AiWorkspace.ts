@@ -132,6 +132,7 @@ export class AiWorkspace extends BaseComponent {
     this.renderConversation();
     const pending = sessionStorage.getItem(PENDING_PROMPT_KEY);
     if (pending) { sessionStorage.removeItem(PENDING_PROMPT_KEY); queueMicrotask(() => this.submitPrompt(pending)); }
+    else { queueMicrotask(() => this.focusComposer()); }
   }
 
   private renderThreadList() {

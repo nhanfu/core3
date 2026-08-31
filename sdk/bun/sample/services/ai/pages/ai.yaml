@@ -70,7 +70,7 @@ components:
     threads_label: Threads
     context_value: core3 CRM workspace
     composer_placeholder: Ask Core3 about this project…
-    welcome_title: What should we build?
+    welcome_title: Ask me anything?
     welcome_description: Ask Core3 to inspect YAML rules, explain behavior, or prepare an API operation.
     suggestions:
       - Inspect this project

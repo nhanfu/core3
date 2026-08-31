@@ -199,7 +199,7 @@
 @keyframes app-picker-task-result-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .app-picker-task-panel { padding: 16px; border-radius: 13px; } .app-picker-task-status { padding: 5px 7px; } .app-picker-task-status-label { display: none; } .app-picker-task-timeline { margin-inline: 0; } .app-picker-task-stage { font-size: .59rem; } .app-picker-task-activity-hint { display: none; } }
 @media (prefers-reduced-motion: reduce) { .app-picker-task-panel, .app-picker-task-panel::before, .app-picker-task-prompt, .app-picker-task-avatar svg, .app-picker-task-status-dot.is-busy, .app-picker-task-stage.is-active .app-picker-task-stage-marker, .app-picker-task-thinking, .app-picker-task-thinking-icon svg, .app-picker-task-thinking-dot, .app-picker-task-result { animation: none; } }
-.ai-workspace { margin: 0 auto 28px; width: min(1400px, 100%); overflow: hidden; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); box-shadow: 0 18px 50px rgba(35, 45, 70, .1); }
+.ai-workspace { display: flex; flex-direction: column; margin: 0 auto 28px; width: min(1400px, 100%); overflow: hidden; border: 1px solid var(--color-border); border-radius: 16px; background: var(--color-surface); box-shadow: 0 18px 50px rgba(35, 45, 70, .1); }
 .ai-workspace-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 20px; border-bottom: 1px solid var(--color-border); background: linear-gradient(120deg, var(--color-surface), var(--color-primary-light)); }
 .ai-workspace-heading { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .ai-workspace-avatar { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; background: var(--color-primary); color: #fff; }
@@ -210,7 +210,7 @@
 .ai-workspace-new { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text); cursor: pointer; font: inherit; font-size: .73rem; font-weight: 700; }
 .ai-workspace-new:hover { border-color: var(--color-primary-mid); color: var(--color-primary); }
 .ai-workspace-new svg { width: 14px; height: 14px; }
-.ai-workspace-body { display: grid; grid-template-columns: 205px minmax(0, 1fr); height: 620px; overflow: hidden; }
+.ai-workspace-body { display: grid; grid-template-columns: 205px minmax(0, 1fr); flex: 1; min-height: 0; height: 620px; overflow: hidden; }
 .ai-workspace-sidebar { padding: 14px 9px; border-right: 1px solid var(--color-border); background: var(--color-surface-muted); }
 .ai-workspace-sidebar-title { padding: 3px 9px 9px; color: var(--color-text-muted); font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .ai-workspace-thread-list { display: grid; gap: 3px; }
