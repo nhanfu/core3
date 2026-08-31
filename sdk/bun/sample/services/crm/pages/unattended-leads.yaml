@@ -5,13 +5,13 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT l.id, l.row_version, l.name, l.type, l.partner_name, l.email,
+      SELECT l.id, l.row_version, l.name, l.type, l.partner_id, l.partner_name, l.email,
         l.salesperson, l.team, l.stage, l.probability, l.expected_revenue,
         CAST(l.expected_closing AS VARCHAR) AS expected_closing,
         CASE WHEN EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
              THEN 'Past due' ELSE 'No planned activity' END AS attention
       FROM crm_leads l
-      WHERE l.stage NOT IN ('Won', 'Lost')
+      WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')
         AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.partner_name ILIKE '%' || :q || '%')
         AND (
           NOT EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned')
@@ -33,10 +33,42 @@ components:
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: expected_closing, label: Expected closing }
     row_key: id
+    row_actions: menu
+    actions:
+      - { id: assign_unattended_lead_to_me, label: Assign to me, permission: crm.write, variant: secondary }
+      - { id: open_unattended_lead_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
+      - { id: crm.unattended_leads.export, label: Export, title: Export, icon: download }
     row_open_action: view_unattended_lead
     row_double_click_action: view_unattended_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
 actions:
+  - id: open_unattended_lead_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{row.partner_id}' }
+  - id: assign_unattended_lead_to_me
+    type: server
+    permission: crm.write
+    action: crm.leads.assign_to_me
+    handler: yaml_mutation
+    operation: assign_to_me
+    params: { id: '{row.id}' }
+    refresh: [crm_unattended_leads]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Closed opportunities cannot be assigned
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NULLIF(TRIM(l.team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams t WHERE t.name = l.team AND t.active = true))"
+          status: 409
+          message: Opportunities in archived sales teams cannot be assigned
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NULLIF(TRIM(l.team), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = l.team) AND m.active = true) OR EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = l.team) AND m.user_name = :current_user_name AND m.active = true))"
+          status: 409
+          message: You are not an active member of this sales team
+      steps:
+        - query: "UPDATE crm_leads SET salesperson = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
   - id: view_unattended_lead
     type: navigate
     permission: crm.read

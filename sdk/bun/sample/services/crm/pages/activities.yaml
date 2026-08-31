@@ -11,10 +11,11 @@ datasources:
              WHEN a.due_date = CURRENT_DATE THEN 'Today'
              ELSE 'Upcoming' END AS timing
       FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id
-      WHERE a.state = 'planned'
+      WHERE l.active = true AND a.state = 'planned'
         AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR a.summary ILIKE '%' || :q || '%')
         AND (:timing IS NULL OR CASE WHEN a.due_date < CURRENT_DATE THEN 'Overdue' WHEN a.due_date = CURRENT_DATE THEN 'Today' ELSE 'Upcoming' END = :timing)
         AND (:activity_type IS NULL OR a.activity_type = :activity_type)
+        AND (:assigned_to IS NULL OR a.assigned_to = :assigned_to)
       ORDER BY a.due_date NULLS LAST, a.created_at DESC
   - id: crm_activity_timing
     single: false
@@ -24,14 +25,25 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+  - id: crm_activity_assignee_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true UNION SELECT DISTINCT assigned_to AS value, assigned_to AS label FROM crm_activities WHERE NULLIF(TRIM(assigned_to), '') IS NOT NULL ORDER BY value"
+  - id: crm_activity_lead_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM crm_leads WHERE active = true AND stage NOT IN ('Won', 'Lost') ORDER BY name"
 components:
   - type: ListView
     variant: odoo
     source: crm_activity_queue
+    create_action: schedule_crm_activity
+    create_label: Schedule activity
     search: { label: Search activities, placeholder: Search opportunity or activity... }
     filters:
       - { field: timing, label: Timing, options_source: crm_activity_timing }
       - { field: activity_type, label: Activity, options_source: crm_activity_type_lookup }
+      - { field: assigned_to, label: Assigned to, options_source: crm_activity_assignee_lookup }
     columns:
       - { field: timing, label: Timing, type: StatusChip }
       - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
@@ -40,11 +52,83 @@ components:
       - { field: due_date, label: Due date }
       - { field: assigned_to, label: Assigned to }
     row_key: id
+    selectable: true
     row_actions: menu
+    bulk_actions:
+      - { id: complete_selected_crm_activities, label: Mark selected done, permission: crm.write }
     actions:
+      - { id: edit_crm_activity, label: Edit activity, permission: crm.write, variant: secondary }
       - { id: complete_crm_activity, label: Mark done, permission: crm.write, variant: primary }
       - { id: view_activity_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+      - { id: crm.activities.export, label: Export, title: Export, icon: download }
 actions:
+  - id: edit_crm_activity
+    type: server_form
+    permission: crm.write
+    title: Edit CRM activity
+    action: crm.activities.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_activity_queue]
+    mutation:
+      operation: update
+      table: crm_activities
+      fields: [activity_type, summary, due_date, assigned_to]
+      required: [activity_type, summary]
+      guards:
+        - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"
+          status: 409
+          message: Only planned activities can be edited
+        - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = :activity_type AND active = true"
+          status: 400
+          message: Select an active activity type
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:assigned_to, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :assigned_to AND active = true) OR EXISTS (SELECT 1 FROM crm_activities WHERE id = :id AND assigned_to = :assigned_to)"
+          status: 400
+          message: Select an active assignee
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: activity_type, label: Activity type, type: select, options_source: crm_activity_type_lookup, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Due date, type: date }
+      - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup }
+  - id: schedule_crm_activity
+    type: server_form
+    permission: crm.write
+    title: Schedule CRM activity
+    action: crm.activities.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_activity_queue]
+    mutation:
+      operation: insert
+      table: crm_activities
+      fields: [lead_id, activity_type, summary, due_date, assigned_to, state, next_activity_type, next_activity_summary, next_activity_due_date]
+      required: [lead_id, activity_type, summary]
+      defaults: { state: planned }
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :lead_id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Select an open opportunity
+        - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = :activity_type AND active = true"
+          status: 400
+          message: Select an active activity type
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:assigned_to, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :assigned_to AND active = true)"
+          status: 400
+          message: Select an active assignee
+        - query: "SELECT 1 AS ok WHERE :next_activity_type IS NULL OR NULLIF(TRIM(CAST(:next_activity_type AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_activity_types WHERE name = :next_activity_type AND active = true)"
+          status: 400
+          message: Select an active next activity type
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: lead_id, label: Opportunity, type: select, options_source: crm_activity_lead_lookup, required: true }
+      - { field: activity_type, label: Activity type, type: select, options_source: crm_activity_type_lookup, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Due date, type: date }
+      - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup }
+      - { field: next_activity_type, label: Next activity type, type: select, options_source: crm_activity_type_lookup }
+      - { field: next_activity_summary, label: Next activity summary, type: text }
+      - { field: next_activity_due_date, label: Next activity due date, type: date }
   - id: complete_crm_activity
     type: server
     permission: crm.write
@@ -62,6 +146,22 @@ actions:
         - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+  - id: complete_selected_crm_activities
+    type: server
+    permission: crm.write
+    action: crm.activities.complete_batch
+    handler: crm_activity
+    operation: complete_batch
+    refresh: [crm_activity_queue]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_activities WHERE id IN :selectedIds) > 0 AND (SELECT COUNT(*) FROM crm_activities WHERE id IN :selectedIds AND state = 'planned') = (SELECT COUNT(*) FROM crm_activities WHERE id IN :selectedIds)"
+          status: 409
+          message: Select only planned activities
+      steps:
+        - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id IN :selectedIds AND state = 'planned'"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id IN :selectedIds AND state = 'done' AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
+      result: { query: "SELECT * FROM crm_activities WHERE id IN :selectedIds ORDER BY due_date NULLS LAST" }
   - id: view_activity_opportunity
     type: navigate
     permission: crm.read

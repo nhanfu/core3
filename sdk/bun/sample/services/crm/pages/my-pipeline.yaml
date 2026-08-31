@@ -5,12 +5,12 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT id, row_version, name, type, partner_name, email, phone, source, priority,
+      SELECT id, row_version, name, type, partner_id, partner_name, email, phone, source, priority,
         expected_revenue, stage, probability, salesperson, team, tags,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         CAST(updated_at AS VARCHAR) AS updated_at
       FROM crm_leads
-      WHERE salesperson = :current_user_name
+      WHERE active = true AND salesperson = :current_user_name
         AND stage NOT IN ('Won', 'Lost')
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
       ORDER BY expected_closing NULLS LAST, updated_at DESC
@@ -33,7 +33,16 @@ components:
     row_key: id
     row_open_action: view_my_opportunity
     row_double_click_action: view_my_opportunity
+    row_actions: menu
+    actions:
+      - { id: open_my_pipeline_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
+      - { id: crm.my_pipeline.export, label: Export, title: Export, icon: download }
 actions:
+  - id: open_my_pipeline_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{row.partner_id}' }
   - id: view_my_opportunity
     type: navigate
     permission: crm.read

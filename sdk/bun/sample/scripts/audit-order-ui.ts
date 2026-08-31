@@ -5,7 +5,7 @@ const appsRoot = fileURLToPath(new URL('../', import.meta.url));
 const discovered = discoverPages(appsRoot);
 const routes = discoverPageRoutes(discovered);
 const legacy = new Map<string, string[]>();
-const legacyTypes = new Set(['ListToolbar', 'StatusTabs', 'DataGrid', 'GridView', 'DocumentSummary']);
+const legacyTypes = new Set(['StatusTabs', 'DataGrid', 'GridView', 'DocumentSummary']);
 
 for (const [id, page] of discovered.pages) {
   const types: string[] = [];

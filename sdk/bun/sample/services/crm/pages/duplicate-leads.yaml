@@ -1,0 +1,41 @@
+title: Duplicate Leads
+page: { id: duplicate-leads, breadcrumb: [Sales, CRM, Duplicate Leads], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_duplicate_leads
+    single: false
+    permission: crm.read
+    query: |
+      SELECT MIN(id) AS survivor_id, MAX(id) AS duplicate_id,
+        COALESCE(NULLIF(partner_name, ''), NULLIF(email, ''), 'Unnamed') AS match_key,
+        COUNT(*) AS match_count
+      FROM crm_leads
+      WHERE active = true AND (NULLIF(TRIM(partner_name), '') IS NOT NULL OR NULLIF(TRIM(email), '') IS NOT NULL)
+      GROUP BY COALESCE(NULLIF(partner_name, ''), NULLIF(email, ''), 'Unnamed')
+      HAVING COUNT(*) > 1
+      ORDER BY match_count DESC, match_key
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_duplicate_leads
+    search: { label: Search duplicate matches, placeholder: Search by customer or email... }
+    columns:
+      - { field: match_key, label: Match }
+      - { field: match_count, label: Records }
+      - { field: survivor_id, label: Oldest record }
+      - { field: duplicate_id, label: Candidate duplicate }
+    row_key: duplicate_id
+    row_actions: menu
+    actions:
+      - { id: open_duplicate_survivor, label: Open oldest, permission: crm.read, variant: ghost }
+      - { id: open_duplicate_candidate, label: Open candidate, permission: crm.read, variant: ghost }
+actions:
+  - id: open_duplicate_survivor
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.survivor_id}' }
+  - id: open_duplicate_candidate
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.duplicate_id}' }

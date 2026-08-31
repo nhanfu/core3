@@ -1,0 +1,19 @@
+version: 0.0.16
+
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_lead_followers (
+        lead_id VARCHAR NOT NULL,
+        user_name VARCHAR NOT NULL,
+        added_by VARCHAR,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (lead_id, user_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_crm_lead_followers_lead ON crm_lead_followers(lead_id);
+    down: |
+      DROP TABLE IF EXISTS crm_lead_followers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

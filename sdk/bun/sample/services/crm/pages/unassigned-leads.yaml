@@ -5,15 +5,19 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT id, row_version, name, type, partner_name, source, priority,
+      SELECT id, row_version, name, type, partner_id, partner_name, source, priority,
         expected_revenue, stage, probability, team, tags,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         CAST(updated_at AS VARCHAR) AS updated_at
       FROM crm_leads
-      WHERE NULLIF(TRIM(salesperson), '') IS NULL
+      WHERE active = true AND NULLIF(TRIM(salesperson), '') IS NULL
         AND stage NOT IN ('Won', 'Lost')
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
       ORDER BY expected_closing NULLS LAST, updated_at DESC
+  - id: crm_assignment_members
+    single: false
+    permission: crm.write
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true ORDER BY user_name"
 components:
   - type: ListView
     variant: odoo
@@ -32,9 +36,67 @@ components:
       - { field: expected_closing, label: Expected closing }
     page_size: 50
     row_key: id
+    selectable: true
+    row_actions: menu
+    bulk_actions:
+      - { id: assign_selected_leads, label: Assign selected, permission: crm.write }
+    actions:
+      - { id: assign_unassigned_lead, label: Assign to salesperson, permission: crm.write, variant: primary }
+      - { id: open_unassigned_lead_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
+      - { id: crm.unassigned_leads.export, label: Export, title: Export, icon: download }
     row_open_action: view_unassigned_lead
     row_double_click_action: view_unassigned_lead
 actions:
+  - id: open_unassigned_lead_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{row.partner_id}' }
+  - id: assign_unassigned_lead
+    type: server_form
+    permission: crm.write
+    title: Assign lead
+    action: crm.leads.assign
+    handler: yaml_mutation
+    operation: assign
+    prefill: row
+    refresh: [crm_unassigned_leads]
+    mutation:
+      operation: update
+      table: crm_leads
+      fields: [salesperson]
+      required: [salesperson]
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(salesperson), '') IS NULL"
+          status: 409
+          message: Lead is already assigned or closed
+        - query: "SELECT 1 AS ok FROM crm_team_members m LEFT JOIN crm_teams t ON t.id = m.team_id WHERE m.user_name = :salesperson AND m.active = true AND (t.active = true OR t.id IS NULL) AND (t.name IS NULL OR t.name = (SELECT team FROM crm_leads WHERE id = :id))"
+          status: 409
+          message: Select an active member of this sales team
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_assignment_members, required: true }
+  - id: assign_selected_leads
+    type: server_form
+    permission: crm.write
+    title: Assign selected leads
+    action: crm.leads.assign_batch
+    handler: yaml_mutation
+    operation: assign_batch
+    refresh: [crm_unassigned_leads]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds) > 0 AND (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(salesperson), '') IS NULL) = (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds)"
+          status: 409
+          message: Select only open unassigned leads
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM crm_team_members m WHERE m.user_name = :salesperson AND m.active = true) AND NOT EXISTS (SELECT 1 FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE l.id IN :selectedIds AND NULLIF(TRIM(l.team), '') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = t.id AND m.user_name = :salesperson AND m.active = true))"
+          status: 409
+          message: Select an active member of the selected sales teams
+      steps:
+        - query: "UPDATE crm_leads SET salesperson = :salesperson, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(salesperson), '') IS NULL"
+      result: { query: "SELECT * FROM crm_leads WHERE id IN :selectedIds ORDER BY updated_at DESC" }
+    fields:
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_assignment_members, required: true }
   - id: view_unassigned_lead
     type: navigate
     permission: crm.read

@@ -5,12 +5,12 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT id, row_version, name, partner_name, salesperson, team, stage,
+      SELECT id, row_version, name, partner_id, partner_name, salesperson, team, stage,
         probability, expected_revenue, tags,
         CAST(expected_revenue * probability / 100 AS DOUBLE) AS weighted_revenue,
         CAST(expected_closing AS VARCHAR) AS expected_closing
       FROM crm_leads
-      WHERE stage NOT IN ('Won', 'Lost')
+      WHERE active = true AND stage NOT IN ('Won', 'Lost')
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
         AND (:team IS NULL OR team = :team)
       ORDER BY expected_closing NULLS LAST, weighted_revenue DESC
@@ -36,10 +36,19 @@ components:
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: weighted_revenue, label: Weighted revenue, align: right }
     row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_expected_revenue_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
+      - { id: crm.expected_revenue.export, label: Export, title: Export, icon: download }
     row_open_action: view_expected_revenue_opportunity
     row_double_click_action: view_expected_revenue_opportunity
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
 actions:
+  - id: open_expected_revenue_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{row.partner_id}' }
   - id: view_expected_revenue_opportunity
     type: navigate
     permission: crm.read

@@ -45,8 +45,83 @@ operations:
     method: POST
     permission: crm.write
     preview: false
+  - id: crm.leads.message
+    route: /api/actions/crm.leads.message
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.note
+    route: /api/actions/crm.leads.note
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.sources.create
+    route: /api/actions/crm.sources.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plans.update
+    route: /api/actions/crm.activity_plans.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plan_steps.update
+    route: /api/actions/crm.activity_plan_steps.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_types.update
+    route: /api/actions/crm.activity_types.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.sources.update
+    route: /api/actions/crm.sources.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.update
+    route: /api/actions/crm.lost_reasons.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.leads.followers.add
+    route: /api/actions/crm.leads.followers.add
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.followers.remove
+    route: /api/actions/crm.leads.followers.remove
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.archive
+    route: /api/actions/crm.leads.archive
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.unarchive
+    route: /api/actions/crm.leads.unarchive
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.bulk_update
+    route: /api/actions/crm.leads.bulk_update
+    method: POST
+    permission: crm.write
+    preview: false
   - id: crm.leads.assign_to_me
     route: /api/actions/crm.leads.assign_to_me
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.assign
+    route: /api/actions/crm.leads.assign
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.assign_batch
+    route: /api/actions/crm.leads.assign_batch
     method: POST
     permission: crm.write
     preview: false
@@ -90,8 +165,18 @@ operations:
     method: POST
     permission: crm.write
     preview: false
+  - id: crm.activities.update
+    route: /api/actions/crm.activities.update
+    method: POST
+    permission: crm.write
+    preview: false
   - id: crm.activities.complete
     route: /api/actions/crm.activities.complete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.complete_batch
+    route: /api/actions/crm.activities.complete_batch
     method: POST
     permission: crm.write
     preview: false

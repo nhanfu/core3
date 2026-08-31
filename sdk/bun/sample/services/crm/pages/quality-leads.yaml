@@ -5,12 +5,13 @@ datasources:
     single: false
     permission: crm.read
     query: |
-      SELECT id, row_version, name, type, partner_name, email, phone, source,
+      SELECT id, row_version, name, type, partner_id, partner_name, email, phone, source,
         salesperson, team, stage, probability, expected_revenue,
         CAST(created_at AS VARCHAR) AS created_at,
         CASE WHEN stage IN ('Won', 'Lost') THEN 'Closed' ELSE 'Open' END AS status_group
       FROM crm_leads
-      WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
+      WHERE active = true AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%')
         AND (:team IS NULL OR team = :team)
         AND NULLIF(TRIM(email), '') IS NOT NULL
         AND NULLIF(TRIM(phone), '') IS NOT NULL
@@ -24,7 +25,7 @@ datasources:
   - id: crm_quality_by_salesperson
     single: false
     permission: crm.read
-    query: "SELECT salesperson, COUNT(*) AS quality_lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' AND NULLIF(TRIM(email), '') IS NOT NULL AND NULLIF(TRIM(phone), '') IS NOT NULL AND NULLIF(TRIM(salesperson), '') IS NOT NULL AND NULLIF(TRIM(source), '') IS NOT NULL GROUP BY salesperson ORDER BY quality_lead_count DESC"
+    query: "SELECT salesperson, COUNT(*) AS quality_lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads WHERE active = true AND created_at >= CURRENT_DATE - INTERVAL '30 days' AND NULLIF(TRIM(email), '') IS NOT NULL AND NULLIF(TRIM(phone), '') IS NOT NULL AND NULLIF(TRIM(salesperson), '') IS NOT NULL AND NULLIF(TRIM(source), '') IS NOT NULL GROUP BY salesperson ORDER BY quality_lead_count DESC"
 components:
   - type: ListView
     variant: odoo
@@ -43,6 +44,10 @@ components:
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: created_at, label: Created }
     row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_quality_lead_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
+      - { id: crm.quality_leads.export, label: Export, title: Export, icon: download }
     row_open_action: view_quality_lead
     row_double_click_action: view_quality_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
@@ -53,6 +58,11 @@ components:
     value_field: quality_lead_count
     variant: bar
 actions:
+  - id: open_quality_lead_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{row.partner_id}' }
   - id: view_quality_lead
     type: navigate
     permission: crm.read

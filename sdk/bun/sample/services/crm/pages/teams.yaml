@@ -4,7 +4,7 @@ datasources:
   - id: crm_teams
     single: false
     permission: crm.read
-    query: "SELECT t.id, t.name, t.leader, t.email_alias, t.target_revenue, t.use_leads, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count FROM crm_teams t ORDER BY t.name"
+    query: "SELECT t.id, t.name, t.leader, t.email_alias, t.target_revenue, t.use_leads, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count, (SELECT COUNT(*) FROM crm_leads l WHERE l.active = true AND l.team = t.name AND l.stage NOT IN ('Won', 'Lost')) AS open_lead_count FROM crm_teams t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.leader ILIKE '%' || :q || '%' OR t.email_alias ILIKE '%' || :q || '%') ORDER BY t.name"
   - id: crm_stages_config
     single: false
     permission: crm.read
@@ -21,18 +21,24 @@ datasources:
     single: false
     permission: crm.manage
     query: "SELECT id AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_team_leader_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true UNION SELECT DISTINCT leader AS value, leader AS label FROM crm_teams WHERE NULLIF(TRIM(leader), '') IS NOT NULL ORDER BY value"
 components:
   - type: ListView
     variant: odoo
     source: crm_teams
     create_action: create_crm_team
     create_label: New sales team
+    search: { label: Search sales teams, placeholder: 'Search team, leader, or email alias...' }
     columns:
       - { field: name, label: Sales team, type: PrimaryEntityCell }
       - { field: leader, label: Team leader }
       - { field: email_alias, label: Email alias }
       - { field: target_revenue, label: Target revenue, align: right }
       - { field: member_count, label: Members, align: right }
+      - { field: open_lead_count, label: Open leads, align: right }
       - { field: use_leads, label: Leads enabled, type: StatusChip }
       - { field: active, label: Active, type: StatusChip }
     page_size: 50
@@ -41,6 +47,7 @@ components:
     actions:
       - { id: edit_crm_team, label: Edit, permission: crm.manage, variant: ghost }
       - { id: archive_crm_team, label: Archive, permission: crm.manage, variant: danger, show_if: "row.active === true" }
+      - { id: crm.teams.export, label: Export, title: Export, icon: download }
   - type: ListView
     variant: odoo
     source: crm_team_member_configuration
@@ -69,7 +76,7 @@ actions:
         - query: "SELECT id FROM crm_teams WHERE id = :id AND active = true"
           status: 409
           message: Only active sales teams can be edited
-        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_teams WHERE name = :name AND id <> :id)"
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND NOT EXISTS (SELECT 1 FROM crm_teams WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)"
           status: 409
           message: Sales team already exists
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:email_alias, '') AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_teams WHERE lower(email_alias) = lower(:email_alias) AND id <> :id)"
@@ -81,7 +88,7 @@ actions:
       result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
     fields:
       - { field: name, label: Sales team, type: text, required: true }
-      - { field: leader, label: Team leader, type: text }
+      - { field: leader, label: Team leader, type: select, options_source: crm_team_leader_lookup }
       - { field: email_alias, label: Email alias, type: text }
       - { field: target_revenue, label: Target revenue, type: number }
       - { field: use_leads, label: Leads enabled, type: checkbox }
@@ -139,6 +146,9 @@ actions:
         - query: "SELECT id FROM crm_teams WHERE id = :id AND active = true"
           status: 409
           message: Sales team is already archived
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_leads l JOIN crm_teams t ON t.name = l.team WHERE t.id = :id AND l.stage NOT IN ('Won', 'Lost'))"
+          status: 409
+          message: A sales team with open leads cannot be archived
       steps:
         - query: "UPDATE crm_teams SET active = false WHERE id = :id"
       result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
@@ -157,7 +167,7 @@ actions:
       required: [name]
       defaults: { target_revenue: 0, use_leads: true, active: true }
       guards:
-        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_teams WHERE name = :name)"
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND NOT EXISTS (SELECT 1 FROM crm_teams WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))"
           status: 409
           message: Sales team already exists
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:email_alias, '') AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_teams WHERE lower(email_alias) = lower(:email_alias))"
@@ -166,7 +176,7 @@ actions:
       result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
     fields:
       - { field: name, label: Sales team, type: text, required: true }
-      - { field: leader, label: Team leader, type: text }
+      - { field: leader, label: Team leader, type: select, options_source: crm_team_leader_lookup }
       - { field: email_alias, label: Email alias, type: text }
       - { field: target_revenue, label: Target revenue, type: number }
       - { field: use_leads, label: Leads enabled, type: checkbox, default: true }

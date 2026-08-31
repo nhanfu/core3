@@ -43,6 +43,7 @@ workflow:
             message: Only new leads can be qualified
         steps:
           - query: "UPDATE crm_leads SET stage = 'Qualified', probability = COALESCE((SELECT probability FROM crm_stages WHERE name = 'Qualified'), probability), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+          - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'New -> Qualified', 'done', CURRENT_TIMESTAMP)"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     - id: propose
       from: [Qualified]
@@ -59,6 +60,7 @@ workflow:
             message: Lead must be qualified before it is won
         steps:
           - query: "UPDATE crm_leads SET stage = 'Won', probability = 100, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+          - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Opportunity marked won', 'done', CURRENT_TIMESTAMP)"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     - id: lost
       from: [New, Qualified, Proposition]
@@ -74,4 +76,5 @@ workflow:
             message: Select an active lost reason
         steps:
           - query: "UPDATE crm_leads SET stage = 'Lost', lost_reason = :lost_reason, probability = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+          - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Opportunity marked lost', 'done', CURRENT_TIMESTAMP)"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }

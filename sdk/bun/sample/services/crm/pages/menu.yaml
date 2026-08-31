@@ -46,6 +46,14 @@ menu:
           label: Lost Opportunities
           icon: archive
           permission: crm.read
+        - path: /archived-leads
+          label: Archived Leads
+          icon: archive
+          permission: crm.read
+        - path: /duplicate-leads
+          label: Duplicate Leads
+          icon: copy
+          permission: crm.read
     - id: configuration
       label: Configuration
       items:

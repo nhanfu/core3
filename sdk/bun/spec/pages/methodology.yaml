@@ -127,15 +127,15 @@ components:
             title: Agent graph
             language: text
             code: |
-              BA: scope, reference facts, behavior contract, and acceptance criteria
-                → dev: architecture choice, YAML implementation, and focused checks
-                → QA: browser/API verification, parity review, and repair feedback
-                → BA: confirm the next bounded loop or accept the result
+              BA (leader): scope, reference facts, behavior contract, and acceptance criteria
+                ↔ dev: architecture choice, YAML implementation, focused checks, and repair feedback
+              BA: verify evidence, decide acceptance, and lead the next bounded loop
           - type: p
             text: >-
-              The loop uses only three roles: BA, dev, and QA. BA defines the target and contract,
-              dev makes the smallest architecture-fit implementation, and QA verifies the result
-              and routes concrete repair feedback. Every loop must declare a maximum iteration
+              The loop uses only two roles: BA and dev, with BA as the leader. BA defines the target,
+              contract, acceptance evidence, and next action; dev makes the smallest architecture-fit
+              implementation and reports concrete results back to BA. BA performs the verification
+              review that would otherwise be separated into QA. Every loop must declare a maximum iteration
               count, time limit, tool/action budget, and a no-progress stop condition. When a limit
               is reached, the agent stops and reports the unresolved state or asks the user for
               direction; it may not retry indefinitely or silently continue after a failed safety
@@ -158,11 +158,11 @@ components:
         blocks:
           - type: p
             text: >-
-              The unit of work is one product feature at a time. The workflow above applies to
-              feature development and parity work wherever it is initiated; it is not a plan for
-              improving the AI module itself. Agents may choose their own tools and evidence, but
-              the feature contract, implementation status, verification results, and next action
-              must remain visible to the user.
+              The unit of work is a BA-owned batch of bounded product features. The workflow above
+              applies to feature development and parity work wherever it is initiated; it is not a
+              plan for improving the AI module itself. BA plans several independent or dependency-
+              ordered items for dev in one reviewable batch, and each item keeps its own contract,
+              implementation status, verification results, and next action visible to the user.
           - type: list
             items:
               - start and continue feature-focused work in named threads

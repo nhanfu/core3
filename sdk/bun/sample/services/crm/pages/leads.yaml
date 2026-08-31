@@ -11,7 +11,8 @@ datasources:
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         CAST(created_at AS VARCHAR) AS created_at
       FROM crm_leads
-      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%' OR source ILIKE '%' || :q || '%' OR utm_campaign ILIKE '%' || :q || '%' OR utm_medium ILIKE '%' || :q || '%' OR utm_source ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+      WHERE active = true
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%' OR source ILIKE '%' || :q || '%' OR utm_campaign ILIKE '%' || :q || '%' OR utm_medium ILIKE '%' || :q || '%' OR utm_source ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
         AND (:stage IS NULL OR stage = :stage)
         AND (:type IS NULL OR type = :type)
         AND (:salesperson IS NULL OR salesperson = :salesperson)
@@ -31,6 +32,22 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE NULLIF(TRIM(salesperson), '') IS NOT NULL ORDER BY salesperson"
+  - id: crm_active_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true ORDER BY user_name"
+  - id: crm_duplicate_preview
+    single: false
+    permission: crm.read
+    query: |
+      SELECT MIN(id) AS survivor_id, MAX(id) AS duplicate_id,
+        COALESCE(NULLIF(partner_name, ''), NULLIF(email, ''), 'Unnamed') AS match_key,
+        COUNT(*) AS match_count
+      FROM crm_leads
+      WHERE active = true AND (NULLIF(TRIM(partner_name), '') IS NOT NULL OR NULLIF(TRIM(email), '') IS NOT NULL)
+      GROUP BY COALESCE(NULLIF(partner_name, ''), NULLIF(email, ''), 'Unnamed')
+      HAVING COUNT(*) > 1
+      ORDER BY match_count DESC, match_key
   - id: crm_sales_teams
     single: false
     permission: crm.read
@@ -43,6 +60,10 @@ datasources:
     permission: crm.read
     single: false
     query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_tag_lookup
+    permission: crm.read
+    single: false
+    query: "SELECT name AS value, name AS label FROM crm_tags ORDER BY active DESC, name"
   - id: crm_utm_campaign_lookup
     single: false
     permission: crm.read
@@ -161,12 +182,83 @@ components:
       - { id: assign_lead_to_me, label: Assign to me, permission: crm.write, variant: secondary, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
       - { id: qualify_lead, label: Qualify, permission: crm.write, variant: ghost, show_if: "row.stage === 'New'" }
       - { id: convert_lead, label: Convert to opportunity, permission: crm.write, variant: ghost, show_if: "row.type === 'lead' && row.stage !== 'Won' && row.stage !== 'Lost'" }
+      - { id: open_lead_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
+      - { id: archive_lead, label: Archive, permission: crm.write, variant: danger, show_if: "row.active === true && row.stage !== 'Won' && row.stage !== 'Lost'" }
+      - { id: crm.leads.export, label: Export, title: Export, icon: download }
     bulk_actions:
       - { id: merge_leads, label: Merge selected }
+      - { id: bulk_update_leads, label: Update selected, permission: crm.write }
+      - { id: preview_duplicate_leads, label: Preview duplicates, permission: crm.read }
     row_open_action: view_lead
     row_double_click_action: view_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
 actions:
+  - id: open_lead_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{row.partner_id}' }
+  - id: bulk_update_leads
+    type: server_form
+    permission: crm.write
+    title: Update selected leads
+    action: crm.leads.bulk_update
+    handler: yaml_mutation
+    operation: bulk_update
+    refresh: [crm_leads]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND active = true AND stage NOT IN ('Won', 'Lost')) = (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds) AND (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds) > 0"
+          status: 409
+          message: Select only active open leads
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :salesperson AND active = true)"
+          status: 409
+          message: Select an active salesperson
+        - query: "SELECT 1 AS ok FROM crm_stages WHERE name = :stage AND active = true"
+          status: 409
+          message: Select an active pipeline stage
+      steps:
+        - query: "UPDATE crm_leads SET stage = :stage, probability = COALESCE((SELECT probability FROM crm_stages WHERE name = :stage), probability), salesperson = :salesperson, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id IN :selectedIds AND active = true AND stage NOT IN ('Won', 'Lost')"
+      result: { query: "SELECT * FROM crm_leads WHERE id IN :selectedIds ORDER BY updated_at DESC" }
+    fields:
+      - { field: stage, label: Stage, type: select, options_source: crm_lead_stages, required: true }
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_active_salespeople, required: true }
+  - id: preview_duplicate_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /duplicate-leads
+  - id: archive_lead
+    type: server
+    permission: crm.write
+    action: crm.leads.archive
+    handler: yaml_mutation
+    operation: archive
+    params: { id: '{row.id}' }
+    refresh: [crm_leads]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only open active leads can be archived
+      steps:
+        - query: "UPDATE crm_leads SET active = false, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND active = true AND stage NOT IN ('Won', 'Lost')"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+  - id: unarchive_lead
+    type: server
+    permission: crm.write
+    action: crm.leads.unarchive
+    handler: yaml_mutation
+    operation: unarchive
+    params: { id: '{row.id}' }
+    refresh: [crm_leads]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND active = false"
+          status: 409
+          message: Only archived leads can be restored
+      steps:
+        - query: "UPDATE crm_leads SET active = true, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND active = false"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
   - id: create_lead
     type: server_form
     permission: crm.write
@@ -181,9 +273,14 @@ actions:
       required: [name]
       defaults: { stage: New, probability: 10, expected_revenue: 0 }
       guards:
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:probability, 10) AS INTEGER) BETWEEN 0 AND 100"
+          status: 400
+          message: Probability must be between 0 and 100
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
           status: 400
           message: Select an active contact
+        - query: "SELECT CASE WHEN NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL THEN :partner_name ELSE (SELECT name FROM base_contacts WHERE id = :partner_id AND active = true) END AS partner_name"
+          assign: true
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
           status: 400
           message: Select an active lead source
@@ -208,11 +305,11 @@ actions:
       - { field: utm_campaign, label: UTM campaign, type: text }
       - { field: utm_medium, label: UTM medium, type: text }
       - { field: utm_source, label: UTM source, type: text }
-      - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
+      - { field: tags, label: Tags, type: multi-select, multiple: true, options_source: crm_tag_lookup, placeholder: Choose tags }
       - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3], default: 0 }
       - { field: expected_revenue, label: Expected revenue, type: number }
       - { field: probability, label: Probability, type: number }
-      - { field: salesperson, label: Salesperson, type: text }
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_active_salespeople }
       - { field: team, label: Sales team, type: select, options_source: crm_sales_teams }
       - { field: expected_closing, label: Expected closing, type: date }
   - id: edit_lead
@@ -231,9 +328,14 @@ actions:
       required: [name]
       timestamps: true
       guards:
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:probability, 10) AS INTEGER) BETWEEN 0 AND 100"
+          status: 400
+          message: Probability must be between 0 and 100
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
           status: 400
           message: Select an active contact
+        - query: "SELECT CASE WHEN NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL THEN :partner_name ELSE (SELECT name FROM base_contacts WHERE id = :partner_id AND active = true) END AS partner_name"
+          assign: true
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
           status: 400
           message: Select an active lead source
@@ -258,11 +360,11 @@ actions:
       - { field: utm_campaign, label: UTM campaign, type: text }
       - { field: utm_medium, label: UTM medium, type: text }
       - { field: utm_source, label: UTM source, type: text }
-      - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
+      - { field: tags, label: Tags, type: multi-select, multiple: true, options_source: crm_tag_lookup, placeholder: Choose tags }
       - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
       - { field: expected_revenue, label: Expected revenue, type: number }
       - { field: probability, label: Probability, type: number }
-      - { field: salesperson, label: Salesperson, type: text }
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_active_salespeople }
       - { field: team, label: Sales team, type: select, options_source: crm_sales_teams }
       - { field: expected_closing, label: Expected closing, type: date }
   - id: view_lead

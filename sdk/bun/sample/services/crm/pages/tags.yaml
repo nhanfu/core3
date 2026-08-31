@@ -7,10 +7,10 @@ datasources:
   - id: crm_tag_values
     type: local
     permission: crm.read
-    query: "SELECT TRIM(tag) AS value, TRIM(tag) AS label, COUNT(*) AS lead_count FROM crm_leads, UNNEST(string_split(COALESCE(tags, ''), ',')) AS split(tag) WHERE NULLIF(TRIM(tag), '') IS NOT NULL AND (:q IS NULL OR TRIM(tag) ILIKE '%' || :q || '%') GROUP BY TRIM(tag) ORDER BY lead_count DESC, value"
+    query: "SELECT TRIM(tag) AS value, TRIM(tag) AS label, COUNT(*) AS lead_count FROM crm_leads, UNNEST(string_split(COALESCE(tags, ''), ',')) AS split(tag) WHERE active = true AND NULLIF(TRIM(tag), '') IS NOT NULL AND (:q IS NULL OR TRIM(tag) ILIKE '%' || :q || '%') GROUP BY TRIM(tag) ORDER BY lead_count DESC, value"
   - id: crm_tag_configuration
     permission: crm.read
-    query: "SELECT t.id, t.name, t.color, t.active, (SELECT COUNT(*) FROM crm_leads l WHERE ',' || replace(COALESCE(l.tags, ''), ' ', '') || ',' LIKE '%,' || replace(t.name, ' ', '') || ',%') AS lead_count FROM crm_tags t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%') ORDER BY t.active DESC, t.name"
+    query: "SELECT t.id, t.name, t.color, t.active, (SELECT COUNT(*) FROM crm_leads l WHERE l.active = true AND ',' || replace(COALESCE(l.tags, ''), ' ', '') || ',' LIKE '%,' || replace(t.name, ' ', '') || ',%') AS lead_count FROM crm_tags t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%') ORDER BY t.active DESC, t.name"
 components:
   - type: ListView
     variant: odoo
@@ -31,6 +31,7 @@ components:
     row_actions: menu
     actions:
       - { id: toggle_crm_tag, label: Toggle, permission: crm.manage, variant: ghost }
+      - { id: crm.tags.export, label: Export, title: Export, icon: download }
 actions:
   - id: create_crm_tag
     type: server_form

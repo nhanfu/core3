@@ -1,0 +1,56 @@
+title: Archived Leads
+page: { id: archived-leads, breadcrumb: [Sales, CRM, Archived Leads], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_archived_leads
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, type, partner_name, email, phone, stage,
+        salesperson, team, CAST(updated_at AS VARCHAR) AS updated_at
+      FROM crm_leads
+      WHERE active = false
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%')
+      ORDER BY updated_at DESC
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_archived_leads
+    search: { label: Search archived leads, placeholder: Search archived leads... }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: type, label: Type }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: salesperson, label: Salesperson }
+      - { field: team, label: Sales team }
+      - { field: updated_at, label: Archived at }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: unarchive_lead, label: Restore, permission: crm.write, variant: primary }
+      - { id: view_archived_lead, label: View, permission: crm.read, variant: ghost }
+    row_open_action: view_archived_lead
+    row_double_click_action: view_archived_lead
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+actions:
+  - id: view_archived_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }
+  - id: unarchive_lead
+    type: server
+    permission: crm.write
+    action: crm.leads.unarchive
+    handler: yaml_mutation
+    operation: unarchive
+    params: { id: '{row.id}' }
+    refresh: [crm_archived_leads]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND active = false"
+          status: 409
+          message: Only archived leads can be restored
+      steps:
+        - query: "UPDATE crm_leads SET active = true, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND active = false"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }

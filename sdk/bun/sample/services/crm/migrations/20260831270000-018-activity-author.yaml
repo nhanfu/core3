@@ -1,0 +1,14 @@
+version: 0.0.18
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS created_by VARCHAR;
+      UPDATE crm_activities SET created_by = assigned_to WHERE created_by IS NULL AND assigned_to IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_crm_activities_created_by ON crm_activities(created_by);
+    down: |
+      DROP INDEX IF EXISTS idx_crm_activities_created_by;
+      ALTER TABLE crm_activities DROP COLUMN IF EXISTS created_by;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

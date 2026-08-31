@@ -20,6 +20,22 @@ datasources:
         CAST(created_at AS VARCHAR) AS created_at,
         CAST(completed_at AS VARCHAR) AS completed_at
       FROM crm_activities WHERE lead_id = :id ORDER BY due_date NULLS LAST, created_at DESC
+  - id: crm_lead_chatter
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, COALESCE(NULLIF(created_by, ''), NULLIF(assigned_to, ''), 'CRM') AS actor_name,
+        CASE WHEN activity_type = 'message' THEN 'crm.message' WHEN activity_type = 'note' THEN 'crm.note' ELSE 'crm.activity' END AS action,
+        summary AS detail, CAST(created_at AS VARCHAR) AS created_at
+      FROM crm_activities WHERE lead_id = :id ORDER BY created_at DESC
+  - id: crm_lead_followers
+    single: false
+    permission: crm.read
+    query: "SELECT user_name AS user_id, user_name AS name, '' AS email FROM crm_lead_followers WHERE lead_id = :id ORDER BY user_name"
+  - id: crm_lead_follower_candidates
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT user_name AS user_id, user_name AS name, '' AS email FROM crm_team_members WHERE active = true ORDER BY user_name"
   - id: crm_lost_reason_lookup_detail
     single: false
     permission: crm.read
@@ -28,10 +44,22 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_tag_lookup_detail
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_tags ORDER BY active DESC, name"
   - id: crm_sales_teams_detail
     single: false
     permission: crm.read
     query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_active_salespeople_detail
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true ORDER BY user_name"
+  - id: crm_activity_assignee_lookup_detail
+    single: false
+    permission: crm.read
+    query: "SELECT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true UNION SELECT DISTINCT assigned_to AS value, assigned_to AS label FROM crm_activities WHERE NULLIF(TRIM(assigned_to), '') IS NOT NULL ORDER BY value"
   - id: crm_contacts_detail
     type: service
     service: yaml.service.base
@@ -60,6 +88,7 @@ components:
     status_colors: { New: neutral, Qualified: blue, Proposition: amber, Won: green, Lost: red }
     header_actions:
       - { id: edit_lead_detail, label: Edit, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
+      - { id: open_lead_customer, label: Open customer, variant: secondary, permission: base.contacts.read, show_if: "!!state.crm_lead_detail.partner_id" }
       - { id: qualify_lead_detail, label: Qualify, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'New'" }
       - { id: convert_lead_detail, label: Convert to opportunity, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'lead' && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: convert_lead_create_contact_detail, label: Convert and create customer, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'lead' && !state.crm_lead_detail.partner_id && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
@@ -98,7 +127,23 @@ components:
               fields: [{ field: description, label: Notes, type: textarea, wide: true }]
         - id: activities
           label: Activities
-          content_slot: true
+    content_slot: true
+    message_source: crm_lead_chatter
+    message_action: send_lead_message
+    note_action: log_lead_note
+    chatter_label: Messages and activities
+    message_label: Send message
+    note_label: Log note
+    message_actor_field: actor_name
+    message_timestamp_field: created_at
+    message_detail_field: detail
+    follower_source: crm_lead_followers
+    follower_candidates_source: crm_lead_follower_candidates
+    follower_add_action: add_lead_follower
+    follower_remove_action: remove_lead_follower
+    follower_label: Followers
+    add_follower_label: Add follower
+    remove_follower_label: Remove follower
   - type: ContactGrid
     source: crm_lead_activities
     row_key: id
@@ -112,8 +157,103 @@ components:
     actions:
       - { id: schedule_lead_activity, label: Schedule activity, variant: primary, permission: crm.write }
       - { id: apply_activity_plan, label: Apply activity plan, variant: secondary, permission: crm.write }
+      - { id: edit_lead_activity, label: Edit activity, variant: secondary, permission: crm.write, show_if: "row.state === 'planned'" }
       - { id: complete_lead_activity, label: Mark done, variant: ghost, permission: crm.write, show_if: "row.state === 'planned'" }
 actions:
+  - id: add_lead_follower
+    type: server
+    permission: crm.write
+    action: crm.leads.followers.add
+    handler: yaml_mutation
+    operation: update
+    params: { lead_id: '{state.id}', user_name: '{row.user_id}' }
+    refresh: [crm_lead_followers, crm_lead_chatter]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id"
+          status: 404
+          message: Opportunity no longer exists
+        - query: "SELECT user_name FROM crm_team_members WHERE user_name = :user_name AND active = true"
+          status: 404
+          message: Follower is not an active CRM member
+      steps:
+        - query: "INSERT INTO crm_lead_followers(lead_id, user_name, added_by) SELECT :lead_id, :user_name, :current_user_name WHERE NOT EXISTS (SELECT 1 FROM crm_lead_followers WHERE lead_id = :lead_id AND user_name = :user_name)"
+      result: { query: "SELECT :user_name AS user_id, :user_name AS name, '' AS email, false AS removed" }
+  - id: remove_lead_follower
+    type: server
+    permission: crm.write
+    action: crm.leads.followers.remove
+    handler: yaml_mutation
+    operation: update
+    params: { lead_id: '{state.id}', user_name: '{row.user_id}' }
+    refresh: [crm_lead_followers, crm_lead_chatter]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id"
+          status: 404
+          message: Opportunity no longer exists
+      steps:
+        - query: "DELETE FROM crm_lead_followers WHERE lead_id = :lead_id AND user_name = :user_name"
+      result: { query: "SELECT :user_name AS user_id, :user_name AS name, '' AS email, true AS removed" }
+  - id: send_lead_message
+    type: server_form
+    permission: crm.write
+    title: Send message
+    action: crm.leads.message
+    handler: yaml_mutation
+    operation: create
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_lead_detail, crm_lead_chatter, crm_lead_activities]
+    mutation:
+      operation: insert
+      table: crm_activities
+      fields: [lead_id, activity_type, summary, state, created_by]
+      required: [summary]
+      defaults: { activity_type: message, state: done }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:summary AS VARCHAR))) BETWEEN 1 AND 4000"
+          status: 400
+          message: Message content must be between 1 and 4000 characters
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id"
+          status: 404
+          message: Opportunity no longer exists
+      steps:
+        - query: "UPDATE crm_activities SET created_by = :current_user_name WHERE id = :id"
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: summary, label: Message, type: textarea, required: true }
+  - id: log_lead_note
+    type: server_form
+    permission: crm.write
+    title: Log note
+    action: crm.leads.note
+    handler: yaml_mutation
+    operation: create
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_lead_detail, crm_lead_chatter, crm_lead_activities]
+    mutation:
+      operation: insert
+      table: crm_activities
+      fields: [lead_id, activity_type, summary, state, created_by]
+      required: [summary]
+      defaults: { activity_type: note, state: done }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:summary AS VARCHAR))) BETWEEN 1 AND 4000"
+          status: 400
+          message: Note content must be between 1 and 4000 characters
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id"
+          status: 404
+          message: Opportunity no longer exists
+      steps:
+        - query: "UPDATE crm_activities SET created_by = :current_user_name WHERE id = :id"
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: summary, label: Note, type: textarea, required: true }
+  - id: open_lead_customer
+    type: navigate
+    permission: base.contacts.read
+    navigate_to: /contact-detail
+    params: { id: '{state.crm_lead_detail.partner_id}' }
   - id: convert_lead_create_contact_detail
     type: server_form
     permission: crm.write
@@ -160,9 +300,14 @@ actions:
       required: [name]
       timestamps: true
       guards:
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:probability, 10) AS INTEGER) BETWEEN 0 AND 100"
+          status: 400
+          message: Probability must be between 0 and 100
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
           status: 400
           message: Select an active contact
+        - query: "SELECT CASE WHEN NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL THEN :partner_name ELSE (SELECT name FROM base_contacts WHERE id = :partner_id AND active = true) END AS partner_name"
+          assign: true
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
           status: 400
           message: Select an active lead source
@@ -182,12 +327,12 @@ actions:
       - { field: utm_campaign, label: UTM campaign, type: text }
       - { field: utm_medium, label: UTM medium, type: text }
       - { field: utm_source, label: UTM source, type: text }
-      - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
+      - { field: tags, label: Tags, type: multi-select, multiple: true, options_source: crm_tag_lookup_detail, placeholder: Choose tags }
       - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
       - { field: description, label: Notes, type: textarea }
       - { field: expected_revenue, label: Expected revenue, type: number }
       - { field: probability, label: Probability, type: number }
-      - { field: salesperson, label: Salesperson, type: text }
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_active_salespeople_detail }
       - { field: team, label: Sales team, type: select, options_source: crm_sales_teams_detail }
       - { field: expected_closing, label: Expected closing, type: date }
   - id: qualify_lead_detail
@@ -308,6 +453,9 @@ actions:
         - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = :activity_type AND active = true"
           status: 400
           message: Select an active activity type
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:assigned_to, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :assigned_to AND active = true)"
+          status: 400
+          message: Select an active assignee
         - query: "SELECT 1 AS ok WHERE :next_activity_type IS NULL OR NULLIF(TRIM(CAST(:next_activity_type AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_activity_types WHERE name = :next_activity_type AND active = true)"
           status: 400
           message: Select an active next activity type
@@ -316,7 +464,7 @@ actions:
       - { field: activity_type, label: Activity type, type: select, options_source: crm_activity_types_detail, required: true }
       - { field: summary, label: Summary, type: text, required: true }
       - { field: due_date, label: Due date, type: date }
-      - { field: assigned_to, label: Assigned to, type: text }
+      - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup_detail }
       - { field: next_activity_type, label: Next activity type, type: select, options_source: crm_activity_types_detail }
       - { field: next_activity_summary, label: Next activity summary, type: text }
       - { field: next_activity_due_date, label: Next activity due date, type: date }
@@ -337,11 +485,44 @@ actions:
         - query: "SELECT id FROM crm_activity_plans WHERE id = :plan_id AND active = true"
           status: 400
           message: Select an active activity plan
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :lead_id AND (NULLIF(TRIM(CAST(COALESCE(l.salesperson, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members m WHERE m.user_name = l.salesperson AND m.active = true))"
+          status: 409
+          message: The opportunity salesperson is not an active assignee
       steps:
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), :lead_id, s.activity_type, s.summary, CURRENT_DATE + s.delay_days, l.salesperson, 'planned' FROM crm_activity_plan_steps s JOIN crm_leads l ON l.id = :lead_id WHERE s.plan_id = :plan_id AND s.active = true ORDER BY s.sequence"
       result: { query: "SELECT * FROM crm_activities WHERE lead_id = :lead_id ORDER BY created_at DESC" }
     fields:
       - { field: plan_id, label: Activity plan, type: select, options_source: crm_activity_plans_detail, required: true }
+  - id: edit_lead_activity
+    type: server_form
+    permission: crm.write
+    title: Edit activity
+    action: crm.activities.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_lead_activities, crm_lead_detail]
+    mutation:
+      operation: update
+      table: crm_activities
+      fields: [activity_type, summary, due_date, assigned_to]
+      required: [activity_type, summary]
+      guards:
+        - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"
+          status: 409
+          message: Only planned activities can be edited
+        - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = :activity_type AND active = true"
+          status: 400
+          message: Select an active activity type
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:assigned_to, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :assigned_to AND active = true) OR EXISTS (SELECT 1 FROM crm_activities WHERE id = :id AND assigned_to = :assigned_to)"
+          status: 400
+          message: Select an active assignee
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: activity_type, label: Activity type, type: select, options_source: crm_activity_types_detail, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Due date, type: date }
+      - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup_detail }
   - id: complete_lead_activity
     type: server
     permission: crm.write

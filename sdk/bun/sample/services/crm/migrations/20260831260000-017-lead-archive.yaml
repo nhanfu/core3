@@ -1,0 +1,15 @@
+version: 0.0.17
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      UPDATE crm_leads SET active = true WHERE active IS NULL;
+      ALTER TABLE crm_leads ALTER COLUMN active SET DEFAULT true;
+      CREATE INDEX IF NOT EXISTS idx_crm_leads_active ON crm_leads(active);
+    down: |
+      DROP INDEX IF EXISTS idx_crm_leads_active;
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

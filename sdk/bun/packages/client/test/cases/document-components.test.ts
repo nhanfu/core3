@@ -246,7 +246,7 @@ describe('document detail components', () => {
     input.value = 'Please review this order';
     composer.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await Promise.resolve();
-    expect(submitted).toEqual([{ action: 'send_order_message', params: { id: 'order-1', content: 'Please review this order' } }]);
+    expect(submitted).toEqual([{ action: 'send_order_message', params: { id: 'order-1', content: 'Please review this order', lead_id: 'order-1', summary: 'Please review this order' } }]);
     expect(container.querySelector('.o-form-sheet')).not.toBeNull();
   });
 

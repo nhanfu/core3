@@ -4,44 +4,59 @@ datasources:
   - id: crm_pipeline_totals
     single: true
     permission: crm.read
-    query: "SELECT COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS pipeline_revenue, CAST(COALESCE(SUM(expected_revenue * probability / 100), 0) AS DOUBLE) AS weighted_pipeline_revenue, CAST(COALESCE(AVG(probability), 0) AS DOUBLE) AS average_probability FROM crm_leads WHERE stage NOT IN ('Won', 'Lost')"
+    query: "SELECT COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS pipeline_revenue, CAST(COALESCE(SUM(expected_revenue * probability / 100), 0) AS DOUBLE) AS weighted_pipeline_revenue, CAST(COALESCE(AVG(probability), 0) AS DOUBLE) AS average_probability FROM crm_leads WHERE active = true AND stage NOT IN ('Won', 'Lost') AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day')"
   - id: crm_pipeline_by_stage
     single: false
     permission: crm.read
-    query: "SELECT stage, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY stage ORDER BY lead_count DESC"
+    query: "SELECT stage, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY stage ORDER BY lead_count DESC"
   - id: crm_pipeline_by_team
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY team ORDER BY revenue DESC"
+    query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY team ORDER BY revenue DESC"
   - id: crm_pipeline_by_source
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
+    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
   - id: crm_win_loss
     single: false
     permission: crm.read
-    query: "SELECT stage AS outcome, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE stage IN ('Won', 'Lost') GROUP BY stage ORDER BY stage"
+    query: "SELECT stage AS outcome, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE active = true AND stage IN ('Won', 'Lost') AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY stage ORDER BY stage"
   - id: crm_lost_by_reason
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(r.name, 'Unspecified') AS lost_reason, COUNT(*) AS lead_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.stage = 'Lost' GROUP BY COALESCE(r.name, 'Unspecified') ORDER BY revenue DESC"
+    query: "SELECT COALESCE(r.name, 'Unspecified') AS lost_reason, MIN(l.lost_reason) AS lost_reason_id, COUNT(*) AS lead_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.active = true AND l.stage = 'Lost' AND (:team IS NULL OR l.team = :team) AND (:salesperson IS NULL OR l.salesperson = :salesperson) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(r.name, 'Unspecified') ORDER BY revenue DESC"
   - id: crm_source_performance
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue, CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE stage = 'Won') / NULLIF(COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')), 0), 0) AS DOUBLE) AS win_rate FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
+    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue, CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE stage = 'Won') / NULLIF(COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')), 0), 0) AS DOUBLE) AS win_rate FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
   - id: crm_historical_lead_scoring
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS total_leads, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) AS closed_count, CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE stage = 'Won') / NULLIF(COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')), 0), 0) AS DOUBLE) AS observed_win_rate, CASE WHEN COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) = 0 THEN 'No closed history' WHEN COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) < 5 THEN 'Low sample' ELSE 'Historical baseline' END AS evidence_level FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY observed_win_rate DESC, closed_count DESC, source"
+    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS total_leads, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) AS closed_count, CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE stage = 'Won') / NULLIF(COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')), 0), 0) AS DOUBLE) AS observed_win_rate, CASE WHEN COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) = 0 THEN 'No closed history' WHEN COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) < 5 THEN 'Low sample' ELSE 'Historical baseline' END AS evidence_level FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY observed_win_rate DESC, closed_count DESC, source"
   - id: crm_lead_distribution
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE l.stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE l.stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads l GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY open_count DESC, team, salesperson"
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') || ':' || COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS distribution_key, COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE l.stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE l.stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads l WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:salesperson IS NULL OR l.salesperson = :salesperson) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY open_count DESC, team, salesperson"
   - id: crm_utm_campaign_performance
     single: false
     permission: crm.read
-    query: "SELECT COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') AS campaign, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') ORDER BY revenue DESC"
+    query: "SELECT COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') AS campaign, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE active = true AND (:team IS NULL OR team = :team) AND (:salesperson IS NULL OR salesperson = :salesperson) AND (:date_from IS NULL OR created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') ORDER BY revenue DESC"
+  - id: crm_analysis_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_analysis_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true ORDER BY user_name"
 components:
+  - type: ListToolbar
+    source: crm_pipeline_totals
+    filter_sources: [crm_pipeline_totals, crm_pipeline_by_stage, crm_pipeline_by_team, crm_pipeline_by_source, crm_win_loss, crm_lost_by_reason, crm_source_performance, crm_historical_lead_scoring, crm_lead_distribution, crm_utm_campaign_performance]
+    filters:
+      - { field: team, label: Sales team, options_source: crm_analysis_teams }
+      - { field: salesperson, label: Salesperson, options_source: crm_analysis_salespeople }
+    date_range: { from_field: date_from, to_field: date_to, from_label: From date, to_label: To date, presets: [all, month, quarter, year], default_preset: all }
   - type: StatRow
     source: crm_pipeline_totals
     title: Current pipeline
@@ -56,6 +71,16 @@ components:
     label_field: stage
     value_field: revenue
     variant: bar
+  - type: ListView
+    variant: odoo
+    source: crm_pipeline_by_stage
+    columns:
+      - { field: stage, label: Stage }
+      - { field: lead_count, label: Leads }
+      - { field: revenue, label: Revenue }
+    row_key: stage
+    row_actions: menu
+    actions: [{ id: drilldown_stage_leads, label: Open leads, permission: crm.read, variant: ghost }]
   - type: Chart
     source: crm_pipeline_by_team
     title: Pipeline by sales team
@@ -74,12 +99,32 @@ components:
     label_field: outcome
     value_field: revenue
     variant: bar
+  - type: ListView
+    variant: odoo
+    source: crm_win_loss
+    columns:
+      - { field: outcome, label: Outcome }
+      - { field: lead_count, label: Leads }
+      - { field: revenue, label: Revenue }
+    row_key: outcome
+    row_actions: menu
+    actions: [{ id: drilldown_outcome_leads, label: Open leads, permission: crm.read, variant: ghost }]
   - type: Chart
     source: crm_lost_by_reason
     title: Lost revenue by reason
     label_field: lost_reason
     value_field: revenue
     variant: bar
+  - type: ListView
+    variant: odoo
+    source: crm_lost_by_reason
+    columns:
+      - { field: lost_reason, label: Lost reason }
+      - { field: lead_count, label: Leads }
+      - { field: revenue, label: Revenue }
+    row_key: lost_reason
+    row_actions: menu
+    actions: [{ id: drilldown_lost_reason_leads, label: Open leads, permission: crm.read, variant: ghost }]
   - type: ListView
     variant: odoo
     source: crm_source_performance
@@ -91,6 +136,8 @@ components:
       - { field: revenue, label: Revenue }
       - { field: win_rate, label: Win rate }
     row_key: source
+    row_actions: menu
+    actions: [{ id: drilldown_source_leads, label: Open leads, permission: crm.read, variant: ghost }]
   - type: ListView
     variant: odoo
     source: crm_historical_lead_scoring
@@ -102,6 +149,8 @@ components:
       - { field: observed_win_rate, label: Observed win rate }
       - { field: evidence_level, label: Evidence }
     row_key: source
+    row_actions: menu
+    actions: [{ id: drilldown_source_leads, label: Open leads, permission: crm.read, variant: ghost }]
   - type: ListView
     variant: odoo
     source: crm_lead_distribution
@@ -113,7 +162,9 @@ components:
       - { field: won_count, label: Won }
       - { field: lost_count, label: Lost }
       - { field: expected_revenue, label: Expected revenue }
-    row_key: salesperson
+    row_key: distribution_key
+    row_actions: menu
+    actions: [{ id: drilldown_team_leads, label: Open leads, permission: crm.read, variant: ghost }]
   - type: ListView
     variant: odoo
     source: crm_utm_campaign_performance
@@ -123,3 +174,36 @@ components:
       - { field: won_count, label: Won }
       - { field: revenue, label: Revenue }
     row_key: campaign
+    row_actions: menu
+    actions: [{ id: drilldown_campaign_leads, label: Open leads, permission: crm.read, variant: ghost }]
+actions:
+  - id: drilldown_stage_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { stage: '{row.stage}' }
+  - id: drilldown_outcome_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { stage: '{row.outcome}' }
+  - id: drilldown_lost_reason_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { stage: Lost, lost_reason: '{row.lost_reason_id}' }
+  - id: drilldown_source_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { source: '{row.source}' }
+  - id: drilldown_team_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { team: '{row.team}', salesperson: '{row.salesperson}' }
+  - id: drilldown_campaign_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { utm_campaign: '{row.campaign}' }

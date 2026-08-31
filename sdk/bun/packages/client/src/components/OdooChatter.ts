@@ -129,7 +129,7 @@ export class OdooChatter extends BaseComponent {
       const content = input.value.trim();
       if (!content) return;
       html.take(submit).prop('disabled', true);
-      void Promise.resolve(this.submit(String(item.action), { id: record.id, content }))
+      void Promise.resolve(this.submit(String(item.action), { id: record.id, content, lead_id: record.id, summary: content }))
         .then(() => this.setState({ composerMode: '' }))
         .finally(() => { html.take(submit).prop('disabled', false); });
     });
