@@ -45,6 +45,7 @@ export class AiWorkspace extends BaseComponent {
   private sendButton: HTMLButtonElement | null = null;
   private previewPanel: HTMLElement | null = null;
   private currentThreadId: string | null = null;
+  private selectedProvider: string = '';
 
   constructor(id: string, state: any, def: any = {}) {
     super(id, { threads: [], messages: [], currentUserId: '', ...state });
@@ -101,6 +102,22 @@ export class AiWorkspace extends BaseComponent {
     this.composer = html.take(row).textarea.attr('rows', '2').attr('placeholder', this.label('composer_placeholder', 'Ask about this project…')).attr('aria-label', 'Message Core3 agent').ele() as HTMLTextAreaElement;
     this.sendButton = html.take(row).button.className('ai-workspace-send').attr('type', 'submit').attr('aria-label', 'Send message').ele() as HTMLButtonElement;
     appendIcon(this.sendButton, 'arrow-right');
+    const controls = html.take(composerForm).div.className('ai-workspace-composer-controls').ele();
+    const providerControl = html.take(controls).label.className('ai-workspace-control').ele();
+    html.take(providerControl).span.text('Agent');
+    const providers: Array<{ value: string; label: string }> = Array.isArray(this.def?.providers)
+      ? this.def.providers
+      : [{ value: 'codex', label: 'Codex' }, { value: 'claude', label: 'Claude' }];
+    this.selectedProvider = providers[0]?.value || 'codex';
+    const providerSelect = html.take(providerControl).select.attr('aria-label', 'AI agent').ele() as HTMLSelectElement;
+    for (const p of providers) {
+      const opt = document.createElement('option');
+      opt.value = p.value;
+      opt.textContent = p.label;
+      providerSelect.appendChild(opt);
+    }
+    providerSelect.value = this.selectedProvider;
+    providerSelect.addEventListener('change', () => { this.selectedProvider = providerSelect.value; });
     html.take(composerForm).div.className('ai-workspace-composer-hint').text('The agent can read approved YAML and call registered Core3 APIs only.');
     composerForm.addEventListener('submit', (event) => { event.preventDefault(); void this.send(); });
     this.composer.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void this.send(); } });
@@ -274,7 +291,7 @@ export class AiWorkspace extends BaseComponent {
         this.currentThreadId = threadId;
       }
       await this.runAction('send_action', { thread_id: threadId, prompt });
-      const response = await fetch(`${apiBase()}/ai/agent`, { method: 'POST', headers: tokenHeaders(), body: JSON.stringify({ thread_id: threadId, prompt }) });
+      const response = await fetch(`${apiBase()}/ai/agent`, { method: 'POST', headers: tokenHeaders(), body: JSON.stringify({ thread_id: threadId, prompt, provider: this.selectedProvider || undefined }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(String(result?.error || 'Agent request failed'));
       const parts = Array.isArray(result?.parts) ? result.parts : [{ type: 'text', markdown: 'The agent returned no readable response.' }];

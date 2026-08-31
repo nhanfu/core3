@@ -6,8 +6,9 @@ import { discoverPageRoutes, discoverPages } from '@core3/server/discovery';
 import { loadApplicationConfig } from '@core3/server/application-config';
 import { FetchObjectStore, GatewayRateLimiter, HybridEventBus, MessageLog, MessageLogEventBus } from '@core3/server';
 import { EventStore, EventMediatorClient, loadMedConfig, type EventBus } from '@core3/med';
-import { createAiAgentApi, createHttpAgentProvider } from './services/ai/ai-agent-api.ts';
+import { createAiAgentApi, createHttpAgentProvider } from './services/ai/api/ai-agent-api.ts';
 import { createCodexCliAgentProvider } from './services/ai/codex-agent-provider.ts';
+import { createClaudeCliAgentProvider } from './services/ai/claude-agent-provider.ts';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const APPS_ROOT = import.meta.dir;
@@ -191,16 +192,23 @@ const yamlServiceContexts = modules
   .filter((context): context is NonNullable<typeof context> => Boolean(context));
 const yamlApiHandlers = yamlServiceContexts.map((context) => context.api);
 const providerEndpoint = String(process.env.CORE3_AI_AGENT_PROVIDER_URL || '').trim();
-const agentProvider = providerEndpoint
+const providerName = String(process.env.CORE3_AI_AGENT_PROVIDER || '').trim().toLowerCase();
+const codexProvider = createCodexCliAgentProvider({
+  bin: String(process.env.CORE3_CODEX_BIN || 'codex'),
+  model: String(process.env.CORE3_AI_AGENT_MODEL || '').trim() || undefined,
+});
+const claudeProvider = createClaudeCliAgentProvider({
+  bin: String(process.env.CORE3_CLAUDE_BIN || 'claude'),
+  model: String(process.env.CORE3_AI_AGENT_MODEL || '').trim() || undefined,
+});
+const defaultProvider = providerEndpoint
   ? createHttpAgentProvider(providerEndpoint, String(process.env.CORE3_AI_AGENT_PROVIDER_KEY || ''))
-  : createCodexCliAgentProvider({
-    bin: String(process.env.CORE3_CODEX_BIN || 'codex'),
-    model: String(process.env.CORE3_AI_AGENT_MODEL || '').trim() || undefined,
-  });
+  : providerName === 'claude' ? claudeProvider : codexProvider;
 moduleManager.apiHandlers.unshift(createAiAgentApi({
   appsRoot: APPS_ROOT,
   authProvider: moduleManager.resolveService('auth.adapter') as any,
-  provider: agentProvider,
+  provider: defaultProvider,
+  providers: { codex: codexProvider, claude: claudeProvider },
   invoke: async (request, url) => {
     for (const handler of yamlApiHandlers) {
       const response = await handler(request.clone(), url);

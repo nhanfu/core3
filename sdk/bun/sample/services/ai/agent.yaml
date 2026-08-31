@@ -11,22 +11,6 @@ read:
 context_paths:
   - services/ai/agent.yaml
   - services/ai/permissions.yaml
-  - services/crm/manifest.yaml
-  - services/crm/pages/leads.yaml
-  - services/crm/pages/lead-detail.yaml
-  - services/crm/pages/lead-workflow.yaml
-  - services/crm/pages/activities.yaml
-  - services/crm/pages/analysis.yaml
-  - services/crm/pages/lost-opportunities.yaml
-  - services/crm/pages/quality-leads.yaml
-  - services/crm/pages/expected-revenue.yaml
-  - services/crm/pages/unattended-leads.yaml
-  - services/crm/pages/tags.yaml
-  - services/crm/pages/my-pipeline.yaml
-  - services/crm/pages/unassigned-leads.yaml
-  - services/crm/pages/teams.yaml
-  - services/crm/pages/configuration.yaml
-  - services/order/pages/sale-quotations.yaml
 
 operations:
   - id: ecommerce.orders.confirm

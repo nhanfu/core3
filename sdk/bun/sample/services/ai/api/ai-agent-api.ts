@@ -1,5 +1,6 @@
 import { join, normalize, relative, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { glob } from 'node:fs/promises';
 import { discoverPages } from '@core3/server/discovery';
 import type { AgentApiCall, AgentPart, AgentProvider } from './ai-agent-contract.ts';
 
@@ -84,6 +85,14 @@ async function yamlContext(appsRoot: string, paths: string[] = []): Promise<Arra
 function operationMap(appsRoot: string): Map<string, AgentOperation> {
   const file = join(appsRoot, 'services/ai/agent.yaml');
   const operations = new Map<string, AgentOperation>();
+  // Built-in: YAML file discovery — always available to the agent.
+  operations.set('yaml.search', {
+    id: 'yaml.search',
+    route: '/api/ai/yaml-search',
+    method: 'POST',
+    permission: 'ai.read',
+    read_only: true,
+  });
   try {
     const config = Bun.YAML.parse(readFileSync(file, 'utf8')) as any;
     for (const entry of Array.isArray(config?.operations) ? config.operations : []) {
@@ -150,6 +159,51 @@ function datasourceCatalog(appsRoot: string) {
   }
 }
 
+function readAgentConfig(appsRoot: string) {
+  try {
+    return Bun.YAML.parse(readFileSync(join(appsRoot, 'services/ai/agent.yaml'), 'utf8')) as any;
+  } catch {
+    return {};
+  }
+}
+
+async function yamlSearch(appsRoot: string, query: string, limit = 8): Promise<Array<{ path: string; snippet: string }>> {
+  const config = readAgentConfig(appsRoot);
+  const roots: string[] = Array.isArray(config?.read?.roots) ? config.read.roots.map(String) : [
+    'services/*/pages', 'services/*/permissions.yaml', 'services/*/manifest.yaml',
+  ];
+  const keywords = (query || '').toLowerCase().match(/\b\w{3,}\b/g) || [];
+  const results: Array<{ path: string; snippet: string; score: number }> = [];
+  for (const root of roots) {
+    const pattern = root.endsWith('.yaml') || root.endsWith('.yml') ? root : `${root}/**/*.yaml`;
+    try {
+      for await (const file of glob(pattern, { cwd: appsRoot })) {
+        const absPath = join(appsRoot, file);
+        const safe = safeYamlPath(appsRoot, file);
+        if (!safe) continue;
+        const content = await Bun.file(absPath).text().catch(() => '');
+        if (!content) continue;
+        const lower = content.toLowerCase();
+        const score = keywords.reduce((s, kw) => s + (lower.includes(kw) ? 1 : 0), 0);
+        if (score > 0 || keywords.length === 0) {
+          const lines = content.split('\n');
+          // Find first matching line for the snippet
+          const matchLine = keywords.length
+            ? lines.findIndex((l) => keywords.some((kw) => l.toLowerCase().includes(kw)))
+            : 0;
+          const start = Math.max(0, matchLine - 1);
+          const snippet = lines.slice(start, start + 6).join('\n').slice(0, 400);
+          results.push({ path: relative(appsRoot, absPath).replaceAll('\\', '/'), snippet, score });
+        }
+      }
+    } catch { /* skip unreadable roots */ }
+  }
+  return results
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ path, snippet }) => ({ path, snippet }));
+}
+
 function tokenFrom(request: Request) {
   const value = request.headers.get('authorization') || '';
   return value.startsWith('Bearer ') ? value.slice(7) : '';
@@ -173,12 +227,18 @@ export function createAiAgentApi(options: {
   appsRoot: string;
   authProvider: { getCurrentUser(request: Request): Promise<any>; hasPermission(user: any, permission: string): boolean };
   provider: AgentProvider;
+  providers?: Record<string, AgentProvider>;
   invoke: (request: Request, url: URL) => Promise<Response | null | undefined>;
 }) {
   const pending = new Map<string, PendingCall>();
   const operations = operationMap(options.appsRoot);
   const pages = pageMap(options.appsRoot);
   const datasources = datasourceCatalog(options.appsRoot);
+
+  function resolveProvider(name: string | undefined): AgentProvider {
+    if (name && options.providers && options.providers[name]) return options.providers[name];
+    return options.provider;
+  }
 
   async function execute(request: Request, call: AgentApiCall, operation: AgentOperation, user: any) {
     const token = tokenFrom(request);
@@ -197,15 +257,25 @@ export function createAiAgentApi(options: {
   }
 
   return async (request: Request, url: URL): Promise<Response | null> => {
-    if (!url.pathname.startsWith('/api/ai/agent')) return null;
+    if (!url.pathname.startsWith('/api/ai/')) return null;
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
     if (request.method !== 'POST') return error(405, 'Only POST is supported', 'METHOD_NOT_ALLOWED');
 
     let user: any;
     try { user = await options.authProvider.getCurrentUser(request); } catch { return error(401, 'Authentication required', 'UNAUTHENTICATED'); }
+
+    if (url.pathname === '/api/ai/yaml-search') {
+      if (!hasPermission(options.authProvider, user, 'ai.read')) return error(403, 'AI access is not permitted', 'AI_PERMISSION_REQUIRED');
+      const body = await request.json().catch(() => ({}));
+      const query = String(body?.query || '').trim().slice(0, 200);
+      const matches = await yamlSearch(options.appsRoot, query);
+      return json({ matches });
+    }
+
     if (!hasPermission(options.authProvider, user, 'ai.write')) return error(403, 'AI access is not permitted', 'AI_PERMISSION_REQUIRED');
     const body = await request.json().catch(() => ({}));
     const prompt = String(body?.prompt || '').trim();
+    const providerName = String(body?.provider || '').trim();
 
     if (url.pathname === '/api/ai/agent/confirm') {
       const id = String(body?.preview_id || '');
@@ -234,7 +304,7 @@ export function createAiAgentApi(options: {
       }
       const accessiblePages = [...pages.values()].filter((page) => page.permissions.every((permission) => hasPermission(options.authProvider, user, permission)));
       const accessibleOperations = [...operations.values()].filter((operation) => hasPermission(options.authProvider, user, operation.permission) && (operation.permissions || []).every((permission) => hasPermission(options.authProvider, user, permission)));
-      generated = await options.provider.generate({
+      generated = await resolveProvider(providerName).generate({
         prompt,
         user: {
           id: actorId(user),
@@ -264,6 +334,12 @@ export function createAiAgentApi(options: {
       if (!hasPermission(options.authProvider, user, operation.permission)) return error(403, `Requires permission: ${operation.permission}`, 'OPERATION_PERMISSION_REQUIRED');
       for (const permission of operation.permissions || []) if (!hasPermission(options.authProvider, user, permission)) return error(403, `Requires permission: ${permission}`, 'OPERATION_PERMISSION_REQUIRED');
       if (operation.read_only) {
+        if (operation.id === 'yaml.search') {
+          const query = String(call.values?.query || '');
+          const matches = await yamlSearch(options.appsRoot, query);
+          parts.push({ type: 'result', title: 'YAML file search results', summary: { matches } });
+          continue;
+        }
         const result = await execute(request, call, operation, user);
         if (!result.ok) return error(result.status, 'Datasource query failed', 'AI_QUERY_FAILED');
         const payload = await result.json().catch(() => ({}));
