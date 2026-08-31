@@ -16,7 +16,7 @@ const ROUTES: Record<string, string> = {
   '/backend': 'backend',
   '/scripting': 'scripting',
   '/reference': 'reference',
-  '/ai-improvement': 'ai-improvement',
+  '/methodology': 'methodology',
   '/component-library': 'component-library',
   '/extensions': 'extensions',
   '/roadmap': 'roadmap',
