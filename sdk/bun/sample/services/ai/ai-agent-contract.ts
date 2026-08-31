@@ -1,6 +1,7 @@
 export type AgentPart =
   | { type: 'text'; markdown: string }
   | { type: 'activity'; label: string; status: 'running' | 'success' | 'failed' }
+  | { type: 'run_status'; title?: string; stage?: string; status?: string; iteration?: number; max_iterations?: number; actions_used?: number; max_actions?: number; elapsed_ms?: number; max_duration_ms?: number; remaining_budget?: number; stop_reason?: string }
   | { type: 'preview'; title: string; preview_id: string; summary: Record<string, unknown>; page?: string; context?: Record<string, unknown> }
   | { type: 'approval'; preview_id: string; action_label: string; warning?: string }
   | { type: 'result'; title: string; summary: Record<string, unknown> }

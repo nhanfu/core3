@@ -5,6 +5,14 @@ migrations: migrations
 pages:
   - pages/menu.yaml
   - pages/leads.yaml
+  - pages/my-pipeline.yaml
+  - pages/unassigned-leads.yaml
+  - pages/activities.yaml
+  - pages/unattended-leads.yaml
+  - pages/quality-leads.yaml
+  - pages/expected-revenue.yaml
+  - pages/tags.yaml
+  - pages/lost-opportunities.yaml
   - pages/lead-detail.yaml
   - pages/teams.yaml
   - pages/configuration.yaml

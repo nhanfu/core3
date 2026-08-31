@@ -1,0 +1,13 @@
+version: 0.0.7
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS partner_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_crm_leads_partner ON crm_leads(partner_id);
+    down: |
+      DROP INDEX IF EXISTS idx_crm_leads_partner;
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS partner_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

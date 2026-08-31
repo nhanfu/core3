@@ -1,0 +1,13 @@
+version: 0.0.10
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS opportunity_id VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_orders_opportunity ON orders(opportunity_id);
+    down: |
+      DROP INDEX IF EXISTS idx_orders_opportunity;
+      ALTER TABLE orders DROP COLUMN IF EXISTS opportunity_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -8,9 +8,216 @@ read:
     - services/*/permissions.yaml
     - services/*/manifest.yaml
 
+context_paths:
+  - services/ai/agent.yaml
+  - services/ai/permissions.yaml
+  - services/crm/manifest.yaml
+  - services/crm/pages/leads.yaml
+  - services/crm/pages/lead-detail.yaml
+  - services/crm/pages/lead-workflow.yaml
+  - services/crm/pages/activities.yaml
+  - services/crm/pages/analysis.yaml
+  - services/crm/pages/lost-opportunities.yaml
+  - services/crm/pages/quality-leads.yaml
+  - services/crm/pages/expected-revenue.yaml
+  - services/crm/pages/unattended-leads.yaml
+  - services/crm/pages/tags.yaml
+  - services/crm/pages/my-pipeline.yaml
+  - services/crm/pages/unassigned-leads.yaml
+  - services/crm/pages/teams.yaml
+  - services/crm/pages/configuration.yaml
+  - services/order/pages/sale-quotations.yaml
+
 operations:
   - id: ecommerce.orders.confirm
     route: /api/actions/ecommerce.orders.confirm
     method: POST
     permission: ecommerce.write
+    preview: false
+  - id: datasource.crm_leads.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_leads
+  - id: crm.leads.convert
+    route: /api/actions/crm.leads.convert
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.convert_create_contact
+    route: /api/actions/crm.leads.convert_create_contact
+    method: POST
+    permission: crm.write
+    permissions: [base.contacts.write]
+    preview: false
+  - id: crm.leads.create
+    route: /api/actions/crm.leads.create
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.update
+    route: /api/actions/crm.leads.update
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.assign_to_me
+    route: /api/actions/crm.leads.assign_to_me
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.qualify
+    route: /api/actions/crm.leads.qualify
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.propose
+    route: /api/actions/crm.leads.propose
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.won
+    route: /api/actions/crm.leads.won
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.lost
+    route: /api/actions/crm.leads.lost
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.reopen
+    route: /api/actions/crm.leads.reopen
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.restore_lost
+    route: /api/actions/crm.leads.restore_lost
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.merge
+    route: /api/actions/crm.leads.merge
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.create
+    route: /api/actions/crm.activities.create
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.complete
+    route: /api/actions/crm.activities.complete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.apply_plan
+    route: /api/actions/crm.activities.apply_plan
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.teams.create
+    route: /api/actions/crm.teams.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.teams.update
+    route: /api/actions/crm.teams.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.teams.archive
+    route: /api/actions/crm.teams.archive
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.sources.create
+    route: /api/actions/crm.sources.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.sources.toggle
+    route: /api/actions/crm.sources.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.create
+    route: /api/actions/crm.lost_reasons.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.toggle
+    route: /api/actions/crm.lost_reasons.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_types.create
+    route: /api/actions/crm.activity_types.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_types.toggle
+    route: /api/actions/crm.activity_types.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plans.create
+    route: /api/actions/crm.activity_plans.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plans.toggle
+    route: /api/actions/crm.activity_plans.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plan_steps.create
+    route: /api/actions/crm.activity_plan_steps.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plan_steps.toggle
+    route: /api/actions/crm.activity_plan_steps.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.tags.create
+    route: /api/actions/crm.tags.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.tags.toggle
+    route: /api/actions/crm.tags.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.stages.create
+    route: /api/actions/crm.stages.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.stages.update
+    route: /api/actions/crm.stages.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.stages.toggle
+    route: /api/actions/crm.stages.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.team_members.create
+    route: /api/actions/crm.team_members.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.team_members.toggle
+    route: /api/actions/crm.team_members.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: orders.quotation.create
+    route: /api/actions/orders.quotation.create
+    method: POST
+    permission: orders.write
     preview: false

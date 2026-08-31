@@ -1,0 +1,12 @@
+version: 0.0.4
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_teams ADD COLUMN IF NOT EXISTS use_leads BOOLEAN DEFAULT true;
+      UPDATE crm_teams SET use_leads = true WHERE use_leads IS NULL;
+    down: |
+      ALTER TABLE crm_teams DROP COLUMN IF EXISTS use_leads;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

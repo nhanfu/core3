@@ -65,16 +65,23 @@ components:
     preview_page: ai-preview
     eyebrow: CORE3 AGENT
     heading: Project workspace
-    description: Plan, change, and review your YAML-driven project.
+    description: Plan, change, and review your YAML-driven project, including the Odoo-style CRM workspace.
     new_thread_label: New thread
     threads_label: Threads
-    context_value: core3 project
+    context_value: core3 CRM workspace
     composer_placeholder: Ask Core3 about this project…
     welcome_title: What should we build?
     welcome_description: Ask Core3 to inspect YAML rules, explain behavior, or prepare an API operation.
     suggestions:
       - Inspect this project
-      - Create a dashboard
+      - Review the CRM pipeline
+      - Find unattended CRM leads
+      - Prepare a new CRM lead
+      - Merge duplicate CRM leads
+      - Schedule a CRM follow-up
+      - Analyze expected CRM revenue
+      - Review lost CRM opportunities
+      - Audit CRM lead quality
       - Explain the service structure
 
 actions:

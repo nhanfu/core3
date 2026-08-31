@@ -6,22 +6,53 @@ datasources:
     permission: crm.read
     workflow: crm_leads
     query: |
-      SELECT id, row_version, name, type, partner_name, email, phone, source, priority,
-        expected_revenue, stage, probability, salesperson, team,
+      SELECT id, row_version, name, type, partner_id, partner_name, email, phone, source, utm_campaign, utm_medium, utm_source, priority,
+        expected_revenue, stage, probability, salesperson, team, tags,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         CAST(created_at AS VARCHAR) AS created_at
       FROM crm_leads
-      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%')
+      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%' OR source ILIKE '%' || :q || '%' OR utm_campaign ILIKE '%' || :q || '%' OR utm_medium ILIKE '%' || :q || '%' OR utm_source ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
         AND (:stage IS NULL OR stage = :stage)
+        AND (:type IS NULL OR type = :type)
+        AND (:salesperson IS NULL OR salesperson = :salesperson)
+        AND (:team IS NULL OR team = :team)
+        AND (:source IS NULL OR source = :source)
+        AND (:utm_campaign IS NULL OR utm_campaign = :utm_campaign)
       ORDER BY created_at DESC
   - id: crm_lead_stages
     single: false
     permission: crm.read
-    query: "SELECT DISTINCT stage AS value, stage AS label FROM crm_leads ORDER BY stage"
+    query: "SELECT name AS value, name AS label FROM crm_stages WHERE active = true ORDER BY sequence, name"
+  - id: crm_lead_types
+    single: false
+    permission: crm.read
+    query: "SELECT 'lead' AS value, 'Lead' AS label UNION ALL SELECT 'opportunity' AS value, 'Opportunity' AS label"
+  - id: crm_salespeople
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE NULLIF(TRIM(salesperson), '') IS NOT NULL ORDER BY salesperson"
+  - id: crm_sales_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
   - id: crm_lost_reason_lookup
     single: false
     permission: crm.read
     query: "SELECT id AS value, name AS label FROM crm_lost_reasons WHERE active = true ORDER BY name"
+  - id: crm_source_lookup
+    permission: crm.read
+    single: false
+    query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_utm_campaign_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT DISTINCT utm_campaign AS value, utm_campaign AS label FROM crm_leads WHERE NULLIF(TRIM(utm_campaign), '') IS NOT NULL ORDER BY utm_campaign"
+  - id: crm_contacts
+    type: service
+    service: yaml.service.base
+    operation: contacts.search
+    service_params: { query: q, limit: 100 }
+    permission: base.contacts.read
 components:
   - type: ListView
     variant: odoo
@@ -31,6 +62,23 @@ components:
     search: { label: Search leads, placeholder: Search opportunities and customers... }
     filters:
       - { field: stage, label: Stage, options_source: crm_lead_stages }
+      - { field: type, label: Type, options_source: crm_lead_types }
+      - { field: salesperson, label: Salesperson, options_source: crm_salespeople }
+      - { field: team, label: Sales team, options_source: crm_sales_teams }
+      - { field: source, label: Lead source, options_source: crm_source_lookup }
+      - { field: utm_campaign, label: UTM campaign, options_source: crm_utm_campaign_lookup }
+    favorites:
+      - id: my_pipeline
+        label: Proposition Pipeline
+        filters: { type: opportunity, stage: Proposition }
+        group_by: stage
+      - id: unassigned
+        label: Unassigned
+        filters: { salesperson: '' }
+      - id: open_leads
+        label: Open Leads
+        filters: { type: lead }
+        group_by: stage
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
@@ -69,6 +117,7 @@ components:
         pivot:
           fields:
             - { field: stage, column: Stage }
+            - { field: tags, column: Tags }
             - { field: type, column: Type }
             - { field: source, column: Source }
             - { field: team, column: Sales team }
@@ -97,13 +146,23 @@ components:
       - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
       - { field: partner_name, label: Customer }
       - { field: stage, label: Stage, type: StatusChip }
-      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: tags, label: Tags }
+      - { field: priority, label: Priority }
       - { field: probability, label: Probability, align: right }
+      - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: salesperson, label: Salesperson }
       - { field: expected_closing, label: Expected closing }
     page_size: 50
     row_key: id
     selectable: true
+    row_actions: menu
+    actions:
+      - { id: edit_lead, label: Edit, permission: crm.write, variant: ghost, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
+      - { id: assign_lead_to_me, label: Assign to me, permission: crm.write, variant: secondary, show_if: "row.stage !== 'Won' && row.stage !== 'Lost'" }
+      - { id: qualify_lead, label: Qualify, permission: crm.write, variant: ghost, show_if: "row.stage === 'New'" }
+      - { id: convert_lead, label: Convert to opportunity, permission: crm.write, variant: ghost, show_if: "row.type === 'lead' && row.stage !== 'Won' && row.stage !== 'Lost'" }
+    bulk_actions:
+      - { id: merge_leads, label: Merge selected }
     row_open_action: view_lead
     row_double_click_action: view_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
@@ -118,18 +177,43 @@ actions:
     mutation:
       operation: insert
       table: crm_leads
-      fields: [name, type, partner_name, email, phone, description, source, priority, expected_revenue, stage, probability, salesperson, team, expected_closing]
+      fields: [name, type, partner_id, partner_name, email, phone, description, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability, salesperson, team, expected_closing]
       required: [name]
       defaults: { stage: New, probability: 10, expected_revenue: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+          status: 400
+          message: Select an active contact
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
+          status: 400
+          message: Select an active lead source
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team AND active = true)"
+          status: 400
+          message: Select an active sales team
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:type, 'opportunity') AS VARCHAR) <> 'lead' OR NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team AND use_leads = true)"
+          status: 409
+          message: This sales team does not accept new leads
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:salesperson, '') AS VARCHAR)), '') IS NULL OR NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_team_members WHERE team_id = (SELECT id FROM crm_teams WHERE name = :team) AND active = true) OR EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = :team) AND m.user_name = :salesperson AND m.active = true)"
+          status: 409
+          message: Select a member of the sales team
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     fields:
       - { field: name, label: Opportunity, type: text, required: true }
       - { field: type, label: Type, type: select, options: [lead, opportunity], default: opportunity }
       - { field: partner_name, label: Customer, type: text }
+      - { field: partner_id, label: Contact, type: async-select, options_source: crm_contacts }
       - { field: email, label: Email, type: text }
       - { field: phone, label: Phone, type: text }
-      - { field: source, label: Source, type: text }
+      - { field: source, label: Source, type: select, options_source: crm_source_lookup }
+      - { field: utm_campaign, label: UTM campaign, type: text }
+      - { field: utm_medium, label: UTM medium, type: text }
+      - { field: utm_source, label: UTM source, type: text }
+      - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
+      - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3], default: 0 }
       - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: probability, label: Probability, type: number }
+      - { field: salesperson, label: Salesperson, type: text }
+      - { field: team, label: Sales team, type: select, options_source: crm_sales_teams }
       - { field: expected_closing, label: Expected closing, type: date }
   - id: edit_lead
     type: server_form
@@ -143,22 +227,43 @@ actions:
     mutation:
       operation: update
       table: crm_leads
-      fields: [name, type, partner_name, email, phone, description, source, priority, expected_revenue, salesperson, team, expected_closing]
+      fields: [name, type, partner_id, partner_name, email, phone, description, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, probability, salesperson, team, expected_closing]
       required: [name]
       timestamps: true
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+          status: 400
+          message: Select an active contact
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
+          status: 400
+          message: Select an active lead source
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team AND active = true)"
+          status: 400
+          message: Select an active sales team
         - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
           status: 409
           message: Closed opportunities cannot be edited
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:salesperson, '') AS VARCHAR)), '') IS NULL OR NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_team_members WHERE team_id = (SELECT id FROM crm_teams WHERE name = :team) AND active = true) OR EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = :team) AND m.user_name = :salesperson AND m.active = true)"
+          status: 409
+          message: Select a member of the sales team
     fields:
       - { field: name, label: Opportunity, type: text, required: true }
       - { field: type, label: Type, type: select, options: [lead, opportunity] }
       - { field: partner_name, label: Customer, type: text }
+      - { field: partner_id, label: Contact, type: async-select, options_source: crm_contacts }
       - { field: email, label: Email, type: text }
       - { field: phone, label: Phone, type: text }
       - { field: description, label: Notes, type: textarea }
-      - { field: source, label: Source, type: text }
+      - { field: source, label: Source, type: select, options_source: crm_source_lookup }
+      - { field: utm_campaign, label: UTM campaign, type: text }
+      - { field: utm_medium, label: UTM medium, type: text }
+      - { field: utm_source, label: UTM source, type: text }
+      - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
+      - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
       - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: probability, label: Probability, type: number }
+      - { field: salesperson, label: Salesperson, type: text }
+      - { field: team, label: Sales team, type: select, options_source: crm_sales_teams }
       - { field: expected_closing, label: Expected closing, type: date }
   - id: view_lead
     type: navigate
@@ -173,6 +278,63 @@ actions:
     workflow: crm_leads
     operation: qualify
     refresh: [crm_leads]
+  - id: assign_lead_to_me
+    type: server
+    permission: crm.write
+    action: crm.leads.assign_to_me
+    handler: yaml_mutation
+    operation: assign_to_me
+    params: { id: '{row.id}' }
+    refresh: [crm_leads]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Closed opportunities cannot be assigned
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NULLIF(TRIM(l.team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams t WHERE t.name = l.team AND t.active = true))"
+          status: 409
+          message: Opportunities in archived sales teams cannot be assigned
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NULLIF(TRIM(l.team), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = l.team) AND m.active = true) OR EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = l.team) AND m.user_name = :current_user_name AND m.active = true))"
+          status: 409
+          message: You are not an active member of this sales team
+      steps:
+        - query: "UPDATE crm_leads SET salesperson = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+  - id: convert_lead
+    type: server
+    permission: crm.write
+    action: crm.leads.convert
+    handler: yaml_mutation
+    operation: convert
+    refresh: [crm_leads]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'lead' AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only open leads can be converted into opportunities
+      steps:
+        - query: "UPDATE crm_leads AS lead SET partner_name = COALESCE((SELECT contact.name FROM base_contacts contact WHERE contact.id = lead.partner_id AND contact.active = true), lead.partner_name), email = COALESCE((SELECT contact.email FROM base_contacts contact WHERE contact.id = lead.partner_id AND contact.active = true), lead.email), phone = COALESCE((SELECT contact.phone FROM base_contacts contact WHERE contact.id = lead.partner_id AND contact.active = true), lead.phone), type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE lead.id = :id AND lead.type = 'lead'"
+        - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', 'Lead converted to opportunity', 'done', CURRENT_TIMESTAMP)"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+  - id: merge_leads
+    type: server
+    confirm: Merge the selected open records? The oldest selected record will be kept and the others will be deleted.
+    permission: crm.write
+    action: crm.leads.merge
+    handler: yaml_mutation
+    operation: merge
+    refresh: [crm_leads]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost')) >= 2"
+          status: 409
+          message: Select at least two open leads or opportunities to merge
+      steps:
+        - query: "UPDATE crm_leads AS survivor SET utm_campaign = COALESCE(NULLIF(survivor.utm_campaign, ''), (SELECT duplicate.utm_campaign FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.utm_campaign, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), utm_medium = COALESCE(NULLIF(survivor.utm_medium, ''), (SELECT duplicate.utm_medium FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.utm_medium, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), utm_source = COALESCE(NULLIF(survivor.utm_source, ''), (SELECT duplicate.utm_source FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.utm_source, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)) WHERE survivor.id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1)"
+        - query: "UPDATE crm_leads AS survivor SET partner_id = COALESCE(survivor.partner_id, (SELECT duplicate.partner_id FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND duplicate.partner_id IS NOT NULL ORDER BY duplicate.id LIMIT 1)), partner_name = COALESCE(NULLIF(survivor.partner_name, ''), (SELECT duplicate.partner_name FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.partner_name, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), email = COALESCE(NULLIF(survivor.email, ''), (SELECT duplicate.email FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.email, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), phone = COALESCE(NULLIF(survivor.phone, ''), (SELECT duplicate.phone FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.phone, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), source = COALESCE(NULLIF(survivor.source, ''), (SELECT duplicate.source FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.source, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), salesperson = COALESCE(NULLIF(survivor.salesperson, ''), (SELECT duplicate.salesperson FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.salesperson, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), team = COALESCE(NULLIF(survivor.team, ''), (SELECT duplicate.team FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.team, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), tags = COALESCE(NULLIF(survivor.tags, ''), (SELECT duplicate.tags FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND NULLIF(duplicate.tags, '') IS NOT NULL ORDER BY duplicate.id LIMIT 1)), expected_revenue = COALESCE(NULLIF(survivor.expected_revenue, 0), (SELECT duplicate.expected_revenue FROM crm_leads duplicate WHERE duplicate.id IN :selectedIds AND duplicate.stage NOT IN ('Won', 'Lost') AND duplicate.id <> survivor.id AND duplicate.expected_revenue IS NOT NULL ORDER BY duplicate.id LIMIT 1)), row_version = survivor.row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE survivor.id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1)"
+        - query: "UPDATE crm_activities SET lead_id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1) WHERE lead_id IN :selectedIds AND lead_id <> (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1) AND lead_id IN (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost'))"
+        - query: "DELETE FROM crm_leads WHERE id IN :selectedIds AND id <> (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1) AND stage NOT IN ('Won', 'Lost')"
+      result: { query: "SELECT * FROM crm_leads WHERE id = (SELECT id FROM crm_leads WHERE id IN :selectedIds AND stage NOT IN ('Won', 'Lost') ORDER BY created_at ASC, id ASC LIMIT 1)" }
   - id: mark_lead_won
     type: server
     permission: crm.write

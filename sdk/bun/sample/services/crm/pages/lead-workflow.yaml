@@ -13,7 +13,7 @@ workflow:
         status: 409
         message: Lead stage has changed; refresh and try again
     steps:
-      - query: "UPDATE crm_leads SET stage = :target_status, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+      - query: "UPDATE crm_leads SET stage = :target_status, probability = COALESCE((SELECT probability FROM crm_stages WHERE name = :target_status), probability), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
       - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', CAST(:current_status AS VARCHAR) || ' -> ' || CAST(:target_status AS VARCHAR), 'done', CURRENT_TIMESTAMP)"
     result: { query: "SELECT *, :current_status AS previous_status FROM crm_leads WHERE id = :id" }
   states:
@@ -23,6 +23,15 @@ workflow:
     - { id: Won, label: Won, color: green, terminal: true }
     - { id: Lost, label: Lost, color: red, terminal: true }
   transitions:
+    - id: reopen
+      from: [Lost]
+      to: New
+      permission: crm.write
+      mutation:
+        steps:
+          - query: "UPDATE crm_leads SET stage = 'New', lost_reason = NULL, probability = 10, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND stage = 'Lost'"
+          - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Opportunity reopened', 'done', CURRENT_TIMESTAMP)"
+        result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     - id: qualify
       from: [New]
       to: Qualified
@@ -33,7 +42,7 @@ workflow:
             status: 409
             message: Only new leads can be qualified
         steps:
-          - query: "UPDATE crm_leads SET stage = 'Qualified', probability = GREATEST(probability, 25), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+          - query: "UPDATE crm_leads SET stage = 'Qualified', probability = COALESCE((SELECT probability FROM crm_stages WHERE name = 'Qualified'), probability), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
     - id: propose
       from: [Qualified]
@@ -60,6 +69,9 @@ workflow:
           - query: "SELECT id FROM crm_leads WHERE id = :id AND stage IN ('New', 'Qualified', 'Proposition')"
             status: 409
             message: Lead is already closed
+          - query: "SELECT id FROM crm_lost_reasons WHERE id = :lost_reason AND active = true"
+            status: 400
+            message: Select an active lost reason
         steps:
           - query: "UPDATE crm_leads SET stage = 'Lost', lost_reason = :lost_reason, probability = 0, row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
         result: { query: "SELECT * FROM crm_leads WHERE id = :id" }

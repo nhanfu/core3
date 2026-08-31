@@ -154,7 +154,10 @@ async function renderGridView(def: any, targetContainer: HTMLElement) {
     const row = params?.row || params || {};
     const actionDef = (config.actions || []).find(a => a.id === actionId);
     if (actionDef) {
-      await handleAction(actionDef, row);
+      await handleAction(actionDef, {
+        ...row,
+        ...(Array.isArray(params?.selectedIds) ? { selectedIds: params.selectedIds } : {}),
+      });
     } else {
       console.error(`[page-renderer] No action def found for: ${actionId}`);
     }

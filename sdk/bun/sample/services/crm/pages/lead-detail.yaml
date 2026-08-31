@@ -5,8 +5,8 @@ datasources:
     single: true
     permission: crm.read
     query: |
-      SELECT l.id, l.row_version, l.name, l.type, l.partner_name, l.email, l.phone, l.description,
-        source, priority, expected_revenue, stage, probability, salesperson, team,
+      SELECT l.id, l.row_version, l.name, l.type, l.partner_id, l.partner_name, l.email, l.phone, l.description,
+        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability, salesperson, team,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         l.lost_reason, r.name AS lost_reason_name, CAST(l.created_at AS VARCHAR) AS created_at
       FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.id = :id
@@ -15,13 +15,37 @@ datasources:
     permission: crm.read
     query: |
       SELECT id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date,
-        assigned_to, state, CAST(created_at AS VARCHAR) AS created_at,
+        assigned_to, state, next_activity_type, next_activity_summary,
+        CAST(next_activity_due_date AS VARCHAR) AS next_activity_due_date,
+        CAST(created_at AS VARCHAR) AS created_at,
         CAST(completed_at AS VARCHAR) AS completed_at
       FROM crm_activities WHERE lead_id = :id ORDER BY due_date NULLS LAST, created_at DESC
   - id: crm_lost_reason_lookup_detail
     single: false
     permission: crm.read
     query: "SELECT id AS value, name AS label FROM crm_lost_reasons WHERE active = true ORDER BY name"
+  - id: crm_source_lookup_detail
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_sales_teams_detail
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_contacts_detail
+    type: service
+    service: yaml.service.base
+    operation: contacts.search
+    service_params: { query: q, limit: 100 }
+    permission: base.contacts.read
+  - id: crm_activity_types_detail
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+  - id: crm_activity_plans_detail
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
 components:
   - type: OdooFormView
     source: crm_lead_detail
@@ -37,9 +61,14 @@ components:
     header_actions:
       - { id: edit_lead_detail, label: Edit, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: qualify_lead_detail, label: Qualify, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'New'" }
-      - { id: propose_lead_detail, label: Send quotation, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Qualified'" }
+      - { id: convert_lead_detail, label: Convert to opportunity, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'lead' && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
+      - { id: convert_lead_create_contact_detail, label: Convert and create customer, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.type === 'lead' && !state.crm_lead_detail.partner_id && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
+      - { id: assign_lead_detail_to_me, label: Assign to me, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
+      - { id: propose_lead_detail, label: Move to Proposition, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Qualified'" }
+      - { id: create_quotation_from_lead, label: Create quotation, variant: primary, permission: orders.write, show_if: "state.crm_lead_detail.type === 'opportunity' && state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
       - { id: mark_lead_won_detail, label: Mark won, variant: primary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Qualified' || state.crm_lead_detail.stage === 'Proposition'" }
       - { id: mark_lead_lost_detail, label: Mark lost, variant: danger, permission: crm.write, show_if: "state.crm_lead_detail.stage !== 'Won' && state.crm_lead_detail.stage !== 'Lost'" }
+      - { id: reopen_lead_detail, label: Reopen, variant: secondary, permission: crm.write, show_if: "state.crm_lead_detail.stage === 'Lost'" }
     group_columns: 2
     groups:
       - title: Opportunity
@@ -48,6 +77,8 @@ components:
           - { field: type, label: Type }
           - { field: stage, label: Stage }
           - { field: probability, label: Probability }
+          - { field: priority, label: Priority }
+          - { field: tags, label: Tags }
           - { field: expected_revenue, label: Expected revenue }
           - { field: expected_closing, label: Expected closing }
           - { field: lost_reason_name, label: Lost reason }
@@ -80,8 +111,39 @@ components:
       - { field: completed_at, label: Completed }
     actions:
       - { id: schedule_lead_activity, label: Schedule activity, variant: primary, permission: crm.write }
+      - { id: apply_activity_plan, label: Apply activity plan, variant: secondary, permission: crm.write }
       - { id: complete_lead_activity, label: Mark done, variant: ghost, permission: crm.write, show_if: "row.state === 'planned'" }
 actions:
+  - id: convert_lead_create_contact_detail
+    type: server_form
+    permission: crm.write
+    permissions: [base.contacts.write]
+    title: Convert lead and create customer
+    action: crm.leads.convert_create_contact
+    handler: yaml_mutation
+    operation: convert_create_contact
+    params: { id: '{state.id}' }
+    refresh: [crm_lead_detail, crm_lead_activities]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'lead' AND partner_id IS NULL AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only an open lead without a linked contact can create a customer
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:contact_name, '') AS VARCHAR)), '') IS NOT NULL"
+          status: 400
+          message: Customer name is required
+        - query: "SELECT 1 AS ok WHERE :contact_email IS NULL OR NOT EXISTS (SELECT 1 FROM base_contacts WHERE active = true AND lower(email) = lower(:contact_email))"
+          status: 409
+          message: A contact with this email already exists
+      steps:
+        - query: "INSERT INTO base_contacts(id, name, email, phone, active) VALUES('crm-lead-contact-' || :id, :contact_name, :contact_email, :contact_phone, true)"
+        - query: "UPDATE crm_leads SET partner_id = 'crm-lead-contact-' || :id, partner_name = :contact_name, email = :contact_email, phone = :contact_phone, type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'Lead converted and customer created', 'done', CURRENT_TIMESTAMP)"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: contact_name, label: Customer name, type: text, required: true }
+      - { field: contact_email, label: Email, type: text }
+      - { field: contact_phone, label: Phone, type: text }
   - id: edit_lead_detail
     type: server_form
     permission: crm.write
@@ -94,20 +156,39 @@ actions:
     mutation:
       operation: update
       table: crm_leads
-      fields: [name, type, partner_name, email, phone, description, source, priority, expected_revenue, salesperson, team, expected_closing]
+      fields: [name, type, partner_id, partner_name, email, phone, description, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, probability, salesperson, team, expected_closing]
       required: [name]
       timestamps: true
       guards:
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+          status: 400
+          message: Select an active contact
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
+          status: 400
+          message: Select an active lead source
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team AND active = true)"
+          status: 400
+          message: Select an active sales team
         - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
           status: 409
           message: Closed opportunities cannot be edited
     fields:
       - { field: name, label: Opportunity, type: text, required: true }
       - { field: partner_name, label: Customer, type: text }
+      - { field: partner_id, label: Contact, type: async-select, options_source: crm_contacts_detail }
       - { field: email, label: Email, type: text }
       - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: select, options_source: crm_source_lookup_detail }
+      - { field: utm_campaign, label: UTM campaign, type: text }
+      - { field: utm_medium, label: UTM medium, type: text }
+      - { field: utm_source, label: UTM source, type: text }
+      - { field: tags, label: Tags, type: text, placeholder: 'e.g. urgent, enterprise' }
+      - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
       - { field: description, label: Notes, type: textarea }
       - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: probability, label: Probability, type: number }
+      - { field: salesperson, label: Salesperson, type: text }
+      - { field: team, label: Sales team, type: select, options_source: crm_sales_teams_detail }
       - { field: expected_closing, label: Expected closing, type: date }
   - id: qualify_lead_detail
     type: server
@@ -125,6 +206,62 @@ actions:
     workflow: crm_leads
     operation: propose
     refresh: [crm_lead_detail, crm_lead_activities]
+  - id: assign_lead_detail_to_me
+    type: server
+    permission: crm.write
+    action: crm.leads.assign_to_me
+    handler: yaml_mutation
+    operation: assign_to_me
+    params: { id: '{state.id}' }
+    refresh: [crm_lead_detail, crm_lead_activities]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Closed opportunities cannot be assigned
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NULLIF(TRIM(l.team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams t WHERE t.name = l.team AND t.active = true))"
+          status: 409
+          message: Opportunities in archived sales teams cannot be assigned
+        - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NULLIF(TRIM(l.team), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = l.team) AND m.active = true) OR EXISTS (SELECT 1 FROM crm_team_members m WHERE m.team_id = (SELECT id FROM crm_teams WHERE name = l.team) AND m.user_name = :current_user_name AND m.active = true))"
+          status: 409
+          message: You are not an active member of this sales team
+      steps:
+        - query: "UPDATE crm_leads SET salesperson = :current_user_name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND stage NOT IN ('Won', 'Lost')"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+  - id: create_quotation_from_lead
+    type: server_form
+    permission: orders.write
+    title: New quotation from opportunity
+    action: orders.quotation.create
+    handler: service_call
+    service: yaml.service.order
+    service_operation: orders.quotation.create
+    params: { opportunity_id: '{state.id}' }
+    refresh: [crm_lead_detail]
+    success_message: Quotation created
+    fields:
+      - { field: order_number, label: Quotation, type: text, required: true }
+      - { field: customer_name, label: Customer, type: text, required: true }
+      - { field: order_date, label: Quotation date, type: date, required: true }
+      - { field: validity_date, label: Expiration, type: date }
+      - { field: customer_reference, label: Customer reference, type: text }
+      - { field: notes, label: Terms and conditions, type: textarea }
+  - id: convert_lead_detail
+    type: server
+    permission: crm.write
+    action: crm.leads.convert
+    handler: yaml_mutation
+    operation: convert
+    refresh: [crm_lead_detail, crm_lead_activities]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'lead' AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only open leads can be converted into opportunities
+      steps:
+        - query: "UPDATE crm_leads SET type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
+        - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', 'Lead converted to opportunity', 'done', CURRENT_TIMESTAMP)"
+      result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
   - id: mark_lead_won_detail
     type: server
     permission: crm.write
@@ -144,6 +281,14 @@ actions:
     refresh: [crm_lead_detail, crm_lead_activities]
     fields:
       - { field: lost_reason, label: Lost reason, type: select, options_source: crm_lost_reason_lookup_detail, required: true }
+  - id: reopen_lead_detail
+    type: server
+    permission: crm.write
+    action: crm.leads.reopen
+    handler: order_transition
+    workflow: crm_leads
+    operation: reopen
+    refresh: [crm_lead_detail, crm_lead_activities]
   - id: schedule_lead_activity
     type: server_form
     permission: crm.write
@@ -156,15 +301,47 @@ actions:
     mutation:
       operation: insert
       table: crm_activities
-      fields: [lead_id, activity_type, summary, due_date, assigned_to, state]
+      fields: [lead_id, activity_type, summary, due_date, assigned_to, state, next_activity_type, next_activity_summary, next_activity_due_date]
       required: [activity_type, summary]
       defaults: { state: planned }
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = :activity_type AND active = true"
+          status: 400
+          message: Select an active activity type
+        - query: "SELECT 1 AS ok WHERE :next_activity_type IS NULL OR NULLIF(TRIM(CAST(:next_activity_type AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_activity_types WHERE name = :next_activity_type AND active = true)"
+          status: 400
+          message: Select an active next activity type
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
     fields:
-      - { field: activity_type, label: Activity type, type: select, options: [Call, Meeting, Email, To-Do], required: true }
+      - { field: activity_type, label: Activity type, type: select, options_source: crm_activity_types_detail, required: true }
       - { field: summary, label: Summary, type: text, required: true }
       - { field: due_date, label: Due date, type: date }
       - { field: assigned_to, label: Assigned to, type: text }
+      - { field: next_activity_type, label: Next activity type, type: select, options_source: crm_activity_types_detail }
+      - { field: next_activity_summary, label: Next activity summary, type: text }
+      - { field: next_activity_due_date, label: Next activity due date, type: date }
+  - id: apply_activity_plan
+    type: server_form
+    permission: crm.write
+    title: Apply activity plan
+    action: crm.activities.apply_plan
+    handler: yaml_mutation
+    operation: apply_plan
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_lead_activities]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Activity plans can only be applied to open opportunities
+        - query: "SELECT id FROM crm_activity_plans WHERE id = :plan_id AND active = true"
+          status: 400
+          message: Select an active activity plan
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), :lead_id, s.activity_type, s.summary, CURRENT_DATE + s.delay_days, l.salesperson, 'planned' FROM crm_activity_plan_steps s JOIN crm_leads l ON l.id = :lead_id WHERE s.plan_id = :plan_id AND s.active = true ORDER BY s.sequence"
+      result: { query: "SELECT * FROM crm_activities WHERE lead_id = :lead_id ORDER BY created_at DESC" }
+    fields:
+      - { field: plan_id, label: Activity plan, type: select, options_source: crm_activity_plans_detail, required: true }
   - id: complete_lead_activity
     type: server
     permission: crm.write
@@ -180,4 +357,5 @@ actions:
           message: Activity is already completed or no longer exists
       steps:
         - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }

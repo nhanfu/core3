@@ -1,0 +1,13 @@
+version: 0.0.13
+
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_stages ADD COLUMN IF NOT EXISTS active BOOLEAN DEFAULT true;
+      UPDATE crm_stages SET active = true WHERE active IS NULL;
+    down: |
+      ALTER TABLE crm_stages DROP COLUMN IF EXISTS active;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

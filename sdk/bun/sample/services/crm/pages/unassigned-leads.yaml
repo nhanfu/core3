@@ -1,0 +1,42 @@
+title: Unassigned Leads
+page: { id: unassigned-leads, breadcrumb: [Sales, CRM, Unassigned Leads], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_unassigned_leads
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, type, partner_name, source, priority,
+        expected_revenue, stage, probability, team, tags,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM crm_leads
+      WHERE NULLIF(TRIM(salesperson), '') IS NULL
+        AND stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+      ORDER BY expected_closing NULLS LAST, updated_at DESC
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_unassigned_leads
+    search: { label: Search unassigned leads, placeholder: Search unassigned leads... }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
+      - { field: partner_name, label: Customer }
+      - { field: type, label: Type }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: tags, label: Tags }
+      - { field: priority, label: Priority }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: probability, label: Probability, align: right }
+      - { field: team, label: Sales team }
+      - { field: expected_closing, label: Expected closing }
+    page_size: 50
+    row_key: id
+    row_open_action: view_unassigned_lead
+    row_double_click_action: view_unassigned_lead
+actions:
+  - id: view_unassigned_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

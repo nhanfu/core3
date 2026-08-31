@@ -1,0 +1,11 @@
+version: 0.0.9
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS tags VARCHAR;
+    down: |
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS tags;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

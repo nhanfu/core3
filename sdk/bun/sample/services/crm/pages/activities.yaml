@@ -1,0 +1,69 @@
+title: CRM Activities
+page: { id: crm-activities, breadcrumb: [CRM, Activities], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_activity_queue
+    single: false
+    permission: crm.read
+    query: |
+      SELECT a.id, a.lead_id, l.name AS opportunity, a.activity_type, a.summary,
+        CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_to, a.state,
+        CASE WHEN a.due_date < CURRENT_DATE THEN 'Overdue'
+             WHEN a.due_date = CURRENT_DATE THEN 'Today'
+             ELSE 'Upcoming' END AS timing
+      FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id
+      WHERE a.state = 'planned'
+        AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR a.summary ILIKE '%' || :q || '%')
+        AND (:timing IS NULL OR CASE WHEN a.due_date < CURRENT_DATE THEN 'Overdue' WHEN a.due_date = CURRENT_DATE THEN 'Today' ELSE 'Upcoming' END = :timing)
+        AND (:activity_type IS NULL OR a.activity_type = :activity_type)
+      ORDER BY a.due_date NULLS LAST, a.created_at DESC
+  - id: crm_activity_timing
+    single: false
+    permission: crm.read
+    query: "SELECT value, label FROM (VALUES ('Overdue', 'Overdue'), ('Today', 'Today'), ('Upcoming', 'Upcoming')) timing(value, label)"
+  - id: crm_activity_type_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_activity_queue
+    search: { label: Search activities, placeholder: Search opportunity or activity... }
+    filters:
+      - { field: timing, label: Timing, options_source: crm_activity_timing }
+      - { field: activity_type, label: Activity, options_source: crm_activity_type_lookup }
+    columns:
+      - { field: timing, label: Timing, type: StatusChip }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: activity_type, label: Activity }
+      - { field: summary, label: Summary }
+      - { field: due_date, label: Due date }
+      - { field: assigned_to, label: Assigned to }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: complete_crm_activity, label: Mark done, permission: crm.write, variant: primary }
+      - { id: view_activity_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+actions:
+  - id: complete_crm_activity
+    type: server
+    permission: crm.write
+    action: crm.activities.complete
+    handler: crm_activity
+    operation: complete
+    params: { id: '{row.id}' }
+    refresh: [crm_activity_queue]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"
+          status: 409
+          message: Activity is already completed or no longer exists
+      steps:
+        - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+  - id: view_activity_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

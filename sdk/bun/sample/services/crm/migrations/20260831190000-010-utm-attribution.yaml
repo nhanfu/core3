@@ -1,0 +1,20 @@
+version: 0.0.10
+
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS utm_campaign VARCHAR;
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS utm_medium VARCHAR;
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS utm_source VARCHAR;
+      CREATE INDEX IF NOT EXISTS idx_crm_leads_utm_campaign ON crm_leads(utm_campaign);
+      CREATE INDEX IF NOT EXISTS idx_crm_leads_utm_source ON crm_leads(utm_source);
+    down: |
+      DROP INDEX IF EXISTS idx_crm_leads_utm_campaign;
+      DROP INDEX IF EXISTS idx_crm_leads_utm_source;
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS utm_campaign;
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS utm_medium;
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS utm_source;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

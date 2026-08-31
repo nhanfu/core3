@@ -1,0 +1,21 @@
+version: 0.0.6
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_sources (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO crm_sources(id, name) VALUES
+        ('crm-source-website', 'Website'),
+        ('crm-source-email', 'Email'),
+        ('crm-source-referral', 'Referral'),
+        ('crm-source-event', 'Event')
+      ON CONFLICT (name) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS crm_sources;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

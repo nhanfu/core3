@@ -1,0 +1,41 @@
+title: My Pipeline
+page: { id: my-pipeline, breadcrumb: [Sales, CRM, My Pipeline], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_my_pipeline
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, type, partner_name, email, phone, source, priority,
+        expected_revenue, stage, probability, salesperson, team, tags,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM crm_leads
+      WHERE salesperson = :current_user_name
+        AND stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+      ORDER BY expected_closing NULLS LAST, updated_at DESC
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_my_pipeline
+    search: { label: Search my pipeline, placeholder: Search my opportunities and tags... }
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
+      - { field: partner_name, label: Customer }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: tags, label: Tags }
+      - { field: priority, label: Priority }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: probability, label: Probability, align: right }
+      - { field: expected_closing, label: Expected closing }
+      - { field: team, label: Sales team }
+    page_size: 50
+    row_key: id
+    row_open_action: view_my_opportunity
+    row_double_click_action: view_my_opportunity
+actions:
+  - id: view_my_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

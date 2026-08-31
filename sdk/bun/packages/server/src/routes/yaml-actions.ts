@@ -18,6 +18,7 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
   const actionDefinition = NAMED_ACTIONS[actionName];
   if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
   requirePerm(permissionForAction(actionName));
+  for (const permission of Array.isArray(actionDefinition.permissions) ? actionDefinition.permissions : []) requirePerm(String(permission));
 
   const body = await req.json() as any;
   const handler = actionDefinition.handler;
@@ -54,6 +55,13 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
     const values = body?.values && typeof body.values === 'object' ? body.values : {};
     const scalarBody = Object.fromEntries(Object.entries(body || {}).filter(([, value]) =>
       value === null || ['boolean', 'number', 'string'].includes(typeof value)));
+    // Bulk actions submit selected record IDs as an array. Preserve this
+    // explicitly declared transport field while keeping arbitrary arrays out
+    // of the scalar mutation parameter surface.
+    if (Array.isArray(body?.selectedIds)) {
+      scalarBody.selectedIds = body.selectedIds.filter((value: unknown) =>
+        typeof value === 'string' || typeof value === 'number');
+    }
     const event = {
       operation: String(actionDefinition.operation || 'changed'),
       actorId: String(authUser.sub || ''),

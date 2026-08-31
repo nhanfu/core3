@@ -5,7 +5,7 @@ datasources:
     single: false
     permission: orders.read
     query: |
-      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_reference,
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_reference, o.opportunity_id,
         CAST(o.order_date AS VARCHAR) AS order_date, CAST(o.validity_date AS VARCHAR) AS validity_date,
         COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
         o.pricelist_name, o.payment_term_name, CAST(o.total_amount AS DOUBLE) AS total_amount,
@@ -42,6 +42,7 @@ components:
     columns:
       - { field: order_number, label: Quotation, type: PrimaryEntityCell }
       - { field: customer_name, label: Customer }
+      - { field: opportunity_id, label: CRM opportunity }
       - { field: order_date, label: Quotation date }
       - { field: validity_date, label: Expiration }
       - { field: status, label: Status, type: StatusChip }
@@ -64,7 +65,7 @@ actions:
     mutation:
       operation: insert
       table: orders
-      fields: [order_number, customer_name, customer_legal_name, order_date, validity_date, customer_reference, pricelist_name, payment_term_name, require_signature, require_payment, notes]
+      fields: [order_number, customer_name, customer_legal_name, opportunity_id, order_date, validity_date, customer_reference, pricelist_name, payment_term_name, require_signature, require_payment, notes]
       required: [order_number, customer_name, order_date]
       defaults: { status: Draft, pricelist_name: Public Pricelist, payment_term_name: Immediate Payment, require_signature: false, require_payment: false }
       scope: { field: branch_id, message: Quotation branch is invalid }
@@ -76,6 +77,7 @@ actions:
     fields:
       - { field: order_number, label: Quotation, type: text, required: true }
       - { field: customer_name, label: Customer, type: select, options_source: sale_quotation_customers, required: true }
+      - { field: opportunity_id, label: CRM opportunity ID, type: text }
       - { field: customer_reference, label: Customer reference, type: text }
       - { field: order_date, label: Quotation date, type: date, required: true }
       - { field: validity_date, label: Expiration, type: date }

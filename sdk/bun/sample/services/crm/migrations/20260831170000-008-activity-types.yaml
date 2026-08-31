@@ -1,0 +1,19 @@
+version: 0.0.8
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_activity_types (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR NOT NULL UNIQUE,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO crm_activity_types(id, name) VALUES
+        ('crm-activity-call', 'Call'), ('crm-activity-meeting', 'Meeting'),
+        ('crm-activity-email', 'Email'), ('crm-activity-todo', 'To-Do')
+      ON CONFLICT (name) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS crm_activity_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

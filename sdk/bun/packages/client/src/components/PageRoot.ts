@@ -489,6 +489,7 @@ export class PageRuntime extends BaseComponent {
           const result = await client.action(actionDef.action, {
             id: row?.id ?? null,
             expected_row_version: row?.row_version,
+            ...(Array.isArray(row?.selectedIds) ? { selectedIds: row.selectedIds } : {}),
             ...resolveActionParams(actionDef.params, rowCtx),
           });
           if (actionDef.result === 'alert') {

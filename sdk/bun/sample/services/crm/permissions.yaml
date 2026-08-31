@@ -2,3 +2,6 @@ permissions:
   - crm.read
   - crm.write
   - crm.manage
+  - orders.write
+  - base.contacts.read
+  - base.contacts.write

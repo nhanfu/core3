@@ -14,6 +14,7 @@ type AgentOperation = {
   route: string;
   method?: string;
   permission: string;
+  permissions?: string[];
   preview?: boolean;
   read_only?: boolean;
   datasource?: string;
@@ -61,8 +62,15 @@ function safeYamlPath(appsRoot: string, value: string) {
   return candidate;
 }
 
-async function yamlContext(appsRoot: string, paths: string[] = []) {
-  const selected = paths.length ? paths : ['services/ai/agent.yaml', 'services/ai/permissions.yaml'];
+async function yamlContext(appsRoot: string, paths: string[] = []): Promise<Array<{ path: string; content: string }>> {
+  let configured: string[] = [];
+  try {
+    const agent = Bun.YAML.parse(readFileSync(join(appsRoot, 'services/ai/agent.yaml'), 'utf8')) as any;
+    configured = Array.isArray(agent?.context_paths) ? agent.context_paths.map(String) : [];
+  } catch { /* use the minimal safe fallback below */ }
+  const selected = paths.length ? paths : (configured.length ? configured : [
+    'services/ai/agent.yaml', 'services/ai/permissions.yaml',
+  ]);
   const context: Array<{ path: string; content: string }> = [];
   for (const path of selected.slice(0, 20)) {
     const file = safeYamlPath(appsRoot, path);
@@ -88,7 +96,7 @@ function operationMap(appsRoot: string): Map<string, AgentOperation> {
       for (const action of Array.isArray(page.config?.actions) ? page.config.actions : []) {
         if ((action?.type !== 'server' && action?.type !== 'server_form') || !action.action || !action.permission) continue;
         const id = String(action.action);
-        operations.set(id, {
+        if (!operations.has(id)) operations.set(id, {
           id,
           route: `/api/actions/${encodeURIComponent(id)}`,
           method: 'POST',
@@ -100,7 +108,7 @@ function operationMap(appsRoot: string): Map<string, AgentOperation> {
     for (const [datasource, source] of discovered.datasources.entries()) {
       if (!source?.permission) continue;
       const id = `datasource.${datasource}.query`;
-      operations.set(id, {
+      if (!operations.has(id)) operations.set(id, {
         id,
         route: '/api/query',
         method: 'POST',
@@ -206,14 +214,16 @@ export function createAiAgentApi(options: {
       pending.delete(id);
       if (!hasPermission(options.authProvider, user, item.operation.permission)) return error(403, `Requires permission: ${item.operation.permission}`, 'OPERATION_PERMISSION_REQUIRED');
       const result = await execute(request, item.call, item.operation, user);
-      return json({ parts: [{ type: 'result', title: 'Operation completed', summary: await result.json().catch(() => ({})) }] });
+      const payload = await result.json().catch(() => ({}));
+      if (!result.ok) return error(result.status, String(payload?.error || 'Operation failed'), String(payload?.code || 'AI_OPERATION_FAILED'));
+      return json({ parts: [{ type: 'result', title: 'Operation completed', summary: payload }] });
     }
     if (!prompt || prompt.length > 12_000) return error(400, 'Prompt must be between 1 and 12000 characters', 'INVALID_PROMPT');
 
     const context = await yamlContext(options.appsRoot, Array.isArray(body?.yaml_paths) ? body.yaml_paths.map(String) : []);
     let generated;
     try {
-      const userPermissions = new Set(Array.isArray(user?.permissions) ? user.permissions.map(String) : []);
+      const userPermissions = new Set<string>(Array.isArray(user?.permissions) ? user.permissions.map(String) : []);
       for (const operation of operations.values()) {
         if (hasPermission(options.authProvider, user, operation.permission)) userPermissions.add(operation.permission);
       }
@@ -223,7 +233,7 @@ export function createAiAgentApi(options: {
         }
       }
       const accessiblePages = [...pages.values()].filter((page) => page.permissions.every((permission) => hasPermission(options.authProvider, user, permission)));
-      const accessibleOperations = [...operations.values()].filter((operation) => hasPermission(options.authProvider, user, operation.permission));
+      const accessibleOperations = [...operations.values()].filter((operation) => hasPermission(options.authProvider, user, operation.permission) && (operation.permissions || []).every((permission) => hasPermission(options.authProvider, user, permission)));
       generated = await options.provider.generate({
         prompt,
         user: {
@@ -252,6 +262,7 @@ export function createAiAgentApi(options: {
       const operation = operations.get(String(call?.operation || ''));
       if (!operation || !operation.route.startsWith('/api/')) return error(400, 'Agent attempted an undeclared operation', 'AI_OPERATION_NOT_ALLOWED');
       if (!hasPermission(options.authProvider, user, operation.permission)) return error(403, `Requires permission: ${operation.permission}`, 'OPERATION_PERMISSION_REQUIRED');
+      for (const permission of operation.permissions || []) if (!hasPermission(options.authProvider, user, permission)) return error(403, `Requires permission: ${permission}`, 'OPERATION_PERMISSION_REQUIRED');
       if (operation.read_only) {
         const result = await execute(request, call, operation, user);
         if (!result.ok) return error(result.status, 'Datasource query failed', 'AI_QUERY_FAILED');

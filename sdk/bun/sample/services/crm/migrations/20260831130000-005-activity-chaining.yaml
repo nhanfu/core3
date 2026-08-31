@@ -1,0 +1,15 @@
+version: 0.0.5
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS next_activity_type VARCHAR;
+      ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS next_activity_summary VARCHAR;
+      ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS next_activity_due_date DATE;
+    down: |
+      ALTER TABLE crm_activities DROP COLUMN IF EXISTS next_activity_due_date;
+      ALTER TABLE crm_activities DROP COLUMN IF EXISTS next_activity_summary;
+      ALTER TABLE crm_activities DROP COLUMN IF EXISTS next_activity_type;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

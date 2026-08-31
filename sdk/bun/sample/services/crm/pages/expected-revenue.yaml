@@ -1,0 +1,47 @@
+title: Expected Revenue
+page: { id: expected-revenue, breadcrumb: [Sales, CRM, Expected Revenue], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_expected_revenue
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, partner_name, salesperson, team, stage,
+        probability, expected_revenue, tags,
+        CAST(expected_revenue * probability / 100 AS DOUBLE) AS weighted_revenue,
+        CAST(expected_closing AS VARCHAR) AS expected_closing
+      FROM crm_leads
+      WHERE stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+        AND (:team IS NULL OR team = :team)
+      ORDER BY expected_closing NULLS LAST, weighted_revenue DESC
+  - id: crm_expected_revenue_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_expected_revenue
+    search: { label: Search expected revenue, placeholder: Search opportunities and customers... }
+    filters: [{ field: team, label: Sales team, options_source: crm_expected_revenue_teams }]
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: salesperson, label: Salesperson }
+      - { field: team, label: Sales team }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: tags, label: Tags }
+      - { field: expected_closing, label: Expected closing }
+      - { field: probability, label: Probability, align: right }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: weighted_revenue, label: Weighted revenue, align: right }
+    row_key: id
+    row_open_action: view_expected_revenue_opportunity
+    row_double_click_action: view_expected_revenue_opportunity
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
+actions:
+  - id: view_expected_revenue_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

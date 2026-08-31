@@ -161,6 +161,17 @@ export class AiWorkspace extends BaseComponent {
       for (const paragraph of String(part.markdown || '').split(/\n\s*\n/).filter(Boolean)) html.take(target).p.className('ai-workspace-message-text').text(paragraph);
     } else if (part.type === 'activity') {
       html.take(target).div.className(`ai-workspace-activity-row is-${part.status}`).text(`${part.status === 'success' ? '✓' : part.status === 'failed' ? '!' : '·'} ${String(part.label || '')}`);
+    } else if (part.type === 'run_status') {
+      const card = html.take(target).section.className('ai-workspace-run-status').ele();
+      html.take(card).strong.text(String(part.title || 'Run status'));
+      if (part.stage) html.take(card).div.className('ai-workspace-run-stage').text(`Stage: ${String(part.stage)}`);
+      const values: Array<[string, unknown]> = [
+        ['Status', part.status], ['Iteration', part.max_iterations ? `${part.iteration ?? 0} / ${part.max_iterations}` : part.iteration],
+        ['Actions', part.max_actions ? `${part.actions_used ?? 0} / ${part.max_actions}` : part.actions_used],
+        ['Time', part.max_duration_ms ? `${Math.round(Number(part.elapsed_ms || 0) / 1000)}s / ${Math.round(part.max_duration_ms / 1000)}s` : part.elapsed_ms],
+        ['Remaining budget', part.remaining_budget], ['Stop reason', part.stop_reason],
+      ];
+      for (const [label, value] of values) if (value !== undefined && value !== null && value !== '') html.take(card).div.className('ai-workspace-run-stat').text(`${label}: ${String(value)}`);
     } else if (part.type === 'preview') {
       const card = html.take(target).section.className('ai-workspace-preview-card').ele();
       html.take(card).h3.text(String(part.title || 'Preview ready'));
@@ -287,6 +298,15 @@ export class AiWorkspace extends BaseComponent {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(String(result?.error || 'Confirmation failed'));
     const parts = Array.isArray(result?.parts) ? result.parts : [];
+    const text = parts.filter((part: Part) => part.type === 'text').map((part: Part) => part.markdown).join('\n\n') || 'Approved operation completed.';
+    if (this.currentThreadId && parts.length) {
+      await this.runAction('save_assistant_action', { thread_id: this.currentThreadId, text, parts_json: JSON.stringify(parts) });
+      await this.def?.refresh?.();
+      await this.loadMessages();
+      this.renderThreadList();
+      this.renderConversation();
+      return;
+    }
     for (const part of parts) this.renderPart(this.conversation!, part);
   }
 

@@ -1,0 +1,14 @@
+version: 0.0.15
+
+type:
+  postgres:
+    up: |
+      UPDATE crm_teams SET email_alias = NULL WHERE NULLIF(TRIM(email_alias), '') IS NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_crm_teams_email_alias
+        ON crm_teams(lower(email_alias));
+    down: |
+      DROP INDEX IF EXISTS idx_crm_teams_email_alias;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

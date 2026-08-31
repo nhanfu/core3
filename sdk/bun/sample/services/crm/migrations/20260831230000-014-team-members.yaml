@@ -1,0 +1,25 @@
+version: 0.0.14
+
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_team_members (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), team_id VARCHAR NOT NULL,
+        user_name VARCHAR NOT NULL, active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(team_id, user_name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_crm_team_members_team ON crm_team_members(team_id, active);
+      INSERT INTO crm_team_members(team_id, user_name)
+      SELECT DISTINCT t.id, l.salesperson
+      FROM crm_leads l
+      JOIN crm_teams t ON t.name = l.team
+      WHERE NULLIF(TRIM(l.salesperson), '') IS NOT NULL
+        AND NULLIF(TRIM(l.team), '') IS NOT NULL
+      ON CONFLICT (team_id, user_name) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS crm_team_members;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

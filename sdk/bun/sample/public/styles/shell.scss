@@ -300,6 +300,9 @@
 .ai-workspace-activity-row { margin: 5px 0; color: var(--color-text-muted); font-size: .7rem; }
 .ai-workspace-activity-row.is-success { color: #15803d; }
 .ai-workspace-activity-row.is-failed { color: #b91c1c; }
+.ai-workspace-run-status { display: grid; gap: 5px; margin: 12px 0; padding: 12px 14px; border: 1px solid var(--color-primary-mid); border-radius: 10px; background: color-mix(in srgb, var(--color-primary-light) 55%, var(--color-surface)); box-shadow: var(--shadow-sm); }
+.ai-workspace-run-status strong { color: var(--color-text); font-size: .75rem; }
+.ai-workspace-run-stage, .ai-workspace-run-stat { color: var(--color-text-muted); font-size: .68rem; }
 .ai-workspace-preview-card, .ai-workspace-approval-card, .ai-workspace-result-card { margin: 12px 0; padding: 13px 14px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
 .ai-workspace-preview-card h3 { margin: 0 0 10px; color: var(--color-text); font-size: .78rem; }
 .ai-workspace-preview-stat { padding: 4px 0; color: var(--color-text-muted); font-size: .7rem; }
