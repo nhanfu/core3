@@ -25,11 +25,15 @@ components:
           user-visible behavior, workflows, permissions, data meaning, validation, views,
           navigation, actions, reference data, and seed-data behavior. The implementation may
           diverge whenever a more scalable Core3 architecture provides equivalent behavior.
+
         blocks:
           - type: p
             text: >-
               This methodology keeps behavioral parity separate from architecture fitness so the
               system cannot achieve a high parity score by blindly reproducing an unsuitable design.
+              The methodology and workflow described on this page are illustrative defaults, not a
+              locked process. Agents and projects may modify, replace, or extend them as long as
+              their chosen approach remains observable, permission-safe, and verifiable.
           - type: table
             headers: [Odoo behavioral parity dimension, Weight]
             rows:
@@ -140,19 +144,9 @@ components:
                 → repair routing
           - type: p
             text: >-
-              Loops are bounded and local to a graph stage. A repair may repeat until the retry
-              limit, score target, or stop condition is reached.
-          - type: list
-            items:
-              - 'BA: business scenarios and acceptance criteria'
-              - 'architecture: scalable Core3 design alternatives'
-              - 'seed-data: reproducible reference fixtures and provenance'
-              - 'implementation: staged YAML changes'
-              - 'manual tester: Playwright journeys, screenshots, traces, console, and network evidence'
-              - 'QA: positive, negative, boundary, and regression testing'
-              - 'security: permission and scope testing'
-              - 'evaluator: independent weighted scoring'
-              - 'lesson extractor: process and architecture improvements'
+              This graph is one example of a bounded repair-loop design. It is not a required
+              agent topology: an agent may reorder, omit, or add stages, define different retry
+              rules, or use another workflow that better fits the task.
 
       - id: learning-ledger
         kicker: Continuous improvement
@@ -182,27 +176,31 @@ components:
 
       - id: workspace
         kicker: Product surface
-        title: AiWorkspace integration
+        title: AiWorkspace as the agent surface
         blocks:
-          - type: list
-            items:
-              - graph-stage progress
-              - criterion results
-              - evidence artifacts
-              - repair attempts
-              - parity score
-              - architecture score
-              - score deltas
-              - architecture decisions
-              - lessons learned
-              - final run status
           - type: p
             text: >-
-              AiWorkspace should show both scores independently, with drill-down to criteria,
-              evidence, source references, failed tests, and rejected architecture alternatives.
-              All agent operations remain declared, permission-checked, sandbox-scoped,
-              time-limited, and audited. No arbitrary shell, SQL, filesystem, URL, or
-              production-browser access is allowed.
+              AiWorkspace is the primary product module for AI work. The workflow above is only
+              an example of what an agent might run inside it; agents are free to define their own
+              plans, tools, stages, evidence, and completion criteria. The module should make those
+              choices usable and understandable to the user rather than imposing one fixed graph.
+          - type: list
+            items:
+              - start and continue conversations in named threads
+              - submit natural-language tasks and show readable agent responses
+              - show live activity and arbitrary agent-defined progress
+              - present structured results, tables, evidence, and technical details
+              - open read-only previews of YAML pages or agent-produced views
+              - request and complete explicit mutation approvals
+              - keep agent actions within the user's permissions and declared APIs
+              - support project-specific scores, criteria, decisions, lessons, and run status
+          - type: p
+            text: >-
+              The workspace should render each agent's chosen workflow and data model, including
+              optional drill-down to criteria, evidence, source references, failed tests, scores,
+              and rejected alternatives. All agent operations remain declared, permission-checked,
+              sandbox-scoped, time-limited, and audited. No arbitrary shell, SQL, filesystem, URL,
+              or production-browser access is allowed.
 
       - id: acceptance
         kicker: Exit evidence
@@ -211,12 +209,8 @@ components:
           - type: callout
             tone: important
             text: >-
-              The system must prove that every parity criterion is traceable to Odoo source or
-              approved reference evidence; reference and seed data are reproducible; scenarios run
-              against the selected Odoo scope and Core3; Playwright captures comparable journeys;
-              both scores are deterministic and versioned; injected defects reduce the relevant
-              score; repairs increase scores only after evidence passes; architecture alternatives
-              are recorded for non-trivial decisions; recurring failures generate lessons; validated
-              lessons improve later runs measurably; security failures apply the correct parity caps;
-              missing evidence cannot produce a passing criterion; and architectural improvements
-              do not silently reduce Odoo behavioral parity.
+              For this example workflow, the system should prove that parity criteria are traceable
+              to approved evidence, scenarios are reproducible, scores are versioned, repairs are
+              evidence-backed, and security failures are handled correctly. Other workflows may
+              define different acceptance criteria; each agent must declare its criteria and produce
+              enough evidence for the user to review the result.
