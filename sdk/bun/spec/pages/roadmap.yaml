@@ -14,10 +14,12 @@ components:
         - label: Roadmap
       eyebrow: Roadmap
       title: Plan & next steps
-      subtitle: Where the framework is today, and what pattern-extraction feeds back into it next.
+      subtitle: Where the framework is today and how progress is tracked toward AI-oriented Odoo parity.
+    timelineNav: true
     sections:
       - id: direction
         kicker: Direction
+        timeline: 0–3 months
         title: Target — a full Odoo clone
         lead: >-
           The framework's direction is to reproduce Odoo's ERP surface end to end on YShip, not to
@@ -40,172 +42,9 @@ components:
                existed). That approach is now retired — the order service is real running proof, and
                Odoo itself is the specification for what comes next.
 
-      - id: parity-framework
-        kicker: Odoo parity framework
-        title: Behavior-compatible parity, architecture fitness
-        lead: >-
-          Clone Odoo's observable behavior, not its internal architecture. Core3 must preserve
-          user-visible behavior, workflows, permissions, data meaning, validation, views,
-          navigation, actions, reference data, and seed-data behavior. The implementation may
-          diverge whenever a more scalable Core3 architecture provides equivalent behavior.
-        blocks:
-          - type: p
-            text: >-
-              This framework keeps behavioral parity separate from architecture fitness so the
-              system cannot achieve a high parity score by blindly reproducing an unsuitable design.
-          - type: table
-            headers: [Odoo behavioral parity dimension, Weight]
-            rows:
-              - [Business workflows and transitions, 25]
-              - [Screens, views, navigation, and actions, 20]
-              - [Data model, relationships, reference data, and seed data, 15]
-              - [Validation, errors, empty states, loading states, and boundaries, 15]
-              - [Permissions, company scope, and security, 10]
-              - [Search, filtering, reporting, and usability, 5]
-              - [Accessibility and visual interaction quality, 5]
-              - [Audit, reliability, and performance, 5]
-              - [Total, 100]
-          - type: p
-            text: >-
-              Each criterion receives 1.0 when equivalent behavior is proven by evidence, 0.5
-              when it is partially equivalent or limited in scope, and 0.0 when it is missing,
-              incorrect, or unverified. A security or tenant-scope failure caps parity at 49; a
-              broken primary workflow caps parity at 69; missing evidence cannot receive full
-              credit; and AI opinion alone cannot increase the score.
-          - type: table
-            headers: [Architecture fitness dimension, Weight]
-            rows:
-              - [Scalability and performance, 20]
-              - [Correctness and data integrity, 15]
-              - [Security and tenant isolation, 15]
-              - [Operability, observability, and recovery, 15]
-              - [Testability and verification quality, 10]
-              - [Interface stability and module depth, 10]
-              - [Migration and versioning strategy, 5]
-              - [Complexity and maintainability, 10]
-              - [Total, 100]
-          - type: panel
-            title: Example score report
-            language: text
-            code: |
-              Odoo behavioral parity: 94/100
-              Core3 architecture fitness: 62/100
-
-              The feature is behaviorally close but not yet architecturally ready for broad adoption.
-          - type: panel
-            title: Architecture decision gate
-            language: text
-            code: |
-              Odoo reference facts
-                → behavior contract
-                → architecture research
-                → alternatives and trade-offs
-                → architecture decision record
-                → implementation
-                → parity validation
-                → architecture validation
-          - type: list
-            items:
-              - Inspect existing Core3 modules and seams
-              - Inspect Odoo only to understand behavior and constraints
-              - Research authoritative alternatives
-              - Propose at least two viable designs
-              - Compare scalability, correctness, security, operations, migration cost, performance, and complexity
-              - Identify reversible and irreversible choices
-              - Benchmark or prototype high-risk choices
-              - Record rejected alternatives and reasons
-          - type: p
-            text: The agent must never select an architecture solely because Odoo uses it.
-          - type: panel
-            title: Agent graph and repair loops
-            language: text
-            code: |
-              Scope and target Odoo version
-                → reference extraction
-                → BA behavior contract
-                → architecture decision gate
-                → seed-data preparation
-                → Core3 YAML implementation
-                → schema/discovery validation
-                → Playwright verification
-                → QA review
-                → security review
-                → UX/accessibility review
-                → parity scoring
-                → architecture scoring
-                → lesson extraction
-                → repair routing
-          - type: p
-            text: >-
-              Loops are bounded and local to a graph stage. A repair may repeat until the retry
-              limit, score target, or stop condition is reached.
-          - type: list
-            items:
-              - 'BA: business scenarios and acceptance criteria'
-              - 'architecture: scalable Core3 design alternatives'
-              - 'seed-data: reproducible reference fixtures and provenance'
-              - 'implementation: staged YAML changes'
-              - 'manual tester: Playwright journeys, screenshots, traces, console, and network evidence'
-              - 'QA: positive, negative, boundary, and regression testing'
-              - 'security: permission and scope testing'
-              - 'evaluator: independent weighted scoring'
-              - 'lesson extractor: process and architecture improvements'
-          - type: p
-            text: >-
-              Maintain a process-learning ledger separate from the parity and architecture ledgers.
-              Its fields are id, observation, failure_pattern, root_cause, alternatives_considered,
-              change_to_process, affected_agent_or_node, supporting_runs, measured_effect,
-              parity_impact, architecture_fitness_impact, confidence, and status (proposed,
-              validated, adopted, or rejected).
-          - type: panel
-            title: Learning loop
-            language: text
-            code: |
-              run evidence
-                → detect recurring failure or wasted work
-                → propose lesson
-                → test lesson on later runs
-                → measure score gain, retry reduction, and false-result rate
-                → adopt only when independently validated
-          - type: p
-            text: >-
-              Scoring rules and evaluator behavior must be versioned. The system must not improve
-              its score by weakening criteria or removing difficult tests.
-          - type: list
-            items:
-              - graph-stage progress
-              - criterion results
-              - evidence artifacts
-              - repair attempts
-              - parity score
-              - architecture score
-              - score deltas
-              - architecture decisions
-              - lessons learned
-              - final run status
-          - type: p
-            text: >-
-              AiWorkspace should show both scores independently, with drill-down to criteria,
-              evidence, source references, failed tests, and rejected architecture alternatives.
-              All agent operations remain declared, permission-checked, sandbox-scoped,
-              time-limited, and audited. No arbitrary shell, SQL, filesystem, URL, or
-              production-browser access is allowed.
-          - type: callout
-            tone: important
-            title: Acceptance criteria
-            text: >-
-              The system must prove that every parity criterion is traceable to Odoo source or
-              approved reference evidence; reference and seed data are reproducible; scenarios run
-              against the selected Odoo scope and Core3; Playwright captures comparable journeys;
-              both scores are deterministic and versioned; injected defects reduce the relevant
-              score; repairs increase scores only after evidence passes; architecture alternatives
-              are recorded for non-trivial decisions; recurring failures generate lessons; validated
-              lessons improve later runs measurably; security failures apply the correct parity caps;
-              missing evidence cannot produce a passing criterion; and architectural improvements
-              do not silently reduce Odoo behavioral parity.
-
       - id: odoo-modules
         kicker: Odoo parity tracker
+        timeline: 3–12 months
         title: Module / sub-module checklist and implementation status
         lead: >-
           Odoo's own app grouping is the literal tracking list for AI-oriented operations. Status is
@@ -238,84 +77,45 @@ components:
               module detail page, side_panel behavior, and row-open navigation so users can inspect
               and edit records without leaving the list context. A standalone detail route does not
               replace this inline FormView requirement.
-          - type: table
-            headers: [Category, AI-oriented modules, Status]
-            rows:
-              - [Sales, 'Sales · CRM · Point of Sale · Subscriptions · Rental', In progress]
-              - [Finance, 'Accounting · Invoicing · Expenses · Documents · Spreadsheet / Dashboards', In progress]
-              - [Supply Chain, 'Inventory · Manufacturing · Purchase · Maintenance · Quality · PLM', In progress]
-              - [Human Resources, 'Employees · Recruitment · Time Off · Appraisals · Referrals · Fleet', In progress]
-              - [Marketing, 'Email Marketing · SMS Marketing · Events · Surveys · Marketing Automation', In progress]
-              - [Services, 'Project · Timesheets · Field Service · Helpdesk', In progress]
-              - [Services, 'Appointments · Planning', Not started]
-              - [Productivity, Approvals, In progress]
-              - [Productivity, 'Knowledge · Sign · VoIP', Not started]
-          - type: flowstrip
-            steps:
-              - label: CRM lead
-                sub: Qualify into an opportunity
-              - label: Quotation
-                sub: Prepare products, prices, and terms
-              - label: Sales order
-                sub: Confirm the commercial commitment
-              - label: Delivery / invoice
-                sub: Fulfill and collect payment
-          - type: flowstrip
-            steps:
-              - label: POS session
-                sub: Open the register
-              - label: POS order
-                sub: Sell products to the customer
-              - label: Payment
-                sub: Register cash, bank, or card
-              - label: Receipt / invoice
-                sub: Close the sale and document it
-          - type: flowstrip
-            steps:
-              - label: Subscription plan
-                sub: Select recurring terms
-              - label: Subscription
-                sub: Confirm the contract
-              - label: Recurring invoice
-                sub: Generate the billing obligation
-              - label: Payment
-                sub: Settle the recurring charge
-          - type: flowstrip
-            steps:
-              - label: Rental quotation
-                sub: Choose product and dates
-              - label: Reservation
-                sub: Hold the inventory
-              - label: Pickup
-                sub: Start the rental
-              - label: Return / invoice
-                sub: Complete and charge the rental
-
-      - id: pattern-rule
-        kicker: Working principle
-        title: Pattern extraction
-        blocks:
-          - type: callout
-            title: Pattern-extraction rule
-            text: >-
-              When the same structure appears in two pages, write a YAML shorthand for it. When it
-              appears in three, it becomes a first-class framework concept — a new component, a new
-              schema key, or a new registerPageComponentSchema-backed extension point.
-          - type: p
-            text: >-
-              This spec project is itself an example of the rule: DocHero, DocPage, and DocTopNav
-              exist because "hero + sidebar-linked sections + global nav" is a shape every doc-style
-              project needs, not something worth re-describing per page.
-
-      - id: next
-        kicker: Next up
-        title: What's next
-        blocks:
-          - type: list
-            items:
-              - Model new modules directly against Odoo's real feature set, using the order service as the pattern to follow
-              - Keep the component-library reference in sync as real components change
-              - Grow the sample order service with more read-focused example pages (analytics, reports)
-              - Keep extracting repeated DocPage block shapes into the schema as the doc set grows
-              - text: Continue hardening auth and the event mediator per the Gate Service Plan (gateway refactor)
-                href: /plan/auth-mediator
+          - type: cardgrid
+            cards:
+              - tag: In progress
+                tone: tip
+                title: Sales & CRM
+                body: Leads, sales, POS, subscriptions, and rentals.
+                icons: [{name: users, label: CRM}, {name: cart, label: Sales}, {name: receipt, label: Point of Sale}, {name: repeat, label: Subscriptions}, {name: calendar, label: Rental}]
+              - tag: In progress
+                tone: important
+                title: Finance
+                body: Billing, expenses, documents, and reporting.
+                icons: [{name: money, label: Accounting}, {name: invoice, label: Invoicing}, {name: file, label: Expenses}, {name: folder, label: Documents}, {name: analytics, label: Spreadsheet and Dashboards}]
+              - tag: In progress
+                tone: note
+                title: Supply Chain
+                body: Inventory, production, purchasing, quality, and maintenance.
+                icons: [{name: warehouse, label: Inventory}, {name: factory, label: Manufacturing}, {name: purchase, label: Purchase}, {name: wrench, label: Maintenance}, {name: quality, label: Quality}, {name: engineering, label: PLM}]
+              - tag: In progress
+                tone: tip
+                title: Human Resources
+                body: Employees, hiring, leave, reviews, referrals, and fleet.
+                icons: [{name: users, label: Employees}, {name: recruitment, label: Recruitment}, {name: calendar, label: Time Off}, {name: review, label: Appraisals}, {name: share, label: Referrals}, {name: car, label: Fleet}]
+              - tag: In progress
+                tone: note
+                title: Marketing
+                body: Campaigns, consent, events, surveys, and automation.
+                icons: [{name: mail, label: Email Marketing}, {name: message, label: SMS Marketing}, {name: calendar, label: Events}, {name: survey, label: Surveys}, {name: automation, label: Marketing Automation}]
+              - tag: In progress
+                tone: note
+                title: Services
+                body: Projects, timesheets, field work, and helpdesk.
+                icons: [{name: project, label: Project}, {name: activity, label: Timesheets}, {name: truck, label: Field Service}, {name: headset, label: Helpdesk}]
+              - tag: In progress
+                tone: important
+                title: Productivity
+                body: Guarded approvals with evidence and attachments.
+                icons: [{name: check, label: Approvals}, {name: shield, label: Permission checks}, {name: file, label: Evidence}, {name: folder, label: Attachments}]
+              - tag: Not started
+                tone: warning
+                title: Planned capabilities
+                body: Reserved areas without a discovered service.
+                icons: [{name: calendar, label: Appointments and Planning}, {name: document, label: Knowledge}, {name: edit, label: Sign}, {name: message, label: VoIP}]

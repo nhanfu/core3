@@ -10,7 +10,7 @@ const PAGES_ROOT = join(APPS_ROOT, 'pages');
 
 // The spec app has no datasources, auth, or storage — it registers its own
 // content component so the shared page schema still validates its YAML.
-registerPageComponentSchema('DocPage', ['layout', 'hero', 'sections']);
+registerPageComponentSchema('DocPage', ['layout', 'hero', 'timelineNav', 'sections']);
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',

@@ -1,6 +1,7 @@
 import { html } from '@core3/client/html';
 import { BaseComponent } from '@core3/client/components/BaseComponent';
 import { DocHero, type DocHeroDef, type DocHeroStat, renderDocStat } from '@core3/client/doc/DocHero';
+import { appendIcon } from '@core3/client/components/Icon';
 import { navigate } from '@core3/client/navigate';
 import hljs from 'highlight.js';
 
@@ -12,7 +13,7 @@ const LANGUAGE_ALIAS: Record<string, string> = { yml: 'yaml', ts: 'typescript', 
 export type DocBlock =
   | { type: 'p'; text: string }
   | { type: 'list'; items: Array<string | { text: string; href: string }> }
-  | { type: 'cardgrid'; cards: Array<{ tag?: string; title: string; body?: string; items?: string[] }> }
+  | { type: 'cardgrid'; cards: Array<{ tag?: string; title: string; body?: string; items?: string[]; icons?: Array<{ name: string; label: string }>; tone?: 'note' | 'tip' | 'important' | 'warning' | 'caution' }> }
   | { type: 'panel'; title?: string; language?: string; code: string }
   | { type: 'table'; headers: string[]; rows: string[][] }
   | { type: 'flowstrip'; steps: Array<{ label: string; sub?: string }> }
@@ -26,6 +27,7 @@ export type DocBlock =
 export type DocSection = {
   id?: string;
   kicker?: string;
+  timeline?: string;
   title: string;
   lead?: string;
   blocks?: DocBlock[];
@@ -34,6 +36,7 @@ export type DocSection = {
 export type DocPageDef = {
   layout?: 'document' | 'landing';
   hero?: DocHeroDef;
+  timelineNav?: boolean;
   sections?: DocSection[];
 };
 
@@ -148,10 +151,17 @@ export class DocPage extends BaseComponent {
       case 'cardgrid': {
         const grid = html.take(container).div.className('doc-cardgrid').ele() as HTMLElement;
         for (const card of block.cards || []) {
-          const cardEl = html.take(grid).div.className('doc-card').ele() as HTMLElement;
+          const cardEl = html.take(grid).div.className(`doc-card${card.tone ? ` doc-card-${card.tone}` : ''}`).ele() as HTMLElement;
           if (card.tag) html.take(cardEl).span.className('doc-card-tag').text(card.tag);
           html.take(cardEl).h4.text(card.title);
           if (card.body) html.take(cardEl).p.text(card.body);
+          if (card.icons?.length) {
+            const icons = html.take(cardEl).div.className('doc-card-icons').ele() as HTMLElement;
+            for (const iconDef of card.icons) {
+              const icon = html.take(icons).span.className('doc-card-icon').attr('title', iconDef.label).ele() as HTMLElement;
+              appendIcon(icon, iconDef.name, iconDef.label);
+            }
+          }
           if (card.items?.length) {
             const list = html.take(cardEl).ul.ele() as HTMLElement;
             for (const item of card.items) html.take(list).li.text(item);
@@ -257,7 +267,7 @@ export class DocPage extends BaseComponent {
   }
 
   draw(container: HTMLElement) {
-    const { layout: pageLayout = 'document', hero, sections = [] } = this.def;
+    const { layout: pageLayout = 'document', hero, timelineNav = false, sections = [] } = this.def;
     const isLanding = pageLayout === 'landing';
     this.children = [];
     this.sectionObserver?.disconnect();
@@ -275,9 +285,9 @@ export class DocPage extends BaseComponent {
 
     const layout = html.take(container).div.className(`doc-layout${isLanding ? ' doc-layout-landing' : ''}`).ele() as HTMLElement;
     const main = html.take(layout).div.className('doc-main').ele() as HTMLElement;
-    const nav = isLanding ? null : html.take(layout).aside.className('doc-toc').ele() as HTMLElement;
+    const nav = isLanding ? null : html.take(layout).aside.className(`doc-toc${timelineNav ? ' doc-toc-timeline' : ''}`).ele() as HTMLElement;
+    if (nav) html.take(nav).div.className('doc-toc-heading').text(timelineNav ? 'Progress timeline' : 'In this article');
     const tocNav = nav ? html.take(nav).nav.ele() as HTMLElement : null;
-    if (nav) html.take(nav).div.className('doc-toc-heading').text('In this article');
 
     const usedAnchors = new Set<string>();
     const sectionEls: HTMLElement[] = [];
@@ -285,7 +295,7 @@ export class DocPage extends BaseComponent {
       let anchor = section.id || slug(section.title, index);
       while (usedAnchors.has(anchor)) anchor = `${anchor}-${index}`;
       usedAnchors.add(anchor);
-      if (tocNav) this.tocLinks.set(anchor, this.link(tocNav, anchor, section.title));
+      if (tocNav) this.tocLinks.set(anchor, this.link(tocNav, anchor, section.title, section.timeline));
 
       const sectionClass = isLanding
         ? `doc-section doc-section-reveal doc-landing-section doc-landing-section-${index % 2 ? 'alternate' : 'default'}`
@@ -363,8 +373,10 @@ export class DocPage extends BaseComponent {
     for (const el of targets) this.revealObserver.observe(el);
   }
 
-  private link(container: HTMLElement, anchor: string, label: string): HTMLAnchorElement {
-    const item = html.take(container).a.className('doc-toc-link').attr('href', `#${anchor}`).text(label).ele() as HTMLAnchorElement;
+  private link(container: HTMLElement, anchor: string, label: string, timeline?: string): HTMLAnchorElement {
+    const item = html.take(container).a.className('doc-toc-link').attr('href', `#${anchor}`).ele() as HTMLAnchorElement;
+    html.take(item).span.className('doc-toc-link-title').text(label);
+    if (timeline) html.take(item).small.className('doc-toc-link-time').text(timeline);
     html.take(item).event('click', (event: MouseEvent) => {
       event.preventDefault();
       document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

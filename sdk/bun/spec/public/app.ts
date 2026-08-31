@@ -7,7 +7,7 @@ import { DocPage } from '@core3/client/doc/DocPage';
 
 // Mirrors the registration in server.ts — the browser loads its own copy of
 // the shared page schema, so the custom "DocPage" type must be declared here too.
-registerPageComponentSchema('DocPage', ['layout', 'hero', 'sections']);
+registerPageComponentSchema('DocPage', ['layout', 'hero', 'timelineNav', 'sections']);
 
 const ROUTES: Record<string, string> = {
   '/': 'home',
@@ -16,6 +16,7 @@ const ROUTES: Record<string, string> = {
   '/backend': 'backend',
   '/scripting': 'scripting',
   '/reference': 'reference',
+  '/ai-improvement': 'ai-improvement',
   '/component-library': 'component-library',
   '/extensions': 'extensions',
   '/roadmap': 'roadmap',
