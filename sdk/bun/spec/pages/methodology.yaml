@@ -1,7 +1,7 @@
-title: YShip — AI methodology
+title: YShip — Feature methodology
 
 page:
-  id: ai-improvement
+  id: feature-improvement
 
 components:
   - type: DocPage
@@ -12,9 +12,9 @@ components:
         - label: Docs
           href: /
         - label: Reference
-        - label: AI-improvement methodology
+        - label: Feature improvement methodology
       eyebrow: Reference
-      title: AI-improvement methodology
+      title: Feature improvement methodology
       subtitle: Evidence-driven parity, architecture decisions, bounded repair loops, and measurable learning.
     sections:
       - id: principle-and-scores
@@ -52,7 +52,7 @@ components:
               when it is partially equivalent or limited in scope, and 0.0 when it is missing,
               incorrect, or unverified. A security or tenant-scope failure caps parity at 49; a
               broken primary workflow caps parity at 69; missing evidence cannot receive full
-              credit; and AI opinion alone cannot increase the score.
+              credit; and agent opinion alone cannot increase the score.
           - type: table
             headers: [Architecture fitness dimension, Weight]
             rows:
@@ -127,30 +127,20 @@ components:
             title: Agent graph
             language: text
             code: |
-              Scope and target Odoo version
-                → reference extraction
-                → BA behavior contract
-                → architecture decision gate
-                → seed-data preparation
-                → Core3 YAML implementation
-                → schema/discovery validation
-                → Playwright verification
-                → QA review
-                → security review
-                → UX/accessibility review
-                → parity scoring
-                → architecture scoring
-                → lesson extraction
-                → repair routing
+              BA: scope, reference facts, behavior contract, and acceptance criteria
+                → dev: architecture choice, YAML implementation, and focused checks
+                → QA: browser/API verification, parity review, and repair feedback
+                → BA: confirm the next bounded loop or accept the result
           - type: p
             text: >-
-              This graph is one example of a bounded repair-loop design. It is not a required
-              agent topology: an agent may reorder, omit, or add stages, define different retry
-              rules, or use another workflow that better fits the task. Every loop must still
-              declare a maximum iteration count, time limit, tool/action budget, and a no-progress
-              stop condition. When a limit is reached, the agent stops and reports the unresolved
-              state or asks the user for direction; it may not retry indefinitely or silently
-              continue after a failed safety check.
+              The loop uses only three roles: BA, dev, and QA. BA defines the target and contract,
+              dev makes the smallest architecture-fit implementation, and QA verifies the result
+              and routes concrete repair feedback. Every loop must declare a maximum iteration
+              count, time limit, tool/action budget, and a no-progress stop condition. When a limit
+              is reached, the agent stops and reports the unresolved state or asks the user for
+              direction; it may not retry indefinitely or silently continue after a failed safety
+              check. Lessons learned are added to the agent's notes for future runs, not written as
+              a separate ledger or generated artifact.
           - type: panel
             title: Example loop policy
             language: text
@@ -162,60 +152,35 @@ components:
               stop_on: [safety_failure, permission_failure, repeated_same_error]
               on_limit: report_and_ask_user
 
-      - id: learning-ledger
-        kicker: Continuous improvement
-        title: Learning ledger
-        blocks:
-          - type: p
-            text: >-
-              Maintain a process-learning ledger separate from the parity and architecture ledgers.
-              Its fields are id, observation, failure_pattern, root_cause, alternatives_considered,
-              change_to_process, affected_agent_or_node, supporting_runs, measured_effect,
-              parity_impact, architecture_fitness_impact, confidence, and status (proposed,
-              validated, adopted, or rejected).
-          - type: panel
-            title: Learning loop
-            language: text
-            code: |
-              run evidence
-                → detect recurring failure or wasted work
-                → propose lesson
-                → test lesson on later runs
-                → measure score gain, retry reduction, and false-result rate
-                → adopt only when independently validated
-          - type: p
-            text: >-
-              Scoring rules and evaluator behavior must be versioned. The system must not improve
-              its score by weakening criteria or removing difficult tests.
-
-      - id: workspace
+      - id: execution-surface
         kicker: Product surface
-        title: AiWorkspace as the agent surface
+        title: Feature work as the execution surface
         blocks:
           - type: p
             text: >-
-              AiWorkspace is the primary product module for AI work. The workflow above is only
-              an example of what an agent might run inside it; agents are free to define their own
-              plans, tools, stages, evidence, and completion criteria. The module should make those
-              choices usable and understandable to the user rather than imposing one fixed graph.
+              The unit of work is one product feature at a time. The workflow above applies to
+              feature development and parity work wherever it is initiated; it is not a plan for
+              improving the AI module itself. Agents may choose their own tools and evidence, but
+              the feature contract, implementation status, verification results, and next action
+              must remain visible to the user.
           - type: list
             items:
-              - start and continue conversations in named threads
-              - submit natural-language tasks and show readable agent responses
-              - show live activity and arbitrary agent-defined progress
+              - start and continue feature-focused work in named threads
+              - submit feature tasks and show readable agent responses
+              - show live activity and feature progress
               - show loop limits, current attempts, remaining budget, and stop reasons
               - present structured results, tables, evidence, and technical details
-              - open read-only previews of YAML pages or agent-produced views
+              - open read-only previews of YAML pages or feature views
               - request and complete explicit mutation approvals
               - keep agent actions within the user's permissions and declared APIs
-              - support project-specific scores, criteria, decisions, lessons, and run status
+              - support feature-specific scores, criteria, decisions, lessons, and run status
           - type: p
             text: >-
-              The workspace should render each agent's chosen workflow and data model, including
-              optional drill-down to criteria, evidence, source references, failed tests, scores,
-              and rejected alternatives. All agent operations remain declared, permission-checked,
-              sandbox-scoped, time-limited, and audited. No arbitrary shell, SQL, filesystem, URL,
-              or production-browser access is allowed.
+              The execution surface should render the selected feature's workflow and data model,
+              including optional drill-down to criteria, evidence, source references, failed tests,
+              scores, and rejected alternatives. All agent operations remain declared,
+              permission-checked, sandbox-scoped, time-limited, and audited. No arbitrary shell,
+              SQL, filesystem, URL, or production-browser access is allowed.
 
       - id: acceptance
         kicker: Exit evidence
