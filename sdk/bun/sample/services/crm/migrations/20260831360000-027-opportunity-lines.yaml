@@ -1,0 +1,9 @@
+version: 0.0.27
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_opportunity_lines (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), lead_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL, quantity DECIMAL(18,3) NOT NULL DEFAULT 1, unit_price DECIMAL(18,2) NOT NULL DEFAULT 0, line_total DECIMAL(18,2) NOT NULL DEFAULT 0, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE INDEX IF NOT EXISTS idx_crm_opportunity_lines_lead ON crm_opportunity_lines(lead_id);"
+    down: "DROP INDEX IF EXISTS idx_crm_opportunity_lines_lead; DROP TABLE IF EXISTS crm_opportunity_lines;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

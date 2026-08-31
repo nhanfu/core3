@@ -1,0 +1,9 @@
+version: 0.0.29
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_retention_policies (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL, record_type VARCHAR NOT NULL, retention_days INTEGER NOT NULL, team VARCHAR, active BOOLEAN NOT NULL DEFAULT true, UNIQUE(name)); CREATE TABLE IF NOT EXISTS crm_retention_holds (lead_id VARCHAR PRIMARY KEY, reason VARCHAR NOT NULL, held_by VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE TABLE IF NOT EXISTS crm_retention_deletion_audit (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), lead_id VARCHAR NOT NULL, record_name VARCHAR, deleted_by VARCHAR, deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP); CREATE INDEX IF NOT EXISTS idx_crm_retention_policies_active ON crm_retention_policies(active, record_type, team);"
+    down: "DROP INDEX IF EXISTS idx_crm_retention_policies_active; DROP TABLE IF EXISTS crm_retention_deletion_audit; DROP TABLE IF EXISTS crm_retention_holds; DROP TABLE IF EXISTS crm_retention_policies;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

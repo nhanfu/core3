@@ -6,7 +6,7 @@ datasources:
     permission: crm.read
     query: |
       SELECT id, row_version, name, partner_id, partner_name, salesperson, team, stage,
-        probability, expected_revenue, tags,
+        probability, expected_revenue, recurring_revenue, recurring_plan, tags,
         CAST(expected_revenue * probability / 100 AS DOUBLE) AS weighted_revenue,
         CAST(expected_closing AS VARCHAR) AS expected_closing
       FROM crm_leads
@@ -34,9 +34,12 @@ components:
       - { field: expected_closing, label: Expected closing }
       - { field: probability, label: Probability, align: right }
       - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: recurring_revenue, label: Recurring revenue, align: right }
       - { field: weighted_revenue, label: Weighted revenue, align: right }
     row_key: id
     row_actions: menu
+    bulk_actions:
+      - { id: capture_forecast_snapshot, label: Capture forecast snapshot, permission: crm.manage }
     actions:
       - { id: open_expected_revenue_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
       - { id: crm.expected_revenue.export, label: Export, title: Export, icon: download }
@@ -54,3 +57,18 @@ actions:
     permission: crm.read
     navigate_to: /lead-detail
     params: { id: '{row.id}' }
+  - id: capture_forecast_snapshot
+    type: server
+    permission: crm.manage
+    action: crm.forecast_snapshots.capture
+    handler: yaml_mutation
+    operation: capture
+    refresh: [crm_expected_revenue]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND active = true AND stage NOT IN ('Won', 'Lost')) = (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds)"
+          status: 409
+          message: Select only active open opportunities
+      steps:
+        - query: "INSERT INTO crm_forecast_snapshots(snapshot_date, lead_id, name, team, salesperson, stage, probability, expected_revenue, weighted_revenue, captured_by) SELECT CURRENT_DATE, l.id, l.name, l.team, l.salesperson, l.stage, l.probability, l.expected_revenue, l.expected_revenue * l.probability / 100, :current_user_name FROM crm_leads l WHERE l.id IN :selectedIds AND l.active = true AND l.stage NOT IN ('Won', 'Lost') ON CONFLICT(snapshot_date, lead_id) DO NOTHING"
+      result: { query: "SELECT * FROM crm_forecast_snapshots WHERE snapshot_date = CURRENT_DATE AND lead_id IN :selectedIds ORDER BY lead_id" }

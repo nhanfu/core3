@@ -1,0 +1,9 @@
+version: 0.0.31
+type:
+  postgres:
+    up: "ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS escalation_state VARCHAR; ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS escalated_at TIMESTAMP;"
+    down: "ALTER TABLE crm_activities DROP COLUMN IF EXISTS escalated_at; ALTER TABLE crm_activities DROP COLUMN IF EXISTS escalation_state;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

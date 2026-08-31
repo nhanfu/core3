@@ -1,0 +1,9 @@
+version: 0.0.26
+type:
+  postgres:
+    up: "ALTER TABLE crm_teams ADD COLUMN IF NOT EXISTS response_hours INTEGER; UPDATE crm_teams SET response_hours = 24 WHERE response_hours IS NULL;"
+    down: "ALTER TABLE crm_teams DROP COLUMN IF EXISTS response_hours;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

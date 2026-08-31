@@ -1,0 +1,12 @@
+version: 0.0.22
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_stage_teams (stage_id VARCHAR NOT NULL, team_id VARCHAR NOT NULL, PRIMARY KEY(stage_id, team_id));
+      CREATE INDEX IF NOT EXISTS idx_crm_stage_teams_team ON crm_stage_teams(team_id);
+    down: |
+      DROP TABLE IF EXISTS crm_stage_teams;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

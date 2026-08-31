@@ -44,6 +44,19 @@ components:
       - { field: timing, label: Timing, options_source: crm_activity_timing }
       - { field: activity_type, label: Activity, options_source: crm_activity_type_lookup }
       - { field: assigned_to, label: Assigned to, options_source: crm_activity_assignee_lookup }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: due_date
+        card:
+          title: opportunity
+          subtitle: summary
+          fields:
+            - { field: activity_type, label: Activity }
+            - { field: assigned_to, label: Assigned to }
+            - { field: state, label: State }
     columns:
       - { field: timing, label: Timing, type: StatusChip }
       - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
@@ -130,20 +143,23 @@ actions:
       - { field: next_activity_summary, label: Next activity summary, type: text }
       - { field: next_activity_due_date, label: Next activity due date, type: date }
   - id: complete_crm_activity
-    type: server
+    type: server_form
     permission: crm.write
+    title: Complete CRM activity
     action: crm.activities.complete
     handler: crm_activity
     operation: complete
     params: { id: '{row.id}' }
     refresh: [crm_activity_queue]
+    fields:
+      - { field: outcome_note, label: Outcome note, type: text }
     mutation:
       guards:
         - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"
           status: 409
           message: Activity is already completed or no longer exists
       steps:
-        - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
+        - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP, summary = COALESCE(NULLIF(:outcome_note, ''), summary), outcome_note = NULLIF(:outcome_note, '') WHERE id = :id AND state = 'planned'"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
   - id: complete_selected_crm_activities

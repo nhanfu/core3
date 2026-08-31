@@ -1,0 +1,19 @@
+version: 0.0.24
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_email_templates (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR NOT NULL,
+        subject VARCHAR NOT NULL,
+        body VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_crm_email_templates_name ON crm_email_templates(lower(name));
+    down: |
+      DROP INDEX IF EXISTS idx_crm_email_templates_name;
+      DROP TABLE IF EXISTS crm_email_templates;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

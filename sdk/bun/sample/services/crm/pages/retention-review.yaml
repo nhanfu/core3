@@ -1,0 +1,90 @@
+title: CRM Retention Review
+page: { id: retention-review, breadcrumb: [Sales, CRM, Retention Review], auth: { require: [crm.manage] } }
+datasources:
+  - id: crm_retention_review
+    single: false
+    permission: crm.manage
+    query: "SELECT l.id, l.name, l.type, l.team, l.stage, CAST(l.updated_at AS VARCHAR) AS archived_at, p.name AS policy, p.retention_days, h.reason AS hold_reason, CASE WHEN h.lead_id IS NOT NULL THEN 'Legal hold' ELSE 'Review' END AS review_state FROM crm_leads l JOIN crm_retention_policies p ON p.active = true AND (p.record_type = l.type OR p.record_type = 'all') AND (p.team IS NULL OR p.team = l.team) LEFT JOIN crm_retention_holds h ON h.lead_id = l.id WHERE l.active = false AND l.updated_at <= CURRENT_TIMESTAMP - (p.retention_days * INTERVAL '1 day') ORDER BY review_state DESC, l.updated_at"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_retention_review
+    columns:
+      - { field: review_state, label: State, type: StatusChip }
+      - { field: name, label: Record, type: PrimaryEntityCell }
+      - { field: type, label: Type }
+      - { field: team, label: Sales team }
+      - { field: archived_at, label: Archived at }
+      - { field: policy, label: Policy }
+      - { field: hold_reason, label: Hold reason }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_retention_review_lead, label: Open record, permission: crm.manage, variant: ghost }
+      - { id: place_retention_hold, label: Place legal hold, permission: crm.manage, variant: secondary, show_if: "!row.hold_reason" }
+      - { id: remove_retention_hold, label: Remove legal hold, permission: crm.manage, variant: danger, show_if: "!!row.hold_reason" }
+      - { id: permanently_delete_retention_record, label: Permanently delete, permission: crm.manage, variant: danger, show_if: "!row.hold_reason" }
+actions:
+  - id: permanently_delete_retention_record
+    type: server
+    confirm: Permanently delete this archived CRM record and its activities? This cannot be undone.
+    permission: crm.manage
+    action: crm.retention_records.delete
+    handler: yaml_mutation
+    operation: permanent_delete
+    refresh: [crm_retention_review]
+    mutation:
+      guards:
+        - query: "SELECT l.id FROM crm_leads l JOIN crm_retention_policies p ON p.active = true AND (p.record_type = l.type OR p.record_type = 'all') AND (p.team IS NULL OR p.team = l.team) WHERE l.id = :id AND l.active = false AND l.updated_at <= CURRENT_TIMESTAMP - (p.retention_days * INTERVAL '1 day')"
+          status: 409
+          message: Record is not currently eligible for permanent deletion
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_retention_holds WHERE lead_id = :id)"
+          status: 409
+          message: Records under legal hold cannot be deleted
+      steps:
+        - query: "INSERT INTO crm_retention_deletion_audit(lead_id, record_name, deleted_by) SELECT id, name, :current_user_name FROM crm_leads WHERE id = :id"
+        - query: "DELETE FROM crm_activities WHERE lead_id = :id"
+        - query: "DELETE FROM crm_leads WHERE id = :id AND active = false"
+  - id: place_retention_hold
+    type: server_form
+    permission: crm.manage
+    title: Place legal hold
+    action: crm.retention_holds.create
+    handler: yaml_mutation
+    operation: create
+    params: { lead_id: '{row.id}' }
+    refresh: [crm_retention_review]
+    mutation:
+      operation: insert
+      table: crm_retention_holds
+      fields: [lead_id, reason, held_by]
+      required: [reason]
+      defaults: { held_by: '{current_user_name}' }
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id AND active = false"
+          status: 409
+          message: Only archived records can receive a retention hold
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_retention_holds WHERE lead_id = :lead_id)"
+          status: 409
+          message: A legal hold already exists
+    fields:
+      - { field: reason, label: Hold reason, type: textarea, required: true }
+  - id: remove_retention_hold
+    type: server
+    permission: crm.manage
+    action: crm.retention_holds.remove
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_retention_review]
+    mutation:
+      guards:
+        - query: "SELECT lead_id FROM crm_retention_holds WHERE lead_id = :id"
+          status: 404
+          message: Legal hold no longer exists
+      steps:
+        - query: "DELETE FROM crm_retention_holds WHERE lead_id = :id"
+  - id: open_retention_review_lead
+    type: navigate
+    permission: crm.manage
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

@@ -6,10 +6,13 @@ datasources:
     permission: crm.read
     query: |
       SELECT l.id, l.row_version, l.name, l.type, l.partner_id, l.partner_name, l.email, l.phone, l.description,
-        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability, salesperson, team,
+        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, recurring_revenue, recurring_plan, stage, s.requirements AS stage_requirements, probability, salesperson, team,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
-        l.lost_reason, r.name AS lost_reason_name, CAST(l.created_at AS VARCHAR) AS created_at
-      FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.id = :id
+        l.lost_reason, r.name AS lost_reason_name, CAST(l.created_at AS VARCHAR) AS created_at,
+        (SELECT COUNT(*) FROM crm_opportunity_lines x WHERE x.lead_id = l.id) AS line_count,
+        (SELECT COALESCE(SUM(x.line_total), 0) FROM crm_opportunity_lines x WHERE x.lead_id = l.id) AS line_subtotal,
+        (SELECT COALESCE(SUM(x.line_total), 0) FROM crm_opportunity_lines x WHERE x.lead_id = l.id) * l.probability / 100 AS weighted_line_value
+      FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason LEFT JOIN crm_stages s ON s.name = l.stage AND s.active = true WHERE l.id = :id
   - id: crm_lead_activities
     single: false
     permission: crm.read
@@ -20,6 +23,14 @@ datasources:
         CAST(created_at AS VARCHAR) AS created_at,
         CAST(completed_at AS VARCHAR) AS completed_at
       FROM crm_activities WHERE lead_id = :id ORDER BY due_date NULLS LAST, created_at DESC
+  - id: crm_lead_quotations
+    single: false
+    permission: orders.read
+    query: "SELECT o.id, o.order_number, o.customer_name, o.status, o.total_amount, CAST(o.order_date AS VARCHAR) AS order_date, o.opportunity_id FROM orders o WHERE o.opportunity_id = :id ORDER BY o.order_date DESC, o.id DESC"
+  - id: crm_opportunity_lines
+    single: false
+    permission: crm.read
+    query: "SELECT id, product_name, quantity, unit_price, line_total, CAST(created_at AS VARCHAR) AS created_at FROM crm_opportunity_lines WHERE lead_id = :id ORDER BY created_at DESC"
   - id: crm_lead_chatter
     single: false
     permission: crm.read
@@ -28,6 +39,10 @@ datasources:
         CASE WHEN activity_type = 'message' THEN 'crm.message' WHEN activity_type = 'note' THEN 'crm.note' ELSE 'crm.activity' END AS action,
         summary AS detail, CAST(created_at AS VARCHAR) AS created_at
       FROM crm_activities WHERE lead_id = :id ORDER BY created_at DESC
+  - id: crm_engagement_timeline
+    single: false
+    permission: crm.read
+    query: "SELECT id, activity_type AS event_type, summary, COALESCE(NULLIF(created_by, ''), NULLIF(assigned_to, ''), 'CRM') AS actor_name, CAST(COALESCE(completed_at, created_at) AS VARCHAR) AS occurred_at FROM crm_activities WHERE lead_id = :id ORDER BY COALESCE(completed_at, created_at) DESC, id DESC"
   - id: crm_lead_followers
     single: false
     permission: crm.read
@@ -44,10 +59,18 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+  - id: crm_campaign_lookup_detail
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_campaigns WHERE active = true ORDER BY name"
   - id: crm_tag_lookup_detail
     single: false
     permission: crm.read
     query: "SELECT name AS value, name AS label FROM crm_tags ORDER BY active DESC, name"
+  - id: crm_email_template_lookup_detail
+    single: false
+    permission: crm.write
+    query: "SELECT id AS value, name AS label FROM crm_email_templates WHERE active = true ORDER BY name"
   - id: crm_sales_teams_detail
     single: false
     permission: crm.read
@@ -74,6 +97,10 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
+  - id: crm_recurring_plans_detail
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_recurring_plans WHERE active = true ORDER BY name"
 components:
   - type: OdooFormView
     source: crm_lead_detail
@@ -105,10 +132,13 @@ components:
           - { field: name, label: Opportunity }
           - { field: type, label: Type }
           - { field: stage, label: Stage }
+          - { field: stage_requirements, label: Stage requirements }
           - { field: probability, label: Probability }
           - { field: priority, label: Priority }
           - { field: tags, label: Tags }
           - { field: expected_revenue, label: Expected revenue }
+          - { field: recurring_revenue, label: Recurring revenue }
+          - { field: recurring_plan, label: Recurring plan }
           - { field: expected_closing, label: Expected closing }
           - { field: lost_reason_name, label: Lost reason }
       - title: Customer
@@ -156,10 +186,117 @@ components:
       - { field: completed_at, label: Completed }
     actions:
       - { id: schedule_lead_activity, label: Schedule activity, variant: primary, permission: crm.write }
+      - { id: schedule_lead_meeting, label: Schedule meeting, variant: secondary, permission: crm.write }
       - { id: apply_activity_plan, label: Apply activity plan, variant: secondary, permission: crm.write }
       - { id: edit_lead_activity, label: Edit activity, variant: secondary, permission: crm.write, show_if: "row.state === 'planned'" }
       - { id: complete_lead_activity, label: Mark done, variant: ghost, permission: crm.write, show_if: "row.state === 'planned'" }
+  - type: ContactGrid
+    source: crm_lead_quotations
+    row_key: id
+    columns:
+      - { field: order_number, label: Quotation, type: PrimaryEntityCell }
+      - { field: status, label: Status, type: StatusChip }
+      - { field: total_amount, label: Total amount }
+      - { field: order_date, label: Date }
+    actions:
+      - { id: open_lead_quotation, label: Open quotation, variant: secondary, permission: orders.read }
+  - type: ContactGrid
+    source: crm_opportunity_lines
+    row_key: id
+    columns:
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity }
+      - { field: unit_price, label: Unit price }
+      - { field: line_total, label: Line total }
+    actions:
+      - { id: edit_opportunity_line, label: Edit line, permission: crm.write, variant: secondary }
+      - { id: remove_opportunity_line, label: Remove line, permission: crm.write, variant: danger }
+  - type: ContactGrid
+    source: crm_engagement_timeline
+    row_key: id
+    columns:
+      - { field: occurred_at, label: Occurred }
+      - { field: event_type, label: Event, type: StatusChip }
+      - { field: actor_name, label: Actor }
+      - { field: summary, label: Details }
 actions:
+  - id: open_lead_quotation
+    type: navigate
+    permission: orders.read
+    navigate_to: /quotations
+    params: { id: '{row.id}' }
+  - id: add_opportunity_line
+    type: server_form
+    permission: crm.write
+    title: Add product line
+    action: crm.opportunity_lines.create
+    handler: yaml_mutation
+    operation: create
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_opportunity_lines, crm_lead_detail]
+    mutation:
+      operation: insert
+      table: crm_opportunity_lines
+      fields: [lead_id, product_name, quantity, unit_price, line_total]
+      required: [product_name, quantity, unit_price]
+      defaults: { quantity: 1, unit_price: 0, line_total: 0 }
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :lead_id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only active open opportunities can be changed
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:product_name AS VARCHAR))) BETWEEN 1 AND 160 AND CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:unit_price AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Product and pricing values are invalid
+      steps:
+        - query: "UPDATE crm_opportunity_lines SET line_total = CAST(quantity * unit_price AS DECIMAL(18,2)) WHERE id = :id"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) SELECT gen_random_uuid(), lead_id, 'commercial', 'Product line added', 'done', CURRENT_TIMESTAMP, :current_user_name FROM crm_opportunity_lines WHERE id = :id"
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true, default: 1 }
+      - { field: unit_price, label: Unit price, type: number, required: true, default: 0 }
+  - id: edit_opportunity_line
+    type: server_form
+    permission: crm.write
+    title: Edit product line
+    action: crm.opportunity_lines.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_opportunity_lines, crm_lead_detail]
+    mutation:
+      operation: update
+      table: crm_opportunity_lines
+      fields: [product_name, quantity, unit_price]
+      required: [product_name, quantity, unit_price]
+      guards:
+        - query: "SELECT l.id FROM crm_opportunity_lines x JOIN crm_leads l ON l.id = x.lead_id WHERE x.id = :id AND l.active = true AND l.stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only lines on active open opportunities can be changed
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:product_name AS VARCHAR))) BETWEEN 1 AND 160 AND CAST(:quantity AS DECIMAL(18,3)) > 0 AND CAST(:unit_price AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Product and pricing values are invalid
+      steps:
+        - query: "UPDATE crm_opportunity_lines SET line_total = CAST(quantity * unit_price AS DECIMAL(18,2)) WHERE id = :id"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) SELECT gen_random_uuid(), lead_id, 'commercial', 'Product line updated', 'done', CURRENT_TIMESTAMP, :current_user_name FROM crm_opportunity_lines WHERE id = :id"
+    fields:
+      - { field: product_name, label: Product, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: unit_price, label: Unit price, type: number, required: true }
+  - id: remove_opportunity_line
+    type: server
+    permission: crm.write
+    action: crm.opportunity_lines.remove
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_opportunity_lines, crm_lead_detail]
+    mutation:
+      guards:
+        - query: "SELECT x.id FROM crm_opportunity_lines x JOIN crm_leads l ON l.id = x.lead_id WHERE x.id = :id AND l.active = true AND l.stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only lines on active open opportunities can be removed
+      steps:
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) SELECT gen_random_uuid(), lead_id, 'commercial', 'Product line removed', 'done', CURRENT_TIMESTAMP, :current_user_name FROM crm_opportunity_lines WHERE id = :id"
+        - query: "DELETE FROM crm_opportunity_lines WHERE id = :id"
   - id: add_lead_follower
     type: server
     permission: crm.write
@@ -207,21 +344,31 @@ actions:
     mutation:
       operation: insert
       table: crm_activities
-      fields: [lead_id, activity_type, summary, state, created_by]
-      required: [summary]
-      defaults: { activity_type: message, state: done }
+      fields: [lead_id, activity_type, summary, state, created_by, delivery_status, delivery_attempts]
+      defaults: { activity_type: message, state: done, delivery_status: sent, delivery_attempts: 1 }
       guards:
-        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:summary AS VARCHAR))) BETWEEN 1 AND 4000"
+        - query: "SELECT 1 AS ok WHERE (NULLIF(TRIM(CAST(COALESCE(:summary, '') AS VARCHAR)), '') IS NOT NULL OR :template_id IS NOT NULL)"
           status: 400
-          message: Message content must be between 1 and 4000 characters
+          message: Message content or an active template is required
         - query: "SELECT id FROM crm_leads WHERE id = :lead_id"
           status: 404
           message: Opportunity no longer exists
+        - query: "SELECT 1 AS ok WHERE :template_id IS NULL OR EXISTS (SELECT 1 FROM crm_email_templates WHERE id = :template_id AND active = true)"
+          status: 400
+          message: Select an active email template
+        - query: "SELECT 1 AS ok WHERE :template_id IS NULL OR EXISTS (SELECT 1 FROM crm_leads JOIN crm_contact_preferences ON crm_contact_preferences.contact_id = crm_leads.partner_id WHERE crm_leads.id = :lead_id AND crm_contact_preferences.allow_email = true) OR EXISTS (SELECT 1 FROM crm_leads WHERE crm_leads.id = :lead_id AND crm_leads.partner_id IS NULL)"
+          status: 409
+          message: The linked contact has opted out of email communication
+        - query: "SELECT 1 AS ok WHERE :summary IS NULL OR length(trim(CAST(:summary AS VARCHAR))) BETWEEN 1 AND 4000"
+          status: 400
+          message: Message content must be between 1 and 4000 characters
       steps:
+        - query: "UPDATE crm_activities SET summary = CASE WHEN :template_id IS NULL THEN :summary ELSE replace(replace(replace((SELECT body FROM crm_email_templates WHERE id = :template_id AND active = true), '{{lead_name}}', COALESCE((SELECT name FROM crm_leads WHERE id = :lead_id), '')), '{{partner_name}}', COALESCE((SELECT partner_name FROM crm_leads WHERE id = :lead_id), '')), '{{salesperson}}', COALESCE((SELECT salesperson FROM crm_leads WHERE id = :lead_id), '')) END WHERE id = :id"
         - query: "UPDATE crm_activities SET created_by = :current_user_name WHERE id = :id"
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
     fields:
-      - { field: summary, label: Message, type: textarea, required: true }
+      - { field: template_id, label: Email template, type: select, options_source: crm_email_template_lookup_detail }
+      - { field: summary, label: Message, type: textarea }
   - id: log_lead_note
     type: server_form
     permission: crm.write
@@ -296,13 +443,16 @@ actions:
     mutation:
       operation: update
       table: crm_leads
-      fields: [name, type, partner_id, partner_name, email, phone, description, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, probability, salesperson, team, expected_closing]
+      fields: [name, type, partner_id, partner_name, email, phone, description, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, recurring_revenue, recurring_plan, probability, salesperson, team, expected_closing]
       required: [name]
       timestamps: true
       guards:
         - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:probability, 10) AS INTEGER) BETWEEN 0 AND 100"
           status: 400
           message: Probability must be between 0 and 100
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:recurring_revenue, 0) AS DECIMAL(18,2)) >= 0"
+          status: 400
+          message: Recurring revenue cannot be negative
         - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
           status: 400
           message: Select an active contact
@@ -324,13 +474,15 @@ actions:
       - { field: email, label: Email, type: text }
       - { field: phone, label: Phone, type: text }
       - { field: source, label: Source, type: select, options_source: crm_source_lookup_detail }
-      - { field: utm_campaign, label: UTM campaign, type: text }
+      - { field: utm_campaign, label: UTM campaign, type: select, options_source: crm_campaign_lookup_detail }
       - { field: utm_medium, label: UTM medium, type: text }
       - { field: utm_source, label: UTM source, type: text }
       - { field: tags, label: Tags, type: multi-select, multiple: true, options_source: crm_tag_lookup_detail, placeholder: Choose tags }
       - { field: priority, label: Priority, type: select, options: [0, 1, 2, 3] }
       - { field: description, label: Notes, type: textarea }
       - { field: expected_revenue, label: Expected revenue, type: number }
+      - { field: recurring_revenue, label: Recurring revenue, type: number }
+      - { field: recurring_plan, label: Recurring plan, type: select, options_source: crm_recurring_plans_detail }
       - { field: probability, label: Probability, type: number }
       - { field: salesperson, label: Salesperson, type: select, options_source: crm_active_salespeople_detail }
       - { field: team, label: Sales team, type: select, options_source: crm_sales_teams_detail }
@@ -392,21 +544,36 @@ actions:
       - { field: customer_reference, label: Customer reference, type: text }
       - { field: notes, label: Terms and conditions, type: textarea }
   - id: convert_lead_detail
-    type: server
+    type: server_form
     permission: crm.write
+    title: Convert lead to opportunity
     action: crm.leads.convert
     handler: yaml_mutation
     operation: convert
+    prefill: state.crm_lead_detail
     refresh: [crm_lead_detail, crm_lead_activities]
     mutation:
       guards:
         - query: "SELECT id FROM crm_leads WHERE id = :id AND type = 'lead' AND stage NOT IN ('Won', 'Lost')"
           status: 409
           message: Only open leads can be converted into opportunities
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:team, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_teams WHERE name = :team AND active = true)"
+          status: 400
+          message: Select an active sales team
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:salesperson, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :salesperson AND active = true)"
+          status: 400
+          message: Select an active salesperson
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:partner_id, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM base_contacts WHERE id = :partner_id AND active = true)"
+          status: 400
+          message: Select an active contact
       steps:
-        - query: "UPDATE crm_leads SET type = 'opportunity', updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead'"
+        - query: "UPDATE crm_leads SET type = 'opportunity', partner_id = COALESCE(NULLIF(:partner_id, ''), partner_id), partner_name = COALESCE((SELECT name FROM base_contacts WHERE id = :partner_id AND active = true), partner_name), salesperson = COALESCE(NULLIF(:salesperson, ''), salesperson), team = COALESCE(NULLIF(:team, ''), team), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND type = 'lead' AND stage NOT IN ('Won', 'Lost')"
         - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', 'Lead converted to opportunity', 'done', CURRENT_TIMESTAMP)"
       result: { query: "SELECT * FROM crm_leads WHERE id = :id" }
+    fields:
+      - { field: salesperson, label: Salesperson, type: select, options_source: crm_active_salespeople_detail }
+      - { field: team, label: Sales team, type: select, options_source: crm_sales_teams_detail }
+      - { field: partner_id, label: Customer, type: async-select, options_source: crm_contacts_detail }
   - id: mark_lead_won_detail
     type: server
     permission: crm.write
@@ -468,6 +635,32 @@ actions:
       - { field: next_activity_type, label: Next activity type, type: select, options_source: crm_activity_types_detail }
       - { field: next_activity_summary, label: Next activity summary, type: text }
       - { field: next_activity_due_date, label: Next activity due date, type: date }
+  - id: schedule_lead_meeting
+    type: server_form
+    permission: crm.write
+    title: Schedule meeting
+    action: crm.meetings.create
+    handler: yaml_mutation
+    operation: create_meeting
+    params: { lead_id: '{state.id}' }
+    refresh: [crm_lead_activities, crm_lead_chatter]
+    mutation:
+      operation: insert
+      table: crm_activities
+      fields: [lead_id, activity_type, summary, due_date, assigned_to, state]
+      defaults: { activity_type: Meeting, summary: Meeting, state: planned }
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_leads WHERE id = :lead_id AND active = true AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only active open opportunities can have meetings scheduled
+        - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = 'Meeting' AND active = true"
+          status: 400
+          message: Meeting activity type is not active
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: summary, label: Meeting subject, type: text, default: Meeting }
+      - { field: due_date, label: Meeting date, type: date, required: true }
+      - { field: assigned_to, label: Assignee, type: select, options_source: crm_activity_assignee_lookup_detail }
   - id: apply_activity_plan
     type: server_form
     permission: crm.write
@@ -524,13 +717,16 @@ actions:
       - { field: due_date, label: Due date, type: date }
       - { field: assigned_to, label: Assigned to, type: select, options_source: crm_activity_assignee_lookup_detail }
   - id: complete_lead_activity
-    type: server
+    type: server_form
     permission: crm.write
+    title: Complete CRM activity
     action: crm.activities.complete
     handler: crm_activity
     operation: complete
     params: { id: '{row.id}' }
     refresh: [crm_lead_activities, crm_lead_detail]
+    fields:
+      - { field: outcome_note, label: Outcome note, type: text }
     mutation:
       guards:
         - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"

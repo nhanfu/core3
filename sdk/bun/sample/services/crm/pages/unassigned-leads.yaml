@@ -40,6 +40,7 @@ components:
     row_actions: menu
     bulk_actions:
       - { id: assign_selected_leads, label: Assign selected, permission: crm.write }
+      - { id: apply_assignment_rules, label: Apply assignment rules, permission: crm.manage }
     actions:
       - { id: assign_unassigned_lead, label: Assign to salesperson, permission: crm.write, variant: primary }
       - { id: open_unassigned_lead_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
@@ -97,6 +98,22 @@ actions:
       result: { query: "SELECT * FROM crm_leads WHERE id IN :selectedIds ORDER BY updated_at DESC" }
     fields:
       - { field: salesperson, label: Salesperson, type: select, options_source: crm_assignment_members, required: true }
+  - id: apply_assignment_rules
+    type: server
+    permission: crm.manage
+    action: crm.leads.apply_assignment_rules
+    handler: yaml_mutation
+    operation: apply_rules
+    refresh: [crm_unassigned_leads]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND active = true AND stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(salesperson), '') IS NULL) = (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds)"
+          status: 409
+          message: Select only active unassigned open leads
+      steps:
+        - query: "UPDATE crm_leads l SET salesperson = (SELECT r.user_name FROM crm_assignment_rules r JOIN crm_team_members m ON m.user_name = r.user_name AND m.active = true LEFT JOIN crm_teams t ON t.id = r.team_id AND t.active = true WHERE r.active = true AND (r.team_id IS NULL OR t.id IS NOT NULL) AND (r.team_id IS NULL OR l.team = t.name) AND ((r.field = 'source' AND ((r.operator = 'equals' AND l.source = r.comparison_value) OR (r.operator = 'present' AND NULLIF(TRIM(l.source), '') IS NOT NULL))) OR (r.field = 'type' AND ((r.operator = 'equals' AND l.type = r.comparison_value) OR (r.operator = 'present' AND NULLIF(TRIM(l.type), '') IS NOT NULL))) OR (r.field = 'priority' AND ((r.operator = 'equals' AND CAST(l.priority AS VARCHAR) = r.comparison_value) OR (r.operator = 'present' AND l.priority IS NOT NULL))) OR (r.field = 'team' AND ((r.operator = 'equals' AND l.team = r.comparison_value) OR (r.operator = 'present' AND NULLIF(TRIM(l.team), '') IS NOT NULL)))) ORDER BY r.sequence, r.id LIMIT 1), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE l.id IN :selectedIds AND l.active = true AND l.stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(l.salesperson), '') IS NULL AND (SELECT r.user_name FROM crm_assignment_rules r JOIN crm_team_members m ON m.user_name = r.user_name AND m.active = true LEFT JOIN crm_teams t ON t.id = r.team_id AND t.active = true WHERE r.active = true AND (r.team_id IS NULL OR t.id IS NOT NULL) AND (r.team_id IS NULL OR l.team = t.name) AND ((r.field = 'source' AND ((r.operator = 'equals' AND l.source = r.comparison_value) OR (r.operator = 'present' AND NULLIF(TRIM(l.source), '') IS NOT NULL))) OR (r.field = 'type' AND ((r.operator = 'equals' AND l.type = r.comparison_value) OR (r.operator = 'present' AND NULLIF(TRIM(l.type), '') IS NOT NULL))) OR (r.field = 'priority' AND ((r.operator = 'equals' AND CAST(l.priority AS VARCHAR) = r.comparison_value) OR (r.operator = 'present' AND l.priority IS NOT NULL))) OR (r.field = 'team' AND ((r.operator = 'equals' AND l.team = r.comparison_value) OR (r.operator = 'present' AND NULLIF(TRIM(l.team), '') IS NOT NULL)))) ORDER BY r.sequence, r.id LIMIT 1) IS NOT NULL"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) SELECT gen_random_uuid(), l.id, 'assignment', 'Lead assigned by assignment rule', 'done', CURRENT_TIMESTAMP, :current_user_name FROM crm_leads l WHERE l.id IN :selectedIds AND NULLIF(TRIM(l.salesperson), '') IS NOT NULL AND NOT EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.activity_type = 'assignment' AND a.summary = 'Lead assigned by assignment rule')"
+      result: { query: "SELECT * FROM crm_leads WHERE id IN :selectedIds ORDER BY id" }
   - id: view_unassigned_lead
     type: navigate
     permission: crm.read

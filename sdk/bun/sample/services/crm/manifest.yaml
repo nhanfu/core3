@@ -19,6 +19,8 @@ pages:
   - pages/analysis.yaml
   - pages/import.yaml
   - pages/import-history.yaml
+  - pages/activity-report.yaml
+  - pages/customer-opportunities.yaml
 permissions: permissions.yaml
 imports: imports.yaml
 storage: storage.yaml

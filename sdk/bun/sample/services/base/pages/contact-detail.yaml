@@ -21,6 +21,7 @@ components:
     labels: { save: Save, discard: Discard, editDetails: Edit details }
     header_actions:
       - { id: edit_contact_detail, label: Edit, variant: secondary, permission: base.contacts.write }
+      - { id: open_contact_opportunities, label: CRM opportunities, variant: secondary, permission: crm.read }
     group_columns: 2
     groups:
       - title: Contact
@@ -46,6 +47,11 @@ components:
     row_open_action: view_activity
     row_double_click_action: view_activity
 actions:
+  - id: open_contact_opportunities
+    type: navigate
+    permission: crm.read
+    navigate_to: /customer-opportunities
+    params: { id: '{state.id}' }
   - id: edit_contact_detail
     type: server_form
     permission: base.contacts.write

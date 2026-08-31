@@ -24,6 +24,18 @@ operations:
     permission: crm.read
     read_only: true
     datasource: crm_leads
+  - id: datasource.crm_customer_opportunities.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_customer_opportunities
+  - id: datasource.crm_customer_opportunity_totals.query
+    route: /api/query
+    method: POST
+    permission: crm.read
+    read_only: true
+    datasource: crm_customer_opportunity_totals
   - id: crm.leads.convert
     route: /api/actions/crm.leads.convert
     method: POST
@@ -109,6 +121,39 @@ operations:
     route: /api/actions/crm.leads.bulk_update
     method: POST
     permission: crm.write
+  - id: crm.leads.mass_convert
+    route: /api/actions/crm.leads.mass_convert
+    method: POST
+    permission: crm.write
+  - id: crm.leads.archive_stale
+    route: /api/actions/crm.leads.archive_stale
+    method: POST
+    permission: crm.write
+  - id: crm.retention_policies.create
+    route: /api/actions/crm.retention_policies.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.retention_policies.toggle
+    route: /api/actions/crm.retention_policies.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.retention_holds.create
+    route: /api/actions/crm.retention_holds.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.retention_holds.remove
+    route: /api/actions/crm.retention_holds.remove
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.retention_records.delete
+    route: /api/actions/crm.retention_records.delete
+    method: POST
+    permission: crm.manage
+    preview: false
   - id: crm.leads.import
     route: /api/import/commit
     permission: crm.write
@@ -120,6 +165,36 @@ operations:
     permission: crm.manage
   - id: crm.scoring_rules.toggle
     route: /api/actions/crm.scoring_rules.toggle
+    permission: crm.manage
+  - id: crm.recurring_plans.create
+    route: /api/actions/crm.recurring_plans.create
+    permission: crm.manage
+  - id: crm.recurring_plans.update
+    route: /api/actions/crm.recurring_plans.update
+    permission: crm.manage
+  - id: crm.recurring_plans.toggle
+    route: /api/actions/crm.recurring_plans.toggle
+    permission: crm.manage
+  - id: crm.campaigns.create
+    route: /api/actions/crm.campaigns.create
+    permission: crm.manage
+  - id: crm.campaigns.update
+    route: /api/actions/crm.campaigns.update
+    permission: crm.manage
+  - id: crm.campaigns.toggle
+    route: /api/actions/crm.campaigns.toggle
+    permission: crm.manage
+  - id: crm.leads.create_from_alias
+    route: /api/actions/crm.leads.create_from_alias
+    permission: crm.write
+  - id: crm.meetings.create
+    route: /api/actions/crm.meetings.create
+    permission: crm.write
+  - id: crm.stage_teams.create
+    route: /api/actions/crm.stage_teams.create
+    permission: crm.manage
+  - id: crm.stage_teams.remove
+    route: /api/actions/crm.stage_teams.remove
     permission: crm.manage
     preview: false
   - id: crm.leads.assign_to_me
@@ -136,6 +211,71 @@ operations:
     route: /api/actions/crm.leads.assign_batch
     method: POST
     permission: crm.write
+    preview: false
+  - id: crm.leads.apply_assignment_rules
+    route: /api/actions/crm.leads.apply_assignment_rules
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.assignment_rules.create
+    route: /api/actions/crm.assignment_rules.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.assignment_rules.update
+    route: /api/actions/crm.assignment_rules.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.assignment_rules.toggle
+    route: /api/actions/crm.assignment_rules.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.email_templates.create
+    route: /api/actions/crm.email_templates.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.email_templates.update
+    route: /api/actions/crm.email_templates.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.email_templates.toggle
+    route: /api/actions/crm.email_templates.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.forecast_snapshots.capture
+    route: /api/actions/crm.forecast_snapshots.capture
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.opportunity_lines.create
+    route: /api/actions/crm.opportunity_lines.create
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.opportunity_lines.update
+    route: /api/actions/crm.opportunity_lines.update
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.opportunity_lines.remove
+    route: /api/actions/crm.opportunity_lines.remove
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.contact_preferences.create
+    route: /api/actions/crm.contact_preferences.create
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.contact_preferences.update
+    route: /api/actions/crm.contact_preferences.update
+    method: POST
+    permission: crm.manage
     preview: false
   - id: crm.leads.qualify
     route: /api/actions/crm.leads.qualify
@@ -189,6 +329,11 @@ operations:
     preview: false
   - id: crm.activities.complete_batch
     route: /api/actions/crm.activities.complete_batch
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.escalation_remediate
+    route: /api/actions/crm.activities.escalation_remediate
     method: POST
     permission: crm.write
     preview: false

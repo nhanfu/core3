@@ -1,0 +1,42 @@
+title: Qualification Quality
+page: { id: qualification-quality, breadcrumb: [CRM, Qualification Quality], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_qualification_completeness
+    single: false
+    permission: crm.read
+    query: "SELECT l.id, l.name, l.partner_name, l.email, l.phone, l.source, l.salesperson, l.team, l.expected_revenue, CASE WHEN NULLIF(TRIM(COALESCE(l.partner_name, '')), '') IS NULL THEN 'Missing contact' WHEN NULLIF(TRIM(COALESCE(l.source, '')), '') IS NULL THEN 'Missing source' WHEN NULLIF(TRIM(COALESCE(l.salesperson, '')), '') IS NULL THEN 'Missing owner' WHEN COALESCE(l.expected_revenue, 0) <= 0 THEN 'Missing revenue' ELSE 'Complete' END AS completeness_status FROM crm_leads l WHERE l.active = true AND l.stage = 'New' ORDER BY completeness_status, l.name"
+  - id: crm_qualification_outcomes
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.source, ''), 'Unknown') AS source, COUNT(*) AS total_leads, COUNT(*) FILTER (WHERE l.stage = 'Qualified') AS qualified_count, COUNT(*) FILTER (WHERE l.stage = 'New') AS unqualified_count FROM crm_leads l WHERE l.active = true AND l.stage IN ('New', 'Qualified') GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.source, ''), 'Unknown') ORDER BY qualified_count DESC, team, source"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_qualification_completeness
+    columns:
+      - { field: name, label: Lead, type: PrimaryEntityCell }
+      - { field: partner_name, label: Contact }
+      - { field: source, label: Source }
+      - { field: salesperson, label: Owner }
+      - { field: expected_revenue, label: Expected revenue }
+      - { field: completeness_status, label: Completeness, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_qualification_lead, label: Open lead, permission: crm.read, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_qualification_outcomes
+    columns:
+      - { field: team, label: Sales team }
+      - { field: source, label: Source }
+      - { field: total_leads, label: Total }
+      - { field: qualified_count, label: Qualified }
+      - { field: unqualified_count, label: Unqualified }
+    row_key: source
+actions:
+  - id: open_qualification_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

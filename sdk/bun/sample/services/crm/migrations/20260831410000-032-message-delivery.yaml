@@ -1,0 +1,9 @@
+version: 0.0.32
+type:
+  postgres:
+    up: "ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS delivery_status VARCHAR; ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS delivery_attempts INTEGER;"
+    down: "ALTER TABLE crm_activities DROP COLUMN IF EXISTS delivery_attempts; ALTER TABLE crm_activities DROP COLUMN IF EXISTS delivery_status;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

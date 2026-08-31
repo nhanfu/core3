@@ -1,0 +1,29 @@
+title: Follow-up Effectiveness
+page: { id: followup-effectiveness, breadcrumb: [Sales, CRM, Follow-up Effectiveness], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_followup_effectiveness
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(DISTINCT l.id) AS leads, COUNT(a.id) FILTER (WHERE a.state = 'done') AS completed_followups, COUNT(a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_followups, COUNT(DISTINCT l.id) FILTER (WHERE l.stage = 'Won') AS won_opportunities, COUNT(DISTINCT l.id) FILTER (WHERE l.stage = 'Lost') AS lost_opportunities FROM crm_leads l LEFT JOIN crm_activities a ON a.lead_id = l.id AND a.activity_type NOT IN ('assignment', 'merge', 'commercial') WHERE l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY overdue_followups DESC, completed_followups DESC, team, salesperson"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_followup_effectiveness
+    columns:
+      - { field: team, label: Sales team, type: PrimaryEntityCell }
+      - { field: salesperson, label: Salesperson }
+      - { field: leads, label: Leads }
+      - { field: completed_followups, label: Completed follow-ups }
+      - { field: overdue_followups, label: Overdue follow-ups }
+      - { field: won_opportunities, label: Won }
+      - { field: lost_opportunities, label: Lost }
+    row_key: team
+    row_actions: menu
+    actions:
+      - { id: open_effectiveness_pipeline, label: Open pipeline, permission: crm.read, variant: ghost }
+actions:
+  - id: open_effectiveness_pipeline
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { team: '{row.team}', salesperson: '{row.salesperson}' }

@@ -1,0 +1,9 @@
+version: 0.0.28
+type:
+  postgres:
+    up: "CREATE TABLE IF NOT EXISTS crm_contact_preferences (contact_id VARCHAR PRIMARY KEY, allow_email BOOLEAN NOT NULL DEFAULT true, allow_phone BOOLEAN NOT NULL DEFAULT true);"
+    down: "DROP TABLE IF EXISTS crm_contact_preferences;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

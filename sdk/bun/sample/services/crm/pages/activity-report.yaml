@@ -1,0 +1,124 @@
+title: CRM Activity Report
+page: { id: crm-activity-report, breadcrumb: [Sales, CRM, Reporting, Activities], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_activity_report_totals
+    single: true
+    permission: crm.read
+    query: "SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned, COUNT(*) FILTER (WHERE a.state = 'done') AS completed, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR a.assigned_to = :assigned_to)"
+  - id: crm_activity_report_by_type
+    single: false
+    permission: crm.read
+    query: "SELECT a.activity_type, COUNT(*) AS total, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned, COUNT(*) FILTER (WHERE a.state = 'done') AS completed, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR a.assigned_to = :assigned_to) GROUP BY a.activity_type ORDER BY total DESC, a.activity_type"
+  - id: crm_activity_report_by_team
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COUNT(*) AS total, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned, COUNT(*) FILTER (WHERE a.state = 'done') AS completed, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR a.assigned_to = :assigned_to) GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team') ORDER BY total DESC, team"
+  - id: crm_activity_report_by_assignee
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS assigned_to, COUNT(*) AS total, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned, COUNT(*) FILTER (WHERE a.state = 'done') AS completed, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR a.assigned_to = :assigned_to) GROUP BY COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') ORDER BY total DESC, assigned_to"
+  - id: crm_activity_report_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_activity_report_assignees
+    single: false
+    permission: crm.read
+    query: "SELECT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true UNION SELECT DISTINCT assigned_to AS value, assigned_to AS label FROM crm_activities WHERE NULLIF(TRIM(assigned_to), '') IS NOT NULL ORDER BY value"
+  - id: crm_assignment_audit_report
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, a.activity_type, a.summary, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, CAST(a.completed_at AS VARCHAR) AS occurred_at, l.name AS lead_name, l.team, l.salesperson FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type IN ('assignment', 'merge', 'commercial') AND (:team IS NULL OR l.team = :team) AND (:assigned_to IS NULL OR l.salesperson = :assigned_to) ORDER BY a.completed_at DESC, a.id DESC"
+components:
+  - type: ListToolbar
+    source: crm_activity_report_totals
+    filter_sources: [crm_activity_report_totals, crm_activity_report_by_type, crm_activity_report_by_team, crm_activity_report_by_assignee]
+    filters:
+      - { field: team, label: Sales team, options_source: crm_activity_report_teams }
+      - { field: assigned_to, label: Assignee, options_source: crm_activity_report_assignees }
+  - type: StatRow
+    source: crm_activity_report_totals
+    title: CRM activities
+    stats:
+      - { label: Total, field: total }
+      - { label: Planned, field: planned }
+      - { label: Completed, field: completed }
+      - { label: Overdue, field: overdue }
+  - type: Chart
+    source: crm_activity_report_by_type
+    title: Activities by type
+    label_field: activity_type
+    value_field: total
+    variant: bar
+  - type: ListView
+    variant: odoo
+    source: crm_activity_report_by_type
+    columns:
+      - { field: activity_type, label: Activity type, type: PrimaryEntityCell }
+      - { field: total, label: Total }
+      - { field: planned, label: Planned }
+      - { field: completed, label: Completed }
+      - { field: overdue, label: Overdue }
+    row_key: activity_type
+    row_actions: menu
+    actions: [{ id: drilldown_activity_type, label: Open activities, permission: crm.read, variant: ghost }]
+  - type: ListView
+    variant: odoo
+    source: crm_activity_report_by_team
+    columns:
+      - { field: team, label: Sales team, type: PrimaryEntityCell }
+      - { field: total, label: Total }
+      - { field: planned, label: Planned }
+      - { field: completed, label: Completed }
+      - { field: overdue, label: Overdue }
+    row_key: team
+    row_actions: menu
+    actions: [{ id: drilldown_activity_team, label: Open activities, permission: crm.read, variant: ghost }]
+  - type: ListView
+    variant: odoo
+    source: crm_activity_report_by_assignee
+    columns:
+      - { field: assigned_to, label: Assignee, type: PrimaryEntityCell }
+      - { field: total, label: Total }
+      - { field: planned, label: Planned }
+      - { field: completed, label: Completed }
+      - { field: overdue, label: Overdue }
+    row_key: assigned_to
+    row_actions: menu
+    actions: [{ id: drilldown_activity_assignee, label: Open activities, permission: crm.read, variant: ghost }]
+  - type: ListView
+    variant: odoo
+    source: crm_assignment_audit_report
+    columns:
+      - { field: occurred_at, label: Occurred }
+      - { field: activity_type, label: Event, type: StatusChip }
+      - { field: lead_name, label: Lead, type: PrimaryEntityCell }
+      - { field: team, label: Sales team }
+      - { field: salesperson, label: Assignee }
+      - { field: actor_name, label: Actor }
+      - { field: summary, label: Details }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_assignment_audit_lead, label: Open lead, permission: crm.read, variant: ghost }
+actions:
+  - id: drilldown_activity_type
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm-activities
+    params: { activity_type: '{row.activity_type}' }
+  - id: drilldown_activity_team
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm-activities
+    params: { team: '{row.team}' }
+  - id: drilldown_activity_assignee
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm-activities
+    params: { assigned_to: '{row.assigned_to}' }
+  - id: open_assignment_audit_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

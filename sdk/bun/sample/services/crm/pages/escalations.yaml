@@ -1,0 +1,73 @@
+title: CRM Escalations
+page: { id: crm-escalations, breadcrumb: [CRM, Escalations], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_overdue_escalations
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, l.name AS opportunity, l.team, a.activity_type, a.summary, a.assigned_to, CAST(a.due_date AS VARCHAR) AS due_date, a.escalation_state, CAST(a.escalated_at AS VARCHAR) AS escalated_at, DATE_DIFF('day', a.due_date, CURRENT_DATE) AS overdue_days FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND a.state = 'planned' AND a.due_date < CURRENT_DATE ORDER BY overdue_days DESC, a.due_date, a.id"
+  - id: crm_escalation_summary
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS assigned_to, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_count, COUNT(*) FILTER (WHERE a.escalation_state = 'escalated') AS escalated_count, COUNT(*) FILTER (WHERE a.escalation_state = 'rescheduled') AS rescheduled_count, COUNT(*) FILTER (WHERE a.state = 'done' AND a.escalation_state = 'cleared') AS cleared_count FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') ORDER BY overdue_count DESC, team, assigned_to"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_overdue_escalations
+    columns:
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: team, label: Team }
+      - { field: activity_type, label: Activity }
+      - { field: summary, label: Summary }
+      - { field: assigned_to, label: Assignee }
+      - { field: due_date, label: Due date }
+      - { field: overdue_days, label: Overdue days }
+      - { field: escalation_state, label: Escalation, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: remediate_crm_escalation, label: Reschedule escalation, permission: crm.write, variant: primary }
+      - { id: open_escalation_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_escalation_summary
+    columns:
+      - { field: team, label: Team }
+      - { field: assigned_to, label: Assignee }
+      - { field: overdue_count, label: Overdue }
+      - { field: escalated_count, label: Escalated }
+      - { field: rescheduled_count, label: Rescheduled }
+      - { field: cleared_count, label: Cleared }
+    row_key: assigned_to
+actions:
+  - id: remediate_crm_escalation
+    type: server_form
+    permission: crm.write
+    title: Reschedule CRM escalation
+    action: crm.activities.escalation_remediate
+    handler: yaml_mutation
+    operation: escalation_remediate
+    prefill: row
+    refresh: [crm_overdue_escalations]
+    mutation:
+      operation: update
+      table: crm_activities
+      fields: [due_date, assigned_to, escalation_state]
+      required: [due_date]
+      defaults: { escalation_state: rescheduled }
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.id = :id AND a.state = 'planned' AND l.active = true AND l.stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Only overdue activities on open opportunities can be rescheduled
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:assigned_to, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_team_members WHERE user_name = :assigned_to AND active = true)"
+          status: 400
+          message: Select an active assignee
+      timestamps: true
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: due_date, label: New due date, type: date, required: true }
+      - { field: assigned_to, label: Assignee, type: select, options_source: crm_activity_assignee_lookup }
+  - id: open_escalation_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

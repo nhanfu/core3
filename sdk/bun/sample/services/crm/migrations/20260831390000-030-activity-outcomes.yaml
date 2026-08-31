@@ -1,0 +1,9 @@
+version: 0.0.30
+type:
+  postgres:
+    up: "ALTER TABLE crm_activities ADD COLUMN IF NOT EXISTS outcome_note VARCHAR;"
+    down: "ALTER TABLE crm_activities DROP COLUMN IF EXISTS outcome_note;"
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

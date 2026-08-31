@@ -1,0 +1,12 @@
+version: 0.0.21
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_campaigns (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL, active BOOLEAN NOT NULL DEFAULT true);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_crm_campaigns_name ON crm_campaigns(name);
+    down: |
+      DROP TABLE IF EXISTS crm_campaigns;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

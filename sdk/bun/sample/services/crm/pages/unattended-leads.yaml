@@ -9,13 +9,14 @@ datasources:
         l.salesperson, l.team, l.stage, l.probability, l.expected_revenue,
         CAST(l.expected_closing AS VARCHAR) AS expected_closing,
         CASE WHEN EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
-             THEN 'Past due' ELSE 'No planned activity' END AS attention
-      FROM crm_leads l
+             THEN 'Past due' WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - l.created_at)) / 3600 >= COALESCE(t.response_hours, 24) THEN 'Response overdue' ELSE 'No planned activity' END AS attention
+      FROM crm_leads l LEFT JOIN crm_teams t ON t.name = l.team AND t.active = true
       WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')
         AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.partner_name ILIKE '%' || :q || '%')
         AND (
           NOT EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned')
           OR EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
+          OR EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - l.created_at)) / 3600 >= COALESCE(t.response_hours, 24)
         )
       ORDER BY attention, l.updated_at DESC
 components:
@@ -33,7 +34,10 @@ components:
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: expected_closing, label: Expected closing }
     row_key: id
+    selectable: true
     row_actions: menu
+    bulk_actions:
+      - { id: archive_stale_leads, label: Archive selected, permission: crm.write }
     actions:
       - { id: assign_unattended_lead_to_me, label: Assign to me, permission: crm.write, variant: secondary }
       - { id: open_unattended_lead_customer, label: Open customer, permission: base.contacts.read, variant: secondary, show_if: "!!row.partner_id" }
@@ -42,6 +46,22 @@ components:
     row_double_click_action: view_unattended_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
 actions:
+  - id: archive_stale_leads
+    type: server
+    permission: crm.write
+    action: crm.leads.archive_stale
+    handler: yaml_mutation
+    operation: archive_stale
+    refresh: [crm_unattended_leads]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND active = true AND stage NOT IN ('Won', 'Lost')) = (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds)"
+          status: 409
+          message: Select only active open leads
+      steps:
+        - query: "UPDATE crm_leads SET active = false, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id IN :selectedIds AND active = true AND stage NOT IN ('Won', 'Lost')"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at, created_by) SELECT gen_random_uuid(), id, 'archive', 'Stale opportunity archived', 'done', CURRENT_TIMESTAMP, :current_user_name FROM crm_leads WHERE id IN :selectedIds AND active = false AND stage NOT IN ('Won', 'Lost') AND NOT EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = crm_leads.id AND a.activity_type = 'archive' AND a.summary = 'Stale opportunity archived')"
+      result: { query: "SELECT * FROM crm_leads WHERE id IN :selectedIds ORDER BY id" }
   - id: open_unattended_lead_customer
     type: navigate
     permission: base.contacts.read

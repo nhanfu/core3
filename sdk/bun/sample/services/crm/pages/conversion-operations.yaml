@@ -1,0 +1,63 @@
+title: Conversion Operations
+page: { id: conversion-operations, breadcrumb: [Sales, CRM, Conversion Operations], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_conversion_operations
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, l.name AS lead_name, l.type, l.stage, l.partner_name, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, a.summary, CAST(COALESCE(a.completed_at, a.created_at) AS VARCHAR) AS occurred_at FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type = 'stage_change' AND (a.summary ILIKE '%convert%' OR a.summary ILIKE '%customer%') ORDER BY COALESCE(a.completed_at, a.created_at) DESC, a.id DESC"
+  - id: crm_conversion_exceptions
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, l.name AS lead_name, l.stage, l.partner_name, COALESCE(NULLIF(a.created_by, ''), 'CRM') AS actor_name, a.summary AS reason, CAST(COALESCE(a.completed_at, a.created_at) AS VARCHAR) AS occurred_at FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE a.activity_type IN ('conversion_blocked', 'conversion_failed') ORDER BY COALESCE(a.completed_at, a.created_at) DESC, a.id DESC"
+  - id: crm_conversion_operation_totals
+    single: true
+    permission: crm.read
+    query: "SELECT COUNT(*) FILTER (WHERE a.activity_type = 'stage_change' AND (a.summary ILIKE '%convert%' OR a.summary ILIKE '%customer%')) AS converted, COUNT(*) FILTER (WHERE a.activity_type IN ('conversion_blocked', 'conversion_failed')) AS exceptions, COUNT(DISTINCT a.lead_id) AS affected_leads FROM crm_activities a"
+components:
+  - type: StatRow
+    source: crm_conversion_operation_totals
+    title: Conversion operations
+    stats:
+      - { label: Converted, field: converted }
+      - { label: Exceptions, field: exceptions }
+      - { label: Affected leads, field: affected_leads }
+  - type: ListView
+    variant: odoo
+    source: crm_conversion_operations
+    columns:
+      - { field: occurred_at, label: Occurred }
+      - { field: lead_name, label: Source lead, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: type, label: Current type }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: summary, label: Outcome }
+      - { field: actor_name, label: Actor }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_conversion_source, label: Open source lead, permission: crm.read, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_conversion_exceptions
+    columns:
+      - { field: occurred_at, label: Occurred }
+      - { field: lead_name, label: Lead, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: reason, label: Reason }
+      - { field: actor_name, label: Actor }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_conversion_exception, label: Open lead, permission: crm.read, variant: ghost }
+actions:
+  - id: open_conversion_source
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }
+  - id: open_conversion_exception
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

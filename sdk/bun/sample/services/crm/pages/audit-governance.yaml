@@ -1,0 +1,30 @@
+title: CRM Audit Governance
+page: { id: audit-governance, breadcrumb: [CRM, Audit Governance], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_opportunity_audit
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, l.name AS opportunity, a.activity_type AS event_type, a.summary AS detail, COALESCE(NULLIF(a.created_by, ''), NULLIF(a.assigned_to, ''), 'CRM') AS actor_name, CAST(COALESCE(a.completed_at, a.created_at) AS VARCHAR) AS occurred_at, CASE WHEN h.lead_id IS NOT NULL THEN 'Held' WHEN l.active = false THEN 'Retention eligible' ELSE 'Retained' END AS retention_status FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id LEFT JOIN crm_retention_holds h ON h.lead_id = l.id WHERE (:lead_id IS NULL OR a.lead_id = :lead_id) ORDER BY COALESCE(a.completed_at, a.created_at) DESC, a.id DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_opportunity_audit
+    search: { label: Search audit events, placeholder: Search opportunity or audit detail... }
+    columns:
+      - { field: occurred_at, label: Occurred }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: event_type, label: Event }
+      - { field: detail, label: Detail }
+      - { field: actor_name, label: Actor }
+      - { field: retention_status, label: Retention, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_audit_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+      - { id: crm.audit_governance.export, label: Export audit, permission: crm.read, variant: secondary }
+actions:
+  - id: open_audit_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

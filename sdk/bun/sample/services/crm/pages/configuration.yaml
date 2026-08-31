@@ -33,6 +33,42 @@ datasources:
     single: false
     permission: crm.manage
     query: "SELECT id, field, operator, comparison_value, points, active FROM crm_scoring_rules ORDER BY active DESC, field, id"
+  - id: crm_recurring_plan_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT id, name, interval_unit, interval_count, active FROM crm_recurring_plans ORDER BY active DESC, name"
+  - id: crm_campaign_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT id, name, active FROM crm_campaigns ORDER BY active DESC, name"
+  - id: crm_stage_team_scope
+    single: false
+    permission: crm.manage
+    query: "SELECT st.stage_id, s.name AS stage, st.team_id, t.name AS team FROM crm_stage_teams st JOIN crm_stages s ON s.id = st.stage_id JOIN crm_teams t ON t.id = st.team_id ORDER BY s.sequence, t.name"
+  - id: crm_stage_scope_stage_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT id AS value, name AS label FROM crm_stages WHERE active = true ORDER BY sequence, name"
+  - id: crm_stage_scope_team_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT id AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_assignment_rule_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT r.id, r.sequence, r.field, r.operator, r.comparison_value, r.team_id, t.name AS team, r.user_name, r.active FROM crm_assignment_rules r LEFT JOIN crm_teams t ON t.id = r.team_id ORDER BY r.active DESC, r.sequence, r.id"
+  - id: crm_assignment_rule_team_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT id AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_assignment_rule_user_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT DISTINCT user_name AS value, user_name AS label FROM crm_team_members WHERE active = true ORDER BY user_name"
+  - id: crm_email_template_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT id, name, subject, body, active FROM crm_email_templates ORDER BY active DESC, name"
 components:
   - type: ListView
     variant: odoo
@@ -71,6 +107,63 @@ components:
       - { id: toggle_crm_scoring_rule, label: Toggle active, permission: crm.manage, variant: ghost }
   - type: ListView
     variant: odoo
+    source: crm_recurring_plan_configuration
+    create_action: create_crm_recurring_plan
+    create_label: New recurring plan
+    columns:
+      - { field: name, label: Plan, type: PrimaryEntityCell }
+      - { field: interval_count, label: Every, align: right }
+      - { field: interval_unit, label: Unit }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_crm_recurring_plan, label: Edit plan, permission: crm.manage, variant: ghost }
+      - { id: toggle_crm_recurring_plan, label: Toggle active, permission: crm.manage, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_campaign_configuration
+    create_action: create_crm_campaign
+    create_label: New campaign
+    columns:
+      - { field: name, label: Campaign, type: PrimaryEntityCell }
+      - { field: active, label: Active, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_crm_campaign, label: Edit campaign, permission: crm.manage, variant: ghost }
+      - { id: toggle_crm_campaign, label: Toggle active, permission: crm.manage, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_stage_team_scope
+    columns:
+      - { field: stage, label: Stage, type: PrimaryEntityCell }
+      - { field: team, label: Sales team }
+    row_key: stage_id
+    create_action: create_crm_stage_scope
+    actions:
+      - { id: remove_crm_stage_scope, label: Remove team scope, permission: crm.manage, variant: danger }
+  - type: ListView
+    variant: odoo
+    source: crm_assignment_rule_configuration
+    create_action: create_crm_assignment_rule
+    create_label: New assignment rule
+    columns:
+      - { field: sequence, label: Priority, align: right }
+      - { field: field, label: Lead field, type: PrimaryEntityCell }
+      - { field: operator, label: Operator }
+      - { field: comparison_value, label: Match }
+      - { field: team, label: Sales team }
+      - { field: user_name, label: Assignee }
+      - { field: active, label: Active, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_crm_assignment_rule, label: Edit rule, permission: crm.manage, variant: ghost }
+      - { id: toggle_crm_assignment_rule, label: Toggle active, permission: crm.manage, variant: ghost }
+  - type: ListView
+    variant: odoo
     source: crm_activity_type_configuration
     create_action: create_crm_activity_type
     create_label: New activity type
@@ -83,6 +176,21 @@ components:
     actions:
       - { id: edit_crm_activity_type, label: Edit activity type, permission: crm.manage, variant: ghost }
       - { id: toggle_crm_activity_type, label: Toggle active, permission: crm.manage, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_email_template_configuration
+    create_action: create_crm_email_template
+    create_label: New email template
+    columns:
+      - { field: name, label: Template, type: PrimaryEntityCell }
+      - { field: subject, label: Subject }
+      - { field: body, label: Body }
+      - { field: active, label: Active, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_crm_email_template, label: Edit template, permission: crm.manage, variant: ghost }
+      - { id: toggle_crm_email_template, label: Toggle active, permission: crm.manage, variant: ghost }
   - type: ListView
     variant: odoo
     source: crm_source_configuration
@@ -145,6 +253,182 @@ components:
       - { id: edit_crm_activity_plan_step, label: Edit plan step, permission: crm.manage, variant: ghost }
       - { id: toggle_crm_activity_plan_step, label: Toggle active, permission: crm.manage, variant: ghost }
 actions:
+  - id: create_crm_stage_scope
+    type: server_form
+    permission: crm.manage
+    title: Assign stage to sales team
+    action: crm.stage_teams.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_stage_team_scope]
+    mutation:
+      operation: insert
+      table: crm_stage_teams
+      fields: [stage_id, team_id]
+      required: [stage_id, team_id]
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_stages WHERE id = :stage_id AND active = true"
+          status: 400
+          message: Select an active stage
+        - query: "SELECT 1 AS ok FROM crm_teams WHERE id = :team_id AND active = true"
+          status: 400
+          message: Select an active sales team
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_stage_teams WHERE stage_id = :stage_id AND team_id = :team_id)"
+          status: 409
+          message: This stage is already assigned to the team
+      result: { query: "SELECT * FROM crm_stage_teams WHERE stage_id = :stage_id AND team_id = :team_id" }
+    fields:
+      - { field: stage_id, label: Stage, type: select, options_source: crm_stage_scope_stage_lookup, required: true }
+      - { field: team_id, label: Sales team, type: select, options_source: crm_stage_scope_team_lookup, required: true }
+  - id: remove_crm_stage_scope
+    type: server
+    permission: crm.manage
+    action: crm.stage_teams.remove
+    handler: yaml_mutation
+    operation: delete
+    refresh: [crm_stage_team_scope]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok FROM crm_stage_teams WHERE stage_id = :stage_id AND team_id = :team_id"
+          status: 404
+          message: Stage team scope no longer exists
+      steps:
+        - query: "DELETE FROM crm_stage_teams WHERE stage_id = :stage_id AND team_id = :team_id"
+      result: { query: "SELECT :stage_id AS stage_id, :team_id AS team_id, true AS removed" }
+  - id: create_crm_campaign
+    type: server_form
+    permission: crm.manage
+    title: New campaign
+    action: crm.campaigns.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_campaign_configuration]
+    mutation:
+      operation: insert
+      table: crm_campaigns
+      fields: [name, active]
+      required: [name]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120 AND NOT EXISTS (SELECT 1 FROM crm_campaigns WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))"
+          status: 409
+          message: Campaign already exists
+      result: { query: "SELECT * FROM crm_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Campaign, type: text, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_crm_campaign
+    type: server_form
+    permission: crm.manage
+    title: Edit campaign
+    action: crm.campaigns.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_campaign_configuration]
+    mutation:
+      operation: update
+      table: crm_campaigns
+      fields: [name, active]
+      required: [name]
+      guards:
+        - query: "SELECT id FROM crm_campaigns WHERE id = :id"
+          status: 404
+          message: Campaign no longer exists
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120 AND NOT EXISTS (SELECT 1 FROM crm_campaigns WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)"
+          status: 409
+          message: Campaign already exists
+      result: { query: "SELECT * FROM crm_campaigns WHERE id = :id" }
+    fields:
+      - { field: name, label: Campaign, type: text, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: toggle_crm_campaign
+    type: server
+    permission: crm.manage
+    action: crm.campaigns.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_campaign_configuration]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_campaigns WHERE id = :id"
+          status: 404
+          message: Campaign no longer exists
+      steps:
+        - query: "UPDATE crm_campaigns SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_campaigns WHERE id = :id" }
+  - id: create_crm_recurring_plan
+    type: server_form
+    permission: crm.manage
+    title: New recurring plan
+    action: crm.recurring_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_recurring_plan_configuration]
+    mutation:
+      operation: insert
+      table: crm_recurring_plans
+      fields: [name, interval_unit, interval_count, active]
+      required: [name, interval_unit, interval_count]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND NOT EXISTS (SELECT 1 FROM crm_recurring_plans WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))"
+          status: 409
+          message: Recurring plan already exists
+        - query: "SELECT 1 AS ok WHERE :interval_unit IN ('day', 'week', 'month', 'year') AND CAST(:interval_count AS INTEGER) BETWEEN 1 AND 120"
+          status: 400
+          message: Select a valid recurring interval
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan, type: text, required: true }
+      - { field: interval_unit, label: Unit, type: select, options: [day, week, month, year], required: true }
+      - { field: interval_count, label: Every, type: number, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_crm_recurring_plan
+    type: server_form
+    permission: crm.manage
+    title: Edit recurring plan
+    action: crm.recurring_plans.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_recurring_plan_configuration]
+    mutation:
+      operation: update
+      table: crm_recurring_plans
+      fields: [name, interval_unit, interval_count, active]
+      required: [name, interval_unit, interval_count]
+      guards:
+        - query: "SELECT id FROM crm_recurring_plans WHERE id = :id"
+          status: 404
+          message: Recurring plan no longer exists
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 80 AND NOT EXISTS (SELECT 1 FROM crm_recurring_plans WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)"
+          status: 409
+          message: Recurring plan already exists
+        - query: "SELECT 1 AS ok WHERE :interval_unit IN ('day', 'week', 'month', 'year') AND CAST(:interval_count AS INTEGER) BETWEEN 1 AND 120"
+          status: 400
+          message: Select a valid recurring interval
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Plan, type: text, required: true }
+      - { field: interval_unit, label: Unit, type: select, options: [day, week, month, year], required: true }
+      - { field: interval_count, label: Every, type: number, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: toggle_crm_recurring_plan
+    type: server
+    permission: crm.manage
+    action: crm.recurring_plans.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_recurring_plan_configuration]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_recurring_plans WHERE id = :id"
+          status: 404
+          message: Recurring plan no longer exists
+      steps:
+        - query: "UPDATE crm_recurring_plans SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_recurring_plans WHERE id = :id" }
   - id: create_crm_scoring_rule
     type: server_form
     permission: crm.manage
@@ -207,6 +491,149 @@ actions:
       steps:
         - query: "UPDATE crm_scoring_rules SET active = NOT active WHERE id = :id"
       result: { query: "SELECT * FROM crm_scoring_rules WHERE id = :id" }
+  - id: create_crm_assignment_rule
+    type: server_form
+    permission: crm.manage
+    title: New lead assignment rule
+    action: crm.assignment_rules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_assignment_rule_configuration]
+    mutation:
+      operation: insert
+      table: crm_assignment_rules
+      fields: [sequence, field, operator, comparison_value, team_id, user_name, active]
+      required: [field, operator, user_name]
+      defaults: { sequence: 10, active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE :field IN ('source', 'type', 'priority', 'team') AND :operator IN ('equals', 'present')"
+          status: 400
+          message: Assignment rule field or operator is invalid
+        - query: "SELECT 1 AS ok FROM crm_team_members m WHERE m.user_name = :user_name AND m.active = true AND (:team_id IS NULL OR m.team_id = :team_id)"
+          status: 400
+          message: Select an active member of the selected team
+    fields:
+      - { field: sequence, label: Priority, type: number, default: 10 }
+      - { field: field, label: Lead field, type: select, options: [{ value: source, label: Lead source }, { value: type, label: Lead type }, { value: priority, label: Priority }, { value: team, label: Sales team }], required: true }
+      - { field: operator, label: Operator, type: select, options: [{ value: equals, label: Equals }, { value: present, label: Is present }], required: true }
+      - { field: comparison_value, label: Match value, type: text }
+      - { field: team_id, label: Sales team, type: select, options_source: crm_assignment_rule_team_lookup }
+      - { field: user_name, label: Assignee, type: select, options_source: crm_assignment_rule_user_lookup, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_crm_assignment_rule
+    type: server_form
+    permission: crm.manage
+    title: Edit lead assignment rule
+    action: crm.assignment_rules.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_assignment_rule_configuration]
+    mutation:
+      operation: update
+      table: crm_assignment_rules
+      fields: [sequence, field, operator, comparison_value, team_id, user_name, active]
+      required: [field, operator, user_name]
+      guards:
+        - query: "SELECT id FROM crm_assignment_rules WHERE id = :id"
+          status: 404
+          message: Assignment rule no longer exists
+        - query: "SELECT 1 AS ok WHERE :field IN ('source', 'type', 'priority', 'team') AND :operator IN ('equals', 'present')"
+          status: 400
+          message: Assignment rule field or operator is invalid
+        - query: "SELECT 1 AS ok FROM crm_team_members m WHERE m.user_name = :user_name AND m.active = true AND (:team_id IS NULL OR m.team_id = :team_id)"
+          status: 400
+          message: Select an active member of the selected team
+    fields:
+      - { field: sequence, label: Priority, type: number, required: true }
+      - { field: field, label: Lead field, type: select, options: [{ value: source, label: Lead source }, { value: type, label: Lead type }, { value: priority, label: Priority }, { value: team, label: Sales team }], required: true }
+      - { field: operator, label: Operator, type: select, options: [{ value: equals, label: Equals }, { value: present, label: Is present }], required: true }
+      - { field: comparison_value, label: Match value, type: text }
+      - { field: team_id, label: Sales team, type: select, options_source: crm_assignment_rule_team_lookup }
+      - { field: user_name, label: Assignee, type: select, options_source: crm_assignment_rule_user_lookup, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: toggle_crm_assignment_rule
+    type: server
+    permission: crm.manage
+    action: crm.assignment_rules.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_assignment_rule_configuration]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_assignment_rules WHERE id = :id"
+          status: 404
+          message: Assignment rule no longer exists
+      steps:
+        - query: "UPDATE crm_assignment_rules SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_assignment_rules WHERE id = :id" }
+  - id: create_crm_email_template
+    type: server_form
+    permission: crm.manage
+    title: New CRM email template
+    action: crm.email_templates.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_email_template_configuration]
+    mutation:
+      operation: insert
+      table: crm_email_templates
+      fields: [name, subject, body, active]
+      required: [name, subject, body]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120 AND length(trim(CAST(:subject AS VARCHAR))) BETWEEN 1 AND 255 AND length(trim(CAST(:body AS VARCHAR))) BETWEEN 1 AND 10000 AND NOT EXISTS (SELECT 1 FROM crm_email_templates WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))))"
+          status: 400
+          message: Template name and content must be valid and unique
+        - query: "SELECT 1 AS ok WHERE CAST(:body AS VARCHAR) NOT LIKE '%{{%' OR CAST(:body AS VARCHAR) LIKE '%{{lead_name}}%' OR CAST(:body AS VARCHAR) LIKE '%{{partner_name}}%' OR CAST(:body AS VARCHAR) LIKE '%{{salesperson}}%'"
+          status: 400
+          message: Use only declared lead placeholders
+    fields:
+      - { field: name, label: Template, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body, label: Body, type: textarea, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_crm_email_template
+    type: server_form
+    permission: crm.manage
+    title: Edit CRM email template
+    action: crm.email_templates.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_email_template_configuration]
+    mutation:
+      operation: update
+      table: crm_email_templates
+      fields: [name, subject, body, active]
+      required: [name, subject, body]
+      guards:
+        - query: "SELECT id FROM crm_email_templates WHERE id = :id"
+          status: 404
+          message: Email template no longer exists
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_email_templates WHERE lower(name) = lower(trim(CAST(:name AS VARCHAR))) AND id <> :id)"
+          status: 409
+          message: Template name is already used
+    fields:
+      - { field: name, label: Template, type: text, required: true }
+      - { field: subject, label: Subject, type: text, required: true }
+      - { field: body, label: Body, type: textarea, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: toggle_crm_email_template
+    type: server
+    permission: crm.manage
+    action: crm.email_templates.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_email_template_configuration]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_email_templates WHERE id = :id"
+          status: 404
+          message: Email template no longer exists
+      steps:
+        - query: "UPDATE crm_email_templates SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_email_templates WHERE id = :id" }
   - id: create_crm_stage
     type: server_form
     permission: crm.manage

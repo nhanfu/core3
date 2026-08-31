@@ -1,0 +1,73 @@
+title: Contact Communication Preferences
+page: { id: contact-preferences, breadcrumb: [Sales, CRM, Communication Preferences], auth: { require: [crm.manage] } }
+datasources:
+  - id: crm_contact_preferences
+    single: false
+    permission: crm.manage
+    query: "SELECT p.contact_id, c.name AS contact_name, c.email, c.phone, p.allow_email, p.allow_phone FROM crm_contact_preferences p JOIN base_contacts c ON c.id = p.contact_id WHERE c.active = true ORDER BY c.name"
+  - id: crm_preference_contacts
+    single: false
+    permission: crm.manage
+    query: "SELECT id AS value, name AS label FROM base_contacts WHERE active = true ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_contact_preferences
+    create_action: create_contact_preference
+    create_label: New preference
+    columns:
+      - { field: contact_name, label: Contact, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: allow_email, label: Email allowed, type: StatusChip }
+      - { field: allow_phone, label: Phone allowed, type: StatusChip }
+    row_key: contact_id
+    row_actions: menu
+    actions:
+      - { id: toggle_contact_preference, label: Toggle channels, permission: crm.manage, variant: ghost }
+actions:
+  - id: create_contact_preference
+    type: server_form
+    permission: crm.manage
+    title: Set communication preferences
+    action: crm.contact_preferences.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_contact_preferences]
+    mutation:
+      operation: insert
+      table: crm_contact_preferences
+      fields: [contact_id, allow_email, allow_phone]
+      required: [contact_id]
+      defaults: { allow_email: true, allow_phone: true }
+      guards:
+        - query: "SELECT id FROM base_contacts WHERE id = :contact_id AND active = true"
+          status: 400
+          message: Select an active contact
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_contact_preferences WHERE contact_id = :contact_id)"
+          status: 409
+          message: Communication preferences already exist
+    fields:
+      - { field: contact_id, label: Contact, type: select, options_source: crm_preference_contacts, required: true }
+      - { field: allow_email, label: Allow email, type: checkbox, default: true }
+      - { field: allow_phone, label: Allow phone, type: checkbox, default: true }
+  - id: toggle_contact_preference
+    type: server_form
+    permission: crm.manage
+    title: Update communication preferences
+    action: crm.contact_preferences.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_contact_preferences]
+    mutation:
+      operation: update
+      table: crm_contact_preferences
+      fields: [allow_email, allow_phone]
+      guards:
+        - query: "SELECT contact_id FROM crm_contact_preferences WHERE contact_id = :contact_id"
+          status: 404
+          message: Communication preferences no longer exist
+    fields:
+      - { field: allow_email, label: Allow email, type: checkbox }
+      - { field: allow_phone, label: Allow phone, type: checkbox }

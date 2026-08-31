@@ -1,0 +1,66 @@
+title: Customer Opportunities
+page: { id: customer-opportunities, breadcrumb: [CRM, Customer Opportunities], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_customer_opportunities
+    single: false
+    permission: crm.read
+    query: "SELECT l.id, l.name, l.type, l.stage, l.probability, l.expected_revenue, l.salesperson, l.team, l.active, CAST(l.expected_closing AS VARCHAR) AS expected_closing FROM crm_leads l WHERE l.partner_id = :id ORDER BY l.active DESC, l.updated_at DESC"
+  - id: crm_customer_opportunity_totals
+    single: true
+    permission: crm.read
+    query: "SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE active = true AND stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, CAST(COALESCE(SUM(expected_revenue) FILTER (WHERE active = true), 0) AS DOUBLE) AS expected_revenue FROM crm_leads WHERE partner_id = :id"
+  - id: crm_customer_activity_rollup
+    single: true
+    permission: crm.read
+    query: "SELECT COUNT(*) AS activity_count, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned_count, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_count, CAST(MAX(COALESCE(a.completed_at, a.created_at)) AS VARCHAR) AS latest_engagement FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.partner_id = :id AND l.active = true"
+  - id: crm_customer_pipeline_health
+    single: true
+    permission: crm.read
+    query: "SELECT COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_count, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS open_value, CAST(COALESCE(SUM(l.expected_revenue * l.probability / 100) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS weighted_value, COUNT(*) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND (EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - l.created_at)) / 3600 >= COALESCE(t.response_hours, 24))) AS stale_count, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)) AS overdue_activity_count FROM crm_leads l LEFT JOIN crm_teams t ON t.name = l.team WHERE l.partner_id = :id"
+components:
+  - type: StatRow
+    source: crm_customer_opportunity_totals
+    title: Customer opportunities
+    stats:
+      - { label: Total, field: total }
+      - { label: Open, field: open_count }
+      - { label: Won, field: won_count }
+      - { label: Expected revenue, field: expected_revenue }
+  - type: StatRow
+    source: crm_customer_activity_rollup
+    title: CRM engagement
+    stats:
+      - { label: Activities, field: activity_count }
+      - { label: Planned, field: planned_count }
+      - { label: Overdue, field: overdue_count }
+      - { label: Latest engagement, field: latest_engagement }
+  - type: StatRow
+    source: crm_customer_pipeline_health
+    title: Pipeline health
+    stats:
+      - { label: Open value, field: open_value }
+      - { label: Weighted value, field: weighted_value }
+      - { label: Stale, field: stale_count }
+      - { label: Overdue activity, field: overdue_activity_count }
+  - type: ListView
+    variant: odoo
+    source: crm_customer_opportunities
+    columns:
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: type, label: Type }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: probability, label: Probability }
+      - { field: expected_revenue, label: Expected revenue }
+      - { field: salesperson, label: Salesperson }
+      - { field: team, label: Sales team }
+      - { field: expected_closing, label: Expected closing }
+    row_key: id
+    row_actions: menu
+    actions: [{ id: open_customer_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }]
+    row_open_action: open_customer_opportunity
+actions:
+  - id: open_customer_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.id}' }

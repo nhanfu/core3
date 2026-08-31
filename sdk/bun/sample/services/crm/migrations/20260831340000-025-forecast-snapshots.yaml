@@ -1,0 +1,18 @@
+version: 0.0.25
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_forecast_snapshots (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), snapshot_date DATE NOT NULL,
+        lead_id VARCHAR NOT NULL, name VARCHAR, team VARCHAR, salesperson VARCHAR,
+        stage VARCHAR, probability INTEGER, expected_revenue DECIMAL(18,2), weighted_revenue DECIMAL(18,2), captured_by VARCHAR,
+        UNIQUE(snapshot_date, lead_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_crm_forecast_snapshots_date ON crm_forecast_snapshots(snapshot_date, team, salesperson);
+    down: |
+      DROP INDEX IF EXISTS idx_crm_forecast_snapshots_date;
+      DROP TABLE IF EXISTS crm_forecast_snapshots;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

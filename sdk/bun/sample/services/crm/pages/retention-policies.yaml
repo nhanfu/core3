@@ -1,0 +1,63 @@
+title: CRM Retention Policies
+page: { id: retention-policies, breadcrumb: [Sales, CRM, Retention Policies], auth: { require: [crm.manage] } }
+datasources:
+  - id: crm_retention_policies
+    single: false
+    permission: crm.manage
+    query: "SELECT id, name, record_type, retention_days, team, active FROM crm_retention_policies ORDER BY active DESC, name"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_retention_policies
+    create_action: create_retention_policy
+    create_label: New retention policy
+    columns:
+      - { field: name, label: Policy, type: PrimaryEntityCell }
+      - { field: record_type, label: Record type }
+      - { field: retention_days, label: Retain days }
+      - { field: team, label: Sales team }
+      - { field: active, label: Active, type: StatusChip }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: toggle_retention_policy, label: Toggle active, permission: crm.manage, variant: ghost }
+actions:
+  - id: create_retention_policy
+    type: server_form
+    permission: crm.manage
+    title: New retention policy
+    action: crm.retention_policies.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_retention_policies]
+    mutation:
+      operation: insert
+      table: crm_retention_policies
+      fields: [name, record_type, retention_days, team, active]
+      required: [name, record_type, retention_days]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(CAST(:name AS VARCHAR))) BETWEEN 1 AND 120 AND :record_type IN ('lead', 'opportunity', 'all') AND CAST(:retention_days AS INTEGER) BETWEEN 1 AND 3650 AND NOT EXISTS (SELECT 1 FROM crm_retention_policies WHERE lower(name) = lower(:name))"
+          status: 400
+          message: Retention policy values are invalid or already used
+    fields:
+      - { field: name, label: Policy, type: text, required: true }
+      - { field: record_type, label: Record type, type: select, options: [{ value: lead, label: Lead }, { value: opportunity, label: Opportunity }, { value: all, label: All CRM records }], required: true }
+      - { field: retention_days, label: Retain days, type: number, required: true }
+      - { field: team, label: Sales team, type: text }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: toggle_retention_policy
+    type: server
+    permission: crm.manage
+    action: crm.retention_policies.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_retention_policies]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_retention_policies WHERE id = :id"
+          status: 404
+          message: Retention policy no longer exists
+      steps:
+        - query: "UPDATE crm_retention_policies SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_retention_policies WHERE id = :id" }

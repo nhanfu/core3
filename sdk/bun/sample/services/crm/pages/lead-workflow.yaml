@@ -12,6 +12,9 @@ workflow:
       - query: "SELECT id FROM crm_leads WHERE id = :id AND stage = :current_status"
         status: 409
         message: Lead stage has changed; refresh and try again
+      - query: "SELECT 1 AS ok FROM crm_leads l WHERE l.id = :id AND (NOT EXISTS (SELECT 1 FROM crm_stage_teams st WHERE st.stage_id = (SELECT id FROM crm_stages WHERE name = :target_status)) OR NULLIF(TRIM(l.team), '') IS NULL OR EXISTS (SELECT 1 FROM crm_stage_teams st JOIN crm_teams t ON t.id = st.team_id WHERE st.stage_id = (SELECT id FROM crm_stages WHERE name = :target_status) AND t.name = l.team AND t.active = true))"
+        status: 409
+        message: This stage is not available for the opportunity sales team
     steps:
       - query: "UPDATE crm_leads SET stage = :target_status, probability = COALESCE((SELECT probability FROM crm_stages WHERE name = :target_status), probability), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
       - query: "INSERT INTO crm_activities(lead_id, activity_type, summary, state, completed_at) VALUES(:id, 'stage_change', CAST(:current_status AS VARCHAR) || ' -> ' || CAST(:target_status AS VARCHAR), 'done', CURRENT_TIMESTAMP)"
@@ -41,6 +44,9 @@ workflow:
           - query: "SELECT id FROM crm_leads WHERE id = :id AND stage = 'New'"
             status: 409
             message: Only new leads can be qualified
+          - query: "SELECT id FROM crm_leads WHERE id = :id AND stage = 'New' AND NULLIF(TRIM(COALESCE(partner_name, '')), '') IS NOT NULL AND NULLIF(TRIM(COALESCE(source, '')), '') IS NOT NULL AND NULLIF(TRIM(COALESCE(salesperson, '')), '') IS NOT NULL AND COALESCE(expected_revenue, 0) > 0"
+            status: 400
+            message: Complete contact, source, owner, and expected revenue before qualification
         steps:
           - query: "UPDATE crm_leads SET stage = 'Qualified', probability = COALESCE((SELECT probability FROM crm_stages WHERE name = 'Qualified'), probability), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
           - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) VALUES(gen_random_uuid(), :id, 'stage_change', 'New -> Qualified', 'done', CURRENT_TIMESTAMP)"

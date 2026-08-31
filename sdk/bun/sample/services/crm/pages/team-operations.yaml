@@ -1,0 +1,53 @@
+title: Team Operations
+page: { id: team-operations, breadcrumb: [CRM, Team Operations], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_team_operations_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+  - id: crm_team_operations
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_opportunities, CAST(COALESCE(SUM(l.expected_revenue) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS open_value, CAST(COALESCE(SUM(l.expected_revenue * l.probability / 100) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')), 0) AS DOUBLE) AS weighted_value, COUNT(a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_activities, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost') AND NULLIF(TRIM(l.salesperson), '') IS NULL) AS unassigned_opportunities, COUNT(DISTINCT l.id) FILTER (WHERE l.stage = 'Won') AS won_opportunities FROM crm_leads l LEFT JOIN crm_activities a ON a.lead_id = l.id WHERE (:team IS NULL OR l.team = :team) AND (:date_from IS NULL OR l.created_at >= CAST(:date_from AS DATE)) AND (:date_to IS NULL OR l.created_at < CAST(:date_to AS DATE) + INTERVAL '1 day') GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team') ORDER BY overdue_activities DESC, team"
+  - id: crm_team_operations_members
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(m.team_id, ''), 'Unassigned team') AS team, m.user_name AS salesperson, COUNT(DISTINCT l.id) FILTER (WHERE l.active = true AND l.stage NOT IN ('Won', 'Lost')) AS open_opportunities, COUNT(a.id) FILTER (WHERE a.state = 'planned') AS planned_activities, COUNT(a.id) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_activities FROM crm_team_members m LEFT JOIN crm_teams t ON t.id = m.team_id LEFT JOIN crm_leads l ON l.salesperson = m.user_name AND l.team = t.name LEFT JOIN crm_activities a ON a.lead_id = l.id WHERE m.active = true AND (:team IS NULL OR t.name = :team) GROUP BY COALESCE(NULLIF(m.team_id, ''), 'Unassigned team'), m.user_name ORDER BY overdue_activities DESC, team, salesperson"
+components:
+  - type: ListToolbar
+    source: crm_team_operations
+    filter_sources: [crm_team_operations, crm_team_operations_members]
+    filters:
+      - { field: team, label: Sales team, options_source: crm_team_operations_teams }
+    date_range: { from_field: date_from, to_field: date_to, from_label: From date, to_label: To date, presets: [all, month, quarter, year], default_preset: all }
+  - type: ListView
+    variant: odoo
+    source: crm_team_operations
+    columns:
+      - { field: team, label: Sales team, type: PrimaryEntityCell }
+      - { field: open_opportunities, label: Open opportunities }
+      - { field: open_value, label: Open value }
+      - { field: weighted_value, label: Weighted value }
+      - { field: overdue_activities, label: Overdue activities }
+      - { field: unassigned_opportunities, label: Unassigned }
+      - { field: won_opportunities, label: Won }
+    row_key: team
+    row_actions: menu
+    actions:
+      - { id: open_team_operations_leads, label: Open team pipeline, permission: crm.read, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_team_operations_members
+    columns:
+      - { field: team, label: Team }
+      - { field: salesperson, label: Salesperson }
+      - { field: open_opportunities, label: Open opportunities }
+      - { field: planned_activities, label: Planned activities }
+      - { field: overdue_activities, label: Overdue activities }
+    row_key: salesperson
+actions:
+  - id: open_team_operations_leads
+    type: navigate
+    permission: crm.read
+    navigate_to: /leads
+    params: { team: '{row.team}' }

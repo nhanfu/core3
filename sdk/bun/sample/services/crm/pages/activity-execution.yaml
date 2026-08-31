@@ -1,0 +1,44 @@
+title: Activity Execution
+page: { id: activity-execution, breadcrumb: [CRM, Activity Execution], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_activity_execution_summary
+    single: false
+    permission: crm.read
+    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned') AS assigned_to, a.activity_type, COUNT(*) FILTER (WHERE a.state = 'planned') AS planned_count, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.due_date < CURRENT_DATE) AS overdue_count, COUNT(*) FILTER (WHERE a.state = 'done') AS completed_count, COUNT(*) FILTER (WHERE a.state = 'planned' AND a.next_activity_type IS NOT NULL) AS chained_count FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(a.assigned_to, ''), 'Unassigned'), a.activity_type ORDER BY overdue_count DESC, team, assigned_to, a.activity_type"
+  - id: crm_activity_execution_detail
+    single: false
+    permission: crm.read
+    query: "SELECT a.id, a.lead_id, l.name AS opportunity, l.team, a.activity_type, a.summary, a.outcome_note, a.assigned_to, a.state, CAST(a.due_date AS VARCHAR) AS due_date, CAST(a.completed_at AS VARCHAR) AS completed_at FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id WHERE l.active = true AND a.state = 'done' ORDER BY a.completed_at DESC NULLS LAST, a.id DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: crm_activity_execution_summary
+    columns:
+      - { field: team, label: Sales team }
+      - { field: assigned_to, label: Assignee }
+      - { field: activity_type, label: Activity }
+      - { field: planned_count, label: Planned }
+      - { field: overdue_count, label: Overdue }
+      - { field: completed_count, label: Completed }
+      - { field: chained_count, label: Chained }
+    row_key: activity_type
+  - type: ListView
+    variant: odoo
+    source: crm_activity_execution_detail
+    columns:
+      - { field: completed_at, label: Completed }
+      - { field: opportunity, label: Opportunity, type: PrimaryEntityCell }
+      - { field: activity_type, label: Activity }
+      - { field: summary, label: Activity summary }
+      - { field: outcome_note, label: Outcome note }
+      - { field: assigned_to, label: Assignee }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_activity_execution_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+actions:
+  - id: open_activity_execution_opportunity
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

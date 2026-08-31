@@ -22,6 +22,62 @@ menu:
           permission: crm.read
         - path: /expected-revenue
           label: Expected Revenue
+        - path: /forecast-snapshots
+          label: Forecast Snapshots
+          icon: chart
+          permission: crm.read
+        - path: /salesperson-workload
+          label: Salesperson Workload
+          icon: users
+          permission: crm.read
+        - path: /team-target-attainment
+          label: Team Target Attainment
+          icon: chart
+          permission: crm.read
+        - path: /followup-effectiveness
+          label: Follow-up Effectiveness
+          icon: chart
+          permission: crm.read
+        - path: /pipeline-hygiene
+          label: Pipeline Hygiene
+          icon: check
+          permission: crm.read
+        - path: /retention-review
+          label: Retention Review
+          icon: archive
+          permission: crm.manage
+        - path: /retention-policies
+          label: Retention Policies
+          icon: settings
+          permission: crm.manage
+        - path: /conversion-operations
+          label: Conversion Operations
+          icon: history
+          permission: crm.read
+        - path: /stage-movement
+          label: Stage Movement
+          icon: chart
+          permission: crm.read
+        - path: /activity-execution
+          label: Activity Execution
+          icon: chart
+          permission: crm.read
+        - path: /qualification-quality
+          label: Qualification Quality
+          icon: check
+          permission: crm.read
+        - path: /team-operations
+          label: Team Operations
+          icon: chart
+          permission: crm.read
+        - path: /crm-escalations
+          label: Escalations
+          icon: alert
+          permission: crm.read
+        - path: /audit-governance
+          label: Audit Governance
+          icon: history
+          permission: crm.read
         - path: /crm-tags
           label: Tags
           icon: chart
@@ -42,9 +98,17 @@ menu:
           label: Pipeline Analysis
           icon: chart
           permission: crm.read
+        - path: /crm-activity-report
+          label: Activity Report
+          icon: chart
+          permission: crm.read
         - path: /lost-opportunities
           label: Lost Opportunities
           icon: archive
+          permission: crm.read
+        - path: /customer-opportunities
+          label: Customer Opportunities
+          icon: users
           permission: crm.read
         - path: /archived-leads
           label: Archived Leads
@@ -67,5 +131,9 @@ menu:
       items:
         - path: /configuration
           label: Configuration
+          icon: settings
+          permission: crm.manage
+        - path: /contact-preferences
+          label: Communication Preferences
           icon: settings
           permission: crm.manage

@@ -1,0 +1,39 @@
+title: Forecast Snapshots
+page: { id: forecast-snapshots, breadcrumb: [Sales, CRM, Forecast Snapshots], auth: { require: [crm.read] } }
+datasources:
+  - id: crm_forecast_snapshots
+    single: false
+    permission: crm.read
+    query: "SELECT id, CAST(snapshot_date AS VARCHAR) AS snapshot_date, lead_id, name, team, salesperson, stage, probability, expected_revenue, weighted_revenue, captured_by FROM crm_forecast_snapshots WHERE (:team IS NULL OR team = :team) ORDER BY snapshot_date DESC, weighted_revenue DESC, name"
+  - id: crm_forecast_snapshot_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+components:
+  - type: ListToolbar
+    source: crm_forecast_snapshots
+    filters:
+      - { field: team, label: Sales team, options_source: crm_forecast_snapshot_teams }
+  - type: ListView
+    variant: odoo
+    source: crm_forecast_snapshots
+    columns:
+      - { field: snapshot_date, label: Snapshot date }
+      - { field: name, label: Opportunity, type: PrimaryEntityCell }
+      - { field: team, label: Sales team }
+      - { field: salesperson, label: Salesperson }
+      - { field: stage, label: Stage, type: StatusChip }
+      - { field: probability, label: Probability }
+      - { field: expected_revenue, label: Expected revenue, align: right }
+      - { field: weighted_revenue, label: Weighted revenue, align: right }
+      - { field: captured_by, label: Captured by }
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: open_forecast_snapshot_lead, label: Open opportunity, permission: crm.read, variant: ghost }
+actions:
+  - id: open_forecast_snapshot_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{row.lead_id}' }

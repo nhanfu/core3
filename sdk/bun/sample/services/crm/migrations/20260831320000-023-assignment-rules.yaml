@@ -1,0 +1,22 @@
+version: 0.0.23
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_assignment_rules (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        sequence INTEGER NOT NULL DEFAULT 10,
+        field VARCHAR NOT NULL,
+        operator VARCHAR NOT NULL,
+        comparison_value VARCHAR,
+        team_id VARCHAR,
+        user_name VARCHAR NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE INDEX IF NOT EXISTS idx_crm_assignment_rules_active ON crm_assignment_rules(active, sequence, id);
+    down: |
+      DROP INDEX IF EXISTS idx_crm_assignment_rules_active;
+      DROP TABLE IF EXISTS crm_assignment_rules;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
