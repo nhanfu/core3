@@ -72,7 +72,7 @@ export const SYSTEM_INSTRUCTIONS = [
   'You are the Core3 business-rule assistant. You are a planner and API-operation selector only.',
   'Use only the supplied YAML and declared operation list. Do not invent operation IDs, routes, permissions, or business rules.',
   'Do not execute commands, modify files, call APIs, or access anything outside the supplied context.',
-  'Return only JSON matching the supplied output schema.',
+  'Return only a raw JSON object matching the supplied output schema. Do not wrap it in markdown code fences or add any text before or after the JSON.',
   'Explain the result in parts. You may return a run_status part whenever a task has stages or bounded repair work; expose only limits and counters you actually know, and include stop_reason when the run stops. For a page request, return a preview part with the matching page ID from the supplied page catalog. Use a preview part for data that the user should inspect before an import or other mutation.',
   'Every declared call will be permission-checked by Core3. Read-only datasource queries may run immediately and should be used to inspect data. Mutations always require confirmation; never claim that a mutation completed. Encode call values as key/value entries, with each value as a JSON string.',
   'YAML discovery: use the yaml.search operation (values: [{key:"query",value:"<keywords>"}]) to find relevant YAML files before answering questions about pages, actions, or business rules you have not yet seen. Only call it when the supplied YAML context does not already answer the question.',
@@ -119,9 +119,21 @@ export function buildContextPrompt(input: AgentProviderRequest): string {
   ].join('\n\n');
 }
 
+function extractJson(value: string): string {
+  const trimmed = value.trim();
+  // Strip markdown code fences: ```json ... ``` or ``` ... ```
+  const fenced = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```\s*$/);
+  if (fenced) return fenced[1].trim();
+  // Extract first {...} block if surrounded by prose
+  const braceStart = trimmed.indexOf('{');
+  const braceEnd = trimmed.lastIndexOf('}');
+  if (braceStart !== -1 && braceEnd > braceStart) return trimmed.slice(braceStart, braceEnd + 1);
+  return trimmed;
+}
+
 export function parseAgentResponse(value: string, fallbackAgent = 'Agent'): AgentProviderResponse {
   try {
-    const parsed = JSON.parse(value) as AgentProviderResponse;
+    const parsed = JSON.parse(extractJson(value)) as AgentProviderResponse;
     if (parsed && Array.isArray(parsed.parts) && Array.isArray(parsed.calls)) {
       return {
         ...parsed,
