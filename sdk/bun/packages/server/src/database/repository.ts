@@ -35,6 +35,21 @@ private readonly resolveService?: (name: string) => any;
     }
   }
 
+  /** Execute a reusable multi-row operation atomically on one connection. */
+  async withTransaction<T>(fn: (conn: any) => Promise<T> | T): Promise<T> {
+    return this.withConnection(async (conn) => {
+      await runOnConnection(conn, 'BEGIN TRANSACTION');
+      try {
+        const result = await fn(conn);
+        await runOnConnection(conn, 'COMMIT');
+        return result;
+      } catch (error) {
+        await runOnConnection(conn, 'ROLLBACK').catch(() => {});
+        throw error;
+      }
+    });
+  }
+
   run(sql: string, params: any[] = []): Promise<void> {
     return this.withConnection((conn) => runOnConnection(conn, sql, params));
   }
@@ -45,6 +60,11 @@ private readonly resolveService?: (name: string) => any;
 
   async executeMutation(definition: any, input: Record<string, any> = {}): Promise<any> {
     return this.withConnection((conn) => this.mutationRuntime.execute(conn, definition as MutationDefinition, input));
+  }
+
+  /** Execute a YAML mutation inside a caller-owned transaction. */
+  executeMutationOnConnection(connection: any, definition: any, input: Record<string, any> = {}): Promise<any> {
+    return this.mutationRuntime.execute(connection, definition as MutationDefinition, input, { transactionOwned: true });
   }
 
   async runStatements(sql: string): Promise<void> {

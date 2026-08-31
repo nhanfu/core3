@@ -350,6 +350,19 @@ describe('CRM YAML lifecycle integration', () => {
     }
   });
 
+  it('calculates configurable lead scores and grades deterministically', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await migrateDatabase(repository, crmRoot + '/migrations', undefined, 'crm_scoring_schema_migrations', ['schema', 'data']);
+    await repository.run("INSERT INTO crm_scoring_rules(id, field, operator, points, active) VALUES ('rule-email', 'email', 'present', 40, true)");
+    await repository.run("INSERT INTO crm_scoring_rules(id, field, operator, comparison_value, points, active) VALUES ('rule-type', 'type', 'equals', 'lead', 35, true)");
+    await repository.run("INSERT INTO crm_leads(id, name, type, email, stage, active) VALUES ('scored-lead', 'Scored lead', 'lead', 'lead@example.test', 'New', true)");
+    const query = String(yaml('pages/leads.yaml').datasources.find((source: any) => source.id === 'crm_leads').query).replaceAll(/:\w+/g, 'NULL');
+    const scored = (await repository.query(query))[0];
+    expect(scored).toMatchObject({ id: 'scored-lead', lead_score: 75, lead_grade: 'Hot' });
+    await database.close();
+  });
+
   it('declares Odoo-style CRM saved favorites for common pipeline slices', () => {
     const list = yaml('pages/leads.yaml').components.find((component: any) => component.type === 'ListView');
     expect(list.favorites).toEqual(expect.arrayContaining([

@@ -310,7 +310,15 @@ export class PageRuntime extends BaseComponent {
     for (const sourceId of (sourceIds || [])) {
       const ps = paginationState[sourceId] || { skip: 0, top: 25, page: 1 };
       const fs = filterState[sourceId] || {};
-      const data = await refetchSource(sourceId, fs, ps.skip, ps.top);
+      // Detail views can be rendered in a side panel, where the active record
+      // ID is held in runtime state rather than the URL query string.
+      const activeId = ctx.state?.id ?? pageParams.id;
+      const data = await refetchSource(
+        sourceId,
+        activeId == null ? fs : { ...fs, id: activeId },
+        ps.skip,
+        ps.top,
+      );
       updateBoundComponents(sourceId, data);
     }
   }

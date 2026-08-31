@@ -6,19 +6,33 @@ datasources:
     permission: crm.read
     workflow: crm_leads
     query: |
+      WITH scored_leads AS (
+        SELECT l.*,
+          CAST(COALESCE((SELECT SUM(r.points) FROM crm_scoring_rules r WHERE r.active = true AND (
+            (r.field = 'email' AND r.operator = 'present' AND NULLIF(TRIM(l.email), '') IS NOT NULL) OR
+            (r.field = 'phone' AND r.operator = 'present' AND NULLIF(TRIM(l.phone), '') IS NOT NULL) OR
+            (r.field = 'source' AND r.operator = 'equals' AND l.source = r.comparison_value) OR
+            (r.field = 'expected_revenue' AND r.operator = 'gte' AND l.expected_revenue >= CAST(r.comparison_value AS DECIMAL(18,2))) OR
+            (r.field = 'type' AND r.operator = 'equals' AND l.type = r.comparison_value)
+          )), 0) AS INTEGER) AS lead_score
+        FROM crm_leads l
+        WHERE l.active = true
+      )
       SELECT id, row_version, name, type, partner_id, partner_name, email, phone, source, utm_campaign, utm_medium, utm_source, priority,
-        expected_revenue, stage, probability, salesperson, team, tags,
+        expected_revenue, stage, probability, salesperson, team, tags, lead_score,
+        CASE WHEN lead_score >= 70 THEN 'Hot' WHEN lead_score >= 30 THEN 'Warm' ELSE 'Cold' END AS lead_grade,
         CAST(expected_closing AS VARCHAR) AS expected_closing,
         CAST(created_at AS VARCHAR) AS created_at
-      FROM crm_leads
-      WHERE active = true
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%' OR source ILIKE '%' || :q || '%' OR utm_campaign ILIKE '%' || :q || '%' OR utm_medium ILIKE '%' || :q || '%' OR utm_source ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+      FROM scored_leads
+      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%' OR source ILIKE '%' || :q || '%' OR utm_campaign ILIKE '%' || :q || '%' OR utm_medium ILIKE '%' || :q || '%' OR utm_source ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
         AND (:stage IS NULL OR stage = :stage)
         AND (:type IS NULL OR type = :type)
         AND (:salesperson IS NULL OR salesperson = :salesperson)
         AND (:team IS NULL OR team = :team)
         AND (:source IS NULL OR source = :source)
         AND (:utm_campaign IS NULL OR utm_campaign = :utm_campaign)
+        AND (:score_min IS NULL OR lead_score >= CAST(:score_min AS INTEGER))
+        AND (:score_max IS NULL OR lead_score <= CAST(:score_max AS INTEGER))
       ORDER BY created_at DESC
   - id: crm_lead_stages
     single: false
@@ -88,6 +102,8 @@ components:
       - { field: team, label: Sales team, options_source: crm_sales_teams }
       - { field: source, label: Lead source, options_source: crm_source_lookup }
       - { field: utm_campaign, label: UTM campaign, options_source: crm_utm_campaign_lookup }
+      - { field: score_min, label: Minimum lead score, options: [{ id: '0', label: '0+' }, { id: '30', label: '30+' }, { id: '70', label: '70+' }] }
+      - { field: score_max, label: Maximum lead score, options: [{ id: '30', label: '30 or less' }, { id: '70', label: '70 or less' }, { id: '100', label: '100 or less' }] }
     favorites:
       - id: my_pipeline
         label: Proposition Pipeline
@@ -169,6 +185,8 @@ components:
       - { field: stage, label: Stage, type: StatusChip }
       - { field: tags, label: Tags }
       - { field: priority, label: Priority }
+      - { field: lead_score, label: Lead score, align: right }
+      - { field: lead_grade, label: Grade, type: StatusChip }
       - { field: probability, label: Probability, align: right }
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: salesperson, label: Salesperson }
@@ -456,3 +474,22 @@ actions:
     refresh: [crm_leads]
     fields:
       - { field: lost_reason, label: Lost reason, type: select, options_source: crm_lost_reason_lookup, required: true }
+  - id: import_lead
+    type: server
+    permission: crm.write
+    action: crm.leads.import
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: crm_leads
+      fields: [name, type, partner_id, email, phone, source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability, salesperson, team, expected_closing]
+      required: [name]
+      defaults: { type: lead, stage: New, probability: 10, expected_revenue: 0, priority: 0 }
+      guards:
+        - query: "SELECT 1 AS ok WHERE CAST(COALESCE(:probability, 10) AS INTEGER) BETWEEN 0 AND 100"
+          status: 400
+          message: Probability must be between 0 and 100
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:source, '') AS VARCHAR)), '') IS NULL OR EXISTS (SELECT 1 FROM crm_sources WHERE name = :source AND active = true)"
+          status: 400
+          message: Select an active lead source

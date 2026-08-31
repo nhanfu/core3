@@ -44,7 +44,7 @@ function sameMutationValue(left: unknown, right: unknown): boolean {
 export class YamlMutationRuntime {
   constructor(private readonly resolveService?: (name: string) => any) {}
 
-  async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}): Promise<any> {
+  async execute(connection: MutationConnection, definition: MutationDefinition, input: Record<string, any> = {}, options: { transactionOwned?: boolean } = {}): Promise<any> {
     const params = { ...input };
     if (params.values && typeof params.values === 'object') {
       for (const [field, value] of Object.entries(params.values)) {
@@ -55,7 +55,7 @@ export class YamlMutationRuntime {
       if (!IDENTIFIER.test(field)) throw { status: 500, message: 'Generated mutation field is invalid' };
       if (!params[field]) params[field] = crypto.randomUUID();
     }
-    await runOnConnection(connection, 'BEGIN TRANSACTION');
+    if (!options.transactionOwned) await runOnConnection(connection, 'BEGIN TRANSACTION');
     try {
       for (const guard of definition.guards || []) {
         if (guard.type === 'service') {
@@ -84,10 +84,10 @@ export class YamlMutationRuntime {
         const [row] = await queryOnConnection(connection, statement, values);
         result = row || {};
       }
-      await runOnConnection(connection, 'COMMIT');
+      if (!options.transactionOwned) await runOnConnection(connection, 'COMMIT');
       return result;
     } catch (error) {
-      await runOnConnection(connection, 'ROLLBACK').catch(() => {});
+      if (!options.transactionOwned) await runOnConnection(connection, 'ROLLBACK').catch(() => {});
       throw error;
     }
   }

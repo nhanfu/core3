@@ -54,6 +54,14 @@ menu:
           label: Duplicate Leads
           icon: copy
           permission: crm.read
+        - path: /crm-import
+          label: Import Leads
+          icon: upload
+          permission: crm.write
+        - path: /crm-import-history
+          label: Import History
+          icon: history
+          permission: crm.read
     - id: configuration
       label: Configuration
       items:

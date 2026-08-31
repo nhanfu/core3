@@ -200,7 +200,10 @@ export class ModuleManager {
   async handle(request: Request, url: URL, server?: ModuleServer): Promise<Response | null | undefined> {
     for (const handler of this.apiHandlers) {
       const response = await handler(request, url, server);
-      if (response === undefined) return undefined;
+      // Undefined means that this handler did not claim the HTTP request.
+      // WebSocket upgrade handlers are responsible for completing the
+      // upgrade; ordinary API dispatch must continue to later modules.
+      if (response === undefined) continue;
       if (response) return response;
     }
     return null;

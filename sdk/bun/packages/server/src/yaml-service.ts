@@ -29,6 +29,7 @@ export type YamlRuntimeContext = {
   catalogs?: Map<string, any>;
   actions: Map<string, any>;
   storage: any;
+  imports?: unknown;
   reloadPages?: () => number;
 };
 
@@ -47,6 +48,7 @@ export type YamlServiceDefinition = DiscoveredYamlService & {
   policies: unknown;
   operations: unknown;
   storage: unknown;
+  imports: unknown;
   migrations: unknown;
 };
 
@@ -73,6 +75,7 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
     policies: readOptionalYaml(root, manifest.policies),
     operations: readOptionalYaml(root, manifest.operations),
     storage: readOptionalYaml(root, manifest.storage),
+    imports: readOptionalYaml(root, manifest.imports),
     migrations: manifest.migrations,
   };
 }
@@ -275,6 +278,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       eventStore: context.eventBus,
       topics: this.topics,
       storage: this.definition.storage,
+      imports: this.definition.imports,
       reloadPages,
       resolveService: context.resolveService,
     });
@@ -287,6 +291,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       catalogs: pageMaps.catalogs,
       actions: namedActions,
       storage: this.definition.storage,
+      imports: this.definition.imports,
     };
     // Expose declarative actions as an internal service contract. Domain
     // services can call another YAML service without importing its database

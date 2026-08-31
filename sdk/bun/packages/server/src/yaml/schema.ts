@@ -224,6 +224,8 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['ChoiceGroup', new Set(['type', 'id', 'title', 'value', 'class', 'section_class', 'title_class', 'group_class', 'option_class', 'options', 'action'])],
   ['Form', new Set(['type', 'id', 'title', 'class', 'section_class', 'title_class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
   ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
+  ['ImportWizard', new Set(['type', 'id', 'schema_id', 'title', 'description', 'placeholder', 'fields'])],
+  ['ImportHistory', new Set(['type', 'id', 'schema_id', 'title'])],
 ]);
 
 export class PageSchemaError extends Error {

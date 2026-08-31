@@ -109,6 +109,18 @@ operations:
     route: /api/actions/crm.leads.bulk_update
     method: POST
     permission: crm.write
+  - id: crm.leads.import
+    route: /api/import/commit
+    permission: crm.write
+  - id: crm.scoring_rules.create
+    route: /api/actions/crm.scoring_rules.create
+    permission: crm.manage
+  - id: crm.scoring_rules.update
+    route: /api/actions/crm.scoring_rules.update
+    permission: crm.manage
+  - id: crm.scoring_rules.toggle
+    route: /api/actions/crm.scoring_rules.toggle
+    permission: crm.manage
     preview: false
   - id: crm.leads.assign_to_me
     route: /api/actions/crm.leads.assign_to_me

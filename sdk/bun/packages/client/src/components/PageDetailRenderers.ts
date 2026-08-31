@@ -132,7 +132,14 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     if (actionDef.type === 'server_form' && typeof params?.content === 'string') {
       await client.action(actionDef.action, {
         ...resolveActionParams(actionDef.params, { ...ctx, row: params }),
-        values: { content: params.content },
+        lead_id: params.lead_id ?? params.id ?? ctx.state?.id ?? pageParams.id,
+        // Chatter uses a generic content field while YAML server_form actions
+        // commonly name the persisted field `summary`.
+        values: {
+          content: params.content,
+          summary: params.content,
+          lead_id: params.lead_id ?? params.id ?? ctx.state?.id ?? pageParams.id,
+        },
       });
       if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
       return;

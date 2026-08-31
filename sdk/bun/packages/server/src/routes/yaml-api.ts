@@ -6,6 +6,7 @@ import { handleActionRoutes } from './yaml-actions.ts';
 import { handleEventRoutes } from '@core3/server/routes/event-websocket';
 import type { ModuleServer } from '../module.ts';
 import type { TopicRouter } from '../topics/direct.ts';
+import { ImportBatchStore, parseImportCsv, validateImportRows } from '../interfaces/import.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -27,6 +28,7 @@ type YamlApiContext = {
   eventStore: any;
   topics: TopicRouter;
   storage?: any;
+  imports?: any;
   reloadPages?: () => void;
   resolveService?: <T>(name: string) => T;
 };
@@ -47,6 +49,7 @@ export function createYamlApi(ctx: YamlApiContext) {
     topics: TOPICS,
     reloadPages,
     resolveService,
+    imports: IMPORTS,
   } = ctx;
 
   function json(data: any, status = 200, extraHeaders: Record<string, string> = {}): Response {
@@ -271,6 +274,80 @@ export function createYamlApi(ctx: YamlApiContext) {
   const requirePerm = (perm: string) => {
     if (!hasPerm(perm)) throw { status: 403, message: `Requires permission: ${perm}` };
   };
+  if (pathname === '/api/import/history' && method === 'GET') {
+    const schemaId = String(url.searchParams.get('schemaId') || '');
+    const declarations = Array.isArray(IMPORTS?.imports) ? IMPORTS.imports : [];
+    const declaration = declarations.find((candidate: any) => candidate.id === schemaId);
+    if (!declaration) return apiError(404, 'Import schema not found', 'IMPORT_SCHEMA_NOT_FOUND');
+    requirePerm(String(declaration.permission || 'base.import.commit'));
+    const store = new ImportBatchStore(repository);
+    await store.ensureSchema();
+    return json(await store.list(schemaId, Math.min(Number(url.searchParams.get('limit') || 50), 100)));
+  }
+  if (pathname === '/api/import/commit' && method === 'POST') {
+    const body = await req.json() as any;
+    const declarations = Array.isArray(IMPORTS?.imports) ? IMPORTS.imports : [];
+    const declaration = declarations.find((candidate: any) => candidate.id === body?.schemaId);
+    if (!declaration) return apiError(404, 'Import schema not found', 'IMPORT_SCHEMA_NOT_FOUND');
+    requirePerm(String(declaration.permission || 'base.import.commit'));
+    const rows = Array.isArray(body?.rows) ? body.rows : [];
+    const importKey = String(body.importKey || crypto.randomUUID());
+    const preview = validateImportRows(declaration, rows, importKey);
+    const store = new ImportBatchStore(repository);
+    await store.ensureSchema();
+    if (!preview.valid) return json(await store.save({ importKey, status: 'rejected', acceptedRows: 0, rejectedRows: rows.length, errors: preview.errors }, declaration.id, preview.rows), 400);
+    if (!declaration.action) return apiError(409, 'Import schema has no commit action', 'IMPORT_ACTION_MISSING');
+    const action = NAMED_ACTIONS[String(declaration.action)];
+    if (!action?.mutation) return apiError(409, 'Import commit action is unavailable', 'IMPORT_ACTION_UNAVAILABLE');
+    const result = await repository.withTransaction(async (connection: any) => {
+      for (const row of preview.rows) await repository.executeMutationOnConnection(connection, action.mutation, { values: row.values || {} });
+      return { importKey, status: 'committed' as const, acceptedRows: preview.rows.length, rejectedRows: 0 };
+    });
+    return json(await store.save(result, declaration.id, preview.rows));
+  }
+  if ((pathname === '/api/import/retry' || pathname.startsWith('/api/import/retry/')) && method === 'POST') {
+    let body: any = {};
+    try { body = await req.json(); } catch { /* query parameters are also supported for retry */ }
+    const pathParts = pathname.split('/').filter(Boolean);
+    const schemaFromPath = pathParts.length >= 5 ? decodeURIComponent(pathParts[3]) : '';
+    const keyFromPath = pathParts.length >= 5 ? decodeURIComponent(pathParts[4]) : '';
+    const schemaId = String(body?.schemaId || url.searchParams.get('schemaId') || schemaFromPath);
+    const importKey = String(body?.importKey || url.searchParams.get('importKey') || keyFromPath);
+    const declarations = Array.isArray(IMPORTS?.imports) ? IMPORTS.imports : [];
+    const declaration = declarations.find((candidate: any) => candidate.id === schemaId);
+    if (!declaration || !importKey) return apiError(400, 'Schema and import key are required', 'INVALID_IMPORT_RETRY');
+    requirePerm(String(declaration.permission || 'base.import.commit'));
+    const store = new ImportBatchStore(repository);
+    await store.ensureSchema();
+    const prior = await store.get(importKey);
+    if (!prior || prior.schemaId !== schemaId) return apiError(404, 'Import batch not found', 'IMPORT_BATCH_NOT_FOUND');
+    if (prior.status === 'committed') return json(prior);
+    if (prior.status !== 'recoverable') return apiError(409, 'Only recoverable imports can be retried', 'IMPORT_RETRY_NOT_ALLOWED');
+    const action = declaration.action ? NAMED_ACTIONS[String(declaration.action)] : null;
+    if (!action?.mutation) return apiError(409, 'Import commit action is unavailable', 'IMPORT_ACTION_UNAVAILABLE');
+    try {
+      const result = await repository.withTransaction(async (connection: any) => {
+        for (const row of prior.rows || []) await repository.executeMutationOnConnection(connection, action.mutation, { values: row.values || {} });
+        return { importKey, status: 'committed' as const, acceptedRows: (prior.rows || []).length, rejectedRows: 0 };
+      });
+      return json(await store.save(result, schemaId, prior.rows || []));
+    } catch {
+      return json(await store.save({ importKey, status: 'recoverable', acceptedRows: 0, rejectedRows: prior.rejectedRows, errors: prior.errors }, schemaId, prior.rows || []), 503);
+    }
+  }
+
+  // Domain-neutral import preview; domain services provide the schema and
+  // commit action in a later, permissioned step.
+  if (pathname === '/api/import/preview' && method === 'POST') {
+    requirePerm('base.import.preview');
+    const body = await req.json() as any;
+    if (typeof body?.csv !== 'string' || !body?.schema || typeof body?.schema.id !== 'string') {
+      return apiError(400, 'CSV and import schema are required', 'INVALID_IMPORT');
+    }
+    const parsed = parseImportCsv(body.csv, String(body.importKey || crypto.randomUUID()));
+    const preview = validateImportRows(body.schema, parsed.rows, parsed.importKey);
+    return json({ ...preview, errors: [...parsed.errors, ...preview.errors], valid: parsed.errors.length === 0 && preview.valid });
+  }
   const activityActor = {
     id: authUser.sub ? String(authUser.sub) : null,
     name: String(authUser.name || authUser.email || authUser.sub || 'Unknown user'),

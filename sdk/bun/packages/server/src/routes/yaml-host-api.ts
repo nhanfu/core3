@@ -69,12 +69,17 @@ export function createYamlHostApi(services: YamlRuntimeContext[]) {
     } else if (pathname === '/api/upload' && method === 'POST') {
       const kind = await uploadKind(request);
       if (kind) candidates = services.filter((service) => [...service.actions.values()].some((action: any) => action.type === 'upload' && action.kind === kind));
+    } else if (pathname === '/api/import/preview' || pathname === '/api/import/commit' || pathname === '/api/import/history' || pathname === '/api/import/retry' || pathname.startsWith('/api/import/retry/')) {
+      candidates = services.filter((service) => Array.isArray(service.imports?.imports) && service.imports.imports.length > 0);
     }
     if (!candidates?.length) return null;
 
     for (const service of candidates) {
       const response = await call(service, request, url, server);
-      if (response === undefined) return undefined;
+      // An undefined response is meaningful only for an event/WebSocket
+      // upgrade. For ordinary HTTP routes, let the next module handler claim
+      // the request (for example auth after the YAML host).
+      if (response === undefined && pathname.startsWith('/api/events/')) return undefined;
       if (response && response.status !== 404) return response;
     }
     return null;

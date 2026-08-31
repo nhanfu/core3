@@ -197,12 +197,18 @@ export class BaseComponent {
     if (typeof this._onAction === 'function') {
       return this._onAction(action, params, this);
     }
-    const root = this.root;
-    if (typeof root._transport?.submit === 'function') {
-      return root._transport.submit(action, params);
-    }
-    if (typeof root._onAction === 'function') {
-      return root._onAction(action, params, this);
+    // Components rendered inside a page detail can have an action handler on
+    // their owning form rather than on the page root. Walk the ownership chain
+    // so nested components (for example the chatter) reach that handler.
+    let owner: BaseComponent | null = this.parent;
+    while (owner) {
+      if (typeof owner._transport?.submit === 'function') {
+        return owner._transport.submit(action, params);
+      }
+      if (typeof owner._onAction === 'function') {
+        return owner._onAction(action, params, this);
+      }
+      owner = owner.parent;
     }
     throw new Error(`No action handler registered for action: ${action}`);
   }

@@ -1,0 +1,16 @@
+title: Import CRM Leads
+page: { id: crm-import, breadcrumb: [Sales, CRM, Import], auth: { require: [crm.write] } }
+components:
+  - type: ImportWizard
+    id: crm-lead-import-wizard
+    schema_id: crm.lead
+    title: Import leads
+    description: Paste a CSV export, preview validation errors, then commit valid CRM leads.
+    fields:
+      - { key: name, type: text, required: true }
+      - { key: type, type: text }
+      - { key: email, type: text }
+      - { key: phone, type: text }
+      - { key: probability, type: integer }
+      - { key: expected_revenue, type: number }
+      - { key: expected_closing, type: date }

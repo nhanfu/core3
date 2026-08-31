@@ -1,0 +1,22 @@
+imports:
+  - id: crm.lead
+    permission: crm.write
+    action: crm.leads.import
+    fields:
+      - { key: name, type: text, required: true }
+      - { key: type, type: text }
+      - { key: partner_id, type: text }
+      - { key: email, type: text }
+      - { key: phone, type: text }
+      - { key: source, type: text }
+      - { key: utm_campaign, type: text }
+      - { key: utm_medium, type: text }
+      - { key: utm_source, type: text }
+      - { key: tags, type: text }
+      - { key: priority, type: integer }
+      - { key: expected_revenue, type: number }
+      - { key: stage, type: text }
+      - { key: probability, type: integer }
+      - { key: salesperson, type: text }
+      - { key: team, type: text }
+      - { key: expected_closing, type: date }

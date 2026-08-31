@@ -29,6 +29,10 @@ datasources:
     single: false
     permission: crm.manage
     query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
+  - id: crm_scoring_rule_configuration
+    single: false
+    permission: crm.manage
+    query: "SELECT id, field, operator, comparison_value, points, active FROM crm_scoring_rules ORDER BY active DESC, field, id"
 components:
   - type: ListView
     variant: odoo
@@ -48,6 +52,23 @@ components:
     actions:
       - { id: edit_crm_stage, label: Edit stage, permission: crm.manage, variant: ghost }
       - { id: toggle_crm_stage, label: Toggle active, permission: crm.manage, variant: ghost }
+  - type: ListView
+    variant: odoo
+    source: crm_scoring_rule_configuration
+    create_action: create_crm_scoring_rule
+    create_label: New scoring rule
+    columns:
+      - { field: field, label: Field, type: PrimaryEntityCell }
+      - { field: operator, label: Operator }
+      - { field: comparison_value, label: Comparison }
+      - { field: points, label: Points, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_actions: menu
+    actions:
+      - { id: edit_crm_scoring_rule, label: Edit rule, permission: crm.manage, variant: ghost }
+      - { id: toggle_crm_scoring_rule, label: Toggle active, permission: crm.manage, variant: ghost }
   - type: ListView
     variant: odoo
     source: crm_activity_type_configuration
@@ -124,6 +145,68 @@ components:
       - { id: edit_crm_activity_plan_step, label: Edit plan step, permission: crm.manage, variant: ghost }
       - { id: toggle_crm_activity_plan_step, label: Toggle active, permission: crm.manage, variant: ghost }
 actions:
+  - id: create_crm_scoring_rule
+    type: server_form
+    permission: crm.manage
+    title: New lead scoring rule
+    action: crm.scoring_rules.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_scoring_rule_configuration]
+    mutation:
+      operation: insert
+      table: crm_scoring_rules
+      fields: [field, operator, comparison_value, points, active]
+      required: [field, operator, points]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE :field IN ('email', 'phone', 'source', 'expected_revenue', 'type') AND :operator IN ('present', 'equals', 'gte') AND CAST(:points AS INTEGER) BETWEEN -100 AND 100"
+          status: 400
+          message: Scoring rule field, operator, or points are invalid
+    fields:
+      - { field: field, label: Lead field, type: select, options: [{ value: email, label: Email }, { value: phone, label: Phone }, { value: source, label: Source }, { value: expected_revenue, label: Expected revenue }, { value: type, label: Type }], required: true }
+      - { field: operator, label: Operator, type: select, options: [{ value: present, label: Is present }, { value: equals, label: Equals }, { value: gte, label: Greater or equal }], required: true }
+      - { field: comparison_value, label: Comparison value, type: text }
+      - { field: points, label: Points, type: number, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: edit_crm_scoring_rule
+    type: server_form
+    permission: crm.manage
+    title: Edit lead scoring rule
+    action: crm.scoring_rules.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_scoring_rule_configuration]
+    mutation:
+      operation: update
+      table: crm_scoring_rules
+      fields: [field, operator, comparison_value, points, active]
+      required: [field, operator, points]
+      guards:
+        - query: "SELECT id FROM crm_scoring_rules WHERE id = :id"
+          status: 404
+          message: Scoring rule no longer exists
+        - query: "SELECT 1 AS ok WHERE :field IN ('email', 'phone', 'source', 'expected_revenue', 'type') AND :operator IN ('present', 'equals', 'gte') AND CAST(:points AS INTEGER) BETWEEN -100 AND 100"
+          status: 400
+          message: Scoring rule field, operator, or points are invalid
+    fields:
+      - { field: field, label: Lead field, type: select, options: [{ value: email, label: Email }, { value: phone, label: Phone }, { value: source, label: Source }, { value: expected_revenue, label: Expected revenue }, { value: type, label: Type }], required: true }
+      - { field: operator, label: Operator, type: select, options: [{ value: present, label: Is present }, { value: equals, label: Equals }, { value: gte, label: Greater or equal }], required: true }
+      - { field: comparison_value, label: Comparison value, type: text }
+      - { field: points, label: Points, type: number, required: true }
+      - { field: active, label: Active, type: checkbox }
+  - id: toggle_crm_scoring_rule
+    type: server
+    permission: crm.manage
+    action: crm.scoring_rules.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_scoring_rule_configuration]
+    mutation:
+      steps:
+        - query: "UPDATE crm_scoring_rules SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_scoring_rules WHERE id = :id" }
   - id: create_crm_stage
     type: server_form
     permission: crm.manage

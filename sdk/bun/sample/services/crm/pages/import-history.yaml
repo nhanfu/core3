@@ -1,0 +1,7 @@
+title: CRM Import History
+page: { id: crm-import-history, breadcrumb: [Sales, CRM, Import History], auth: { require: [crm.read] } }
+components:
+  - type: ImportHistory
+    id: crm-import-history-table
+    schema_id: crm.lead
+    title: Lead import history

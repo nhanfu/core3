@@ -1,0 +1,19 @@
+version: 0.0.19
+type:
+  postgres:
+    up: |
+      ALTER TABLE crm_leads ADD COLUMN IF NOT EXISTS lead_score INTEGER;
+      UPDATE crm_leads SET lead_score = 0 WHERE lead_score IS NULL;
+      CREATE TABLE IF NOT EXISTS crm_scoring_rules (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), field VARCHAR NOT NULL,
+        operator VARCHAR NOT NULL, comparison_value VARCHAR, points INTEGER NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_crm_scoring_rules_active ON crm_scoring_rules(active);
+    down: |
+      DROP TABLE IF EXISTS crm_scoring_rules;
+      ALTER TABLE crm_leads DROP COLUMN IF EXISTS lead_score;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
