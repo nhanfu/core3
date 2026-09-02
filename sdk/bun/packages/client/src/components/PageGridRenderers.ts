@@ -205,6 +205,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     id: column.id || column.field || `column-${index}`,
     field: column.field,
     label: column.label || '',
+    width: typeof column.width === 'number' ? column.width : undefined,
     align: column.align,
     sortable: column.sortable !== false,
     rowActions: column.actions?.map((action: any) => ({
@@ -371,8 +372,29 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
     const inlineActions = actionChild?.actions || (def.columns || []).flatMap((column: any) => column.actions || []);
     const editAction = actionChild?.edit_action || inlineActions.find((action: any) => action.id.startsWith('edit_'))?.id;
     const createAction = actionChild?.create_action || (def.actions || [])[0]?.id;
+    const createActionDefinition = (config.actions || []).find((action: any) => action.id === createAction);
+    const createFieldDefaults = new Map(
+      (createActionDefinition?.fields || [])
+        .filter((field: any) => field.default !== undefined)
+        .map((field: any) => [field.field, field.default]),
+    );
+    const columnWidths = new Map(
+      (def.columns || [])
+        .filter((column: any) => typeof column.width === 'number')
+        .flatMap((column: any) => [[column.field, column.width], [column.id, column.width]]),
+    );
+    const fieldsWithDefaults = inlineFields.map((field: any) => ({
+      ...field,
+      ...(field.width === undefined
+        && (columnWidths.has(field.field) || columnWidths.has(field.display_field))
+        ? { width: columnWidths.get(field.field) ?? columnWidths.get(field.display_field) }
+        : {}),
+      ...(field.default === undefined && createFieldDefaults.has(field.field)
+        ? { default: createFieldDefaults.get(field.field) }
+        : {}),
+    }));
     comp.configureInline({
-      fields: inlineFields,
+      fields: fieldsWithDefaults,
       actions: inlineActions,
       editAction,
       createAction,

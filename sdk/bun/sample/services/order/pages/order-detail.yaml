@@ -137,17 +137,18 @@ components:
           - { id: edit_order_line, label: Edit, icon: edit, variant: ghost, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
           - { id: delete_order_line, label: Delete, icon: trash, variant: danger, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
     columns:
-      - { field: sequence, label: '#', align: right }
-      - { field: product_name, label: Product }
-      - { field: description, label: Description }
-      - { field: quantity_display, label: Quantity, align: right }
-      - { field: unit, label: Unit }
-      - { field: unit_price_display, label: Unit price, align: right }
-      - { field: tax_rate_display, label: Tax, align: right }
-      - { field: line_total_display, label: Amount, align: right }
+      - { field: sequence, label: '#', align: right, width: 56 }
+      - { field: product_name, label: Product, width: 220 }
+      - { field: description, label: Description, width: 260 }
+      - { field: quantity_display, label: Quantity, align: right, width: 110 }
+      - { field: unit, label: Unit, width: 110 }
+      - { field: unit_price_display, label: Unit price, align: right, width: 150 }
+      - { field: tax_rate_display, label: Tax, align: right, width: 100 }
+      - { field: line_total_display, label: Amount, align: right, width: 150 }
       - field: actions
         label: ''
         sortable: false
+        width: 84
         actions:
           - { id: edit_order_line, label: Edit, icon: edit, variant: ghost, permission: orders.write, show_if: "row.parent_status === 'Draft'" }
           - { id: delete_order_line, label: Delete, icon: trash, variant: danger, permission: orders.write, show_if: "row.parent_status === 'Draft'" }

@@ -11,6 +11,7 @@ export interface DataGridColumn {
   id?: string;
   field: string;
   label: string;
+  width?: number;
   align?: 'left' | 'center' | 'right';
   sortable?: boolean;
   /** Formats a value without giving the formatter direct DOM access. */

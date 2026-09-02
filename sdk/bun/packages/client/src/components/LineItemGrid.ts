@@ -37,7 +37,10 @@ export class LineItemGrid extends DataGrid {
     const tableWrap = html.take(root).div.className('o-line-grid-table overflow-x-auto').ele();
     const table = html.take(tableWrap).table.className('token-table min-w-full').ele();
     const head = html.take(table).thead.trow.className('token-header').ele();
-    for (const field of this.inline.fields) html.take(head).th.dataAttr('column', field.field).text(field.label || field.field);
+    for (const field of this.inline.fields) {
+      const header = html.take(head).th.dataAttr('column', field.field).text(field.label || field.field);
+      if (field.width) header.css('width', `${field.width}px`).css('minWidth', `${field.width}px`);
+    }
     html.take(head).th.text('');
     const body = html.take(table).tbody.className('token-body divide-y divide-gray-100').ele();
     for (const row of rows) this.drawRow(body, root, row, editingId === String(row.id));
@@ -82,8 +85,12 @@ export class LineItemGrid extends DataGrid {
     const tr = html.take(body).trow.className('token-row').ele();
     for (const field of this.fieldDefinitions()) {
       const cell = html.take(tr).tdata.dataAttr('column', field.field).className('token-cell px-4 py-2').ele();
+      if (field.width) html.take(cell).css('width', `${field.width}px`).css('minWidth', `${field.width}px`);
       if (editing && !field.readonly) {
-        const child = new LineItemField(`line-field-${row.id}-${field.field}`, { definition: field, value: row[field.field] });
+        const value = String(row.id) === '__new__' && row[field.field] === undefined
+          ? field.default
+          : row[field.field];
+        const child = new LineItemField(`line-field-${row.id}-${field.field}`, { definition: field, value });
         child.parent = this; this.children.push(child); child.mount(cell);
       } else {
         const displayValue = row[field.display_field || field.field];
@@ -102,7 +109,10 @@ export class LineItemGrid extends DataGrid {
       const item = html.take(card).div.className('o-line-card-field').ele();
       html.take(item).span.className('o-line-card-label').text(field.label || field.field);
       if (editing && !field.readonly) {
-        const child = new LineItemField(`line-card-field-${row.id}-${field.field}`, { definition: field, value: row[field.field] });
+        const value = String(row.id) === '__new__' && row[field.field] === undefined
+          ? field.default
+          : row[field.field];
+        const child = new LineItemField(`line-card-field-${row.id}-${field.field}`, { definition: field, value });
         child.parent = this; this.children.push(child); child.mount(item);
       } else {
         const displayValue = row[field.display_field || field.field];

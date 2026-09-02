@@ -506,7 +506,10 @@ describe('document detail components', () => {
       actions: [{ id: 'add_line', label: 'Add line' }],
     }, []);
     grid.configureInline({
-      fields: [{ type: 'LineItemField', field: 'description', label: 'Description' }],
+      fields: [
+        { type: 'LineItemField', field: 'description', label: 'Description' },
+        { type: 'LineItemField', field: 'discount', label: 'Discount', input_type: 'number', default: 0 },
+      ],
       actions: [{ id: 'edit_line', label: 'Edit' }],
       editAction: 'edit_line',
       createAction: 'add_line',
@@ -524,6 +527,7 @@ describe('document detail components', () => {
     expect(saves[0].action).toBe('add_line');
     expect(saves[0].row.id).toBe('__new__');
     expect(saves[0].values.description).toBe('New freight');
+    expect(saves[0].values.discount).toBe(0);
   });
 
   it('renders resource rows across assignment dates', () => {

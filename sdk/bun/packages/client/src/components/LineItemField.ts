@@ -14,6 +14,8 @@ export type LineItemFieldDefinition = {
   readonly?: boolean;
   currency?: string;
   decimals?: number;
+  default?: unknown;
+  width?: number;
 };
 
 export class LineItemField extends BaseComponent {
