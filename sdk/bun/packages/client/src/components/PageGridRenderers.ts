@@ -415,6 +415,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
 
   bindSource(sourceId, data => _origSetState({ rows: data.data || [], meta: data.meta }, true));
   bindSource(footerSourceId, data => _origSetState({ footerRecord: data.data || {} }, true));
+  return slot;
 }
 
 async function renderListView(def: any, targetContainer: HTMLElement) {

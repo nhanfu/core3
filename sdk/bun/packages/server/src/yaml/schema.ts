@@ -88,7 +88,7 @@ const ROOT_KEYS = new Set([
   'actions',
   'api',
 ]);
-const PAGE_KEYS = new Set(['id', 'auth', 'breadcrumb']);
+const PAGE_KEYS = new Set(['id', 'route', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
 const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
@@ -266,6 +266,7 @@ export function validatePageDefinition(
   if (isRecord(input.page)) {
     rejectUnknownKeys(input.page, PAGE_KEYS, 'page', issues);
     requireString(input.page.id, 'page.id', issues);
+    if (input.page.route !== undefined) requireString(input.page.route, 'page.route', issues);
     if (input.page.breadcrumb !== undefined) requireStringArray(input.page.breadcrumb, 'page.breadcrumb', issues);
     if (input.page.auth !== undefined) {
       requireRecord(input.page.auth, 'page.auth', issues);

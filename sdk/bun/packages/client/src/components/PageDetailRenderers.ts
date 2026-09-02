@@ -459,7 +459,8 @@ async function renderTabGroupDef(def: any, targetContainer: HTMLElement) {
 }
 
 async function renderComponentDef(def: any, targetContainer: HTMLElement) {
-  if (await renderHandlers.render(def, targetContainer)) return;
+  const handled = await renderHandlers.render(def, targetContainer);
+  if (handled !== false) return handled === true ? undefined : handled;
 
   // Applications can register components that intentionally do not live in
   // the framework's convention-based component directory (for example the

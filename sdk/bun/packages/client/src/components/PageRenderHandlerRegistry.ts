@@ -14,7 +14,7 @@ export class PageRenderHandlerRegistry {
   async render(definition: any, target: HTMLElement) {
     const handler = this.resolve(definition?.type);
     if (!handler) return false;
-    await handler(definition, target);
-    return true;
+    const result = await handler(definition, target);
+    return result === undefined ? true : result;
   }
 }

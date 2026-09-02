@@ -1,5 +1,5 @@
 title: Order details
-page: { id: order-detail, breadcrumb: [Orders, Detail], auth: { require: [orders.read] } }
+page: { id: order-detail, route: /order/detail, breadcrumb: [Orders, Detail], auth: { require: [orders.read] } }
 
 datasources:
   - id: order_detail

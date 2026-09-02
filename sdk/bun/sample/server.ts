@@ -104,6 +104,7 @@ function apiError(status: number, message: string, code?: string, messageKey?: s
 
 function moduleRoute(moduleId: string, route: string): string {
   const path = route.startsWith('/') ? route : `/${route}`;
+  if (path === `/${moduleId}` || path.startsWith(`/${moduleId}/`)) return path;
   if (path.replace(/\/$/, '') === `/${moduleId}`) return `/${moduleId}`;
   return `/${moduleId}${path}`.replace(/\/$/, '') || '/';
 }

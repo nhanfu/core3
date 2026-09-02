@@ -194,5 +194,5 @@ actions:
   - id: view_order
     type: navigate
     permission: orders.read
-    navigate_to: /detail
+    navigate_to: /order/detail
     params: { id: '{row.id}' }
