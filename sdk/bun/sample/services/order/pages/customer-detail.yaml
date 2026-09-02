@@ -1,0 +1,29 @@
+title: Customer details
+page: { id: customer-detail, route: /order/customer/detail, breadcrumb: [Sales, Customers, Detail], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: customer_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details }
+    header_actions:
+      - { id: edit_customer, label: Edit, variant: secondary }
+    group_columns: 2
+    groups:
+      - title: Customer
+        fields:
+          - { field: code, label: Customer code }
+          - { field: name, label: Customer name }
+          - { field: legal_name, label: Legal name }
+          - { field: company_type, label: Company type }
+      - title: Contact
+        fields:
+          - { field: owner_name, label: Account owner }
+          - { field: email, label: Email }
+          - { field: phone, label: Phone }
+          - { field: street, label: Street }
+          - { field: city, label: City }
+          - { field: country, label: Country }
+          - { field: vat, label: Tax ID }
+          - { field: visibility, label: Visibility }
+          - { field: status, label: Status }

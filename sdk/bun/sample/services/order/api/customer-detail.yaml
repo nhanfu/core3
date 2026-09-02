@@ -1,0 +1,40 @@
+page: { id: customer-detail }
+datasources:
+  - id: customer_detail
+    single: true
+    permission: orders.read
+    query: "SELECT * FROM customers WHERE id = :id"
+actions:
+  - id: edit_customer
+    type: server_form
+    permission: orders.write
+    title: Edit customer
+    action: sales.customers.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [customer_detail]
+    mutation:
+      operation: update
+      table: customers
+      key: id
+      concurrency: false
+      fields: [code, name, legal_name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type]
+      required: [code, name]
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM customers WHERE (code = :code OR name = :name) AND id <> :id)"
+          status: 409
+          message: Customer code or name already exists
+      result: { query: "SELECT * FROM customers WHERE id = :id" }
+    fields:
+      - { field: code, label: Customer code, type: text, required: true }
+      - { field: name, label: Customer name, type: text, required: true }
+      - { field: legal_name, label: Legal name, type: text }
+      - { field: owner_name, label: Account owner, type: text }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: city, label: City, type: text }
+      - { field: country, label: Country, type: text }
+      - { field: vat, label: Tax ID, type: text }
+      - { field: company_type, label: Company type, type: select, options: [Company, Individual] }
+      - { field: visibility, label: Visibility, type: select, options: [Public, Private] }
