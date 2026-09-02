@@ -10,7 +10,7 @@ type:
   postgres:
     up: |
       CREATE TABLE IF NOT EXISTS customers (
-        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL,
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL, legal_name VARCHAR,
         owner_name VARCHAR, visibility VARCHAR DEFAULT 'Public', status VARCHAR DEFAULT 'Active'
       );
       CREATE TABLE IF NOT EXISTS master_data (
@@ -71,7 +71,7 @@ type:
       DROP TABLE IF EXISTS customers;
   duckdb:
     up: |
-      CREATE TABLE IF NOT EXISTS customers (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL, owner_name VARCHAR, visibility VARCHAR DEFAULT 'Public', status VARCHAR DEFAULT 'Active');
+      CREATE TABLE IF NOT EXISTS customers (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), code VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL, legal_name VARCHAR, owner_name VARCHAR, visibility VARCHAR DEFAULT 'Public', status VARCHAR DEFAULT 'Active');
       CREATE TABLE IF NOT EXISTS master_data (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), kind VARCHAR NOT NULL, code VARCHAR NOT NULL, name VARCHAR NOT NULL, status VARCHAR NOT NULL DEFAULT 'Active', UNIQUE(kind, code));
       CREATE TABLE IF NOT EXISTS system_configs (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), kind VARCHAR NOT NULL, code VARCHAR NOT NULL, name VARCHAR NOT NULL, status VARCHAR NOT NULL DEFAULT 'Active', UNIQUE(kind, code));
       CREATE TABLE IF NOT EXISTS orders (id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), order_number VARCHAR NOT NULL UNIQUE, customer_name VARCHAR NOT NULL, customer_legal_name VARCHAR, order_date DATE NOT NULL, status VARCHAR NOT NULL DEFAULT 'Draft', shipment_type VARCHAR, route VARCHAR, transport_method VARCHAR, trip_count INTEGER NOT NULL DEFAULT 0, total_amount DECIMAL(18,2) NOT NULL DEFAULT 0, branch_id VARCHAR, created_by VARCHAR NOT NULL DEFAULT 'Admin User', notes VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);

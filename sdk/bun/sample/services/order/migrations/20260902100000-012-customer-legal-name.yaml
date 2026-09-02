@@ -1,0 +1,35 @@
+version: 0.0.11
+
+type:
+  postgres:
+    up: |
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS legal_name VARCHAR;
+      UPDATE customers AS c
+      SET legal_name = (
+        SELECT o.customer_legal_name
+        FROM orders AS o
+        WHERE o.customer_name = c.name AND o.customer_legal_name IS NOT NULL
+        LIMIT 1
+      )
+      WHERE EXISTS (
+        SELECT 1 FROM orders AS o
+        WHERE o.customer_name = c.name AND o.customer_legal_name IS NOT NULL
+      );
+    down: |
+      ALTER TABLE customers DROP COLUMN IF EXISTS legal_name;
+  duckdb:
+    up: |
+      ALTER TABLE customers ADD COLUMN IF NOT EXISTS legal_name VARCHAR;
+      UPDATE customers AS c
+      SET legal_name = (
+        SELECT o.customer_legal_name
+        FROM orders AS o
+        WHERE o.customer_name = c.name AND o.customer_legal_name IS NOT NULL
+        LIMIT 1
+      )
+      WHERE EXISTS (
+        SELECT 1 FROM orders AS o
+        WHERE o.customer_name = c.name AND o.customer_legal_name IS NOT NULL
+      );
+    down: |
+      ALTER TABLE customers DROP COLUMN IF EXISTS legal_name;

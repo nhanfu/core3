@@ -80,8 +80,8 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     formDef.edit_action_id = editAction.id;
     formDef.edit_fields = (editAction.fields || []).map((field: any) => ({
       ...field,
-      options: field.options || (field.options_source
-        ? (dataMap[field.options_source]?.data || []).map((row: any) => ({ value: row.value ?? row.id ?? row.code, label: row.label ?? row.name ?? row.value ?? row.id ?? row.code }))
+        options: field.options || (field.options_source
+          ? (dataMap[field.options_source]?.data || []).map((row: any) => ({ ...row, value: row.value ?? row.id ?? row.code, label: row.label ?? row.name ?? row.value ?? row.id ?? row.code }))
         : undefined),
     }));
   }

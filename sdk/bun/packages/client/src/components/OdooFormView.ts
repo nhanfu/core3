@@ -152,7 +152,17 @@ export class OdooFormView extends BaseComponent {
         options: editorDefinition.options,
         permission_options: this.def.permission_options,
         onChange: next => {
-          this.state.draft = { ...(this.state.draft || {}), [editorDefinition.field]: next };
+          const draft = { ...(this.state.draft || {}), [editorDefinition.field]: next };
+          if (editorDefinition.field === 'customer_name') {
+            const selected = (editorDefinition.options || []).find((option: any) => String(option.value ?? option.id ?? '') === String(next));
+            if (selected && Object.prototype.hasOwnProperty.call(selected, 'legal_name')) {
+              const legalName = selected.legal_name || '';
+              draft.customer_legal_name = legalName;
+              const legalInput = this._container?.querySelector<HTMLElement>('[data-form-field="customer_legal_name"]');
+              if (legalInput && 'value' in legalInput) (legalInput as HTMLInputElement).value = legalName;
+            }
+          }
+          this.state.draft = draft;
         },
       }, { constructorDefinition: editorDefinition });
       this.mountChild(editor, value);

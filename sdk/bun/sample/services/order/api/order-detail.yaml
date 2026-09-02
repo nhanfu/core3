@@ -139,7 +139,7 @@ datasources:
   - id: order_customer_lookup_detail
     single: false
     permission: orders.read
-    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+    query: "SELECT name AS value, legal_name, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, NULL AS legal_name, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
   - id: order_shipment_type_lookup_detail
     single: false
     permission: orders.read
