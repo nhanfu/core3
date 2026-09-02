@@ -17,6 +17,7 @@ type YamlApiContext = {
   repository: any;
   authProvider: any;
   sources: Map<string, any>;
+  pageSources: Map<string, string[]>;
   pages: Map<string, any>;
   catalogs: Map<string, any>;
   menus: Map<string, any>;
@@ -36,6 +37,7 @@ export function createYamlApi(ctx: YamlApiContext) {
     repository,
     authProvider,
     sources: SOURCES,
+    pageSources: PAGE_SOURCES,
     pages: PAGES,
     catalogs: CATALOGS,
     menus: MENUS,
@@ -124,7 +126,9 @@ export function createYamlApi(ctx: YamlApiContext) {
       view_scope: String(user.view_scope || 'all'),
     };
     const lang = requestLanguage(url, user.preferred_lang || 'en');
-    const datasources = await Promise.all((page.datasources || []).map(async (source: any) => {
+    const datasources = await Promise.all((PAGE_SOURCES.get(String(page.page?.id || '')) || []).map(async (sourceId: string) => {
+      const source = SOURCES.get(sourceId);
+      if (!source) throw { status: 500, message: `Unknown datasource: ${sourceId}` };
       if (source.permission && !authProvider.hasPermission(user, source.permission)) {
         throw { status: 403, message: `Requires permission: ${source.permission}` };
       }

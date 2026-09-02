@@ -1,5 +1,0 @@
-database:
-  driver: duckdb
-files:
-  driver: local
-  path: .data/uploads

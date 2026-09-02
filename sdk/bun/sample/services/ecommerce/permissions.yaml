@@ -1,4 +1,0 @@
-permissions:
-  - ecommerce.read
-  - ecommerce.write
-  - ecommerce.manage

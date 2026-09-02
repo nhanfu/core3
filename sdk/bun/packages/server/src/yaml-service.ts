@@ -208,9 +208,8 @@ export class YamlServiceModule implements ModuleLifecycle {
     const discovered = discoverPages(context.appsRoot);
     const pageMaps = {
       pages: new Map([...discovered.pages].filter(([, page]) => page.module === this.id).map(([id, page]) => [id, page.config])),
-      datasources: new Map([...discovered.datasources].filter(([, source]) => {
-        return [...discovered.pages.values()].some((page) => page.module === this.id && (page.config.datasources || []).some((candidate: any) => candidate.id === source.id));
-      })),
+      datasources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === this.id).flatMap(([, sourceIds]) => sourceIds.map((id) => [id, discovered.datasources.get(id)!] as [string, any]))),
+      pageSources: new Map([...discovered.pageDatasources].filter(([pageId]) => discovered.pages.get(pageId)?.module === this.id)),
       catalogs: new Map([...discovered.catalogs].filter(([key]) => key.startsWith(`${this.id}:`))),
       menus: new Map([...discovered.menus].filter(([key]) => key === this.id)),
       workflows: new Map([...discovered.workflows].filter(([, workflow]) => workflow.module === this.id).map(([id, workflow]) => [id, workflow.config])),
@@ -220,14 +219,16 @@ export class YamlServiceModule implements ModuleLifecycle {
       const refreshed = discoverPages(context.appsRoot);
       const servicePages = [...refreshed.pages].filter(([, page]) => page.module === this.id);
       const servicePageIds = new Set(servicePages.map(([id]) => id));
-      const serviceSources = [...refreshed.datasources].filter(([, source]) =>
-        servicePages.some(([, page]) => (page.config.datasources || []).some((candidate: any) => candidate.id === source.id)));
+      const serviceSources = [...refreshed.pageDatasources]
+        .filter(([pageId]) => servicePages.some(([id]) => id === pageId))
+        .flatMap(([, sourceIds]) => sourceIds.map((id) => [id, refreshed.datasources.get(id)!] as [string, any]));
       const replaceMap = (target: Map<string, any>, entries: Array<[string, any]>) => {
         target.clear();
         for (const [key, value] of entries) target.set(key, value);
       };
       replaceMap(pageMaps.pages, servicePages.map(([id, page]) => [id, page.config]));
       replaceMap(pageMaps.datasources, serviceSources);
+      replaceMap(pageMaps.pageSources, [...refreshed.pageDatasources].filter(([pageId]) => servicePages.some(([id]) => id === pageId)));
       replaceMap(pageMaps.catalogs, [...refreshed.catalogs].filter(([key]) => key.startsWith(`${this.id}:`)));
       replaceMap(pageMaps.menus, [...refreshed.menus].filter(([key]) => key === this.id));
       replaceMap(pageMaps.workflows, [...refreshed.workflows]
@@ -260,6 +261,7 @@ export class YamlServiceModule implements ModuleLifecycle {
       repository: this.repository,
       authProvider,
       sources: pageMaps.datasources,
+      pageSources: pageMaps.pageSources,
       pages: pageMaps.pages,
       catalogs: pageMaps.catalogs,
       menus: pageMaps.menus,

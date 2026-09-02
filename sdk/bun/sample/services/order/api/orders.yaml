@@ -1,0 +1,182 @@
+page: { id: orders }
+datasources:
+  - id: orders
+    single: false
+    permission: orders.read
+    query_window:
+      table: orders
+      date_field: order_date
+      from_param: from_date
+      to_param: to_date
+      max_years: 2
+      deny_unbounded: true
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
+          WHEN 'Draft' THEN 'Nháp'
+          WHEN 'Pending Approval' THEN 'Đang duyệt'
+          WHEN 'Approved' THEN 'Đã duyệt'
+          WHEN 'Cancelled' THEN 'Đã hủy'
+          ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
+        END AS status_label,
+        o.shipment_type, o.route, o.transport_method, o.trip_count,
+        CAST(COALESCE(o.total_amount, 0) AS DOUBLE) AS total_amount,
+        printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        o.created_by, CAST(o.created_at AS VARCHAR) AS created_at
+      FROM orders o
+      WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+        AND (:status IS NULL OR COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = :status)
+        AND (:shipment_type IS NULL OR o.shipment_type = :shipment_type)
+        AND (:transport_method IS NULL OR o.transport_method = :transport_method)
+        AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
+        AND (:to_date IS NULL OR o.order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
+        AND (:q IS NULL
+          OR o.order_number ILIKE '%' || :q || '%'
+          OR o.customer_name ILIKE '%' || :q || '%'
+          OR o.customer_legal_name ILIKE '%' || :q || '%'
+          OR o.route ILIKE '%' || :q || '%')
+      ORDER BY o.order_date DESC, o.created_at DESC
+    workflow: orders
+    pivot:
+      fields: [status_label, transport_method, shipment_type, order_date, customer_name, route, trip_count, total_amount, created_by]
+  - id: order_statuses
+    single: false
+    permission: orders.read
+    workflow_states: orders
+  - id: order_customer_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+  - id: order_shipment_type_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM system_configs WHERE kind = 'shipment_type' AND status = 'Active' UNION SELECT DISTINCT shipment_type AS value, shipment_type AS label FROM orders WHERE shipment_type IS NOT NULL AND shipment_type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+
+actions:
+  - id: add_order
+    type: server_form
+    permission: orders.write
+    title: Add order
+    action: orders.create
+    handler: yaml_mutation
+    operation: create
+    success_message: Order created successfully.
+    refresh: [orders]
+    mutation:
+      operation: insert
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      required: [order_number, customer_name, order_date]
+      defaults: { status: Draft, trip_count: 0 }
+      scope: { field: branch_id, message: Order branch is invalid }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
+          status: 409
+          message: Order number already exists
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air], default: Road }
+      - { field: trip_count, label: Trip count, type: number, default: 0 }
+      - { field: notes, label: Notes, type: textarea }
+  - id: edit_order
+    type: server_form
+    permission: orders.write
+    title: Update order
+    action: orders.update
+    handler: yaml_mutation
+    operation: update
+    success_message: Order updated successfully.
+    prefill: row
+    refresh: [orders]
+    mutation:
+      operation: update
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, notes]
+      required: [order_number, customer_name, order_date]
+      timestamps: true
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
+          status: 409
+          message: Order number already exists
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be edited while Draft
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air] }
+      - { field: trip_count, label: Trip count, type: number }
+      - { field: notes, label: Notes, type: textarea }
+  - id: submit_order
+    type: server
+    permission: orders.write
+    action: orders.submit_for_approval
+    handler: order_transition
+    workflow: orders
+    operation: submit_for_approval
+    confirm: 'Submit order {{row.order_number}}?'
+    refresh: [orders]
+  - id: approve_order
+    type: server
+    permission: orders.approve
+    action: orders.approve
+    handler: order_transition
+    workflow: orders
+    operation: approve
+    confirm: 'Approve order {{row.order_number}}?'
+    refresh: [orders]
+  - id: reject_order
+    type: server
+    permission: orders.approve
+    action: orders.reject
+    handler: order_transition
+    workflow: orders
+    operation: reject
+    confirm: 'Reject and return order {{row.order_number}} to draft?'
+    refresh: [orders]
+  - id: cancel_order
+    type: server
+    permission: orders.write
+    action: orders.cancel
+    handler: order_transition
+    workflow: orders
+    operation: cancel
+    confirm: 'Cancel order {{row.order_number}}?'
+    refresh: [orders]
+  - id: delete_order
+    type: server
+    permission: orders.write
+    action: orders.delete
+    handler: yaml_mutation
+    operation: delete
+    confirm: 'Delete order {{row.order_number}}?'
+    refresh: [orders]
+    mutation:
+      operation: delete
+      table: orders
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be deleted while Draft
+      before_steps:
+        - query: "DELETE FROM order_lines WHERE order_id = :id"
+        - query: "DELETE FROM order_workflow_states WHERE order_id = :id"
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.delete', 'orders', :id, 'Deleted order')"
+      result: { query: "SELECT true AS ok" }
+

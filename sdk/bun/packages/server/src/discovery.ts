@@ -144,10 +144,26 @@ export function discoverPages(appsRoot: string) {
 
   const pages = new Map<string, DiscoveredPage>();
   const datasources = new Map<string, any>();
+  const pageDatasources = new Map<string, string[]>();
   const catalogs = new Map<string, TranslationCatalog>();
   const menus = new Map<string, ModuleMenu>();
   const permissions = new Map<string, PermissionDefinition>();
   const workflows = new Map<string, DiscoveredWorkflow>();
+  const backendFragments = new Map<string, { file: string; config: any }>();
+
+  for (const moduleRoot of discoverModuleRoots(appsRoot)) {
+    const apiRoot = join(moduleRoot, 'api');
+    let apiFiles: string[] = [];
+    try { if (statSync(apiRoot).isDirectory()) apiFiles = walk(apiRoot).filter((name) => /\.ya?ml$/i.test(name)); } catch { /* api is optional */ }
+    for (const file of apiFiles.sort()) {
+      const config = parseYaml(file);
+      const id = String(config?.page?.id || '');
+      if (!id) throw new Error(`Backend API fragment must declare page.id: ${file}`);
+      if (backendFragments.has(id)) throw new Error(`Duplicate backend API fragment for page "${id}" in ${file}`);
+      validatePageDefinition(config, { allowExternalSources: true });
+      backendFragments.set(id, { file, config });
+    }
+  }
 
   for (const moduleRoot of discoverModuleRoots(appsRoot)) {
     let moduleName = relative(appsRoot, moduleRoot).split(sep).pop() || 'root';
@@ -192,18 +208,31 @@ export function discoverPages(appsRoot: string) {
         catalogs.set(moduleName, value || {});
         continue;
       }
-      validatePageDefinition(value);
       const id = String(value.page?.id || '');
+      const backend = backendFragments.get(id);
+      const merged = backend ? {
+        ...value,
+        actions: [...(backend.config.actions || []), ...(value.actions || [])],
+      } : value;
+      validatePageDefinition(merged, { allowExternalSources: Boolean(backend) });
       assertUnique(pages, id, file, 'page id');
-      pages.set(id, { id, file, module: moduleName, config: value });
-      for (const source of value.datasources || []) {
+      pages.set(id, { id, file, module: moduleName, config: merged });
+      const pageSources = [
+        ...(backend?.config.datasources || []).map((source: any) => source.id),
+        ...(value.datasources || []).map((source: any) => source.id),
+      ];
+      if (pageSources.length) pageDatasources.set(id, pageSources);
+      for (const source of [...(backend?.config.datasources || []), ...(value.datasources || [])]) {
         assertUnique(datasources, source.id, file, 'datasource id');
         datasources.set(source.id, source);
       }
     }
   }
+  for (const [id, fragment] of backendFragments) {
+    if (!pages.has(id)) throw new Error(`Backend fragment ${fragment.file} has no matching frontend page "${id}"`);
+  }
   validateTranslationCatalogs(catalogs);
-  return { pages, datasources, catalogs, menus, permissions, workflows };
+  return { pages, datasources, pageDatasources, catalogs, menus, permissions, workflows };
 }
 
 export function translationMap(catalogs: Map<string, TranslationCatalog>, lang: string, page = '*') {
