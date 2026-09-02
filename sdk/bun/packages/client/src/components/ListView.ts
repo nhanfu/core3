@@ -10,6 +10,7 @@ import { GraphView, type GraphViewDefinition } from '@core3/client/components/Gr
 import { MapView, type MapViewDefinition } from '@core3/client/components/MapView';
 import { DateRangeFilterTag } from '@core3/client/components/DateRangeFilterTag';
 import { i18n } from '@core3/client/i18n';
+import { drawColumnChooser } from '@core3/client/components/ColumnChooser';
 
 type ListRow = Record<string, unknown>;
 type SortDirection = 'asc' | 'desc';
@@ -665,36 +666,26 @@ export class ListView extends BaseComponent {
     }
 
     if (!this.options.columnChooser && !this.options.actions?.length && !this.options.favorites?.length) return;
-    const details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').ele() as HTMLDetailsElement;
-    if (this.state.columnMenuOpen === true) html.take(details).prop('open', true);
-    html.take(details).event('toggle', () => {
-      if (!details.open) this.setState({ columnMenuOpen: false }, false);
-    });
-    const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).ele();
-    appendIcon(summary, 'settings');
-    const menu = html.take(details).div.className('o-list-dropdown-menu').ele();
+    let menu: HTMLElement | null = null;
+    let details: HTMLDetailsElement;
     if (this.options.columnChooser) {
-      const group = html.take(menu).section.className('o-list-column-menu').ele();
-      html.take(group).h4.text(labels.columns);
-      for (const column of this.defs.filter(candidate => !candidate.rowActions?.length)) {
-        const label = html.take(group).label.ele();
-        const checkbox = html.take(label).input.attr('type', 'checkbox').ele() as HTMLInputElement;
-        html.take(checkbox).prop('checked', visibleColumnIds.has(column.id || column.field)).attr('aria-label', `${labels.columns}: ${column.label}`).event('change', () => {
-          const nextVisible = new Set(visibleColumnIds);
-          if (checkbox.checked) nextVisible.add(column.id || column.field);
-          else nextVisible.delete(column.id || column.field);
-          if (!nextVisible.size) {
-            html.take(checkbox).prop('checked', true);
-            return;
-          }
-          this.persistColumns(nextVisible);
-          this.setState({ visibleColumns: [...nextVisible], columnMenuOpen: true });
-        });
-        html.take(label).text(column.label);
-      }
+      details = drawColumnChooser(navigation, {
+        columns: this.defs.filter(candidate => !candidate.rowActions?.length),
+        visibleColumns: visibleColumnIds,
+        labels: { button: labels.columns, title: labels.columns, show: label => `${labels.columns}: ${label}` },
+        onChange: nextVisible => { this.persistColumns(nextVisible); this.setState({ visibleColumns: nextVisible, columnMenuOpen: true }); },
+      });
+      if (this.state.columnMenuOpen === true) details.open = true;
+      html.take(details).event('toggle', () => { if (!details.open) this.setState({ columnMenuOpen: false }, false); });
+      menu = details.querySelector<HTMLElement>('.o-list-dropdown-menu');
+    } else {
+      details = html.take(navigation).details.className('o-list-dropdown o-list-cog-menu').ele() as HTMLDetailsElement;
+      const summary = html.take(details).summary.attr('aria-label', labels.columns).attr('title', labels.columns).ele();
+      appendIcon(summary, 'settings');
+      menu = html.take(details).div.className('o-list-dropdown-menu').ele();
     }
     if (this.options.actions?.length) {
-      const group = html.take(menu).section.className('o-list-utility-menu').ele();
+      const group = html.take(menu!).section.className('o-list-utility-menu').ele();
       for (const action of this.options.actions) {
         const button = html.take(group).button.dataAttr('list-action', action.id).ele() as HTMLButtonElement;
         if (action.icon) {
@@ -706,7 +697,7 @@ export class ListView extends BaseComponent {
       }
     }
     if (this.options.favorites?.length) {
-      const group = html.take(menu).section.className('o-list-favorites-menu').ele();
+      const group = html.take(menu!).section.className('o-list-favorites-menu').ele();
       html.take(group).h4.text(i18n.tKey('list.favorites', {}, 'Favorites'));
       for (const favorite of this.options.favorites) {
         const button = html.take(group).button.dataAttr('list-favorite', favorite.id).text(favorite.label).ele();

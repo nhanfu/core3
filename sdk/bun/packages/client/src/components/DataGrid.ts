@@ -19,6 +19,7 @@ export interface DataGridColumn {
   /** Renders a semantic cell while preserving DataGrid ownership of the row. */
   render?: (container: HTMLElement, value: unknown, row: DataGridRow) => void;
   rowActions?: DataGridRowAction[];
+  optional?: 'show' | 'hide';
 }
 
 export interface DataGridRowAction {

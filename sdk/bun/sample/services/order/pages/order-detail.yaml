@@ -108,6 +108,7 @@ components:
     variant: odoo_x2many
     page_size: 50
     row_key: id
+    column_chooser: true
     actions:
       - { id: add_order_line, label: Add a line, variant: primary, permission: orders.write, show_if: "state.order_detail.status === 'Draft'" }
     empty_state: { title: No order lines, description: Add a line to start calculating the order total. }

@@ -3,6 +3,7 @@ import { LineItemField, type LineItemFieldDefinition } from '@core3/client/compo
 import { LineItemActions, type LineItemActionDefinition } from '@core3/client/components/LineItemActions';
 import { appendIcon } from '@core3/client/components/Icon';
 import { html } from '@core3/client/html';
+import { drawColumnChooser } from '@core3/client/components/ColumnChooser';
 
 type Row = Record<string, any>;
 
@@ -25,6 +26,7 @@ export class LineItemGrid extends DataGrid {
   private inline?: InlineOptions;
   private resizeCleanup?: () => void;
   private preferencesLoaded = false;
+  private columnMenuOpen = false;
 
   configureInline(options: InlineOptions) { this.inline = options; this.loadPreferences(); }
 
@@ -100,7 +102,20 @@ export class LineItemGrid extends DataGrid {
       : rows;
     const visibleFields = this.visibleFields();
     const editingId = this.state.editingId == null ? '' : String(this.state.editingId);
-    const root = html.take(container).div.className('token-panel o-x2many-grid o-line-grid').ele();
+    const root = html.take(container).div.className('token-panel o-x2many-grid o-line-grid relative').ele();
+    if (!formEditing && this.state.actions && Array.isArray(this.state.actions)) {
+      const controls = html.take(root).div.className('o-x2many-controls flex items-center justify-between gap-2').ele();
+      const actionBar = html.take(controls).div.className('flex items-center gap-2').ele();
+      for (const action of this.state.actions as any[]) {
+        const button = html.take(actionBar).button.className('o-x2many-create').type('button').text(action.label).ele();
+        html.take(button).event('click', () => this.startCreate());
+      }
+      if (this.options.columnChooser) {
+        const details = this.drawColumnChooser(controls);
+        if (this.columnMenuOpen) details.open = true;
+        html.take(details).event('toggle', () => { this.columnMenuOpen = details.open; });
+      }
+    }
     const tableWrap = html.take(root).div.className('o-line-grid-table overflow-x-auto').ele();
     const table = html.take(tableWrap).table.className('token-table min-w-full').ele();
     const head = html.take(table).thead.trow.className('token-header').ele();
@@ -132,32 +147,12 @@ export class LineItemGrid extends DataGrid {
       }
     }
 
-    if (!formEditing && this.state.actions && Array.isArray(this.state.actions)) {
-      const controls = html.take(root).div.className('o-x2many-controls').ele();
-      for (const action of this.state.actions as any[]) {
-        const button = html.take(controls).button.className('o-x2many-create').type('button').text(action.label).ele();
-        html.take(button).event('click', () => this.startCreate());
-      }
-      if (this.options.columnChooser) this.drawColumnChooser(root);
-    }
   }
 
   private drawColumnChooser(root: HTMLElement) {
     const configured = this.columns.filter(column => column.field !== 'actions');
     const visible = new Set(this.visibleFields().map(field => this.columnKey(this.columnForField(field) || { field: field.field })));
-    const details = html.take(root).details.className('o-line-grid-column-chooser relative').ele();
-    html.take(details).summary.className('token-control cursor-pointer').text('Columns');
-    const menu = html.take(details).div.className('token-menu absolute right-0 z-10 min-w-[180px] rounded-md border bg-white p-2 shadow-lg').ele();
-    for (const column of configured) {
-      const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm').ele();
-      const checkbox = html.take(label).input.attr('type', 'checkbox').prop('checked', visible.has(this.columnKey(column))).attr('aria-label', `Show ${column.label}`).ele() as HTMLInputElement;
-      html.take(checkbox).event('change', () => {
-        const next = new Set(visible);
-        if (checkbox.checked) next.add(this.columnKey(column)); else if (next.size > 1) next.delete(this.columnKey(column)); else { checkbox.checked = true; return; }
-        this.state.visibleColumns = [...next]; this.persistPreferences(); this.redraw();
-      });
-      html.take(label).text(column.label);
-    }
+    return drawColumnChooser(root, { columns: configured, visibleColumns: visible, menuFixed: true, onChange: next => { this.state.visibleColumns = next; this.persistPreferences(); this.columnMenuOpen = true; this.redraw(); } });
   }
 
   private fieldDefinitions() { return this.inline!.fields; }
