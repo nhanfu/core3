@@ -1,0 +1,11 @@
+/* Reusable form date picker. */
+.o-date-picker { position: relative; width: 100%; }
+.o-date-picker > input { padding-right: 36px; }
+.o-date-picker-toggle { position: absolute; top: 1px; right: 1px; display: grid; width: 30px; height: calc(100% - 2px); place-items: center; border: 0; border-radius: 3px; background: transparent; color: var(--o-form-muted, #64748b); cursor: pointer; }
+.o-date-picker-toggle:hover, .o-date-picker-toggle:focus-visible { background: var(--o-form-hover, #f1f5f9); color: var(--o-form-action, #4f46e5); outline: none; }
+.o-date-picker-toggle svg { width: 16px; height: 16px; }
+.o-date-picker-popup { top: calc(100% + 6px); left: 0; width: 264px; max-width: calc(100vw - 24px); color: var(--o-form-text, #1e293b); }
+.o-date-picker-nav { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--o-form-border, #cbd5e1); border-radius: 4px; background: var(--o-form-surface, #fff); color: inherit; cursor: pointer; font-size: 18px; line-height: 1; }
+.o-date-picker-nav:hover { border-color: var(--o-form-action, #4f46e5); color: var(--o-form-action, #4f46e5); }
+.o-date-picker-day { min-height: 30px; border: 0; border-radius: 4px; background: transparent; color: inherit; cursor: pointer; font: inherit; }
+.o-date-picker-day:hover, .o-date-picker-day.is-selected { background: var(--o-form-action, #4f46e5); color: #fff; font-weight: 600; }

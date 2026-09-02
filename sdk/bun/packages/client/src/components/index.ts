@@ -13,6 +13,7 @@ export { TextInput }      from '@core3/client/components/TextInput';
 export { NumberInput }    from '@core3/client/components/NumberInput';
 export { SelectInput }    from '@core3/client/components/SelectInput';
 export { DateInput }      from '@core3/client/components/DateInput';
+export { DatePicker }     from '@core3/client/components/DatePicker';
 export { TextareaInput }  from '@core3/client/components/TextareaInput';
 export { CheckboxInput }  from '@core3/client/components/CheckboxInput';
 export { FormPanel }      from '@core3/client/components/FormPanel';
