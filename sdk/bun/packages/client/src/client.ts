@@ -69,11 +69,15 @@ class Client {
     });
   }
 
-  async action(name, params = {}) {
-    return this._fetch(`${this._resolveBase()}/actions/${encodeURIComponent(name)}`, {
+  async mutate(mutation: string, params: Record<string, unknown> = {}) {
+    return this._fetch(`${this._resolveBase()}/mutate`, {
       method: 'POST',
-      body: JSON.stringify(params),
+      body: JSON.stringify({ mutation, ...params }),
     });
+  }
+
+  async action(name, params = {}) {
+    return this.mutate(name, params);
   }
 
   /** Raw authenticated request that returns the Response untouched (SSE, downloads, manual status checks). */

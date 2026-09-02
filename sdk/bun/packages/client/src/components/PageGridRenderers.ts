@@ -416,6 +416,31 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       });
       comp.setState({ editingId: null });
     };
+    const deleteLine = async (row: any) => {
+      const deleteAction = inlineActions.find((action: any) => action.id.startsWith('delete_'));
+      const actionDef = (config.actions || []).find((candidate: any) => candidate.id === deleteAction?.id);
+      if (!actionDef) return;
+      if (actionDef.confirm) {
+        const message = String(actionDef.confirm).replaceAll('{{row.description}}', String(row.description || ''));
+        if (!confirm(message)) return;
+      }
+      const parentSourceId = def.parent_source || def.footer?.source;
+      let parentExpectedRowVersion = parentSourceId ? dataMap[parentSourceId]?.data?.row_version : undefined;
+      if (parentSourceId) {
+        const freshParent = await client.query(createQuery({ sourceId: parentSourceId, params: pageParams, skip: 0, top: 1 }));
+        dataMap[parentSourceId] = freshParent;
+        parentExpectedRowVersion = freshParent?.data?.row_version;
+      }
+      const params = resolveActionParams(actionDef.params, { ...ctx, row });
+      await client.action(actionDef.action, {
+        ...params,
+        id: params.id ?? pageParams.id,
+        line_id: params.line_id ?? row.id,
+        expected_row_version: row.row_version,
+        parent_expected_row_version: parentExpectedRowVersion,
+      });
+      if (actionDef.refresh?.length) await refreshSources(actionDef.refresh);
+    };
     comp.configureInline({
       fields: fieldsWithDefaults,
       actions: inlineActions,
@@ -424,6 +449,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       visible: (action: any, row: any) => hasPermission(ctx.user, action.permission)
         && (!action.show_if || Boolean(evalExpr(action.show_if, { ...ctx, row }))),
       onSave: saveLine,
+      onDelete: deleteLine,
     });
     if (def.parent_source) {
       const onFormEditing = (event: Event) => {

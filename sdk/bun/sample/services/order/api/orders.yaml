@@ -75,6 +75,7 @@ actions:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number)"
           status: 409
           message: Order number already exists
+          message_key: errors.order_number_exists
       result: { query: "SELECT * FROM orders WHERE id = :id" }
     fields:
       - { field: order_number, label: Order number, type: text, required: true }
@@ -107,9 +108,11 @@ actions:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
           status: 409
           message: Order number already exists
+          message_key: errors.order_number_exists
         - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           message: Order can only be edited while Draft
+          message_key: errors.order_draft_only
         - query: "SELECT order_number AS old_order_number, customer_name AS old_customer_name, customer_legal_name AS old_customer_legal_name, CAST(order_date AS VARCHAR) AS old_order_date, shipment_type AS old_shipment_type, route AS old_route, transport_method AS old_transport_method, trip_count AS old_trip_count, notes AS old_notes FROM orders WHERE id = :id"
           assign: true
       before_steps:
@@ -198,6 +201,7 @@ actions:
         - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           message: Order can only be deleted while Draft
+          message_key: errors.order_delete_draft_only
       before_steps:
         - query: "DELETE FROM order_lines WHERE order_id = :id"
         - query: "DELETE FROM order_workflow_states WHERE order_id = :id"

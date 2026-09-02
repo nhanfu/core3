@@ -12,6 +12,7 @@ type InlineOptions = {
   editAction?: string;
   createAction?: string;
   onSave: (actionId: string, row: Row, values: Row) => void | Promise<void>;
+  onDelete?: (row: Row) => void | Promise<void>;
   onCancel?: () => void;
   visible?: (action: LineItemActionDefinition, row: Row) => boolean;
 };
@@ -155,7 +156,16 @@ export class LineItemGrid extends DataGrid {
 
   private drawActions(container: HTMLElement, row: Row, editing: boolean) {
     if (editing) {
-      if (this.state.formEditing === true) return;
+      if (this.state.formEditing === true) {
+        if (String(row.id) === '__new__' || !this.inline!.onDelete) return;
+        const deleteAction = this.inline!.actions.find(action => action.id.startsWith('delete_') || action.variant === 'danger');
+        if (!deleteAction || this.inline!.visible && !this.inline!.visible(deleteAction, row)) return;
+        const button = html.take(container).button.type('button').className('o-x2many-row-action is-icon-only is-danger').ele();
+        appendIcon(button, 'trash');
+        html.take(button).attr('aria-label', deleteAction.label || 'Delete').attr('title', deleteAction.label || 'Delete');
+        html.take(button).event('click', () => void this.inline!.onDelete!(row));
+        return;
+      }
       const save = html.take(container).button.type('button').className('o-x2many-row-action is-icon-only').ele();
       appendIcon(save, 'check');
       html.take(save).attr('aria-label', 'Save').attr('title', 'Save');

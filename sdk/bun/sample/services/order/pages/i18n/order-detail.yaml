@@ -98,6 +98,18 @@ vi:
   Removed follower: Đã xóa người theo dõi
   Uploaded attachment: Đã tải lên tệp đính kèm
   Edit Order: Sửa đơn hàng
+  Order updated successfully.: Cập nhật đơn hàng thành công.
+  Order is outside the current view scope: Đơn hàng nằm ngoài phạm vi hiện tại.
+  Message content must be between 1 and 4000 characters: Nội dung tin nhắn phải từ 1 đến 4000 ký tự.
+  Note content must be between 1 and 4000 characters: Nội dung ghi chú phải từ 1 đến 4000 ký tự.
+  Order not found: Không tìm thấy đơn hàng.
+  Follower not found: Không tìm thấy người theo dõi.
+  Order number already exists: Số đơn hàng đã tồn tại.
+  Order can only be edited while Draft: Chỉ có thể sửa đơn hàng ở trạng thái Nháp.
+  Order changed or is not Draft; reload it before editing lines: Đơn hàng đã thay đổi hoặc không còn ở trạng thái Nháp; hãy tải lại trước khi sửa dòng.
+  Selected product is not available for sale: Sản phẩm đã chọn không được phép bán.
+  Line item changed or no longer exists; reload it before saving: Dòng đơn hàng đã thay đổi hoặc không còn tồn tại; hãy tải lại trước khi lưu.
+  Line item changed or no longer exists; reload it before deleting: Dòng đơn hàng đã thay đổi hoặc không còn tồn tại; hãy tải lại trước khi xóa.
   Order number: Mã đơn hàng
   Customer: Khách hàng
   "Search customers...": "Tìm khách hàng..."

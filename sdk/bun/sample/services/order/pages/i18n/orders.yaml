@@ -75,6 +75,12 @@ vi:
   Notes: Ghi chú
   "Search customers...": "Tìm khách hàng..."
   Update order: Cập nhật đơn hàng
+  Order created successfully.: Tạo đơn hàng thành công.
+  Order updated successfully.: Cập nhật đơn hàng thành công.
+  Order branch is invalid: Chi nhánh của đơn hàng không hợp lệ.
+  Order number already exists: Số đơn hàng đã tồn tại.
+  Order can only be edited while Draft: Chỉ có thể sửa đơn hàng ở trạng thái Nháp.
+  Order can only be deleted while Draft: Chỉ có thể xóa đơn hàng ở trạng thái Nháp.
   "Submit order {{row.order_number}}?": "Trình duyệt đơn hàng {{row.order_number}}?"
   "Approve order {{row.order_number}}?": "Duyệt đơn hàng {{row.order_number}}?"
   "Reject and return order {{row.order_number}} to draft?": "Từ chối và trả đơn hàng {{row.order_number}} về trạng thái nháp?"

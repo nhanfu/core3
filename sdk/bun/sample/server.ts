@@ -332,6 +332,19 @@ Bun.serve({
             headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
           });
         }
+        if (url.pathname === '/api/mutate' && req.method === 'POST') {
+          const body = await req.json().catch(() => ({}));
+          const mutation = body && typeof body === 'object' ? String(body.mutation || '') : '';
+          if (!mutation) return new Response(JSON.stringify({ error: 'mutation is required', code: 'MUTATION_REQUIRED' }), { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
+          const actionUrl = new URL(`/api/actions/${encodeURIComponent(mutation)}`, url);
+          const actionRequest = new Request(actionUrl, {
+            method: 'POST',
+            headers: req.headers,
+            body: JSON.stringify(body),
+          });
+          const response = await moduleManager.handle(actionRequest, actionUrl, server);
+          if (response) return response;
+        }
         const response = await moduleManager.handle(req, url, server);
         if (response === undefined) return;
         return response ?? apiError(404, 'API route not found');

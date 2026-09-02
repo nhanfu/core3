@@ -14,7 +14,7 @@ export type MutationDefinition = {
   defaults?: Record<string, unknown>;
   timestamps?: boolean;
   concurrency?: false | { field?: string; input?: string; required?: boolean };
-  scope?: { table?: string; field: string; message?: string };
+  scope?: { table?: string; field: string; message?: string; message_key?: string };
   message_key?: string;
   guards?: Array<{ type?: 'query' | 'service'; query?: string; service?: string; operation?: string; request?: Record<string, unknown>; status?: number; message?: string; code?: string; message_key?: string; message_params?: Record<string, unknown>; assign?: boolean }>;
   before_steps?: MutationStep[];
@@ -157,7 +157,11 @@ export class YamlMutationRuntime {
       const scopeField = this.identifier(definition.scope.field, 'Mutation scope field');
       const bound = bindNamedParams(`SELECT id FROM ${scopeTable} WHERE id = :id AND (:view_scope = 'all' OR ${scopeField} = :current_branch_id)`, { ...params, id });
       const [scoped] = await queryOnConnection(connection, bound.statement, bound.values);
-      if (!scoped) throw { status: 403, message: String(definition.scope.message || 'Record is outside the current view scope') };
+      if (!scoped) throw {
+        status: 403,
+        message: String(definition.scope.message || 'Record is outside the current view scope'),
+        ...(definition.scope.message_key ? { message_key: definition.scope.message_key } : {}),
+      };
     }
     if (operation === 'update') {
       if (!requested.length) throw { status: 400, message: 'No fields to update' };

@@ -162,17 +162,20 @@ actions:
     fields:
       - { field: content, label: Message, type: textarea, required: true }
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000"
           status: 400
           message: Message content must be between 1 and 4000 characters
+          message_key: errors.message_content_length
         - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
           status: 403
           message: Order is outside the current view scope
+          message_key: errors.order_outside_scope
         - query: "SELECT id FROM orders WHERE id = :id"
           status: 404
           message: Order not found
+          message_key: errors.order_not_found
       steps:
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.message', 'orders', :id, :content)"
       result: { query: "SELECT :id AS id, 'orders.message' AS action, :content AS detail" }
@@ -188,17 +191,20 @@ actions:
     fields:
       - { field: content, label: Note, type: textarea, required: true }
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000"
           status: 400
           message: Note content must be between 1 and 4000 characters
+          message_key: errors.note_content_length
         - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
           status: 403
           message: Order is outside the current view scope
+          message_key: errors.order_outside_scope
         - query: "SELECT id FROM orders WHERE id = :id"
           status: 404
           message: Order not found
+          message_key: errors.order_not_found
       steps:
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.note', 'orders', :id, :content)"
       result: { query: "SELECT :id AS id, 'orders.note' AS action, :content AS detail" }
@@ -211,11 +217,12 @@ actions:
     params: { user_id: '{row.user_id}' }
     refresh: [order_detail_followers, order_detail_timeline]
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
           status: 403
           message: Order is outside the current view scope
+          message_key: errors.order_outside_scope
         - type: service
           service: auth
           operation: users.validate
@@ -223,6 +230,7 @@ actions:
           assign: true
           status: 404
           message: Follower not found
+          message_key: errors.follower_not_found
       steps:
         - query: "INSERT INTO order_followers(order_id, user_id, added_by) SELECT :id, :user_id, :current_user_id WHERE NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.add', 'orders', :id, :name WHERE NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
@@ -236,11 +244,12 @@ actions:
     params: { user_id: '{row.user_id}' }
     refresh: [order_detail_followers, order_detail_timeline]
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
           status: 403
           message: Order is outside the current view scope
+          message_key: errors.order_outside_scope
         - type: service
           service: auth
           operation: users.validate
@@ -248,6 +257,7 @@ actions:
           assign: true
           status: 404
           message: Follower not found
+          message_key: errors.follower_not_found
       steps:
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.remove', 'orders', :id, :name FROM order_followers f WHERE f.user_id = :user_id AND f.order_id = :id"
         - query: "DELETE FROM order_followers WHERE order_id = :id AND user_id = :user_id"
@@ -262,11 +272,12 @@ actions:
     refresh: [order_detail_attachments, order_detail_timeline]
     mutation:
       generated: [attachment_id]
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT id FROM orders WHERE id = :order_id"
           status: 404
           message: Order not found
+          message_key: errors.order_not_found
       steps:
         - query: "INSERT INTO order_attachments(id, order_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :order_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.attachments.upload', 'orders', :order_id, :fileName)"
@@ -297,9 +308,11 @@ actions:
         - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
           status: 409
           message: Order number already exists
+          message_key: errors.order_number_exists
         - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           message: Order can only be edited while Draft
+          message_key: errors.order_draft_only
         - query: "SELECT order_number AS old_order_number, customer_name AS old_customer_name, customer_legal_name AS old_customer_legal_name, CAST(order_date AS VARCHAR) AS old_order_date, shipment_type AS old_shipment_type, route AS old_route, transport_method AS old_transport_method, trip_count AS old_trip_count, payment_term_name AS old_payment_term_name, notes AS old_notes FROM orders WHERE id = :id"
           assign: true
       before_steps:
@@ -394,16 +407,18 @@ actions:
       - { field: tax_rate, label: Tax rate (%), type: number, default: 0, required: true }
       - { field: discount, label: Discount (%), type: number, default: 0, required: true }
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       generated: [line_id]
       guards:
         - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           code: STALE_RECORD
           message: Order changed or is not Draft; reload it before editing lines
+          message_key: errors.order_line_parent_stale
         - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
           status: 400
           message: Selected product is not available for sale
+          message_key: errors.product_unavailable
       steps:
         - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
         - query: "INSERT INTO order_lines(id, order_id, sequence, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) VALUES(:line_id, :id, :next_sequence, :description, :product_id, :quantity, :unit, :unit_price, :tax_rate, :discount, 0, 0, :quantity, ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2))"
@@ -432,19 +447,22 @@ actions:
       - { field: tax_rate, label: Tax rate (%), type: number, required: true }
       - { field: discount, label: Discount (%), type: number, required: true }
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           code: STALE_RECORD
           message: Order changed or is not Draft; reload it before editing lines
+          message_key: errors.order_line_parent_stale
         - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
           status: 400
           message: Selected product is not available for sale
+          message_key: errors.product_unavailable
         - query: "SELECT description AS old_description, product_id AS old_product_id, quantity AS old_quantity, unit AS old_unit, unit_price AS old_unit_price, tax_rate AS old_tax_rate, discount AS old_discount FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           status: 409
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before saving
+          message_key: errors.order_line_stale_update
           assign: true
       steps:
         - query: "UPDATE order_lines SET description = :description, product_id = :product_id, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, discount = :discount, qty_to_invoice = CASE WHEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) > 0 THEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) ELSE 0 END, price_subtotal = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), price_tax = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), price_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
@@ -464,16 +482,18 @@ actions:
     params: { id: '{state.id}', line_id: '{row.id}' }
     refresh: [order_detail_lines, order_detail, order_detail_timeline]
     mutation:
-      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope, message_key: errors.order_outside_scope }
       guards:
         - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           code: STALE_RECORD
           message: Order changed or is not Draft; reload it before editing lines
+          message_key: errors.order_line_parent_stale
         - query: "SELECT id, description, product_id, quantity, unit, unit_price, tax_rate, discount FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           status: 409
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before deleting
+          message_key: errors.order_line_stale_delete
           assign: true
       steps:
         - query: "DELETE FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"

@@ -544,10 +544,11 @@ describe('document detail components', () => {
     }, []);
     grid.configureInline({
       fields: [{ type: 'LineItemField', field: 'description', label: 'Description' }],
-      actions: [],
+      actions: [{ id: 'delete_line', label: 'Delete', icon: 'trash', variant: 'danger' }],
       editAction: 'edit_line',
       createAction: 'add_line',
       onSave: async () => {},
+      onDelete: async () => {},
     });
     const container = mount(grid);
 
@@ -557,6 +558,7 @@ describe('document detail components', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].querySelector<HTMLInputElement>('[aria-label="Description"]')?.value).toBe('Freight');
     expect(rows[1].querySelector<HTMLInputElement>('[aria-label="Description"]')?.value).toBe('');
+    expect(rows[0].querySelector('[aria-label="Delete"]')).not.toBeNull();
     expect(container.querySelector('.o-x2many-controls')).toBeNull();
     expect(grid.getFormDrafts()).toHaveLength(1);
     expect(grid.getFormDrafts()[0].row.id).toBe('__new__');

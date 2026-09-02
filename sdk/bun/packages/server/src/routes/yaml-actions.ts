@@ -12,15 +12,17 @@ export async function handleActionRoutes(ctx: Record<string, any>): Promise<Resp
   } = ctx;
 
   const match = pathname.match(/^\/api\/actions\/([A-Za-z0-9_.-]+)$/);
-  if (!match || method !== 'POST') return null;
+  const isMutationRoute = pathname === '/api/mutate';
+  if ((!match && !isMutationRoute) || method !== 'POST') return null;
 
-  const actionName = match[1];
+  const body = await req.json() as any;
+  const actionName = isMutationRoute ? String(body?.mutation || '') : match![1];
+  if (!actionName) return apiError(400, 'mutation is required', 'MUTATION_REQUIRED');
   const actionDefinition = NAMED_ACTIONS[actionName];
   if (!actionDefinition) return apiError(404, `Unknown action: ${actionName}`);
   requirePerm(permissionForAction(actionName));
   for (const permission of Array.isArray(actionDefinition.permissions) ? actionDefinition.permissions : []) requirePerm(String(permission));
 
-  const body = await req.json() as any;
   const handler = actionDefinition.handler;
   if (typeof actionDefinition.topic === 'string') {
     return json(await (topics as TopicRouter).request(topicDefinition(actionDefinition.topic, Number(actionDefinition.topic_version || 1)), {
