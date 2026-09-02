@@ -64,6 +64,7 @@ components:
       orders.approve: Approved
       orders.reject: Rejected
       orders.cancel: Cancelled
+      orders.update: Updated order
       orders.lines.create: Added order line
       orders.lines.update: Updated order line
       orders.lines.delete: Deleted order line

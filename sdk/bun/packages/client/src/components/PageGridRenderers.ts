@@ -393,6 +393,29 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         ? { default: createFieldDefaults.get(field.field) }
         : {}),
     }));
+    const saveLine = async (actionId: string, row: any, values: any) => {
+      const actionDef = (config.actions || []).find((candidate: any) => candidate.id === actionId);
+      if (!actionDef) return;
+      const parentSourceId = def.parent_source || def.footer?.source;
+      let parentExpectedRowVersion = parentSourceId ? dataMap[parentSourceId]?.data?.row_version : undefined;
+      if (parentSourceId) {
+        const freshParent = await client.query(createQuery({
+          sourceId: parentSourceId,
+          params: pageParams,
+          skip: 0,
+          top: 1,
+        }));
+        dataMap[parentSourceId] = freshParent;
+        parentExpectedRowVersion = freshParent?.data?.row_version;
+      }
+      await handleInlineForm(actionDef, {
+        ...values,
+        id: row.id === '__new__' ? undefined : row.id,
+        row_version: row.row_version,
+        parent_expected_row_version: parentExpectedRowVersion,
+      });
+      comp.setState({ editingId: null });
+    };
     comp.configureInline({
       fields: fieldsWithDefaults,
       actions: inlineActions,
@@ -400,30 +423,44 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       createAction,
       visible: (action: any, row: any) => hasPermission(ctx.user, action.permission)
         && (!action.show_if || Boolean(evalExpr(action.show_if, { ...ctx, row }))),
-      onSave: async (actionId: string, row: any, values: any) => {
-        const actionDef = (config.actions || []).find((candidate: any) => candidate.id === actionId);
-        if (!actionDef) return;
-        const parentSourceId = def.parent_source || def.footer?.source;
-        let parentExpectedRowVersion = parentSourceId ? dataMap[parentSourceId]?.data?.row_version : undefined;
-        if (parentSourceId) {
-          const freshParent = await client.query(createQuery({
-            sourceId: parentSourceId,
-            params: pageParams,
-            skip: 0,
-            top: 1,
-          }));
-          dataMap[parentSourceId] = freshParent;
-          parentExpectedRowVersion = freshParent?.data?.row_version;
-        }
-        await handleInlineForm(actionDef, {
-          ...values,
-          id: row.id === '__new__' ? undefined : row.id,
-          row_version: row.row_version,
-          parent_expected_row_version: parentExpectedRowVersion,
-        });
-        comp.setState({ editingId: null });
-      },
+      onSave: saveLine,
     });
+    if (def.parent_source) {
+      const onFormEditing = (event: Event) => {
+        const detail = (event as CustomEvent).detail || {};
+        if (detail.source === def.parent_source) comp.setFormEditing?.(detail.editing === true);
+      };
+      document.addEventListener('core3:form-editing', onFormEditing);
+      const dispose = comp.dispose.bind(comp);
+      comp.dispose = () => {
+        document.removeEventListener('core3:form-editing', onFormEditing);
+        dispose();
+      };
+      const onFormSave = (event: Event) => {
+        const detail = (event as CustomEvent).detail || {};
+        if (detail.source !== def.parent_source || !Array.isArray(detail.tasks)) return;
+        const drafts = comp.getFormDrafts?.() || [];
+        detail.tasks.push(async () => {
+          for (const draft of drafts) {
+            if (draft.row.id === '__new__') {
+              const actionDef = (config.actions || []).find((candidate: any) => candidate.id === draft.actionId);
+              const hasNewValues = (actionDef?.fields || []).some((field: any) => {
+                const value = draft.values[field.field];
+                return value !== undefined && value !== null && value !== '' && value !== field.default;
+              });
+              if (!hasNewValues) continue;
+            }
+            await saveLine(draft.actionId, draft.row, draft.values);
+          }
+        });
+      };
+      document.addEventListener('core3:form-save', onFormSave);
+      const previousDispose = comp.dispose.bind(comp);
+      comp.dispose = () => {
+        document.removeEventListener('core3:form-save', onFormSave);
+        previousDispose();
+      };
+    }
   }
 
   const _origSetState = comp.setState.bind(comp);

@@ -110,7 +110,15 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     return action
       && hasPermission(ctx.user, action.permission)
       && (!button.show_if || Boolean(evalExpr(button.show_if, ctx)));
+  }).map((button: any) => {
+    const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
+    return { ...button, is_workflow: Boolean(action?.workflow) };
   });
+  formDef.onEditingChange = (editing: boolean) => {
+    document.dispatchEvent(new CustomEvent('core3:form-editing', {
+      detail: { source: def.source, editing },
+    }));
+  };
   const comp = new OdooFormView(
     `odoo-form-view-${def.source || def.id || Date.now()}`,
     {
@@ -141,7 +149,12 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
   };
   comp.state.onInlineSave = async (values: Record<string, unknown>) => {
     if (!editAction) return;
+    const tasks: Array<() => Promise<void>> = [];
+    document.dispatchEvent(new CustomEvent('core3:form-save', {
+      detail: { source: def.source, tasks },
+    }));
     await handleInlineForm(editAction, values);
+    for (const task of tasks) await task();
   };
   mountOwned(comp, slot);
   const bind = (sourceId: string | undefined, stateKey: string) => bindSource(sourceId, data => {

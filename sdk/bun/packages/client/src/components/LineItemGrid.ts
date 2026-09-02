@@ -25,6 +25,32 @@ export class LineItemGrid extends DataGrid {
 
   configureInline(options: InlineOptions) { this.inline = options; }
 
+  setFormEditing(editing: boolean) {
+    this.setState({ formEditing: editing, editingId: editing ? '__new__' : null });
+  }
+
+  getFormDrafts() {
+    if (!this.inline || this.state.formEditing !== true) return [];
+    const rows = [...((this.state.rows as Row[] | undefined) || []).filter(row => String(row.id) !== '__new__'), { id: '__new__' }];
+    return rows.filter(row => String(row.id) === '__new__' || this.hasChanged(row)).map(row => ({
+      actionId: String(row.id) === '__new__'
+        ? (this.inline!.createAction || this.inline!.editAction || 'create')
+        : (this.inline!.editAction || 'edit'),
+      row,
+      values: this.rowValues(row),
+    }));
+  }
+
+  private hasChanged(row: Row) {
+    const values = this.rowValues(row);
+    return this.fieldDefinitions()
+      .filter(field => !field.readonly)
+      .some(field => {
+        const normalize = (value: unknown) => value == null || value === '' ? '' : String(value);
+        return normalize(values[field.field]) !== normalize(row[field.field]);
+      });
+  }
+
   draw(container: HTMLElement) {
     if (!this.inline) {
       super.draw(container);
@@ -32,6 +58,10 @@ export class LineItemGrid extends DataGrid {
     }
     this.disposeChildren();
     const rows = (this.state.rows as Row[] | undefined) || [];
+    const formEditing = this.state.formEditing === true;
+    const displayRows = formEditing
+      ? [...rows.filter(row => String(row.id) !== '__new__'), { id: '__new__' }]
+      : rows;
     const editingId = this.state.editingId == null ? '' : String(this.state.editingId);
     const root = html.take(container).div.className('token-panel o-x2many-grid o-line-grid').ele();
     const tableWrap = html.take(root).div.className('o-line-grid-table overflow-x-auto').ele();
@@ -43,13 +73,13 @@ export class LineItemGrid extends DataGrid {
     }
     html.take(head).th.text('');
     const body = html.take(table).tbody.className('token-body divide-y divide-gray-100').ele();
-    for (const row of rows) this.drawRow(body, root, row, editingId === String(row.id));
+    for (const row of displayRows) this.drawRow(body, root, row, formEditing || editingId === String(row.id));
 
     // Keep the mobile representation out of the rendered layout until its
     // responsive stylesheet explicitly enables it. This prevents a stale or
     // missing generated stylesheet from showing each line twice.
     const cards = html.take(root).div.className('o-line-grid-cards').css('display', 'none').ele();
-    for (const row of rows) this.drawCard(cards, row, editingId === String(row.id));
+    for (const row of displayRows) this.drawCard(cards, row, formEditing || editingId === String(row.id));
 
     if (Array.isArray(this.state.footerStats) && this.state.footerStats.length) {
       const footer = html.take(root).div.className('o-document-totals').ele();
@@ -60,7 +90,7 @@ export class LineItemGrid extends DataGrid {
       }
     }
 
-    if (this.state.actions && Array.isArray(this.state.actions)) {
+    if (!formEditing && this.state.actions && Array.isArray(this.state.actions)) {
       const controls = html.take(root).div.className('o-x2many-controls').ele();
       for (const action of this.state.actions as any[]) {
         const button = html.take(controls).button.className('o-x2many-create').type('button').text(action.label).ele();
@@ -125,6 +155,7 @@ export class LineItemGrid extends DataGrid {
 
   private drawActions(container: HTMLElement, row: Row, editing: boolean) {
     if (editing) {
+      if (this.state.formEditing === true) return;
       const save = html.take(container).button.type('button').className('o-x2many-row-action is-icon-only').ele();
       appendIcon(save, 'check');
       html.take(save).attr('aria-label', 'Save').attr('title', 'Save');

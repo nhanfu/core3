@@ -46,14 +46,17 @@ export class OdooFormView extends BaseComponent {
     if (headerActions.length || editing || statusStages.length) {
       const statusbar = html.take(sheetBackground).header.className('o-form-statusbar').ele();
       const actionBar = html.take(statusbar).div.className('o-form-actionbar').ele();
-      for (const action of headerActions.filter((candidate: any) => !editing || candidate.id !== this.def.edit_action_id)) {
+      for (const action of headerActions.filter((candidate: any) => !editing || (candidate.id !== this.def.edit_action_id && !candidate.is_workflow))) {
         const button = html.take(actionBar).button
           .className(`o-form-action o-form-action-${action.variant || 'secondary'}`)
           .attr('type', 'button')
           .text(String(action.label || action.id || 'Action'))
           .ele();
         html.take(button).event('click', () => {
-          if (action.id === this.def.edit_action_id && this.def.editable !== false) this.setState({ editing: true, draft: { ...sourceRecord } });
+          if (action.id === this.def.edit_action_id && this.def.editable !== false) {
+            this.setState({ editing: true, draft: { ...sourceRecord } });
+            this.def.onEditingChange?.(true);
+          }
           else void this.submit(String(action.id), { ...record });
         });
       }
@@ -65,13 +68,17 @@ export class OdooFormView extends BaseComponent {
           try {
             await this.state.onInlineSave?.({ ...sourceRecord, ...(this.state.draft || {}), id: sourceRecord.id });
             this.setState({ editing: false, draft: {} });
+            this.def.onEditingChange?.(false);
           } catch (error: any) {
             showToast(error instanceof Error ? error.message : 'Unable to save the order', toastTypeForError(error));
           } finally {
             html.take(save).prop('disabled', false);
           }
         });
-        html.take(discard).event('click', () => this.setState({ editing: false, draft: {} }));
+        html.take(discard).event('click', () => {
+          this.setState({ editing: false, draft: {} });
+          this.def.onEditingChange?.(false);
+        });
       }
       if (statusStages.length) {
         const steps = html.take(statusbar).nav.className('o-form-statusbar-steps').attr('aria-label', labels.workflowStatus).ele();
@@ -103,6 +110,13 @@ export class OdooFormView extends BaseComponent {
       }
     }
 
+    const editFields = Array.isArray(this.def.edit_fields) && this.def.edit_fields.length
+      ? this.def.edit_fields
+      : Array.isArray(this.def.groups)
+        ? this.def.groups.flatMap((group: any) => group.fields || [])
+        : (this.def.fields || []);
+    const editFieldsByName = new Map(editFields.map((field: any) => [String(field.field), field]));
+    const hasExplicitEditFields = Array.isArray(this.def.edit_fields) && this.def.edit_fields.length > 0;
     const renderFields = (fieldsDef: any[], title?: string, target: HTMLElement = sheet, wide = false) => {
       const group = title
         ? html.take(target).section.className(`o-form-field-group${wide ? ' o-form-field-group-wide' : ''}`).ele()
@@ -110,10 +124,13 @@ export class OdooFormView extends BaseComponent {
       if (title) html.take(group).h2.className('o-form-group-title').text(title);
       const fields = html.take(group).div.className('o-form-fields').ele();
       for (const field of fieldsDef || []) {
+      const editField = editFieldsByName.get(String(field.field));
+      const canEditField = editing && (!hasExplicitEditFields || Boolean(editField));
+      const editorDefinition = editField || field;
       const item = html.take(fields).div.className(`o-form-field${field.wide || field.type === 'textarea' ? ' o-form-field-wide' : ''}`).ele();
       html.take(item).div.className('o-form-field-label').text(String(field.label || ''));
       const value = html.take(item).div.className(`o-form-field-value${field.type === 'money' ? ' is-money' : ''}`).ele();
-      if (!editing) {
+      if (!canEditField) {
         if (field.type === 'permission-grid') {
           const selected = new Set(String(record[field.field] || '').split(',').map(permission => permission.trim()).filter(Boolean));
           const options = Array.isArray(this.def.permission_options) ? this.def.permission_options : [];
@@ -128,27 +145,20 @@ export class OdooFormView extends BaseComponent {
         }
         continue;
       }
-      const current = record[field.field] ?? '';
-      const editorType = `Odoo${String(field.type || 'text').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('')}Editor`;
-      const editor = this.componentLoader.createSync(editorType, `inline-${field.field}`, {
+      const current = record[editorDefinition.field] ?? '';
+      const editorType = `Odoo${String(editorDefinition.type || 'text').split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('')}Editor`;
+      const editor = this.componentLoader.createSync(editorType, `inline-${editorDefinition.field}`, {
         value: current,
-        options: field.options,
+        options: editorDefinition.options,
         permission_options: this.def.permission_options,
         onChange: next => {
-          this.state.draft = { ...(this.state.draft || {}), [field.field]: next };
+          this.state.draft = { ...(this.state.draft || {}), [editorDefinition.field]: next };
         },
-      }, { constructorDefinition: field });
+      }, { constructorDefinition: editorDefinition });
       this.mountChild(editor, value);
-      }
+    }
     };
-    const editFields = Array.isArray(this.def.edit_fields) && this.def.edit_fields.length
-      ? this.def.edit_fields
-      : Array.isArray(this.def.groups)
-        ? this.def.groups.flatMap((group: any) => group.fields || [])
-        : (this.def.fields || []);
-    if (editing) {
-      renderFields(editFields, labels.editDetails);
-    } else if (Array.isArray(this.def.groups) && this.def.groups.length) {
+    if (Array.isArray(this.def.groups) && this.def.groups.length) {
       if (this.def.group_columns) {
         const groups = html.take(sheet).div.className(`o-form-groups o-form-groups-${this.def.group_columns}`).ele();
         for (const group of this.def.groups) renderFields(group.fields || [], group.title, groups, group.wide === true);
@@ -156,11 +166,11 @@ export class OdooFormView extends BaseComponent {
         for (const group of this.def.groups) renderFields(group.fields || [], group.title);
       }
     } else {
-      renderFields(this.def.fields || []);
+      renderFields(this.def.fields?.length ? this.def.fields : editFields);
     }
 
     const notebookTabs = Array.isArray(this.def.notebook?.tabs) ? this.def.notebook.tabs : [];
-    if (!editing && notebookTabs.length) {
+    if (notebookTabs.length) {
       const notebook = html.take(sheet).section.className('o-form-notebook').ele();
       const tablist = html.take(notebook).div.className('o-form-notebook-tabs').attr('role', 'tablist').ele();
       const activeTab = String(this.state.activeNotebookTab || this.def.notebook.active || notebookTabs[0]?.id || '');

@@ -110,6 +110,31 @@ actions:
         - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
           status: 409
           message: Order can only be edited while Draft
+        - query: "SELECT order_number AS old_order_number, customer_name AS old_customer_name, customer_legal_name AS old_customer_legal_name, CAST(order_date AS VARCHAR) AS old_order_date, shipment_type AS old_shipment_type, route AS old_route, transport_method AS old_transport_method, trip_count AS old_trip_count, notes AS old_notes FROM orders WHERE id = :id"
+          assign: true
+      before_steps:
+        - query: |
+            INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail)
+            SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.update', 'orders', :id,
+              concat_ws(' | ',
+                CASE WHEN :old_order_number IS DISTINCT FROM :order_number THEN concat('Order number: ', COALESCE(CAST(:old_order_number AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:order_number AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_customer_name IS DISTINCT FROM :customer_name THEN concat('Customer: ', COALESCE(CAST(:old_customer_name AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:customer_name AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_customer_legal_name IS DISTINCT FROM :customer_legal_name THEN concat('Legal name: ', COALESCE(CAST(:old_customer_legal_name AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:customer_legal_name AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_order_date IS DISTINCT FROM CAST(:order_date AS VARCHAR) THEN concat('Order date: ', COALESCE(CAST(:old_order_date AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:order_date AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_shipment_type IS DISTINCT FROM :shipment_type THEN concat('Shipment type: ', COALESCE(CAST(:old_shipment_type AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:shipment_type AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_route IS DISTINCT FROM :route THEN concat('Route: ', COALESCE(CAST(:old_route AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:route AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_transport_method IS DISTINCT FROM :transport_method THEN concat('Transport method: ', COALESCE(CAST(:old_transport_method AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:transport_method AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_trip_count IS DISTINCT FROM :trip_count THEN concat('Trip count: ', COALESCE(CAST(:old_trip_count AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:trip_count AS VARCHAR), 'Not set')) END,
+                CASE WHEN :old_notes IS DISTINCT FROM :notes THEN concat('Notes: ', COALESCE(CAST(:old_notes AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:notes AS VARCHAR), 'Not set')) END)
+            WHERE :old_order_number IS DISTINCT FROM :order_number
+              OR :old_customer_name IS DISTINCT FROM :customer_name
+              OR :old_customer_legal_name IS DISTINCT FROM :customer_legal_name
+              OR :old_order_date IS DISTINCT FROM CAST(:order_date AS VARCHAR)
+              OR :old_shipment_type IS DISTINCT FROM :shipment_type
+              OR :old_route IS DISTINCT FROM :route
+              OR :old_transport_method IS DISTINCT FROM :transport_method
+              OR :old_trip_count IS DISTINCT FROM :trip_count
+              OR :old_notes IS DISTINCT FROM :notes
       result: { query: "SELECT * FROM orders WHERE id = :id" }
     fields:
       - { field: order_number, label: Order number, type: text, required: true }
@@ -179,4 +204,3 @@ actions:
       steps:
         - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.delete', 'orders', :id, 'Deleted order')"
       result: { query: "SELECT true AS ok" }
-

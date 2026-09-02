@@ -182,6 +182,45 @@ describe('document detail components', () => {
     expect(container.querySelector<HTMLInputElement>('[data-form-field="route"]')?.value).toBe('HCM - Hanoi');
   });
 
+  it('keeps inline editors in the declared view groups', () => {
+    const component = new OdooFormView('grouped-order', { record: { id: 'o1', number: 'SO-001', route: 'HCM - Hanoi' } }, {
+      title_field: 'number',
+      editable: true,
+      edit_action_id: 'edit_order',
+      edit_fields: [{ field: 'route', label: 'Route', type: 'text' }],
+      header_actions: [{ id: 'edit_order', label: 'Edit' }],
+      groups: [{ title: 'Shipping', fields: [{ field: 'route', label: 'Route', type: 'text' }] }],
+    });
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('.o-form-action')!.click();
+
+    expect(container.querySelector('.o-form-field-group')).not.toBeNull();
+    expect(container.querySelector('.o-form-group-title')?.textContent).toBe('Shipping');
+    expect(container.querySelector<HTMLInputElement>('[data-form-field="route"]')?.value).toBe('HCM - Hanoi');
+    expect(container.querySelector('.o-form-field-group .o-form-field-value [data-form-field="route"]')).not.toBeNull();
+    expect(container.textContent).not.toContain('Edit details');
+  });
+
+  it('hides workflow actions while the form is being edited', () => {
+    const component = new OdooFormView('workflow-order', { record: { id: 'o1', number: 'SO-001' } }, {
+      title_field: 'number',
+      editable: true,
+      edit_action_id: 'edit_order',
+      edit_fields: [{ field: 'number', label: 'Number', type: 'text' }],
+      header_actions: [
+        { id: 'edit_order', label: 'Edit' },
+        { id: 'submit_order', label: 'Submit', is_workflow: true },
+      ],
+    });
+    const container = mount(component);
+
+    container.querySelector<HTMLButtonElement>('.o-form-action')!.click();
+
+    expect(container.textContent).not.toContain('Submit');
+    expect(container.querySelector('.o-form-action-primary')?.textContent).toBe('Save');
+  });
+
   it('preserves embedded panel content when the form redraws', () => {
     const component = new OdooFormView('order', { record: { number: 'SO-001' } }, {
       title_field: 'number',
@@ -497,6 +536,30 @@ describe('document detail components', () => {
     expect(saves[0].action).toBe('edit_line');
     expect(saves[0].values.description).toBe('Updated freight');
     expect(grid.find('line-field-line-1-description')).not.toBeNull();
+  });
+
+  it('edits all lines and appends a blank line while the parent form is edited', () => {
+    const grid = new LineItemGrid('form-edit-lines', {
+      rows: [{ id: 'line-1', description: 'Freight', parent_status: 'Draft' }],
+    }, []);
+    grid.configureInline({
+      fields: [{ type: 'LineItemField', field: 'description', label: 'Description' }],
+      actions: [],
+      editAction: 'edit_line',
+      createAction: 'add_line',
+      onSave: async () => {},
+    });
+    const container = mount(grid);
+
+    grid.setFormEditing(true);
+
+    const rows = container.querySelectorAll('.o-line-grid-table tbody tr');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].querySelector<HTMLInputElement>('[aria-label="Description"]')?.value).toBe('Freight');
+    expect(rows[1].querySelector<HTMLInputElement>('[aria-label="Description"]')?.value).toBe('');
+    expect(container.querySelector('.o-x2many-controls')).toBeNull();
+    expect(grid.getFormDrafts()).toHaveLength(1);
+    expect(grid.getFormDrafts()[0].row.id).toBe('__new__');
   });
 
   it('submits the create action when saving a new inline line', async () => {
