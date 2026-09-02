@@ -22,14 +22,26 @@ export class DatePicker extends BaseComponent {
     const button = html.take(root).button.type('button').className('o-date-picker-toggle').attr('aria-label', 'Open date picker').ele();
     appendIcon(button, 'calendar');
     const popup = html.take(root).div.className('o-date-picker-popup absolute z-20 hidden rounded-md border border-gray-200 bg-white p-2 shadow-lg').ele();
+    let mode: 'calendar' | 'year' = 'calendar';
     const render = () => {
       popup.replaceChildren();
       const header = html.take(popup).div.className('flex items-center justify-between gap-2 pb-2').ele();
       const previous = html.take(header).button.type('button').className('o-date-picker-nav').text('‹').ele();
-      html.take(header).strong.className('text-sm').text(new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(this.month));
+      const heading = mode === 'year' ? 'Select year' : new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(this.month);
+      const title = html.take(header).button.type('button').className('o-date-picker-month').attr('aria-label', mode === 'year' ? 'Choose month' : 'Choose year').text(heading).ele();
       const next = html.take(header).button.type('button').className('o-date-picker-nav').text('›').ele();
-      html.take(previous).event('click', () => { this.month.setUTCMonth(this.month.getUTCMonth() - 1); render(); });
-      html.take(next).event('click', () => { this.month.setUTCMonth(this.month.getUTCMonth() + 1); render(); });
+      html.take(title).event('click', () => { mode = mode === 'year' ? 'calendar' : 'year'; render(); });
+      html.take(previous).event('click', () => { if (mode === 'year') this.month.setUTCFullYear(this.month.getUTCFullYear() - 12); else this.month.setUTCMonth(this.month.getUTCMonth() - 1); render(); });
+      html.take(next).event('click', () => { if (mode === 'year') this.month.setUTCFullYear(this.month.getUTCFullYear() + 12); else this.month.setUTCMonth(this.month.getUTCMonth() + 1); render(); });
+      if (mode === 'year') {
+        const years = html.take(popup).div.className('grid grid-cols-3 gap-1').ele();
+        const start = this.month.getUTCFullYear() - 5;
+        for (let year = start; year < start + 12; year++) {
+          const yearButton = html.take(years).button.type('button').className(`o-date-picker-year px-2 py-2 text-sm ${year === this.month.getUTCFullYear() ? 'is-selected' : ''}`).text(String(year)).ele();
+          html.take(yearButton).event('click', () => { this.month.setUTCFullYear(year); mode = 'calendar'; render(); });
+        }
+        return;
+      }
       const grid = html.take(popup).div.className('grid grid-cols-7 gap-1').ele();
       for (const day of ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']) html.take(grid).span.className('px-1 text-center text-xs text-gray-500').text(day);
       const year = this.month.getUTCFullYear(); const month = this.month.getUTCMonth();
@@ -45,6 +57,6 @@ export class DatePicker extends BaseComponent {
     const close = (event: MouseEvent) => { if (!root.contains(event.target as Node)) popup.classList.add('hidden'); };
     html.take(input).event('input', () => { this.state.value = input.value; (this.state.onChange as ((value: string) => void) | undefined)?.(input.value); });
     html.take(button).event('click', () => { render(); popup.classList.toggle('hidden'); });
-    html.take(document).event('click', close);
+    document.addEventListener('click', close, true);
   }
 }
