@@ -1,0 +1,457 @@
+title: Order details
+page: { id: order-detail, route: /order/detail, breadcrumb: [Orders, Detail], auth: { require: [orders.read] } }
+
+datasources:
+  - id: order_detail
+    single: true
+    permission: orders.read
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) WHEN 'Draft' THEN 'Draft'
+          WHEN 'Pending Approval' THEN 'Pending approval'
+          WHEN 'Approved' THEN 'Approved'
+          WHEN 'Cancelled' THEN 'Cancelled' ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) END AS status_label,
+        o.shipment_type, o.route, o.transport_method, o.trip_count, o.payment_term_name,
+        printf('%,.0f ₫', COALESCE(o.total_amount, 0)) AS total_amount_display,
+        o.created_by, o.notes
+      FROM orders o
+      WHERE o.id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+  - id: order_detail_statuses
+    single: false
+    permission: orders.read
+    workflow_states: orders
+  - id: order_detail_lines
+    single: false
+    permission: orders.read
+    query: |
+      SELECT l.id, l.row_version, l.order_id AS document_id, l.sequence, l.description,
+        l.product_id, p.name AS product_name,
+        CAST(l.quantity AS DOUBLE) AS quantity, l.unit,
+        CAST(l.unit_price AS DOUBLE) AS unit_price,
+        CAST(l.tax_rate AS DOUBLE) AS tax_rate,
+        CAST(COALESCE(l.discount, 0) AS DOUBLE) AS discount,
+        CAST(COALESCE(l.qty_delivered, 0) AS DOUBLE) AS qty_delivered,
+        CAST(COALESCE(l.qty_invoiced, 0) AS DOUBLE) AS qty_invoiced,
+        CAST(COALESCE(l.qty_to_invoice, l.quantity) AS DOUBLE) AS qty_to_invoice,
+        CAST(COALESCE(l.price_subtotal, l.line_total / NULLIF(1 + l.tax_rate / 100, 0)) AS DOUBLE) AS price_subtotal,
+        CAST(COALESCE(l.price_tax, l.line_total - l.line_total / NULLIF(1 + l.tax_rate / 100, 0)) AS DOUBLE) AS price_tax,
+        CAST(COALESCE(l.price_total, l.line_total) AS DOUBLE) AS line_total,
+        printf('%,.3f', l.quantity) AS quantity_display,
+        printf('%,.0f ₫', l.unit_price) AS unit_price_display,
+        printf('%.2f%%', l.tax_rate) AS tax_rate_display,
+        printf('%.2f%%', COALESCE(l.discount, 0)) AS discount_display,
+        printf('%,.3f', COALESCE(l.qty_delivered, 0)) AS qty_delivered_display,
+        printf('%,.3f', COALESCE(l.qty_invoiced, 0)) AS qty_invoiced_display,
+        printf('%,.3f', COALESCE(l.qty_to_invoice, l.quantity)) AS qty_to_invoice_display,
+        printf('%,.0f ₫', COALESCE(l.price_subtotal, l.line_total / NULLIF(1 + l.tax_rate / 100, 0))) AS price_subtotal_display,
+        printf('%,.0f ₫', COALESCE(l.price_tax, l.line_total - l.line_total / NULLIF(1 + l.tax_rate / 100, 0))) AS price_tax_display,
+        printf('%,.0f ₫', COALESCE(l.price_total, l.line_total)) AS line_total_display,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS parent_status
+      FROM order_lines l
+      JOIN orders o ON o.id = l.order_id
+      LEFT JOIN sale_products p ON p.id = l.product_id
+      WHERE l.order_id = :id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY l.sequence
+  - id: order_detail_timeline
+    single: false
+    permission: orders.read
+    query: |
+      SELECT actor_name, action,
+        CASE action
+          WHEN 'orders.submit_for_approval' THEN 'Submitted for approval'
+          WHEN 'orders.approve' THEN 'Approved'
+          WHEN 'orders.reject' THEN 'Rejected'
+          WHEN 'orders.cancel' THEN 'Cancelled'
+          WHEN 'orders.lines.create' THEN 'Added order line'
+          WHEN 'orders.lines.update' THEN 'Updated order line'
+          WHEN 'orders.lines.delete' THEN 'Deleted order line'
+          WHEN 'orders.message' THEN 'Message'
+          WHEN 'orders.note' THEN 'Note'
+          WHEN 'orders.followers.add' THEN 'Added follower'
+          WHEN 'orders.followers.remove' THEN 'Removed follower'
+          WHEN 'orders.attachments.upload' THEN 'Uploaded attachment'
+          ELSE action END AS action_label,
+        detail, CAST(created_at AS VARCHAR) AS created_at
+      FROM system_activity
+      WHERE resource = 'orders' AND resource_id = :id
+        AND (:view_scope = 'all' OR EXISTS (SELECT 1 FROM orders o WHERE o.id = :id AND o.branch_id = :current_branch_id))
+      UNION ALL
+      SELECT created_by, 'created', 'Created', 'Order created',
+        CAST(created_at AS VARCHAR)
+      FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)
+      ORDER BY created_at DESC
+  - id: order_detail_followers
+    single: false
+    permission: orders.read
+    query: |
+      SELECT f.user_id, CAST(f.created_at AS VARCHAR) AS followed_at
+      FROM order_followers f
+      JOIN orders o ON o.id = f.order_id
+      WHERE f.order_id = :id
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY f.created_at
+    enrich:
+      service: auth
+      operation: users.resolve
+      local_key: user_id
+      ids_param: user_ids
+      fields: [name, email, avatar_url]
+  - id: order_detail_follower_candidates
+    single: false
+    permission: orders.read
+    type: service
+    service: auth
+    operation: users.search
+    service_params:
+      query: q
+      branch_id: current_branch_id
+      view_scope: view_scope
+      limit: 100
+  - id: order_detail_attachments
+    single: false
+    permission: orders.read
+    query: |
+      SELECT a.id, a.order_id, a.file_name, a.mime_type, a.size_bytes,
+        a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at
+      FROM order_attachments a
+      JOIN orders o ON o.id = a.order_id
+      WHERE a.order_id = :id
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY a.created_at DESC
+    enrich:
+      service: auth
+      operation: users.resolve
+      local_key: uploaded_by
+      ids_param: user_ids
+      fields:
+        - { source: name, target: uploaded_by_name }
+  - id: order_unit_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM master_data WHERE kind = 'unit' AND status = 'Active' UNION SELECT DISTINCT unit AS value, unit AS label FROM order_lines WHERE unit IS NOT NULL AND unit <> '' ORDER BY label"
+  - id: sale_product_lookup
+    single: false
+    permission: orders.read
+    query: "SELECT id AS value, default_code || ' - ' || name AS label FROM sale_products WHERE active = true AND sale_ok = true ORDER BY name"
+  - id: order_customer_lookup_detail
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, code || ' - ' || name AS label FROM customers WHERE status = 'Active' AND (:view_scope = 'all' OR (:view_scope = 'branch' AND (visibility = 'Public' OR owner_name = :current_user_name)) OR (:view_scope = 'own' AND owner_name = :current_user_name)) UNION SELECT DISTINCT customer_name AS value, customer_name AS label FROM orders WHERE customer_name IS NOT NULL AND customer_name <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+  - id: order_shipment_type_lookup_detail
+    single: false
+    permission: orders.read
+    query: "SELECT code AS value, code || ' - ' || name AS label FROM system_configs WHERE kind = 'shipment_type' AND status = 'Active' UNION SELECT DISTINCT shipment_type AS value, shipment_type AS label FROM orders WHERE shipment_type IS NOT NULL AND shipment_type <> '' AND (:view_scope = 'all' OR branch_id = :current_branch_id) ORDER BY label"
+  - id: sale_payment_terms_lookup_detail
+    single: false
+    permission: orders.read
+    query: "SELECT name AS value, name AS label FROM sale_payment_terms WHERE active = true ORDER BY due_days, name"
+
+actions:
+  - id: send_order_message
+    type: server_form
+    permission: orders.write
+    title: Send message
+    action: orders.chatter.send
+    handler: order_chatter
+    operation: message
+    params: { id: '{row.id}' }
+    refresh: [order_detail_timeline]
+    fields:
+      - { field: content, label: Message, type: textarea, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000"
+          status: 400
+          message: Message content must be between 1 and 4000 characters
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - query: "SELECT id FROM orders WHERE id = :id"
+          status: 404
+          message: Order not found
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.message', 'orders', :id, :content)"
+      result: { query: "SELECT :id AS id, 'orders.message' AS action, :content AS detail" }
+  - id: log_order_note
+    type: server_form
+    permission: orders.write
+    title: Log note
+    action: orders.chatter.note
+    handler: order_chatter
+    operation: note
+    params: { id: '{row.id}' }
+    refresh: [order_detail_timeline]
+    fields:
+      - { field: content, label: Note, type: textarea, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT 1 AS ok WHERE length(trim(:content)) BETWEEN 1 AND 4000"
+          status: 400
+          message: Note content must be between 1 and 4000 characters
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - query: "SELECT id FROM orders WHERE id = :id"
+          status: 404
+          message: Order not found
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.note', 'orders', :id, :content)"
+      result: { query: "SELECT :id AS id, 'orders.note' AS action, :content AS detail" }
+  - id: add_order_follower
+    type: server
+    permission: orders.write
+    action: orders.followers.add
+    handler: order_chatter
+    operation: follower_add
+    params: { user_id: '{row.user_id}' }
+    refresh: [order_detail_followers, order_detail_timeline]
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - type: service
+          service: auth
+          operation: users.validate
+          request: { user_id: user_id, branch_id: current_branch_id, view_scope: view_scope }
+          assign: true
+          status: 404
+          message: Follower not found
+      steps:
+        - query: "INSERT INTO order_followers(order_id, user_id, added_by) SELECT :id, :user_id, :current_user_id WHERE NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.add', 'orders', :id, :name WHERE NOT EXISTS (SELECT 1 FROM order_followers WHERE order_id = :id AND user_id = :user_id)"
+      result: { query: "SELECT :user_id AS user_id, :name AS name, :email AS email, :avatar_url AS avatar_url, false AS removed" }
+  - id: remove_order_follower
+    type: server
+    permission: orders.write
+    action: orders.followers.remove
+    handler: order_chatter
+    operation: follower_remove
+    params: { user_id: '{row.user_id}' }
+    refresh: [order_detail_followers, order_detail_timeline]
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND (:view_scope = 'all' OR branch_id = :current_branch_id)"
+          status: 403
+          message: Order is outside the current view scope
+        - type: service
+          service: auth
+          operation: users.validate
+          request: { user_id: user_id, branch_id: current_branch_id, view_scope: view_scope }
+          assign: true
+          status: 404
+          message: Follower not found
+      steps:
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.followers.remove', 'orders', :id, :name FROM order_followers f WHERE f.user_id = :user_id AND f.order_id = :id"
+        - query: "DELETE FROM order_followers WHERE order_id = :id AND user_id = :user_id"
+      result: { query: "SELECT :user_id AS user_id, :name AS name, :email AS email, :avatar_url AS avatar_url, true AS removed" }
+  - id: upload_order_attachment
+    type: upload
+    action: orders.attachments.upload
+    handler: attachment_metadata
+    permission: orders.write
+    kind: order_attachment
+    params: { order_id: '{row.id}' }
+    refresh: [order_detail_attachments, order_detail_timeline]
+    mutation:
+      generated: [attachment_id]
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :order_id"
+          status: 404
+          message: Order not found
+      steps:
+        - query: "INSERT INTO order_attachments(id, order_id, file_name, mime_type, size_bytes, storage_key, uploaded_by) VALUES(:attachment_id, :order_id, :fileName, :mimeType, :sizeBytes, :storageKey, :current_user_id)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.attachments.upload', 'orders', :order_id, :fileName)"
+      result: { query: "SELECT id, order_id, file_name, mime_type, size_bytes, CAST(created_at AS VARCHAR) AS created_at FROM order_attachments WHERE id = :attachment_id" }
+  - id: download_order_attachment
+    type: download
+    permission: orders.read
+    kind: order_attachment
+  - id: edit_order_detail
+    type: server_form
+    permission: orders.write
+    title: Edit Order
+    action: orders.update
+    handler: yaml_mutation
+    operation: update
+    success_message: Order updated successfully.
+    prefill: source
+    prefill_source: order_detail
+    refresh: [order_detail, order_detail_lines, order_detail_timeline]
+    mutation:
+      operation: update
+      table: orders
+      fields: [order_number, customer_name, customer_legal_name, order_date, shipment_type, route, transport_method, trip_count, payment_term_name, notes]
+      required: [order_number, customer_name, order_date]
+      timestamps: true
+      scope: { field: branch_id }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM orders WHERE order_number = :order_number AND id <> :id)"
+          status: 409
+          message: Order number already exists
+        - query: "SELECT id FROM orders WHERE id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          message: Order can only be edited while Draft
+      result: { query: "SELECT * FROM orders WHERE id = :id" }
+    fields:
+      - { field: order_number, label: Order number, type: text, required: true }
+      - { field: customer_name, label: Customer, type: async-select, options_source: order_customer_lookup_detail, search_placeholder: 'Search customers...', required: true }
+      - { field: customer_legal_name, label: Legal name, type: text }
+      - { field: order_date, label: Order date, type: date, required: true }
+      - { field: shipment_type, label: Shipment type, type: select, options_source: order_shipment_type_lookup_detail }
+      - { field: route, label: Route, type: text }
+      - { field: transport_method, label: Transport method, type: select, options: [Road, Sea, Rail, Air] }
+      - { field: trip_count, label: Trip count, type: number }
+      - { field: payment_term_name, label: Payment terms, type: select, options_source: sale_payment_terms_lookup_detail }
+      - { field: notes, label: Notes, type: textarea }
+  - id: submit_order_detail
+    type: server
+    permission: orders.write
+    action: orders.submit_for_approval
+    handler: order_transition
+    workflow: orders
+    operation: submit_for_approval
+    confirm: 'Submit order {{row.order_number}}?'
+    refresh: [order_detail, order_detail_lines, order_detail_timeline]
+  - id: approve_order_detail
+    type: server
+    permission: orders.approve
+    action: orders.approve
+    handler: order_transition
+    workflow: orders
+    operation: approve
+    confirm: 'Approve order {{row.order_number}}?'
+    refresh: [order_detail, order_detail_lines, order_detail_timeline]
+  - id: reject_order_detail
+    type: server
+    permission: orders.approve
+    action: orders.reject
+    handler: order_transition
+    workflow: orders
+    operation: reject
+    confirm: 'Reject and return order {{row.order_number}} to draft?'
+    refresh: [order_detail, order_detail_lines, order_detail_timeline]
+  - id: cancel_order_detail
+    type: server
+    permission: orders.write
+    action: orders.cancel
+    handler: order_transition
+    workflow: orders
+    operation: cancel
+    confirm: 'Cancel order {{row.order_number}}?'
+    refresh: [order_detail, order_detail_lines, order_detail_timeline]
+  - id: add_order_line
+    type: server_form
+    permission: orders.write
+    title: Add a charge line
+    action: orders.lines.create
+    handler: line_item
+    operation: create
+    domain: order
+    params: { id: '{state.id}' }
+    refresh: [order_detail_lines, order_detail, order_detail_timeline]
+    fields:
+      - { field: description, label: Content, type: text, required: true }
+      - { field: product_id, label: Product, type: select, options_source: sale_product_lookup }
+      - { field: quantity, label: Quantity, type: number, default: 1, required: true }
+      - { field: unit, label: Unit, type: select, options_source: order_unit_lookup, default: Chuyến, required: true }
+      - { field: unit_price, label: Unit price, type: money, currency: VND, default: 0, required: true }
+      - { field: tax_rate, label: Tax rate (%), type: number, default: 0, required: true }
+      - { field: discount, label: Discount (%), type: number, default: 0, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      generated: [line_id]
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          code: STALE_RECORD
+          message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
+          status: 400
+          message: Selected product is not available for sale
+      steps:
+        - { query: "SELECT COALESCE(MAX(sequence), 0) + 10 AS next_sequence FROM order_lines WHERE order_id = :id", assign: true }
+        - query: "INSERT INTO order_lines(id, order_id, sequence, description, product_id, quantity, unit, unit_price, tax_rate, discount, qty_delivered, qty_invoiced, qty_to_invoice, price_subtotal, price_tax, price_total, line_total) VALUES(:line_id, :id, :next_sequence, :description, :product_id, :quantity, :unit, :unit_price, :tax_rate, :discount, 0, 0, :quantity, ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2))"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, :description)"
+      result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
+  - id: edit_order_line
+    type: server_form
+    permission: orders.write
+    title: Update freight lines
+    action: orders.lines.update
+    handler: line_item
+    operation: update
+    domain: order
+    prefill: row
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [order_detail_lines, order_detail, order_detail_timeline]
+    fields:
+      - { field: description, label: Content, type: text, required: true }
+      - { field: product_id, label: Product, type: select, options_source: sale_product_lookup }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: unit, label: Unit, type: select, options_source: order_unit_lookup, required: true }
+      - { field: unit_price, label: Unit price, type: money, currency: VND, required: true }
+      - { field: tax_rate, label: Tax rate (%), type: number, required: true }
+      - { field: discount, label: Discount (%), type: number, required: true }
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          code: STALE_RECORD
+          message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
+          status: 400
+          message: Selected product is not available for sale
+        - query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Line item changed or no longer exists; reload it before saving
+      steps:
+        - query: "UPDATE order_lines SET description = :description, product_id = :product_id, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, discount = :discount, qty_to_invoice = CASE WHEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) > 0 THEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) ELSE 0 END, price_subtotal = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), price_tax = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), price_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.update', 'orders', :id, :description)"
+      result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
+  - id: delete_order_line
+    type: server
+    permission: orders.write
+    action: orders.lines.delete
+    handler: line_item
+    operation: delete
+    domain: order
+    confirm: 'Delete charge line {{row.description}}?'
+    params: { id: '{state.id}', line_id: '{row.id}' }
+    refresh: [order_detail_lines, order_detail, order_detail_timeline]
+    mutation:
+      scope: { table: orders, field: branch_id, message: Order is outside the current view scope }
+      guards:
+        - query: "SELECT id FROM orders WHERE id = :id AND row_version = :parent_expected_row_version AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = orders.id), orders.status) = 'Draft'"
+          status: 409
+          code: STALE_RECORD
+          message: Order changed or is not Draft; reload it before editing lines
+        - query: "SELECT id, description FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          status: 409
+          code: STALE_RECORD
+          message: Line item changed or no longer exists; reload it before deleting
+          assign: true
+      steps:
+        - query: "DELETE FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
+          expect_changed: true
+          code: STALE_RECORD
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.delete', 'orders', :id, :description)"
+      result: { query: "SELECT true AS deleted, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount" }
