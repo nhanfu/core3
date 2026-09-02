@@ -414,8 +414,10 @@ export class PageRuntime extends BaseComponent {
           const result = await response.json().catch(() => ({}));
           if (!response.ok) {
             const fallback = result.error || result.message || i18n.tKey('errors.request_failed', {}, 'Request failed');
-            const message = result.message_key ? i18n.tKey(String(result.message_key), result.message_params || {}, fallback) : fallback;
-            throw Object.assign(new Error(message), { status: response.status, code: result.code, messageKey: result.message_key, messageParams: result.message_params });
+            const messageKey = result.message_key || (response.status >= 500 ? 'errors.internal_error' : undefined);
+            const translated = messageKey ? i18n.tKey(String(messageKey), result.message_params || {}, fallback) : fallback;
+            const message = result.detail ? `${translated} — Dev detail: ${String(result.detail)}` : translated;
+            throw Object.assign(new Error(message), { status: response.status, code: result.code, messageKey, messageParams: result.message_params });
           }
           return result;
         };

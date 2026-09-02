@@ -2,6 +2,7 @@ en:
   errors.stale_record: Record was changed by another user. Reload it before saving.
   errors.unauthorized: You are not authorized to perform this action.
   errors.request_failed: Request failed.
+  errors.internal_error: The request could not be completed. Please try again.
   errors.order_outside_scope: The order is outside the current view scope.
   errors.message_content_length: Message content must be between 1 and 4000 characters.
   errors.note_content_length: Note content must be between 1 and 4000 characters.
@@ -122,6 +123,7 @@ vi:
   errors.stale_record: Dữ liệu đã được người dùng khác thay đổi. Hãy tải lại trước khi lưu.
   errors.unauthorized: Bạn không có quyền thực hiện thao tác này.
   errors.request_failed: Yêu cầu thất bại.
+  errors.internal_error: Không thể xử lý yêu cầu. Vui lòng thử lại.
   errors.order_outside_scope: Đơn hàng nằm ngoài phạm vi hiện tại.
   errors.message_content_length: Nội dung tin nhắn phải từ 1 đến 4000 ký tự.
   errors.note_content_length: Nội dung ghi chú phải từ 1 đến 4000 ký tự.

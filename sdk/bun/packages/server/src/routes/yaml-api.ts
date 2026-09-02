@@ -67,12 +67,13 @@ export function createYamlApi(ctx: YamlApiContext) {
     return { 'Cache-Control': `private, max-age=${ttl}` };
   }
 
-  function apiError(status: number, message: string, code?: string, messageKey?: string, messageParams?: Record<string, unknown>): Response {
+  function apiError(status: number, message: string, code?: string, messageKey?: string, messageParams?: Record<string, unknown>, debugDetail?: string): Response {
     return json({
       error: message,
       ...(code ? { code } : {}),
-      message_key: messageKey || (code ? `errors.${String(code).toLowerCase()}` : `errors.http_${status}`),
+      message_key: messageKey || (code ? `errors.${String(code).toLowerCase()}` : (status >= 500 ? 'errors.internal_error' : `errors.http_${status}`)),
       ...(messageParams ? { message_params: messageParams } : {}),
+      ...(process.env.CORE3_ENV !== 'production' && debugDetail ? { detail: debugDetail } : {}),
     }, status);
   }
 

@@ -90,12 +90,13 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
-function apiError(status: number, message: string, code?: string, messageKey?: string, messageParams?: Record<string, unknown>): Response {
+function apiError(status: number, message: string, code?: string, messageKey?: string, messageParams?: Record<string, unknown>, debugDetail?: string): Response {
   return new Response(JSON.stringify({
     error: message,
     ...(code ? { code } : {}),
-    message_key: messageKey || (code ? `errors.${String(code).toLowerCase()}` : `errors.http_${status}`),
+    message_key: messageKey || (code ? `errors.${String(code).toLowerCase()}` : (status >= 500 ? 'errors.internal_error' : `errors.http_${status}`)),
     ...(messageParams ? { message_params: messageParams } : {}),
+    ...(appConfig.environment === 'development' && debugDetail ? { detail: debugDetail } : {}),
   }), {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
@@ -335,7 +336,7 @@ Bun.serve({
         if (url.pathname === '/api/mutate' && req.method === 'POST') {
           const body = await req.json().catch(() => ({}));
           const mutation = body && typeof body === 'object' ? String(body.mutation || '') : '';
-          if (!mutation) return new Response(JSON.stringify({ error: 'mutation is required', code: 'MUTATION_REQUIRED' }), { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } });
+          if (!mutation) return apiError(400, 'mutation is required', 'MUTATION_REQUIRED');
           const actionUrl = new URL(`/api/actions/${encodeURIComponent(mutation)}`, url);
           const actionRequest = new Request(actionUrl, {
             method: 'POST',
@@ -350,9 +351,9 @@ Bun.serve({
         return response ?? apiError(404, 'API route not found');
       } catch (error) {
         const failure = error as any;
-        if (failure?.status) return apiError(failure.status, failure.message, failure.code, failure.message_key, failure.message_params);
+        if (failure?.status) return apiError(failure.status, failure.message, failure.code, failure.message_key, failure.message_params, failure.stack || failure.detail);
         console.error('[API error]', error);
-        return apiError(500, 'Internal server error');
+        return apiError(500, 'Internal server error', 'INTERNAL_ERROR', 'errors.internal_error', undefined, failure?.stack || String(failure?.message || error));
       }
     }
 

@@ -4,6 +4,7 @@ type:
   postgres:
     up: |
       DELETE FROM order_lines WHERE id IN ('order-line-demo-01', 'order-line-demo-02', 'order-line-demo-03', 'order-line-demo-04', 'order-line-demo-05', 'order-line-demo-06', 'order-line-demo-07', 'order-line-demo-09', 'order-line-demo-10a', 'order-line-demo-10b', 'order-line-demo-11');
+      DELETE FROM order_workflow_states WHERE order_id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
       DELETE FROM orders WHERE id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
       DELETE FROM customers WHERE id IN ('customer-minh-long', 'customer-dai-phat', 'customer-an-binh', 'customer-hung-thinh', 'customer-nam-viet', 'customer-thanh-cong', 'customer-dong-a', 'customer-phu-my');
 
@@ -104,6 +105,7 @@ type:
 
     down: |
       DELETE FROM order_lines WHERE id IN ('order-line-demo-01', 'order-line-demo-02', 'order-line-demo-03', 'order-line-demo-04', 'order-line-demo-05', 'order-line-demo-06', 'order-line-demo-07', 'order-line-demo-09', 'order-line-demo-10a', 'order-line-demo-10b', 'order-line-demo-11');
+      DELETE FROM order_workflow_states WHERE order_id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
       DELETE FROM orders WHERE id IN ('order-demo-01', 'order-demo-02', 'order-demo-03', 'order-demo-04', 'order-demo-05', 'order-demo-06', 'order-demo-07', 'order-demo-08', 'order-demo-09', 'order-demo-10', 'order-demo-11', 'order-demo-12');
       DELETE FROM customers WHERE id IN ('customer-minh-long', 'customer-dai-phat', 'customer-an-binh', 'customer-hung-thinh', 'customer-nam-viet', 'customer-thanh-cong', 'customer-dong-a', 'customer-phu-my');
   duckdb: postgres

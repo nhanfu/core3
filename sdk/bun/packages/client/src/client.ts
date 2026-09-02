@@ -39,11 +39,13 @@ class Client {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ message: res.statusText }));
       const fallback = err.message || err.error || 'Request failed';
-      const message = err.message_key ? i18n.tKey(String(err.message_key), err.message_params || {}, fallback) : fallback;
+      const messageKey = err.message_key || (res.status >= 500 ? 'errors.internal_error' : undefined);
+      const translated = messageKey ? i18n.tKey(String(messageKey), err.message_params || {}, fallback) : fallback;
+      const message = err.detail ? `${translated} — Dev detail: ${String(err.detail)}` : translated;
       throw Object.assign(new Error(message), {
         status: res.status,
         code: err.code,
-        messageKey: err.message_key,
+        messageKey,
         messageParams: err.message_params,
       });
     }
