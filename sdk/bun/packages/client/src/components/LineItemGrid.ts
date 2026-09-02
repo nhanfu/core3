@@ -118,7 +118,10 @@ export class LineItemGrid extends DataGrid {
       const save = html.take(container).button.type('button').className('o-x2many-row-action is-icon-only').ele();
       appendIcon(save, 'check');
       html.take(save).attr('aria-label', 'Save').attr('title', 'Save');
-      html.take(save).event('click', () => void this.inline!.onSave(this.inline!.editAction || 'edit', row, this.rowValues(row)));
+      const actionId = String(row.id) === '__new__'
+        ? (this.inline!.createAction || this.inline!.editAction || 'create')
+        : (this.inline!.editAction || 'edit');
+      html.take(save).event('click', () => void this.inline!.onSave(actionId, row, this.rowValues(row)));
       const cancel = html.take(container).button.type('button').className('o-x2many-row-action is-icon-only').ele();
       appendIcon(cancel, 'x');
       html.take(cancel).attr('aria-label', 'Cancel').attr('title', 'Cancel');

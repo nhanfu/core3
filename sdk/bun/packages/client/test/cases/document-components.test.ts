@@ -499,6 +499,33 @@ describe('document detail components', () => {
     expect(grid.find('line-field-line-1-description')).not.toBeNull();
   });
 
+  it('submits the create action when saving a new inline line', async () => {
+    const saves: any[] = [];
+    const grid = new LineItemGrid('new-inline-line', {
+      rows: [],
+      actions: [{ id: 'add_line', label: 'Add line' }],
+    }, []);
+    grid.configureInline({
+      fields: [{ type: 'LineItemField', field: 'description', label: 'Description' }],
+      actions: [{ id: 'edit_line', label: 'Edit' }],
+      editAction: 'edit_line',
+      createAction: 'add_line',
+      onSave: async (action, row, values) => { saves.push({ action, row, values }); },
+    });
+    const container = mount(grid);
+
+    container.querySelector<HTMLButtonElement>('.o-x2many-create')!.click();
+    const input = container.querySelector<HTMLInputElement>('[aria-label="Description"]')!;
+    input.value = 'New freight';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    container.querySelector<HTMLButtonElement>('.o-line-grid-table button[aria-label="Save"]')!.click();
+
+    await Promise.resolve();
+    expect(saves[0].action).toBe('add_line');
+    expect(saves[0].row.id).toBe('__new__');
+    expect(saves[0].values.description).toBe('New freight');
+  });
+
   it('renders resource rows across assignment dates', () => {
     const container = mount(new ScheduleGrid('schedule', {
       rows: [

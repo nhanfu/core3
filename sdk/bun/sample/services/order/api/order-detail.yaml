@@ -382,7 +382,7 @@ actions:
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
-        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, :description)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.create', 'orders', :id, concat('Description: ', COALESCE(CAST(:description AS VARCHAR), ''), ' | Product: ', COALESCE((SELECT name FROM sale_products WHERE id = :product_id), CAST(:product_id AS VARCHAR), 'Not selected'), ' | Quantity: ', COALESCE(CAST(:quantity AS VARCHAR), ''), ' | Unit: ', COALESCE(CAST(:unit AS VARCHAR), ''), ' | Unit price: ', COALESCE(CAST(:unit_price AS VARCHAR), ''), ' | Tax: ', COALESCE(CAST(:tax_rate AS VARCHAR), '0'), '% | Discount: ', COALESCE(CAST(:discount AS VARCHAR), '0'), '%'))"
       result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
   - id: edit_order_line
     type: server_form
@@ -413,16 +413,17 @@ actions:
         - query: "SELECT 1 AS ok WHERE :product_id IS NULL OR EXISTS (SELECT 1 FROM sale_products WHERE id = :product_id AND active = true AND sale_ok = true)"
           status: 400
           message: Selected product is not available for sale
-        - query: "SELECT id FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "SELECT description AS old_description, product_id AS old_product_id, quantity AS old_quantity, unit AS old_unit, unit_price AS old_unit_price, tax_rate AS old_tax_rate, discount AS old_discount FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           status: 409
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before saving
+          assign: true
       steps:
         - query: "UPDATE order_lines SET description = :description, product_id = :product_id, quantity = :quantity, unit = :unit, unit_price = :unit_price, tax_rate = :tax_rate, discount = :discount, qty_to_invoice = CASE WHEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) > 0 THEN CAST(:quantity AS DECIMAL(18, 4)) - COALESCE(qty_invoiced, 0) ELSE 0 END, price_subtotal = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100), 2), price_tax = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * CAST(:tax_rate AS DECIMAL(9, 4)) / 100, 2), price_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), line_total = ROUND(CAST(:quantity AS DECIMAL(18, 4)) * CAST(:unit_price AS DECIMAL(18, 2)) * (1 - CAST(:discount AS DECIMAL(9, 4)) / 100) * (1 + CAST(:tax_rate AS DECIMAL(9, 4)) / 100), 2), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(COALESCE(price_total, line_total)), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
-        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.update', 'orders', :id, :description)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.update', 'orders', :id, concat_ws(' | ', CASE WHEN :old_description IS DISTINCT FROM :description THEN concat('Description: ', COALESCE(CAST(:old_description AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:description AS VARCHAR), 'Not set')) END, CASE WHEN :old_product_id IS DISTINCT FROM :product_id THEN concat('Product: ', COALESCE((SELECT name FROM sale_products WHERE id = :old_product_id), CAST(:old_product_id AS VARCHAR), 'Not selected'), ' → ', COALESCE((SELECT name FROM sale_products WHERE id = :product_id), CAST(:product_id AS VARCHAR), 'Not selected')) END, CASE WHEN :old_quantity IS DISTINCT FROM :quantity THEN concat('Quantity: ', CAST(:old_quantity AS VARCHAR), ' → ', CAST(:quantity AS VARCHAR)) END, CASE WHEN :old_unit IS DISTINCT FROM :unit THEN concat('Unit: ', COALESCE(CAST(:old_unit AS VARCHAR), 'Not set'), ' → ', COALESCE(CAST(:unit AS VARCHAR), 'Not set')) END, CASE WHEN :old_unit_price IS DISTINCT FROM :unit_price THEN concat('Unit price: ', CAST(:old_unit_price AS VARCHAR), ' → ', CAST(:unit_price AS VARCHAR)) END, CASE WHEN :old_tax_rate IS DISTINCT FROM :tax_rate THEN concat('Tax: ', COALESCE(CAST(:old_tax_rate AS VARCHAR), '0'), '% → ', COALESCE(CAST(:tax_rate AS VARCHAR), '0'), '%') END, CASE WHEN :old_discount IS DISTINCT FROM :discount THEN concat('Discount: ', COALESCE(CAST(:old_discount AS VARCHAR), '0'), '% → ', COALESCE(CAST(:discount AS VARCHAR), '0'), '%') END) WHERE :old_description IS DISTINCT FROM :description OR :old_product_id IS DISTINCT FROM :product_id OR :old_quantity IS DISTINCT FROM :quantity OR :old_unit IS DISTINCT FROM :unit OR :old_unit_price IS DISTINCT FROM :unit_price OR :old_tax_rate IS DISTINCT FROM :tax_rate OR :old_discount IS DISTINCT FROM :discount"
       result: { query: "SELECT l.*, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount FROM order_lines l WHERE l.id = :line_id" }
   - id: delete_order_line
     type: server
@@ -441,7 +442,7 @@ actions:
           status: 409
           code: STALE_RECORD
           message: Order changed or is not Draft; reload it before editing lines
-        - query: "SELECT id, description FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
+        - query: "SELECT id, description, product_id, quantity, unit, unit_price, tax_rate, discount FROM order_lines WHERE id = :line_id AND order_id = :id AND row_version = :expected_row_version"
           status: 409
           code: STALE_RECORD
           message: Line item changed or no longer exists; reload it before deleting
@@ -453,5 +454,5 @@ actions:
         - query: "UPDATE orders SET total_amount = (SELECT COALESCE(SUM(line_total), 0) FROM order_lines WHERE order_id = :id), updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id AND row_version = :parent_expected_row_version"
           expect_changed: true
           code: STALE_RECORD
-        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.delete', 'orders', :id, :description)"
+        - query: "INSERT INTO system_activity(id, actor_id, actor_name, action, resource, resource_id, detail) VALUES(gen_random_uuid(), :current_user_id, :current_user_name, 'orders.lines.delete', 'orders', :id, concat('Description: ', COALESCE(CAST(:description AS VARCHAR), ''), ' | Product: ', COALESCE((SELECT name FROM sale_products WHERE id = :product_id), CAST(:product_id AS VARCHAR), 'Not selected'), ' | Quantity: ', COALESCE(CAST(:quantity AS VARCHAR), ''), ' | Unit: ', COALESCE(CAST(:unit AS VARCHAR), ''), ' | Unit price: ', COALESCE(CAST(:unit_price AS VARCHAR), ''), ' | Tax: ', COALESCE(CAST(:tax_rate AS VARCHAR), '0'), '% | Discount: ', COALESCE(CAST(:discount AS VARCHAR), '0'), '%'))"
       result: { query: "SELECT true AS deleted, (SELECT total_amount FROM orders WHERE id = :id) AS total_amount" }
