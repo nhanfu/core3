@@ -60,6 +60,7 @@ export interface DataGridOptions {
   rowNumbers?: boolean;
   selectable?: boolean;
   columnChooser?: boolean;
+  columnStorageKey?: string;
   emptyState?: { title?: string; description?: string };
   onSort?: (sort: { field: string; direction: SortDirection }) => void;
   onSelectionChange?: (selectedIds: string[]) => void;

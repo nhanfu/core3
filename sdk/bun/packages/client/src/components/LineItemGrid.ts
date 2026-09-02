@@ -23,8 +23,42 @@ type InlineOptions = {
  */
 export class LineItemGrid extends DataGrid {
   private inline?: InlineOptions;
+  private resizeCleanup?: () => void;
+  private preferencesLoaded = false;
 
-  configureInline(options: InlineOptions) { this.inline = options; }
+  configureInline(options: InlineOptions) { this.inline = options; this.loadPreferences(); }
+
+  private columnKey(column: any) { return String(column.id || column.field); }
+  private columnForField(field: LineItemFieldDefinition) { return this.columns.find(column => column.field === field.field || column.field === field.display_field); }
+  private loadPreferences() {
+    if (this.preferencesLoaded || !this.options.columnStorageKey || typeof localStorage === 'undefined') return;
+    this.preferencesLoaded = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.options.columnStorageKey) || '{}');
+      if (Array.isArray(saved.visible)) this.state.visibleColumns = saved.visible.map(String);
+      if (saved.widths && typeof saved.widths === 'object') this.state.columnWidths = saved.widths;
+    } catch { /* local storage is optional */ }
+  }
+  private persistPreferences() {
+    if (!this.options.columnStorageKey || typeof localStorage === 'undefined') return;
+    try { localStorage.setItem(this.options.columnStorageKey, JSON.stringify({ visible: this.state.visibleColumns, widths: this.state.columnWidths || {} })); } catch { /* local storage is optional */ }
+  }
+  private visibleFields() {
+    const configured = this.columns.filter(column => column.field !== 'actions');
+    const visible = new Set(Array.isArray(this.state.visibleColumns) ? this.state.visibleColumns.map(String) : configured.filter(column => column.optional !== 'hide').map(column => this.columnKey(column)));
+    return this.fieldDefinitions().filter(field => { const column = this.columnForField(field); return !column || visible.has(this.columnKey(column)); });
+  }
+  private beginResize(event: MouseEvent, key: string, header: HTMLElement) {
+    event.preventDefault();
+    const startX = event.clientX; const startWidth = header.getBoundingClientRect().width;
+    const move = (moveEvent: MouseEvent) => {
+      const width = Math.max(56, Math.round(startWidth + moveEvent.clientX - startX));
+      this.state.columnWidths = { ...(this.state.columnWidths || {}), [key]: width };
+      header.closest('table')?.querySelectorAll<HTMLElement>(`[data-column="${key}"]`).forEach(cell => { cell.style.width = `${width}px`; cell.style.minWidth = `${width}px`; });
+    };
+    const stop = () => { window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', stop); document.body.style.cursor = ''; this.persistPreferences(); this.resizeCleanup = undefined; };
+    this.resizeCleanup?.(); window.addEventListener('mousemove', move); window.addEventListener('mouseup', stop); document.body.style.cursor = 'col-resize'; this.resizeCleanup = stop;
+  }
 
   setFormEditing(editing: boolean) {
     this.setState({ formEditing: editing, editingId: editing ? '__new__' : null });
@@ -53,6 +87,7 @@ export class LineItemGrid extends DataGrid {
   }
 
   draw(container: HTMLElement) {
+    this.resizeCleanup?.();
     if (!this.inline) {
       super.draw(container);
       return;
@@ -63,14 +98,20 @@ export class LineItemGrid extends DataGrid {
     const displayRows = formEditing
       ? [...rows.filter(row => String(row.id) !== '__new__'), { id: '__new__' }]
       : rows;
+    const visibleFields = this.visibleFields();
     const editingId = this.state.editingId == null ? '' : String(this.state.editingId);
     const root = html.take(container).div.className('token-panel o-x2many-grid o-line-grid').ele();
     const tableWrap = html.take(root).div.className('o-line-grid-table overflow-x-auto').ele();
     const table = html.take(tableWrap).table.className('token-table min-w-full').ele();
     const head = html.take(table).thead.trow.className('token-header').ele();
-    for (const field of this.inline.fields) {
-      const header = html.take(head).th.dataAttr('column', field.field).text(field.label || field.field);
-      if (field.width) header.css('width', `${field.width}px`).css('minWidth', `${field.width}px`);
+    for (const field of visibleFields) {
+      const column = this.columnForField(field); const key = column ? this.columnKey(column) : field.field;
+      const width = this.state.columnWidths?.[key] || field.width || column?.width;
+      const headerBuilder = html.take(head).th.dataAttr('column', key).className('relative whitespace-nowrap').text(field.label || field.field);
+      if (width) headerBuilder.css('width', `${width}px`).css('minWidth', `${width}px`);
+      const header = headerBuilder.ele() as HTMLElement;
+      const handle = html.take(header).div.className('o-line-grid-column-resize absolute right-0 top-0 h-full w-1 cursor-col-resize').attr('role', 'separator').attr('aria-label', `Resize ${field.label || field.field}`).ele();
+      html.take(handle).event('mousedown', event => this.beginResize(event as MouseEvent, key, header));
     }
     html.take(head).th.text('');
     const body = html.take(table).tbody.className('token-body divide-y divide-gray-100').ele();
@@ -97,6 +138,25 @@ export class LineItemGrid extends DataGrid {
         const button = html.take(controls).button.className('o-x2many-create').type('button').text(action.label).ele();
         html.take(button).event('click', () => this.startCreate());
       }
+      if (this.options.columnChooser) this.drawColumnChooser(root);
+    }
+  }
+
+  private drawColumnChooser(root: HTMLElement) {
+    const configured = this.columns.filter(column => column.field !== 'actions');
+    const visible = new Set(this.visibleFields().map(field => this.columnKey(this.columnForField(field) || { field: field.field })));
+    const details = html.take(root).details.className('o-line-grid-column-chooser relative').ele();
+    html.take(details).summary.className('token-control cursor-pointer').text('Columns');
+    const menu = html.take(details).div.className('token-menu absolute right-0 z-10 min-w-[180px] rounded-md border bg-white p-2 shadow-lg').ele();
+    for (const column of configured) {
+      const label = html.take(menu).label.className('token-label flex items-center gap-2 px-2 py-1 text-sm').ele();
+      const checkbox = html.take(label).input.attr('type', 'checkbox').prop('checked', visible.has(this.columnKey(column))).attr('aria-label', `Show ${column.label}`).ele() as HTMLInputElement;
+      html.take(checkbox).event('change', () => {
+        const next = new Set(visible);
+        if (checkbox.checked) next.add(this.columnKey(column)); else if (next.size > 1) next.delete(this.columnKey(column)); else { checkbox.checked = true; return; }
+        this.state.visibleColumns = [...next]; this.persistPreferences(); this.redraw();
+      });
+      html.take(label).text(column.label);
     }
   }
 
@@ -104,7 +164,7 @@ export class LineItemGrid extends DataGrid {
 
   private rowValues(row: Row) {
     const values: Row = { ...row };
-    for (const field of this.fieldDefinitions()) {
+    for (const field of this.visibleFields()) {
       const child = this.find(`line-field-${row.id}-${field.field}`) as LineItemField | null
         || this.find(`line-card-field-${row.id}-${field.field}`) as LineItemField | null;
       if (child) values[field.field] = child.value;
@@ -114,9 +174,10 @@ export class LineItemGrid extends DataGrid {
 
   private drawRow(body: HTMLElement, root: HTMLElement, row: Row, editing: boolean) {
     const tr = html.take(body).trow.className('token-row').ele();
-    for (const field of this.fieldDefinitions()) {
+    for (const field of this.visibleFields()) {
       const cell = html.take(tr).tdata.dataAttr('column', field.field).className('token-cell px-4 py-2').ele();
-      if (field.width) html.take(cell).css('width', `${field.width}px`).css('minWidth', `${field.width}px`);
+      const column = this.columnForField(field); const width = this.state.columnWidths?.[column ? this.columnKey(column) : field.field] || field.width || column?.width;
+      if (width) html.take(cell).css('width', `${width}px`).css('minWidth', `${width}px`);
       if (editing && !field.readonly) {
         const value = String(row.id) === '__new__' && row[field.field] === undefined
           ? field.default
@@ -136,7 +197,7 @@ export class LineItemGrid extends DataGrid {
     const card = html.take(container).div.className('o-line-card').dataAttr('row-id', String(row.id)).ele();
     const title = this.fieldDefinitions().find(field => field.field === 'description') || this.fieldDefinitions()[0];
     if (title) html.take(card).h3.className('o-line-card-title').text(String(row[title.field] ?? 'Line item'));
-    for (const field of this.fieldDefinitions().slice(1)) {
+    for (const field of this.visibleFields().slice(1)) {
       const item = html.take(card).div.className('o-line-card-field').ele();
       html.take(item).span.className('o-line-card-label').text(field.label || field.field);
       if (editing && !field.readonly) {
@@ -191,6 +252,6 @@ export class LineItemGrid extends DataGrid {
 
   private startCreate() {
     const row = { id: '__new__' };
-    this.setState({ rows: [row, ...((this.state.rows as Row[]) || [])], editingId: '__new__' });
+    this.setState({ rows: [...((this.state.rows as Row[]) || []), row], editingId: '__new__' });
   }
 }

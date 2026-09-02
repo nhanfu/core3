@@ -567,7 +567,7 @@ describe('document detail components', () => {
   it('submits the create action when saving a new inline line', async () => {
     const saves: any[] = [];
     const grid = new LineItemGrid('new-inline-line', {
-      rows: [],
+      rows: [{ id: 'line-1', description: 'Existing freight' }],
       actions: [{ id: 'add_line', label: 'Add line' }],
     }, []);
     grid.configureInline({
@@ -583,6 +583,10 @@ describe('document detail components', () => {
     const container = mount(grid);
 
     container.querySelector<HTMLButtonElement>('.o-x2many-create')!.click();
+    const rows = container.querySelectorAll('.o-line-grid-table tbody tr');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].querySelector<HTMLInputElement>('[aria-label="Description"]')).toBeNull();
+    expect(rows[1].querySelector<HTMLInputElement>('[aria-label="Description"]')?.value).toBe('');
     const input = container.querySelector<HTMLInputElement>('[aria-label="Description"]')!;
     input.value = 'New freight';
     input.dispatchEvent(new Event('input', { bubbles: true }));

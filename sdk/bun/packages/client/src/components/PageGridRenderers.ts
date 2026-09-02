@@ -294,6 +294,7 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
       rowKey: def.row_key || 'id',
       selectable: !!def.selectable,
       columnChooser: def.column_chooser === true,
+      columnStorageKey: `core3:columns:${String(config.page?.id || config.title || 'page')}:${sourceId}`,
       rowNumbers: def.row_numbers === true,
       labels: {
         ...(config.locale === 'vi' ? {
