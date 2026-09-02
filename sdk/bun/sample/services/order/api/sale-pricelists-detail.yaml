@@ -1,0 +1,28 @@
+page: { id: sale-pricelists-detail }
+datasources:
+  - id: sale_pricelist_detail
+    single: true
+    permission: orders.read
+    query: "SELECT * FROM sale_pricelists WHERE id = :id"
+actions:
+  - id: edit_sale_pricelists
+    type: server_form
+    permission: orders.write
+    title: Edit Pricelist
+    action: sale_pricelists.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [sale_pricelist_detail]
+    mutation:
+      operation: update
+      table: sale_pricelists
+      key: id
+      concurrency: false
+      fields: [name, currency, discount_policy, active]
+      required: []
+      result: { query: "SELECT * FROM sale_pricelists WHERE id = :id" }
+    fields:
+      - { field: name, label: Pricelist name, type: text }
+      - { field: currency, label: Currency, type: text }
+      - { field: discount_policy, label: Discount policy, type: text }
+      - { field: active, label: Active, type: checkbox }

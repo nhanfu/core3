@@ -66,7 +66,11 @@ export function discoverPageRoutes(discovered: ReturnType<typeof discoverPages>)
   const routes = new Map<string, PageRoute>();
   const add = (path: unknown, page: string, module: string) => {
     if (typeof path !== 'string' || !path.startsWith('/') || !discovered.pages.has(page)) return;
-    routes.set(path.replace(/\/$/, '') || '/', { path: path.replace(/\/$/, '') || '/', page, module });
+    const normalized = path.replace(/\/$/, '') || '/';
+    // Explicit page routes are authoritative. Menu and action aliases must
+    // not silently replace a route already declared by a page.
+    if (routes.has(normalized)) return;
+    routes.set(normalized, { path: normalized, page, module });
   };
   for (const entry of discovered.pages.values()) {
     const declared = entry.config?.page?.route;
@@ -82,7 +86,8 @@ export function discoverPageRoutes(discovered: ReturnType<typeof discoverPages>)
     const visit = (value: any) => {
       if (!value || typeof value !== 'object') return;
       if (typeof value.navigate_to === 'string') {
-        const page = routeId(value.navigate_to, discovered.pages);
+        const declared = [...discovered.pages.values()].find((entry) => entry.config?.page?.route === value.navigate_to);
+        const page = declared?.id || routeId(value.navigate_to, discovered.pages);
         if (page) add(value.navigate_to, page, discovered.pages.get(page)!.module);
       }
       for (const child of Array.isArray(value) ? value : Object.values(value)) visit(child);

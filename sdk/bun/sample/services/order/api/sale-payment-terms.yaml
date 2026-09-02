@@ -1,0 +1,36 @@
+page: { id: sale-payment-terms }
+datasources:
+  - id: sale_payment_terms
+    single: false
+    permission: orders.read
+    query: "SELECT id, name, due_days, discount_days, discount_percent, active FROM sale_payment_terms ORDER BY due_days, name"
+actions:
+  - id: view_sale_payment_term
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/payment-term/detail
+    params: { id: '{row.id}' }
+  - id: create_sale_payment_term
+    type: server_form
+    permission: orders.write
+    title: New payment term
+    action: sales.payment_terms.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [sale_payment_terms]
+    mutation:
+      operation: insert
+      table: sale_payment_terms
+      fields: [name, due_days, discount_days, discount_percent, active]
+      required: [name]
+      defaults: { due_days: 0, discount_days: 0, discount_percent: 0, active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_payment_terms WHERE name = :name)"
+          status: 409
+          message: Payment term already exists
+      result: { query: "SELECT * FROM sale_payment_terms WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment term, type: text, required: true }
+      - { field: due_days, label: Due in days, type: number, default: 0 }
+      - { field: discount_days, label: Early discount days, type: number, default: 0 }
+      - { field: discount_percent, label: Early discount (%), type: number, default: 0 }

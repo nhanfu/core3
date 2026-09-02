@@ -1,29 +1,5 @@
 title: Customer invoices
-page: { id: sale-invoices, breadcrumb: [Sales, Invoices], auth: { require: [orders.read] } }
-datasources:
-  - id: sale_invoices
-    single: false
-    permission: orders.read
-    query: |
-      SELECT i.id, i.invoice_number, i.order_id, i.accounting_invoice_id, o.order_number, o.customer_name,
-        i.state, CAST(i.amount AS DOUBLE) AS amount, CAST(i.invoice_date AS VARCHAR) AS invoice_date,
-        CAST(i.due_date AS VARCHAR) AS due_date, CAST(i.created_at AS VARCHAR) AS created_at
-      FROM sale_invoices i
-      LEFT JOIN orders o ON o.id = i.order_id
-      WHERE (:q IS NULL OR i.invoice_number ILIKE '%' || :q || '%' OR o.order_number ILIKE '%' || :q || '%'
-        OR o.customer_name ILIKE '%' || :q || '%')
-        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
-      ORDER BY i.created_at DESC
-  - id: sale_invoice_order_lookup
-    single: false
-    permission: orders.read
-    query: |
-      SELECT o.id AS value, o.order_number || ' - ' || o.customer_name AS label
-      FROM orders o
-      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved'
-        AND NOT EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id)
-        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
-      ORDER BY o.order_number
+page: { id: sale-invoices, route: /order/invoices, breadcrumb: [Sales, Invoices], auth: { require: [orders.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -42,79 +18,8 @@ components:
       - { field: due_date, label: Due date }
     page_size: 50
     row_key: id
+    row_double_click_action: view_sale_invoice
     row_actions: menu
     actions:
       - { id: post_sale_invoice, label: Post invoice, permission: orders.write, variant: primary, show_if: "row.state === 'Draft'" }
-actions:
-  - id: post_sale_invoice
-    type: server
-    permission: orders.write
-    action: sales.invoices.post
-    handler: invoice_status
-    operation: post
-    params: { id: '{row.id}' }
-    refresh: [sale_invoices]
-    mutation:
-      guards:
-        - query: "SELECT id FROM sale_invoices WHERE id = :id AND state = 'Draft'"
-          status: 409
-          message: Only draft invoices can be posted
-        - query: "SELECT 1 AS ok FROM sale_invoices i JOIN orders o ON o.id = i.order_id WHERE i.id = :id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved'"
-          status: 409
-          message: The sales order must remain approved before posting the invoice
-      steps:
-        - query: "UPDATE sale_invoices SET state = 'Posted' WHERE id = :id"
-      result: { query: "SELECT * FROM sale_invoices WHERE id = :id" }
-  - id: create_sale_invoice
-    type: server_form
-    permission: orders.write
-    title: Create customer invoice
-    action: sales.invoices.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [sale_invoices]
-    mutation:
-      operation: insert
-      table: sale_invoices
-      fields: [order_id, invoice_number, accounting_invoice_id, state, amount, invoice_date, due_date]
-      required: [order_id, invoice_number, amount, invoice_date]
-      defaults: { state: Draft }
-      guards:
-        - query: "SELECT 1 AS ok FROM orders o WHERE o.id = :order_id AND COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved'"
-          status: 409
-          message: Only approved sales orders can be invoiced
-        - query: "SELECT 1 AS ok FROM orders o WHERE o.id = :order_id AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)"
-          status: 403
-          message: Sales order is outside the current branch scope
-        - query: "SELECT 1 AS ok FROM orders WHERE id = :order_id AND CAST(:amount AS DECIMAL(18,2)) = total_amount"
-          status: 400
-          message: Invoice amount must match the approved sales order total
-        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM sale_invoices WHERE invoice_number = :invoice_number OR order_id = :order_id)"
-          status: 409
-          message: An invoice already exists for this order or invoice number
-        - query: "SELECT o.customer_name, o.order_number FROM orders o WHERE o.id = :order_id"
-          assign: true
-        - type: service
-          service: yaml.service.accounting
-          operation: accounting.invoices.create_from_source
-          request:
-            name: invoice_number
-            partner_name: customer_name
-            invoice_type: Customer Invoice
-            invoice_date: invoice_date
-            due_date: due_date
-            amount_untaxed: amount
-            amount_total: amount
-            amount_residual: amount
-            reference: order_number
-            source_service: order
-            source_type: sale_order
-            source_id: order_id
-          assign: true
-      result: { query: "SELECT * FROM sale_invoices WHERE id = :id" }
-    fields:
-      - { field: order_id, label: Approved sales order, type: select, options_source: sale_invoice_order_lookup, required: true }
-      - { field: invoice_number, label: Invoice number, type: text, required: true }
-      - { field: amount, label: Amount, type: money, currency: VND, required: true }
-      - { field: invoice_date, label: Invoice date, type: date, required: true }
-      - { field: due_date, label: Due date, type: date }
+    form_view: { page: apps/services/order/pages/sale-invoices-detail.yaml, side_panel: true }

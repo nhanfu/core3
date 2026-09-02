@@ -1,0 +1,31 @@
+page: { id: sale-pricelist-rules-detail }
+datasources:
+  - id: sale_pricelist_rule_detail
+    single: true
+    permission: orders.read
+    query: "SELECT * FROM sale_pricelist_items WHERE id = :id"
+actions:
+  - id: edit_sale_pricelist_rules
+    type: server_form
+    permission: orders.write
+    title: Edit Pricelist rule
+    action: sale_pricelist_rules.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [sale_pricelist_rule_detail]
+    mutation:
+      operation: update
+      table: sale_pricelist_items
+      key: id
+      concurrency: false
+      fields: [pricelist_id, product_id, min_quantity, fixed_price, percentage_discount, date_start, date_end]
+      required: []
+      result: { query: "SELECT * FROM sale_pricelist_items WHERE id = :id" }
+    fields:
+      - { field: pricelist_id, label: Pricelist, type: text }
+      - { field: product_id, label: Product, type: text }
+      - { field: min_quantity, label: Minimum quantity, type: number }
+      - { field: fixed_price, label: Fixed price, type: number }
+      - { field: percentage_discount, label: Discount (%), type: number }
+      - { field: date_start, label: Start date, type: date }
+      - { field: date_end, label: End date, type: date }

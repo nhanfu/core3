@@ -1,0 +1,19 @@
+title: Invoice details
+page: { id: sale-invoices-detail, route: /order/invoice/detail, breadcrumb: [Sales, Detail], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: sale_invoice_detail
+    title_field: invoice_number
+    editable: true
+    labels: { save: Save, discard: Discard }
+    header_actions:
+      - { id: edit_sale_invoices, label: Edit, variant: secondary }
+    group_columns: 2
+    fields:
+      - { field: invoice_number, label: Invoice number, type: text }
+      - { field: order_id, label: Order, type: text }
+      - { field: accounting_invoice_id, label: Accounting invoice, type: text }
+      - { field: state, label: State, type: text }
+      - { field: amount, label: Amount, type: number }
+      - { field: invoice_date, label: Invoice date, type: date }
+      - { field: due_date, label: Due date, type: date }

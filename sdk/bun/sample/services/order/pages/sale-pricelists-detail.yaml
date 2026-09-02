@@ -1,0 +1,16 @@
+title: Pricelist details
+page: { id: sale-pricelists-detail, route: /order/pricelist/detail, breadcrumb: [Sales, Detail], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: sale_pricelist_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard }
+    header_actions:
+      - { id: edit_sale_pricelists, label: Edit, variant: secondary }
+    group_columns: 2
+    fields:
+      - { field: name, label: Pricelist name, type: text }
+      - { field: currency, label: Currency, type: text }
+      - { field: discount_policy, label: Discount policy, type: text }
+      - { field: active, label: Active, type: checkbox }

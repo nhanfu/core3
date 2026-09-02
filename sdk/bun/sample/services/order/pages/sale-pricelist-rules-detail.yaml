@@ -1,0 +1,19 @@
+title: Pricelist rule details
+page: { id: sale-pricelist-rules-detail, route: /order/pricelist-rule/detail, breadcrumb: [Sales, Detail], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: sale_pricelist_rule_detail
+    title_field: id
+    editable: true
+    labels: { save: Save, discard: Discard }
+    header_actions:
+      - { id: edit_sale_pricelist_rules, label: Edit, variant: secondary }
+    group_columns: 2
+    fields:
+      - { field: pricelist_id, label: Pricelist, type: text }
+      - { field: product_id, label: Product, type: text }
+      - { field: min_quantity, label: Minimum quantity, type: number }
+      - { field: fixed_price, label: Fixed price, type: number }
+      - { field: percentage_discount, label: Discount (%), type: number }
+      - { field: date_start, label: Start date, type: date }
+      - { field: date_end, label: End date, type: date }

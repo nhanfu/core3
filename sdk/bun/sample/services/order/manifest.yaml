@@ -12,6 +12,12 @@ pages:
   - pages/sale-payment-terms.yaml
   - pages/sale-invoices.yaml
   - pages/order-detail.yaml
+  - pages/customer-detail.yaml
+  - pages/sale-products-detail.yaml
+  - pages/sale-pricelists-detail.yaml
+  - pages/sale-pricelist-rules-detail.yaml
+  - pages/sale-payment-terms-detail.yaml
+  - pages/sale-invoices-detail.yaml
   - pages/order-workflow.yaml
 permissions: permissions.yaml
 operations: operations.yaml

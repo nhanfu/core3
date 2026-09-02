@@ -21,6 +21,7 @@ components:
       - { field: status, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_double_click_action: view_customer
     row_actions: menu
     form_view: { page: apps/services/order/pages/customer-detail.yaml, side_panel: true }
     actions:

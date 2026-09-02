@@ -1,0 +1,31 @@
+page: { id: sale-invoices-detail }
+datasources:
+  - id: sale_invoice_detail
+    single: true
+    permission: orders.read
+    query: "SELECT * FROM sale_invoices WHERE id = :id"
+actions:
+  - id: edit_sale_invoices
+    type: server_form
+    permission: orders.write
+    title: Edit Invoice
+    action: sale_invoices.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [sale_invoice_detail]
+    mutation:
+      operation: update
+      table: sale_invoices
+      key: id
+      concurrency: false
+      fields: [invoice_number, order_id, accounting_invoice_id, state, amount, invoice_date, due_date]
+      required: []
+      result: { query: "SELECT * FROM sale_invoices WHERE id = :id" }
+    fields:
+      - { field: invoice_number, label: Invoice number, type: text }
+      - { field: order_id, label: Order, type: text }
+      - { field: accounting_invoice_id, label: Accounting invoice, type: text }
+      - { field: state, label: State, type: text }
+      - { field: amount, label: Amount, type: number }
+      - { field: invoice_date, label: Invoice date, type: date }
+      - { field: due_date, label: Due date, type: date }

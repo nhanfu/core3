@@ -1,0 +1,17 @@
+title: Payment term details
+page: { id: sale-payment-terms-detail, route: /order/payment-term/detail, breadcrumb: [Sales, Detail], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: sale_payment_term_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard }
+    header_actions:
+      - { id: edit_sale_payment_terms, label: Edit, variant: secondary }
+    group_columns: 2
+    fields:
+      - { field: name, label: Payment term, type: text }
+      - { field: due_days, label: Due in days, type: number }
+      - { field: discount_days, label: Early discount days, type: number }
+      - { field: discount_percent, label: Early discount (%), type: number }
+      - { field: active, label: Active, type: checkbox }

@@ -1,0 +1,22 @@
+title: Product details
+page: { id: sale-products-detail, route: /order/product/detail, breadcrumb: [Sales, Detail], auth: { require: [orders.read] } }
+components:
+  - type: OdooFormView
+    source: sale_product_detail
+    title_field: name
+    editable: true
+    labels: { save: Save, discard: Discard }
+    header_actions:
+      - { id: edit_sale_products, label: Edit, variant: secondary }
+    group_columns: 2
+    fields:
+      - { field: default_code, label: Internal reference, type: text }
+      - { field: name, label: Product name, type: text }
+      - { field: product_type, label: Product type, type: text }
+      - { field: list_price, label: List price, type: number }
+      - { field: cost_price, label: Cost price, type: number }
+      - { field: uom, label: Unit of measure, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: sale_ok, label: Available for sale, type: checkbox }
+      - { field: active, label: Active, type: checkbox }
+      - { field: description, label: Description, type: textarea }

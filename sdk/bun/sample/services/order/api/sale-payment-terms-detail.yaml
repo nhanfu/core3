@@ -1,0 +1,29 @@
+page: { id: sale-payment-terms-detail }
+datasources:
+  - id: sale_payment_term_detail
+    single: true
+    permission: orders.read
+    query: "SELECT * FROM sale_payment_terms WHERE id = :id"
+actions:
+  - id: edit_sale_payment_terms
+    type: server_form
+    permission: orders.write
+    title: Edit Payment term
+    action: sale_payment_terms.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [sale_payment_term_detail]
+    mutation:
+      operation: update
+      table: sale_payment_terms
+      key: id
+      concurrency: false
+      fields: [name, due_days, discount_days, discount_percent, active]
+      required: []
+      result: { query: "SELECT * FROM sale_payment_terms WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment term, type: text }
+      - { field: due_days, label: Due in days, type: number }
+      - { field: discount_days, label: Early discount days, type: number }
+      - { field: discount_percent, label: Early discount (%), type: number }
+      - { field: active, label: Active, type: checkbox }

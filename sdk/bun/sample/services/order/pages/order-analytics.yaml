@@ -1,43 +1,9 @@
 title: Order analytics
-
 page:
   id: order-analytics
   breadcrumb: [Management, Orders, Analytics]
   auth:
     require: [orders.read]
-
-datasources:
-  - id: order_totals
-    single: true
-    permission: orders.read
-    query: |
-      SELECT
-        COUNT(*) AS order_count,
-        CAST(COALESCE(SUM(total_amount), 0) AS DOUBLE) AS total_revenue,
-        printf('%,.0f ₫', COALESCE(SUM(total_amount), 0)) AS total_revenue_display,
-        printf('%,.0f ₫', COALESCE(AVG(total_amount), 0)) AS avg_order_value_display
-      FROM orders o
-      WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
-        AND (:from_date IS NULL OR o.order_date >= CAST(:from_date AS DATE))
-        AND (:to_date IS NULL OR o.order_date < CAST(:to_date AS DATE) + INTERVAL 1 DAY)
-  - id: order_status_breakdown
-    single: false
-    permission: orders.read
-    query: |
-      SELECT
-        CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
-          WHEN 'Draft' THEN 'Nháp'
-          WHEN 'Pending Approval' THEN 'Đang duyệt'
-          WHEN 'Approved' THEN 'Đã duyệt'
-          WHEN 'Cancelled' THEN 'Đã hủy'
-          ELSE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
-        END AS status_label,
-        COUNT(*) AS order_count
-      FROM orders o
-      WHERE (:view_scope = 'all' OR o.branch_id = :current_branch_id)
-      GROUP BY 1
-      ORDER BY 2 DESC
-
 components:
   - type: StatRow
     source: order_totals

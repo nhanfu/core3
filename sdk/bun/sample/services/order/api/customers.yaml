@@ -15,6 +15,11 @@ datasources:
     permission: orders.read
     query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Archived','Archived')) statuses(value, label)"
 actions:
+  - id: view_customer
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/customer/detail
+    params: { id: '{row.id}' }
   - id: create_customer
     type: server_form
     permission: orders.write

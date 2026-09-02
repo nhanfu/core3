@@ -1,26 +1,5 @@
 title: Pricelist rules
-page: { id: sale-pricelist-rules, breadcrumb: [Sales, Pricelists, Rules], auth: { require: [orders.read] } }
-datasources:
-  - id: sale_pricelist_rules
-    single: false
-    permission: orders.read
-    query: |
-      SELECT i.id, i.pricelist_id, p.name AS pricelist_name, i.product_id, s.name AS product_name,
-        i.min_quantity, i.fixed_price, i.percentage_discount,
-        CAST(i.date_start AS VARCHAR) AS date_start, CAST(i.date_end AS VARCHAR) AS date_end
-      FROM sale_pricelist_items i
-      JOIN sale_pricelists p ON p.id = i.pricelist_id
-      LEFT JOIN sale_products s ON s.id = i.product_id
-      WHERE (:pricelist_id IS NULL OR i.pricelist_id = :pricelist_id)
-      ORDER BY p.name, s.name, i.min_quantity
-  - id: sale_pricelist_rule_pricelists
-    single: false
-    permission: orders.read
-    query: "SELECT id AS value, name AS label FROM sale_pricelists WHERE active = true ORDER BY name"
-  - id: sale_pricelist_rule_products
-    single: false
-    permission: orders.read
-    query: "SELECT id AS value, default_code || ' - ' || name AS label FROM sale_products WHERE active = true AND sale_ok = true ORDER BY name"
+page: { id: sale-pricelist-rules, route: /order/pricelist-rules, breadcrumb: [Sales, Pricelists, Rules], auth: { require: [orders.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -38,31 +17,5 @@ components:
       - { field: date_end, label: End date }
     page_size: 50
     row_key: id
-actions:
-  - id: create_sale_pricelist_rule
-    type: server_form
-    permission: orders.write
-    title: New pricelist rule
-    action: sales.pricelist_rules.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [sale_pricelist_rules]
-    mutation:
-      operation: insert
-      table: sale_pricelist_items
-      fields: [pricelist_id, product_id, min_quantity, fixed_price, percentage_discount, date_start, date_end]
-      required: [pricelist_id]
-      defaults: { min_quantity: 1 }
-      guards:
-        - query: "SELECT 1 AS ok WHERE :fixed_price IS NOT NULL OR :percentage_discount IS NOT NULL"
-          status: 400
-          message: Provide a fixed price or percentage discount
-      result: { query: "SELECT * FROM sale_pricelist_items WHERE id = :id" }
-    fields:
-      - { field: pricelist_id, label: Pricelist, type: select, options_source: sale_pricelist_rule_pricelists, required: true }
-      - { field: product_id, label: Product, type: select, options_source: sale_pricelist_rule_products }
-      - { field: min_quantity, label: Minimum quantity, type: number, default: 1 }
-      - { field: fixed_price, label: Fixed price, type: number }
-      - { field: percentage_discount, label: Discount (%), type: number }
-      - { field: date_start, label: Start date, type: date }
-      - { field: date_end, label: End date, type: date }
+    row_double_click_action: view_sale_pricelist_rule
+    form_view: { page: apps/services/order/pages/sale-pricelist-rules-detail.yaml, side_panel: true }

@@ -1,0 +1,34 @@
+page: { id: sale-products-detail }
+datasources:
+  - id: sale_product_detail
+    single: true
+    permission: orders.read
+    query: "SELECT * FROM sale_products WHERE id = :id"
+actions:
+  - id: edit_sale_products
+    type: server_form
+    permission: orders.write
+    title: Edit Product
+    action: sale_products.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [sale_product_detail]
+    mutation:
+      operation: update
+      table: sale_products
+      key: id
+      concurrency: false
+      fields: [default_code, name, product_type, list_price, cost_price, uom, category, sale_ok, active, description]
+      required: []
+      result: { query: "SELECT * FROM sale_products WHERE id = :id" }
+    fields:
+      - { field: default_code, label: Internal reference, type: text }
+      - { field: name, label: Product name, type: text }
+      - { field: product_type, label: Product type, type: text }
+      - { field: list_price, label: List price, type: number }
+      - { field: cost_price, label: Cost price, type: number }
+      - { field: uom, label: Unit of measure, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: sale_ok, label: Available for sale, type: checkbox }
+      - { field: active, label: Active, type: checkbox }
+      - { field: description, label: Description, type: textarea }
