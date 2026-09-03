@@ -1,0 +1,21 @@
+title: POS Cashier
+page: { id: pos-cashier, route: /point-of-sale/cashier, breadcrumb: [Sales, Point of Sale, Cashier], auth: { require: [pos.read] } }
+toolbar:
+  - { id: start_cashier_ticket, label: Start ticket, action: create_cashier_ticket, permission: pos.write, variant: primary }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_cashier_products
+    search: { label: Find product, placeholder: Search product or scan barcode... }
+    view_navigation: tabs
+    views:
+      - { id: card, label: Products, icon: grid }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: barcode, label: Barcode }
+      - { field: category, label: Category }
+      - { field: price, label: Price, align: right }
+      - { field: tax_rate, label: Tax, align: right }
+    page_size: 48
+    row_key: id

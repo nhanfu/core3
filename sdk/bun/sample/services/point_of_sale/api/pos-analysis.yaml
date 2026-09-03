@@ -1,0 +1,14 @@
+page: { id: pos-analysis }
+datasources:
+  - id: pos_analysis_totals
+    single: true
+    permission: pos.read
+    query: "SELECT COUNT(*) AS order_count, CAST(COALESCE(SUM(amount_total), 0) AS DOUBLE) AS gross_sales, CAST(COALESCE(SUM(amount_paid), 0) AS DOUBLE) AS paid_sales FROM pos_orders WHERE state <> 'Cancelled'"
+  - id: pos_sales_by_method
+    single: false
+    permission: pos.read
+    query: "SELECT COALESCE(payment_method, 'Unpaid') AS method, COUNT(*) AS order_count, CAST(COALESCE(SUM(amount_total), 0) AS DOUBLE) AS total FROM pos_orders WHERE state <> 'Cancelled' GROUP BY payment_method ORDER BY total DESC"
+  - id: pos_sales_by_session
+    single: false
+    permission: pos.read
+    query: "SELECT s.name AS session, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total FROM pos_sessions s LEFT JOIN pos_orders o ON o.session_id = s.id AND o.state <> 'Cancelled' GROUP BY s.name ORDER BY total DESC"

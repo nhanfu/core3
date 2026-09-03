@@ -1,10 +1,5 @@
 title: Point of Sale Configuration
-page: { id: pos-configs, breadcrumb: [Sales, Point of Sale, Configuration], auth: { require: [pos.read] } }
-datasources:
-  - id: pos_configs
-    single: false
-    permission: pos.read
-    query: "SELECT id, name, company, currency, receipt_header, receipt_footer, active FROM pos_configs ORDER BY name"
+page: { id: pos-configs, route: /point-of-sale/configs, breadcrumb: [Sales, Point of Sale, Configuration], auth: { require: [pos.read] } }
 components:
   - type: ListView
     variant: odoo
@@ -22,41 +17,3 @@ components:
     row_actions: menu
     actions:
       - { id: archive_pos_config, label: Archive, permission: pos.manage, variant: danger, show_if: "row.active === true" }
-actions:
-  - id: create_pos_config
-    type: server_form
-    permission: pos.manage
-    title: New POS configuration
-    action: pos.configs.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [pos_configs]
-    mutation:
-      operation: insert
-      table: pos_configs
-      fields: [name, company, currency, receipt_header, receipt_footer, active]
-      required: [name]
-      defaults: { currency: USD, active: true }
-      result: { query: "SELECT * FROM pos_configs WHERE id = :id" }
-    fields:
-      - { field: name, label: Point of Sale, type: text, required: true }
-      - { field: company, label: Company, type: text }
-      - { field: currency, label: Currency, type: text, default: USD }
-      - { field: receipt_header, label: Receipt header, type: textarea }
-      - { field: receipt_footer, label: Receipt footer, type: textarea }
-  - id: archive_pos_config
-    type: server
-    permission: pos.manage
-    action: pos.configs.archive
-    handler: pos_config_status
-    operation: archive
-    params: { id: '{row.id}' }
-    refresh: [pos_configs]
-    mutation:
-      guards:
-        - query: "SELECT id FROM pos_configs WHERE id = :id AND active = true"
-          status: 409
-          message: POS configuration is already archived
-      steps:
-        - query: "UPDATE pos_configs SET active = false WHERE id = :id"
-      result: { query: "SELECT * FROM pos_configs WHERE id = :id" }

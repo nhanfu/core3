@@ -1,0 +1,20 @@
+version: 0.0.7
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_products (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL, barcode VARCHAR UNIQUE,
+        category VARCHAR NOT NULL DEFAULT 'General', price DECIMAL(18,2) NOT NULL, tax_rate DECIMAL(9,4) NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_products(id, name, barcode, category, price, tax_rate) VALUES
+        ('pos-product-coffee', 'House coffee', 'POS-COFFEE', 'Drinks', 3.50, 10),
+        ('pos-product-sandwich', 'Market sandwich', 'POS-SANDWICH', 'Food', 8.90, 10),
+        ('pos-product-water', 'Sparkling water', 'POS-WATER', 'Drinks', 2.20, 10)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

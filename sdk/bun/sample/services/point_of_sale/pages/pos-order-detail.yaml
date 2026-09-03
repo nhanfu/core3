@@ -1,18 +1,5 @@
 title: POS Order
-page: { id: pos-order-detail, breadcrumb: [Sales, Point of Sale, Order], auth: { require: [pos.read] } }
-datasources:
-  - id: pos_order_detail
-    single: true
-    permission: pos.read
-    query: "SELECT o.id, o.row_version, o.name, o.session_id, s.name AS session_name, o.partner_name, o.state, o.amount_total, COALESCE(o.amount_tax, 0) AS amount_tax, o.amount_paid, COALESCE(o.to_invoice, false) AS to_invoice, o.invoice_id, o.payment_method, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_orders o JOIN pos_sessions s ON s.id = o.session_id WHERE o.id = :id"
-  - id: pos_order_detail_lines
-    single: false
-    permission: pos.read
-    query: "SELECT id, order_id, product_name, quantity, price_unit, COALESCE(tax_rate, 0) AS tax_rate, COALESCE(discount, 0) AS discount, price_subtotal, COALESCE(price_tax, 0) AS price_tax, COALESCE(price_total, price_subtotal) AS price_total FROM pos_order_lines WHERE order_id = :id ORDER BY id"
-  - id: pos_order_detail_payments
-    single: false
-    permission: pos.read
-    query: "SELECT id, method, amount, state, CAST(payment_date AS VARCHAR) AS payment_date FROM pos_payments WHERE order_id = :id ORDER BY payment_date DESC"
+page: { id: pos-order-detail, route: /point-of-sale/order-detail, breadcrumb: [Sales, Point of Sale, Order], auth: { require: [pos.read] } }
 components:
   - type: OdooFormView
     source: pos_order_detail

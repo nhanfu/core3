@@ -1,0 +1,38 @@
+page: { id: pos-cashier }
+datasources:
+  - id: pos_cashier_products
+    single: false
+    permission: pos.read
+    query: |
+      SELECT id, name, barcode, category, CAST(price AS DOUBLE) AS price, CAST(tax_rate AS DOUBLE) AS tax_rate
+      FROM pos_products WHERE active = true
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%')
+      ORDER BY category, name
+  - id: pos_cashier_sessions
+    single: false
+    permission: pos.read
+    query: "SELECT id AS value, name || ' — ' || config AS label FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC"
+actions:
+  - id: create_cashier_ticket
+    type: server_form
+    permission: pos.write
+    title: Start cashier ticket
+    action: pos.cashier.ticket.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_cashier_sessions]
+    mutation:
+      operation: insert
+      table: pos_orders
+      fields: [name, session_id, partner_name, state, amount_total, amount_tax, amount_paid]
+      required: [name, session_id]
+      defaults: { state: New, amount_total: 0, amount_tax: 0, amount_paid: 0 }
+      guards:
+        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND state = 'In Progress'"
+          status: 409
+          message: Select an open POS session before starting a ticket
+      result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
+    fields:
+      - { field: name, label: Ticket reference, type: text, required: true }
+      - { field: session_id, label: Open session, type: select, options_source: pos_cashier_sessions, required: true }
+      - { field: partner_name, label: Customer, type: text }

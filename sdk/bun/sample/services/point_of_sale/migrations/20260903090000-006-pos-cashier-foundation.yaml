@@ -1,0 +1,54 @@
+version: 0.0.6
+type:
+  postgres:
+    up: |
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS config_id VARCHAR;
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD';
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS opening_counted DECIMAL(18,2);
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS expected_cash DECIMAL(18,2);
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS closing_counted DECIMAL(18,2);
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS cash_difference DECIMAL(18,2);
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS discrepancy_reason VARCHAR;
+      ALTER TABLE pos_sessions ADD COLUMN IF NOT EXISTS cashier_id VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS config_id VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS cashier_id VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS client_operation_id VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS receipt_number VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS original_order_id VARCHAR;
+      ALTER TABLE pos_orders ADD COLUMN IF NOT EXISTS note VARCHAR;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_pos_orders_client_operation ON pos_orders(client_operation_id);
+      CREATE TABLE IF NOT EXISTS pos_cash_movements (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), session_id VARCHAR NOT NULL,
+        movement_type VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL,
+        reason VARCHAR, cashier_id VARCHAR, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS pos_operations (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), session_id VARCHAR,
+        order_id VARCHAR, operation_id VARCHAR NOT NULL UNIQUE, operation_type VARCHAR NOT NULL,
+        expected_row_version BIGINT, result_payload VARCHAR, actor_id VARCHAR,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_operations_order ON pos_operations(order_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_pos_cash_movements_session ON pos_cash_movements(session_id, created_at);
+    down: |
+      DROP TABLE IF EXISTS pos_operations;
+      DROP TABLE IF EXISTS pos_cash_movements;
+      DROP INDEX IF EXISTS idx_pos_orders_client_operation;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS note;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS original_order_id;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS receipt_number;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS client_operation_id;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS cashier_id;
+      ALTER TABLE pos_orders DROP COLUMN IF EXISTS config_id;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS cashier_id;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS discrepancy_reason;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS cash_difference;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS closing_counted;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS expected_cash;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS opening_counted;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS currency;
+      ALTER TABLE pos_sessions DROP COLUMN IF EXISTS config_id;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

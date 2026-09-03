@@ -1,0 +1,11 @@
+page: { id: pos-invoices }
+datasources:
+  - id: pos_invoices
+    single: false
+    permission: pos.read
+    query: |
+      SELECT i.id, i.invoice_number, i.order_id, o.name AS order_name,
+        o.partner_name, i.state, i.amount, CAST(i.invoice_date AS VARCHAR) AS invoice_date
+      FROM pos_invoices i LEFT JOIN pos_orders o ON o.id = i.order_id
+      WHERE (:q IS NULL OR i.invoice_number ILIKE '%' || :q || '%' OR o.name ILIKE '%' || :q || '%')
+      ORDER BY i.created_at DESC

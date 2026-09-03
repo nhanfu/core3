@@ -1,10 +1,5 @@
 title: POS Payments
-page: { id: pos-payments, breadcrumb: [Sales, Point of Sale, Payments], auth: { require: [pos.read] } }
-datasources:
-  - id: pos_payments
-    single: false
-    permission: pos.read
-    query: "SELECT p.id, p.order_id, o.name AS order_name, p.method, p.amount, p.state, CAST(p.payment_date AS VARCHAR) AS payment_date FROM pos_payments p JOIN pos_orders o ON o.id = p.order_id ORDER BY p.payment_date DESC"
+page: { id: pos-payments, route: /point-of-sale/payments, breadcrumb: [Sales, Point of Sale, Payments], auth: { require: [pos.read] } }
 components:
   - type: ListView
     variant: odoo
