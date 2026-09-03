@@ -1,23 +1,5 @@
 title: Unattended Leads
 page: { id: unattended-leads, breadcrumb: [Sales, CRM, Unattended Leads], auth: { require: [crm.read] } }
-datasources:
-  - id: crm_unattended_leads
-    single: false
-    permission: crm.read
-    query: |
-      SELECT l.id, l.row_version, l.name, l.type, l.partner_name, l.email,
-        l.salesperson, l.team, l.stage, l.probability, l.expected_revenue,
-        CAST(l.expected_closing AS VARCHAR) AS expected_closing,
-        CASE WHEN EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
-             THEN 'Past due' ELSE 'No planned activity' END AS attention
-      FROM crm_leads l
-      WHERE l.stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.partner_name ILIKE '%' || :q || '%')
-        AND (
-          NOT EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned')
-          OR EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
-        )
-      ORDER BY attention, l.updated_at DESC
 components:
   - type: ListView
     variant: odoo
@@ -32,7 +14,24 @@ components:
       - { field: team, label: Sales team }
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: expected_closing, label: Expected closing }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: attention, label: Attention }
+            - { field: stage, label: Stage }
+            - { field: salesperson, label: Salesperson }
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: bulk_delete_unattended_leads, label: Delete selected, permission: crm.write }
     row_open_action: view_unattended_lead
     row_double_click_action: view_unattended_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }

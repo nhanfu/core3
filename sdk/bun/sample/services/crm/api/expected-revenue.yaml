@@ -1,0 +1,35 @@
+page: { id: expected-revenue }
+datasources:
+  - id: crm_expected_revenue
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, partner_name, salesperson, team, stage,
+        probability, expected_revenue, tags,
+        CAST(expected_revenue * probability / 100 AS DOUBLE) AS weighted_revenue,
+        CAST(expected_closing AS VARCHAR) AS expected_closing
+      FROM crm_leads
+      WHERE stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+        AND (:team IS NULL OR team = :team)
+      ORDER BY expected_closing NULLS LAST, weighted_revenue DESC
+  - id: crm_expected_revenue_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+actions:
+  - id: bulk_delete_expected_revenue
+    type: server
+    permission: crm.write
+    action: crm.expected_revenue.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    confirm: 'Delete {count} selected opportunities?'
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :ids IS NOT NULL"
+          status: 400
+          message: No records selected
+      steps:
+        - query: "DELETE FROM crm_leads WHERE id IN (SELECT UNNEST(:ids))"
+      result: { query: "SELECT true AS deleted" }

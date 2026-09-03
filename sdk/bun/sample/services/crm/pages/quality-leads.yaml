@@ -1,30 +1,5 @@
 title: Quality Leads
 page: { id: quality-leads, breadcrumb: [Sales, CRM, Quality Leads], auth: { require: [crm.read] } }
-datasources:
-  - id: crm_quality_leads
-    single: false
-    permission: crm.read
-    query: |
-      SELECT id, row_version, name, type, partner_name, email, phone, source,
-        salesperson, team, stage, probability, expected_revenue,
-        CAST(created_at AS VARCHAR) AS created_at,
-        CASE WHEN stage IN ('Won', 'Lost') THEN 'Closed' ELSE 'Open' END AS status_group
-      FROM crm_leads
-      WHERE created_at >= CURRENT_DATE - INTERVAL '30 days'
-        AND (:team IS NULL OR team = :team)
-        AND NULLIF(TRIM(email), '') IS NOT NULL
-        AND NULLIF(TRIM(phone), '') IS NOT NULL
-        AND NULLIF(TRIM(salesperson), '') IS NOT NULL
-        AND NULLIF(TRIM(source), '') IS NOT NULL
-      ORDER BY created_at DESC
-  - id: crm_quality_teams
-    single: false
-    permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
-  - id: crm_quality_by_salesperson
-    single: false
-    permission: crm.read
-    query: "SELECT salesperson, COUNT(*) AS quality_lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' AND NULLIF(TRIM(email), '') IS NOT NULL AND NULLIF(TRIM(phone), '') IS NOT NULL AND NULLIF(TRIM(salesperson), '') IS NOT NULL AND NULLIF(TRIM(source), '') IS NOT NULL GROUP BY salesperson ORDER BY quality_lead_count DESC"
 components:
   - type: ListView
     variant: odoo
@@ -42,7 +17,24 @@ components:
       - { field: stage, label: Stage, type: StatusChip }
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: created_at, label: Created }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: stage, label: Stage }
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: salesperson, label: Salesperson }
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: bulk_delete_quality_leads, label: Delete selected, permission: crm.write }
     row_open_action: view_quality_lead
     row_double_click_action: view_quality_lead
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }

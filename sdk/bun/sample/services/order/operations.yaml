@@ -7,3 +7,14 @@ operations:
       FROM orders
       ORDER BY updated_at DESC, id
       LIMIT :limit
+  orders.quotations.by_opportunity:
+    result_key: quotations
+    query: |
+      SELECT o.id, o.order_number, o.customer_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        CAST(o.validity_date AS VARCHAR) AS validity_date,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CAST(o.total_amount AS DOUBLE) AS total_amount
+      FROM orders o
+      WHERE o.opportunity_id = :opportunity_id
+      ORDER BY o.order_date DESC

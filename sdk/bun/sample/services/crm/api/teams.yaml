@@ -1,0 +1,153 @@
+page: { id: teams }
+datasources:
+  - id: crm_teams
+    single: false
+    permission: crm.read
+    query: "SELECT t.id, t.name, t.leader, t.email_alias, t.target_revenue, t.use_leads, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count FROM crm_teams t ORDER BY t.name"
+  - id: crm_stages_config
+    single: false
+    permission: crm.read
+    query: "SELECT id, name, sequence, probability, fold, requirements FROM crm_stages ORDER BY sequence"
+  - id: crm_lost_reasons
+    single: false
+    permission: crm.read
+    query: "SELECT id, name, active FROM crm_lost_reasons ORDER BY name"
+  - id: crm_team_member_configuration
+    single: false
+    permission: crm.read
+    query: "SELECT m.id, m.team_id, t.name AS team_name, m.user_name, m.active FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id ORDER BY t.name, m.user_name"
+  - id: crm_team_lookup
+    single: false
+    permission: crm.manage
+    query: "SELECT id AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+actions:
+  - id: edit_crm_team
+    type: server_form
+    permission: crm.manage
+    title: Edit sales team
+    action: crm.teams.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_teams]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_teams WHERE id = :id AND active = true"
+          status: 409
+          message: Only active sales teams can be edited
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_teams WHERE name = :name AND id <> :id)"
+          status: 409
+          message: Sales team already exists
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:email_alias, '') AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_teams WHERE lower(email_alias) = lower(:email_alias) AND id <> :id)"
+          status: 409
+          message: Email alias is already used by another sales team
+      steps:
+        - query: "UPDATE crm_leads SET team = :name, updated_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE team = (SELECT name FROM crm_teams WHERE id = :id)"
+        - query: "UPDATE crm_teams SET name = :name, leader = :leader, email_alias = :email_alias, target_revenue = :target_revenue, use_leads = :use_leads WHERE id = :id"
+      result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
+    fields:
+      - { field: name, label: Sales team, type: text, required: true }
+      - { field: leader, label: Team leader, type: text }
+      - { field: email_alias, label: Email alias, type: text }
+      - { field: target_revenue, label: Target revenue, type: number }
+      - { field: use_leads, label: Leads enabled, type: checkbox }
+  - id: create_crm_team_member
+    type: server_form
+    permission: crm.manage
+    title: Add sales team member
+    action: crm.team_members.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_teams, crm_team_member_configuration]
+    mutation:
+      operation: insert
+      table: crm_team_members
+      fields: [team_id, user_name, active]
+      required: [team_id, user_name]
+      defaults: { active: true }
+      guards:
+        - query: "SELECT id FROM crm_teams WHERE id = :team_id AND active = true"
+          status: 400
+          message: Select an active sales team
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_team_members WHERE team_id = :team_id AND lower(user_name) = lower(:user_name))"
+          status: 409
+          message: This user is already on the sales team
+      result: { query: "SELECT * FROM crm_team_members WHERE id = :id" }
+    fields:
+      - { field: team_id, label: Sales team, type: select, options_source: crm_team_lookup, required: true }
+      - { field: user_name, label: Member, type: text, required: true }
+      - { field: active, label: Active, type: checkbox, default: true }
+  - id: toggle_crm_team_member
+    type: server
+    permission: crm.manage
+    action: crm.team_members.toggle
+    handler: yaml_mutation
+    operation: update
+    refresh: [crm_teams, crm_team_member_configuration]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_team_members WHERE id = :id"
+          status: 404
+          message: Sales team member no longer exists
+      steps:
+        - query: "UPDATE crm_team_members SET active = NOT active WHERE id = :id"
+      result: { query: "SELECT * FROM crm_team_members WHERE id = :id" }
+  - id: archive_crm_team
+    type: server
+    permission: crm.manage
+    action: crm.teams.archive
+    handler: yaml_mutation
+    operation: archive
+    params: { id: '{row.id}' }
+    refresh: [crm_teams]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_teams WHERE id = :id AND active = true"
+          status: 409
+          message: Sales team is already archived
+      steps:
+        - query: "UPDATE crm_teams SET active = false WHERE id = :id"
+      result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
+  - id: create_crm_team
+    type: server_form
+    permission: crm.manage
+    title: New sales team
+    action: crm.teams.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_teams]
+    mutation:
+      operation: insert
+      table: crm_teams
+      fields: [name, leader, email_alias, target_revenue, use_leads, active]
+      required: [name]
+      defaults: { target_revenue: 0, use_leads: true, active: true }
+      guards:
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM crm_teams WHERE name = :name)"
+          status: 409
+          message: Sales team already exists
+        - query: "SELECT 1 AS ok WHERE NULLIF(TRIM(CAST(COALESCE(:email_alias, '') AS VARCHAR)), '') IS NULL OR NOT EXISTS (SELECT 1 FROM crm_teams WHERE lower(email_alias) = lower(:email_alias))"
+          status: 409
+          message: Email alias is already used by another sales team
+      result: { query: "SELECT * FROM crm_teams WHERE id = :id" }
+    fields:
+      - { field: name, label: Sales team, type: text, required: true }
+      - { field: leader, label: Team leader, type: text }
+      - { field: email_alias, label: Email alias, type: text }
+      - { field: target_revenue, label: Target revenue, type: number }
+      - { field: use_leads, label: Leads enabled, type: checkbox, default: true }
+  - id: bulk_delete_crm_teams
+    type: server
+    permission: crm.manage
+    action: crm.teams.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    confirm: 'Delete {count} selected sales teams?'
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :ids IS NOT NULL"
+          status: 400
+          message: No records selected
+      steps:
+        - query: "DELETE FROM crm_teams WHERE id IN (SELECT UNNEST(:ids))"
+      result: { query: "SELECT true AS deleted" }

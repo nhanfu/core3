@@ -1,0 +1,31 @@
+page: { id: my-pipeline }
+datasources:
+  - id: crm_my_pipeline
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, type, partner_name, email, phone, source, priority,
+        expected_revenue, stage, probability, salesperson, team, tags,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM crm_leads
+      WHERE salesperson = :current_user_name
+        AND stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+      ORDER BY expected_closing NULLS LAST, updated_at DESC
+actions:
+  - id: bulk_delete_my_pipeline
+    type: server
+    permission: crm.write
+    action: crm.my_pipeline.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    confirm: 'Delete {count} selected opportunities?'
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :ids IS NOT NULL"
+          status: 400
+          message: No records selected
+      steps:
+        - query: "DELETE FROM crm_leads WHERE id IN (SELECT UNNEST(:ids))"
+      result: { query: "SELECT true AS deleted" }

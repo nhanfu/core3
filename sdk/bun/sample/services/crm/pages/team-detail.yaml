@@ -1,0 +1,39 @@
+title: Sales Team
+page: { id: team-detail, breadcrumb: [CRM, Sales Teams, Team], auth: { require: [crm.read] } }
+components:
+  - type: OdooFormView
+    source: crm_team_detail
+    title_field: name
+    status_field: active
+    status_colors: { true: green, false: neutral }
+    header_actions:
+      - { id: edit_crm_team_detail, label: Edit, variant: secondary, permission: crm.manage, show_if: "state.crm_team_detail.active === true" }
+      - { id: archive_crm_team_detail, label: Archive, variant: danger, permission: crm.manage, show_if: "state.crm_team_detail.active === true" }
+    group_columns: 2
+    groups:
+      - title: Team Information
+        fields:
+          - { field: name, label: Sales team }
+          - { field: leader, label: Team leader }
+          - { field: email_alias, label: Email alias }
+          - { field: target_revenue, label: Target revenue }
+          - { field: use_leads, label: Leads enabled }
+          - { field: active, label: Active }
+    notebook:
+      tabs:
+        - id: members
+          label: Members
+          content_slot: true
+  - type: ContactGrid
+    source: crm_team_members_detail
+    row_key: id
+    columns:
+      - { field: user_name, label: Member, type: PrimaryEntityCell }
+      - { field: active, label: Active, type: StatusChip }
+    actions:
+      - { id: add_team_member_detail, label: Add member, variant: primary, permission: crm.manage }
+      - { id: toggle_team_member_detail, label: Toggle active, variant: ghost, permission: crm.manage, show_if: "row.id !== undefined" }
+actions:
+  - id: back_to_teams
+    type: navigate
+    navigate_to: /teams

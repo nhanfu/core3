@@ -1,0 +1,51 @@
+page: { id: lost-opportunities }
+datasources:
+  - id: crm_lost_opportunities
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, partner_name, email, phone, source,
+        expected_revenue, salesperson, team, lost_reason, tags,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM crm_leads
+      WHERE stage = 'Lost'
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+        AND (:lost_reason IS NULL OR lost_reason = :lost_reason)
+      ORDER BY updated_at DESC
+  - id: crm_lost_reason_filter
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM crm_lost_reasons ORDER BY name"
+actions:
+  - id: restore_lost_opportunities
+    type: server
+    permission: crm.write
+    action: crm.leads.restore_lost
+    handler: yaml_mutation
+    operation: restore_lost
+    refresh: [crm_lost_opportunities]
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE (SELECT COUNT(*) FROM crm_leads WHERE id IN :selectedIds AND stage = 'Lost') > 0"
+          status: 409
+          message: Select at least one lost opportunity
+      steps:
+        - query: "UPDATE crm_leads SET stage = 'New', lost_reason = NULL, probability = COALESCE((SELECT probability FROM crm_stages WHERE name = 'New' AND active = true), 10), row_version = row_version + 1, updated_at = CURRENT_TIMESTAMP WHERE id IN :selectedIds AND stage = 'Lost'"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, state, completed_at) SELECT gen_random_uuid(), id, 'stage_change', 'Opportunity restored', 'done', CURRENT_TIMESTAMP FROM crm_leads WHERE id IN :selectedIds AND stage = 'New'"
+      result: { query: "SELECT * FROM crm_leads WHERE id IN :selectedIds ORDER BY updated_at DESC" }
+  - id: bulk_delete_lost_opportunities
+    type: server
+    permission: crm.write
+    action: crm.lost_opportunities.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    confirm: 'Delete {count} selected lost opportunities?'
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :ids IS NOT NULL"
+          status: 400
+          message: No records selected
+      steps:
+        - query: "DELETE FROM crm_leads WHERE id IN (SELECT UNNEST(:ids))"
+      result: { query: "SELECT true AS deleted" }

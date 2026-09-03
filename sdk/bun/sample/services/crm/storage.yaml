@@ -1,3 +1,15 @@
 database:
   storage:
     driver: duckdb
+
+files:
+  driver: local
+  path: ${CRM_UPLOAD_ROOT:-.data/crm-uploads}
+  credentials: {}
+
+attachments:
+  crm_lead_attachment:
+    download:
+      route: /api/crm/attachments
+      permission: crm.attachment.download
+      query: SELECT * FROM crm_lead_attachments WHERE id = :attachment_id

@@ -2,6 +2,10 @@ permissions:
   - crm.read
   - crm.write
   - crm.manage
+  - crm.chatter
   - orders.write
   - base.contacts.read
   - base.contacts.write
+endpoints:
+  upload.crm_lead_attachment: crm.write
+  crm.attachment.download: crm.read

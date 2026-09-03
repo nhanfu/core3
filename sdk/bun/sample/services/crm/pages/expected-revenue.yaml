@@ -1,23 +1,5 @@
 title: Expected Revenue
 page: { id: expected-revenue, breadcrumb: [Sales, CRM, Expected Revenue], auth: { require: [crm.read] } }
-datasources:
-  - id: crm_expected_revenue
-    single: false
-    permission: crm.read
-    query: |
-      SELECT id, row_version, name, partner_name, salesperson, team, stage,
-        probability, expected_revenue, tags,
-        CAST(expected_revenue * probability / 100 AS DOUBLE) AS weighted_revenue,
-        CAST(expected_closing AS VARCHAR) AS expected_closing
-      FROM crm_leads
-      WHERE stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-        AND (:team IS NULL OR team = :team)
-      ORDER BY expected_closing NULLS LAST, weighted_revenue DESC
-  - id: crm_expected_revenue_teams
-    single: false
-    permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
 components:
   - type: ListView
     variant: odoo
@@ -35,7 +17,24 @@ components:
       - { field: probability, label: Probability, align: right }
       - { field: expected_revenue, label: Expected revenue, align: right }
       - { field: weighted_revenue, label: Weighted revenue, align: right }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: stage, label: Stage }
+            - { field: weighted_revenue, label: Weighted revenue }
+            - { field: salesperson, label: Salesperson }
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: bulk_delete_expected_revenue, label: Delete selected, permission: crm.write }
     row_open_action: view_expected_revenue_opportunity
     row_double_click_action: view_expected_revenue_opportunity
     form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }

@@ -1,46 +1,5 @@
 title: Pipeline Analysis
 page: { id: crm-analysis, breadcrumb: [Sales, CRM, Pipeline Analysis], auth: { require: [crm.read] } }
-datasources:
-  - id: crm_pipeline_totals
-    single: true
-    permission: crm.read
-    query: "SELECT COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS pipeline_revenue, CAST(COALESCE(SUM(expected_revenue * probability / 100), 0) AS DOUBLE) AS weighted_pipeline_revenue, CAST(COALESCE(AVG(probability), 0) AS DOUBLE) AS average_probability FROM crm_leads WHERE stage NOT IN ('Won', 'Lost')"
-  - id: crm_pipeline_by_stage
-    single: false
-    permission: crm.read
-    query: "SELECT stage, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY stage ORDER BY lead_count DESC"
-  - id: crm_pipeline_by_team
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(team, 'Unassigned') AS team, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY team ORDER BY revenue DESC"
-  - id: crm_pipeline_by_source
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
-  - id: crm_win_loss
-    single: false
-    permission: crm.read
-    query: "SELECT stage AS outcome, COUNT(*) AS lead_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads WHERE stage IN ('Won', 'Lost') GROUP BY stage ORDER BY stage"
-  - id: crm_lost_by_reason
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(r.name, 'Unspecified') AS lost_reason, COUNT(*) AS lead_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.stage = 'Lost' GROUP BY COALESCE(r.name, 'Unspecified') ORDER BY revenue DESC"
-  - id: crm_source_performance
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue, CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE stage = 'Won') / NULLIF(COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')), 0), 0) AS DOUBLE) AS win_rate FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY revenue DESC"
-  - id: crm_historical_lead_scoring
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(NULLIF(source, ''), 'Unknown') AS source, COUNT(*) AS total_leads, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) AS closed_count, CAST(COALESCE(100.0 * COUNT(*) FILTER (WHERE stage = 'Won') / NULLIF(COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')), 0), 0) AS DOUBLE) AS observed_win_rate, CASE WHEN COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) = 0 THEN 'No closed history' WHEN COUNT(*) FILTER (WHERE stage IN ('Won', 'Lost')) < 5 THEN 'Low sample' ELSE 'Historical baseline' END AS evidence_level FROM crm_leads GROUP BY COALESCE(NULLIF(source, ''), 'Unknown') ORDER BY observed_win_rate DESC, closed_count DESC, source"
-  - id: crm_lead_distribution
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(NULLIF(l.team, ''), 'Unassigned team') AS team, COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') AS salesperson, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE l.stage NOT IN ('Won', 'Lost')) AS open_count, COUNT(*) FILTER (WHERE l.stage = 'Won') AS won_count, COUNT(*) FILTER (WHERE l.stage = 'Lost') AS lost_count, CAST(COALESCE(SUM(l.expected_revenue), 0) AS DOUBLE) AS expected_revenue FROM crm_leads l GROUP BY COALESCE(NULLIF(l.team, ''), 'Unassigned team'), COALESCE(NULLIF(l.salesperson, ''), 'Unassigned') ORDER BY open_count DESC, team, salesperson"
-  - id: crm_utm_campaign_performance
-    single: false
-    permission: crm.read
-    query: "SELECT COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') AS campaign, COUNT(*) AS lead_count, COUNT(*) FILTER (WHERE stage = 'Won') AS won_count, CAST(COALESCE(SUM(expected_revenue), 0) AS DOUBLE) AS revenue FROM crm_leads GROUP BY COALESCE(NULLIF(utm_campaign, ''), 'Unattributed') ORDER BY revenue DESC"
 components:
   - type: StatRow
     source: crm_pipeline_totals

@@ -1,0 +1,31 @@
+page: { id: unassigned-leads }
+datasources:
+  - id: crm_unassigned_leads
+    single: false
+    permission: crm.read
+    query: |
+      SELECT id, row_version, name, type, partner_name, source, priority,
+        expected_revenue, stage, probability, team, tags,
+        CAST(expected_closing AS VARCHAR) AS expected_closing,
+        CAST(updated_at AS VARCHAR) AS updated_at
+      FROM crm_leads
+      WHERE NULLIF(TRIM(salesperson), '') IS NULL
+        AND stage NOT IN ('Won', 'Lost')
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
+      ORDER BY expected_closing NULLS LAST, updated_at DESC
+actions:
+  - id: bulk_delete_unassigned_leads
+    type: server
+    permission: crm.write
+    action: crm.unassigned_leads.bulk_delete
+    handler: yaml_mutation
+    operation: bulk_delete
+    confirm: 'Delete {count} selected leads?'
+    mutation:
+      guards:
+        - query: "SELECT 1 AS ok WHERE :ids IS NOT NULL"
+          status: 400
+          message: No records selected
+      steps:
+        - query: "DELETE FROM crm_leads WHERE id IN (SELECT UNNEST(:ids))"
+      result: { query: "SELECT true AS deleted" }

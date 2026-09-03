@@ -1,19 +1,5 @@
 title: Unassigned Leads
 page: { id: unassigned-leads, breadcrumb: [Sales, CRM, Unassigned Leads], auth: { require: [crm.read] } }
-datasources:
-  - id: crm_unassigned_leads
-    single: false
-    permission: crm.read
-    query: |
-      SELECT id, row_version, name, type, partner_name, source, priority,
-        expected_revenue, stage, probability, team, tags,
-        CAST(expected_closing AS VARCHAR) AS expected_closing,
-        CAST(updated_at AS VARCHAR) AS updated_at
-      FROM crm_leads
-      WHERE NULLIF(TRIM(salesperson), '') IS NULL
-        AND stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-      ORDER BY expected_closing NULLS LAST, updated_at DESC
 components:
   - type: ListView
     variant: odoo
@@ -30,10 +16,28 @@ components:
       - { field: probability, label: Probability, align: right }
       - { field: team, label: Sales team }
       - { field: expected_closing, label: Expected closing }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: stage, label: Stage }
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: team, label: Sales team }
     page_size: 50
     row_key: id
+    selectable: true
+    bulk_actions:
+      - { id: bulk_delete_unassigned_leads, label: Delete selected, permission: crm.write }
     row_open_action: view_unassigned_lead
     row_double_click_action: view_unassigned_lead
+    form_view: { page: apps/services/crm/pages/lead-detail.yaml, side_panel: true }
 actions:
   - id: view_unassigned_lead
     type: navigate
