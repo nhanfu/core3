@@ -120,6 +120,245 @@ components:
                 body: Reserved areas without a discovered service.
                 icons: [{name: calendar, label: Appointments and Planning}, {name: document, label: Knowledge}, {name: edit, label: Sign}, {name: message, label: VoIP}]
 
+      - id: pos-clone
+        kicker: POS clone plan
+        timing: Q4 2026
+        title: Point of Sale — from back-office records to a resilient cashier
+        lead: >-
+          Clone the local Odoo point_of_sale module in dependency order. The existing point-of-sale
+          service is a useful back-office foundation, but it is not yet Odoo's touch-first selling
+          application. Preserve its discovered YAML service and evolve it through explicit contracts.
+        blocks:
+          - type: callout
+            tone: note
+            title: Comparison baseline — verified from this repository
+            text: >-
+              Core3 already has a point-of-sale service with DuckDB migrations, pos.read/write/manage
+              permissions, session open/closing/close workflow, order lines with tax and discount,
+              partial payments, invoice creation, configuration, payment, invoice, and sales-analysis
+              pages. It lacks Odoo's Product, Payment, Receipt, Ticket, Partner, Login, and Scale
+              cashier screens; product/customer catalog loading; durable offline queue/sync; barcode,
+              printer, terminal, and customer-display adapters; and the POS extensions below. The
+              reference is addons/point_of_sale plus pos_restaurant, pos_loyalty, pos_self_order,
+              pos_hr, pos_sale, pos_mrp, pos_discount, and pos_online_payment in ../odoo.
+          - type: table
+            headers: [Odoo surface, Core3 status, Planned parity boundary]
+            rows:
+              - [pos.config / pos.session, Partial, Keep the existing workflows; add store/cash-control/device/operator policy and close/post reconciliation.]
+              - [pos.order / line / payment, Partial, Keep order history; add idempotent cashier commands, catalog references, returns, tips, rounding, and payment lifecycle.]
+              - [Product / Payment / Receipt / Ticket screens, Missing, Build reusable touch-first registered client components composed by POS YAML pages.]
+              - [Offline data and synchronization, Missing, Add a versioned local cache and ordered mutation outbox with conflict and recovery states.]
+              - [Hardware and customer display, Missing, Define permissioned adapter contracts with browser-safe mocks before vendor integration.]
+              - [Restaurant, loyalty, self-order, HR, sales, MRP, Missing, Ship as separately enabled declarative extensions after the base cashier is proven.]
+          - type: callout
+            tone: important
+            title: Architecture guardrails
+            text: >-
+              The client may cache a session catalog and queue requests, but the POS service must
+              recompute and validate price, tax, discount, fiscal mapping, stock outcome, payment
+              result, ownership, session state, and totals. Every command carries a stable operation
+              ID and expected version. Replays return the original result; conflicts enter an explicit
+              recovery state. Cross-service inventory, invoicing, loyalty, employee, and sales work
+              only through declared yaml.service contracts, never direct SQL across service databases.
+
+      - id: pos-foundation
+        kicker: POS phase 0
+        timing: First implementation batch
+        title: Stabilize the POS domain contract and back-office foundation
+        lead: >-
+          Make the existing records safe enough to support a cashier without breaking the ListView
+          and inline FormView workflow already available.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: Extend
+                tone: note
+                title: Canonical POS data model
+                body: Add store/session ownership, currency/tax context, customer/product IDs, barcode, price-list and fiscal snapshots, receipt number, return relation, notes, tips, rounding, payment reference, and append-only operation/audit records. Amounts remain server-derived projections.
+                icons: [{name: table, label: POS records}, {name: shield, label: Server-derived totals}]
+              - tag: Extend
+                tone: note
+                title: Session and cash control
+                body: Add opening count, cash movements, expected versus counted close, discrepancy reason, rescue-session policy, and immutable close/post outcome. Closing rejects unsettled orders and unacknowledged discrepancy by policy.
+                icons: [{name: money, label: Cash control}, {name: check, label: Close validation}]
+              - tag: Extend
+                tone: note
+                title: Catalog and policy loading
+                body: Declare bounded product, category, customer, tax, payment-method, price-list, fiscal-position, stock-availability, and settings operations. Return a versioned session bootstrap payload, never unbounded browser table access.
+                icons: [{name: cart, label: Catalog}, {name: refresh, label: Versioned bootstrap}]
+              - tag: Preserve
+                tone: note
+                title: Back-office continuity
+                body: Keep sessions, orders, payments, invoices, configurations, analytics, row-open navigation, and side-panel FormView; add reconciliation and operation-history drill-down.
+                icons: [{name: table, label: Lists and forms}, {name: analytics, label: Audit evidence}]
+          - type: table
+            headers: [Planned artifact, Responsibility, Done when]
+            rows:
+              - [sample/services/point_of_sale/migrations/*, POS-owned schema and immutable operation log, Fresh and upgrade migrations create the schema and reject invalid transition data.]
+              - [sample/services/point_of_sale/api/pos-bootstrap.yaml, Bounded cashier bootstrap read contract, It returns only active store/session catalog and catalog version under scoped pos.read.]
+              - [sample/services/point_of_sale/api/pos-commands.yaml, Idempotent commands and server calculation, Replay of create/update/pay/cancel/close with the same operation ID is safe and returns the same result.]
+              - [sample/services/point_of_sale/pages/*.yaml, Back-office reconciliation UI, Operator can inspect line/payment/cash/invoice/operation history from an order or session.]
+          - type: callout
+            tone: important
+            title: Phase 0 acceptance
+            text: >-
+              Focused migration and integration tests cover stale version, duplicate operation ID,
+              cross-store access, invalid price/tax, overpayment, unauthorized discount, closing with
+              open orders, and cash discrepancy. Signed-in headless browser checks navigate menus,
+              open an order in its side panel, and assert visible state after every transition.
+
+      - id: pos-cashier
+        kicker: POS phase 1
+        timing: Core cashier vertical slice
+        title: Deliver Odoo’s counter-selling flow as reusable client components
+        lead: >-
+          Build the minimum true POS: open a session, find or scan a product, manage a cart, choose a
+          customer, take payment, validate, and produce a receipt. It is separate from back-office
+          ListView, not a compressed desktop order form.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: New component
+                tone: note
+                title: POS product screen
+                body: Touch-first category rail, product cards, search, barcode focus, cart/order lines, numeric pad, customer selector, held orders, notes, and clear checkout. Support mouse, keyboard, scanner-like keystrokes, and narrow touch screens.
+                icons: [{name: cart, label: Product screen}, {name: grid, label: Touch catalog}]
+              - tag: New component
+                tone: note
+                title: Payment and receipt screens
+                body: Render split payment, due/change, provider status, cash rounding, invoice option, receipt preview, print/download/email choices, and explicit completion. UI never declares payment success before service acceptance.
+                icons: [{name: money, label: Payment}, {name: receipt, label: Receipt}]
+              - tag: New component
+                tone: note
+                title: Ticket and customer screens
+                body: Find historic/held tickets, reopen only by policy, return against the original order, and create/search a customer without losing the active cart.
+                icons: [{name: search, label: Tickets}, {name: users, label: Customers}]
+              - tag: New component
+                tone: note
+                title: Cashier authentication
+                body: Add operator lock/login, PIN or barcode-ready credential adapter, cashier attribution on orders/payments, and lock/switch flow without bypassing Core3 permissions.
+                icons: [{name: shield, label: Operator scope}, {name: users, label: Cashier switch}]
+          - type: table
+            headers: [Planned artifact, Contract]
+            rows:
+              - [packages/client/src/components/pos/PosShell.ts, Session-scoped layout/state machine with no direct database access.]
+              - [packages/client/src/components/pos/ProductScreen.ts, Catalog/cart interaction rendered from the server bootstrap payload.]
+              - [packages/client/src/components/pos/PaymentScreen.ts, Payment intent/result UI driven by command responses and provider-adapter state.]
+              - [packages/client/src/components/pos/ReceiptScreen.ts, Printable accessible receipt sourced from finalized server projection.]
+              - [packages/client/src/components/pos/TicketScreen.ts, Bounded historic/held lookup with role-checked return and reprint actions.]
+              - [sample/services/point_of_sale/pages/pos-cashier.yaml, Registered POS route composing components, sources, actions, and permissions.]
+          - type: callout
+            tone: important
+            title: Phase 1 acceptance
+            text: >-
+              Authenticated Playwright/Chrome opens a permitted session, adds a catalog product by
+              search and barcode-like input, changes quantity, selects a customer, applies an
+              authorized discount, completes cash and split payment, sees correct totals/change,
+              previews a receipt, and finds the finalized order in existing back office. Repeat at a
+              phone-width viewport; it remains touch-operable.
+
+      - id: pos-offline-devices
+        kicker: POS phase 2
+        timing: Resilience and peripherals
+        title: Make the cashier resilient without weakening service authority
+        lead: >-
+          Odoo’s POS behaves as an installed offline-capable application. Earn that behavior with a
+          bounded cache, durable command queue, observable reconciliation, and pluggable devices.
+        blocks:
+          - type: cardgrid
+            cards:
+              - tag: New runtime seam
+                tone: note
+                title: Offline bootstrap and outbox
+                body: Cache only signed-in session bootstrap and drafts in IndexedDB. Persist ordered commands with operation ID, expected version, retry state, and user-visible error. Reload never duplicates a sale.
+                icons: [{name: refresh, label: Sync queue}, {name: shield, label: Idempotency}]
+              - tag: New runtime seam
+                tone: note
+                title: Reconciliation and recovery
+                body: On reconnect refresh policy, submit in order, surface conflicts by ticket, and offer retry, discard draft, or supervisor review. Never automatically mutate a paid order after conflict.
+                icons: [{name: check, label: Reconcile}, {name: activity, label: Recovery evidence}]
+              - tag: Adapter family
+                tone: note
+                title: Devices and payment terminals
+                body: Define scanner, scale, receipt/kitchen printer, cash drawer, terminal, and customer-display interfaces with mock browser implementations. Vendors sit behind configuration and explicit device permissions.
+                icons: [{name: wrench, label: Devices}, {name: money, label: Terminal lifecycle}]
+              - tag: Security boundary
+                tone: note
+                title: Customer display and receipt delivery
+                body: Expose a minimized order projection through short-lived pairing or QR flow; never expose the authenticated POS session. Record print/email delivery attempts on finalized receipts.
+                icons: [{name: panel, label: Customer display}, {name: receipt, label: Delivery record}]
+          - type: table
+            headers: [Failure case, Required behavior]
+            rows:
+              - [Network loss before order submission, Preserve a local draft/outbox item and show pending; server order exists only after acceptance.]
+              - [Retry after timeout, Send the same operation ID and show original result if already committed.]
+              - [Catalog or price changed while offline, Server rejects or reprices by policy; cashier sees the difference before continuing.]
+              - [Terminal response uncertain, Persist pending/reconcile state; provider lookup or supervisor resolution precedes another charge.]
+              - [Browser storage unavailable/corrupt, Disable offline promise, preserve server flow, and show recovery guidance without deleting authoritative records.]
+          - type: callout
+            tone: important
+            title: Phase 2 acceptance
+            text: >-
+              Browser tests run online, offline, reload, reconnect, duplicate-submit, and conflict
+              scenarios against the same session. They prove customer-display output contains no token
+              or hidden catalog data and mock device failures leave clear audit/retry evidence.
+
+      - id: pos-extensions
+        kicker: POS phase 3
+        timing: Optional Odoo extensions
+        title: Add Odoo POS extensions as independently enabled service slices
+        lead: >-
+          Do not bundle variants into the first cashier release. Each extension declares dependency,
+          migration, permission, UI contribution, service contract, and acceptance path.
+        blocks:
+          - type: table
+            headers: [Odoo source module, Core3 extension outcome, Dependency and exit evidence]
+            rows:
+              - [pos_discount, Global/line discount policies with supervisor limits, Base cashier; tests retain reason/auditor and reject unauthorized/stale discount.]
+              - [pos_restaurant, Floors/tables/coursing/kitchen tickets/bill print/split-merge/tips, Base cashier; table assignment through kitchen completion appears in cashier and back office.]
+              - [pos_loyalty, Programs/cards/coupons/gift cards/points, Loyalty contract; server calculates eligibility and replay cannot duplicate points.]
+              - [pos_self_order, QR/mobile/kiosk catalog and payment handoff, Restaurant extension; public session is tightly scoped from cashier/back office.]
+              - [pos_hr, Employee PIN/barcode switching and employee sales reports, HR contract; every sale/payment has permitted operator attribution.]
+              - [pos_sale, Sales-team/order linkage and delivery/invoice handoff, Order contract; links survive retries with no cross-service SQL.]
+              - [pos_mrp, Product availability and production handoff, Manufacturing contract; unavailable/produced states are explicit and service-derived.]
+              - [pos_online_payment, Transaction lifecycle and portal/QR provider adapters, Payment contract; authorize/capture/cancel/reconcile are idempotent/auditable.]
+              - [pos_repair / pos_event / pos_sms, Repair pickup, event tickets, consented receipt notifications, Owning service contracts; each separately installable and policy-gated.]
+          - type: callout
+            tone: caution
+            title: Vendor provider rule
+            text: >-
+              Odoo includes many provider-specific modules. Core3 first ships one generic terminal/
+              payment-provider contract with deterministic mocks. Each real provider is a separate
+              reviewed integration with credentials outside YAML, webhook verification, reconciliation,
+              telemetry, and provider-specific browser/device tests.
+
+      - id: pos-delivery
+        kicker: POS release gates
+        timing: Every phase
+        title: Delivery order, migration safety, and definition of POS parity
+        lead: >-
+          Ship domain foundation, online cashier, offline/devices, then optional extensions. A green
+          page-discovery result alone never upgrades POS parity status.
+        blocks:
+          - type: table
+            headers: [Gate, Required evidence]
+            rows:
+              - [YAML/service discovery, All POS pages, API fragments, workflows, permissions, and migration mappings discover and validate from sdk/bun/sample.]
+              - [Database upgrade, New migrations work against clean and existing POS sample databases; destructive-change rollback policy is documented.]
+              - [Command correctness, Tests exercise idempotency, expected version, recalculation, scope, payment uncertainty, returns, and close/post invariants.]
+              - [Cross-service correctness, Contract tests prove inventory/invoicing/loyalty/HR/sales/manufacturing/notification handoffs use declared service operations.]
+              - [Browser workflow, Authenticated Chrome/Playwright covers menus plus cashier, error/retry, receipt, ticket, and phone-width touch path.]
+              - [Security and observability, Permission denial, data minimization, audit history, structured failures, and recovery messages are asserted.]
+          - type: callout
+            tone: important
+            title: POS parity exit criteria
+            text: >-
+              Mark base POS In progress only after Phase 1 is live and verified. Mark it complete
+              only when a cashier safely operates online and transiently offline, recovers
+              deterministically, reconciles/closes cash, and inspects the same final evidence in back
+              office. Restaurant, loyalty, self-order, HR, and provider integrations retain separate
+              status until their own exit evidence passes; they never inflate base POS parity.
+
       - id: ai-product-parity
         kicker: AI product parity
         timing: Q2 2027
