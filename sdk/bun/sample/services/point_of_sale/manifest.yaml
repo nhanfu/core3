@@ -9,6 +9,8 @@ pages:
   - pages/pos-orders.yaml
   - pages/pos-order-detail.yaml
   - pages/pos-cashier.yaml
+  - pages/pos-bootstrap.yaml
+  - pages/pos-commands.yaml
   - pages/pos-cash-movements.yaml
   - pages/pos-configs.yaml
   - pages/pos-payments.yaml

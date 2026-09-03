@@ -52,7 +52,7 @@ datasources:
       FROM pos_operations WHERE session_id = :id
       ORDER BY created_at DESC
 
-  - id: pos_session_config_lookup
+  - id: pos_session_detail_config_lookup
     single: false
     permission: pos.read
     query: "SELECT name AS value, name AS label FROM pos_configs WHERE active = true ORDER BY name"

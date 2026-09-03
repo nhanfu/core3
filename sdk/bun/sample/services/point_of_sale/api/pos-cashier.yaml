@@ -14,42 +14,42 @@ datasources:
   - id: pos_cashier_sessions
     single: false
     permission: pos.read
-    query: "SELECT id AS value, name || ' — ' || config AS label FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC"
+    query: |
+      SELECT id AS value, name || ' — ' || config AS label
+      FROM pos_sessions WHERE state = 'In Progress'
+      ORDER BY opened_at DESC
 
-  - id: pos_active_ticket
+  - id: pos_cashier_session_stats
     single: true
+    permission: pos.read
+    query: |
+      SELECT
+        COALESCE((SELECT name FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'None') AS session_name,
+        (SELECT COUNT(*) FROM pos_orders WHERE state = 'New' AND session_id IN (SELECT id FROM pos_sessions WHERE state = 'In Progress')) AS open_orders,
+        CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders WHERE state = 'Paid' AND DATE(date_order) = CURRENT_DATE) AS DOUBLE) AS total_paid,
+        COALESCE((SELECT state FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC LIMIT 1), 'No active session') AS cashier_state
+
+  - id: pos_open_tickets
+    single: false
     permission: pos.write
     query: |
-      SELECT o.id, o.row_version, o.name, o.session_id,
-        s.name AS session_name, o.partner_name, o.state,
-        o.cashier_id, o.receipt_number,
+      SELECT o.id, o.name, o.session_id, s.name AS session_name,
+        o.partner_name, o.state,
         CAST(o.amount_total AS DOUBLE) AS amount_total,
-        CAST(COALESCE(o.amount_tax, 0) AS DOUBLE) AS amount_tax,
         CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        o.payment_method, o.cashier_id,
         CAST(o.date_order AS VARCHAR) AS date_order
       FROM pos_orders o
       JOIN pos_sessions s ON s.id = o.session_id
-      WHERE o.id = :ticket_id
+      WHERE o.state = 'New' AND s.state = 'In Progress'
+      ORDER BY o.date_order DESC
 
-  - id: pos_ticket_lines
+  - id: pos_open_ticket_options
     single: false
     permission: pos.write
     query: |
-      SELECT id, product_name,
-        CAST(quantity AS DOUBLE) AS quantity,
-        CAST(price_unit AS DOUBLE) AS price_unit,
-        CAST(COALESCE(tax_rate, 0) AS DOUBLE) AS tax_rate,
-        CAST(COALESCE(discount, 0) AS DOUBLE) AS discount,
-        CAST(price_subtotal AS DOUBLE) AS price_subtotal,
-        CAST(COALESCE(price_tax, 0) AS DOUBLE) AS price_tax,
-        CAST(COALESCE(price_total, price_subtotal) AS DOUBLE) AS price_total
-      FROM pos_order_lines WHERE order_id = :ticket_id ORDER BY id
-
-  - id: pos_ticket_payments
-    single: false
-    permission: pos.write
-    query: |
-      SELECT id, method,
-        CAST(amount AS DOUBLE) AS amount,
-        state, CAST(payment_date AS VARCHAR) AS payment_date
-      FROM pos_payments WHERE order_id = :ticket_id ORDER BY payment_date DESC
+      SELECT o.id AS value, o.name || COALESCE(' — ' || o.partner_name, '') AS label
+      FROM pos_orders o
+      JOIN pos_sessions s ON s.id = o.session_id
+      WHERE o.state = 'New' AND s.state = 'In Progress'
+      ORDER BY o.date_order DESC

@@ -1,0 +1,10 @@
+title: POS Commands
+page:
+  id: pos-commands
+  route: /point-of-sale/commands
+  auth: { require: [pos.write] }
+components:
+  - type: ComingSoon
+    eyebrow: POS Commands
+    title: Idempotent cashier command surface
+    description: API surface for cashier commands — add lines, record payments, validate and cancel orders with operation_id replay protection.

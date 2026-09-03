@@ -1,0 +1,10 @@
+title: POS Bootstrap
+page:
+  id: pos-bootstrap
+  route: /point-of-sale/bootstrap
+  auth: { require: [pos.read] }
+components:
+  - type: ComingSoon
+    eyebrow: POS Bootstrap
+    title: Cashier session data
+    description: This endpoint provides the bounded session catalog and configuration for cashier clients.

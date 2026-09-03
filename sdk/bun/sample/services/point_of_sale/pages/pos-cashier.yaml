@@ -5,105 +5,77 @@ page:
   breadcrumb: [Sales, Point of Sale, Cashier]
   auth: { require: [pos.write] }
 toolbar:
-  - { id: start_cashier_ticket, label: New ticket, action: create_cashier_ticket, permission: pos.write, variant: primary }
+  - { id: start_cashier_ticket, label: New ticket, action: start_cashier_ticket, permission: pos.write, variant: primary }
 components:
-  - type: SplitPanel
-    panels:
-      - id: catalog
+  - type: StatRow
+    source: pos_cashier_session_stats
+    stats:
+      - { field: session_name, label: Active session }
+      - { field: open_orders, label: Open tickets }
+      - { field: total_paid, label: Paid today }
+      - { field: cashier_state, label: Session status }
+
+  - type: ListView
+    variant: odoo
+    source: pos_cashier_products
+    search:
+      label: Find product
+      placeholder: Search by name or scan barcode...
+    view_navigation: tabs
+    views:
+      - id: card
         label: Products
-        components:
-          - type: ListView
-            variant: odoo
-            source: pos_cashier_products
-            search: { label: Find product, placeholder: Search product or scan barcode... }
-            view_navigation: tabs
-            views:
-              - id: card
-                label: Products
-                icon: grid
-                card:
-                  title: name
-                  subtitle: category
-                  fields:
-                    - { field: price, label: Price }
-                    - { field: tax_rate, label: Tax % }
-              - { id: list, label: List, icon: table }
-            columns:
-              - { field: name, label: Product, type: PrimaryEntityCell }
-              - { field: barcode, label: Barcode }
-              - { field: category, label: Category }
-              - { field: price, label: Price, align: right }
-              - { field: tax_rate, label: Tax %, align: right }
-            page_size: 48
-            row_key: id
-            row_actions: inline
-            columns:
-              - { field: name, label: Product, type: PrimaryEntityCell }
-              - { field: barcode, label: Barcode }
-              - { field: category, label: Category }
-              - { field: price, label: Price, align: right }
-              - { field: tax_rate, label: Tax %, align: right }
-              - field: actions
-                label: ''
-                align: right
-                actions:
-                  - { id: add_product_to_ticket, label: Add, variant: primary, permission: pos.write }
+        icon: grid
+        card:
+          title: name
+          subtitle: category
+          fields:
+            - { field: price, label: Price }
+            - { field: tax_rate, label: Tax % }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: barcode, label: Barcode }
+      - { field: category, label: Category }
+      - { field: price, label: Price, align: right }
+      - { field: tax_rate, label: Tax %, align: right }
+      - field: actions
+        label: ''
+        align: right
+        actions:
+          - { id: add_product_to_ticket, label: Add to ticket, variant: primary, permission: pos.write }
+    page_size: 48
+    row_key: id
+    row_actions: buttons
 
-      - id: ticket
-        label: Current ticket
-        components:
-          - type: OdooFormView
-            source: pos_active_ticket
-            title_field: name
-            status_field: state
-            statusbar:
-              - { value: New, label: New }
-              - { value: Paid, label: Paid }
-              - { value: Cancelled, label: Cancelled }
-            status_colors: { New: neutral, Paid: green, Cancelled: red }
-            header_actions:
-              - { id: pay_cashier_ticket, label: Payment, variant: primary, permission: pos.write, show_if: "state.pos_active_ticket.state === 'New'" }
-              - { id: cancel_cashier_ticket, label: Cancel, variant: danger, permission: pos.write, show_if: "state.pos_active_ticket.state === 'New'" }
-            group_columns: 2
-            groups:
-              - title: Ticket
-                fields:
-                  - { field: name, label: Reference }
-                  - { field: session_name, label: Session }
-                  - { field: partner_name, label: Customer }
-                  - { field: cashier_id, label: Cashier }
-              - title: Totals
-                fields:
-                  - { field: amount_total, label: Total }
-                  - { field: amount_tax, label: Tax }
-                  - { field: amount_paid, label: Paid }
-                  - { field: receipt_number, label: Receipt }
-
-          - type: LineItemGrid
-            source: pos_ticket_lines
-            parent_source: pos_active_ticket
-            row_key: id
-            variant: odoo_x2many
-            columns:
-              - { field: product_name, label: Product }
-              - { field: quantity, label: Qty, align: right }
-              - { field: price_unit, label: Unit price, align: right }
-              - { field: discount, label: Disc%, align: right }
-              - { field: price_subtotal, label: Untaxed, align: right }
-              - { field: price_tax, label: Tax, align: right }
-              - { field: price_total, label: Total, align: right }
-            empty_state: { title: Empty ticket, description: Select a product from the catalog to add it to this ticket. }
-
-          - type: ContactGrid
-            source: pos_ticket_payments
-            row_key: id
-            title: Payments
-            columns:
-              - { field: method, label: Method }
-              - { field: amount, label: Amount, align: right }
-              - { field: state, label: Status, type: StatusChip }
-              - { field: payment_date, label: Date }
-            empty_state: { title: No payments, description: Register a payment to complete this ticket. }
+  - type: ListView
+    variant: odoo
+    source: pos_open_tickets
+    create_action: start_cashier_ticket
+    create_label: New ticket
+    page_size: 20
+    row_key: id
+    row_open_action: view_ticket
+    row_actions: menu
+    form_view: { page: apps/services/point_of_sale/pages/pos-order-detail.yaml, side_panel: true }
+    columns:
+      - { field: name, label: Ticket, type: PrimaryEntityCell }
+      - { field: session_name, label: Session }
+      - { field: partner_name, label: Customer }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_paid, label: Paid, align: right }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: date_order, label: Opened }
+      - field: actions
+        label: ''
+        align: right
+        actions:
+          - { id: view_ticket, label: Open, variant: secondary, permission: pos.read }
+          - { id: pay_cashier_ticket, label: Payment, variant: primary, permission: pos.write, show_if: "row.state === 'New'" }
+          - { id: cancel_cashier_ticket, label: Cancel, variant: danger, permission: pos.write, show_if: "row.state === 'New'" }
+    empty_state:
+      title: No open tickets
+      description: Start a new ticket to begin selling.
 
 actions:
   - id: start_cashier_ticket
@@ -113,7 +85,7 @@ actions:
     action: pos.cashier.ticket.create
     handler: yaml_mutation
     operation: create
-    refresh: [pos_cashier_sessions, pos_active_ticket]
+    refresh: [pos_open_tickets, pos_cashier_session_stats]
     mutation:
       operation: insert
       table: pos_orders
@@ -137,7 +109,7 @@ actions:
     action: pos.cashier.ticket.add_product
     handler: yaml_mutation
     operation: create
-    refresh: [pos_active_ticket, pos_ticket_lines]
+    refresh: [pos_open_tickets, pos_cashier_session_stats]
     mutation:
       generated: [line_id]
       guards:
@@ -173,10 +145,16 @@ actions:
             WHERE id = :ticket_id
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
     fields:
-      - { field: ticket_id, label: Ticket, type: text, required: true }
+      - { field: ticket_id, label: Ticket, type: select, options_source: pos_open_ticket_options, required: true }
       - { field: product_id, label: Product ID, type: text, required: true }
       - { field: quantity, label: Quantity, type: number, default: 1, required: true }
       - { field: discount, label: Discount (%), type: number, default: 0 }
+
+  - id: view_ticket
+    type: navigate
+    permission: pos.read
+    navigate_to: /order-detail
+    params: { id: '{row.id}' }
 
   - id: pay_cashier_ticket
     type: server_form
@@ -185,7 +163,8 @@ actions:
     action: pos.cashier.ticket.pay
     handler: yaml_mutation
     operation: pay
-    refresh: [pos_active_ticket, pos_ticket_payments]
+    prefill: { ticket_id: '{row.id}' }
+    refresh: [pos_open_tickets, pos_cashier_session_stats]
     mutation:
       generated: [payment_id]
       guards:
@@ -211,7 +190,7 @@ actions:
             WHERE id = :ticket_id
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
     fields:
-      - { field: ticket_id, label: Ticket, type: text, required: true }
+      - { field: ticket_id, label: Ticket, type: select, options_source: pos_open_ticket_options, required: true }
       - { field: amount, label: Amount, type: money, required: true }
       - { field: method, label: Method, type: select, options: [Cash, Card, Bank, Other], required: true }
 
@@ -222,4 +201,5 @@ actions:
     handler: order_transition
     workflow: pos_orders
     operation: cancel
-    refresh: [pos_active_ticket]
+    params: { id: '{row.id}' }
+    refresh: [pos_open_tickets, pos_cashier_session_stats]

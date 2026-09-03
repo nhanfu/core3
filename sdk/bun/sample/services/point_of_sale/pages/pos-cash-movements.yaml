@@ -8,7 +8,9 @@ components:
   - type: ListView
     variant: odoo
     source: pos_cash_movements_list
-    search: { label: Search movements, placeholder: Search session, reason, or type... }
+    search:
+      label: Search movements
+      placeholder: Search session name or reason...
     page_size: 50
     row_key: id
     columns:
