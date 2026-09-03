@@ -1,0 +1,10 @@
+title: POS Discounts
+page:
+  id: pos-discount
+  route: /point-of-sale/discount
+  auth: { require: [pos.manage] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_discount Extension
+    title: Discount Policies
+    description: Configure automated discount rules for your POS — percentage or fixed-amount discounts triggered by minimum quantity, minimum order total, or manager approval.

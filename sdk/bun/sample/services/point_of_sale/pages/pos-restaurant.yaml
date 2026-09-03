@@ -1,0 +1,10 @@
+title: Restaurant Floor Plan
+page:
+  id: pos-restaurant
+  route: /point-of-sale/restaurant
+  auth: { require: [pos.read] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_restaurant Extension
+    title: Restaurant Floor Plan
+    description: Manage your dining room layouts with interactive floor plans — assign tables to floors, track seating capacity, and monitor real-time table availability for a smooth front-of-house operation.

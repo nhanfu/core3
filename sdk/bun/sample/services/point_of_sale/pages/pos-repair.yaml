@@ -1,0 +1,10 @@
+title: Repair Orders
+page:
+  id: pos-repair
+  route: /point-of-sale/repair
+  auth: { require: [pos.read] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_repair Extension
+    title: Repair Orders at POS
+    description: Process and track repair jobs directly from your point of sale — create repair orders for customer devices, monitor repair states, and collect payment upon completion without leaving the POS interface.

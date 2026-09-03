@@ -16,5 +16,14 @@ pages:
   - pages/pos-payments.yaml
   - pages/pos-invoices.yaml
   - pages/pos-analysis.yaml
+  # Phase 3: POS extensions
+  - pages/pos-discount.yaml
+  - pages/pos-restaurant.yaml
+  - pages/pos-loyalty.yaml
+  - pages/pos-self-order.yaml
+  - pages/pos-hr.yaml
+  - pages/pos-online-payment.yaml
+  - pages/pos-customer-display.yaml
+  - pages/pos-repair.yaml
 permissions: permissions.yaml
 storage: storage.yaml

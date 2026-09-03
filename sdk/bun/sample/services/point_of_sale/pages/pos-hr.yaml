@@ -1,0 +1,10 @@
+title: POS Employees
+page:
+  id: pos-hr
+  route: /point-of-sale/hr
+  auth: { require: [pos.manage] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_hr Extension
+    title: POS Employee Management
+    description: Manage cashier and manager access to your point of sale — configure employee PINs, barcode badges, and role-based permissions so your team can log in securely and only perform authorized actions.

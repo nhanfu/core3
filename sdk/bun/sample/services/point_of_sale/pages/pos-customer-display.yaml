@@ -1,0 +1,10 @@
+title: Customer Display
+page:
+  id: pos-customer-display
+  route: /point-of-sale/customer-display
+  auth: { require: [pos.read] }
+components:
+  - type: ComingSoon
+    eyebrow: Customer Display Viewer
+    title: Customer-Facing Display
+    description: Show customers a live view of their order as items are scanned — the customer display mirrors the active POS session, presenting line items, totals, and payment prompts on a second screen or tablet.

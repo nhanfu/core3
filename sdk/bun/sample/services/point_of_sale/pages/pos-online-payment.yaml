@@ -1,0 +1,10 @@
+title: Online Payments
+page:
+  id: pos-online-payment
+  route: /point-of-sale/online-payment
+  auth: { require: [pos.manage] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_online_payment Extension
+    title: Online Payment Transactions
+    description: Track and reconcile digital payment transactions processed through your POS — view provider references, payment statuses, and amounts for every online payment linked to a POS order.

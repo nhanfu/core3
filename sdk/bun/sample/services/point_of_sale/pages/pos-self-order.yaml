@@ -1,0 +1,10 @@
+title: Self-Order Kiosk
+page:
+  id: pos-self-order
+  route: /point-of-sale/self-order
+  auth: { require: [pos.manage] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_self_order Extension
+    title: Self-Order Kiosk
+    description: Monitor and configure customer-facing self-order kiosks linked to active POS sessions — enable customers to browse the menu, place orders, and pay independently without cashier assistance.

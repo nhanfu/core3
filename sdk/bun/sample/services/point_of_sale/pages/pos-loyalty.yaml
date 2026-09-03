@@ -1,0 +1,10 @@
+title: Loyalty Programs
+page:
+  id: pos-loyalty
+  route: /point-of-sale/loyalty
+  auth: { require: [pos.read] }
+components:
+  - type: ComingSoon
+    eyebrow: pos_loyalty Extension
+    title: Loyalty Programs & Cards
+    description: View and manage customer loyalty programs including points-per-order rewards, percentage discounts, and gift cards — track individual loyalty card balances and program memberships across all customers.
