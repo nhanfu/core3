@@ -1,0 +1,90 @@
+title: POS Session
+page:
+  id: pos-session-detail
+  route: /point-of-sale/session-detail
+  breadcrumb: [Sales, Point of Sale, Session]
+  auth: { require: [pos.read] }
+components:
+  - type: OdooFormView
+    source: pos_session_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Opening Control, label: Opening Control }
+      - { value: In Progress, label: In Progress }
+      - { value: Closing Control, label: Closing Control }
+      - { value: 'Closed & Posted', label: Closed & Posted }
+    status_colors:
+      Opening Control: amber
+      In Progress: green
+      Closing Control: amber
+      Closed & Posted: neutral
+    header_actions:
+      - { id: open_session_detail, label: Open, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'Opening Control'" }
+      - { id: start_closing_session_detail, label: Start Closing, variant: secondary, permission: pos.write, show_if: "state.pos_session_detail.state === 'In Progress'" }
+      - { id: close_session_detail, label: Close & Post, variant: primary, permission: pos.manage, show_if: "state.pos_session_detail.state === 'Closing Control'" }
+      - { id: add_session_cash_movement, label: Cash In/Out, variant: ghost, permission: pos.write, show_if: "state.pos_session_detail.state === 'In Progress'" }
+    group_columns: 2
+    groups:
+      - title: Session
+        fields:
+          - { field: name, label: Session }
+          - { field: state, label: Status }
+          - { field: config, label: Point of Sale }
+          - { field: user_name, label: Responsible }
+          - { field: opened_at, label: Opened }
+          - { field: closed_at, label: Closed }
+      - title: Cash control
+        fields:
+          - { field: balance_start, label: Opening balance }
+          - { field: opening_counted, label: Opening count }
+          - { field: expected_cash, label: Expected cash }
+          - { field: closing_counted, label: Closing count }
+          - { field: cash_difference, label: Difference }
+          - { field: discrepancy_reason, label: Discrepancy reason }
+          - { field: net_cash_movements, label: Net cash movements }
+          - { field: order_count, label: Orders }
+          - { field: total_paid, label: Total paid }
+
+  - type: LineItemGrid
+    source: pos_session_cash_movements
+    parent_source: pos_session_detail
+    row_key: id
+    variant: odoo_x2many
+    title: Cash Movements
+    actions:
+      - { id: add_session_cash_movement, label: Add movement, variant: primary, permission: pos.write, show_if: "state.pos_session_detail.state === 'In Progress'" }
+    columns:
+      - { field: movement_type, label: Type }
+      - { field: amount, label: Amount, align: right }
+      - { field: reason, label: Reason }
+      - { field: cashier_id, label: Cashier }
+      - { field: created_at, label: Date }
+    empty_state: { title: No cash movements, description: No cash-in or cash-out movements recorded for this session. }
+
+  - type: ContactGrid
+    source: pos_session_orders
+    row_key: id
+    title: Orders
+    columns:
+      - { field: name, label: Order }
+      - { field: partner_name, label: Customer }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_paid, label: Paid, align: right }
+      - { field: payment_method, label: Payment method }
+      - { field: cashier_id, label: Cashier }
+      - { field: date_order, label: Date }
+    empty_state: { title: No orders, description: This session has no orders yet. }
+
+  - type: ContactGrid
+    source: pos_session_operations
+    row_key: id
+    title: Operation log
+    columns:
+      - { field: operation_type, label: Operation }
+      - { field: operation_id, label: Operation ID }
+      - { field: actor_id, label: Actor }
+      - { field: expected_row_version, label: Version }
+      - { field: created_at, label: Date }
+    empty_state: { title: No operations, description: No operations have been recorded for this session. }

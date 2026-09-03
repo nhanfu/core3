@@ -5,6 +5,13 @@ menu:
     icon: cart
     permission: pos.read
   groups:
+    - id: cashier
+      label: Cashier
+      items:
+        - path: /cashier
+          label: Cashier
+          icon: receipt
+          permission: pos.write
     - id: operations
       label: Operations
       items:
@@ -19,6 +26,10 @@ menu:
         - path: /invoices
           label: POS Invoices
           icon: invoice
+          permission: pos.read
+        - path: /cash-movements
+          label: Cash Movements
+          icon: money
           permission: pos.read
     - id: configuration-reporting
       label: Configuration & Reporting

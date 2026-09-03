@@ -50,7 +50,7 @@ actions:
   - id: view_pos_session
     type: navigate
     permission: pos.read
-    navigate_to: /sessions
+    navigate_to: /session-detail
     params: { id: '{row.id}' }
   - id: open_pos_session
     type: server

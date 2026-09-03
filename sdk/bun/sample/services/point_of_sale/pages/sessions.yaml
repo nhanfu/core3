@@ -9,6 +9,8 @@ components:
     page_size: 50
     row_key: id
     row_open_action: view_pos_session
+    row_double_click_action: view_pos_session
+    form_view: { page: apps/services/point_of_sale/pages/pos-session-detail.yaml, side_panel: true }
     row_actions: menu
     columns:
       - { field: name, label: Session, type: PrimaryEntityCell }

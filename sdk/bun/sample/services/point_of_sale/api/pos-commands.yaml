@@ -1,0 +1,385 @@
+page: { id: pos-commands }
+
+# Idempotent cashier commands. Every mutating action:
+#   - Requires operation_id (client UUID, stored in pos_operations.operation_id UNIQUE)
+#   - Checks expected_row_version for optimistic concurrency
+#   - Logs to pos_operations for audit and replay detection
+#   - Recomputes price, tax, discount, and totals server-side
+# A duplicate operation_id is rejected with 409 — clients receive the original
+# result by re-querying pos_active_order after the conflict response.
+
+datasources:
+  - id: pos_active_order
+    single: true
+    permission: pos.write
+    query: |
+      SELECT o.id, o.row_version, o.name, o.session_id, o.state,
+        o.cashier_id, o.partner_name, o.note,
+        o.receipt_number, o.original_order_id,
+        CAST(o.amount_total AS DOUBLE) AS amount_total,
+        CAST(o.amount_tax AS DOUBLE) AS amount_tax,
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        CAST(o.date_order AS VARCHAR) AS date_order
+      FROM pos_orders o WHERE o.id = :id
+
+  - id: pos_active_order_lines
+    single: false
+    permission: pos.write
+    query: |
+      SELECT l.id, l.product_name,
+        CAST(l.quantity AS DOUBLE) AS quantity,
+        CAST(l.price_unit AS DOUBLE) AS price_unit,
+        CAST(COALESCE(l.tax_rate, 0) AS DOUBLE) AS tax_rate,
+        CAST(COALESCE(l.discount, 0) AS DOUBLE) AS discount,
+        CAST(l.price_subtotal AS DOUBLE) AS price_subtotal,
+        CAST(COALESCE(l.price_tax, 0) AS DOUBLE) AS price_tax,
+        CAST(COALESCE(l.price_total, l.price_subtotal) AS DOUBLE) AS price_total
+      FROM pos_order_lines l WHERE l.order_id = :id ORDER BY l.id
+
+  - id: pos_active_order_payments
+    single: false
+    permission: pos.write
+    query: |
+      SELECT id, method,
+        CAST(amount AS DOUBLE) AS amount,
+        state, CAST(payment_date AS VARCHAR) AS payment_date
+      FROM pos_payments WHERE order_id = :id ORDER BY payment_date DESC
+
+actions:
+  # ── Add product to order ──────────────────────────────────────────────────
+  - id: cashier_add_line
+    type: server_form
+    permission: pos.write
+    title: Add product
+    action: pos.cashier.lines.add
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_active_order, pos_active_order_lines]
+    mutation:
+      generated: [line_id]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :order_id AND state = 'New'"
+          status: 409
+          message: Cannot add lines to an order that is not in New state
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed — query the order to get the current state
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload order and retry
+        - query: "SELECT id FROM pos_products WHERE id = :product_id AND active = true"
+          status: 404
+          message: Product not found or inactive
+        - query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0"
+          status: 400
+          message: Quantity must be positive
+        - query: "SELECT 1 AS ok WHERE CAST(:discount AS DECIMAL(9,4)) BETWEEN 0 AND 100"
+          status: 400
+          message: Discount must be between 0 and 100 percent
+      steps:
+        - query: |
+            INSERT INTO pos_order_lines(id, order_id, product_name, quantity, price_unit, tax_rate, discount, price_subtotal, price_tax, price_total)
+            SELECT :line_id, :order_id, p.name,
+              CAST(:quantity AS DECIMAL(18,3)),
+              CAST(p.price AS DECIMAL(18,2)),
+              CAST(p.tax_rate AS DECIMAL(9,4)),
+              CAST(:discount AS DECIMAL(9,4)),
+              ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(p.price AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100), 2),
+              ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(p.price AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * CAST(p.tax_rate AS DECIMAL(9,4)) / 100, 2),
+              ROUND(CAST(:quantity AS DECIMAL(18,3)) * CAST(p.price AS DECIMAL(18,2)) * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * (1 + CAST(p.tax_rate AS DECIMAL(9,4)) / 100), 2)
+            FROM pos_products p WHERE p.id = :product_id
+        - query: |
+            UPDATE pos_orders SET
+              amount_tax   = (SELECT COALESCE(SUM(price_tax),   0) FROM pos_order_lines WHERE order_id = :order_id),
+              amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :order_id),
+              row_version  = row_version + 1
+            WHERE id = :order_id
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :line_id, o.session_id, :order_id, :operation_id, 'add_line',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: product_id, label: Product ID, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, default: 1, required: true }
+      - { field: discount, label: Discount (%), type: number, default: 0 }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }
+
+  # ── Update order line quantity ─────────────────────────────────────────────
+  - id: cashier_update_line_qty
+    type: server_form
+    permission: pos.write
+    title: Update quantity
+    action: pos.cashier.lines.update_qty
+    handler: yaml_mutation
+    operation: update
+    refresh: [pos_active_order, pos_active_order_lines]
+    mutation:
+      guards:
+        - query: "SELECT l.id FROM pos_order_lines l JOIN pos_orders o ON o.id = l.order_id WHERE l.id = :line_id AND o.state = 'New'"
+          status: 409
+          message: Cannot update lines on a non-new order
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload and retry
+        - query: "SELECT 1 AS ok WHERE CAST(:quantity AS DECIMAL(18,3)) > 0"
+          status: 400
+          message: Quantity must be positive
+      steps:
+        - query: |
+            UPDATE pos_order_lines SET
+              quantity       = CAST(:quantity AS DECIMAL(18,3)),
+              price_subtotal = ROUND(CAST(:quantity AS DECIMAL(18,3)) * price_unit * (1 - discount / 100), 2),
+              price_tax      = ROUND(CAST(:quantity AS DECIMAL(18,3)) * price_unit * (1 - discount / 100) * tax_rate / 100, 2),
+              price_total    = ROUND(CAST(:quantity AS DECIMAL(18,3)) * price_unit * (1 - discount / 100) * (1 + tax_rate / 100), 2)
+            WHERE id = :line_id
+        - query: |
+            UPDATE pos_orders SET
+              amount_tax   = (SELECT COALESCE(SUM(price_tax),   0) FROM pos_order_lines WHERE order_id = :order_id),
+              amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :order_id),
+              row_version  = row_version + 1
+            WHERE id = :order_id
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :line_id || '-upd', o.session_id, :order_id, :operation_id, 'update_line_qty',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: line_id, label: Line ID, type: text, required: true }
+      - { field: quantity, label: Quantity, type: number, required: true }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }
+
+  # ── Remove order line ─────────────────────────────────────────────────────
+  - id: cashier_remove_line
+    type: server_form
+    permission: pos.write
+    title: Remove line
+    action: pos.cashier.lines.remove
+    handler: yaml_mutation
+    operation: delete
+    refresh: [pos_active_order, pos_active_order_lines]
+    mutation:
+      guards:
+        - query: "SELECT l.id FROM pos_order_lines l JOIN pos_orders o ON o.id = l.order_id WHERE l.id = :line_id AND o.state = 'New'"
+          status: 409
+          message: Cannot remove lines from a non-new order
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload and retry
+      steps:
+        - query: "DELETE FROM pos_order_lines WHERE id = :line_id"
+        - query: |
+            UPDATE pos_orders SET
+              amount_tax   = (SELECT COALESCE(SUM(price_tax),   0) FROM pos_order_lines WHERE order_id = :order_id),
+              amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :order_id),
+              row_version  = row_version + 1
+            WHERE id = :order_id
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :line_id || '-del', o.session_id, :order_id, :operation_id, 'remove_line',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: line_id, label: Line ID, type: text, required: true }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }
+
+  # ── Apply line discount ────────────────────────────────────────────────────
+  - id: cashier_apply_discount
+    type: server_form
+    permission: pos.write
+    title: Apply discount
+    action: pos.cashier.lines.discount
+    handler: yaml_mutation
+    operation: update
+    refresh: [pos_active_order, pos_active_order_lines]
+    mutation:
+      guards:
+        - query: "SELECT l.id FROM pos_order_lines l JOIN pos_orders o ON o.id = l.order_id WHERE l.id = :line_id AND o.state = 'New'"
+          status: 409
+          message: Cannot apply discount on a non-new order
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload and retry
+        - query: "SELECT 1 AS ok WHERE CAST(:discount AS DECIMAL(9,4)) BETWEEN 0 AND 100"
+          status: 400
+          message: Discount must be between 0 and 100 percent
+      steps:
+        - query: |
+            UPDATE pos_order_lines SET
+              discount       = CAST(:discount AS DECIMAL(9,4)),
+              price_subtotal = ROUND(quantity * price_unit * (1 - CAST(:discount AS DECIMAL(9,4)) / 100), 2),
+              price_tax      = ROUND(quantity * price_unit * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * tax_rate / 100, 2),
+              price_total    = ROUND(quantity * price_unit * (1 - CAST(:discount AS DECIMAL(9,4)) / 100) * (1 + tax_rate / 100), 2)
+            WHERE id = :line_id
+        - query: |
+            UPDATE pos_orders SET
+              amount_tax   = (SELECT COALESCE(SUM(price_tax),   0) FROM pos_order_lines WHERE order_id = :order_id),
+              amount_total = (SELECT COALESCE(SUM(price_total), 0) FROM pos_order_lines WHERE order_id = :order_id),
+              row_version  = row_version + 1
+            WHERE id = :order_id
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :line_id || '-disc', o.session_id, :order_id, :operation_id, 'apply_discount',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: line_id, label: Line ID, type: text, required: true }
+      - { field: discount, label: Discount (%), type: number, required: true }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }
+
+  # ── Validate payment (split payment support) ──────────────────────────────
+  - id: cashier_validate_payment
+    type: server_form
+    permission: pos.write
+    title: Record payment
+    action: pos.cashier.orders.pay
+    handler: yaml_mutation
+    operation: pay
+    refresh: [pos_active_order, pos_active_order_payments]
+    mutation:
+      generated: [payment_id]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :order_id AND state = 'New'"
+          status: 409
+          message: Cannot record payment on an order that is not in New state
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload and retry
+        - query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0"
+          status: 400
+          message: Payment amount must be positive
+        - query: |
+            SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) <=
+              (SELECT amount_total - amount_paid FROM pos_orders WHERE id = :order_id)
+          status: 400
+          message: Payment exceeds remaining balance
+      steps:
+        - query: "INSERT INTO pos_payments(id, order_id, method, amount) VALUES(:payment_id, :order_id, :method, CAST(:amount AS DECIMAL(18,2)))"
+        - query: |
+            UPDATE pos_orders SET
+              amount_paid    = amount_paid + CAST(:amount AS DECIMAL(18,2)),
+              payment_method = :method,
+              row_version    = row_version + 1
+            WHERE id = :order_id
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :payment_id, o.session_id, :order_id, :operation_id, 'payment',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: amount, label: Amount, type: money, required: true }
+      - { field: method, label: Method, type: select, options: [Cash, Card, Bank, Other], required: true }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }
+
+  # ── Validate (finalize) order ──────────────────────────────────────────────
+  - id: cashier_validate_order
+    type: server_form
+    permission: pos.write
+    title: Validate order
+    action: pos.cashier.orders.validate
+    handler: yaml_mutation
+    operation: validate
+    refresh: [pos_active_order]
+    mutation:
+      generated: [receipt_number]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :order_id AND state = 'New'"
+          status: 409
+          message: Cannot validate an order that is not in New state
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload and retry
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND amount_paid >= amount_total"
+          status: 409
+          message: Order is not fully paid — register remaining payment before validating
+        - query: "SELECT 1 AS ok WHERE EXISTS (SELECT 1 FROM pos_order_lines WHERE order_id = :order_id)"
+          status: 409
+          message: Cannot validate an order with no lines
+      steps:
+        - query: |
+            UPDATE pos_orders SET
+              state          = 'Paid',
+              receipt_number = 'POS-' || UPPER(SUBSTRING(:receipt_number, 1, 8)),
+              row_version    = row_version + 1
+            WHERE id = :order_id
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :receipt_number, o.session_id, :order_id, :operation_id, 'validate',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }
+
+  # ── Cancel order ───────────────────────────────────────────────────────────
+  - id: cashier_cancel_order
+    type: server_form
+    permission: pos.write
+    title: Cancel order
+    action: pos.cashier.orders.cancel
+    handler: yaml_mutation
+    operation: cancel
+    refresh: [pos_active_order]
+    mutation:
+      generated: [cancel_op_id]
+      guards:
+        - query: "SELECT id FROM pos_orders WHERE id = :order_id AND state = 'New'"
+          status: 409
+          message: Only new orders can be cancelled from the cashier
+        - query: "SELECT 1 AS ok WHERE NOT EXISTS (SELECT 1 FROM pos_operations WHERE operation_id = :operation_id)"
+          status: 409
+          message: Operation already processed
+        - query: "SELECT 1 AS ok FROM pos_orders WHERE id = :order_id AND row_version = CAST(:expected_row_version AS BIGINT)"
+          status: 409
+          message: Order version mismatch — reload and retry
+      steps:
+        - query: "UPDATE pos_orders SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :order_id"
+        - query: |
+            INSERT INTO pos_operations(id, session_id, order_id, operation_id, operation_type, expected_row_version, actor_id)
+            SELECT :cancel_op_id, o.session_id, :order_id, :operation_id, 'cancel',
+              CAST(:expected_row_version AS BIGINT), :cashier_id
+            FROM pos_orders o WHERE o.id = :order_id
+      result: { query: "SELECT * FROM pos_orders WHERE id = :order_id" }
+    fields:
+      - { field: order_id, label: Order ID, type: text, required: true }
+      - { field: operation_id, label: Operation ID, type: text, required: true }
+      - { field: expected_row_version, label: Expected version, type: number, required: true }
+      - { field: cashier_id, label: Cashier ID, type: text }

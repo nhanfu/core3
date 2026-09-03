@@ -4,35 +4,52 @@ datasources:
     single: false
     permission: pos.read
     query: |
-      SELECT id, name, barcode, category, CAST(price AS DOUBLE) AS price, CAST(tax_rate AS DOUBLE) AS tax_rate
+      SELECT id, name, barcode, category,
+        CAST(price AS DOUBLE) AS price,
+        CAST(tax_rate AS DOUBLE) AS tax_rate
       FROM pos_products WHERE active = true
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%')
       ORDER BY category, name
+
   - id: pos_cashier_sessions
     single: false
     permission: pos.read
     query: "SELECT id AS value, name || ' — ' || config AS label FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC"
-actions:
-  - id: create_cashier_ticket
-    type: server_form
+
+  - id: pos_active_ticket
+    single: true
     permission: pos.write
-    title: Start cashier ticket
-    action: pos.cashier.ticket.create
-    handler: yaml_mutation
-    operation: create
-    refresh: [pos_cashier_sessions]
-    mutation:
-      operation: insert
-      table: pos_orders
-      fields: [name, session_id, partner_name, state, amount_total, amount_tax, amount_paid]
-      required: [name, session_id]
-      defaults: { state: New, amount_total: 0, amount_tax: 0, amount_paid: 0 }
-      guards:
-        - query: "SELECT id FROM pos_sessions WHERE id = :session_id AND state = 'In Progress'"
-          status: 409
-          message: Select an open POS session before starting a ticket
-      result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
-    fields:
-      - { field: name, label: Ticket reference, type: text, required: true }
-      - { field: session_id, label: Open session, type: select, options_source: pos_cashier_sessions, required: true }
-      - { field: partner_name, label: Customer, type: text }
+    query: |
+      SELECT o.id, o.row_version, o.name, o.session_id,
+        s.name AS session_name, o.partner_name, o.state,
+        o.cashier_id, o.receipt_number,
+        CAST(o.amount_total AS DOUBLE) AS amount_total,
+        CAST(COALESCE(o.amount_tax, 0) AS DOUBLE) AS amount_tax,
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        CAST(o.date_order AS VARCHAR) AS date_order
+      FROM pos_orders o
+      JOIN pos_sessions s ON s.id = o.session_id
+      WHERE o.id = :ticket_id
+
+  - id: pos_ticket_lines
+    single: false
+    permission: pos.write
+    query: |
+      SELECT id, product_name,
+        CAST(quantity AS DOUBLE) AS quantity,
+        CAST(price_unit AS DOUBLE) AS price_unit,
+        CAST(COALESCE(tax_rate, 0) AS DOUBLE) AS tax_rate,
+        CAST(COALESCE(discount, 0) AS DOUBLE) AS discount,
+        CAST(price_subtotal AS DOUBLE) AS price_subtotal,
+        CAST(COALESCE(price_tax, 0) AS DOUBLE) AS price_tax,
+        CAST(COALESCE(price_total, price_subtotal) AS DOUBLE) AS price_total
+      FROM pos_order_lines WHERE order_id = :ticket_id ORDER BY id
+
+  - id: pos_ticket_payments
+    single: false
+    permission: pos.write
+    query: |
+      SELECT id, method,
+        CAST(amount AS DOUBLE) AS amount,
+        state, CAST(payment_date AS VARCHAR) AS payment_date
+      FROM pos_payments WHERE order_id = :ticket_id ORDER BY payment_date DESC

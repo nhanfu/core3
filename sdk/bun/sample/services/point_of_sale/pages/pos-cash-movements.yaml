@@ -1,0 +1,24 @@
+title: Cash Movements
+page:
+  id: pos-cash-movements
+  route: /point-of-sale/cash-movements
+  breadcrumb: [Sales, Point of Sale, Cash Movements]
+  auth: { require: [pos.read] }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_cash_movements_list
+    search: { label: Search movements, placeholder: Search session, reason, or type... }
+    page_size: 50
+    row_key: id
+    columns:
+      - { field: session_name, label: Session, type: PrimaryEntityCell }
+      - { field: config, label: Point of Sale }
+      - { field: movement_type, label: Type }
+      - { field: amount, label: Amount, align: right }
+      - { field: reason, label: Reason }
+      - { field: cashier_id, label: Cashier }
+      - { field: created_at, label: Date }
+    empty_state:
+      title: No cash movements
+      description: Cash-in and cash-out movements will appear here once recorded in an open session.

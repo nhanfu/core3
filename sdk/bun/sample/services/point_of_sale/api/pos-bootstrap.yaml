@@ -1,0 +1,62 @@
+page: { id: pos-bootstrap }
+
+# Bounded cashier bootstrap — returned on session open, never exposes full
+# table access. All sources are scoped to a single active session (:id).
+# Clients must re-bootstrap when the catalog_version changes.
+datasources:
+  - id: pos_bootstrap_session
+    single: true
+    permission: pos.read
+    query: |
+      SELECT s.id, s.name, s.state, s.config, COALESCE(s.currency, 'USD') AS currency,
+        s.cashier_id,
+        CAST(s.balance_start AS DOUBLE) AS balance_start,
+        CAST(COALESCE(s.opening_counted, 0) AS DOUBLE) AS opening_counted,
+        CAST(s.opened_at AS VARCHAR) AS opened_at,
+        c.receipt_header, c.receipt_footer,
+        (SELECT COUNT(*) FROM pos_products WHERE active = true) AS catalog_version
+      FROM pos_sessions s
+      JOIN pos_configs c ON c.name = s.config
+      WHERE s.id = :id AND s.state = 'In Progress'
+
+  - id: pos_bootstrap_products
+    single: false
+    permission: pos.read
+    query: |
+      SELECT p.id, p.name, p.barcode, p.category,
+        CAST(p.price AS DOUBLE) AS price,
+        CAST(p.tax_rate AS DOUBLE) AS tax_rate
+      FROM pos_products p
+      WHERE p.active = true
+        AND EXISTS (SELECT 1 FROM pos_sessions s WHERE s.id = :id AND s.state = 'In Progress')
+      ORDER BY p.category, p.name
+
+  - id: pos_bootstrap_payment_methods
+    single: false
+    permission: pos.read
+    query: |
+      SELECT method AS id, method AS label
+      FROM (
+        SELECT DISTINCT payment_method AS method
+        FROM pos_orders WHERE session_id IN (
+          SELECT id FROM pos_sessions WHERE config = (
+            SELECT config FROM pos_sessions WHERE id = :id
+          )
+        ) AND payment_method IS NOT NULL
+        UNION VALUES ('Cash'), ('Card'), ('Bank')
+      ) methods
+      WHERE method IS NOT NULL
+      ORDER BY label
+
+  - id: pos_bootstrap_open_orders
+    single: false
+    permission: pos.read
+    query: |
+      SELECT o.id, o.name, o.state, o.partner_name,
+        CAST(o.amount_total AS DOUBLE) AS amount_total,
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        o.cashier_id, o.receipt_number,
+        CAST(o.date_order AS VARCHAR) AS date_order
+      FROM pos_orders o
+      WHERE o.session_id = :id AND o.state = 'New'
+      ORDER BY o.date_order DESC

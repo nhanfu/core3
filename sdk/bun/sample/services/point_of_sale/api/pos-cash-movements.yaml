@@ -1,0 +1,30 @@
+page: { id: pos-cash-movements }
+datasources:
+  - id: pos_cash_movements_list
+    single: false
+    permission: pos.read
+    query: |
+      SELECT m.id, m.session_id, s.name AS session_name, s.config,
+        m.movement_type,
+        CAST(m.amount AS DOUBLE) AS amount,
+        m.reason, m.cashier_id,
+        CAST(m.created_at AS VARCHAR) AS created_at
+      FROM pos_cash_movements m
+      JOIN pos_sessions s ON s.id = m.session_id
+      WHERE (:q IS NULL OR m.reason ILIKE '%' || :q || '%'
+          OR m.movement_type ILIKE '%' || :q || '%'
+          OR s.name ILIKE '%' || :q || '%')
+      ORDER BY m.created_at DESC
+
+  - id: pos_cash_movement_type_lookup
+    single: false
+    permission: pos.read
+    query: |
+      SELECT value, label FROM (VALUES ('Cash In','Cash In'), ('Cash Out','Cash Out')) t(value, label)
+
+  - id: pos_active_sessions_lookup
+    single: false
+    permission: pos.read
+    query: |
+      SELECT id AS value, name || ' — ' || config AS label
+      FROM pos_sessions WHERE state = 'In Progress' ORDER BY opened_at DESC

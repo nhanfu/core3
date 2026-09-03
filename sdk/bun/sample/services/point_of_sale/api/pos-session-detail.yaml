@@ -1,0 +1,116 @@
+page: { id: pos-session-detail }
+datasources:
+  - id: pos_session_detail
+    single: true
+    permission: pos.read
+    workflow: pos_sessions
+    query: |
+      SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state,
+        s.currency, s.cashier_id,
+        CAST(s.balance_start AS DOUBLE) AS balance_start,
+        CAST(COALESCE(s.opening_counted, 0) AS DOUBLE) AS opening_counted,
+        CAST(COALESCE(s.expected_cash, 0) AS DOUBLE) AS expected_cash,
+        CAST(COALESCE(s.closing_counted, 0) AS DOUBLE) AS closing_counted,
+        CAST(COALESCE(s.cash_difference, 0) AS DOUBLE) AS cash_difference,
+        s.discrepancy_reason, s.balance_end,
+        CAST(s.opened_at AS VARCHAR) AS opened_at,
+        CAST(s.closed_at AS VARCHAR) AS closed_at,
+        (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count,
+        CAST((SELECT COALESCE(SUM(amount_total), 0) FROM pos_orders o WHERE o.session_id = s.id AND o.state = 'Paid') AS DOUBLE) AS total_paid,
+        CAST((SELECT COALESCE(SUM(CASE WHEN m.movement_type = 'Cash In' THEN m.amount ELSE -m.amount END), 0) FROM pos_cash_movements m WHERE m.session_id = s.id) AS DOUBLE) AS net_cash_movements
+      FROM pos_sessions s WHERE s.id = :id
+
+  - id: pos_session_orders
+    single: false
+    permission: pos.read
+    query: |
+      SELECT o.id, o.name, o.partner_name, o.state,
+        CAST(o.amount_total AS DOUBLE) AS amount_total,
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid,
+        o.payment_method, o.cashier_id,
+        CAST(o.date_order AS VARCHAR) AS date_order
+      FROM pos_orders o WHERE o.session_id = :id
+      ORDER BY o.date_order DESC
+
+  - id: pos_session_cash_movements
+    single: false
+    permission: pos.read
+    query: |
+      SELECT id, movement_type,
+        CAST(amount AS DOUBLE) AS amount,
+        reason, cashier_id,
+        CAST(created_at AS VARCHAR) AS created_at
+      FROM pos_cash_movements WHERE session_id = :id
+      ORDER BY created_at DESC
+
+  - id: pos_session_operations
+    single: false
+    permission: pos.read
+    query: |
+      SELECT id, operation_type, operation_id, expected_row_version, actor_id,
+        CAST(created_at AS VARCHAR) AS created_at
+      FROM pos_operations WHERE session_id = :id
+      ORDER BY created_at DESC
+
+  - id: pos_session_config_lookup
+    single: false
+    permission: pos.read
+    query: "SELECT name AS value, name AS label FROM pos_configs WHERE active = true ORDER BY name"
+
+actions:
+  - id: open_session_detail
+    type: server
+    permission: pos.write
+    action: pos.sessions.open
+    handler: order_transition
+    workflow: pos_sessions
+    operation: open
+    refresh: [pos_session_detail]
+
+  - id: start_closing_session_detail
+    type: server
+    permission: pos.write
+    action: pos.sessions.start_closing
+    handler: order_transition
+    workflow: pos_sessions
+    operation: start_closing
+    refresh: [pos_session_detail]
+
+  - id: close_session_detail
+    type: server_form
+    permission: pos.manage
+    title: Close point of sale session
+    action: pos.sessions.close
+    handler: order_transition
+    workflow: pos_sessions
+    operation: close
+    refresh: [pos_session_detail]
+    fields:
+      - { field: balance_end, label: Closing balance, type: money, required: true }
+      - { field: closing_counted, label: Counted cash, type: money }
+      - { field: discrepancy_reason, label: Discrepancy reason, type: text }
+
+  - id: add_session_cash_movement
+    type: server_form
+    permission: pos.write
+    title: Cash movement
+    action: pos.sessions.cash_movement
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_session_cash_movements, pos_session_detail]
+    mutation:
+      generated: [movement_id]
+      guards:
+        - query: "SELECT id FROM pos_sessions WHERE id = :id AND state = 'In Progress'"
+          status: 409
+          message: Cash movements can only be added to sessions in progress
+        - query: "SELECT 1 AS ok WHERE CAST(:amount AS DECIMAL(18,2)) > 0"
+          status: 400
+          message: Amount must be positive
+      steps:
+        - query: "INSERT INTO pos_cash_movements(id, session_id, movement_type, amount, reason) VALUES(:movement_id, :id, :movement_type, CAST(:amount AS DECIMAL(18,2)), :reason)"
+      result: { query: "SELECT * FROM pos_cash_movements WHERE id = :movement_id" }
+    fields:
+      - { field: movement_type, label: Type, type: select, options: [Cash In, Cash Out], required: true }
+      - { field: amount, label: Amount, type: money, required: true }
+      - { field: reason, label: Reason, type: text }
