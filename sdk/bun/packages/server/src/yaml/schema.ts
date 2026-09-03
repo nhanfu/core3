@@ -225,6 +225,12 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['ChoiceGroup', new Set(['type', 'id', 'title', 'value', 'class', 'section_class', 'title_class', 'group_class', 'option_class', 'options', 'action'])],
   ['Form', new Set(['type', 'id', 'title', 'class', 'section_class', 'title_class', 'action', 'submit_variant', 'submit_label', 'loading_label', 'success_label', 'fields', 'validation'])],
   ['Button', new Set(['type', 'id', 'action', 'label', 'icon', 'variant', 'full_width'])],
+  // POS cashier components (Phase 1)
+  ['PosShell', new Set(['type', 'id', 'session_source', 'bootstrap_source', 'orders_source', 'actions'])],
+  ['ProductScreen', new Set(['type', 'id', 'source', 'session_source', 'cart_source', 'search', 'actions', 'labels'])],
+  ['PaymentScreen', new Set(['type', 'id', 'source', 'session_source', 'payment_methods_source', 'actions', 'labels'])],
+  ['ReceiptScreen', new Set(['type', 'id', 'source', 'session_source', 'lines_source', 'payments_source', 'actions', 'labels'])],
+  ['TicketScreen', new Set(['type', 'id', 'source', 'session_source', 'actions', 'labels'])],
 ]);
 
 export class PageSchemaError extends Error {
