@@ -7,18 +7,11 @@ messages: messages.yaml
 storage: storage.yaml
 menu:
   dashboard:
-    path: /
+    path: /order
     label: Orders
     icon: logo
     permission: orders.read
   groups:
-    - id: sales
-      label: Sales
-      items:
-        - path: /quotations
-          label: Quotations
-          icon: document
-          permission: orders.read
     - id: products-pricing
       label: Products & Pricing
       items:
