@@ -3,7 +3,7 @@ export type YamlServiceManifest = {
   kind?: 'domain-service' | 'infrastructure-service';
   runtime?: string;
   database?: string | YamlServiceDatabase;
-  pages?: string[];
+  menu?: Record<string, unknown>;
   permissions?: string;
   topics?: string;
   events?: string;
@@ -46,15 +46,13 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
   if (manifest.kind !== undefined && manifest.kind !== 'domain-service' && manifest.kind !== 'infrastructure-service') {
     throw new Error(`Service manifest kind is invalid: ${file}`);
   }
-  for (const key of ['pages'] as const) {
-    if (manifest[key] !== undefined && (!Array.isArray(manifest[key]) || manifest[key].some((entry) => typeof entry !== 'string'))) {
-      throw new Error(`Service manifest ${key} must be a string list: ${file}`);
-    }
-  }
   for (const key of ['runtime', 'permissions', 'topics', 'events', 'messages', 'policies', 'operations', 'storage', 'migrations'] as const) {
     if (manifest[key] !== undefined && typeof manifest[key] !== 'string') {
       throw new Error(`Service manifest ${key} must be a string: ${file}`);
     }
+  }
+  if (manifest.menu !== undefined && (!manifest.menu || typeof manifest.menu !== 'object' || Array.isArray(manifest.menu))) {
+    throw new Error(`Service manifest menu must be an object: ${file}`);
   }
   const database = manifest.database;
   if (database !== undefined && typeof database !== 'string') {
@@ -99,7 +97,7 @@ export function validateServiceManifest(value: unknown, file = 'manifest.yaml'):
     kind: manifest.kind as YamlServiceManifest['kind'],
     runtime: manifest.runtime as string | undefined,
     database: manifest.database as YamlServiceManifest['database'],
-    pages: manifest.pages as string[] | undefined,
+    menu: manifest.menu as Record<string, unknown> | undefined,
     permissions: manifest.permissions as string | undefined,
     topics: manifest.topics as string | undefined,
     events: manifest.events as string | undefined,

@@ -2,11 +2,17 @@ id: surveys
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/surveys.yaml
-  - pages/survey-detail.yaml
-  - pages/analysis.yaml
-  - pages/survey-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  surveys:
+    path: /surveys
+    label: Surveys
+    icon: survey
+    permission: surveys.read
+  groups:
+    - id: surveys
+      label: Surveys
+      items:
+        - { path: /surveys, label: Surveys, icon: survey, permission: surveys.read }
+        - { path: /survey-analysis, label: Survey Analysis, icon: chart, permission: surveys.read }

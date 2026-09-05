@@ -2,12 +2,21 @@ id: appraisals
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/cycles.yaml
-  - pages/reviews.yaml
-  - pages/review-detail.yaml
-  - pages/analysis.yaml
-  - pages/appraisal-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  appraisals:
+    path: /appraisals
+    label: Appraisals
+    icon: review
+    permission: appraisals.read
+  groups:
+    - id: performance
+      label: Performance
+      items:
+        - { path: /appraisals, label: Appraisals, icon: review, permission: appraisals.read }
+        - { path: /appraisal-cycles, label: Appraisal Cycles, icon: calendar, permission: appraisals.manage }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /appraisal-analysis, label: Appraisal Analysis, icon: chart, permission: appraisals.read }

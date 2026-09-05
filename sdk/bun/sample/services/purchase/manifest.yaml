@@ -2,12 +2,21 @@ id: purchase
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/vendors.yaml
-  - pages/purchase-orders.yaml
-  - pages/purchase-detail.yaml
-  - pages/analysis.yaml
-  - pages/purchase-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  purchase:
+    path: /purchase-orders
+    label: Purchase
+    icon: purchase
+    permission: purchase.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - { path: /purchase-orders, label: Purchase Orders, icon: purchase, permission: purchase.read }
+        - { path: /vendors, label: Vendors, icon: contacts, permission: purchase.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /purchase-analysis, label: Purchase Analysis, icon: chart, permission: purchase.read }

@@ -2,10 +2,16 @@ id: field-service
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/tasks.yaml
-  - pages/task-detail.yaml
-  - pages/field-service-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  field-service:
+    path: /field-service
+    label: Field Service
+    icon: wrench
+    permission: field-service.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - { path: /field-service, label: Field Tasks, icon: wrench, permission: field-service.read }

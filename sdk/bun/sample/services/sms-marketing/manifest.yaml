@@ -2,12 +2,21 @@ id: sms-marketing
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/lists.yaml
-  - pages/campaigns.yaml
-  - pages/campaign-detail.yaml
-  - pages/analysis.yaml
-  - pages/sms-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  sms-marketing:
+    path: /sms-campaigns
+    label: SMS Marketing
+    icon: message
+    permission: sms_marketing.read
+  groups:
+    - id: campaigns
+      label: Campaigns
+      items:
+        - { path: /sms-campaigns, label: SMS Campaigns, icon: message, permission: sms_marketing.read }
+        - { path: /sms-lists, label: Opt-in Lists, icon: users, permission: sms_marketing.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /sms-analysis, label: SMS Analysis, icon: chart, permission: sms_marketing.read }

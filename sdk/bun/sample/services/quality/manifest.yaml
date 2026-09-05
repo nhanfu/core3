@@ -2,11 +2,20 @@ id: quality
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/checks.yaml
-  - pages/check-detail.yaml
-  - pages/analysis.yaml
-  - pages/quality-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  quality:
+    path: /quality-checks
+    label: Quality
+    icon: quality
+    permission: quality.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - { path: /quality-checks, label: Quality Checks, icon: quality, permission: quality.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /quality-analysis, label: Quality Analysis, icon: chart, permission: quality.read }

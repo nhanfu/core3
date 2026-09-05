@@ -2,12 +2,34 @@ id: manufacturing
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/boms.yaml
-  - pages/manufacturing-orders.yaml
-  - pages/manufacturing-detail.yaml
-  - pages/analysis.yaml
-  - pages/manufacturing-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  manufacturing:
+    path: /manufacturing-orders
+    label: Manufacturing
+    icon: factory
+    permission: manufacturing.read
+  groups:
+    - id: operations
+      label: Operations
+      items:
+        - path: /manufacturing-orders
+          label: Manufacturing Orders
+          icon: factory
+          permission: manufacturing.read
+        - path: /workorders
+          label: Work Orders
+          icon: tools
+          permission: manufacturing.read
+    - id: master-data
+      label: Master Data
+      items:
+        - path: /boms
+          label: Bills of Materials
+          icon: components
+          permission: manufacturing.read
+        - path: /manufacturing-analysis
+          label: Production Analysis
+          icon: chart
+          permission: manufacturing.read

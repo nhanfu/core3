@@ -2,12 +2,21 @@ id: time-off
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/types.yaml
-  - pages/requests.yaml
-  - pages/request-detail.yaml
-  - pages/analysis.yaml
-  - pages/time-off-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  time_off:
+    path: /leave-requests
+    label: Time Off
+    icon: calendar
+    permission: time_off.read
+  groups:
+    - id: requests
+      label: Requests
+      items:
+        - { path: /leave-requests, label: Leave Requests, icon: calendar, permission: time_off.read }
+        - { path: /leave-types, label: Leave Types, icon: settings, permission: time_off.manage }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /time-off-analysis, label: Time Off Analysis, icon: chart, permission: time_off.read }

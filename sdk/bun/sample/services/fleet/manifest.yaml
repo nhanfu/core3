@@ -2,11 +2,17 @@ id: fleet
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/vehicles.yaml
-  - pages/vehicle-detail.yaml
-  - pages/analysis.yaml
-  - pages/fleet-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  fleet:
+    path: /vehicles
+    label: Fleet
+    icon: car
+    permission: fleet.read
+  groups:
+    - id: vehicles
+      label: Vehicles
+      items:
+        - { path: /vehicles, label: Vehicles, icon: car, permission: fleet.read }
+        - { path: /fleet-analysis, label: Fleet Analysis, icon: chart, permission: fleet.read }

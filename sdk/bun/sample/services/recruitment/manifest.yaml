@@ -2,12 +2,21 @@ id: recruitment
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/openings.yaml
-  - pages/applicants.yaml
-  - pages/applicant-detail.yaml
-  - pages/analysis.yaml
-  - pages/recruitment-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  recruitment:
+    path: /applicants
+    label: Recruitment
+    icon: recruitment
+    permission: recruitment.read
+  groups:
+    - id: hiring
+      label: Hiring
+      items:
+        - { path: /applicants, label: Applicants, icon: users, permission: recruitment.read }
+        - { path: /openings, label: Job Openings, icon: briefcase, permission: recruitment.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /recruitment-analysis, label: Recruitment Analysis, icon: chart, permission: recruitment.read }

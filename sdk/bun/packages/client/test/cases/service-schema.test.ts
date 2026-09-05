@@ -9,7 +9,7 @@ describe('YAML service manifest schema', () => {
       kind: 'domain-service',
       runtime: undefined,
       database: 'order',
-      pages: ['pages/orders.yaml'],
+      menu: { dashboard: { path: '/orders' } },
       permissions: 'permissions.yaml',
       topics: 'topics.yaml',
       events: 'events.yaml',
@@ -18,7 +18,7 @@ describe('YAML service manifest schema', () => {
       id: 'order',
       kind: 'domain-service',
       database: 'order',
-      pages: ['pages/orders.yaml'],
+      menu: { dashboard: { path: '/orders' } },
       permissions: 'permissions.yaml',
       topics: 'topics.yaml',
       events: 'events.yaml',
@@ -55,9 +55,9 @@ describe('YAML service manifest schema', () => {
 
   it('rejects invalid service identifiers and declaration types', () => {
     expect(() => validateServiceManifest({ id: 'Order' })).toThrow(/id is invalid/);
-    expect(() => validateServiceManifest({ id: 'order', pages: 'pages/orders.yaml' })).toThrow(/pages must be a string list/);
     expect(() => validateServiceManifest({ id: 'order', database: 42 })).toThrow(/database must be a string/);
     expect(() => validateServiceManifest({ id: 'order', database: { storage: { driver: 'mysql' } } })).toThrow(/driver is invalid/);
     expect(() => validateServiceManifest({ id: 'order', database: { storage: { driver: 'postgres' }, compute: { driver: 'postgres' } } })).toThrow(/compute must declare/);
+    expect(() => validateServiceManifest({ id: 'order', menu: [] })).toThrow(/menu must be an object/);
   });
 });

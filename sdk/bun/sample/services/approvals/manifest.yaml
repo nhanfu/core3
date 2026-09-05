@@ -2,12 +2,21 @@ id: approvals
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/types.yaml
-  - pages/requests.yaml
-  - pages/request-detail.yaml
-  - pages/approval-workflow.yaml
-  - pages/analysis.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  approvals:
+    path: /approvals
+    label: Approvals
+    icon: check-circle
+    permission: approvals.read
+  groups:
+    - id: approvals
+      label: Approvals
+      items:
+        - { path: /approvals, label: Requests, icon: check-circle, permission: approvals.read }
+        - { path: /approval-types, label: Approval Types, icon: settings, permission: approvals.manage }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /approval-analysis, label: Approval Analysis, icon: chart, permission: approvals.read }

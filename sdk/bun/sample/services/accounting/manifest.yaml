@@ -2,12 +2,30 @@ id: accounting
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/invoices.yaml
-  - pages/invoices-workflow.yaml
-  - pages/journal-entries.yaml
-  - pages/payments.yaml
-  - pages/analysis.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  invoices:
+    path: /invoices
+    label: Invoices
+    icon: invoice
+    permission: accounting.read
+  groups:
+    - id: accounting
+      label: Accounting
+      items:
+        - path: /journal-entries
+          label: Journal Entries
+          icon: ledger
+          permission: accounting.read
+        - path: /payments
+          label: Payments
+          icon: bank
+          permission: accounting.read
+    - id: reporting
+      label: Reporting
+      items:
+        - path: /analysis
+          label: Accounting Analysis
+          icon: chart
+          permission: accounting.read

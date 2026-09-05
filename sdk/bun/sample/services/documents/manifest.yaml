@@ -2,10 +2,23 @@ id: documents
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/documents.yaml
-  - pages/analysis.yaml
-  - pages/document-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  documents:
+    path: /documents
+    label: Documents
+    icon: folder
+    permission: documents.read
+  groups:
+    - id: workspace
+      label: Workspace
+      items:
+        - path: /documents
+          label: All Documents
+          icon: file
+          permission: documents.read
+        - path: /document-analysis
+          label: Document Analysis
+          icon: chart
+          permission: documents.read

@@ -176,6 +176,7 @@ export function discoverPages(appsRoot: string) {
     try {
       const manifest = loadYamlServiceManifest(moduleRoot).manifest;
       moduleName = manifest.id;
+      if (manifest.menu) menus.set(moduleName, { module: moduleName, config: { menu: manifest.menu } });
       if (manifest.permissions) file = join(moduleRoot, manifest.permissions);
     } catch { /* default permission path is optional */ }
     try {
@@ -201,7 +202,9 @@ export function discoverPages(appsRoot: string) {
         continue;
       }
       if (relativeFile.length === 1 && /^menu\.ya?ml$/i.test(relativeFile[0])) {
-        menus.set(moduleName, { module: moduleName, config: parseYaml(file) || {} });
+        // Keep the manifest as the authoritative location when a legacy
+        // pages/menu.yaml is still present during migration.
+        if (!menus.has(moduleName)) menus.set(moduleName, { module: moduleName, config: parseYaml(file) || {} });
         continue;
       }
       if (relativeFile[0] === 'i18n') {

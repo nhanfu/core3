@@ -2,6 +2,15 @@ id: helpdesk
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages: [pages/menu.yaml, pages/tickets.yaml, pages/ticket-detail.yaml, pages/helpdesk-workflow.yaml]
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  helpdesk:
+    path: /helpdesk
+    label: Helpdesk
+    icon: headset
+    permission: helpdesk.read
+  groups:
+    - id: operations
+      label: Operations
+      items: [{ path: /helpdesk, label: Tickets, icon: headset, permission: helpdesk.read }]

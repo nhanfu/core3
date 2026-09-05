@@ -2,13 +2,22 @@ id: forum
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/forums.yaml
-  - pages/questions.yaml
-  - pages/question-detail.yaml
-  - pages/tags.yaml
-  - pages/analysis.yaml
-  - pages/forum-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  forum:
+    path: /forum
+    label: Forum
+    icon: forum
+    permission: forum.read
+  groups:
+    - id: community
+      label: Community
+      items:
+        - { path: /forum-questions, label: Questions, icon: help, permission: forum.read }
+        - { path: /forum, label: Forums, icon: forum, permission: forum.read }
+        - { path: /forum-tags, label: Tags, icon: tag, permission: forum.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /forum-analysis, label: Forum Analysis, icon: chart, permission: forum.read }

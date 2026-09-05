@@ -1,8 +1,5 @@
 id: ai
 kind: domain-service
 migrations: migrations
-pages:
-  - pages/ai.yaml
-  - pages/preview.yaml
 permissions: permissions.yaml
 storage: storage.yaml

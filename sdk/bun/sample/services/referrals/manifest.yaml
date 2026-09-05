@@ -2,11 +2,17 @@ id: referrals
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/referrals.yaml
-  - pages/referral-detail.yaml
-  - pages/analysis.yaml
-  - pages/referral-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  referrals:
+    path: /referrals
+    label: Referrals
+    icon: share
+    permission: referrals.read
+  groups:
+    - id: people
+      label: People
+      items:
+        - { path: /referrals, label: Referrals, icon: share, permission: referrals.read }
+        - { path: /referral-analysis, label: Referral Analysis, icon: chart, permission: referrals.read }

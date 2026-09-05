@@ -39,7 +39,6 @@ export type DiscoveredYamlService = {
 };
 
 export type YamlServiceDefinition = DiscoveredYamlService & {
-  pages: Array<{ file: string; config: unknown }>;
   permissions: unknown;
   topics: unknown;
   events: unknown;
@@ -65,7 +64,6 @@ export function loadYamlServiceDefinition(service: DiscoveredYamlService): YamlS
   const { root, manifest } = service;
   return {
     ...service,
-    pages: (manifest.pages || []).map((file) => ({ file: join(root, file), config: Bun.YAML.parse(readFileSync(join(root, file), 'utf8')) })),
     permissions: readOptionalYaml(root, manifest.permissions),
     topics: readOptionalYaml(root, manifest.topics),
     events: readOptionalYaml(root, manifest.events),

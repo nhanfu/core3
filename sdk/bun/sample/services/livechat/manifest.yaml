@@ -2,12 +2,21 @@ id: livechat
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/channels.yaml
-  - pages/sessions.yaml
-  - pages/session-detail.yaml
-  - pages/analysis.yaml
-  - pages/livechat-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  livechat:
+    path: /livechat
+    label: Live Chat
+    icon: message
+    permission: livechat.read
+  groups:
+    - id: conversations
+      label: Conversations
+      items:
+        - { path: /livechat, label: Channels, icon: message, permission: livechat.read }
+        - { path: /livechat-sessions, label: Sessions, icon: users, permission: livechat.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /livechat-analysis, label: Livechat Analysis, icon: chart, permission: livechat.read }

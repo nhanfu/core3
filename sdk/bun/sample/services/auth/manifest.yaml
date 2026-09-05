@@ -3,9 +3,6 @@ kind: infrastructure-service
 runtime: auth
 database: auth
 storage: storage.yaml
-pages:
-  - pages/login.yaml
-  - pages/profile.yaml
 permissions: permissions.yaml
 policies: policies.yaml
 data: data.yaml

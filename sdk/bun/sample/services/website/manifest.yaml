@@ -2,13 +2,22 @@ id: website
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/websites.yaml
-  - pages/website-detail.yaml
-  - pages/pages.yaml
-  - pages/menus.yaml
-  - pages/analysis.yaml
-  - pages/website-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  website:
+    path: /website
+    label: Website
+    icon: globe
+    permission: website.read
+  groups:
+    - id: content
+      label: Content
+      items:
+        - { path: /website, label: Websites, icon: globe, permission: website.read }
+        - { path: /website-pages, label: Pages, icon: document, permission: website.read }
+        - { path: /website-menus, label: Menus, icon: menu, permission: website.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /website-analysis, label: Website Analysis, icon: chart, permission: website.read }

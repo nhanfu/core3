@@ -2,11 +2,17 @@ id: employees
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/employees.yaml
-  - pages/employee-detail.yaml
-  - pages/analysis.yaml
-  - pages/employee-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  employees:
+    path: /employees
+    label: Employees
+    icon: users
+    permission: employees.read
+  groups:
+    - id: people
+      label: People
+      items:
+        - { path: /employees, label: Employees, icon: users, permission: employees.read }
+        - { path: /employee-analysis, label: Employee Analysis, icon: chart, permission: employees.read }

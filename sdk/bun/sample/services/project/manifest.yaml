@@ -2,11 +2,17 @@ id: project
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/projects.yaml
-  - pages/project-detail.yaml
-  - pages/analysis.yaml
-  - pages/project-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  project:
+    path: /projects
+    label: Project
+    icon: project
+    permission: project.read
+  groups:
+    - id: delivery
+      label: Delivery
+      items:
+        - { path: /projects, label: Projects, icon: project, permission: project.read }
+        - { path: /project-analysis, label: Project Analysis, icon: chart, permission: project.read }

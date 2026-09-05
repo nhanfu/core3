@@ -2,10 +2,23 @@ id: expenses
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/expenses.yaml
-  - pages/analysis.yaml
-  - pages/expense-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  expenses:
+    path: /expenses
+    label: Expenses
+    icon: receipt
+    permission: expenses.read
+  groups:
+    - id: expenses
+      label: Expenses
+      items:
+        - path: /expenses
+          label: Expense Reports
+          icon: receipt
+          permission: expenses.read
+        - path: /expense-analysis
+          label: Expense Analysis
+          icon: chart
+          permission: expenses.read

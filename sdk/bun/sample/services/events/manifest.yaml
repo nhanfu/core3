@@ -2,11 +2,17 @@ id: events
 kind: domain-service
 database: duckdb
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/events.yaml
-  - pages/event-detail.yaml
-  - pages/analysis.yaml
-  - pages/event-workflow.yaml
 permissions: permissions.yaml
 storage: storage.yaml
+menu:
+  events:
+    path: /events
+    label: Events
+    icon: calendar
+    permission: events.read
+  groups:
+    - id: events
+      label: Events
+      items:
+        - { path: /events, label: Events, icon: calendar, permission: events.read }
+        - { path: /events-analysis, label: Event Analysis, icon: chart, permission: events.read }

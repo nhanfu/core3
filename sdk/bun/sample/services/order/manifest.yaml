@@ -1,25 +1,55 @@
 id: order
 kind: domain-service
 migrations: migrations
-pages:
-  - pages/menu.yaml
-  - pages/orders.yaml
-  - pages/sale-quotations.yaml
-  - pages/customers.yaml
-  - pages/sale-products.yaml
-  - pages/sale-pricelists.yaml
-  - pages/sale-pricelist-rules.yaml
-  - pages/sale-payment-terms.yaml
-  - pages/sale-invoices.yaml
-  - pages/order-detail.yaml
-  - pages/customer-detail.yaml
-  - pages/sale-products-detail.yaml
-  - pages/sale-pricelists-detail.yaml
-  - pages/sale-pricelist-rules-detail.yaml
-  - pages/sale-payment-terms-detail.yaml
-  - pages/sale-invoices-detail.yaml
-  - pages/order-workflow.yaml
 permissions: permissions.yaml
 operations: operations.yaml
 messages: messages.yaml
 storage: storage.yaml
+menu:
+  dashboard:
+    path: /
+    label: Orders
+    icon: logo
+    permission: orders.read
+  groups:
+    - id: sales
+      label: Sales
+      items:
+        - path: /quotations
+          label: Quotations
+          icon: document
+          permission: orders.read
+    - id: products-pricing
+      label: Products & Pricing
+      items:
+        - path: /customers
+          label: Customers
+          icon: users
+          permission: orders.read
+        - path: /products
+          label: Products
+          icon: cube
+          permission: orders.read
+        - path: /pricelists
+          label: Pricelists
+          icon: tag
+          permission: orders.read
+        - path: /pricelist-rules
+          label: Pricelist Rules
+          icon: sliders
+          permission: orders.read
+        - path: /payment-terms
+          label: Payment Terms
+          icon: calendar
+          permission: orders.read
+    - id: reporting-billing
+      label: Reporting & Billing
+      items:
+        - path: /analytics
+          label: Analytics
+          icon: chart
+          permission: orders.read
+        - path: /invoices
+          label: Invoices
+          icon: document
+          permission: orders.read
