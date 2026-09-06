@@ -241,7 +241,7 @@ async function renderRoute(path: string, langCode?: string) {
   const cleanPath = normalizePagePath(path);
   const normalizedPath = cleanPath.toLowerCase();
   const route = _manifest.flatMap((module) => module.routes || []).find((entry) => entry.path.toLowerCase() === normalizedPath);
-  const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route.toLowerCase() === normalizedPath);
+  const page = _manifest.flatMap((module) => module.pages).find((entry) => entry.id === route?.page || entry.route?.toLowerCase() === normalizedPath);
   const pageId = page?.id || (cleanPath === '/home' ? 'home' : 'dashboard');
   const moduleId = _manifest.find((module) => module.pages.includes(page as ManifestPage) || module.routes?.some((entry) => entry.path === route?.path))?.id;
   if (_shell && moduleId && moduleId !== _shellMenuModuleId) {

@@ -77,9 +77,11 @@ export function discoverPageRoutes(discovered: ReturnType<typeof discoverPages>)
     if (declared) add(declared, entry.id, entry.module);
   }
   for (const menu of discovered.menus.values()) {
+    const modulePages = new Map([...discovered.pages].filter(([, entry]) => entry.module === menu.module));
     for (const item of routeItems(menu.config?.menu)) {
-      const page = routeId(item.path, discovered.pages);
-      if (page) add(item.path, page, discovered.pages.get(page)!.module);
+      const moduleRoot = `/${menu.module}`;
+      const page = item.path === moduleRoot ? routeId('/', modulePages) : routeId(item.path, modulePages);
+      if (page) add(item.path, page, modulePages.get(page)!.module);
     }
   }
   for (const entry of discovered.pages.values()) {

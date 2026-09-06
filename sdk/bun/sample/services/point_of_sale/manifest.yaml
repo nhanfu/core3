@@ -6,7 +6,7 @@ permissions: permissions.yaml
 storage: storage.yaml
 menu:
   sessions:
-    path: /sessions
+    path: /point-of-sale/sessions
     label: Point of Sale
     icon: cart
     permission: pos.read
@@ -14,37 +14,37 @@ menu:
     - id: cashier
       label: Cashier
       items:
-        - path: /cashier
+        - path: /point-of-sale/cashier
           label: Cashier
           icon: receipt
           permission: pos.write
     - id: operations
       label: Operations
       items:
-        - path: /orders
+        - path: /point-of-sale/orders
           label: Orders
           icon: cart
           permission: pos.read
-        - path: /payments
+        - path: /point-of-sale/payments
           label: Payments
           icon: bank
           permission: pos.read
-        - path: /invoices
+        - path: /point-of-sale/invoices
           label: POS Invoices
           icon: invoice
           permission: pos.read
-        - path: /cash-movements
+        - path: /point-of-sale/cash-movements
           label: Cash Movements
           icon: money
           permission: pos.read
     - id: configuration-reporting
       label: Configuration & Reporting
       items:
-        - path: /configs
+        - path: /point-of-sale/configs
           label: Configuration
           icon: settings
           permission: pos.read
-        - path: /analysis
+        - path: /point-of-sale/analysis
           label: Sales Analysis
           icon: chart
           permission: pos.read
