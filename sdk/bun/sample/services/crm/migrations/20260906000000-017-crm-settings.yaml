@@ -1,0 +1,54 @@
+version: 0.0.17
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS crm_settings (
+        id VARCHAR PRIMARY KEY,
+        use_recurring_revenues BOOLEAN NOT NULL DEFAULT false,
+        use_leads BOOLEAN NOT NULL DEFAULT true,
+        use_multi_sales_teams BOOLEAN NOT NULL DEFAULT false,
+        use_ringover BOOLEAN NOT NULL DEFAULT false,
+        use_memberships BOOLEAN NOT NULL DEFAULT false,
+        use_predictive_lead_scoring BOOLEAN NOT NULL DEFAULT false,
+        use_rule_based_assignment BOOLEAN NOT NULL DEFAULT false,
+        use_lead_generation BOOLEAN NOT NULL DEFAULT false,
+        lead_enrichment_mode VARCHAR NOT NULL DEFAULT 'disabled'
+          CHECK (lead_enrichment_mode IN ('disabled', 'on_demand', 'automatic')),
+        use_lead_mining BOOLEAN NOT NULL DEFAULT false,
+        use_website_visits_to_leads BOOLEAN NOT NULL DEFAULT false,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO crm_settings (
+        id,
+        use_recurring_revenues,
+        use_leads,
+        use_multi_sales_teams,
+        use_ringover,
+        use_memberships,
+        use_predictive_lead_scoring,
+        use_rule_based_assignment,
+        use_lead_generation,
+        lead_enrichment_mode,
+        use_lead_mining,
+        use_website_visits_to_leads
+      ) VALUES (
+        'crm-settings',
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        'disabled',
+        false,
+        false
+      )
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS crm_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

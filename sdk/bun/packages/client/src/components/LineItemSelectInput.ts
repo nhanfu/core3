@@ -1,5 +1,5 @@
 import { html } from '@core3/client/html';
-import { LineItemInput } from './LineItemInput';
+import { LineItemInput } from './LineItemInput.ts';
 
 export class LineItemSelectInput extends LineItemInput {
   draw(container: HTMLElement) {

@@ -1,1 +1,230 @@
 @use 'styles/tokens';
+
+/* Settings follows Odoo's full-width application surface: no page gutter or breadcrumb. */
+.app-content:has(.o-settings-view) {
+  padding: 0;
+}
+
+.app-content:has(.o-settings-view) > #outlet {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.o-settings-view {
+  width: 100%;
+  height: calc(100dvh - 72px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+  color: #212529;
+  overflow: hidden;
+}
+
+.o-settings-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.o-settings-toolbar-title {
+  margin-left: 4px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.o-settings-button {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 7px 13px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.o-settings-button-primary {
+  color: #fff;
+  background: #71639e;
+}
+
+.o-settings-button-secondary {
+  color: #343a40;
+  background: #e9ecef;
+  border-color: #d6d9dc;
+}
+
+.o-settings-button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.o-settings-search {
+  width: min(520px, 42vw);
+  margin-left: auto;
+  padding: 8px 14px;
+  border: 1px solid #71639e;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.o-settings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr);
+}
+
+.o-settings-nav {
+  min-height: 0;
+  background: #f1f3f5;
+  border-right: 1px solid #dee2e6;
+  overflow: hidden;
+}
+
+.o-settings-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 15px 16px;
+  border: 0;
+  border-bottom: 1px solid #e1e3e5;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: #343a40;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.o-settings-nav-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+}
+
+.o-settings-nav-icon .svg-icon,
+.o-settings-nav-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.o-settings-nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.o-settings-nav-item:hover,
+.o-settings-nav-item.is-active {
+  background: #ddd9ea;
+  border-left-color: #71639e;
+  color: #212529;
+  font-weight: 600;
+}
+
+.o-settings-nav-item:hover .o-settings-nav-icon,
+.o-settings-nav-item.is-active .o-settings-nav-icon {
+  color: #71639e;
+}
+
+.o-settings-content {
+  min-height: 0;
+  min-width: 0;
+  background: #fff;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.o-settings-section-title {
+  margin: 0;
+  padding: 8px 32px;
+  background: #e9ecef;
+  border-bottom: 1px solid #dee2e6;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.o-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 32px;
+  row-gap: 10px;
+  padding: 18px 32px 26px;
+}
+
+.o-settings-card {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  min-height: 76px;
+  padding: 9px 0 13px;
+  border-left: 1px solid #dee2e6;
+}
+
+.o-settings-card-control {
+  padding-top: 3px;
+  text-align: center;
+}
+
+.o-settings-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: #71639e;
+}
+
+.o-settings-card-content {
+  padding: 0 10px 0 0;
+}
+
+.o-settings-card-content h3 {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.o-settings-card-content p {
+  max-width: 520px;
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.o-settings-card-action {
+  display: inline-block;
+  margin-top: 9px;
+  color: #5f518b;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.o-settings-card-action:hover {
+  text-decoration: underline;
+}
+
+.o-settings-select {
+  max-width: 190px;
+  padding: 5px 8px;
+  border: 1px solid #adb5bd;
+  border-radius: 3px;
+  background: #fff;
+  color: #212529;
+}
+
+@media (max-width: 900px) {
+  .o-settings-body { grid-template-columns: 142px minmax(0, 1fr); }
+  .o-settings-grid { grid-template-columns: 1fr; padding-inline: 20px; }
+  .o-settings-section-title { padding-inline: 20px; }
+  .o-settings-search { width: 34vw; }
+}

@@ -1,5 +1,5 @@
 import { MoneyInput } from '@core3/client/components/MoneyInput';
-import { LineItemInput } from './LineItemInput';
+import { LineItemInput } from './LineItemInput.ts';
 
 export class LineItemMoneyInput extends LineItemInput {
   draw(container: HTMLElement) {

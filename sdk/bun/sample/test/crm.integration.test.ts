@@ -4,10 +4,28 @@ import { describe, expect, it } from 'bun:test';
 import { DuckDbDatabase } from '@core3/server/database/duckdb-database';
 import { YamlRepository } from '@core3/server/database/yaml-repository';
 import { migrateDatabase } from '@core3/server/migrations';
-import { createAiAgentApi } from '../services/ai/ai-agent-api.ts';
+import { createAiAgentApi } from '../services/ai/api/ai-agent-api.ts';
 
 const crmRoot = join(import.meta.dir, '../services/crm');
-const yaml = (file: string) => Bun.YAML.parse(readFileSync(join(crmRoot, file), 'utf8')) as any;
+const parseYaml = (file: string) => Bun.YAML.parse(readFileSync(file, 'utf8')) as any;
+const yaml = (file: string) => {
+  const page = parseYaml(join(crmRoot, file));
+  const pageId = page.page?.id;
+  if (!pageId || !file.startsWith('pages/')) return page;
+
+  const apiRoot = join(crmRoot, 'api');
+  for (const apiFile of readdirSync(apiRoot).filter((entry) => entry.endsWith('.yaml'))) {
+    const fragment = parseYaml(join(apiRoot, apiFile));
+    if (fragment.page?.id !== pageId) continue;
+    for (const key of ['datasources', 'actions']) {
+      if (Array.isArray(fragment[key])) page[key] = [...(page[key] || []), ...fragment[key]];
+    }
+    for (const key of ['workflow']) {
+      if (fragment[key] !== undefined) page[key] = fragment[key];
+    }
+  }
+  return page;
+};
 const aiYaml = (file: string) => Bun.YAML.parse(readFileSync(join(import.meta.dir, '../services/ai', file), 'utf8')) as any;
 const action = (page: any, id: string) => page.actions.find((candidate: any) => candidate.id === id);
 
@@ -16,8 +34,9 @@ describe('CRM YAML lifecycle integration', () => {
     const database = await DuckDbDatabase.open(':memory:');
     const repository = new YamlRepository(database);
     await migrateDatabase(repository, join(crmRoot, 'migrations'), undefined, 'crm_test_schema_migrations', ['schema', 'data']);
-    expect((await repository.query("SELECT version FROM crm_test_schema_migrations WHERE version = '0.0.15'")).length).toBe(1);
-    expect((await repository.query("SELECT table_name FROM information_schema.tables WHERE table_name IN ('crm_leads', 'crm_tags', 'crm_activity_plans', 'crm_team_members') ORDER BY table_name")).map((row: any) => row.table_name)).toEqual(['crm_activity_plans', 'crm_leads', 'crm_tags', 'crm_team_members']);
+    expect((await repository.query("SELECT version FROM crm_test_schema_migrations WHERE version = '0.0.17'")).length).toBe(1);
+    expect((await repository.query("SELECT table_name FROM information_schema.tables WHERE table_name IN ('crm_leads', 'crm_settings', 'crm_tags', 'crm_activity_plans', 'crm_team_members') ORDER BY table_name")).map((row: any) => row.table_name)).toEqual(['crm_activity_plans', 'crm_leads', 'crm_settings', 'crm_tags', 'crm_team_members']);
+    expect((await repository.query("SELECT use_leads, lead_enrichment_mode FROM crm_settings WHERE id = 'crm-settings'")).map((row: any) => row)).toEqual([{ use_leads: true, lead_enrichment_mode: 'disabled' }]);
     expect((await repository.query('SELECT COUNT(*) AS count FROM crm_team_members'))[0].count).toBeGreaterThan(0);
   });
 
@@ -584,7 +603,7 @@ describe('CRM YAML lifecycle integration', () => {
     const allowed = new Set((agent.operations || []).map((operation: any) => String(operation.id)));
     const declared = new Set<string>();
     for (const file of readdirSync(join(crmRoot, 'pages')).filter((entry) => entry.endsWith('.yaml'))) {
-      const page = Bun.YAML.parse(readFileSync(join(crmRoot, 'pages', file), 'utf8')) as any;
+      const page = yaml(`pages/${file}`);
       for (const operation of page.actions || []) {
         if (operation.action && ['server', 'server_form'].includes(operation.type)) declared.add(String(operation.action));
       }
@@ -608,7 +627,7 @@ describe('CRM YAML lifecycle integration', () => {
     }), new URL('http://localhost/api/ai/agent'));
     const ids = new Set(generated.datasources.map((source: any) => source.id));
     for (const file of readdirSync(join(crmRoot, 'pages')).filter((entry) => entry.endsWith('.yaml'))) {
-      const page = Bun.YAML.parse(readFileSync(join(crmRoot, 'pages', file), 'utf8')) as any;
+      const page = yaml(`pages/${file}`);
       for (const source of page.datasources || []) {
         if (source.permission === 'crm.read') expect(ids.has(String(source.id))).toBe(true);
       }

@@ -59,3 +59,7 @@ menu:
           label: Configuration
           icon: settings
           permission: crm.manage
+        - path: /settings
+          label: CRM Settings
+          icon: settings
+          permission: crm.manage

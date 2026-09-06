@@ -1,4 +1,4 @@
-import { DatePicker } from '@core3/client/components/DatePicker';
+import { DatePicker } from './DatePicker.ts';
 import { OdooFieldEditor } from './OdooFieldEditor.ts';
 
 export class OdooDateEditor extends OdooFieldEditor {

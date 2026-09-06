@@ -112,7 +112,7 @@ const COLUMN_KEYS = new Set([
   'optional',
 ]);
 const ROW_ACTION_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'show_if']);
-const TAB_KEYS = new Set(['id', 'label', 'components', 'permission', 'count']);
+const TAB_KEYS = new Set(['id', 'label', 'icon', 'components', 'permission', 'count', 'sections']);
 const STAT_KEYS = new Set(['label', 'field', 'format', 'currency', 'color', 'navigate_to']);
 const SEARCH_KEYS = new Set(['label', 'placeholder', 'action']);
 const DATE_RANGE_KEYS = new Set(['from_field', 'to_field', 'from_label', 'to_label', 'label', 'presets', 'preset_labels', 'preset_style', 'default_preset', 'max_years', 'deny_unbounded', 'apply_label', 'calendar_previous_label', 'calendar_next_label', 'weekday_labels', 'validation_messages']);
@@ -172,6 +172,7 @@ const COMPONENT_KEYS = new Map<string, Set<string>>([
   ['Chart', new Set(['type', 'source', 'title', 'label_field', 'value_field', 'width', 'height', 'color', 'variant', 'series', 'layout'])],
   ['DocumentSummary', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_colors', 'columns'])],
   ['OdooFormView', new Set(['type', 'source', 'title_field', 'subtitle_field', 'status_field', 'status_label_field', 'status_colors', 'statusbar', 'statusbar_source', 'status_badges', 'form_mode', 'editable', 'fields', 'relations', 'groups', 'group_columns', 'notebook', 'header_actions', 'labels', 'message_source', 'message_page_size', 'follower_source', 'follower_candidates_source', 'follower_candidates_page_size', 'attachment_source', 'attachment_page_size', 'chatter_label', 'chatter_empty', 'message_label', 'note_label', 'activity_label', 'message_action', 'note_action', 'activity_action', 'message_placeholder', 'note_placeholder', 'activity_placeholder', 'send_label', 'log_label', 'schedule_label', 'cancel_label', 'follower_label', 'attachment_label', 'add_follower_label', 'remove_follower_label', 'no_followers_label', 'follower_search_placeholder', 'add_label', 'add_attachment_label', 'no_attachments_label', 'uploading_label', 'upload_failed_label', 'download_label', 'preview_label', 'attachment_accept', 'follower_add_action', 'follower_remove_action', 'attachment_upload_action', 'attachment_download_action', 'message_actor_field', 'message_action_field', 'message_detail_field', 'message_timestamp_field', 'message_action_labels', 'message_detail_labels', 'save_label', 'discard_label', 'edit_details_label', 'workflow_status_label', 'content_slot'])],
+  ['SettingsView', new Set(['type', 'id', 'source', 'title', 'save_action', 'save_label', 'discard_label', 'search_placeholder', 'tabs'])],
   ['LineItemGrid', new Set(['type', 'source', 'parent_source', 'title', 'description', 'variant', 'page_size', 'row_key', 'empty_state', 'columns', 'column_chooser', 'actions', 'children', 'labels', 'footer', 'mount_in'])],
   ['LineItemField', new Set(['type', 'id', 'field', 'display_field', 'label', 'input_type', 'options', 'options_source', 'readonly', 'currency', 'decimals', 'width'])],
   ['LineItemActions', new Set(['type', 'id', 'actions', 'edit_action', 'create_action'])],

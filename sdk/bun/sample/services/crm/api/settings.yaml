@@ -1,0 +1,36 @@
+page: { id: settings }
+datasources:
+  - id: crm_settings
+    permission: crm.manage
+    single: true
+    query: "SELECT id, 'CRM Settings' AS name, use_recurring_revenues, use_leads, use_multi_sales_teams, use_ringover, use_memberships, use_predictive_lead_scoring, use_rule_based_assignment, use_lead_generation, lead_enrichment_mode, use_lead_mining, use_website_visits_to_leads FROM crm_settings WHERE id = COALESCE(:id, 'crm-settings')"
+actions:
+  - id: edit_crm_settings
+    type: server_form
+    permission: crm.manage
+    title: Edit CRM Settings
+    action: crm.settings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [crm_settings]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_settings WHERE id = :id"
+          status: 404
+          message: CRM settings no longer exist
+      steps:
+        - query: "UPDATE crm_settings SET use_recurring_revenues = :use_recurring_revenues, use_leads = :use_leads, use_multi_sales_teams = :use_multi_sales_teams, use_ringover = :use_ringover, use_memberships = :use_memberships, use_predictive_lead_scoring = :use_predictive_lead_scoring, use_rule_based_assignment = :use_rule_based_assignment, use_lead_generation = :use_lead_generation, lead_enrichment_mode = :lead_enrichment_mode, use_lead_mining = :use_lead_mining, use_website_visits_to_leads = :use_website_visits_to_leads, updated_at = CURRENT_TIMESTAMP WHERE id = :id"
+      result: { query: "SELECT id, 'CRM Settings' AS name, use_recurring_revenues, use_leads, use_multi_sales_teams, use_ringover, use_memberships, use_predictive_lead_scoring, use_rule_based_assignment, use_lead_generation, lead_enrichment_mode, use_lead_mining, use_website_visits_to_leads FROM crm_settings WHERE id = :id" }
+    fields:
+      - { field: use_leads, label: Leads, type: checkbox }
+      - { field: use_recurring_revenues, label: Recurring Revenues, type: checkbox }
+      - { field: use_multi_sales_teams, label: Multi Teams, type: checkbox }
+      - { field: use_predictive_lead_scoring, label: Predictive Lead Scoring, type: checkbox }
+      - { field: use_rule_based_assignment, label: Rule-Based Assignment, type: checkbox }
+      - { field: use_lead_generation, label: Lead Generation, type: checkbox }
+      - { field: lead_enrichment_mode, label: Lead Enrichment, type: select, options: [{ value: disabled, label: Disabled }, { value: on_demand, label: Enrich leads on demand only }, { value: automatic, label: Enrich all leads automatically }] }
+      - { field: use_lead_mining, label: Lead Mining, type: checkbox }
+      - { field: use_website_visits_to_leads, label: Visits to Leads, type: checkbox }
+      - { field: use_ringover, label: Ringover VoIP Phone, type: checkbox }
+      - { field: use_memberships, label: Membership / Partnership, type: checkbox }

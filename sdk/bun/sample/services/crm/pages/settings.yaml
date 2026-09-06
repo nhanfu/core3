@@ -1,0 +1,128 @@
+title: Settings
+page:
+  id: settings
+  auth: { require: [crm.manage] }
+
+components:
+  - type: SettingsView
+    id: crm-settings
+    source: crm_settings
+    title: Settings
+    save_action: save_crm_settings
+    tabs:
+      - id: general
+        label: General Settings
+        icon: settings
+        sections:
+          - title: Users
+            fields:
+              - { label: Invite New Users, description: Invite users and manage access rights., type: info, action_label: Invite }
+              - { label: Active Users, description: Review active users and manage their access rights., type: info, action_label: Manage Users }
+          - title: Languages
+            fields:
+              - { label: Languages, description: Configure the languages available to your users and customers., type: info, action_label: Add Languages }
+          - title: Companies
+            fields:
+              - { label: Companies, description: Configure companies and company information., type: info, action_label: Manage Companies }
+          - title: Document Layout
+            fields:
+              - { label: Document Layout, description: Choose the layout and branding of your documents., type: info, action_label: Configure Document Layout }
+          - title: Email Templates
+            fields:
+              - { label: Email Templates, description: Customize the look and feel of automated emails., type: info, action_label: Review All Templates }
+          - title: Emails
+            fields:
+              - { label: Custom Email Servers, description: Configure your own email servers., type: info, action_label: Configure Email Servers }
+              - { label: Alias Domain, description: Use different domains for your mail aliases., type: info }
+              - { label: Digest Email, description: Add users as recipients of periodic emails with key metrics., type: info, action_label: Configure Digest Emails }
+              - { label: Restrict Template Rendering, description: Restrict mail template editing and QWeb placeholder usage., type: info }
+          - title: Discuss
+            fields:
+              - { label: Activities, description: Configure your activity types., type: info, action_label: Activity Types }
+              - { label: Custom ICE Server with Twilio, description: Set up your own server for small group calls using peer-to-peer connections., type: info }
+              - { label: Custom SFU Server, description: Set up your own server for large group calls by routing connections centrally., type: info }
+              - { label: Custom ICE Servers, description: Use your own servers to manage heavy traffic and reliability., type: info, action_label: Configure ICE Servers }
+              - { label: Klipy GIF API Key, description: Add a Klipy GIF API key to enable GIF support., type: info }
+              - { label: Message Translation, description: Configure Google Translate integration for message translation., type: info }
+          - title: Contacts
+            fields:
+              - { label: Send SMS, description: Send texts to your contacts., type: info, action_label: Manage Service & Buy Credits }
+              - { label: Partner Autocomplete, description: Automatically enrich your contact base with company data., type: info, action_label: Manage Service & Buy Credits }
+              - { label: Odoo IAP, description: View your IAP services and recharge your credits., type: info, action_label: View My Services }
+          - title: Permissions
+            fields:
+              - { label: Customer Account, description: Let your customers log in to see their documents., type: info, action_label: Default Access Rights }
+              - { label: Password Reset, description: Enable password reset from the login page., type: info, action_label: Default Access Rights }
+              - { label: Default Access Rights, description: Set custom access rights for new users., type: info, action_label: Default Access Rights }
+              - { label: API Keys, description: Allow users to access Odoo with external tools when MFA is enabled., type: info, action_label: Manage API Keys }
+              - { label: Enforce Two-Factor Authentication, description: Enforce two-factor authentication for employees or all users., type: info }
+          - title: Integrations
+            fields:
+              - { label: Mail Plugin, description: Integrate with mail client plugins., type: info }
+              - { label: OAuth Authentication, description: Use external accounts to log in., type: info }
+              - { label: LDAP Authentication, description: Use LDAP credentials to log in., type: info }
+              - { label: Unsplash Image Library, description: Find free high-resolution images from Unsplash., type: info, action_label: Generate an Access Key }
+              - { label: Geolocation, description: Geolocate your partners., type: info }
+              - { label: reCAPTCHA, description: Protect your forms from spam and abuse., type: info }
+              - { label: Cloudflare Turnstile, description: Protect your forms from spam and abuse., type: info }
+              - { label: Google Address Autocomplete, description: Autocomplete partner addresses with Google Places., type: info }
+          - title: Developer Tools
+            fields:
+              - { label: Developer Mode, description: Activate the developer mode., type: info }
+              - { label: Developer Mode with Assets, description: Activate the developer mode with assets., type: info }
+              - { label: Developer Mode with Tests Assets, description: Activate the developer mode with tests assets., type: info }
+          - title: About
+            fields:
+              - { label: Odoo Version, description: View the application version and license information., type: info }
+      - id: crm
+        label: CRM
+        icon: analytics
+        sections:
+          - title: CRM
+            fields:
+              - { field: use_recurring_revenues, label: Recurring Revenues, description: Define recurring plans and revenues on Opportunities., type: checkbox, action_label: Manage Recurring Plans }
+              - { field: use_leads, label: Leads, description: Add a qualification step before the creation of an opportunity., type: checkbox }
+              - { field: use_multi_sales_teams, label: Multi Teams, description: Assign salespersons into multiple Sales Teams., type: checkbox }
+              - { field: use_ringover, label: Ringover VOIP Phone, description: Make and receive calls from Core3 with Ringover's dialer. Track calls, SMS messages, and AI-powered transcripts., type: checkbox, action_label: Install Extension }
+              - { field: use_memberships, label: Membership / Partnership, description: Manage members or partners. Members get grades and pricelists; partners allow lead assignment and commission plans., type: checkbox }
+              - { field: use_predictive_lead_scoring, label: Predictive Lead Scoring, description: Compute the success rate from Stage, State, Country, Phone Quality, Email Quality, Source, Language, and Tags., type: checkbox, action_label: Update Probabilities }
+              - { field: use_rule_based_assignment, label: Rule-Based Assignment, description: Periodically assign leads based on priorities and filters., type: checkbox }
+          - title: Lead Generation
+            fields:
+              - { field: lead_enrichment_mode, label: Lead Enrichment, description: Enrich your leads with company data based on their email addresses., type: select, options: [{ value: disabled, label: Disabled }, { value: on_demand, label: Enrich leads on demand only }, { value: automatic, label: Enrich all leads automatically }], action_label: Manage Service & Buy Credits }
+              - { field: use_lead_mining, label: Lead Mining, description: Generate new leads based on their country, industry, size, and other criteria., type: checkbox, action_label: Manage Service & Buy Credits }
+              - { field: use_lead_generation, label: Lead Generation, description: Generate and qualify leads from configured sources., type: checkbox }
+              - { field: use_website_visits_to_leads, label: Visits to Leads, description: Convert visitors of your website into leads and enrich them based on their IP address., type: checkbox }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        sections:
+          - title: Calendar Settings
+            fields:
+              - { label: Outlook Calendar, description: Synchronize your calendar with Outlook., type: info, action_label: Configure Outlook Calendar }
+              - { label: Google Calendar, description: Synchronize your calendar with Google Calendar., type: info, action_label: Configure Google Calendar }
+
+actions:
+  - id: save_crm_settings
+    type: client
+    permission: crm.manage
+    script: |
+      async ({ row, request }) => {
+        await request('/api/actions/crm.settings.update', {
+          method: 'POST',
+          body: {
+            id: row.id,
+            use_recurring_revenues: row.use_recurring_revenues,
+            use_leads: row.use_leads,
+            use_multi_sales_teams: row.use_multi_sales_teams,
+            use_ringover: row.use_ringover,
+            use_memberships: row.use_memberships,
+            use_predictive_lead_scoring: row.use_predictive_lead_scoring,
+            use_rule_based_assignment: row.use_rule_based_assignment,
+            use_lead_generation: row.use_lead_generation,
+            lead_enrichment_mode: row.lead_enrichment_mode,
+            use_lead_mining: row.use_lead_mining,
+            use_website_visits_to_leads: row.use_website_visits_to_leads,
+          },
+        });
+      }
