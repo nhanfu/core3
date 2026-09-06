@@ -60,6 +60,22 @@ export class SettingsView extends BaseComponent {
     root.appendChild(body);
     container.appendChild(root);
 
+    let query = '';
+
+    const applySearch = () => {
+      const normalized = query.trim().toLowerCase();
+      content.querySelectorAll<HTMLElement>('.o-settings-section').forEach(section => {
+        const sectionMatch = Boolean(normalized && section.dataset.searchText?.includes(normalized));
+        let visibleCards = 0;
+        section.querySelectorAll<HTMLElement>('.o-settings-card').forEach(card => {
+          const matches = !normalized || sectionMatch || card.dataset.searchText?.includes(normalized);
+          card.hidden = !matches;
+          if (matches) visibleCards += 1;
+        });
+        section.hidden = Boolean(normalized && visibleCards === 0);
+      });
+    };
+
     const renderTab = (tab: SettingsTab) => {
       this.state.activeTab = tab.id;
       navigation.replaceChildren();
@@ -83,17 +99,26 @@ export class SettingsView extends BaseComponent {
 
       content.replaceChildren();
       for (const section of tab.sections || []) {
+        const sectionBlock = document.createElement('section');
+        sectionBlock.className = 'o-settings-section';
+        sectionBlock.dataset.searchText = (section.title || '').toLowerCase();
         if (section.title) {
           const heading = document.createElement('h2');
           heading.className = 'o-settings-section-title';
           heading.textContent = section.title;
-          content.appendChild(heading);
+          sectionBlock.appendChild(heading);
         }
         const grid = document.createElement('div');
         grid.className = 'o-settings-grid';
-        for (const field of section.fields || []) grid.appendChild(this.renderField(field));
-        content.appendChild(grid);
+        for (const field of section.fields || []) {
+          const card = this.renderField(field);
+          card.dataset.searchText = `${field.label} ${field.description || ''} ${field.action_label || ''}`.toLowerCase();
+          grid.appendChild(card);
+        }
+        sectionBlock.appendChild(grid);
+        content.appendChild(sectionBlock);
       }
+      applySearch();
     };
 
     save.addEventListener('click', async () => {
@@ -117,10 +142,15 @@ export class SettingsView extends BaseComponent {
       renderTab(tabs.find(tab => tab.id === this.state.activeTab) || tabs[0]);
     });
     search.addEventListener('input', () => {
-      const query = search.value.trim().toLowerCase();
-      content.querySelectorAll<HTMLElement>('.o-settings-card').forEach(card => {
-        card.hidden = Boolean(query && !card.textContent?.toLowerCase().includes(query));
-      });
+      query = search.value.trim().toLowerCase();
+      if (query) {
+        const matchingTab = tabs.find(tab => tab.sections.some(section => {
+          const text = `${section.title || ''} ${(section.fields || []).map(field => `${field.label} ${field.description || ''} ${field.action_label || ''}`).join(' ')}`.toLowerCase();
+          return text.includes(query);
+        }));
+        if (matchingTab && matchingTab.id !== this.state.activeTab) renderTab(matchingTab);
+      }
+      applySearch();
     });
     renderTab(tabs.find(tab => tab.id === this.state.activeTab) || tabs[0]);
   }
