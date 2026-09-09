@@ -1,0 +1,14 @@
+title: Detailed Answer
+page: { id: survey-detailed-answer-detail, route: /surveys/detailed-answer-detail, breadcrumb: [Marketing, Surveys, Questions & Answers, Detailed Answers, Answer], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_detailed_answer_detail
+    title_field: question_text
+    subtitle_field: survey_name
+    editable: false
+    group_columns: 2
+    groups:
+      - title: Answer
+        fields: [{ field: survey_name, label: Survey }, { field: question_text, label: Question }, { field: answer_type, label: Answer Type }, { field: answer_value, label: Answer }, { field: answer_state, label: Answer State }, { field: score, label: Score }]
+      - title: Submission
+        fields: [{ field: participant_id, label: Participant }, { field: submitted_at, label: Submitted at }]

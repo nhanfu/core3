@@ -16,4 +16,12 @@ components:
       - { field: submitted_at, label: Date }
     page_size: 50
     row_key: id
+    row_open_action: view_survey_detailed_answer
+    row_double_click_action: view_survey_detailed_answer
     empty_state: { title: No detailed answers, description: Detailed answer lines appear after participants submit responses. }
+actions:
+  - id: view_survey_detailed_answer
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/detailed-answer-detail
+    params: { id: '{row.id}' }

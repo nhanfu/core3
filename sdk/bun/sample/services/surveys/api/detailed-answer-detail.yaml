@@ -1,0 +1,6 @@
+page: { id: survey-detailed-answer-detail }
+datasources:
+  - id: survey_detailed_answer_detail
+    single: true
+    permission: surveys.read
+    query: "SELECT id, row_version, participant_id, survey_name, question_text, answer_type, answer_value, CASE WHEN skipped THEN 'Skipped' ELSE 'Answered' END AS answer_state, score, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_detailed_answers WHERE id = :id"
