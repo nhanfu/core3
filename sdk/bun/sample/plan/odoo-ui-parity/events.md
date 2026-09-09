@@ -338,6 +338,14 @@ event fields. An authenticated mobile check updated `EVT/2026/0004` to
 requests or horizontal overflow; evidence is
 `/tmp/core3-events-mobile-detail-edited.png`.
 
+The Attendees list now matches the Odoo row-menu workflow with permissioned
+Mark attended and Cancel registration actions. An authenticated desktop check
+marked `Taylor Kim` as Attended through the row menu, confirmed the refreshed
+state, and found no unexpected failed requests; the desktop evidence is
+`/tmp/core3-events-desktop-attendee-attended.png`. A 390x844 mobile check
+rendered all three rows with no horizontal overflow or unexpected failures;
+the evidence is `/tmp/core3-events-mobile-attendees.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
