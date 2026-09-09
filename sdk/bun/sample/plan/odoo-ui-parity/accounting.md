@@ -84,6 +84,16 @@ Cash Roundings are not exposed as standalone menus in this installed
 Community/demo build; those two routes are documented fixture coverage for the
 Accounting model surfaces. The existing Base currency screen remains unchanged.
 
+## Current batch: API boundary extraction
+
+Payments and Journal Entries now bind their list datasources and create-payment/
+create-entry server forms from convention-discovered fragments under
+`services/accounting/api/`, keyed by `page.id`; their page YAML contains only
+layout and action references. Authenticated Chrome verification at 1440x900 and
+390x844 confirmed populated lists, New payment/New journal entry dialogs, zero
+unexpected responses, and no page-level horizontal overflow. Captures are
+temporary under `/tmp/core3-accounting-api-*.png` and are not repository assets.
+
 ## Current batch: document forms and payment workflow
 
 The next parity batch adds the shared OdooFormView workflow for invoices,

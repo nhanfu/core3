@@ -364,12 +364,14 @@
 .o-list-table-viewport { min-height: 0; width: 100%; flex: 1; overflow: auto; background: var(--o-list-bg); }
 .o-list-view-body-scroll .o-list-content { flex: 0 0 auto; }
 .o-list-view-body-scroll,
-.o-list-view-body-scroll .o-list-content,
-.o-list-view-body-scroll .o-list-table-viewport { overflow: visible !important; }
+.o-list-view-body-scroll .o-list-content { overflow-x: hidden !important; overflow-y: visible !important; }
 .o-list-view-body-scroll .o-list-table-viewport {
   width: 0;
   flex: 1 1 0%;
   min-width: 0;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
 }
 .o-list-view-body-scroll .o-list-table thead { position: static; }
 .o-list-content { position: relative; display: flex; min-width: 0; min-height: 0; flex: 1; }
