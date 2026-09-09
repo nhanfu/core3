@@ -291,6 +291,13 @@ disposable reference has authenticated desktop/mobile captures for every
 currently visible top-level action. Implementation acceptance remains open for
 the complete detail/report surface and the Core3 browser checks below.
 
+The first implementation batch adds Core3 routes for Attendees, Event Templates,
+Event Stages, Event Tags Categories, Event Questions, Events Settings, and the
+Registration Desk. Authenticated desktop/mobile checks against deterministic
+fixtures show seeded records or settings, zero unexpected failed requests, and
+no page-level horizontal overflow. Captures are temporary under
+`/tmp/core3-events-{desktop,mobile}-*.png` and are not committed.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
