@@ -22,8 +22,20 @@ menu:
           label: Expenses to Process
           icon: checklist
           permission: expenses.read
+        - path: /expenses/employee
+          label: Employee Expenses
+          icon: people
+          permission: expenses.read
       children:
         - path: /expense-analysis
           label: Expense Analysis
           icon: chart
+          permission: expenses.read
+        - path: /expenses/categories
+          label: Expense Categories
+          icon: folder
+          permission: expenses.read
+        - path: /expenses/settings
+          label: Settings
+          icon: settings
           permission: expenses.read

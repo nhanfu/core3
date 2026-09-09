@@ -1,0 +1,18 @@
+page: { id: expenses-settings }
+datasources:
+  - id: expenses_settings
+    single: true
+    permission: expenses.read
+    query: "SELECT id, incoming_email, reimburse_in_payslip, digitalization_ocr, expense_card, employee_journal, company_payment_methods FROM expense_settings WHERE id = 'expenses-settings'"
+actions:
+  - id: save_expenses_settings
+    type: server_form
+    permission: expenses.write
+    title: Save Expenses Settings
+    action: expenses.settings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [expenses_settings]
+    mutation: { operation: update, table: expense_settings, key_field: id, fields: [incoming_email, reimburse_in_payslip, digitalization_ocr, expense_card, employee_journal, company_payment_methods], required: [id], result: { query: "SELECT * FROM expense_settings WHERE id = :id" } }
+    fields: [{ field: incoming_email, label: Incoming Emails, type: checkbox }, { field: reimburse_in_payslip, label: Reimburse in Payslip, type: checkbox }, { field: digitalization_ocr, label: Expense Digitalization (OCR), type: checkbox }, { field: expense_card, label: Expense Card, type: checkbox }, { field: employee_journal, label: Employee Expense Journal, type: text }, { field: company_payment_methods, label: Company-paid Payment Methods, type: text }]

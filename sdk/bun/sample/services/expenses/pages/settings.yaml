@@ -1,0 +1,24 @@
+title: Expenses Settings
+page: { id: expenses-settings, route: /expenses/settings, breadcrumb: [Expenses, Configuration, Settings], auth: { require: [expenses.read] } }
+components:
+  - type: SettingsView
+    id: expenses-settings-view
+    source: expenses_settings
+    title: Settings
+    save_action: save_expenses_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: expenses
+        label: Expenses
+        icon: receipt
+        sections:
+          - title: Expense Management
+            fields:
+              - { field: incoming_email, label: Incoming Emails, description: Create expenses from incoming email aliases., type: checkbox }
+              - { field: reimburse_in_payslip, label: Reimburse in Payslip, description: Include approved expenses in employee payslips., type: checkbox }
+              - { field: digitalization_ocr, label: Expense Digitalization, description: Extract expense data from uploaded receipts., type: checkbox }
+          - title: Payments
+            fields:
+              - { field: expense_card, label: Expense Card, description: Allow company expense cards when the optional module is enabled., type: checkbox }
+              - { field: employee_journal, label: Employee Expense Journal, description: Journal used for company-paid employee expenses., type: text }
+              - { field: company_payment_methods, label: Company-paid Payment Methods, description: Payment methods available for company-paid expenses., type: text }

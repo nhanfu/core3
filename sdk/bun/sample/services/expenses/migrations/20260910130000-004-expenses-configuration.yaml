@@ -1,0 +1,34 @@
+version: 20260910130000
+description: Expense categories and settings parity fixtures
+up:
+  - sql: |
+      CREATE TABLE IF NOT EXISTS expense_categories (
+        id VARCHAR PRIMARY KEY,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        name VARCHAR NOT NULL,
+        cost_method VARCHAR NOT NULL DEFAULT 'fixed',
+        unit_cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        reference VARCHAR,
+        guideline VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS expense_settings (
+        id VARCHAR PRIMARY KEY,
+        incoming_email BOOLEAN NOT NULL DEFAULT true,
+        reimburse_in_payslip BOOLEAN NOT NULL DEFAULT false,
+        digitalization_ocr BOOLEAN NOT NULL DEFAULT true,
+        expense_card BOOLEAN NOT NULL DEFAULT false,
+        employee_journal VARCHAR NOT NULL DEFAULT 'Employee Expenses',
+        company_payment_methods VARCHAR NOT NULL DEFAULT 'Company, Employee'
+      );
+      INSERT INTO expense_categories(id, name, cost_method, unit_cost, reference, guideline) VALUES
+        ('expense-category-meals', 'Meals', 'fixed', 0, 'MEAL', 'Business meals and refreshments'),
+        ('expense-category-mileage', 'Mileage', 'quantity', 0.70, 'MILE', 'Mileage reimbursed per kilometer'),
+        ('expense-category-travel', 'Travel & Accommodation', 'fixed', 0, 'TRAVEL', 'Flights, hotels, and ground transport'),
+        ('expense-category-other', 'Other', 'fixed', 0, 'OTHER', 'Other reimbursable expenses')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO expense_settings(id) VALUES ('expenses-settings') ON CONFLICT (id) DO NOTHING;
+down:
+  - sql: |
+      DROP TABLE IF EXISTS expense_settings;
+      DROP TABLE IF EXISTS expense_categories;

@@ -1,0 +1,13 @@
+page: { id: expenses-employee }
+datasources:
+  - id: expenses_employee
+    single: false
+    permission: expenses.read
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
+        CAST(e.expense_date AS VARCHAR) AS expense_date,
+        printf('$%,.2f', e.amount) AS amount_display, e.payment_method AS payment_mode,
+        e.company_name, e.department_name, e.state AS status
+      FROM expenses e
+      WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+      ORDER BY e.expense_date DESC, e.id

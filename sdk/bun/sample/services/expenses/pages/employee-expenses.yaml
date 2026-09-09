@@ -1,0 +1,26 @@
+title: Employee Expenses
+page: { id: expenses-employee, route: /expenses/employee, breadcrumb: [Expenses, Employee Expenses], auth: { require: [expenses.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: expenses_employee
+    search: { label: Search employee expenses, placeholder: 'Search expense, employee, or category...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: employee_name, card: { title: name, subtitle: employee_name, fields: [{ field: category, label: Category }, { field: amount_display, label: Total }, { field: status, label: Status }] } }
+    columns:
+      - { field: name, label: Expense, type: PrimaryEntityCell, sortable: true }
+      - { field: employee_name, label: Employee }
+      - { field: category, label: Category }
+      - { field: expense_date, label: Expense Date, sortable: true }
+      - { field: amount_display, label: Total, align: right }
+      - { field: company_name, label: Company, optional: hide }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 25
+    selectable: true
+    column_chooser: true
+    row_key: id
+    row_double_click_action: view_expense_detail
+actions:
+  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }

@@ -1,0 +1,5 @@
+page: { id: expense-categories }
+datasources:
+  - id: expense_categories
+    permission: expenses.read
+    query: "SELECT id, row_version, name, cost_method, unit_cost, reference, guideline, active FROM expense_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR reference ILIKE '%' || :q || '%') ORDER BY name"

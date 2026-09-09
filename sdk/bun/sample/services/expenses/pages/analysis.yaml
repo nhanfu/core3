@@ -1,5 +1,5 @@
 title: Expense Analysis
-page: { id: expense-analysis, breadcrumb: [Finance, Expenses, Analysis], auth: { require: [expenses.read] } }
+page: { id: expense-analysis, route: /expenses/analysis, breadcrumb: [Finance, Expenses, Analysis], auth: { require: [expenses.read] } }
 datasources:
   - id: expense_analysis_totals
     single: true
