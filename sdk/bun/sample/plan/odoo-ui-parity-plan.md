@@ -30,13 +30,13 @@ outside this local parity plan.
 | --- | --- | --- | --- | --- |
 | base | contacts, base | available | `odoo-ui-parity/base-contacts.md` | ready |
 | chat | mail | available | `odoo-ui-parity/chat.md` | ready |
-| crm | crm | available | `odoo-ui-parity/crm.md` | planned |
+| crm | crm | available | `odoo-ui-parity/crm.md` | ready |
 | order | sale_management | available | `odoo-ui-parity/sales.md` | ready |
 | point-of-sale | point_of_sale | available | `odoo-ui-parity/point-of-sale.md` | in-progress |
 | sale-subscription | sale_subscription | unavailable in supplied source | `odoo-ui-parity/subscriptions.md` | planned |
 | sale-renting | sale_renting | unavailable in supplied source | `odoo-ui-parity/rental.md` | planned |
 | accounting | account | available | `odoo-ui-parity/accounting.md` | in-progress |
-| expenses | hr_expense | available | `odoo-ui-parity/expenses.md` | planned |
+| expenses | hr_expense | available | `odoo-ui-parity/expenses.md` | ready |
 | documents | documents | unavailable in supplied source | `odoo-ui-parity/documents.md` | planned |
 | approvals | approvals | unavailable in supplied source | `odoo-ui-parity/approvals.md` | planned |
 | spreadsheet | spreadsheet | available | `odoo-ui-parity/spreadsheet.md` | planned |
