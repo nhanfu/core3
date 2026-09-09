@@ -22,7 +22,7 @@ frontend code is not copied.
 | point-of-sale | point_of_sale | available | `odoo-ui-parity/point-of-sale.md` | in-progress |
 | sale-subscription | sale_subscription | unavailable in supplied source | `odoo-ui-parity/subscriptions.md` | planned |
 | sale-renting | sale_renting | unavailable in supplied source | `odoo-ui-parity/rental.md` | planned |
-| accounting | account | available | `odoo-ui-parity/accounting.md` | planned |
+| accounting | account | available | `odoo-ui-parity/accounting.md` | in-progress |
 | expenses | hr_expense | available | `odoo-ui-parity/expenses.md` | planned |
 | documents | documents | unavailable in supplied source | `odoo-ui-parity/documents.md` | planned |
 | approvals | approvals | unavailable in supplied source | `odoo-ui-parity/approvals.md` | planned |
