@@ -1,0 +1,25 @@
+page: { id: time-off-dashboard }
+
+datasources:
+  - id: time_off_dashboard_totals
+    single: true
+    permission: time_off.read
+    query: |
+      SELECT
+        COUNT(*) AS request_count,
+        COALESCE(SUM(days) FILTER (WHERE state = 'Approved'), 0) AS approved_days,
+        COUNT(*) FILTER (WHERE state = 'Submitted') AS pending_count,
+        COALESCE(SUM(days) FILTER (WHERE state IN ('Approved', 'Submitted')), 0) AS available_days
+      FROM leave_requests
+
+  - id: time_off_dashboard_requests
+    single: false
+    permission: time_off.read
+    query: |
+      SELECT r.id, r.row_version, r.name, r.employee_name, r.leave_type_name,
+        CAST(r.date_from AS VARCHAR) AS date_from,
+        CAST(r.date_to AS VARCHAR) AS date_to,
+        r.days, r.reason, r.approver, r.state
+      FROM leave_requests r
+      WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%')
+      ORDER BY r.date_from

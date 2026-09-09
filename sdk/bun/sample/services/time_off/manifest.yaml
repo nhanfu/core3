@@ -6,7 +6,7 @@ permissions: permissions.yaml
 storage: storage.yaml
 menu:
   time_off:
-    path: /leave-requests
+    path: /time-off
     label: Time Off
     icon: calendar
     permission: time_off.read

@@ -1,0 +1,58 @@
+title: Time Off
+page:
+  id: time-off-dashboard
+  route: /time-off
+  breadcrumb: [Human Resources, Time Off]
+  auth: { require: [time_off.read] }
+
+toolbar:
+  - { id: dashboard_new_request, label: New, action: dashboard_new_request, permission: time_off.write, variant: primary }
+
+components:
+  - type: StatRow
+    source: time_off_dashboard_totals
+    title: Time Off overview
+    stats:
+      - { field: available_days, label: Available days }
+      - { field: approved_days, label: Approved days }
+      - { field: pending_count, label: Pending requests }
+      - { field: request_count, label: Total requests }
+
+  - type: ListView
+    variant: odoo
+    source: time_off_dashboard_requests
+    search: { label: Search time off, placeholder: Search employee or request... }
+    view_navigation: tabs
+    views:
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: employee_name }
+      - id: list
+        label: List
+        icon: table
+    columns:
+      - { field: name, label: Request, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: date_from, label: Start }
+      - { field: date_to, label: End }
+      - { field: days, label: Duration, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: dashboard_open_request
+
+actions:
+  - id: dashboard_new_request
+    type: navigate
+    permission: time_off.write
+    navigate_to: /leave-requests
+
+  - id: dashboard_open_request
+    type: navigate
+    permission: time_off.read
+    navigate_to: /leave-request-detail
+    params: { id: '{row.id}' }
