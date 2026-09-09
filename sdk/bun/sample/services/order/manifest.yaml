@@ -8,41 +8,74 @@ storage: storage.yaml
 menu:
   dashboard:
     path: /order
-    label: Orders
+    label: Sales
     icon: logo
     permission: orders.read
   groups:
-    - id: products-pricing
-      label: Products & Pricing
+    - id: orders
+      label: Orders
       items:
-        - path: /customers
+        - path: /order/quotations
+          label: Quotations
+          icon: document
+          permission: orders.read
+        - path: /order/sales-orders
+          label: Orders
+          icon: document
+          permission: orders.read
+        - path: /order/customers
           label: Customers
           icon: users
           permission: orders.read
-        - path: /products
+    - id: to-invoice
+      label: To Invoice
+      items:
+        - path: /order/to-invoice
+          label: Orders to Invoice
+          icon: invoice
+          permission: orders.read
+    - id: products
+      label: Products
+      items:
+        - path: /order/products
           label: Products
           icon: cube
           permission: orders.read
-        - path: /pricelists
+        - path: /order/pricelists
           label: Pricelists
           icon: tag
           permission: orders.read
-        - path: /pricelist-rules
-          label: Pricelist Rules
-          icon: sliders
+    - id: reporting
+      label: Reporting
+      items:
+        - path: /order/reporting/sales
+          label: Sales
+          icon: chart
           permission: orders.read
-        - path: /payment-terms
+        - path: /order/reporting/salespersons
+          label: Salespersons
+          icon: users
+          permission: orders.read
+        - path: /order/reporting/products
+          label: Products
+          icon: cube
+          permission: orders.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /order/payment-terms
           label: Payment Terms
           icon: calendar
           permission: orders.read
-    - id: reporting-billing
-      label: Reporting & Billing
-      items:
-        - path: /analytics
-          label: Analytics
-          icon: chart
+        - path: /order/pricelist-rules
+          label: Pricelist Rules
+          icon: sliders
           permission: orders.read
-        - path: /invoices
+        - path: /order/invoices
           label: Invoices
           icon: document
+          permission: orders.read
+        - path: /order/analytics
+          label: Legacy Analytics
+          icon: chart
           permission: orders.read

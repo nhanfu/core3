@@ -1,0 +1,35 @@
+title: Orders to Invoice
+page: { id: sale-to-invoice, route: /order/to-invoice, breadcrumb: [Sales, To Invoice, Orders to Invoice], auth: { require: [orders.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_orders_to_invoice
+    search: { label: Search orders, placeholder: Search order number or customer... }
+    group_by:
+      - { field: salesperson_name, label: Salesperson }
+      - { field: customer_name, label: Customer }
+    columns:
+      - { field: order_number, label: Number, type: PrimaryEntityCell, sortable: true }
+      - { field: order_date, label: Order date, sortable: true }
+      - { field: customer_name, label: Customer }
+      - { field: salesperson_name, label: Salesperson }
+      - { field: invoice_status, label: Invoice status, type: StatusChip,
+          colors: { 'To invoice': amber, Invoiced: green } }
+      - { field: total_amount_display, label: Total, align: right }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_to_invoice_order
+    row_double_click_action: view_to_invoice_order
+    row_actions: menu
+    form_view: { page: apps/services/order/pages/order-detail.yaml, side_panel: true }
+    empty_state:
+      title: No orders to invoice
+      description: Confirmed orders with deliveries appear here when ready to bill.
+
+actions:
+  - id: view_to_invoice_order
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/detail
+    params: { id: '{row.id}' }

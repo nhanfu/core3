@@ -1,0 +1,23 @@
+version: 0.0.12
+
+type:
+  postgres:
+    up: |
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS salesperson_name VARCHAR;
+      UPDATE orders SET salesperson_name = CASE
+        WHEN created_by = 'Dispatcher User' THEN 'Sarah Johnson'
+        ELSE 'Mitchell Admin'
+      END
+      WHERE salesperson_name IS NULL;
+      INSERT INTO sale_products(id, default_code, name, product_type, list_price, cost_price, uom, category, description)
+      VALUES
+        ('product-demo-004', 'LAPTOP-01', 'Laptop Pro 15"', 'Goods', 1299, 850, 'Units', 'Electronics', 'High-performance laptop'),
+        ('product-demo-005', 'DESK-01', 'Office Desk', 'Goods', 350, 180, 'Units', 'Furniture', 'Adjustable office desk'),
+        ('product-demo-006', 'SUPPORT-01', 'Technical Support', 'Service', 95, 40, 'Hours', 'Services', 'On-site or remote technical support')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM sale_products WHERE id IN ('product-demo-004', 'product-demo-005', 'product-demo-006');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

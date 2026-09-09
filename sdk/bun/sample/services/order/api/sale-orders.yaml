@@ -1,0 +1,36 @@
+page: { id: sale-orders }
+datasources:
+  - id: sale_orders
+    single: false
+    permission: orders.read
+    query: |
+      SELECT o.id, o.row_version, o.order_number, o.customer_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
+        CAST(o.total_amount AS DOUBLE) AS total_amount,
+        printf('$%,.2f', CAST(o.total_amount AS DOUBLE)) AS total_amount_display,
+        CASE
+          WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id AND i.state = 'Posted') THEN 'Invoiced'
+          WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id) THEN 'To invoice'
+          ELSE COALESCE(o.invoice_status, 'Nothing to invoice')
+        END AS invoice_status
+      FROM orders o
+      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) = 'Approved'
+        AND (:q IS NULL OR o.order_number ILIKE '%' || :q || '%' OR o.customer_name ILIKE '%' || :q || '%')
+        AND (:invoice_status IS NULL OR
+          CASE
+            WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id AND i.state = 'Posted') THEN 'Invoiced'
+            WHEN EXISTS (SELECT 1 FROM sale_invoices i WHERE i.order_id = o.id) THEN 'To invoice'
+            ELSE COALESCE(o.invoice_status, 'Nothing to invoice')
+          END = :invoice_status)
+        AND (:view_scope = 'all' OR o.branch_id = :current_branch_id)
+      ORDER BY o.order_date DESC
+  - id: sale_invoice_status_groups
+    single: false
+    permission: orders.read
+    query: |
+      SELECT value, label FROM (VALUES
+        ('To invoice', 'To invoice'),
+        ('Invoiced', 'Invoiced'),
+        ('Nothing to invoice', 'Nothing to invoice')
+      ) t(value, label)

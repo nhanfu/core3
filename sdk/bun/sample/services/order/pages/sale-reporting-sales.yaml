@@ -1,0 +1,69 @@
+title: Sales Analysis
+page: { id: sale-reporting-sales, route: /order/reporting/sales, breadcrumb: [Sales, Reporting, Sales], auth: { require: [orders.read] } }
+datasources:
+  - id: sale_report
+    single: false
+    permission: orders.read
+    query: |
+      SELECT o.order_number, o.customer_name,
+        COALESCE(o.salesperson_name, o.created_by) AS salesperson_name,
+        CAST(o.order_date AS VARCHAR) AS order_date,
+        CAST(strftime(o.order_date, '%Y-%m') AS VARCHAR) AS order_month,
+        COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) AS status,
+        CAST(o.total_amount AS DOUBLE) AS total_amount,
+        ol.description AS product_name,
+        CAST(ol.quantity AS DOUBLE) AS quantity,
+        CAST(ol.unit_price AS DOUBLE) AS unit_price,
+        CAST(ol.line_total AS DOUBLE) AS line_total
+      FROM orders o
+      LEFT JOIN order_lines ol ON ol.order_id = o.id
+      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Approved', 'Pending Approval')
+      ORDER BY o.order_date DESC
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_report
+    search: { label: Search, placeholder: Search by customer or salesperson... }
+    group_by:
+      - { field: salesperson_name, label: Salesperson }
+      - { field: customer_name, label: Customer }
+      - { field: order_month, label: Month }
+      - { field: status, label: Status }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: salesperson_name
+        measure_field: line_total
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: salesperson_name, column: Salesperson }
+            - { field: customer_name, column: Customer }
+            - { field: product_name, column: Product }
+            - { field: order_month, column: Month }
+            - { field: line_total, column: Revenue }
+            - { field: quantity, column: Qty }
+          default:
+            rows: [salesperson_name]
+            columns: [order_month]
+            measures:
+              - { field: line_total, aggregate: sum, column: Revenue }
+              - { field: quantity, aggregate: sum, column: Qty }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: order_number, label: Number, type: PrimaryEntityCell }
+      - { field: order_date, label: Date }
+      - { field: customer_name, label: Customer }
+      - { field: salesperson_name, label: Salesperson }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Qty, align: right }
+      - { field: unit_price, label: Unit price, align: right }
+      - { field: line_total, label: Revenue, align: right }
+      - { field: status, label: Status, type: StatusChip,
+          colors: { Approved: green, 'Pending Approval': amber } }
+    page_size: 80
+    row_key: order_number

@@ -1,6 +1,7 @@
 title: Order analytics
 page:
   id: order-analytics
+  route: /order/analytics
   breadcrumb: [Management, Orders, Analytics]
   auth:
     require: [orders.read]

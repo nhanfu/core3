@@ -1,5 +1,5 @@
 title: Products
-page: { id: sale-products, breadcrumb: [Sales, Products], auth: { require: [orders.read] } }
+page: { id: sale-products, route: /order/products, breadcrumb: [Sales, Products], auth: { require: [orders.read] } }
 components:
   - type: ListView
     variant: odoo

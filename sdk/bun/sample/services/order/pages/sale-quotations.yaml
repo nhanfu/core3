@@ -1,5 +1,5 @@
 title: Quotations
-page: { id: sale-quotations, breadcrumb: [Sales, Quotations], auth: { require: [orders.read] } }
+page: { id: sale-quotations, route: /order/quotations, breadcrumb: [Sales, Quotations], auth: { require: [orders.read] } }
 components:
   - type: ListView
     variant: odoo

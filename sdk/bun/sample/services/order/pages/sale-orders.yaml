@@ -1,0 +1,79 @@
+title: Sales Orders
+page: { id: sale-orders, route: /order/sales-orders, breadcrumb: [Sales, Orders], auth: { require: [orders.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_orders
+    create_label: New
+    search: { label: Search orders, placeholder: Search order number or customer... }
+    filters:
+      - field: invoice_status
+        label: Invoice status
+        placeholder: All
+        options:
+          - { id: To invoice, label: To invoice }
+          - { id: Invoiced, label: Fully invoiced }
+          - { id: Nothing to invoice, label: Nothing to invoice }
+    group_by:
+      - { field: salesperson_name, label: Salesperson }
+      - { field: invoice_status, label: Invoice status }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: invoice_status
+        groups_source: sale_invoice_status_groups
+        card:
+          title: order_number
+          subtitle: customer_name
+          fields:
+            - { field: order_date, label: Order date }
+            - { field: salesperson_name, label: Salesperson }
+            - { field: total_amount_display, label: Total }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: salesperson_name
+        measure_field: total_amount
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: salesperson_name, column: Salesperson }
+            - { field: customer_name, column: Customer }
+            - { field: invoice_status, column: Invoice status }
+            - { field: order_date, column: Order date, type: date }
+            - { field: total_amount, column: Total }
+          default:
+            rows: [salesperson_name]
+            columns: [invoice_status]
+            measures:
+              - { field: total_amount, aggregate: sum, column: Amount }
+    columns:
+      - { field: order_number, label: Number, type: PrimaryEntityCell, sortable: true }
+      - { field: order_date, label: Order date, sortable: true }
+      - { field: customer_name, label: Customer }
+      - { field: salesperson_name, label: Salesperson }
+      - { field: total_amount_display, label: Total, align: right }
+      - { field: invoice_status, label: Invoice status, type: StatusChip,
+          colors: { 'To invoice': amber, Invoiced: green, 'Nothing to invoice': neutral } }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_sale_order
+    row_double_click_action: view_sale_order
+    row_actions: menu
+    form_view: { page: apps/services/order/pages/order-detail.yaml, side_panel: true }
+    empty_state:
+      title: No sales orders
+      description: Confirmed quotations appear here.
+
+actions:
+  - id: view_sale_order
+    type: navigate
+    permission: orders.read
+    navigate_to: /order/detail
+    params: { id: '{row.id}' }

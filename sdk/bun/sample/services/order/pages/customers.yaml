@@ -1,5 +1,5 @@
 title: Customers
-page: { id: customers, breadcrumb: [Sales, Customers], auth: { require: [orders.read] } }
+page: { id: customers, route: /order/customers, breadcrumb: [Sales, Customers], auth: { require: [orders.read] } }
 components:
   - type: ListView
     variant: odoo

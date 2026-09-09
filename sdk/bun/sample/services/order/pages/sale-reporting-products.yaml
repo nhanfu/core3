@@ -1,0 +1,60 @@
+title: Products Reporting
+page: { id: sale-reporting-products, route: /order/reporting/products, breadcrumb: [Sales, Reporting, Products], auth: { require: [orders.read] } }
+datasources:
+  - id: sale_report_products
+    single: false
+    permission: orders.read
+    query: |
+      SELECT
+        COALESCE(ol.description, 'Other') AS product_name,
+        COALESCE(sp.category, 'Uncategorised') AS category,
+        CAST(SUM(ol.quantity) AS DOUBLE) AS qty_sold,
+        CAST(SUM(ol.line_total) AS DOUBLE) AS total_revenue,
+        printf('$%,.2f', CAST(SUM(ol.line_total) AS DOUBLE)) AS total_revenue_display,
+        CAST(AVG(ol.unit_price) AS DOUBLE) AS avg_price,
+        printf('$%,.2f', CAST(AVG(ol.unit_price) AS DOUBLE)) AS avg_price_display
+      FROM order_lines ol
+      JOIN orders o ON o.id = ol.order_id
+      LEFT JOIN sale_products sp ON sp.name = ol.description
+      WHERE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status) IN ('Approved', 'Pending Approval')
+      GROUP BY COALESCE(ol.description, 'Other'), COALESCE(sp.category, 'Uncategorised')
+      ORDER BY total_revenue DESC
+components:
+  - type: ListView
+    variant: odoo
+    source: sale_report_products
+    group_by:
+      - { field: category, label: Category }
+    view_navigation: tabs
+    views:
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: product_name
+        measure_field: total_revenue
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: product_name, column: Product }
+            - { field: category, column: Category }
+            - { field: qty_sold, column: Qty sold }
+            - { field: total_revenue, column: Revenue }
+          default:
+            rows: [product_name]
+            measures:
+              - { field: total_revenue, aggregate: sum, column: Revenue }
+              - { field: qty_sold, aggregate: sum, column: Qty }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: product_name, label: Product, type: PrimaryEntityCell }
+      - { field: category, label: Category }
+      - { field: qty_sold, label: Qty sold, align: right }
+      - { field: avg_price_display, label: Avg. price, align: right }
+      - { field: total_revenue_display, label: Revenue, align: right }
+    page_size: 50
+    row_key: product_name
+    empty_state:
+      title: No data
+      description: No confirmed orders with products found.
