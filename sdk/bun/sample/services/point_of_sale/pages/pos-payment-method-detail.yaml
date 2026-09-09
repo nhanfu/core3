@@ -10,8 +10,6 @@ components:
         fields:
           - { field: name, label: Payment method }
           - { field: journal, label: Journal }
+          - { field: company, label: Company }
+          - { field: point_of_sale, label: Point of Sale }
           - { field: state, label: Status }
-      - title: Payments
-        fields:
-          - { field: payment_count, label: Payments }
-          - { field: total, label: Total }
