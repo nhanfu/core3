@@ -65,6 +65,21 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(validPage())).not.toThrow();
   });
 
+  it('accepts backend mock data with named fixture states', () => {
+    const page = validPage() as any;
+    page.datasources[0] = {
+      id: 'orders',
+      permission: 'orders.read',
+      mock_data: {
+        default: [{ id: 'order-1', code: 'SO001' }],
+        states: { empty: [], filtered: [{ id: 'order-2', code: 'SO002' }] },
+      },
+    };
+    expect(() => validatePageDefinition(page)).not.toThrow();
+    page.datasources[0].query = 'SELECT id, code FROM orders';
+    expect(() => validatePageDefinition(page)).toThrow(/exactly one of query, data, mock_data, or workflow_states/);
+  });
+
   it('accepts the opt-in Odoo ListView contract and validates action references', () => {
     const page = validPage() as any;
     page.components = [{

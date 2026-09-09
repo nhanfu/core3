@@ -23,6 +23,10 @@ export type DatasourceDefinition = {
   enrich?: Record<string, unknown>;
   single?: boolean;
   data?: unknown;
+  mock_data?: {
+    default?: unknown;
+    states?: Record<string, unknown>;
+  };
   workflow?: string | WorkflowDefinition;
   workflow_states?: string;
   meta?: Record<string, unknown>;
@@ -91,7 +95,7 @@ const ROOT_KEYS = new Set([
 const PAGE_KEYS = new Set(['id', 'route', 'auth', 'breadcrumb']);
 const AUTH_KEYS = new Set(['require']);
 const SCOPE_KEYS = new Set(['label', 'value']);
-const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
+const DATASOURCE_KEYS = new Set(['id', 'type', 'single', 'permission', 'query', 'data', 'mock_data', 'meta', 'workflow', 'workflow_states', 'pivot', 'query_window', 'service', 'operation', 'service_params', 'enrich', 'limit_param']);
 const TOOLBAR_KEYS = new Set(['id', 'label', 'icon', 'variant', 'permission', 'action', 'show_if']);
 const FILTER_KEYS = new Set(['source', 'fields', 'all_label', 'clear_label']);
 const FILTER_FIELD_KEYS = new Set(['field', 'label', 'type', 'options', 'options_source', 'placeholder']);
@@ -312,9 +316,10 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     requireString(source.permission, `${path}.permission`, issues);
     const sourceKinds = options.allowExternalSources && source.data !== undefined
       ? 1
-      : [source.query, source.data, source.workflow_states, source.type === 'service' ? source.operation : undefined].filter(value => value !== undefined).length;
-    if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, or workflow_states`);
+      : [source.query, source.data, source.mock_data, source.workflow_states, source.type === 'service' ? source.operation : undefined].filter(value => value !== undefined).length;
+    if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, mock_data, or workflow_states`);
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
+    if (source.mock_data !== undefined) validateMockData(source.mock_data, `${path}.mock_data`, issues);
     if (source.type !== undefined && source.type !== 'local' && source.type !== 'service') issues.push(`${path}.type must be local or service`);
     if (source.type === 'service') {
       requireString(source.service, `${path}.service`, issues);
@@ -348,6 +353,19 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     if (source.workflow_states !== undefined) requireString(source.workflow_states, `${path}.workflow_states`, issues);
     if (typeof source.id === 'string') addUnique(ids, source.id, `${path}.id`, 'datasource', issues);
   });
+}
+
+function validateMockData(value: unknown, path: string, issues: string[]) {
+  requireRecord(value, path, issues);
+  if (!isRecord(value)) return;
+  rejectUnknownKeys(value, new Set(['default', 'states']), path, issues);
+  if (value.default === undefined && value.states === undefined) issues.push(`${path} must define default or states`);
+  if (value.states !== undefined) {
+    requireRecord(value.states, `${path}.states`, issues);
+    if (isRecord(value.states)) {
+      for (const key of Object.keys(value.states)) if (!key.trim()) issues.push(`${path}.states contains an empty state name`);
+    }
+  }
 }
 
 function validateQueryWindow(value: unknown, path: string, issues: string[]) {

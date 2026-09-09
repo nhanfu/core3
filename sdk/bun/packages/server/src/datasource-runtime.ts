@@ -3,7 +3,7 @@ import { resolveQueryWindow, type QueryWindowDefinition } from './database/query
 
 export const datasourceMethods = {
   querySource: async function(this: any,
-    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any },
+    source: { id?: string; type?: string; query?: string; single?: boolean; pivot?: any; query_window?: QueryWindowDefinition; service?: string; operation?: string; service_params?: Record<string, unknown>; enrich?: any; mock_data?: { default?: unknown; states?: Record<string, unknown> } },
     params: Record<string, any> = {},
     skip = 0,
     top = 25,
@@ -12,6 +12,7 @@ export const datasourceMethods = {
     pivot?: any,
   ): Promise<any> {
     if (source.type === 'service') return queryServiceSource.call(this, source, params, top);
+    if (source.mock_data !== undefined) return queryMockSource(source, params, skip, top);
     const bounds = source.query_window ? resolveQueryWindow(source.query_window, params) : undefined;
     const release = bounds && this.prepareQueryWindow
       ? await this.prepareQueryWindow(source.query_window, bounds)
@@ -24,6 +25,32 @@ export const datasourceMethods = {
     }
   },
 };
+
+function queryMockSource(
+  source: { id?: string; single?: boolean; mock_data?: { default?: unknown; states?: Record<string, unknown> } },
+  params: Record<string, any>,
+  skip: number,
+  top: number,
+): any {
+  const declaration = source.mock_data || {};
+  const requestedState = [params.mock_state, params.fixture_state, params.state]
+    .find((value) => typeof value === 'string' && value.trim() && declaration.states?.[value] !== undefined);
+  const fixture = requestedState === undefined ? declaration.default : declaration.states?.[String(requestedState)];
+  const wrapped = fixture && typeof fixture === 'object' && !Array.isArray(fixture) && 'data' in fixture
+    ? fixture as { data: unknown; meta?: Record<string, unknown> }
+    : undefined;
+  const value = wrapped ? wrapped.data : fixture;
+  if (source.single) {
+    const data = Array.isArray(value) ? value[0] || {} : value && typeof value === 'object' ? value : {};
+    return { data, meta: wrapped?.meta || {} };
+  }
+  const rows = Array.isArray(value) ? value : value === undefined || value === null ? [] : [value];
+  const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
+  const offset = Math.max(0, Number(skip) || 0);
+  const data = rows.slice(offset, offset + pageSize);
+  const total = Number(wrapped?.meta?.total ?? rows.length);
+  return { data, meta: { total, page: Math.floor(offset / pageSize) + 1, pageSize, pages: Math.ceil(total / pageSize), ...wrapped?.meta } };
+}
 
 async function querySourceInternal(this: any,
     source: { id?: string; query?: string; single?: boolean; pivot?: any },
