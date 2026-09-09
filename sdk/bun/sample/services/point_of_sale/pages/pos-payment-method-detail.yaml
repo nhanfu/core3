@@ -1,0 +1,17 @@
+title: POS Payment Method
+page: { id: pos-payment-method-detail, route: /point-of-sale/payment-method-detail, breadcrumb: [Sales, Point of Sale, Configuration, Payment Methods, Payment Method], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_payment_method_detail
+    title_field: name
+    group_columns: 2
+    groups:
+      - title: Payment Method
+        fields:
+          - { field: name, label: Payment method }
+          - { field: journal, label: Journal }
+          - { field: state, label: Status }
+      - title: Payments
+        fields:
+          - { field: payment_count, label: Payments }
+          - { field: total, label: Total }

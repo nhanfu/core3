@@ -3,3 +3,9 @@ datasources:
   - id: pos_payment_method_catalog
     permission: pos.read
     query: "SELECT method AS name, method AS journal, COUNT(*) AS payment_count, CAST(SUM(amount) AS DOUBLE) AS total, 'Active' AS state FROM pos_payments WHERE method IS NOT NULL GROUP BY method ORDER BY method"
+actions:
+  - id: view_pos_payment_method
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/payment-method-detail
+    params: { id: '{row.name}' }

@@ -1,0 +1,6 @@
+page: { id: pos-payment-method-detail }
+datasources:
+  - id: pos_payment_method_detail
+    single: true
+    permission: pos.read
+    query: "SELECT method AS id, method AS name, method AS journal, COUNT(*) AS payment_count, CAST(COALESCE(SUM(amount), 0) AS DOUBLE) AS total, 'Active' AS state FROM pos_payments WHERE method = :id GROUP BY method"

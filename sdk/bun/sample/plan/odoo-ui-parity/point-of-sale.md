@@ -85,6 +85,14 @@ Authenticated checks verified tab switching, zero unexpected responses, and no
 horizontal overflow. Odoo captures are `/tmp/odoo-pos-{desktop,mobile}-settings.png`;
 Core3 captures are `/tmp/core3-pos-{desktop,mobile}-settings.png`.
 
+The live POS action audit resolved Payment Methods to action 479 and captured
+its list/kanban surfaces at both target viewports. Core3 now supports row-open
+and double-click navigation from `/point-of-sale/payment-methods` to a service-
+owned payment-method form. Authenticated checks verified list and detail states
+with no unexpected responses or horizontal overflow. Odoo captures are under
+`/tmp/odoo-pos-{desktop,mobile}-payment-methods.png`; Core3 captures are under
+`/tmp/core3-pos-{desktop,mobile}-payment-{methods,detail}.png`.
+
 Add explicit menu/page coverage for the remaining Odoo POS product forms and
 the touch-selling dashboard/session.
 Capture and implement configuration forms, payment/tender modals, session

@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_payment_method_catalog
+    row_open_action: view_pos_payment_method
+    row_double_click_action: view_pos_payment_method
     search: { label: Search payment methods, placeholder: Search payment method... }
     columns:
       - { field: name, label: Payment method, type: PrimaryEntityCell }
