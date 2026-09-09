@@ -139,6 +139,11 @@ horizontal overflow. Captures are under `/tmp/core3-pos-{desktop,mobile}-*`
 for the five catalog routes; corresponding Odoo reference captures remain
 under `/tmp/odoo-pos-*`.
 
+The session lifecycle batch adds status filtering, closing-balance visibility,
+and permissioned Open, Start Closing, and Close & Post row actions. Its guarded
+workflow records counted cash, expected cash, discrepancy, and close time; the
+focused integration test covers the session transition contract.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,
