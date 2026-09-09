@@ -19,10 +19,12 @@ Status: in-progress
 The existing `point_of_sale` service already provides YAML/API contracts for
 cashier, orders, payments, invoices, cash movements, configuration, analysis,
 customer display, discount, HR, loyalty, online payment, repair, restaurant,
-self-order, sessions, and workflows. Existing routes include `/point-of-sale/
-cashier`, `/point-of-sale/orders`, `/point-of-sale/payments`,
-`/point-of-sale/invoices`, `/point-of-sale/cash-movements`, `/point-of-sale/configs`,
-and `/point-of-sale/analysis`.
+self-order, sessions, and workflows. Existing routes include
+`/point-of-sale/cashier`, `/point-of-sale/orders`, `/point-of-sale/payments`,
+`/point-of-sale/invoices`, `/point-of-sale/cash-movements`,
+`/point-of-sale/configs`, and `/point-of-sale/analysis`. The current batch adds
+data-backed Customers, Products, Payment Methods, Session Report, and Sales
+Details routes with convention-discovered API fragments.
 
 ## Remaining parity work
 
