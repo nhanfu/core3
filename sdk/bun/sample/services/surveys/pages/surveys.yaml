@@ -18,11 +18,17 @@ components:
     page_size: 50
     row_key: id
     row_actions: menu
+    row_double_click_action: view_survey_detail
     actions:
       - { id: publish_survey, label: Publish, permission: surveys.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: close_survey, label: Close, permission: surveys.manage, variant: secondary, show_if: "row.state === 'Published'" }
       - { id: cancel_survey, label: Cancel, permission: surveys.manage, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Published'" }
 actions:
+  - id: view_survey_detail
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/detail
+    params: { id: '{row.id}' }
   - id: create_survey
     type: server_form
     permission: surveys.write
