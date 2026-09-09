@@ -1,0 +1,19 @@
+title: Analytic Distribution Models
+page: { id: accounting-analytic-distribution-models, route: /accounting/analytic-distribution-models, breadcrumb: [Finance, Configuration, Analytic Distribution Models], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_analytic_distribution_models
+    create_action: create_accounting_distribution_model
+    create_label: New
+    search: { label: Search distribution models, placeholder: 'Search accounts, partners, or products...' }
+    columns:
+      - { field: account_prefixes, label: Accounts Prefixes, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: product_name, label: Product }
+      - { field: company_name, label: Company }
+      - { field: distribution, label: Analytic Distribution }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No distribution models, description: 'There are no analytic distribution models configured.' }

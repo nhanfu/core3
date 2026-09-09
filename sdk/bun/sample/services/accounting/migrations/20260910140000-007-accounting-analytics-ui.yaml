@@ -1,0 +1,39 @@
+version: 0.0.7
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_products (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        default_code VARCHAR, name VARCHAR NOT NULL, product_type VARCHAR NOT NULL,
+        price DECIMAL(18,2) NOT NULL DEFAULT 0, cost DECIMAL(18,2) NOT NULL DEFAULT 0,
+        on_hand DECIMAL(18,2) NOT NULL DEFAULT 0, variant_count INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS accounting_analytic_items (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        item_date DATE NOT NULL, account_name VARCHAR NOT NULL, partner_name VARCHAR,
+        product_name VARCHAR, company_name VARCHAR NOT NULL, amount DECIMAL(18,2) NOT NULL,
+        description VARCHAR NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS accounting_analytic_distribution_models (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        account_prefixes VARCHAR, partner_name VARCHAR, product_name VARCHAR,
+        company_name VARCHAR NOT NULL, distribution VARCHAR NOT NULL, active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT OR IGNORE INTO accounting_products VALUES
+        ('acct-product-001',1,'[CONS_0001]','Acoustic Bloc Screens','Goods',295.00,180.00,16,2,true),
+        ('acct-product-002',1,'[FOOD_0001]','Apple Pie','Goods',12.00,5.20,42,1,true),
+        ('acct-product-003',1,'[FOOD_0002]','Bagel','Goods',1.25,0.40,120,1,true),
+        ('acct-product-004',1,'[TSHIRT_001]','Black embroidered t-shirt','Goods',25.00,11.00,28,8,true),
+        ('acct-product-005',1,'[JEANS_001]','Blue Denim Jeans','Goods',80.00,35.00,19,8,true),
+        ('acct-product-006',1,'[FOOD_0003]','Blueberry Muffin','Goods',1.80,0.65,74,1,true),
+        ('acct-product-007',1,'[FOOD_0004]','Butter Croissant','Goods',1.20,0.35,90,1,true),
+        ('acct-product-008',1,'[FURN_0001]','Cabinet with Doors','Goods',480.00,290.00,7,1,true);
+    down: |
+      DROP TABLE IF EXISTS accounting_analytic_distribution_models;
+      DROP TABLE IF EXISTS accounting_analytic_items;
+      DROP TABLE IF EXISTS accounting_products;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

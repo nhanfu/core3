@@ -1,0 +1,28 @@
+title: Products
+page: { id: accounting-products, route: /accounting/products, breadcrumb: [Finance, Invoicing, Products], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_products
+    create_action: create_accounting_product
+    create_label: New
+    search: { label: Search products, placeholder: 'Search products...' }
+    filters:
+      - { field: active, label: Active, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: product_type
+        card: { title: name, subtitle: default_code, fields: [{ field: price, label: Price }, { field: on_hand, label: On hand }, { field: variant_count, label: Variants }] }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: default_code, label: Internal Reference }
+      - { field: product_type, label: Type }
+      - { field: price, label: Sales Price, align: right }
+      - { field: on_hand, label: On Hand, align: right }
+      - { field: variant_count, label: Variants, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

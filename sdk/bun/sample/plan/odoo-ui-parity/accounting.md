@@ -94,6 +94,18 @@ layout and action references. Authenticated Chrome verification at 1440x900 and
 unexpected responses, and no page-level horizontal overflow. Captures are
 temporary under `/tmp/core3-accounting-api-*.png` and are not repository assets.
 
+## Current batch: product and analytic surfaces
+
+The live Odoo menu audit identified Products, Analytic Items, and Analytic
+Distribution Models as visible Accounting surfaces. Core3 now exposes
+`/accounting/products`, `/accounting/analytic-items`, and
+`/accounting/analytic-distribution-models` with service-owned API fragments,
+deterministic product fixtures, and reference-matching empty analytic states.
+Authenticated desktop/mobile comparison against Odoo was captured under
+`/tmp/odoo-accounting-{products,analytic-items,distribution-models}-{desktop,mobile}.png`
+and `/tmp/core3-accounting-{desktop,mobile}-*.png`; all routes had zero
+unexpected responses and no page-level horizontal overflow.
+
 ## Current batch: document forms and payment workflow
 
 The next parity batch adds the shared OdooFormView workflow for invoices,

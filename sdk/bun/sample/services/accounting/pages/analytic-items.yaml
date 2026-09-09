@@ -1,0 +1,20 @@
+title: Analytic Items
+page: { id: accounting-analytic-items, route: /accounting/analytic-items, breadcrumb: [Finance, Accounting, Analytic Items], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_analytic_items
+    create_action: create_accounting_analytic_item
+    create_label: New
+    search: { label: Search analytic items, placeholder: 'Search accounts, partners, or descriptions...' }
+    columns:
+      - { field: item_date, label: Date }
+      - { field: account_name, label: Analytic Account, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: product_name, label: Product }
+      - { field: company_name, label: Company }
+      - { field: amount, label: Amount, align: right }
+      - { field: description, label: Description }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No analytic items, description: 'Analytic entries will appear here as invoices, expenses, and timesheets are posted.' }

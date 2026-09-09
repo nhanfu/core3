@@ -1,0 +1,29 @@
+page: { id: accounting-analytic-items }
+datasources:
+  - id: accounting_analytic_items
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, CAST(item_date AS VARCHAR) AS item_date, account_name, partner_name, product_name, company_name, amount, description FROM accounting_analytic_items WHERE (:q IS NULL OR account_name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY item_date DESC, id"
+actions:
+  - id: create_accounting_analytic_item
+    type: server_form
+    permission: accounting.write
+    title: New analytic item
+    action: accounting.analytic_items.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_analytic_items
+      fields: [item_date, account_name, partner_name, product_name, company_name, amount, description]
+      required: [item_date, account_name, company_name, amount, description]
+      defaults: { company_name: My Company }
+      result: { query: "SELECT * FROM accounting_analytic_items WHERE id = :id" }
+    fields:
+      - { field: item_date, label: Date, type: text, required: true }
+      - { field: account_name, label: Analytic account, type: text, required: true }
+      - { field: partner_name, label: Partner, type: text }
+      - { field: product_name, label: Product, type: text }
+      - { field: company_name, label: Company, type: text, required: true }
+      - { field: amount, label: Amount, type: number, required: true }
+      - { field: description, label: Description, type: text, required: true }

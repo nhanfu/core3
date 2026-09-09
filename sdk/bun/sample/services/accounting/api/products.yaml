@@ -1,0 +1,27 @@
+page: { id: accounting-products }
+datasources:
+  - id: accounting_products
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, default_code, name, product_type, price, cost, on_hand, variant_count, active FROM accounting_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(default_code, '') ILIKE '%' || :q || '%') AND (:active IS NULL OR active = CAST(:active AS BOOLEAN)) ORDER BY name"
+actions:
+  - id: create_accounting_product
+    type: server_form
+    permission: accounting.write
+    title: New product
+    action: accounting.products.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_products
+      fields: [default_code, name, product_type, price, cost, on_hand, variant_count]
+      required: [name]
+      defaults: { product_type: Goods, price: 0, cost: 0, on_hand: 0, variant_count: 1, active: true }
+      result: { query: "SELECT * FROM accounting_products WHERE id = :id" }
+    fields:
+      - { field: default_code, label: Internal reference, type: text }
+      - { field: name, label: Product name, type: text, required: true }
+      - { field: product_type, label: Product type, type: select, options: [Goods, Service, Combo] }
+      - { field: price, label: Sales price, type: number }
+      - { field: cost, label: Cost, type: number }

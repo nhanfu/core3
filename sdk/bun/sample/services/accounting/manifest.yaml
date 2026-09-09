@@ -30,6 +30,10 @@ menu:
           label: Vendor Refunds
           icon: invoice
           permission: accounting.read
+        - path: /accounting/products
+          label: Products
+          icon: cube
+          permission: accounting.read
     - id: accounting
       label: Accounting
       items:
@@ -89,8 +93,16 @@ menu:
           label: Analytic Accounts
           icon: ledger
           permission: accounting.read
+        - path: /accounting/analytic-items
+          label: Analytic Items
+          icon: ledger
+          permission: accounting.read
         - path: /accounting/analytic-plans
           label: Analytic Plans
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/analytic-distribution-models
+          label: Analytic Distribution Models
           icon: ledger
           permission: accounting.read
         - path: /accounting/reconciliation

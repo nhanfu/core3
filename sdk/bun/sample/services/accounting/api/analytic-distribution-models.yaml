@@ -1,0 +1,27 @@
+page: { id: accounting-analytic-distribution-models }
+datasources:
+  - id: accounting_analytic_distribution_models
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, account_prefixes, partner_name, product_name, company_name, distribution, active FROM accounting_analytic_distribution_models WHERE (:q IS NULL OR COALESCE(account_prefixes, '') ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR COALESCE(product_name, '') ILIKE '%' || :q || '%') ORDER BY account_prefixes, id"
+actions:
+  - id: create_accounting_distribution_model
+    type: server_form
+    permission: accounting.write
+    title: New analytic distribution model
+    action: accounting.analytic_distribution_models.create
+    handler: yaml_mutation
+    operation: create
+    mutation:
+      operation: insert
+      table: accounting_analytic_distribution_models
+      fields: [account_prefixes, partner_name, product_name, company_name, distribution]
+      required: [company_name, distribution]
+      defaults: { active: true }
+      result: { query: "SELECT * FROM accounting_analytic_distribution_models WHERE id = :id" }
+    fields:
+      - { field: account_prefixes, label: Accounts Prefixes, type: text }
+      - { field: partner_name, label: Partner, type: text }
+      - { field: product_name, label: Product, type: text }
+      - { field: company_name, label: Company, type: text, required: true }
+      - { field: distribution, label: Analytic Distribution, type: text, required: true }
