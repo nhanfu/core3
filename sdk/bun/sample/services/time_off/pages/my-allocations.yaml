@@ -1,0 +1,23 @@
+title: My Allocations
+page: { id: my-allocations, route: /my-allocations, breadcrumb: [Human Resources, Time Off, My Allocations], auth: { require: [time_off.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: my_allocations
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: leave_type_name, fields: [{ field: days, label: Amount }, { field: state, label: Status }] }
+    columns:
+      - { field: name, label: Allocation, type: PrimaryEntityCell }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: days, label: Amount, align: right }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

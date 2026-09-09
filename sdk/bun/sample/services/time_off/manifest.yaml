@@ -30,6 +30,7 @@ menu:
       label: My Time
       items:
         - { path: /my-time-off, label: My Time Off, icon: calendar, permission: time_off.read }
+        - { path: /my-allocations, label: My Allocations, icon: calendar, permission: time_off.read }
     - id: configuration
       label: Configuration
       items:
