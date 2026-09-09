@@ -16,8 +16,8 @@ export class StatRow extends BaseComponent {
     this.disposeChildren();
     const cols = this.stats.length;
     const gridCls = cols === 2 ? 'grid-cols-2'
-                  : cols === 3 ? 'grid-cols-3'
-                  : cols === 4 ? 'grid-cols-4'
+                  : cols === 3 ? 'grid-cols-1 sm:grid-cols-3'
+                  : cols === 4 ? 'grid-cols-2 md:grid-cols-4'
                   : cols === 5 ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5'
                   : cols === 7 ? 'grid-cols-2 md:grid-cols-4 xl:grid-cols-7'
                   : 'grid-cols-2 md:grid-cols-3 xl:grid-cols-6';
