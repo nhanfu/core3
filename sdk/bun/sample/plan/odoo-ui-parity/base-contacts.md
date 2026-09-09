@@ -36,3 +36,10 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
 - Every visible datasource returns stable backend `mock_data`; no page-layout YAML contains records and no list/form is blank.
 - Search, filter, group, sort, pagination, empty, archive, validation, save/discard, and permission states are reproducible.
 - Screenshot comparison is reviewed at both viewports and `git diff --check` is clean before `ready`.
+
+## Current batch evidence
+
+- Core3 authenticated route: `/base/contacts` (canonical app entry `/contacts/`).
+- Core3 captures: `/tmp/core3-odoo-parity/integrated-20260909/contacts-desktop.png` and `contacts-mobile.png`.
+- Odoo captures: `/tmp/odoo-contacts-desktop.png` and `/tmp/odoo-contacts-mobile.png`.
+- Verified: populated list, List/Kanban navigation, deterministic contact rows, and responsive mobile cards.

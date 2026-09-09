@@ -29,3 +29,10 @@ Shell/control panel/search/pager, list and kanban, relational selectors, editabl
 ## Screenshots and acceptance checks
 
 Capture `/odoo/sales` (quotations/orders) and every listed action at 1440x900 and 390x844, with draft, confirmed, cancelled, empty, and report states. Validate totals against fixture lines, menu/action parity, form tabs and buttons, mobile line editing, deterministic offline rendering, and datasource completeness before `ready`.
+
+## Current batch evidence
+
+- Core3 authenticated routes: `/order/quotations/`, `/order/sales-orders/`, `/order/reporting/sales/`.
+- Core3 captures: `/tmp/core3-odoo-parity/integrated-20260909/quotations-desktop.png`, `quotations-mobile.png`, `sales-orders-desktop.png`, `sales-orders-mobile.png`, `sales-reporting-desktop.png`, and `sales-reporting-mobile.png`.
+- Odoo captures: `/tmp/odoo-sales-quotations-desktop.png`, `odoo-sales-quotations-mobile.png`, `odoo-sales-orders-list-desktop.png`, and `odoo-sales-reporting-desktop.png`.
+- Verified: authenticated menu routes, populated quotation/order/report lists, reporting graph/pivot/list tabs, and responsive mobile rendering.

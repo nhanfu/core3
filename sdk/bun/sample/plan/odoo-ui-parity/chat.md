@@ -33,3 +33,10 @@ Capture Odoo/Core3 at 1440x900 and 390x844 for inbox, channel, direct message, t
 - Discuss menus, sidebar ordering, unread/starred behavior, message rendering, composer, attachments, reactions, member/settings dialogs, and mobile layout match Odoo.
 - Every message, thread, member, badge, attachment, reaction, activity, and empty/search state comes from backend YAML mock data.
 - Send/note/reply, star/read actions, search, channel navigation, and offline rendering are deterministic and datasource IDs remain query-replaceable.
+
+## Current batch evidence
+
+- Core3 authenticated route: `/chat/`.
+- Core3 captures: `/tmp/core3-odoo-parity/chat-20260909-desktop.png` and `chat-20260909-mobile.png`.
+- Odoo captures: `/tmp/odoo-chat-inbox-1440x900.png` and `/tmp/odoo-chat-inbox-390x844.png`.
+- Verified: deterministic inbox/thread rendering, unread/starred fixture fields, attachment display, and desktop/mobile rendering. The Core3 shell remains intentionally separate from Odoo's native shell for this fixture-focused batch.
