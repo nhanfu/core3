@@ -1,19 +1,43 @@
-title: POS Configuration Coverage
-page: { id: pos-configuration-coverage, route: /point-of-sale/configuration-coverage, breadcrumb: [Sales, Point of Sale, Configuration], auth: { require: [pos.read] } }
+title: Point of Sale Settings
+page: { id: pos-settings, route: /point-of-sale/settings, breadcrumb: [Sales, Point of Sale, Configuration, Settings], auth: { require: [pos.read] } }
 components:
-  - type: OdooFormView
+  - type: SettingsView
+    id: pos-settings-view
     source: pos_settings
-    title_field: point_of_sale
-    group_columns: 2
-    groups:
-      - title: General settings
-        fields:
-          - { field: point_of_sale, label: Point of Sale }
-          - { field: currency, label: Currency }
-          - { field: default_pricelist, label: Default pricelist }
-          - { field: invoicing, label: Invoicing }
-      - title: Checkout and hardware
-        fields:
-          - { field: barcode_scanning, label: Barcode scanning }
-          - { field: cash_control, label: Cash control }
-          - { field: customer_display, label: Customer display }
+    title: Settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: general
+        label: General Settings
+        icon: settings
+        sections:
+          - title: Sales
+            fields:
+              - { field: point_of_sale, label: Point of Sale, description: Configure the shop used for POS sessions., type: text }
+              - { field: currency, label: Currency, description: Currency used for POS orders., type: text }
+              - { field: default_pricelist, label: Default pricelist, description: Pricelist applied to new orders., type: text }
+          - title: Inventory
+            fields:
+              - { field: barcode_scanning, label: Barcode Scanning, description: Scan products and customer cards., type: checkbox }
+              - { field: cash_control, label: Cash Control, description: Count cash when opening and closing sessions., type: checkbox }
+              - { field: customer_display, label: Customer Display, description: Show the customer-facing display during checkout., type: checkbox }
+      - id: point-of-sale
+        label: Point of Sale
+        icon: cart
+        sections:
+          - title: Point of Sale
+            fields:
+              - { field: is_bar_restaurant, label: Is a Bar/Restaurant, description: Enable restaurant floors and table orders., type: checkbox }
+              - { field: presets, label: Take out / Delivery / Members, description: Define presets to manage taxes and prices., type: text }
+          - title: Payment
+            fields:
+              - { field: payment_methods, label: Payment Methods, description: Payment methods available in the shop., type: text }
+              - { field: auto_validate, label: Automatically validate order, description: Automatically validate orders paid with a payment terminal., type: checkbox }
+              - { field: cash_rounding, label: Cash Rounding, description: Define the smallest coinage used to pay by cash., type: checkbox }
+              - { field: one_click_payment, label: One-click Payment, description: Shortcut to skip the payment screen., type: checkbox }
+              - { field: maximum_difference, label: Set Maximum Difference, description: Maximum difference allowed during session closing., type: number }
+              - { field: tips, label: Tips, description: Accept customer tips or convert change to a tip., type: checkbox }
+          - title: PoS Interface
+            fields:
+              - { field: employee_login, label: Log in with Employees, description: Log in and switch between selected employees., type: checkbox }
+              - { field: large_scrollbars, label: Large Scrollbars, description: Improve navigation on industrial touchscreens., type: checkbox }

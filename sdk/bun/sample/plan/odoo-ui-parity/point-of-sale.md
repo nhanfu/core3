@@ -77,6 +77,14 @@ under `/tmp/core3-pos-{desktop,mobile}-{products,product-detail,customers,custom
 
 ## Remaining parity work
 
+The live Odoo Settings action is action 463 and was captured at both target
+viewports. Core3 now exposes the canonical `/point-of-sale/settings` menu route
+with SettingsView tabs for General Settings and Point of Sale, including
+payment, cash-control, interface, employee-login, and restaurant controls.
+Authenticated checks verified tab switching, zero unexpected responses, and no
+horizontal overflow. Odoo captures are `/tmp/odoo-pos-{desktop,mobile}-settings.png`;
+Core3 captures are `/tmp/core3-pos-{desktop,mobile}-settings.png`.
+
 Add explicit menu/page coverage for the remaining Odoo POS product forms and
 the touch-selling dashboard/session.
 Capture and implement configuration forms, payment/tender modals, session
