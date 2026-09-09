@@ -3,6 +3,7 @@ datasources:
   - id: sale_pricelists
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: pricelist-public, row_version: 1, name: Public Pricelist, currency: USD, discount_policy: Discount included, active: true }] }
     query: |
       SELECT p.id, p.row_version, p.name, p.currency, p.discount_policy, p.active,
         (SELECT COUNT(*) FROM sale_pricelist_items i WHERE i.pricelist_id = p.id) AS rule_count,

@@ -3,6 +3,7 @@ datasources:
   - id: sale_pricelist_rules
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: rule-public-001, pricelist_id: pricelist-public, pricelist_name: Public Pricelist, product_id: product-demo, product_name: Core3 Service, min_quantity: 1, fixed_price: 12500, discount: 0, currency: USD, active: true }] }
     query: |
       SELECT i.id, i.pricelist_id, p.name AS pricelist_name, i.product_id, s.name AS product_name,
         i.min_quantity, i.fixed_price, i.percentage_discount,

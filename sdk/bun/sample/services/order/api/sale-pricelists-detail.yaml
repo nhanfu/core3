@@ -3,6 +3,7 @@ datasources:
   - id: sale_pricelist_detail
     single: true
     permission: orders.read
+    mock_data: { default: { id: pricelist-public, row_version: 1, name: Public Pricelist, currency: USD, discount_policy: Discount included, active: true } }
     query: "SELECT * FROM sale_pricelists WHERE id = :id"
 actions:
   - id: edit_sale_pricelists

@@ -3,6 +3,7 @@ datasources:
   - id: sales_customers
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: customer-demo, code: C001, name: Core3 Demo Company, legal_name: Core3 Demo Company Ltd, owner_name: Administrator, visibility: Public, status: Active, email: hello@core3.local, phone: '+1 555 0100', street: 100 Main Street, city: San Francisco, country: United States, vat: US123, company_type: Company }] }
     query: |
       SELECT id, code, name, legal_name, owner_name, visibility, status, email, phone, street, city, country, vat, company_type
       FROM customers

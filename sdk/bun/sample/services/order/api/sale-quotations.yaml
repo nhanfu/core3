@@ -3,6 +3,7 @@ datasources:
   - id: sale_quotations
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: order-demo-001, row_version: 1, order_number: SO001, customer_name: Core3 Demo Company, customer_reference: Web inquiry, opportunity_id: crm-opp-001, status: Draft, status_label: Quotation, total_amount: 12500, order_date: '2026-09-08', salesperson: Administrator }] }
     query: |
       SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_reference, o.opportunity_id,
         CAST(o.order_date AS VARCHAR) AS order_date, CAST(o.validity_date AS VARCHAR) AS validity_date,

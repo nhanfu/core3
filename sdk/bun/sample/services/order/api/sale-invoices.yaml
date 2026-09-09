@@ -3,6 +3,7 @@ datasources:
   - id: sale_invoices
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: invoice-demo-001, invoice_number: INV001, order_id: order-demo-001, accounting_invoice_id: ACC001, order_number: SO001, customer_name: Core3 Demo Company, status: Draft, total_amount: 12500, invoice_date: '2026-09-08' }] }
     query: |
       SELECT i.id, i.invoice_number, i.order_id, i.accounting_invoice_id, o.order_number, o.customer_name,
         i.state, CAST(i.amount AS DOUBLE) AS amount, CAST(i.invoice_date AS VARCHAR) AS invoice_date,

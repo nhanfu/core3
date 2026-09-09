@@ -3,6 +3,7 @@ datasources:
   - id: orders
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: order-demo-001, row_version: 1, order_number: SO001, customer_name: Core3 Demo Company, customer_legal_name: Core3 Demo Company Ltd, status: Draft, status_label: Quotation, total_amount: 12500, order_date: '2026-09-08', transport_method: Road, shipment_type: Standard, route: San Francisco, trip_count: 1, created_by: Administrator }], states: { empty: [] } }
     query_window:
       table: orders
       date_field: order_date

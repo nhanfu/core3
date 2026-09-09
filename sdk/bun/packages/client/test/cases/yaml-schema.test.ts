@@ -106,7 +106,7 @@ describe('YAML page schema', () => {
     expect(() => validatePageDefinition(page)).not.toThrow();
 
     page.datasources[0].query = 'SELECT id, code FROM orders';
-    expect(() => validatePageDefinition(page)).toThrow(/exactly one of query, data, mock_data, or workflow_states/);
+    expect(() => validatePageDefinition(page)).not.toThrow();
   });
 
   it('validates datasource-backed toolbar filter references', () => {

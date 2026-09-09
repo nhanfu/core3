@@ -307,7 +307,7 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     rejectUnknownKeys(source, DATASOURCE_KEYS, path, issues);
     requireString(source.id, `${path}.id`, issues);
     requireString(source.permission, `${path}.permission`, issues);
-    const sourceKinds = [source.query, source.data, source.mock_data, source.workflow_states, source.type === 'service' ? source.operation : undefined].filter(value => value !== undefined).length;
+    const sourceKinds = [source.query !== undefined || source.mock_data !== undefined ? true : undefined, source.data, source.workflow_states, source.type === 'service' ? source.operation : undefined].filter(value => value !== undefined).length;
     if (sourceKinds !== 1) issues.push(`${path} must define exactly one of query, data, mock_data, or workflow_states`);
     if (source.query !== undefined) requireString(source.query, `${path}.query`, issues);
     if (source.mock_data !== undefined) validateMockData(source.mock_data, `${path}.mock_data`, issues);

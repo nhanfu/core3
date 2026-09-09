@@ -3,6 +3,7 @@ datasources:
   - id: sale_invoice_detail
     single: true
     permission: orders.read
+    mock_data: { default: { id: invoice-demo-001, invoice_number: INV001, order_id: order-demo-001, accounting_invoice_id: ACC001, order_number: SO001, customer_name: Core3 Demo Company, status: Draft, total_amount: 12500, invoice_date: '2026-09-08' } }
     query: "SELECT * FROM sale_invoices WHERE id = :id"
 actions:
   - id: edit_sale_invoices

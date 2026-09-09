@@ -3,6 +3,7 @@ datasources:
   - id: sale_payment_terms
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: term-net30, name: Net 30, due_days: 30, discount_days: 0, discount_percent: 0, active: true }] }
     query: "SELECT id, name, due_days, discount_days, discount_percent, active FROM sale_payment_terms ORDER BY due_days, name"
 actions:
   - id: view_sale_payment_term

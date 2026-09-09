@@ -5,6 +5,7 @@ datasources:
   - id: order_detail
     single: true
     permission: orders.read
+    mock_data: { default: { id: order-demo-001, row_version: 1, order_number: SO001, customer_name: Core3 Demo Company, customer_legal_name: Core3 Demo Company Ltd, status: Draft, status_label: Quotation, total_amount: 12500, order_date: '2026-09-08', transport_method: Road, shipment_type: Standard, route: San Francisco, trip_count: 1, notes: Demo order, created_by: Administrator } }
     query: |
       SELECT o.id, o.row_version, o.order_number, o.customer_name, o.customer_legal_name,
         CAST(o.order_date AS VARCHAR) AS order_date,
@@ -25,6 +26,7 @@ datasources:
   - id: order_detail_lines
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: line-demo-001, row_version: 1, document_id: order-demo-001, sequence: 1, description: Core3 Service, product_id: product-demo, product_name: Core3 Service, quantity: 1, unit: unit-each, unit_price: 12500, discount: 0, tax_rate: 0, subtotal: 12500, total: 12500 }] }
     query: |
       SELECT l.id, l.row_version, l.order_id AS document_id, l.sequence, l.description,
         l.product_id, p.name AS product_name,
@@ -57,6 +59,7 @@ datasources:
   - id: order_detail_timeline
     single: false
     permission: orders.read
+    mock_data: { default: [{ actor_name: Administrator, action: orders.created, action_label: Created, detail: Sales order created, created_at: '2026-09-08' }], states: { empty: [] } }
     query: |
       SELECT actor_name, action,
         CASE action
@@ -86,6 +89,7 @@ datasources:
   - id: order_detail_followers
     single: false
     permission: orders.read
+    mock_data: { default: [{ user_id: user-admin, followed_at: '2026-09-08', name: Administrator, email: admin@core3.local, avatar_url: '' }] }
     query: |
       SELECT f.user_id, CAST(f.created_at AS VARCHAR) AS followed_at
       FROM order_followers f
@@ -113,6 +117,7 @@ datasources:
   - id: order_detail_attachments
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: order-attachment-001, order_id: order-demo-001, file_name: order-confirmation.pdf, mime_type: application/pdf, size_bytes: 16384, uploaded_by: user-admin, uploaded_by_name: Administrator, created_at: '2026-09-08' }] }
     query: |
       SELECT a.id, a.order_id, a.file_name, a.mime_type, a.size_bytes,
         a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at

@@ -3,6 +3,7 @@ datasources:
   - id: sale_product_detail
     single: true
     permission: orders.read
+    mock_data: { default: { id: product-demo, row_version: 1, default_code: PROD001, name: Core3 Service, product_type: Service, list_price: 12500, cost_price: 5000, active: true, sale_ok: true, description: Core3 service product } }
     query: "SELECT * FROM sale_products WHERE id = :id"
 actions:
   - id: edit_sale_products

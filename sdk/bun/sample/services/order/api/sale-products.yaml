@@ -3,6 +3,7 @@ datasources:
   - id: sale_products
     single: false
     permission: orders.read
+    mock_data: { default: [{ id: product-demo, row_version: 1, default_code: PROD001, name: Core3 Service, product_type: Service, list_price: 12500, cost_price: 5000, active: true, sale_ok: true }] }
     query: |
       SELECT id, row_version, default_code, name, product_type, list_price, cost_price,
         uom, category, sale_ok, active, description, CAST(created_at AS VARCHAR) AS created_at
@@ -13,6 +14,7 @@ datasources:
   - id: sale_product_active
     single: false
     permission: orders.read
+    mock_data: { default: [{ value: true, label: Active }, { value: false, label: Archived }] }
     query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
 actions:
   - id: view_sale_product

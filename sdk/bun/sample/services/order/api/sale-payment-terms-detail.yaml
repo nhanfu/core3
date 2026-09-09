@@ -3,6 +3,7 @@ datasources:
   - id: sale_payment_term_detail
     single: true
     permission: orders.read
+    mock_data: { default: { id: term-net30, name: Net 30, due_days: 30, discount_days: 0, discount_percent: 0, active: true } }
     query: "SELECT * FROM sale_payment_terms WHERE id = :id"
 actions:
   - id: edit_sale_payment_terms

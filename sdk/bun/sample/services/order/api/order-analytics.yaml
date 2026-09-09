@@ -3,6 +3,7 @@ datasources:
   - id: order_totals
     single: true
     permission: orders.read
+    mock_data: { default: { order_count: 2, gross_total: 57500, average_order: 28750, tax_total: 0 } }
     query: |
       SELECT
         COUNT(*) AS order_count,
@@ -16,6 +17,7 @@ datasources:
   - id: order_status_breakdown
     single: false
     permission: orders.read
+    mock_data: { default: [{ status: Draft, order_count: 1, total_amount: 12500 }, { status: Confirmed, order_count: 1, total_amount: 45000 }] }
     query: |
       SELECT
         CASE COALESCE((SELECT s.status FROM order_workflow_states s WHERE s.order_id = o.id), o.status)
