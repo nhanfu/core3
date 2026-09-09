@@ -51,6 +51,11 @@ cash denominations, and order presets, with required-field validation and list
 refresh after save. Authenticated desktop/mobile checks verified each modal,
 responsive layout, bounded overflow, and successful preset creation; captures
 are `/tmp/core3-pos-{desktop,mobile}-{preparation-printers,note-models,coins-bills,presets}.png`.
+The corresponding Core3 list and modal captures are also retained as
+`/tmp/core3-pos-{desktop,mobile}-{preparation-printers,note-models,coins-bills,presets}-{list,new}.png`.
+Odoo reference captures for Note Models, Coins/Bills, and Presets use actions
+421, 441, and 448 and are `/tmp/odoo-pos-{desktop,mobile}-{note-models,coins-bills,presets}.png`;
+Preparation Printers is not exposed in the installed Odoo demo menu.
 
 The POS Taxes comparison was recaptured after rebuilding the ignored global and
 POS styles; authenticated desktop/mobile checks show all four tax rows with no
