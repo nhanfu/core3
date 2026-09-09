@@ -1,0 +1,12 @@
+page: { id: survey-detail }
+datasources:
+  - id: survey_detail
+    single: true
+    permission: surveys.read
+    query: "SELECT id, row_version, name, title, description, owner, response_count, state, CAST(published_at AS VARCHAR) AS published_at, CAST(closed_at AS VARCHAR) AS closed_at FROM surveys WHERE id = :id"
+  - id: survey_questions
+    permission: surveys.read
+    query: "SELECT id, question_text, question_type, sequence, required, answer_options FROM survey_questions WHERE survey_id = :id ORDER BY sequence, id"
+  - id: survey_responses
+    permission: surveys.read
+    query: "SELECT id, respondent_name, respondent_email, answer_data, state, CAST(submitted_at AS VARCHAR) AS submitted_at FROM survey_responses WHERE survey_id = :id ORDER BY submitted_at DESC, id"

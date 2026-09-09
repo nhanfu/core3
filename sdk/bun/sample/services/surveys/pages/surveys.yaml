@@ -1,14 +1,5 @@
 title: Surveys
-page: { id: surveys, breadcrumb: [Marketing, Surveys], auth: { require: [surveys.read] } }
-datasources:
-  - id: survey_states
-    permission: surveys.read
-    single: false
-    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Closed','Closed'), ('Cancelled','Cancelled')) states(value, label)"
-  - id: surveys
-    permission: surveys.read
-    workflow: surveys
-    query: "SELECT s.id, s.row_version, s.name, s.title, s.owner, s.response_count, s.state, CAST(s.published_at AS VARCHAR) AS published_at, CAST(s.closed_at AS VARCHAR) AS closed_at FROM surveys s WHERE (:q IS NULL OR s.name ILIKE '%' || :q || '%' OR s.title ILIKE '%' || :q || '%') AND (:state IS NULL OR s.state = :state) ORDER BY s.created_at DESC"
+page: { id: surveys, route: /surveys, breadcrumb: [Marketing, Surveys], auth: { require: [surveys.read] } }
 components:
   - type: ListView
     variant: odoo

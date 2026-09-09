@@ -1,0 +1,17 @@
+title: Suggested Values
+page: { id: survey-suggested-values, route: /surveys/suggested-values, breadcrumb: [Marketing, Surveys, Questions & Answers, Suggested Values], auth: { require: [surveys.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: survey_suggested_values
+    search: { label: Search suggested values, placeholder: 'Search question or answer...' }
+    group_by: [{ field: question_text, label: Question }]
+    columns:
+      - { field: value, label: Suggested Value, type: PrimaryEntityCell }
+      - { field: question_text, label: Question }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: score, label: Score, align: right }
+      - { field: matrix_row, label: Matrix Row, optional: hide }
+      - { field: matrix_column, label: Matrix Column, optional: hide }
+    page_size: 50
+    row_key: id

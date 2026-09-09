@@ -1,0 +1,19 @@
+title: Detailed Answers
+page: { id: survey-detailed-answers, route: /surveys/detailed-answers, breadcrumb: [Marketing, Surveys, Questions & Answers, Detailed Answers], auth: { require: [surveys.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: survey_detailed_answers
+    search: { label: Search detailed answers, placeholder: 'Search survey, question, or answer...' }
+    group_by: [{ field: survey_name, label: Survey }, { field: answer_type, label: Answer Type }]
+    columns:
+      - { field: survey_name, label: Survey, type: PrimaryEntityCell }
+      - { field: question_text, label: Question }
+      - { field: answer_type, label: Answer Type }
+      - { field: answer_value, label: Answer }
+      - { field: skipped, label: Skipped }
+      - { field: score, label: Score, align: right }
+      - { field: submitted_at, label: Date }
+    page_size: 50
+    row_key: id
+    empty_state: { title: No detailed answers, description: Detailed answer lines appear after participants submit responses. }

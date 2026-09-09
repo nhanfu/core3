@@ -1,0 +1,27 @@
+title: Participants
+page: { id: survey-participants, route: /surveys/participants, breadcrumb: [Marketing, Surveys, Participants], auth: { require: [surveys.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: survey_participants
+    search: { label: Search participants, placeholder: 'Search survey, contact, or email...' }
+    filters: [{ field: state, label: Status, options_source: participant_states }]
+    group_by: [{ field: survey_name, label: Survey }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: survey_name, card: { title: contact, subtitle: survey_name, fields: [{ field: email, label: Email }, { field: score, label: Score }, { field: state, label: Status }] } }
+    columns:
+      - { field: contact, label: Contact, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: survey_name, label: Survey }
+      - { field: attempt_no, label: Attempt, align: right }
+      - { field: deadline, label: Deadline }
+      - { field: quiz_status, label: Quiz Passed, type: StatusChip }
+      - { field: score, label: Score (%), align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    selectable: true
+    column_chooser: true
+    row_key: id
+    empty_state: { title: No participants, description: Participants will appear after a survey is completed. }

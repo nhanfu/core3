@@ -15,4 +15,14 @@ menu:
       label: Surveys
       items:
         - { path: /surveys, label: Surveys, icon: survey, permission: surveys.read }
-        - { path: /survey-analysis, label: Survey Analysis, icon: chart, permission: surveys.read }
+        - { path: /surveys/participants, label: Participants, icon: users, permission: surveys.read }
+    - id: questions
+      label: Questions & Answers
+      items:
+        - { path: /surveys/questions, label: Questions, icon: question, permission: surveys.read }
+        - { path: /surveys/suggested-values, label: Suggested Values, icon: list, permission: surveys.read }
+        - { path: /surveys/detailed-answers, label: Detailed Answers, icon: ledger, permission: surveys.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /surveys/analysis, label: Survey Analysis, icon: chart, permission: surveys.read }

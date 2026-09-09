@@ -1,0 +1,9 @@
+page: { id: survey-analysis }
+datasources:
+  - id: survey_analysis_totals
+    single: true
+    permission: surveys.read
+    query: "SELECT COUNT(*) AS survey_count, COALESCE(SUM(response_count), 0) AS responses, COUNT(*) FILTER (WHERE state = 'Published') AS published_count, COUNT(*) FILTER (WHERE state = 'Closed') AS closed_count FROM surveys"
+  - id: survey_analysis_states
+    permission: surveys.read
+    query: "SELECT state AS category, COUNT(*) AS survey_count FROM surveys GROUP BY state ORDER BY survey_count DESC"
