@@ -11,6 +11,7 @@ workflow:
     - { id: Published, label: Published, color: blue }
     - { id: Closed, label: Closed, color: green, terminal: true }
     - { id: Cancelled, label: Cancelled, color: red, terminal: true }
+    - { id: Archived, label: Archived, color: neutral, terminal: true }
   transitions:
     - id: publish
       from: [Draft]
@@ -35,4 +36,20 @@ workflow:
       mutation:
         guards: [{ query: "SELECT id FROM surveys WHERE id = :id AND state IN ('Draft', 'Published')", status: 409, message: Only open surveys can be cancelled }]
         steps: [{ query: "UPDATE surveys SET state = 'Cancelled', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM surveys WHERE id = :id" }
+    - id: archive
+      from: [Draft, Published, Closed]
+      to: Archived
+      permission: surveys.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM surveys WHERE id = :id AND state IN ('Draft', 'Published', 'Closed')", status: 409, message: Only active surveys can be archived }]
+        steps: [{ query: "UPDATE surveys SET state = 'Archived', row_version = row_version + 1 WHERE id = :id" }]
+        result: { query: "SELECT * FROM surveys WHERE id = :id" }
+    - id: reopen
+      from: [Archived]
+      to: Draft
+      permission: surveys.manage
+      mutation:
+        guards: [{ query: "SELECT id FROM surveys WHERE id = :id AND state = 'Archived'", status: 409, message: Only archived surveys can be reopened }]
+        steps: [{ query: "UPDATE surveys SET state = 'Draft', row_version = row_version + 1 WHERE id = :id" }]
         result: { query: "SELECT * FROM surveys WHERE id = :id" }

@@ -3,7 +3,7 @@ datasources:
   - id: survey_states
     permission: surveys.read
     single: false
-    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Closed','Closed'), ('Cancelled','Cancelled')) states(value, label)"
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Published','Published'), ('Closed','Closed'), ('Cancelled','Cancelled'), ('Archived','Archived')) states(value, label)"
   - id: surveys
     permission: surveys.read
     workflow: surveys

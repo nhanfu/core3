@@ -23,6 +23,8 @@ components:
       - { id: publish_survey, label: Publish, permission: surveys.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: close_survey, label: Close, permission: surveys.manage, variant: secondary, show_if: "row.state === 'Published'" }
       - { id: cancel_survey, label: Cancel, permission: surveys.manage, variant: danger, show_if: "row.state === 'Draft' || row.state === 'Published'" }
+      - { id: archive_survey, label: Archive, permission: surveys.manage, variant: secondary, show_if: "row.state === 'Draft' || row.state === 'Published' || row.state === 'Closed'" }
+      - { id: reopen_survey, label: Reopen, permission: surveys.manage, variant: primary, show_if: "row.state === 'Archived'" }
 actions:
   - id: view_survey_detail
     type: navigate
@@ -94,3 +96,5 @@ actions:
   - { id: publish_survey, type: server, permission: surveys.write, action: surveys.records.publish, handler: order_transition, workflow: surveys, operation: publish, refresh: [surveys] }
   - { id: close_survey, type: server, permission: surveys.manage, action: surveys.records.close, handler: order_transition, workflow: surveys, operation: close, refresh: [surveys] }
   - { id: cancel_survey, type: server, permission: surveys.manage, action: surveys.records.cancel, handler: order_transition, workflow: surveys, operation: cancel, refresh: [surveys] }
+  - { id: archive_survey, type: server, permission: surveys.manage, action: surveys.records.archive, handler: order_transition, workflow: surveys, operation: archive, refresh: [surveys] }
+  - { id: reopen_survey, type: server, permission: surveys.manage, action: surveys.records.reopen, handler: order_transition, workflow: surveys, operation: reopen, refresh: [surveys] }
