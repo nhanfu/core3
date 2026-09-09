@@ -1,0 +1,11 @@
+title: Event Tags Categories
+page: { id: event-tags, route: /events/tags, breadcrumb: [Marketing, Events, Configuration, Event Tags Categories], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_tag_categories
+    create_label: New tag category
+    search: { label: Search tag categories, placeholder: Search categories... }
+    columns: [{ field: name, label: Name, type: PrimaryEntityCell }, { field: tags, label: Tags }, { field: activity, label: Activity }, { field: age, label: Age }]
+    page_size: 50
+    row_key: id

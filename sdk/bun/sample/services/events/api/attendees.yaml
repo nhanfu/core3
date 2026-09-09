@@ -1,0 +1,5 @@
+page: { id: attendees }
+datasources:
+  - id: event_attendees
+    permission: events.read
+    query: "SELECT id, event_name, attendee_name, attendee_email, ticket_type, state, CAST(registered_at AS VARCHAR) AS registered_at FROM event_registrations WHERE (:q IS NULL OR attendee_name ILIKE '%' || :q || '%' OR event_name ILIKE '%' || :q || '%') ORDER BY registered_at DESC"

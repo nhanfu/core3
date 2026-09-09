@@ -1,0 +1,11 @@
+title: Event Stages
+page: { id: event-stages, route: /events/stages, breadcrumb: [Marketing, Events, Configuration, Event Stages], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_stages
+    create_label: New stage
+    search: { label: Search stages, placeholder: Search stages... }
+    columns: [{ field: name, label: Stage Name, type: PrimaryEntityCell }, { field: sequence, label: Sequence, align: right }, { field: fold, label: Folded, type: StatusChip }]
+    page_size: 50
+    row_key: id

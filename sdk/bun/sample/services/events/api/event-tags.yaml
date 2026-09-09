@@ -1,0 +1,5 @@
+page: { id: event-tags }
+datasources:
+  - id: event_tag_categories
+    permission: events.read
+    query: "SELECT id, name, tags, activity, age FROM event_tag_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name"

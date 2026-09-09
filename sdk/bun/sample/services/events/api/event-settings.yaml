@@ -1,0 +1,6 @@
+page: { id: event-settings }
+datasources:
+  - id: event_settings
+    single: true
+    permission: events.read
+    query: "SELECT 'event-settings' AS id, true AS schedule, true AS online_exhibitors, true AS booth_management, true AS sale_tickets, true AS pos_tickets, true AS online_ticketing, true AS barcode_attendance"

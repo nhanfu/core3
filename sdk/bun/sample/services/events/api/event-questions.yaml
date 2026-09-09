@@ -1,0 +1,5 @@
+page: { id: event-questions }
+datasources:
+  - id: event_questions
+    permission: events.read
+    query: "SELECT id, title, question_type, mandatory, once_per_order, answers FROM event_questions WHERE (:q IS NULL OR title ILIKE '%' || :q || '%') ORDER BY title"

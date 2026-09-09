@@ -1,0 +1,6 @@
+page: { id: registration-desk }
+datasources:
+  - id: event_registration_desk
+    single: true
+    permission: events.read
+    query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Registered') AS pending FROM event_registrations"

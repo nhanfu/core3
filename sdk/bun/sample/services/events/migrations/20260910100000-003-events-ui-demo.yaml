@@ -1,0 +1,34 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_templates (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, seats INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true);
+      CREATE TABLE IF NOT EXISTS event_stages (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10, fold BOOLEAN NOT NULL DEFAULT false);
+      CREATE TABLE IF NOT EXISTS event_tag_categories (id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, tags VARCHAR, activity VARCHAR, age VARCHAR);
+      CREATE TABLE IF NOT EXISTS event_questions (id VARCHAR PRIMARY KEY, title VARCHAR NOT NULL, question_type VARCHAR NOT NULL, mandatory BOOLEAN NOT NULL DEFAULT false, once_per_order BOOLEAN NOT NULL DEFAULT false, answers VARCHAR);
+      INSERT INTO events(id, name, event_type, organizer, venue, description, capacity, registration_count, start_at, end_at, state) VALUES
+        ('event-demo-002','EVT/2026/0002','Conference','Marketing Team','Main Hall','Customer conference',180,3,TIMESTAMP '2026-09-14 14:00:00',TIMESTAMP '2026-09-14 18:00:00','Published'),
+        ('event-demo-003','EVT/2026/0003','Training','People Team','Training Room','Internal training',40,12,TIMESTAMP '2026-09-19 09:00:00',TIMESTAMP '2026-09-19 16:00:00','In Progress'),
+        ('event-demo-004','EVT/2026/0004','Design Fair','Marketing Team','Exhibition Hall','Design fair',250,6,TIMESTAMP '2026-12-19 09:15:00',TIMESTAMP '2026-12-19 17:00:00','Completed')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_registrations(id,event_id,event_name,attendee_name,attendee_email,ticket_type,state,registered_at) VALUES
+        ('registration-demo-001','event-demo-002','EVT/2026/0002','Alex Morgan','alex@example.com','General Admission','Attended',TIMESTAMP '2026-09-01 10:00:00'),
+        ('registration-demo-002','event-demo-002','EVT/2026/0002','Jamie Lee','jamie@example.com','General Admission','Registered',TIMESTAMP '2026-09-02 11:00:00'),
+        ('registration-demo-003','event-demo-003','EVT/2026/0003','Taylor Kim','taylor@example.com','Standard','Registered',TIMESTAMP '2026-09-03 12:00:00')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_templates(id,name,seats) VALUES ('template-exhibition','Exhibition',250),('template-training','Training',40),('template-sport','Sport',100) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_stages(id,name,sequence,fold) VALUES ('stage-new','New',1,false),('stage-booked','Booked',2,false),('stage-announced','Announced',3,false),('stage-ended','Ended',4,true) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_tag_categories(id,name,tags,activity,age) VALUES ('tag-culture','Culture','Music, Sport','Online','18+'),('tag-activity','Activity','Conference','Online','10-14'),('tag-audience','Audience','','In Person','5-10') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO event_questions(id,title,question_type,mandatory,once_per_order,answers) VALUES ('question-name','Name','Name',true,false,''),('question-email','Email','Email',true,false,''),('question-phone','Phone','Phone',false,false,'') ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_questions;
+      DROP TABLE IF EXISTS event_tag_categories;
+      DROP TABLE IF EXISTS event_stages;
+      DROP TABLE IF EXISTS event_templates;
+      DELETE FROM event_registrations WHERE id IN ('registration-demo-001','registration-demo-002','registration-demo-003');
+      DELETE FROM events WHERE id IN ('event-demo-002','event-demo-003','event-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

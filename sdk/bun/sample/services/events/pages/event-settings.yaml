@@ -1,0 +1,22 @@
+title: Events Settings
+page: { id: event-settings, route: /events/settings, breadcrumb: [Marketing, Events, Configuration, Settings], auth: { require: [events.read] } }
+components:
+  - type: SettingsView
+    source: event_settings
+    title: Settings
+    tabs:
+      - id: events
+        label: Events
+        icon: calendar
+        sections:
+          - title: Events
+            fields:
+              - { field: schedule, label: Schedule & Tracks, description: Manage and publish a schedule with tracks., type: checkbox }
+              - { field: online_exhibitors, label: Online Exhibitors, description: Display sponsors and exhibitors on your event pages., type: checkbox }
+              - { field: booth_management, label: Booth Management, description: Create booths and manage their reservations., type: checkbox }
+          - title: Registration
+            fields:
+              - { field: sale_tickets, label: Tickets with Sale, description: Sell tickets with sales orders., type: checkbox }
+              - { field: pos_tickets, label: Tickets with PoS, description: Sell tickets with Point of Sale., type: checkbox }
+              - { field: online_ticketing, label: Online Ticketing, description: Sell tickets on your website., type: checkbox }
+              - { field: barcode_attendance, label: Attendance, description: Use Event Barcode., type: checkbox }

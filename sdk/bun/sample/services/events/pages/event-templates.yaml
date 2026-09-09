@@ -1,0 +1,11 @@
+title: Event Templates
+page: { id: event-templates, route: /events/templates, breadcrumb: [Marketing, Events, Configuration, Event Templates], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_templates
+    create_label: New event template
+    search: { label: Search event templates, placeholder: Search templates... }
+    columns: [{ field: name, label: Event Template, type: PrimaryEntityCell }, { field: seats, label: Seats, align: right }, { field: active, label: Active, type: StatusChip }]
+    page_size: 50
+    row_key: id

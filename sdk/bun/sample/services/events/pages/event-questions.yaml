@@ -1,0 +1,11 @@
+title: Event Questions
+page: { id: event-questions, route: /events/questions, breadcrumb: [Marketing, Events, Configuration, Event Questions], auth: { require: [events.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: event_questions
+    create_label: New question
+    search: { label: Search questions, placeholder: Search questions... }
+    columns: [{ field: title, label: Title, type: PrimaryEntityCell }, { field: mandatory, label: Mandatory, type: StatusChip }, { field: once_per_order, label: Once per Order, type: StatusChip }, { field: question_type, label: Type }, { field: answers, label: Answers }]
+    page_size: 50
+    row_key: id

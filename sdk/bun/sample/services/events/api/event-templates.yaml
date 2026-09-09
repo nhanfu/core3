@@ -1,0 +1,5 @@
+page: { id: event-templates }
+datasources:
+  - id: event_templates
+    permission: events.read
+    query: "SELECT id, name, seats, active FROM event_templates WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY name"

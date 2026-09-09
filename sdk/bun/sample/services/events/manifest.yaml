@@ -16,3 +16,16 @@ menu:
       items:
         - { path: /events, label: Events, icon: calendar, permission: events.read }
         - { path: /events-analysis, label: Event Analysis, icon: chart, permission: events.read }
+        - { path: /events/registration-desk, label: Registration Desk, icon: scan, permission: events.read }
+    - id: reporting
+      label: Reporting
+      items:
+        - { path: /events/attendees, label: Attendees, icon: users, permission: events.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /events/templates, label: Event Templates, icon: calendar, permission: events.read }
+        - { path: /events/stages, label: Event Stages, icon: workflow, permission: events.read }
+        - { path: /events/tags, label: Event Tags Categories, icon: tag, permission: events.read }
+        - { path: /events/questions, label: Event Questions, icon: question, permission: events.read }
+        - { path: /events/settings, label: Settings, icon: settings, permission: events.read }

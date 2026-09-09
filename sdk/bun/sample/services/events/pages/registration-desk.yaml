@@ -1,0 +1,9 @@
+title: Registration Desk
+page: { id: registration-desk, route: /events/registration-desk, breadcrumb: [Marketing, Events, Registration Desk], auth: { require: [events.read] } }
+components:
+  - type: PageIntro
+    title: Event Registrations
+    description: Scan or tap an attendee to check in at the registration desk.
+  - type: StatRow
+    source: event_registration_desk
+    stats: [{ label: Registrations, field: registrations }, { label: Pending, field: pending }]
