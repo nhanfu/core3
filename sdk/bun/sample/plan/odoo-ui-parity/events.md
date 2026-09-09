@@ -51,10 +51,14 @@ visual reference.
 Installed-reference dashboard captures now exist at
 `/tmp/odoo-events-{desktop,mobile}-dashboard.png`, with no failed requests;
 the desktop and mobile bodies contain seeded event records and the Events menu.
+The authenticated menu audit resolved Attendees to action 177, Event Templates
+to action 180, Event Stages to action 183, Event Tags Categories to action 193,
+Event Questions to action 194, and Settings to action 192. Desktop/mobile
+captures for those actions and the Registration Desk are under
+`/tmp/odoo-events-{desktop,mobile}-{attendees,event-templates,event-stages,event-tags,event-questions,settings,registration-desk}.png`; all captured routes had empty failed-request lists.
 Remaining installed-addon captures, kept under `/tmp` and never committed,
-include desktop and mobile pairs for event detail, Attendees,
-Registration statistics, Event Templates, Event Stages, Event Tags Categories,
-Event Questions, Settings, and Registration Desk. Each capture must record the
+include desktop and mobile pairs for event detail and Registration statistics.
+Each capture must record the
 database, user/groups, demo flag, source revision, exact action route, viewport,
 and failed-request list; navigate through the authenticated menu/action before
 capturing and assert the expected title and records.
