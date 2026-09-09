@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_taxes
+    create_action: create_pos_tax
+    create_label: New
     search: { label: Search taxes, placeholder: 'Search tax name, description, or invoice label...' }
     filters:
       - { field: tax_scope, label: Scope, options_source: pos_tax_scopes }
@@ -18,3 +20,26 @@ components:
       - { field: active, label: Active, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: create_pos_tax
+    type: server_form
+    permission: pos.manage
+    title: New POS tax
+    action: pos.taxes.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_taxes]
+    mutation:
+      operation: insert
+      table: pos_taxes
+      fields: [name, description, tax_type, tax_scope, invoice_label, company, active]
+      required: [name, tax_type, tax_scope]
+      defaults: { tax_type: Percentage, tax_scope: Sale, company: My Company (San Francisco), active: true }
+      result: { query: "SELECT * FROM pos_taxes WHERE id = :id" }
+    fields:
+      - { field: name, label: Tax name, type: text, required: true }
+      - { field: description, label: Description, type: text }
+      - { field: tax_type, label: Tax type, type: select, options: [Percentage, Fixed, Division], default: Percentage }
+      - { field: tax_scope, label: Tax scope, type: select, options: [Sale, Purchase], default: Sale }
+      - { field: invoice_label, label: Label on invoices, type: text }
+      - { field: company, label: Company, type: text, default: My Company (San Francisco) }
