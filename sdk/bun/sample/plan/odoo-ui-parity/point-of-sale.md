@@ -108,8 +108,17 @@ component fallback registration for native form fields, lookup propagation and
 refresh for list-created server forms, and two-decimal POS payment inputs.
 Mobile stat cards now collapse to two columns and the list root contains table
 header overflow while preserving its internal horizontal viewport. The cashier
-surface remains in-progress pending explicit permission-denied/error coverage
-and a fresh Odoo touch-session comparison.
+surface remains in-progress pending additional empty/error-state coverage and a
+fresh Odoo touch-session comparison.
+
+The Odoo touch dashboard and Furniture Shop selling session were captured at
+1440x900 and 390x844, including the opening-control modal and responsive product
+grid. Core3 now exposes `/point-of-sale/touch` through the dashboard register
+action and renders the shared `PosShell` with the active session, service-owned
+products, open tickets, cart, and payment affordance. Authenticated browser
+checks verified the route at both viewports with zero unexpected responses and
+no horizontal overflow. Odoo captures are `/tmp/odoo-pos-{desktop,mobile}-touch-{dashboard,selling}.png`;
+Core3 captures are `/tmp/core3-pos-touch-shell-final-{desktop,mobile}.png`.
 
 Add explicit menu/page coverage for the remaining Odoo POS product forms and
 the touch-selling dashboard/session.
