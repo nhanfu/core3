@@ -1,0 +1,5 @@
+page: { id: pos-session-report }
+datasources:
+  - id: pos_session_report
+    permission: pos.read
+    query: "SELECT s.id, s.name, s.config, s.state, s.user_name, COUNT(o.id) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, CAST(COALESCE(SUM(o.amount_paid), 0) AS DOUBLE) AS paid_sales FROM pos_sessions s LEFT JOIN pos_orders o ON o.session_id = s.id GROUP BY s.id, s.name, s.config, s.state, s.user_name ORDER BY s.opened_at DESC"

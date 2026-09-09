@@ -1,7 +1,15 @@
 title: POS Payment Methods
 page: { id: pos-payment-methods, route: /point-of-sale/payment-methods, breadcrumb: [Sales, Point of Sale, Configuration, Payment Methods], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: Payment methods
-    description: Cash, card, bank, and online payment methods used by POS tenders are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_payment_method_catalog
+    search: { label: Search payment methods, placeholder: Search payment method... }
+    columns:
+      - { field: name, label: Payment method, type: PrimaryEntityCell }
+      - { field: journal, label: Journal }
+      - { field: payment_count, label: Payments, align: right }
+      - { field: total, label: Total, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: name

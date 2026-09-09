@@ -1,7 +1,18 @@
 title: POS Sales Details
 page: { id: pos-sales-details, route: /point-of-sale/sales-details, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Reporting
-    title: Sales details
-    description: Detailed POS order lines, taxes, discounts, and payment breakdowns are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_sales_details
+    search: { label: Search sales details, placeholder: 'Search order, customer, or product...' }
+    columns:
+      - { field: order_name, label: Order, type: PrimaryEntityCell }
+      - { field: date_order, label: Date }
+      - { field: partner_name, label: Customer }
+      - { field: product_name, label: Product }
+      - { field: quantity, label: Quantity, align: right }
+      - { field: price_unit, label: Unit price, align: right }
+      - { field: total, label: Total, align: right }
+      - { field: payment_method, label: Payment method }
+    page_size: 50
+    row_key: id

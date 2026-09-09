@@ -1,0 +1,16 @@
+title: POS Products
+page: { id: pos-products, route: /point-of-sale/products, breadcrumb: [Sales, Point of Sale, Products], auth: { require: [pos.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_product_catalog
+    search: { label: Search products, placeholder: Search product or barcode... }
+    columns:
+      - { field: name, label: Product, type: PrimaryEntityCell }
+      - { field: barcode, label: Barcode }
+      - { field: category, label: Category }
+      - { field: price, label: Price, align: right }
+      - { field: tax_rate, label: Tax %, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

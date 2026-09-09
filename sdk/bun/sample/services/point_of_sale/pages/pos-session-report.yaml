@@ -1,7 +1,17 @@
 title: POS Session Report
 page: { id: pos-session-report, route: /point-of-sale/session-report, breadcrumb: [Sales, Point of Sale, Reporting, Session Report], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Reporting
-    title: Session report
-    description: Session closing control totals and payment-method reconciliation are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_session_report
+    search: { label: Search session reports, placeholder: Search session... }
+    columns:
+      - { field: name, label: Session, type: PrimaryEntityCell }
+      - { field: config, label: Point of Sale }
+      - { field: user_name, label: Responsible }
+      - { field: order_count, label: Orders, align: right }
+      - { field: total_sales, label: Sales, align: right }
+      - { field: paid_sales, label: Paid, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

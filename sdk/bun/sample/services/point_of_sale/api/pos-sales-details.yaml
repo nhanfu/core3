@@ -1,0 +1,5 @@
+page: { id: pos-sales-details }
+datasources:
+  - id: pos_sales_details
+    permission: pos.read
+    query: "SELECT l.id, o.name AS order_name, o.partner_name, l.product_name, l.quantity, CAST(l.price_unit AS DOUBLE) AS price_unit, CAST(l.price_total AS DOUBLE) AS total, o.payment_method, CAST(o.date_order AS VARCHAR) AS date_order FROM pos_order_lines l JOIN pos_orders o ON o.id = l.order_id WHERE (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.partner_name ILIKE '%' || :q || '%' OR l.product_name ILIKE '%' || :q || '%') ORDER BY o.date_order DESC"

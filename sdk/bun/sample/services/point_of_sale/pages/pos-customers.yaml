@@ -1,7 +1,14 @@
 title: POS Customers
 page: { id: pos-customers, route: /point-of-sale/customers, breadcrumb: [Sales, Point of Sale, Customers], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Customers
-    title: POS customer directory
-    description: Customer lookup and partner creation for the touch-selling flow are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_customer_directory
+    search: { label: Search customers, placeholder: Search customer... }
+    columns:
+      - { field: partner_name, label: Customer, type: PrimaryEntityCell }
+      - { field: order_count, label: Orders, align: right }
+      - { field: total_sales, label: Total sales, align: right }
+      - { field: last_order, label: Last order }
+    page_size: 50
+    row_key: id

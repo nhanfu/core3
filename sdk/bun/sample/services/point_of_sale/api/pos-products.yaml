@@ -1,0 +1,5 @@
+page: { id: pos-products }
+datasources:
+  - id: pos_product_catalog
+    permission: pos.read
+    query: "SELECT id, row_version, name, barcode, category, CAST(price AS DOUBLE) AS price, CAST(tax_rate AS DOUBLE) AS tax_rate, active FROM pos_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%') ORDER BY category, name"
