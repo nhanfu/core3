@@ -1,7 +1,8 @@
-version: 20260910130000
+version: 0.0.4
 description: Expense categories and settings parity fixtures
-up:
-  - sql: |
+type:
+  postgres:
+    up: |
       CREATE TABLE IF NOT EXISTS expense_categories (
         id VARCHAR PRIMARY KEY,
         row_version BIGINT NOT NULL DEFAULT 1,
@@ -28,7 +29,10 @@ up:
         ('expense-category-other', 'Other', 'fixed', 0, 'OTHER', 'Other reimbursable expenses')
       ON CONFLICT (id) DO NOTHING;
       INSERT INTO expense_settings(id) VALUES ('expenses-settings') ON CONFLICT (id) DO NOTHING;
-down:
-  - sql: |
+    down: |
       DROP TABLE IF EXISTS expense_settings;
       DROP TABLE IF EXISTS expense_categories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
