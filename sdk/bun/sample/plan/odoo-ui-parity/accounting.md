@@ -72,6 +72,8 @@ list/pivot states; reconciliation exposes a register-payment form against
 posted invoices with a residual balance; payment tokens intentionally exercise
 an authenticated empty state.
 
+## Remaining parity work
+
 The configuration reference batch adds explicit Core3 routes for
 `/accounting/product-categories`, `/accounting/fiscal-positions`,
 `/accounting/tax-groups`, `/accounting/cash-roundings`, and
