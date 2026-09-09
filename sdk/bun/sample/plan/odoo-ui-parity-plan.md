@@ -48,7 +48,7 @@ outside this local parity plan.
 | helpdesk | helpdesk | unavailable in supplied source | `odoo-ui-parity/helpdesk.md` | planned |
 | quality | quality | unavailable in supplied source | `odoo-ui-parity/quality.md` | planned |
 | plm | mrp_plm | unavailable in supplied source | `odoo-ui-parity/plm.md` | planned |
-| employees | hr | available | `odoo-ui-parity/employees.md` | planned |
+| employees | hr | available | `odoo-ui-parity/employees.md` | ready |
 | recruitment | hr_recruitment | available | `odoo-ui-parity/recruitment.md` | planned |
 | time-off | hr_holidays | available | `odoo-ui-parity/time-off.md` | planned |
 | appraisals | hr_appraisal | unavailable in supplied source | `odoo-ui-parity/appraisals.md` | planned |
@@ -59,7 +59,7 @@ outside this local parity plan.
 | events | event | available | `odoo-ui-parity/events.md` | planned |
 | surveys | survey | available | `odoo-ui-parity/surveys.md` | planned |
 | marketing-automation | marketing_automation | unavailable in supplied source | `odoo-ui-parity/marketing-automation.md` | planned |
-| project | project | available | `odoo-ui-parity/project.md` | planned |
+| project | project | available | `odoo-ui-parity/project.md` | ready |
 | timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | planned |
 | website | website | available; YAML-driven | `odoo-ui-parity/website.md` | on-hold |
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | on-hold |
