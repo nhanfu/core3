@@ -253,6 +253,19 @@ overflow. Corrected captures are
 `/tmp/core3-expenses-{desktop,mobile}-to-process-recaptured.png`; the matching
 installed Odoo references are `/tmp/odoo-expenses/expenses-to-process-{desktop,mobile}.png`.
 
+The configuration batch is now implemented and browser-verified against the
+installed disposable reference. Authenticated Core3 checks at 1440x900 and
+390x844 loaded `/expenses`, `/expenses/to-process`, `/expenses/analysis`, the
+legacy `/expense-analysis` alias, `/expenses/employee`, `/expenses/categories`,
+and `/expenses/settings` with no unexpected failed responses or horizontal
+overflow. The employee and category lists expose 9 and 4 deterministic rows;
+the category New action opens its shared server form. Fresh comparison captures
+are under `/tmp/core3-expenses-final/` and include desktop/mobile pairs for My
+Expenses, Expenses to Process, Expense Analysis, Employee Expenses, Expense
+Categories, and Settings. The implementation is in commits `e5f805d`,
+`83fb678`, and `7c3dec3`; its source was developed in the dedicated
+`agent/odoo-ui-expenses-impl` worktree.
+
 ## Acceptance
 
 - The implementation inventory maps every visible installed-addon menu and
