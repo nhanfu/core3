@@ -4,10 +4,17 @@ datasources:
   - id: contact_detail
     single: true
     permission: base.contacts.read
-    query: "SELECT c.*, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories FROM base_contacts c WHERE c.id = :id"
+    mock_data:
+      default: { id: contact-demo, row_version: 1, name: Demo Contact, company_type: person, email: demo@core3.local, phone: '+1 555 0101', street: 100 Main Street, street2: Suite 2, city: San Francisco, state_name: California, zip: '94105', country_name: United States, active: true, active_label: Active, categories: Partner }
+      states:
+        archived: { id: contact-archived, row_version: 2, name: Archived Contact, company_type: person, email: archived@core3.local, phone: '+1 555 0199', city: Berlin, country_name: Germany, active: false, active_label: Archived, categories: Customer }
   - id: contact_activities
     permission: base.activities.read
-    query: "SELECT id, summary, activity_type, state, due_date, assigned_user_name FROM base_activities WHERE contact_id = :id ORDER BY due_date DESC"
+    mock_data:
+      default:
+        - { id: activity-demo, summary: Welcome call, activity_type: call, state: planned, due_date: '2026-09-09', assigned_user_name: Administrator }
+      states:
+        empty: []
 components:
   - type: OdooFormView
     source: contact_detail

@@ -1,7 +1,11 @@
 title: Language
 page: { id: language-detail, breadcrumb: [Contacts, Configuration, Languages], auth: { require: [base.reference.read] } }
 datasources:
-  - { id: language_detail, single: true, permission: base.reference.read, query: "SELECT code, name, direction FROM base_languages WHERE code = :id" }
+  - id: language_detail
+    single: true
+    permission: base.reference.read
+    mock_data:
+      default: { code: en_US, name: English (US), direction: ltr }
 components:
   - type: OdooFormView
     source: language_detail

@@ -1,7 +1,11 @@
 title: Currency
 page: { id: currency-detail, breadcrumb: [Contacts, Configuration, Currencies], auth: { require: [base.reference.read] } }
 datasources:
-  - { id: currency_detail, single: true, permission: base.reference.read, query: "SELECT code, name, symbol, decimal_places FROM base_currencies WHERE code = :id" }
+  - id: currency_detail
+    single: true
+    permission: base.reference.read
+    mock_data:
+      default: { code: USD, name: US Dollar, symbol: '$', decimal_places: 2 }
 components:
   - type: OdooFormView
     source: currency_detail

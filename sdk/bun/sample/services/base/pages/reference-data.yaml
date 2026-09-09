@@ -1,10 +1,26 @@
 title: Base Configuration
 page: { id: base-reference-data, breadcrumb: [Contacts, Configuration], auth: { require: [base.reference.read] } }
 datasources:
-  - { id: countries, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries ORDER BY name" }
-  - { id: currencies, permission: base.reference.read, query: "SELECT code, name, symbol, decimal_places FROM base_currencies ORDER BY code" }
-  - { id: languages, permission: base.reference.read, query: "SELECT code, name, direction FROM base_languages ORDER BY name" }
-  - { id: categories, permission: base.reference.read, query: "SELECT id, name, color FROM base_contact_categories ORDER BY name" }
+  - id: countries
+    permission: base.reference.read
+    mock_data:
+      default: [{ code: US, name: United States, currency_code: USD }, { code: VN, name: Vietnam, currency_code: VND }, { code: DE, name: Germany, currency_code: EUR }]
+      states: { empty: [] }
+  - id: currencies
+    permission: base.reference.read
+    mock_data:
+      default: [{ code: USD, name: US Dollar, symbol: '$', decimal_places: 2 }, { code: EUR, name: Euro, symbol: '€', decimal_places: 2 }, { code: VND, name: Vietnamese Dong, symbol: '₫', decimal_places: 0 }]
+      states: { empty: [] }
+  - id: languages
+    permission: base.reference.read
+    mock_data:
+      default: [{ code: en_US, name: English (US), direction: ltr }, { code: vi_VN, name: Vietnamese, direction: ltr }, { code: de_DE, name: German, direction: ltr }]
+      states: { empty: [] }
+  - id: categories
+    permission: base.reference.read
+    mock_data:
+      default: [{ id: category-customer, name: Customer, color: 10 }, { id: category-vendor, name: Vendor, color: 20 }, { id: category-partner, name: Partner, color: 30 }]
+      states: { empty: [] }
 components:
   - type: ListView
     variant: odoo

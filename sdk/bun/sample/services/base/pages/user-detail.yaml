@@ -10,7 +10,8 @@ datasources:
     permission: auth.users.manage
   - id: user_languages
     permission: base.reference.read
-    query: "SELECT code, name FROM base_languages UNION SELECT 'en' AS code, 'English' AS name ORDER BY name"
+    mock_data:
+      default: [{ code: en, name: English }, { code: en_US, name: English (US) }, { code: vi_VN, name: Vietnamese }]
   - id: user_roles
     type: service
     service: auth

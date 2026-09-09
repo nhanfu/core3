@@ -1,7 +1,11 @@
 title: Contact Category
 page: { id: category-detail, breadcrumb: [Contacts, Configuration, Categories], auth: { require: [base.reference.read] } }
 datasources:
-  - { id: category_detail, single: true, permission: base.reference.read, query: "SELECT id, name, color FROM base_contact_categories WHERE id = :id" }
+  - id: category_detail
+    single: true
+    permission: base.reference.read
+    mock_data:
+      default: { id: category-customer, name: Customer, color: 10 }
 components:
   - type: OdooFormView
     source: category_detail

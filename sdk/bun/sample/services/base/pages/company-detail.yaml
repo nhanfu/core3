@@ -4,7 +4,10 @@ datasources:
   - id: company_detail
     single: true
     permission: base.companies.read
-    query: "SELECT * FROM base_contacts WHERE id = :id AND is_company = true"
+    mock_data:
+      default: { id: company-demo, row_version: 1, name: Core3 Demo Company, email: hello@core3.local, phone: '+1 555 0100', currency_code: USD, street: 100 Main Street, city: San Francisco, state_name: California, zip: '94105', country_name: United States, is_company: true, active: true }
+      states:
+        archived: { id: company-archived, row_version: 2, name: Archived Company, email: archived-company@core3.local, phone: '+1 555 0198', currency_code: EUR, street: 10 Alexanderplatz, city: Berlin, state_name: Berlin, zip: '10178', country_name: Germany, is_company: true, active: false }
 components:
   - type: OdooFormView
     source: company_detail

@@ -1,7 +1,11 @@
 title: Country
 page: { id: country-detail, breadcrumb: [Contacts, Configuration, Countries], auth: { require: [base.reference.read] } }
 datasources:
-  - { id: country_detail, single: true, permission: base.reference.read, query: "SELECT code, name, currency_code FROM base_countries WHERE code = :id" }
+  - id: country_detail
+    single: true
+    permission: base.reference.read
+    mock_data:
+      default: { code: US, name: United States, currency_code: USD }
 components:
   - type: OdooFormView
     source: country_detail

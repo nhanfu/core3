@@ -1,7 +1,11 @@
 title: Activity
 page: { id: activity-detail, breadcrumb: [Contacts, Activity, Detail], auth: { require: [base.activities.read] } }
 datasources:
-  - { id: activity_detail, single: true, permission: base.activities.read, query: "SELECT id, summary, activity_type, state, due_date, assigned_user_name, note FROM base_activities WHERE id = :id" }
+  - id: activity_detail
+    single: true
+    permission: base.activities.read
+    mock_data:
+      default: { id: activity-demo, summary: Welcome call, activity_type: call, state: planned, due_date: '2026-09-09', assigned_user_name: Administrator, note: Confirm requirements }
 components:
   - type: OdooFormView
     source: activity_detail

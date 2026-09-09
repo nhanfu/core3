@@ -3,10 +3,19 @@ page: { id: contacts, breadcrumb: [Contacts], auth: { require: [base.contacts.re
 datasources:
   - id: contacts
     permission: base.contacts.read
-    query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.is_company, c.active, c.created_at, (SELECT COUNT(*) FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS category_count FROM base_contacts c WHERE c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') AND (:company_type IS NULL OR c.company_type = :company_type) ORDER BY c.name"
+    mock_data:
+      default:
+        - { id: company-demo, row_version: 1, name: Core3 Demo Company, company_type: company, email: hello@core3.local, phone: '+1 555 0100', city: San Francisco, country_name: United States, is_company: true, active: true, category_count: 1 }
+        - { id: contact-demo, row_version: 1, name: Demo Contact, company_type: person, email: demo@core3.local, phone: '+1 555 0101', city: San Francisco, country_name: United States, is_company: false, active: true, category_count: 1 }
+        - { id: company-vietnam, row_version: 1, name: Core3 Vietnam Branch, company_type: company, email: vn@core3.local, phone: '+84 28 5555 0100', city: Ho Chi Minh City, country_name: Vietnam, is_company: true, active: true, category_count: 0 }
+      states:
+        empty: []
+        filtered:
+          - { id: contact-demo, row_version: 1, name: Demo Contact, company_type: person, email: demo@core3.local, phone: '+1 555 0101', city: San Francisco, country_name: United States, is_company: false, active: true, category_count: 1 }
   - id: contact_types
     permission: base.contacts.read
-    query: "SELECT value, label FROM (VALUES ('person','Person'), ('company','Company'), ('other','Other')) types(value, label)"
+    mock_data:
+      default: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }]
 components:
   - type: ListView
     variant: odoo

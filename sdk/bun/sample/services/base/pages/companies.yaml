@@ -3,7 +3,14 @@ page: { id: companies, breadcrumb: [Contacts, Companies], auth: { require: [base
 datasources:
   - id: companies
     permission: base.companies.read
-    query: "SELECT id, row_version, name, email, phone, street, city, state_name, zip, country_name, currency_code, active FROM base_contacts WHERE is_company = true AND active = true AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') ORDER BY name"
+    mock_data:
+      default:
+        - { id: company-demo, row_version: 1, name: Core3 Demo Company, email: hello@core3.local, phone: '+1 555 0100', street: 100 Main Street, city: San Francisco, state_name: California, zip: '94105', country_name: United States, currency_code: USD, active: true }
+        - { id: company-vietnam, row_version: 1, name: Core3 Vietnam Branch, email: vn@core3.local, phone: '+84 28 5555 0100', street: 1 Nguyen Hue, city: Ho Chi Minh City, state_name: Ho Chi Minh City, zip: '700000', country_name: Vietnam, currency_code: VND, active: true }
+      states:
+        empty: []
+        filtered:
+          - { id: company-demo, row_version: 1, name: Core3 Demo Company, email: hello@core3.local, phone: '+1 555 0100', street: 100 Main Street, city: San Francisco, state_name: California, zip: '94105', country_name: United States, currency_code: USD, active: true }
 components:
   - type: ListView
     variant: odoo
