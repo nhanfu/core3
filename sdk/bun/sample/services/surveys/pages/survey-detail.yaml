@@ -5,6 +5,12 @@ components:
     source: survey_detail
     title_field: name
     status_field: state
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: publish_survey_detail, label: Publish, variant: primary, permission: surveys.write, show_if: "state.survey_detail.state === 'Draft'" }
+      - { id: close_survey_detail, label: Close, variant: secondary, permission: surveys.manage, show_if: "state.survey_detail.state === 'Published'" }
+      - { id: cancel_survey_detail, label: Cancel, variant: danger, permission: surveys.manage, show_if: "state.survey_detail.state === 'Draft' || state.survey_detail.state === 'Published'" }
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: Closed, label: Closed }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Published: blue, Closed: green, Cancelled: red }
     group_columns: 2
