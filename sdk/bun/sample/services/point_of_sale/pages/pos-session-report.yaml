@@ -1,0 +1,7 @@
+title: POS Session Report
+page: { id: pos-session-report, route: /point-of-sale/session-report, breadcrumb: [Sales, Point of Sale, Reporting, Session Report], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Reporting
+    title: Session report
+    description: Session closing control totals and payment-method reconciliation are tracked here.

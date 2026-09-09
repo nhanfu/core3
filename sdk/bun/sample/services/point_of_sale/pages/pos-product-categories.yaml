@@ -1,0 +1,7 @@
+title: POS Product Categories
+page: { id: pos-product-categories, route: /point-of-sale/product-categories, breadcrumb: [Sales, Point of Sale, Products, Categories], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Products
+    title: POS product categories
+    description: POS category ordering and product grouping are tracked here.

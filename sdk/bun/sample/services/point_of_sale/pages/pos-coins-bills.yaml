@@ -1,0 +1,7 @@
+title: POS Coins and Bills
+page: { id: pos-coins-bills, route: /point-of-sale/coins-bills, breadcrumb: [Sales, Point of Sale, Configuration, Coins and Bills], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Configuration
+    title: Coins and bills
+    description: Cash denominations used by opening and closing controls are tracked here.

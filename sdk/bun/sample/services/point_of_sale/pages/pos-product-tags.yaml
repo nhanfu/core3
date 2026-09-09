@@ -1,0 +1,7 @@
+title: POS Product Tags
+page: { id: pos-product-tags, route: /point-of-sale/product-tags, breadcrumb: [Sales, Point of Sale, Products, Tags], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Products
+    title: Product tags
+    description: POS catalog tags and category filters are tracked here.

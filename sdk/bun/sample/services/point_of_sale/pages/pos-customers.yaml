@@ -1,0 +1,7 @@
+title: POS Customers
+page: { id: pos-customers, route: /point-of-sale/customers, breadcrumb: [Sales, Point of Sale, Customers], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Customers
+    title: POS customer directory
+    description: Customer lookup and partner creation for the touch-selling flow are tracked here.

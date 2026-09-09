@@ -1,0 +1,7 @@
+title: Preparation Printers
+page: { id: pos-preparation-printers, route: /point-of-sale/preparation-printers, breadcrumb: [Sales, Point of Sale, Preparation Printers], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Configuration
+    title: Preparation printers
+    description: Kitchen and preparation printer routing for POS order lines is tracked here.

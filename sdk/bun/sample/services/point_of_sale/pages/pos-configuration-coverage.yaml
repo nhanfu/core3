@@ -1,0 +1,7 @@
+title: POS Configuration Coverage
+page: { id: pos-configuration-coverage, route: /point-of-sale/configuration-coverage, breadcrumb: [Sales, Point of Sale, Configuration], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Configuration
+    title: POS configuration registry
+    description: Settings, note models, coins and bills, presets, taxes, and payment methods are tracked as independent contracts.

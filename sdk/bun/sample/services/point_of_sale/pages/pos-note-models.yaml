@@ -1,0 +1,7 @@
+title: POS Note Models
+page: { id: pos-note-models, route: /point-of-sale/note-models, breadcrumb: [Sales, Point of Sale, Configuration, Note Models], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Configuration
+    title: Note models
+    description: Reusable order and kitchen note templates are tracked here.

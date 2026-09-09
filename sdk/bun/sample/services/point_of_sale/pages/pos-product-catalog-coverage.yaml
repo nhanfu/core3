@@ -1,0 +1,7 @@
+title: POS Product Catalog Coverage
+page: { id: pos-product-catalog-coverage, route: /point-of-sale/product-catalog, breadcrumb: [Sales, Point of Sale, Products], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Products
+    title: Product catalog registry
+    description: Products, variants, combo choices, pricelists, categories, attributes, and tags are tracked as independent POS catalog contracts.

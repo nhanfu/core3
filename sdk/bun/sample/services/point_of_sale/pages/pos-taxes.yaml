@@ -1,0 +1,7 @@
+title: POS Taxes
+page: { id: pos-taxes, route: /point-of-sale/taxes, breadcrumb: [Sales, Point of Sale, Configuration, Taxes], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Configuration
+    title: POS taxes
+    description: Tax mapping used by POS products and receipts is tracked here.

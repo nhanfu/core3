@@ -1,0 +1,7 @@
+title: POS Sales Details
+page: { id: pos-sales-details, route: /point-of-sale/sales-details, breadcrumb: [Sales, Point of Sale, Reporting, Sales Details], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Reporting
+    title: Sales details
+    description: Detailed POS order lines, taxes, discounts, and payment breakdowns are tracked here.

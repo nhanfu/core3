@@ -1,0 +1,7 @@
+title: POS Attributes
+page: { id: pos-attributes, route: /point-of-sale/attributes, breadcrumb: [Sales, Point of Sale, Products, Attributes], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Products
+    title: Product attributes
+    description: Variant attributes and values used by POS products are tracked here.

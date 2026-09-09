@@ -1,0 +1,7 @@
+title: POS Combo Choices
+page: { id: pos-combo-choices, route: /point-of-sale/combo-choices, breadcrumb: [Sales, Point of Sale, Products, Combo Choices], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Products
+    title: Combo choices
+    description: Configurable product combo choices and pricing are tracked here.

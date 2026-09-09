@@ -37,6 +37,14 @@ menu:
           label: Cash Movements
           icon: money
           permission: pos.read
+        - path: /point-of-sale/customers
+          label: Customers
+          icon: users
+          permission: pos.read
+        - path: /point-of-sale/preparation-printers
+          label: Preparation Printers
+          icon: printer
+          permission: pos.read
     - id: configuration-reporting
       label: Configuration & Reporting
       items:
@@ -47,4 +55,63 @@ menu:
         - path: /point-of-sale/analysis
           label: Sales Analysis
           icon: chart
+          permission: pos.read
+        - path: /point-of-sale/session-report
+          label: Session Report
+          icon: chart
+          permission: pos.read
+        - path: /point-of-sale/sales-details
+          label: Sales Details
+          icon: chart
+          permission: pos.read
+        - path: /point-of-sale/note-models
+          label: Note Models
+          icon: document
+          permission: pos.read
+        - path: /point-of-sale/coins-bills
+          label: Coins/Bills
+          icon: money
+          permission: pos.read
+        - path: /point-of-sale/presets
+          label: Presets
+          icon: sliders
+          permission: pos.read
+        - path: /point-of-sale/taxes
+          label: Taxes
+          icon: percent
+          permission: pos.read
+        - path: /point-of-sale/payment-methods
+          label: Payment Methods
+          icon: bank
+          permission: pos.read
+    - id: product-catalog
+      label: Product Catalog
+      items:
+        - path: /point-of-sale/products
+          label: Products
+          icon: cube
+          permission: pos.read
+        - path: /point-of-sale/product-variants
+          label: Product Variants
+          icon: cube
+          permission: pos.read
+        - path: /point-of-sale/combo-choices
+          label: Combo Choices
+          icon: list
+          permission: pos.read
+        - path: /point-of-sale/pricelists
+          label: Pricelists
+          icon: tag
+          permission: pos.read
+        - path: /point-of-sale/product-categories
+          label: PoS Product Categories
+          icon: folder
+          permission: pos.read
+        - path: /point-of-sale/attributes
+          label: Attributes
+          icon: sliders
+          permission: pos.read
+        - path: /point-of-sale/product-tags
+          label: Product Tags
+          icon: tag
           permission: pos.read

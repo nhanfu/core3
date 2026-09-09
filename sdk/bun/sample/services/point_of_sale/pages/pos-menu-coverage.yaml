@@ -1,0 +1,7 @@
+title: POS Menu Coverage
+page: { id: pos-menu-coverage, route: /point-of-sale/menu-coverage, breadcrumb: [Sales, Point of Sale, Menu Coverage], auth: { require: [pos.read] } }
+components:
+  - type: ComingSoon
+    eyebrow: Point of Sale
+    title: POS menu coverage registry
+    description: This registry anchors the Odoo POS menu families while each catalog, reporting, and configuration surface is implemented with its own datasource and form contract.
