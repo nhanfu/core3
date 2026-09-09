@@ -4,14 +4,38 @@ components:
   - type: ListView
     variant: odoo
     source: pos_payment_method_catalog
+    create_action: create_pos_payment_method
+    create_label: New
     row_open_action: view_pos_payment_method
     row_double_click_action: view_pos_payment_method
     search: { label: Search payment methods, placeholder: Search payment method... }
     columns:
       - { field: name, label: Payment method, type: PrimaryEntityCell }
       - { field: journal, label: Journal }
-      - { field: payment_count, label: Payments, align: right }
-      - { field: total, label: Total, align: right }
-      - { field: state, label: Status, type: StatusChip }
+      - { field: company, label: Company }
+      - { field: point_of_sale, label: Point of Sale }
+      - { field: active, label: Active, type: StatusChip }
+    selectable: true
     page_size: 50
-    row_key: name
+    row_key: id
+actions:
+  - id: create_pos_payment_method
+    type: server_form
+    permission: pos.manage
+    title: New payment method
+    action: pos.payment_methods.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_payment_method_catalog]
+    mutation:
+      operation: insert
+      table: pos_payment_methods
+      fields: [name, journal, company, point_of_sale, active]
+      required: [name]
+      defaults: { company: My Company (San Francisco), point_of_sale: Furniture Shop, active: true }
+      result: { query: "SELECT * FROM pos_payment_methods WHERE id = :id" }
+    fields:
+      - { field: name, label: Payment method, type: text, required: true }
+      - { field: journal, label: Journal, type: text }
+      - { field: company, label: Company, type: text, default: My Company (San Francisco) }
+      - { field: point_of_sale, label: Point of Sale, type: text, default: Furniture Shop }

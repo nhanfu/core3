@@ -1,0 +1,25 @@
+version: 0.0.13
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_payment_methods (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR NOT NULL,
+        journal VARCHAR,
+        company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        point_of_sale VARCHAR NOT NULL DEFAULT 'Furniture Shop',
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_payment_methods(id, name, journal, company, point_of_sale, active) VALUES
+        ('pos-method-card', 'Card', 'Bank', 'My Company (San Francisco)', 'Furniture Shop, Clothes Shop, Bakery Shop', true),
+        ('pos-method-account', 'Customer Account', '', 'My Company (San Francisco)', 'Furniture Shop, Clothes Shop, Bakery Shop', true),
+        ('pos-method-cash-furniture', 'Cash', 'Cash Furn. Shop', 'My Company (San Francisco)', 'Furniture Shop', true),
+        ('pos-method-cash-clothes', 'Cash', 'Cash Clothes Shop', 'My Company (San Francisco)', 'Clothes Shop', true),
+        ('pos-method-cash-bakery', 'Cash', 'Cash Bakery', 'My Company (San Francisco)', 'Bakery Shop', true)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_payment_methods;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
