@@ -57,7 +57,7 @@ outside this local parity plan.
 | email-marketing | mass_mailing | available | `odoo-ui-parity/email-marketing.md` | planned |
 | sms-marketing | mass_mailing_sms | available | `odoo-ui-parity/sms-marketing.md` | planned |
 | events | event | available | `odoo-ui-parity/events.md` | in-progress |
-| surveys | survey | available | `odoo-ui-parity/surveys.md` | planned |
+| surveys | survey | available | `odoo-ui-parity/surveys.md` | in-progress |
 | marketing-automation | marketing_automation | unavailable in supplied source | `odoo-ui-parity/marketing-automation.md` | planned |
 | project | project | available | `odoo-ui-parity/project.md` | ready |
 | timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | ready |

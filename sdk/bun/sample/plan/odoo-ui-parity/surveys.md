@@ -74,6 +74,24 @@ zero failed network requests; they are retained only as historical evidence.
 6. **Acceptance:** in progress; broader workflow, permission, empty/error,
    public-flow, and visual checks remain.
 
+## Current implementation batch
+
+Core3 now exposes `/surveys`, `/surveys/participants`, `/surveys/questions`,
+`/surveys/suggested-values`, `/surveys/detailed-answers`,
+`/surveys/analysis`, and `/surveys/detail`. The first batch extracts the
+survey, analysis, and detail queries into convention-discovered API fragments;
+adds participant, question, suggested-value, and detailed-answer catalogs;
+normalizes the deterministic fixture set to the four installed Odoo demo
+surveys; and adds shared ListView/server-form contracts plus survey-row detail
+navigation. Authenticated Core3 checks at 1440x900 and 390x844 loaded every
+route with seeded data, no unexpected failed responses, and no horizontal
+overflow. A mobile survey detail check rendered the certification questions,
+and the Questions New action opened the shared form with nine fields. Captures
+are under `/tmp/core3-surveys-{surveys,participants,questions,suggested-values,detailed-answers,analysis}-{desktop,mobile}.png`,
+with additional detail/form captures under `/tmp/core3-surveys-*`. The batch
+was developed in `agent/odoo-ui-surveys-impl2` and integrated as `453f787a`,
+`7803bcc1`, `fbe848e8`, `43b762b6`, `c2a3a012`, `952394b4`, and `18e0f702`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
