@@ -191,7 +191,7 @@ actions:
       result: { query: "SELECT * FROM pos_orders WHERE id = :ticket_id" }
     fields:
       - { field: ticket_id, label: Ticket, type: select, options_source: pos_open_ticket_options, required: true }
-      - { field: amount, label: Amount, type: money, required: true }
+      - { field: amount, label: Amount, type: money, decimals: 2, required: true }
       - { field: method, label: Method, type: select, options: [Cash, Card, Bank, Other], required: true }
 
   - id: cancel_cashier_ticket
