@@ -1,0 +1,19 @@
+title: Vendors
+page: { id: accounting-vendors, route: /accounting/vendors, breadcrumb: [Finance, Vendors], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_vendors
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('vendor-001','Ready Mat','sales@ready-mat.example','+1 555 0103','United States','Active'), ('vendor-002','Wood Corner','orders@wood-corner.example','+1 555 0105','United States','Active')) vendors(id,name,email,phone,country,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_vendors
+    search: { label: Search vendors, placeholder: Search vendors... }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: country, label: Country }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

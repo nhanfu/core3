@@ -44,6 +44,11 @@ settings navigation, section bands, two-column cards, tab switching, search
 filtering, and a mobile single-column layout; captures remain temporary local
 evidence.
 
+The customer and vendor list batch adds explicit `/accounting/customers` and
+`/accounting/vendors` routes with deterministic partner fixtures and Odoo list
+columns. These are compared with Odoo `/odoo/customers` and `/odoo/vendors` at
+desktop and mobile viewports; captures remain temporary local evidence.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining customer/vendor, reporting,

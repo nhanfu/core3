@@ -14,6 +14,14 @@ menu:
     - id: accounting
       label: Accounting
       items:
+        - path: /accounting/customers
+          label: Customers
+          icon: users
+          permission: accounting.read
+        - path: /accounting/vendors
+          label: Vendors
+          icon: users
+          permission: accounting.read
         - path: /accounting/journal-entries
           label: Journal Entries
           icon: ledger

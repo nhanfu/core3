@@ -1,0 +1,19 @@
+title: Customers
+page: { id: accounting-customers, route: /accounting/customers, breadcrumb: [Finance, Customers], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_customers
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('customer-001','Azure Interior','contact@azure-interior.example','+1 555 0101','United States','Active'), ('customer-002','Deco Addict','hello@deco-addict.example','+1 555 0102','United States','Active'), ('customer-003','Ready Mat','sales@ready-mat.example','+1 555 0103','United States','Active'), ('customer-004','Gemini Furniture','orders@gemini-furniture.example','+1 555 0104','United States','Active')) customers(id,name,email,phone,country,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_customers
+    search: { label: Search customers, placeholder: Search customers... }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: email, label: Email }
+      - { field: phone, label: Phone }
+      - { field: country, label: Country }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
