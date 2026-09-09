@@ -93,6 +93,22 @@ with no unexpected responses or horizontal overflow. Odoo captures are under
 `/tmp/odoo-pos-{desktop,mobile}-payment-methods.png`; Core3 captures are under
 `/tmp/core3-pos-{desktop,mobile}-payment-{methods,detail}.png`.
 
+The cashier workflow was audited in an isolated all-memory runtime at desktop
+and mobile sizes. Authenticated browser evidence covers New ticket with an open
+session lookup, Add to ticket for House coffee, and Register payment using Cash.
+The resulting order appears in POS Orders as Paid with total 3.85, paid 3.85,
+tax 0.35, and payment method Cash. Core3 captures are kept locally under
+`/tmp/core3-pos-cashier-desktop-{initial,new-ticket,product-added,paid,order-paid}.png`
+and `/tmp/core3-pos-cashier-mobile.png`.
+
+The audit fixed three shared/runtime gaps found by the browser: direct Bun
+component fallback registration for native form fields, lookup propagation and
+refresh for list-created server forms, and two-decimal POS payment inputs.
+Mobile stat cards now collapse to two columns and the list root contains table
+header overflow while preserving its internal horizontal viewport. The cashier
+surface remains in-progress pending explicit permission-denied/error coverage
+and a fresh Odoo touch-session comparison.
+
 Add explicit menu/page coverage for the remaining Odoo POS product forms and
 the touch-selling dashboard/session.
 Capture and implement configuration forms, payment/tender modals, session
