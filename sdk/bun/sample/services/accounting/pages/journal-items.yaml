@@ -1,0 +1,17 @@
+title: Journal Items
+page: { id: accounting-journal-items, route: /accounting/journal-items, breadcrumb: [Finance, Review, Journal Items], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_journal_items
+    search: { label: Search Journal Items, placeholder: 'Search journal entries, partners, or labels...' }
+    columns:
+      - { field: item_date, label: Date }
+      - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }
+      - { field: partner_name, label: Partner }
+      - { field: label, label: Label }
+      - { field: debit, label: Debit, align: right }
+      - { field: credit, label: Credit, align: right }
+      - { field: matching, label: Matching }
+    page_size: 50
+    row_key: id

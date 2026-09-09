@@ -1,0 +1,6 @@
+page: { id: accounting-incoterms }
+datasources:
+  - id: accounting_incoterms
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, code, name, active FROM accounting_incoterms WHERE (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY code"

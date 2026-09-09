@@ -1,0 +1,14 @@
+title: Audit Trail
+page: { id: accounting-audit-trail, route: /accounting/audit-trail, breadcrumb: [Finance, Review, Audit Trail], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_audit_trail
+    search: { label: Search audit trail, placeholder: 'Search author, record, or description...' }
+    columns:
+      - { field: event_date, label: Date }
+      - { field: author_name, label: Author }
+      - { field: record_name, label: Name, type: PrimaryEntityCell }
+      - { field: description, label: Description }
+    page_size: 50
+    row_key: id

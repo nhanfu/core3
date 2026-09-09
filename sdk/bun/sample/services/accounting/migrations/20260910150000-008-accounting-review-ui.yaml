@@ -1,0 +1,43 @@
+version: 0.0.8
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_journal_items (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        item_date DATE NOT NULL, entry_name VARCHAR NOT NULL, partner_name VARCHAR,
+        label VARCHAR NOT NULL, debit DECIMAL(18,2) NOT NULL DEFAULT 0,
+        credit DECIMAL(18,2) NOT NULL DEFAULT 0, matching VARCHAR
+      );
+      CREATE TABLE IF NOT EXISTS accounting_audit_trail (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        event_date TIMESTAMP NOT NULL, author_name VARCHAR NOT NULL,
+        record_name VARCHAR NOT NULL, description VARCHAR NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS accounting_incoterms (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1,
+        code VARCHAR NOT NULL UNIQUE, name VARCHAR NOT NULL, active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT OR IGNORE INTO accounting_journal_items VALUES
+        ('acct-item-001',1,DATE '2026-01-15','INV/2026/0001','Lumber Inc','Product Sales',295.00,0,''),
+        ('acct-item-002',1,DATE '2026-01-15','INV/2026/0001','Lumber Inc','Sales untaxed',0,295.00,''),
+        ('acct-item-003',1,DATE '2026-01-14','BILL/2026/0002','Azure Interior','Expenses',480.00,0,''),
+        ('acct-item-004',1,DATE '2026-01-14','BILL/2026/0002','Azure Interior','Account Payable',0,480.00,'');
+      INSERT OR IGNORE INTO accounting_audit_trail VALUES
+        ('acct-audit-001',1,TIMESTAMP '2026-01-15 09:10:00','OdooBot','INV/2026/0001','Journal Entry created'),
+        ('acct-audit-002',1,TIMESTAMP '2026-01-15 09:11:00','OdooBot','INV/2026/0001','Journal Entry posted'),
+        ('acct-audit-003',1,TIMESTAMP '2026-01-14 14:20:00','OdooBot','BILL/2026/0002','Journal Entry created');
+      INSERT OR IGNORE INTO accounting_incoterms VALUES
+        ('incoterm-exw',1,'EXW','EX WORKS',true),('incoterm-fca',1,'FCA','FREE CARRIER',true),
+        ('incoterm-fas',1,'FAS','FREE ALONGSIDE SHIP',true),('incoterm-fob',1,'FOB','FREE ON BOARD',true),
+        ('incoterm-cfr',1,'CFR','COST AND FREIGHT',true),('incoterm-cif',1,'CIF','COST, INSURANCE AND FREIGHT',true),
+        ('incoterm-cpt',1,'CPT','CARRIAGE PAID TO',true),('incoterm-cip',1,'CIP','CARRIAGE AND INSURANCE PAID TO',true),
+        ('incoterm-dpu',1,'DPU','DELIVERED AT PLACE UNLOADED',true),('incoterm-dap',1,'DAP','DELIVERED AT PLACE',true),
+        ('incoterm-ddp',1,'DDP','DELIVERED DUTY PAID',true);
+    down: |
+      DROP TABLE IF EXISTS accounting_incoterms;
+      DROP TABLE IF EXISTS accounting_audit_trail;
+      DROP TABLE IF EXISTS accounting_journal_items;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

@@ -1,0 +1,12 @@
+title: Incoterms
+page: { id: accounting-incoterms, route: /accounting/incoterms, breadcrumb: [Finance, Configuration, Incoterms], auth: { require: [accounting.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_incoterms
+    search: { label: Search Incoterms, placeholder: 'Search code or name...' }
+    columns:
+      - { field: code, label: Code, type: PrimaryEntityCell }
+      - { field: name, label: Name }
+    page_size: 50
+    row_key: id

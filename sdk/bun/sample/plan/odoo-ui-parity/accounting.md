@@ -126,6 +126,17 @@ Authenticated browser evidence was captured at 1440x900 and 390x844 under
 broader empty/error/denied-state coverage across every Accounting route and
 additional Odoo form tabs and relational controls.
 
+## Current batch: review and shipping configuration surfaces
+
+The live Odoo action audit resolved Journal Items to `/odoo/items` (action 257)
+and captured the populated Journal Items, Audit Trail (action 305), and
+Incoterms (action 303) surfaces at desktop and mobile viewports. Core3 now
+provides `/accounting/journal-items`, `/accounting/audit-trail`, and
+`/accounting/incoterms` with service-owned API fragments and deterministic
+fixtures matching the observed columns and rows. Captures are temporary under
+`/tmp/odoo-accounting-{desktop,mobile}-{journal-items,audit-trail,incoterms}.png`
+and `/tmp/core3-accounting-{desktop,mobile}-{journal-items,audit-trail,incoterms}.png`.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a

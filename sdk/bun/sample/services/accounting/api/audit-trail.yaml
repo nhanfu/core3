@@ -1,0 +1,6 @@
+page: { id: accounting-audit-trail }
+datasources:
+  - id: accounting_audit_trail
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, CAST(event_date AS VARCHAR) AS event_date, author_name, record_name, description FROM accounting_audit_trail WHERE (:q IS NULL OR author_name ILIKE '%' || :q || '%' OR record_name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY event_date DESC, id"

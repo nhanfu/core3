@@ -1,0 +1,6 @@
+page: { id: accounting-journal-items }
+datasources:
+  - id: accounting_journal_items
+    single: false
+    permission: accounting.read
+    query: "SELECT id, row_version, CAST(item_date AS VARCHAR) AS item_date, entry_name, partner_name, label, debit, credit, matching FROM accounting_journal_items WHERE (:q IS NULL OR entry_name ILIKE '%' || :q || '%' OR COALESCE(partner_name, '') ILIKE '%' || :q || '%' OR label ILIKE '%' || :q || '%') ORDER BY item_date DESC, id"

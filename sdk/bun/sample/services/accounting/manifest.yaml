@@ -128,6 +128,21 @@ menu:
           label: Payment Tokens
           icon: lock
           permission: accounting.read
+        - path: /accounting/incoterms
+          label: Incoterms
+          icon: globe
+          permission: accounting.read
+    - id: review
+      label: Review
+      items:
+        - path: /accounting/journal-items
+          label: Journal Items
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/audit-trail
+          label: Audit Trail
+          icon: history
+          permission: accounting.read
     - id: reporting
       label: Reporting
       items:
