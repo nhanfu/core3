@@ -1,0 +1,24 @@
+title: Task
+page: { id: project-task-detail, route: /tasks/detail, breadcrumb: [Services, Project, Tasks, Detail], auth: { require: [project.read] } }
+components:
+  - type: OdooFormView
+    source: project_task_detail
+    title_field: name
+    subtitle_field: project_name
+    status_field: state
+    statusbar: [{ value: Todo, label: To do }, { value: In Progress, label: In progress }, { value: Done, label: Done }, { value: Cancelled, label: Cancelled }]
+    status_colors: { Todo: neutral, In Progress: blue, Done: green, Cancelled: red }
+    header_actions:
+      - { id: start_task, label: Start, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'Todo'" }
+      - { id: complete_task, label: Mark done, variant: primary, permission: project.write, show_if: "state.project_task_detail.state === 'In Progress'" }
+      - { id: cancel_task, label: Cancel, variant: danger, permission: project.manage, show_if: "state.project_task_detail.state === 'Todo' || state.project_task_detail.state === 'In Progress'" }
+    group_columns: 2
+    groups:
+      - title: Task details
+        fields: [{ field: name, label: Task }, { field: project_name, label: Project }, { field: stage, label: Stage }, { field: assignee, label: Assignee }, { field: priority, label: Priority }]
+      - title: Planning
+        fields: [{ field: due_date, label: Deadline }, { field: planned_hours, label: Planned hours }, { field: spent_hours, label: Spent hours }, { field: description, label: Description, type: textarea }]
+actions:
+  - { id: start_task, type: server, permission: project.write, action: project.tasks.start, handler: order_transition, workflow: project_tasks, operation: start, params: { id: '{state.id}' }, refresh: [project_task_detail, project_tasks_all] }
+  - { id: complete_task, type: server, permission: project.write, action: project.tasks.complete, handler: order_transition, workflow: project_tasks, operation: complete, params: { id: '{state.id}' }, refresh: [project_task_detail, project_tasks_all] }
+  - { id: cancel_task, type: server, permission: project.manage, action: project.tasks.cancel, handler: order_transition, workflow: project_tasks, operation: cancel, params: { id: '{state.id}' }, refresh: [project_task_detail, project_tasks_all] }

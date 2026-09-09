@@ -15,4 +15,5 @@ menu:
       label: Delivery
       items:
         - { path: /projects, label: Projects, icon: project, permission: project.read }
+        - { path: /tasks, label: My Tasks, icon: checklist, permission: project.read }
         - { path: /project-analysis, label: Project Analysis, icon: chart, permission: project.read }

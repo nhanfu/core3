@@ -1,0 +1,11 @@
+page: { id: project-tasks }
+datasources:
+  - id: project_task_states
+    single: false
+    permission: project.read
+    query: "SELECT value, label FROM (VALUES ('Todo','To do'), ('In Progress','In progress'), ('Done','Done'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: project_tasks_all
+    single: false
+    permission: project.read
+    workflow: project_tasks
+    query: "SELECT t.id, t.row_version, t.project_id, t.project_name, t.name, t.stage, t.assignee, t.milestone_name, t.priority, t.planned_hours, t.spent_hours, t.state, CAST(t.due_date AS VARCHAR) AS due_date FROM project_tasks t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.assignee ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) AND (:priority IS NULL OR t.priority = :priority) AND (:stage IS NULL OR t.stage = :stage) ORDER BY t.due_date NULLS LAST, t.id"

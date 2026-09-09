@@ -4,10 +4,10 @@ type:
   postgres:
     up: |
       INSERT OR IGNORE INTO projects(id, name, customer_name, project_manager, description, planned_hours, start_date, end_date, state)
-      VALUES ('project-demo-001', 'Core3 Implementation', 'Core3 Internal', 'Project Team', 'Platform implementation project', 480, CURRENT_DATE, CURRENT_DATE + INTERVAL 90 DAY, 'Active');
-      INSERT OR IGNORE INTO project_milestones(id, project_id, name, due_date) VALUES ('milestone-demo-001', 'project-demo-001', 'Foundation release', CURRENT_DATE + INTERVAL 30 DAY);
+      VALUES ('project-demo-001', 'Core3 Implementation', 'Core3 Internal', 'Project Team', 'Platform implementation project', 480, DATE '2026-01-15', DATE '2026-04-15', 'Active');
+      INSERT OR IGNORE INTO project_milestones(id, project_id, name, due_date) VALUES ('milestone-demo-001', 'project-demo-001', 'Foundation release', DATE '2026-02-14');
       INSERT OR IGNORE INTO project_tasks(id, project_id, project_name, name, assignee, milestone_name, planned_hours, state, due_date)
-      VALUES ('task-demo-001', 'project-demo-001', 'Core3 Implementation', 'Complete module migration', 'Project Team', 'Foundation release', 40, 'In Progress', CURRENT_DATE + INTERVAL 14 DAY);
+      VALUES ('task-demo-001', 'project-demo-001', 'Core3 Implementation', 'Complete module migration', 'Project Team', 'Foundation release', 40, 'In Progress', DATE '2026-01-29');
     down: |
       DELETE FROM project_tasks WHERE project_id = 'project-demo-001';
       DELETE FROM project_milestones WHERE project_id = 'project-demo-001';

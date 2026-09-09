@@ -1,0 +1,40 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS project_stages (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL UNIQUE, sequence INTEGER NOT NULL DEFAULT 10,
+        active BOOLEAN NOT NULL DEFAULT TRUE, folded BOOLEAN NOT NULL DEFAULT FALSE
+      );
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS stage VARCHAR;
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS favorite BOOLEAN;
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS archived BOOLEAN;
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS is_template BOOLEAN;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS stage VARCHAR;
+      ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS description VARCHAR;
+      INSERT INTO project_stages(id, name, sequence) VALUES
+        ('project-stage-planning', 'Planning', 10), ('project-stage-execution', 'In progress', 20), ('project-stage-done', 'Done', 30)
+        ON CONFLICT (id) DO NOTHING;
+      UPDATE projects SET stage = COALESCE(stage, 'Planning'), favorite = COALESCE(favorite, FALSE), archived = COALESCE(archived, FALSE), is_template = COALESCE(is_template, FALSE);
+      UPDATE project_tasks SET stage = COALESCE(stage, 'Planning');
+      UPDATE projects SET stage = 'In progress', favorite = TRUE WHERE id = 'project-demo-001';
+      UPDATE project_tasks SET stage = 'In progress', description = 'Complete the module migration and record the implementation evidence.' WHERE id = 'task-demo-001';
+      INSERT INTO projects(id, name, customer_name, project_manager, description, planned_hours, spent_hours, start_date, end_date, state, stage, favorite, archived, is_template)
+        VALUES ('project-demo-002', 'Website Refresh', 'Northwind Traders', 'Mitchell Admin', 'Customer website refresh.', 160, 64, DATE '2026-01-15', DATE '2026-03-31', 'Active', 'Planning', FALSE, FALSE, FALSE),
+               ('project-demo-003', 'Legacy Template', NULL, 'Project Team', 'Reusable project template.', 80, 0, DATE '2026-01-15', DATE '2026-02-28', 'Draft', 'Planning', FALSE, FALSE, TRUE)
+        ON CONFLICT (id) DO NOTHING;
+      INSERT INTO project_tasks(id, project_id, project_name, name, assignee, milestone_name, priority, planned_hours, spent_hours, state, stage, due_date, description)
+        VALUES ('task-demo-002', 'project-demo-001', 'Core3 Implementation', 'Review parity screenshots', 'Mitchell Admin', 'Foundation release', 'High', 8, 2, 'Todo', 'In progress', DATE '2026-01-20', 'Compare desktop and mobile surfaces.'),
+               ('task-demo-003', 'project-demo-001', 'Core3 Implementation', 'Publish release notes', 'Project Team', NULL, 'Normal', 4, 4, 'Done', 'Done', DATE '2026-01-16', 'Document the completed batch.'),
+               ('task-demo-004', 'project-demo-002', 'Website Refresh', 'Confirm customer brief', 'Mitchell Admin', NULL, 'Normal', 6, 0, 'Todo', 'Planning', NULL, 'No deadline has been set yet.'),
+               ('task-demo-005', 'project-demo-002', 'Website Refresh', 'Archive old wireframes', 'Project Team', NULL, 'Low', 3, 3, 'Cancelled', 'Planning', DATE '2026-01-18', 'Superseded by the new brief.')
+        ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM project_tasks WHERE id IN ('task-demo-002','task-demo-003','task-demo-004','task-demo-005');
+      DELETE FROM projects WHERE id IN ('project-demo-002','project-demo-003');
+      DROP TABLE IF EXISTS project_stages;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
