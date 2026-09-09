@@ -21,6 +21,10 @@ menu:
     - id: operations
       label: Operations
       items:
+        - path: /point-of-sale/sessions
+          label: Sessions
+          icon: clock
+          permission: pos.read
         - path: /point-of-sale/orders
           label: Orders
           icon: cart

@@ -1,0 +1,24 @@
+version: 0.0.12
+kind: data
+description: Deterministic POS session lifecycle and touch-selling fixtures
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_sessions(id, name, config, user_name, state, balance_start, opening_counted, expected_cash, closing_counted, cash_difference, opened_at, closed_at)
+      VALUES
+        ('pos-session-demo-opening', 'POS/2026/09/10/001', 'Coffee Bar', 'Maya Chen', 'Opening Control', 300, 300, 300, NULL, NULL, TIMESTAMP '2026-09-10 07:45:00', NULL),
+        ('pos-session-demo-closing', 'POS/2026/09/09/014', 'Events Cart', 'Jordan Lee', 'Closing Control', 250, 250, 418.50, NULL, NULL, TIMESTAMP '2026-09-09 09:00:00', NULL),
+        ('pos-session-demo-closed', 'POS/2026/09/08/009', 'Warehouse Kiosk', 'Admin User', 'Closed & Posted', 200, 200, 326.25, 326.25, 0, TIMESTAMP '2026-09-08 08:30:00', TIMESTAMP '2026-09-08 17:12:00')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_cash_movements(id, session_id, movement_type, amount, reason, cashier_id, created_at)
+      VALUES
+        ('pos-movement-demo-closing-in', 'pos-session-demo-closing', 'Cash In', 50, 'Float top-up', 'Jordan Lee', TIMESTAMP '2026-09-09 09:05:00'),
+        ('pos-movement-demo-closing-out', 'pos-session-demo-closing', 'Cash Out', 12.50, 'Petty cash', 'Jordan Lee', TIMESTAMP '2026-09-09 13:30:00')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_cash_movements WHERE id IN ('pos-movement-demo-closing-in', 'pos-movement-demo-closing-out');
+      DELETE FROM pos_sessions WHERE id IN ('pos-session-demo-opening', 'pos-session-demo-closing', 'pos-session-demo-closed');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

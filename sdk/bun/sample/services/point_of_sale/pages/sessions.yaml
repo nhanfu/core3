@@ -12,6 +12,7 @@ components:
     row_double_click_action: view_pos_session
     form_view: { page: apps/services/point_of_sale/pages/pos-session-detail.yaml, side_panel: true }
     row_actions: menu
+    filters: [{ field: state, label: Status, options_source: pos_session_states }]
     columns:
       - { field: name, label: Session, type: PrimaryEntityCell }
       - { field: config, label: Point of Sale }
@@ -19,4 +20,12 @@ components:
       - { field: state, label: Status, type: StatusChip }
       - { field: order_count, label: Orders, align: right }
       - { field: balance_start, label: Opening balance, align: right }
+      - { field: balance_end, label: Closing balance, align: right }
       - { field: opened_at, label: Opened }
+      - field: actions
+        label: ''
+        align: right
+        actions:
+          - { id: open_pos_session, label: Open, variant: primary, permission: pos.write, show_if: "row.state === 'Opening Control'" }
+          - { id: start_closing_pos_session, label: Start Closing, variant: secondary, permission: pos.write, show_if: "row.state === 'In Progress'" }
+          - { id: close_pos_session, label: Close & Post, variant: primary, permission: pos.manage, show_if: "row.state === 'Closing Control'" }

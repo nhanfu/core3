@@ -54,6 +54,17 @@ columns: combo choice/product/category/extra price, pricelist name/country
 groups/company, category/parent/sequence, attribute/display type/variant
 creation, and tag/color/product count.
 
+The session parity batch adds the explicit Sessions menu and corrects session
+detail navigation. The Sessions list is backed by the service-owned session
+API, includes bounded status filtering and state-aware open/start-closing/
+close-post controls, and opens the shared POS session form. Session detail
+uses the shared OdooFormView status bar, cash-control fields, cash movements,
+orders, and operation log. The lifecycle workflow now persists counted cash,
+expected cash, differences, and discrepancy reason on close. Deterministic
+fixtures cover Opening Control, In Progress, Closing Control, and Closed &
+Posted, while the existing cashier route remains the touch-selling surface
+with its active-session and open-ticket state.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining Odoo POS product forms and

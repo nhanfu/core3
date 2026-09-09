@@ -50,5 +50,15 @@ workflow:
             status: 400
             message: Closing balance is required and cannot be negative
         steps:
-          - query: "UPDATE pos_sessions SET state = 'Closed & Posted', balance_end = :balance_end, closed_at = CURRENT_TIMESTAMP, row_version = row_version + 1 WHERE id = :id"
+          - query: |
+              UPDATE pos_sessions SET
+                state = 'Closed & Posted',
+                balance_end = CAST(:balance_end AS DECIMAL(18,2)),
+                closing_counted = COALESCE(CAST(NULLIF(:closing_counted, '') AS DECIMAL(18,2)), CAST(:balance_end AS DECIMAL(18,2))),
+                expected_cash = COALESCE(expected_cash, balance_start + COALESCE((SELECT SUM(CASE WHEN movement_type = 'Cash In' THEN amount ELSE -amount END) FROM pos_cash_movements WHERE session_id = :id), 0)),
+                cash_difference = COALESCE(CAST(NULLIF(:closing_counted, '') AS DECIMAL(18,2)), CAST(:balance_end AS DECIMAL(18,2))) - COALESCE(expected_cash, balance_start),
+                discrepancy_reason = :discrepancy_reason,
+                closed_at = CURRENT_TIMESTAMP,
+                row_version = row_version + 1
+              WHERE id = :id
         result: { query: "SELECT * FROM pos_sessions WHERE id = :id" }
