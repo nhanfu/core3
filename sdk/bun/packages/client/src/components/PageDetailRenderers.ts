@@ -109,7 +109,12 @@ async function renderOdooFormView(def: any, targetContainer: HTMLElement) {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return action
       && hasPermission(ctx.user, action.permission)
-      && (!button.show_if || Boolean(evalExpr(button.show_if, ctx)));
+      && (!button.show_if || Boolean(evalExpr(button.show_if, {
+        ...ctx,
+        row: sourceResult.data || {},
+        record: sourceResult.data || {},
+        state: { ...(ctx.state || {}), ...(sourceResult.data || {}) },
+      })));
   }).map((button: any) => {
     const action = (config.actions || []).find((candidate: any) => candidate.id === button.id);
     return { ...button, is_workflow: Boolean(action?.workflow) };
