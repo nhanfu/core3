@@ -46,7 +46,6 @@ components:
     page_size: 50
     row_key: id
     row_double_click_action: view_accounting_invoice
-    form_view: { page: apps/services/accounting/pages/invoice-detail.yaml, side_panel: true }
     row_actions: menu
     actions:
       - { id: post_accounting_invoice, label: Post, permission: accounting.write, variant: primary, show_if: "row.state === 'Draft'" }
