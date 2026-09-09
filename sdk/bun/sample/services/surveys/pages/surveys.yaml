@@ -49,7 +49,7 @@ actions:
     action: surveys.questions.create
     handler: yaml_mutation
     operation: create_question
-    refresh: [surveys]
+    refresh: [surveys, survey_questions_catalog]
     mutation:
       operation: insert
       table: survey_questions
