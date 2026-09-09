@@ -37,6 +37,14 @@ Current authenticated fallback captures, intentionally kept outside Git:
 - Mobile: `/tmp/odoo-expenses-uninstalled-mobile.png`
 - App-menu evidence: `/tmp/odoo-expenses-apps.png`
 
+A disposable database `core3_expenses_demo` was then initialized with
+`hr_expense` and demo data, using admin credentials `admin` /
+`ExpensesDemo2026!`. Authenticated desktop/mobile captures now exist for the
+four source routes under `/tmp/odoo-expenses/`; all four loaded with no
+unexpected failed requests or mobile overflow. The primary `core3_demo`
+database remains unchanged and uninstalled, so the disposable database is the
+authoritative implementation reference.
+
 Required implementation-reference captures, to be produced after the addon is
 enabled with demo data, are:
 
@@ -235,6 +243,15 @@ Use explicit Core3 routes with aliases only where needed for existing links:
 Department-scoped approval/analysis and accounting/payables entry points may
 reuse these page IDs with scoped datasource parameters, but their scope and
 permission behavior must be tested explicitly.
+
+## Current evidence refresh
+
+With generated global and Expenses styles present, authenticated Core3 checks
+at 1440x900 and 390x844 loaded `/expenses/to-process` with three deterministic
+rows and List/Kanban tabs, with no unexpected failed requests or horizontal
+overflow. Corrected captures are
+`/tmp/core3-expenses-{desktop,mobile}-to-process-recaptured.png`; the matching
+installed Odoo references are `/tmp/odoo-expenses/expenses-to-process-{desktop,mobile}.png`.
 
 ## Acceptance
 
