@@ -6,18 +6,66 @@ datasources:
     permission: accounting.read
     query: "SELECT 'accounting-settings' AS id, 'USD' AS currency, 'Accrual' AS accounting_basis, '30 days' AS default_payment_terms, true AS lock_posted_entries, true AS tax_included_prices, 'Main Company' AS company"
 components:
-  - type: OdooFormView
+  - type: SettingsView
+    id: accounting-settings-view
     source: accounting_settings
-    title_field: company
-    group_columns: 2
-    groups:
-      - title: Fiscal settings
-        fields:
-          - { field: company, label: Company }
-          - { field: currency, label: Currency }
-          - { field: accounting_basis, label: Accounting basis }
-          - { field: default_payment_terms, label: Default payment terms }
-      - title: Controls
-        fields:
-          - { field: lock_posted_entries, label: Lock posted entries }
-          - { field: tax_included_prices, label: Tax-included prices }
+    title: Settings
+    save_action: save_accounting_settings
+    search_placeholder: Search settings...
+    tabs:
+      - id: general
+        label: General Settings
+        icon: settings
+        sections:
+          - title: Users
+            fields:
+              - { label: Invite New Users, description: Invite users and manage access rights., type: info, action_label: Invite }
+              - { label: Active Users, description: Review active users and manage their access rights., type: info, action_label: Manage Users }
+          - title: Companies
+            fields:
+              - { label: Company, description: Configure company information and document branding., type: info, action_label: Manage Companies }
+          - title: Document Layout
+            fields:
+              - { label: Document Layout, description: Choose the layout and branding of invoices and reports., type: info, action_label: Configure Document Layout }
+          - title: Languages
+            fields:
+              - { label: Languages, description: Configure languages available to users and customers., type: info, action_label: Add Languages }
+      - id: invoicing
+        label: Invoicing
+        icon: invoice
+        sections:
+          - title: Fiscal settings
+            fields:
+              - { field: currency, label: Currency, description: Main currency used for accounting records., type: select, options: [{ value: USD, label: USD }, { value: EUR, label: EUR }] }
+              - { field: accounting_basis, label: Accounting basis, description: Choose how accounting entries are recognized., type: select, options: [{ value: Accrual, label: Accrual }, { value: Cash, label: Cash }] }
+              - { field: default_payment_terms, label: Default payment terms, description: Default due rule for new invoices., type: select, options: [{ value: 'Due on receipt', label: Due on receipt }, { value: '30 days', label: 30 days }, { value: '60 days', label: 60 days }] }
+          - title: Customer invoices
+            fields:
+              - { field: tax_included_prices, label: Tax-included prices, description: Display sales prices including taxes by default., type: checkbox }
+              - { label: Customer invoices, description: Create, send, and track customer invoices and credit notes., type: info, action_label: Manage Invoices }
+              - { label: Vendor bills, description: Record bills, refunds, and payments to vendors., type: info, action_label: Manage Bills }
+      - id: accounting
+        label: Accounting
+        icon: ledger
+        sections:
+          - title: Controls
+            fields:
+              - { field: lock_posted_entries, label: Lock posted entries, description: Prevent changes to posted journal entries., type: checkbox }
+              - { label: Chart of Accounts, description: Configure accounts, journals, taxes, and fiscal positions., type: info, action_label: Configure Accounting }
+          - title: Analytic Accounting
+            fields:
+              - { label: Analytic Plans, description: Organize analytic accounts and distribution models., type: info, action_label: Configure Analytic Accounting }
+      - id: point-of-sale
+        label: Point of Sale
+        icon: cart
+        sections:
+          - title: POS settings
+            fields:
+              - { label: Point of Sale, description: Configure sessions, payment methods, receipts, and products., type: info, action_label: Configure Point of Sale }
+              - { label: Payment Providers, description: Configure online payment providers and transactions., type: info, action_label: Manage Payment Providers }
+actions:
+  - id: save_accounting_settings
+    type: client
+    permission: accounting.write
+    script: |
+      async () => {}

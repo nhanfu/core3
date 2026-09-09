@@ -37,6 +37,13 @@ screen found that Odoo opens the list unselected. Core3 now keeps the invoice
 list unselected on entry and preserves explicit double-click navigation to the
 detail form; comparison captures remain temporary local evidence.
 
+The Accounting Settings route now uses the shared SettingsView contract and
+loads the service stylesheet with the client token path. Authenticated Chrome
+comparison against Odoo `/odoo/settings` verifies the toolbar, vertical
+settings navigation, section bands, two-column cards, tab switching, search
+filtering, and a mobile single-column layout; captures remain temporary local
+evidence.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining customer/vendor, reporting,
