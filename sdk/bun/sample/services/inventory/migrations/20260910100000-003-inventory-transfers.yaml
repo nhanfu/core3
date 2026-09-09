@@ -1,0 +1,52 @@
+version: 0.0.3
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS inventory_operation_types (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, code VARCHAR NOT NULL UNIQUE,
+        operation_kind VARCHAR NOT NULL, source_location_id VARCHAR NOT NULL,
+        destination_location_id VARCHAR NOT NULL, state VARCHAR NOT NULL DEFAULT 'Active'
+      );
+      CREATE TABLE IF NOT EXISTS inventory_pickings (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, operation_type_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL UNIQUE, contact_name VARCHAR, scheduled_date DATE NOT NULL,
+        source_document VARCHAR, company_name VARCHAR NOT NULL, source_location_id VARCHAR NOT NULL,
+        destination_location_id VARCHAR NOT NULL, state VARCHAR NOT NULL DEFAULT 'Draft'
+      );
+      CREATE TABLE IF NOT EXISTS inventory_picking_moves (
+        id VARCHAR PRIMARY KEY, picking_id VARCHAR NOT NULL, product_name VARCHAR NOT NULL,
+        quantity DECIMAL(18,3) NOT NULL, done_quantity DECIMAL(18,3) NOT NULL DEFAULT 0
+      );
+      INSERT INTO inventory_operation_types(id, name, code, operation_kind, source_location_id, destination_location_id) VALUES
+        ('operation-receipts', 'Receipts', 'WH-IN', 'receipt', 'location-customer', 'location-stock'),
+        ('operation-deliveries', 'Deliveries', 'WH-OUT', 'delivery', 'location-stock', 'location-customer')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state) VALUES
+        ('receipt-00001', 'operation-receipts', 'WH/IN/00001', 'Wood Corner', DATE '2026-01-09', NULL, 'My Company', 'location-customer', 'location-stock', 'Ready'),
+        ('receipt-00002', 'operation-receipts', 'WH/IN/00002', 'Wood Corner', DATE '2026-01-12', NULL, 'My Company', 'location-customer', 'location-stock', 'Ready'),
+        ('receipt-00003', 'operation-receipts', 'WH/IN/00003', 'Wood Corner', DATE '2026-01-15', NULL, 'My Company', 'location-customer', 'location-stock', 'Draft'),
+        ('receipt-00004', 'operation-receipts', 'WH/IN/00004', NULL, DATE '2026-01-16', 'PO/00004', 'My Company', 'location-customer', 'location-stock', 'Waiting'),
+        ('receipt-00005', 'operation-receipts', 'WH/IN/00005', 'Wood Corner', DATE '2026-01-18', 'PO/00005', 'My Company', 'location-customer', 'location-stock', 'Done'),
+        ('receipt-00006', 'operation-receipts', 'WH/IN/00006', 'Wood Corner', DATE '2026-01-20', 'PO/00006', 'My Company', 'location-customer', 'location-stock', 'Ready')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO inventory_pickings(id, operation_type_id, name, contact_name, scheduled_date, source_document, company_name, source_location_id, destination_location_id, state) VALUES
+        ('delivery-00001', 'operation-deliveries', 'WH/OUT/00001', 'Wood Corner', DATE '2025-12-27', 'outgoing shipment', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00002', 'operation-deliveries', 'WH/OUT/00002', 'Wood Corner', DATE '2026-01-02', 'outgoing shipment', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00003', 'operation-deliveries', 'WH/OUT/00003', 'Wood Corner', DATE '2026-01-06', 'outgoing shipment', 'My Company', 'location-stock', 'location-customer', 'Draft'),
+        ('delivery-00004', 'operation-deliveries', 'WH/OUT/00004', 'Wood Corner', DATE '2026-01-09', 'your company warehouse', 'My Company', 'location-stock', 'location-customer', 'Draft'),
+        ('delivery-00005', 'operation-deliveries', 'WH/OUT/00005', 'Wood Corner', DATE '2026-01-12', 'outgoing shipment', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00006', 'operation-deliveries', 'WH/OUT/00006', 'Wood Corner', DATE '2025-12-28', 'outgoing shipment', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00007', 'operation-deliveries', 'WH/OUT/00007', 'Wood Corner', DATE '2026-01-07', 'outgoing shipment', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00008', 'operation-deliveries', 'WH/OUT/00008', 'Gemini Furniture, Oscar Morgan', DATE '2026-01-15', 'SO00021', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00009', 'operation-deliveries', 'WH/OUT/00009', 'Gemini Furniture, Oscar Morgan', DATE '2026-01-16', 'SO00022', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00010', 'operation-deliveries', 'WH/OUT/00010', 'Gemini Furniture, Oscar Morgan', DATE '2026-01-17', 'SO00023', 'My Company', 'location-stock', 'location-customer', 'Ready'),
+        ('delivery-00011', 'operation-deliveries', 'WH/OUT/00011', 'Gemini Furniture, Oscar Morgan', DATE '2026-01-15', 'SO00024', 'My Company', 'location-stock', 'location-customer', 'Waiting')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS inventory_picking_moves;
+      DROP TABLE IF EXISTS inventory_pickings;
+      DROP TABLE IF EXISTS inventory_operation_types;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

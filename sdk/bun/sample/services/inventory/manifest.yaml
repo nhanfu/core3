@@ -14,6 +14,14 @@ menu:
     - id: operations
       label: Operations
       items:
+        - path: /receipts
+          label: Receipts
+          icon: inbox
+          permission: inventory.read
+        - path: /deliveries
+          label: Deliveries
+          icon: truck
+          permission: inventory.read
         - path: /stock
           label: On Hand
           icon: boxes

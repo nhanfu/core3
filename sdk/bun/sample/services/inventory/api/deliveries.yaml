@@ -1,0 +1,10 @@
+page: { id: deliveries }
+datasources:
+  - id: inventory_delivery_transfer_states
+    single: false
+    permission: inventory.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Waiting','Waiting'), ('Ready','Ready'), ('Done','Done'), ('Cancelled','Cancelled')) states(value, label)"
+  - id: inventory_deliveries
+    single: false
+    permission: inventory.read
+    query: "SELECT p.id, p.row_version, p.name, p.contact_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, p.company_name, p.state FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id WHERE t.operation_kind = 'delivery' AND (:q IS NULL OR p.name ILIKE '%' || :q || '%' OR p.contact_name ILIKE '%' || :q || '%' OR p.source_document ILIKE '%' || :q || '%') AND (:state IS NULL OR p.state = :state) AND (:scheduled_date IS NULL OR (:scheduled_date = 'overdue' AND p.scheduled_date < DATE '2026-01-15') OR (:scheduled_date = 'today' AND p.scheduled_date = DATE '2026-01-15') OR (:scheduled_date = 'upcoming' AND p.scheduled_date > DATE '2026-01-15')) ORDER BY p.scheduled_date, p.name"

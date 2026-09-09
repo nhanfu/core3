@@ -1,0 +1,34 @@
+title: Deliveries
+page: { id: deliveries, route: /deliveries, breadcrumb: [Supply Chain, Inventory, Deliveries], auth: { require: [inventory.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: inventory_deliveries
+    create_label: New
+    search: { label: Search deliveries, placeholder: Search deliveries... }
+    filters:
+      - { field: state, label: Status, options_source: inventory_delivery_transfer_states }
+      - { field: scheduled_date, label: Scheduled date, options: [{ id: overdue, label: Overdue }, { id: today, label: Today }, { id: upcoming, label: Upcoming }] }
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: state
+        card: { title: name, subtitle: contact_name, fields: [{ field: scheduled_date, label: Scheduled date }, { field: state, label: Status }] }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: contact_name, label: Contact }
+      - { field: scheduled_date, label: Scheduled date, sortable: true }
+      - { field: source_document, label: Source document }
+      - { field: company_name, label: Company }
+      - { field: state, label: Status, type: StatusChip, colors: { Ready: teal, Draft: neutral, Waiting: amber, Done: green, Cancelled: red } }
+    page_size: 50
+    row_key: id
+    row_open_action: view_inventory_transfer
+    row_double_click_action: view_inventory_transfer
+    row_actions: menu
+    form_view: { page: apps/services/inventory/pages/transfer-detail.yaml, side_panel: true }
+    empty_state: { title: No deliveries, description: Outgoing transfers will appear here. }
+actions:
+  - { id: view_inventory_transfer, type: navigate, permission: inventory.read, navigate_to: /inventory/transfer/detail, params: { id: '{row.id}' } }

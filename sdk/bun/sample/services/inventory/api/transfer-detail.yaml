@@ -1,0 +1,6 @@
+page: { id: inventory-transfer-detail }
+datasources:
+  - id: inventory_transfer_detail
+    single: true
+    permission: inventory.read
+    query: "SELECT p.id, p.row_version, p.name, t.name AS operation_type_name, p.contact_name, p.company_name, CAST(p.scheduled_date AS VARCHAR) AS scheduled_date, p.source_document, sl.name AS source_location, dl.name AS destination_location, p.state FROM inventory_pickings p JOIN inventory_operation_types t ON t.id = p.operation_type_id JOIN inventory_locations sl ON sl.id = p.source_location_id JOIN inventory_locations dl ON dl.id = p.destination_location_id WHERE p.id = :id"
