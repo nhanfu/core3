@@ -11,6 +11,19 @@ Website Builder, Forum, Blog, eCommerce, and other composition-oriented modules
 remain YAML-driven are on-hold for an appropreate architecture.
 frontend code is not copied.
 
+## Live Odoo reference environment
+
+- URL: `http://localhost:8069`
+- Login email: `admin@core3.local`
+- Login password: `Core3Odoo2026!`
+- Docker Compose file: `/home/nhanjs/projects/odoo-core3-demo/docker-compose.yml`
+- Restore/start command: `docker compose -f /home/nhanjs/projects/odoo-core3-demo/docker-compose.yml up -d`
+- Stop command: `docker compose -f /home/nhanjs/projects/odoo-core3-demo/docker-compose.yml down`
+
+The Compose project contains the Odoo 19 container, PostgreSQL service, and
+demo database used for UI comparison. Keep credentials out of source code
+outside this local parity plan.
+
 ## Module register
 
 | Core3 service | Odoo reference addon | Source status | Sub-plan | Status |
