@@ -53,7 +53,7 @@ outside this local parity plan.
 | time-off | hr_holidays | available | `odoo-ui-parity/time-off.md` | planned |
 | appraisals | hr_appraisal | unavailable in supplied source | `odoo-ui-parity/appraisals.md` | planned |
 | referrals | hr_referral | unavailable in supplied source | `odoo-ui-parity/referrals.md` | planned |
-| fleet | fleet | available | `odoo-ui-parity/fleet.md` | planned |
+| fleet | fleet | available | `odoo-ui-parity/fleet.md` | in-progress |
 | email-marketing | mass_mailing | available | `odoo-ui-parity/email-marketing.md` | planned |
 | sms-marketing | mass_mailing_sms | available | `odoo-ui-parity/sms-marketing.md` | planned |
 | events | event | available | `odoo-ui-parity/events.md` | planned |
