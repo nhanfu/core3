@@ -7,7 +7,8 @@ type:
         license_plate VARCHAR NOT NULL UNIQUE, vehicle_type VARCHAR NOT NULL DEFAULT 'Car',
         model VARCHAR, manufacturer VARCHAR, driver_employee_id VARCHAR, driver_name VARCHAR,
         odometer DECIMAL(18,3) NOT NULL DEFAULT 0, fuel_type VARCHAR, acquisition_date DATE,
-        contract_end_date DATE, state VARCHAR NOT NULL DEFAULT 'Available',
+        contract_end_date DATE, trailer_hook BOOLEAN NOT NULL DEFAULT FALSE, archived BOOLEAN NOT NULL DEFAULT FALSE,
+        state VARCHAR NOT NULL DEFAULT 'Available',
         row_version BIGINT NOT NULL DEFAULT 1, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );

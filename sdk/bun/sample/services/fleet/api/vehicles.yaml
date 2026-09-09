@@ -1,0 +1,34 @@
+page: { id: vehicles }
+datasources:
+  - id: fleet_vehicle_states
+    permission: fleet.read
+    query: "SELECT id AS value, label FROM fleet_vehicle_states WHERE active = TRUE ORDER BY sequence, id"
+  - id: fleet_vehicles
+    permission: fleet.read
+    workflow: fleet_vehicles
+    query: "SELECT v.id, v.row_version, v.name, v.license_plate, v.vehicle_type, v.model, v.manufacturer, v.driver_name, v.odometer, v.fuel_type, v.state, v.trailer_hook, v.archived, CAST(v.contract_end_date AS VARCHAR) AS contract_end_date FROM fleet_vehicles v WHERE (:q IS NULL OR v.name ILIKE '%' || :q || '%' OR v.license_plate ILIKE '%' || :q || '%' OR COALESCE(v.driver_name, '') ILIKE '%' || :q || '%') AND (:state IS NULL OR v.state = :state) AND (:vehicle_type IS NULL OR v.vehicle_type = :vehicle_type) AND (:trailer_hook IS NULL OR v.trailer_hook = CAST(:trailer_hook AS BOOLEAN)) AND (COALESCE(:archived, FALSE) = TRUE OR COALESCE(v.archived, FALSE) = FALSE) ORDER BY v.name, v.id"
+actions:
+  - { id: view_fleet_vehicle, type: navigate, permission: fleet.read, navigate_to: /vehicles/detail, params: { id: '{row.id}' } }
+  - id: create_fleet_vehicle
+    type: server_form
+    permission: fleet.write
+    title: New fleet vehicle
+    action: fleet.vehicles.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [fleet_vehicles]
+    mutation: { operation: insert, table: fleet_vehicles, fields: [name, license_plate, vehicle_type, model, manufacturer, driver_employee_id, driver_name, odometer, fuel_type, acquisition_date, contract_end_date, trailer_hook], required: [name, license_plate] }
+    fields:
+      - { field: name, label: Vehicle, type: text, required: true }
+      - { field: license_plate, label: License plate, type: text, required: true }
+      - { field: vehicle_type, label: Type, type: select, options: [{ value: Car, label: Car }, { value: Bike, label: Bike }] }
+      - { field: model, label: Model, type: text }
+      - { field: manufacturer, label: Manufacturer, type: text }
+      - { field: driver_name, label: Driver, type: text }
+      - { field: odometer, label: Odometer, type: number }
+      - { field: fuel_type, label: Fuel type, type: text }
+      - { field: contract_end_date, label: Contract end date, type: text }
+  - { id: assign_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.assign, handler: order_transition, workflow: fleet_vehicles, operation: assign, refresh: [fleet_vehicles] }
+  - { id: service_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.service, handler: order_transition, workflow: fleet_vehicles, operation: service, refresh: [fleet_vehicles] }
+  - { id: release_fleet_vehicle, type: server, permission: fleet.write, action: fleet.vehicles.release, handler: order_transition, workflow: fleet_vehicles, operation: release, refresh: [fleet_vehicles] }
+  - { id: retire_fleet_vehicle, type: server, permission: fleet.manage, action: fleet.vehicles.retire, handler: order_transition, workflow: fleet_vehicles, operation: retire, refresh: [fleet_vehicles] }

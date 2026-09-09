@@ -1,0 +1,9 @@
+page: { id: fleet-analysis }
+datasources:
+  - id: fleet_analysis_totals
+    single: true
+    permission: fleet.read
+    query: "SELECT COUNT(*) AS vehicle_count, COUNT(*) FILTER (WHERE state = 'Assigned') AS assigned_count, COUNT(*) FILTER (WHERE state = 'Maintenance') AS maintenance_count, COALESCE(SUM(odometer), 0) AS total_odometer FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE"
+  - id: fleet_analysis_states
+    permission: fleet.read
+    query: "SELECT state AS category, COUNT(*) AS vehicle_count FROM fleet_vehicles WHERE COALESCE(archived, FALSE) = FALSE GROUP BY state ORDER BY state"

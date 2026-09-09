@@ -3,10 +3,11 @@ kind: data
 type:
   postgres:
     up: |
-      INSERT OR IGNORE INTO fleet_vehicles(id, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state)
-      VALUES ('fleet-demo-001', 'Pool Vehicle 01', '51A-000.01', 'Car', 'Model S', 'Core Motors', 'Admin User', 12500, 'Petrol', 'Assigned');
+      INSERT INTO fleet_vehicles(id, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state, acquisition_date, contract_end_date) VALUES ('fleet-demo-001', 'Pool Vehicle 01', '51A-000.01', 'Car', 'Model S', 'Core Motors', 'Admin User', 12500, 'Petrol', 'Assigned', DATE '2026-01-15', DATE '2026-12-31') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO fleet_vehicles(id, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state, acquisition_date, contract_end_date) VALUES ('fleet-demo-002', 'City Bike 02', 'BIKE-0002', 'Bike', 'City', 'Core Motors', NULL, 840, 'Electric', 'Available', DATE '2026-01-15', DATE '2026-06-30') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO fleet_vehicles(id, name, license_plate, vehicle_type, model, manufacturer, driver_name, odometer, fuel_type, state, acquisition_date, contract_end_date, archived) VALUES ('fleet-demo-003', 'Retired Van 03', '51A-000.03', 'Car', 'Transit', 'Core Motors', NULL, 98700, 'Diesel', 'Retired', DATE '2026-01-15', DATE '2025-12-31', TRUE) ON CONFLICT (id) DO NOTHING;
     down: |
-      DELETE FROM fleet_vehicles WHERE id = 'fleet-demo-001';
+      DELETE FROM fleet_vehicles WHERE id IN ('fleet-demo-001', 'fleet-demo-002', 'fleet-demo-003');
   duckdb: postgres
   mysql: postgres
   oracle: postgres

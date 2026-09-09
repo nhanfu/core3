@@ -1,0 +1,17 @@
+version: 0.0.3
+type:
+  postgres:
+    up: |
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS trailer_hook BOOLEAN;
+      ALTER TABLE fleet_vehicles ADD COLUMN IF NOT EXISTS archived BOOLEAN;
+      UPDATE fleet_vehicles SET trailer_hook = FALSE WHERE trailer_hook IS NULL;
+      UPDATE fleet_vehicles SET archived = FALSE WHERE archived IS NULL;
+      CREATE TABLE IF NOT EXISTS fleet_vehicle_states (id VARCHAR PRIMARY KEY, label VARCHAR NOT NULL, sequence INTEGER NOT NULL, active BOOLEAN NOT NULL DEFAULT TRUE);
+      INSERT INTO fleet_vehicle_states(id, label, sequence) VALUES ('Available','Available',10), ('Assigned','Assigned',20), ('Maintenance','Maintenance',30), ('Retired','Retired',40) ON CONFLICT (id) DO NOTHING;
+      CREATE INDEX IF NOT EXISTS fleet_vehicles_type_idx ON fleet_vehicles(vehicle_type);
+    down: |
+      DROP TABLE IF EXISTS fleet_vehicle_states;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
