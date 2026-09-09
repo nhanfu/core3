@@ -120,11 +120,11 @@ checks verified the route at both viewports with zero unexpected responses and
 no horizontal overflow. Odoo captures are `/tmp/odoo-pos-{desktop,mobile}-touch-{dashboard,selling}.png`;
 Core3 captures are `/tmp/core3-pos-touch-shell-final-{desktop,mobile}.png`.
 
-Add explicit menu/page coverage for the remaining Odoo POS product forms and
-the touch-selling dashboard/session.
-Capture and implement configuration forms, payment/tender modals, session
-open/close controls, product/customer dialogs, error/empty states, responsive
-desktop/mobile composition, and permission-denied states.
+Remaining work is focused on additional configuration forms, payment/tender
+modals, and broader empty/error-state coverage across the already implemented
+POS routes. Session open/close controls, product/customer forms, responsive
+desktop/mobile composition, permission-denied behavior, and the touch-selling
+dashboard/session now have implementation and captured browser evidence.
 
 ## Shared primitives and fixtures
 
