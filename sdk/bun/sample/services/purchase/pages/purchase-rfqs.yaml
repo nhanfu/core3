@@ -1,0 +1,38 @@
+title: Requests for Quotation
+page: { id: purchase-rfqs, route: /purchase, breadcrumb: [Supply Chain, Purchase, Requests for Quotation], auth: { require: [purchase.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: purchase_rfqs
+    create_action: create_purchase_order
+    create_label: New request for quotation
+    search: { label: Search requests for quotation, placeholder: 'Search RFQs, vendors, or products...' }
+    filters:
+      - { field: state, label: Status, options_source: purchase_rfq_states }
+      - { field: vendor_id, label: Vendor, options_source: purchase_vendor_lookup_rfqs }
+    group_by: [{ field: vendor_name, label: Vendor }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: state, groups_source: purchase_rfq_states, card: { title: name, subtitle: vendor_name, fields: [{ field: expected_date, label: Expected }, { field: total_amount_display, label: Total }] } }
+      - { id: calendar, label: Calendar, icon: calendar, date_field: expected_date, card: { title: name, subtitle: vendor_name } }
+    columns:
+      - { field: name, label: Reference, type: PrimaryEntityCell, sortable: true }
+      - { field: order_date, label: Order date }
+      - { field: vendor_name, label: Vendor }
+      - { field: product_name, label: Product }
+      - { field: total_amount_display, label: Total, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    selectable: true
+    row_open_action: view_purchase_order
+    row_double_click_action: view_purchase_order
+    row_actions: menu
+    empty_state: { title: No requests for quotation, description: New vendor requests will appear here. }
+actions:
+  - id: view_purchase_order
+    type: navigate
+    permission: purchase.read
+    navigate_to: /purchase/detail
+    params: { id: '{row.id}' }

@@ -1,0 +1,11 @@
+page: { id: purchase-detail }
+datasources:
+  - id: purchase_order_detail
+    single: true
+    permission: purchase.read
+    query: "SELECT id, row_version, name, vendor_name, contact_name, product_name, quantity, qty_received, unit_price, state, CAST(order_date AS VARCHAR) AS order_date, CAST(expected_date AS VARCHAR) AS expected_date, reference, currency, buyer_name, total_amount, printf('%s %,.2f', currency, CAST(total_amount AS DOUBLE)) AS total_amount_display, locked, acknowledged, notes FROM purchase_orders WHERE id = :id"
+actions:
+  - { id: send_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.send, handler: order_transition, workflow: purchase_orders, operation: send, refresh: [purchase_order_detail] }
+  - { id: confirm_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.confirm, handler: order_transition, workflow: purchase_orders, operation: confirm, refresh: [purchase_order_detail] }
+  - { id: receive_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.receive, handler: order_transition, workflow: purchase_orders, operation: receive, refresh: [purchase_order_detail] }
+  - { id: cancel_purchase_order_detail, type: server, permission: purchase.write, action: purchase.orders.cancel, handler: order_transition, workflow: purchase_orders, operation: cancel, refresh: [purchase_order_detail] }

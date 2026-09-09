@@ -1,0 +1,32 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE purchase_vendors ADD COLUMN IF NOT EXISTS street VARCHAR;
+      ALTER TABLE purchase_vendors ADD COLUMN IF NOT EXISTS city VARCHAR;
+      ALTER TABLE purchase_vendors ADD COLUMN IF NOT EXISTS country VARCHAR;
+      ALTER TABLE purchase_vendors ADD COLUMN IF NOT EXISTS vat VARCHAR;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS order_type VARCHAR NOT NULL DEFAULT 'rfq';
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS approval_status VARCHAR NOT NULL DEFAULT 'approved';
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS acknowledged BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS currency VARCHAR NOT NULL DEFAULT 'USD';
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS buyer_name VARCHAR NOT NULL DEFAULT 'Mitchell Admin';
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS total_amount DECIMAL(18,2) NOT NULL DEFAULT 0;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS contact_name VARCHAR;
+      ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS notes VARCHAR;
+      UPDATE purchase_orders SET total_amount = quantity * unit_price WHERE total_amount = 0;
+      UPDATE purchase_orders SET order_type = 'rfq', buyer_name = 'Mitchell Admin', currency = 'USD', contact_name = 'Linh Tran' WHERE id = 'po-demo-001';
+      INSERT OR IGNORE INTO purchase_vendors(id, name, email, phone, state, payment_terms, street, city, country, vat) VALUES ('vendor-demo-002', 'Northwind Components', 'orders@northwind.example', '+1 206 555 0142', 'Active', 'Net 45', '410 Market Street', 'Seattle', 'United States', 'US-NW-2048');
+      INSERT OR IGNORE INTO purchase_vendors(id, name, email, phone, state, payment_terms, street, city, country, vat) VALUES ('vendor-demo-003', 'Saigon Office Goods', 'hello@saigon-office.example', '+84 24 5555 0199', 'Active', 'Immediate Payment', '18 Nguyen Hue', 'Ho Chi Minh City', 'Vietnam', 'VN-SOG-8831');
+      INSERT OR IGNORE INTO purchase_orders(id, name, vendor_id, vendor_name, product_name, quantity, qty_received, unit_price, state, order_date, expected_date, reference, order_type, approval_status, locked, acknowledged, currency, buyer_name, total_amount, contact_name, notes) VALUES ('po-demo-002', 'PO/2026/0002', 'vendor-demo-002', 'Northwind Components', 'USB-C docking stations', 24, 0, 129.00, 'Sent', DATE '2026-09-02', DATE '2026-09-18', 'IT equipment refresh', 'rfq', 'approved', false, false, 'USD', 'Mitchell Admin', 3096.00, 'Grace Chen', 'Please confirm delivery window.');
+      INSERT OR IGNORE INTO purchase_orders(id, name, vendor_id, vendor_name, product_name, quantity, qty_received, unit_price, state, order_date, expected_date, reference, order_type, approval_status, locked, acknowledged, currency, buyer_name, total_amount, contact_name, notes) VALUES ('po-demo-003', 'PO/2026/0003', 'vendor-demo-003', 'Saigon Office Goods', 'Ergonomic office chairs', 12, 12, 185.00, 'Confirmed', DATE '2026-08-20', DATE '2026-09-05', 'Office expansion', 'purchase', 'approved', true, true, 'USD', 'Mitchell Admin', 2220.00, 'Nguyen Minh', 'Received in full.');
+      INSERT OR IGNORE INTO purchase_orders(id, name, vendor_id, vendor_name, product_name, quantity, qty_received, unit_price, state, order_date, expected_date, reference, order_type, approval_status, locked, acknowledged, currency, buyer_name, total_amount, contact_name, notes) VALUES ('po-demo-004', 'PO/2026/0004', 'vendor-demo-001', 'Lotus Industrial Supply', 'Packing tape', 80, 0, 4.50, 'Cancelled', DATE '2026-08-12', DATE '2026-08-22', 'Duplicate request', 'rfq', 'approved', false, false, 'USD', 'Mitchell Admin', 360.00, 'Linh Tran', 'Replaced by a consolidated request.');
+    down: |
+      DELETE FROM purchase_orders WHERE id IN ('po-demo-002', 'po-demo-003', 'po-demo-004');
+      DELETE FROM purchase_vendors WHERE id IN ('vendor-demo-002', 'vendor-demo-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

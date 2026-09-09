@@ -1,0 +1,32 @@
+page: { id: vendors }
+datasources:
+  - id: purchase_vendor_states
+    permission: purchase.read
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Inactive','Inactive')) states(value, label)"
+  - id: purchase_vendors
+    permission: purchase.read
+    query: "SELECT id, row_version, name, email, phone, city, state, payment_terms FROM purchase_vendors WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY name"
+actions:
+  - id: create_purchase_vendor
+    type: server_form
+    permission: purchase.manage
+    title: New vendor
+    action: purchase.vendors.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [purchase_vendors]
+    mutation:
+      operation: insert
+      table: purchase_vendors
+      fields: [name, email, phone, payment_terms, street, city, country, vat]
+      required: [name]
+      result: { query: "SELECT * FROM purchase_vendors WHERE id = :id" }
+    fields:
+      - { field: name, label: Vendor, type: text, required: true }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: payment_terms, label: Payment terms, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: city, label: City, type: text }
+      - { field: country, label: Country, type: text }
+      - { field: vat, label: Tax ID, type: text }

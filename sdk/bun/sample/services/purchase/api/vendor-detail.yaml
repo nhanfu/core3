@@ -1,0 +1,32 @@
+page: { id: vendor-detail }
+datasources:
+  - id: purchase_vendor_detail
+    single: true
+    permission: purchase.read
+    query: "SELECT id, row_version, name, email, phone, street, city, country, vat, payment_terms, state FROM purchase_vendors WHERE id = :id"
+actions:
+  - id: update_purchase_vendor
+    type: server_form
+    permission: purchase.manage
+    title: Edit vendor
+    action: purchase.vendors.update
+    handler: yaml_mutation
+    operation: update
+    refresh: [purchase_vendor_detail]
+    mutation:
+      operation: update
+      table: purchase_vendors
+      key: id
+      fields: [name, email, phone, street, city, country, vat, payment_terms, state]
+      required: [name]
+      result: { query: "SELECT * FROM purchase_vendors WHERE id = :id" }
+    fields:
+      - { field: name, label: Vendor, type: text, required: true }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: city, label: City, type: text }
+      - { field: country, label: Country, type: text }
+      - { field: vat, label: Tax ID, type: text }
+      - { field: payment_terms, label: Payment terms, type: text }
+      - { field: state, label: Status, type: select, options: [Active, Inactive] }

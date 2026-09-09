@@ -1,0 +1,18 @@
+title: Vendor
+page: { id: vendor-detail, route: /vendors/detail, breadcrumb: [Supply Chain, Purchase, Vendors, Vendor], auth: { require: [purchase.read] } }
+components:
+  - type: OdooFormView
+    source: purchase_vendor_detail
+    title_field: name
+    subtitle_field: email
+    status_field: state
+    status_colors: { Active: green, Inactive: neutral }
+    editable: true
+    group_columns: 2
+    groups:
+      - title: Contact
+        fields: [{ field: name, label: Vendor }, { field: email, label: Email }, { field: phone, label: Phone }, { field: vat, label: Tax ID }]
+      - title: Address
+        fields: [{ field: street, label: Street }, { field: city, label: City }, { field: country, label: Country }, { field: payment_terms, label: Payment terms }]
+      - title: Purchase
+        fields: [{ field: state, label: Status }, { field: row_version, label: Record version }]
