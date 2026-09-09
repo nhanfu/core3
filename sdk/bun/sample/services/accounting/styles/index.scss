@@ -3,3 +3,14 @@
 .accounting-page {
   min-height: 100%;
 }
+
+/* Odoo's accounting dashboard uses a two-column tile grid on desktop. */
+.o-card-view:has([data-row-id='sales']) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .o-card-view:has([data-row-id='sales']) {
+    grid-template-columns: 1fr;
+  }
+}

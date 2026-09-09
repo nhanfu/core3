@@ -49,6 +49,11 @@ The customer and vendor list batch adds explicit `/accounting/customers` and
 columns. These are compared with Odoo `/odoo/customers` and `/odoo/vendors` at
 desktop and mobile viewports; captures remain temporary local evidence.
 
+The dashboard batch adds `/accounting` as the direct Core3 counterpart to
+Odoo `/odoo/accounting`, with deterministic Sales, Purchases, Bank, and Point
+of Sale summary fixtures and an explicit Invoicing menu group. Desktop/mobile
+captures remain temporary local evidence.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining customer/vendor, reporting,

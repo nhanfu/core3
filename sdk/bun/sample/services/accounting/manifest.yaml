@@ -5,12 +5,19 @@ migrations: migrations
 permissions: permissions.yaml
 storage: storage.yaml
 menu:
-  invoices:
-    path: /accounting/invoices
-    label: Invoices
-    icon: invoice
+  dashboard:
+    path: /accounting
+    label: Dashboard
+    icon: dashboard
     permission: accounting.read
   groups:
+    - id: invoicing
+      label: Invoicing
+      items:
+        - path: /accounting/invoices
+          label: Invoices
+          icon: invoice
+          permission: accounting.read
     - id: accounting
       label: Accounting
       items:

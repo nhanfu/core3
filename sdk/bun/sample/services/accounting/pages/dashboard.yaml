@@ -1,0 +1,28 @@
+title: Accounting Dashboard
+page: { id: accounting-dashboard, route: /accounting, auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_dashboard_cards
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('sales','Sales','13 Unpaid · $52,074.00','2 Late · $33,750.00'), ('purchases','Purchases','3 To Pay · $622.27',''), ('bank','Bank','Balance · $6,793.93','Last Statement · $6,678.00'), ('pos','Point of Sale','3 Active Registers','Today Sales · $129.50')) cards(id,title,summary,detail) ORDER BY CASE id WHEN 'sales' THEN 1 WHEN 'purchases' THEN 2 WHEN 'bank' THEN 3 ELSE 4 END"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_dashboard_cards
+    search: { label: Search dashboard, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Dashboard
+        icon: grid
+        card:
+          title: title
+          fields:
+            - { field: summary, label: Summary }
+            - { field: detail, label: Detail }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: title, label: Dashboard, type: PrimaryEntityCell }
+      - { field: summary, label: Summary }
+      - { field: detail, label: Detail }
+    page_size: 50
+    row_key: id
