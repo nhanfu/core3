@@ -2,4 +2,7 @@ page: { id: survey-suggested-values }
 datasources:
   - id: survey_suggested_values
     permission: surveys.read
-    query: "SELECT id, row_version, question_text, value, sequence, score, matrix_row, matrix_column FROM survey_suggested_values WHERE (:q IS NULL OR question_text ILIKE '%' || :q || '%' OR value ILIKE '%' || :q || '%') ORDER BY question_text, sequence, id"
+    query: "SELECT id, row_version, question_id, question_text, value, sequence, score, matrix_row, matrix_column FROM survey_suggested_values WHERE (:q IS NULL OR question_text ILIKE '%' || :q || '%' OR value ILIKE '%' || :q || '%') ORDER BY question_text, sequence, id"
+  - id: survey_question_options
+    permission: surveys.read
+    query: "SELECT id AS value, question_text AS label FROM survey_questions ORDER BY question_text, id"

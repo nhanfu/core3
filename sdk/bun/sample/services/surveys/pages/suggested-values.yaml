@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: survey_suggested_values
+    create_action: create_survey_suggested_value
+    create_label: New
     search: { label: Search suggested values, placeholder: 'Search question or answer...' }
     group_by: [{ field: question_text, label: Question }]
     columns:
@@ -15,3 +17,27 @@ components:
       - { field: matrix_column, label: Matrix Column, optional: hide }
     page_size: 50
     row_key: id
+actions:
+  - id: create_survey_suggested_value
+    type: server_form
+    permission: surveys.write
+    title: New suggested value
+    action: surveys.suggested_values.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [survey_suggested_values]
+    mutation:
+      operation: insert
+      table: survey_suggested_values
+      fields: [question_id, question_text, value, sequence, score, matrix_row, matrix_column]
+      required: [question_id, question_text, value]
+      defaults: { sequence: 1, score: 0 }
+      result: { query: "SELECT * FROM survey_suggested_values WHERE id = :id" }
+    fields:
+      - { field: question_id, label: Question, type: select, options_source: survey_question_options, required: true }
+      - { field: question_text, label: Question text, type: text, required: true }
+      - { field: value, label: Suggested value, type: text, required: true }
+      - { field: sequence, label: Sequence, type: number, default: 1 }
+      - { field: score, label: Score, type: number, default: 0 }
+      - { field: matrix_row, label: Matrix row, type: text }
+      - { field: matrix_column, label: Matrix column, type: text }
