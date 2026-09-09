@@ -15,4 +15,5 @@ menu:
       label: People
       items:
         - { path: /employees, label: Employees, icon: users, permission: employees.read }
+        - { path: /employees/directory, label: Directory, icon: contacts, permission: employees.read }
         - { path: /employee-analysis, label: Employee Analysis, icon: chart, permission: employees.read }

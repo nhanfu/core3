@@ -1,0 +1,57 @@
+page: { id: employees }
+datasources:
+  - id: employee_states
+    permission: employees.read
+    query: "SELECT value, label FROM (VALUES ('Draft','New'), ('Active','Active'), ('On Leave','On leave'), ('Terminated','Departed')) states(value, label)"
+  - id: employee_departments
+    permission: employees.read
+    query: "SELECT id AS value, name AS label FROM employee_departments WHERE state = 'Active' ORDER BY name"
+  - id: employees
+    permission: employees.read
+    query: "SELECT e.id, e.row_version, e.employee_number, e.name, e.image_url, e.work_email, e.work_phone, e.department_name, e.job_title, e.manager_name, e.employment_type, e.state, e.active, CAST(e.hire_date AS VARCHAR) AS hire_date FROM employees e WHERE (:q IS NULL OR e.employee_number ILIKE '%' || :q || '%' OR e.name ILIKE '%' || :q || '%' OR e.work_email ILIKE '%' || :q || '%') AND (:state IS NULL OR e.state = :state) AND (:department_name IS NULL OR e.department_name = :department_name) ORDER BY e.name, e.id"
+actions:
+  - id: view_employee
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/detail
+    params: { id: '{row.id}' }
+  - id: create_employee
+    type: server_form
+    permission: employees.write
+    title: New employee
+    action: employees.records.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employees]
+    mutation:
+      operation: insert
+      table: employees
+      fields: [employee_number, name, work_email, work_phone, department_name, job_title, employment_type, hire_date]
+      required: [employee_number, name, hire_date]
+      defaults: { active: true, state: Draft }
+      result: { query: "SELECT * FROM employees WHERE id = :id" }
+    fields:
+      - { field: employee_number, label: Employee number, type: text, required: true }
+      - { field: name, label: Name, type: text, required: true }
+      - { field: work_email, label: Work Email, type: text }
+      - { field: work_phone, label: Work Phone, type: text }
+      - { field: department_name, label: Department, type: text }
+      - { field: job_title, label: Job Position, type: text }
+      - { field: employment_type, label: Employment Type, type: select, options: [{ value: Employee, label: Employee }, { value: Contractor, label: Contractor }, { value: Intern, label: Intern }] }
+      - { field: hire_date, label: Start Date, type: date, required: true }
+  - id: archive_employee
+    type: server
+    permission: employees.write
+    action: employees.records.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [employees]
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: false } }
+  - id: restore_employee
+    type: server
+    permission: employees.write
+    action: employees.records.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [employees]
+    mutation: { operation: update, table: employees, fields: [active], defaults: { active: true } }

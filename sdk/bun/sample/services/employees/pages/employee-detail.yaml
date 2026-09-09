@@ -1,25 +1,61 @@
 title: Employee
-page: { id: employee-detail, breadcrumb: [Human Resources, Employees, Detail], auth: { require: [employees.read] } }
-datasources:
-  - id: employee_detail
-    single: true
-    permission: employees.read
-    query: "SELECT id, row_version, employee_number, name, auth_user_id, work_email, phone, department_name, job_title, manager_name, employment_type, state, CAST(hire_date AS VARCHAR) AS hire_date, CAST(termination_date AS VARCHAR) AS termination_date FROM employees WHERE id = :id"
+page: { id: employee-detail, route: /employees/detail, breadcrumb: [Human Resources, Employees, Employee], auth: { require: [employees.read] } }
 components:
   - type: OdooFormView
     source: employee_detail
     title_field: name
+    subtitle_field: job_title
     status_field: state
-    statusbar: [{ value: Draft, label: Draft }, { value: Active, label: Active }, { value: On Leave, label: On Leave }, { value: Terminated, label: Terminated }]
+    statusbar: [{ value: Draft, label: New }, { value: Active, label: Active }, { value: On Leave, label: On leave }, { value: Terminated, label: Departed }]
     status_colors: { Draft: neutral, Active: green, On Leave: amber, Terminated: red }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: edit_employee, label: Edit, variant: secondary, permission: employees.write }
+      - { id: archive_employee_detail, label: Archive, variant: danger, permission: employees.write, show_if: "state.employee_detail.active === true" }
+      - { id: restore_employee_detail, label: Restore, variant: secondary, permission: employees.write, show_if: "state.employee_detail.active === false" }
     group_columns: 2
     groups:
-      - title: Profile
-        fields: [{ field: employee_number, label: Employee number }, { field: name, label: Name }, { field: state, label: Status }, { field: work_email, label: Work email }, { field: phone, label: Phone }]
-      - title: Employment
-        fields: [{ field: department_name, label: Department }, { field: job_title, label: Job title }, { field: manager_name, label: Manager }, { field: employment_type, label: Type }, { field: hire_date, label: Hire date }, { field: termination_date, label: Termination date }]
-actions:
-  - { id: activate_employee_detail, type: server, permission: employees.write, action: employees.records.activate, handler: order_transition, workflow: employees, operation: activate, params: { id: '{state.id}' }, refresh: [employee_detail] }
-  - { id: leave_employee_detail, type: server, permission: employees.write, action: employees.records.leave, handler: order_transition, workflow: employees, operation: leave, params: { id: '{state.id}' }, refresh: [employee_detail] }
-  - { id: return_employee_detail, type: server, permission: employees.write, action: employees.records.return, handler: order_transition, workflow: employees, operation: return, params: { id: '{state.id}' }, refresh: [employee_detail] }
-  - { id: terminate_employee_detail, type: server, permission: employees.manage, action: employees.records.terminate, handler: order_transition, workflow: employees, operation: terminate, params: { id: '{state.id}' }, refresh: [employee_detail] }
+      - title: Work Information
+        fields:
+          - { field: name, label: Employee Name }
+          - { field: employee_number, label: Employee Number }
+          - { field: work_email, label: Work Email }
+          - { field: work_phone, label: Work Phone }
+          - { field: company_name, label: Company }
+          - { field: department_name, label: Department }
+          - { field: job_title, label: Job Position }
+          - { field: manager_name, label: Manager }
+          - { field: coach_name, label: Coach }
+          - { field: work_location, label: Work Location }
+          - { field: hire_date, label: Start Date }
+          - { field: termination_date, label: Departure Date }
+    notebook:
+      active: work
+      tabs:
+        - id: work
+          label: Work
+          groups:
+            - title: Organization
+              fields: [{ field: department_name, label: Department }, { field: job_title, label: Job Position }, { field: manager_name, label: Manager }, { field: coach_name, label: Coach }, { field: work_location, label: Work Location }]
+        - id: resume
+          label: Resume
+          groups:
+            - title: Skills and resume
+              fields: [{ field: skills, label: Skills }, { field: resume_summary, label: Resume, type: textarea, wide: true }]
+        - id: personal
+          label: Personal
+          groups:
+            - title: Contact Information
+              fields: [{ field: private_email, label: Private Email }, { field: phone, label: Phone }, { field: street, label: Private Address }, { field: birthday, label: Birthday }]
+        - id: payroll
+          label: Payroll
+          groups:
+            - title: Contract
+              fields: [{ field: employment_type, label: Employment Type }, { field: contract_start, label: Contract Start }, { field: contract_end, label: Contract End }, { field: wage, label: Wage }, { field: working_schedule, label: Working Schedule }]
+        - id: settings
+          label: Settings
+          groups:
+            - title: User and attendance
+              fields: [{ field: user_name, label: Related User }, { field: timezone, label: Timezone }, { field: barcode, label: Badge ID }, { field: presence, label: Presence, type: StatusChip }]
+    content_slot: true

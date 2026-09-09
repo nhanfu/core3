@@ -1,0 +1,37 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS active BOOLEAN;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS image_url VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_phone VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS coach_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS work_location VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS contract_start DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS contract_end DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS birthday DATE;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS wage DECIMAL(12,2);
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS working_schedule VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS timezone VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS barcode VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS presence VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS user_name VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS private_email VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS street VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS skills VARCHAR;
+      ALTER TABLE employees ADD COLUMN IF NOT EXISTS resume_summary VARCHAR;
+      UPDATE employees SET active = (state <> 'Terminated') WHERE active IS NULL;
+      UPDATE employees SET company_name = 'Core3 Vietnam', timezone = 'Asia/Ho_Chi_Minh' WHERE company_name IS NULL;
+      INSERT OR IGNORE INTO employees(id, auth_user_id, employee_number, name, image_url, work_email, work_phone, company_name, department_id, department_name, job_title, manager_name, coach_name, work_location, employment_type, hire_date, contract_start, wage, timezone, presence, state, active, skills, resume_summary)
+      VALUES
+        ('employee-demo-002', NULL, 'EMP-0002', 'Nguyen Minh Anh', NULL, 'anh.nguyen@core3.local', '+84 901 000 002', 'Core3 Vietnam', 'department-engineering', 'Engineering', 'Frontend Engineer', 'Engineering Manager', 'Admin User', 'Ho Chi Minh City', 'Employee', DATE '2025-06-10', DATE '2025-06-10', 2800, 'Asia/Ho_Chi_Minh', 'online', 'Active', true, 'TypeScript, UX', 'Builds accessible business workflows.'),
+        ('employee-demo-003', NULL, 'EMP-0003', 'Tran Bao Long', NULL, 'long.tran@core3.local', '+84 901 000 003', 'Core3 Vietnam', 'department-engineering', 'Engineering', 'QA Specialist', 'Engineering Manager', 'Admin User', 'Da Nang', 'Contractor', DATE '2026-01-05', DATE '2026-01-05', 2200, 'Asia/Ho_Chi_Minh', 'away', 'Draft', true, 'Playwright, SQL', 'Owns release verification.'),
+        ('employee-demo-004', NULL, 'EMP-0004', 'Le Thu Ha', NULL, 'ha.le@core3.local', '+84 901 000 004', 'Core3 Vietnam', 'department-engineering', 'Engineering', 'Product Designer', 'Engineering Manager', 'Admin User', 'Hanoi', 'Employee', DATE '2024-03-18', DATE '2024-03-18', 3000, 'Asia/Ho_Chi_Minh', 'offline', 'Terminated', false, 'Figma, Research', 'Former product design lead.');
+    down: |
+      DELETE FROM employees WHERE id IN ('employee-demo-002', 'employee-demo-003', 'employee-demo-004');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

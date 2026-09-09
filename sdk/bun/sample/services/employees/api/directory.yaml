@@ -1,0 +1,11 @@
+page: { id: employee-directory }
+datasources:
+  - id: employee_directory
+    permission: employees.read
+    query: "SELECT id, row_version, name, image_url, job_title, department_name, work_email, work_phone, company_name, work_location FROM employees WHERE active = true AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR work_email ILIKE '%' || :q || '%' OR department_name ILIKE '%' || :q || '%') ORDER BY name, id"
+actions:
+  - id: view_directory_employee
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/directory/detail
+    params: { id: '{row.id}' }

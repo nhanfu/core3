@@ -1,0 +1,17 @@
+title: Employee Directory
+page: { id: employee-directory, route: /employees/directory, breadcrumb: [Human Resources, Directory], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_directory
+    search: { label: Search directory, placeholder: 'Search employees...' }
+    columns:
+      - { field: image_url, label: Avatar, type: Image }
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: job_title, label: Job Position }
+      - { field: department_name, label: Department }
+      - { field: work_email, label: Work Email }
+      - { field: work_phone, label: Work Phone }
+    page_size: 50
+    row_key: id
+    row_double_click_action: view_directory_employee

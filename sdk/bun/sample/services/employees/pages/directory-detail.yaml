@@ -1,0 +1,13 @@
+title: Directory Employee
+page: { id: employee-directory-detail, route: /employees/directory/detail, breadcrumb: [Human Resources, Directory, Employee], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_directory_detail
+    title_field: name
+    subtitle_field: job_title
+    group_columns: 2
+    groups:
+      - title: Employee
+        fields: [{ field: name, label: Name }, { field: job_title, label: Job Position }, { field: department_name, label: Department }, { field: company_name, label: Company }]
+      - title: Contact
+        fields: [{ field: work_email, label: Work Email }, { field: work_phone, label: Work Phone }, { field: work_location, label: Work Location }]
