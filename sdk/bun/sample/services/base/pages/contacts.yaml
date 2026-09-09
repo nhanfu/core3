@@ -37,6 +37,7 @@ components:
       - id: kanban
         label: Kanban
         icon: dashboard
+        group_by: company_type
         card:
           title: name
           subtitle: email
