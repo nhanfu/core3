@@ -229,6 +229,13 @@ Odoo-observed records and columns on all four routes with zero unexpected
 responses and no horizontal overflow. Core3 captures are under
 `/tmp/core3-time-off-{desktop,mobile}-{allocations,accrual-plans,public-holidays,mandatory-days}-management.png`.
 
+The personal and approval batch adds My Time Off, All Time Off, and Overview
+routes with list/card/calendar contracts and service-owned API fragments.
+Authenticated desktop/mobile checks verified personal, approval, and team
+calendar records with no failed responses or horizontal overflow. A dispatcher
+without Time Off permissions receives the expected 403 page-load state. Core3
+captures are under `/tmp/core3-time-off-{desktop,mobile}-{my-time-off,approval,overview}-batch.png`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
