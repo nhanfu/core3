@@ -74,7 +74,7 @@ actions:
         - query: "UPDATE pos_orders SET amount_paid = amount_paid + CAST(:payment_amount AS DECIMAL(18,2)), payment_method = :payment_method, state = CASE WHEN amount_paid + CAST(:payment_amount AS DECIMAL(18,2)) >= amount_total THEN 'Paid' ELSE 'New' END, row_version = row_version + 1 WHERE id = :id"
       result: { query: "SELECT * FROM pos_orders WHERE id = :id" }
     fields:
-      - { field: payment_amount, label: Payment amount, type: money, required: true }
+      - { field: payment_amount, label: Payment amount, type: money, decimals: 2, required: true }
       - { field: payment_method, label: Payment method, type: select, options: [Cash, Bank, Card, Other], required: true }
   - id: invoice_pos_order
     type: server
