@@ -1,0 +1,32 @@
+version: 0.0.4
+type:
+  postgres:
+    up: |
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS parent_company_id VARCHAR;
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS website VARCHAR;
+      ALTER TABLE base_contacts ADD COLUMN IF NOT EXISTS language_code VARCHAR;
+      INSERT INTO base_contacts(id, name, company_type, email, phone, street, city, state_name, zip, country_name, currency_code, is_company, parent_company_id, website, language_code) VALUES
+        ('company-azure', 'Azure Interior', 'company', 'azure@core3.local', '+1 555 0102', '8 Market Street', 'San Francisco', 'California', '94105', 'United States', 'USD', true, NULL, 'https://azure.core3.local', 'en_US'),
+        ('contact-azure-brandon', 'Brandon Freeman', 'person', 'brandon@azure.core3.local', '+1 555 0103', '8 Market Street', 'San Francisco', 'California', '94105', 'United States', 'USD', false, 'company-azure', NULL, 'en_US'),
+        ('company-gemini', 'Gemini Furniture', 'company', 'gemini@core3.local', '+1 555 0104', '42 Nguyen Hue', 'Ho Chi Minh City', 'Ho Chi Minh City', '700000', 'Vietnam', 'VND', true, NULL, 'https://gemini.core3.local', 'vi_VN'),
+        ('contact-gemini-edwin', 'Edwin Hansen', 'person', 'edwin@gemini.core3.local', '+84 28 5555 0105', '42 Nguyen Hue', 'Ho Chi Minh City', 'Ho Chi Minh City', '700000', 'Vietnam', 'VND', false, 'company-gemini', NULL, 'vi_VN'),
+        ('contact-gemini-jesse', 'Jesse Brown', 'person', 'jesse@gemini.core3.local', '+84 28 5555 0106', '42 Nguyen Hue', 'Ho Chi Minh City', 'Ho Chi Minh City', '700000', 'Vietnam', 'VND', false, 'company-gemini', NULL, 'vi_VN'),
+        ('contact-berlin', 'Leonie Weber', 'person', 'leonie@core3.local', '+49 30 555 0107', 'Alexanderplatz 1', 'Berlin', 'Berlin', '10178', 'Germany', 'EUR', false, NULL, NULL, 'de_DE'),
+        ('contact-archived', 'Archived Contact', 'person', 'archived@core3.local', '+1 555 0199', 'Old Road', 'San Francisco', 'California', '94105', 'United States', 'USD', false, NULL, NULL, 'en_US')
+      ON CONFLICT (id) DO UPDATE SET parent_company_id = EXCLUDED.parent_company_id, website = EXCLUDED.website, language_code = EXCLUDED.language_code;
+      UPDATE base_contacts SET active = false WHERE id = 'contact-archived';
+      INSERT INTO base_contact_categories_rel(contact_id, category_id, category_name) VALUES
+        ('company-azure', 'category-customer', 'Customer'), ('company-gemini', 'category-vendor', 'Vendor'), ('contact-azure-brandon', 'category-partner', 'Partner'), ('contact-gemini-edwin', 'category-customer', 'Customer')
+      ON CONFLICT (contact_id, category_id) DO NOTHING;
+      INSERT INTO base_activities(id, contact_id, summary, activity_type, state, due_date, assigned_user_name) VALUES
+        ('activity-azure', 'contact-azure-brandon', 'Follow up on proposal', 'call', 'planned', CURRENT_DATE + INTERVAL '2 days', 'Administrator'),
+        ('activity-gemini', 'contact-gemini-edwin', 'Send pricing update', 'email', 'planned', CURRENT_DATE + INTERVAL '5 days', 'Administrator')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM base_activities WHERE id IN ('activity-azure', 'activity-gemini');
+      DELETE FROM base_contact_categories_rel WHERE contact_id IN ('company-azure', 'company-gemini', 'contact-azure-brandon', 'contact-gemini-edwin');
+      DELETE FROM base_contacts WHERE id IN ('company-azure', 'contact-azure-brandon', 'company-gemini', 'contact-gemini-edwin', 'contact-gemini-jesse', 'contact-berlin', 'contact-archived');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

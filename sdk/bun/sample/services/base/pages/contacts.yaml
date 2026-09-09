@@ -3,10 +3,13 @@ page: { id: contacts, breadcrumb: [Contacts], auth: { require: [base.contacts.re
 datasources:
   - id: contacts
     permission: base.contacts.read
-    query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.is_company, c.active, c.created_at, (SELECT COUNT(*) FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS category_count FROM base_contacts c WHERE c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') AND (:company_type IS NULL OR c.company_type = :company_type) ORDER BY c.name"
+    query: "SELECT c.id, c.row_version, c.name, c.company_type, c.email, c.phone, c.city, c.country_name, c.is_company, c.active, c.created_at, c.parent_company_id, parent.name AS parent_company_name, c.website, c.language_code, (SELECT COUNT(*) FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS category_count, (SELECT COUNT(*) FROM base_activities a WHERE a.contact_id = c.id AND a.state = 'planned') AS activity_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id WHERE c.active = true AND (:q IS NULL OR c.name ILIKE '%' || :q || '%' OR c.email ILIKE '%' || :q || '%' OR c.phone ILIKE '%' || :q || '%') AND (:company_type IS NULL OR c.company_type = :company_type) AND (:country_name IS NULL OR c.country_name = :country_name) ORDER BY COALESCE(parent.name, c.name), c.name"
   - id: contact_types
     permission: base.contacts.read
     query: "SELECT value, label FROM (VALUES ('person','Person'), ('company','Company'), ('other','Other')) types(value, label)"
+  - id: contact_countries
+    permission: base.contacts.read
+    query: "SELECT DISTINCT country_name AS value, country_name AS label FROM base_contacts WHERE active = true AND country_name IS NOT NULL ORDER BY country_name"
 components:
   - type: ListView
     variant: odoo
@@ -14,13 +17,26 @@ components:
     create_action: create_contact
     create_label: New contact
     search: { label: Search contacts, placeholder: 'Search name, email, or phone...' }
-    filters: [{ field: company_type, label: Type, options_source: contact_types }]
+    filters:
+      - { field: company_type, label: Type, options_source: contact_types }
+      - { field: country_name, label: Country, options_source: contact_countries }
+    group_by:
+      - { field: company_type, label: Type }
+      - { field: country_name, label: Country }
+    favorites:
+      - { id: companies, label: Companies, filters: { company_type: company }, group_by: country_name }
+      - { id: people, label: People, filters: { company_type: person }, group_by: country_name }
+    actions:
+      - { id: contacts.export, label: Export, title: Export contacts, icon: download }
+    tree: { parent_field: parent_company_id }
+    selectable: true
+    column_chooser: true
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
-      - id: card
-        label: Cards
-        icon: grid
+      - id: kanban
+        label: Kanban
+        icon: dashboard
         card:
           title: name
           subtitle: email
@@ -28,7 +44,9 @@ components:
             - { field: company_type, label: Type }
             - { field: phone, label: Phone }
             - { field: city, label: City }
+            - { field: parent_company_name, label: Company }
             - { field: category_count, label: Tags }
+            - { field: activity_count, label: Activities }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
       - { field: company_type, label: Type }
@@ -36,7 +54,9 @@ components:
       - { field: phone, label: Phone }
       - { field: city, label: City }
       - { field: country_name, label: Country }
+      - { field: parent_company_name, label: Company, optional: hide }
       - { field: category_count, label: Tags }
+      - { field: activity_count, label: Activities }
     page_size: 50
     row_key: id
     row_actions: menu
