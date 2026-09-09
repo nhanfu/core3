@@ -83,13 +83,13 @@ export class PosShell extends BaseComponent {
     const openOrders = this.state.openOrders || [];
 
     const shell = html.take(container).div
-      .className('pos-shell flex flex-col h-full min-h-screen bg-gray-100')
+      .className('pos-shell flex flex-col h-full min-h-screen w-full max-w-full overflow-x-hidden bg-gray-100')
       .ele();
 
     this._drawHeader(shell, sessionSource);
 
     const screen = this.state.screen || 'product';
-    const body = html.take(shell).div.className('pos-shell__body flex-1 overflow-hidden').ele();
+    const body = html.take(shell).div.className('pos-shell__body flex-1 min-w-0 max-w-full overflow-hidden').ele();
 
     if (screen === 'payment') {
       this._drawPaymentScreen(body);
@@ -104,7 +104,7 @@ export class PosShell extends BaseComponent {
 
   private _drawHeader(container: HTMLElement, session: any) {
     const header = html.take(container).header
-      .className('pos-shell__header flex items-center justify-between px-4 py-2 bg-white border-b shadow-sm')
+      .className('pos-shell__header flex flex-wrap items-center justify-between gap-2 px-4 py-2 bg-white border-b shadow-sm')
       .ele();
 
     // Left: session info
@@ -141,7 +141,7 @@ export class PosShell extends BaseComponent {
 
   private _drawProductScreen(container: HTMLElement, products: CatalogProduct[]) {
     const wrap = html.take(container).div
-      .className('pos-product-screen flex flex-col md:flex-row h-full')
+      .className('pos-product-screen flex flex-col md:flex-row h-full min-w-0 max-w-full')
       .ele();
 
     // Catalog panel
