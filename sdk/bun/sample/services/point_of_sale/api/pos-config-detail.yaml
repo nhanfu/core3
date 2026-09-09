@@ -1,0 +1,6 @@
+page: { id: pos-config-detail }
+datasources:
+  - id: pos_config_detail
+    single: true
+    permission: pos.read
+    query: "SELECT id, name, company, currency, receipt_header, receipt_footer, active FROM pos_configs WHERE id = :id"

@@ -1,7 +1,19 @@
 title: POS Configuration Coverage
 page: { id: pos-configuration-coverage, route: /point-of-sale/configuration-coverage, breadcrumb: [Sales, Point of Sale, Configuration], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: POS configuration registry
-    description: Settings, note models, coins and bills, presets, taxes, and payment methods are tracked as independent contracts.
+  - type: OdooFormView
+    source: pos_settings
+    title_field: point_of_sale
+    group_columns: 2
+    groups:
+      - title: General settings
+        fields:
+          - { field: point_of_sale, label: Point of Sale }
+          - { field: currency, label: Currency }
+          - { field: default_pricelist, label: Default pricelist }
+          - { field: invoicing, label: Invoicing }
+      - title: Checkout and hardware
+        fields:
+          - { field: barcode_scanning, label: Barcode scanning }
+          - { field: cash_control, label: Cash control }
+          - { field: customer_display, label: Customer display }

@@ -1,0 +1,18 @@
+title: Point of Sale Configuration
+page: { id: pos-config-detail, route: /point-of-sale/config-detail, breadcrumb: [Sales, Point of Sale, Configuration, Detail], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_config_detail
+    title_field: name
+    group_columns: 2
+    groups:
+      - title: Point of Sale
+        fields:
+          - { field: name, label: Point of Sale }
+          - { field: company, label: Company }
+          - { field: currency, label: Currency }
+          - { field: active, label: Active }
+      - title: Receipts
+        fields:
+          - { field: receipt_header, label: Receipt header }
+          - { field: receipt_footer, label: Receipt footer }

@@ -1,0 +1,6 @@
+page: { id: pos-configuration-coverage }
+datasources:
+  - id: pos_settings
+    single: true
+    permission: pos.read
+    query: "SELECT 'pos-settings' AS id, 'Main Shop' AS point_of_sale, 'USD' AS currency, 'Optional' AS invoicing, true AS barcode_scanning, true AS cash_control, true AS customer_display, 'Public Pricelist' AS default_pricelist"
