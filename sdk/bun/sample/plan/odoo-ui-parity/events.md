@@ -6,7 +6,7 @@ This is an implementation gate for the Odoo 19 Community `event` addon. It is
 plan-only: do not add or modify product code, migrations, fixtures, assets, or
 tests in this worktree. `ready` is reserved for the point at which all six
 register gates below have evidence, including installed-addon desktop/mobile
-reference captures. The current reference database does not meet that bar.
+reference captures.
 
 ## Reference gate and live limitation
 
@@ -28,14 +28,13 @@ reference captures. The current reference database does not meet that bar.
   authenticated `ir.module.module.search_read` result is:
   `name=event`, `state=uninstalled`, `demo=false`, `latest_version=false`,
   `installed_version=19.0.1.9`.
-- Because `event` is uninstalled, the live Odoo UI exposes no Events app menu,
-  event action, event record, view mode, registration desk, configuration,
-  report, or event route. The authenticated fallback is Discuss at
-  `/odoo/discuss`; this is not evidence of an installed Events UI.
-- Do not install or activate the addon in this plan-only task. Do not invent
-  installed/demo screenshots, payloads, menu visibility, or record IDs. A
-  future installed reference must use a disposable database with the addon
-  installed and demo loading explicitly recorded.
+- The primary `core3_demo` database still has `event` uninstalled; its
+  authenticated fallback is Discuss at `/odoo/discuss` and is not evidence of
+  an installed Events UI.
+- A disposable `core3_events_demo` database was created without changing
+  `core3_demo`; `event` was installed with `--without-demo=False` on 2026-09-10.
+  The database contains official event demo records and uses the local
+  reference login `admin` / `EventsDemo2026!`.
 
 ## Truthful live screenshots
 
@@ -49,8 +48,11 @@ visual reference.
 | Authenticated Discuss fallback; no Events app | 1440x900 | `/tmp/odoo-events-uninstalled-desktop.png` |
 | Authenticated Discuss fallback; no Events app | 390x844, touch/mobile emulation | `/tmp/odoo-events-uninstalled-mobile.png` |
 
-Required future installed-addon captures, kept under `/tmp` and never
-committed, include desktop and mobile pairs for Events, event detail, Attendees,
+Installed-reference dashboard captures now exist at
+`/tmp/odoo-events-{desktop,mobile}-dashboard.png`, with no failed requests;
+the desktop and mobile bodies contain seeded event records and the Events menu.
+Remaining installed-addon captures, kept under `/tmp` and never committed,
+include desktop and mobile pairs for event detail, Attendees,
 Registration statistics, Event Templates, Event Stages, Event Tags Categories,
 Event Questions, Settings, and Registration Desk. Each capture must record the
 database, user/groups, demo flag, source revision, exact action route, viewport,
@@ -268,9 +270,10 @@ must have explicit route and permission decisions before implementation.
 1. Addon/version/demo contract: evidenced above from manifest and source demo
    files.
 2. Complete visible menu/action/view inventory: source inventory is recorded;
-   installed live visibility is not evidenced because the addon is uninstalled.
-3. Authenticated desktop/mobile Odoo route/screenshot evidence: only truthful
-   uninstalled fallback captures exist; installed captures are missing.
+   the disposable installed database currently confirms the Events dashboard
+   menu and seeded event records; the remaining actions still need auditing.
+3. Authenticated desktop/mobile Odoo route/screenshot evidence: dashboard pairs
+   exist, while installed captures for the remaining actions are missing.
 4. Deterministic datasource/mock-data contract: specified above; no API/mock
    implementation exists yet.
 5. Shared primitives: required generic contracts are recorded; reuse/focused
@@ -280,8 +283,7 @@ must have explicit route and permission decisions before implementation.
 
 Therefore the status remains `planned`, not `ready`. It must not be changed to
 `ready` until gates 2-6 have implementation evidence and the installed Odoo
-desktop/mobile reference is captured. If an installed reference cannot be
-provided, retain `planned` and preserve the exact uninstalled limitation above.
+desktop/mobile reference is captured for the complete surface.
 
 ## Acceptance
 
