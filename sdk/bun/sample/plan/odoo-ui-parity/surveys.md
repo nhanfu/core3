@@ -108,6 +108,14 @@ the list remains at 4 surveys, and no unexpected requests or horizontal
 overflow occur. Captures are
 `/tmp/core3-surveys-detail-certification-{desktop,mobile}.png`.
 
+The question-form follow-up adds `/surveys/question-detail` with a service-owned
+question datasource, shared OdooFormView editing, suggested-answer rows, and
+row double-click navigation from the Questions list. Authenticated desktop and
+mobile checks loaded the 38-question catalog, opened the certification question,
+rendered its `Desk,Laptop,Screen` values, and confirmed Edit with no unexpected
+failed responses or horizontal overflow. Captures are under
+`/tmp/core3-surveys-question-detail-{desktop,mobile}.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
