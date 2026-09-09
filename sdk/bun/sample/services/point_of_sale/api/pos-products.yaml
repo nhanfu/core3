@@ -3,3 +3,9 @@ datasources:
   - id: pos_product_catalog
     permission: pos.read
     query: "SELECT id, 1 AS row_version, name, barcode, category, CAST(price AS DOUBLE) AS price, CAST(tax_rate AS DOUBLE) AS tax_rate, active FROM pos_products WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%') ORDER BY category, name"
+actions:
+  - id: view_pos_product
+    type: navigate
+    permission: pos.read
+    navigate_to: /point-of-sale/product-detail
+    params: { id: '{row.id}' }

@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_product_catalog
+    row_open_action: view_pos_product
+    row_double_click_action: view_pos_product
     search: { label: Search products, placeholder: Search product or barcode... }
     columns:
       - { field: name, label: Product, type: PrimaryEntityCell }

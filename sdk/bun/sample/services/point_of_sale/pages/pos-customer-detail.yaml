@@ -1,0 +1,25 @@
+title: POS Customer
+page: { id: pos-customer-detail, route: /point-of-sale/customer-detail, breadcrumb: [Sales, Point of Sale, Customers, Customer], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_customer_detail
+    title_field: partner_name
+    group_columns: 2
+    groups:
+      - title: Customer
+        fields:
+          - { field: partner_name, label: Customer }
+          - { field: order_count, label: Orders }
+      - title: Sales
+        fields:
+          - { field: total_sales, label: Total sales }
+          - { field: last_order, label: Last order }
+  - type: ContactGrid
+    source: pos_customer_detail_orders
+    row_key: id
+    title: Orders
+    columns:
+      - { field: name, label: Order, type: PrimaryEntityCell }
+      - { field: date_order, label: Date }
+      - { field: state, label: Status, type: StatusChip }
+      - { field: amount_total, label: Total, align: right }

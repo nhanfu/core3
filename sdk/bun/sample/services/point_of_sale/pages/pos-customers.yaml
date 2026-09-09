@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_customer_directory
+    row_open_action: view_pos_customer
+    row_double_click_action: view_pos_customer
     search: { label: Search customers, placeholder: Search customer... }
     columns:
       - { field: partner_name, label: Customer, type: PrimaryEntityCell }

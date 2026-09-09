@@ -1,0 +1,6 @@
+page: { id: pos-product-detail }
+datasources:
+  - id: pos_product_detail
+    single: true
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, barcode, category, CAST(price AS DOUBLE) AS price, CAST(tax_rate AS DOUBLE) AS tax_rate, active FROM pos_products WHERE id = :id"

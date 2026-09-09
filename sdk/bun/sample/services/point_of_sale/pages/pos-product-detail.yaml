@@ -1,0 +1,18 @@
+title: POS Product
+page: { id: pos-product-detail, route: /point-of-sale/product-detail, breadcrumb: [Sales, Point of Sale, Products, Product], auth: { require: [pos.read] } }
+components:
+  - type: OdooFormView
+    source: pos_product_detail
+    title_field: name
+    group_columns: 2
+    groups:
+      - title: Product
+        fields:
+          - { field: name, label: Product }
+          - { field: barcode, label: Barcode }
+          - { field: category, label: Category }
+          - { field: active, label: Active }
+      - title: Pricing
+        fields:
+          - { field: price, label: Price }
+          - { field: tax_rate, label: Tax rate }

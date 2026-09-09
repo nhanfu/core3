@@ -64,6 +64,17 @@ expected cash, differences, and discrepancy reason on close. Deterministic
 fixtures cover Opening Control, In Progress, Closing Control, and Closed &
 Posted, while the existing cashier route remains the touch-selling surface
 with its active-session and open-ticket state.
+## Current batch: product and customer forms
+
+The Odoo Products and Customers surfaces were captured at 1440x900 and 390x844.
+Core3 now adds row-open/double-click navigation from `/point-of-sale/products`
+and `/point-of-sale/customers` to service-owned Product and Customer forms,
+including related POS orders for a customer. Authenticated checks verified both
+lists and both detail routes at desktop and mobile sizes with zero unexpected
+responses and no horizontal overflow. Odoo captures are under
+`/tmp/odoo-pos-{desktop,mobile}-{products,customers}.png`; Core3 captures are
+under `/tmp/core3-pos-{desktop,mobile}-{products,product-detail,customers,customer-detail}.png`.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining Odoo POS product forms and

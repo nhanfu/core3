@@ -1,0 +1,10 @@
+page: { id: pos-customer-detail }
+datasources:
+  - id: pos_customer_detail
+    single: true
+    permission: pos.read
+    query: "SELECT MIN(o.partner_name) AS id, o.partner_name, COUNT(*) AS order_count, CAST(COALESCE(SUM(o.amount_total), 0) AS DOUBLE) AS total_sales, MAX(CAST(o.date_order AS VARCHAR)) AS last_order FROM pos_orders o WHERE o.partner_name = :id GROUP BY o.partner_name"
+  - id: pos_customer_detail_orders
+    single: false
+    permission: pos.read
+    query: "SELECT id, name, CAST(date_order AS VARCHAR) AS date_order, state, amount_total FROM pos_orders WHERE partner_name = :id ORDER BY date_order DESC"
