@@ -57,6 +57,14 @@ the modal layout. Both checks had no unexpected failures or horizontal
 overflow. Captures are `/tmp/core3-pos-mobile-taxes-created.png` and
 `/tmp/core3-pos-desktop-taxes-new.png`.
 
+Payment Methods now uses a service-owned catalog with five Odoo-matching
+fixtures, selectable rows, a New payment method form, and catalog-backed
+detail navigation. Authenticated desktop/mobile checks loaded all five rows
+without failures or overflow; mobile creation refreshed the list to six rows,
+and Card detail displayed its journal, company, and Point of Sale fields.
+Captures are under `/tmp/core3-pos-{desktop,mobile}-payment-methods-catalog.png`
+and `/tmp/core3-pos-mobile-payment-method-detail-final.png`.
+
 The product-catalog batch adds the five remaining Odoo product submenu routes:
 Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
 Each route is a `ListView` backed by the convention-discovered
