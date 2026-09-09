@@ -17,3 +17,25 @@ components:
       - { field: answer_options, label: Suggested Answers }
     page_size: 50
     row_key: id
+actions:
+  - id: create_survey_question
+    type: server_form
+    permission: surveys.write
+    title: Add survey question
+    action: surveys.questions.create
+    handler: yaml_mutation
+    operation: create_question
+    refresh: [survey_questions_catalog]
+    mutation:
+      operation: insert
+      table: survey_questions
+      fields: [survey_id, question_text, question_type, sequence, required, answer_options]
+      required: [survey_id, question_text]
+      result: { query: "SELECT * FROM survey_questions WHERE id = :id" }
+    fields:
+      - { field: survey_id, label: Survey ID, type: text, required: true }
+      - { field: question_text, label: Question, type: text, required: true }
+      - { field: question_type, label: Type, type: select, options: [{ value: Text, label: Text }, { value: Rating, label: Rating }, { value: Choice, label: Choice }] }
+      - { field: sequence, label: Sequence, type: number }
+      - { field: required, label: Required, type: checkbox }
+      - { field: answer_options, label: Options, type: text }
