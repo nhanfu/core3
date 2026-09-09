@@ -154,6 +154,10 @@ describe('CRM YAML lifecycle integration', () => {
         due_date DATE, assigned_to VARCHAR, state VARCHAR, completed_at TIMESTAMP,
         next_activity_type VARCHAR, next_activity_summary VARCHAR, next_activity_due_date DATE
       );
+      CREATE TABLE crm_activity_log(
+        id VARCHAR PRIMARY KEY, actor_id VARCHAR, actor_name VARCHAR, action VARCHAR,
+        resource VARCHAR, resource_id VARCHAR, detail VARCHAR
+      );
       INSERT INTO crm_activities(id, lead_id, activity_type, summary, state,
         next_activity_type, next_activity_summary) VALUES
         ('activity-1', 'lead-1', 'Call', 'Qualify account', 'planned', 'Meeting', 'Demo product');
@@ -313,6 +317,42 @@ describe('CRM YAML lifecycle integration', () => {
     expect(activities.components[0].filters).toEqual(expect.arrayContaining([
       expect.objectContaining({ field: 'activity_type', options_source: 'crm_activity_type_lookup' }),
     ]));
+  });
+
+  it('makes My Activities actionable and routes rows to CRM activity detail', () => {
+    const activities = yaml('pages/activities.yaml');
+    const list = activities.components[0];
+    expect(list.row_double_click_action).toBe('view_crm_activity_detail');
+    expect(list.actions).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'schedule_crm_activity' })]));
+    expect(action(activities, 'view_crm_activity_detail')).toMatchObject({ navigate_to: '/crm-activity-detail', params: { id: '{row.id}' } });
+    const detail = yaml('pages/activity-detail.yaml');
+    expect(detail.page.id).toBe('crm-activity-detail');
+    expect(String(detail.datasources.find((source: any) => source.id === 'crm_activity_detail').query)).toContain('JOIN crm_leads');
+    expect(action(detail, 'open_crm_activity_lead')).toMatchObject({ navigate_to: '/lead-detail' });
+  });
+
+  it('rejects queue scheduling for closed opportunities and records completion in chatter', async () => {
+    const database = await DuckDbDatabase.open(':memory:');
+    const repository = new YamlRepository(database);
+    await repository.run(`
+      CREATE TABLE crm_leads(id VARCHAR PRIMARY KEY, name VARCHAR, stage VARCHAR);
+      CREATE TABLE crm_activity_types(name VARCHAR PRIMARY KEY, active BOOLEAN);
+      CREATE TABLE crm_activities(id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), lead_id VARCHAR,
+        activity_type VARCHAR, summary VARCHAR, due_date DATE, assigned_to VARCHAR, state VARCHAR, completed_at TIMESTAMP,
+        next_activity_type VARCHAR, next_activity_summary VARCHAR, next_activity_due_date DATE);
+      CREATE TABLE crm_activity_log(id VARCHAR PRIMARY KEY, actor_id VARCHAR, actor_name VARCHAR,
+        action VARCHAR, resource VARCHAR, resource_id VARCHAR, detail VARCHAR);
+      INSERT INTO crm_leads VALUES ('open-1', 'Open opportunity', 'Proposition'), ('won-1', 'Won opportunity', 'Won');
+      INSERT INTO crm_activity_types VALUES ('Call', true);
+    `);
+    const activities = yaml('pages/activities.yaml');
+    const schedule = action(activities, 'schedule_crm_activity').mutation;
+    await expect(repository.executeMutation(schedule, { lead_id: 'won-1', activity_type: 'Call', summary: 'Nope' })).rejects.toThrow('open opportunities');
+    await repository.executeMutation(schedule, { lead_id: 'open-1', activity_type: 'Call', summary: 'Call back', current_user_name: 'Admin User' });
+    const created = (await repository.query("SELECT id FROM crm_activities WHERE summary = 'Call back'"))[0];
+    const complete = action(yaml('pages/activity-detail.yaml'), 'complete_crm_activity_detail').mutation;
+    await repository.executeMutation(complete, { id: created.id, current_user_id: 'admin', current_user_name: 'Admin User' });
+    expect((await repository.query("SELECT action, detail FROM crm_activity_log WHERE resource_id = 'open-1'"))[0]).toMatchObject({ action: 'crm.activities.complete', detail: 'Call back' });
   });
 
   it('exposes UTM attribution fields and campaign performance', () => {

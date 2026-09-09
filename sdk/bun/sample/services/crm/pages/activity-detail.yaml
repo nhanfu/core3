@@ -1,0 +1,39 @@
+title: CRM Activity
+page: { id: crm-activity-detail, breadcrumb: [CRM, My Activities, Activity], auth: { require: [crm.read] } }
+components:
+  - type: OdooFormView
+    source: crm_activity_detail
+    title_field: summary
+    status_field: state
+    status_colors: { planned: amber, done: green }
+    header_actions:
+      - { id: complete_crm_activity_detail, label: Mark done, variant: primary, permission: crm.write, show_if: "state.crm_activity_detail.state === 'planned'" }
+      - { id: open_crm_activity_lead, label: Open opportunity, variant: secondary, permission: crm.read }
+    group_columns: 2
+    groups:
+      - title: Activity
+        fields:
+          - { field: summary, label: Summary }
+          - { field: activity_type, label: Activity type }
+          - { field: state, label: Status }
+          - { field: due_date, label: Due date }
+          - { field: assigned_to, label: Assigned to }
+      - title: Opportunity
+        fields:
+          - { field: opportunity, label: Opportunity }
+          - { field: lead_stage, label: Stage }
+          - { field: lead_salesperson, label: Salesperson }
+          - { field: completed_at, label: Completed }
+    notebook:
+      tabs:
+        - id: notes
+          label: Notes
+          groups:
+            - title: Activity notes
+              fields: [{ field: note, label: Note, type: textarea, wide: true }]
+actions:
+  - id: open_crm_activity_lead
+    type: navigate
+    permission: crm.read
+    navigate_to: /lead-detail
+    params: { id: '{state.crm_activity_detail.lead_id}' }

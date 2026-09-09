@@ -23,7 +23,39 @@ datasources:
     single: false
     permission: crm.read
     query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+  - id: crm_activity_lead_lookup
+    single: false
+    permission: crm.read
+    query: "SELECT id AS value, name AS label FROM crm_leads WHERE stage NOT IN ('Won', 'Lost') ORDER BY name"
 actions:
+  - id: schedule_crm_activity
+    type: server_form
+    title: Schedule activity
+    permission: crm.write
+    action: crm.activities.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [crm_activity_queue]
+    mutation:
+      operation: insert
+      table: crm_activities
+      fields: [lead_id, activity_type, summary, due_date, assigned_to, state]
+      required: [lead_id, activity_type, summary]
+      defaults: { state: planned }
+      guards:
+        - query: "SELECT id FROM crm_leads WHERE id = :lead_id AND stage NOT IN ('Won', 'Lost')"
+          status: 409
+          message: Activities can only be scheduled for open opportunities
+        - query: "SELECT 1 AS ok FROM crm_activity_types WHERE name = :activity_type AND active = true"
+          status: 400
+          message: Select an active activity type
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
+    fields:
+      - { field: lead_id, label: Opportunity, type: select, options_source: crm_activity_lead_lookup, required: true }
+      - { field: activity_type, label: Activity type, type: select, options_source: crm_activity_type_lookup, required: true }
+      - { field: summary, label: Summary, type: text, required: true }
+      - { field: due_date, label: Due date, type: date }
+      - { field: assigned_to, label: Assigned to, type: text }
   - id: complete_crm_activity
     type: server
     permission: crm.write
@@ -39,6 +71,7 @@ actions:
           message: Activity is already completed or no longer exists
       steps:
         - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
+        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.activities.complete', 'crm_leads', lead_id, summary FROM crm_activities WHERE id = :id"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
   - id: bulk_delete_crm_activities

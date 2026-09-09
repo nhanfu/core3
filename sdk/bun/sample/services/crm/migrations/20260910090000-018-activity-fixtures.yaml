@@ -1,0 +1,19 @@
+version: 0.0.18
+type:
+  postgres:
+    up: |
+      INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state)
+      VALUES
+        ('crm-activity-today', 'crm-demo-001', 'Meeting', 'Review renewal proposal', CURRENT_DATE, 'Admin User', 'planned'),
+        ('crm-activity-upcoming', 'crm-demo-002', 'Email', 'Send onboarding pack', CURRENT_DATE + INTERVAL '3 days', 'Dispatcher User', 'planned')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO crm_activity_log(id, actor_name, action, resource, resource_id, detail)
+      VALUES ('crm-log-demo-001', 'Admin User', 'crm.note', 'crm_leads', 'crm-demo-001', 'Renewal scope confirmed with the customer.')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM crm_activity_log WHERE id = 'crm-log-demo-001';
+      DELETE FROM crm_activities WHERE id IN ('crm-activity-today', 'crm-activity-upcoming');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

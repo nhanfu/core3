@@ -1,0 +1,32 @@
+page: { id: crm-activity-detail }
+datasources:
+  - id: crm_activity_detail
+    single: true
+    permission: crm.read
+    query: |
+      SELECT a.id, a.lead_id, a.activity_type, a.summary, a.state,
+        CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_to,
+        CAST(a.completed_at AS VARCHAR) AS completed_at,
+        a.note, l.name AS opportunity, l.stage AS lead_stage,
+        l.salesperson AS lead_salesperson
+      FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id
+      WHERE a.id = :id
+actions:
+  - id: complete_crm_activity_detail
+    type: server
+    permission: crm.write
+    action: crm.activities.complete
+    handler: crm_activity
+    operation: complete
+    params: { id: '{state.id}' }
+    refresh: [crm_activity_detail]
+    mutation:
+      guards:
+        - query: "SELECT id FROM crm_activities WHERE id = :id AND state = 'planned'"
+          status: 409
+          message: Activity is already completed or no longer exists
+      steps:
+        - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
+        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.activities.complete', 'crm_leads', lead_id, summary FROM crm_activities WHERE id = :id"
+        - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
+      result: { query: "SELECT * FROM crm_activities WHERE id = :id" }

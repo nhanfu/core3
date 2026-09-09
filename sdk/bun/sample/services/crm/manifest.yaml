@@ -26,6 +26,10 @@ menu:
           label: My Activities
           icon: calendar
           permission: crm.read
+        - path: /crm-activity-detail
+          label: Activity detail
+          icon: calendar
+          permission: crm.read
         - path: /teams
           label: Teams
           icon: users

@@ -31,15 +31,23 @@ components:
             - { field: due_date, label: Due date }
     row_key: id
     selectable: true
+    row_double_click_action: view_crm_activity_detail
     bulk_actions:
       - { id: bulk_delete_crm_activities, label: Delete selected, permission: crm.write }
     row_actions: menu
     actions:
       - { id: complete_crm_activity, label: Mark done, permission: crm.write, variant: primary }
       - { id: view_activity_opportunity, label: Open opportunity, permission: crm.read, variant: ghost }
+      - { id: view_crm_activity_detail, label: Open activity, permission: crm.read, variant: ghost }
+      - { id: schedule_crm_activity, label: Schedule activity, permission: crm.write, variant: primary }
 actions:
   - id: view_activity_opportunity
     type: navigate
     permission: crm.read
     navigate_to: /lead-detail
     params: { id: '{row.lead_id}' }
+  - id: view_crm_activity_detail
+    type: navigate
+    permission: crm.read
+    navigate_to: /crm-activity-detail
+    params: { id: '{row.id}' }

@@ -362,6 +362,7 @@ actions:
           message: Activity is already completed or no longer exists
       steps:
         - query: "UPDATE crm_activities SET state = 'done', completed_at = CURRENT_TIMESTAMP WHERE id = :id AND state = 'planned'"
+        - query: "INSERT INTO crm_activity_log(id, actor_id, actor_name, action, resource, resource_id, detail) SELECT gen_random_uuid(), :current_user_id, :current_user_name, 'crm.activities.complete', 'crm_leads', lead_id, summary FROM crm_activities WHERE id = :id"
         - query: "INSERT INTO crm_activities(id, lead_id, activity_type, summary, due_date, assigned_to, state) SELECT gen_random_uuid(), lead_id, next_activity_type, next_activity_summary, next_activity_due_date, assigned_to, 'planned' FROM crm_activities WHERE id = :id AND next_activity_type IS NOT NULL AND NULLIF(TRIM(next_activity_summary), '') IS NOT NULL"
       result: { query: "SELECT * FROM crm_activities WHERE id = :id" }
   - id: send_lead_message
