@@ -40,11 +40,15 @@ The dashboard comparison found one shared CardView action propagation defect;
 ListView now forwards its action handler into CardView, and an authenticated
 card click is verified to navigate to `/point-of-sale/cashier?config_id=...`.
 
+The configuration-menu batch adds authenticated fixture-backed routes for
+Preparation Printers, Note Models, Coins/Bills, and Presets. Desktop/mobile
+browser smoke checks verified 3, 3, 6, and 3 rows respectively; comparison
+captures remain temporary local evidence.
+
 ## Remaining parity work
 
-Add explicit menu/page coverage for the Odoo POS Customers, Preparation
-Printers, Session Report, Sales Details, Note Models, Coins/Bills, Presets,
-Taxes, product catalog submenus, and the touch-selling dashboard/session.
+Add explicit menu/page coverage for the remaining Odoo POS Taxes, product
+catalog submenus, and the touch-selling dashboard/session.
 Capture and implement configuration forms, payment/tender modals, session
 open/close controls, product/customer dialogs, error/empty states, responsive
 desktop/mobile composition, and permission-denied states.

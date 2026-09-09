@@ -30,9 +30,9 @@ fixtures. Invoice list double-click navigation is verified at
 The current batch adds authenticated, fixture-backed Settings, Chart of
 Accounts, Journals, Taxes, Payment Terms, reporting, analytic, closing,
 payment provider/token/transaction, and reconciliation routes under
-`/accounting/*`.
-Each route was smoke-tested in desktop Chrome; the implementation remains
-image-free in Git.
+`/accounting/*`. Integrated browser smoke checks cover the new report,
+analytic, closing, payment-method, credit-note, vendor-bill, and vendor-refund
+states; the implementation remains image-free in Git.
 
 Visual comparison of the invoice list against the fresh Odoo `/odoo/invoicing`
 screen found that Odoo opens the list unselected. Core3 now keeps the invoice
@@ -74,9 +74,8 @@ an authenticated empty state.
 
 ## Remaining parity work
 
-Add explicit menu/page coverage for the remaining customer/vendor, reporting,
-payment-provider, analytic-account, closing, and settings surfaces. Implement
-OdooFormView detail pages, create/edit forms,
+Add explicit menu/page coverage for the remaining customer/vendor product and
+configuration surfaces. Implement OdooFormView detail pages, create/edit forms,
 register-payment and reconciliation modals, filters, empty/error/permission
 states, and responsive desktop/mobile behavior using service-owned fixtures.
 
