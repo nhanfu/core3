@@ -2,10 +2,10 @@ version: 0.0.2
 type:
   postgres:
     up: |
-      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS row_version BIGINT NOT NULL DEFAULT 1;
-      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_label VARCHAR NOT NULL DEFAULT 'No receipt';
-      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS company_name VARCHAR NOT NULL DEFAULT 'Core3 Demo Company';
-      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS department_name VARCHAR NOT NULL DEFAULT 'Engineering';
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS row_version BIGINT;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_label VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS company_name VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS department_name VARCHAR;
       INSERT INTO expense_sheets (id, row_version, name, employee_name, manager_name, state, expense_date, amount_total, amount_reimbursed, note)
       VALUES
         ('expense-sheet-demo-001', 1, 'Admin User - September expenses', 'Admin User', 'Operations Lead', 'Draft', DATE '2026-09-08', 84.50, 0, 'Seeded My Expenses report'),
