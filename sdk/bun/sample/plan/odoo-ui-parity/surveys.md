@@ -1,12 +1,10 @@
 # Surveys UI parity gate
 
-Status: planned (blocked on an installed Odoo reference)
+Status: in-progress
 
-This is a plan-only implementation gate for the Odoo 19 Community `survey`
-addon. It does not authorize product code, migrations, fixtures, assets, or
-tests in this worktree. The module may be marked `ready` only after all six
-register gates below have installed-addon evidence. The current Core3 register
-therefore remains `planned`.
+This is the implementation gate for the Odoo 19 Community `survey` addon. The
+installed disposable reference now authorizes a YAML-first vertical slice; the
+module remains `in-progress` until the acceptance gates below are verified.
 
 ## Reference and exact live limitation
 
@@ -34,10 +32,20 @@ The authenticated live audit was performed on `2026-09-10` against
 `http://localhost:8069` as the admin user from the parent parity plan. The
 authenticated `ir.module.module.search_read` result for `name=survey` was:
 `state=uninstalled`, `demo=false`, `latest_version=false`,
-`installed_version=19.0.3.7`. Consequently the live database has no truthful
-Surveys app menu, action, record, installed view, demo record, public survey
-token, or Surveys action route to capture. Do not install the addon or invent
-those observations as part of this plan.
+`installed_version=19.0.3.7`. Consequently the primary live database has no
+truthful Surveys app menu, action, record, installed view, demo record, public
+survey token, or Surveys action route to capture.
+
+The reference gate was subsequently satisfied in the disposable database
+`core3_surveys_demo`, with `survey|installed|true`, four demo surveys, and
+eight participant attempts. Credentials are `admin` / `SurveysDemo2026!` and
+the isolated HTTP worker is available through the local disposable-reference
+proxy on port 8072. Authenticated desktop/mobile captures are under `/tmp`:
+`/tmp/odoo-surveys-{surveys,participants,questions,suggested-values,detailed-answers}-{desktop,mobile}.png`.
+The observed action routes are `/odoo/surveys`, `/odoo/action-178`
+(Participants), `/odoo/action-180` (Questions), `/odoo/action-181` (Suggested
+Values), and `/odoo/action-179` (Detailed Answers); each loaded seeded data
+with no unexpected failed responses or mobile overflow.
 
 Truthful fallback captures (authenticated Discuss, not Surveys reference
 screens) are under `/tmp` and must never be committed:
@@ -47,29 +55,24 @@ screens) are under `/tmp` and must never be committed:
 | Authenticated Discuss fallback; Surveys absent | 1440x900 | `/tmp/odoo-surveys-uninstalled-desktop.png` |
 | Authenticated Discuss fallback; Surveys absent | 390x844, touch/mobile emulation | `/tmp/odoo-surveys-uninstalled-mobile.png` |
 
-Both captures navigated to `/odoo/discuss` after login and recorded zero failed
-network requests. The future installed audit must use a disposable database,
-record whether demo loading was enabled, and capture the actual menu/action
-navigation before asserting any title, route, record, or visual parity.
+Both fallback captures navigated to `/odoo/discuss` after login and recorded
+zero failed network requests; they are retained only as historical evidence.
 
 ## Six register gates and evidence state
 
-1. **Manifest/version/demo:** source manifest and official demo files are
-   recorded above. Evidence is complete for source, but installed/demo runtime
-   evidence is missing; gate not passed.
-2. **Visible menus, actions, views, and states:** the source inventory below is
-   recorded. No authenticated installed menu/action/view was observable; gate
-   not passed.
-3. **Desktop/mobile routes and screenshots:** required viewport dimensions and
-   truthful uninstalled fallbacks are recorded. Installed Surveys screenshots
-   are unavailable; gate not passed.
-4. **Deterministic Core3 datasource/API fixtures:** the required service-owned
-   contract is specified below, but it is not implemented; gate not passed.
-5. **Shared primitives:** required generic contracts are listed below; no new
-   primitive is approved by this plan; gate not passed.
-6. **Acceptance:** permission, empty, error, mobile, functional, API, and
-   visual checks are specified below, but no installed reference comparison has
-   passed; gate not passed.
+1. **Manifest/version/demo:** passed for source and the installed disposable
+   runtime, including `demo=true`.
+2. **Visible menus, actions, views, and states:** passed for the five captured
+   menu/action surfaces and their seeded records.
+3. **Desktop/mobile routes and screenshots:** passed for 1440x900 and 390x844;
+   installed reference captures are under `/tmp/odoo-surveys-*`.
+4. **Deterministic Core3 datasource/API fixtures:** in progress; the first
+   service-owned catalog batch is implemented in the dedicated worktree.
+5. **Shared primitives:** passed for the current slice using ListView,
+   OdooFormView, Chart, StatRow, and shared server forms; no new primitive is
+   introduced.
+6. **Acceptance:** in progress; broader workflow, permission, empty/error,
+   public-flow, and visual checks remain.
 
 ## Source menu, action, view, and route inventory
 
@@ -268,7 +271,6 @@ lists under `/tmp` only.
   database, user/groups, demo flag, source revision, viewport, and failed
   requests with each screenshot.
 
-Until the addon is installed in a disposable reference database and these six
-gates have evidence, keep this file and the parent register at `planned` (or
-`blocked` with the same explicit uninstalled limitation); do not claim Surveys
-parity or use the fallback Discuss screenshots as installed UI evidence.
+Keep this file and the parent register at `in-progress` until the remaining
+acceptance checks pass; do not use the fallback Discuss screenshots as
+installed UI evidence.
