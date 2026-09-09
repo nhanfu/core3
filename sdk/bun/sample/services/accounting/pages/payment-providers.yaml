@@ -1,0 +1,12 @@
+title: Payment Providers
+page: { id: payment-providers, route: /accounting/payment-providers, breadcrumb: [Finance, Configuration, Payment Providers], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_payment_providers
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('manual','Manual payments','Bank and cash methods','Enabled'), ('demo','Demo provider','Fixture provider for testing','Test mode')) providers(id,name,description,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_payment_providers
+    columns: [{ field: name, label: Provider, type: PrimaryEntityCell }, { field: description, label: Description }, { field: state, label: State, type: StatusChip }]
+    row_key: id

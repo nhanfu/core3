@@ -28,7 +28,9 @@ fixtures. Invoice list double-click navigation is verified at
 `/accounting/invoice-detail` and renders an OdooFormView detail state.
 
 The current batch adds authenticated, fixture-backed Settings, Chart of
-Accounts, Journals, Taxes, and Payment Terms routes under `/accounting/*`.
+Accounts, Journals, Taxes, Payment Terms, reporting, analytic, closing,
+payment provider/token/transaction, and reconciliation routes under
+`/accounting/*`.
 Each route was smoke-tested in desktop Chrome; the implementation remains
 image-free in Git.
 
@@ -59,6 +61,16 @@ The document batch adds fixture-backed `/accounting/credit-notes`,
 the same role-specific columns observed at Odoo `/odoo/credit-notes`,
 `/odoo/vendor-bills`, and `/odoo/vendor-refunds`. Desktop/mobile captures are
 kept outside Git.
+
+The reporting and reconciliation batch adds
+`/accounting/reports/invoice-analysis`, `/accounting/reports/analytic`,
+`/accounting/reports/partner`, `/accounting/reports/taxes`,
+`/accounting/reports/statements`, `/accounting/reconciliation`,
+`/accounting/analytic-accounts`, `/accounting/analytic-plans`, and
+`/accounting/closing`. Invoice analysis, analytic, and partner reports expose
+list/pivot states; reconciliation exposes a register-payment form against
+posted invoices with a residual balance; payment tokens intentionally exercise
+an authenticated empty state.
 
 ## Remaining parity work
 

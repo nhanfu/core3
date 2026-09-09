@@ -1,0 +1,14 @@
+title: Analytic Plans
+page: { id: analytic-plans, route: /accounting/analytic-plans, breadcrumb: [Finance, Accounting, Analytic Plans], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_analytic_plans
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('plan-project','Project','Required for project costs','Active'), ('plan-operations','Operations','Internal cost allocation','Active')) plans(id,name,description,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_analytic_plans
+    search: { label: Search analytic plans, placeholder: Search plans... }
+    columns: [{ field: name, label: Plan, type: PrimaryEntityCell }, { field: description, label: Description }, { field: state, label: Status, type: StatusChip }]
+    page_size: 50
+    row_key: id

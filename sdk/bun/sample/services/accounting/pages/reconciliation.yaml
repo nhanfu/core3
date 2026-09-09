@@ -1,0 +1,26 @@
+title: Reconciliation
+page: { id: reconciliation, route: /accounting/reconciliation, breadcrumb: [Finance, Accounting, Reconciliation], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_reconciliation
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, amount_total, amount_residual, state, reference FROM accounting_invoices WHERE state = 'Posted' AND amount_residual > 0 ORDER BY invoice_date"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_reconciliation
+    search: { label: Search reconciliation, placeholder: Search invoices or partners... }
+    columns: [{ field: name, label: Invoice, type: PrimaryEntityCell }, { field: partner_name, label: Partner }, { field: invoice_date, label: Date }, { field: amount_total, label: Total, align: right }, { field: amount_residual, label: To reconcile, align: right }, { field: state, label: Status, type: StatusChip }]
+    row_key: id
+    row_actions: menu
+    actions: [{ id: reconcile_invoice, label: Register payment, permission: accounting.write, variant: primary }]
+actions:
+  - id: reconcile_invoice
+    type: server_form
+    permission: accounting.write
+    title: Reconcile invoice
+    action: accounting.invoices.pay
+    handler: yaml_mutation
+    operation: pay
+    refresh: [accounting_reconciliation]
+    mutation: { generated: [payment_id], guards: [{ query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND amount_residual > 0", status: 409, message: Only posted invoices with a balance can be reconciled }], steps: ["UPDATE accounting_invoices SET amount_residual = 0, state = 'Paid', row_version = row_version + 1 WHERE id = :id"], result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" } }
+    fields: [{ field: payment_amount, label: Payment amount, type: number, required: true }]

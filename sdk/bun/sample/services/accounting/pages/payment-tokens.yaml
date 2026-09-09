@@ -1,0 +1,13 @@
+title: Payment Tokens
+page: { id: payment-tokens, route: /accounting/payment-tokens, breadcrumb: [Finance, Configuration, Payment Tokens], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_payment_tokens
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES (CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR))) tokens(payment_details,partner,payment_method,provider) WHERE payment_details IS NOT NULL"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_payment_tokens
+    empty_state: { title: No payment tokens, description: Saved payment details will appear here after a customer authorizes a payment method. }
+    columns: [{ field: payment_details, label: Payment Details }, { field: partner, label: Partner }, { field: payment_method, label: Payment Method }, { field: provider, label: Provider }]
+    row_key: payment_details

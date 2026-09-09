@@ -1,0 +1,22 @@
+title: Partner Reports
+page: { id: partner-reports, route: /accounting/reports/partner, breadcrumb: [Finance, Reporting, Partner Reports], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_partner_report
+    permission: accounting.read
+    query: "SELECT partner_name, COUNT(*) AS document_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS due FROM accounting_invoices WHERE partner_name IS NOT NULL GROUP BY partner_name ORDER BY total DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_partner_report
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: partner_name, column: Partner }, { field: document_count, column: Documents }, { field: total, column: Total }, { field: due, column: Due }]
+          default: { rows: [partner_name], measures: [{ field: total, aggregate: sum, column: Total }, { field: due, aggregate: sum, column: Due }] }
+    columns: [{ field: partner_name, label: Partner, type: PrimaryEntityCell }, { field: document_count, label: Documents, align: right }, { field: total, label: Total, align: right }, { field: due, label: Due, align: right }]
+    page_size: 50
+    row_key: partner_name

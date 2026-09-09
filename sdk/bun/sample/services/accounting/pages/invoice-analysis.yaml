@@ -1,0 +1,27 @@
+title: Invoice Analysis
+page: { id: invoice-analysis, route: /accounting/reports/invoice-analysis, breadcrumb: [Finance, Reporting, Invoice Analysis], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_invoice_analysis
+    permission: accounting.read
+    query: "SELECT invoice_type, state, COUNT(*) AS invoice_count, COALESCE(SUM(amount_total), 0) AS total, COALESCE(SUM(amount_residual), 0) AS outstanding FROM accounting_invoices GROUP BY invoice_type, state ORDER BY invoice_type, state"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_invoice_analysis
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: invoice_type, column: Type }, { field: state, column: Status }, { field: invoice_count, column: Invoices }, { field: total, column: Total }, { field: outstanding, column: Outstanding }]
+          default: { rows: [invoice_type], columns: [state], measures: [{ field: invoice_count, aggregate: sum, column: Invoices }, { field: total, aggregate: sum, column: Total }, { field: outstanding, aggregate: sum, column: Outstanding }] }
+    columns:
+      - { field: invoice_type, label: Invoice type, type: PrimaryEntityCell }
+      - { field: state, label: Status }
+      - { field: invoice_count, label: Invoices, align: right }
+      - { field: total, label: Total, align: right }
+      - { field: outstanding, label: Outstanding, align: right }
+    page_size: 50
+    row_key: invoice_type

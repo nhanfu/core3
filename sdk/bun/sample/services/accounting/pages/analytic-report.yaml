@@ -1,0 +1,22 @@
+title: Analytic Report
+page: { id: analytic-report, route: /accounting/reports/analytic, breadcrumb: [Finance, Reporting, Analytic Report], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_analytic_report
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('Project','Gemini Furniture','Revenue',1650.00,'Posted'), ('Project','Lumber Inc','Cost of goods',880.00,'Posted'), ('Operations','Main Company','Opening balance',1650.00,'Posted')) analytic(plan, account, label, amount, state) ORDER BY plan, account"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_analytic_report
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: plan, column: Plan }, { field: account, column: Account }, { field: amount, column: Amount }]
+          default: { rows: [plan, account], measures: [{ field: amount, aggregate: sum, column: Amount }] }
+    columns: [{ field: plan, label: Plan, type: PrimaryEntityCell }, { field: account, label: Analytic account }, { field: label, label: Entry }, { field: amount, label: Amount, align: right }, { field: state, label: Status, type: StatusChip }]
+    page_size: 50
+    row_key: account

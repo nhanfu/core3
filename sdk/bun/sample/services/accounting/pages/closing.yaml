@@ -1,0 +1,13 @@
+title: Accounting Closing
+page: { id: accounting-closing, route: /accounting/closing, breadcrumb: [Finance, Accounting, Closing], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_closing_checklist
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('lock-date','Lock date','Prevent edits before the accounting lock date','Not configured'), ('bank-reconciliation','Bank reconciliation','Reconcile all bank statements before closing','Needs review'), ('tax-review','Tax review','Review tax balances and exceptions','Ready'), ('year-end','Year-end closing','Close the fiscal year and carry balances forward','Not started')) checklist(id,task,description,state) ORDER BY id"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_closing_checklist
+    columns: [{ field: task, label: Closing task, type: PrimaryEntityCell }, { field: description, label: Guidance }, { field: state, label: State, type: StatusChip }]
+    page_size: 50
+    row_key: id

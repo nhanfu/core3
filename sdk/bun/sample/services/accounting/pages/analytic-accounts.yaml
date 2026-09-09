@@ -1,0 +1,15 @@
+title: Analytic Accounts
+page: { id: analytic-accounts, route: /accounting/analytic-accounts, breadcrumb: [Finance, Accounting, Analytic Accounts], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_analytic_accounts
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('analytic-acme','Acme Corporation','ACME','Project','Active'), ('analytic-lumber','Lumber Inc','LUMBER','Project','Active'), ('analytic-ops','Main Company','OPS','Operations','Active')) accounts(id,name,reference,plan,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_analytic_accounts
+    create_label: New analytic account
+    search: { label: Search analytic accounts, placeholder: Search accounts... }
+    columns: [{ field: name, label: Name, type: PrimaryEntityCell }, { field: reference, label: Reference }, { field: plan, label: Plan }, { field: state, label: Status, type: StatusChip }]
+    page_size: 50
+    row_key: id

@@ -1,0 +1,13 @@
+title: Payment Methods
+page: { id: payment-methods, route: /accounting/payment-methods, breadcrumb: [Finance, Configuration, Payment Methods], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_payment_methods
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('bank','Bank','Manual bank transfer','Active'), ('cash','Cash','Cash payment','Active'), ('card','Card','Card terminal','Active')) methods(id,name,description,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_payment_methods
+    search: { label: Search payment methods, placeholder: Search methods... }
+    columns: [{ field: name, label: Method, type: PrimaryEntityCell }, { field: description, label: Description }, { field: state, label: Status, type: StatusChip }]
+    row_key: id

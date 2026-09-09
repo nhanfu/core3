@@ -65,6 +65,22 @@ menu:
           label: Payment Terms
           icon: calendar
           permission: accounting.read
+        - path: /accounting/analytic-accounts
+          label: Analytic Accounts
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/analytic-plans
+          label: Analytic Plans
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/reconciliation
+          label: Reconciliation
+          icon: bank
+          permission: accounting.read
+        - path: /accounting/closing
+          label: Closing
+          icon: lock
+          permission: accounting.read
     - id: configuration
       label: Configuration
       items:
@@ -72,10 +88,38 @@ menu:
           label: Settings
           icon: settings
           permission: accounting.read
+        - path: /accounting/payment-methods
+          label: Payment Methods
+          icon: bank
+          permission: accounting.read
+        - path: /accounting/payment-tokens
+          label: Payment Tokens
+          icon: lock
+          permission: accounting.read
     - id: reporting
       label: Reporting
       items:
         - path: /accounting/analysis
           label: Accounting Analysis
           icon: chart
+          permission: accounting.read
+        - path: /accounting/reports/invoice-analysis
+          label: Invoice Analysis
+          icon: chart
+          permission: accounting.read
+        - path: /accounting/reports/analytic
+          label: Analytic Report
+          icon: chart
+          permission: accounting.read
+        - path: /accounting/reports/partner
+          label: Partner Reports
+          icon: chart
+          permission: accounting.read
+        - path: /accounting/reports/taxes
+          label: Taxes and Fiscal
+          icon: percent
+          permission: accounting.read
+        - path: /accounting/reports/statements
+          label: Statement Reports
+          icon: ledger
           permission: accounting.read

@@ -1,0 +1,12 @@
+title: Statement Reports
+page: { id: statement-reports, route: /accounting/reports/statements, breadcrumb: [Finance, Reporting, Statement Reports], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_statement_report
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('Bank','2026-09-01','2026-09-09',6793.93,6678.00,'Needs review'), ('Cash','2026-09-01','2026-09-09',1250.00,1250.00,'Reconciled')) statements(journal,date_from,date_to,balance,statement_balance,state) ORDER BY journal"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_statement_report
+    columns: [{ field: journal, label: Journal, type: PrimaryEntityCell }, { field: date_from, label: From }, { field: date_to, label: To }, { field: balance, label: Balance, align: right }, { field: statement_balance, label: Statement balance, align: right }, { field: state, label: State, type: StatusChip }]
+    row_key: journal
