@@ -135,6 +135,11 @@ export function createYamlApi(ctx: YamlApiContext) {
       }
       const publicSource = { ...source };
       delete publicSource.query;
+      // The client receives the resolved datasource payload below. Keep the
+      // public shape to one source kind so validation does not see both the
+      // fixture definition and its resolved data.
+      delete publicSource.mock_data;
+      delete publicSource.operation;
       const workflow_states = publicSource.workflow_states;
       delete publicSource.workflow_states;
       const workflow = typeof source.workflow === 'string' ? WORKFLOWS.get(source.workflow) : undefined;

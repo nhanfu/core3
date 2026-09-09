@@ -314,7 +314,9 @@ function validateDatasources(value: unknown, ids: Set<string>, options: PageVali
     if (source.type !== undefined && source.type !== 'local' && source.type !== 'service') issues.push(`${path}.type must be local or service`);
     if (source.type === 'service') {
       requireString(source.service, `${path}.service`, issues);
-      requireString(source.operation, `${path}.operation`, issues);
+      // Resolved public service sources carry data instead of the executable
+      // operation definition.
+      if (source.data === undefined) requireString(source.operation, `${path}.operation`, issues);
       if (source.service_params !== undefined) requireRecord(source.service_params, `${path}.service_params`, issues);
     }
     if (source.enrich !== undefined) requireRecord(source.enrich, `${path}.enrich`, issues);
