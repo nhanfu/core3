@@ -45,6 +45,13 @@ Preparation Printers, Note Models, Coins/Bills, and Presets. Desktop/mobile
 browser smoke checks verified 3, 3, 6, and 3 rows respectively; comparison
 captures remain temporary local evidence.
 
+The configuration-form batch adds permissioned Odoo-style New forms to those
+four routes. Forms are service-owned YAML mutations for printers, note models,
+cash denominations, and order presets, with required-field validation and list
+refresh after save. Authenticated desktop/mobile checks verified each modal,
+responsive layout, bounded overflow, and successful preset creation; captures
+are `/tmp/core3-pos-{desktop,mobile}-{preparation-printers,note-models,coins-bills,presets}.png`.
+
 The POS Taxes comparison was recaptured after rebuilding the ignored global and
 POS styles; authenticated desktop/mobile checks show all four tax rows with no
 unexpected failures or horizontal overflow. Corrected Core3 captures are
