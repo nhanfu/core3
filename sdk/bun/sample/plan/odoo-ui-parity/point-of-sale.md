@@ -64,7 +64,6 @@ expected cash, differences, and discrepancy reason on close. Deterministic
 fixtures cover Opening Control, In Progress, Closing Control, and Closed &
 Posted, while the existing cashier route remains the touch-selling surface
 with its active-session and open-ticket state.
-
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining Odoo POS product forms and
