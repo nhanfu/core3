@@ -126,6 +126,13 @@ POS routes. Session open/close controls, product/customer forms, responsive
 desktop/mobile composition, permission-denied behavior, and the touch-selling
 dashboard/session now have implementation and captured browser evidence.
 
+The product-catalog batch adds the five remaining Odoo product submenu routes:
+Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
+Each route is a `ListView` backed by the convention-discovered
+`pos-product-catalog.yaml` API fragment and migration `011`, with search and an
+Active/Archived filter. Fixtures mirror the visible Odoo list columns for
+choices, pricelists, categories, attributes, and tags.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,
