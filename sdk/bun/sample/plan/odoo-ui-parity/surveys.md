@@ -100,6 +100,14 @@ Published certification survey with Close available; its detail questions and
 response section rendered without failed requests or horizontal overflow.
 The transition capture is `/tmp/core3-surveys-detail-draft-published-mobile.png`.
 
+The fixture fidelity follow-up expands the Odoo-derived question catalogs to
+the observed card/detail sizes: 14 certification questions, 7 feedback
+questions, 13 burger questions, and 4 conditional questions. Fresh desktop and
+mobile checks confirmed the certification detail renders all 14 question rows,
+the list remains at 4 surveys, and no unexpected requests or horizontal
+overflow occur. Captures are
+`/tmp/core3-surveys-detail-certification-{desktop,mobile}.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
