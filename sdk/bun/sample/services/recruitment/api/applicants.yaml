@@ -1,0 +1,42 @@
+page: { id: applicants }
+datasources:
+  - id: recruitment_applicant_stages
+    permission: recruitment.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('New','New'), ('Screening','First screening'), ('Interview','First interview'), ('Offer','Contract proposal'), ('Hired','Contract signed'), ('Rejected','Refused')) stages(value, label)"
+  - id: recruitment_opening_lookup
+    permission: recruitment.read
+    single: false
+    query: "SELECT id AS value, name || ' - ' || job_title AS label FROM recruitment_openings WHERE state IN ('Open','Draft') ORDER BY name, id"
+  - id: recruitment_applicants
+    permission: recruitment.read
+    workflow: recruitment_applicants
+    query: "SELECT a.id, a.row_version, a.name, a.opening_name, a.email, a.phone, a.source, a.recruiter, a.stage, a.rating, a.priority, a.archived, CAST(a.applied_date AS VARCHAR) AS applied_date, CAST(a.interview_date AS VARCHAR) AS interview_date FROM recruitment_applicants a WHERE (:q IS NULL OR a.name ILIKE '%' || :q || '%' OR a.email ILIKE '%' || :q || '%' OR a.opening_name ILIKE '%' || :q || '%') AND (:stage IS NULL OR a.stage = :stage) AND (:opening_name IS NULL OR a.opening_name = :opening_name) AND (:priority IS NULL OR a.priority = :priority) AND (:archived IS NULL OR (:archived = 'active' AND a.archived = FALSE) OR (:archived = 'archived' AND a.archived = TRUE)) ORDER BY a.applied_date DESC, a.id"
+actions:
+  - { id: view_recruitment_applicant, type: navigate, permission: recruitment.read, navigate_to: /applicants/detail, params: { id: '{row.id}' } }
+  - id: create_recruitment_applicant
+    type: server_form
+    permission: recruitment.write
+    title: New applicant
+    action: recruitment.applicants.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_applicants]
+    mutation: { operation: insert, table: recruitment_applicants, fields: [name, opening_id, opening_name, email, phone, source, recruiter, rating, priority, applied_date, notes], required: [name, opening_id, opening_name, email], defaults: { stage: New, archived: false, applied_date: '2026-01-15' }, result: { query: "SELECT * FROM recruitment_applicants WHERE id = :id" } }
+    fields:
+      - { field: name, label: Applicant, type: text, required: true }
+      - { field: opening_id, label: Job position, type: select, options_source: recruitment_opening_lookup, required: true }
+      - { field: opening_name, label: Job position name, type: text, required: true }
+      - { field: email, label: Email, type: text, required: true }
+      - { field: phone, label: Phone, type: text }
+      - { field: source, label: Source, type: text }
+      - { field: recruiter, label: Recruiter, type: text }
+      - { field: priority, label: Priority, type: select, options: [Low, Normal, High], default: Normal }
+      - { field: rating, label: Rating, type: select, options: [Excellent, Good, Average] }
+      - { field: applied_date, label: Applied date, type: date, default: '2026-01-15' }
+      - { field: notes, label: Notes, type: textarea }
+  - { id: screen_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.screen, handler: order_transition, workflow: recruitment_applicants, operation: screen, refresh: [recruitment_applicants] }
+  - { id: interview_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, refresh: [recruitment_applicants] }
+  - { id: offer_applicant, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, refresh: [recruitment_applicants] }
+  - { id: hire_applicant, type: server, permission: recruitment.manage, action: recruitment.applicants.hire, handler: order_transition, workflow: recruitment_applicants, operation: hire, refresh: [recruitment_applicants] }
+  - { id: reject_applicant, type: server, permission: recruitment.manage, action: recruitment.applicants.reject, handler: order_transition, workflow: recruitment_applicants, operation: reject, refresh: [recruitment_applicants] }

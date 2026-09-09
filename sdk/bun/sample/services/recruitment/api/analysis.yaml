@@ -1,0 +1,9 @@
+page: { id: recruitment-analysis }
+datasources:
+  - id: recruitment_analysis_totals
+    single: true
+    permission: recruitment.read
+    query: "SELECT COUNT(*) AS applicant_count, COUNT(*) FILTER (WHERE stage = 'Hired') AS hired_count, COUNT(*) FILTER (WHERE stage NOT IN ('Hired', 'Rejected')) AS open_count, COUNT(DISTINCT opening_id) AS opening_count FROM recruitment_applicants WHERE archived = FALSE"
+  - id: recruitment_analysis_stages
+    permission: recruitment.read
+    query: "SELECT stage AS category, COUNT(*) AS applicant_count FROM recruitment_applicants WHERE archived = FALSE GROUP BY stage ORDER BY CASE stage WHEN 'New' THEN 1 WHEN 'Screening' THEN 2 WHEN 'Interview' THEN 3 WHEN 'Offer' THEN 4 WHEN 'Hired' THEN 5 ELSE 6 END"

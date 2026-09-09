@@ -1,26 +1,16 @@
 title: Applicant
-page: { id: applicant-detail, breadcrumb: [Human Resources, Recruitment, Applicant Detail], auth: { require: [recruitment.read] } }
-datasources:
-  - id: recruitment_applicant_detail
-    single: true
-    permission: recruitment.read
-    query: "SELECT id, row_version, name, opening_name, email, phone, source, recruiter, stage, rating, CAST(applied_date AS VARCHAR) AS applied_date, CAST(interview_date AS VARCHAR) AS interview_date, CAST(hired_date AS VARCHAR) AS hired_date, notes FROM recruitment_applicants WHERE id = :id"
+page: { id: applicant-detail, route: /applicants/detail, breadcrumb: [Human Resources, Recruitment, Applicant], auth: { require: [recruitment.read] } }
 components:
   - type: OdooFormView
     source: recruitment_applicant_detail
     title_field: name
     status_field: stage
-    statusbar: [{ value: New, label: New }, { value: Screening, label: Screening }, { value: Interview, label: Interview }, { value: Offer, label: Offer }, { value: Hired, label: Hired }, { value: Rejected, label: Rejected }]
+    statusbar: [{ value: New, label: New }, { value: Screening, label: First screening }, { value: Interview, label: First interview }, { value: Offer, label: Contract proposal }, { value: Hired, label: Contract signed }, { value: Rejected, label: Refused }]
     status_colors: { New: neutral, Screening: amber, Interview: blue, Offer: violet, Hired: green, Rejected: red }
     group_columns: 2
     groups:
       - title: Applicant
-        fields: [{ field: name, label: Applicant }, { field: stage, label: Stage }, { field: opening_name, label: Opening }, { field: email, label: Email }, { field: phone, label: Phone }]
+        fields: [{ field: name, label: Applicant }, { field: stage, label: Stage }, { field: opening_name, label: Job position }, { field: department_name, label: Department }, { field: email, label: Email }, { field: phone, label: Phone }, { field: priority, label: Priority }, { field: rating, label: Rating }]
       - title: Hiring
-        fields: [{ field: recruiter, label: Recruiter }, { field: source, label: Source }, { field: rating, label: Rating }, { field: applied_date, label: Applied date }, { field: interview_date, label: Interview date }, { field: hired_date, label: Hired date }, { field: notes, label: Notes }]
-actions:
-  - { id: screen_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.screen, handler: order_transition, workflow: recruitment_applicants, operation: screen, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
-  - { id: interview_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
-  - { id: offer_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
-  - { id: hire_applicant_detail, type: server, permission: recruitment.manage, action: recruitment.applicants.hire, handler: order_transition, workflow: recruitment_applicants, operation: hire, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
-  - { id: reject_applicant_detail, type: server, permission: recruitment.manage, action: recruitment.applicants.reject, handler: order_transition, workflow: recruitment_applicants, operation: reject, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
+        fields: [{ field: recruiter, label: Recruiter }, { field: source, label: Source }, { field: applied_date, label: Applied date }, { field: interview_date, label: Interview date }, { field: hired_date, label: Hired date }, { field: notes, label: Notes }, { field: archived, label: Archived }]
+    header_actions: [{ id: screen_applicant_detail, label: First screening, permission: recruitment.write, show_if: "record.stage === 'New'" }, { id: interview_applicant_detail, label: First interview, permission: recruitment.write, show_if: "record.stage === 'Screening'" }, { id: offer_applicant_detail, label: Contract proposal, permission: recruitment.write, show_if: "record.stage === 'Interview'" }, { id: hire_applicant_detail, label: Hire, permission: recruitment.manage, show_if: "record.stage === 'Offer'" }, { id: reject_applicant_detail, label: Refuse, permission: recruitment.manage, variant: danger, show_if: "record.stage !== 'Hired' && record.stage !== 'Rejected'" }]

@@ -1,0 +1,12 @@
+page: { id: applicant-detail }
+datasources:
+  - id: recruitment_applicant_detail
+    single: true
+    permission: recruitment.read
+    query: "SELECT id, row_version, name, opening_name, email, phone, source, recruiter, stage, rating, priority, department_name, notes, archived, CAST(applied_date AS VARCHAR) AS applied_date, CAST(interview_date AS VARCHAR) AS interview_date, CAST(hired_date AS VARCHAR) AS hired_date FROM recruitment_applicants WHERE id = :id"
+actions:
+  - { id: screen_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.screen, handler: order_transition, workflow: recruitment_applicants, operation: screen, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
+  - { id: interview_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.interview, handler: order_transition, workflow: recruitment_applicants, operation: interview, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
+  - { id: offer_applicant_detail, type: server, permission: recruitment.write, action: recruitment.applicants.offer, handler: order_transition, workflow: recruitment_applicants, operation: offer, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
+  - { id: hire_applicant_detail, type: server, permission: recruitment.manage, action: recruitment.applicants.hire, handler: order_transition, workflow: recruitment_applicants, operation: hire, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }
+  - { id: reject_applicant_detail, type: server, permission: recruitment.manage, action: recruitment.applicants.reject, handler: order_transition, workflow: recruitment_applicants, operation: reject, params: { id: '{state.id}' }, refresh: [recruitment_applicant_detail] }

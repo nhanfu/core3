@@ -1,0 +1,33 @@
+page: { id: openings }
+datasources:
+  - id: recruitment_opening_states
+    permission: recruitment.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Open','Recruiting'), ('Draft','New'), ('Closed','Closed'), ('Archived','Archived')) states(value, label)"
+  - id: recruitment_department_lookup
+    permission: recruitment.read
+    single: false
+    query: "SELECT DISTINCT department_name AS value, department_name AS label FROM recruitment_openings WHERE department_name IS NOT NULL ORDER BY department_name"
+  - id: recruitment_openings
+    permission: recruitment.read
+    query: "SELECT o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, COUNT(a.id) AS application_count, o.recruiter, o.state, CAST(o.opened_date AS VARCHAR) AS opened_date, CAST(o.closing_date AS VARCHAR) AS closing_date FROM recruitment_openings o LEFT JOIN recruitment_applicants a ON a.opening_id = o.id AND a.archived = FALSE WHERE (:q IS NULL OR o.name ILIKE '%' || :q || '%' OR o.job_title ILIKE '%' || :q || '%') AND (:state IS NULL OR o.state = :state) AND (:department_name IS NULL OR o.department_name = :department_name) GROUP BY o.id, o.row_version, o.name, o.department_name, o.job_title, o.employment_type, o.target_hires, o.hired_count, o.recruiter, o.state, o.opened_date, o.closing_date ORDER BY o.opened_date DESC, o.id"
+actions:
+  - { id: view_recruitment_opening, type: navigate, permission: recruitment.read, navigate_to: /openings/detail, params: { id: '{row.id}' } }
+  - id: create_recruitment_opening
+    type: server_form
+    permission: recruitment.manage
+    title: New job position
+    action: recruitment.openings.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [recruitment_openings]
+    mutation: { operation: insert, table: recruitment_openings, fields: [name, department_name, job_title, employment_type, target_hires, recruiter, opened_date, closing_date], required: [name, job_title], defaults: { state: Draft, opened_date: '2026-01-15' }, result: { query: "SELECT * FROM recruitment_openings WHERE id = :id" } }
+    fields:
+      - { field: name, label: Job position, type: text, required: true }
+      - { field: job_title, label: Job title, type: text, required: true }
+      - { field: department_name, label: Department, type: text }
+      - { field: employment_type, label: Employment type, type: select, options: [Employee, Contractor], default: Employee }
+      - { field: target_hires, label: Expected new employees, type: number, default: 1 }
+      - { field: recruiter, label: Recruiter, type: text }
+      - { field: opened_date, label: Opened date, type: date, default: '2026-01-15' }
+      - { field: closing_date, label: Closing date, type: date }

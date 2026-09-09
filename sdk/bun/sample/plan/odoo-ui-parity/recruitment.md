@@ -1,10 +1,11 @@
 # Odoo 19 UI parity — Recruitment
 
-Status: `ready`
+Status: `batch-1-implemented`
 
-This is a plan-only implementation gate. It authorizes a later recruitment
-implementation batch; it does not change product code, install Odoo modules,
-or treat an uninstalled reference addon as visual evidence.
+This document remains the implementation gate and evidence record. Batch 1
+implements the coherent Core3 job-position/openings and applicant queues,
+including list/kanban/detail/filter/workflow states. It does not install Odoo
+modules or treat an uninstalled reference addon as visual evidence.
 
 ## Reference gate and exact limitation
 
@@ -256,7 +257,24 @@ git diff --check
 ```
 
 Also run the focused recruitment migration/API/schema tests and the complete
-authenticated desktop/mobile Playwright matrix described above. This plan is
-ready because all six register gates are recorded with evidence or an exact
-reference limitation; installed-addon visual sign-off is an explicit
-prerequisite before claiming UI parity.
+authenticated desktop/mobile Playwright matrix described above. The live Odoo
+`hr_recruitment` addon remains uninstalled, so no Odoo Recruitment screenshot,
+route, record, or menu assertion is claimed. Authenticated Core3 captures are
+under `/tmp/core3-recruitment-desktop.png` (1440x900) and
+`/tmp/core3-recruitment-mobile.png` (390x844); images are intentionally not
+committed.
+
+## Batch 1 implementation record
+
+Implemented in the isolated worktree: service-owned API fragments under
+`services/recruitment/api/` keyed by `page.id`; deterministic foundation and
+parity fixtures seeded at `2026-01-15`; page YAML reduced to layout contracts;
+job-position and applicant list/kanban views; applicant detail form with the
+Odoo pipeline statusbar; filter/group/search contracts; guarded screening,
+interview, proposal, hire, and refuse actions; and deterministic opening
+application counts. Shared ListView, KanbanView, FormView, search, filter, and
+responsive primitives are reused without a recruitment-only renderer.
+
+Deliberate defer for a later batch: talent pools, configuration/reference data,
+settings, job-board email actions, reporting graph/pivot/calendar/activity,
+CV/chatter, and interviewer-specific permissions.

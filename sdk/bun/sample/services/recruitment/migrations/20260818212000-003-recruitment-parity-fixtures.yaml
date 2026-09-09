@@ -1,0 +1,24 @@
+version: 0.0.3
+kind: schema
+type:
+  postgres:
+    up: |
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS department_name VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS priority VARCHAR;
+      ALTER TABLE recruitment_applicants ADD COLUMN IF NOT EXISTS archived BOOLEAN;
+      UPDATE recruitment_applicants SET priority = 'Normal' WHERE priority IS NULL;
+      UPDATE recruitment_applicants SET archived = FALSE WHERE archived IS NULL;
+      INSERT OR IGNORE INTO recruitment_openings(id, name, department_name, job_title, employment_type, target_hires, hired_count, recruiter, opened_date, closing_date, state, created_at, updated_at) VALUES
+        ('opening-demo-002', 'JOB/2026/0002', 'People Operations', 'People Partner', 'Employee', 1, 0, 'Maya Singh', DATE '2026-01-10', DATE '2026-03-31', 'Open', TIMESTAMP '2026-01-10 09:00:00', TIMESTAMP '2026-01-10 09:00:00'),
+        ('opening-demo-003', 'JOB/2026/0003', 'Finance', 'Payroll Specialist', 'Employee', 1, 0, 'Alex Chen', DATE '2026-01-05', DATE '2026-02-28', 'Closed', TIMESTAMP '2026-01-05 09:00:00', TIMESTAMP '2026-01-05 09:00:00');
+      INSERT OR IGNORE INTO recruitment_applicants(id, name, opening_id, opening_name, email, phone, source, recruiter, stage, rating, priority, department_name, applied_date, notes, archived, created_at, updated_at) VALUES
+        ('applicant-demo-002', 'Meldona Thang', 'opening-demo-001', 'JOB/2026/0001', 'meldona@example.com', '+84 900 000 002', 'LinkedIn', 'Alex Chen', 'Screening', 'Excellent', 'High', 'Engineering', DATE '2026-01-12', 'Strong systems background.', FALSE, TIMESTAMP '2026-01-12 09:00:00', TIMESTAMP '2026-01-12 09:00:00'),
+        ('applicant-demo-003', 'Emily Brooks', 'opening-demo-002', 'JOB/2026/0002', 'emily@example.com', '+84 900 000 003', 'Website', 'Maya Singh', 'Interview', 'Good', 'Normal', 'People Operations', DATE '2026-01-08', 'Interview scheduled.', FALSE, TIMESTAMP '2026-01-08 09:00:00', TIMESTAMP '2026-01-08 09:00:00'),
+        ('applicant-demo-004', 'Alex Parker', 'opening-demo-003', 'JOB/2026/0003', 'alex@example.com', '+84 900 000 004', 'Referral', 'Alex Chen', 'Rejected', 'Average', 'Low', 'Finance', DATE '2026-01-03', 'Not a match for this role.', TRUE, TIMESTAMP '2026-01-03 09:00:00', TIMESTAMP '2026-01-03 09:00:00');
+    down: |
+      DELETE FROM recruitment_applicants WHERE id IN ('applicant-demo-002','applicant-demo-003','applicant-demo-004');
+      DELETE FROM recruitment_openings WHERE id IN ('opening-demo-002','opening-demo-003');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
