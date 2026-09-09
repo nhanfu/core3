@@ -116,6 +116,15 @@ rendered its `Desk,Laptop,Screen` values, and confirmed Edit with no unexpected
 failed responses or horizontal overflow. Captures are under
 `/tmp/core3-surveys-question-detail-{desktop,mobile}.png`.
 
+The Suggested Values follow-up adds a permissioned New form with a question
+lookup, answer value, sequence, score, and matrix row/column fields. Authenticated
+desktop/mobile checks opened the form, created `QA Excellent` and `QA Mobile`,
+and confirmed list refresh from 5 to 6 and then 7 rows with zero failed requests
+or horizontal overflow. Core3 captures are
+`/tmp/core3-surveys-{desktop,mobile}-suggested-values-{list,new}.png`; the
+installed Odoo action 181 reference captures are
+`/tmp/odoo-surveys-suggested-values-{desktop,mobile}.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
