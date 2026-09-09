@@ -1,5 +1,9 @@
 page: { id: expenses }
 datasources:
+  - id: expense_states
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Posted','Posted'), ('Paid','Paid'), ('Refused','Refused')) states(value, label)"
   - id: expense_statuses
     single: false
     permission: expenses.read
