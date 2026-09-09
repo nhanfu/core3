@@ -1,0 +1,40 @@
+title: My Time Off
+page: { id: my-time-off, route: /my-time-off, breadcrumb: [Human Resources, Time Off, My Time Off], auth: { require: [time_off.read] } }
+toolbar:
+  - { id: my_time_off_new, label: New, action: my_time_off_new, permission: time_off.write, variant: primary }
+components:
+  - type: ListView
+    variant: odoo
+    source: my_time_off_requests
+    search: { label: Search my time off, placeholder: Search by request or type... }
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: leave_type_name, fields: [{ field: days, label: Duration }, { field: state, label: Status }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: leave_type_name }
+    columns:
+      - { field: name, label: Time Off, type: PrimaryEntityCell }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: days, label: Duration, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: my_time_off_open
+actions:
+  - { id: my_time_off_new, type: navigate, permission: time_off.write, navigate_to: /leave-requests }
+  - id: my_time_off_open
+    type: navigate
+    permission: time_off.read
+    navigate_to: /leave-request-detail
+    params: { id: '{row.id}' }

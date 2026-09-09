@@ -1,0 +1,39 @@
+title: All Time Off
+page: { id: time-off-approval, route: /time-off-approval, breadcrumb: [Human Resources, Time Off, Management, All Time Off], auth: { require: [time_off.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_approval_requests
+    search: { label: Search all time off, placeholder: Search employee or request... }
+    filters: [{ field: state, label: Status, options_source: time_off_approval_states }]
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: employee_name, fields: [{ field: leave_type_name, label: Type }, { field: days, label: Duration }, { field: state, label: Status }] }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: employee_name }
+    columns:
+      - { field: name, label: Time Off, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: days, label: Duration, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: approval_open
+actions:
+  - id: approval_open
+    type: navigate
+    permission: time_off.manage
+    navigate_to: /leave-request-detail
+    params: { id: '{row.id}' }

@@ -1,0 +1,5 @@
+page: { id: my-time-off }
+datasources:
+  - id: my_time_off_requests
+    permission: time_off.read
+    query: "SELECT r.id, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.state, r.reason FROM leave_requests r WHERE r.employee_name = 'Admin User' AND (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.leave_type_name ILIKE '%' || :q || '%') ORDER BY r.date_from DESC"

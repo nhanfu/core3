@@ -1,0 +1,26 @@
+title: Time Off Overview
+page: { id: time-off-overview, route: /time-off-overview, breadcrumb: [Human Resources, Time Off, Overview], auth: { require: [time_off.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_overview_requests
+    view_navigation: tabs
+    views:
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: employee_name }
+      - id: list
+        label: List
+        icon: table
+    columns:
+      - { field: name, label: Time Off, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: date_from, label: Start Date }
+      - { field: date_to, label: End Date }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
