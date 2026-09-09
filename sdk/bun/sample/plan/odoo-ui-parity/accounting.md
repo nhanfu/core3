@@ -32,6 +32,11 @@ Accounts, Journals, Taxes, and Payment Terms routes under `/accounting/*`.
 Each route was smoke-tested in desktop Chrome; the implementation remains
 image-free in Git.
 
+Visual comparison of the invoice list against the fresh Odoo `/odoo/invoicing`
+screen found that Odoo opens the list unselected. Core3 now keeps the invoice
+list unselected on entry and preserves explicit double-click navigation to the
+detail form; comparison captures remain temporary local evidence.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining customer/vendor, reporting,
