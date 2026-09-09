@@ -17,7 +17,13 @@ components:
       - { field: answer_options, label: Suggested Answers }
     page_size: 50
     row_key: id
+    row_double_click_action: view_survey_question
 actions:
+  - id: view_survey_question
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/question-detail
+    params: { id: '{row.id}' }
   - id: create_survey_question
     type: server_form
     permission: surveys.write

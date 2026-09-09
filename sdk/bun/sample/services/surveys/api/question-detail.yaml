@@ -1,0 +1,9 @@
+page: { id: survey-question-detail }
+datasources:
+  - id: survey_question_detail
+    single: true
+    permission: surveys.read
+    query: "SELECT q.id, q.survey_id, q.question_text, q.question_type, q.sequence, q.required, q.answer_options, s.title AS survey_name FROM survey_questions q JOIN surveys s ON s.id = q.survey_id WHERE q.id = :id"
+  - id: question_suggested_values
+    permission: surveys.read
+    query: "SELECT id, question_text, value, sequence, score, matrix_row, matrix_column FROM survey_suggested_values WHERE question_id = :id ORDER BY sequence, id"

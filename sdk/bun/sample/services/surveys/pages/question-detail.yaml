@@ -1,0 +1,38 @@
+title: Question
+page: { id: survey-question-detail, route: /surveys/question-detail, breadcrumb: [Marketing, Surveys, Questions & Answers, Question], auth: { require: [surveys.read] } }
+components:
+  - type: OdooFormView
+    source: survey_question_detail
+    title_field: question_text
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Question type }
+    header_actions:
+      - { id: edit_survey_question, label: Edit, variant: secondary, permission: surveys.write }
+    group_columns: 2
+    groups:
+      - title: Question
+        fields: [{ field: question_text, label: Question }, { field: survey_name, label: Survey }, { field: question_type, label: Type }, { field: sequence, label: Sequence }, { field: required, label: Required }]
+      - title: Answers
+        fields: [{ field: answer_options, label: Suggested Answers, wide: true }]
+  - type: ContactGrid
+    source: question_suggested_values
+    row_key: id
+    columns:
+      - { field: value, label: Answer, type: PrimaryEntityCell }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: score, label: Score, align: right }
+      - { field: matrix_row, label: Matrix Row, optional: hide }
+      - { field: matrix_column, label: Matrix Column, optional: hide }
+    empty_state: { title: No suggested values, description: Add suggested answers for choice and matrix questions. }
+actions:
+  - id: edit_survey_question
+    type: server_form
+    permission: surveys.write
+    title: Edit Question
+    action: surveys.questions.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.survey_question_detail
+    refresh: [survey_question_detail, question_suggested_values]
+    mutation: { operation: update, table: survey_questions, key_field: id, fields: [question_text, question_type, sequence, required, answer_options], required: [question_text], result: { query: "SELECT * FROM survey_questions WHERE id = :id" } }
+    fields: [{ field: question_text, label: Question, type: text, required: true }, { field: question_type, label: Type, type: select, options: [{ value: Text, label: Text }, { value: Choice, label: Choice }, { value: Multiple Choice, label: Multiple Choice }, { value: Rating, label: Rating }, { value: Numerical, label: Numerical }] }, { field: sequence, label: Sequence, type: number }, { field: required, label: Required, type: checkbox }, { field: answer_options, label: Suggested Answers, type: text }]
