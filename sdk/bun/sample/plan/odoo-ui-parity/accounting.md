@@ -153,6 +153,9 @@ column chooser, and List/Pivot view tabs while retaining the service-owned
 deterministic datasource. Authenticated checks at 1440x900 and 390x844 loaded
 all four rows with no unexpected failures or horizontal overflow; revised
 captures are `/tmp/core3-accounting-{desktop,mobile}-journal-items-revised.png`.
+The Pivot tab was also exercised successfully and rendered partner debit/credit
+aggregates without failed requests; its capture is
+`/tmp/core3-accounting-desktop-journal-items-pivot.png`.
 
 ## Acceptance
 
