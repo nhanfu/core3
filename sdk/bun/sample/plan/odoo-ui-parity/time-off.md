@@ -201,6 +201,20 @@ primitive contracts if absent, not bespoke Time Off widgets.
 
 ## Gate 6: acceptance checks
 
+## Current batch: dashboard and request workflow
+
+Core3 now exposes `/time-off` as the service-owned dashboard counterpart to
+the captured Odoo Time Off dashboard, with balance statistics and a
+calendar/list request surface. Deterministic fixtures cover six requests in
+Draft, Submitted, Approved, Refused, and Cancelled states. The request list
+now supports list, card, and calendar views, bounded search, status filtering,
+and request detail navigation. Draft detail shows Submit/Cancel while
+Submitted detail shows Approve/Refuse/Cancel through permissioned workflow
+actions. Authenticated desktop/mobile checks captured populated dashboard,
+request list, and detail states with zero unexpected responses and no
+horizontal overflow. Odoo reference captures remain under
+`/tmp/odoo-time-off/`; Core3 captures are under `/tmp/core3-time-off-*`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
