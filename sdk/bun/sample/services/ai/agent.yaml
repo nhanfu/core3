@@ -11,6 +11,22 @@ read:
 context_paths:
   - services/ai/agent.yaml
   - services/ai/permissions.yaml
+  - services/crm/manifest.yaml
+  - services/crm/pages/leads.yaml
+  - services/crm/pages/lead-detail.yaml
+  - services/crm/pages/activities.yaml
+  - services/crm/pages/analysis.yaml
+  - services/crm/pages/lost-opportunities.yaml
+  - services/crm/pages/quality-leads.yaml
+  - services/crm/pages/expected-revenue.yaml
+  - services/crm/pages/unattended-leads.yaml
+  - services/crm/pages/tags.yaml
+  - services/crm/pages/my-pipeline.yaml
+  - services/crm/pages/unassigned-leads.yaml
+  - services/crm/pages/teams.yaml
+  - services/crm/pages/configuration.yaml
+  - services/crm/pages/lead-workflow.yaml
+  - services/order/pages/sale-quotations.yaml
 
 operations:
   - id: ecommerce.orders.confirm
@@ -197,6 +213,141 @@ operations:
     preview: false
   - id: crm.team_members.toggle
     route: /api/actions/crm.team_members.toggle
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.my_pipeline.bulk_delete
+    route: /api/actions/crm.my_pipeline.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.leads.bulk_delete
+    route: /api/actions/crm.leads.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.unassigned_leads.bulk_delete
+    route: /api/actions/crm.unassigned_leads.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.unattended_leads.bulk_delete
+    route: /api/actions/crm.unattended_leads.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.quality_leads.bulk_delete
+    route: /api/actions/crm.quality_leads.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.expected_revenue.bulk_delete
+    route: /api/actions/crm.expected_revenue.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.lost_opportunities.bulk_delete
+    route: /api/actions/crm.lost_opportunities.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activities.bulk_delete
+    route: /api/actions/crm.activities.bulk_delete
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.teams.bulk_delete
+    route: /api/actions/crm.teams.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.tags.update
+    route: /api/actions/crm.tags.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.tags.bulk_delete
+    route: /api/actions/crm.tags.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.stages.bulk_delete
+    route: /api/actions/crm.stages.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_types.update
+    route: /api/actions/crm.activity_types.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.sources.update
+    route: /api/actions/crm.sources.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.update
+    route: /api/actions/crm.lost_reasons.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plans.update
+    route: /api/actions/crm.activity_plans.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plan_steps.update
+    route: /api/actions/crm.activity_plan_steps.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.settings.update
+    route: /api/actions/crm.settings.update
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.chatter.send
+    route: /api/actions/crm.chatter.send
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.chatter.note
+    route: /api/actions/crm.chatter.note
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.followers.add
+    route: /api/actions/crm.followers.add
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.followers.remove
+    route: /api/actions/crm.followers.remove
+    method: POST
+    permission: crm.write
+    preview: false
+  - id: crm.activity_types.bulk_delete
+    route: /api/actions/crm.activity_types.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.sources.bulk_delete
+    route: /api/actions/crm.sources.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.lost_reasons.bulk_delete
+    route: /api/actions/crm.lost_reasons.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plans.bulk_delete
+    route: /api/actions/crm.activity_plans.bulk_delete
+    method: POST
+    permission: crm.manage
+    preview: false
+  - id: crm.activity_plan_steps.bulk_delete
+    route: /api/actions/crm.activity_plan_steps.bulk_delete
     method: POST
     permission: crm.manage
     preview: false

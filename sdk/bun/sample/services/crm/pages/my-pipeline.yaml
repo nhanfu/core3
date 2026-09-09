@@ -5,6 +5,36 @@ components:
     variant: odoo
     source: crm_my_pipeline
     search: { label: Search my pipeline, placeholder: Search my opportunities and tags... }
+    filters:
+      - { field: stage, label: Stage, options_source: crm_my_pipeline_stages }
+      - { field: team, label: Sales team, options_source: crm_my_pipeline_teams }
+    view_navigation: tabs
+    views:
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: stage
+        groups_source: crm_my_pipeline_stages
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: probability, label: Probability }
+            - { field: salesperson, label: Salesperson }
+      - { id: list, label: List, icon: table }
+      - id: card
+        label: Cards
+        icon: grid
+        group_by: stage
+        groups_source: crm_my_pipeline_stages
+        card:
+          title: name
+          subtitle: partner_name
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: probability, label: Probability }
+            - { field: team, label: Sales team }
     columns:
       - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
       - { field: partner_name, label: Customer }
@@ -15,20 +45,6 @@ components:
       - { field: probability, label: Probability, align: right }
       - { field: expected_closing, label: Expected closing }
       - { field: team, label: Sales team }
-    view_navigation: tabs
-    views:
-      - { id: list, label: List, icon: table }
-      - id: card
-        label: Cards
-        icon: grid
-        group_by: stage
-        card:
-          title: name
-          subtitle: partner_name
-          fields:
-            - { field: expected_revenue, label: Expected revenue }
-            - { field: probability, label: Probability }
-            - { field: team, label: Sales team }
     page_size: 50
     row_key: id
     selectable: true

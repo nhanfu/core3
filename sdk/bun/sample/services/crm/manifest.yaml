@@ -6,7 +6,7 @@ permissions: permissions.yaml
 storage: storage.yaml
 menu:
   dashboard:
-    path: /leads
+    path: /my-pipeline
     label: CRM
     icon: users
     permission: crm.read
@@ -14,43 +14,52 @@ menu:
     - id: pipeline
       label: Pipeline
       items:
+        - path: /my-pipeline
+          label: My Pipeline
+          icon: dashboard
+          permission: crm.read
+        - path: /leads
+          label: Leads
+          icon: list
+          permission: crm.read
         - path: /crm-activities
-          label: Activities
+          label: My Activities
           icon: calendar
           permission: crm.read
-        - path: /unattended-leads
-          label: Unattended Leads
-          icon: alert
+        - path: /teams
+          label: Teams
+          icon: users
           permission: crm.read
-        - path: /quality-leads
-          label: Quality Leads
-          icon: check
+        - path: /contacts
+          label: Customers
+          icon: users
+          permission: base.contacts.read
+    - id: reporting
+      label: Reporting
+      items:
+        - path: /analysis
+          label: Pipeline Analysis
+          icon: chart
           permission: crm.read
         - path: /expected-revenue
           label: Expected Revenue
-        - path: /crm-tags
-          label: Tags
-          icon: chart
-          permission: crm.read
-        - path: /my-pipeline
-          label: My Pipeline
-          icon: users
-          permission: crm.read
-        - path: /unassigned-leads
-          label: Unassigned Leads
-          icon: users
-          permission: crm.read
-        - path: /teams
-          label: Sales Teams
-          icon: users
-          permission: crm.read
-        - path: /analysis
-          label: Pipeline Analysis
           icon: chart
           permission: crm.read
         - path: /lost-opportunities
           label: Lost Opportunities
           icon: archive
+          permission: crm.read
+        - path: /quality-leads
+          label: Quality Leads
+          icon: check
+          permission: crm.read
+        - path: /unattended-leads
+          label: Unattended Leads
+          icon: alert
+          permission: crm.read
+        - path: /unassigned-leads
+          label: Unassigned Leads
+          icon: users
           permission: crm.read
     - id: configuration
       label: Configuration

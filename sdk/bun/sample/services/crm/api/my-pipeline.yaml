@@ -13,6 +13,14 @@ datasources:
         AND stage NOT IN ('Won', 'Lost')
         AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
       ORDER BY expected_closing NULLS LAST, updated_at DESC
+  - id: crm_my_pipeline_stages
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label, CASE name WHEN 'New' THEN 'neutral' WHEN 'Qualified' THEN 'blue' WHEN 'Proposition' THEN 'amber' WHEN 'Won' THEN 'green' WHEN 'Lost' THEN 'red' ELSE 'neutral' END AS color FROM crm_stages WHERE active = true ORDER BY sequence, name"
+  - id: crm_my_pipeline_teams
+    single: false
+    permission: crm.read
+    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
 actions:
   - id: bulk_delete_my_pipeline
     type: server
