@@ -24,4 +24,12 @@ components:
     selectable: true
     column_chooser: true
     row_key: id
+    row_open_action: view_survey_participant
+    row_double_click_action: view_survey_participant
     empty_state: { title: No participants, description: Participants will appear after a survey is completed. }
+actions:
+  - id: view_survey_participant
+    type: navigate
+    permission: surveys.read
+    navigate_to: /surveys/participant-detail
+    params: { id: '{row.id}' }
