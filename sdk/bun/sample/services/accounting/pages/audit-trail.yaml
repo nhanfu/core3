@@ -5,6 +5,8 @@ components:
     variant: odoo
     source: accounting_audit_trail
     search: { label: Search audit trail, placeholder: 'Search author, record, or description...' }
+    selectable: true
+    column_chooser: true
     columns:
       - { field: event_date, label: Date }
       - { field: author_name, label: Author }

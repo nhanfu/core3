@@ -157,6 +157,12 @@ The Pivot tab was also exercised successfully and rendered partner debit/credit
 aggregates without failed requests; its capture is
 `/tmp/core3-accounting-desktop-journal-items-pivot.png`.
 
+Audit Trail now also exposes selectable rows and the column chooser, matching
+the installed Odoo list controls. Revised authenticated desktop/mobile checks
+loaded all three deterministic records with no unexpected failures or
+horizontal overflow; captures are
+`/tmp/core3-accounting-{desktop,mobile}-audit-trail-revised.png`.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a
