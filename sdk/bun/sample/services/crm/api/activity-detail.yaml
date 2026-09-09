@@ -7,7 +7,7 @@ datasources:
       SELECT a.id, a.lead_id, a.activity_type, a.summary, a.state,
         CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_to,
         CAST(a.completed_at AS VARCHAR) AS completed_at,
-        a.note, l.name AS opportunity, l.stage AS lead_stage,
+        CAST(NULL AS VARCHAR) AS note, l.name AS opportunity, l.stage AS lead_stage,
         l.salesperson AS lead_salesperson
       FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id
       WHERE a.id = :id
