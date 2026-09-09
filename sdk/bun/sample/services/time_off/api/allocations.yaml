@@ -1,0 +1,5 @@
+page: { id: time-off-allocations }
+datasources:
+  - id: time_off_allocations
+    permission: time_off.read
+    query: "SELECT id, name, employee_name, leave_type_name, days, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, state, reason FROM leave_allocations WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR employee_name ILIKE '%' || :q || '%') ORDER BY date_from DESC, name"

@@ -20,3 +20,14 @@ menu:
       label: Reporting
       items:
         - { path: /time-off-analysis, label: Time Off Analysis, icon: chart, permission: time_off.read }
+    - id: management
+      label: Management
+      items:
+        - { path: /time-off-allocations, label: Allocations, icon: calendar, permission: time_off.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /leave-types, label: Time Off Types, icon: settings, permission: time_off.manage }
+        - { path: /accrual-plans, label: Accrual Plans, icon: chart, permission: time_off.manage }
+        - { path: /public-holidays, label: Public Holidays, icon: calendar, permission: time_off.manage }
+        - { path: /mandatory-days, label: Mandatory Days, icon: calendar, permission: time_off.manage }

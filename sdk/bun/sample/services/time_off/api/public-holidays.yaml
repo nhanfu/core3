@@ -1,0 +1,5 @@
+page: { id: public-holidays }
+datasources:
+  - id: public_holidays
+    permission: time_off.manage
+    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, calendar_name FROM public_holidays ORDER BY date_from"

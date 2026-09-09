@@ -1,0 +1,5 @@
+page: { id: mandatory-days }
+datasources:
+  - id: mandatory_days
+    permission: time_off.manage
+    query: "SELECT id, name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, color, company FROM mandatory_days ORDER BY date_from"

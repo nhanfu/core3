@@ -1,0 +1,14 @@
+title: Public Holidays
+page: { id: public-holidays, route: /public-holidays, breadcrumb: [Human Resources, Time Off, Public Holidays], auth: { require: [time_off.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: public_holidays
+    search: { label: Search public holidays, placeholder: Search holidays... }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: date_from, label: Start date }
+      - { field: date_to, label: End date }
+      - { field: calendar_name, label: Working Hours }
+    page_size: 50
+    row_key: id

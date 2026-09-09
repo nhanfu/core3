@@ -1,0 +1,25 @@
+title: Allocations
+page: { id: time-off-allocations, route: /time-off-allocations, breadcrumb: [Human Resources, Time Off, Allocations], auth: { require: [time_off.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: time_off_allocations
+    search: { label: Search allocations, placeholder: Search employee or allocation... }
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, subtitle: employee_name, fields: [{ field: leave_type_name, label: Type }, { field: days, label: Days }, { field: state, label: Status }] }
+    columns:
+      - { field: name, label: Allocation, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: leave_type_name, label: Time Off Type }
+      - { field: days, label: Amount, align: right }
+      - { field: date_from, label: Start }
+      - { field: date_to, label: End }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

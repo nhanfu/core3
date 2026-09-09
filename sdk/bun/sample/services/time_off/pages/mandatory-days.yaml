@@ -1,0 +1,15 @@
+title: Mandatory Days
+page: { id: mandatory-days, route: /mandatory-days, breadcrumb: [Human Resources, Time Off, Mandatory Days], auth: { require: [time_off.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: mandatory_days
+    search: { label: Search mandatory days, placeholder: Search mandatory days... }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: date_from, label: Start date }
+      - { field: date_to, label: End date }
+      - { field: color, label: Color }
+      - { field: company, label: Company }
+    page_size: 50
+    row_key: id

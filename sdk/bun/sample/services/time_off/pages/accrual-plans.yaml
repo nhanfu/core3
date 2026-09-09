@@ -1,0 +1,22 @@
+title: Accrual Plans
+page: { id: accrual-plans, route: /accrual-plans, breadcrumb: [Human Resources, Time Off, Accrual Plans], auth: { require: [time_off.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: accrual_plans
+    search: { label: Search accrual plans, placeholder: Search plans... }
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card: { title: name, fields: [{ field: level_count, label: Levels }, { field: employee_count, label: Employees }, { field: state, label: Status }] }
+    columns:
+      - { field: name, label: Name, type: PrimaryEntityCell }
+      - { field: level_count, label: Levels, align: right }
+      - { field: employee_count, label: Employees, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

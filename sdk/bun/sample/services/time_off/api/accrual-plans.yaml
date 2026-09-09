@@ -1,0 +1,5 @@
+page: { id: accrual-plans }
+datasources:
+  - id: accrual_plans
+    permission: time_off.manage
+    query: "SELECT id, name, level_count, employee_count, state FROM accrual_plans ORDER BY name"
