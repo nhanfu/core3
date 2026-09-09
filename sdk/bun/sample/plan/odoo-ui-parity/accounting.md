@@ -90,6 +90,11 @@ Payment Transactions. Each route returned seeded records with no unexpected
 failed requests or horizontal overflow. Comparison captures are temporary under
 `/tmp/core3-accounting-config-*.png` and are not committed.
 
+The non-accounting dispatcher user was checked against
+`/accounting/currencies`; Core3 returned the visible 403 Failed to load page
+state. The denied-state capture is
+`/tmp/core3-accounting-config-denied-desktop.png`.
+
 ## Current batch: API boundary extraction
 
 Payments and Journal Entries now bind their list datasources and create-payment/
