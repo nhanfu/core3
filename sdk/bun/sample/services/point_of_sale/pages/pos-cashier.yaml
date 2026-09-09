@@ -85,7 +85,7 @@ actions:
     action: pos.cashier.ticket.create
     handler: yaml_mutation
     operation: create
-    refresh: [pos_open_tickets, pos_cashier_session_stats]
+    refresh: [pos_open_tickets, pos_open_ticket_options, pos_cashier_session_stats]
     mutation:
       operation: insert
       table: pos_orders
