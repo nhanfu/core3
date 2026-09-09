@@ -332,6 +332,12 @@ They are stored at `/tmp/odoo-events-detail-{desktop,mobile}.png`. Core3’s
 double-click path opens the equivalent `/events/event-detail?id=event-demo-004`
 form and has matching desktop/mobile evidence under `/tmp/core3-events-*-detail.png`.
 
+The event detail form now supports permissioned inline Edit/Save/Discard for
+event fields. An authenticated mobile check updated `EVT/2026/0004` to
+`Design Fair QA`, confirmed the persisted value after save, and found no failed
+requests or horizontal overflow; evidence is
+`/tmp/core3-events-mobile-detail-edited.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

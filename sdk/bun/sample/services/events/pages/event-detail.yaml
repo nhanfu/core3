@@ -13,6 +13,10 @@ components:
     source: event_detail
     title_field: name
     status_field: state
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Status }
+    header_actions:
+      - { id: edit_event_detail, label: Edit, variant: secondary, permission: events.write }
     statusbar: [{ value: Draft, label: Draft }, { value: Published, label: Published }, { value: In Progress, label: In Progress }, { value: Completed, label: Completed }, { value: Cancelled, label: Cancelled }]
     status_colors: { Draft: neutral, Published: blue, In Progress: amber, Completed: green, Cancelled: red }
     group_columns: 2
@@ -32,6 +36,31 @@ components:
       - { field: state, label: Status, type: StatusChip }
     empty_state: { title: No registrations, description: Attendees will appear here after registration. }
 actions:
+  - id: edit_event_detail
+    type: server_form
+    permission: events.write
+    title: Edit event
+    action: events.records.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.event_detail
+    refresh: [event_detail]
+    mutation:
+      operation: update
+      table: events
+      fields: [name, event_type, organizer, venue, description, capacity, start_at, end_at]
+      required: [name]
+      timestamps: true
+      result: { query: "SELECT * FROM events WHERE id = :id" }
+    fields:
+      - { field: name, label: Event, type: text, required: true }
+      - { field: event_type, label: Type, type: text }
+      - { field: organizer, label: Organizer, type: text }
+      - { field: venue, label: Venue, type: text }
+      - { field: description, label: Description, type: textarea }
+      - { field: capacity, label: Capacity, type: number }
+      - { field: start_at, label: Starts at, type: text }
+      - { field: end_at, label: Ends at, type: text }
   - { id: publish_event_detail, type: server, permission: events.write, action: events.records.publish, handler: order_transition, workflow: events, operation: publish, params: { id: '{state.id}' }, refresh: [event_detail] }
   - { id: start_event_detail, type: server, permission: events.write, action: events.records.start, handler: order_transition, workflow: events, operation: start, params: { id: '{state.id}' }, refresh: [event_detail] }
   - { id: complete_event_detail, type: server, permission: events.manage, action: events.records.complete, handler: order_transition, workflow: events, operation: complete, params: { id: '{state.id}' }, refresh: [event_detail] }
