@@ -9,7 +9,7 @@ components:
     search: { label: Search categories, placeholder: Search expense categories... }
     views:
       - { id: list, label: List, icon: table }
-      - { id: kanban, label: Kanban, icon: dashboard, card: { title: name, subtitle: reference, fields: [{ field: cost_method, label: Cost Method }, { field: unit_cost, label: Unit Cost }, { field: active, label: Active }] } }
+      - { id: kanban, label: Kanban, icon: dashboard, group_by: cost_method, card: { title: name, subtitle: reference, fields: [{ field: cost_method, label: Cost Method }, { field: unit_cost, label: Unit Cost }, { field: active, label: Active }] } }
     columns:
       - { field: name, label: Category, type: PrimaryEntityCell, sortable: true }
       - { field: cost_method, label: Cost Method }
