@@ -50,6 +50,13 @@ POS styles; authenticated desktop/mobile checks show all four tax rows with no
 unexpected failures or horizontal overflow. Corrected Core3 captures are
 `/tmp/core3-pos-{desktop,mobile}-taxes-recaptured.png`.
 
+POS Taxes now includes an Odoo-style New action backed by a permissioned
+service-owned server form. An authenticated mobile check created `QA Reduced
+Tax` and refreshed the list from four to five rows; a desktop check confirmed
+the modal layout. Both checks had no unexpected failures or horizontal
+overflow. Captures are `/tmp/core3-pos-mobile-taxes-created.png` and
+`/tmp/core3-pos-desktop-taxes-new.png`.
+
 The product-catalog batch adds the five remaining Odoo product submenu routes:
 Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
 Each route is a `ListView` backed by the convention-discovered
