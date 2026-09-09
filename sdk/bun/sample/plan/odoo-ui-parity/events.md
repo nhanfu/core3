@@ -298,6 +298,11 @@ fixtures show seeded records or settings, zero unexpected failed requests, and
 no page-level horizontal overflow. Captures are temporary under
 `/tmp/core3-events-{desktop,mobile}-*.png` and are not committed.
 
+The Events list now opens the existing OdooFormView detail page on row double
+click. Authenticated desktop/mobile checks opened `EVT/2026/0004`, asserted the
+completed status, schedule, attendance fields, empty-registration state, and
+no horizontal overflow; captures are `/tmp/core3-events-{desktop,mobile}-detail.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

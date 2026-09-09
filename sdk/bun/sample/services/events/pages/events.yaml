@@ -29,12 +29,18 @@ components:
     page_size: 50
     row_key: id
     row_actions: menu
+    row_double_click_action: view_event_detail
     actions:
       - { id: publish_event, label: Publish, permission: events.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: start_event, label: Start, permission: events.write, variant: secondary, show_if: "row.state === 'Published'" }
       - { id: complete_event, label: Complete, permission: events.manage, variant: primary, show_if: "row.state === 'In Progress'" }
       - { id: cancel_event, label: Cancel, permission: events.manage, variant: danger, show_if: "row.state !== 'Completed' && row.state !== 'Cancelled'" }
 actions:
+  - id: view_event_detail
+    type: navigate
+    permission: events.read
+    navigate_to: /event-detail
+    params: { id: '{row.id}' }
   - id: create_event
     type: server_form
     permission: events.write
