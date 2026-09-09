@@ -15,6 +15,7 @@ import * as OdooTimeEditor from './OdooTimeEditor.ts';
 import * as LineItemMoneyInput from './LineItemMoneyInput.ts';
 import * as LineItemSelectInput from './LineItemSelectInput.ts';
 import * as LineItemTextInput from './LineItemTextInput.ts';
+import * as PageNativeField from './PageNativeField.ts';
 
 type ComponentConstructor = {
   new (id: string, state?: any, definition?: any): BaseComponent;
@@ -44,6 +45,7 @@ const directEagerModules: Record<string, ComponentModule> = {
   './LineItemMoneyInput.ts': LineItemMoneyInput,
   './LineItemSelectInput.ts': LineItemSelectInput,
   './LineItemTextInput.ts': LineItemTextInput,
+  './PageNativeField.ts': PageNativeField,
 };
 try {
   eagerModules = (import.meta as any).glob(['./*Cell.ts', './Odoo*Editor.ts', './LineItem*Input.ts', './Page*Field.ts'], { eager: true });

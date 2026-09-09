@@ -681,6 +681,14 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
           : component);
       }
       const detailData = Object.fromEntries((detailConfig.datasources || []).map((source: any) => [source.id, source]));
+      if (newRecord && createDefinition) {
+        for (const field of createDefinition.fields || []) {
+          const lookupSource = field.options_source;
+          if (lookupSource && !detailData[lookupSource] && dataMap[lookupSource]) {
+            detailData[lookupSource] = dataMap[lookupSource];
+          }
+        }
+      }
       const detailParams = { ...pageParams, id: String(row.id) };
       const detailCtx = { ...ctx, row, state: { ...ctx.state, ...detailParams } };
       for (const [sourceId, sourceResult] of Object.entries(detailData) as Array<[string, any]>) {
