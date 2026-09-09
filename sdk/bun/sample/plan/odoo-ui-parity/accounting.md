@@ -163,6 +163,20 @@ loaded all three deterministic records with no unexpected failures or
 horizontal overflow; captures are
 `/tmp/core3-accounting-{desktop,mobile}-audit-trail-revised.png`.
 
+## Current batch: configuration catalog ownership
+
+Taxes, Journals, Chart of Accounts, Payment Terms, and Payment Methods now use
+service-owned API fragments and the idempotent migration
+`20260910170000-009-accounting-config-catalog.yaml`, rather than page-local
+`VALUES` queries. Each surface exposes a permissioned shared server form for
+creating a catalog record. Authenticated desktop/mobile checks loaded 3, 5, 5,
+3, and 3 seeded records respectively with no unexpected failed responses or
+horizontal overflow. Fresh Core3 comparison captures are under
+`/tmp/core3-accounting-config-{taxes,journals,chart-of-accounts,payment-terms,payment-methods}-{desktop,mobile}.png`;
+the Odoo comparison captures remain under `/tmp/odoo-accounting-config-*`.
+The implementation was developed in the dedicated
+`agent/odoo-ui-accounting-config` worktree and integrated as `5afc52db`.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a
