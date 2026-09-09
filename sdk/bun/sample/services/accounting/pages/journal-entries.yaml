@@ -1,5 +1,5 @@
 title: Journal Entries
-page: { id: journal-entries, breadcrumb: [Finance, Accounting, Journal Entries], auth: { require: [accounting.read] } }
+page: { id: journal-entries, route: /accounting/journal-entries, breadcrumb: [Finance, Accounting, Journal Entries], auth: { require: [accounting.read] } }
 datasources:
   - id: accounting_journal_entries
     single: false

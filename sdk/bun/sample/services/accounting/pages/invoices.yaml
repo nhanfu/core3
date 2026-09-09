@@ -1,5 +1,5 @@
 title: Invoices
-page: { id: invoices, breadcrumb: [Finance, Invoices], auth: { require: [accounting.read] } }
+page: { id: invoices, route: /accounting/invoices, breadcrumb: [Finance, Invoices], auth: { require: [accounting.read] } }
 datasources:
   - id: invoice_states
     single: false
@@ -45,12 +45,19 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_double_click_action: view_accounting_invoice
+    form_view: { page: apps/services/accounting/pages/invoice-detail.yaml, side_panel: true }
     row_actions: menu
     actions:
       - { id: post_accounting_invoice, label: Post, permission: accounting.write, variant: primary, show_if: "row.state === 'Draft'" }
       - { id: register_invoice_payment, label: Register payment, permission: accounting.write, variant: secondary, show_if: "row.state === 'Posted' && row.amount_residual > 0" }
       - { id: cancel_accounting_invoice, label: Cancel, permission: accounting.write, variant: danger, show_if: "row.state !== 'Paid' && row.state !== 'Cancelled'" }
 actions:
+  - id: view_accounting_invoice
+    type: navigate
+    permission: accounting.read
+    navigate_to: /accounting/invoice-detail
+    params: { id: '{row.id}' }
   - id: create_accounting_invoice
     type: server_form
     permission: accounting.write

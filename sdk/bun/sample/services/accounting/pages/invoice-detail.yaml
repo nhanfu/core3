@@ -1,0 +1,41 @@
+title: Invoice
+page: { id: invoice-detail, route: /accounting/invoice-detail, breadcrumb: [Finance, Invoices, Detail], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_invoice_detail
+    single: true
+    permission: accounting.read
+    workflow: accounting_invoices
+    query: "SELECT id, row_version, name, partner_name, invoice_type, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id FROM accounting_invoices WHERE id = :id"
+components:
+  - type: OdooFormView
+    source: accounting_invoice_detail
+    title_field: name
+    status_field: state
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Posted, label: Posted }
+      - { value: Paid, label: Paid }
+      - { value: Cancelled, label: Cancelled }
+    status_colors: { Draft: neutral, Posted: blue, Paid: green, Cancelled: red }
+    group_columns: 2
+    groups:
+      - title: Invoice
+        fields:
+          - { field: name, label: Invoice }
+          - { field: state, label: Status }
+          - { field: invoice_type, label: Type }
+          - { field: partner_name, label: Customer or vendor }
+          - { field: reference, label: Reference }
+      - title: Dates and amounts
+        fields:
+          - { field: invoice_date, label: Invoice date }
+          - { field: due_date, label: Due date }
+          - { field: amount_untaxed, label: Untaxed amount }
+          - { field: amount_tax, label: Tax }
+          - { field: amount_total, label: Total }
+          - { field: amount_residual, label: Amount due }
+      - title: Source link
+        fields:
+          - { field: source_service, label: Source service }
+          - { field: source_type, label: Source type }
+          - { field: source_id, label: Source record }

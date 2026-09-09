@@ -1,5 +1,5 @@
 title: Accounting Analysis
-page: { id: analysis, breadcrumb: [Finance, Accounting, Analysis], auth: { require: [accounting.read] } }
+page: { id: analysis, route: /accounting/analysis, breadcrumb: [Finance, Accounting, Analysis], auth: { require: [accounting.read] } }
 datasources:
   - id: accounting_analysis_totals
     single: true

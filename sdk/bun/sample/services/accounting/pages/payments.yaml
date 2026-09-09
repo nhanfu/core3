@@ -1,5 +1,5 @@
 title: Payments
-page: { id: payments, breadcrumb: [Finance, Accounting, Payments], auth: { require: [accounting.read] } }
+page: { id: payments, route: /accounting/payments, breadcrumb: [Finance, Accounting, Payments], auth: { require: [accounting.read] } }
 datasources:
   - id: accounting_payments
     single: false

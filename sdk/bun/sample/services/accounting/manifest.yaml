@@ -6,7 +6,7 @@ permissions: permissions.yaml
 storage: storage.yaml
 menu:
   invoices:
-    path: /invoices
+    path: /accounting/invoices
     label: Invoices
     icon: invoice
     permission: accounting.read
@@ -14,18 +14,18 @@ menu:
     - id: accounting
       label: Accounting
       items:
-        - path: /journal-entries
+        - path: /accounting/journal-entries
           label: Journal Entries
           icon: ledger
           permission: accounting.read
-        - path: /payments
+        - path: /accounting/payments
           label: Payments
           icon: bank
           permission: accounting.read
     - id: reporting
       label: Reporting
       items:
-        - path: /analysis
+        - path: /accounting/analysis
           label: Accounting Analysis
           icon: chart
           permission: accounting.read
