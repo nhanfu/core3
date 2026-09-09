@@ -11,6 +11,38 @@ Website Builder, Forum, Blog, eCommerce, and other composition-oriented modules
 remain YAML-driven are on-hold for an appropreate architecture.
 frontend code is not copied.
 
+## Binding fidelity contract
+
+This is a strict UI/UX parity project. For every module, implementation MUST
+follow the Odoo menu tree first and build screens only after the complete visible
+menu, submenu, action, permission, and ordering inventory has been recorded.
+No screen may be added as an isolated approximation or placed in a different
+menu merely because it is convenient for Core3 routing. Any unavoidable route
+difference must be explicitly documented as a deliberate alias or redirect.
+
+For every Odoo screen, the implementation MUST reproduce the observed layout
+hierarchy and visual language: page frame, toolbar, content widths, colors,
+backgrounds, borders, radii, typography, spacing, responsive breakpoints, tabs,
+sections, section ordering, component types, labels, helper text, empty states,
+and action placement. Visible text must match Odoo exactly, including menu
+labels, tab labels, section headings, field labels, button labels, status text,
+placeholders, and explanatory copy, except where a documented localization or
+Core3 security constraint requires a difference.
+
+ListView view-mode navigation MUST use visible text tabs (for example List,
+Kanban, Pivot, Graph, or Calendar) and MUST NOT use icon-only navigation. This
+rule applies even where an icon-navigation implementation already exists; such
+navigation must be replaced or disabled for parity work. Icons may remain as
+decorative or supplementary controls, but they must not be the sole way to
+change a view or discover a screen.
+
+Each screen is accepted only after authenticated desktop and mobile headless
+browser captures have been compared with the corresponding Odoo screen. The
+comparison must check menu location and labels, layout geometry, color and
+spacing tokens, tabs, sections, component and text parity, responsive behavior,
+and all visible interactive states. A module is not ready when its screens work
+but its menu structure or visual/UX details remain approximate.
+
 ## Live Odoo reference environment
 
 - URL: `http://localhost:8069`
@@ -72,19 +104,25 @@ this register.
 
 ## Required gate for every sub-plan
 
-1. Record the Odoo addon/version and whether its manifest provides official demo
+1. Record the exact Odoo menu tree first: application, menu, submenu, action,
+   ordering, visibility groups, route/action context, and every screen reached
+   from each visible entry.
+2. Record the Odoo addon/version and whether its manifest provides official demo
    data.
-2. Enumerate every visible menu, action, and view state.
-3. Identify Odoo screenshots/routes at desktop and mobile viewports.
-4. Declare Core3 YAML mock data in the screen's backend datasource definition for
+3. Enumerate every visible menu, action, and view state.
+4. Identify Odoo screenshots/routes at desktop and mobile viewports.
+5. Declare Core3 YAML mock data in the screen's backend datasource definition for
    every list, form, kanban, calendar, chart, report, pivot, dashboard, and empty
    state shown by the module. Page-layout YAML remains data-source-only, so its
    backend mock provider can later be replaced by a query without changing UI YAML.
-5. Identify shared UI primitives required by the module; do not implement new
+6. Specify the exact screen layout, colors, spacing, tabs, sections, components,
+   and visible text to be matched, including the ListView tab-navigation rule.
+7. Identify shared UI primitives required by the module; do not implement new
    primitives before recording them here.
-6. Define visual and fixture-data acceptance checks.
+8. Define visual, menu-order, responsive, interaction, permission, and
+   fixture-data acceptance checks, including the required headless comparison.
 
-Only after all six are written does implementation begin.
+Only after all eight are written does implementation begin.
 
 The shared mock-data contract is defined in
 `odoo-ui-parity/screen-mock-data.md` and applies to every module sub-plan.
