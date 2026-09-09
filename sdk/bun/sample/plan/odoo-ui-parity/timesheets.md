@@ -186,3 +186,19 @@ not direct SQL against another isolated service database.
   `git diff --check`; implementation is not complete until all required checks
   pass and any uninstalled or unavailable Odoo/dependency behavior is recorded
   with exact observed status rather than inferred coverage.
+
+## Batch 1 implementation record
+
+Core3 Batch 1 implements the entries and reporting slice: service-owned API
+fragments, deterministic `2026-01-15` demo data, My and All Timesheets routes,
+shared List/Kanban/Form modes, and shared List/Pivot/Graph analysis. The
+authenticated Core3 checks used admin@tms.local at 1440x900 and 390x844; the
+truthful captures are `/tmp/odoo-timesheets/desktop-entries.png`,
+`desktop-analysis.png`, `mobile-entries.png`, and `mobile-analysis.png`.
+
+The Odoo reference remains a limitation, not parity evidence: authenticated
+`hr_timesheet` inspection in `core3_demo` at source revision `65975996`
+reported `state: uninstalled`, `demo: false`, and no installed Timesheets
+menu, action, records, or views. No Odoo Timesheets screenshots were created
+or used. The Core3 runtime also exposes the pre-existing `/api/v1/notifications`
+404; it does not affect the Timesheets routes or datasource requests.

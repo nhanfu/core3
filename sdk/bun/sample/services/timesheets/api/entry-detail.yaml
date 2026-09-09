@@ -1,0 +1,11 @@
+page: { id: timesheet-detail }
+datasources:
+  - id: timesheet_detail
+    single: true
+    permission: timesheets.read
+    query: "SELECT id, row_version, name, employee_name, project_name, task_name, CAST(work_date AS VARCHAR) AS work_date, description, hours, billable, unit_amount, state, approver, CAST(approved_at AS VARCHAR) AS approved_at FROM timesheet_entries WHERE :id IS NOT NULL AND id = :id"
+actions:
+  - { id: submit_timesheet_detail, type: server, permission: timesheets.write, action: timesheets.entries.submit, handler: order_transition, workflow: timesheet_entries, operation: submit, params: { id: '{state.id}' }, refresh: [timesheet_detail] }
+  - { id: approve_timesheet_detail, type: server, permission: timesheets.manage, action: timesheets.entries.approve, handler: order_transition, workflow: timesheet_entries, operation: approve, params: { id: '{state.id}' }, refresh: [timesheet_detail] }
+  - { id: reject_timesheet_detail, type: server, permission: timesheets.manage, action: timesheets.entries.reject, handler: order_transition, workflow: timesheet_entries, operation: reject, params: { id: '{state.id}' }, refresh: [timesheet_detail] }
+  - { id: cancel_timesheet_detail, type: server, permission: timesheets.write, action: timesheets.entries.cancel, handler: order_transition, workflow: timesheet_entries, operation: cancel, params: { id: '{state.id}' }, refresh: [timesheet_detail] }

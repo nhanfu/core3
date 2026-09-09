@@ -1,0 +1,9 @@
+page: { id: timesheet-analysis }
+datasources:
+  - id: timesheet_analysis_totals
+    single: true
+    permission: timesheets.read
+    query: "SELECT COUNT(*) AS entry_count, COALESCE(SUM(hours), 0) AS total_hours, COALESCE(SUM(hours) FILTER (WHERE state = 'Approved'), 0) AS approved_hours, COALESCE(SUM(hours) FILTER (WHERE billable), 0) AS billable_hours FROM timesheet_entries"
+  - id: timesheet_analysis
+    permission: timesheets.read
+    query: "SELECT t.id, t.employee_name, t.project_name, t.task_name, CAST(strftime(t.work_date, '%Y-%m') AS VARCHAR) AS month, t.hours, CAST(t.hours * t.unit_amount AS DECIMAL(18,2)) AS cost, t.state FROM timesheet_entries t WHERE (:q IS NULL OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%') ORDER BY month DESC, t.employee_name, t.project_name, t.id"

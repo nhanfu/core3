@@ -4,7 +4,7 @@ type:
   postgres:
     up: |
       INSERT OR IGNORE INTO timesheet_entries(id, name, employee_id, employee_name, project_id, project_name, task_id, task_name, work_date, description, hours, billable, state)
-      VALUES ('timesheet-demo-001', 'TS/2026/0001', 'employee-demo-001', 'Admin User', 'project-demo-001', 'Core3 Implementation', 'task-demo-001', 'Complete module migration', CURRENT_DATE, 'Migration work', 8, TRUE, 'Draft');
+      VALUES ('timesheet-demo-001', 'TS/2026/0001', 'employee-demo-001', 'Admin User', 'project-demo-001', 'Core3 Implementation', 'task-demo-001', 'Complete module migration', DATE '2026-01-15', 'Migration work', 8, TRUE, 'Draft');
     down: |
       DELETE FROM timesheet_entries WHERE id = 'timesheet-demo-001';
   duckdb: postgres

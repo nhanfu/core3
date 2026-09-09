@@ -1,21 +1,35 @@
 title: Timesheet Analysis
-page: { id: timesheet-analysis, breadcrumb: [Services, Timesheets, Analysis], auth: { require: [timesheets.read] } }
-datasources:
-  - id: timesheet_analysis_totals
-    single: true
-    permission: timesheets.read
-    query: "SELECT COUNT(*) AS entry_count, COALESCE(SUM(hours), 0) AS total_hours, COALESCE(SUM(hours) FILTER (WHERE state = 'Approved'), 0) AS approved_hours, COALESCE(SUM(hours) FILTER (WHERE billable), 0) AS billable_hours FROM timesheet_entries"
-  - id: timesheet_analysis_states
-    permission: timesheets.read
-    query: "SELECT state AS category, COUNT(*) AS entry_count FROM timesheet_entries GROUP BY state ORDER BY entry_count DESC"
+page: { id: timesheet-analysis, route: /timesheet-analysis, breadcrumb: [Services, Timesheets, Reporting], auth: { require: [timesheets.read] } }
 components:
   - type: StatRow
     source: timesheet_analysis_totals
     title: Timesheet performance
     stats: [{ label: Entries, field: entry_count }, { label: Total hours, field: total_hours }, { label: Approved hours, field: approved_hours }, { label: Billable hours, field: billable_hours }]
-  - type: Chart
-    source: timesheet_analysis_states
-    title: Entries by status
-    label_field: category
-    value_field: entry_count
-    variant: bar
+  - type: ListView
+    variant: odoo
+    source: timesheet_analysis
+    search: { label: Search analysis, placeholder: 'Search employee, project, or task...' }
+    group_by: [{ field: employee_name, label: Employee }, { field: project_name, label: Project }, { field: task_name, label: Task }, { field: month, label: Month }]
+    view_navigation: tabs
+    views:
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: employee_name, column: Employee }, { field: project_name, column: Project }, { field: task_name, column: Task }, { field: month, column: Month }, { field: hours, column: Time Spent }, { field: cost, column: Timesheet Costs }]
+          default: { rows: [employee_name], columns: [month], measures: [{ field: hours, aggregate: sum, column: Time Spent }, { field: cost, aggregate: sum, column: Timesheet Costs }] }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: project_name
+        measure_field: hours
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: employee_name, label: Employee, type: PrimaryEntityCell }
+      - { field: project_name, label: Project }
+      - { field: task_name, label: Task }
+      - { field: month, label: Month }
+      - { field: hours, label: Time Spent, align: right }
+      - { field: cost, label: Timesheet Costs, align: right }
+    page_size: 50
+    row_key: id

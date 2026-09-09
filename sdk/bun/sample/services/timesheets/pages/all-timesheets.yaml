@@ -1,0 +1,31 @@
+title: All Timesheets
+page: { id: all-timesheets, route: /all-timesheets, breadcrumb: [Services, Timesheets, All Timesheets], auth: { require: [timesheets.manage] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: all_timesheet_entries
+    search: { label: Search all timesheets, placeholder: 'Search employee, project, or entry...' }
+    filters: [{ field: state, label: Status, options: [Draft, Submitted, Approved, Rejected, Cancelled] }]
+    group_by: [{ field: employee_name, label: Employee }, { field: project_name, label: Project }, { field: task_name, label: Task }, { field: state, label: Status }]
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: employee_name
+        card: { title: name, subtitle: employee_name, fields: [{ field: project_name, label: Project }, { field: task_name, label: Task }, { field: hours, label: Time Spent }, { field: state, label: Status }] }
+    column_chooser: true
+    row_key: id
+    row_open_action: view_all_timesheet_entry
+    row_actions: menu
+    columns:
+      - { field: name, label: Entry, type: PrimaryEntityCell }
+      - { field: employee_name, label: Employee }
+      - { field: project_name, label: Project }
+      - { field: task_name, label: Task }
+      - { field: work_date, label: Date }
+      - { field: hours, label: Time Spent, align: right }
+      - { field: state, label: Status, type: StatusChip }
+actions:
+  - { id: view_all_timesheet_entry, type: navigate, permission: timesheets.manage, navigate_to: /timesheets/detail, params: { id: '{row.id}' } }

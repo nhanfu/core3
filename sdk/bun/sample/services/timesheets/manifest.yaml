@@ -16,3 +16,4 @@ menu:
       items:
         - { path: /timesheets, label: Timesheets, icon: clock, permission: timesheets.read }
         - { path: /timesheet-analysis, label: Timesheet Analysis, icon: chart, permission: timesheets.read }
+        - { path: /all-timesheets, label: All Timesheets, icon: users, permission: timesheets.manage }

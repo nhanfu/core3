@@ -1,0 +1,6 @@
+page: { id: all-timesheets }
+datasources:
+  - id: all_timesheet_entries
+    permission: timesheets.manage
+    workflow: timesheet_entries
+    query: "SELECT t.id, t.row_version, t.name, t.employee_name, t.project_name, t.task_name, CAST(t.work_date AS VARCHAR) AS work_date, t.description, t.hours, t.billable, t.unit_amount, t.state, t.approver, CAST(t.approved_at AS VARCHAR) AS approved_at FROM timesheet_entries t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%' OR t.employee_name ILIKE '%' || :q || '%' OR t.project_name ILIKE '%' || :q || '%' OR t.task_name ILIKE '%' || :q || '%') AND (:state IS NULL OR t.state = :state) ORDER BY t.work_date DESC, t.id"
