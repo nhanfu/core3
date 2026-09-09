@@ -314,6 +314,11 @@ creation check created `QA Workshop` in Event Templates and refreshed the list
 with no failed requests or horizontal overflow; the form capture is
 `/tmp/core3-events-mobile-template-form.png`.
 
+Events Settings now exposes the Odoo-style Save/Discard toolbar and its
+service-owned settings fields. Authenticated desktop/mobile checks confirmed
+the Save action remains on `/events/settings` with no failed requests or page
+overflow; the mobile evidence is `/tmp/core3-events-mobile-settings-save.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
