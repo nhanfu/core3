@@ -215,6 +215,13 @@ request list, and detail states with zero unexpected responses and no
 horizontal overflow. Odoo reference captures remain under
 `/tmp/odoo-time-off/`; Core3 captures are under `/tmp/core3-time-off-*`.
 
+The configuration/reporting follow-up adds active/archived status filtering and
+card/list views to Leave Types, and adds a status list/pivot companion to the
+analysis chart. Authenticated desktop/mobile checks verified populated active
+and archived fixtures, six lifecycle request aggregates, zero unexpected
+responses, and no horizontal overflow. Captures are kept outside Git under
+`/tmp/core3-time-off-{desktop,mobile}-{types,analysis}-views.png`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
