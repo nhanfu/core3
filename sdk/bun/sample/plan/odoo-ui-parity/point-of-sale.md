@@ -64,6 +64,9 @@ without failures or overflow; mobile creation refreshed the list to six rows,
 and Card detail displayed its journal, company, and Point of Sale fields.
 Captures are under `/tmp/core3-pos-{desktop,mobile}-payment-methods-catalog.png`
 and `/tmp/core3-pos-mobile-payment-method-detail-final.png`.
+The catalog now projects boolean activity as the Odoo-compatible `Active` or
+`Archived` label; a fresh mobile check confirmed all five rows render `Active`
+with no failures or overflow.
 
 The product-catalog batch adds the five remaining Odoo product submenu routes:
 Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
