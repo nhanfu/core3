@@ -26,6 +26,11 @@ self-order, sessions, and workflows. Existing routes include
 data-backed Customers, Products, Payment Methods, Session Report, and Sales
 Details routes with convention-discovered API fragments.
 
+The current follow-up adds a configuration detail side panel and a settings
+form. Authenticated browser verification confirms `/point-of-sale/configs`,
+double-click navigation to `/point-of-sale/config-detail?id=pos-config-main`,
+and `/point-of-sale/configuration-coverage` render with fixture data.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the Odoo POS Customers, Preparation
