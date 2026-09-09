@@ -60,6 +60,22 @@ export class PosShell extends BaseComponent {
     this.def = def;
   }
 
+  static resolveState(_definition: any, context: any = {}) {
+    const dataMap = context.dataMap || {};
+    const value = (id: string) => dataMap[id]?.data;
+    const session = value('pos_touch_session') || {};
+    const orders = Array.isArray(value('pos_touch_open_orders')) ? value('pos_touch_open_orders') : [];
+    return {
+      sessionSource: session,
+      bootstrapProducts: Array.isArray(value('pos_touch_products')) ? value('pos_touch_products') : [],
+      openOrders: orders,
+      sessionId: session.id || null,
+      sessionName: session.name || 'No active session',
+      sessionStatus: session.state || 'closed',
+      activeOrderId: orders[0]?.id || null,
+    };
+  }
+
   draw(container: HTMLElement) {
     this.disposeChildren();
     const sessionSource = this.state.sessionSource || {};

@@ -1,6 +1,18 @@
 page: { id: pos-touch }
 
 datasources:
+  - id: pos_touch_session
+    single: true
+    permission: pos.read
+    query: |
+      SELECT s.id, s.name, s.state, s.config,
+        CAST(s.balance_start AS DOUBLE) AS balance_start,
+        CAST(COALESCE(s.opening_counted, 0) AS DOUBLE) AS opening_counted
+      FROM pos_sessions s
+      WHERE s.state = 'In Progress'
+      ORDER BY s.opened_at DESC
+      LIMIT 1
+
   - id: pos_touch_products
     single: false
     permission: pos.read
