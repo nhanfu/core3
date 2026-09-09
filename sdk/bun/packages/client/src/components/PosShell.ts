@@ -141,12 +141,12 @@ export class PosShell extends BaseComponent {
 
   private _drawProductScreen(container: HTMLElement, products: CatalogProduct[]) {
     const wrap = html.take(container).div
-      .className('pos-product-screen flex h-full')
+      .className('pos-product-screen flex flex-col md:flex-row h-full')
       .ele();
 
     // Catalog panel
     const catalog = html.take(wrap).div
-      .className('pos-catalog flex-1 p-4 overflow-y-auto bg-white border-r')
+      .className('pos-catalog w-full md:flex-1 p-4 overflow-y-auto bg-white border-r')
       .ele();
 
     html.take(catalog).h2.className('text-sm font-semibold text-gray-700 mb-3').text('Products').ele();
@@ -196,7 +196,7 @@ export class PosShell extends BaseComponent {
     const cartTotal = cart.reduce((s: number, l: CartLine) => s + l.total, 0);
 
     const panel = html.take(container).div
-      .className('pos-cart-panel w-80 flex flex-col bg-gray-50 border-l')
+      .className('pos-cart-panel w-full md:w-80 max-h-80 md:max-h-none flex flex-col bg-gray-50 border-l')
       .ele();
 
     // Cart header
