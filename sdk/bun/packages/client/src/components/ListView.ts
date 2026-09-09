@@ -296,6 +296,7 @@ export class ListView extends BaseComponent {
       );
       card.parent = this;
       card._transport = this._transport;
+      card._onAction = this._onAction;
       this.children.push(card);
       const content = html.take(root).div.className('o-list-content').ele();
       const cardHost = html.take(content).div.className('o-list-card-host').ele();

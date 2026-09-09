@@ -1,0 +1,37 @@
+title: Point of Sale
+page: { id: pos-dashboard, route: /point-of-sale, auth: { require: [pos.read] } }
+datasources:
+  - id: pos_dashboard_configs
+    permission: pos.read
+    query: "SELECT id, name, company, currency, receipt_header, active, CASE WHEN active THEN 'Open register' ELSE 'Archived' END AS register_action FROM pos_configs ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_dashboard_configs
+    search: { label: Search point of sale, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: company
+          fields:
+            - { field: register_action, label: Register }
+            - { field: currency, label: Currency }
+      - { id: list, label: List, icon: table }
+    columns:
+      - { field: name, label: Point of Sale, type: PrimaryEntityCell }
+      - { field: company, label: Company }
+      - { field: currency, label: Currency }
+      - { field: register_action, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
+    row_open_action: open_pos_register
+actions:
+  - id: open_pos_register
+    type: navigate
+    permission: pos.write
+    navigate_to: /point-of-sale/cashier
+    params: { config_id: '{row.id}' }

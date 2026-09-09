@@ -31,6 +31,15 @@ form. Authenticated browser verification confirms `/point-of-sale/configs`,
 double-click navigation to `/point-of-sale/config-detail?id=pos-config-main`,
 and `/point-of-sale/configuration-coverage` render with fixture data.
 
+The dashboard batch adds `/point-of-sale` as the direct counterpart to Odoo
+`/odoo/point-of-sale`, using service-owned configuration fixtures, card/list
+view switching, search, and an authenticated Open Register action. Desktop and
+mobile captures are kept as local comparison evidence.
+
+The dashboard comparison found one shared CardView action propagation defect;
+ListView now forwards its action handler into CardView, and an authenticated
+card click is verified to navigate to `/point-of-sale/cashier?config_id=...`.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the Odoo POS Customers, Preparation

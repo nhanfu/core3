@@ -6,7 +6,7 @@ permissions: permissions.yaml
 storage: storage.yaml
 menu:
   sessions:
-    path: /point-of-sale/sessions
+    path: /point-of-sale
     label: Point of Sale
     icon: cart
     permission: pos.read

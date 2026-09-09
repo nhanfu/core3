@@ -1,0 +1,16 @@
+version: 0.0.8
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT INTO pos_configs(id, name, company, currency, receipt_header, receipt_footer, active)
+      VALUES
+        ('pos-config-clothes', 'Clothes Shop', 'YShip Demo Company', 'USD', 'Thank you for your purchase', 'Visit again soon', true),
+        ('pos-config-bakery', 'Bakery Shop', 'YShip Demo Company', 'USD', 'Thank you for your purchase', 'Visit again soon', true)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DELETE FROM pos_configs WHERE id IN ('pos-config-clothes', 'pos-config-bakery');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
