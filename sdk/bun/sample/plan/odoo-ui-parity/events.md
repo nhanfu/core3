@@ -319,6 +319,13 @@ service-owned settings fields. Authenticated desktop/mobile checks confirmed
 the Save action remains on `/events/settings` with no failed requests or page
 overflow; the mobile evidence is `/tmp/core3-events-mobile-settings-save.png`.
 
+The installed Odoo event card interaction opens `/odoo/events/8`; desktop and
+mobile detail captures show the event status, registration/ticket sections,
+registration actions, and chatter with no failed requests or mobile overflow.
+They are stored at `/tmp/odoo-events-detail-{desktop,mobile}.png`. Core3’s
+double-click path opens the equivalent `/events/event-detail?id=event-demo-004`
+form and has matching desktop/mobile evidence under `/tmp/core3-events-*-detail.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
