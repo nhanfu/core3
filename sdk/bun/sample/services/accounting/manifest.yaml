@@ -65,6 +65,26 @@ menu:
           label: Payment Terms
           icon: calendar
           permission: accounting.read
+        - path: /accounting/product-categories
+          label: Product Categories
+          icon: folder
+          permission: accounting.read
+        - path: /accounting/fiscal-positions
+          label: Fiscal Positions
+          icon: globe
+          permission: accounting.read
+        - path: /accounting/tax-groups
+          label: Tax Groups
+          icon: percent
+          permission: accounting.read
+        - path: /accounting/cash-roundings
+          label: Cash Roundings
+          icon: bank
+          permission: accounting.read
+        - path: /accounting/currencies
+          label: Currencies
+          icon: globe
+          permission: accounting.read
         - path: /accounting/analytic-accounts
           label: Analytic Accounts
           icon: ledger

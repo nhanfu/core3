@@ -1,0 +1,14 @@
+title: Currencies
+page: { id: accounting-currencies, route: /accounting/currencies, breadcrumb: [Finance, Configuration, Currencies], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_currencies
+    permission: accounting.read
+    query: "SELECT code, name, symbol, CAST(last_update AS VARCHAR) AS last_update, unit_per_usd, active FROM accounting_currencies WHERE (:q IS NULL OR code ILIKE '%' || :q || '%' OR name ILIKE '%' || :q || '%') ORDER BY code"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_currencies
+    search: { label: Search currencies, placeholder: Search currency... }
+    columns: [{ field: code, label: Currency, type: PrimaryEntityCell }, { field: symbol, label: Symbol }, { field: name, label: Name }, { field: last_update, label: Last Update }, { field: unit_per_usd, label: Unit per USD, align: right }, { field: active, label: Active }]
+    page_size: 50
+    row_key: code

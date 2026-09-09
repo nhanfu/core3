@@ -1,0 +1,27 @@
+title: Cash Roundings
+page: { id: accounting-cash-roundings, route: /accounting/cash-roundings, breadcrumb: [Finance, Configuration, Cash Roundings], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_cash_roundings
+    permission: accounting.read
+    query: "SELECT id, row_version, name, rounding, rounding_method, profit_account, loss_account, active FROM accounting_cash_roundings WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR rounding_method ILIKE '%' || :q || '%') ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_cash_roundings
+    create_action: create_accounting_cash_rounding
+    create_label: New
+    search: { label: Search cash roundings, placeholder: Search cash rounding... }
+    columns: [{ field: name, label: Cash Rounding, type: PrimaryEntityCell }, { field: rounding, label: Rounding Precision, align: right }, { field: rounding_method, label: Rounding Method }, { field: profit_account, label: Profit Account }, { field: loss_account, label: Loss Account }, { field: active, label: Active }]
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_accounting_cash_rounding
+    type: server_form
+    permission: accounting.write
+    title: New Cash Rounding
+    action: accounting.cash_roundings.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_cash_roundings]
+    mutation: { operation: insert, table: accounting_cash_roundings, fields: [name, rounding, rounding_method, profit_account, loss_account, active], required: [name, rounding], defaults: { rounding_method: Nearest, active: true }, result: { query: "SELECT * FROM accounting_cash_roundings WHERE id = :id" } }
+    fields: [{ field: name, label: Cash Rounding, type: text, required: true }, { field: rounding, label: Rounding Precision, type: number, required: true, default: 0.05 }, { field: rounding_method, label: Rounding Method, type: select, options: [{ value: Nearest, label: Nearest }, { value: Up, label: Up }, { value: Down, label: Down }] }, { field: profit_account, label: Profit Account, type: text }, { field: loss_account, label: Loss Account, type: text }, { field: active, label: Active, type: checkbox, default: true }]

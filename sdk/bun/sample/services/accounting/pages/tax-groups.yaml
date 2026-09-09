@@ -1,0 +1,27 @@
+title: Tax Groups
+page: { id: accounting-tax-groups, route: /accounting/tax-groups, breadcrumb: [Finance, Configuration, Tax Groups], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_tax_groups
+    permission: accounting.read
+    query: "SELECT id, row_version, name, sequence, description, active FROM accounting_tax_groups WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%') ORDER BY sequence, name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_tax_groups
+    create_action: create_accounting_tax_group
+    create_label: New
+    search: { label: Search tax groups, placeholder: Search tax group... }
+    columns: [{ field: name, label: Tax Group, type: PrimaryEntityCell }, { field: description, label: Description }, { field: sequence, label: Sequence, align: right }, { field: active, label: Active }]
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_accounting_tax_group
+    type: server_form
+    permission: accounting.write
+    title: New Tax Group
+    action: accounting.tax_groups.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_tax_groups]
+    mutation: { operation: insert, table: accounting_tax_groups, fields: [name, sequence, description, active], required: [name], defaults: { sequence: 10, active: true }, result: { query: "SELECT * FROM accounting_tax_groups WHERE id = :id" } }
+    fields: [{ field: name, label: Tax Group, type: text, required: true }, { field: description, label: Description, type: textarea }, { field: sequence, label: Sequence, type: number, default: 10 }, { field: active, label: Active, type: checkbox, default: true }]

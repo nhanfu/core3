@@ -1,0 +1,27 @@
+title: Product Categories
+page: { id: accounting-product-categories, route: /accounting/product-categories, breadcrumb: [Finance, Configuration, Product Categories], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_product_categories
+    permission: accounting.read
+    query: "SELECT id, row_version, name, parent_name, complete_name, child_count, active FROM accounting_product_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR complete_name ILIKE '%' || :q || '%') ORDER BY complete_name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_product_categories
+    create_action: create_accounting_product_category
+    create_label: New
+    search: { label: Search categories, placeholder: Search category... }
+    columns: [{ field: name, label: Product Category, type: PrimaryEntityCell, secondary: complete_name }, { field: parent_name, label: Parent Category }, { field: child_count, label: Child Categories, align: right }, { field: active, label: Active }]
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_accounting_product_category
+    type: server_form
+    permission: accounting.write
+    title: New Product Category
+    action: accounting.product_categories.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_product_categories]
+    mutation: { operation: insert, table: accounting_product_categories, fields: [name, parent_name, complete_name, child_count, active], required: [name, complete_name], defaults: { child_count: 0, active: true }, result: { query: "SELECT * FROM accounting_product_categories WHERE id = :id" } }
+    fields: [{ field: name, label: Product Category, type: text, required: true }, { field: parent_name, label: Parent Category, type: text }, { field: complete_name, label: Complete Name, type: text, required: true }, { field: active, label: Active, type: checkbox, default: true }]

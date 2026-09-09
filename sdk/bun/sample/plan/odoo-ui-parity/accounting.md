@@ -72,12 +72,21 @@ list/pivot states; reconciliation exposes a register-payment form against
 posted invoices with a residual balance; payment tokens intentionally exercise
 an authenticated empty state.
 
+The configuration reference batch adds explicit Core3 routes for
+`/accounting/product-categories`, `/accounting/fiscal-positions`,
+`/accounting/tax-groups`, `/accounting/cash-roundings`, and
+`/accounting/currencies`, backed by one Accounting migration and searchable
+Odoo-style ListView/server-form contracts. The live Odoo 19 demo exposes Product
+Categories, Fiscal Positions, and Currencies under Configuration. Tax Groups and
+Cash Roundings are not exposed as standalone menus in this installed
+Community/demo build; those two routes are documented fixture coverage for the
+Accounting model surfaces. The existing Base currency screen remains unchanged.
+
 ## Remaining parity work
 
-Add explicit menu/page coverage for the remaining customer/vendor product and
-configuration surfaces. Implement OdooFormView detail pages, create/edit forms,
-register-payment and reconciliation modals, filters, empty/error/permission
-states, and responsive desktop/mobile behavior using service-owned fixtures.
+Implement OdooFormView detail pages, create/edit forms, register-payment and
+reconciliation modals, filters, empty/error/permission states, and responsive
+desktop/mobile behavior using service-owned fixtures.
 
 ## Acceptance
 

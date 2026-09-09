@@ -1,0 +1,27 @@
+title: Fiscal Positions
+page: { id: accounting-fiscal-positions, route: /accounting/fiscal-positions, breadcrumb: [Finance, Configuration, Fiscal Positions], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_fiscal_positions
+    permission: accounting.read
+    query: "SELECT id, row_version, name, company, foreign_trade, active FROM accounting_fiscal_positions WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR company ILIKE '%' || :q || '%') ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_fiscal_positions
+    create_action: create_accounting_fiscal_position
+    create_label: New
+    search: { label: Search fiscal positions, placeholder: Search fiscal position... }
+    columns: [{ field: name, label: Fiscal Position, type: PrimaryEntityCell }, { field: company, label: Company }, { field: foreign_trade, label: Foreign Trade }, { field: active, label: Active }]
+    page_size: 50
+    row_key: id
+actions:
+  - id: create_accounting_fiscal_position
+    type: server_form
+    permission: accounting.write
+    title: New Fiscal Position
+    action: accounting.fiscal_positions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_fiscal_positions]
+    mutation: { operation: insert, table: accounting_fiscal_positions, fields: [name, company, foreign_trade, active], required: [name, company], defaults: { foreign_trade: false, active: true }, result: { query: "SELECT * FROM accounting_fiscal_positions WHERE id = :id" } }
+    fields: [{ field: name, label: Fiscal Position, type: text, required: true }, { field: company, label: Company, type: text, required: true }, { field: foreign_trade, label: Foreign Trade, type: checkbox }, { field: active, label: Active, type: checkbox, default: true }]

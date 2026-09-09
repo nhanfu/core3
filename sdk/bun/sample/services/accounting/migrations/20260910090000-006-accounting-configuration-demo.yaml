@@ -1,0 +1,24 @@
+version: 0.0.6
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_product_categories (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, parent_name VARCHAR, complete_name VARCHAR NOT NULL, child_count INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true);
+      CREATE TABLE IF NOT EXISTS accounting_fiscal_positions (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, company VARCHAR NOT NULL, foreign_trade BOOLEAN NOT NULL DEFAULT false, active BOOLEAN NOT NULL DEFAULT true);
+      CREATE TABLE IF NOT EXISTS accounting_tax_groups (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10, description VARCHAR, active BOOLEAN NOT NULL DEFAULT true);
+      CREATE TABLE IF NOT EXISTS accounting_cash_roundings (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, rounding DECIMAL(12, 4) NOT NULL DEFAULT 0.05, rounding_method VARCHAR NOT NULL DEFAULT 'Nearest', profit_account VARCHAR, loss_account VARCHAR, active BOOLEAN NOT NULL DEFAULT true);
+      CREATE TABLE IF NOT EXISTS accounting_currencies (code VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, symbol VARCHAR NOT NULL, last_update DATE, unit_per_usd DECIMAL(18, 6) NOT NULL DEFAULT 1, active BOOLEAN NOT NULL DEFAULT true);
+      INSERT INTO accounting_product_categories(id, name, parent_name, complete_name, child_count) VALUES ('cat-all','All','', 'All', 5), ('cat-clothes','Clothes','All','All / Clothes',0), ('cat-furniture','Furniture','All','All / Furniture',2), ('cat-office','Office Furniture','Furniture','All / Furniture / Office Furniture',0), ('cat-services','Services','All','All / Services',0) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_fiscal_positions(id, name, company, foreign_trade) VALUES ('fiscal-domestic','Domestic','Main Company (San Francisco)',false), ('fiscal-foreign','Foreign Trade','Main Company (San Francisco)',true) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_tax_groups(id, name, sequence, description) VALUES ('tax-group-sales','Sales Taxes',10,'Taxes applied to customer invoices'), ('tax-group-purchases','Purchase Taxes',20,'Taxes applied to vendor bills'), ('tax-group-zero','Zero Rate',30,'Exempt and zero-rated transactions') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_cash_roundings(id, name, rounding, rounding_method, profit_account, loss_account) VALUES ('round-nearest-05','Nearest 0.05',0.05,'Nearest','Other Income','Other Expenses'), ('round-up-01','Up to 0.01',0.01,'Up','Other Income','Other Expenses') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_currencies(code, name, symbol, last_update, unit_per_usd) VALUES ('USD','United States dollar','$','2010-01-01',1.000000), ('EUR','Euro','€','2010-01-01',0.920000), ('VND','Vietnamese dong','₫','2026-01-01',25100.000000), ('GBP','Pound sterling','£','2010-01-01',0.790000), ('JPY','Japanese yen','¥','2010-01-01',149.500000), ('AUD','Australian dollar','$','2010-01-01',1.540000) ON CONFLICT (code) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_currencies;
+      DROP TABLE IF EXISTS accounting_cash_roundings;
+      DROP TABLE IF EXISTS accounting_tax_groups;
+      DROP TABLE IF EXISTS accounting_fiscal_positions;
+      DROP TABLE IF EXISTS accounting_product_categories;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
