@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_preparation_printers
+    create_action: create_pos_preparation_printer
+    create_label: New
     search: { label: Search preparation printers, placeholder: Search printer or category... }
     columns:
       - { field: name, label: Printer, type: PrimaryEntityCell }
@@ -14,3 +16,26 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: create_pos_preparation_printer
+    type: server_form
+    permission: pos.manage
+    title: New preparation printer
+    action: pos.preparation_printers.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_preparation_printers]
+    mutation:
+      operation: insert
+      table: pos_preparation_printers
+      fields: [name, printer_type, proxy_ip, categories, state, active]
+      required: [name, printer_type]
+      defaults: { categories: All products, state: Connected, active: true }
+      result: { query: "SELECT * FROM pos_preparation_printers WHERE id = :id" }
+    fields:
+      - { field: name, label: Printer, type: text, required: true }
+      - { field: printer_type, label: Device, type: text, required: true }
+      - { field: proxy_ip, label: Proxy address, type: text }
+      - { field: categories, label: Product categories, type: text, default: All products }
+      - { field: state, label: Status, type: select, options: [Connected, Paused, Disconnected], default: Connected }
+      - { field: active, label: Active, type: checkbox, default: true }

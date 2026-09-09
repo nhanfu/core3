@@ -4,6 +4,8 @@ components:
   - type: ListView
     variant: odoo
     source: pos_cash_denominations
+    create_action: create_pos_cash_denomination
+    create_label: New
     search: { label: Search denominations, placeholder: Search currency or kind... }
     columns:
       - { field: denomination, label: Denomination, type: PrimaryEntityCell, align: right }
@@ -14,3 +16,25 @@ components:
       - { field: active, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: create_pos_cash_denomination
+    type: server_form
+    permission: pos.manage
+    title: New coin or bill
+    action: pos.cash_denominations.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [pos_cash_denominations]
+    mutation:
+      operation: insert
+      table: pos_cash_denominations
+      fields: [denomination, currency, kind, quantity, active]
+      required: [denomination, kind]
+      defaults: { currency: USD, kind: Coin, quantity: 0, active: true }
+      result: { query: "SELECT * FROM pos_cash_denominations WHERE id = :id" }
+    fields:
+      - { field: denomination, label: Denomination, type: number, required: true }
+      - { field: currency, label: Currency, type: text, default: USD }
+      - { field: kind, label: Type, type: select, options: [Coin, Bill], default: Coin }
+      - { field: quantity, label: Default quantity, type: number, default: 0 }
+      - { field: active, label: Active, type: checkbox, default: true }
