@@ -1,0 +1,63 @@
+title: Expense
+page: { id: expense-detail, route: /expenses/detail, breadcrumb: [Expenses, Expense], auth: { require: [expenses.read] } }
+
+components:
+  - type: OdooFormView
+    source: expense_detail
+    title_field: name
+    status_field: status
+    statusbar:
+      - { value: Draft, label: Draft }
+      - { value: Submitted, label: Submitted }
+      - { value: Approved, label: Approved }
+      - { value: Posted, label: Posted }
+      - { value: In Payment, label: In payment }
+      - { value: Paid, label: Paid }
+    status_colors: { Draft: neutral, Submitted: amber, Approved: blue, Posted: green, In Payment: blue, Paid: green, Refused: red }
+    status_badges: [{ value: Refused, label: Refused, tone: red }]
+    labels: { save: Save, discard: Discard, editDetails: Edit details, workflowStatus: Workflow status }
+    header_actions:
+      - { id: edit_expense_detail, label: Edit, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
+      - { id: submit_expense_detail, label: Submit, variant: primary, permission: expenses.write, show_if: "state.expense_detail.status === 'Draft'" }
+      - { id: approve_expense_detail, label: Approve, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted'" }
+      - { id: post_expense_detail, label: Post journal entry, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Approved'" }
+      - { id: pay_expense_detail, label: Mark paid, variant: primary, permission: expenses.manage, show_if: "state.expense_detail.status === 'Posted' || state.expense_detail.status === 'In Payment'" }
+      - { id: refuse_expense_detail, label: Refuse, variant: danger, permission: expenses.manage, show_if: "state.expense_detail.status === 'Submitted' || state.expense_detail.status === 'Approved'" }
+      - { id: reset_expense_detail, label: Reset to draft, variant: secondary, permission: expenses.write, show_if: "state.expense_detail.status === 'Refused'" }
+    group_columns: 2
+    groups:
+      - title: Expense details
+        fields:
+          - { field: name, label: Expense }
+          - { field: employee_name, label: Employee }
+          - { field: category, label: Category }
+          - { field: expense_date, label: Expense date }
+          - { field: description, label: Description, type: textarea, wide: true }
+      - title: Payment and accounting
+        fields:
+          - { field: amount_display, label: Total }
+          - { field: tax_display, label: Taxes }
+          - { field: payment_mode_label, label: Paid by }
+          - { field: reimbursement_status, label: Reimbursement }
+          - { field: analytic_distribution, label: Analytic distribution }
+          - { field: journal_entry, label: Journal entry }
+          - { field: company_name, label: Company }
+          - { field: department_name, label: Department }
+    notebook:
+      active: receipt
+      tabs:
+        - id: receipt
+          label: Receipt
+          groups:
+            - title: Receipt and duplicate review
+              fields:
+                - { field: receipt_label, label: Receipt status }
+                - { field: receipt_reference, label: Attachment }
+                - { field: duplicate_candidate, label: Duplicate check }
+        - id: activity
+          label: Chatter
+          content_slot: true
+    message_source: expense_detail_activity
+    chatter_label: Messages and activities
+    no_attachments_label: No receipt attached
+    attachment_label: Receipt

@@ -1,0 +1,58 @@
+page: { id: expense-detail }
+datasources:
+  - id: expense_detail
+    single: true
+    permission: expenses.read
+    workflow: expense_items
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.description,
+        e.amount, printf('$%,.2f', e.amount) AS amount_display,
+        printf('$%,.2f', COALESCE(e.tax_amount, 0)) AS tax_display,
+        e.payment_method AS payment_mode,
+        CASE e.payment_method WHEN 'Company' THEN 'Paid by Company' ELSE 'Paid by Employee' END AS payment_mode_label,
+        e.receipt_reference, e.receipt_label, e.company_name, e.department_name,
+        e.analytic_distribution, e.journal_entry, e.duplicate_candidate,
+        e.reimbursement_status, e.state AS status
+      FROM expenses e WHERE e.id = :id
+  - id: expense_detail_activity
+    single: false
+    permission: expenses.read
+    query: |
+      SELECT actor_name, action, action_label, detail, CAST(created_at AS VARCHAR) AS created_at
+      FROM expense_activity WHERE expense_id = :id ORDER BY created_at DESC
+actions:
+  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
+  - id: edit_expense_detail
+    type: server_form
+    permission: expenses.write
+    title: Edit expense
+    action: expenses.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [expense_detail, expense_detail_activity]
+    mutation:
+      operation: update
+      table: expenses
+      fields: [name, category, expense_date, description, amount, payment_method, receipt_reference, receipt_label, tax_amount, analytic_distribution]
+      required: [name, category, expense_date, amount]
+      guards:
+        - { query: "SELECT id FROM expenses WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft expenses can be edited }
+      result: { query: "SELECT * FROM expenses WHERE id = :id" }
+    fields:
+      - { field: name, label: Expense, type: text, required: true }
+      - { field: category, label: Category, type: text, required: true }
+      - { field: expense_date, label: Expense date, type: text, required: true }
+      - { field: description, label: Description, type: textarea }
+      - { field: amount, label: Total, type: number, required: true }
+      - { field: payment_method, label: Paid by, type: select, options: [{ value: Company, label: Paid by Company }, { value: Employee, label: Paid by Employee }] }
+      - { field: receipt_reference, label: Receipt attachment, type: text }
+      - { field: tax_amount, label: Taxes, type: number }
+      - { field: analytic_distribution, label: Analytic distribution, type: text }
+  - { id: submit_expense_detail, type: server, permission: expenses.write, action: expenses.submit, handler: order_transition, workflow: expense_items, operation: submit, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
+  - { id: approve_expense_detail, type: server, permission: expenses.manage, action: expenses.approve, handler: order_transition, workflow: expense_items, operation: approve, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
+  - { id: post_expense_detail, type: server, permission: expenses.manage, action: expenses.post, handler: order_transition, workflow: expense_items, operation: post, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
+  - { id: pay_expense_detail, type: server, permission: expenses.manage, action: expenses.pay, handler: order_transition, workflow: expense_items, operation: pay, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
+  - { id: refuse_expense_detail, type: server, permission: expenses.manage, action: expenses.refuse, handler: order_transition, workflow: expense_items, operation: refuse, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }
+  - { id: reset_expense_detail, type: server, permission: expenses.write, action: expenses.reset, handler: order_transition, workflow: expense_items, operation: reset, params: { id: '{state.id}' }, refresh: [expense_detail, expense_detail_activity] }

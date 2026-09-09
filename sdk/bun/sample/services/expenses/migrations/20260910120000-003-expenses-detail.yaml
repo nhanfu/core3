@@ -1,0 +1,29 @@
+version: 0.0.3
+type:
+  postgres:
+    up: |
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS tax_amount DECIMAL(18,2) DEFAULT 0;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS analytic_distribution VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS journal_entry VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS duplicate_candidate VARCHAR;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS reimbursement_status VARCHAR DEFAULT 'Not reimbursed';
+      CREATE TABLE IF NOT EXISTS expense_activity (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), expense_id VARCHAR NOT NULL,
+        actor_name VARCHAR NOT NULL, action VARCHAR NOT NULL, action_label VARCHAR NOT NULL,
+        detail VARCHAR, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT INTO expenses(id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, receipt_label, company_name, department_name, tax_amount, analytic_distribution, journal_entry, duplicate_candidate, reimbursement_status)
+      VALUES ('expense-demo-in-payment', 1, 'expense-sheet-demo-002', 'Hotel Expenses reimbursement', 'Travel & accommodation', DATE '2026-08-25', 'Admin User', 210.00, 'Employee', 'Reimbursement is being processed', 'receipt-reimbursement.pdf', 'In Payment', 'Receipt attached', 'Core3 Demo Company', 'Operations', 21.00, 'Operations: 100%', 'MISC/2026/0084', 'No duplicate found', 'In payment')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO expense_activity(expense_id, actor_name, action, action_label, detail) VALUES
+        ('expense-demo-draft', 'Admin User', 'created', 'Created', 'Draft expense created'),
+        ('expense-demo-submitted', 'Admin User', 'expenses.submit', 'Submitted', 'Submitted for manager approval'),
+        ('expense-demo-posted', 'Operations Lead', 'expenses.post', 'Posted', 'Journal entry MISC/2026/0079 posted')
+      ON CONFLICT DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS expense_activity;
+      DELETE FROM expenses WHERE id = 'expense-demo-in-payment';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

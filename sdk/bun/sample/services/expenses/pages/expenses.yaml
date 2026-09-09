@@ -29,6 +29,7 @@ components:
     selectable: true
     row_key: id
     row_actions: menu
+    row_double_click_action: view_expense_detail
     empty_state: { title: No expenses, description: There are no expenses matching these filters. }
     labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all rows, select_row: Select row, previous_page: Previous page, next_page: Next page }
     columns:
@@ -42,3 +43,5 @@ components:
       - { field: company_name, label: Company, optional: hide }
       - { field: status, label: Status, type: StatusChip }
       - { field: actions, label: '', align: right, actions: [{ id: submit_expense, label: Submit, variant: primary, permission: expenses.write, show_if: "row.status === 'Draft'" }, { id: reset_expense, label: Reset, variant: ghost, permission: expenses.write, show_if: "row.status === 'Refused'" }] }
+actions:
+  - { id: view_expense_detail, type: navigate, permission: expenses.read, navigate_to: /expenses/detail, params: { id: '{row.id}' } }
