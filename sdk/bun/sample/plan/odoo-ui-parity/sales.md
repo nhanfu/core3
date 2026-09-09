@@ -1,6 +1,6 @@
 # Sales (orders) — sub-plan
 
-Status: `planning`
+Status: `ready`
 
 ## Reference and availability
 

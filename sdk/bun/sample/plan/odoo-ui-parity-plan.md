@@ -18,7 +18,7 @@ frontend code is not copied.
 | base | contacts, base | available | `odoo-ui-parity/base-contacts.md` | ready |
 | chat | mail | available | `odoo-ui-parity/chat.md` | ready |
 | crm | crm | available | `odoo-ui-parity/crm.md` | planned |
-| order | sale_management | available | `odoo-ui-parity/sales.md` | planned |
+| order | sale_management | available | `odoo-ui-parity/sales.md` | ready |
 | point-of-sale | point_of_sale | available | `odoo-ui-parity/point-of-sale.md` | planned |
 | sale-subscription | sale_subscription | unavailable in supplied source | `odoo-ui-parity/subscriptions.md` | planned |
 | sale-renting | sale_renting | unavailable in supplied source | `odoo-ui-parity/rental.md` | planned |
