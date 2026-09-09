@@ -2,7 +2,7 @@ page: { id: pos-payment-methods }
 datasources:
   - id: pos_payment_method_catalog
     permission: pos.read
-    query: "SELECT id, name, journal, company, point_of_sale, active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(journal, '') ILIKE '%' || :q || '%') ORDER BY name, journal, id"
+    query: "SELECT id, name, journal, company, point_of_sale, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS active, CASE WHEN active THEN 'Active' ELSE 'Archived' END AS state FROM pos_payment_methods WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR COALESCE(journal, '') ILIKE '%' || :q || '%') ORDER BY name, journal, id"
 actions:
   - id: view_pos_payment_method
     type: navigate
