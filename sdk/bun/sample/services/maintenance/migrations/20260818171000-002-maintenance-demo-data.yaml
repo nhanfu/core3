@@ -3,13 +3,17 @@ kind: data
 type:
   postgres:
     up: |
-      INSERT OR IGNORE INTO maintenance_equipment(id, name, serial_number, category, location, technician, preventive_interval_days, next_preventive_date)
-      VALUES ('equipment-demo-001', 'CNC Mill 01', 'CNC-001', 'Production', 'Workshop A', 'Maintenance Team', 30, CURRENT_DATE + INTERVAL 30 DAY);
-      INSERT OR IGNORE INTO maintenance_requests(id, name, equipment_id, equipment_name, request_type, description, priority, assigned_to, scheduled_date)
-      VALUES ('maintenance-demo-001', 'MNT/2026/0001', 'equipment-demo-001', 'CNC Mill 01', 'Preventive', 'Monthly lubrication and calibration', 'Normal', 'Maintenance Team', CURRENT_DATE + INTERVAL 7 DAY);
+      INSERT INTO maintenance_stages(id, name, sequence) VALUES ('maintenance-stage-new', 'New Request', 10), ('maintenance-stage-progress', 'In Progress', 20), ('maintenance-stage-repaired', 'Repaired', 30), ('maintenance-stage-scrap', 'Scrap', 40) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO maintenance_teams(id, name) VALUES ('maintenance-team-metrology', 'Metrology'), ('maintenance-team-subcontractor', 'Subcontractor') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO maintenance_categories(id, name) VALUES ('maintenance-category-computers', 'Computers'), ('maintenance-category-printers', 'Printers'), ('maintenance-category-monitors', 'Monitors') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO maintenance_equipment(id, name, serial_number, model, category, category_id, location, technician, team, team_id, preventive_interval_days, next_preventive_date, state, archived, company_name) VALUES ('equipment-demo-001', 'CNC Mill 01', 'CNC-001', 'CM-100', 'Computers', 'maintenance-category-computers', 'Workshop A', 'Alex Chen', 'Metrology', 'maintenance-team-metrology', 30, DATE '2026-02-14', 'Active', FALSE, 'My Company'), ('equipment-demo-002', 'Acer Laptop', 'ACER-002', 'TravelMate', 'Computers', 'maintenance-category-computers', 'Office 2', NULL, 'Subcontractor', 'maintenance-team-subcontractor', 90, DATE '2026-04-15', 'Active', FALSE, 'My Company'), ('equipment-demo-003', 'Archived Printer', 'HP-003', 'Inkjet', 'Printers', 'maintenance-category-printers', 'Storage', NULL, NULL, NULL, NULL, NULL, 'Archived', TRUE, 'My Company') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO maintenance_requests(id, name, equipment_id, equipment_name, category, category_id, team, team_id, request_type, description, instructions, priority, assigned_to, owner, scheduled_date, stage, state, kanban_state, recurrence, company_name) VALUES ('maintenance-demo-001', 'MNT/2026/0001', 'equipment-demo-001', 'CNC Mill 01', 'Computers', 'maintenance-category-computers', 'Metrology', 'maintenance-team-metrology', 'Preventive', 'Monthly lubrication and calibration', 'Use the approved calibration checklist.', 'Normal', 'Alex Chen', 'Demo User', DATE '2026-01-20', 'New Request', 'New Request', 'ready', 'Every 30 days', 'My Company'), ('maintenance-demo-002', 'MNT/2026/0002', 'equipment-demo-002', 'Acer Laptop', 'Computers', 'maintenance-category-computers', 'Subcontractor', 'maintenance-team-subcontractor', 'Corrective', 'Some keys are not working', 'Replace the keyboard if cleaning fails.', 'High', NULL, 'Demo User', DATE '2026-01-22', 'In Progress', 'In Progress', 'blocked', NULL, 'My Company'), ('maintenance-demo-003', 'MNT/2026/0003', 'equipment-demo-001', 'CNC Mill 01', 'Computers', 'maintenance-category-computers', 'Metrology', 'maintenance-team-metrology', 'Corrective', 'Resolution is bad', NULL, 'Normal', 'Alex Chen', 'Demo User', DATE '2026-01-10', 'Repaired', 'Repaired', 'ready', NULL, 'My Company'), ('maintenance-demo-004', 'MNT/2026/0004', 'equipment-demo-002', 'Acer Laptop', 'Computers', 'maintenance-category-computers', 'Subcontractor', 'maintenance-team-subcontractor', 'Corrective', 'Battery drains fast', NULL, 'Low', NULL, 'Other User', NULL, 'Scrap', 'Scrap', 'ready', NULL, 'Other Company') ON CONFLICT (id) DO NOTHING;
     down: |
-      DELETE FROM maintenance_requests WHERE id = 'maintenance-demo-001';
-      DELETE FROM maintenance_equipment WHERE id = 'equipment-demo-001';
+      DELETE FROM maintenance_requests WHERE id LIKE 'maintenance-demo-%';
+      DELETE FROM maintenance_equipment WHERE id LIKE 'equipment-demo-%';
+      DELETE FROM maintenance_categories WHERE id LIKE 'maintenance-category-%';
+      DELETE FROM maintenance_teams WHERE id LIKE 'maintenance-team-%';
+      DELETE FROM maintenance_stages WHERE id LIKE 'maintenance-stage-%';
   duckdb: postgres
   mysql: postgres
   oracle: postgres

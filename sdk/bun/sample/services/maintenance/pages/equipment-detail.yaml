@@ -1,0 +1,12 @@
+title: Equipment
+page: { id: maintenance-equipment-detail, route: /equipment/detail, breadcrumb: [Supply Chain, Maintenance, Equipment], auth: { require: [maintenance.read] } }
+components:
+  - type: OdooFormView
+    source: maintenance_equipment_detail
+    title_field: name
+    subtitle_field: model
+    status_field: state
+    status_colors: { Active: green, Archived: neutral }
+    group_columns: 2
+    groups: [{ title: Equipment, fields: [{ field: name, label: Equipment }, { field: state, label: Status }, { field: model, label: Model }, { field: serial_number, label: Serial number }, { field: vendor_reference, label: Vendor reference }, { field: category, label: Category }] }, { title: Ownership and maintenance, fields: [{ field: owner, label: Owner }, { field: technician, label: Technician }, { field: team, label: Team }, { field: location, label: Location }, { field: next_preventive_date, label: Next preventive date }, { field: warranty_date, label: Warranty date }, { field: cost, label: Cost }, { field: description, label: Description }] }]
+actions: []

@@ -1,0 +1,33 @@
+page: { id: maintenance-requests }
+datasources:
+  - { id: maintenance_request_states, single: false, permission: maintenance.read, query: "SELECT id AS value, name AS label FROM maintenance_stages WHERE active = TRUE ORDER BY sequence" }
+  - { id: maintenance_equipment_lookup, single: false, permission: maintenance.read, query: "SELECT id AS value, name AS label FROM maintenance_equipment WHERE archived = FALSE ORDER BY name" }
+  - id: maintenance_requests
+    single: false
+    permission: maintenance.read
+    workflow: maintenance_requests
+    query: "SELECT r.id, r.row_version, r.name, r.equipment_name, r.category, r.team, r.request_type, r.description, r.priority, r.assigned_to, r.owner, r.stage, r.state, r.kanban_state, CAST(r.request_date AS VARCHAR) AS request_date, CAST(r.scheduled_date AS VARCHAR) AS scheduled_date, CAST(r.completed_date AS VARCHAR) AS completed_date, r.archived FROM maintenance_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.equipment_name ILIKE '%' || :q || '%' OR r.category ILIKE '%' || :q || '%' OR r.assigned_to ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) AND (:priority IS NULL OR r.priority = :priority) AND (:archived IS NULL OR (:archived = 'active' AND r.archived = FALSE) OR (:archived = 'archived' AND r.archived = TRUE)) ORDER BY r.request_date DESC, r.name"
+actions:
+  - id: create_maintenance_request
+    type: server_form
+    permission: maintenance.write
+    title: New maintenance request
+    action: maintenance.requests.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [maintenance_requests]
+    mutation: { operation: insert, table: maintenance_requests, fields: [name, equipment_id, equipment_name, category, team, request_type, description, instructions, priority, assigned_to, owner, request_date, scheduled_date, recurrence], required: [name, equipment_id, equipment_name, description], result: { query: "SELECT * FROM maintenance_requests WHERE id = :id" } }
+    fields:
+      - { field: name, label: Request, type: text, required: true }
+      - { field: equipment_id, label: Equipment, type: select, options_source: maintenance_equipment_lookup, required: true }
+      - { field: equipment_name, label: Equipment name, type: text, required: true }
+      - { field: request_type, label: Type, type: select, options: [{ value: Corrective, label: Corrective }, { value: Preventive, label: Preventive }], required: true }
+      - { field: description, label: Description, type: text, required: true }
+      - { field: priority, label: Priority, type: select, options: [Low, Normal, High], required: true }
+      - { field: assigned_to, label: Assigned to, type: text }
+      - { field: scheduled_date, label: Scheduled date, type: text }
+      - { field: recurrence, label: Recurrence, type: text }
+  - { id: assign_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.assign, handler: order_transition, workflow: maintenance_requests, operation: assign, refresh: [maintenance_requests] }
+  - { id: start_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.start, handler: order_transition, workflow: maintenance_requests, operation: start, refresh: [maintenance_requests] }
+  - { id: repair_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.repair, handler: order_transition, workflow: maintenance_requests, operation: repair, refresh: [maintenance_requests] }
+  - { id: cancel_maintenance_request, type: server, permission: maintenance.write, action: maintenance.requests.cancel, handler: order_transition, workflow: maintenance_requests, operation: cancel, refresh: [maintenance_requests] }

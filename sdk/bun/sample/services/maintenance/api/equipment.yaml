@@ -1,0 +1,24 @@
+page: { id: equipment }
+datasources:
+  - id: maintenance_equipment
+    single: false
+    permission: maintenance.read
+    query: "SELECT id, row_version, name, serial_number, model, vendor_reference, category, location, owner, technician, team, CAST(next_preventive_date AS VARCHAR) AS next_preventive_date, state, archived FROM maintenance_equipment WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR serial_number ILIKE '%' || :q || '%' OR model ILIKE '%' || :q || '%' OR vendor_reference ILIKE '%' || :q || '%') AND (:state IS NULL OR state = :state) ORDER BY name, id"
+actions:
+  - id: create_maintenance_equipment
+    type: server_form
+    permission: maintenance.manage
+    title: New equipment
+    action: maintenance.equipment.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [maintenance_equipment]
+    mutation: { operation: insert, table: maintenance_equipment, fields: [name, serial_number, model, vendor_reference, category, location, owner, technician, team, preventive_interval_days, next_preventive_date, warranty_date, cost, description], required: [name], result: { query: "SELECT * FROM maintenance_equipment WHERE id = :id" } }
+    fields:
+      - { field: name, label: Equipment, type: text, required: true }
+      - { field: serial_number, label: Serial number, type: text }
+      - { field: model, label: Model, type: text }
+      - { field: category, label: Category, type: text }
+      - { field: location, label: Location, type: text }
+      - { field: technician, label: Technician, type: text }
+      - { field: preventive_interval_days, label: Preventive interval days, type: number }
