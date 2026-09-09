@@ -21,8 +21,11 @@ Status: in-progress
 
 The accounting service provides YAML-first invoices with list/kanban/pivot
 views, create and payment forms, invoice workflow, journal entries, payments,
-and analysis. It currently exposes `/invoices`, `/journal-entries`,
-`/payments`, and `/analysis`.
+and analysis. It currently exposes `/accounting/invoices`,
+`/accounting/journal-entries`, `/accounting/payments`, and
+`/accounting/analysis`, with deterministic invoice, journal-entry, and payment
+fixtures. Invoice list double-click navigation is verified at
+`/accounting/invoice-detail` and renders an OdooFormView detail state.
 
 ## Remaining parity work
 
