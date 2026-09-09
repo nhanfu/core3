@@ -222,6 +222,13 @@ and archived fixtures, six lifecycle request aggregates, zero unexpected
 responses, and no horizontal overflow. Captures are kept outside Git under
 `/tmp/core3-time-off-{desktop,mobile}-{types,analysis}-views.png`.
 
+The management/configuration batch adds fixture-backed Allocations, Accrual
+Plans, Public Holidays, and Mandatory Days routes, with corresponding menu
+groups and API fragments. Authenticated desktop/mobile checks verified the
+Odoo-observed records and columns on all four routes with zero unexpected
+responses and no horizontal overflow. Core3 captures are under
+`/tmp/core3-time-off-{desktop,mobile}-{allocations,accrual-plans,public-holidays,mandatory-days}-management.png`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
