@@ -1,0 +1,23 @@
+title: Accounting Settings
+page: { id: accounting-settings, route: /accounting/settings, breadcrumb: [Finance, Configuration, Settings], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_settings
+    single: true
+    permission: accounting.read
+    query: "SELECT 'accounting-settings' AS id, 'USD' AS currency, 'Accrual' AS accounting_basis, '30 days' AS default_payment_terms, true AS lock_posted_entries, true AS tax_included_prices, 'Main Company' AS company"
+components:
+  - type: OdooFormView
+    source: accounting_settings
+    title_field: company
+    group_columns: 2
+    groups:
+      - title: Fiscal settings
+        fields:
+          - { field: company, label: Company }
+          - { field: currency, label: Currency }
+          - { field: accounting_basis, label: Accounting basis }
+          - { field: default_payment_terms, label: Default payment terms }
+      - title: Controls
+        fields:
+          - { field: lock_posted_entries, label: Lock posted entries }
+          - { field: tax_included_prices, label: Tax-included prices }

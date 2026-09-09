@@ -1,0 +1,18 @@
+title: Taxes
+page: { id: taxes, route: /accounting/taxes, breadcrumb: [Finance, Configuration, Taxes], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_taxes
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('tax-sales-10','Sales Tax 10%','Sales','10.00','Active'), ('tax-purchase-10','Purchase Tax 10%','Purchases','10.00','Active'), ('tax-zero','Zero Rate','Sales','0.00','Active')) taxes(id,name,tax_scope,rate,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_taxes
+    search: { label: Search taxes, placeholder: Search tax... }
+    columns:
+      - { field: name, label: Tax, type: PrimaryEntityCell }
+      - { field: tax_scope, label: Scope }
+      - { field: rate, label: Rate }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

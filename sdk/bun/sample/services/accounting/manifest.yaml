@@ -22,6 +22,29 @@ menu:
           label: Payments
           icon: bank
           permission: accounting.read
+        - path: /accounting/chart-of-accounts
+          label: Chart of Accounts
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/journals
+          label: Journals
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/taxes
+          label: Taxes
+          icon: percent
+          permission: accounting.read
+        - path: /accounting/payment-terms
+          label: Payment Terms
+          icon: calendar
+          permission: accounting.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /accounting/settings
+          label: Settings
+          icon: settings
+          permission: accounting.read
     - id: reporting
       label: Reporting
       items:

@@ -1,0 +1,19 @@
+title: Chart of Accounts
+page: { id: chart-of-accounts, route: /accounting/chart-of-accounts, breadcrumb: [Finance, Accounting, Chart of Accounts], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_chart_of_accounts
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('100000','Receivable','Assets','Debit','Active'), ('101000','Bank','Assets','Debit','Active'), ('200000','Payable','Liabilities','Credit','Active'), ('400000','Product Sales','Income','Credit','Active'), ('600000','Operating Expenses','Expenses','Debit','Active')) accounts(code,name,account_type,normal_balance,state) ORDER BY code"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_chart_of_accounts
+    search: { label: Search accounts, placeholder: Search account code or name... }
+    columns:
+      - { field: code, label: Code, type: PrimaryEntityCell }
+      - { field: name, label: Account }
+      - { field: account_type, label: Type }
+      - { field: normal_balance, label: Balance }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: code

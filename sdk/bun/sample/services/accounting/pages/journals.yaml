@@ -1,0 +1,18 @@
+title: Journals
+page: { id: journals, route: /accounting/journals, breadcrumb: [Finance, Configuration, Journals], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_journals
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('sales','Sales','Sales','USD','Active'), ('purchases','Purchases','Purchase','USD','Active'), ('bank','Bank','Bank','USD','Active'), ('cash','Cash','Cash','USD','Active'), ('misc','Miscellaneous','Miscellaneous','USD','Active')) journals(id,name,journal_type,currency,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_journals
+    search: { label: Search journals, placeholder: Search journal... }
+    columns:
+      - { field: name, label: Journal, type: PrimaryEntityCell }
+      - { field: journal_type, label: Type }
+      - { field: currency, label: Currency }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

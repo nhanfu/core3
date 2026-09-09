@@ -27,11 +27,16 @@ and analysis. It currently exposes `/accounting/invoices`,
 fixtures. Invoice list double-click navigation is verified at
 `/accounting/invoice-detail` and renders an OdooFormView detail state.
 
+The current batch adds authenticated, fixture-backed Settings, Chart of
+Accounts, Journals, Taxes, and Payment Terms routes under `/accounting/*`.
+Each route was smoke-tested in desktop Chrome; the implementation remains
+image-free in Git.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining customer/vendor, reporting,
-chart-of-accounts, journal, tax, payment-provider, analytic-account, closing,
-and settings surfaces. Implement OdooFormView detail pages, create/edit forms,
+payment-provider, analytic-account, closing, and settings surfaces. Implement
+OdooFormView detail pages, create/edit forms,
 register-payment and reconciliation modals, filters, empty/error/permission
 states, and responsive desktop/mobile behavior using service-owned fixtures.
 

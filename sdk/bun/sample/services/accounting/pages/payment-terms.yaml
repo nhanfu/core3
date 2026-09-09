@@ -1,0 +1,17 @@
+title: Payment Terms
+page: { id: payment-terms, route: /accounting/payment-terms, breadcrumb: [Finance, Configuration, Payment Terms], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_payment_terms
+    permission: accounting.read
+    query: "SELECT * FROM (VALUES ('immediate','Immediate Payment','Due on receipt','Active'), ('net30','Net 30','30 days','Active'), ('net60','Net 60','60 days','Active')) terms(id,name,description,state) ORDER BY name"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_payment_terms
+    search: { label: Search payment terms, placeholder: Search payment term... }
+    columns:
+      - { field: name, label: Payment term, type: PrimaryEntityCell }
+      - { field: description, label: Due rule }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
