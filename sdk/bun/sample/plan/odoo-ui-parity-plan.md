@@ -16,7 +16,7 @@ frontend code is not copied.
 | Core3 service | Odoo reference addon | Source status | Sub-plan | Status |
 | --- | --- | --- | --- | --- |
 | base | contacts, base | available | `odoo-ui-parity/base-contacts.md` | ready |
-| chat | mail | available | `odoo-ui-parity/chat.md` | planned |
+| chat | mail | available | `odoo-ui-parity/chat.md` | ready |
 | crm | crm | available | `odoo-ui-parity/crm.md` | planned |
 | order | sale_management | available | `odoo-ui-parity/sales.md` | planned |
 | point-of-sale | point_of_sale | available | `odoo-ui-parity/point-of-sale.md` | planned |

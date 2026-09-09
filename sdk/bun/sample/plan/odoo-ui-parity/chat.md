@@ -1,6 +1,6 @@
 # Chat — sub-plan
 
-Status: `planning`
+Status: `ready`
 
 ## Reference
 
