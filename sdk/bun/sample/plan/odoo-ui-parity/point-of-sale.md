@@ -133,6 +133,12 @@ Each route is a `ListView` backed by the convention-discovered
 Active/Archived filter. Fixtures mirror the visible Odoo list columns for
 choices, pricelists, categories, attributes, and tags.
 
+Authenticated Core3 checks at 1440x900 and 390x844 loaded all five catalog
+routes with 4-5 deterministic rows, no unexpected failed responses, and no
+horizontal overflow. Captures are under `/tmp/core3-pos-{desktop,mobile}-*`
+for the five catalog routes; corresponding Odoo reference captures remain
+under `/tmp/odoo-pos-*`.
+
 ## Shared primitives and fixtures
 
 Use the existing POS cashier, `ListView`, `OdooFormView`, `StatRow`, `Chart`,
