@@ -319,6 +319,12 @@ service-owned settings fields. Authenticated desktop/mobile checks confirmed
 the Save action remains on `/events/settings` with no failed requests or page
 overflow; the mobile evidence is `/tmp/core3-events-mobile-settings-save.png`.
 
+Registration Desk now includes a manual attendee form alongside the scanner
+guidance and registration counters. An authenticated mobile check submitted
+`QA Attendee` for `EVT/2026/0002`, refreshed the counters from 3 to 4, and
+returned no failed requests or page overflow; the evidence is
+`/tmp/core3-events-mobile-registration-desk-created.png`.
+
 The installed Odoo event card interaction opens `/odoo/events/8`; desktop and
 mobile detail captures show the event status, registration/ticket sections,
 registration actions, and chatter with no failed requests or mobile overflow.

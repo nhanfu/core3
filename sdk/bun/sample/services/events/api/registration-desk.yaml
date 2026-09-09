@@ -3,4 +3,4 @@ datasources:
   - id: event_registration_desk
     single: true
     permission: events.read
-    query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Registered') AS pending FROM event_registrations"
+    query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Registered') AS pending, 'event-demo-002' AS event_id, 'EVT/2026/0002' AS event_name FROM event_registrations"

@@ -7,3 +7,37 @@ components:
   - type: StatRow
     source: event_registration_desk
     stats: [{ label: Registrations, field: registrations }, { label: Pending, field: pending }]
+  - type: Form
+    id: registration-desk-check-in
+    title: Manual registration
+    action: register_event_from_desk
+    submit_label: Register attendee
+    fields:
+      - { field: event_id, label: Event ID, type: text, required: true }
+      - { field: event_name, label: Event, type: text, required: true }
+      - { field: attendee_name, label: Attendee, type: text, required: true }
+      - { field: attendee_email, label: Email, type: text }
+      - { field: ticket_type, label: Ticket type, type: text }
+actions:
+  - id: register_event_from_desk
+    type: server_form
+    permission: events.write
+    title: Register attendee
+    action: events.registrations.create
+    handler: yaml_mutation
+    operation: register
+    refresh: [event_registration_desk]
+    mutation:
+      operation: insert
+      table: event_registrations
+      fields: [event_id, event_name, attendee_name, attendee_email, ticket_type]
+      required: [event_id, event_name, attendee_name]
+      guards: [{ query: "SELECT 1 AS ok FROM events WHERE id = :event_id AND state IN ('Published', 'In Progress') AND (capacity = 0 OR registration_count < capacity)", status: 409, message: The event is not open or has reached capacity }]
+      steps: [{ query: "UPDATE events SET registration_count = registration_count + 1, row_version = row_version + 1 WHERE id = :event_id" }]
+      result: { query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Registered') AS pending FROM event_registrations" }
+    fields:
+      - { field: event_id, label: Event ID, type: text, required: true }
+      - { field: event_name, label: Event, type: text, required: true }
+      - { field: attendee_name, label: Attendee, type: text, required: true }
+      - { field: attendee_email, label: Email, type: text }
+      - { field: ticket_type, label: Ticket type, type: text }
