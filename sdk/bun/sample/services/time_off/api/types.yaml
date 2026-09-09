@@ -1,5 +1,9 @@
 page: { id: leave-types }
 datasources:
+  - id: leave_type_states
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Active','Active'), ('Archived','Archived')) states(value, label)"
   - id: leave_types
     permission: time_off.read
-    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types ORDER BY name"
+    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types WHERE (:state IS NULL OR state = :state) ORDER BY name"

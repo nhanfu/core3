@@ -11,3 +11,23 @@ components:
     label_field: category
     value_field: request_count
     variant: bar
+  - type: ListView
+    variant: odoo
+    source: time_off_analysis_states
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: category, column: Status }, { field: request_count, column: Requests }]
+          default:
+            rows: [category]
+            measures: [{ field: request_count, aggregate: sum, label: Requests }]
+    columns:
+      - { field: category, label: Status, type: PrimaryEntityCell }
+      - { field: request_count, label: Requests, align: right }
+    page_size: 25
+    row_key: category

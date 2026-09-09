@@ -6,6 +6,21 @@ components:
     source: leave_types
     create_action: create_leave_type
     create_label: New leave type
+    search: { label: Search leave types, placeholder: Search by name or code... }
+    filters: [{ field: state, label: Status, options_source: leave_type_states }]
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: code
+          fields:
+            - { field: allocation_days, label: Allocation days }
+            - { field: state, label: Status }
     columns:
       - { field: name, label: Leave type, type: PrimaryEntityCell }
       - { field: code, label: Code }
@@ -14,6 +29,7 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_actions: menu
 actions:
   - id: create_leave_type
     type: server_form
