@@ -35,6 +35,8 @@
   color: var(--o-list-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, "Noto Sans", Arial, sans-serif;
   font-size: 13px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .o-list-view.o-list-view-body-scroll {
