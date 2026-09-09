@@ -33,5 +33,5 @@ actions:
   - id: open_pos_register
     type: navigate
     permission: pos.write
-    navigate_to: /point-of-sale/cashier
+    navigate_to: /point-of-sale/touch
     params: { config_id: '{row.id}' }

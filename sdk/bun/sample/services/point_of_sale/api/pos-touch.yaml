@@ -1,0 +1,37 @@
+page: { id: pos-touch }
+
+datasources:
+  - id: pos_touch_products
+    single: false
+    permission: pos.read
+    query: |
+      SELECT id, name, barcode, category,
+        CAST(price AS DOUBLE) AS price,
+        CAST(tax_rate AS DOUBLE) AS tax_rate
+      FROM pos_products
+      WHERE active = true
+        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR barcode ILIKE '%' || :q || '%')
+      ORDER BY category, name
+
+  - id: pos_touch_sessions
+    single: false
+    permission: pos.read
+    query: |
+      SELECT id, name, config, state,
+        CAST(balance_start AS DOUBLE) AS balance_start,
+        CAST(COALESCE(opening_counted, 0) AS DOUBLE) AS opening_counted
+      FROM pos_sessions
+      WHERE state = 'In Progress'
+      ORDER BY opened_at DESC
+
+  - id: pos_touch_open_orders
+    single: false
+    permission: pos.read
+    query: |
+      SELECT o.id, o.name, o.partner_name, o.state,
+        CAST(o.amount_total AS DOUBLE) AS amount_total,
+        CAST(o.amount_paid AS DOUBLE) AS amount_paid
+      FROM pos_orders o
+      JOIN pos_sessions s ON s.id = o.session_id
+      WHERE o.state = 'New' AND s.state = 'In Progress'
+      ORDER BY o.date_order DESC
