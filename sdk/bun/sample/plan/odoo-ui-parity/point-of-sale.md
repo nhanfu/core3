@@ -45,6 +45,11 @@ Preparation Printers, Note Models, Coins/Bills, and Presets. Desktop/mobile
 browser smoke checks verified 3, 3, 6, and 3 rows respectively; comparison
 captures remain temporary local evidence.
 
+The POS Taxes comparison was recaptured after rebuilding the ignored global and
+POS styles; authenticated desktop/mobile checks show all four tax rows with no
+unexpected failures or horizontal overflow. Corrected Core3 captures are
+`/tmp/core3-pos-{desktop,mobile}-taxes-recaptured.png`.
+
 The product-catalog batch adds the five remaining Odoo product submenu routes:
 Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
 Each route is a `ListView` backed by the convention-discovered
