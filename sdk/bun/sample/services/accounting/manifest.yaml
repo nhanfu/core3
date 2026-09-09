@@ -18,6 +18,18 @@ menu:
           label: Invoices
           icon: invoice
           permission: accounting.read
+        - path: /accounting/credit-notes
+          label: Credit Notes
+          icon: invoice
+          permission: accounting.read
+        - path: /accounting/vendor-bills
+          label: Vendor Bills
+          icon: invoice
+          permission: accounting.read
+        - path: /accounting/vendor-refunds
+          label: Vendor Refunds
+          icon: invoice
+          permission: accounting.read
     - id: accounting
       label: Accounting
       items:

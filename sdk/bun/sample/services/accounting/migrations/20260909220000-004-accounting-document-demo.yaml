@@ -1,0 +1,15 @@
+version: 0.0.4
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_invoices(id, name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference)
+      VALUES
+        ('accounting-credit-demo-001', 'CN/2026/0001', 'Azure Interior', 'Customer Credit Note', CURRENT_DATE - INTERVAL '3' DAY, CURRENT_DATE + INTERVAL '27' DAY, 250, 25, 275, 275, 'Posted', 'INV/2026/0001'),
+        ('accounting-refund-demo-001', 'REF/2026/0001', 'Lumber Inc', 'Vendor Refund', CURRENT_DATE - INTERVAL '4' DAY, CURRENT_DATE + INTERVAL '26' DAY, 120, 12, 132, 0, 'Paid', 'BILL/2026/0001');
+    down: |
+      DELETE FROM accounting_invoices WHERE id IN ('accounting-credit-demo-001', 'accounting-refund-demo-001');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

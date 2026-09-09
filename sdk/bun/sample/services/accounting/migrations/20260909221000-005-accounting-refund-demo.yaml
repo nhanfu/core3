@@ -1,0 +1,13 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_invoices(id, name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference)
+      VALUES ('accounting-refund-demo-001', 'REF/2026/0001', 'Lumber Inc', 'Vendor Refund', CURRENT_DATE - INTERVAL '4' DAY, CURRENT_DATE + INTERVAL '26' DAY, 120, 12, 132, 0, 'Paid', 'BILL/2026/0001');
+    down: |
+      DELETE FROM accounting_invoices WHERE id = 'accounting-refund-demo-001';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

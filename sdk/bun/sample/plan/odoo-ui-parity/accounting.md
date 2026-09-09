@@ -54,6 +54,12 @@ Odoo `/odoo/accounting`, with deterministic Sales, Purchases, Bank, and Point
 of Sale summary fixtures and an explicit Invoicing menu group. Desktop/mobile
 captures remain temporary local evidence.
 
+The document batch adds fixture-backed `/accounting/credit-notes`,
+`/accounting/vendor-bills`, and `/accounting/vendor-refunds` list states with
+the same role-specific columns observed at Odoo `/odoo/credit-notes`,
+`/odoo/vendor-bills`, and `/odoo/vendor-refunds`. Desktop/mobile captures are
+kept outside Git.
+
 ## Remaining parity work
 
 Add explicit menu/page coverage for the remaining customer/vendor, reporting,

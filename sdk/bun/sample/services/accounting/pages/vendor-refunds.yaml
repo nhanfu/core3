@@ -1,0 +1,21 @@
+title: Vendor Refunds
+page: { id: accounting-vendor-refunds, route: /accounting/vendor-refunds, breadcrumb: [Finance, Vendors, Refunds], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_vendor_refunds
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_total, amount_residual, state, reference FROM accounting_invoices WHERE invoice_type = 'Vendor Refund' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%') ORDER BY invoice_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_vendor_refunds
+    search: { label: Search vendor refunds, placeholder: Search refunds and vendors... }
+    columns:
+      - { field: name, label: Refund, type: PrimaryEntityCell }
+      - { field: partner_name, label: Vendor }
+      - { field: invoice_date, label: Refund date }
+      - { field: due_date, label: Due date }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_residual, label: Due, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

@@ -1,0 +1,21 @@
+title: Credit Notes
+page: { id: accounting-credit-notes, route: /accounting/credit-notes, breadcrumb: [Finance, Customers, Credit Notes], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_credit_notes
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_total, amount_residual, state, reference FROM accounting_invoices WHERE invoice_type = 'Customer Credit Note' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%') ORDER BY invoice_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_credit_notes
+    search: { label: Search credit notes, placeholder: Search credit notes and customers... }
+    columns:
+      - { field: name, label: Credit Note, type: PrimaryEntityCell }
+      - { field: partner_name, label: Customer }
+      - { field: invoice_date, label: Credit note date }
+      - { field: due_date, label: Due date }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_residual, label: Due, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

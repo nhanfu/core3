@@ -1,0 +1,21 @@
+title: Vendor Bills
+page: { id: accounting-vendor-bills, route: /accounting/vendor-bills, breadcrumb: [Finance, Vendors, Bills], auth: { require: [accounting.read] } }
+datasources:
+  - id: accounting_vendor_bills
+    permission: accounting.read
+    query: "SELECT id, row_version, name, partner_name, CAST(invoice_date AS VARCHAR) AS invoice_date, CAST(due_date AS VARCHAR) AS due_date, amount_total, amount_residual, state, reference FROM accounting_invoices WHERE invoice_type = 'Vendor Bill' AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%') ORDER BY invoice_date DESC"
+components:
+  - type: ListView
+    variant: odoo
+    source: accounting_vendor_bills
+    search: { label: Search vendor bills, placeholder: Search bills and vendors... }
+    columns:
+      - { field: name, label: Bill, type: PrimaryEntityCell }
+      - { field: partner_name, label: Vendor }
+      - { field: invoice_date, label: Bill date }
+      - { field: due_date, label: Due date }
+      - { field: amount_total, label: Total, align: right }
+      - { field: amount_residual, label: Due, align: right }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
