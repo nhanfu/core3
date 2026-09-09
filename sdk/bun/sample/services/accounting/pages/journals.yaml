@@ -1,13 +1,11 @@
 title: Journals
 page: { id: journals, route: /accounting/journals, breadcrumb: [Finance, Configuration, Journals], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_journals
-    permission: accounting.read
-    query: "SELECT * FROM (VALUES ('sales','Sales','Sales','USD','Active'), ('purchases','Purchases','Purchase','USD','Active'), ('bank','Bank','Bank','USD','Active'), ('cash','Cash','Cash','USD','Active'), ('misc','Miscellaneous','Miscellaneous','USD','Active')) journals(id,name,journal_type,currency,state) ORDER BY name"
 components:
   - type: ListView
     variant: odoo
     source: accounting_journals
+    create_action: create_accounting_journal
+    create_label: New
     search: { label: Search journals, placeholder: Search journal... }
     columns:
       - { field: name, label: Journal, type: PrimaryEntityCell }
@@ -16,3 +14,14 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: create_accounting_journal
+    type: server_form
+    permission: accounting.write
+    title: New Journal
+    action: accounting.journals.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_journals]
+    mutation: { operation: insert, table: accounting_config_journals, fields: [name, journal_type, currency, state], required: [name, journal_type], defaults: { currency: USD, state: Active }, result: { query: "SELECT * FROM accounting_config_journals WHERE id = :id" } }
+    fields: [{ field: name, label: Journal, type: text, required: true }, { field: journal_type, label: Type, type: select, options: [{ value: Sales, label: Sales }, { value: Purchase, label: Purchase }, { value: Bank, label: Bank }, { value: Cash, label: Cash }, { value: Miscellaneous, label: Miscellaneous }] }, { field: currency, label: Currency, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]

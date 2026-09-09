@@ -1,13 +1,22 @@
 title: Payment Methods
 page: { id: payment-methods, route: /accounting/payment-methods, breadcrumb: [Finance, Configuration, Payment Methods], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_payment_methods
-    permission: accounting.read
-    query: "SELECT * FROM (VALUES ('bank','Bank','Manual bank transfer','Active'), ('cash','Cash','Cash payment','Active'), ('card','Card','Card terminal','Active')) methods(id,name,description,state) ORDER BY name"
 components:
   - type: ListView
     variant: odoo
     source: accounting_payment_methods
+    create_action: create_accounting_payment_method
+    create_label: New
     search: { label: Search payment methods, placeholder: Search methods... }
     columns: [{ field: name, label: Method, type: PrimaryEntityCell }, { field: description, label: Description }, { field: state, label: Status, type: StatusChip }]
     row_key: id
+actions:
+  - id: create_accounting_payment_method
+    type: server_form
+    permission: accounting.write
+    title: New Payment Method
+    action: accounting.payment_methods.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_payment_methods]
+    mutation: { operation: insert, table: accounting_config_payment_methods, fields: [name, description, state], required: [name], defaults: { state: Active }, result: { query: "SELECT * FROM accounting_config_payment_methods WHERE id = :id" } }
+    fields: [{ field: name, label: Method, type: text, required: true }, { field: description, label: Description, type: text }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]

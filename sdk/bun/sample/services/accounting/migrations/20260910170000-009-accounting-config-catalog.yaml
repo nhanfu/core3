@@ -1,0 +1,25 @@
+version: 0.0.9
+description: Accounting configuration catalog fixtures
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS accounting_config_taxes (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, tax_scope VARCHAR NOT NULL, rate DECIMAL(8,2) NOT NULL DEFAULT 0, state VARCHAR NOT NULL DEFAULT 'Active');
+      CREATE TABLE IF NOT EXISTS accounting_config_journals (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, journal_type VARCHAR NOT NULL, currency VARCHAR NOT NULL DEFAULT 'USD', state VARCHAR NOT NULL DEFAULT 'Active');
+      CREATE TABLE IF NOT EXISTS accounting_config_accounts (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, code VARCHAR NOT NULL, name VARCHAR NOT NULL, account_type VARCHAR NOT NULL, normal_balance VARCHAR NOT NULL, state VARCHAR NOT NULL DEFAULT 'Active');
+      CREATE TABLE IF NOT EXISTS accounting_config_payment_terms (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, description VARCHAR, state VARCHAR NOT NULL DEFAULT 'Active');
+      CREATE TABLE IF NOT EXISTS accounting_config_payment_methods (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL, description VARCHAR, state VARCHAR NOT NULL DEFAULT 'Active');
+      INSERT INTO accounting_config_taxes(id,name,tax_scope,rate) VALUES ('tax-sales-10','Sales Tax 10%','Sales',10),('tax-purchase-10','Purchase Tax 10%','Purchases',10),('tax-zero','Zero Rate','Sales',0) ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_config_journals(id,name,journal_type,currency) VALUES ('sales','Sales','Sales','USD'),('purchases','Purchases','Purchase','USD'),('bank','Bank','Bank','USD'),('cash','Cash','Cash','USD'),('misc','Miscellaneous','Miscellaneous','USD') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_config_accounts(id,code,name,account_type,normal_balance) VALUES ('account-receivable','100000','Receivable','Assets','Debit'),('account-bank','101000','Bank','Assets','Debit'),('account-payable','200000','Payable','Liabilities','Credit'),('account-sales','400000','Product Sales','Income','Credit'),('account-expenses','600000','Operating Expenses','Expenses','Debit') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_config_payment_terms(id,name,description) VALUES ('immediate','Immediate Payment','Due on receipt'),('net30','Net 30','30 days'),('net60','Net 60','60 days') ON CONFLICT (id) DO NOTHING;
+      INSERT INTO accounting_config_payment_methods(id,name,description) VALUES ('bank','Bank','Manual bank transfer'),('cash','Cash','Cash payment'),('card','Card','Card terminal') ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS accounting_config_payment_methods;
+      DROP TABLE IF EXISTS accounting_config_payment_terms;
+      DROP TABLE IF EXISTS accounting_config_accounts;
+      DROP TABLE IF EXISTS accounting_config_journals;
+      DROP TABLE IF EXISTS accounting_config_taxes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

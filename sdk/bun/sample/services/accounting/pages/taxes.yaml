@@ -1,13 +1,11 @@
 title: Taxes
 page: { id: taxes, route: /accounting/taxes, breadcrumb: [Finance, Configuration, Taxes], auth: { require: [accounting.read] } }
-datasources:
-  - id: accounting_taxes
-    permission: accounting.read
-    query: "SELECT * FROM (VALUES ('tax-sales-10','Sales Tax 10%','Sales','10.00','Active'), ('tax-purchase-10','Purchase Tax 10%','Purchases','10.00','Active'), ('tax-zero','Zero Rate','Sales','0.00','Active')) taxes(id,name,tax_scope,rate,state) ORDER BY name"
 components:
   - type: ListView
     variant: odoo
     source: accounting_taxes
+    create_action: create_accounting_tax
+    create_label: New
     search: { label: Search taxes, placeholder: Search tax... }
     columns:
       - { field: name, label: Tax, type: PrimaryEntityCell }
@@ -16,3 +14,14 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: create_accounting_tax
+    type: server_form
+    permission: accounting.write
+    title: New Tax
+    action: accounting.taxes.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_taxes]
+    mutation: { operation: insert, table: accounting_config_taxes, fields: [name, tax_scope, rate, state], required: [name, tax_scope], defaults: { rate: 0, state: Active }, result: { query: "SELECT * FROM accounting_config_taxes WHERE id = :id" } }
+    fields: [{ field: name, label: Tax, type: text, required: true }, { field: tax_scope, label: Scope, type: select, options: [{ value: Sales, label: Sales }, { value: Purchases, label: Purchases }] }, { field: rate, label: Rate, type: number }, { field: state, label: Status, type: select, options: [{ value: Active, label: Active }, { value: Archived, label: Archived }] }]

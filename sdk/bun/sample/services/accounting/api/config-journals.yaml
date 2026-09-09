@@ -1,0 +1,5 @@
+page: { id: journals }
+datasources:
+  - id: accounting_journals
+    permission: accounting.read
+    query: "SELECT id, row_version, name, journal_type, currency, state FROM accounting_config_journals WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR journal_type ILIKE '%' || :q || '%') ORDER BY name"

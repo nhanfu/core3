@@ -1,0 +1,5 @@
+page: { id: taxes }
+datasources:
+  - id: accounting_taxes
+    permission: accounting.read
+    query: "SELECT id, row_version, name, tax_scope, rate, state FROM accounting_config_taxes WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR tax_scope ILIKE '%' || :q || '%') ORDER BY name"
