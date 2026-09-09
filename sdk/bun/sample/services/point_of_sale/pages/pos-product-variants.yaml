@@ -1,7 +1,19 @@
 title: POS Product Variants
 page: { id: pos-product-variants, route: /point-of-sale/product-variants, breadcrumb: [Sales, Point of Sale, Products, Variants], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Products
-    title: Product variants
-    description: Variant attributes and POS availability are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_product_variants
+    search: { label: Search variants, placeholder: 'Search variant, reference, or product...' }
+    filters:
+      - { field: active, label: Status, options_source: pos_variant_active }
+    columns:
+      - { field: name, label: Variant, type: PrimaryEntityCell }
+      - { field: internal_reference, label: Internal Reference }
+      - { field: product_template, label: Product }
+      - { field: attributes, label: Attributes }
+      - { field: category, label: Category }
+      - { field: price, label: Price, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

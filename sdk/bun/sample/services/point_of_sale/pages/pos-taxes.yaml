@@ -1,7 +1,20 @@
 title: POS Taxes
 page: { id: pos-taxes, route: /point-of-sale/taxes, breadcrumb: [Sales, Point of Sale, Configuration, Taxes], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: POS taxes
-    description: Tax mapping used by POS products and receipts is tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_taxes
+    search: { label: Search taxes, placeholder: 'Search tax name, description, or invoice label...' }
+    filters:
+      - { field: tax_scope, label: Scope, options_source: pos_tax_scopes }
+      - { field: active, label: Status, options_source: pos_tax_active }
+    columns:
+      - { field: name, label: Tax Name, type: PrimaryEntityCell }
+      - { field: description, label: Description }
+      - { field: tax_type, label: Tax Type }
+      - { field: tax_scope, label: Tax Scope }
+      - { field: invoice_label, label: Label on Invoices }
+      - { field: company, label: Company }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

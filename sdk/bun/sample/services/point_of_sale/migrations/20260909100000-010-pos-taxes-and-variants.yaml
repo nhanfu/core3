@@ -1,0 +1,35 @@
+version: 0.0.10
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_taxes (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL,
+        description VARCHAR, tax_type VARCHAR NOT NULL, tax_scope VARCHAR NOT NULL,
+        invoice_label VARCHAR, company VARCHAR NOT NULL DEFAULT 'My Company (San Francisco)',
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_taxes(id, name, description, tax_type, tax_scope, invoice_label, active) VALUES
+        ('pos-tax-sale-15', '15%', 'Sales tax', 'Percentage', 'Sale', '15%', true),
+        ('pos-tax-purchase-15', '15%', 'Purchase tax', 'Percentage', 'Purchase', '15%', true),
+        ('pos-tax-export-zero', '0% Exports', 'Export exempt', 'Percentage', 'Sale', '0%', true),
+        ('pos-tax-import-zero', '0% Imports', 'Import exempt', 'Percentage', 'Purchase', '0%', true)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE TABLE IF NOT EXISTS pos_product_variants (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(), name VARCHAR NOT NULL,
+        internal_reference VARCHAR, product_template VARCHAR NOT NULL, attributes VARCHAR NOT NULL,
+        category VARCHAR NOT NULL DEFAULT 'General', price DECIMAL(18,2) NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_product_variants(id, name, internal_reference, product_template, attributes, category, price, active) VALUES
+        ('pos-variant-coffee-small', 'House coffee / Small', 'COFFEE-S', 'House coffee', 'Size: Small', 'Drinks', 3.50, true),
+        ('pos-variant-coffee-large', 'House coffee / Large', 'COFFEE-L', 'House coffee', 'Size: Large', 'Drinks', 4.50, true),
+        ('pos-variant-sandwich-veggie', 'Market sandwich / Veggie', 'SANDWICH-V', 'Market sandwich', 'Filling: Veggie', 'Food', 8.90, true),
+        ('pos-variant-sandwich-turkey', 'Market sandwich / Turkey', 'SANDWICH-T', 'Market sandwich', 'Filling: Turkey', 'Food', 9.90, true)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_product_variants;
+      DROP TABLE IF EXISTS pos_taxes;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

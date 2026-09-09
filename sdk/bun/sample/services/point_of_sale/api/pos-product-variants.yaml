@@ -1,0 +1,8 @@
+page: { id: pos-product-variants }
+datasources:
+  - id: pos_product_variants
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, internal_reference, product_template, attributes, category, CAST(price AS DOUBLE) AS price, active FROM pos_product_variants WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR internal_reference ILIKE '%' || :q || '%' OR product_template ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY product_template, name"
+  - id: pos_variant_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"

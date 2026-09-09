@@ -1,0 +1,11 @@
+page: { id: pos-taxes }
+datasources:
+  - id: pos_taxes
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, description, tax_type, tax_scope, invoice_label, company, active FROM pos_taxes WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR description ILIKE '%' || :q || '%' OR invoice_label ILIKE '%' || :q || '%') AND (:tax_scope IS NULL OR tax_scope = :tax_scope) AND (:active IS NULL OR active = :active) ORDER BY name, tax_scope"
+  - id: pos_tax_scopes
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES ('Sale', 'Sale'), ('Purchase', 'Purchase')) scopes(value, label)"
+  - id: pos_tax_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"
