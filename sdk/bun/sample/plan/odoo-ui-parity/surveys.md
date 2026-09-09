@@ -139,6 +139,14 @@ answer, rendered its survey, answer state, score, participant, and submission
 timestamp, and returned no failed requests or horizontal overflow. Captures are
 `/tmp/core3-surveys-{desktop,mobile}-detailed-answer-detail.png`.
 
+The lifecycle follow-up adds an explicit Archived state plus guarded Archive and
+Reopen actions on the survey list and detail form. Direct authenticated action
+checks returned 200 for both transitions and restored the deterministic survey
+to Draft; the detail statusbar exposes Draft, Published, Closed, Cancelled, and
+Archived. Workflow captures are retained at
+`/tmp/core3-surveys-detail-archived-desktop.png` and
+`/tmp/core3-surveys-detail-reopened-desktop.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
