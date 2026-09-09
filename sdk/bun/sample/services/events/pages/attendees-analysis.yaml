@@ -1,0 +1,20 @@
+title: Registration Analysis
+page: { id: attendees-analysis, route: /events/attendees-analysis, breadcrumb: [Marketing, Events, Reporting, Registration Analysis], auth: { require: [events.read] } }
+components:
+  - type: StatRow
+    source: attendees_analysis_totals
+    title: Registration performance
+    stats: [{ label: Registrations, field: registrations }, { label: Attended, field: attended }, { label: Events, field: events }, { label: Attendees, field: attendees }]
+  - type: Chart
+    source: attendees_analysis_states
+    title: Registrations by status
+    label_field: category
+    value_field: registrations
+    variant: bar
+  - type: ListView
+    variant: odoo
+    source: attendees_analysis_events
+    search: { label: Search event registrations, placeholder: Search events... }
+    columns: [{ field: event_name, label: Event, type: PrimaryEntityCell }, { field: registrations, label: Registrations, align: right }, { field: attended, label: Attended, align: right }]
+    page_size: 50
+    row_key: event_name

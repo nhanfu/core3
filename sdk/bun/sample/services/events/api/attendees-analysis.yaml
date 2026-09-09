@@ -1,0 +1,12 @@
+page: { id: attendees-analysis }
+datasources:
+  - id: attendees_analysis_totals
+    single: true
+    permission: events.read
+    query: "SELECT COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Attended') AS attended, COUNT(DISTINCT event_id) AS events, COUNT(DISTINCT attendee_email) AS attendees FROM event_registrations"
+  - id: attendees_analysis_states
+    permission: events.read
+    query: "SELECT state AS category, COUNT(*) AS registrations FROM event_registrations GROUP BY state ORDER BY registrations DESC"
+  - id: attendees_analysis_events
+    permission: events.read
+    query: "SELECT event_name, COUNT(*) AS registrations, COUNT(*) FILTER (WHERE state = 'Attended') AS attended FROM event_registrations GROUP BY event_name ORDER BY event_name"

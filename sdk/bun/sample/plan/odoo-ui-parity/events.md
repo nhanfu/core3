@@ -303,6 +303,11 @@ click. Authenticated desktop/mobile checks opened `EVT/2026/0004`, asserted the
 completed status, schedule, attendance fields, empty-registration state, and
 no horizontal overflow; captures are `/tmp/core3-events-{desktop,mobile}-detail.png`.
 
+The reporting batch adds `/events/attendees-analysis` with registration totals,
+status chart, and event aggregates. Authenticated desktop/mobile checks show
+three seeded registrations across two events, no unexpected failures, and no
+horizontal overflow; captures are `/tmp/core3-events-{desktop,mobile}-attendees-analysis.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and

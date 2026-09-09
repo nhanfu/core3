@@ -21,6 +21,7 @@ menu:
       label: Reporting
       items:
         - { path: /events/attendees, label: Attendees, icon: users, permission: events.read }
+        - { path: /events/attendees-analysis, label: Registration Analysis, icon: chart, permission: events.read }
     - id: configuration
       label: Configuration
       items:
