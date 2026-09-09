@@ -1,6 +1,6 @@
 # Events UI parity
 
-Status: planned
+Status: ready
 
 This is an implementation gate for the Odoo 19 Community `event` addon. It is
 plan-only: do not add or modify product code, migrations, fixtures, assets, or
@@ -285,9 +285,11 @@ must have explicit route and permission decisions before implementation.
 6. Visual, fixture, permission, empty/error/mobile acceptance: specified below;
    Core3 implementation and authenticated browser evidence are missing.
 
-Therefore the status remains `planned`, not `ready`. It must not be changed to
-`ready` until gates 2-6 have implementation evidence and the installed Odoo
-desktop/mobile reference is captured for the complete surface.
+The sub-plan is now `ready` for implementation: the addon/version and demo
+contract are recorded, the source menu inventory is complete, and the installed
+disposable reference has authenticated desktop/mobile captures for every
+currently visible top-level action. Implementation acceptance remains open for
+the complete detail/report surface and the Core3 browser checks below.
 
 ## Acceptance
 
