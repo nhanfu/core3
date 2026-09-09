@@ -1,9 +1,13 @@
 title: Accrual Plans
 page: { id: accrual-plans, route: /accrual-plans, breadcrumb: [Human Resources, Time Off, Accrual Plans], auth: { require: [time_off.manage] } }
+toolbar:
+  - { id: create_accrual_plan, label: New, action: create_accrual_plan, permission: time_off.manage, variant: primary }
 components:
   - type: ListView
     variant: odoo
     source: accrual_plans
+    create_action: create_accrual_plan
+    create_label: New accrual plan
     search: { label: Search accrual plans, placeholder: Search plans... }
     views:
       - id: list
@@ -20,3 +24,23 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+actions:
+  - id: create_accrual_plan
+    type: server_form
+    permission: time_off.manage
+    title: New accrual plan
+    action: time_off.accrual_plans.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accrual_plans]
+    mutation:
+      operation: insert
+      table: accrual_plans
+      fields: [name, level_count, employee_count, state]
+      required: [name]
+      defaults: { level_count: 0, employee_count: 0, state: Active }
+      result: { query: "SELECT * FROM accrual_plans WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: level_count, label: Levels, type: number }
+      - { field: employee_count, label: Employees, type: number }

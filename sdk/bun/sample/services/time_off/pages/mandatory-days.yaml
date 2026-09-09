@@ -1,9 +1,13 @@
 title: Mandatory Days
 page: { id: mandatory-days, route: /mandatory-days, breadcrumb: [Human Resources, Time Off, Mandatory Days], auth: { require: [time_off.manage] } }
+toolbar:
+  - { id: create_mandatory_day, label: New, action: create_mandatory_day, permission: time_off.manage, variant: primary }
 components:
   - type: ListView
     variant: odoo
     source: mandatory_days
+    create_action: create_mandatory_day
+    create_label: New mandatory day
     search: { label: Search mandatory days, placeholder: Search mandatory days... }
     columns:
       - { field: name, label: Name, type: PrimaryEntityCell }
@@ -13,3 +17,25 @@ components:
       - { field: company, label: Company }
     page_size: 50
     row_key: id
+actions:
+  - id: create_mandatory_day
+    type: server_form
+    permission: time_off.manage
+    title: New mandatory day
+    action: time_off.mandatory_days.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [mandatory_days]
+    mutation:
+      operation: insert
+      table: mandatory_days
+      fields: [name, date_from, date_to, color, company]
+      required: [name, date_from, date_to]
+      defaults: { color: violet, company: YShip Demo Company }
+      result: { query: "SELECT * FROM mandatory_days WHERE id = :id" }
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: date_from, label: Start date, type: date, required: true }
+      - { field: date_to, label: End date, type: date, required: true }
+      - { field: color, label: Color, type: text }
+      - { field: company, label: Company, type: text }

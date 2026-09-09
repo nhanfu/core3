@@ -236,6 +236,13 @@ calendar records with no failed responses or horizontal overflow. A dispatcher
 without Time Off permissions receives the expected 403 page-load state. Core3
 captures are under `/tmp/core3-time-off-{desktop,mobile}-{my-time-off,approval,overview}-batch.png`.
 
+The management form batch adds permissioned New dialogs for allocations,
+accrual plans, public holidays, and mandatory days. The allocation dialog was
+exercised on mobile through a successful create mutation after making its
+start/end date contract explicit; the resulting fixture remained visible after
+refresh with no failed responses or horizontal overflow. Core3 form captures
+remain under `/tmp/core3-time-off-mobile-allocation-{new,created}.png`.
+
 ### Source and navigation
 
 - Every source menu above maps to an explicit Core3 route, modal, context
