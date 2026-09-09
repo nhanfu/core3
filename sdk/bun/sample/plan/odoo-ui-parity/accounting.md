@@ -148,6 +148,12 @@ fixtures matching the observed columns and rows. Captures are temporary under
 `/tmp/odoo-accounting-{desktop,mobile}-{journal-items,audit-trail,incoterms}.png`
 and `/tmp/core3-accounting-{desktop,mobile}-{journal-items,audit-trail,incoterms}.png`.
 
+Journal Items now exposes the shared Odoo-style Posted filter, selectable rows,
+column chooser, and List/Pivot view tabs while retaining the service-owned
+deterministic datasource. Authenticated checks at 1440x900 and 390x844 loaded
+all four rows with no unexpected failures or horizontal overflow; revised
+captures are `/tmp/core3-accounting-{desktop,mobile}-journal-items-revised.png`.
+
 ## Acceptance
 
 - Every installed Odoo Accounting menu has an explicit Core3 route or a

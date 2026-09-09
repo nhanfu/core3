@@ -5,6 +5,18 @@ components:
     variant: odoo
     source: accounting_journal_items
     search: { label: Search Journal Items, placeholder: 'Search journal entries, partners, or labels...' }
+    view_navigation: tabs
+    views:
+      - { id: list, label: List, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields: [{ field: partner_name, column: Partner }, { field: debit, column: Debit }, { field: credit, column: Credit }]
+          default: { rows: [partner_name], measures: [{ field: debit, aggregate: sum, column: Debit }, { field: credit, aggregate: sum, column: Credit }] }
+    filters: [{ field: state, label: Status, options: [{ id: Posted, label: Posted }]}]
+    selectable: true
+    column_chooser: true
     columns:
       - { field: item_date, label: Date }
       - { field: entry_name, label: Journal Entry, type: PrimaryEntityCell }
