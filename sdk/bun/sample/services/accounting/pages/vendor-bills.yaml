@@ -8,6 +8,8 @@ components:
   - type: ListView
     variant: odoo
     source: accounting_vendor_bills
+    create_action: create_accounting_vendor_bill
+    create_label: New bill
     search: { label: Search vendor bills, placeholder: Search bills and vendors... }
     columns:
       - { field: name, label: Bill, type: PrimaryEntityCell }
@@ -19,3 +21,16 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_double_click_action: view_accounting_vendor_bill
+actions:
+  - { id: view_accounting_vendor_bill, type: navigate, permission: accounting.read, navigate_to: /accounting/invoice-detail, params: { id: '{row.id}' } }
+  - id: create_accounting_vendor_bill
+    type: server_form
+    permission: accounting.write
+    title: New vendor bill
+    action: accounting.invoices.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_vendor_bills]
+    mutation: { operation: insert, table: accounting_invoices, fields: [name, partner_name, invoice_type, invoice_date, due_date, amount_total, amount_residual, reference], required: [name], defaults: { invoice_type: Vendor Bill, amount_total: 0, amount_residual: 0 }, result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" } }
+    fields: [{ field: name, label: Bill, type: text, required: true }, { field: partner_name, label: Vendor, type: text }, { field: invoice_date, label: Bill date, type: date }, { field: due_date, label: Due date, type: date }, { field: amount_total, label: Total, type: number }, { field: reference, label: Reference, type: text }]

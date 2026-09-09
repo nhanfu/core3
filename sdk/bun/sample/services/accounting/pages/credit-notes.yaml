@@ -8,6 +8,8 @@ components:
   - type: ListView
     variant: odoo
     source: accounting_credit_notes
+    create_action: create_accounting_credit_note
+    create_label: New credit note
     search: { label: Search credit notes, placeholder: Search credit notes and customers... }
     columns:
       - { field: name, label: Credit Note, type: PrimaryEntityCell }
@@ -19,3 +21,16 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_double_click_action: view_accounting_credit_note
+actions:
+  - { id: view_accounting_credit_note, type: navigate, permission: accounting.read, navigate_to: /accounting/invoice-detail, params: { id: '{row.id}' } }
+  - id: create_accounting_credit_note
+    type: server_form
+    permission: accounting.write
+    title: New credit note
+    action: accounting.invoices.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [accounting_credit_notes]
+    mutation: { operation: insert, table: accounting_invoices, fields: [name, partner_name, invoice_type, invoice_date, amount_total, amount_residual, reference], required: [name], defaults: { invoice_type: Customer Credit Note, amount_total: 0, amount_residual: 0 }, result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" } }
+    fields: [{ field: name, label: Credit note, type: text, required: true }, { field: partner_name, label: Customer, type: text }, { field: invoice_date, label: Credit note date, type: date }, { field: amount_total, label: Total, type: number }, { field: reference, label: Reference, type: text }]

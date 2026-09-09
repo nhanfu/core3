@@ -82,11 +82,25 @@ Cash Roundings are not exposed as standalone menus in this installed
 Community/demo build; those two routes are documented fixture coverage for the
 Accounting model surfaces. The existing Base currency screen remains unchanged.
 
-## Remaining parity work
+## Current batch: document forms and payment workflow
 
-Implement OdooFormView detail pages, create/edit forms, register-payment and
-reconciliation modals, filters, empty/error/permission states, and responsive
-desktop/mobile behavior using service-owned fixtures.
+The next parity batch adds the shared OdooFormView workflow for invoices,
+customer credit notes, vendor bills, and vendor refunds. Each document list
+opens the service-owned invoice detail form; draft records expose permissioned
+Edit with Save/Discard, while the detail header exposes state-gated Post and
+Register payment actions. Role-specific New document dialogs are available for
+credit notes, vendor bills, and vendor refunds.
+
+Register payment and Reconciliation use YAML server-form mutations. They reject
+non-positive or over-residual payments, create a posted accounting payment,
+support partial residual reduction, and transition the document to Paid only
+when its residual reaches zero. All actions retain accounting.read/write
+permission boundaries and use the existing deterministic demo fixtures.
+
+Authenticated browser evidence was captured at 1440x900 and 390x844 under
+/tmp; no screenshots are part of the repository. The remaining parity work is
+broader empty/error/denied-state coverage across every Accounting route and
+additional Odoo form tabs and relational controls.
 
 ## Acceptance
 

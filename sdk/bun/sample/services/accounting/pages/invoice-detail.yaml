@@ -17,6 +17,11 @@ components:
       - { value: Paid, label: Paid }
       - { value: Cancelled, label: Cancelled }
     status_colors: { Draft: neutral, Posted: blue, Paid: green, Cancelled: red }
+    editable: true
+    header_actions:
+      - { id: edit_accounting_invoice, label: Edit, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Draft'" }
+      - { id: post_accounting_invoice_detail, label: Post, variant: primary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Draft'" }
+      - { id: register_accounting_invoice_payment, label: Register payment, variant: secondary, permission: accounting.write, show_if: "state.accounting_invoice_detail.state === 'Posted' && state.accounting_invoice_detail.amount_residual > 0" }
     group_columns: 2
     groups:
       - title: Invoice
@@ -39,3 +44,52 @@ components:
           - { field: source_service, label: Source service }
           - { field: source_type, label: Source type }
           - { field: source_id, label: Source record }
+actions:
+  - id: edit_accounting_invoice
+    type: server_form
+    permission: accounting.write
+    title: Edit invoice
+    action: accounting.invoices.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.accounting_invoice_detail
+    refresh: [accounting_invoice_detail]
+    mutation:
+      operation: update
+      table: accounting_invoices
+      fields: [name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, reference]
+      required: [name]
+      timestamps: true
+      guards: [{ query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Draft'", status: 409, message: Only draft invoices can be edited }]
+    fields:
+      - { field: name, label: Invoice, type: text, required: true }
+      - { field: partner_name, label: Customer or vendor, type: text }
+      - { field: invoice_type, label: Type, type: select, options: [Customer Invoice, Vendor Bill, Customer Credit Note, Vendor Refund] }
+      - { field: invoice_date, label: Invoice date, type: date }
+      - { field: due_date, label: Due date, type: date }
+      - { field: amount_untaxed, label: Untaxed amount, type: number }
+      - { field: amount_tax, label: Tax, type: number }
+      - { field: amount_total, label: Total, type: number }
+      - { field: amount_residual, label: Amount due, type: number }
+      - { field: reference, label: Reference, type: text }
+  - { id: post_accounting_invoice_detail, type: server, permission: accounting.write, action: accounting.invoices.post, handler: order_transition, workflow: accounting_invoices, operation: post, refresh: [accounting_invoice_detail] }
+  - id: register_accounting_invoice_payment
+    type: server_form
+    permission: accounting.write
+    title: Register invoice payment
+    action: accounting.invoices.pay
+    handler: yaml_mutation
+    operation: pay
+    refresh: [accounting_invoice_detail]
+    mutation:
+      generated: [payment_id]
+      guards:
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND state = 'Posted' AND amount_residual > 0", status: 409, message: Only posted invoices with a balance can be paid }
+        - { query: "SELECT id FROM accounting_invoices WHERE id = :id AND CAST(:payment_amount AS DECIMAL(18,2)) > 0 AND CAST(:payment_amount AS DECIMAL(18,2)) <= amount_residual", status: 422, message: Payment must be positive and cannot exceed the amount due }
+      steps:
+        - query: "INSERT INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, payment_date, state, reference) SELECT :payment_id, 'Register payment', partner_name, CASE WHEN invoice_type IN ('Vendor Bill', 'Vendor Refund') THEN 'Outbound' ELSE 'Inbound' END, CAST(:payment_amount AS DECIMAL(18,2)), 'Bank', CURRENT_DATE, 'Posted', name FROM accounting_invoices WHERE id = :id"
+        - query: "UPDATE accounting_invoices SET amount_residual = amount_residual - CAST(:payment_amount AS DECIMAL(18,2)), state = CASE WHEN amount_residual - CAST(:payment_amount AS DECIMAL(18,2)) <= 0 THEN 'Paid' ELSE state END, row_version = row_version + 1 WHERE id = :id"
+      result: { query: "SELECT * FROM accounting_invoices WHERE id = :id" }
+    fields:
+      - { field: payment_amount, label: Payment amount, type: number, required: true }
+      - { field: payment_method, label: Payment method, type: select, options: [Bank, Cash, Card, Other], default: Bank }
