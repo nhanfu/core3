@@ -49,7 +49,7 @@ outside this local parity plan.
 | quality | quality | unavailable in supplied source | `odoo-ui-parity/quality.md` | planned |
 | plm | mrp_plm | unavailable in supplied source | `odoo-ui-parity/plm.md` | planned |
 | employees | hr | available | `odoo-ui-parity/employees.md` | ready |
-| recruitment | hr_recruitment | available | `odoo-ui-parity/recruitment.md` | planned |
+| recruitment | hr_recruitment | available | `odoo-ui-parity/recruitment.md` | in-progress |
 | time-off | hr_holidays | available | `odoo-ui-parity/time-off.md` | planned |
 | appraisals | hr_appraisal | unavailable in supplied source | `odoo-ui-parity/appraisals.md` | planned |
 | referrals | hr_referral | unavailable in supplied source | `odoo-ui-parity/referrals.md` | planned |
