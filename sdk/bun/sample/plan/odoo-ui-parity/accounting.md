@@ -84,6 +84,12 @@ Cash Roundings are not exposed as standalone menus in this installed
 Community/demo build; those two routes are documented fixture coverage for the
 Accounting model surfaces. The existing Base currency screen remains unchanged.
 
+Authenticated Core3 checks cover all eleven configuration routes at desktop
+`1440x900` and mobile `390x844` touch sizes, including Payment Providers and
+Payment Transactions. Each route returned seeded records with no unexpected
+failed requests or horizontal overflow. Comparison captures are temporary under
+`/tmp/core3-accounting-config-*.png` and are not committed.
+
 ## Current batch: API boundary extraction
 
 Payments and Journal Entries now bind their list datasources and create-payment/
