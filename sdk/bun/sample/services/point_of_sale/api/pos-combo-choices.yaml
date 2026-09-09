@@ -1,0 +1,8 @@
+page: { id: pos-combo-choices }
+datasources:
+  - id: pos_combo_choices
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, product, category, CAST(price_extra AS DOUBLE) AS price_extra, active FROM pos_combo_choices WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR product ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY product, name"
+  - id: pos_catalog_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"

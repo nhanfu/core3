@@ -1,0 +1,8 @@
+page: { id: pos-pricelists }
+datasources:
+  - id: pos_pricelists
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, country_groups, company, currency, active FROM pos_pricelists WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR country_groups ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY name"
+  - id: pos_pricelist_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"

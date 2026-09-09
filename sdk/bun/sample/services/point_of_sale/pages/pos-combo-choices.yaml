@@ -1,7 +1,16 @@
 title: POS Combo Choices
 page: { id: pos-combo-choices, route: /point-of-sale/combo-choices, breadcrumb: [Sales, Point of Sale, Products, Combo Choices], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Products
-    title: Combo choices
-    description: Configurable product combo choices and pricing are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_combo_choices
+    search: { label: Search combo choices, placeholder: 'Search choice or product...' }
+    filters: [{ field: active, label: Status, options_source: pos_catalog_active }]
+    columns:
+      - { field: name, label: Combo Choice, type: PrimaryEntityCell }
+      - { field: product, label: Product }
+      - { field: category, label: Category }
+      - { field: price_extra, label: Extra Price, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

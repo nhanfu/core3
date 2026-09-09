@@ -1,0 +1,8 @@
+page: { id: pos-product-tags }
+datasources:
+  - id: pos_product_tags
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, color, product_count, active FROM pos_product_tags WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY name"
+  - id: pos_tag_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"

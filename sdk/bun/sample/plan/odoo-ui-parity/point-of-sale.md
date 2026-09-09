@@ -45,10 +45,19 @@ Preparation Printers, Note Models, Coins/Bills, and Presets. Desktop/mobile
 browser smoke checks verified 3, 3, 6, and 3 rows respectively; comparison
 captures remain temporary local evidence.
 
+The product-catalog batch adds the five remaining Odoo product submenu routes:
+Combo Choices, Pricelists, PoS Product Categories, Attributes, and Product Tags.
+Each route is a `ListView` backed by the convention-discovered
+`pos-product-catalog.yaml` API fragment and migration `011`, with search and an
+Active/Archived filter. Fixtures intentionally mirror the visible Odoo list
+columns: combo choice/product/category/extra price, pricelist name/country
+groups/company, category/parent/sequence, attribute/display type/variant
+creation, and tag/color/product count.
+
 ## Remaining parity work
 
-Add explicit menu/page coverage for the remaining Odoo POS Taxes, product
-catalog submenus, and the touch-selling dashboard/session.
+Add explicit menu/page coverage for the remaining Odoo POS product forms and
+the touch-selling dashboard/session.
 Capture and implement configuration forms, payment/tender modals, session
 open/close controls, product/customer dialogs, error/empty states, responsive
 desktop/mobile composition, and permission-denied states.
@@ -64,6 +73,9 @@ images are permitted.
 
 - Every listed Odoo menu has an explicit Core3 route or a documented deliberate
   redirect.
+- Product-catalog list routes render deterministic fixture rows, support bounded
+  search/filter interactions, and remain service-owned without page-local
+  records.
 - Authenticated desktop/mobile checks cover lists, forms, touch selling,
   payment/session modals, settings, empty/error/permission states.
 - `bun run audit` passes with no POS route silently resolving elsewhere.

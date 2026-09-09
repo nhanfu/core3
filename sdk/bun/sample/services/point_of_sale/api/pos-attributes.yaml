@@ -1,0 +1,8 @@
+page: { id: pos-attributes }
+datasources:
+  - id: pos_attributes
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, display_type, variant_creation, values_count, active FROM pos_attributes WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR display_type ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY name"
+  - id: pos_attribute_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"

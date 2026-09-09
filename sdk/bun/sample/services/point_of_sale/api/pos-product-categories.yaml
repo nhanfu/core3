@@ -1,0 +1,8 @@
+page: { id: pos-product-categories }
+datasources:
+  - id: pos_product_categories
+    permission: pos.read
+    query: "SELECT id, 1 AS row_version, name, parent_category, CAST(sequence AS INTEGER) AS sequence, color, active FROM pos_product_categories WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR parent_category ILIKE '%' || :q || '%') AND (:active IS NULL OR active = :active) ORDER BY sequence, name"
+  - id: pos_category_active
+    permission: pos.read
+    query: "SELECT value, label FROM (VALUES (true, 'Active'), (false, 'Archived')) statuses(value, label)"

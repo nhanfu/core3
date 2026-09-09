@@ -1,0 +1,69 @@
+version: 0.0.11
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_combo_choices (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, product VARCHAR NOT NULL,
+        category VARCHAR NOT NULL, price_extra DECIMAL(18,2) NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_combo_choices(id, name, product, category, price_extra, active) VALUES
+        ('pos-combo-oat-milk', 'Oat milk', 'Coffee combo', 'Milk options', 0.75, true),
+        ('pos-combo-almond-milk', 'Almond milk', 'Coffee combo', 'Milk options', 0.85, true),
+        ('pos-combo-extra-shot', 'Extra espresso shot', 'Coffee combo', 'Add-ons', 1.00, true),
+        ('pos-combo-fries', 'French fries', 'Lunch combo', 'Side dishes', 0.00, true),
+        ('pos-combo-salad', 'Side salad', 'Lunch combo', 'Side dishes', 1.50, true)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE TABLE IF NOT EXISTS pos_pricelists (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, country_groups VARCHAR,
+        company VARCHAR NOT NULL, currency VARCHAR NOT NULL DEFAULT 'USD', active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_pricelists(id, name, country_groups, company, currency, active) VALUES
+        ('pos-pricelist-public', 'Public Pricelist', 'All countries', 'My Company (San Francisco)', 'USD', true),
+        ('pos-pricelist-members', 'Member Pricelist', 'United States', 'My Company (San Francisco)', 'USD', true),
+        ('pos-pricelist-wholesale', 'Wholesale', 'All countries', 'My Company (San Francisco)', 'USD', true),
+        ('pos-pricelist-archived', 'Holiday 2025', 'United States', 'My Company (San Francisco)', 'USD', false)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE TABLE IF NOT EXISTS pos_product_categories (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, parent_category VARCHAR,
+        sequence INTEGER NOT NULL DEFAULT 10, color VARCHAR NOT NULL DEFAULT 'Gray', active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_product_categories(id, name, parent_category, sequence, color, active) VALUES
+        ('pos-cat-food', 'Food', NULL, 10, 'Orange', true),
+        ('pos-cat-drinks', 'Drinks', NULL, 20, 'Blue', true),
+        ('pos-cat-coffee', 'Coffee', 'Drinks', 21, 'Brown', true),
+        ('pos-cat-merch', 'Merchandise', NULL, 30, 'Purple', true),
+        ('pos-cat-seasonal', 'Seasonal', NULL, 40, 'Green', false)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE TABLE IF NOT EXISTS pos_attributes (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, display_type VARCHAR NOT NULL,
+        variant_creation VARCHAR NOT NULL, values_count INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_attributes(id, name, display_type, variant_creation, values_count, active) VALUES
+        ('pos-attr-size', 'Size', 'Pills', 'Instantly', 3, true),
+        ('pos-attr-color', 'Color', 'Color', 'Instantly', 5, true),
+        ('pos-attr-milk', 'Milk type', 'Radio', 'Dynamically', 4, true),
+        ('pos-attr-roast', 'Roast', 'Select', 'Never', 3, true),
+        ('pos-attr-archived', 'Season', 'Multi-checkbox', 'Never', 2, false)
+      ON CONFLICT(id) DO NOTHING;
+      CREATE TABLE IF NOT EXISTS pos_product_tags (
+        id VARCHAR PRIMARY KEY, name VARCHAR NOT NULL, color VARCHAR NOT NULL DEFAULT 'Gray',
+        product_count INTEGER NOT NULL DEFAULT 0, active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_product_tags(id, name, color, product_count, active) VALUES
+        ('pos-tag-new', 'New', 'Green', 8, true),
+        ('pos-tag-best-seller', 'Best Seller', 'Orange', 12, true),
+        ('pos-tag-seasonal', 'Seasonal', 'Purple', 5, true),
+        ('pos-tag-kitchen', 'Kitchen', 'Blue', 14, true),
+        ('pos-tag-archived', 'Clearance', 'Gray', 0, false)
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_product_tags;
+      DROP TABLE IF EXISTS pos_attributes;
+      DROP TABLE IF EXISTS pos_product_categories;
+      DROP TABLE IF EXISTS pos_pricelists;
+      DROP TABLE IF EXISTS pos_combo_choices;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

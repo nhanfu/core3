@@ -1,7 +1,16 @@
 title: POS Pricelists
 page: { id: pos-pricelists, route: /point-of-sale/pricelists, breadcrumb: [Sales, Point of Sale, Products, Pricelists], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Products
-    title: POS pricelists
-    description: Pricelist rules applied by POS configuration and customer segments are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_pricelists
+    search: { label: Search pricelists, placeholder: 'Search pricelist or country group...' }
+    filters: [{ field: active, label: Status, options_source: pos_pricelist_active }]
+    columns:
+      - { field: name, label: Pricelist Name, type: PrimaryEntityCell }
+      - { field: country_groups, label: Country Groups }
+      - { field: company, label: Company }
+      - { field: currency, label: Currency }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

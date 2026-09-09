@@ -1,7 +1,16 @@
 title: POS Product Categories
 page: { id: pos-product-categories, route: /point-of-sale/product-categories, breadcrumb: [Sales, Point of Sale, Products, Categories], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Products
-    title: POS product categories
-    description: POS category ordering and product grouping are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_product_categories
+    search: { label: Search categories, placeholder: 'Search category or parent...' }
+    filters: [{ field: active, label: Status, options_source: pos_category_active }]
+    columns:
+      - { field: name, label: Category, type: PrimaryEntityCell }
+      - { field: parent_category, label: Parent Category }
+      - { field: sequence, label: Sequence, align: right }
+      - { field: color, label: Color }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id

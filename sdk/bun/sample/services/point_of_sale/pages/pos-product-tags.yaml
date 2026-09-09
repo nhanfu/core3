@@ -1,7 +1,15 @@
 title: POS Product Tags
 page: { id: pos-product-tags, route: /point-of-sale/product-tags, breadcrumb: [Sales, Point of Sale, Products, Tags], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Products
-    title: Product tags
-    description: POS catalog tags and category filters are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_product_tags
+    search: { label: Search product tags, placeholder: 'Search tag...' }
+    filters: [{ field: active, label: Status, options_source: pos_tag_active }]
+    columns:
+      - { field: name, label: Tag, type: PrimaryEntityCell }
+      - { field: color, label: Color }
+      - { field: product_count, label: Products, align: right }
+      - { field: active, label: Active, type: StatusChip }
+    page_size: 50
+    row_key: id
