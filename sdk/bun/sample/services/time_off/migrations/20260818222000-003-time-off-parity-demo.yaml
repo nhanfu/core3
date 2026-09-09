@@ -1,0 +1,31 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO leave_types(id, name, code, allocation_days, requires_approval, state) VALUES
+        ('leave-type-annual', 'Annual Leave', 'AL', 20, true, 'Active'),
+        ('leave-type-sick', 'Sick Time Off', 'SICK', 10, true, 'Active'),
+        ('leave-type-comp', 'Compensatory Days', 'COMP', 16, false, 'Active'),
+        ('leave-type-training', 'Training Time Off', 'TRAIN', 7, true, 'Active'),
+        ('leave-type-archived', 'Legacy Leave', 'LEGACY', 5, true, 'Archived');
+      INSERT OR IGNORE INTO leave_balances(id, employee_id, employee_name, leave_type_id, leave_type_name, year, allocated_days, used_days) VALUES
+        ('leave-balance-demo-001', 'employee-demo-001', 'Admin User', 'leave-type-annual', 'Annual Leave', 2026, 20, 3),
+        ('leave-balance-demo-002', 'employee-demo-001', 'Admin User', 'leave-type-sick', 'Sick Time Off', 2026, 10, 0),
+        ('leave-balance-demo-003', 'employee-demo-002', 'Marc Demo', 'leave-type-annual', 'Annual Leave', 2026, 20, 5),
+        ('leave-balance-demo-004', 'employee-demo-003', 'Mitchell Admin', 'leave-type-comp', 'Compensatory Days', 2026, 16, 2);
+      INSERT OR IGNORE INTO leave_requests(id, name, employee_id, employee_name, leave_type_id, leave_type_name, date_from, date_to, days, reason, approver, state) VALUES
+        ('leave-request-demo-001', 'LEAVE/2026/0001', 'employee-demo-001', 'Admin User', 'leave-type-sick', 'Sick Time Off', '2026-01-12', '2026-01-14', 3, 'Doctor appointment', 'Mitchell Admin', 'Approved'),
+        ('leave-request-demo-002', 'LEAVE/2026/0002', 'employee-demo-001', 'Admin User', 'leave-type-comp', 'Compensatory Days', '2026-02-03', '2026-02-04', 2, 'Overtime recovery', NULL, 'Submitted'),
+        ('leave-request-demo-003', 'LEAVE/2026/0003', 'employee-demo-002', 'Marc Demo', 'leave-type-annual', 'Annual Leave', '2026-03-16', '2026-03-20', 5, 'Family trip', 'Mitchell Admin', 'Approved'),
+        ('leave-request-demo-004', 'LEAVE/2026/0004', 'employee-demo-003', 'Mitchell Admin', 'leave-type-annual', 'Annual Leave', '2026-04-06', '2026-04-07', 2, 'Personal days', NULL, 'Draft'),
+        ('leave-request-demo-005', 'LEAVE/2026/0005', 'employee-demo-002', 'Marc Demo', 'leave-type-training', 'Training Time Off', '2026-05-11', '2026-05-12', 2, 'Certification course', 'Admin User', 'Refused'),
+        ('leave-request-demo-006', 'LEAVE/2026/0006', 'employee-demo-001', 'Admin User', 'leave-type-annual', 'Annual Leave', '2026-06-22', '2026-06-24', 3, 'Cancelled travel', NULL, 'Cancelled');
+    down: |
+      DELETE FROM leave_requests WHERE id LIKE 'leave-request-demo-%';
+      DELETE FROM leave_balances WHERE id LIKE 'leave-balance-demo-%';
+      DELETE FROM leave_types WHERE id IN ('leave-type-sick', 'leave-type-comp', 'leave-type-training', 'leave-type-archived');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
