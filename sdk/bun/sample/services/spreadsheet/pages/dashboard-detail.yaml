@@ -1,105 +1,59 @@
 title: Dashboard
-page: { id: dashboard-detail, breadcrumb: [Finance, Spreadsheet / Dashboards, Detail], auth: { require: [spreadsheet.read] } }
-datasources:
-  - id: dashboard_detail
-    single: true
-    permission: spreadsheet.read
-    query: "SELECT id, row_version, name, owner_name, description, state, layout, shared FROM dashboards WHERE id = :id"
-  - id: dashboard_detail_widgets
-    single: false
-    permission: spreadsheet.read
-    query: "SELECT id, row_version, dashboard_id, title, widget_type, source_service, source_id, config_json, position_x, position_y, width, height, active FROM dashboard_widgets WHERE dashboard_id = :id AND active = true ORDER BY position_y, position_x"
-  - id: dashboard_detail_widget_types
-    single: false
-    permission: spreadsheet.read
-    query: "SELECT value, label FROM (VALUES ('KPI','KPI'), ('Chart','Chart'), ('Table','Table'), ('Pivot','Pivot'), ('Text','Text')) widget_types(value, label)"
+page: { id: dashboard-detail, route: /dashboard-detail, breadcrumb: [Dashboards, Dashboard], auth: { require: [spreadsheet.read] } }
 components:
-  - type: OdooFormView
-    source: dashboard_detail
-    title_field: name
-    status_field: state
-    statusbar:
-      - { value: Draft, label: Draft }
-      - { value: Published, label: Published }
-      - { value: Archived, label: Archived }
-    status_colors: { Draft: neutral, Published: green, Archived: blue }
-    header_actions:
-      - { id: publish_dashboard_detail, label: Publish, variant: primary, permission: spreadsheet.manage, show_if: "state.dashboard_detail.state === 'Draft'" }
-      - { id: archive_dashboard_detail, label: Archive, variant: danger, permission: spreadsheet.manage, show_if: "state.dashboard_detail.state !== 'Archived'" }
-    group_columns: 2
-    groups:
-      - title: Dashboard
-        fields:
-          - { field: name, label: Dashboard }
-          - { field: state, label: Status }
-          - { field: owner_name, label: Owner }
-          - { field: layout, label: Layout }
-      - title: Sharing
-        fields:
-          - { field: shared, label: Shared with team }
-          - { field: description, label: Description, type: textarea, wide: true }
-  - type: ContactGrid
-    source: dashboard_detail_widgets
-    row_key: id
+  - type: PageIntro
+    title: Dashboard
+    description: Read-only spreadsheet dashboard canvas.
+  - type: StatRow
+    source: spreadsheet_dashboard_summary
+    title: Overview
+    stats:
+      - { label: Revenue, field: revenue }
+      - { label: Orders, field: orders }
+      - { label: Customers, field: customers }
+  - type: TabGroup
+    tabs:
+      - { id: days, label: Days }
+      - { id: weeks, label: Weeks }
+      - { id: months, label: Months }
+      - { id: quarters, label: Quarters }
+  - type: Chart
+    source: spreadsheet_dashboard_chart
+    title: Revenue over time
+    label_field: period
+    value_field: revenue
+    variant: line
+    height: 280
+  - type: ListView
+    variant: odoo
+    source: spreadsheet_dashboard_table
+    date_range: { label: Date range, presets: [month, quarter, year] }
+    actions:
+      - { id: share_dashboard, label: Share, permission: spreadsheet.read, variant: ghost }
+      - { id: download_dashboard, label: Download, permission: spreadsheet.read, variant: ghost }
+    views:
+      - { id: list, label: Table, icon: table }
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        row_fields: [country]
+        measures: [{ field: revenue, aggregate: sum, label: Revenue }]
     columns:
-      - { field: title, label: Widget, type: PrimaryEntityCell }
-      - { field: widget_type, label: Type }
-      - { field: source_service, label: Source service }
-      - { field: source_id, label: Source }
-      - { field: position_x, label: Column, align: right }
-      - { field: position_y, label: Row, align: right }
-      - { field: width, label: Width, align: right }
-      - { field: height, label: Height, align: right }
-    empty_state: { title: No widgets, description: Add a widget to define this dashboard. }
+      - { field: country, label: Country, type: PrimaryEntityCell }
+      - { field: category, label: Category }
+      - { field: revenue, label: Revenue, type: Money }
+      - { field: orders, label: Orders, align: right }
+    page_size: 10
+    row_key: id
+    empty_state: { title: Empty workbook, description: This dashboard has no readable spreadsheet data. }
 actions:
-  - id: publish_dashboard_detail
+  - id: share_dashboard
     type: server
-    permission: spreadsheet.manage
-    action: spreadsheet.dashboards.publish
-    handler: order_transition
-    workflow: dashboards
-    operation: publish
-    params: { id: '{state.id}' }
-    refresh: [dashboard_detail, dashboard_detail_widgets]
-  - id: archive_dashboard_detail
-    type: server
-    permission: spreadsheet.manage
-    action: spreadsheet.dashboards.archive
-    handler: order_transition
-    workflow: dashboards
-    operation: archive
-    params: { id: '{state.id}' }
-    refresh: [dashboard_detail, dashboard_detail_widgets]
-  - id: add_dashboard_widget
-    type: server_form
-    permission: spreadsheet.write
-    title: Add dashboard widget
-    action: spreadsheet.dashboard_widgets.create
+    permission: spreadsheet.read
+    action: spreadsheet.dashboard.share
     handler: yaml_mutation
     operation: create
-    params: { dashboard_id: '{state.id}' }
-    refresh: [dashboard_detail, dashboard_detail_widgets]
-    mutation:
-      operation: insert
-      table: dashboard_widgets
-      fields: [dashboard_id, title, widget_type, source_service, source_id, config_json, position_x, position_y, width, height]
-      required: [dashboard_id, title, widget_type]
-      defaults: { config_json: '{}', position_x: 0, position_y: 0, width: 4, height: 2, active: true }
-      guards:
-        - query: "SELECT id FROM dashboards WHERE id = :dashboard_id AND state <> 'Archived'"
-          status: 409
-          message: Widgets can only be added to an active dashboard
-        - query: "SELECT 1 AS ok WHERE CAST(:position_x AS INTEGER) >= 0 AND CAST(:position_y AS INTEGER) >= 0 AND CAST(:width AS INTEGER) BETWEEN 1 AND 12 AND CAST(:height AS INTEGER) BETWEEN 1 AND 12"
-          status: 400
-          message: Widget position and size are invalid
-      result: { query: "SELECT * FROM dashboard_widgets WHERE id = :id" }
-    fields:
-      - { field: title, label: Widget title, type: text, required: true }
-      - { field: widget_type, label: Widget type, type: select, options_source: dashboard_detail_widget_types, required: true }
-      - { field: source_service, label: Source service, type: text }
-      - { field: source_id, label: Source ID, type: text }
-      - { field: config_json, label: Widget configuration JSON, type: textarea }
-      - { field: position_x, label: Column, type: number }
-      - { field: position_y, label: Row, type: number }
-      - { field: width, label: Width, type: number }
-      - { field: height, label: Height, type: number }
+  - id: download_dashboard
+    type: download
+    permission: spreadsheet.read
+    kind: spreadsheet-dashboard

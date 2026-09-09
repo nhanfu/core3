@@ -1,0 +1,45 @@
+title: Dashboards
+page: { id: spreadsheet-dashboard-groups, route: /spreadsheet/dashboard-groups, breadcrumb: [Dashboards, Configuration, Dashboards], auth: { require: [spreadsheet.manage] } }
+components:
+  - type: PageIntro
+    title: Dashboards
+    description: Organize dashboards into groups.
+  - type: ListView
+    variant: odoo
+    source: spreadsheet_dashboard_groups_configuration
+    create_action: create_dashboard_group
+    create_label: New
+    columns:
+      - { field: name, label: Group, type: PrimaryEntityCell }
+      - { field: dashboard_count, label: Dashboards, align: right }
+      - { field: official, label: Official, type: StatusChip }
+      - { field: company_name, label: Company }
+    page_size: 50
+    row_key: id
+    row_open_action: view_dashboard_group
+    row_double_click_action: view_dashboard_group
+    row_actions: menu
+    empty_state: { title: No dashboard groups, description: Create a group to organize dashboards. }
+actions:
+  - id: view_dashboard_group
+    type: navigate
+    permission: spreadsheet.manage
+    navigate_to: /spreadsheet/dashboard-group
+    params: { id: '{row.id}' }
+  - id: create_dashboard_group
+    type: server_form
+    permission: spreadsheet.dashboard.manage
+    title: New dashboard group
+    action: spreadsheet.dashboard.groups.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [spreadsheet_dashboard_groups]
+    mutation:
+      operation: insert
+      table: spreadsheet_dashboard_groups
+      fields: [name, company_name]
+      required: [name]
+      defaults: { company_name: Global, official: false, row_version: 1 }
+    fields:
+      - { field: name, label: Group name, type: text, required: true }
+      - { field: company_name, label: Company, type: text }

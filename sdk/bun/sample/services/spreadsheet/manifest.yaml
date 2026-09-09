@@ -7,18 +7,21 @@ storage: storage.yaml
 menu:
   dashboards:
     path: /dashboards
-    label: Spreadsheet / Dashboards
+    label: Dashboards
     icon: dashboard
     permission: spreadsheet.read
   groups:
-    - id: workspace
-      label: Workspace
+    - id: dashboards
+      label: Dashboards
       items:
         - path: /dashboards
           label: Dashboards
           icon: dashboard
           permission: spreadsheet.read
-        - path: /spreadsheet-analysis
-          label: Dashboard Analysis
-          icon: chart
-          permission: spreadsheet.read
+    - id: configuration
+      label: Configuration
+      items:
+        - path: /spreadsheet/dashboard-groups
+          label: Dashboards
+          icon: dashboard
+          permission: spreadsheet.manage

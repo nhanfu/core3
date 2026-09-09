@@ -1,0 +1,20 @@
+page: { id: dashboard-detail }
+datasources:
+  - id: spreadsheet_dashboard_summary
+    single: true
+    permission: spreadsheet.read
+    query: "SELECT revenue, orders, customers FROM spreadsheet_dashboard_summaries WHERE dashboard_id = :id"
+  - id: spreadsheet_dashboard_filters
+    single: false
+    permission: spreadsheet.read
+    mock_data:
+      default:
+        - { id: dashboard-filter-default, date_range: This year, options: [Today, This week, This month, This year] }
+  - id: spreadsheet_dashboard_chart
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT period, revenue FROM spreadsheet_dashboard_chart_points WHERE dashboard_id = :id ORDER BY sequence"
+  - id: spreadsheet_dashboard_table
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT id, country, category, revenue, orders FROM spreadsheet_dashboard_rows WHERE dashboard_id = :id ORDER BY sequence"

@@ -1,0 +1,10 @@
+page: { id: spreadsheet-dashboard-group }
+datasources:
+  - id: spreadsheet_dashboard_group
+    single: true
+    permission: spreadsheet.manage
+    query: "SELECT id, row_version, name, company_name, official FROM spreadsheet_dashboard_groups WHERE id = :id"
+  - id: spreadsheet_group_dashboards
+    single: false
+    permission: spreadsheet.manage
+    query: "SELECT id, row_version, name, state, favorite, published FROM spreadsheet_dashboards WHERE group_id = :id ORDER BY sequence, name"

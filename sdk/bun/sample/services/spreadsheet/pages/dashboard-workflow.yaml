@@ -1,15 +1,14 @@
 workflow:
-  id: dashboards
-  entity: dashboards
-  handler: order_transition
+  id: spreadsheet_dashboards
+  entity: spreadsheet_dashboards
+  handler: yaml_mutation
   initial: Draft
-  permission: spreadsheet.write
+  permission: spreadsheet.dashboard.write
   mutable: true
-  status_source: dashboard_states
   states:
     - { id: Draft, label: Draft, color: neutral }
     - { id: Published, label: Published, color: green }
     - { id: Archived, label: Archived, color: blue, terminal: true }
   transitions:
-    - { id: publish, from: [Draft], to: Published, permission: spreadsheet.manage }
-    - { id: archive, from: [Draft, Published], to: Archived, permission: spreadsheet.manage }
+    - { id: publish, from: [Draft], to: Published, permission: spreadsheet.dashboard.manage }
+    - { id: archive, from: [Draft, Published], to: Archived, permission: spreadsheet.dashboard.manage }

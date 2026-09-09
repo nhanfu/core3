@@ -1,0 +1,11 @@
+page: { id: dashboards }
+datasources:
+  - id: spreadsheet_dashboard_groups_landing
+    single: false
+    permission: spreadsheet.read
+    query: "SELECT id, row_version, name, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
+  - id: spreadsheet_dashboards_landing
+    single: false
+    permission: spreadsheet.read
+    workflow: spreadsheet_dashboards
+    query: "SELECT d.id, d.row_version, d.name, g.name AS group_name, d.state, d.favorite, d.company_name, d.published, d.snapshot_status FROM spreadsheet_dashboards d JOIN spreadsheet_dashboard_groups g ON g.id = d.group_id WHERE d.state <> 'Archived' AND d.published = TRUE AND (:q IS NULL OR d.name ILIKE '%' || :q || '%' OR g.name ILIKE '%' || :q || '%') AND (:state IS NULL OR d.state = :state) AND (:favorite IS NULL OR d.favorite = CAST(:favorite AS BOOLEAN)) ORDER BY d.sequence, d.name"

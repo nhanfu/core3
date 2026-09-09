@@ -1,0 +1,64 @@
+version: 0.0.2
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboard_groups (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, name VARCHAR NOT NULL,
+        sequence INTEGER NOT NULL DEFAULT 10, company_name VARCHAR NOT NULL DEFAULT 'Global',
+        official BOOLEAN NOT NULL DEFAULT false, dashboard_count INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_spreadsheet_dashboard_group_name ON spreadsheet_dashboard_groups(name, company_name);
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboards (
+        id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, group_id VARCHAR NOT NULL,
+        name VARCHAR NOT NULL, sequence INTEGER NOT NULL DEFAULT 10, state VARCHAR NOT NULL DEFAULT 'Draft',
+        published BOOLEAN NOT NULL DEFAULT false, favorite BOOLEAN NOT NULL DEFAULT false,
+        company_name VARCHAR NOT NULL DEFAULT 'Global', snapshot_status VARCHAR NOT NULL DEFAULT 'ready',
+        workbook_snapshot VARCHAR NOT NULL DEFAULT '{}', created_at TIMESTAMP NOT NULL DEFAULT TIMESTAMP '2026-01-15 00:00:00'
+      );
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboard_summaries (
+        dashboard_id VARCHAR PRIMARY KEY, revenue DECIMAL(18,2) NOT NULL, orders INTEGER NOT NULL, customers INTEGER NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboard_chart_points (
+        id VARCHAR PRIMARY KEY, dashboard_id VARCHAR NOT NULL, sequence INTEGER NOT NULL, period VARCHAR NOT NULL, revenue DECIMAL(18,2) NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS spreadsheet_dashboard_rows (
+        id VARCHAR PRIMARY KEY, dashboard_id VARCHAR NOT NULL, sequence INTEGER NOT NULL, country VARCHAR NOT NULL, category VARCHAR NOT NULL, revenue DECIMAL(18,2) NOT NULL, orders INTEGER NOT NULL
+      );
+      INSERT OR IGNORE INTO spreadsheet_dashboard_groups(id, row_version, name, sequence, company_name, official, dashboard_count) VALUES
+        ('sdg-sales', 1, 'Sales', 10, 'Global', true, 1),
+        ('sdg-finance', 1, 'Finance', 20, 'Global', true, 1),
+        ('sdg-logistics', 1, 'Logistics', 30, 'Global', true, 1),
+        ('sdg-services', 1, 'Services', 40, 'Global', true, 0),
+        ('sdg-marketing', 1, 'Marketing', 50, 'Global', true, 0),
+        ('sdg-website', 1, 'Website', 60, 'Global', true, 0),
+        ('sdg-hr', 1, 'Human Resources', 70, 'Global', true, 0),
+        ('sdg-empty', 1, 'Unpopulated', 80, 'Global', false, 0),
+        ('sdg-custom', 1, 'Custom dashboards', 90, 'Global', false, 1);
+      INSERT OR IGNORE INTO spreadsheet_dashboards(id, group_id, name, sequence, state, published, favorite, company_name, snapshot_status, workbook_snapshot) VALUES
+        ('sdb-sales', 'sdg-sales', 'Sales', 10, 'Published', true, true, 'Global', 'ready', '{"version":1,"sheets":[{"name":"Sheet1","cells":{"A1":"Sales dashboard","B2":"=SUM(B5:B7)"}}],"figures":["kpi","table","pivot","chart","map","treemap"],"filters":["date","text","numeric","selection"],"links":["/orders"]}'),
+        ('sdb-product', 'sdg-custom', 'Product', 20, 'Published', true, false, 'Global', 'ready', '{"version":1,"sheets":[{"name":"Sheet1"}],"figures":["kpi","chart"]}'),
+        ('sdb-invoicing', 'sdg-finance', 'Invoicing', 10, 'Published', true, false, 'Global', 'ready', '{"version":1,"sheets":[{"name":"Sheet1"}],"figures":["kpi","table","pivot"]}'),
+        ('sdb-warehouse', 'sdg-logistics', 'Warehouse Metrics', 10, 'Published', true, false, 'Global', 'ready', '{"version":1,"sheets":[{"name":"Sheet1"}],"figures":["kpi","map"]}'),
+        ('sdb-draft', 'sdg-services', 'Service planning draft', 20, 'Draft', false, false, 'Global', 'ready', '{"version":1,"sheets":[{"name":"Sheet1"}]}'),
+        ('sdb-archived', 'sdg-marketing', 'Archived campaign', 20, 'Archived', false, false, 'Global', 'ready', '{"version":1,"sheets":[]}'),
+        ('sdb-empty', 'sdg-empty', 'Empty workbook', 10, 'Published', true, false, 'Global', 'empty', '{}'),
+        ('sdb-error', 'sdg-custom', 'Unreadable source example', 30, 'Published', true, false, 'Global', 'error', '{"malformed":true}');
+      INSERT OR IGNORE INTO spreadsheet_dashboard_summaries VALUES ('sdb-sales', 184250.00, 1284, 642);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_summaries VALUES ('sdb-product', 92100.00, 731, 419);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_summaries VALUES ('sdb-invoicing', 241800.00, 912, 508);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_summaries VALUES ('sdb-warehouse', 76300.00, 486, 220);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_chart_points VALUES
+        ('sdp-01','sdb-sales',1,'Jan',28500),('sdp-02','sdb-sales',2,'Feb',31200),('sdp-03','sdb-sales',3,'Mar',33800),('sdp-04','sdb-sales',4,'Apr',37100),('sdp-05','sdb-sales',5,'May',40400);
+      INSERT OR IGNORE INTO spreadsheet_dashboard_rows VALUES
+        ('sdr-01','sdb-sales',1,'United States','Hardware',58200,312),('sdr-02','sdb-sales',2,'Vietnam','Services',42100,284),('sdr-03','sdb-sales',3,'Germany','Software',36750,246),('sdr-04','sdb-sales',4,'France','Hardware',29100,218),('sdr-05','sdb-sales',5,'Canada','Services',18100,224);
+    down: |
+      DROP TABLE IF EXISTS spreadsheet_dashboard_rows;
+      DROP TABLE IF EXISTS spreadsheet_dashboard_chart_points;
+      DROP TABLE IF EXISTS spreadsheet_dashboard_summaries;
+      DROP TABLE IF EXISTS spreadsheet_dashboards;
+      DROP TABLE IF EXISTS spreadsheet_dashboard_groups;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

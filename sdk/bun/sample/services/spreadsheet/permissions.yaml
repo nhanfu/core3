@@ -2,3 +2,6 @@ permissions:
   - spreadsheet.read
   - spreadsheet.write
   - spreadsheet.manage
+  - spreadsheet.dashboard.read
+  - spreadsheet.dashboard.write
+  - spreadsheet.dashboard.manage

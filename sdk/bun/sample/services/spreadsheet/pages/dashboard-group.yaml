@@ -1,0 +1,27 @@
+title: Dashboard group
+page: { id: spreadsheet-dashboard-group, route: /spreadsheet/dashboard-group, breadcrumb: [Dashboards, Configuration, Dashboards, Group], auth: { require: [spreadsheet.manage] } }
+components:
+  - type: OdooFormView
+    source: spreadsheet_dashboard_group
+    title_field: name
+    editable: true
+    group_columns: 2
+    groups:
+      - title: Group
+        fields:
+          - { field: name, label: Group name, required: true }
+          - { field: company_name, label: Company }
+          - { field: official, label: Official, type: checkbox, readonly: true }
+    notebook:
+      - id: spreadsheets
+        label: Spreadsheets
+        component:
+          type: ListView
+          variant: odoo
+          source: spreadsheet_group_dashboards
+          columns:
+            - { field: name, label: Dashboard, type: PrimaryEntityCell }
+            - { field: state, label: Status, type: StatusChip }
+            - { field: favorite, label: Favorite, type: StatusChip }
+          row_key: id
+          empty_state: { title: No spreadsheets, description: This group has no dashboards yet. }

@@ -1,0 +1,6 @@
+page: { id: spreadsheet-dashboard-groups }
+datasources:
+  - id: spreadsheet_dashboard_groups_configuration
+    single: false
+    permission: spreadsheet.manage
+    query: "SELECT id, row_version, name, sequence, company_name, official, dashboard_count FROM spreadsheet_dashboard_groups WHERE (:q IS NULL OR name ILIKE '%' || :q || '%') ORDER BY sequence, name"
