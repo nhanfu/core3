@@ -1,12 +1,12 @@
-title: My Expenses
-page: { id: expenses, route: /expenses, breadcrumb: [Expenses, My Expenses], auth: { require: [expenses.read] } }
+title: Expenses to Process
+page: { id: expenses-to-process, route: /expenses/to-process, breadcrumb: [Expenses, Expenses to Process], auth: { require: [expenses.read] } }
 components:
   - type: ListView
     variant: odoo
-    source: expenses_my
-    search: { label: Search expenses, placeholder: 'Search expense, employee, or category...' }
+    source: expenses_to_process
+    search: { label: Search expenses to process, placeholder: 'Search expense, employee, or category...' }
     filters:
-      - { field: status, label: Status, options_source: expense_statuses }
+      - { field: status, label: Status, options_source: expense_processing_statuses }
       - { field: payment_mode, label: Paid by, options_source: expense_payment_modes }
     group_by:
       - { field: employee_name, label: Employee }
@@ -22,23 +22,23 @@ components:
         label: Kanban
         icon: dashboard
         group_by: status
-        groups_source: expense_statuses
+        groups_source: expense_processing_statuses
         card: { title: name, subtitle: employee_name, fields: [{ field: category, label: Category }, { field: amount_display, label: Total }, { field: status, label: Status }] }
     page_size: 25
     column_chooser: true
     selectable: true
     row_key: id
     row_actions: menu
-    empty_state: { title: No expenses, description: There are no expenses matching these filters. }
+    empty_state: { title: No expenses to process, description: Submitted expenses will appear here for review. }
     labels: { selected: selected, filters: Filters, columns: Columns, clear_selection: Clear selection, select_all: Select all rows, select_row: Select row, previous_page: Previous page, next_page: Next page }
     columns:
       - { field: name, label: Expense, type: PrimaryEntityCell, sortable: true }
       - { field: employee_name, label: Employee }
+      - { field: department_name, label: Department, optional: hide }
       - { field: category, label: Category }
       - { field: expense_date, label: Expense Date, sortable: true }
       - { field: amount_display, label: Total, align: right }
-      - { field: payment_mode, label: Paid by, optional: hide }
       - { field: receipt_label, label: Receipt, optional: hide }
       - { field: company_name, label: Company, optional: hide }
       - { field: status, label: Status, type: StatusChip }
-      - { field: actions, label: '', align: right, actions: [{ id: submit_expense, label: Submit, variant: primary, permission: expenses.write, show_if: "row.status === 'Draft'" }, { id: reset_expense, label: Reset, variant: ghost, permission: expenses.write, show_if: "row.status === 'Refused'" }] }
+      - { field: actions, label: '', align: right, actions: [{ id: approve_expense, label: Approve, variant: primary, permission: expenses.manage, show_if: "row.status === 'Submitted'" }, { id: refuse_expense, label: Refuse, variant: danger, permission: expenses.manage, show_if: "row.status === 'Submitted'" }] }

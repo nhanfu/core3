@@ -12,12 +12,17 @@ menu:
     permission: expenses.read
   groups:
     - id: expenses
-      label: Expenses
+      label: My Expenses
       items:
         - path: /expenses
-          label: Expense Reports
+          label: My Expenses
           icon: receipt
           permission: expenses.read
+        - path: /expenses/to-process
+          label: Expenses to Process
+          icon: checklist
+          permission: expenses.read
+      children:
         - path: /expense-analysis
           label: Expense Analysis
           icon: chart

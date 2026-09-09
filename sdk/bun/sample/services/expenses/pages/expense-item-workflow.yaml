@@ -1,0 +1,22 @@
+workflow:
+  id: expense_items
+  entity: expenses
+  handler: order_transition
+  initial: Draft
+  permission: expenses.write
+  mutable: true
+  states:
+    - { id: Draft, label: Draft, color: neutral }
+    - { id: Submitted, label: Submitted, color: amber }
+    - { id: Approved, label: Approved, color: blue }
+    - { id: Posted, label: Posted, color: green }
+    - { id: In Payment, label: In Payment, color: blue }
+    - { id: Paid, label: Paid, color: green, terminal: true }
+    - { id: Refused, label: Refused, color: red }
+  transitions:
+    - { id: submit, from: [Draft], to: Submitted, permission: expenses.write }
+    - { id: approve, from: [Submitted], to: Approved, permission: expenses.manage }
+    - { id: refuse, from: [Submitted, Approved], to: Refused, permission: expenses.manage }
+    - { id: reset, from: [Refused], to: Draft, permission: expenses.write }
+    - { id: post, from: [Approved], to: Posted, permission: expenses.manage }
+    - { id: pay, from: [Posted, In Payment], to: Paid, permission: expenses.manage }

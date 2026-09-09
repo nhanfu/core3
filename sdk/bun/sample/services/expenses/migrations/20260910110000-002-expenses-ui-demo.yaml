@@ -1,0 +1,31 @@
+version: 0.0.1
+type:
+  postgres:
+    up: |
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS row_version BIGINT NOT NULL DEFAULT 1;
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt_label VARCHAR NOT NULL DEFAULT 'No receipt';
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS company_name VARCHAR NOT NULL DEFAULT 'Core3 Demo Company';
+      ALTER TABLE expenses ADD COLUMN IF NOT EXISTS department_name VARCHAR NOT NULL DEFAULT 'Engineering';
+      INSERT INTO expense_sheets (id, row_version, name, employee_name, manager_name, state, expense_date, amount_total, amount_reimbursed, note)
+      VALUES
+        ('expense-sheet-demo-001', 1, 'Admin User - September expenses', 'Admin User', 'Operations Lead', 'Draft', DATE '2026-09-08', 84.50, 0, 'Seeded My Expenses report'),
+        ('expense-sheet-demo-002', 1, 'Brandon Freeman - September expenses', 'Brandon Freeman', 'Operations Lead', 'Submitted', DATE '2026-09-07', 245.00, 0, 'Seeded approval queue')
+      ON CONFLICT (id) DO NOTHING;
+      INSERT INTO expenses (id, row_version, sheet_id, name, category, expense_date, employee_name, amount, payment_method, description, receipt_reference, state, receipt_label, company_name, department_name)
+      VALUES
+        ('expense-demo-draft', 1, 'expense-sheet-demo-001', 'Breakfast with project team', 'Meals', DATE '2026-09-08', 'Admin User', 24.50, 'Employee', 'Breakfast during planning session', 'receipt-breakfast.pdf', 'Draft', 'Receipt attached', 'Core3 Demo Company', 'Engineering'),
+        ('expense-demo-no-receipt', 1, 'expense-sheet-demo-001', 'Travel by car', 'Mileage', DATE '2026-09-06', 'Admin User', 60.00, 'Company', 'Client visit mileage', NULL, 'Draft', 'Missing receipt', 'Core3 Demo Company', 'Engineering'),
+        ('expense-demo-submitted', 1, 'expense-sheet-demo-002', 'Hotel Expenses', 'Travel & accommodation', DATE '2026-09-07', 'Brandon Freeman', 180.00, 'Employee', 'Customer workshop accommodation', 'receipt-hotel.pdf', 'Submitted', 'Receipt attached', 'Core3 Demo Company', 'Sales'),
+        ('expense-demo-submitted-2', 1, 'expense-sheet-demo-002', 'Travel by Air', 'Travel & accommodation', DATE '2026-09-05', 'Brandon Freeman', 65.00, 'Employee', 'Flight transfer', 'receipt-air.pdf', 'Submitted', 'Receipt attached', 'Core3 Demo Company', 'Sales'),
+        ('expense-demo-approved', 1, 'expense-sheet-demo-002', 'Lunch with Customer', 'Meals', DATE '2026-09-03', 'Chloe Martin', 95.00, 'Company', 'Customer lunch', 'receipt-lunch.pdf', 'Approved', 'Receipt attached', 'Core3 Demo Company', 'Sales'),
+        ('expense-demo-posted', 1, 'expense-sheet-demo-002', 'Laptop', 'Other', DATE '2026-08-28', 'Diego Santos', 1250.00, 'Company', 'Approved equipment purchase', 'receipt-laptop.pdf', 'Posted', 'Receipt attached', 'Core3 Demo Company', 'Engineering'),
+        ('expense-demo-paid', 1, 'expense-sheet-demo-002', 'Pizzas', 'Meals', DATE '2026-08-21', 'Admin User', 48.00, 'Employee', 'Team event', 'receipt-pizzas.pdf', 'Paid', 'Receipt attached', 'Core3 Demo Company', 'Engineering'),
+        ('expense-demo-refused', 1, 'expense-sheet-demo-002', 'Paintball', 'Other', DATE '2026-08-19', 'Brandon Freeman', 72.00, 'Employee', 'Rejected team activity', NULL, 'Refused', 'Missing receipt', 'Core3 Demo Company', 'Sales')
+      ON CONFLICT (id) DO NOTHING;
+    down: |
+      DELETE FROM expenses WHERE id LIKE 'expense-demo-%';
+      DELETE FROM expense_sheets WHERE id LIKE 'expense-sheet-demo-%';
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

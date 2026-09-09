@@ -1,0 +1,39 @@
+page: { id: expenses }
+datasources:
+  - id: expense_statuses
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Posted','Posted'), ('In Payment','In Payment'), ('Paid','Paid'), ('Refused','Refused')) states(value, label)"
+  - id: expense_processing_statuses
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Submitted','Submitted'), ('Approved','Approved')) states(value, label)"
+  - id: expense_payment_modes
+    single: false
+    permission: expenses.read
+    query: "SELECT value, label FROM (VALUES ('Company','Paid by Company'), ('Employee','Paid by Employee')) modes(value, label)"
+  - id: expense_employees
+    single: false
+    permission: expenses.read
+    query: "SELECT DISTINCT employee_name AS value, employee_name AS label FROM expenses ORDER BY employee_name"
+  - id: expense_companies
+    single: false
+    permission: expenses.read
+    query: "SELECT DISTINCT company_name AS value, company_name AS label FROM expenses ORDER BY company_name"
+  - id: expenses_my
+    single: false
+    permission: expenses.read
+    workflow: expense_items
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.amount,
+        printf('$%,.2f', e.amount) AS amount_display, e.payment_method AS payment_mode,
+        e.receipt_label, e.company_name, e.department_name, e.state AS status
+      FROM expenses e
+      WHERE (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+        AND (:status IS NULL OR e.state = :status)
+        AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
+      ORDER BY e.expense_date DESC, e.id
+actions:
+  - { id: submit_expense, type: server, permission: expenses.write, action: expenses.submit, handler: order_transition, workflow: expense_items, operation: submit, refresh: [expenses_my] }
+  - { id: reset_expense, type: server, permission: expenses.write, action: expenses.reset, handler: order_transition, workflow: expense_items, operation: reset, refresh: [expenses_my] }

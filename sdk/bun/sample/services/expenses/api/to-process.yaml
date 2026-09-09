@@ -1,0 +1,20 @@
+page: { id: expenses-to-process }
+datasources:
+  - id: expenses_to_process
+    single: false
+    permission: expenses.read
+    workflow: expense_items
+    query: |
+      SELECT e.id, e.row_version, e.name, e.employee_name, e.category,
+        CAST(e.expense_date AS VARCHAR) AS expense_date, e.amount,
+        printf('$%,.2f', e.amount) AS amount_display, e.payment_method AS payment_mode,
+        e.receipt_label, e.company_name, e.department_name, e.state AS status
+      FROM expenses e
+      WHERE e.state IN ('Submitted', 'Approved')
+        AND (:q IS NULL OR e.name ILIKE '%' || :q || '%' OR e.employee_name ILIKE '%' || :q || '%' OR e.category ILIKE '%' || :q || '%')
+        AND (:status IS NULL OR e.state = :status)
+        AND (:payment_mode IS NULL OR e.payment_method = :payment_mode)
+      ORDER BY e.expense_date ASC, e.id
+actions:
+  - { id: approve_expense, type: server, permission: expenses.manage, action: expenses.approve, handler: order_transition, workflow: expense_items, operation: approve, refresh: [expenses_to_process] }
+  - { id: refuse_expense, type: server, permission: expenses.manage, action: expenses.refuse, handler: order_transition, workflow: expense_items, operation: refuse, refresh: [expenses_to_process] }
