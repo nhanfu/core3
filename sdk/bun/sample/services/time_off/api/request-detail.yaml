@@ -1,0 +1,10 @@
+page: { id: leave-request-detail }
+datasources:
+  - id: leave_request_detail
+    single: true
+    permission: time_off.read
+    query: "SELECT id, row_version, name, employee_name, leave_type_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, days, reason, approver, state FROM leave_requests WHERE id = :id"
+  - id: leave_request_detail_states
+    permission: time_off.read
+    single: false
+    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"

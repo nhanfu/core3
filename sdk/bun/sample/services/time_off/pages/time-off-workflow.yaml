@@ -5,7 +5,7 @@ workflow:
   initial: Draft
   permission: time_off.write
   mutable: true
-  status_source: leave_request_states
+  status_source: leave_request_detail_states
   states:
     - { id: Draft, label: Draft, color: neutral }
     - { id: Submitted, label: Submitted, color: amber }
