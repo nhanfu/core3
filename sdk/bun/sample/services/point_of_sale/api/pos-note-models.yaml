@@ -1,0 +1,5 @@
+page: { id: pos-note-models }
+datasources:
+  - id: pos_note_models
+    permission: pos.read
+    query: "SELECT id, name, note_type, position, note_text, usage_count, active FROM pos_note_models WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR note_type ILIKE '%' || :q || '%' OR note_text ILIKE '%' || :q || '%') ORDER BY name"

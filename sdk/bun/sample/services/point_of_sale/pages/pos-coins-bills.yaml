@@ -1,7 +1,16 @@
 title: POS Coins and Bills
 page: { id: pos-coins-bills, route: /point-of-sale/coins-bills, breadcrumb: [Sales, Point of Sale, Configuration, Coins and Bills], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: Coins and bills
-    description: Cash denominations used by opening and closing controls are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_cash_denominations
+    search: { label: Search denominations, placeholder: Search currency or kind... }
+    columns:
+      - { field: denomination, label: Denomination, type: PrimaryEntityCell, align: right }
+      - { field: currency, label: Currency }
+      - { field: kind, label: Type }
+      - { field: quantity, label: Default quantity, align: right }
+      - { field: total, label: Opening value, align: right }
+      - { field: active, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

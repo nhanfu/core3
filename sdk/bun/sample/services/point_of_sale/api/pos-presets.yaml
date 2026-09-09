@@ -1,0 +1,5 @@
+page: { id: pos-presets }
+datasources:
+  - id: pos_order_presets
+    permission: pos.read
+    query: "SELECT id, name, service_mode, preparation_minutes, guest_count, note, active FROM pos_order_presets WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR service_mode ILIKE '%' || :q || '%') ORDER BY name"

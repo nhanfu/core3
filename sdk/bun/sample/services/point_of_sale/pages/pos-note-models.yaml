@@ -1,7 +1,16 @@
 title: POS Note Models
 page: { id: pos-note-models, route: /point-of-sale/note-models, breadcrumb: [Sales, Point of Sale, Configuration, Note Models], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: Note models
-    description: Reusable order and kitchen note templates are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_note_models
+    search: { label: Search note models, placeholder: Search note model... }
+    columns:
+      - { field: name, label: Note model, type: PrimaryEntityCell }
+      - { field: note_type, label: Type }
+      - { field: position, label: Show on }
+      - { field: note_text, label: Note }
+      - { field: usage_count, label: Used, align: right }
+      - { field: active, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

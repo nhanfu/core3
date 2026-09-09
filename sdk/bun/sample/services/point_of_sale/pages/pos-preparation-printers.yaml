@@ -1,7 +1,16 @@
 title: Preparation Printers
 page: { id: pos-preparation-printers, route: /point-of-sale/preparation-printers, breadcrumb: [Sales, Point of Sale, Preparation Printers], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: Preparation printers
-    description: Kitchen and preparation printer routing for POS order lines is tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_preparation_printers
+    search: { label: Search preparation printers, placeholder: Search printer or category... }
+    columns:
+      - { field: name, label: Printer, type: PrimaryEntityCell }
+      - { field: printer_type, label: Device }
+      - { field: proxy_ip, label: Proxy address }
+      - { field: categories, label: Product categories }
+      - { field: last_seen, label: Last seen }
+      - { field: state, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id

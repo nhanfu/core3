@@ -1,0 +1,5 @@
+page: { id: pos-coins-bills }
+datasources:
+  - id: pos_cash_denominations
+    permission: pos.read
+    query: "SELECT id, CAST(denomination AS DOUBLE) AS denomination, currency, kind, quantity, CAST(denomination * quantity AS DOUBLE) AS total, active FROM pos_cash_denominations WHERE (:q IS NULL OR currency ILIKE '%' || :q || '%' OR kind ILIKE '%' || :q || '%') ORDER BY denomination"

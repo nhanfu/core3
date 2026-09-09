@@ -1,0 +1,72 @@
+version: 0.0.9
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS pos_preparation_printers (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        printer_type VARCHAR NOT NULL,
+        proxy_ip VARCHAR,
+        categories VARCHAR NOT NULL DEFAULT 'All products',
+        state VARCHAR NOT NULL DEFAULT 'Connected',
+        last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS pos_note_models (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        note_type VARCHAR NOT NULL,
+        position VARCHAR NOT NULL DEFAULT 'On receipt',
+        note_text VARCHAR NOT NULL,
+        usage_count INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS pos_cash_denominations (
+        id VARCHAR PRIMARY KEY,
+        denomination DECIMAL(18,2) NOT NULL,
+        currency VARCHAR NOT NULL DEFAULT 'USD',
+        kind VARCHAR NOT NULL,
+        quantity INTEGER NOT NULL DEFAULT 0,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      CREATE TABLE IF NOT EXISTS pos_order_presets (
+        id VARCHAR PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        service_mode VARCHAR NOT NULL,
+        preparation_minutes INTEGER NOT NULL DEFAULT 0,
+        guest_count INTEGER NOT NULL DEFAULT 1,
+        note VARCHAR,
+        active BOOLEAN NOT NULL DEFAULT true
+      );
+      INSERT INTO pos_preparation_printers(id, name, printer_type, proxy_ip, categories, state) VALUES
+        ('pos-printer-kitchen', 'Kitchen printer', 'Epson TM-m30', '192.168.10.31', 'Food, Main courses', 'Connected'),
+        ('pos-printer-bar', 'Bar printer', 'Epson TM-m30', '192.168.10.32', 'Drinks, Desserts', 'Connected'),
+        ('pos-printer-receipt', 'Receipt printer', 'Network printer', '192.168.10.33', 'All products', 'Paused')
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_note_models(id, name, note_type, position, note_text, usage_count) VALUES
+        ('pos-note-allergy', 'Allergy warning', 'Kitchen note', 'On order', 'Please check ingredients for allergies', 14),
+        ('pos-note-cutlery', 'Cutlery', 'Customer note', 'On receipt', 'Include cutlery and napkins', 9),
+        ('pos-note-no-onion', 'No onion', 'Kitchen note', 'On order line', 'Do not add onion', 6)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_cash_denominations(id, denomination, currency, kind, quantity) VALUES
+        ('pos-cash-001', 0.01, 'USD', 'Coin', 20),
+        ('pos-cash-025', 0.25, 'USD', 'Coin', 40),
+        ('pos-cash-001d', 1.00, 'USD', 'Coin', 30),
+        ('pos-cash-005d', 5.00, 'USD', 'Bill', 12),
+        ('pos-cash-010d', 10.00, 'USD', 'Bill', 8),
+        ('pos-cash-020d', 20.00, 'USD', 'Bill', 6)
+      ON CONFLICT(id) DO NOTHING;
+      INSERT INTO pos_order_presets(id, name, service_mode, preparation_minutes, guest_count, note) VALUES
+        ('pos-preset-takeaway', 'Takeaway', 'Takeaway', 10, 1, 'Default takeaway preparation'),
+        ('pos-preset-dine-in', 'Dine in', 'Dine in', 20, 2, 'Table service'),
+        ('pos-preset-delivery', 'Delivery', 'Delivery', 30, 1, 'Confirm delivery address')
+      ON CONFLICT(id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS pos_order_presets;
+      DROP TABLE IF EXISTS pos_cash_denominations;
+      DROP TABLE IF EXISTS pos_note_models;
+      DROP TABLE IF EXISTS pos_preparation_printers;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

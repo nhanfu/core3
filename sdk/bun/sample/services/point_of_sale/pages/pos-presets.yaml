@@ -1,7 +1,16 @@
 title: POS Presets
 page: { id: pos-presets, route: /point-of-sale/presets, breadcrumb: [Sales, Point of Sale, Configuration, Presets], auth: { require: [pos.read] } }
 components:
-  - type: ComingSoon
-    eyebrow: Configuration
-    title: Order presets
-    description: POS order presets and default preparation behavior are tracked here.
+  - type: ListView
+    variant: odoo
+    source: pos_order_presets
+    search: { label: Search presets, placeholder: Search preset or service mode... }
+    columns:
+      - { field: name, label: Preset, type: PrimaryEntityCell }
+      - { field: service_mode, label: Service mode }
+      - { field: preparation_minutes, label: Preparation (min), align: right }
+      - { field: guest_count, label: Guests, align: right }
+      - { field: note, label: Default note }
+      - { field: active, label: Status, type: StatusChip }
+    page_size: 50
+    row_key: id
