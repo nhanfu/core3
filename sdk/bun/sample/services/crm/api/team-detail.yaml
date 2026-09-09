@@ -3,15 +3,15 @@ datasources:
   - id: crm_team_detail
     single: true
     permission: crm.read
-    query: "SELECT id, name, leader, email_alias, target_revenue, use_leads, active FROM crm_teams WHERE id = :id"
+    mock_data: { default: { id: team-direct, name: Direct Sales, leader: Administrator, email_alias: sales@core3.local, target_revenue: 100000, use_leads: true, active: true } }
   - id: crm_team_members_detail
     single: false
     permission: crm.read
-    query: "SELECT id, team_id, user_name, active FROM crm_team_members WHERE team_id = :id ORDER BY user_name"
+    mock_data: { default: [{ id: member-admin, team_id: team-direct, user_name: Administrator, active: true }, { id: member-dispatch, team_id: team-direct, user_name: Dispatcher User, active: true }] }
   - id: crm_activity_type_lookup_detail
     single: false
     permission: crm.read
-    query: "SELECT id AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Call, label: Call }, { value: Email, label: Email }] }
 actions:
   - id: edit_crm_team_detail
     type: server_form

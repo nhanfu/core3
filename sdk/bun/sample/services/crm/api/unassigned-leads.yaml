@@ -3,16 +3,9 @@ datasources:
   - id: crm_unassigned_leads
     single: false
     permission: crm.read
-    query: |
-      SELECT id, row_version, name, type, partner_name, source, priority,
-        expected_revenue, stage, probability, team, tags,
-        CAST(expected_closing AS VARCHAR) AS expected_closing,
-        CAST(updated_at AS VARCHAR) AS updated_at
-      FROM crm_leads
-      WHERE NULLIF(TRIM(salesperson), '') IS NULL
-        AND stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-      ORDER BY expected_closing NULLS LAST, updated_at DESC
+    mock_data:
+      default: [{ id: crm-unassigned-001, row_version: 1, name: Unassigned inquiry, type: lead, partner_name: New Customer, source: Website, priority: '0', expected_revenue: 6000, stage: New, probability: 10, team: Direct Sales, tags: New, expected_closing: '2026-09-25', updated_at: '2026-09-08' }]
+      states: { empty: [] }
 actions:
   - id: bulk_delete_unassigned_leads
     type: server

@@ -3,26 +3,17 @@ datasources:
   - id: crm_activity_queue
     single: false
     permission: crm.read
-    query: |
-      SELECT a.id, a.lead_id, l.name AS opportunity, a.activity_type, a.summary,
-        CAST(a.due_date AS VARCHAR) AS due_date, a.assigned_to, a.state,
-        CASE WHEN a.due_date < CURRENT_DATE THEN 'Overdue'
-             WHEN a.due_date = CURRENT_DATE THEN 'Today'
-             ELSE 'Upcoming' END AS timing
-      FROM crm_activities a JOIN crm_leads l ON l.id = a.lead_id
-      WHERE a.state = 'planned'
-        AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR a.summary ILIKE '%' || :q || '%')
-        AND (:timing IS NULL OR CASE WHEN a.due_date < CURRENT_DATE THEN 'Overdue' WHEN a.due_date = CURRENT_DATE THEN 'Today' ELSE 'Upcoming' END = :timing)
-        AND (:activity_type IS NULL OR a.activity_type = :activity_type)
-      ORDER BY a.due_date NULLS LAST, a.created_at DESC
+    mock_data:
+      default: [{ id: crm-activity-001, lead_id: crm-opp-001, opportunity: Vietnam expansion, activity_type: Call, summary: Confirm expansion requirements, due_date: '2026-09-10', assigned_to: Administrator, state: planned, timing: Upcoming }]
+      states: { empty: [], overdue: [{ id: crm-activity-002, lead_id: crm-lead-001, opportunity: Core3 website inquiry, activity_type: Email, summary: Send pricing details, due_date: '2026-09-08', assigned_to: Administrator, state: planned, timing: Overdue }] }
   - id: crm_activity_timing
     single: false
     permission: crm.read
-    query: "SELECT value, label FROM (VALUES ('Overdue', 'Overdue'), ('Today', 'Today'), ('Upcoming', 'Upcoming')) timing(value, label)"
+    mock_data: { default: [{ value: Overdue, label: Overdue }, { value: Today, label: Today }, { value: Upcoming, label: Upcoming }] }
   - id: crm_activity_type_lookup
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Call, label: Call }, { value: Email, label: Email }, { value: To-do, label: To-do }] }
 actions:
   - id: complete_crm_activity
     type: server

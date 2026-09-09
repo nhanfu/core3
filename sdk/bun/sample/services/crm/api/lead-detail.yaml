@@ -3,34 +3,26 @@ datasources:
   - id: crm_lead_detail
     single: true
     permission: crm.read
-    query: |
-      SELECT l.id, l.row_version, l.name, l.type, l.partner_id, l.partner_name, l.email, l.phone, l.description,
-        source, utm_campaign, utm_medium, utm_source, tags, priority, expected_revenue, stage, probability, salesperson, team,
-        CAST(expected_closing AS VARCHAR) AS expected_closing,
-        l.lost_reason, r.name AS lost_reason_name, CAST(l.created_at AS VARCHAR) AS created_at
-      FROM crm_leads l LEFT JOIN crm_lost_reasons r ON r.id = l.lost_reason WHERE l.id = :id
+    mock_data:
+      default: { id: crm-opp-001, row_version: 1, name: Vietnam expansion, type: opportunity, partner_id: company-vietnam, partner_name: Core3 Vietnam Branch, email: vn@core3.local, phone: '+84 28 5555 0100', description: Expansion opportunity, source: Referral, utm_campaign: partner, utm_medium: referral, utm_source: partner, tags: Priority, priority: '2', expected_revenue: 45000, stage: Qualified, probability: 60, salesperson: Administrator, team: Direct Sales, expected_closing: '2026-10-15', lost_reason: '', lost_reason_name: '', created_at: '2026-08-28' }
   - id: crm_lead_activities
     single: false
     permission: crm.read
-    query: |
-      SELECT id, activity_type, summary, CAST(due_date AS VARCHAR) AS due_date,
-        assigned_to, state, next_activity_type, next_activity_summary,
-        CAST(next_activity_due_date AS VARCHAR) AS next_activity_due_date,
-        CAST(created_at AS VARCHAR) AS created_at,
-        CAST(completed_at AS VARCHAR) AS completed_at
-      FROM crm_activities WHERE lead_id = :id ORDER BY due_date NULLS LAST, created_at DESC
+    mock_data:
+      default: [{ id: crm-activity-001, activity_type: Call, summary: Confirm expansion requirements, due_date: '2026-09-10', assigned_to: Administrator, state: planned, next_activity_type: Email, next_activity_summary: Send proposal, next_activity_due_date: '2026-09-12', created_at: '2026-09-08', completed_at: '' }]
+      states: { empty: [] }
   - id: crm_lost_reason_lookup_detail
     single: false
     permission: crm.read
-    query: "SELECT id AS value, name AS label FROM crm_lost_reasons WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: reason-price, label: Too expensive }, { value: reason-timing, label: Timing }] }
   - id: crm_source_lookup_detail
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Website, label: Website }, { value: Referral, label: Referral }] }
   - id: crm_sales_teams_detail
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Direct Sales, label: Direct Sales }] }
   - id: crm_contacts_detail
     type: service
     service: yaml.service.base
@@ -40,46 +32,23 @@ datasources:
   - id: crm_activity_types_detail
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_activity_types WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Call, label: Call }, { value: Email, label: Email }] }
   - id: crm_activity_plans_detail
     single: false
     permission: crm.read
-    query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: plan-followup, label: Follow-up plan }] }
   - id: crm_lead_timeline
     single: false
     permission: crm.read
-    query: |
-      SELECT actor_name, action,
-        CASE action
-          WHEN 'crm.message' THEN 'Message'
-          WHEN 'crm.note' THEN 'Note'
-          WHEN 'crm.followers.add' THEN 'Added follower'
-          WHEN 'crm.followers.remove' THEN 'Removed follower'
-          WHEN 'crm.attachments.upload' THEN 'Uploaded attachment'
-          WHEN 'crm.leads.qualify' THEN 'Qualified'
-          WHEN 'crm.leads.propose' THEN 'Moved to Proposition'
-          WHEN 'crm.leads.won' THEN 'Marked won'
-          WHEN 'crm.leads.lost' THEN 'Marked lost'
-          WHEN 'crm.leads.reopen' THEN 'Reopened'
-          WHEN 'crm.leads.convert' THEN 'Converted to opportunity'
-          WHEN 'crm.leads.update' THEN 'Updated opportunity'
-          ELSE action END AS action_label,
-        detail, CAST(created_at AS VARCHAR) AS created_at
-      FROM crm_activity_log
-      WHERE resource = 'crm_leads' AND resource_id = :id
-      UNION ALL
-      SELECT salesperson, 'created', 'Created', 'Opportunity created',
-        CAST(created_at AS VARCHAR)
-      FROM crm_leads WHERE id = :id
-      ORDER BY created_at DESC
+    mock_data:
+      default: [{ actor_name: Administrator, action: crm.leads.update, action_label: Updated opportunity, detail: Opportunity details updated, created_at: '2026-09-08' }, { actor_name: Administrator, action: created, action_label: Created, detail: Opportunity created, created_at: '2026-08-28' }]
+      states: { empty: [] }
   - id: crm_lead_followers_list
     single: false
     permission: crm.read
-    query: |
-      SELECT f.user_id, CAST(f.created_at AS VARCHAR) AS followed_at
-      FROM crm_lead_followers f
-      WHERE f.lead_id = :id
-      ORDER BY f.created_at
+    mock_data:
+      default: [{ user_id: user-admin, followed_at: '2026-08-28', name: Administrator, email: admin@core3.local, avatar_url: '' }]
+      states: { empty: [] }
     enrich:
       service: auth
       operation: users.resolve
@@ -98,12 +67,9 @@ datasources:
   - id: crm_lead_attachments_list
     single: false
     permission: crm.read
-    query: |
-      SELECT a.id, a.lead_id, a.file_name, a.mime_type, a.size_bytes,
-        a.uploaded_by, CAST(a.created_at AS VARCHAR) AS created_at
-      FROM crm_lead_attachments a
-      WHERE a.lead_id = :id
-      ORDER BY a.created_at DESC
+    mock_data:
+      default: [{ id: attachment-proposal, lead_id: crm-opp-001, file_name: proposal.pdf, mime_type: application/pdf, size_bytes: 32768, uploaded_by: user-admin, uploaded_by_name: Administrator, created_at: '2026-09-08' }]
+      states: { empty: [] }
     enrich:
       service: auth
       operation: users.resolve

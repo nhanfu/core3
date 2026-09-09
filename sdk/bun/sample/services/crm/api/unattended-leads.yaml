@@ -3,20 +3,9 @@ datasources:
   - id: crm_unattended_leads
     single: false
     permission: crm.read
-    query: |
-      SELECT l.id, l.row_version, l.name, l.type, l.partner_name, l.email,
-        l.salesperson, l.team, l.stage, l.probability, l.expected_revenue,
-        CAST(l.expected_closing AS VARCHAR) AS expected_closing,
-        CASE WHEN EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
-             THEN 'Past due' ELSE 'No planned activity' END AS attention
-      FROM crm_leads l
-      WHERE l.stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR l.name ILIKE '%' || :q || '%' OR l.partner_name ILIKE '%' || :q || '%')
-        AND (
-          NOT EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned')
-          OR EXISTS (SELECT 1 FROM crm_activities a WHERE a.lead_id = l.id AND a.state = 'planned' AND a.due_date < CURRENT_DATE)
-        )
-      ORDER BY attention, l.updated_at DESC
+    mock_data:
+      default: [{ id: crm-unattended-001, row_version: 1, name: Follow-up needed, type: opportunity, partner_name: Core3 Demo Company, email: buyer@core3.local, salesperson: Administrator, team: Direct Sales, stage: Qualified, probability: 60, expected_revenue: 12500, expected_closing: '2026-09-12', attention: Past due }]
+      states: { empty: [] }
 actions:
   - id: bulk_delete_unattended_leads
     type: server

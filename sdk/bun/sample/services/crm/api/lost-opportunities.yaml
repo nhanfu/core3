@@ -3,20 +3,13 @@ datasources:
   - id: crm_lost_opportunities
     single: false
     permission: crm.read
-    query: |
-      SELECT id, row_version, name, partner_name, email, phone, source,
-        expected_revenue, salesperson, team, lost_reason, tags,
-        CAST(expected_closing AS VARCHAR) AS expected_closing,
-        CAST(updated_at AS VARCHAR) AS updated_at
-      FROM crm_leads
-      WHERE stage = 'Lost'
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-        AND (:lost_reason IS NULL OR lost_reason = :lost_reason)
-      ORDER BY updated_at DESC
+    mock_data:
+      default: [{ id: crm-lost-001, row_version: 1, name: Legacy renewal, partner_name: Old Customer, email: old@customer.local, phone: '+1 555 0130', source: Website, expected_revenue: 8000, salesperson: Administrator, team: Direct Sales, lost_reason: reason-price, tags: Lost, expected_closing: '2026-08-15', updated_at: '2026-08-20' }]
+      states: { empty: [], filtered: [{ id: crm-lost-001, row_version: 1, name: Legacy renewal, partner_name: Old Customer, source: Website, expected_revenue: 8000, salesperson: Administrator, team: Direct Sales, lost_reason: reason-price, tags: Lost, expected_closing: '2026-08-15', updated_at: '2026-08-20' }] }
   - id: crm_lost_reason_filter
     single: false
     permission: crm.read
-    query: "SELECT id AS value, name AS label FROM crm_lost_reasons ORDER BY name"
+    mock_data: { default: [{ value: reason-price, label: Too expensive }, { value: reason-timing, label: Timing }] }
 actions:
   - id: restore_lost_opportunities
     type: server

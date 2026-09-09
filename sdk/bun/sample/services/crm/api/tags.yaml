@@ -3,10 +3,10 @@ datasources:
   - id: crm_tag_values
     type: local
     permission: crm.read
-    query: "SELECT TRIM(tag) AS value, TRIM(tag) AS label, COUNT(*) AS lead_count FROM crm_leads, UNNEST(string_split(COALESCE(tags, ''), ',')) AS split(tag) WHERE NULLIF(TRIM(tag), '') IS NOT NULL AND (:q IS NULL OR TRIM(tag) ILIKE '%' || :q || '%') GROUP BY TRIM(tag) ORDER BY lead_count DESC, value"
+    mock_data: { default: [{ value: New, label: New, lead_count: 1 }, { value: Priority, label: Priority, lead_count: 1 }], states: { empty: [] } }
   - id: crm_tag_configuration
     permission: crm.read
-    query: "SELECT t.id, t.name, t.color, t.active, (SELECT COUNT(*) FROM crm_leads l WHERE ',' || replace(COALESCE(l.tags, ''), ' ', '') || ',' LIKE '%,' || replace(t.name, ' ', '') || ',%') AS lead_count FROM crm_tags t WHERE (:q IS NULL OR t.name ILIKE '%' || :q || '%') ORDER BY t.active DESC, t.name"
+    mock_data: { default: [{ id: tag-new, name: New, color: 10, active: true, lead_count: 1 }, { id: tag-priority, name: Priority, color: 20, active: true, lead_count: 1 }] }
 actions:
   - id: create_crm_tag
     type: server_form

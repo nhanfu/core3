@@ -4,48 +4,43 @@ datasources:
     single: false
     permission: crm.read
     workflow: crm_leads
-    query: |
-      SELECT id, row_version, name, type, partner_id, partner_name, email, phone, source, utm_campaign, utm_medium, utm_source, priority,
-        expected_revenue, stage, probability, salesperson, team, tags,
-        CAST(expected_closing AS VARCHAR) AS expected_closing,
-        CAST(created_at AS VARCHAR) AS created_at
-      FROM crm_leads
-      WHERE (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR email ILIKE '%' || :q || '%' OR phone ILIKE '%' || :q || '%' OR source ILIKE '%' || :q || '%' OR utm_campaign ILIKE '%' || :q || '%' OR utm_medium ILIKE '%' || :q || '%' OR utm_source ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-        AND (:stage IS NULL OR stage = :stage)
-        AND (:type IS NULL OR type = :type)
-        AND (:salesperson IS NULL OR salesperson = :salesperson)
-        AND (:team IS NULL OR team = :team)
-        AND (:source IS NULL OR source = :source)
-        AND (:utm_campaign IS NULL OR utm_campaign = :utm_campaign)
-      ORDER BY created_at DESC
+    mock_data:
+      default:
+        - { id: crm-lead-001, row_version: 1, name: Core3 website inquiry, type: lead, partner_id: company-demo, partner_name: Core3 Demo Company, email: buyer@core3.local, phone: '+1 555 0120', source: Website, utm_campaign: spring, utm_medium: cpc, utm_source: google, priority: '1', expected_revenue: 12500, stage: New, probability: 20, salesperson: Administrator, team: Direct Sales, tags: New, expected_closing: '2026-09-20', created_at: '2026-09-01' }
+        - { id: crm-opp-001, row_version: 1, name: Vietnam expansion, type: opportunity, partner_id: company-vietnam, partner_name: Core3 Vietnam Branch, email: vn@core3.local, phone: '+84 28 5555 0100', source: Referral, utm_campaign: partner, utm_medium: referral, utm_source: partner, priority: '2', expected_revenue: 45000, stage: Qualified, probability: 60, salesperson: Dispatcher User, team: Direct Sales, tags: Priority, expected_closing: '2026-10-15', created_at: '2026-08-28' }
+      states:
+        filtered: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, type: opportunity, partner_id: company-vietnam, partner_name: Core3 Vietnam Branch, email: vn@core3.local, phone: '+84 28 5555 0100', source: Referral, priority: '2', expected_revenue: 45000, stage: Qualified, probability: 60, salesperson: Dispatcher User, team: Direct Sales, tags: Priority, expected_closing: '2026-10-15', created_at: '2026-08-28' }]
+        grouped: [{ id: crm-lead-001, row_version: 1, name: Core3 website inquiry, type: lead, partner_name: Core3 Demo Company, expected_revenue: 12500, stage: New, probability: 20, salesperson: Administrator, team: Direct Sales, tags: New, expected_closing: '2026-09-20', created_at: '2026-09-01' }, { id: crm-opp-001, row_version: 1, name: Vietnam expansion, type: opportunity, partner_name: Core3 Vietnam Branch, expected_revenue: 45000, stage: Qualified, probability: 60, salesperson: Dispatcher User, team: Direct Sales, tags: Priority, expected_closing: '2026-10-15', created_at: '2026-08-28' }]
+        empty: []
+        mobile: [{ id: crm-lead-001, row_version: 1, name: Core3 website inquiry, type: lead, partner_name: Core3 Demo Company, expected_revenue: 12500, stage: New, probability: 20, salesperson: Administrator, team: Direct Sales, tags: New, expected_closing: '2026-09-20', created_at: '2026-09-01' }]
   - id: crm_lead_stages
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_stages WHERE active = true ORDER BY sequence, name"
+    mock_data: { default: [{ value: New, label: New }, { value: Qualified, label: Qualified }, { value: Won, label: Won }, { value: Lost, label: Lost }] }
   - id: crm_lead_types
     single: false
     permission: crm.read
-    query: "SELECT 'lead' AS value, 'Lead' AS label UNION ALL SELECT 'opportunity' AS value, 'Opportunity' AS label"
+    mock_data: { default: [{ value: lead, label: Lead }, { value: opportunity, label: Opportunity }] }
   - id: crm_salespeople
     single: false
     permission: crm.read
-    query: "SELECT DISTINCT salesperson AS value, salesperson AS label FROM crm_leads WHERE NULLIF(TRIM(salesperson), '') IS NOT NULL ORDER BY salesperson"
+    mock_data: { default: [{ value: Administrator, label: Administrator }, { value: Dispatcher User, label: Dispatcher User }] }
   - id: crm_sales_teams
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Direct Sales, label: Direct Sales }] }
   - id: crm_lost_reason_lookup
     single: false
     permission: crm.read
-    query: "SELECT id AS value, name AS label FROM crm_lost_reasons WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: reason-price, label: Too expensive }, { value: reason-timing, label: Timing }] }
   - id: crm_source_lookup
     permission: crm.read
     single: false
-    query: "SELECT name AS value, name AS label FROM crm_sources WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Website, label: Website }, { value: Referral, label: Referral }] }
   - id: crm_utm_campaign_lookup
     single: false
     permission: crm.read
-    query: "SELECT DISTINCT utm_campaign AS value, utm_campaign AS label FROM crm_leads WHERE NULLIF(TRIM(utm_campaign), '') IS NOT NULL ORDER BY utm_campaign"
+    mock_data: { default: [{ value: spring, label: spring }, { value: partner, label: partner }] }
   - id: crm_contacts
     type: service
     service: yaml.service.base

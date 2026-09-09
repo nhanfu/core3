@@ -3,16 +3,9 @@ datasources:
   - id: crm_my_pipeline
     single: false
     permission: crm.read
-    query: |
-      SELECT id, row_version, name, type, partner_name, email, phone, source, priority,
-        expected_revenue, stage, probability, salesperson, team, tags,
-        CAST(expected_closing AS VARCHAR) AS expected_closing,
-        CAST(updated_at AS VARCHAR) AS updated_at
-      FROM crm_leads
-      WHERE salesperson = :current_user_name
-        AND stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-      ORDER BY expected_closing NULLS LAST, updated_at DESC
+    mock_data:
+      default: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, type: opportunity, partner_name: Core3 Vietnam Branch, email: vn@core3.local, phone: '+84 28 5555 0100', source: Referral, priority: '2', expected_revenue: 45000, stage: Qualified, probability: 60, salesperson: Administrator, team: Direct Sales, tags: Priority, expected_closing: '2026-10-15', updated_at: '2026-09-08' }]
+      states: { empty: [], filtered: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, type: opportunity, partner_name: Core3 Vietnam Branch, expected_revenue: 45000, stage: Qualified, probability: 60, salesperson: Administrator, team: Direct Sales, tags: Priority, expected_closing: '2026-10-15', updated_at: '2026-09-08' }] }
 actions:
   - id: bulk_delete_my_pipeline
     type: server

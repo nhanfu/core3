@@ -3,23 +3,23 @@ datasources:
   - id: crm_teams
     single: false
     permission: crm.read
-    query: "SELECT t.id, t.name, t.leader, t.email_alias, t.target_revenue, t.use_leads, t.active, (SELECT COUNT(*) FROM crm_team_members m WHERE m.team_id = t.id AND m.active = true) AS member_count FROM crm_teams t ORDER BY t.name"
+    mock_data: { default: [{ id: team-direct, name: Direct Sales, leader: Administrator, email_alias: sales@core3.local, target_revenue: 100000, use_leads: true, active: true, member_count: 2 }] }
   - id: crm_stages_config
     single: false
     permission: crm.read
-    query: "SELECT id, name, sequence, probability, fold, requirements FROM crm_stages ORDER BY sequence"
+    mock_data: { default: [{ id: stage-new, name: New, sequence: 1, probability: 20, fold: false, requirements: '' }, { id: stage-qualified, name: Qualified, sequence: 2, probability: 60, fold: false, requirements: '' }] }
   - id: crm_lost_reasons
     single: false
     permission: crm.read
-    query: "SELECT id, name, active FROM crm_lost_reasons ORDER BY name"
+    mock_data: { default: [{ id: reason-price, name: Too expensive, active: true }, { id: reason-timing, name: Timing, active: true }] }
   - id: crm_team_member_configuration
     single: false
     permission: crm.read
-    query: "SELECT m.id, m.team_id, t.name AS team_name, m.user_name, m.active FROM crm_team_members m JOIN crm_teams t ON t.id = m.team_id ORDER BY t.name, m.user_name"
+    mock_data: { default: [{ id: member-admin, team_id: team-direct, team_name: Direct Sales, user_name: Administrator, active: true }, { id: member-dispatch, team_id: team-direct, team_name: Direct Sales, user_name: Dispatcher User, active: true }] }
   - id: crm_team_lookup
     single: false
     permission: crm.manage
-    query: "SELECT id AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: team-direct, label: Direct Sales }] }
 actions:
   - id: edit_crm_team
     type: server_form

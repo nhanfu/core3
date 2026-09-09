@@ -3,20 +3,13 @@ datasources:
   - id: crm_expected_revenue
     single: false
     permission: crm.read
-    query: |
-      SELECT id, row_version, name, partner_name, salesperson, team, stage,
-        probability, expected_revenue, tags,
-        CAST(expected_revenue * probability / 100 AS DOUBLE) AS weighted_revenue,
-        CAST(expected_closing AS VARCHAR) AS expected_closing
-      FROM crm_leads
-      WHERE stage NOT IN ('Won', 'Lost')
-        AND (:q IS NULL OR name ILIKE '%' || :q || '%' OR partner_name ILIKE '%' || :q || '%' OR tags ILIKE '%' || :q || '%')
-        AND (:team IS NULL OR team = :team)
-      ORDER BY expected_closing NULLS LAST, weighted_revenue DESC
+    mock_data:
+      default: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, partner_name: Core3 Vietnam Branch, salesperson: Administrator, team: Direct Sales, stage: Qualified, probability: 60, expected_revenue: 45000, weighted_revenue: 27000, tags: Priority, expected_closing: '2026-10-15' }]
+      states: { empty: [], filtered: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, partner_name: Core3 Vietnam Branch, salesperson: Administrator, team: Direct Sales, stage: Qualified, probability: 60, expected_revenue: 45000, weighted_revenue: 27000, tags: Priority, expected_closing: '2026-10-15' }] }
   - id: crm_expected_revenue_teams
     single: false
     permission: crm.read
-    query: "SELECT name AS value, name AS label FROM crm_teams WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: Direct Sales, label: Direct Sales }] }
 actions:
   - id: bulk_delete_expected_revenue
     type: server

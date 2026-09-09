@@ -3,31 +3,31 @@ datasources:
   - id: crm_stage_configuration
     single: false
     permission: crm.manage
-    query: "SELECT id, name, sequence, probability, fold, requirements, active FROM crm_stages ORDER BY sequence"
+    mock_data: { default: [{ id: stage-new, name: New, sequence: 1, probability: 20, fold: false, requirements: '', active: true }, { id: stage-qualified, name: Qualified, sequence: 2, probability: 60, fold: false, requirements: '', active: true }] }
   - id: crm_lost_reason_configuration
     single: false
     permission: crm.manage
-    query: "SELECT id, name, active FROM crm_lost_reasons ORDER BY name"
+    mock_data: { default: [{ id: reason-price, name: Too expensive, active: true }, { id: reason-timing, name: Timing, active: true }] }
   - id: crm_source_configuration
     single: false
     permission: crm.manage
-    query: "SELECT id, name, active FROM crm_sources ORDER BY name"
+    mock_data: { default: [{ id: source-web, name: Website, active: true }, { id: source-referral, name: Referral, active: true }] }
   - id: crm_activity_type_configuration
     single: false
     permission: crm.manage
-    query: "SELECT id, name, active FROM crm_activity_types ORDER BY name"
+    mock_data: { default: [{ id: activity-call, name: Call, active: true }, { id: activity-email, name: Email, active: true }] }
   - id: crm_activity_plan_configuration
     single: false
     permission: crm.manage
-    query: "SELECT p.id, p.name, p.active, COUNT(s.id) AS step_count FROM crm_activity_plans p LEFT JOIN crm_activity_plan_steps s ON s.plan_id = p.id AND s.active = true GROUP BY p.id, p.name, p.active ORDER BY p.name"
+    mock_data: { default: [{ id: plan-followup, name: Follow-up plan, active: true, step_count: 2 }] }
   - id: crm_activity_plan_steps_configuration
     single: false
     permission: crm.manage
-    query: "SELECT s.id, s.plan_id, p.name AS plan_name, s.sequence, s.activity_type, s.summary, s.delay_days, s.active FROM crm_activity_plan_steps s JOIN crm_activity_plans p ON p.id = s.plan_id ORDER BY p.name, s.sequence"
+    mock_data: { default: [{ id: step-followup-call, plan_id: plan-followup, plan_name: Follow-up plan, sequence: 1, activity_type: Call, summary: Call customer, delay_days: 1, active: true }] }
   - id: crm_activity_plan_lookup
     single: false
     permission: crm.manage
-    query: "SELECT id AS value, name AS label FROM crm_activity_plans WHERE active = true ORDER BY name"
+    mock_data: { default: [{ value: plan-followup, label: Follow-up plan }] }
 actions:
   - id: create_crm_stage
     type: server_form
