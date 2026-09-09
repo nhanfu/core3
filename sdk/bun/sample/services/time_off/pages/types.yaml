@@ -1,9 +1,5 @@
 title: Leave Types
 page: { id: leave-types, breadcrumb: [Human Resources, Time Off, Leave Types], auth: { require: [time_off.manage] } }
-datasources:
-  - id: leave_types
-    permission: time_off.read
-    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types ORDER BY name"
 components:
   - type: ListView
     variant: odoo

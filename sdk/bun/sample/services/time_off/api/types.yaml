@@ -1,0 +1,5 @@
+page: { id: leave-types }
+datasources:
+  - id: leave_types
+    permission: time_off.read
+    query: "SELECT id, name, code, allocation_days, requires_approval, state FROM leave_types ORDER BY name"

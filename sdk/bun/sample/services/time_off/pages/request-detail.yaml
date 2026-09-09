@@ -1,10 +1,5 @@
 title: Leave Request
 page: { id: leave-request-detail, breadcrumb: [Human Resources, Time Off, Detail], auth: { require: [time_off.read] } }
-datasources:
-  - id: leave_request_detail
-    single: true
-    permission: time_off.read
-    query: "SELECT id, row_version, name, employee_name, leave_type_name, CAST(date_from AS VARCHAR) AS date_from, CAST(date_to AS VARCHAR) AS date_to, days, reason, approver, state FROM leave_requests WHERE id = :id"
 components:
   - type: OdooFormView
     source: leave_request_detail

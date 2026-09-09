@@ -1,18 +1,5 @@
 title: Leave Requests
 page: { id: leave-requests, breadcrumb: [Human Resources, Time Off, Leave Requests], auth: { require: [time_off.read] } }
-datasources:
-  - id: leave_request_states
-    permission: time_off.read
-    single: false
-    query: "SELECT value, label FROM (VALUES ('Draft','Draft'), ('Submitted','Submitted'), ('Approved','Approved'), ('Refused','Refused'), ('Cancelled','Cancelled')) states(value, label)"
-  - id: leave_type_lookup
-    permission: time_off.read
-    single: false
-    query: "SELECT id AS value, name AS label FROM leave_types WHERE state = 'Active' ORDER BY name"
-  - id: leave_requests
-    permission: time_off.read
-    workflow: leave_requests
-    query: "SELECT r.id, r.row_version, r.name, r.employee_name, r.leave_type_name, CAST(r.date_from AS VARCHAR) AS date_from, CAST(r.date_to AS VARCHAR) AS date_to, r.days, r.reason, r.approver, r.state FROM leave_requests r WHERE (:q IS NULL OR r.name ILIKE '%' || :q || '%' OR r.employee_name ILIKE '%' || :q || '%') AND (:state IS NULL OR r.state = :state) ORDER BY r.date_from DESC"
 components:
   - type: ListView
     variant: odoo
