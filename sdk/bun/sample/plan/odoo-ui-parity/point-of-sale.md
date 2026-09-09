@@ -100,6 +100,8 @@ The resulting order appears in POS Orders as Paid with total 3.85, paid 3.85,
 tax 0.35, and payment method Cash. Core3 captures are kept locally under
 `/tmp/core3-pos-cashier-desktop-{initial,new-ticket,product-added,paid,order-paid}.png`
 and `/tmp/core3-pos-cashier-mobile.png`.
+An authenticated dispatcher session without `pos.write` receives the expected
+403 page-load response and the visible Failed to load page state.
 
 The audit fixed three shared/runtime gaps found by the browser: direct Bun
 component fallback registration for native form fields, lookup propagation and
