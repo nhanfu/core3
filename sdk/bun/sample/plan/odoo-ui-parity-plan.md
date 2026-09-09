@@ -40,9 +40,9 @@ outside this local parity plan.
 | documents | documents | unavailable in supplied source | `odoo-ui-parity/documents.md` | planned |
 | approvals | approvals | unavailable in supplied source | `odoo-ui-parity/approvals.md` | planned |
 | spreadsheet | spreadsheet | available | `odoo-ui-parity/spreadsheet.md` | planned |
-| inventory | stock | available | `odoo-ui-parity/inventory.md` | planned |
+| inventory | stock | available | `odoo-ui-parity/inventory.md` | ready |
 | manufacturing | mrp | available | `odoo-ui-parity/manufacturing.md` | planned |
-| purchase | purchase | available | `odoo-ui-parity/purchase.md` | planned |
+| purchase | purchase | available | `odoo-ui-parity/purchase.md` | ready |
 | maintenance | maintenance | available | `odoo-ui-parity/maintenance.md` | planned |
 | field-service | industry_fsm | unavailable in supplied source | `odoo-ui-parity/field-service.md` | planned |
 | helpdesk | helpdesk | unavailable in supplied source | `odoo-ui-parity/helpdesk.md` | planned |
