@@ -69,40 +69,8 @@ menu:
           label: Payment Terms
           icon: calendar
           permission: accounting.read
-        - path: /accounting/product-categories
-          label: Product Categories
-          icon: folder
-          permission: accounting.read
-        - path: /accounting/fiscal-positions
-          label: Fiscal Positions
-          icon: globe
-          permission: accounting.read
-        - path: /accounting/tax-groups
-          label: Tax Groups
-          icon: percent
-          permission: accounting.read
-        - path: /accounting/cash-roundings
-          label: Cash Roundings
-          icon: bank
-          permission: accounting.read
-        - path: /accounting/currencies
-          label: Currencies
-          icon: globe
-          permission: accounting.read
-        - path: /accounting/analytic-accounts
-          label: Analytic Accounts
-          icon: ledger
-          permission: accounting.read
         - path: /accounting/analytic-items
           label: Analytic Items
-          icon: ledger
-          permission: accounting.read
-        - path: /accounting/analytic-plans
-          label: Analytic Plans
-          icon: ledger
-          permission: accounting.read
-        - path: /accounting/analytic-distribution-models
-          label: Analytic Distribution Models
           icon: ledger
           permission: accounting.read
         - path: /accounting/reconciliation
@@ -128,9 +96,49 @@ menu:
           label: Payment Tokens
           icon: lock
           permission: accounting.read
+        - path: /accounting/payment-providers
+          label: Payment Providers
+          icon: bank
+          permission: accounting.read
+        - path: /accounting/payment-transactions
+          label: Payment Transactions
+          icon: bank
+          permission: accounting.read
         - path: /accounting/incoterms
           label: Incoterms
           icon: globe
+          permission: accounting.read
+        - path: /accounting/product-categories
+          label: Product Categories
+          icon: folder
+          permission: accounting.read
+        - path: /accounting/fiscal-positions
+          label: Fiscal Positions
+          icon: globe
+          permission: accounting.read
+        - path: /accounting/tax-groups
+          label: Tax Groups
+          icon: percent
+          permission: accounting.read
+        - path: /accounting/cash-roundings
+          label: Cash Roundings
+          icon: bank
+          permission: accounting.read
+        - path: /accounting/currencies
+          label: Currencies
+          icon: globe
+          permission: accounting.read
+        - path: /accounting/analytic-accounts
+          label: Analytic Accounts
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/analytic-plans
+          label: Analytic Plans
+          icon: ledger
+          permission: accounting.read
+        - path: /accounting/analytic-distribution-models
+          label: Analytic Distribution Models
+          icon: ledger
           permission: accounting.read
     - id: review
       label: Review
