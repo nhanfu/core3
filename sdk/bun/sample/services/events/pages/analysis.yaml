@@ -1,5 +1,5 @@
 title: Event Analysis
-page: { id: events-analysis, breadcrumb: [Marketing, Events, Analysis], auth: { require: [events.read] } }
+page: { id: events-analysis, route: /events-analysis, breadcrumb: [Marketing, Events, Analysis], auth: { require: [events.read] } }
 datasources:
   - id: event_analysis_totals
     single: true

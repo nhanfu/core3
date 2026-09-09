@@ -1,5 +1,5 @@
 title: Events
-page: { id: events, breadcrumb: [Marketing, Events], auth: { require: [events.read] } }
+page: { id: events, route: /events, breadcrumb: [Marketing, Events], auth: { require: [events.read] } }
 datasources:
   - id: event_states
     permission: events.read
