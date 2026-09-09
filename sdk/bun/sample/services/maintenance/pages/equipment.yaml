@@ -16,7 +16,7 @@ components:
     row_key: id
     row_open_action: view_maintenance_equipment
     row_double_click_action: view_maintenance_equipment
-    form_view: { page: apps/services/maintenance/pages/equipment-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/maintenance/pages/maintenance-equipment-detail.yaml, side_panel: true }
     row_actions: menu
     empty_state: { title: No equipment, description: No equipment matches the current filters. }
     columns: [{ field: name, label: Equipment, type: PrimaryEntityCell, sortable: true }, { field: model, label: Model }, { field: serial_number, label: Serial number }, { field: category, label: Category }, { field: technician, label: Technician }, { field: team, label: Team }, { field: state, label: Status, type: StatusChip }]

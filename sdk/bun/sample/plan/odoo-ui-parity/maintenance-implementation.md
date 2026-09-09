@@ -33,11 +33,13 @@ evidence only and do not represent Odoo parity evidence.
 
 ## Verification record
 
-- `bun run audit` passes: 252 pages, 255 routes, and 462 datasources.
+- `bun run audit` passes after integration: 253 pages, 256 routes, and 463
+  datasources.
 - `bun run frontend:build` reaches the existing repository-wide CSS build but
   is blocked by the pre-existing missing
   `services/ecommerce/styles/index.scss` path.
 - `git diff --check` passes.
-- Authenticated Core3 browser captures must be recorded under `/tmp` only after
-  the isolated runtime is available; image files are intentionally excluded
-  from the commit.
+- Authenticated Core3 browser checks passed for requests, equipment, and both
+  detail routes at 1440x900 and 390x844 with no failed requests or horizontal
+  overflow. Captures are under `/tmp/core3-timesheets-maintenance/`; image
+  files are intentionally excluded from the commit.

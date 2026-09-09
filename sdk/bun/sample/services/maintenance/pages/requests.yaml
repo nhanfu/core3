@@ -18,7 +18,7 @@ components:
     row_key: id
     row_open_action: view_maintenance_request
     row_double_click_action: view_maintenance_request
-    form_view: { page: apps/services/maintenance/pages/request-detail.yaml, side_panel: true }
+    form_view: { page: apps/services/maintenance/pages/maintenance-request-detail.yaml, side_panel: true }
     row_actions: menu
     empty_state: { title: No maintenance requests, description: No requests match the current filters. }
     columns: [{ field: name, label: Request, type: PrimaryEntityCell, sortable: true }, { field: equipment_name, label: Equipment }, { field: category, label: Category }, { field: request_type, label: Type }, { field: priority, label: Priority, type: StatusChip }, { field: assigned_to, label: Responsible }, { field: scheduled_date, label: Scheduled }, { field: state, label: Status, type: StatusChip }]
