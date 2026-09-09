@@ -100,8 +100,11 @@ export type ListViewOptions = {
   onFormStateChange?: (state: { mode: 'right' | 'hidden'; rowId?: string }) => void;
   columnStorageKey?: string;
   rowActions?: 'buttons' | 'menu';
+  onAction?: (actionId: string, row: ListRow) => void;
   views?: ListViewMode[];
   viewNavigation?: 'icons' | 'tabs';
+  defaultView?: string;
+  mobileDefaultView?: string;
   responsiveCard?: boolean;
   onKanbanMove?: (row: ListRow, status: string) => Promise<void> | void;
   onKanbanAddStatus?: (label: string, fromStates: string[], toStates: string[]) => Promise<void> | void;
@@ -292,6 +295,9 @@ export class ListView extends BaseComponent {
           view: activeView,
           rowKey: this.options.rowKey,
           openAction: this.options.openAction || this.options.doubleClickAction,
+          onAction: (actionId, row) => {
+            this.options.onAction?.(actionId, row);
+          },
         },
       );
       card.parent = this;
@@ -965,6 +971,8 @@ export class ListView extends BaseComponent {
   private activeView(): ListViewMode {
     const views = this.options.views || [];
     if (this.isSmallScreen()) {
+      const mobileView = views.find(view => view.id === this.options.mobileDefaultView);
+      if (this.state.activeView === undefined && mobileView) return mobileView;
       const cardView = views.find(view => view.id === 'card');
       if (this.state.activeView === undefined || this.state.activeView === 'form') {
         if (cardView) return cardView;
@@ -972,7 +980,10 @@ export class ListView extends BaseComponent {
         if (nonFormView) return nonFormView;
       }
     }
-    return views.find(view => view.id === this.state.activeView) || views[0] || { id: 'list', label: 'List' };
+    return views.find(view => view.id === this.state.activeView)
+      || views.find(view => view.id === this.options.defaultView)
+      || views[0]
+      || { id: 'list', label: 'List' };
   }
 
   private isSmallScreen() {

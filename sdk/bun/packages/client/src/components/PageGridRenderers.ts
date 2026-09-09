@@ -603,10 +603,13 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
     columnFields: view.column_fields || (view.column_field ? [view.column_field] : view.pivot?.default?.columns || []),
     measures: view.measures || view.pivot?.default?.measures?.map((measure: any) => ({ field: measure.field, aggregate: measure.aggregate || 'sum', label: measure.column || measure.label })) || [],
     groupBy: view.group_by,
+    groupTotalField: view.group_total_field,
+    groupProgressField: view.group_progress_field,
+    columnCount: view.column_count,
     groups: view.groups_source
       ? (dataMap[view.groups_source]?.data || []).map((group: any) => ({ value: String(group.value), label: String(group.label || group.value), color: group.color }))
       : view.groups,
-    card: view.card,
+    card: view.card ? { ...view.card, avatarField: view.card.avatar_field } : undefined,
     groupsSource: view.groups_source,
     form: view.form,
   }));
@@ -835,6 +838,10 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       columnChooser: def.column_chooser === true,
       openAction: def.row_open_action,
       doubleClickAction: def.row_double_click_action,
+      onAction: (actionId: string, row: any) => {
+        const actionDef = (config.actions || []).find((action: any) => action.id === actionId);
+        if (actionDef) void handleAction(actionDef, row);
+      },
       formView,
       renderForm,
       columnStorageKey: `core3:columns:${String(config.page?.id || config.title || 'page')}:${sourceId}`,
@@ -848,6 +855,8 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
       rowActions: def.row_actions || 'buttons',
       views,
       viewNavigation: def.view_navigation || 'icons',
+      defaultView: def.default_view,
+      mobileDefaultView: def.mobile_view,
       responsiveCard: def.responsive_card === true,
       onViewChange: (view: string) => {
         const params = { ...getPageParams(), view } as Record<string, string | undefined>;

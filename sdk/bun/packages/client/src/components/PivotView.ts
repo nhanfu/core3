@@ -41,7 +41,7 @@ export class PivotView extends BaseComponent {
     if (!view.measures?.length) {
       html.take(root).p.className('o-analytics-empty').replaceText(i18n.tKey('pivot.configure_hint', {}, 'Configure the pivot to choose rows, columns, and measures.')); return;
     }
-    const columns = rows.length ? Object.keys(rows[0]) : [];
+    const columns = [...new Set(rows.flatMap(row => Object.keys(row)))];
     const columnDescriptors = this.pivotColumnDescriptors(columns, view);
     const visibleDataColumns = columnDescriptors.length
       ? [...columns.filter(column => !columnDescriptors.some(descriptor => descriptor.column === column)), ...columnDescriptors.filter(descriptor => !this.isColumnHidden(descriptor.values))].map(column => typeof column === 'string' ? column : column.column)
@@ -55,7 +55,18 @@ export class PivotView extends BaseComponent {
       for (const column of columns) this.addCell(headRow, this.columnLabel(column), 'th');
     }
     const body = html.take(table).tbody.ele() as HTMLTableSectionElement;
-    const tree = this.buildPivotTree(rows, view.rowFields || []);
+    if (view.pivotColumns?.length && (view.rowFields || []).length) {
+      const totalRow: Record<string, unknown> = {};
+      for (const field of view.rowFields) totalRow[field] = field === view.rowFields[0] ? 'Total' : '';
+      for (const row of rows) for (const [field, value] of Object.entries(row)) {
+        if (typeof value === 'number') totalRow[field] = Number(totalRow[field] || 0) + value;
+      }
+      const total = html.take(body).trow.ele() as HTMLTableRowElement;
+      for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(total, { node: { key: 'pivot-total', level: 0, row: totalRow, children: [], leaves: rows }, leaf: true }, column, index, view.rowFields || []);
+    }
+    const tree = view.pivotColumns?.length
+      ? rows.map((row, index) => ({ node: { key: `pivot-row-${index}`, level: 0, row, children: [], leaves: [row] }, leaf: true }))
+      : this.buildPivotTree(rows, view.rowFields || []);
     for (const item of this.visiblePivotRows(tree)) {
       const tr = html.take(body).trow.ele() as HTMLTableRowElement;
       for (const [index, column] of visibleDataColumns.entries()) this.addPivotCell(tr, item, column, index, view.rowFields || []);

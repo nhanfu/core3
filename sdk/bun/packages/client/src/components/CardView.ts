@@ -10,7 +10,7 @@ export type CardViewDefinition = {
   groupBy?: string;
   groups?: Array<{ value: string; label: string; color?: string }>;
   groupsSource?: string;
-  card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
+  card?: { title: string; subtitle?: string; avatarField?: string; fields?: Array<{ field: string; label?: string; type?: string }>; actions?: Array<{ id: string; label: string; variant?: string }> };
 };
 
 export type CardViewOptions = {
@@ -19,6 +19,7 @@ export type CardViewOptions = {
   openAction?: string;
   doubleClickAction?: string;
   onSelect?: (row: CardRow) => void;
+  onAction?: (actionId: string, row: CardRow) => void;
 };
 
 /** Flat, optionally grouped card list for compact resource browsing. */
@@ -104,6 +105,9 @@ export class CardView extends BaseComponent {
     }
 
     const cardDef = this.options.view.card;
+    if (cardDef?.avatarField && row[cardDef.avatarField]) {
+      html.take(card).span.className('o-kanban-avatar').style('display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:6px;border-radius:4px;background:#3daa50;color:#fff;font-size:12px;font-weight:600').text(String(row[cardDef.avatarField]));
+    }
     const title = row[cardDef?.title || 'name'];
     html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
     if (cardDef?.subtitle) {
@@ -117,8 +121,25 @@ export class CardView extends BaseComponent {
       const value = row[field.field];
       if (value == null || value === '') continue;
       const line = html.take(details).div.ele();
+      if (field.type === 'tag') {
+        for (const tag of String(value).split(',').map(item => item.trim()).filter(Boolean)) {
+          html.take(line).span.className('o-kanban-tag').style('display:inline-block;margin-right:4px;padding:2px 8px;border-radius:10px;background:#cfe8ff;color:#174a7c;font-size:11px').text(tag);
+        }
+        continue;
+      }
+      if (field.type === 'activity') {
+        html.take(line).span.className('o-kanban-activity').style('color:#2eae4f;font-size:12px').text(`${String(value)} activities`);
+        continue;
+      }
       if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
       html.take(line).span.className('o-kanban-card-field-value').text(String(value));
+    }
+    for (const action of cardDef?.actions || []) {
+      const button = html.take(card).button.className(`btn btn-${action.variant || 'secondary'} o-card-view-action`).style('margin-top:12px;padding:8px 12px;border:0;border-radius:4px;background:#714b67;color:#fff;cursor:pointer;font-weight:600').text(action.label).ele() as HTMLButtonElement;
+      html.take(button).attr('type', 'button').event('click', (event: Event) => {
+        event.stopPropagation();
+        this.options.onAction?.(action.id, row);
+      });
     }
   }
 

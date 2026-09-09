@@ -63,7 +63,7 @@ apps:
     description: Retail sessions and payments
     icon: cart
     color: orange
-    route: /sessions
+    route: /point-of-sale
     module: point-of-sale
     enabled: true
   - id: sale-subscription

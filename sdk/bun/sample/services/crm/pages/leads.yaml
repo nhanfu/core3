@@ -27,6 +27,8 @@ components:
         filters: { type: lead }
         group_by: stage
     view_navigation: tabs
+    default_view: kanban
+    mobile_view: kanban
     views:
       - { id: list, label: List, icon: table }
       - id: card
@@ -37,20 +39,31 @@ components:
         card:
           title: name
           subtitle: partner_name
+          avatar_field: partner_initial
           fields:
             - { field: expected_revenue, label: Expected revenue }
             - { field: probability, label: Probability }
+            - { field: priority, type: priority }
+            - { field: tags, type: tag }
+            - { field: activity_count, type: activity }
       - id: kanban
         label: Kanban
         icon: dashboard
         group_by: stage
+        group_total_field: expected_revenue
+        group_progress_field: probability
+        column_count: 4
         groups_source: crm_lead_stages
         card:
           title: name
           subtitle: partner_name
+          avatar_field: partner_initial
           fields:
             - { field: expected_revenue, label: Expected revenue }
             - { field: probability, label: Probability }
+            - { field: priority, type: priority }
+            - { field: tags, type: tag }
+            - { field: activity_count, type: activity }
       - id: calendar
         label: Calendar
         icon: calendar

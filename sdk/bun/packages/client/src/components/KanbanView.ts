@@ -10,8 +10,11 @@ export type KanbanViewDefinition = {
   label: string;
   icon?: string;
   groupBy?: string;
+  groupTotalField?: string;
+  groupProgressField?: string;
+  columnCount?: number;
   groups?: Array<{ value: string; label: string; color?: string }>;
-  card?: { title: string; subtitle?: string; fields?: Array<{ field: string; label?: string }> };
+  card?: { title: string; subtitle?: string; avatarField?: string; fields?: Array<{ field: string; label?: string; type?: string }> };
   groupsSource?: string;
 };
 
@@ -55,13 +58,25 @@ export class KanbanView extends BaseComponent {
       group.rows.push(row);
     }
 
-    const board = html.take(container).div.className('o-kanban-board').ele();
+    const board = html.take(container).div.className('o-kanban-board').style(
+      `grid-template-columns:${this.isSmallScreen() ? 'minmax(0, 1fr)' : `repeat(${this.options.view.columnCount || 'auto-fit'}, minmax(0, 1fr))`}`,
+    ).ele();
     for (const group of groups) {
       const column = html.take(board).section.className('o-kanban-column').dataAttr('kanban-group', group.value).ele();
       const header = html.take(column).header.className('o-kanban-column-header').ele();
       const heading = html.take(header).div.className('o-kanban-column-title').ele();
       if (group.color) html.take(heading).toggleClass(`is-${group.color}`, true);
       html.take(heading).span.text(group.label);
+      if (view.groupTotalField) {
+        const total = group.rows.reduce((sum, row) => sum + Number(row[view.groupTotalField!] || 0), 0);
+        if (total) html.take(header).span.className('o-kanban-total').text(new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(total));
+      }
+      if (view.groupProgressField) {
+        const values = group.rows.map(row => Number(row[view.groupProgressField!] || 0)).filter(value => Number.isFinite(value));
+        const progress = values.length ? Math.max(0, Math.min(100, values.reduce((sum, value) => sum + value, 0) / values.length)) : 0;
+        const track = html.take(column).div.className('o-kanban-progress').style('height:8px;margin:8px 0;background:#d9dee3;border-radius:4px;overflow:hidden').ele();
+        html.take(track).div.className('o-kanban-progress-bar').style(`height:100%;width:${progress}%;background:#2eae4f;border-radius:4px`).ele();
+      }
       if (this.options.onEditStatus) {
         heading.title = this.options.stateEditor?.labels?.edit_status || '';
         html.take(heading).prop('tabIndex', 0).attr('role', 'button');
@@ -132,6 +147,9 @@ export class KanbanView extends BaseComponent {
     }
 
     const cardDef = this.options.view.card;
+    if (cardDef?.avatarField && row[cardDef.avatarField]) {
+      html.take(card).span.className('o-kanban-avatar').style('display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-right:6px;border-radius:4px;background:#3daa50;color:#fff;font-size:12px;font-weight:600').text(String(row[cardDef.avatarField]));
+    }
     const title = row[cardDef?.title || 'name'];
     html.take(card).h3.className('o-kanban-card-title').text(title == null || title === '' ? '—' : String(title));
     if (cardDef?.subtitle) {
@@ -145,6 +163,21 @@ export class KanbanView extends BaseComponent {
       const value = row[field.field];
       if (value == null || value === '') continue;
       const line = html.take(details).div.ele();
+      if (field.type === 'tag') {
+        for (const tag of String(value).split(',').map(item => item.trim()).filter(Boolean)) {
+          html.take(line).span.className('o-kanban-tag').style('display:inline-block;margin-right:4px;padding:2px 8px;border-radius:10px;background:#cfe8ff;color:#174a7c;font-size:11px').text(tag);
+        }
+        continue;
+      }
+      if (field.type === 'activity') {
+        html.take(line).span.className('o-kanban-activity').style('color:#2eae4f;font-size:12px').text(`${String(value)} activities`);
+        continue;
+      }
+      if (field.type === 'priority') {
+        const level = Math.max(0, Math.min(3, Number(value) || 0));
+        html.take(line).span.className('o-kanban-priority').style('color:#f2b900;font-size:17px;letter-spacing:1px').text(`${'★'.repeat(level)}${'☆'.repeat(3 - level)}`);
+        continue;
+      }
       if (field.label) html.take(line).span.className('o-kanban-card-field-label').text(field.label);
       html.take(line).span.className('o-kanban-card-field-value').text(String(value));
     }
@@ -223,5 +256,11 @@ export class KanbanView extends BaseComponent {
 
   private rowId(row: ListRow, index: number) {
     return String(row[this.options.rowKey || 'id'] ?? index);
+  }
+
+  private isSmallScreen() {
+    return typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(max-width: 768px)').matches;
   }
 }

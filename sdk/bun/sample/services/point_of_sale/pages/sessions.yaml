@@ -4,15 +4,21 @@ datasources:
   - id: pos_session_states
     single: false
     permission: pos.read
+    mock_data:
+      default: [{ value: Opening Control, label: Opening Control }, { value: In Progress, label: In Progress }, { value: Closing Control, label: Closing Control }, { value: Closed & Posted, label: Closed & Posted }]
     query: "SELECT value, label FROM (VALUES ('Opening Control','Opening Control'), ('In Progress','In Progress'), ('Closing Control','Closing Control'), ('Closed & Posted','Closed & Posted')) states(value, label)"
   - id: pos_sessions
     single: false
     permission: pos.read
     workflow: pos_sessions
+    mock_data:
+      default: [{ id: pos-session-demo, row_version: 1, name: POS/2026/08/17/001, config: Main Shop, user_name: Admin User, state: In Progress, balance_start: 500, balance_end: null, opened_at: '2026-09-09 13:34:38', closed_at: null, order_count: 1 }]
     query: "SELECT s.id, s.row_version, s.name, s.config, s.user_name, s.state, s.balance_start, s.balance_end, CAST(s.opened_at AS VARCHAR) AS opened_at, CAST(s.closed_at AS VARCHAR) AS closed_at, (SELECT COUNT(*) FROM pos_orders o WHERE o.session_id = s.id) AS order_count FROM pos_sessions s ORDER BY s.opened_at DESC"
   - id: pos_session_config_lookup
     single: false
     permission: pos.read
+    mock_data:
+      default: [{ value: Main Shop, label: Main Shop }]
     query: "SELECT name AS value, name AS label FROM pos_configs WHERE active = true ORDER BY name"
 components:
   - type: ListView

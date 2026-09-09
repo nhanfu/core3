@@ -3,13 +3,32 @@ datasources:
   - id: crm_expected_revenue
     single: false
     permission: crm.read
+    pivot:
+      fields: [forecast_period, team, stage, salesperson, expected_closing, expected_revenue, weighted_revenue, probability]
     mock_data:
-      default: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, partner_name: Core3 Vietnam Branch, salesperson: Administrator, team: Direct Sales, stage: Qualified, probability: 60, expected_revenue: 45000, weighted_revenue: 27000, tags: Priority, expected_closing: '2026-10-15' }]
-      states: { empty: [], filtered: [{ id: crm-opp-001, row_version: 1, name: Vietnam expansion, partner_name: Core3 Vietnam Branch, salesperson: Administrator, team: Direct Sales, stage: Qualified, probability: 60, expected_revenue: 45000, weighted_revenue: 27000, tags: Priority, expected_closing: '2026-10-15' }] }
+      default:
+        - { id: forecast-001, row_version: 1, name: Modern Open Space, partner_initial: H, partner_name: Henry Jordan, salesperson: Administrator, team: Direct Sales, stage: Proposition, probability: 60, expected_revenue: 2700, weighted_revenue: 1620, tags: Information, priority: '2', activity_count: 1, forecast_period: None, expected_closing: '2026-09-09' }
+        - { id: forecast-002, row_version: 1, name: Office Design and Architecture, partner_initial: R, partner_name: Ready Mat, salesperson: Dispatcher User, team: Direct Sales, stage: Proposition, probability: 70, expected_revenue: 310.5, weighted_revenue: 217.35, tags: Consulting, priority: '2', activity_count: 1, forecast_period: None, expected_closing: '2026-09-12' }
+        - { id: forecast-003, row_version: 1, name: 5 VP Chairs, partner_initial: A, partner_name: Azure Interior, salesperson: Administrator, team: Direct Sales, stage: Qualified, probability: 25, expected_revenue: 1680, weighted_revenue: 420, tags: Services, priority: '1', activity_count: 1, forecast_period: None, expected_closing: '2026-09-18' }
+        - { id: forecast-004, row_version: 1, name: Distributor Contract, partner_initial: G, partner_name: Gemini Furniture, salesperson: Administrator, team: Direct Sales, stage: Won, probability: 100, expected_revenue: 19800, weighted_revenue: 19800, tags: Information, priority: '2', activity_count: 1, forecast_period: 'September 2026', expected_closing: '2026-09-22' }
+        - { id: forecast-005, row_version: 1, name: 'Global Solutions: Furnitures', partner_initial: R, partner_name: Ready Mat, salesperson: Dispatcher User, team: Direct Sales, stage: Qualified, probability: 70, expected_revenue: 3420, weighted_revenue: 2394, tags: Design, priority: '2', activity_count: 1, forecast_period: 'September 2026', expected_closing: '2026-09-25' }
+        - { id: forecast-006, row_version: 1, name: Devis pour 150 tapis, partner_initial: O, partner_name: OpenWood, salesperson: Administrator, team: Direct Sales, stage: New, probability: 20, expected_revenue: 4000, weighted_revenue: 800, tags: Product, priority: '1', activity_count: 1, forecast_period: 'October 2026', expected_closing: '2026-10-03' }
+        - { id: forecast-007, row_version: 1, name: Info about services, partner_initial: A, partner_name: Acme Corporation, salesperson: Dispatcher User, team: Direct Sales, stage: Qualified, probability: 40, expected_revenue: 7500, weighted_revenue: 3000, tags: Product, priority: '1', activity_count: 1, forecast_period: 'October 2026', expected_closing: '2026-10-12' }
+        - { id: forecast-010, row_version: 1, name: Quote for 12 Tables, partner_initial: W, partner_name: Will McEncroe, salesperson: Administrator, team: Direct Sales, stage: New, probability: 20, expected_revenue: 4000, weighted_revenue: 800, tags: Product, priority: '1', activity_count: 1, forecast_period: 'October 2026', expected_closing: '2026-10-20' }
+        - { id: forecast-008, row_version: 1, name: Quote for 600 Chairs, partner_initial: E, partner_name: Erik N. French, salesperson: Administrator, team: Direct Sales, stage: New, probability: 20, expected_revenue: 4500, weighted_revenue: 900, tags: Product, priority: '1', activity_count: 1, forecast_period: 'November 2026', expected_closing: '2026-11-05' }
+        - { id: forecast-009, row_version: 1, name: Need 20 Desks, partner_initial: R, partner_name: Ready Mat, salesperson: Dispatcher User, team: Direct Sales, stage: Proposition, probability: 30, expected_revenue: 54000, weighted_revenue: 16200, tags: Consulting, priority: '0', activity_count: 1, forecast_period: 'November 2026', expected_closing: '2026-11-18' }
+      states:
+        empty: []
+        filtered: [{ id: forecast-005, row_version: 1, name: 'Global Solutions: Furnitures', partner_initial: R, partner_name: Ready Mat, salesperson: Dispatcher User, team: Direct Sales, stage: Qualified, probability: 70, expected_revenue: 3420, weighted_revenue: 2394, tags: Design, priority: '2', activity_count: 1, forecast_period: 'September 2026', expected_closing: '2026-09-25' }]
+        mobile: [{ id: forecast-001, row_version: 1, name: Modern Open Space, partner_initial: H, partner_name: Henry Jordan, salesperson: Administrator, team: Direct Sales, stage: Proposition, probability: 60, expected_revenue: 4500, weighted_revenue: 2700, tags: Information, priority: '2', activity_count: 1, forecast_period: None, expected_closing: '2026-09-09' }, { id: forecast-004, row_version: 1, name: Distributor Contract, partner_initial: G, partner_name: Gemini Furniture, salesperson: Administrator, team: Direct Sales, stage: Won, probability: 100, expected_revenue: 19800, weighted_revenue: 19800, tags: Information, priority: '2', activity_count: 1, forecast_period: 'September 2026', expected_closing: '2026-09-22' }]
   - id: crm_expected_revenue_teams
     single: false
     permission: crm.read
     mock_data: { default: [{ value: Direct Sales, label: Direct Sales }] }
+  - id: crm_forecast_periods
+    single: false
+    permission: crm.read
+    mock_data: { default: [{ value: None, label: None }, { value: 'September 2026', label: 'September 2026' }, { value: 'October 2026', label: 'October 2026' }, { value: 'November 2026', label: 'November 2026' }] }
 actions:
   - id: bulk_delete_expected_revenue
     type: server

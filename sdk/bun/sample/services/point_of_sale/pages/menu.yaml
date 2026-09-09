@@ -1,6 +1,6 @@
 menu:
   sessions:
-    path: /sessions
+    path: /point-of-sale
     label: Point of Sale
     icon: cart
     permission: pos.read
@@ -8,6 +8,10 @@ menu:
     - id: operations
       label: Operations
       items:
+        - path: /sessions
+          label: Sessions
+          icon: cart
+          permission: pos.read
         - path: /orders
           label: Orders
           icon: cart

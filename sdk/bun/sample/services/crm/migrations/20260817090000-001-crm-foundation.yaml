@@ -10,7 +10,7 @@ type:
         source VARCHAR, priority VARCHAR NOT NULL DEFAULT '0',
         expected_revenue DECIMAL(18,2) NOT NULL DEFAULT 0,
         stage VARCHAR NOT NULL DEFAULT 'New', probability INTEGER NOT NULL DEFAULT 10,
-        salesperson VARCHAR, team VARCHAR, expected_closing DATE, lost_reason VARCHAR,
+        salesperson VARCHAR, team VARCHAR, expected_closing DATE, lost_reason VARCHAR, lost_reason_name VARCHAR,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       CREATE TABLE IF NOT EXISTS crm_activities (

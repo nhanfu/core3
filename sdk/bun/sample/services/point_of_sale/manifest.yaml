@@ -3,6 +3,7 @@ kind: domain-service
 database: duckdb
 migrations: migrations
 pages:
+  - pages/dashboard.yaml
   - pages/menu.yaml
   - pages/sessions.yaml
   - pages/pos-orders.yaml

@@ -5,7 +5,11 @@ components:
     variant: odoo
     source: crm_expected_revenue
     search: { label: Search expected revenue, placeholder: Search opportunities and customers... }
-    filters: [{ field: team, label: Sales team, options_source: crm_expected_revenue_teams }]
+    filters:
+      - { field: team, label: Sales team, options_source: crm_expected_revenue_teams }
+      - { field: forecast_period, label: Expected closing, options_source: crm_forecast_periods }
+    default_view: kanban
+    mobile_view: kanban
     columns:
       - { field: name, label: Opportunity, type: PrimaryEntityCell }
       - { field: partner_name, label: Customer }
@@ -20,6 +24,23 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Forecast
+        icon: dashboard
+        group_by: forecast_period
+        group_total_field: expected_revenue
+        group_progress_field: probability
+        column_count: 4
+        groups_source: crm_forecast_periods
+        card:
+          title: name
+          subtitle: partner_name
+          avatar_field: partner_initial
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: tags, type: tag }
+            - { field: priority, type: priority }
+            - { field: activity_count, type: activity }
       - id: card
         label: Cards
         icon: grid
@@ -31,6 +52,30 @@ components:
             - { field: stage, label: Stage }
             - { field: weighted_revenue, label: Weighted revenue }
             - { field: salesperson, label: Salesperson }
+      - id: graph
+        label: Graph
+        icon: graph
+        category_field: forecast_period
+        measure_field: expected_revenue
+      - id: pivot
+        label: Pivot
+        icon: pivot
+        pivot:
+          fields:
+            - { field: forecast_period, column: Expected closing }
+            - { field: team, column: Sales team }
+            - { field: stage, column: Stage }
+            - { field: salesperson, column: Salesperson }
+            - { field: expected_closing, column: Expected closing date, type: date }
+            - { field: expected_revenue, column: Expected revenue }
+            - { field: weighted_revenue, column: Weighted revenue }
+            - { field: probability, column: Probability }
+          default:
+            rows: [forecast_period]
+            columns: [stage]
+            measures:
+              - { field: expected_revenue, aggregate: sum, column: Prorated Revenue }
+          date_ranges: { expected_closing: month }
     row_key: id
     selectable: true
     bulk_actions:

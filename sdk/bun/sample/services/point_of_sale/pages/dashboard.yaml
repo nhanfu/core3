@@ -1,0 +1,39 @@
+title: Point of Sale
+page: { id: dashboard, route: /point-of-sale, breadcrumb: [Sales, Point of Sale], auth: { require: [pos.read] } }
+datasources:
+  - id: pos_dashboard_configs
+    single: false
+    permission: pos.read
+    mock_data:
+      default:
+        - { id: furniture-shop, name: Furniture Shop, state: open, balance_label: Balance, balance: 2243.57, closing_label: Closing, closing_date: '2026-09-09' }
+        - { id: clothes-shop, name: Clothes Shop, state: closed }
+        - { id: bakery-shop, name: Bakery Shop, state: closed }
+components:
+  - type: ListView
+    variant: odoo
+    source: pos_dashboard_configs
+    search: { label: Search POS, placeholder: Search... }
+    view_navigation: tabs
+    views:
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          actions: [{ id: open_pos_register, label: Open Register, variant: primary }]
+          fields:
+            - { field: balance_label, label: '' }
+            - { field: balance, label: '' }
+            - { field: closing_label, label: '' }
+            - { field: closing_date, label: '' }
+    columns:
+      - field: name
+        label: Point of Sale
+        type: PrimaryEntityCell
+        actions: [{ id: open_pos_register, label: Open Register, variant: primary }]
+actions:
+  - id: open_pos_register
+    type: navigate
+    permission: pos.write
+    navigate_to: /sessions

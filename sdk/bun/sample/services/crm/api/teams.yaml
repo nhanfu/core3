@@ -11,7 +11,9 @@ datasources:
   - id: crm_lost_reasons
     single: false
     permission: crm.read
-    mock_data: { default: [{ id: reason-price, name: Too expensive, active: true }, { id: reason-timing, name: Timing, active: true }] }
+    mock_data:
+      default: [{ id: reason-price, name: Too expensive, active: true, opportunity_count: 1, revenue: 8000 }, { id: reason-timing, name: Timing, active: true, opportunity_count: 0, revenue: 0 }]
+      states: { filtered: [{ id: reason-price, name: Too expensive, active: true, opportunity_count: 1, revenue: 8000 }], empty: [], mobile: [{ id: reason-price, name: Too expensive, active: true, opportunity_count: 1, revenue: 8000 }] }
   - id: crm_team_member_configuration
     single: false
     permission: crm.read

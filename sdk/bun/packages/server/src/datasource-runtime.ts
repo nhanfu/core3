@@ -12,7 +12,7 @@ export const datasourceMethods = {
     pivot?: any,
   ): Promise<any> {
     if (source.type === 'service') return queryServiceSource.call(this, source, params, top);
-    if (source.mock_data !== undefined) return queryMockSource(source, params, skip, top);
+    if (source.mock_data !== undefined) return queryMockSource(source, params, skip, top, pivot);
     const bounds = source.query_window ? resolveQueryWindow(source.query_window, params) : undefined;
     const release = bounds && this.prepareQueryWindow
       ? await this.prepareQueryWindow(source.query_window, bounds)
@@ -27,12 +27,16 @@ export const datasourceMethods = {
 };
 
 function queryMockSource(
-  source: { id?: string; single?: boolean; mock_data?: { default?: unknown; states?: Record<string, unknown> } },
+  source: { id?: string; single?: boolean; pivot?: { fields?: unknown[] }; mock_data?: { default?: unknown; states?: Record<string, unknown> } },
   params: Record<string, any>,
   skip: number,
   top: number,
+  pivot?: any,
 ): any {
   const declaration = source.mock_data || {};
+  if (String(params.mock_state || params.fixture_state || params.state || '').trim() === 'error') {
+    throw Object.assign(new Error(`Mock datasource "${source.id || 'unknown'}" is unavailable`), { status: 503, code: 'MOCK_DATASOURCE_UNAVAILABLE' });
+  }
   const requestedState = [params.mock_state, params.fixture_state, params.state]
     .find((value) => typeof value === 'string' && value.trim() && declaration.states?.[value] !== undefined);
   const fixture = requestedState === undefined
@@ -47,6 +51,7 @@ function queryMockSource(
     return { data, meta: wrapped?.meta || {} };
   }
   const rows = Array.isArray(value) ? value : value === undefined || value === null ? [] : [value];
+  if (pivot && typeof pivot === 'object') return queryMockPivot(source, rows as Record<string, unknown>[], pivot);
   const pageSize = Math.max(1, Math.min(Number(top) || 25, 100));
   const offset = Math.max(0, Number(skip) || 0);
   const data = rows.slice(offset, offset + pageSize);
@@ -61,6 +66,58 @@ function queryMockSource(
       ...wrapped?.meta,
     },
   };
+}
+
+function queryMockPivot(
+  source: { pivot?: { fields?: unknown[] } },
+  rows: Record<string, unknown>[],
+  pivot: { rows?: unknown[]; columns?: unknown[]; measures?: unknown[] },
+) {
+  const allowed = new Set((source.pivot?.fields || []).map(String));
+  const rowFields = (Array.isArray(pivot.rows) ? pivot.rows : []).map(String).filter(field => allowed.has(field));
+  const columnFields = (Array.isArray(pivot.columns) ? pivot.columns : []).map(String).filter(field => allowed.has(field));
+  const measures = Array.isArray(pivot.measures) ? pivot.measures : [];
+  const combinations = columnFields.length
+    ? [...new Map(rows.map(row => {
+      const values = columnFields.map(field => row[field] == null ? 'NULL' : String(row[field]));
+      return [values.join('\u0001'), values];
+    })).values()]
+    : [[]];
+  const alias = (measure: any) => String(measure?.label || `${measure?.aggregate || 'sum'}_${measure?.field || 'rows'}`)
+    .trim().replace(/[^A-Za-z0-9_]+/g, '_').replace(/^[^A-Za-z_]+/, '') || 'measure';
+  const grouped = new Map<string, Record<string, unknown>>();
+  for (const row of rows) {
+    const rowValues = rowFields.map(field => row[field] == null ? 'NULL' : String(row[field]));
+    const key = rowValues.join('\u0001');
+    const output = grouped.get(key) || Object.fromEntries(rowFields.map((field, index) => [field, row[field] ?? null]));
+    for (const values of combinations) {
+      if (columnFields.some((field, index) => String(row[field] == null ? 'NULL' : row[field]) !== values[index])) continue;
+      measures.forEach((measure: any) => {
+        const aggregate = String(measure?.aggregate || 'sum').toLowerCase();
+        const field = measure?.field ? String(measure.field) : undefined;
+        const columnPrefix = values.length ? values.join('_').replace(/[^A-Za-z0-9_]+/g, '_') : '';
+        const keyName = `${columnPrefix ? `${columnPrefix}_` : ''}${alias(measure)}`;
+        const current = Number(output[keyName] || 0);
+        const value = field ? Number(row[field] || 0) : 1;
+        if (aggregate === 'avg') {
+          const countName = `${keyName}__count`;
+          output[countName] = Number(output[countName] || 0) + 1;
+          output[keyName] = current + value;
+        } else if (aggregate === 'count') output[keyName] = current + 1;
+        else output[keyName] = current + value;
+      });
+    }
+    grouped.set(key, output);
+  }
+  const data = [...grouped.values()].map(row => {
+    for (const key of Object.keys(row)) if (key.endsWith('__count')) {
+      const valueKey = key.slice(0, -7);
+      row[valueKey] = Number(row[valueKey] || 0) / Number(row[key] || 1);
+      delete row[key];
+    }
+    return row;
+  });
+  return { data, meta: { total: data.length, page: 1, pageSize: data.length || 1, pages: 1, pivotColumns: combinations.map(values => ({ values, prefix: values.join('_').replace(/[^A-Za-z0-9_]+/g, '_') })) } };
 }
 
 async function querySourceInternal(this: any,

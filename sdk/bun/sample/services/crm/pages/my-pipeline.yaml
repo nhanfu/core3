@@ -5,6 +5,8 @@ components:
     variant: odoo
     source: crm_my_pipeline
     search: { label: Search my pipeline, placeholder: Search my opportunities and tags... }
+    default_view: kanban
+    mobile_view: kanban
     columns:
       - { field: name, label: Opportunity, type: PrimaryEntityCell, sortable: true }
       - { field: partner_name, label: Customer }
@@ -18,6 +20,23 @@ components:
     view_navigation: tabs
     views:
       - { id: list, label: List, icon: table }
+      - id: kanban
+        label: Kanban
+        icon: dashboard
+        group_by: stage
+        group_total_field: expected_revenue
+        group_progress_field: probability
+        column_count: 4
+        groups_source: crm_my_pipeline_stages
+        card:
+          title: name
+          subtitle: partner_name
+          avatar_field: partner_initial
+          fields:
+            - { field: expected_revenue, label: Expected revenue }
+            - { field: priority, type: priority }
+            - { field: tags, type: tag }
+            - { field: activity_count, type: activity }
       - id: card
         label: Cards
         icon: grid
