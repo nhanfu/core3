@@ -143,6 +143,14 @@ capture had an empty failed-request list. Files are under
 `/tmp/odoo-time-off/`; the dashboard pair is
 `/tmp/odoo-time-off-{desktop,mobile}-dashboard.png`.
 
+The personal-allocation surface is also captured in Core3 at
+`/tmp/core3-time-off-my-allocations-{desktop,mobile}.png` and in Odoo at
+`/tmp/odoo-time-off/action-222-{desktop,mobile}.png`. Core3 shows the two
+current-user allocations, preserves the allocation/status columns on desktop,
+stacks the records into readable cards on mobile, and has no horizontal
+overflow. The Odoo mobile reference shows the same personal scope with
+allocation actions and status badges.
+
 ## Gate 4: deterministic Core3 datasource and fixture requirements
 
 The existing service is `sdk/bun/sample/services/time_off` with DuckDB storage,
