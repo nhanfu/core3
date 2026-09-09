@@ -43,7 +43,7 @@ outside this local parity plan.
 | inventory | stock | available | `odoo-ui-parity/inventory.md` | ready |
 | manufacturing | mrp | available | `odoo-ui-parity/manufacturing.md` | planned |
 | purchase | purchase | available | `odoo-ui-parity/purchase.md` | ready |
-| maintenance | maintenance | available | `odoo-ui-parity/maintenance.md` | planned |
+| maintenance | maintenance | available | `odoo-ui-parity/maintenance.md` | ready |
 | field-service | industry_fsm | unavailable in supplied source | `odoo-ui-parity/field-service.md` | planned |
 | helpdesk | helpdesk | unavailable in supplied source | `odoo-ui-parity/helpdesk.md` | planned |
 | quality | quality | unavailable in supplied source | `odoo-ui-parity/quality.md` | planned |
@@ -60,7 +60,7 @@ outside this local parity plan.
 | surveys | survey | available | `odoo-ui-parity/surveys.md` | planned |
 | marketing-automation | marketing_automation | unavailable in supplied source | `odoo-ui-parity/marketing-automation.md` | planned |
 | project | project | available | `odoo-ui-parity/project.md` | ready |
-| timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | planned |
+| timesheets | hr_timesheet | available | `odoo-ui-parity/timesheets.md` | ready |
 | website | website | available; YAML-driven | `odoo-ui-parity/website.md` | on-hold |
 | ecommerce | website_sale | available; YAML-driven | `odoo-ui-parity/ecommerce.md` | on-hold |
 | blog | website_blog | available; YAML-driven | `odoo-ui-parity/blog.md` | on-hold |
