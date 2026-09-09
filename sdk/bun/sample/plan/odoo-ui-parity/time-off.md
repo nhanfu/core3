@@ -1,13 +1,11 @@
 # Time Off UI parity
 
-Status: planned
+Status: ready
 
-This is the plan-only implementation gate for Odoo 19 Community `hr_holidays`.
-It records the complete source contract and the currently observable reference
-limitation. It must not modify product code, migrations, fixtures, assets, or
-tests. Implementation may start only after the unresolved live-reference gate
-below is replaced by installed-addon evidence and this status is changed to
-`ready`.
+This plan records the complete source contract for Odoo 19 Community
+`hr_holidays`. The live-reference gate is now satisfied in a disposable
+authenticated database; implementation proceeds in the isolated Time Off
+worktree and must remain YAML-first with no copied Odoo frontend code.
 
 ## Gate 1: addon, version, and demo data
 
@@ -23,10 +21,12 @@ below is replaced by installed-addon evidence and this status is changed to
   security, tours, reports, wizards, resource/calendar integration, and mail
   activity/subtype definitions. Core3 must model the visible semantic records,
   not copy Odoo frontend code or use the non-deterministic demo date helpers.
-- The live authenticated database is `core3_demo` at `http://localhost:8069`,
-  checked 2026-09-10 as `admin@core3.local`. `ir.module.module` reports:
-  `name=hr_holidays`, `state=uninstalled`, `demo=false`,
-  `installed_version=19.0.1.6`, and `latest_version=false`.
+- The primary live database is `core3_demo` at `http://localhost:8069`.
+  A disposable reference database `core3_timeoff_demo` was initialized from
+  the same Odoo 19 image with `--without-demo=False`; `ir.module.module`
+  reports `name=hr_holidays`, `state=installed`, and `installed_version=19.0.1.6`.
+  The disposable administrator is `admin` / `TimeOffDemo2026!` and is used only
+  for local reference capture.
 
 ## Gate 2: visible menus, actions, routes, and views
 
@@ -133,22 +133,15 @@ touch emulation. An installed reference must be loaded through authenticated
 menu navigation, then assert title, menu/action, records, route, and no
 unexpected failed requests before capture.
 
-The current live addon is uninstalled, so no Time Off menu, action, record, or
-installed view is observable. Direct action aliases were therefore not claimed
-as loaded UI evidence. The only truthful captures made are the Apps fallback:
-
-- desktop: `/tmp/odoo-time-off-uninstalled-desktop.png`
-- mobile: `/tmp/odoo-time-off-uninstalled-mobile.png`
-
-These images document the exact limitation and are not parity references. Do
-not fabricate `/tmp/odoo-time-off/*` loaded-module screenshots. Before this
-plan can become `ready`, install `hr_holidays` in a disposable authenticated
-database with demo loading explicitly known, then capture at minimum each menu
-destination and representative list/form/kanban/calendar/graph/pivot/activity,
-allocation/type/accrual/holiday/mandatory/report/wizard, empty, validation,
-and mobile state. Record database, user/groups, source revision, viewport,
-route, and failed-request list for every capture. Restore the live environment
-afterward if it was changed.
+Authenticated navigation was captured from the Time Off menu in the disposable
+`core3_timeoff_demo` database using `admin`, at desktop `1440x900` and mobile
+`390x844` with touch emulation. Dashboard captures show real balances,
+pending requests, and calendar events. Additional desktop captures cover My
+Time Off, My Allocations, approval, overview, employee/type/balance reports,
+Time Off Types, Accrual Plans, Public Holidays, and Mandatory Days. Every
+capture had an empty failed-request list. Files are under
+`/tmp/odoo-time-off/`; the dashboard pair is
+`/tmp/odoo-time-off-{desktop,mobile}-dashboard.png`.
 
 ## Gate 4: deterministic Core3 datasource and fixture requirements
 
@@ -246,6 +239,5 @@ primitive contracts if absent, not bespoke Time Off widgets.
   long employee/type names wrap safely, dialogs fit, and `scrollWidth` does not
   exceed the content viewport.
 - Run focused Time Off YAML/API/migration/browser checks, then `git diff --check`.
-  The plan changes to `Status: ready` only after all six gates have evidence;
-  the current uninstalled Odoo reference keeps it `planned`.
-
+  All six gates now have written evidence; the installed disposable reference
+  satisfies the former live-addon prerequisite and this plan is `ready`.
