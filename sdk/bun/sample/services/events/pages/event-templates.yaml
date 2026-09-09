@@ -9,3 +9,15 @@ components:
     columns: [{ field: name, label: Event Template, type: PrimaryEntityCell }, { field: seats, label: Seats, align: right }, { field: active, label: Active, type: StatusChip }]
     page_size: 50
     row_key: id
+    create_action: create_event_template
+actions:
+  - id: create_event_template
+    type: server_form
+    permission: events.write
+    title: New event template
+    action: events.templates.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [event_templates]
+    mutation: { operation: insert, table: event_templates, fields: [name, seats, active], required: [name], defaults: { seats: 0, active: true }, result: { query: "SELECT * FROM event_templates WHERE id = :id" } }
+    fields: [{ field: name, label: Event Template, type: text, required: true }, { field: seats, label: Seats, type: number, default: 0 }, { field: active, label: Active, type: checkbox, default: true }]

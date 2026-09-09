@@ -9,3 +9,15 @@ components:
     columns: [{ field: title, label: Title, type: PrimaryEntityCell }, { field: mandatory, label: Mandatory, type: StatusChip }, { field: once_per_order, label: Once per Order, type: StatusChip }, { field: question_type, label: Type }, { field: answers, label: Answers }]
     page_size: 50
     row_key: id
+    create_action: create_event_question
+actions:
+  - id: create_event_question
+    type: server_form
+    permission: events.write
+    title: New event question
+    action: events.questions.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [event_questions]
+    mutation: { operation: insert, table: event_questions, fields: [title, question_type, mandatory, once_per_order, answers], required: [title, question_type], defaults: { mandatory: false, once_per_order: false, answers: '' }, result: { query: "SELECT * FROM event_questions WHERE id = :id" } }
+    fields: [{ field: title, label: Title, type: text, required: true }, { field: question_type, label: Type, type: select, options: [Name, Email, Phone, Text, Selection] }, { field: mandatory, label: Mandatory, type: checkbox, default: false }, { field: once_per_order, label: Once per Order, type: checkbox, default: false }, { field: answers, label: Answers, type: text }]

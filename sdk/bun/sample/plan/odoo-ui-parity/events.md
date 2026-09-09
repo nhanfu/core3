@@ -308,6 +308,12 @@ status chart, and event aggregates. Authenticated desktop/mobile checks show
 three seeded registrations across two events, no unexpected failures, and no
 horizontal overflow; captures are `/tmp/core3-events-{desktop,mobile}-attendees-analysis.png`.
 
+The configuration batch adds service-owned New forms for Event Templates, Event
+Stages, Event Tags Categories, and Event Questions. A mobile authenticated
+creation check created `QA Workshop` in Event Templates and refreshed the list
+with no failed requests or horizontal overflow; the form capture is
+`/tmp/core3-events-mobile-template-form.png`.
+
 ## Acceptance
 
 - Source and installed-reference inventories map every visible menu/action and
