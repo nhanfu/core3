@@ -792,7 +792,7 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
   } : undefined;
   const createDefinition = (config.actions || []).find((action: any) => action.id === def.create_action);
   const createAction = def.create_action && hasPermission(ctx.user, createDefinition?.permission)
-    ? { id: def.create_action, label: def.create_label || 'New' }
+    ? { id: def.create_action, label: def.create_label || 'New', modal: createDefinition?.type === 'server_form' }
     : undefined;
   const translatedLabels = def.labels || {};
   const initialFormMode = pageParams.form === 'hidden' ? 'hidden' : 'right';

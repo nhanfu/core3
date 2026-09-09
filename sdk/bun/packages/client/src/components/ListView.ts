@@ -71,7 +71,7 @@ export type ListViewOptions = {
   variant?: 'cards' | 'odoo';
   scroll?: 'list' | 'body';
   breadcrumbs?: string[];
-  createAction?: { id: string; label: string };
+  createAction?: { id: string; label: string; modal?: boolean };
   search?: false | { label?: string; placeholder?: string };
   filters?: ListViewFilter[];
   groupBy?: ListViewGroupBy[];
@@ -504,7 +504,7 @@ export class ListView extends BaseComponent {
     if (this.options.createAction) {
       const button = html.take(primary).button.className('o-list-create').dataAttr('list-create', this.options.createAction.id).text(this.options.createAction.label || labels.new).ele();
       html.take(button).event('click', () => {
-        if (this.options.formView?.sidePanel) {
+        if (this.options.formView?.sidePanel && !this.options.createAction?.modal) {
           this.setFormPanelMode('right');
           this.setState({ formRowId: '__new__', formPanelClosed: false });
           this.options.onFormStateChange?.({ mode: 'right', rowId: '__new__' });
