@@ -125,6 +125,13 @@ or horizontal overflow. Core3 captures are
 installed Odoo action 181 reference captures are
 `/tmp/odoo-surveys-suggested-values-{desktop,mobile}.png`.
 
+The participant-detail follow-up adds `/surveys/participant-detail`, list-row
+navigation, a statusbar-backed read-only participant form, and service-owned
+submitted answer lines. Authenticated desktop/mobile checks opened the
+certification participant from the list, rendered its two answer lines, and
+returned no failed requests or horizontal overflow. Captures are
+`/tmp/core3-surveys-{desktop,mobile}-participant-detail.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
