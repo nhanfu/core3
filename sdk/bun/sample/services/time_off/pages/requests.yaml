@@ -8,6 +8,26 @@ components:
     create_label: New leave request
     search: { label: Search leave requests, placeholder: 'Search request or employee...' }
     filters: [{ field: state, label: Status, options_source: leave_request_states }]
+    views:
+      - id: list
+        label: List
+        icon: table
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: employee_name
+          fields:
+            - { field: leave_type_name, label: Type }
+            - { field: days, label: Duration }
+            - { field: state, label: Status }
+      - id: calendar
+        label: Calendar
+        icon: calendar
+        date_field: date_from
+        end_date_field: date_to
+        card: { title: name, subtitle: employee_name }
     columns:
       - { field: name, label: Request, type: PrimaryEntityCell }
       - { field: employee_name, label: Employee }
@@ -19,6 +39,7 @@ components:
       - { field: state, label: Status, type: StatusChip }
     page_size: 50
     row_key: id
+    row_open_action: open_leave_request
     row_actions: menu
     actions:
       - { id: submit_leave_request, label: Submit, permission: time_off.write, variant: primary, show_if: "row.state === 'Draft'" }
@@ -55,3 +76,8 @@ actions:
   - { id: approve_leave_request, type: server, permission: time_off.manage, action: time_off.requests.approve, handler: order_transition, workflow: leave_requests, operation: approve, refresh: [leave_requests] }
   - { id: refuse_leave_request, type: server, permission: time_off.manage, action: time_off.requests.refuse, handler: order_transition, workflow: leave_requests, operation: refuse, refresh: [leave_requests] }
   - { id: cancel_leave_request, type: server, permission: time_off.write, action: time_off.requests.cancel, handler: order_transition, workflow: leave_requests, operation: cancel, refresh: [leave_requests] }
+  - id: open_leave_request
+    type: navigate
+    permission: time_off.read
+    navigate_to: /leave-request-detail
+    params: { id: '{row.id}' }
