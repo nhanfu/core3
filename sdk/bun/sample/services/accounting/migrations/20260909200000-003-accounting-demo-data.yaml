@@ -1,0 +1,21 @@
+version: 0.0.3
+kind: data
+type:
+  postgres:
+    up: |
+      INSERT OR IGNORE INTO accounting_invoices(id, name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference, source_service, source_type, source_id)
+      VALUES ('accounting-invoice-demo-001', 'INV/2026/0001', 'Gemini Furniture', 'Customer Invoice', CURRENT_DATE - INTERVAL '2' DAY, CURRENT_DATE + INTERVAL '28' DAY, 1500, 150, 1650, 1650, 'Posted', 'SO/2026/0007', 'order', 'sale_order', 'order-demo-07');
+      INSERT OR IGNORE INTO accounting_invoices(id, name, partner_name, invoice_type, invoice_date, due_date, amount_untaxed, amount_tax, amount_total, amount_residual, state, reference)
+      VALUES ('accounting-invoice-demo-002', 'BILL/2026/0001', 'Lumber Inc', 'Vendor Bill', CURRENT_DATE - INTERVAL '5' DAY, CURRENT_DATE + INTERVAL '25' DAY, 800, 80, 880, 0, 'Paid', 'BILL-001');
+      INSERT OR IGNORE INTO accounting_journal_entries(id, name, journal, entry_date, reference, debit, credit, state)
+      VALUES ('accounting-entry-demo-001', 'Miscellaneous Operations', 'Miscellaneous', CURRENT_DATE - INTERVAL '1' DAY, 'Opening demo entry', 1650, 1650, 'Posted');
+      INSERT OR IGNORE INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, payment_date, state, reference)
+      VALUES ('accounting-payment-demo-001', 'PAY/2026/0001', 'Lumber Inc', 'Outbound', 880, 'Bank', CURRENT_DATE, 'Posted', 'BILL/2026/0001');
+    down: |
+      DELETE FROM accounting_payments WHERE id = 'accounting-payment-demo-001';
+      DELETE FROM accounting_journal_entries WHERE id = 'accounting-entry-demo-001';
+      DELETE FROM accounting_invoices WHERE id IN ('accounting-invoice-demo-001', 'accounting-invoice-demo-002');
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
