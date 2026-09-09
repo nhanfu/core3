@@ -132,6 +132,13 @@ certification participant from the list, rendered its two answer lines, and
 returned no failed requests or horizontal overflow. Captures are
 `/tmp/core3-surveys-{desktop,mobile}-participant-detail.png`.
 
+The Detailed Answers follow-up adds `/surveys/detailed-answer-detail`, row
+navigation, and a readonly answer-line form grouped into Answer and Submission
+sections. Authenticated desktop/mobile checks opened the certification policy
+answer, rendered its survey, answer state, score, participant, and submission
+timestamp, and returned no failed requests or horizontal overflow. Captures are
+`/tmp/core3-surveys-{desktop,mobile}-detailed-answer-detail.png`.
+
 ## Source menu, action, view, and route inventory
 
 The source menu tree in `views/survey_menus.xml` and the action/menu additions
