@@ -90,7 +90,15 @@ and the Questions New action opened the shared form with nine fields. Captures
 are under `/tmp/core3-surveys-{surveys,participants,questions,suggested-values,detailed-answers,analysis}-{desktop,mobile}.png`,
 with additional detail/form captures under `/tmp/core3-surveys-*`. The batch
 was developed in `agent/odoo-ui-surveys-impl2` and integrated as `453f787a`,
-`7803bcc1`, `fbe848e8`, `43b762b6`, `c2a3a012`, `952394b4`, and `18e0f702`.
+`7803bcc1`, `fbe848e8`, `43b762b6`, `c2a3a012`, `952394b4`, `18e0f702`, and
+`5863a7f7`.
+
+The detail-form follow-up adds explicit state-gated Publish, Close, and Cancel
+controls to the shared OdooFormView. An authenticated mobile check rendered a
+Draft survey, clicked Publish, observed the Published state, then opened a
+Published certification survey with Close available; its detail questions and
+response section rendered without failed requests or horizontal overflow.
+The transition capture is `/tmp/core3-surveys-detail-draft-published-mobile.png`.
 
 ## Source menu, action, view, and route inventory
 
