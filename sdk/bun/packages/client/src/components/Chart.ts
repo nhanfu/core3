@@ -13,7 +13,7 @@ export class Chart extends BaseComponent {
     const { width = 560, height = 240, color = 'indigo', variant = 'bar' } = this.def;
     const chartColor = this.resolveColor(color, '#6366f1');
 
-    const wrap = html.take(container).div.className('chart flex flex-col items-start gap-2').ele();
+    const wrap = html.take(container).div.className('chart flex flex-col items-start gap-2').style('width:100%;min-width:0;').ele();
 
     if (title) {
       html.take(wrap).h3.className('text-sm font-semibold text-gray-700').text(title);
@@ -25,6 +25,7 @@ export class Chart extends BaseComponent {
       .attr('height', String(height))
       .attr('role', 'img')
       .attr('aria-label', title || 'Biểu đồ')
+      .style('display:block;max-width:100%;height:auto;box-sizing:border-box;')
       .className('rounded border border-gray-200 bg-white')
       .ele();
 
