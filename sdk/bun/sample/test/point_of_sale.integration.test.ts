@@ -88,6 +88,7 @@ describe('POS preset detail parity batch', () => {
       row_double_click_action: 'view_pos_order_preset',
       empty_state: expect.objectContaining({ title: 'No presets' }),
     });
+    expect(listPage.components[0].columns.map((column: any) => column.label)).toEqual(['Label', 'Manage orders by time', 'Identification', 'Color']);
     expect(action(listApi, 'view_pos_order_preset')).toMatchObject({
       navigate_to: '/point-of-sale/preset-detail',
       params: { id: '{row.id}' },

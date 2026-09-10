@@ -244,6 +244,17 @@ async function renderDataGrid(def: any, targetContainer: HTMLElement) {
         cell.append(toggle);
         return;
       }
+      if (column.type === 'ColorCell') {
+        const palette = ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+        const color = palette[Math.max(0, Math.min(palette.length - 1, Number(value) || 0))];
+        const swatch = document.createElement('span');
+        swatch.className = 'o-list-color-cell-swatch';
+        swatch.style.backgroundColor = color;
+        swatch.setAttribute('aria-label', `Color ${Number(value) || 0}`);
+        cell.classList.add('o-list-color-cell');
+        cell.replaceChildren(swatch);
+        return;
+      }
       if (column.type === 'StatusChip') {
         const tone = column.colors?.[String(value)] || column.tone || 'neutral';
         html.take(cell).span.className(`data-grid-status data-grid-status-${tone}`).replaceText(value == null || value === '' ? '—' : String(value));
@@ -583,6 +594,17 @@ async function renderListView(def: any, targetContainer: HTMLElement) {
         toggle.tabIndex = -1;
         toggle.setAttribute('aria-label', String(column.label || 'Boolean value'));
         cell.append(toggle);
+        return;
+      }
+      if (column.type === 'ColorCell') {
+        const palette = ['#ffffff', '#875A7B', '#00A09A', '#F0AD4E', '#E74C3C', '#3498DB', '#9B59B6', '#1ABC9C', '#F39C12', '#D35400', '#34495E', '#7F8C8D'];
+        const color = palette[Math.max(0, Math.min(palette.length - 1, Number(value) || 0))];
+        const swatch = document.createElement('span');
+        swatch.className = 'o-list-color-cell-swatch';
+        swatch.style.backgroundColor = color;
+        swatch.setAttribute('aria-label', `Color ${Number(value) || 0}`);
+        cell.classList.add('o-list-color-cell');
+        cell.replaceChildren(swatch);
         return;
       }
       if (column.type === 'StatusChip') {

@@ -10,14 +10,12 @@ components:
     row_double_click_action: view_pos_order_preset
     search: { label: Search presets, placeholder: Search preset or service mode... }
     empty_state: { title: No presets, description: Create a preset to control service modes and self-order options. }
+    selectable: true
+    column_chooser: true
     columns:
-      - { field: name, label: Preset, type: PrimaryEntityCell }
-      - { field: use_timing, label: Manage orders by time }
+      - { field: name, label: Label, type: PrimaryEntityCell }
+      - { field: use_timing, label: Manage orders by time, type: BooleanToggle, sortable: false }
       - { field: identification, label: Identification }
-      - { field: color, label: Color }
-      - { field: service_mode, label: Service mode }
-      - { field: preparation_minutes, label: Preparation (min), align: right }
-      - { field: guest_count, label: Guests, align: right }
-      - { field: active, label: Status, type: StatusChip }
+      - { field: color, label: Color, type: ColorCell, sortable: false }
     page_size: 50
     row_key: id
