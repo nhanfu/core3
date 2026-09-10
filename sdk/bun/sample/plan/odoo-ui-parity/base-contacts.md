@@ -39,7 +39,13 @@ Capture Odoo 19 and Core3 at `1440x900` and `390x844` for every inventory item, 
 
 ## Current batch evidence
 
-- Core3 authenticated route: `/base/contacts` (canonical app entry `/contacts/`).
-- Core3 captures: `/tmp/core3-odoo-parity/integrated-20260909/contacts-desktop.png` and `contacts-mobile.png`.
-- Odoo captures: `/tmp/odoo-contacts-desktop.png` and `/tmp/odoo-contacts-mobile.png`.
-- Verified: populated list, List/Kanban navigation, deterministic contact rows, and responsive mobile cards.
+- Batch: canonical Contacts list/card and contact detail interaction.
+- Source reviewed: Odoo 19 `addons/contacts/views/contact_views.xml` and `odoo/addons/base/views/res_partner_views.xml`; live reference was available at `/odoo/contacts?view_type=list` and `/odoo/contacts/98`.
+- Core3 authenticated routes: `/base/contacts` (page route `/contacts`) and `/base/contacts/detail?id=contact-demo` (page route `/contacts/detail`).
+- Core3 API ownership: `api/contacts.yaml` owns `contacts`, filters, deterministic fixture states, and list CRUD/navigation actions; `api/contact-detail.yaml` owns detail, activities, chatter fixture rows, smart-button actions, edit, and activity scheduling. The two page YAML files contain layout only.
+- Core3 captures at 1440x900: `/tmp/core3-contacts-final-list-desktop.png`, `/tmp/core3-contacts-final-cards-desktop.png`, `/tmp/core3-contacts-final-detail-desktop.png`.
+- Core3 captures at 390x844: `/tmp/core3-contacts-final-list-mobile.png`, `/tmp/core3-contacts-final-detail-mobile.png`.
+- Odoo comparison captures: `/tmp/odoo-contacts-final-list-desktop.png`, `/tmp/odoo-contacts-final-detail-desktop.png`, `/tmp/odoo-contacts-final-list-mobile.png`, `/tmp/odoo-contacts-final-detail-mobile.png`.
+- Verified with authenticated browser: populated list, visible List/Cards/Kanban tabs, mobile Cards default, full detail navigation (no side panel), avatar initials, six smart buttons, notebook tabs, activities, chatter/follower/attachment tools, edit/save/discard, Activity composer, no unexpected responses >=400, and no horizontal overflow at either viewport.
+- API contract evidence: search `Leonie` returns one record, named `empty` returns zero records, named `transport_error` returns HTTP 503 with `BASE_CONTACTS_DATA_UNAVAILABLE`; detail `not_found` returns an empty single-record payload. Focused integration test: `test/base_contacts.integration.test.ts` (4 tests, 44 assertions).
+- Deferred scope: Odoo app-switcher/menu label parity (`People` remains the existing Core3 shell group), real binary contact avatars, Person/Company radio control, salesperson and richer relational popovers, import/export/archive/bulk confirmations, full chatter compose/send/note persistence, attachment upload/download, contact hierarchy editing, and the remaining Contacts/Companies configuration screens. Images remain in `/tmp` and are not committed.

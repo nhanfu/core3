@@ -1,0 +1,68 @@
+page: { id: contact-detail }
+datasources:
+  - id: contact_detail
+    single: true
+    permission: base.contacts.read
+    error_states: { transport_error: { status: 503, code: BASE_CONTACT_DETAIL_UNAVAILABLE, message: Contact details are temporarily unavailable } }
+    query: "SELECT c.*, CASE WHEN c.active THEN 'Active' ELSE 'Archived' END AS active_label, (SELECT string_agg(r.category_name, ', ') FROM base_contact_categories_rel r WHERE r.contact_id = c.id) AS categories, CAST(NULL AS VARCHAR) AS avatar_url, upper(substr(c.name, 1, 1)) AS avatar_initials, parent.name AS parent_company_name, 0 AS opportunities_count, '$0.00' AS invoiced_amount_display, 0 AS meetings_count, 0 AS tasks_count, 0 AS purchases_count, 0 AS lots_count FROM base_contacts c LEFT JOIN base_contacts parent ON parent.id = c.parent_company_id WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND c.id = :id"
+  - id: contact_activities
+    permission: base.activities.read
+    error_states: { transport_error: { status: 503, code: BASE_CONTACT_DETAIL_UNAVAILABLE, message: Contact activities are temporarily unavailable } }
+    query: "SELECT id, summary, activity_type, state, CAST(due_date AS VARCHAR) AS due_date, assigned_user_name FROM base_activities WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND contact_id = :id ORDER BY due_date DESC"
+  - id: contact_messages
+    permission: base.contacts.read
+    query: "SELECT id, contact_id, actor_name, action, action_label, detail, created_at FROM (SELECT 'contact-message-created-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.created' AS action, 'Contact created' AS action_label, 'Created from the deterministic Core3 demo fixture for ' || c.name AS detail, TIMESTAMP '2026-09-01 09:00:00' AS created_at FROM base_contacts c WHERE c.id = :id UNION ALL SELECT 'contact-message-note-' || c.id AS id, c.id AS contact_id, 'Administrator' AS actor_name, 'contact.note' AS action, 'Internal note' AS action_label, 'Confirm contact details before the next outreach' AS detail, TIMESTAMP '2026-09-03 14:30:00' AS created_at FROM base_contacts c WHERE c.id = :id AND c.id = 'contact-demo') messages WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 ORDER BY created_at DESC"
+  - id: contact_followers
+    permission: base.contacts.read
+    query: "SELECT id, name, email FROM (VALUES ('contact-follower-admin', 'Administrator', 'admin@tms.local')) followers(id, name, email) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+  - id: contact_attachments
+    permission: base.contacts.read
+    query: "SELECT id, file_name, mime_type, size_bytes, uploaded_by, created_at FROM (VALUES ('contact-attachment-001', 'contact-brief.txt', 'text/plain', 128, 'Administrator', TIMESTAMP '2026-09-02 10:00:00')) attachments(id, file_name, mime_type, size_bytes, uploaded_by, created_at) WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1"
+actions:
+  - id: edit_contact_detail
+    type: server_form
+    permission: base.contacts.write
+    title: Edit contact
+    action: base.contacts.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.contact_detail
+    refresh: [contact_detail, contact_activities, contact_messages]
+    mutation:
+      operation: update
+      table: base_contacts
+      fields: [name, company_type, email, phone, street, street2, city, state_name, zip, country_name, currency_code, is_company, notes]
+      required: [name]
+      timestamps: true
+      guards: [{ query: "SELECT id FROM base_contacts WHERE id = :id AND active = true", status: 409, message: Archived contacts cannot be edited }]
+    fields:
+      - { field: name, label: Name, type: text, required: true }
+      - { field: company_type, label: Type, type: select, options: [{ value: person, label: Person }, { value: company, label: Company }, { value: other, label: Other }] }
+      - { field: email, label: Email, type: text }
+      - { field: phone, label: Phone, type: text }
+      - { field: street, label: Street, type: text }
+      - { field: street2, label: Street 2, type: text }
+      - { field: city, label: City, type: text }
+      - { field: state_name, label: State, type: text }
+      - { field: zip, label: ZIP, type: text }
+      - { field: country_name, label: Country, type: text }
+      - { field: currency_code, label: Currency, type: text }
+      - { field: is_company, label: Is a company, type: checkbox }
+      - { field: notes, label: Notes, type: textarea }
+  - id: schedule_activity
+    type: server_form
+    permission: base.activities.write
+    title: Schedule activity
+    action: base.activities.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [contact_activities]
+    mutation: { operation: insert, table: base_activities, fields: [contact_id, summary, activity_type, due_date, assigned_user_id, assigned_user_name, note], required: [contact_id, summary, due_date], defaults: { state: planned } }
+    fields: [{ field: contact_id, label: Contact, type: text, required: true }, { field: summary, label: Summary, type: text, required: true }, { field: activity_type, label: Type, type: select, options: [{ value: todo, label: To-do }, { value: call, label: Call }, { value: meeting, label: Meeting }, { value: email, label: Email }] }, { field: due_date, label: Due date, type: text, required: true }, { field: assigned_user_id, label: Assigned user ID, type: text }, { field: assigned_user_name, label: Assigned to, type: text }, { field: note, label: Note, type: textarea }]
+  - { id: view_activity, type: navigate, permission: base.activities.read, navigate_to: /activity-detail, params: { id: '{row.id}' } }
+  - { id: open_contact_opportunities, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: opportunities } }
+  - { id: open_contact_invoices, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: invoices } }
+  - { id: open_contact_meetings, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: meetings } }
+  - { id: open_contact_tasks, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: tasks } }
+  - { id: open_contact_purchases, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: purchases } }
+  - { id: open_contact_lots, type: navigate, permission: base.contacts.read, navigate_to: /contacts, params: { contact_id: '{row.id}', stat: lots } }

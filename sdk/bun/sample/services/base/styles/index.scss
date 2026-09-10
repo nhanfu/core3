@@ -1,14 +1,28 @@
 @use 'styles/tokens';
 @use 'styles/components';
 
-/* Base records use the shared Odoo sheet, but do not have a chatter column yet. */
-.o-form-layout:not(:has(.o-form-chatter)) {
-  grid-template-columns: minmax(0, 1fr);
-}
+/* Odoo res.partner keeps the chatter below the full-width form sheet. This
+ * Base-only override leaves shared form pages free to use the aside layout. */
+.o-form-layout { grid-template-columns: minmax(0, 1fr); }
+.o-form-chatter-slot { grid-column: 1; }
 
 .o-form-view-slot {
   max-width: 1480px;
   margin: 0 auto;
+}
+
+/* Contacts use the same Odoo identity treatment as res.partner. The shared
+ * form primitive only renders this block when the page declares avatar data. */
+.o-form-header:has(.o-form-avatar) { align-items: center; justify-content: flex-start; }
+.o-form-avatar { display: flex; width: 96px; height: 96px; flex: 0 0 96px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--o-form-border); border-radius: 50%; background: #e9e7f2; color: var(--o-form-action); font-size: 30px; font-weight: 600; }
+.o-form-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.o-form-avatar-initials { line-height: 1; }
+.o-form-header:has(.o-form-avatar) .o-form-identity { margin-right: auto; }
+.o-card-view .o-card-view-item { height: auto; min-height: 210px; }
+
+@media (max-width: 768px) {
+  .o-form-avatar { width: 72px; height: 72px; flex-basis: 72px; font-size: 24px; }
+  .o-card-view .o-card-view-item { min-height: 210px; }
 }
 
 .o-form-embedded-content .o-list-view {
