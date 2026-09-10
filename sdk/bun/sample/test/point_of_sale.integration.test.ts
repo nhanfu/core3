@@ -69,6 +69,9 @@ describe('POS payments list/detail parity', () => {
     expect(migration.kind).toBe('data');
     expect(migration.type.postgres.up).toContain("'pos-payment-demo-002'");
     expect(migration.type.postgres.up).toContain("'Cash'");
+  });
+});
+
 describe('POS preset detail parity batch', () => {
   test('keeps the preset page and API contracts joined by page.id', () => {
     const listPage = yaml('pages/pos-presets.yaml');

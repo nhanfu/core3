@@ -1,4 +1,4 @@
-version: 0.0.14
+version: 0.0.15
 kind: data
 description: POS preset detail fields and deterministic Odoo-style fixtures
 type:
