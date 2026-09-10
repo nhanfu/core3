@@ -21,3 +21,7 @@ menu:
       label: Reporting
       items:
         - { path: /employees/departments, label: Departments, icon: hierarchy, permission: employees.read }
+    - id: configuration
+      label: Configuration
+      items:
+        - { path: /employees/work-locations, label: Work Locations, icon: location, permission: employees.manage }

@@ -1,0 +1,40 @@
+title: Work Locations
+page: { id: employee-work-locations, route: /employees/work-locations, breadcrumb: [Human Resources, Configuration, Employee, Work Locations], auth: { require: [employees.read] } }
+components:
+  - type: ListView
+    variant: odoo
+    source: employee_work_locations
+    create_action: create_employee_work_location
+    create_label: New work location
+    search: { label: Search work locations, placeholder: 'Search location, address, or company...' }
+    filters: [{ field: active, label: Records, options: [{ id: 'true', label: Active }, { id: 'false', label: Archived }] }]
+    view_navigation: tabs
+    views:
+      - id: list
+        label: List
+        icon: table
+        mobile: false
+      - id: card
+        label: Cards
+        icon: grid
+        card:
+          title: name
+          subtitle: location_type_label
+          fields:
+            - { field: address_name, label: Work Address }
+            - { field: company_name, label: Company }
+            - { field: employee_count, label: Employees }
+            - { field: status, label: Status }
+    columns:
+      - { field: name, label: Work Location, type: PrimaryEntityCell }
+      - { field: location_type_label, label: Type }
+      - { field: address_name, label: Work Address }
+      - { field: company_name, label: Company }
+      - { field: employee_count, label: Employees, align: right }
+      - { field: status, label: Status, type: StatusChip }
+    page_size: 50
+    column_chooser: true
+    row_key: id
+    row_open_action: view_employee_work_location
+    row_double_click_action: view_employee_work_location
+    empty_state: { title: No work locations found, description: Create a work location or adjust your search. }

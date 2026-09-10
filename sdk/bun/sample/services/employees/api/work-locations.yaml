@@ -1,0 +1,26 @@
+page: { id: employee-work-locations }
+datasources:
+  - id: employee_work_locations
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
+    query: "WITH request_guard AS (SELECT TRUE AS ok) SELECT w.id, w.row_version, w.name, w.address_name, w.location_type, CASE w.location_type WHEN 'home' THEN 'Home' WHEN 'office' THEN 'Office' ELSE 'Other' END AS location_type_label, w.company_name, w.active, CASE WHEN w.active THEN 'Active' ELSE 'Archived' END AS status, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true) AS employee_count FROM employee_work_locations w CROSS JOIN request_guard LEFT JOIN employees e ON e.work_location = w.name WHERE request_guard.ok AND (:fixture_state IS NULL OR :fixture_state NOT IN ('empty', 'not_found')) AND ((:active IS NULL AND COALESCE(w.active, true) = true) OR (:active IS NOT NULL AND w.active = CAST(:active AS BOOLEAN))) AND (:q IS NULL OR w.name ILIKE '%' || :q || '%' OR w.address_name ILIKE '%' || :q || '%' OR w.company_name ILIKE '%' || :q || '%') GROUP BY w.id, w.row_version, w.name, w.address_name, w.location_type, w.company_name, w.active ORDER BY w.name, w.id"
+actions:
+  - id: view_employee_work_location
+    type: navigate
+    permission: employees.read
+    navigate_to: /employees/work-locations/detail
+    params: { id: '{row.id}' }
+  - id: create_employee_work_location
+    type: server_form
+    permission: employees.manage
+    title: New work location
+    action: employees.work_locations.create
+    handler: yaml_mutation
+    operation: create
+    refresh: [employee_work_locations]
+    mutation: { operation: insert, table: employee_work_locations, fields: [name, address_name, location_type, company_name], required: [name, address_name], defaults: { location_type: office, company_name: Core3 Vietnam, active: true, row_version: 1 }, result: { query: "SELECT * FROM employee_work_locations WHERE id = :id" } }
+    fields:
+      - { field: name, label: Work Location, type: text, required: true }
+      - { field: address_name, label: Work Address, type: text, required: true }
+      - { field: location_type, label: Type, type: select, options: [{ value: home, label: Home }, { value: office, label: Office }, { value: other, label: Other }] }
+      - { field: company_name, label: Company, type: text, default: Core3 Vietnam }

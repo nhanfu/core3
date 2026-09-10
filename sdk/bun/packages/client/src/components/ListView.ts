@@ -296,6 +296,7 @@ export class ListView extends BaseComponent {
           view: activeView,
           rowKey: this.options.rowKey,
           openAction: this.options.openAction || this.options.doubleClickAction,
+          emptyState: this.options.emptyState,
         },
       );
       card.parent = this;

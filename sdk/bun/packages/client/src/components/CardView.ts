@@ -24,6 +24,7 @@ export type CardViewOptions = {
   openAction?: string;
   doubleClickAction?: string;
   onSelect?: (row: CardRow) => void;
+  emptyState?: { title?: string; description?: string };
 };
 
 /** Flat, optionally grouped card list for compact resource browsing. */
@@ -38,6 +39,13 @@ export class CardView extends BaseComponent {
   draw(container: HTMLElement) {
     const rows = Array.isArray(this.state.rows) ? this.state.rows : [];
     const root = html.take(container).section.className('o-card-view').ele();
+    if (!rows.length) {
+      const empty = this.options.emptyState || {};
+      const state = html.take(root).div.className('o-list-empty').ele();
+      html.take(state).h3.text(empty.title || 'No records found');
+      if (empty.description) html.take(state).p.text(empty.description);
+      return;
+    }
     // Grouping is a searchbar concern. The view definition may provide the
     // available group metadata, but must not enable grouping by itself.
     const groupBy = typeof this.state.groupBy === 'string' ? this.state.groupBy : '';

@@ -1,0 +1,29 @@
+version: 0.0.5
+kind: data
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS employee_work_locations (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR NOT NULL UNIQUE,
+        address_name VARCHAR NOT NULL,
+        location_type VARCHAR NOT NULL DEFAULT 'office',
+        company_name VARCHAR NOT NULL DEFAULT 'Core3 Vietnam',
+        active BOOLEAN NOT NULL DEFAULT true,
+        row_version BIGINT NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      INSERT OR IGNORE INTO employee_work_locations(id, name, address_name, location_type, company_name, active, row_version) VALUES
+        ('work-location-hcm', 'Ho Chi Minh City', 'Core3 Vietnam HQ, District 1', 'office', 'Core3 Vietnam', true, 1),
+        ('work-location-danang', 'Da Nang', 'Core3 Vietnam Da Nang Hub', 'office', 'Core3 Vietnam', true, 1),
+        ('work-location-hanoi', 'Hanoi', 'Core3 Vietnam Hanoi Office', 'office', 'Core3 Vietnam', true, 1),
+        ('work-location-home', 'Home Office', 'Employee private address', 'home', 'Core3 Vietnam', true, 1),
+        ('work-location-legacy', 'Building 1, Second Floor', 'Odoo demo office', 'office', 'Core3 Vietnam', false, 1);
+    down: |
+      DELETE FROM employee_work_locations WHERE id IN ('work-location-hcm', 'work-location-danang', 'work-location-hanoi', 'work-location-home', 'work-location-legacy');
+      DROP TABLE IF EXISTS employee_work_locations;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres

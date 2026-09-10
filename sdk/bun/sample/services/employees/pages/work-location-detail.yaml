@@ -1,0 +1,25 @@
+title: Work Location
+page: { id: employee-work-location-detail, route: /employees/work-locations/detail, breadcrumb: [Human Resources, Configuration, Employee, Work Locations, Work Location], auth: { require: [employees.read] } }
+components:
+  - type: OdooFormView
+    source: employee_work_location_detail
+    title_field: name
+    subtitle_field: location_type_label
+    status_field: status
+    status_colors: { Active: green, Archived: neutral }
+    editable: true
+    labels: { save: Save, discard: Discard, editDetails: Edit, workflowStatus: Status }
+    header_actions:
+      - { id: edit_employee_work_location, label: Edit, variant: secondary, permission: employees.manage }
+      - { id: archive_employee_work_location, label: Archive, variant: danger, permission: employees.manage, show_if: "state.employee_work_location_detail.active === true" }
+      - { id: restore_employee_work_location, label: Restore, variant: secondary, permission: employees.manage, show_if: "state.employee_work_location_detail.active === false" }
+    group_columns: 2
+    groups:
+      - title: Work Location
+        fields:
+          - { field: name, label: Work Location }
+          - { field: address_name, label: Work Address }
+          - { field: location_type_label, label: Type }
+          - { field: company_name, label: Company }
+          - { field: employee_count, label: Employees }
+          - { field: status, label: Status, type: StatusChip }

@@ -1,0 +1,39 @@
+page: { id: employee-work-location-detail }
+datasources:
+  - id: employee_work_location_detail
+    single: true
+    permission: employees.read
+    error_states: { transport_error: { status: 503, code: EMPLOYEES_DATA_UNAVAILABLE, message: Employee configuration is temporarily unavailable } }
+    query: "SELECT w.id, w.row_version, w.name, w.address_name, w.location_type, CASE w.location_type WHEN 'home' THEN 'Home' WHEN 'office' THEN 'Office' ELSE 'Other' END AS location_type_label, w.company_name, w.active, CASE WHEN w.active THEN 'Active' ELSE 'Archived' END AS status, COUNT(e.id) FILTER (WHERE COALESCE(e.active, true) = true) AS employee_count FROM employee_work_locations w LEFT JOIN employees e ON e.work_location = w.name WHERE CASE WHEN :fixture_state IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND w.id = :id GROUP BY w.id, w.row_version, w.name, w.address_name, w.location_type, w.company_name, w.active"
+actions:
+  - id: edit_employee_work_location
+    type: server_form
+    permission: employees.manage
+    title: Edit work location
+    action: employees.work_locations.update
+    handler: yaml_mutation
+    operation: update
+    prefill: state.employee_work_location_detail
+    refresh: [employee_work_location_detail]
+    mutation: { operation: update, table: employee_work_locations, fields: [name, address_name, location_type, company_name], required: [name, address_name], timestamps: true, result: { query: "SELECT * FROM employee_work_locations WHERE id = :id" } }
+    fields:
+      - { field: name, label: Work Location, type: text, required: true }
+      - { field: address_name, label: Work Address, type: text, required: true }
+      - { field: location_type, label: Type, type: select, options: [{ value: home, label: Home }, { value: office, label: Office }, { value: other, label: Other }] }
+      - { field: company_name, label: Company, type: text }
+  - id: archive_employee_work_location
+    type: server
+    permission: employees.manage
+    action: employees.work_locations.archive
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_work_location_detail]
+    mutation: { operation: update, table: employee_work_locations, fields: [active], defaults: { active: false } }
+  - id: restore_employee_work_location
+    type: server
+    permission: employees.manage
+    action: employees.work_locations.restore
+    handler: yaml_mutation
+    operation: update
+    refresh: [employee_work_location_detail]
+    mutation: { operation: update, table: employee_work_locations, fields: [active], defaults: { active: true } }
