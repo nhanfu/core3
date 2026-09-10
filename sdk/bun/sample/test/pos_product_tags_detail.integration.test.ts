@@ -86,7 +86,7 @@ describe('POS Product Tags list and form parity', () => {
     const create = action('api/pos-product-tag-new.yaml', 'create_pos_product_tag');
     const edit = action('api/pos-product-tag-detail.yaml', 'edit_pos_product_tag');
     const remove = action('api/pos-product-tag-detail.yaml', 'delete_pos_product_tag');
-    expect(create).toMatchObject({ type: 'server_form', permission: 'pos.write', operation: 'create', handler: 'yaml_mutation' });
+    expect(create).toMatchObject({ type: 'server_form', permission: 'pos.write', operation: 'insert', handler: 'yaml_mutation' });
     expect(edit).toMatchObject({ type: 'server_form', permission: 'pos.write', operation: 'update', handler: 'yaml_mutation' });
     expect(remove).toMatchObject({ type: 'server', permission: 'pos.write', operation: 'delete', handler: 'yaml_mutation' });
 

@@ -55,3 +55,17 @@
     }
   }
 }
+
+// Keep the empty list state inside the viewport even though populated POS
+// tables intentionally retain their natural column width for mobile scrolling.
+.o-list-table:has(.o-list-empty) {
+  width: 100%;
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.o-list-table:has(.o-list-empty) .o-list-empty {
+  max-width: 100%;
+  overflow: hidden;
+  padding-inline: 16px;
+}

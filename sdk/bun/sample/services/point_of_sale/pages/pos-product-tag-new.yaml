@@ -10,9 +10,8 @@ components:
     header_actions:
       - { id: back_to_pos_product_tags, label: Product Tags, variant: secondary, permission: pos.read }
       - { id: create_pos_product_tag, label: Save, variant: primary, permission: pos.write }
-    group_columns: 2
     groups:
-      - title: Tag
+      - fields:
         fields:
           - { field: name, label: Tag, type: text, required: true }
           - { field: visible_to_customers, label: Visible to customers?, type: checkbox, default: true }
