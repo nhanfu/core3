@@ -21,9 +21,3 @@ components:
               - { field: pos_tickets, label: Tickets with PoS, description: Sell tickets with Point of Sale., type: checkbox }
               - { field: online_ticketing, label: Online Ticketing, description: Sell tickets on your website., type: checkbox }
               - { field: barcode_attendance, label: Attendance, description: Use Event Barcode., type: checkbox }
-actions:
-  - id: save_event_settings
-    type: client
-    permission: events.write
-    script: |
-      async () => {}

@@ -492,6 +492,21 @@ The remaining Events mock-data contract is still open for the broader future
 model graph and transport-level loading/error fixtures; this batch is limited
 to the currently implemented list, detail, and analysis surfaces.
 
+## Current batch: Event Settings persistence
+
+The existing `/events/settings` surface had the Odoo-style settings layout but
+its Save action was an empty client script. This bounded follow-up makes Save
+actionable: the layout remains page-owned while `api/event-settings.yaml`
+provides the matching `page.id` datasource and permissioned server mutation.
+
+Migration `20260911130000-016-event-settings-persistence.yaml` adds one
+idempotent, deterministic settings row with a row version. Save persists all
+seven Events toggles and guards `events.write`, missing settings, boolean
+values, and stale row versions; reads expose explicit empty and transport-error
+states. Focused coverage is in `events_settings.integration.test.ts`.
+This singleton settings action intentionally has update-only CRUD semantics;
+create/delete do not apply to the Odoo `res.config.settings` model.
+
 The mobile visual follow-up closes a concrete responsive mismatch found during
 fresh comparison: Odoo switches the Events action to record cards at 390x844,
 whereas the prior Core3 table clipped Organizer and later columns behind the

@@ -3,4 +3,34 @@ datasources:
   - id: event_settings
     single: true
     permission: events.read
-    query: "SELECT 'event-settings' AS id, true AS schedule, true AS online_exhibitors, true AS booth_management, true AS sale_tickets, true AS pos_tickets, true AS online_ticketing, true AS barcode_attendance"
+    error_states: { transport_error: { status: 503, code: EVENTS_SETTINGS_UNAVAILABLE, message: Event settings are temporarily unavailable. } }
+    query: "SELECT id, row_version, schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, barcode_attendance FROM event_settings WHERE CASE WHEN COALESCE(:fixture_state, '') IN ('empty', 'not_found') THEN 0 ELSE 1 END = 1 AND id = 'event-settings'"
+actions:
+  - id: save_event_settings
+    type: server_form
+    permission: events.write
+    title: Save Event Settings
+    action: events.settings.update
+    handler: yaml_mutation
+    operation: update
+    prefill: row
+    refresh: [event_settings]
+    mutation:
+      operation: update
+      table: event_settings
+      key_field: id
+      fields: [schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, barcode_attendance]
+      concurrency: { required: true }
+      guards:
+        - { query: "SELECT id FROM event_settings WHERE id = :id", status: 404, code: EVENT_SETTINGS_NOT_FOUND, message: Event settings were not found. }
+        - { query: "SELECT id FROM event_settings WHERE id = :id AND row_version = :expected_row_version", status: 409, code: EVENT_SETTINGS_STALE, message: Event settings changed elsewhere. Reload before saving. }
+        - { query: "SELECT 1 AS ok FROM event_settings WHERE id = :id AND CAST(:schedule AS BOOLEAN) IS NOT NULL AND CAST(:online_exhibitors AS BOOLEAN) IS NOT NULL AND CAST(:booth_management AS BOOLEAN) IS NOT NULL AND CAST(:sale_tickets AS BOOLEAN) IS NOT NULL AND CAST(:pos_tickets AS BOOLEAN) IS NOT NULL AND CAST(:online_ticketing AS BOOLEAN) IS NOT NULL AND CAST(:barcode_attendance AS BOOLEAN) IS NOT NULL", status: 422, code: EVENT_SETTINGS_VALUES_INVALID, message: Event settings values must be boolean. }
+      result: { query: "SELECT * FROM event_settings WHERE id = :id" }
+    fields:
+      - { field: schedule, label: Schedule & Tracks, type: checkbox }
+      - { field: online_exhibitors, label: Online Exhibitors, type: checkbox }
+      - { field: booth_management, label: Booth Management, type: checkbox }
+      - { field: sale_tickets, label: Tickets with Sale, type: checkbox }
+      - { field: pos_tickets, label: Tickets with PoS, type: checkbox }
+      - { field: online_ticketing, label: Online Ticketing, type: checkbox }
+      - { field: barcode_attendance, label: Attendance, type: checkbox }

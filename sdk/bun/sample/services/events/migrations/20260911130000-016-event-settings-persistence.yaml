@@ -1,0 +1,13 @@
+version: 0.0.17
+description: Persisted Events settings fixture
+type:
+  postgres:
+    up: |
+      CREATE TABLE IF NOT EXISTS event_settings (id VARCHAR PRIMARY KEY, row_version BIGINT NOT NULL DEFAULT 1, schedule BOOLEAN NOT NULL DEFAULT TRUE, online_exhibitors BOOLEAN NOT NULL DEFAULT TRUE, booth_management BOOLEAN NOT NULL DEFAULT TRUE, sale_tickets BOOLEAN NOT NULL DEFAULT TRUE, pos_tickets BOOLEAN NOT NULL DEFAULT TRUE, online_ticketing BOOLEAN NOT NULL DEFAULT TRUE, barcode_attendance BOOLEAN NOT NULL DEFAULT TRUE);
+      INSERT INTO event_settings (id, row_version, schedule, online_exhibitors, booth_management, sale_tickets, pos_tickets, online_ticketing, barcode_attendance) VALUES ('event-settings', 1, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE) ON CONFLICT (id) DO NOTHING;
+    down: |
+      DROP TABLE IF EXISTS event_settings;
+  duckdb: postgres
+  mysql: postgres
+  oracle: postgres
+  sqlserver: postgres
