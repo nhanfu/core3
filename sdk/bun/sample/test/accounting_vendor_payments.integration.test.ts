@@ -24,8 +24,13 @@ describe('Accounting vendor payments parity', () => {
     const api = yaml('api/vendor-payments.yaml');
     expect(api.page.id).toBe(page.page.id);
     expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').query).toContain("payment_type = 'Outbound'");
+    expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').query).toContain("strftime(payment_date, '%b %-d') AS payment_date_display");
+    expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').query).toContain("printf('$ %,.2f'");
     expect(api.datasources.find((source: any) => source.id === 'accounting_vendor_payments').permission).toBe('accounting.read');
     expect(api.actions).toContainEqual(expect.objectContaining({ id: 'create_accounting_vendor_payment', permission: 'accounting.write' }));
+    const create = api.actions.find((action: any) => action.id === 'create_accounting_vendor_payment');
+    expect(create.mutation.fields).toContain('payment_date');
+    expect(create.fields).toContainEqual(expect.objectContaining({ field: 'payment_date', type: 'date', default: '2026-09-10' }));
   });
 
   test('seeds ten deterministic outbound vendor payments with Odoo states', () => {
@@ -35,6 +40,7 @@ describe('Accounting vendor payments parity', () => {
     expect(migration.type.postgres.up).toContain("'Outbound'");
     expect(migration.type.postgres.up).toContain("'Manual Payment'");
     expect(migration.type.postgres.up).toContain("'Rejected'");
+    expect(migration.type.postgres.up).toContain("state = 'Paid'");
     expect(migration.type.postgres.down).toContain("accounting-vendor-payment-demo-%");
   });
 });

@@ -271,16 +271,17 @@ Products, and Vendors; Core3 already has the other bounded payment/document
 surfaces but does not have an explicit vendor-payments route.
 
 The desktop contract at `1440x900` is a populated `Vendor Payments` list with
-`New`, the informational panel title `Register a payment` and copy
-`Payments are used to register liquidity movements. You can process those
-payments by your own means or by using installed facilities.`, followed by
-columns Date, Number, Journal, Payment Method, Vendor, Amount, and State.
+`New`, followed by columns Date, Number, Journal, Payment Method, Vendor,
+Amount, and State. On an initial transient/empty state Odoo may also show the
+informational copy `Register a payment` and `Payments are used to register
+liquidity movements. You can process those payments by your own means or by
+using installed facilities.`; the populated reference capture used for this
+batch did not render that copy.
 The Odoo view switcher exposes List, Kanban, Graph, and Activity modes, and
 the list contains ten deterministic demo rows plus a total amount footer.
 The mobile contract at `390x844` opens the Kanban mode (`view_type=kanban`)
 with one card per payment showing Vendor, Amount, Number, Date, and State;
-the informational panel remains below the cards and the page has no
-horizontal overflow.
+the page has no horizontal overflow.
 
 The desktop New action navigates to `/odoo/vendor-payments/new` and renders a
 `Draft Payment` form with the statusbar Confirm, Paid, In Process, Draft;
@@ -289,6 +290,32 @@ Date; Memo; Journal; Payment Method?; Vendor Bank Account; and the chatter
 tabs Send message, Log note, and Activity. Odoo's current demo rows and form
 were captured temporarily at `/tmp/odoo-accounting-vendor-payments-*.png`;
 the images are evidence only and are not repository assets.
+
+Core3 now exposes `/accounting/vendor-payments` under the Invoicing/Vendors
+menu with a page-only layout and a separate `api/vendor-payments.yaml` joined
+by `page.id`. Migration `20260911090000-014-accounting-vendor-payments.yaml`
+seeds ten outbound vendor payments across the five Odoo states and normalizes
+the earlier outbound demo payment to `Paid`. The datasource filters strictly
+to outbound payments, formats dates as Odoo-style `Sep 10` values, and uses
+the Odoo dollar amount presentation. The permissioned New mutation defaults
+to an outbound Manual Payment, validates positive amounts, persists the
+current date, and refreshes the list; the authenticated isolated browser
+probe created `BILL/QA/0001` successfully.
+
+Final temporary evidence is `/tmp/core3-accounting-vendor-payments-desktop-final.png`,
+`/tmp/core3-accounting-vendor-payments-mobile-final.png`, and
+`/tmp/core3-accounting-vendor-payments-desktop-new-final.png`, compared with
+`/tmp/odoo-accounting-vendor-payments-desktop.png`,
+`/tmp/odoo-accounting-vendor-payments-mobile.png`, and
+`/tmp/odoo-accounting-vendor-payments-desktop-new.png`. Authenticated checks
+covered 1440x900 and 390x844, exact-width no-overflow, populated list/cards,
+New/save CRUD, search empty state, and zero failed responses after login.
+
+The bounded limitation is that Core3 uses the existing server-form modal for
+New instead of Odoo's full-screen Draft Payment sheet with statusbar,
+vendor-bank-account field, and chatter; row navigation reuses the existing
+read-only generic payment detail. A later payment-form slice can add those
+controls without changing this vendor-list datasource boundary.
 
 ## Acceptance
 

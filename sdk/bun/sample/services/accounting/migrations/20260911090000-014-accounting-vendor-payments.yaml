@@ -3,6 +3,8 @@ kind: data
 type:
   postgres:
     up: |
+      UPDATE accounting_payments SET state = 'Paid', journal = COALESCE(journal, 'Bank'), currency = COALESCE(currency, 'USD')
+      WHERE id = 'accounting-payment-demo-001' AND payment_type = 'Outbound';
       INSERT OR IGNORE INTO accounting_payments(id, name, partner_name, payment_type, amount, payment_method, journal, currency, payment_date, state, reference)
       VALUES
         ('accounting-vendor-payment-demo-001', 'BILL/2026/0001', 'Lumber Inc', 'Outbound', 880.00, 'Manual Payment', 'Bank', 'USD', CURRENT_DATE - INTERVAL '5' DAY, 'Paid', 'BILL-001'),
@@ -17,6 +19,7 @@ type:
         ('accounting-vendor-payment-demo-010', 'BILL/2026/0010', 'Gemini Furniture', 'Outbound', 2500.00, 'Manual Payment', 'Miscellaneous', 'USD', CURRENT_DATE + INTERVAL '4' DAY, 'Rejected', 'BILL-010');
     down: |
       DELETE FROM accounting_payments WHERE id LIKE 'accounting-vendor-payment-demo-%';
+      UPDATE accounting_payments SET state = 'Posted' WHERE id = 'accounting-payment-demo-001' AND payment_type = 'Outbound';
   duckdb: postgres
   mysql: postgres
   oracle: postgres

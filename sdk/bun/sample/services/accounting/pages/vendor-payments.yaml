@@ -27,7 +27,7 @@ components:
           subtitle: amount_display
           fields:
             - { field: name, label: Number }
-            - { field: payment_date, label: Date }
+            - { field: payment_date_display, label: Date }
             - { field: state, label: State }
       - id: kanban
         label: Kanban
@@ -49,7 +49,7 @@ components:
           - { id: email, label: Email, icon: mail }
           - { id: done, label: Done, icon: check }
     columns:
-      - { field: payment_date, label: Date, type: DateCell, sortable: true }
+      - { field: payment_date_display, label: Date, sortable: true }
       - { field: name, label: Number, type: PrimaryEntityCell }
       - { field: journal, label: Journal }
       - { field: payment_method, label: Payment Method }
